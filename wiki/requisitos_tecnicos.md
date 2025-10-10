@@ -1,55 +1,74 @@
 DOCUMENTO DE REQUISITOS TÉCNICOS
-Aplicación: SmartEconomat
-Autor: Equipo de Desarrollo
-Fecha: 09 de octubre de 2025
+*Aplicación: SmartEconomat*
+*Autor* *es* *:*  *Darel Martínez Caballero,*  
+*Sergio Herrera Rodríguez,* 
+*Alexis Daniel Ruiz Salazar,* 
+*Luis Guillermo Colmenares Torres,* 
+*Maurizio Giovanni Hernández Camisa*
+*Fecha: 09 de octubre de 2025*
 
-# 1. Introducción
+# **1. Introducción**
 Este documento describe los requisitos técnicos del sistema SmartEconomat, diseñado para la gestión integral de inventarios en entornos educativos. Su objetivo es establecer la base técnica para el desarrollo, despliegue y mantenimiento de la aplicación, asegurando trazabilidad y calidad del software.
-# 2. Objetivos del Sistema
-•  Automatizar el registro, control y seguimiento de inventarios perecederos y no perecederos.   
-• Facilitar la elaboración de pedidos a proveedores.   
-• Reducir errores humanos en la gestión de insumos.   
-• Generar reportes automáticos en formato PDF.   
-• Mejorar la trazabilidad y control de caducidades mediante FIFO y LIFO. 
-# 3. Alcance
+# **2. Objetivos del Sistema**
+- Automatizar el registro, control y seguimiento de inventarios perecederos y no perecederos.
+- Facilitar la elaboración de pedidos a proveedores.
+- Reducir errores humanos en la gestión de insumos.
+- Generar reportes automáticos en formato PDF.
+- Mejorar la trazabilidad y control de caducidades mediante FIFO y LIFO.
+# **3. Alcance**
 El sistema cubrirá la gestión completa del inventario escolar, desde la recepción de productos hasta su uso en clases. Incluye módulos de usuarios, proveedores, pedidos, inventario y reportes. No contempla funciones de facturación, nómina ni gestión contable.
-# 4. Definiciones y Referencias
-•  **FIFO (First In, First Out):**  método que prioriza el uso de los productos más antiguos.   
-•  **LIFO (Last In, First Out):**  método que prioriza los productos más nuevos.   
-•  **SmartEconomat:**  aplicación web/móvil desarrollada por el equipo de desarrollo académico.   
-•  **Referencias** : IEEE 830-1998, ISO/IEC/IEEE 29148:2018. 
-# 5. Requisitos Funcionales
-•  RF01 - El sistema deberá permitir el registro de usuarios por parte del administrador.   
-• RF02 - El sistema deberá gestionar productos perecederos y no perecederos.   
-• RF03 - El sistema deberá permitir registrar pedidos a proveedores y sus fechas.   
-• RF04 - El sistema deberá generar reportes de inventario, pedidos y caducidades.   
-• RF05 - El sistema deberá permitir la exportación de reportes en PDF. 
-# 6. Requisitos No Funcionales
-•  RNF01 - La interfaz deberá ser intuitiva y accesible desde navegadores modernos.   
-• RNF02 - La aplicación deberá mantener disponibilidad del 99% en horario escolar.   
-• RNF03 - Los datos deberán almacenarse de forma segura con respaldo diario.   
-• RNF04 - El sistema deberá responder en menos de 2 segundos por consulta.   
-• RNF05 - Cumplimiento de estándares de seguridad OWASP. 
-# 7. Arquitectura Técnica
-La arquitectura del sistema se basará en un modelo cliente-servidor con una API RESTful central. El backend se desarrollará con Node.js y Express, mientras que el frontend usará React. La base de datos será MongoDB, con integración a servicios en la nube para despliegue.
-# 8. Tecnologías y Dependencias
-•  Frontend: React, HTML5, CSS3,  TypeScript .   
-• Backend:  NestJS .   
-• Base de datos:  PostgreSQL .   
-• Control de versiones: Git y GitHub.   
-• Despliegue: Docker.   
-• Otras dependencias:  JWT . 
-# 9. Entorno de Desarrollo y Despliegue
-•  Sistema operativo: Windows.   
-• Editor recomendado: VS Code.   
-• Entorno de ejecución: Node.js 20+.   
-• Control de dependencias: npm o yarn.   
-• Despliegue en entorno de prueba mediante contenedores Docker y CI/CD en GitHub Actions. 
-# 10. Seguridad
+# **4. Definiciones y Referencias**
+- **FIFO (First In, First Out):**  método que prioriza el uso de los productos más antiguos. 
+- **LIFO (Last In, First Out):**  método que prioriza los productos más nuevos. 
+- **SmartEconomat:**  aplicación web/móvil desarrollada por el equipo de desarrollo cadémico. 
+- **Referencias:**  IEEE 830-1998, ISO/IEC/IEEE 29148:2018. 
+# **5. Requisitos Funcionales**
+- RF01 - El sistema deberá permitir el registro de usuarios por parte del administrador.
+- RF02 - El sistema deberá gestionar productos perecederos y no perecederos.
+- RF03 - El sistema deberá permitir registrar pedidos a proveedores, sus fechas, historial de precios y código de barras,  debe permitir un CRUD sobre pedidos. 
+- RF04 - El sistema deberá generar reportes de inventario, pedidos y caducidades.
+- RF05 - El sistema deberá permitir la exportación de reportes en PDF.
+- RF06 – El sistema deberá permitir  un CRUD sobre los albaranes. 
+- RF07 – El sistema debe permitir un CRUD de una baja.
+- RF08 – El sistema deberá disponer de un conjunto predefinido de unidades de medida seleccionables.
+- RF09 – El sistema deberá mostrar los productos próximos a su fecha de caducidad.
+- RF10 -  El sistema deberá disponer del historial de movimientos que hagan los usuarios en el inventario. 
+- RF11 -  Debe incluir especificaciones de conservación de productos y control del stock siguiendo el método FIFO. 
+- RF12 -  El sistema debe permitir que un profesor pueda reservar un producto. 
+- RF13 -  El sistema debe registrar cómo llega la mercancía, el albarán correspondiente y permitir la revisión y organización de los datos. 
+- RF14 – El sistema deberá gestionar usuarios y roles.
+- RF15 -  El sistema debe permitir registrar el peso de los productos y pasar etiquetas para tener un control físico del inventario. 
+- RF16 -  El sistema deberá aplicar impuestos a cada detalle de albarán. 
+- RF17 -  El sistema deberá permitir modificar el estado de los pedidos 
+- RF18 -  El sistema deberá permitir crear, leer, actualizar y eliminar recetas. 
+- RF19 – EL sistema deberá poder registrar alimentos y sus alérgenos.
+# **6. Requisitos No Funcionales**
+- RNF01 - La interfaz deberá ser intuitiva y accesible desde navegadores modernos.
+- RNF02 - La aplicación deberá mantener disponibilidad del 99% en horario escolar.
+- RNF03 - Los datos deberán almacenarse de forma segura con respaldo diario.
+- RNF04 - El sistema deberá responder en menos de 2 segundos por consulta.
+- RNF05 -   Solo los usuarios autorizados (maestro o encargado) pueden modificar o llevar productos del economato. 
+- RNF06 -   Debe funcionar en tablets y permitir importar/exportar datos desde Excel. 
+# **7. Arquitectura Técnica**
+La arquitectura del sistema se basará en un modelo cliente-servidor con una API RESTful central. El backend se desarrollará con  NestJs , mientras que el frontend usará React. La base de datos será  PostgreSQL . 
+# **8. Tecnologías y Dependencias**
+- Frontend: React, HTML5, CSS3, TypeScript.
+- Backend: NestJS.
+- Base de datos: PostgreSQL.
+- Control de versiones: Git y GitHub.
+- Despliegue: Docker.
+- Otras dependencias: JWT.
+# **9. Entorno de Desarrollo y Despliegue**
+- Sistema operativo: Windows.
+- Editor recomendado: VS Code.
+- Entorno de ejecución: Node.js 20+.
+- Control de dependencias: npm o yarn.
+- Despliegue en entorno de prueba mediante contenedores Docker y CI/CD en GitHub Actions.
+# **10. Seguridad**
 El sistema deberá implementar autenticación JWT y cifrado de contraseñas mediante bcrypt. El acceso a datos sensibles se limitará por roles de usuario. Se aplicarán políticas CORS y validaciones de entrada para prevenir ataques comunes como XSS o inyección SQL.
-# 11. Escalabilidad y Mantenimiento
+# **11. Escalabilidad y Mantenimiento**
 El diseño modular del sistema permitirá la escalabilidad horizontal mediante contenedores Docker. Se mantendrán logs de actividad, versiones semánticas y documentación continua en GitHub Wiki.
-# 12. Anexos Técnicos
+# **12. Anexos Técnicos**
 Diagramas de arquitectura, casos de uso, flujos de datos y esquemas de base de datos se incluirán como anexos gráficos o archivos complementarios.
 SmartEconomat – Documento de Requisitos Técnicos © 2025
 
