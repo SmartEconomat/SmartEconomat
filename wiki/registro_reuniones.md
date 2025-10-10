@@ -7,9 +7,13 @@ Registro de Reuniones - SmartEconomat
 ## **Participantes**
 Darel Martínez Caballero
 Sergio Herrera Rodríguez
-OTROS
+Alexis Daniel Ruiz Salazar
+Luis Guillermo Colmenares Torres
+Maurizio Giovanni Hernández Camisa
 ## **Moderador / Responsable**
-Profesorado Wilme R.
+W ilme  Fernando  Rodriguez  Paz 
+Tanausú Castrillo Estévez
+Samara Albertos Blanchard 
 ## **Medio**
 Reunión presencial en las instalaciones educativas.
 ## **Agenda**
@@ -28,15 +32,15 @@ Este proceso se digitalizará dentro de la aplicación.
 - **Reservas de productos:**   
 Actualmente no es necesario que los profesores reserven productos para sí mismos.   
 Sin embargo, se menciona que un profesor  **puede hacer un pedido**  para preparar su clase, basado en el inventario disponible y los faltantes solicitados al proveedor.   
-🔸 *Este punto requiere aclaración adicional.* 
+-  *Este punto requiere aclaración adicional.* 
 - **Inventario:**   
 Se trata de un  **inventario general** , no por aula. 
 - **Temperaturas:**   
 Se mencionó la necesidad de tener en cuenta las temperaturas de almacenamiento.   
-🔸  *Este punto requiere definir si se medirá o simplemente se registrará el tipo de conservación.* 
+-  *Este punto requiere definir si se medirá o simplemente se registrará el tipo de conservación.* 
 - **Reportes:**   
 Se requieren reportes exportables en  **PDF** .   
-🔸  *Se debe especificar qué tipos de reportes se necesitan (inventario, pedidos, consumos, etc.).* 
+-  *Se debe especificar qué tipos de reportes se necesitan (inventario, pedidos, consumos, etc.).* 
 - **Frecuencia de pedidos:**   
 Los pedidos se elaboran  **cada 15 días** , y pueden realizarse  **hasta las 23:59 del día límite** . 
 - **Gestión de caducidades:**   
@@ -50,7 +54,7 @@ Varía según la persona, pero en general los usuarios tienen un  **buen nivel d
 Se medirá cuando todas las funcionalidades básicas de  **gestión de inventario, proveedores y pedidos**  funcionen sin fallos. 
 - **Horario de funcionamiento:**   
 El aplicativo operará durante el  **horario escolar** .   
-🔸  *Se debe precisar el rango horario exacto.* 
+-  *Se debe precisar el rango horario exacto,*  *aunque se mencionó que los pedidos pueden ser solicitados hasta las 23:55 de ese mismo día.*  
 - **Unidades de medida:**   
 Se emplearán unidades  **no compuestas** :  *kg, ml, L, mg, unidades.* 
 - **Datos requeridos de proveedores:**   
