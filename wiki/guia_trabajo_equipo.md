@@ -53,7 +53,7 @@ src/
 ```
 
 📄 **Visualización de la arquitectura general:**  
-> `![Arquitectura del Backend](./images/arquitectura.jpeg)`
+![Arquitectura del Backend](https://raw.githubusercontent.com/SmartEconomat/SmartEconomat/develop/wiki/images/arquitectura.jpeg)
 
 ---
 
@@ -98,7 +98,7 @@ Para mantener un control de versiones limpio y ordenado, se aplicará una **estr
   - `docs/<nombre>` → Documentación.
 
 📊 **Esquema visual del flujo de ramas:**  
-> `![Flujo de Ramas](./images/integracion.jpeg)`
+![Flujo de ramas](https://raw.githubusercontent.com/SmartEconomat/SmartEconomat/develop/wiki/images/integracion.jpeg)
 
 ---
 
