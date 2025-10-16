@@ -159,4 +159,4 @@ Una vez recibido el material, esta parte controla cómo se reparte dentro de la 
 - `entidad (enum: 'Albarán', 'Producto')`
 - `fecha`
 
-![Diagrama ER](https://ruta.com/imagen.png)
+![Diagrama ER](https://raw.githubusercontent.com/SmartEconomat/SmartEconomat/refs/heads/develop/wiki/images/diagrama-ER.png)
