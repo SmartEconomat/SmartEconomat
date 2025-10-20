@@ -20,10 +20,12 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-    - "${BACKEND_PORT}:${BACKEND_PORT}"
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
     env_file: .env
     depends_on:
-    - db
+      - db
+    networks:
+      - smarteconomat-network
 
 volumes:
   database:
