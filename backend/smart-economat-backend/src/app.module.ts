@@ -3,10 +3,11 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { PedidosModule } from './modules/pedidos/pedidos.module';
 
 @Module({
   imports: [
-      ConfigModule.forRoot({
+    ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '../../.env',
     }),
@@ -20,10 +21,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         username: configService.get<string>('POSTGRES_USER'),
         password: configService.get<string>('POSTGRES_PASSWORD'),
         database: configService.get<string>('POSTGRES_DB'),
-        autoLoadEntities: true,
-        synchronize: configService.get<boolean>('DB_SYNC', false),
+        synchronize: configService.get<string>('DB_SYNC') === 'true',
+        entities: [__dirname + '/**/*.entity.{ts,js}'],
       }),
     }),
+    PedidosModule,
   ],
   controllers: [AppController],
   providers: [AppService],
