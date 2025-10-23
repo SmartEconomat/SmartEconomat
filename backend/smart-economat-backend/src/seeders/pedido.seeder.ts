@@ -38,6 +38,4 @@ export const runSeeder = async (dataSource: DataSource) => {
   }
 
   await pedidoProductoRepo.save(pedidoProductos);
-
-  console.log('Seeder ejecutado correctamente');
 };

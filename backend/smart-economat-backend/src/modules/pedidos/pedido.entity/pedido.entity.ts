@@ -25,7 +25,7 @@ export class PedidoEntity {
   @OneToMany(
     () => PedidoProductoEntity,
     (pedidoProducto) => pedidoProducto.pedido,
-    { cascade: true },
+    { cascade: true }
   )
   productos: PedidoProductoEntity[];
 }
