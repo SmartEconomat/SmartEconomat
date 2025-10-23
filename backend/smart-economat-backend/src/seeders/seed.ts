@@ -3,7 +3,7 @@ import { readdirSync } from 'fs';
 import { join } from 'path';
 import { ConfigService } from '@nestjs/config';
 import * as dotenv from 'dotenv';
-
+import { Seeder } from './interfaces/seeder.interface';
 dotenv.config({ path: join(__dirname, '../../../../.env') });
 
 const configService = new ConfigService();
@@ -23,10 +23,10 @@ console.log(process.env.POSTGRES_PASSWORD);
 
 async function runAllSeeders() {
   const files = readdirSync(__dirname).filter(
-    (f) => f.endsWith('.seeder.ts') || f.endsWith('.seeder.js'),
+    (f) => f.endsWith('.seeder.ts') || f.endsWith('.seeder.js')
   );
   for (const file of files) {
-    const seeder = require(join(__dirname, file));
+    const seeder: Seeder = require(join(__dirname, file)) as Seeder;
     if (typeof seeder.runSeeder === 'function') {
       console.log(`Ejecutando seeder ${file}...`);
       await seeder.runSeeder(dataSource);
@@ -46,7 +46,7 @@ async function runSeederByName(name: string) {
   } else {
     throw new Error(`Seeder no encontrado: ${name}`);
   }
-  const seeder = require(join(__dirname, filePath));
+  const seeder: Seeder = require(join(__dirname, filePath)) as Seeder;
   if (typeof seeder.runSeeder !== 'function') {
     throw new Error(`No se encontró runSeeder en ${filePath}`);
   }
@@ -54,7 +54,7 @@ async function runSeederByName(name: string) {
   await seeder.runSeeder(dataSource);
 }
 
-(async () => {
+void (async () => {
   try {
     await dataSource.initialize();
     const [, , arg] = process.argv;
