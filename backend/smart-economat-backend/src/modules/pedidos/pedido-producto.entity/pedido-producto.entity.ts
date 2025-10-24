@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { PedidoEntity } from '../pedido.entity/pedido.entity';
+import { ProductoProveedor } from 'src/modules/productos/producto-proveedor.entity/producto-proveedor.entity';
 
 @Entity('pedido_productos')
 export class PedidoProductoEntity {
@@ -18,8 +19,9 @@ export class PedidoProductoEntity {
   @JoinColumn({ name: 'id_pedido' })
   pedido: PedidoEntity;
 
-  @Column('uuid', { nullable: false })
-  id_producto_proveedor: string;
+  @ManyToOne(() => ProductoProveedor, { nullable: false })
+  @JoinColumn({ name: 'id_producto_proveedor' })
+  productoProveedor: ProductoProveedor;
 
   @Column({ type: 'numeric', nullable: false, precision: 10, scale: 2 })
   cantidad: number;

@@ -1,35 +1,27 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { EstadoPedido } from '../enums/estado-pedido.enum';
-import { PedidoProductoEntity } from '../pedido-producto.entity/pedido-producto.entity';
+import { ProductoProveedor } from 'src/modules/productos/producto-proveedor.entity/producto-proveedor.entity';
 
 @Entity('pedido')
 export class PedidoEntity {
   @PrimaryGeneratedColumn('uuid', { name: 'id_pedido' })
-  id: string;
+  id!: string;
 
   @Column('uuid', { nullable: false })
-  id_usuario: string;
+  id_usuario!: string;
 
   @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
-  fecha_pedido: Date;
+  fecha_pedido!: Date;
 
   @Column({ type: 'timestamptz' })
-  fecha_entrega: Date;
+  fecha_entrega!: Date;
 
   @Column({ type: 'numeric', precision: 10, scale: 2 })
-  coste_total: number;
+  coste_total!: number;
 
   @Column({ type: 'enum', enum: EstadoPedido, default: EstadoPedido.PENDIENTE })
-  estado: EstadoPedido;
+  estado!: EstadoPedido;
 
-  @OneToMany(
-    () => PedidoProductoEntity,
-    (pedidoProducto) => pedidoProducto.pedido,
-<<<<<<< HEAD
-    { cascade: true }
-=======
-    { cascade: true },
->>>>>>> d0012c8 (feat: Configurar ejecución de seeders y módulo de pedidos)
-  )
-  productos: PedidoProductoEntity[];
+  @OneToMany(() => ProductoProveedor, (pp) => pp.proveedor, { cascade: true })
+  productos!: ProductoProveedor[];
 }

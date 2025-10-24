@@ -1,5 +1,5 @@
 import { Producto } from '../producto.entity/producto.entity';
-import { AlergenoProducto } from '../enums/product.enums';
+import { AlergenoProducto } from '../enums/producto.enums';
 
 export interface IProductoAlergeno {
   id: number;
