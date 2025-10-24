@@ -38,4 +38,9 @@ export const runSeeder = async (dataSource: DataSource) => {
   }
 
   await pedidoProductoRepo.save(pedidoProductos);
+<<<<<<< HEAD
+=======
+
+  console.log('Seeder ejecutado correctamente');
+>>>>>>> d0012c8 (feat: Configurar ejecución de seeders y módulo de pedidos)
 };

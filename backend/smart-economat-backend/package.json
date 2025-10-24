@@ -19,8 +19,12 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.ts",
+<<<<<<< HEAD
     "seed:pedido": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.ts pedido",
     "prepare": "husky"
+=======
+    "seed:pedido": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.ts pedido"
+>>>>>>> d0012c8 (feat: Configurar ejecución de seeders y módulo de pedidos)
   },
   "dependencies": {
     "@faker-js/faker": "^10.1.0",
@@ -35,7 +39,7 @@
     "pg": "^8.16.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.27"
+    "typeorm": "^0.3.27",
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

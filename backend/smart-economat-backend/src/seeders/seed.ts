@@ -3,7 +3,11 @@ import { readdirSync } from 'fs';
 import { join } from 'path';
 import { ConfigService } from '@nestjs/config';
 import * as dotenv from 'dotenv';
+<<<<<<< HEAD
 import { Seeder } from './interfaces/seeder.interface';
+=======
+
+>>>>>>> d0012c8 (feat: Configurar ejecución de seeders y módulo de pedidos)
 dotenv.config({ path: join(__dirname, '../../../../.env') });
 
 const configService = new ConfigService();
@@ -23,10 +27,17 @@ console.log(process.env.POSTGRES_PASSWORD);
 
 async function runAllSeeders() {
   const files = readdirSync(__dirname).filter(
+<<<<<<< HEAD
     (f) => f.endsWith('.seeder.ts') || f.endsWith('.seeder.js')
   );
   for (const file of files) {
     const seeder: Seeder = require(join(__dirname, file)) as Seeder;
+=======
+    (f) => f.endsWith('.seeder.ts') || f.endsWith('.seeder.js'),
+  );
+  for (const file of files) {
+    const seeder = require(join(__dirname, file));
+>>>>>>> d0012c8 (feat: Configurar ejecución de seeders y módulo de pedidos)
     if (typeof seeder.runSeeder === 'function') {
       console.log(`Ejecutando seeder ${file}...`);
       await seeder.runSeeder(dataSource);
@@ -46,7 +57,11 @@ async function runSeederByName(name: string) {
   } else {
     throw new Error(`Seeder no encontrado: ${name}`);
   }
+<<<<<<< HEAD
   const seeder: Seeder = require(join(__dirname, filePath)) as Seeder;
+=======
+  const seeder = require(join(__dirname, filePath));
+>>>>>>> d0012c8 (feat: Configurar ejecución de seeders y módulo de pedidos)
   if (typeof seeder.runSeeder !== 'function') {
     throw new Error(`No se encontró runSeeder en ${filePath}`);
   }
@@ -54,7 +69,11 @@ async function runSeederByName(name: string) {
   await seeder.runSeeder(dataSource);
 }
 
+<<<<<<< HEAD
 void (async () => {
+=======
+(async () => {
+>>>>>>> d0012c8 (feat: Configurar ejecución de seeders y módulo de pedidos)
   try {
     await dataSource.initialize();
     const [, , arg] = process.argv;
