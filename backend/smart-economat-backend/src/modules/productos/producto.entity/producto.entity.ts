@@ -1,9 +1,15 @@
-import { Entity, OneToMany, PrimaryGeneratedColumn, Column } from 'typeorm';
-import { IProductoProveedor } from '../interfaces/producto-proveedor.interface';
-import { TipoProducto, UnidadProducto } from '../enums/product.enums';
+import {
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  Column,
+  Check,
+} from 'typeorm';
+import { TipoProducto, UnidadProducto } from '../enums/producto.enums';
 import { ProductoAlergeno } from '../producto-alergeno.entity/producto-alergeno.entity';
 import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
 
+@Check(`"caducidad" IS NULL OR "caducidad" >= CURRENT_DATE`)
 @Entity({ name: 'producto' })
 export class Producto {
   @PrimaryGeneratedColumn('uuid', { name: 'id_producto' })
@@ -38,5 +44,5 @@ export class Producto {
   @OneToMany(() => ProductoProveedor, (pp: ProductoProveedor) => pp.producto, {
     cascade: true,
   })
-  proveedores: IProductoProveedor[];
+  proveedores: ProductoProveedor[];
 }
