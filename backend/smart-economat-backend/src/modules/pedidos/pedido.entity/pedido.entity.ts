@@ -25,7 +25,11 @@ export class PedidoEntity {
   @OneToMany(
     () => PedidoProductoEntity,
     (pedidoProducto) => pedidoProducto.pedido,
+<<<<<<< HEAD
     { cascade: true }
+=======
+    { cascade: true },
+>>>>>>> d0012c8 (feat: Configurar ejecución de seeders y módulo de pedidos)
   )
   productos: PedidoProductoEntity[];
 }

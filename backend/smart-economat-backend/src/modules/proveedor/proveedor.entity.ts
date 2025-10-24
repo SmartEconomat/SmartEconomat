@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { ProductoProveedor } from './producto-proveedor.entity';
+import { ProductoProveedor } from '../productos/producto-proveedor.entity/producto-proveedor.entity';
 
 @Entity({ name: 'proveedor' })
 export class Proveedor {
@@ -12,6 +12,7 @@ export class Proveedor {
   @Column({ type: 'varchar', length: 100, nullable: true })
   contacto?: string;
 
-  @OneToMany(() => ProductoProveedor, (pp) => pp.proveedor, { cascade: true })
+  @OneToMany(() => ProductoProveedor, (pp) => pp.id_proveedor)
   productos: ProductoProveedor[];
+  proveedor: any;
 }

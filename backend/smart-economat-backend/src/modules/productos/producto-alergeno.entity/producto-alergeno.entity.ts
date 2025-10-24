@@ -1,11 +1,11 @@
-import { Entity, Column, ManyToOne, PrimaryColumn } from 'typeorm';
-import { Producto } from './producto.entity';
-import { AlergenoProducto } from './product.enums';
+import { Entity, ManyToOne, PrimaryColumn } from 'typeorm';
+import { AlergenoProducto } from '../enums/product.enums';
+import { Producto } from '../producto.entity/producto.entity';
 
 @Entity({ name: 'producto_alergeno' })
 export class ProductoAlergeno {
-  @PrimaryColumn({ name: 'id_producto', type: 'int' })
-  id_producto: number;
+  @PrimaryColumn('uuid', { name: 'id_producto' })
+  id: string;
 
   @PrimaryColumn({ type: 'enum', enum: AlergenoProducto })
   alergeno: AlergenoProducto;
