@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { readdirSync } from 'fs';
 import { join } from 'path';
@@ -22,10 +23,9 @@ export const dataSource = new DataSource({
 console.log(process.env.POSTGRES_PASSWORD);
 
 async function runAllSeeders() {
-  const files = readdirSync(__dirname).filter(
-    (f) => f.endsWith('.seeder.ts') || f.endsWith('.seeder.js')
-  );
-  for (const file of files) {
+  const seedersInOrder = ['producto.seeder.ts', 'pedido.seeder.ts'];
+
+  for (const file of seedersInOrder) {
     const seeder: Seeder = require(join(__dirname, file)) as Seeder;
     if (typeof seeder.runSeeder === 'function') {
       console.log(`Ejecutando seeder ${file}...`);
