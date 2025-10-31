@@ -3,8 +3,8 @@ import { ProductoProveedor } from '../../productos/producto-proveedor.entity/pro
 
 @Entity({ name: 'proveedor' })
 export class Proveedor {
-  @PrimaryGeneratedColumn({ name: 'id_proveedor' })
-  id: number;
+  @PrimaryGeneratedColumn('uuid', { name: 'id_proveedor' })
+  id: string;
 
   @Column({ type: 'varchar', length: 100 })
   nombre: string;
