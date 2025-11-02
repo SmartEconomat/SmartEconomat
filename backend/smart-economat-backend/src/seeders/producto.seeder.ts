@@ -116,9 +116,6 @@ export const runSeeder = async (dataSource: DataSource) => {
       precioActual = parseFloat(
         (precioActual * (1 + variacionPrecio)).toFixed(2)
       );
-      //console.log(precioActual);
-      //console.log('Total productoProveedores:', productoProveedores.length);
-      //console.log('Primer productoProveedor:', productoProveedores[0]);
 
       const historial = historialPrecioRepo.create({
         productoProveedor: { id: productoProveedor.id } as ProductoProveedor,
@@ -127,7 +124,6 @@ export const runSeeder = async (dataSource: DataSource) => {
       });
 
       historial_precio.push(historial);
-      //console.log('Historial generados:', historial_precio.length);
     }
   }
 
