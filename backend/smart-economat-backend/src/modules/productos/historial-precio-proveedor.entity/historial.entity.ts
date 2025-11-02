@@ -1,0 +1,24 @@
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
+
+@Entity({ name: 'historial_precio' })
+export class HistorialPrecio {
+  @PrimaryGeneratedColumn('uuid', { name: 'id_historial_precio' })
+  id!: string;
+
+  @ManyToOne(() => ProductoProveedor, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'id_producto_proveedor' })
+  productoProveedor: ProductoProveedor;
+
+  @Column({ type: 'decimal', nullable: false, precision: 10, scale: 2 })
+  precio!: number;
+
+  @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+  fecha!: Date;
+}
