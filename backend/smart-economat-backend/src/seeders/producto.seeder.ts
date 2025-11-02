@@ -6,13 +6,13 @@ import {
   TipoProducto,
 } from '../modules/productos/enums/producto.enums';
 import { Proveedor } from 'src/modules/proveedor/proveedor.entity/proveedor.entity';
-
+import { HistorialPrecio } from 'src/modules/productos/historial-precio-proveedor.entity/historial.entity';
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
   const productoRepo = dataSource.getRepository(Producto);
   const productoProveedorRepo = dataSource.getRepository(ProductoProveedor);
   const proveedorRepo = dataSource.getRepository(Proveedor);
-
+  const historialPrecioRepo = dataSource.getRepository(HistorialPrecio);
   let proveedores = await proveedorRepo.find();
   const name = (faker.company.name as () => string)();
   const fullName = (faker.person.fullName as () => string)();
@@ -99,6 +99,37 @@ export const runSeeder = async (dataSource: DataSource) => {
   }
 
   await productoProveedorRepo.save(productoProveedores);
-
   console.log('Seeder de productos y proveedores ejecutado correctamente.');
+
+  const historial_precio: HistorialPrecio[] = [];
+  for (const productoProveedor of productoProveedores) {
+    const cambios = (
+      faker.number.int as (opts: { min: number; max: number }) => number
+    )({
+      min: 2,
+      max: 5,
+    });
+    let precioActual = productoProveedor.precioUnitario ?? 10;
+
+    for (let i = 0; i < cambios; i++) {
+      const variacionPrecio = faker.number.float({ min: -0.1, max: 0.1 });
+      precioActual = parseFloat(
+        (precioActual * (1 + variacionPrecio)).toFixed(2)
+      );
+      //console.log(precioActual);
+      //console.log('Total productoProveedores:', productoProveedores.length);
+      //console.log('Primer productoProveedor:', productoProveedores[0]);
+
+      const historial = historialPrecioRepo.create({
+        productoProveedor: { id: productoProveedor.id } as ProductoProveedor,
+        precio: precioActual,
+        fecha: faker.date.recent({ days: 90 }),
+      });
+
+      historial_precio.push(historial);
+      //console.log('Historial generados:', historial_precio.length);
+    }
+  }
+
+  await historialPrecioRepo.save(historial_precio);
 };
