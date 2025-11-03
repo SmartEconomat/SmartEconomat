@@ -87,7 +87,6 @@ export const runSeeder = async (dataSource: DataSource) => {
       min: 12,
     });
     for (const proveedor of proveedoresAsignados) {
-      console.log(precioUnitario);
       const productoProveedor = productoProveedorRepo.create({
         producto,
         proveedor,
@@ -104,7 +103,6 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   const historial_precio: HistorialPrecio[] = [];
   for (const productoProveedor of productoProveedores) {
-    console.log(productoProveedor.precioUnitario);
     const historial = historialPrecioRepo.create({
       productoProveedor: { id: productoProveedor.id } as ProductoProveedor,
       precio: productoProveedor.precioUnitario ?? 0,
