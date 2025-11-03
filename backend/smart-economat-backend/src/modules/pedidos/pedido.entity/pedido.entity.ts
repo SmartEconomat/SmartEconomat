@@ -1,8 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { EstadoPedido } from '../enums/estado-pedido.enum';
-import { ProductoProveedor } from 'src/modules/productos/producto-proveedor.entity/producto-proveedor.entity';
+import { PedidoRecepcion } from '../pedido-recepcion.entity/pedido-recepcion.entity';
 
-@Entity('pedido')
+@Entity({ name: 'pedido' })
 export class PedidoEntity {
   @PrimaryGeneratedColumn('uuid', { name: 'id_pedido' })
   id!: string;
@@ -22,6 +22,6 @@ export class PedidoEntity {
   @Column({ type: 'enum', enum: EstadoPedido, default: EstadoPedido.PENDIENTE })
   estado!: EstadoPedido;
 
-  @OneToMany(() => ProductoProveedor, (pp) => pp.proveedor, { cascade: true })
-  productos!: ProductoProveedor[];
+  @OneToMany(() => PedidoRecepcion, (pr) => pr.pedido)
+  pedidosRecepcion!: PedidoRecepcion[];
 }
