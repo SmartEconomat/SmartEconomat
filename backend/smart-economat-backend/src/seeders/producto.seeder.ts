@@ -87,6 +87,7 @@ export const runSeeder = async (dataSource: DataSource) => {
       min: 12,
     });
     for (const proveedor of proveedoresAsignados) {
+      console.log(precioUnitario);
       const productoProveedor = productoProveedorRepo.create({
         producto,
         proveedor,
@@ -103,32 +104,14 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   const historial_precio: HistorialPrecio[] = [];
   for (const productoProveedor of productoProveedores) {
-    const cambios = (
-      faker.number.int as (opts: { min: number; max: number }) => number
-    )({
-      min: 2,
-      max: 5,
+    console.log(productoProveedor.precioUnitario);
+    const historial = historialPrecioRepo.create({
+      productoProveedor: { id: productoProveedor.id } as ProductoProveedor,
+      precio: productoProveedor.precioUnitario ?? 0,
+      fecha: faker.date.recent({ days: 90 }),
     });
-    let precioActual = productoProveedor.precioUnitario ?? 10;
 
-    for (let i = 0; i < cambios; i++) {
-      const variacionPrecio = faker.number.float({ min: -0.1, max: 0.1 });
-      precioActual = parseFloat(
-        (precioActual * (1 + variacionPrecio)).toFixed(2)
-      );
-      //console.log(precioActual);
-      //console.log('Total productoProveedores:', productoProveedores.length);
-      //console.log('Primer productoProveedor:', productoProveedores[0]);
-
-      const historial = historialPrecioRepo.create({
-        productoProveedor: { id: productoProveedor.id } as ProductoProveedor,
-        precio: precioActual,
-        fecha: faker.date.recent({ days: 90 }),
-      });
-
-      historial_precio.push(historial);
-      //console.log('Historial generados:', historial_precio.length);
-    }
+    historial_precio.push(historial);
   }
 
   await historialPrecioRepo.save(historial_precio);
