@@ -1,3 +1,4 @@
+import { ColumnNumericTransformer } from './transformers/column-numeric.transformer';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -16,8 +17,14 @@ export class HistorialPrecio {
   @JoinColumn({ name: 'id_producto_proveedor' })
   productoProveedor: ProductoProveedor;
 
-  @Column({ type: 'decimal', nullable: false, precision: 10, scale: 2 })
-  precio!: number;
+  @Column({
+    type: 'decimal',
+    nullable: false,
+    precision: 10,
+    scale: 2,
+    transformer: new ColumnNumericTransformer(),
+  })
+  precio?: number;
 
   @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   fecha!: Date;
