@@ -1,3 +1,4 @@
+import { ColumnNumericTransformer } from './transformers/column-numeric.transformer';
 import {
   Column,
   Entity,
@@ -44,6 +45,7 @@ export class ProductoProveedor {
     scale: 2,
     nullable: true,
     name: 'precio_unitario',
+    transformer: new ColumnNumericTransformer(),
   })
   precioUnitario?: number;
 }
