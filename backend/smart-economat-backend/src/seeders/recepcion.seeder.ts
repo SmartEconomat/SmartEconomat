@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
-import { Recepcion } from './recepcion.entity';
-import { PedidoRecepcion } from './pedido-recepcion.entity';
+import { Recepcion } from 'src/modules/recepcion/recepcion.entity/recepcion.entity';
+import { PedidoRecepcion } from 'src/modules/pedidos/pedido-recepcion.entity/pedido-recepcion.entity';
 
 export const seedRecepciones = async (dataSource: DataSource) => {
   const recepcionRepo = dataSource.getRepository(Recepcion);
@@ -8,24 +8,56 @@ export const seedRecepciones = async (dataSource: DataSource) => {
 
   const pedidosRecepcion = await pedidoRecepcionRepo.find();
 
-  if (!pedidosRecepcion.length) return;
+  if (!pedidosRecepcion.length) {
+    console.warn('No hay pedidos de recepción para asociar recepciones.');
+    return;
+  }
 
-  await recepcionRepo.save([
+  const ejemplos = [
     {
-      id_pedido_recepcion: pedidosRecepcion[0].id_pedido_recepcion,
-      descripcion: 'Recepción de leche entera',
-      cantidad: 100,
-      unidad: 'litros',
-      calidad: 'Excelente',
-      observacion: 'Temperatura adecuada y sin fugas',
-    },
-    {
-      id_pedido_recepcion: pedidosRecepcion[0].id_pedido_recepcion,
-      descripcion: 'Recepción de harina de trigo',
-      cantidad: 80,
+      descripcion: 'Manzanas',
+      cantidad: 50,
       unidad: 'kg',
-      calidad: 'Buena',
-      observacion: 'Algunos sacos con pequeñas roturas',
+      calidad: 'Excelente',
+      observacion: 'Frescas y bien empaquetadas',
     },
-  ]);
+    {
+      descripcion: 'Leche',
+      cantidad: 200,
+      unidad: 'litros',
+      calidad: 'Buena',
+      observacion: 'Refrigerada correctamente',
+    },
+    {
+      descripcion: 'Huevos',
+      cantidad: 300,
+      unidad: 'unidades',
+      calidad: 'Regular',
+      observacion: 'Algunos con cáscara rota',
+    },
+    {
+      descripcion: 'Pan',
+      cantidad: 100,
+      unidad: 'unidades',
+      calidad: 'Excelente',
+      observacion: 'Recién horneado',
+    },
+    {
+      descripcion: 'Aceite de oliva',
+      cantidad: 75,
+      unidad: 'litros',
+      calidad: 'Buena',
+      observacion: 'Botellas sin fugas',
+    },
+  ];
+
+  const recepciones = ejemplos.map((data) =>
+    recepcionRepo.create({
+      ...data,
+      pedidoRecepcion: pedidosRecepcion[0],
+    })
+  );
+
+  await recepcionRepo.save(recepciones);
+  console.log('Seeder de recepciones ejecutado correctamente.');
 };

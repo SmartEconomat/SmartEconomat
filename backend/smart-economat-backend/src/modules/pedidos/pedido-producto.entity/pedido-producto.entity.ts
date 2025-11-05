@@ -13,9 +13,7 @@ export class PedidoProductoEntity {
   @PrimaryGeneratedColumn('uuid', { name: 'id_pedido_producto' })
   id: string;
 
-  @ManyToOne(() => PedidoEntity, (pedido) => pedido.productos, {
-    onDelete: 'CASCADE',
-  })
+  @ManyToOne(() => PedidoEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id_pedido' })
   pedido: PedidoEntity;
 
