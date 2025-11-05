@@ -1,18 +1,18 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToMany } from 'typeorm';
-import { PedidoRecepcion } from '../pedidos/pedido-recepcion.entity/pedido-recepcion.entity';
+import { PedidoRecepcion } from 'src/modules/pedidos/pedido-recepcion.entity/pedido-recepcion.entity';
 
 @Entity({ name: 'albaran' })
 export class Albaran {
-  @PrimaryGeneratedColumn('uuid', { name: 'id_albaran' })
+  @PrimaryGeneratedColumn('uuid')
   id_albaran: string;
 
   @Column({ type: 'varchar', length: 50 })
   n_albaran: string;
 
-  @Column({ type: 'boolean', nullable: true })
+  @Column({ type: 'boolean', default: false })
   concordancia: boolean;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: 'date', default: () => 'CURRENT_DATE' })
   fecha: Date;
 
   @ManyToMany(
