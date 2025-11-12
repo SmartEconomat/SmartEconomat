@@ -1,4 +1,4 @@
-import { ColumnNumericTransformer } from '../../commons/transformers/column-numeric.transformer';
+import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 import {
   Column,
   Entity,
