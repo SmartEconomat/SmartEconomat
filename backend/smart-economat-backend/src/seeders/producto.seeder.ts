@@ -6,13 +6,13 @@ import {
   TipoProducto,
 } from '../modules/productos/enums/producto.enums';
 import { Proveedor } from 'src/modules/proveedor/proveedor.entity/proveedor.entity';
-
+import { HistorialPrecio } from 'src/modules/productos/historial-precio-proveedor.entity/historial.entity';
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
   const productoRepo = dataSource.getRepository(Producto);
   const productoProveedorRepo = dataSource.getRepository(ProductoProveedor);
   const proveedorRepo = dataSource.getRepository(Proveedor);
-
+  const historialPrecioRepo = dataSource.getRepository(HistorialPrecio);
   let proveedores = await proveedorRepo.find();
   const name = (faker.company.name as () => string)();
   const fullName = (faker.person.fullName as () => string)();
@@ -99,6 +99,18 @@ export const runSeeder = async (dataSource: DataSource) => {
   }
 
   await productoProveedorRepo.save(productoProveedores);
-
   console.log('Seeder de productos y proveedores ejecutado correctamente.');
+
+  const historial_precio: HistorialPrecio[] = [];
+  for (const productoProveedor of productoProveedores) {
+    const historial = historialPrecioRepo.create({
+      productoProveedor: { id: productoProveedor.id } as ProductoProveedor,
+      precio: productoProveedor.precioUnitario ?? 0,
+      fecha: faker.date.recent({ days: 90 }),
+    });
+
+    historial_precio.push(historial);
+  }
+
+  await historialPrecioRepo.save(historial_precio);
 };
