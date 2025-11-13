@@ -1,63 +1,79 @@
 import { DataSource } from 'typeorm';
 import { Recepcion } from 'src/modules/recepcion/recepcion.entity/recepcion.entity';
-import { PedidoRecepcion } from 'src/modules/pedidos/pedido-recepcion.entity/pedido-recepcion.entity';
+import { RecepcionPedido } from 'src/modules/recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
+import { RecepcionProducto } from 'src/modules/recepcion/recepcion-productos.entity/recepcion-producto.entity';
+import { PedidoProducto } from 'src/modules/pedidos/pedido-producto.entity/pedido-producto.entity';
 
-export const seedRecepciones = async (dataSource: DataSource) => {
+export const runSeeder = async (dataSource: DataSource) => {
+  const { faker } = await import('@faker-js/faker');
+
   const recepcionRepo = dataSource.getRepository(Recepcion);
-  const pedidoRecepcionRepo = dataSource.getRepository(PedidoRecepcion);
+  const recepcionPedidoRepo = dataSource.getRepository(RecepcionPedido);
+  const recepcionProductoRepo = dataSource.getRepository(RecepcionProducto);
+  const pedidoProductoRepo = dataSource.getRepository(PedidoProducto);
 
-  const pedidosRecepcion = await pedidoRecepcionRepo.find();
+  const pedidos = await recepcionPedidoRepo.find({
+    relations: ['pedido'],
+  });
 
-  if (!pedidosRecepcion.length) {
-    console.warn('No hay pedidos de recepción para asociar recepciones.');
-    return;
+  if (!pedidos.length) return;
+
+  const allPedidoProductos = await pedidoProductoRepo.find();
+
+  if (!allPedidoProductos.length) return;
+
+  for (let i = 0; i < 5; i++) {
+    const recepcion = recepcionRepo.create({
+      usuario: faker.string.uuid(),
+      observaciones: faker.commerce.productDescription(),
+      fechaRecepcion: faker.date.recent(),
+    });
+    await recepcionRepo.save(recepcion);
+
+    const pedidoRandom = faker.helpers.arrayElement(pedidos);
+
+    const existeRelacion = await recepcionPedidoRepo.findOne({
+      where: {
+        recepcion,
+        pedido: pedidoRandom.pedido || pedidoRandom,
+      },
+      relations: ['recepcion', 'pedido'],
+    });
+
+    if (!existeRelacion) {
+      const nuevaRelacion = recepcionPedidoRepo.create({
+        recepcion,
+        pedido: pedidoRandom.pedido || pedidoRandom,
+      });
+      await recepcionPedidoRepo.save(nuevaRelacion);
+    }
+
+    const productos: RecepcionProducto[] = [];
+    for (let j = 0; j < 3; j++) {
+      const pedidoProductoRandom =
+        faker.helpers.arrayElement(allPedidoProductos);
+
+      const existeProducto = await recepcionProductoRepo.findOne({
+        where: {
+          recepcion,
+          pedidoProducto: pedidoProductoRandom,
+        },
+        relations: ['recepcion', 'pedidoProducto'],
+      });
+
+      if (!existeProducto) {
+        const prod = recepcionProductoRepo.create({
+          cantidadRecibida: faker.number.int({ min: 1, max: 100 }),
+          observaciones: faker.commerce.productDescription(),
+          recepcion,
+          pedidoProducto: pedidoProductoRandom,
+        });
+        productos.push(prod);
+      }
+    }
+
+    if (productos.length) {
+      await recepcionProductoRepo.save(productos);
+    }
   }
-
-  const ejemplos = [
-    {
-      descripcion: 'Manzanas',
-      cantidad: 50,
-      unidad: 'kg',
-      calidad: 'Excelente',
-      observacion: 'Frescas y bien empaquetadas',
-    },
-    {
-      descripcion: 'Leche',
-      cantidad: 200,
-      unidad: 'litros',
-      calidad: 'Buena',
-      observacion: 'Refrigerada correctamente',
-    },
-    {
-      descripcion: 'Huevos',
-      cantidad: 300,
-      unidad: 'unidades',
-      calidad: 'Regular',
-      observacion: 'Algunos con cáscara rota',
-    },
-    {
-      descripcion: 'Pan',
-      cantidad: 100,
-      unidad: 'unidades',
-      calidad: 'Excelente',
-      observacion: 'Recién horneado',
-    },
-    {
-      descripcion: 'Aceite de oliva',
-      cantidad: 75,
-      unidad: 'litros',
-      calidad: 'Buena',
-      observacion: 'Botellas sin fugas',
-    },
-  ];
-
-  const recepciones = ejemplos.map((data) =>
-    recepcionRepo.create({
-      ...data,
-      pedidoRecepcion: pedidosRecepcion[0],
-    })
-  );
-
-  await recepcionRepo.save(recepciones);
-  console.log('Seeder de recepciones ejecutado correctamente.');
 };
