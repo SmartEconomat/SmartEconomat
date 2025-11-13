@@ -1,23 +1,20 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToMany } from 'typeorm';
-import { PedidoRecepcion } from 'src/modules/pedidos/pedido-recepcion.entity/pedido-recepcion.entity';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { AlbaranPedidoRecepcion } from '../albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
 
-@Entity({ name: 'albaran' })
+@Entity('albaran')
 export class Albaran {
-  @PrimaryGeneratedColumn('uuid')
-  id_albaran: string;
+  @PrimaryGeneratedColumn({ name: 'id_albaran' })
+  id: number;
 
-  @Column({ type: 'varchar', length: 50 })
-  n_albaran: string;
+  @Column({ name: 'n_albaran', type: 'varchar', length: 50 })
+  nAlbaran: string;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ type: 'boolean', nullable: true })
   concordancia: boolean;
 
-  @Column({ type: 'date', default: () => 'CURRENT_DATE' })
+  @Column({ type: 'date', nullable: true })
   fecha: Date;
 
-  @ManyToMany(
-    () => PedidoRecepcion,
-    (pedidoRecepcion) => pedidoRecepcion.albaranes
-  )
-  pedidosRecepcion: PedidoRecepcion[];
+  @OneToMany(() => AlbaranPedidoRecepcion, (apr) => apr.albaran)
+  albaranPedidoRecepcion: AlbaranPedidoRecepcion[];
 }

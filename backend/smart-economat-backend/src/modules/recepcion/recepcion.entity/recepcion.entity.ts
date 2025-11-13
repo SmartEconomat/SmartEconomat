@@ -1,39 +1,28 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
-import { PedidoRecepcion } from 'src/modules/pedidos/pedido-recepcion.entity/pedido-recepcion.entity';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { RecepcionPedido } from '../recepcion-pedido.entity/recepcion-pedido.entity';
+import { RecepcionProducto } from '../recepcion-productos.entity/recepcion-producto.entity';
 
-@Entity({ name: 'recepcion' })
+@Entity('recepcion')
 export class Recepcion {
-  @PrimaryGeneratedColumn('uuid')
-  id_recepcion: string;
+  @PrimaryGeneratedColumn({ name: 'id_recepcion' })
+  id: number;
 
-  @Column({ type: 'text' })
-  descripcion: string;
+  @Column({ type: 'uuid', name: 'id_usuario_receptor' })
+  usuario: string;
 
-  @Column({ type: 'int' })
-  cantidad: number;
-
-  @Column({ type: 'varchar', length: 50 })
-  unidad: string;
-
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  calidad?: string;
+  @Column({
+    name: 'fecha_recepcion',
+    type: 'date',
+    default: () => 'CURRENT_DATE',
+  })
+  fechaRecepcion: Date;
 
   @Column({ type: 'text', nullable: true })
-  observacion?: string;
+  observaciones: string;
 
-  @Column({ type: 'date', default: () => 'CURRENT_DATE' })
-  fecha_recepcion: Date;
+  @OneToMany(() => RecepcionPedido, (rp) => rp.recepcion)
+  recepcionesPedido: RecepcionPedido[];
 
-  @ManyToOne(
-    () => PedidoRecepcion,
-    (pedidoRecepcion) => pedidoRecepcion.recepciones
-  )
-  @JoinColumn({ name: 'id_pedido_recepcion' })
-  pedidoRecepcion: PedidoRecepcion;
+  @OneToMany(() => RecepcionProducto, (rp) => rp.recepcion)
+  recepcionesProducto: RecepcionProducto[];
 }
