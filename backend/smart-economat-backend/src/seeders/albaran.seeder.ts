@@ -10,7 +10,12 @@ export const runSeeder = async (dataSource: DataSource) => {
   const albaranPedidoRepo = dataSource.getRepository(AlbaranPedidoRecepcion);
 
   const recepcionPedidos = await recepcionPedidoRepo.find();
-  if (!recepcionPedidos.length) return;
+  if (!recepcionPedidos.length) {
+    console.log(
+      'No se encontraron recepcion_pedidos, saltando seeder de albaranes.'
+    );
+    return;
+  }
 
   const albaranes: Albaran[] = [];
   for (let i = 0; i < 5; i++) {
@@ -30,10 +35,10 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   for (const albaran of savedAlbaranes) {
     const randomPedidos = faker.helpers.arrayElements(recepcionPedidos, 2);
-    for (const pedido of randomPedidos) {
+    for (const recepcionPedido of randomPedidos) {
       const link = albaranPedidoRepo.create({
         albaran,
-        recepcionPedido: pedido,
+        recepcionPedido,
       });
       await albaranPedidoRepo.save(link);
     }
