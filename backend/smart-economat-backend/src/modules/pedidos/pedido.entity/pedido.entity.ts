@@ -1,9 +1,10 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { EstadoPedido } from '../enums/estado-pedido.enum';
-import { PedidoRecepcion } from '../pedido-recepcion.entity/pedido-recepcion.entity';
+import { RecepcionPedido } from 'src/modules/recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
+import { PedidoProducto } from '../pedido-producto.entity/pedido-producto.entity';
 
 @Entity({ name: 'pedido' })
-export class PedidoEntity {
+export class Pedido {
   @PrimaryGeneratedColumn('uuid', { name: 'id_pedido' })
   id!: string;
 
@@ -22,6 +23,9 @@ export class PedidoEntity {
   @Column({ type: 'enum', enum: EstadoPedido, default: EstadoPedido.PENDIENTE })
   estado!: EstadoPedido;
 
-  @OneToMany(() => PedidoRecepcion, (pr) => pr.pedido)
-  pedidosRecepcion!: PedidoRecepcion[];
+  @OneToMany(() => PedidoProducto, (pp) => pp.pedido)
+  productos: PedidoProducto[];
+
+  @OneToMany(() => RecepcionPedido, (rp) => rp.pedido)
+  recepcionesPedido: RecepcionPedido[];
 }
