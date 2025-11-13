@@ -34,7 +34,7 @@ export class Usuario {
   @Column({ type: 'varchar', length: 150, name: 'email', nullable: false })
   email!: string;
 
-  @Column({ type: 'boolean', name: 'activo', default: true })
+  @Column({ type: 'boolean', default: true })
   activo!: boolean;
 
   @OneToMany(() => Movimiento, (mov) => mov.usuario)
