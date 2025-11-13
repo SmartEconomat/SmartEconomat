@@ -5,17 +5,17 @@
     "precio_unidad": "10,50"
   },
   {
-    "nombre": "abdejo filete cong",
+    "nombre": "abadejo filete congelado",
     "unidad": "kg",
     "precio_unidad": "4,90"
   },
   {
-    "nombre": "abdejo filete cong piel",
+    "nombre": "abadejo filete congelado piel",
     "unidad": "kg",
     "precio_unidad": "3,15"
   },
   {
-    "nombre": "abdejo filete cong prem",
+    "nombre": "abadejo filete congelado prem",
     "unidad": "kg",
     "precio_unidad": "5,20"
   },
@@ -40,12 +40,12 @@
     "precio_unidad": "0,22"
   },
   {
-    "nombre": "aceite ove 0,4 o",
+    "nombre": "aceite ove 0,4 i12",
     "unidad": "kg",
     "precio_unidad": "3,23"
   },
   {
-    "nombre": "aceitr de trufa",
+    "nombre": "aceite de trufa",
     "unidad": "kg",
     "precio_unidad": "3,60"
   },
@@ -200,7 +200,7 @@
     "precio_unidad": "2,80"
   },
   {
-    "nombre": "alcachofa cong.",
+    "nombre": "alcachofa congelado",
     "unidad": "kg",
     "precio_unidad": "2,81"
   },
@@ -220,12 +220,12 @@
     "precio_unidad": "2,35"
   },
   {
-    "nombre": "alemja japonica fresca",
+    "nombre": "alemeja japonica fresca",
     "unidad": "kg",
     "precio_unidad": "11,00"
   },
   {
-    "nombre": "alfonsinos fresco",
+    "nombre": "alfonsiaos fresco",
     "unidad": "kg",
     "precio_unidad": "9,50"
   },
@@ -235,7 +235,7 @@
     "precio_unidad": "23,10"
   },
   {
-    "nombre": "almejas cong",
+    "nombre": "almejas congelado",
     "unidad": "kg",
     "precio_unidad": "2,50"
   },
@@ -300,7 +300,7 @@
     "precio_unidad": "1,90"
   },
   {
-    "nombre": "alubia cong.",
+    "nombre": "alubia congelado.",
     "unidad": "kg",
     "precio_unidad": "2,22"
   },
@@ -385,7 +385,7 @@
     "precio_unidad": "5,95"
   },
   {
-    "nombre": "arandanos cong.",
+    "nombre": "arandanos congelado.",
     "unidad": "kg",
     "precio_unidad": "2,73"
   },
@@ -440,7 +440,7 @@
     "precio_unidad": "0,75"
   },
   {
-    "nombre": "arrpz basmati",
+    "nombre": "arroz basmati",
     "unidad": "kg",
     "precio_unidad": "2,65"
   },
@@ -580,7 +580,7 @@
     "precio_unidad": "7,85"
   },
   {
-    "nombre": "bacalao piel cong",
+    "nombre": "bacalao piel congelado",
     "unidad": "kg",
     "precio_unidad": "9,75"
   },
@@ -675,12 +675,12 @@
     "precio_unidad": "8,92"
   },
   {
-    "nombre": "bife cong. entrecot/person",
+    "nombre": "bife congelado. entrecot/person",
     "unidad": "kg",
     "precio_unidad": "6,95"
   },
   {
-    "nombre": "bife cong.entrecot/restau",
+    "nombre": "bife congeladoentrecot/restau",
     "unidad": "kg",
     "precio_unidad": "6,20"
   },
@@ -705,7 +705,7 @@
     "precio_unidad": "5,80"
   },
   {
-    "nombre": "bogavante cong.",
+    "nombre": "bogavante congelado.",
     "unidad": "kg",
     "precio_unidad": "14,50"
   },
@@ -755,7 +755,7 @@
     "precio_unidad": "2,95"
   },
   {
-    "nombre": "bonito lomo cong",
+    "nombre": "bonito lomo congelado",
     "unidad": "kg",
     "precio_unidad": "7,50"
   },
@@ -800,7 +800,7 @@
     "precio_unidad": "3,80"
   },
   {
-    "nombre": "brocoli cong.",
+    "nombre": "brocoli congelado.",
     "unidad": "kg",
     "precio_unidad": "1,44"
   },
@@ -835,12 +835,12 @@
     "precio_unidad": "1,85"
   },
   {
-    "nombre": "buei cong",
+    "nombre": "buey congelado",
     "unidad": "kg",
     "precio_unidad": "5,75"
   },
   {
-    "nombre": "burro cong",
+    "nombre": "burro congelado",
     "unidad": "kg",
     "precio_unidad": "1,95"
   },
@@ -930,17 +930,17 @@
     "precio_unidad": "0,39"
   },
   {
-    "nombre": "cafe descafeinado",
+    "nombre": "cafa descafeinado",
     "unidad": "kg",
     "precio_unidad": "8,64"
   },
   {
-    "nombre": "cafe descafeinado grano",
+    "nombre": "cafa descafeinado grano",
     "unidad": "kg",
     "precio_unidad": "9,06"
   },
   {
-    "nombre": "cafe grano marcilla",
+    "nombre": "cafa grano marcilla",
     "unidad": "kg",
     "precio_unidad": "7,58"
   },
@@ -955,7 +955,7 @@
     "precio_unidad": "0,57"
   },
   {
-    "nombre": "calamar aros cong",
+    "nombre": "calamar aros congelado",
     "unidad": "kg",
     "precio_unidad": "10,90"
   },
@@ -995,7 +995,7 @@
     "precio_unidad": "5,95"
   },
   {
-    "nombre": "callos cong.",
+    "nombre": "callos congelado.",
     "unidad": "kg",
     "precio_unidad": "2,39"
   },
@@ -1035,7 +1035,7 @@
     "precio_unidad": "9,95"
   },
   {
-    "nombre": "canonigos",
+    "nombre": "cana3nigos",
     "unidad": "u",
     "precio_unidad": "2,50"
   },
@@ -1090,7 +1090,7 @@
     "precio_unidad": "5,88"
   },
   {
-    "nombre": "carne molida cong.",
+    "nombre": "carne molida congelado.",
     "unidad": "kg",
     "precio_unidad": "3,60"
   },
@@ -1110,7 +1110,7 @@
     "precio_unidad": "10,40"
   },
   {
-    "nombre": "carret cordero cong.",
+    "nombre": "carret cordero congelado.",
     "unidad": "kg",
     "precio_unidad": "8,95"
   },
@@ -1120,12 +1120,12 @@
     "precio_unidad": "11,00"
   },
   {
-    "nombre": "carret cordero lechal cong.",
+    "nombre": "carret cordero lechal congelado.",
     "unidad": "kg",
     "precio_unidad": "15,00"
   },
   {
-    "nombre": "carrillera iberica cong.",
+    "nombre": "carrillera iberica congelado.",
     "unidad": "kg",
     "precio_unidad": "9,45"
   },
@@ -1145,17 +1145,17 @@
     "precio_unidad": "9,45"
   },
   {
-    "nombre": "castana de agua",
+    "nombre": "castaaa de agua",
     "unidad": "kg",
     "precio_unidad": "1,50"
   },
   {
-    "nombre": "castana pelada congelada",
+    "nombre": "castaaa pelada congelada",
     "unidad": "kg",
     "precio_unidad": "9,37"
   },
   {
-    "nombre": "castanas",
+    "nombre": "castaaas",
     "unidad": "kg",
     "precio_unidad": "3,81"
   },
@@ -1200,7 +1200,7 @@
     "precio_unidad": "13,42"
   },
   {
-    "nombre": "cereeales fibra",
+    "nombre": "cereales fibra",
     "unidad": "kg",
     "precio_unidad": "3,27"
   },
@@ -1240,22 +1240,22 @@
     "precio_unidad": "0,85"
   },
   {
-    "nombre": "champinon",
+    "nombre": "champiaon",
     "unidad": "kg",
     "precio_unidad": "2,10"
   },
   {
-    "nombre": "champinon laminado",
+    "nombre": "champiaon laminado",
     "unidad": "kg",
     "precio_unidad": "1,10"
   },
   {
-    "nombre": "cherne cong lomo",
+    "nombre": "cherne congelado lomo",
     "unidad": "kg",
     "precio_unidad": "12,50"
   },
   {
-    "nombre": "cherne entero cong",
+    "nombre": "cherne entero congelado",
     "unidad": "kg",
     "precio_unidad": "6,50"
   },
@@ -1290,12 +1290,12 @@
     "precio_unidad": "5,24"
   },
   {
-    "nombre": "choco limpio cong",
+    "nombre": "choco limpio congelado",
     "unidad": "kg",
     "precio_unidad": "4,50"
   },
   {
-    "nombre": "choco sin limpiar cong",
+    "nombre": "choco sin limpiar congelado",
     "unidad": "kg",
     "precio_unidad": "5,50"
   },
@@ -1315,7 +1315,7 @@
     "precio_unidad": "0,07"
   },
   {
-    "nombre": "chopitos puntilla cong",
+    "nombre": "chopitos puntilla congelado",
     "unidad": "kg",
     "precio_unidad": "4,65"
   },
@@ -1375,12 +1375,12 @@
     "precio_unidad": "2,60"
   },
   {
-    "nombre": "chuleta cordero cong.",
+    "nombre": "chuleta cordero congelado.",
     "unidad": "kg",
     "precio_unidad": "5,90"
   },
   {
-    "nombre": "chuleta de cerdo cong.",
+    "nombre": "chuleta de cerdo congelado.",
     "unidad": "kg",
     "precio_unidad": "2,50"
   },
@@ -1390,7 +1390,7 @@
     "precio_unidad": "7,50"
   },
   {
-    "nombre": "chuletero cerdo cong.",
+    "nombre": "chuletero cerdo congelado.",
     "unidad": "kg",
     "precio_unidad": "3,10"
   },
@@ -1430,7 +1430,7 @@
     "precio_unidad": "31,50"
   },
   {
-    "nombre": "cigala cong.",
+    "nombre": "cigala congelado.",
     "unidad": "kg",
     "precio_unidad": "14,50"
   },
@@ -1445,7 +1445,7 @@
     "precio_unidad": "4,95"
   },
   {
-    "nombre": "cilanttro",
+    "nombre": "cilantro",
     "unidad": "manojo",
     "precio_unidad": "0,28"
   },
@@ -1505,7 +1505,7 @@
     "precio_unidad": "3,51"
   },
   {
-    "nombre": "cochinillo cong.",
+    "nombre": "cochinillo congelado.",
     "unidad": "kg",
     "precio_unidad": "7,40"
   },
@@ -1535,7 +1535,7 @@
     "precio_unidad": "27,00"
   },
   {
-    "nombre": "codillo de cerdo cong.",
+    "nombre": "codillo de cerdo congelado.",
     "unidad": "kg",
     "precio_unidad": "1,00"
   },
@@ -1545,7 +1545,7 @@
     "precio_unidad": "4,18"
   },
   {
-    "nombre": "codorniz cong.",
+    "nombre": "codorniz congelado.",
     "unidad": "kg",
     "precio_unidad": "0,95"
   },
@@ -1565,7 +1565,7 @@
     "precio_unidad": "1,10"
   },
   {
-    "nombre": "col bruselas cong.",
+    "nombre": "col bruselas congelado.",
     "unidad": "kg",
     "precio_unidad": "2,00"
   },
@@ -1595,7 +1595,7 @@
     "precio_unidad": "1,50"
   },
   {
-    "nombre": "coliflor granel cong.",
+    "nombre": "coliflor granel congelado.",
     "unidad": "kg",
     "precio_unidad": "1,19"
   },
@@ -1655,12 +1655,12 @@
     "precio_unidad": "3,86"
   },
   {
-    "nombre": "conejo cong.",
+    "nombre": "conejo congelado.",
     "unidad": "kg",
     "precio_unidad": "2,95"
   },
   {
-    "nombre": "conejo higado-rinon",
+    "nombre": "conejo higado-rii12i12n",
     "unidad": "kg",
     "precio_unidad": "15,37"
   },
@@ -1695,7 +1695,7 @@
     "precio_unidad": "7,50"
   },
   {
-    "nombre": "cordero cong.",
+    "nombre": "cordero congelado.",
     "unidad": "kg",
     "precio_unidad": "8,95"
   },
@@ -1705,7 +1705,7 @@
     "precio_unidad": "12,50"
   },
   {
-    "nombre": "cordero pata cong.",
+    "nombre": "cordero pata congelado.",
     "unidad": "kg",
     "precio_unidad": "7,40"
   },
@@ -1720,12 +1720,12 @@
     "precio_unidad": "2,03"
   },
   {
-    "nombre": "corvina cong",
+    "nombre": "corvina congelado",
     "unidad": "kg",
     "precio_unidad": "8,17"
   },
   {
-    "nombre": "corvina filete cong",
+    "nombre": "corvina filete congelado",
     "unidad": "kg",
     "precio_unidad": "4,70"
   },
@@ -1735,7 +1735,7 @@
     "precio_unidad": "3,45"
   },
   {
-    "nombre": "costilla de cerdo cong.",
+    "nombre": "costilla de cerdo congelado.",
     "unidad": "kg",
     "precio_unidad": "4,25"
   },
@@ -1780,7 +1780,7 @@
     "precio_unidad": "2,49"
   },
   {
-    "nombre": "crema pure de castana",
+    "nombre": "crema pure de castai12a",
     "unidad": "kg",
     "precio_unidad": "10,91"
   },
@@ -1790,12 +1790,12 @@
     "precio_unidad": "0,30"
   },
   {
-    "nombre": "croissant cong.",
+    "nombre": "croissant congelado.",
     "unidad": "kg",
     "precio_unidad": "7,46"
   },
   {
-    "nombre": "croissant mini cong.",
+    "nombre": "croissant mini congelado.",
     "unidad": "kg",
     "precio_unidad": "0,20"
   },
@@ -1805,7 +1805,7 @@
     "precio_unidad": "0,13"
   },
   {
-    "nombre": "cuadril de ternera cong.",
+    "nombre": "cuadril de ternera congelado.",
     "unidad": "kg",
     "precio_unidad": "6,70"
   },
@@ -1910,7 +1910,7 @@
     "precio_unidad": "0,02"
   },
   {
-    "nombre": "embutido aleman",
+    "nombre": "embutido alemi12n",
     "unidad": "kg",
     "precio_unidad": "4,13"
   },
@@ -1960,7 +1960,7 @@
     "precio_unidad": "2,25"
   },
   {
-    "nombre": "ensaladilla cong.",
+    "nombre": "ensaladilla congelado.",
     "unidad": "kg",
     "precio_unidad": "0,91"
   },
@@ -2000,7 +2000,7 @@
     "precio_unidad": "5,40"
   },
   {
-    "nombre": "esparrago verde cong.",
+    "nombre": "esparrago verde congelado.",
     "unidad": "kg",
     "precio_unidad": "6,24"
   },
@@ -2025,7 +2025,7 @@
     "precio_unidad": "1,99"
   },
   {
-    "nombre": "espinacas cong.",
+    "nombre": "espinacas congelado.",
     "unidad": "kg",
     "precio_unidad": "0,80"
   },
@@ -2095,7 +2095,7 @@
     "precio_unidad": "7,75"
   },
   {
-    "nombre": "filete de res cong.",
+    "nombre": "filete de res congelado.",
     "unidad": "kg",
     "precio_unidad": "6,49"
   },
@@ -2130,7 +2130,7 @@
     "precio_unidad": "4,04"
   },
   {
-    "nombre": "frambuesas cong.",
+    "nombre": "frambuesas congelado.",
     "unidad": "kg",
     "precio_unidad": "4,04"
   },
@@ -2140,7 +2140,7 @@
     "precio_unidad": "2,25"
   },
   {
-    "nombre": "fresa cong.",
+    "nombre": "fresa congelado.",
     "unidad": "kg",
     "precio_unidad": "2,30"
   },
@@ -2165,7 +2165,7 @@
     "precio_unidad": "2,99"
   },
   {
-    "nombre": "frutas del bosque cong.",
+    "nombre": "frutas del bosque congelado.",
     "unidad": "kg",
     "precio_unidad": "2,79"
   },
@@ -2305,7 +2305,7 @@
     "precio_unidad": "2,73"
   },
   {
-    "nombre": "granos cafe chocolate",
+    "nombre": "granos cafi12 chocolate",
     "unidad": "kg",
     "precio_unidad": "11,35"
   },
@@ -2315,12 +2315,12 @@
     "precio_unidad": "14,09"
   },
   {
-    "nombre": "grasa vegetanl pasteleria",
+    "nombre": "grasa vegetai12l pasteleria",
     "unidad": "kg",
     "precio_unidad": "2,22"
   },
   {
-    "nombre": "grosella cong.",
+    "nombre": "grosella congelado.",
     "unidad": "kg",
     "precio_unidad": "1,80"
   },
@@ -2340,7 +2340,7 @@
     "precio_unidad": "1,75"
   },
   {
-    "nombre": "guisante cong.",
+    "nombre": "guisante congelado.",
     "unidad": "kg",
     "precio_unidad": "0,95"
   },
@@ -2360,7 +2360,7 @@
     "precio_unidad": "31,10"
   },
   {
-    "nombre": "habas finas cong.",
+    "nombre": "habas finas congelado.",
     "unidad": "kg",
     "precio_unidad": "1,73"
   },
@@ -2375,7 +2375,7 @@
     "precio_unidad": "1,50"
   },
   {
-    "nombre": "hamburguesa cong.",
+    "nombre": "hamburguesa congelado.",
     "unidad": "kg",
     "precio_unidad": "1,73"
   },
@@ -2595,7 +2595,7 @@
     "precio_unidad": "4,51"
   },
   {
-    "nombre": "jamoncito de ala cong.",
+    "nombre": "jamoncito de ala congelado.",
     "unidad": "kg",
     "precio_unidad": "2,35"
   },
@@ -2610,7 +2610,7 @@
     "precio_unidad": "3,80"
   },
   {
-    "nombre": "jengobre molido",
+    "nombre": "jengibre molido",
     "unidad": "kg",
     "precio_unidad": "5,60"
   },
@@ -2620,7 +2620,7 @@
     "precio_unidad": "3,63"
   },
   {
-    "nombre": "judias cong.",
+    "nombre": "judias congelado.",
     "unidad": "kg",
     "precio_unidad": "1,01"
   },
@@ -2640,7 +2640,7 @@
     "precio_unidad": "9,20"
   },
   {
-    "nombre": "langosta cong.",
+    "nombre": "langosta congelado.",
     "unidad": "kg",
     "precio_unidad": "21,85"
   },
@@ -2670,7 +2670,7 @@
     "precio_unidad": "7,95"
   },
   {
-    "nombre": "lasana",
+    "nombre": "lasaaa",
     "unidad": "kg",
     "precio_unidad": "8,33"
   },
@@ -2755,7 +2755,7 @@
     "precio_unidad": "0,89"
   },
   {
-    "nombre": "lechiga roja",
+    "nombre": "lechuga roja",
     "unidad": "kg",
     "precio_unidad": "0,70"
   },
@@ -2780,12 +2780,12 @@
     "precio_unidad": "5,00"
   },
   {
-    "nombre": "lenguado entero cong",
+    "nombre": "lenguado entero congelado",
     "unidad": "kg",
     "precio_unidad": "5,60"
   },
   {
-    "nombre": "lenguado filete cong",
+    "nombre": "lenguado filete congelado",
     "unidad": "kg",
     "precio_unidad": "4,80"
   },
@@ -2805,7 +2805,7 @@
     "precio_unidad": "1,59"
   },
   {
-    "nombre": "lenteja peqeuna",
+    "nombre": "lenteja pequeaa",
     "unidad": "kg",
     "precio_unidad": "1,33"
   },
@@ -2840,7 +2840,7 @@
     "precio_unidad": "3,95"
   },
   {
-    "nombre": "lomo bola cong.",
+    "nombre": "lomo bola congelado.",
     "unidad": "kg",
     "precio_unidad": "5,00"
   },
@@ -2855,7 +2855,7 @@
     "precio_unidad": "6,95"
   },
   {
-    "nombre": "lomo cinta cong.",
+    "nombre": "lomo cinta congelado.",
     "unidad": "kg",
     "precio_unidad": "3,15"
   },
@@ -2920,7 +2920,7 @@
     "precio_unidad": "11,80"
   },
   {
-    "nombre": "magret de pato cong.",
+    "nombre": "magret de pato congelado.",
     "unidad": "kg",
     "precio_unidad": "14,20"
   },
@@ -2935,7 +2935,7 @@
     "precio_unidad": "4,33"
   },
   {
-    "nombre": "maiz cong.",
+    "nombre": "maiz congelado.",
     "unidad": "kg",
     "precio_unidad": "2,01"
   },
@@ -2965,7 +2965,7 @@
     "precio_unidad": "4,00"
   },
   {
-    "nombre": "mango cong.",
+    "nombre": "mango congelado.",
     "unidad": "kg",
     "precio_unidad": "2,48"
   },
@@ -3075,12 +3075,12 @@
     "precio_unidad": "5,96"
   },
   {
-    "nombre": "medregal cong",
+    "nombre": "medregal congelado",
     "unidad": "kg",
     "precio_unidad": "4,10"
   },
   {
-    "nombre": "mejillon cong",
+    "nombre": "mejillon congelado",
     "unidad": "kg",
     "precio_unidad": "5,20"
   },
@@ -3130,7 +3130,7 @@
     "precio_unidad": "4,27"
   },
   {
-    "nombre": "menestra cong.",
+    "nombre": "menestra congelado.",
     "unidad": "kg",
     "precio_unidad": "0,86"
   },
@@ -3150,17 +3150,17 @@
     "precio_unidad": "6,79"
   },
   {
-    "nombre": "merluza entera cong",
+    "nombre": "merluza entera congelado",
     "unidad": "kg",
     "precio_unidad": "4,90"
   },
   {
-    "nombre": "merluza filete c/piel cong",
+    "nombre": "merluza filete c/piel congelado",
     "unidad": "kg",
     "precio_unidad": "3,14"
   },
   {
-    "nombre": "merluza filete s/piel cong",
+    "nombre": "merluza filete s/piel congelado",
     "unidad": "kg",
     "precio_unidad": "3,10"
   },
@@ -3215,7 +3215,7 @@
     "precio_unidad": "2,28"
   },
   {
-    "nombre": "mero filete cong",
+    "nombre": "mero filete congelado",
     "unidad": "kg",
     "precio_unidad": "4,85"
   },
@@ -3245,7 +3245,7 @@
     "precio_unidad": "4,09"
   },
   {
-    "nombre": "miel de cana",
+    "nombre": "miel de cai12a",
     "unidad": "kg",
     "precio_unidad": "6,20"
   },
@@ -3310,7 +3310,7 @@
     "precio_unidad": "3,55"
   },
   {
-    "nombre": "moras cong.",
+    "nombre": "moras congelado.",
     "unidad": "kg",
     "precio_unidad": "3,71"
   },
@@ -3425,7 +3425,7 @@
     "precio_unidad": "2,23"
   },
   {
-    "nombre": "navajas cong.",
+    "nombre": "navajas congelado.",
     "unidad": "kg",
     "precio_unidad": "4,75"
   },
@@ -3440,12 +3440,12 @@
     "precio_unidad": "14,00"
   },
   {
-    "nombre": "neranja confitada",
+    "nombre": "naranja confitada",
     "unidad": "kg",
     "precio_unidad": "3,67"
   },
   {
-    "nombre": "ninos comunion",
+    "nombre": "niaos comunion",
     "unidad": "u",
     "precio_unidad": "2,53"
   },
@@ -3480,12 +3480,12 @@
     "precio_unidad": "1,94"
   },
   {
-    "nombre": "names",
+    "nombre": "aames",
     "unidad": "kg",
     "precio_unidad": "5,40"
   },
   {
-    "nombre": "noras",
+    "nombre": "aoras",
     "unidad": "kg",
     "precio_unidad": "35,00"
   },
@@ -3515,7 +3515,7 @@
     "precio_unidad": "5,50"
   },
   {
-    "nombre": "ossobuco cong.",
+    "nombre": "ossobuco congelado.",
     "unidad": "kg",
     "precio_unidad": "7,00"
   },
@@ -3550,12 +3550,12 @@
     "precio_unidad": "2,64"
   },
   {
-    "nombre": "palomita cong.",
+    "nombre": "palomita congelado.",
     "unidad": "kg",
     "precio_unidad": "5,50"
   },
   {
-    "nombre": "pampano cong",
+    "nombre": "pampano congelado",
     "unidad": "kg",
     "precio_unidad": "8,95"
   },
@@ -3600,7 +3600,7 @@
     "precio_unidad": "0,22"
   },
   {
-    "nombre": "pan hamburguesa pequeno",
+    "nombre": "pan hamburguesa pequei12o",
     "unidad": "u",
     "precio_unidad": "0,11"
   },
@@ -3645,7 +3645,7 @@
     "precio_unidad": "5,00"
   },
   {
-    "nombre": "pan perrp caliente",
+    "nombre": "pan perrito caliente",
     "unidad": "u",
     "precio_unidad": "0,18"
   },
@@ -3695,12 +3695,12 @@
     "precio_unidad": "0,82"
   },
   {
-    "nombre": "papa dado cong.",
+    "nombre": "papa dado congelado.",
     "unidad": "kg",
     "precio_unidad": "1,17"
   },
   {
-    "nombre": "papa duquesa cong.",
+    "nombre": "papa duquesa congelado.",
     "unidad": "kg",
     "precio_unidad": "1,56"
   },
@@ -3710,12 +3710,12 @@
     "precio_unidad": "5,89"
   },
   {
-    "nombre": "papa parisien cong.",
+    "nombre": "papa parisien congelado.",
     "unidad": "kg",
     "precio_unidad": "0,80"
   },
   {
-    "nombre": "papa prefritas cong.",
+    "nombre": "papa prefritas congelado.",
     "unidad": "kg",
     "precio_unidad": "0,79"
   },
@@ -3730,7 +3730,7 @@
     "precio_unidad": "3,10"
   },
   {
-    "nombre": "papaya cong.",
+    "nombre": "papaya congelado.",
     "unidad": "kg",
     "precio_unidad": "2,40"
   },
@@ -3890,7 +3890,7 @@
     "precio_unidad": "2,33"
   },
   {
-    "nombre": "pasta pina aroma",
+    "nombre": "pasta pii12a aroma",
     "unidad": "kg",
     "precio_unidad": "13,13"
   },
@@ -3940,7 +3940,7 @@
     "precio_unidad": "1,00"
   },
   {
-    "nombre": "pata de cerdo cong.",
+    "nombre": "pata de cerdo congelado.",
     "unidad": "kg",
     "precio_unidad": "2,20"
   },
@@ -3960,12 +3960,12 @@
     "precio_unidad": "5,95"
   },
   {
-    "nombre": "pato cong.",
+    "nombre": "pato congelado.",
     "unidad": "kg",
     "precio_unidad": "2,75"
   },
   {
-    "nombre": "pavo entero cong.",
+    "nombre": "pavo entero congelado.",
     "unidad": "kg",
     "precio_unidad": "3,10"
   },
@@ -3980,12 +3980,12 @@
     "precio_unidad": "3,31"
   },
   {
-    "nombre": "pavo muslo cong.",
+    "nombre": "pavo muslo congelado.",
     "unidad": "kg",
     "precio_unidad": "3,10"
   },
   {
-    "nombre": "pavo pechuga cong.",
+    "nombre": "pavo pechuga congelado.",
     "unidad": "kg",
     "precio_unidad": "5,75"
   },
@@ -4005,7 +4005,7 @@
     "precio_unidad": "3,40"
   },
   {
-    "nombre": "peceto-filo cong.",
+    "nombre": "peceto-filo congelado.",
     "unidad": "kg",
     "precio_unidad": "5,60"
   },
@@ -4040,12 +4040,12 @@
     "precio_unidad": "0,70"
   },
   {
-    "nombre": "perca filete cong",
+    "nombre": "perca filete congelado",
     "unidad": "kg",
     "precio_unidad": "5,25"
   },
   {
-    "nombre": "perdices cong. pieza",
+    "nombre": "perdices congelado. pieza",
     "unidad": "u",
     "precio_unidad": "5,15"
   },
@@ -4080,7 +4080,7 @@
     "precio_unidad": "7,25"
   },
   {
-    "nombre": "pescado azul lomo cong",
+    "nombre": "pescado azul lomo congelado",
     "unidad": "kg",
     "precio_unidad": "4,00"
   },
@@ -4100,12 +4100,12 @@
     "precio_unidad": "4,80"
   },
   {
-    "nombre": "pez espada lomo cong",
+    "nombre": "pez espada lomo congelado",
     "unidad": "kg",
     "precio_unidad": "4,68"
   },
   {
-    "nombre": "picantones cong.",
+    "nombre": "picantones congelado.",
     "unidad": "u",
     "precio_unidad": "3,50"
   },
@@ -4115,7 +4115,7 @@
     "precio_unidad": "18,93"
   },
   {
-    "nombre": "pierna anojo fresc.",
+    "nombre": "pierna ai12ojo fresc.",
     "unidad": "kg",
     "precio_unidad": "5,40"
   },
@@ -4125,7 +4125,7 @@
     "precio_unidad": "28,00"
   },
   {
-    "nombre": "pierna/paleta cordero cong.",
+    "nombre": "pierna/paleta cordero congelado.",
     "unidad": "kg",
     "precio_unidad": "10,90"
   },
@@ -4135,7 +4135,7 @@
     "precio_unidad": "6,30"
   },
   {
-    "nombre": "pierna-rueda ternera cong.",
+    "nombre": "pierna-rueda ternera congelado.",
     "unidad": "kg",
     "precio_unidad": "5,20"
   },
@@ -4175,7 +4175,7 @@
     "precio_unidad": "10,76"
   },
   {
-    "nombre": "pimienta negra mlida",
+    "nombre": "pimienta negra molida",
     "unidad": "kg",
     "precio_unidad": "13,00"
   },
@@ -4190,7 +4190,7 @@
     "precio_unidad": "20,00"
   },
   {
-    "nombre": "pimienta sonbre",
+    "nombre": "pimienta sobre",
     "unidad": "u",
     "precio_unidad": "0,01"
   },
@@ -4215,7 +4215,7 @@
     "precio_unidad": "8,84"
   },
   {
-    "nombre": "pimiento cong.",
+    "nombre": "pimiento congelado.",
     "unidad": "kg",
     "precio_unidad": "1,51"
   },
@@ -4250,27 +4250,27 @@
     "precio_unidad": "1,60"
   },
   {
-    "nombre": "pina cong.",
+    "nombre": "piaa congelado.",
     "unidad": "kg",
     "precio_unidad": "2,08"
   },
   {
-    "nombre": "pina en almibar",
+    "nombre": "piaa en almibar",
     "unidad": "kg",
     "precio_unidad": "1,09"
   },
   {
-    "nombre": "pina millo",
+    "nombre": "piaa millo",
     "unidad": "u",
     "precio_unidad": "1,15"
   },
   {
-    "nombre": "pina tropical",
+    "nombre": "piaa tropical",
     "unidad": "kg",
     "precio_unidad": "3,85"
   },
   {
-    "nombre": "pinones",
+    "nombre": "piaones",
     "unidad": "kg",
     "precio_unidad": "70,00"
   },
@@ -4310,12 +4310,12 @@
     "precio_unidad": "0,52"
   },
   {
-    "nombre": "pochas cong.",
+    "nombre": "pochas congelado.",
     "unidad": "kg",
     "precio_unidad": "7,48"
   },
   {
-    "nombre": "pollo alas cong.",
+    "nombre": "pollo alas congelado.",
     "unidad": "kg",
     "precio_unidad": "2,10"
   },
@@ -4330,7 +4330,7 @@
     "precio_unidad": "3,50"
   },
   {
-    "nombre": "pollo entero cong.",
+    "nombre": "pollo entero congelado.",
     "unidad": "kg",
     "precio_unidad": "1,55"
   },
@@ -4345,7 +4345,7 @@
     "precio_unidad": "1,60"
   },
   {
-    "nombre": "pollo muslo cong.",
+    "nombre": "pollo muslo congelado.",
     "unidad": "kg",
     "precio_unidad": "1,35"
   },
@@ -4360,12 +4360,12 @@
     "precio_unidad": "2,85"
   },
   {
-    "nombre": "pollo nuggets cong.",
+    "nombre": "pollo nuggets congelado.",
     "unidad": "kg",
     "precio_unidad": "3,60"
   },
   {
-    "nombre": "pollo pechuga cong.",
+    "nombre": "pollo pechuga congelado.",
     "unidad": "kg",
     "precio_unidad": "2,40"
   },
@@ -4405,7 +4405,7 @@
     "precio_unidad": "14,47"
   },
   {
-    "nombre": "pota cong",
+    "nombre": "pota congelado",
     "unidad": "kg",
     "precio_unidad": "4,80"
   },
@@ -4425,7 +4425,7 @@
     "precio_unidad": "13,66"
   },
   {
-    "nombre": "presa cerdo cong.",
+    "nombre": "presa cerdo congelado.",
     "unidad": "kg",
     "precio_unidad": "15,25"
   },
@@ -4450,17 +4450,17 @@
     "precio_unidad": "1,69"
   },
   {
-    "nombre": "pularda entera cong.",
+    "nombre": "pularda entera congelado.",
     "unidad": "kg",
     "precio_unidad": "5,45"
   },
   {
-    "nombre": "pulpa albaricoque cong.",
+    "nombre": "pulpa albaricoque congelado.",
     "unidad": "kg",
     "precio_unidad": "5,78"
   },
   {
-    "nombre": "pulpa coco cong.",
+    "nombre": "pulpa coco congelado.",
     "unidad": "kg",
     "precio_unidad": "7,74"
   },
@@ -4470,77 +4470,77 @@
     "precio_unidad": "8,84"
   },
   {
-    "nombre": "pulpa fresa cong.",
+    "nombre": "pulpa fresa congelado.",
     "unidad": "kg",
     "precio_unidad": "5,58"
   },
   {
-    "nombre": "pulpa frutas del bosque cong.",
+    "nombre": "pulpa frutas del bosque congelado.",
     "unidad": "kg",
     "precio_unidad": "5,28"
   },
   {
-    "nombre": "pulpa grosella cong.",
+    "nombre": "pulpa grosella congelado.",
     "unidad": "kg",
     "precio_unidad": "5,90"
   },
   {
-    "nombre": "pulpa guayaba cong.",
+    "nombre": "pulpa guayaba congelado.",
     "unidad": "kg",
     "precio_unidad": "6,14"
   },
   {
-    "nombre": "pulpa higo cong.",
+    "nombre": "pulpa higo congelado.",
     "unidad": "kg",
     "precio_unidad": "6,94"
   },
   {
-    "nombre": "pulpa lima cong.",
+    "nombre": "pulpa lima congelado.",
     "unidad": "kg",
     "precio_unidad": "5,75"
   },
   {
-    "nombre": "pulpa mandarina cong.",
+    "nombre": "pulpa mandarina congelado.",
     "unidad": "kg",
     "precio_unidad": "8,87"
   },
   {
-    "nombre": "pulpa mango cong.",
+    "nombre": "pulpa mango congelado.",
     "unidad": "kg",
     "precio_unidad": "6,38"
   },
   {
-    "nombre": "pulpa manzana cong.",
+    "nombre": "pulpa manzana congelado.",
     "unidad": "kg",
     "precio_unidad": "4,03"
   },
   {
-    "nombre": "pulpa maracuya cong.",
+    "nombre": "pulpa maracuya congelado.",
     "unidad": "kg",
     "precio_unidad": "8,10"
   },
   {
-    "nombre": "pulpa naranja cong.",
+    "nombre": "pulpa naranja congelado.",
     "unidad": "kg",
     "precio_unidad": "6,49"
   },
   {
-    "nombre": "pulpa papaya cong.",
+    "nombre": "pulpa papaya congelado.",
     "unidad": "kg",
     "precio_unidad": "6,29"
   },
   {
-    "nombre": "pulpa pera cong.",
+    "nombre": "pulpa pera congelado.",
     "unidad": "kg",
     "precio_unidad": "4,02"
   },
   {
-    "nombre": "pulpa pina cong.",
+    "nombre": "pulpa pii12a congelado.",
     "unidad": "kg",
     "precio_unidad": "6,11"
   },
   {
-    "nombre": "pulpa pomelo cong.",
+    "nombre": "pulpa pomelo congelado.",
     "unidad": "kg",
     "precio_unidad": "8,21"
   },
@@ -4550,12 +4550,12 @@
     "precio_unidad": "7,94"
   },
   {
-    "nombre": "pulpo cong",
+    "nombre": "pulpo congelado",
     "unidad": "kg",
     "precio_unidad": "6,20"
   },
   {
-    "nombre": "pulpo cong",
+    "nombre": "pulpo congelado",
     "unidad": "",
     "precio_unidad": "0,00"
   },
@@ -4640,7 +4640,7 @@
     "precio_unidad": "5,22"
   },
   {
-    "nombre": "queso cuarado arico",
+    "nombre": "queso curado arico",
     "unidad": "kg",
     "precio_unidad": "10,52"
   },
@@ -4680,7 +4680,7 @@
     "precio_unidad": "6,75"
   },
   {
-    "nombre": "queso gorgonsola",
+    "nombre": "queso gorgonzola",
     "unidad": "kg",
     "precio_unidad": "6,65"
   },
@@ -4695,7 +4695,7 @@
     "precio_unidad": "12,16"
   },
   {
-    "nombre": "queso herreno tierno",
+    "nombre": "queso herrei12o tierno",
     "unidad": "kg",
     "precio_unidad": "8,70"
   },
@@ -4720,7 +4720,7 @@
     "precio_unidad": "7,40"
   },
   {
-    "nombre": "queso mozarella",
+    "nombre": "queso mozzarella",
     "unidad": "kg",
     "precio_unidad": "5,66"
   },
@@ -4795,7 +4795,7 @@
     "precio_unidad": "23,90"
   },
   {
-    "nombre": "rape cola cong",
+    "nombre": "rape cola congelado",
     "unidad": "kg",
     "precio_unidad": "4,20"
   },
@@ -4845,12 +4845,12 @@
     "precio_unidad": "4,40"
   },
   {
-    "nombre": "rinones de cordero",
+    "nombre": "riaones de cordero",
     "unidad": "kg",
     "precio_unidad": "3,90"
   },
   {
-    "nombre": "rinones-corazon de cerdo",
+    "nombre": "riaones-corazon de cerdo",
     "unidad": "kg",
     "precio_unidad": "3,00"
   },
@@ -4970,7 +4970,7 @@
     "precio_unidad": "14,50"
   },
   {
-    "nombre": "salmon cong",
+    "nombre": "salmon congelado",
     "unidad": "kg",
     "precio_unidad": "4,00"
   },
@@ -5025,7 +5025,7 @@
     "precio_unidad": "0,85"
   },
   {
-    "nombre": "sama cong",
+    "nombre": "sama congelado",
     "unidad": "kg",
     "precio_unidad": "4,00"
   },
@@ -5040,7 +5040,7 @@
     "precio_unidad": "0,90"
   },
   {
-    "nombre": "sardina cong",
+    "nombre": "sardina congelado",
     "unidad": "kg",
     "precio_unidad": "1,80"
   },
@@ -5055,7 +5055,7 @@
     "precio_unidad": "15,63"
   },
   {
-    "nombre": "sargo cong.",
+    "nombre": "sargo congelado.",
     "unidad": "kg",
     "precio_unidad": "3,95"
   },
@@ -5125,7 +5125,7 @@
     "precio_unidad": "6,25"
   },
   {
-    "nombre": "solomillo 3/4 cong.",
+    "nombre": "solomillo 3/4 congelado.",
     "unidad": "kg",
     "precio_unidad": "13,00"
   },
@@ -5135,7 +5135,7 @@
     "precio_unidad": "18,75"
   },
   {
-    "nombre": "solomillo 4/5 cong.",
+    "nombre": "solomillo 4/5 congelado.",
     "unidad": "kg",
     "precio_unidad": "15,50"
   },
@@ -5145,12 +5145,12 @@
     "precio_unidad": "18,50"
   },
   {
-    "nombre": "solomillo anojo fresc.",
+    "nombre": "solomillo ai12ojo fresc.",
     "unidad": "kg",
     "precio_unidad": "15,00"
   },
   {
-    "nombre": "solomillo cerdo cong.",
+    "nombre": "solomillo cerdo congelado.",
     "unidad": "kg",
     "precio_unidad": "6,00"
   },
@@ -5160,7 +5160,7 @@
     "precio_unidad": "7,95"
   },
   {
-    "nombre": "solomillo ciervo cong.",
+    "nombre": "solomillo ciervo congelado.",
     "unidad": "kg",
     "precio_unidad": "24,00"
   },
@@ -5205,17 +5205,17 @@
     "precio_unidad": "5,75"
   },
   {
-    "nombre": "taco pescado cong.",
+    "nombre": "taco pescado congelado.",
     "unidad": "kg",
     "precio_unidad": "2,12"
   },
   {
-    "nombre": "taco res cong.",
+    "nombre": "taco res congelado.",
     "unidad": "kg",
     "precio_unidad": "5,60"
   },
   {
-    "nombre": "tacos de cerdo cong.",
+    "nombre": "tacos de cerdo congelado.",
     "unidad": "kg",
     "precio_unidad": "3,60"
   },
@@ -5360,7 +5360,7 @@
     "precio_unidad": "1,15"
   },
   {
-    "nombre": "tomete triturado",
+    "nombre": "tomate triturado",
     "unidad": "kg",
     "precio_unidad": "0,48"
   },
@@ -5375,7 +5375,7 @@
     "precio_unidad": "0,64"
   },
   {
-    "nombre": "torillas de arroz",
+    "nombre": "tortillas de arroz",
     "unidad": "kg",
     "precio_unidad": "6,19"
   },
@@ -5430,7 +5430,7 @@
     "precio_unidad": "129,67"
   },
   {
-    "nombre": "tubo de calamar cong.",
+    "nombre": "tubo de calamar congelado.",
     "unidad": "kg",
     "precio_unidad": "2,50"
   },
@@ -5485,7 +5485,7 @@
     "precio_unidad": "12,50"
   },
   {
-    "nombre": "viejas cong.",
+    "nombre": "viejas congelado.",
     "unidad": "kg",
     "precio_unidad": "6,50"
   },
@@ -5495,7 +5495,7 @@
     "precio_unidad": "51,25"
   },
   {
-    "nombre": "vieras cong.",
+    "nombre": "viejas congelado.",
     "unidad": "kg",
     "precio_unidad": "4,50"
   },
@@ -5600,47 +5600,47 @@
     "precio_unidad": "4,10"
   },
   {
-    "nombre": "yogour activvia",
+    "nombre": "yogur activvia",
     "unidad": "u",
     "precio_unidad": "0,29"
   },
   {
-    "nombre": "yogour liquido",
+    "nombre": "yogur liquido",
     "unidad": "u",
     "precio_unidad": "0,19"
   },
   {
-    "nombre": "yogour natural",
+    "nombre": "yogur natural",
     "unidad": "u",
     "precio_unidad": "0,17"
   },
   {
-    "nombre": "yogour sabia",
+    "nombre": "yogur sabia",
     "unidad": "u",
     "precio_unidad": "0,34"
   },
   {
-    "nombre": "yogour sabores",
+    "nombre": "yogur sabores",
     "unidad": "u",
     "precio_unidad": "0,16"
   },
   {
-    "nombre": "yogour sabores bio soja",
+    "nombre": "yogur sabores bio soja",
     "unidad": "u",
     "precio_unidad": "0,23"
   },
   {
-    "nombre": "yogour sabores c-fruta",
+    "nombre": "yogur sabores c-fruta",
     "unidad": "u",
     "precio_unidad": "0,28"
   },
   {
-    "nombre": "yogour vegetal",
+    "nombre": "yogur vegetal",
     "unidad": "u",
     "precio_unidad": "1,24"
   },
   {
-    "nombre": "yogour vitalinea",
+    "nombre": "yogur vitalinea",
     "unidad": "u",
     "precio_unidad": "0,18"
   },
@@ -5665,7 +5665,7 @@
     "precio_unidad": "0,99"
   },
   {
-    "nombre": "zanahoria cong.",
+    "nombre": "zanahoria congelado",
     "unidad": "kg",
     "precio_unidad": "0,67"
   },
