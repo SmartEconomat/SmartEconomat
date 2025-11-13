@@ -1,0 +1,287 @@
+[
+  {
+    "nombre": "alfileres",
+    "unidad": "caja",
+    "precio_unidad": "1,49"
+  },
+  {
+    "nombre": "ambientador electrico",
+    "unidad": "u",
+    "precio_unidad": "6,05"
+  },
+  {
+    "nombre": "articulos fiesta",
+    "unidad": "u",
+    "precio_unidad": "0,91"
+  },
+  {
+    "nombre": "bandeja carton 22x29",
+    "unidad": "u",
+    "precio_unidad": "0,06"
+  },
+  {
+    "nombre": "bandeja carton 40x50",
+    "unidad": "u",
+    "precio_unidad": "0,66"
+  },
+  {
+    "nombre": "bicarbonato",
+    "unidad": "kg",
+    "precio_unidad": "1,94"
+  },
+  {
+    "nombre": "blister 1000ml 129,63",
+    "unidad": "u",
+    "precio_unidad": "0,37"
+  },
+  {
+    "nombre": "blonda 26x32",
+    "unidad": "u",
+    "precio_unidad": "0,02"
+  },
+  {
+    "nombre": "blonda 30x40",
+    "unidad": "u",
+    "precio_unidad": "0,78"
+  },
+  {
+    "nombre": "blonda 45x55",
+    "unidad": "u",
+    "precio_unidad": "0,10"
+  },
+  {
+    "nombre": "blonda parafina 40x50",
+    "unidad": "u",
+    "precio_unidad": "0,09"
+  },
+  {
+    "nombre": "bobina papel",
+    "unidad": "u",
+    "precio_unidad": "3,80"
+  },
+  {
+    "nombre": "bol plastico 150 cc",
+    "unidad": "u",
+    "precio_unidad": "0,53"
+  },
+  {
+    "nombre": "bolsa camiseta 50x60",
+    "unidad": "u",
+    "precio_unidad": "0,39"
+  },
+  {
+    "nombre": "bolsas isotermo",
+    "unidad": "u",
+    "precio_unidad": "1,80"
+  },
+  {
+    "nombre": "bolsas vacio 20x25",
+    "unidad": "u",
+    "precio_unidad": "0,04"
+  },
+  {
+    "nombre": "botella de co2",
+    "unidad": "u",
+    "precio_unidad": "22,21"
+  },
+  {
+    "nombre": "brochetas de bambu",
+    "unidad": "u",
+    "precio_unidad": "0,01"
+  },
+  {
+    "nombre": "caja 4 botellas carton",
+    "unidad": "u",
+    "precio_unidad": "1,19"
+  },
+  {
+    "nombre": "caja guantes latex",
+    "unidad": "u",
+    "precio_unidad": "5,75"
+  },
+  {
+    "nombre": "caja tarta 30cm",
+    "unidad": "u",
+    "precio_unidad": "0,85"
+  },
+  {
+    "nombre": "caja tarta 32 cm",
+    "unidad": "u",
+    "precio_unidad": "0,75"
+  },
+  {
+    "nombre": "caja tarta 36 cm",
+    "unidad": "caja",
+    "precio_unidad": "0,96"
+  },
+  {
+    "nombre": "caja tarta 48x37(tapa)",
+    "unidad": "u",
+    "precio_unidad": "0,37"
+  },
+  {
+    "nombre": "caja tarta 48x37x9 (fon)",
+    "unidad": "u",
+    "precio_unidad": "0,46"
+  },
+  {
+    "nombre": "caaita flex",
+    "unidad": "u",
+    "precio_unidad": "0,01"
+  },
+  {
+    "nombre": "capsula de cafa",
+    "unidad": "u",
+    "precio_unidad": "0,38"
+  },
+  {
+    "nombre": "capsula nao24 magdalena r",
+    "unidad": "u",
+    "precio_unidad": "0,11"
+  },
+  {
+    "nombre": "capsula nao4",
+    "unidad": "u",
+    "precio_unidad": "0,00"
+  },
+  {
+    "nombre": "capsula nao4 tabaco",
+    "unidad": "u",
+    "precio_unidad": "0,00"
+  },
+  {
+    "nombre": "capsula nao8",
+    "unidad": "u",
+    "precio_unidad": "0,00"
+  },
+  {
+    "nombre": "capsula nao2",
+    "unidad": "u",
+    "precio_unidad": "0,00"
+  },
+  {
+    "nombre": "capsula nao2 tabaco",
+    "unidad": "u",
+    "precio_unidad": "0,00"
+  },
+  {
+    "nombre": "capsula oro nao2",
+    "unidad": "u",
+    "precio_unidad": "0,02"
+  },
+  {
+    "nombre": "capsulas blancas",
+    "unidad": "u",
+    "precio_unidad": "0,04"
+  },
+  {
+    "nombre": "carbon vegetal",
+    "unidad": "kg",
+    "precio_unidad": "1,08"
+  },
+  {
+    "nombre": "cartel suelo mojado",
+    "unidad": "u",
+    "precio_unidad": "8,00"
+  },
+  {
+    "nombre": "cinta bandera",
+    "unidad": "mts",
+    "precio_unidad": "0,29"
+  },
+  {
+    "nombre": "cinta cortina",
+    "unidad": "mts",
+    "precio_unidad": "0,36"
+  },
+  {
+    "nombre": "cinta hiladillo",
+    "unidad": "u",
+    "precio_unidad": "14,00"
+  },
+  {
+    "nombre": "cinta video virgen",
+    "unidad": "u",
+    "precio_unidad": "2,70"
+  },
+  {
+    "nombre": "cocido",
+    "unidad": "kg",
+    "precio_unidad": "10,62"
+  },
+  {
+    "nombre": "compresas",
+    "unidad": "u",
+    "precio_unidad": "0,21"
+  },
+  {
+    "nombre": "cuchillas corta pan",
+    "unidad": "u",
+    "precio_unidad": "1,60"
+  },
+  {
+    "nombre": "delantal plastico",
+    "unidad": "u",
+    "precio_unidad": "0,10"
+  },
+  {
+    "nombre": "desmolde spray",
+    "unidad": "bote",
+    "precio_unidad": "3,32"
+  },
+  {
+    "nombre": "discos comunia3n",
+    "unidad": "u",
+    "precio_unidad": "1,54"
+  },
+  {
+    "nombre": "empanada",
+    "unidad": "kg",
+    "precio_unidad": "2,00"
+  },
+  {
+    "nombre": "manga pastelera desechable",
+    "unidad": "u",
+    "precio_unidad": "0,01"
+  },
+  {
+    "nombre": "plato carta3n 18cm",
+    "unidad": "u",
+    "precio_unidad": "0,05"
+  },
+  {
+    "nombre": "plato carta3n 27cm",
+    "unidad": "u",
+    "precio_unidad": "0,10"
+  },
+  {
+    "nombre": "plato carta3n 30cm",
+    "unidad": "u",
+    "precio_unidad": "0,13"
+  },
+  {
+    "nombre": "plato carta3n 32cm",
+    "unidad": "u",
+    "precio_unidad": "0,17"
+  },
+  {
+    "nombre": "plato carta3n oro 22cm",
+    "unidad": "u",
+    "precio_unidad": "0,25"
+  },
+  {
+    "nombre": "plato carta3n oro 28cm",
+    "unidad": "u",
+    "precio_unidad": "0,37"
+  },
+  {
+    "nombre": "plato carta3n oro 30cm",
+    "unidad": "u",
+    "precio_unidad": "0,43"
+  },
+  {
+    "nombre": "plato carta3n oro 32cm",
+    "unidad": "u",
+    "precio_unidad": "0,20"
+  }
+]
