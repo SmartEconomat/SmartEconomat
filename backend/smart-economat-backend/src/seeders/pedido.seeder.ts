@@ -12,31 +12,6 @@ export const runSeeder = async (dataSource: DataSource) => {
   const pedidoProductoRepo = dataSource.getRepository(PedidoProducto);
   const productoProveedorRepo = dataSource.getRepository(ProductoProveedor);
 
-  const pedidos: Pedido[] = [];
-  const fechaFutura = (faker.date.soon as (opts: { days: number }) => Date)({
-    days: 7,
-  });
-  const costeTotal = parseFloat(
-    (
-      faker.commerce.price as (opts: {
-        min: number;
-        max: number;
-        dec: number;
-      }) => string
-    )({ min: 10, max: 100, dec: 2 })
-  );
-
-  for (let i = 0; i < 5; i++) {
-    const pedido: Pedido = pedidoRepo.create({
-      id_usuario: uuidv4(),
-      fecha_entrega: fechaFutura,
-      coste_total: costeTotal,
-      estado: EstadoPedido.PENDIENTE,
-    });
-    pedidos.push(pedido);
-  }
-  await pedidoRepo.save(pedidos);
-
   const todosLosProductosProveedor = await productoProveedorRepo.find();
   if (!todosLosProductosProveedor.length) {
     throw new Error(
@@ -44,8 +19,25 @@ export const runSeeder = async (dataSource: DataSource) => {
     );
   }
 
+  const pedidos: Pedido[] = [];
+  for (let i = 0; i < 5; i++) {
+    const fechaFutura = (faker.date.soon as (opts: { days: number }) => Date)({
+      days: 7,
+    });
+
+    const pedido: Pedido = pedidoRepo.create({
+      id_usuario: uuidv4(),
+      fecha_entrega: fechaFutura,
+      coste_total: 0,
+      estado: EstadoPedido.PENDIENTE,
+    });
+    pedidos.push(pedido);
+  }
+  await pedidoRepo.save(pedidos);
+
   const pedidoProductos: PedidoProducto[] = [];
   for (const pedido of pedidos) {
+    let costeTotalPedido = 0;
     const productosCount = (
       faker.number.int as (opts: { min: number; max: number }) => number
     )({ min: 1, max: 5 });
@@ -81,7 +73,10 @@ export const runSeeder = async (dataSource: DataSource) => {
       });
 
       pedidoProductos.push(pedidoProducto);
+      costeTotalPedido += cantidad * precioUnitario;
     }
+    pedido.coste_total = costeTotalPedido;
+    await pedidoRepo.save(pedido);
   }
 
   await pedidoProductoRepo.save(pedidoProductos);
