@@ -3,11 +3,13 @@ import {
   Column,
   Entity,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
 import { Producto } from '../producto.entity/producto.entity';
 import { Proveedor } from 'src/modules/proveedor/proveedor.entity/proveedor.entity';
+import { PedidoProducto } from 'src/modules/pedidos/pedido-producto.entity/pedido-producto.entity';
 
 @Unique(['producto', 'proveedor'])
 @Entity({ name: 'producto_proveedor' })
@@ -48,4 +50,10 @@ export class ProductoProveedor {
     transformer: new ColumnNumericTransformer(),
   })
   precioUnitario?: number;
+
+  @OneToMany(
+    () => PedidoProducto,
+    (pedidoProducto) => pedidoProducto.productoProveedor
+  )
+  pedidos: PedidoProducto[];
 }

@@ -1,41 +1,16 @@
 import { DataSource } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { PedidoEntity } from '../modules/pedidos/pedido.entity/pedido.entity';
-import { PedidoProductoEntity } from '../modules/pedidos/pedido-producto.entity/pedido-producto.entity';
+import { Pedido } from '../modules/pedidos/pedido.entity/pedido.entity';
+import { PedidoProducto } from '../modules/pedidos/pedido-producto.entity/pedido-producto.entity';
 import { EstadoPedido } from '../modules/pedidos/enums/estado-pedido.enum';
 import { ProductoProveedor } from 'src/modules/productos/producto-proveedor.entity/producto-proveedor.entity';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
 
-  const pedidoRepo = dataSource.getRepository(PedidoEntity);
-  const pedidoProductoRepo = dataSource.getRepository(PedidoProductoEntity);
+  const pedidoRepo = dataSource.getRepository(Pedido);
+  const pedidoProductoRepo = dataSource.getRepository(PedidoProducto);
   const productoProveedorRepo = dataSource.getRepository(ProductoProveedor);
-
-  const pedidos: PedidoEntity[] = [];
-  const fechaFutura = (faker.date.soon as (opts: { days: number }) => Date)({
-    days: 7,
-  });
-  const costeTotal = parseFloat(
-    (
-      faker.commerce.price as (opts: {
-        min: number;
-        max: number;
-        dec: number;
-      }) => string
-    )({ min: 10, max: 100, dec: 2 })
-  );
-
-  for (let i = 0; i < 5; i++) {
-    const pedido: PedidoEntity = pedidoRepo.create({
-      id_usuario: uuidv4(),
-      fecha_entrega: fechaFutura,
-      coste_total: costeTotal,
-      estado: EstadoPedido.PENDIENTE,
-    });
-    pedidos.push(pedido);
-  }
-  await pedidoRepo.save(pedidos);
 
   const todosLosProductosProveedor = await productoProveedorRepo.find();
   if (!todosLosProductosProveedor.length) {
@@ -44,8 +19,25 @@ export const runSeeder = async (dataSource: DataSource) => {
     );
   }
 
-  const pedidoProductos: PedidoProductoEntity[] = [];
+  const pedidos: Pedido[] = [];
+  for (let i = 0; i < 5; i++) {
+    const fechaFutura = (faker.date.soon as (opts: { days: number }) => Date)({
+      days: 7,
+    });
+
+    const pedido: Pedido = pedidoRepo.create({
+      id_usuario: uuidv4(),
+      fecha_entrega: fechaFutura,
+      coste_total: 0,
+      estado: EstadoPedido.PENDIENTE,
+    });
+    pedidos.push(pedido);
+  }
+  await pedidoRepo.save(pedidos);
+
+  const pedidoProductos: PedidoProducto[] = [];
   for (const pedido of pedidos) {
+    let costeTotalPedido = 0;
     const productosCount = (
       faker.number.int as (opts: { min: number; max: number }) => number
     )({ min: 1, max: 5 });
@@ -77,11 +69,14 @@ export const runSeeder = async (dataSource: DataSource) => {
         pedido,
         productoProveedor,
         cantidad,
-        precio_unitario: precioUnitario,
+        precioUnitario: precioUnitario,
       });
 
       pedidoProductos.push(pedidoProducto);
+      costeTotalPedido += cantidad * precioUnitario;
     }
+    pedido.coste_total = costeTotalPedido;
+    await pedidoRepo.save(pedido);
   }
 
   await pedidoProductoRepo.save(pedidoProductos);

@@ -23,7 +23,12 @@ export const dataSource = new DataSource({
 console.log(process.env.POSTGRES_PASSWORD);
 
 async function runAllSeeders() {
-  const seedersInOrder = ['producto.seeder.ts', 'pedido.seeder.ts'];
+  const seedersInOrder = [
+    'producto.seeder.ts',
+    'pedido.seeder.ts',
+    'recepcion.seeder.ts',
+    'albaran.seeder.ts',
+  ];
 
   for (const file of seedersInOrder) {
     const seeder: Seeder = require(join(__dirname, file)) as Seeder;
