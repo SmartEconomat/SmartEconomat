@@ -2,7 +2,7 @@ import { DataSource } from 'typeorm';
 import { Recepcion } from 'src/modules/recepcion/recepcion.entity/recepcion.entity';
 import { RecepcionPedido } from 'src/modules/recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
 import { RecepcionProducto } from 'src/modules/recepcion/recepcion-productos.entity/recepcion-producto.entity';
-import { PedidoProducto } from 'src/modules/pedidos/pedido-producto.entity/pedido-producto.entity';
+import { Pedido } from 'src/modules/pedidos/pedido.entity/pedido.entity';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
@@ -10,70 +10,52 @@ export const runSeeder = async (dataSource: DataSource) => {
   const recepcionRepo = dataSource.getRepository(Recepcion);
   const recepcionPedidoRepo = dataSource.getRepository(RecepcionPedido);
   const recepcionProductoRepo = dataSource.getRepository(RecepcionProducto);
-  const pedidoProductoRepo = dataSource.getRepository(PedidoProducto);
+  const pedidoRepo = dataSource.getRepository(Pedido);
 
-  const pedidos = await recepcionPedidoRepo.find({
-    relations: ['pedido'],
-  });
+  const pedidos = await pedidoRepo.find({ relations: ['productos'] });
+  if (!pedidos.length) {
+    console.log('No se encontraron pedidos, saltando seeder de recepciones.');
+    return;
+  }
 
-  if (!pedidos.length) return;
-
-  const allPedidoProductos = await pedidoProductoRepo.find();
-
-  if (!allPedidoProductos.length) return;
-
-  for (let i = 0; i < 5; i++) {
+  for (const pedido of pedidos) {
     const recepcion = recepcionRepo.create({
       usuario: faker.string.uuid(),
-      observaciones: faker.commerce.productDescription(),
+      observaciones: faker.lorem.sentence(),
       fechaRecepcion: faker.date.recent(),
     });
     await recepcionRepo.save(recepcion);
 
-    const pedidoRandom = faker.helpers.arrayElement(pedidos);
-
-    const existeRelacion = await recepcionPedidoRepo.findOne({
-      where: {
-        recepcion,
-        pedido: pedidoRandom.pedido || pedidoRandom,
-      },
-      relations: ['recepcion', 'pedido'],
+    const recepcionPedido = recepcionPedidoRepo.create({
+      recepcion,
+      pedido,
     });
+    await recepcionPedidoRepo.save(recepcionPedido);
 
-    if (!existeRelacion) {
-      const nuevaRelacion = recepcionPedidoRepo.create({
-        recepcion,
-        pedido: pedidoRandom.pedido || pedidoRandom,
+    if (pedido.productos && pedido.productos.length > 0) {
+      const productosRecepcion: RecepcionProducto[] = [];
+      const numProductosARecibir = faker.number.int({
+        min: 1,
+        max: pedido.productos.length,
       });
-      await recepcionPedidoRepo.save(nuevaRelacion);
-    }
+      const productosSeleccionados = faker.helpers.arrayElements(
+        pedido.productos,
+        numProductosARecibir
+      );
 
-    const productos: RecepcionProducto[] = [];
-    for (let j = 0; j < 3; j++) {
-      const pedidoProductoRandom =
-        faker.helpers.arrayElement(allPedidoProductos);
-
-      const existeProducto = await recepcionProductoRepo.findOne({
-        where: {
+      for (const pedidoProducto of productosSeleccionados) {
+        const recepcionProducto = recepcionProductoRepo.create({
+          cantidadRecibida: faker.number.int({
+            min: 1,
+            max: pedidoProducto.cantidad,
+          }),
+          observaciones: faker.lorem.sentence(),
           recepcion,
-          pedidoProducto: pedidoProductoRandom,
-        },
-        relations: ['recepcion', 'pedidoProducto'],
-      });
-
-      if (!existeProducto) {
-        const prod = recepcionProductoRepo.create({
-          cantidadRecibida: faker.number.int({ min: 1, max: 100 }),
-          observaciones: faker.commerce.productDescription(),
-          recepcion,
-          pedidoProducto: pedidoProductoRandom,
+          pedidoProducto,
         });
-        productos.push(prod);
+        productosRecepcion.push(recepcionProducto);
       }
-    }
-
-    if (productos.length) {
-      await recepcionProductoRepo.save(productos);
+      await recepcionProductoRepo.save(productosRecepcion);
     }
   }
 };
