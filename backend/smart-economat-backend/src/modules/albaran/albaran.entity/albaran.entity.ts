@@ -1,0 +1,20 @@
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { AlbaranPedidoRecepcion } from '../albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
+
+@Entity('albaran')
+export class Albaran {
+  @PrimaryGeneratedColumn({ name: 'id_albaran' })
+  id: number;
+
+  @Column({ name: 'n_albaran', type: 'varchar', length: 50 })
+  nAlbaran: string;
+
+  @Column({ type: 'boolean', nullable: true })
+  concordancia: boolean;
+
+  @Column({ type: 'date', nullable: true })
+  fecha: Date;
+
+  @OneToMany(() => AlbaranPedidoRecepcion, (apr) => apr.albaran)
+  albaranPedidoRecepcion: AlbaranPedidoRecepcion[];
+}
