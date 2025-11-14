@@ -21,6 +21,8 @@
     "seed": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.ts",
     "seed:pedido": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.ts pedido",
     "seed:producto": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.ts producto",
+    "seed:usuario": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.ts usuario",
+    "seed:movimiento": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.ts movimiento",
     "prepare": "husky"
   },
   "dependencies": {
