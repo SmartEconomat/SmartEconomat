@@ -2,14 +2,15 @@ import { Entity, OneToMany, PrimaryGeneratedColumn, Column } from 'typeorm';
 import { rolUsuario } from '../enums/usuario.enums';
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
 import { Pedido } from 'src/modules/pedidos/pedido.entity/pedido.entity';
+import { Recepcion } from 'src/modules/recepcion/recepcion.entity/recepcion.entity';
 
 @Entity({ name: 'usuario' })
 export class Usuario {
   @PrimaryGeneratedColumn('uuid', { name: 'id_usuario' })
   id!: string;
 
-  @Column({ type: 'varchar', length: 100, unique: true, nullable: false })
-  nombre: string;
+  @Column({ type: 'varchar', length: 100, nullable: false })
+  nombre!: string;
 
   @Column({
     type: 'varchar',
@@ -17,10 +18,10 @@ export class Usuario {
     nullable: false,
     unique: true,
   })
-  username: string;
+  username!: string;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
-  password: string;
+  password!: string;
 
   @Column({
     type: 'enum',
@@ -28,17 +29,20 @@ export class Usuario {
     enumName: 'rol_usuario',
     default: rolUsuario.ADMINISTRADOR,
   })
-  rol: rolUsuario;
+  rol!: rolUsuario;
 
   @Column({ type: 'varchar', length: 150, nullable: false })
-  email: string;
+  email!: string;
 
   @Column({ type: 'boolean', default: true })
-  activo: boolean;
+  activo!: boolean;
 
   @OneToMany(() => Movimiento, (mov) => mov.usuario)
   movimientos?: Movimiento[];
 
   @OneToMany(() => Pedido, (pedido) => pedido.usuario)
-  pedidos: Pedido[];
+  pedidos!: Pedido[];
+
+  @OneToMany(() => Recepcion, (recepcion) => recepcion.usuario)
+  recepciones!: Recepcion[];
 }

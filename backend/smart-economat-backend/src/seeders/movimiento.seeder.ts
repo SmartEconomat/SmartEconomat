@@ -1,4 +1,3 @@
-// src/seeders/movimiento.seeder.ts
 import { DataSource } from 'typeorm';
 import { Movimiento } from '../modules/movimiento/movimiento.entity/movimiento.entity';
 import {
@@ -29,7 +28,7 @@ export const runSeeder = async (dataSource: DataSource) => {
     const movimiento = movimientoRepo.create({
       tipo: faker.helpers.arrayElement(TIPOS_DISPONIBLES) as TipoMovimiento,
       cantidad: faker.number.int({ min: 1, max: 100 }),
-      descripcion: faker.lorem.sentence(),
+      descripcion: faker.datatype.boolean(0.7) ? faker.lorem.sentence() : null,
       fecha: faker.date.recent({ days: 30 }),
       usuario: faker.helpers.arrayElement(usuarios),
       inventario: faker.string.uuid(),
