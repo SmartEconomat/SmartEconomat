@@ -1,58 +1,48 @@
+// src/seeders/producto.seeder.ts
 import { DataSource } from 'typeorm';
 import { Producto } from '../modules/productos/producto.entity/producto.entity';
 import { ProductoProveedor } from '../modules/productos/producto-proveedor.entity/producto-proveedor.entity';
+import { ProductoAlergeno } from '../modules/productos/producto-alergeno.entity/producto-alergeno.entity';
+import { Proveedor } from '../modules/proveedor/proveedor.entity/proveedor.entity';
 import {
   UnidadProducto,
   TipoProducto,
+  AlergenoProducto,
 } from '../modules/productos/enums/producto.enums';
-import { Proveedor } from 'src/modules/proveedor/proveedor.entity/proveedor.entity';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
+
   const productoRepo = dataSource.getRepository(Producto);
-  const productoProveedorRepo = dataSource.getRepository(ProductoProveedor);
   const proveedorRepo = dataSource.getRepository(Proveedor);
+  const productoProveedorRepo = dataSource.getRepository(ProductoProveedor);
+  const productoAlergenoRepo = dataSource.getRepository(ProductoAlergeno);
 
-  let proveedores = await proveedorRepo.find();
-  const name = (faker.company.name as () => string)();
-  const fullName = (faker.person.fullName as () => string)();
+  await dataSource.query(`
+  TRUNCATE TABLE 
+    "producto_alergeno",
+    "producto_proveedor",
+    "producto"
+  RESTART IDENTITY CASCADE;
+  `);
 
-  if (!proveedores.length) {
-    const nuevosProveedores: Proveedor[] = [];
-    for (let i = 0; i < 5; i++) {
-      const proveedor = proveedorRepo.create({
-        nombre: name,
-        contacto: fullName,
-      });
-      nuevosProveedores.push(proveedor);
-    }
-    proveedores = await proveedorRepo.save(nuevosProveedores);
+  const proveedores = await proveedorRepo.find();
+  if (proveedores.length === 0) {
+    throw new Error('No hay proveedores. Ejecuta primero proveedor.seeder.ts');
   }
 
   const productos: Producto[] = [];
-  for (let i = 0; i < 10; i++) {
-    const productName = (faker.commerce.productName as () => string)();
-    const companyName = (faker.company.name as () => string)();
-    const productDescription = (
-      faker.commerce.productDescription as () => string
-    )();
-    const unidad = (faker.helpers.arrayElement as <T>(array: T[]) => T)(
-      Object.values(UnidadProducto)
-    ) as UnidadProducto;
-    const caducidad = (faker.date.soon as () => Date)();
-    const pathImg = (faker.image.url as () => string)();
-    const tipo = (faker.helpers.arrayElement as <T>(array: T[]) => T)(
-      Object.values(TipoProducto)
-    ) as TipoProducto;
-
+  for (let i = 0; i < 15; i++) {
     const producto = productoRepo.create({
-      nombre: productName,
-      marca: companyName,
-      descripcion: productDescription,
-      unidad,
-      caducidad,
-      pathImg,
-      tipo,
+      nombre: faker.commerce.productName(),
+      marca: faker.company.name(),
+      descripcion: faker.commerce.productDescription(),
+      unidad: faker.helpers.arrayElement(Object.values(UnidadProducto)),
+      caducidad: faker.datatype.boolean(0.3)
+        ? faker.date.soon({ days: 60 })
+        : undefined,
+      pathImg: faker.image.url({ width: 640, height: 480 }),
+      tipo: faker.helpers.arrayElement(Object.values(TipoProducto)),
     });
     productos.push(producto);
   }
@@ -60,45 +50,53 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   const productoProveedores: ProductoProveedor[] = [];
   for (const producto of productos) {
-    const proveedoresCount = (
-      faker.number.int as (options: { min: number; max: number }) => number
-    )({
+    const numProveedores = faker.number.int({
       min: 1,
-      max: proveedores.length,
+      max: Math.min(3, proveedores.length),
     });
+    const proveedoresAleatorios = faker.helpers
+      .shuffle(proveedores)
+      .slice(0, numProveedores);
 
-    const proveedoresAsignados = (
-      faker.helpers.shuffle as <T>(array: T[]) => T[]
-    )(proveedores).slice(0, proveedoresCount);
-
-    const precioUnitario = parseFloat(
-      (
-        faker.commerce.price as (opts: {
-          min: number;
-          max: number;
-          dec: number;
-        }) => string
-      )({ min: 10, max: 100, dec: 2 })
-    );
-    const codigoBarras = (
-      faker.string.numeric as (opts: { min: number; max: number }) => string
-    )({
-      max: 12,
-      min: 12,
-    });
-    for (const proveedor of proveedoresAsignados) {
-      const productoProveedor = productoProveedorRepo.create({
+    for (const proveedor of proveedoresAleatorios) {
+      const pp = productoProveedorRepo.create({
         producto,
         proveedor,
-        precioUnitario: precioUnitario,
+        precioUnitario: parseFloat(
+          faker.commerce.price({ min: 5, max: 200, dec: 2 })
+        ),
         marca: producto.marca,
-        codigoBarras: codigoBarras,
+        codigoBarras: faker.string.numeric(13),
       });
-      productoProveedores.push(productoProveedor);
+      productoProveedores.push(pp);
     }
   }
-
   await productoProveedorRepo.save(productoProveedores);
 
-  console.log('Seeder de productos y proveedores ejecutado correctamente.');
+  const alergenos: ProductoAlergeno[] = [];
+  const posiblesAlergenos = Object.values(AlergenoProducto);
+
+  for (const producto of productos) {
+    const numAlergenos = faker.number.int({ min: 0, max: 3 });
+    const alergenosSeleccionados = faker.helpers.arrayElements(
+      posiblesAlergenos,
+      numAlergenos
+    );
+
+    for (const alergeno of alergenosSeleccionados) {
+      const pa = productoAlergenoRepo.create({
+        id_producto: producto.id,
+        producto,
+        alergeno,
+      });
+      alergenos.push(pa);
+    }
+  }
+  if (alergenos.length > 0) {
+    await productoAlergenoRepo.save(alergenos);
+  }
+
+  console.log(
+    'Seeder de productos, proveedores y alérgenos ejecutado correctamente.'
+  );
 };

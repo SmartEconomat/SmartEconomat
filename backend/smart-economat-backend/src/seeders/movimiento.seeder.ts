@@ -1,55 +1,42 @@
+// src/seeders/movimiento.seeder.ts
 import { DataSource } from 'typeorm';
-/* import { v4 as uuidv4 } from 'uuid'; */
-import { Movimiento } from 'src/modules/movimiento/movimiento.entity/movimiento.entity';
+import { Movimiento } from '../modules/movimiento/movimiento.entity/movimiento.entity';
 import {
-  TIPOS_DISPONIBLES,
   TipoMovimiento,
-} from 'src/modules/movimiento/enums/movimiento.enums';
-import { Usuario } from 'src/modules/usuario/usuario.entity/usuario.entity';
+  TIPOS_DISPONIBLES,
+} from '../modules/movimiento/enums/movimiento.enums';
+import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
 
-//1. CANTIDAD DE USUARIOS A CREAR
-const NUM_MOVIMIENTOS_A_CREAR = 50;
+const NUM_MOVIMIENTOS = 50;
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
-
   const movimientoRepo = dataSource.getRepository(Movimiento);
   const usuarioRepo = dataSource.getRepository(Usuario);
 
-  // OBTENER USUARIOS EXISTENTES
   const usuarios = await usuarioRepo.find();
-
   if (usuarios.length === 0) {
-    console.warn(
-      'Advertencia: No hay usuarios. El seeder de Movimiento requiere que el seeder de Usuario se ejecute primero.'
-    );
+    console.warn('No hay usuarios. Saltando seeder de movimientos.');
     return;
   }
 
-  const movimientoAGuardar: Movimiento[] = [];
+  await dataSource.query(
+    `TRUNCATE TABLE "movimiento" RESTART IDENTITY CASCADE;`
+  );
 
-  // 2. GENERAR MOVIMIENTOS
-  for (let i = 0; i < NUM_MOVIMIENTOS_A_CREAR; i++) {
-    const tipoAleatorio = faker.helpers.arrayElement(
-      TIPOS_DISPONIBLES
-    ) as TipoMovimiento;
-    const cantidad = faker.number.int({ min: 1, max: 100 });
-    const descripcion = faker.lorem.sentences(2);
-    const fechaReciente = faker.date.recent({ days: 10 });
-    const usuarioAleatorio = faker.helpers.arrayElement(usuarios);
-    const inventarioUUID = faker.string.uuid();
-    // 3. CREAR LA ENTIDAD
-    const nuevoMovimiento = movimientoRepo.create({
-      tipo: tipoAleatorio,
-      cantidad: cantidad,
-      descripcion: descripcion,
-      fecha: fechaReciente,
-      usuario: usuarioAleatorio, // Objeto de entidad Usuario completo
-      inventario: inventarioUUID, // String UUID
+  const movimientos: Movimiento[] = [];
+  for (let i = 0; i < NUM_MOVIMIENTOS; i++) {
+    const movimiento = movimientoRepo.create({
+      tipo: faker.helpers.arrayElement(TIPOS_DISPONIBLES) as TipoMovimiento,
+      cantidad: faker.number.int({ min: 1, max: 100 }),
+      descripcion: faker.lorem.sentence(),
+      fecha: faker.date.recent({ days: 30 }),
+      usuario: faker.helpers.arrayElement(usuarios),
+      inventario: faker.string.uuid(),
     });
-
-    movimientoAGuardar.push(nuevoMovimiento);
+    movimientos.push(movimiento);
   }
-  await movimientoRepo.save(movimientoAGuardar);
-  /* console.log(`Se insertaron ${NUM_MOVIMIENTOS_A_CREAR} Movimientos.`); */
+
+  await movimientoRepo.save(movimientos);
+  console.log('Seeder de movimientos ejecutado correctamente.');
 };

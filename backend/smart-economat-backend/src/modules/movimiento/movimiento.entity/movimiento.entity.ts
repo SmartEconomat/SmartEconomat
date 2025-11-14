@@ -39,7 +39,7 @@ export class Movimiento {
     nullable: false,
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'id_usuario', referencedColumnName: 'id_usuario' })
+  @JoinColumn({ name: 'id_usuario', referencedColumnName: 'id' })
   usuario!: Usuario;
 
   @Column({ type: 'uuid', nullable: false })

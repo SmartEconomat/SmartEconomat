@@ -4,14 +4,17 @@ import { ProductoProveedor } from '../../productos/producto-proveedor.entity/pro
 @Entity({ name: 'proveedor' })
 export class Proveedor {
   @PrimaryGeneratedColumn('uuid', { name: 'id_proveedor' })
-  id: string;
+  id!: string;
 
   @Column({ type: 'varchar', length: 100 })
-  nombre: string;
+  nombre!: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   contacto?: string;
 
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  telefono?: string;
+
   @OneToMany(() => ProductoProveedor, (pp) => pp.proveedor)
-  productos: ProductoProveedor[];
+  productos!: ProductoProveedor[];
 }
