@@ -24,10 +24,11 @@ console.log(process.env.POSTGRES_PASSWORD);
 
 async function runAllSeeders() {
   const seedersInOrder = [
-    'producto.seeder.ts',
-    'pedido.seeder.ts',
     'usuario.seeder.ts',
+    'proveedor.seeder.ts',
+    'producto.seeder.ts',
     'movimiento.seeder.ts',
+    'pedido.seeder.ts',
   ];
 
   for (const file of seedersInOrder) {
