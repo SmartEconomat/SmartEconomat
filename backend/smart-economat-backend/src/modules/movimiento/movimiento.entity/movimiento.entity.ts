@@ -11,7 +11,7 @@ import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 
 @Entity({ name: 'movimiento' })
 @Check(`"cantidad" > 0`)
-export class MovimientoEntity {
+export class Movimiento {
   @PrimaryGeneratedColumn({ name: 'id_movimiento', type: 'int' })
   id!: number;
 
