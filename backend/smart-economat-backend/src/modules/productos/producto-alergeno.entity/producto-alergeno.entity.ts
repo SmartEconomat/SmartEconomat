@@ -1,22 +1,18 @@
-import { Entity, ManyToOne, PrimaryColumn, JoinColumn } from 'typeorm';
+import { Entity, PrimaryColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Producto } from '../producto.entity/producto.entity';
 import { AlergenoProducto } from '../enums/producto.enums';
 
 @Entity({ name: 'producto_alergeno' })
 export class ProductoAlergeno {
   @PrimaryColumn('uuid', { name: 'id_producto' })
-  id!: string;
+  id_producto!: string;
 
-  @PrimaryColumn({
-    type: 'enum',
-    enum: AlergenoProducto,
-    enumName: 'alergeno_producto',
-  })
+  @PrimaryColumn({ type: 'enum', enum: AlergenoProducto, name: 'alergeno' })
   alergeno!: AlergenoProducto;
 
   @ManyToOne(() => Producto, (producto) => producto.alergenos, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'id_producto' })
+  @JoinColumn({ name: 'id_producto', referencedColumnName: 'id' })
   producto!: Producto;
 }

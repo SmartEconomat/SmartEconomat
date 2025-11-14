@@ -1,12 +1,14 @@
-import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
+// src/modules/productos/producto-proveedor.entity/producto-proveedor.entity.ts
 import {
   Column,
   Entity,
+  JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
+import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 import { Producto } from '../producto.entity/producto.entity';
 import { Proveedor } from 'src/modules/proveedor/proveedor.entity/proveedor.entity';
 import { PedidoProducto } from 'src/modules/pedidos/pedido-producto.entity/pedido-producto.entity';
@@ -15,23 +17,22 @@ import { PedidoProducto } from 'src/modules/pedidos/pedido-producto.entity/pedid
 @Entity({ name: 'producto_proveedor' })
 export class ProductoProveedor {
   @PrimaryGeneratedColumn('uuid', { name: 'id_producto_proveedor' })
-  id: number;
+  id!: string;
 
   @ManyToOne(() => Producto, (producto) => producto.proveedores, {
-    onDelete: 'CASCADE',
+    onDelete: 'CASCADE', // ← ¡CORREGIDO!
   })
-  producto: Producto;
+  @JoinColumn({ name: 'id_producto', referencedColumnName: 'id' })
+  producto!: Producto;
 
-  @Column({
-    type: 'varchar',
-    length: '100',
-  })
+  @Column({ type: 'varchar', length: 100, nullable: true })
   marca?: string;
 
   @ManyToOne(() => Proveedor, (proveedor) => proveedor.productos, {
-    onDelete: 'CASCADE',
+    onDelete: 'CASCADE', // ← ¡CORREGIDO!
   })
-  proveedor: Proveedor;
+  @JoinColumn({ name: 'id_proveedor', referencedColumnName: 'id' })
+  proveedor!: Proveedor;
 
   @Column({
     type: 'varchar',
@@ -51,9 +52,6 @@ export class ProductoProveedor {
   })
   precioUnitario?: number;
 
-  @OneToMany(
-    () => PedidoProducto,
-    (pedidoProducto) => pedidoProducto.productoProveedor
-  )
-  pedidos: PedidoProducto[];
+  @OneToMany(() => PedidoProducto, (pp) => pp.productoProveedor)
+  pedidoProductos!: PedidoProducto[];
 }
