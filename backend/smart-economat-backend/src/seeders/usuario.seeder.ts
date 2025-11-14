@@ -21,7 +21,7 @@ export const runSeeder = async (dataSource: DataSource) => {
       password: faker.internet.password(),
       email: faker.internet.email(),
       rol: faker.helpers.arrayElement(ROLES_DISPONIBLES) as rolUsuario,
-      activo: faker.datatype.boolean(0.8), // 80% activos
+      activo: faker.datatype.boolean(0.8),
     });
     usuarios.push(usuario);
   }

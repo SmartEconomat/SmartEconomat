@@ -21,6 +21,8 @@
     "seed": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.ts",
     "seed:pedido": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.ts pedido",
     "seed:producto": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.ts producto",
+    "seed:recepcion": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.ts recepcion",
+    "seed:albaran": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.ts albaran",
     "seed:usuario": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.ts usuario",
     "seed:movimiento": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.ts movimiento",
     "prepare": "husky"
@@ -30,6 +32,7 @@
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
+    "@nestjs/mapped-types": "^2.1.0",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/typeorm": "^11.0.0",
     "class-transformer": "^0.5.1",

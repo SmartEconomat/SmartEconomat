@@ -1,17 +1,18 @@
+// src/modules/pedidos/pedido.entity/pedido.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  ManyToMany,
   ManyToOne,
   JoinColumn,
-  JoinTable,
+  OneToMany,
 } from 'typeorm';
 import { EstadoPedido } from '../enums/estado-pedido.enum';
-import { ProductoProveedor } from 'src/modules/productos/producto-proveedor.entity/producto-proveedor.entity';
 import { Usuario } from 'src/modules/usuario/usuario.entity/usuario.entity';
+import { RecepcionPedido } from 'src/modules/recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
+import { PedidoProducto } from '../pedido-producto.entity/pedido-producto.entity';
 
-@Entity('pedido')
+@Entity({ name: 'pedido' })
 export class Pedido {
   @PrimaryGeneratedColumn('uuid', { name: 'id_pedido' })
   id!: string;
@@ -28,23 +29,15 @@ export class Pedido {
   @Column({ type: 'timestamptz', nullable: true })
   fecha_entrega?: Date;
 
-  @Column({ type: 'numeric', precision: 10, scale: 2, nullable: true })
-  coste_total?: number;
+  @Column({ type: 'numeric', precision: 10, scale: 2, default: 0 })
+  coste_total!: number;
 
   @Column({ type: 'enum', enum: EstadoPedido, default: EstadoPedido.PENDIENTE })
   estado!: EstadoPedido;
 
-  @ManyToMany(() => ProductoProveedor, { cascade: true })
-  @JoinTable({
-    name: 'pedido_producto_proveedor',
-    joinColumn: {
-      name: 'id_pedido',
-      referencedColumnName: 'id',
-    },
-    inverseJoinColumn: {
-      name: 'id_producto_proveedor',
-      referencedColumnName: 'id',
-    },
-  })
-  productos!: ProductoProveedor[];
+  @OneToMany(() => PedidoProducto, (pp) => pp.pedido, { cascade: true })
+  pedidoProductos!: PedidoProducto[];
+
+  @OneToMany(() => RecepcionPedido, (rp) => rp.pedido)
+  recepcionesPedido!: RecepcionPedido[];
 }
