@@ -13,10 +13,10 @@ import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveed
 @Entity({ name: 'producto' })
 export class Producto {
   @PrimaryGeneratedColumn('uuid', { name: 'id_producto' })
-  id: string;
+  id!: string;
 
   @Column({ type: 'varchar', length: 100 })
-  nombre: string;
+  nombre!: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   marca?: string;
@@ -39,10 +39,10 @@ export class Producto {
   @OneToMany(() => ProductoAlergeno, (pa: ProductoAlergeno) => pa.producto, {
     cascade: true,
   })
-  alergenos: ProductoAlergeno[];
+  alergenos?: ProductoAlergeno[];
 
   @OneToMany(() => ProductoProveedor, (pp: ProductoProveedor) => pp.producto, {
     cascade: true,
   })
-  proveedores: ProductoProveedor[];
+  proveedores?: ProductoProveedor[];
 }
