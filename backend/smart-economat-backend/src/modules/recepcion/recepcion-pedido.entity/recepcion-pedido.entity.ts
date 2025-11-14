@@ -15,27 +15,27 @@ import { AlbaranPedidoRecepcion } from 'src/modules/albaran/albaran-pedido-recep
 @Unique(['recepcion', 'pedido'])
 export class RecepcionPedido {
   @PrimaryGeneratedColumn({ name: 'id_recepcion_pedido' })
-  id: number;
+  id!: number;
 
   @ManyToOne(() => Recepcion, (recepcion) => recepcion.recepcionesPedido, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'id_recepcion' })
-  recepcion: Recepcion;
+  recepcion!: Recepcion;
 
   @ManyToOne(() => Pedido, (pedido) => pedido.recepcionesPedido, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'id_pedido' })
-  pedido: Pedido;
+  pedido!: Pedido;
 
   @Column({
     name: 'fecha_vinculacion',
     type: 'date',
     default: () => 'CURRENT_DATE',
   })
-  fechaVinculacion: Date;
+  fechaVinculacion!: Date;
 
   @OneToMany(() => AlbaranPedidoRecepcion, (apr) => apr.recepcionPedido)
-  albaranPedidoRecepcion: AlbaranPedidoRecepcion[];
+  albaranPedidoRecepcion!: AlbaranPedidoRecepcion[];
 }

@@ -1,83 +1,75 @@
 import { DataSource } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
 import { Pedido } from '../modules/pedidos/pedido.entity/pedido.entity';
 import { PedidoProducto } from '../modules/pedidos/pedido-producto.entity/pedido-producto.entity';
 import { EstadoPedido } from '../modules/pedidos/enums/estado-pedido.enum';
-import { ProductoProveedor } from 'src/modules/productos/producto-proveedor.entity/producto-proveedor.entity';
+import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
+import { ProductoProveedor } from '../modules/productos/producto-proveedor.entity/producto-proveedor.entity';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
-
   const pedidoRepo = dataSource.getRepository(Pedido);
   const pedidoProductoRepo = dataSource.getRepository(PedidoProducto);
+  const usuarioRepo = dataSource.getRepository(Usuario);
   const productoProveedorRepo = dataSource.getRepository(ProductoProveedor);
 
-  const todosLosProductosProveedor = await productoProveedorRepo.find();
-  if (!todosLosProductosProveedor.length) {
-    throw new Error(
-      'No hay productos-proveedor en la base de datos. Primero debes crear algunos.'
-    );
-  }
+  const usuarios = await usuarioRepo.find();
+  const productosProv = await productoProveedorRepo.find({
+    relations: ['producto'],
+  });
+
+  if (usuarios.length === 0) throw new Error('No hay usuarios');
+  if (productosProv.length === 0)
+    throw new Error('No hay productos con proveedor');
+
+  await dataSource.query(`
+    TRUNCATE TABLE "pedido_productos", "pedido" RESTART IDENTITY CASCADE;
+  `);
 
   const pedidos: Pedido[] = [];
-  for (let i = 0; i < 5; i++) {
-    const fechaFutura = (faker.date.soon as (opts: { days: number }) => Date)({
-      days: 7,
-    });
-
-    const pedido: Pedido = pedidoRepo.create({
-      id_usuario: uuidv4(),
-      fecha_entrega: fechaFutura,
-      coste_total: 0,
-      estado: EstadoPedido.PENDIENTE,
-    });
+  for (let i = 0; i < 8; i++) {
+    const pedido = new Pedido();
+    pedido.usuario = faker.helpers.arrayElement(usuarios);
+    pedido.fecha_pedido = faker.date.recent({ days: 7 });
+    pedido.fecha_entrega = faker.date.soon({ days: 7 });
+    pedido.estado = faker.helpers.arrayElement(Object.values(EstadoPedido));
+    pedido.coste_total = 0;
     pedidos.push(pedido);
   }
   await pedidoRepo.save(pedidos);
 
-  const pedidoProductos: PedidoProducto[] = [];
   for (const pedido of pedidos) {
-    let costeTotalPedido = 0;
-    const productosCount = (
-      faker.number.int as (opts: { min: number; max: number }) => number
-    )({ min: 1, max: 5 });
+    const numItems = faker.number.int({ min: 1, max: 5 });
+    const items = faker.helpers.arrayElements(productosProv, numItems);
 
-    for (let j = 0; j < productosCount; j++) {
-      const cantidad = (
-        faker.number.int as (opts: { min: number; max: number }) => number
-      )({ min: 1, max: 20 });
+    let total = 0;
+    const pedidoProductosToSave: PedidoProducto[] = [];
 
-      const precioUnitario = parseFloat(
-        (
-          faker.commerce.price as (opts: {
-            min: number;
-            max: number;
-            dec: number;
-          }) => string
-        )({ min: 10, max: 100, dec: 2 })
-      );
+    for (const pp of items) {
+      const cantidad = faker.number.int({ min: 1, max: 8 });
+      const precio =
+        pp.precioUnitario ||
+        parseFloat(faker.commerce.price({ min: 10, max: 100 }));
+      total += precio * cantidad;
 
-      const productoProveedor =
-        todosLosProductosProveedor[
-          (faker.number.int as (opts: { min: number; max: number }) => number)({
-            min: 0,
-            max: todosLosProductosProveedor.length - 1,
-          })
-        ];
+      const ppEntry = new PedidoProducto();
+      ppEntry.pedido = pedido;
+      ppEntry.productoProveedor = pp;
+      ppEntry.cantidad = cantidad;
+      ppEntry.precio_unitario = precio;
+      ppEntry.observaciones = faker.datatype.boolean(0.3)
+        ? faker.lorem.sentence()
+        : undefined;
 
-      const pedidoProducto = pedidoProductoRepo.create({
-        pedido,
-        productoProveedor,
-        cantidad,
-        precioUnitario: precioUnitario,
-      });
-
-      pedidoProductos.push(pedidoProducto);
-      costeTotalPedido += cantidad * precioUnitario;
+      pedidoProductosToSave.push(ppEntry);
     }
-    pedido.coste_total = costeTotalPedido;
+
+    if (pedidoProductosToSave.length > 0) {
+      await pedidoProductoRepo.save(pedidoProductosToSave);
+    }
+
+    pedido.coste_total = parseFloat(total.toFixed(2));
     await pedidoRepo.save(pedido);
   }
 
-  await pedidoProductoRepo.save(pedidoProductos);
+  console.log('Seeder de pedidos ejecutado correctamente.');
 };

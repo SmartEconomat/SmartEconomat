@@ -15,7 +15,7 @@ export class HistorialPrecio {
 
   @ManyToOne(() => ProductoProveedor, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id_producto_proveedor' })
-  productoProveedor: ProductoProveedor;
+  productoProveedor!: ProductoProveedor;
 
   @Column({
     type: 'decimal',
