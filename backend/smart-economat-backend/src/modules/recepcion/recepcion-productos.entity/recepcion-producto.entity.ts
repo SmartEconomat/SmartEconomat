@@ -12,30 +12,30 @@ import { Recepcion } from '../recepcion.entity/recepcion.entity';
 @Unique(['recepcion', 'pedidoProducto'])
 export class RecepcionProducto {
   @PrimaryGeneratedColumn({ name: 'id_recepcion_producto' })
-  id: number;
+  id!: number;
 
   @ManyToOne(() => Recepcion, (recepcion) => recepcion.recepcionesProducto, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'id_recepcion' })
-  recepcion: Recepcion;
+  recepcion!: Recepcion;
 
   @ManyToOne(() => PedidoProducto, (pp) => pp.recepcionesProducto, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'id_pedido_producto' })
-  pedidoProducto: PedidoProducto;
+  pedidoProducto!: PedidoProducto;
 
   @Column({ name: 'cantidad_recibida', type: 'int' })
-  cantidadRecibida: number;
+  cantidadRecibida!: number;
 
   @Column({ type: 'text', nullable: true })
-  observaciones: string;
+  observaciones?: string;
 
   @Column({
     name: 'fecha_recepcion',
     type: 'date',
     default: () => 'CURRENT_DATE',
   })
-  fechaRecepcion: Date;
+  fechaRecepcion!: Date;
 }
