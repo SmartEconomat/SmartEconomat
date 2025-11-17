@@ -6,6 +6,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
+import { localInventario } from '../enums/inventario.enums';
 
 @Entity({ name: 'inventario' })
 export class Inventario {
@@ -25,7 +26,7 @@ export class Inventario {
   @Column({ type: 'integer' })
   cantidad_maxima?: number;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: 'enum', enum: localInventario, name: 'ubicacion_almacen' })
   ubicacion_almacen!: string;
 
   @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
