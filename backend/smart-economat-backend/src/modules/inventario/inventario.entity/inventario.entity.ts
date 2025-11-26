@@ -5,7 +5,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
+import { ProductoProveedor } from '../../productos/producto-proveedor.entity/producto-proveedor.entity';
 import { localInventario } from '../enums/inventario.enums';
 
 @Entity({ name: 'inventario' })
