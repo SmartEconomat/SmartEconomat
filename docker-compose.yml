@@ -26,6 +26,8 @@ services:
       - db
     networks:
       - smarteconomat-network
+    volumes:
+      - ./backend/smart-economat-backend:/app
 
   frontend:
     build:
@@ -36,6 +38,8 @@ services:
     env_file: .env
     networks:
       - smarteconomat-network
+    volumes:
+      - ./frontend/smart-economat-frontend:/app
 
 volumes:
   database:
