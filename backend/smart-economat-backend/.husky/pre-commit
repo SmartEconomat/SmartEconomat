@@ -1,5 +1,2 @@
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
-
-echo "🧹 Ejecutando lint-staged en backend..."
+echo "Running pre-commit script"
 npx lint-staged
