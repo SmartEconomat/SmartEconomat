@@ -1,8 +1,8 @@
 import { Entity, OneToMany, PrimaryGeneratedColumn, Column } from 'typeorm';
 import { rolUsuario } from '../enums/usuario.enums';
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
-import { Pedido } from 'src/modules/pedidos/pedido.entity/pedido.entity';
-import { Recepcion } from 'src/modules/recepcion/recepcion.entity/recepcion.entity';
+import { Pedido } from '../../pedidos/pedido.entity/pedido.entity';
+import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
 
 @Entity({ name: 'usuario' })
 export class Usuario {

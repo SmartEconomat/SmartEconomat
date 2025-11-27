@@ -1,4 +1,4 @@
-import { Pedido } from 'src/modules/pedidos/pedido.entity/pedido.entity';
+import { Pedido } from '../../pedidos/pedido.entity/pedido.entity';
 import {
   Column,
   Entity,
@@ -9,7 +9,7 @@ import {
   Unique,
 } from 'typeorm';
 import { Recepcion } from '../recepcion.entity/recepcion.entity';
-import { AlbaranPedidoRecepcion } from 'src/modules/albaran/albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
+import { AlbaranPedidoRecepcion } from '../../albaran/albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
 
 @Entity('recepcion_pedido')
 @Unique(['recepcion', 'pedido'])

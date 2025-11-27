@@ -1,4 +1,4 @@
-import { PedidoProducto } from 'src/modules/pedidos/pedido-producto.entity/pedido-producto.entity';
+import { PedidoProducto } from '../../pedidos/pedido-producto.entity/pedido-producto.entity';
 import {
   Column,
   Entity,

@@ -8,8 +8,8 @@ import {
   OneToMany,
 } from 'typeorm';
 import { EstadoPedido } from '../enums/estado-pedido.enum';
-import { Usuario } from 'src/modules/usuario/usuario.entity/usuario.entity';
-import { RecepcionPedido } from 'src/modules/recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
+import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
+import { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
 import { PedidoProducto } from '../pedido-producto.entity/pedido-producto.entity';
 
 @Entity({ name: 'pedido' })
@@ -23,14 +23,24 @@ export class Pedido {
   @JoinColumn({ name: 'id_usuario', referencedColumnName: 'id' })
   usuario!: Usuario;
 
-  @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
-  fecha_pedido!: Date;
+  @Column({
+    type: 'timestamptz',
+    default: () => 'CURRENT_TIMESTAMP',
+    name: 'fecha_pedido',
+  })
+  fechaPedido!: Date;
 
-  @Column({ type: 'timestamptz', nullable: true })
-  fecha_entrega?: Date;
+  @Column({ type: 'timestamptz', nullable: true, name: 'fecha_entrega' })
+  fechaEntrega?: Date;
 
-  @Column({ type: 'numeric', precision: 10, scale: 2, default: 0 })
-  coste_total!: number;
+  @Column({
+    type: 'numeric',
+    precision: 10,
+    scale: 2,
+    default: 0,
+    name: 'coste_total',
+  })
+  costeTotal!: number;
 
   @Column({ type: 'enum', enum: EstadoPedido, default: EstadoPedido.PENDIENTE })
   estado!: EstadoPedido;
