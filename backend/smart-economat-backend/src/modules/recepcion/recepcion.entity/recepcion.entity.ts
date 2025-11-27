@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { RecepcionPedido } from '../recepcion-pedido.entity/recepcion-pedido.entity';
 import { RecepcionProducto } from '../recepcion-productos.entity/recepcion-producto.entity';
-import { Usuario } from 'src/modules/usuario/usuario.entity/usuario.entity';
+import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 
 @Entity('recepcion')
 export class Recepcion {

@@ -29,10 +29,10 @@ export const runSeeder = async (dataSource: DataSource) => {
   for (let i = 0; i < 8; i++) {
     const pedido = new Pedido();
     pedido.usuario = faker.helpers.arrayElement(usuarios);
-    pedido.fecha_pedido = faker.date.recent({ days: 7 });
-    pedido.fecha_entrega = faker.date.soon({ days: 7 });
+    pedido.fechaPedido = faker.date.recent({ days: 7 });
+    pedido.fechaEntrega = faker.date.soon({ days: 7 });
     pedido.estado = faker.helpers.arrayElement(Object.values(EstadoPedido));
-    pedido.coste_total = 0;
+    pedido.costeTotal = 0;
     pedidos.push(pedido);
   }
   await pedidoRepo.save(pedidos);
@@ -67,7 +67,7 @@ export const runSeeder = async (dataSource: DataSource) => {
       await pedidoProductoRepo.save(pedidoProductosToSave);
     }
 
-    pedido.coste_total = parseFloat(total.toFixed(2));
+    pedido.costeTotal = parseFloat(total.toFixed(2));
     await pedidoRepo.save(pedido);
   }
 

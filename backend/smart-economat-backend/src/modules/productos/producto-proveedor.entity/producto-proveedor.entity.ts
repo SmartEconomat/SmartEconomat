@@ -10,8 +10,8 @@ import {
 } from 'typeorm';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 import { Producto } from '../producto.entity/producto.entity';
-import { Proveedor } from 'src/modules/proveedor/proveedor.entity/proveedor.entity';
-import { PedidoProducto } from 'src/modules/pedidos/pedido-producto.entity/pedido-producto.entity';
+import { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
+import { PedidoProducto } from '../../pedidos/pedido-producto.entity/pedido-producto.entity';
 
 @Unique(['producto', 'proveedor'])
 @Entity({ name: 'producto_proveedor' })
@@ -29,7 +29,7 @@ export class ProductoProveedor {
   marca?: string;
 
   @ManyToOne(() => Proveedor, (proveedor) => proveedor.productos, {
-    onDelete: 'CASCADE', // ← ¡CORREGIDO!
+    onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'id_proveedor', referencedColumnName: 'id' })
   proveedor!: Proveedor;
