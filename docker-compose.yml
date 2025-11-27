@@ -40,6 +40,7 @@ services:
       - smarteconomat-network
     volumes:
       - ./frontend/smart-economat-frontend:/app
+      - /app/node_modules
 
 volumes:
   database:

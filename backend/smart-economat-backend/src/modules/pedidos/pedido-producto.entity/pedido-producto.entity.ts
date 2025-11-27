@@ -7,8 +7,8 @@ import {
   OneToMany,
 } from 'typeorm';
 import { Pedido } from '../pedido.entity/pedido.entity';
-import { ProductoProveedor } from 'src/modules/productos/producto-proveedor.entity/producto-proveedor.entity';
-import { RecepcionProducto } from 'src/modules/recepcion/recepcion-productos.entity/recepcion-producto.entity';
+import { ProductoProveedor } from '../../productos/producto-proveedor.entity/producto-proveedor.entity';
+import { RecepcionProducto } from '../../recepcion/recepcion-productos.entity/recepcion-producto.entity';
 
 @Entity('pedido_productos')
 export class PedidoProducto {
