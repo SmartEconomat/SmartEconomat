@@ -25,6 +25,7 @@
     "seed:albaran": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.ts albaran",
     "seed:usuario": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.ts usuario",
     "seed:movimiento": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.ts movimiento",
+    "seed:incidencia": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.ts incidencia",
     "generate:erd": "NODE_OPTIONS='-r ts-node/register' erdia build -d tools/erd/erd-datasource.ts --image-format svg && mv smart-economat-backend.svg tools/erd/erd.svg && rm erdiadb.json index.html mermaid.html",
     "prepare": "cd ../.. && husky backend/smart-economat-backend/.husky"
   },
