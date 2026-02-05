@@ -11,6 +11,7 @@ import { rolUsuario } from '../enums/usuario.enums';
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
 import { Pedido } from '../../pedidos/pedido.entity/pedido.entity';
 import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
+import { Incidencia } from 'src/modules/incidencia/incidencia.entity/incidencia.entity';
 
 @Entity({ name: 'usuario' })
 export class Usuario {
@@ -63,6 +64,9 @@ export class Usuario {
 
   @OneToMany(() => Recepcion, (recepcion) => recepcion.usuario)
   recepciones: Recepcion[];
+
+  @OneToMany(() => Incidencia, (incidencia) => incidencia.usuarioResolutor)
+  incidenciasResueltas!: Incidencia[];
 
   @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
   createdAt!: Date;
