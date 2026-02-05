@@ -5,7 +5,7 @@ import {
   rolUsuario,
 } from '../modules/usuario/enums/usuario.enums';
 
-const NUM_USUARIOS_A_CREAR = 10;
+const NUM_USUARIOS_A_CREAR = 50;
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
@@ -21,6 +21,10 @@ export const runSeeder = async (dataSource: DataSource) => {
       password: faker.internet.password(),
       email: faker.internet.email(),
       rol: faker.helpers.arrayElement(ROLES_DISPONIBLES) as rolUsuario,
+      cial_profesor: `CIAL_${i}${faker.string.numeric(4)}`,
+      numero_clase: faker.string.numeric(2),
+      aula:
+        faker.string.fromCharacters(['A', 'B', 'C']) + faker.string.numeric(1),
       activo: faker.datatype.boolean(0.8),
     });
     usuarios.push(usuario);
