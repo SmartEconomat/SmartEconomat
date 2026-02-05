@@ -32,6 +32,7 @@ async function runAllSeeders() {
     'movimiento.seeder.ts',
     'historial-pedido.seeder.ts',
     'inventario.seeder.ts',
+    'incidencia.seeder.ts',
   ];
 
   for (const file of seedersInOrder) {
