@@ -1,7 +1,7 @@
 import { DataSource } from 'typeorm';
-import { Inventario } from '../modules/productos/inventario.entity/inventario.entity';
+import { Inventario } from '../modules/inventario/inventario.entity/inventario.entity';
 import { ProductoProveedor } from '../modules/productos/producto-proveedor.entity/producto-proveedor.entity';
-import { localInventario } from 'src/modules/productos/enums/inventario.enums';
+import { localInventario } from '../modules/inventario/enums/inventario.enums';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
