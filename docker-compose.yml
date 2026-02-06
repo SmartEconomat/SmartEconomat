@@ -14,6 +14,11 @@ services:
       - database:/var/lib/postgresql/data
     networks:
       - smarteconomat-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
     build:
@@ -22,8 +27,10 @@ services:
     ports:
       - "${BACKEND_PORT}:${BACKEND_PORT}"
     env_file: .env
+
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - smarteconomat-network
     volumes:
