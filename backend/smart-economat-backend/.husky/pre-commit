@@ -1,3 +1,6 @@
 #!/bin/sh
+echo "Running pre-commit script"
+./scripts/contributors/count-commits.sh
+
 echo "🧹 Ejecutando lint-staged en backend..."
 npx lint-staged
