@@ -1,40 +1,44 @@
-import { Inventario } from "../inventario.entity/inventario.entity";
-import { Inject, Injectable } from "@nestjs/common";
-import { Between, Repository, ReturnDocument } from "typeorm";
-import { AlertaStock } from "../dto/alertaStock.dto";
-import { AlertaCaducidad } from "../dto/alertaCaducidad.dto";
-import { InjectRepository } from "@nestjs/typeorm";
+import { Inventario } from '../inventario.entity/inventario.entity';
+import { Injectable } from '@nestjs/common';
+import { Between, Repository } from 'typeorm';
+import { AlertaStockDTO } from '../dto/alertaStock.dto';
+import { AlertaCaducidadDTO } from '../dto/alertaCaducidad.dto';
+import { InjectRepository } from '@nestjs/typeorm';
 
+@Injectable()
 export class InventarioService {
-    constructor(private inventarioRepository: Repository<Inventario>) {}
+  constructor(
+    @InjectRepository(Inventario)
+    private inventarioRepository: Repository<Inventario>
+  ) {}
 
-    async obtenerAlertasCaducidad(): Promise<AlertaCaducidad[]> {
-        const hoy = new Date();
-        const limite = new Date();
-        limite.setDate(hoy.getDate() + 7);
+  async obtenerAlertasCaducidad(): Promise<AlertaCaducidadDTO[]> {
+    const hoy = new Date();
+    const limite = new Date();
+    limite.setDate(hoy.getDate() + 7);
 
-        const productos = await this.inventarioRepository.find({
-            where: {
-                fecha_caducidad: Between(hoy, limite),
-            },
-        });
+    const productos = await this.inventarioRepository.find({
+      where: {
+        fecha_caducidad: Between(hoy, limite),
+      },
+    });
 
-        return productos.map(p => ({
-            id: p.id,
-            fecha_caducidad: p.fecha_caducidad.toISOString(),
-        }));
-    }
+    return productos.map((p) => ({
+      id: p.id,
+      fecha_caducidad: p.fecha_caducidad.toISOString(),
+    }));
+  }
 
-    async obtenerAlertasStock(): Promise<AlertaStock[]> {
-        const productos = await this.inventarioRepository
-        .createQueryBuilder('inventario')
-        .where('inventario.cantidad_actual < inventario.cantidad_minima').getMany();
+  async obtenerAlertasStock(): Promise<AlertaStockDTO[]> {
+    const productos = await this.inventarioRepository
+      .createQueryBuilder('inventario')
+      .where('inventario.cantidad_actual < inventario.cantidad_minima')
+      .getMany();
 
-        return productos.map(p => ({
-            id: p.id,
-            cantidad_actual: p.cantidad_actual,
-            cantidad_minima: p.cantidad_minima,
-        }));
-    }
-    
+    return productos.map((p) => ({
+      id: p.id,
+      cantidad_actual: p.cantidad_actual,
+      cantidad_minima: p.cantidad_minima,
+    }));
+  }
 }
