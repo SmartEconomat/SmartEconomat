@@ -16,6 +16,7 @@ export const runSeeder = async (dataSource: DataSource) => {
   const productoProveedorRepo = dataSource.getRepository(ProductoProveedor);
   const productoAlergenoRepo = dataSource.getRepository(ProductoAlergeno);
 
+  // 1. Limpieza total con CASCADE para resetear IDs
   await dataSource.query(`
     TRUNCATE TABLE "producto_alergeno", "producto_proveedor", "producto" RESTART IDENTITY CASCADE;
   `);
@@ -25,42 +26,44 @@ export const runSeeder = async (dataSource: DataSource) => {
     throw new Error('No hay proveedores. Ejecuta proveedor.seeder.ts primero.');
   }
 
+  // 2. Crear Productos base
   const productos: Producto[] = [];
   for (let i = 0; i < 15; i++) {
-    const producto = new Producto();
-    producto.nombre = faker.commerce.productName();
-    producto.marca = faker.company.name();
-    producto.descripcion = faker.commerce.productDescription();
-    producto.unidad = faker.helpers.arrayElement(Object.values(UnidadProducto));
-    producto.caducidad = faker.datatype.boolean(0.3)
-      ? faker.date.soon({ days: 60 })
-      : undefined;
-    faker.image.url({ width: 640, height: 480 });
-    producto.tipo = faker.helpers.arrayElement(Object.values(TipoProducto));
-
+    const producto = productoRepo.create({
+      nombre: faker.commerce.productName(),
+      marca: faker.company.name(),
+      descripcion: faker.commerce.productDescription(),
+      unidad: faker.helpers.arrayElement(Object.values(UnidadProducto)),
+      caducidad: faker.datatype.boolean(0.3)
+        ? faker.date.soon({ days: 60 })
+        : undefined,
+      tipo: faker.helpers.arrayElement(Object.values(TipoProducto)),
+      pathImg: faker.image.url({ width: 640, height: 480 }),
+    });
     productos.push(producto);
   }
-  await productoRepo.save(productos);
-  await productoRepo.save(productos);
+  const productosGuardados = await productoRepo.save(productos);
 
+  // 3. Crear Relaciones ProductoProveedor con precios y marcas
   const productoProveedores: ProductoProveedor[] = [];
-  for (const producto of productos) {
+  for (const producto of productosGuardados) {
     const numProveedores = faker.number.int({
       min: 1,
       max: Math.min(3, proveedores.length),
     });
-    const proveedoresAleatorios = faker.helpers
-      .shuffle(proveedores)
-      .slice(0, numProveedores);
+
+    // Seleccionar proveedores únicos para este producto
+    const proveedoresAleatorios = faker.helpers.arrayElements(
+      proveedores,
+      numProveedores
+    );
 
     for (const proveedor of proveedoresAleatorios) {
       const pp = productoProveedorRepo.create({
         producto,
         proveedor,
-        precioUnitario: parseFloat(
-          faker.commerce.price({ min: 5, max: 200, dec: 2 })
-        ),
-        marca: producto.marca,
+        precioUnitario: parseFloat(faker.commerce.price({ min: 5, max: 200 })),
+        marca: producto.marca, // O faker.company.name() para marcas de distribución
         codigoBarras: faker.string.numeric({ length: 13 }),
       });
       productoProveedores.push(pp);
@@ -68,26 +71,28 @@ export const runSeeder = async (dataSource: DataSource) => {
   }
   await productoProveedorRepo.save(productoProveedores);
 
+  // 4. Alérgenos
   const alergenos: ProductoAlergeno[] = [];
   const posiblesAlergenos = Object.values(AlergenoProducto);
-  for (const producto of productos) {
+  for (const producto of productosGuardados) {
     const numAlergenos = faker.number.int({ min: 0, max: 3 });
-    const alergenosSeleccionados = faker.helpers.arrayElements(
+    const seleccionados = faker.helpers.arrayElements(
       posiblesAlergenos,
       numAlergenos
     );
-    for (const alergeno of alergenosSeleccionados) {
-      const pa = productoAlergenoRepo.create({
-        id_producto: producto.id,
-        alergeno,
-        producto,
-      });
-      alergenos.push(pa);
+
+    for (const alergeno of seleccionados) {
+      alergenos.push(
+        productoAlergenoRepo.create({
+          producto,
+          alergeno,
+        })
+      );
     }
   }
   if (alergenos.length > 0) await productoAlergenoRepo.save(alergenos);
 
   console.log(
-    'Seeder de productos, proveedores y alérgenos ejecutado correctamente.'
+    '✅ Catálogo de productos y relaciones con proveedores generado.'
   );
 };
