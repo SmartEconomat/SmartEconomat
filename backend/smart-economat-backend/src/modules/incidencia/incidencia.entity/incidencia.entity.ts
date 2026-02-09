@@ -7,8 +7,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Usuario } from 'src/modules/usuario/usuario.entity/usuario.entity';
-import { Recepcion } from 'src/modules/recepcion/recepcion.entity/recepcion.entity';
+import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
+import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
 
 @Entity('incidencia')
 export class Incidencia {

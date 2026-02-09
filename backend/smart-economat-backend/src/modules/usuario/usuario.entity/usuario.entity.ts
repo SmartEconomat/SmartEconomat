@@ -11,7 +11,7 @@ import { rolUsuario } from '../enums/usuario.enums';
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
 import { Pedido } from '../../pedidos/pedido.entity/pedido.entity';
 import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
-import { Incidencia } from 'src/modules/incidencia/incidencia.entity/incidencia.entity';
+import { Incidencia } from '../../incidencia/incidencia.entity/incidencia.entity';
 
 @Entity({ name: 'usuario' })
 export class Usuario {
