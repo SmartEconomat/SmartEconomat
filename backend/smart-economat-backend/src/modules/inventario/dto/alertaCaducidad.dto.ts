@@ -1,16 +1,11 @@
-import {
-  IsUUID,
-  IsDateString,
-  IsNotEmpty,
-} from 'class-validator';
+import { IsUUID, IsDateString, IsNotEmpty } from 'class-validator';
 
-export class AlertaCaducidad {
+export class AlertaCaducidadDTO {
+  @IsUUID()
+  @IsNotEmpty()
+  id: string;
 
-@IsUUID()
-@IsNotEmpty()
-id: string;
-
-@IsDateString()
-@IsNotEmpty()
-fecha_caducidad: string
+  @IsDateString()
+  @IsNotEmpty()
+  fecha_caducidad: string;
 }
