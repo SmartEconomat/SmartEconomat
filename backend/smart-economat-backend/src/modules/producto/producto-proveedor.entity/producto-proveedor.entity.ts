@@ -69,4 +69,10 @@ export class ProductoProveedor {
 
   @OneToMany(() => PedidoProducto, (pp) => pp.productoProveedor)
   pedidoProductos!: PedidoProducto[];
+
+  @OneToMany(() => Inventario, (inventario) => inventario.productoProveedor)
+  inventarios!: Inventario[];
+
+  @OneToMany(() => HistorialPrecio, (historial) => historial.productoProveedor)
+  historialPrecios!: HistorialPrecio[];
 }
