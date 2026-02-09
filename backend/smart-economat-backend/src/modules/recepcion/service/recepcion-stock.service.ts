@@ -1,18 +1,18 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
-import { CreateRecepcionDto } from '../dto/create-recepcion.dto.js';
-import { AlbaranPedidoRecepcion } from '../../albaran/albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity.js';
-import { Inventario } from '../../inventario/inventario.entity/inventario.entity.js';
-import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity.js';
-import { Pedido } from '../../pedidos/pedido.entity/pedido.entity.js';
-import { TipoMovimiento } from '../../movimiento/enums/movimiento.enums.js';
-import { EstadoPedido } from '../../pedidos/enums/estado-pedido.enum.js';
-import { PedidoProducto } from '../../pedidos/pedido-producto.entity/pedido-producto.entity.js';
-import { Recepcion } from '../recepcion.entity/recepcion.entity.js';
-import { RecepcionPedido } from '../recepcion-pedido.entity/recepcion-pedido.entity.js';
-import { RecepcionProducto } from '../recepcion-productos.entity/recepcion-producto.entity.js';
-import { Albaran } from '../../albaran/albaran.entity/albaran.entity.js';
-import { localInventario } from '../../inventario/enums/inventario.enums.js';
+import { CreateRecepcionDto } from '../dto/create-recepcion.dto';
+import { AlbaranPedidoRecepcion } from '../../albaran/albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
+import { Inventario } from '../../inventario/inventario.entity/inventario.entity';
+import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
+import { Pedido } from '../../pedidos/pedido.entity/pedido.entity';
+import { TipoMovimiento } from '../../movimiento/enums/movimiento.enums';
+import { EstadoPedido } from '../../pedidos/enums/estado-pedido.enum';
+import { PedidoProducto } from '../../pedidos/pedido-producto.entity/pedido-producto.entity';
+import { Recepcion } from '../recepcion.entity/recepcion.entity';
+import { RecepcionPedido } from '../recepcion-pedido.entity/recepcion-pedido.entity';
+import { RecepcionProducto } from '../recepcion-productos.entity/recepcion-producto.entity';
+import { Albaran } from '../../albaran/albaran.entity/albaran.entity';
+import { localInventario } from '../../inventario/enums/inventario.enums';
 
 @Injectable()
 export class RecepcionStockService {
