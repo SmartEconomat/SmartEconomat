@@ -274,3 +274,5 @@ echo -e "${BLUE}📝 Total Commits: $TOTAL_COMMITS | Total PRs: $TOTAL_PRS${NC}"
 if [ -n "$HUSKY" ]; then
     git add "$OUTPUT_FILE"
 fi
+
+git add CONTRIBUTORS.md
