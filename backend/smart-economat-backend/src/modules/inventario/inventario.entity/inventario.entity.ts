@@ -4,9 +4,11 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { ProductoProveedor } from '../../productos/producto-proveedor.entity/producto-proveedor.entity';
 import { localInventario } from '../enums/inventario.enums';
+import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
 
 @Entity({ name: 'inventario' })
 export class Inventario {
@@ -34,4 +36,7 @@ export class Inventario {
 
   @Column({ type: 'timestamptz' })
   fecha_caducidad!: Date;
+
+  @OneToMany(() => Movimiento, (movimiento) => movimiento.inventario)
+  movimientos!: Movimiento[];
 }

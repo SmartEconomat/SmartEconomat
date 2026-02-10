@@ -7,10 +7,9 @@ import {
   Min,
 } from 'class-validator';
 import { TipoMovimiento } from '../enums/movimiento.enums';
-import { Usuario } from 'src/modules/usuario/usuario.entity/usuario.entity';
 
 export class CreateMovimientoDto {
-  @IsEnum(TipoMovimiento)
+  @IsEnum(TipoMovimiento, { message: 'Tipo de movimiento inválido' })
   tipo!: TipoMovimiento;
 
   @IsInt()
@@ -25,5 +24,5 @@ export class CreateMovimientoDto {
   inventario!: string;
 
   @IsUUID()
-  usuario!: Usuario;
+  usuario!: string;
 }

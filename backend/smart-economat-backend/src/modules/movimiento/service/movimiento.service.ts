@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { MovimientoRepository } from '../repository/movimiento.repository';
 import { CreateMovimientoDto } from '../dto/create-movimiento.dto';
 import { UpdateMovimientoDto } from '../dto/update-movimiento.dto';
+import { MovimientoHistoryDto } from '../dto/movimiento-history.dto';
+import { Movimiento } from '../movimiento.entity/movimiento.entity';
 
 @Injectable()
 export class MovimientoService {
@@ -27,5 +29,17 @@ export class MovimientoService {
 
   remove(id: number) {
     return this.movimientoRepo.deleteMovimiento(id);
+  }
+
+  async getMovimientoHistory(dto: MovimientoHistoryDto): Promise<Movimiento[]> {
+    const movimientos = await this.movimientoRepo.findMovimientosByEntity(dto);
+
+    if (!movimientos || movimientos.length === 0) {
+      throw new NotFoundException(
+        'No se encontraron movimientos para esta entidad'
+      );
+    }
+
+    return movimientos;
   }
 }

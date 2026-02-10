@@ -6,10 +6,14 @@ import {
   Param,
   Patch,
   Delete,
+  BadRequestException,
+  Query,
 } from '@nestjs/common';
 import { MovimientoService } from '../service/movimiento.service';
 import { CreateMovimientoDto } from '../dto/create-movimiento.dto';
 import { UpdateMovimientoDto } from '../dto/update-movimiento.dto';
+import ERROR_MESSAGES from '../../../common/constants/error-messages';
+import { MovimientoHistoryDto } from '../dto/movimiento-history.dto';
 
 @Controller('movimientos')
 export class MovimientoController {
@@ -17,6 +21,9 @@ export class MovimientoController {
 
   @Post()
   create(@Body() dto: CreateMovimientoDto) {
+    if (!dto) {
+      throw new BadRequestException(ERROR_MESSAGES.EMPTY_REQUEST);
+    }
     return this.movimientoService.create(dto);
   }
 
@@ -28,6 +35,11 @@ export class MovimientoController {
   @Get(':id')
   findOne(@Param('id') id: number) {
     return this.movimientoService.findOne(id);
+  }
+
+  @Get('historial')
+  getMovimientoHistory(@Query() dto: MovimientoHistoryDto) {
+    return this.movimientoService.getMovimientoHistory(dto);
   }
 
   @Patch(':id')
