@@ -11,13 +11,14 @@ const configService = new ConfigService();
 
 export const dataSource = new DataSource({
   type: 'postgres',
-  host: configService.get<string>('POSTGRES_HOST_URL'),
+  host: configService.get<string>('POSTGRES_HOST_SEEDER'),
   port: configService.get<number>('POSTGRES_PORT'),
   username: configService.get<string>('POSTGRES_USER'),
   password: configService.get<string>('POSTGRES_PASSWORD'),
   database: configService.get<string>('POSTGRES_DB'),
   entities: [join(__dirname, '../**/*.entity.{ts,js}')],
   synchronize: configService.get<string>('DB_SYNC') === 'true',
+  dropSchema: true,
   logging: false,
 });
 
@@ -29,10 +30,10 @@ async function runAllSeeders() {
     'pedido.seeder.ts',
     'recepcion.seeder.ts',
     'albaran.seeder.ts',
-    'movimiento.seeder.ts',
     'historial-pedido.seeder.ts',
     'inventario.seeder.ts',
     'incidencia.seeder.ts',
+    'movimiento.seeder.ts',
   ];
 
   for (const file of seedersInOrder) {
