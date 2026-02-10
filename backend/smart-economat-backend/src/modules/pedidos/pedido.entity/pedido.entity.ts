@@ -1,4 +1,3 @@
-// src/modules/pedidos/pedido.entity/pedido.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -7,6 +6,7 @@ import {
   JoinColumn,
   OneToMany,
 } from 'typeorm';
+import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 import { EstadoPedido } from '../enums/estado-pedido.enum';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
@@ -39,6 +39,7 @@ export class Pedido {
     scale: 2,
     default: 0,
     name: 'coste_total',
+    transformer: new ColumnNumericTransformer(),
   })
   costeTotal!: number;
 
