@@ -21,7 +21,6 @@ export const runSeeder = async (dataSource: DataSource) => {
     throw new Error('No hay proveedores. Ejecuta proveedor.seeder.ts primero.');
   }
 
-  // 2. Crear Productos base
   const productos: Producto[] = [];
   for (let i = 0; i < 15; i++) {
     const producto = productoRepo.create({
@@ -39,7 +38,6 @@ export const runSeeder = async (dataSource: DataSource) => {
   }
   const productosGuardados = await productoRepo.save(productos);
 
-  // 3. Crear Relaciones ProductoProveedor con precios y marcas
   const productoProveedores: ProductoProveedor[] = [];
   for (const producto of productosGuardados) {
     const numProveedores = faker.number.int({
@@ -47,7 +45,6 @@ export const runSeeder = async (dataSource: DataSource) => {
       max: Math.min(3, proveedores.length),
     });
 
-    // Seleccionar proveedores únicos para este producto
     const proveedoresAleatorios = faker.helpers.arrayElements(
       proveedores,
       numProveedores
@@ -58,7 +55,7 @@ export const runSeeder = async (dataSource: DataSource) => {
         producto,
         proveedor,
         precioUnitario: parseFloat(faker.commerce.price({ min: 5, max: 200 })),
-        marca: producto.marca, // O faker.company.name() para marcas de distribución
+        marca: producto.marca,
         codigoBarras: faker.string.numeric({ length: 13 }),
       });
       productoProveedores.push(pp);
@@ -66,7 +63,6 @@ export const runSeeder = async (dataSource: DataSource) => {
   }
   await productoProveedorRepo.save(productoProveedores);
 
-  // 4. Alérgenos
   const alergenos: ProductoAlergeno[] = [];
   const posiblesAlergenos = Object.values(AlergenoProducto);
   for (const producto of productosGuardados) {

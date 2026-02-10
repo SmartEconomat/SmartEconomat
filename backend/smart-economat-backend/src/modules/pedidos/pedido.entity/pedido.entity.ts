@@ -1,4 +1,3 @@
-// src/modules/pedidos/pedido.entity/pedido.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,

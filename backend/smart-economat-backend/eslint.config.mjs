@@ -16,6 +16,7 @@ export default tseslint.config(
       'dist/**',
       'package.json',
       'package-lock.json',
+      'scripts/**',
     ],
   },
   eslint.configs.recommended,
