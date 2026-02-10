@@ -11,8 +11,6 @@ export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
   const usuarioRepo = dataSource.getRepository(Usuario);
 
-  await dataSource.query(`TRUNCATE TABLE "usuario" RESTART IDENTITY CASCADE;`);
-
   const usuarios: Usuario[] = [];
   for (let i = 0; i < NUM_USUARIOS_A_CREAR; i++) {
     const usuario = usuarioRepo.create({

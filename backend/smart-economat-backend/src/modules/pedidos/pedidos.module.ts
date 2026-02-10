@@ -16,7 +16,7 @@ import { RecepcionPedido } from '../recepcion/recepcion-pedido.entity/recepcion-
 import { EstadoPedido } from './enums/estado-pedido.enum';
 
 @Entity({ name: 'pedido' })
-export class Pedido {
+export class PedidoModule {
   @PrimaryGeneratedColumn('uuid', { name: 'id_pedido' })
   id!: string;
 
