@@ -50,4 +50,7 @@ export class Pedido {
 
   @OneToMany(() => RecepcionPedido, (rp) => rp.pedido)
   recepcionesPedido!: RecepcionPedido[];
+
+  @Column({ type: 'text', nullable: true, name: 'motivo_cancelacion' })
+  motivoCancelacion?: string;
 }
