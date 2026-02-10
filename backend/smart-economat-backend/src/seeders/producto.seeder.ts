@@ -1,13 +1,13 @@
 import { DataSource } from 'typeorm';
-import { Producto } from '../modules/productos/producto.entity/producto.entity';
-import { ProductoProveedor } from '../modules/productos/producto-proveedor.entity/producto-proveedor.entity';
-import { ProductoAlergeno } from '../modules/productos/producto-alergeno.entity/producto-alergeno.entity';
+import { Producto } from '../modules/producto/producto.entity/producto.entity';
+import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
+import { ProductoAlergeno } from '../modules/producto/producto-alergeno.entity/producto-alergeno.entity';
 import { Proveedor } from '../modules/proveedor/proveedor.entity/proveedor.entity';
 import {
   UnidadProducto,
   TipoProducto,
   AlergenoProducto,
-} from '../modules/productos/enums/producto.enums';
+} from '../modules/producto/enums/producto.enums';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
@@ -15,11 +15,6 @@ export const runSeeder = async (dataSource: DataSource) => {
   const proveedorRepo = dataSource.getRepository(Proveedor);
   const productoProveedorRepo = dataSource.getRepository(ProductoProveedor);
   const productoAlergenoRepo = dataSource.getRepository(ProductoAlergeno);
-
-  // 1. Limpieza total con CASCADE para resetear IDs
-  await dataSource.query(`
-    TRUNCATE TABLE "producto_alergeno", "producto_proveedor", "producto" RESTART IDENTITY CASCADE;
-  `);
 
   const proveedores = await proveedorRepo.find();
   if (proveedores.length === 0) {
