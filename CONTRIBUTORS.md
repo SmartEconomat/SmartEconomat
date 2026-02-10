@@ -1,6 +1,6 @@
 # 🏆 Clasificación de Contribuidores - SmartEconomat
 
-> **Última actualización:** 2026-02-09 09:05:13
+> **Última actualización:** 2026-02-10 09:32:49
 
 ---
 
@@ -18,7 +18,7 @@ Demostrando que:
 - 🚀 Git commit es su mantra matutino
 
 **Estadísticas de Dominio:**
-- Posee el **46.88%** de todo el código.
+- Posee el **46.15%** de todo el código.
 - Ha logrado fusionar **20** funcionalidades completas.
 
 ---
@@ -26,19 +26,19 @@ Demostrando que:
 ## 📊 Hall de la Fama
 
 ### 🥈 Maurizio
-- 💻 Commits: **13** (20.31%)
+- 💻 Commits: **13** (20.00%)
 - 🔀 PRs Fusionados: **6**
 
 ### 🥈 Sergio
-- 💻 Commits: **10** (15.62%)
+- 💻 Commits: **11** (16.92%)
 - 🔀 PRs Fusionados: **1**
 
 ### 🥈 AlexRuiz7687
-- 💻 Commits: **7** (10.94%)
+- 💻 Commits: **7** (10.77%)
 - 🔀 PRs Fusionados: **1**
 
 ### 🥈 StrayClase
-- 💻 Commits: **4** (6.25%)
+- 💻 Commits: **4** (6.15%)
 - 🔀 PRs Fusionados: **2**
 
 
@@ -64,20 +64,20 @@ Con **4 commits** y **2 PRs**, tenemos aquí a alguien que:
 
 | Posición | Contribuidor | Commits | PRs Fusionados | % Código | Estado |
 |----------|--------------|---------|----------------|----------|--------|
-| #1 | Darel | **30** | 🔀 **20** | 46.88% | 👑 Líder |
-| #2 | Maurizio | **13** | 🔀 **6** | 20.31% | 💪 Activo |
-| #3 | Sergio | **10** | 🔀 **1** | 15.62% | 💪 Activo |
-| #4 | AlexRuiz7687 | **7** | 🔀 **1** | 10.94% | 💪 Activo |
-| #5 | StrayClase | **4** | 🔀 **2** | 6.25% | 🐌 Necesita café |
+| #1 | Darel | **30** | 🔀 **20** | 46.15% | 👑 Líder |
+| #2 | Maurizio | **13** | 🔀 **6** | 20.00% | 💪 Activo |
+| #3 | Sergio | **11** | 🔀 **1** | 16.92% | 💪 Activo |
+| #4 | AlexRuiz7687 | **7** | 🔀 **1** | 10.77% | 💪 Activo |
+| #5 | StrayClase | **4** | 🔀 **2** | 6.15% | 🐌 Necesita café |
 
 ---
 
 ## 📊 Estadísticas Generales
 
-- **Total de commits:** 64
+- **Total de commits:** 65
 - **Total de PRs fusionados:** 37
 - **Total de contribuidores:** 5
-- **Promedio de commits por persona:** 12.8
+- **Promedio de commits por persona:** 13.0
 
 ---
 
@@ -90,7 +90,7 @@ Con **4 commits** y **2 PRs**, tenemos aquí a alguien que:
 `████████░░░░░░░░░░░░` 13 commits | 6 PRs
 
 **Sergio**
-`██████░░░░░░░░░░░░░░` 10 commits | 1 PRs
+`███████░░░░░░░░░░░░░` 11 commits | 1 PRs
 
 **AlexRuiz7687**
 `████░░░░░░░░░░░░░░░░` 7 commits | 1 PRs
