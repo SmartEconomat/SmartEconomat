@@ -4,9 +4,15 @@ import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PedidosModule } from './modules/pedidos/pedidos.module';
 import { ProductosModule } from './modules/productos/productos.module';
+import { MovimientoModule } from './modules/movimiento/movimiento.module';
 import { dataSource } from './config/datasource';
 @Module({
-  imports: [TypeOrmModule.forRoot(dataSource), PedidosModule, ProductosModule],
+  imports: [
+    TypeOrmModule.forRoot(dataSource),
+    PedidosModule,
+    ProductosModule,
+    MovimientoModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

@@ -30,10 +30,10 @@ async function runAllSeeders() {
     'pedido.seeder.ts',
     'recepcion.seeder.ts',
     'albaran.seeder.ts',
-    'movimiento.seeder.ts',
     'historial-pedido.seeder.ts',
     'inventario.seeder.ts',
     'incidencia.seeder.ts',
+    'movimiento.seeder.ts',
   ];
 
   for (const file of seedersInOrder) {
