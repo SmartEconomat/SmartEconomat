@@ -1,9 +1,9 @@
 import { DataSource } from 'typeorm';
-import { Pedido } from '../modules/pedidos/pedido.entity/pedido.entity';
-import { PedidoProducto } from '../modules/pedidos/pedido-producto.entity/pedido-producto.entity';
-import { EstadoPedido } from '../modules/pedidos/enums/estado-pedido.enum';
+import { Pedido } from '../modules/pedido/pedido.entity/pedido.entity';
+import { PedidoProducto } from '../modules/pedido/pedido-producto.entity/pedido-producto.entity';
+import { EstadoPedido } from '../modules/pedido/enums/estado-pedido.enum';
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
-import { ProductoProveedor } from '../modules/productos/producto-proveedor.entity/producto-proveedor.entity';
+import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');

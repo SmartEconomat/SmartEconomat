@@ -1,13 +1,13 @@
 import { DataSource } from 'typeorm';
-import { Producto } from '../modules/productos/producto.entity/producto.entity';
-import { ProductoProveedor } from '../modules/productos/producto-proveedor.entity/producto-proveedor.entity';
-import { ProductoAlergeno } from '../modules/productos/producto-alergeno.entity/producto-alergeno.entity';
+import { Producto } from '../modules/producto/producto.entity/producto.entity';
+import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
+import { ProductoAlergeno } from '../modules/producto/producto-alergeno.entity/producto-alergeno.entity';
 import { Proveedor } from '../modules/proveedor/proveedor.entity/proveedor.entity';
 import {
   UnidadProducto,
   TipoProducto,
   AlergenoProducto,
-} from '../modules/productos/enums/producto.enums';
+} from '../modules/producto/enums/producto.enums';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');

@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
-import { HistorialPrecio } from '../modules/productos/historial-precio-proveedor.entity/historial.entity';
-import { ProductoProveedor } from '../modules/productos/producto-proveedor.entity/producto-proveedor.entity';
+import { HistorialPrecio } from '../modules/producto/historial-precio-proveedor.entity/historial.entity';
+import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');

@@ -11,7 +11,7 @@ import {
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 import { Producto } from '../producto.entity/producto.entity';
 import { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
-import { PedidoProducto } from '../../pedidos/pedido-producto.entity/pedido-producto.entity';
+import { PedidoProducto } from '../../pedido/pedido-producto.entity/pedido-producto.entity';
 
 @Unique(['producto', 'proveedor'])
 @Entity({ name: 'producto_proveedor' })

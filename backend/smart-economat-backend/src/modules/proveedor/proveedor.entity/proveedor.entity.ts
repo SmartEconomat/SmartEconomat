@@ -1,4 +1,4 @@
-import { ProductoProveedor } from '../../productos/producto-proveedor.entity/producto-proveedor.entity';
+import { ProductoProveedor } from 'src/modules/producto/producto-proveedor.entity/producto-proveedor.entity';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 @Entity({ name: 'proveedor' })
 export class Proveedor {
