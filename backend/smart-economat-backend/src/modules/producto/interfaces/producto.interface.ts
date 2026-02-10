@@ -1,4 +1,4 @@
-import { IProductoProveedor } from '../interfaces/producto-proveedor.interface';
+import { IProductoProveedor } from './producto-proveedor.interface';
 import { IProductoAlergeno } from './producto-alergeno.interface';
 
 export interface IProducto {

@@ -21,10 +21,6 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   if (usuarios.length === 0 || inventarios.length === 0) return;
 
-  await dataSource.query(
-    `TRUNCATE TABLE "movimiento" RESTART IDENTITY CASCADE;`
-  );
-
   const movimientos: Movimiento[] = [];
 
   const entidades = ['PRODUCTO', 'PEDIDO', 'AJUSTE'] as const;

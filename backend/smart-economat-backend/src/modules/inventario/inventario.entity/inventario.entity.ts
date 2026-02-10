@@ -6,7 +6,7 @@ import {
   JoinColumn,
   OneToMany,
 } from 'typeorm';
-import { ProductoProveedor } from '../../productos/producto-proveedor.entity/producto-proveedor.entity';
+import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
 import { localInventario } from '../enums/inventario.enums';
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
 
