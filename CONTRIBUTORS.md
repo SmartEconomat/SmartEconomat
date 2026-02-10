@@ -1,6 +1,6 @@
 # 🏆 Clasificación de Contribuidores - SmartEconomat
 
-> **Última actualización:** 2026-02-06 15:15:59
+> **Última actualización:** 2026-02-10 13:16:55
 
 ---
 
@@ -18,7 +18,11 @@ Demostrando que:
 - 🚀 Git commit es su mantra matutino
 
 **Estadísticas de Dominio:**
+<<<<<<< HEAD
 - Posee el **50,00%** de todo el código.
+=======
+- Posee el **40.51%** de todo el código.
+>>>>>>> 81a45fc (feat: CRUD movimiento)
 - Ha logrado fusionar **19** funcionalidades completas.
 
 ---
@@ -26,19 +30,19 @@ Demostrando que:
 ## 📊 Hall de la Fama
 
 ### 🥈 Maurizio
-- 💻 Commits: **13** (20,31%)
+- 💻 Commits: **16** (20.25%)
 - 🔀 PRs Fusionados: **6**
 
-### 🥈 Sergio
-- 💻 Commits: **8** (12,50%)
+### 🥈 AlexRuiz7687
+- 💻 Commits: **14** (17.72%)
 - 🔀 PRs Fusionados: **1**
 
-### 🥈 AlexRuiz7687
-- 💻 Commits: **7** (10,94%)
+### 🥈 Sergio
+- 💻 Commits: **10** (12.66%)
 - 🔀 PRs Fusionados: **1**
 
 ### 🥈 StrayClase
-- 💻 Commits: **4** (6,25%)
+- 💻 Commits: **7** (8.86%)
 - 🔀 PRs Fusionados: **2**
 
 
@@ -48,7 +52,7 @@ Demostrando que:
 
 ### 😅 **StrayClase**
 
-Con **4 commits** y **2 PRs**, tenemos aquí a alguien que:
+Con **7 commits** y **2 PRs**, tenemos aquí a alguien que:
 - 🤔 Prefiere la calidad sobre la cantidad (eso espero...)
 - 🏖️ Cree que git es una red social casual
 - 🎯 Está "esperando el momento perfecto" para contribuir
@@ -64,20 +68,20 @@ Con **4 commits** y **2 PRs**, tenemos aquí a alguien que:
 
 | Posición | Contribuidor | Commits | PRs Fusionados | % Código | Estado |
 |----------|--------------|---------|----------------|----------|--------|
-| #1 | Darel | **32** | 🔀 **19** | 50,00% | 👑 Líder |
-| #2 | Maurizio | **13** | 🔀 **6** | 20,31% | 💪 Activo |
-| #3 | Sergio | **8** | 🔀 **1** | 12,50% | 💪 Activo |
-| #4 | AlexRuiz7687 | **7** | 🔀 **1** | 10,94% | 💪 Activo |
-| #5 | StrayClase | **4** | 🔀 **2** | 6,25% | 🐌 Necesita café |
+| #1 | Darel | **32** | 🔀 **19** | 40.51% | 👑 Líder |
+| #2 | Maurizio | **16** | 🔀 **6** | 20.25% | 💪 Activo |
+| #3 | AlexRuiz7687 | **14** | 🔀 **1** | 17.72% | 💪 Activo |
+| #4 | Sergio | **10** | 🔀 **1** | 12.66% | 💪 Activo |
+| #5 | StrayClase | **7** | 🔀 **2** | 8.86% | 🐌 Necesita café |
 
 ---
 
 ## 📊 Estadísticas Generales
 
-- **Total de commits:** 64
+- **Total de commits:** 79
 - **Total de PRs fusionados:** 36
 - **Total de contribuidores:** 5
-- **Promedio de commits por persona:** 12,8
+- **Promedio de commits por persona:** 15.8
 
 ---
 
@@ -87,16 +91,16 @@ Con **4 commits** y **2 PRs**, tenemos aquí a alguien que:
 `████████████████████` 32 commits | 19 PRs
 
 **Maurizio**
-`████████░░░░░░░░░░░░` 13 commits | 6 PRs
-
-**Sergio**
-`█████░░░░░░░░░░░░░░░` 8 commits | 1 PRs
+`██████████░░░░░░░░░░` 16 commits | 6 PRs
 
 **AlexRuiz7687**
-`████░░░░░░░░░░░░░░░░` 7 commits | 1 PRs
+`████████░░░░░░░░░░░░` 14 commits | 1 PRs
+
+**Sergio**
+`██████░░░░░░░░░░░░░░` 10 commits | 1 PRs
 
 **StrayClase**
-`██░░░░░░░░░░░░░░░░░░` 4 commits | 2 PRs
+`████░░░░░░░░░░░░░░░░` 7 commits | 2 PRs
 
 ---
 

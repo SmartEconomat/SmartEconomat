@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Producto } from '../producto.entity/producto.entity';
 import { ProductoRepository } from '../repository/producto.repository';
 import { CreateProductoDto } from '../dto/create-producto.dto';
@@ -7,12 +6,10 @@ import { UpdateProductoDto } from '../dto/update-producto.dto';
 import { getProductMessage } from '../constants';
 import { ErrorMessages } from '../../../common/enums/messages/errors/error-messages.enum';
 import { LanguageEnum } from '../../../common/enums/languages/language.enum';
+
 @Injectable()
 export class ProductosService {
-  constructor(
-    @InjectRepository(Producto)
-    private readonly productoRepository: ProductoRepository
-  ) {}
+  constructor(private readonly productoRepository: ProductoRepository) {}
 
   async create(createProductoDto: CreateProductoDto): Promise<Producto> {
     const producto = this.productoRepository.create(createProductoDto);
