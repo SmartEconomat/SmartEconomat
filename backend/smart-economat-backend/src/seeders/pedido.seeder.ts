@@ -1,9 +1,11 @@
 import { DataSource } from 'typeorm';
-import { Pedido } from '../modules/pedidos/pedido.entity/pedido.entity';
+import {
+  Pedido,
+  EstadoPedido,
+} from '../modules/pedidos/pedido.entity/pedido.entity';
 import { PedidoProducto } from '../modules/pedidos/pedido-producto.entity/pedido-producto.entity';
-import { EstadoPedido } from '../modules/pedidos/enums/estado-pedido.enum';
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
-import { ProductoProveedor } from '../modules/productos/producto-proveedor.entity/producto-proveedor.entity';
+import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
@@ -13,63 +15,59 @@ export const runSeeder = async (dataSource: DataSource) => {
   const productoProveedorRepo = dataSource.getRepository(ProductoProveedor);
 
   const usuarios = await usuarioRepo.find();
-  const productosProv = await productoProveedorRepo.find({
-    relations: ['producto'],
-  });
+  const productosProv = await productoProveedorRepo.find();
 
-  if (usuarios.length === 0) throw new Error('No hay usuarios');
+  if (usuarios.length === 0)
+    throw new Error('No hay usuarios en la base de datos');
   if (productosProv.length === 0)
     throw new Error('No hay productos con proveedor');
 
-  await dataSource.query(`
-    TRUNCATE TABLE "pedido_productos", "pedido" RESTART IDENTITY CASCADE;
-  `);
-
-  const pedidos: Pedido[] = [];
   for (let i = 0; i < 8; i++) {
-    const pedido = new Pedido();
-    pedido.usuario = faker.helpers.arrayElement(usuarios);
-    pedido.fechaPedido = faker.date.recent({ days: 7 });
-    pedido.fechaEntrega = faker.date.soon({ days: 7 });
-    pedido.estado = faker.helpers.arrayElement(Object.values(EstadoPedido));
-    pedido.costeTotal = 0;
-    pedidos.push(pedido);
-  }
-  await pedidoRepo.save(pedidos);
+    const pedido = pedidoRepo.create({
+      usuario: faker.helpers.arrayElement(usuarios),
+      fechaPedido: faker.date.recent({ days: 7 }),
+      fechaEntrega: faker.date.soon({ days: 14 }),
+      estado: faker.helpers.arrayElement(Object.values(EstadoPedido)),
+      costeTotal: 0,
+    });
 
-  for (const pedido of pedidos) {
+    const pedidoGuardado = await pedidoRepo.save(pedido);
+
     const numItems = faker.number.int({ min: 1, max: 5 });
-    const items = faker.helpers.arrayElements(productosProv, numItems);
+    const itemsSeleccionados = faker.helpers.arrayElements(
+      productosProv,
+      numItems
+    );
 
-    let total = 0;
-    const pedidoProductosToSave: PedidoProducto[] = [];
+    let acumuladoTotal = 0;
+    const detallesPedido: PedidoProducto[] = [];
 
-    for (const pp of items) {
-      const cantidad = faker.number.int({ min: 1, max: 8 });
-      const precio =
+    for (const pp of itemsSeleccionados) {
+      const cantidad = faker.number.int({ min: 1, max: 10 });
+      const precioUnitario =
         pp.precioUnitario ||
-        parseFloat(faker.commerce.price({ min: 10, max: 100 }));
-      total += precio * cantidad;
+        parseFloat(faker.commerce.price({ min: 10, max: 500 }));
 
-      const ppEntry = new PedidoProducto();
-      ppEntry.pedido = pedido;
-      ppEntry.productoProveedor = pp;
-      ppEntry.cantidad = cantidad;
-      ppEntry.precio_unitario = precio;
-      ppEntry.observaciones = faker.datatype.boolean(0.3)
-        ? faker.lorem.sentence()
-        : undefined;
+      acumuladoTotal += precioUnitario * cantidad;
 
-      pedidoProductosToSave.push(ppEntry);
+      detallesPedido.push(
+        pedidoProductoRepo.create({
+          pedido: pedidoGuardado,
+          productoProveedor: pp,
+          cantidad: cantidad,
+          precio_unitario: precioUnitario,
+          observaciones: faker.datatype.boolean(0.3)
+            ? faker.lorem.sentence()
+            : undefined,
+        })
+      );
     }
 
-    if (pedidoProductosToSave.length > 0) {
-      await pedidoProductoRepo.save(pedidoProductosToSave);
-    }
+    await pedidoProductoRepo.save(detallesPedido);
 
-    pedido.costeTotal = parseFloat(total.toFixed(2));
-    await pedidoRepo.save(pedido);
+    pedidoGuardado.costeTotal = parseFloat(acumuladoTotal.toFixed(2));
+    await pedidoRepo.save(pedidoGuardado);
   }
 
-  console.log('Seeder de pedidos ejecutado correctamente.');
+  console.log('✅ Seeder de pedidos y detalles completado con éxito.');
 };

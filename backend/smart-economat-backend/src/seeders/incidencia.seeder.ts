@@ -10,10 +10,6 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   const MAX_INCIDENCIA = 5;
 
-  await dataSource.query(
-    `TRUNCATE TABLE "incidencia" RESTART IDENTITY CASCADE;`
-  );
-
   const recepciones = await recepcionRepo.find();
   if (recepciones.length === 0) {
     throw new Error('No se han creado recepciones');
