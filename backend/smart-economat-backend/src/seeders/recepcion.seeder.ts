@@ -4,6 +4,7 @@ import { RecepcionPedido } from '../modules/recepcion/recepcion-pedido.entity/re
 import { RecepcionProducto } from '../modules/recepcion/recepcion-productos.entity/recepcion-producto.entity';
 import { Pedido } from '../modules/pedidos/pedido.entity/pedido.entity';
 import { PedidoProducto } from '../modules/pedidos/pedido-producto.entity/pedido-producto.entity';
+import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
@@ -12,39 +13,41 @@ export const runSeeder = async (dataSource: DataSource) => {
   const recepcionProductoRepo = dataSource.getRepository(RecepcionProducto);
   const pedidoRepo = dataSource.getRepository(Pedido);
   const pedidoProductoRepo = dataSource.getRepository(PedidoProducto);
+  const usuarioRepo = dataSource.getRepository(Usuario);
 
-  const pedidos = await pedidoRepo.find({
-    relations: ['usuario'],
-  });
+  const pedidos = await pedidoRepo.find();
+  const usuarios = await usuarioRepo.find();
 
-  if (!pedidos.length) {
-    console.log('No se encontraron pedidos, saltando seeder de recepciones.');
+  if (!pedidos.length || !usuarios.length) {
+    console.log('Faltan pedidos o usuarios, saltando seeder de recepciones.');
     return;
   }
+  await dataSource.query(
+    `TRUNCATE TABLE "recepcion_producto", "recepcion_pedido", "recepcion" RESTART IDENTITY CASCADE;`
+  );
 
   for (const pedido of pedidos) {
     const pedidoProductos = await pedidoProductoRepo.find({
       where: { pedido: { id: pedido.id } },
-      relations: ['productoProveedor', 'productoProveedor.producto'],
+      relations: ['productoProveedor'],
     });
 
     if (pedidoProductos.length === 0) continue;
 
-    const recepcion = new Recepcion();
-    const usuarioAleatorio = await dataSource
-      .getRepository('Usuario')
-      .findOne({ where: {} });
-    recepcion.usuario = usuarioAleatorio?.id || faker.string.uuid();
-    recepcion.fechaRecepcion = faker.date.recent({ days: 3 });
-    recepcion.observaciones = faker.datatype.boolean(0.4)
-      ? faker.lorem.sentence()
-      : undefined;
-    await recepcionRepo.save(recepcion);
+    const recepcion = recepcionRepo.create({
+      usuario: faker.helpers.arrayElement(usuarios),
+      fechaRecepcion: faker.date.recent({ days: 3 }),
+      observaciones: faker.datatype.boolean(0.4)
+        ? faker.lorem.sentence()
+        : undefined,
+    });
+    const recepcionGuardada = await recepcionRepo.save(recepcion);
 
-    const rp = new RecepcionPedido();
-    rp.recepcion = recepcion;
-    rp.pedido = pedido;
-    rp.fechaVinculacion = faker.date.recent();
+    const rp = recepcionPedidoRepo.create({
+      recepcion: recepcionGuardada,
+      pedido: pedido,
+      fechaVinculacion: faker.date.recent(),
+    });
     await recepcionPedidoRepo.save(rp);
 
     const numRecibir = faker.number.int({
@@ -58,19 +61,23 @@ export const runSeeder = async (dataSource: DataSource) => {
 
     const recepcionesProd: RecepcionProducto[] = [];
     for (const pp of seleccionados) {
-      const cantidadMax = Math.max(1, Number(pp.cantidad));
-      const recibida = faker.number.int({ min: 1, max: cantidadMax });
+      const cantidadPedida = Number(pp.cantidad);
+      const recibida = faker.number.int({
+        min: 1,
+        max: Math.floor(cantidadPedida),
+      });
 
-      const rpProd = new RecepcionProducto();
-      rpProd.recepcion = recepcion;
-      rpProd.pedidoProducto = pp;
-      rpProd.cantidadRecibida = recibida;
-      rpProd.observaciones = faker.datatype.boolean(0.3)
-        ? faker.lorem.sentence()
-        : undefined;
-      rpProd.fechaRecepcion = faker.date.recent();
-
-      recepcionesProd.push(rpProd);
+      recepcionesProd.push(
+        recepcionProductoRepo.create({
+          recepcion: recepcionGuardada,
+          pedidoProducto: pp,
+          cantidadRecibida: recibida,
+          observaciones: faker.datatype.boolean(0.3)
+            ? faker.lorem.sentence()
+            : undefined,
+          fechaRecepcion: faker.date.recent(),
+        })
+      );
     }
 
     if (recepcionesProd.length > 0) {
@@ -78,5 +85,5 @@ export const runSeeder = async (dataSource: DataSource) => {
     }
   }
 
-  console.log('Seeder de recepciones ejecutado correctamente.');
+  console.log('✅ Seeder de recepciones completado con éxito.');
 };
