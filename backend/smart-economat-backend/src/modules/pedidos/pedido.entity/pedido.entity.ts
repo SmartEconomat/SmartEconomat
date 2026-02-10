@@ -51,3 +51,5 @@ export class Pedido {
   @OneToMany(() => RecepcionPedido, (rp) => rp.pedido)
   recepcionesPedido!: RecepcionPedido[];
 }
+
+export { EstadoPedido };
