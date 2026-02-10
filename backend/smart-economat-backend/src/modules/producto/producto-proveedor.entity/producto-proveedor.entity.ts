@@ -17,16 +17,12 @@ import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.
 @Unique(['producto', 'proveedor'])
 @Entity({ name: 'producto_proveedor' })
 export class ProductoProveedor {
-  // --- CAMPOS ---
-  // id_producto_proveedor
   @PrimaryGeneratedColumn('uuid', { name: 'id_producto_proveedor' })
   id!: string;
 
-  // marca
   @Column({ type: 'varchar', length: 100, nullable: true })
   marca?: string;
 
-  // codigo_barras
   @Column({
     type: 'varchar',
     length: 130,
@@ -34,7 +30,7 @@ export class ProductoProveedor {
     name: 'codigo_barras',
   })
   codigoBarras?: string;
-  // precio_unitario
+
   @Column({
     type: 'decimal',
     precision: 10,
@@ -44,8 +40,6 @@ export class ProductoProveedor {
     transformer: new ColumnNumericTransformer(),
   })
   precioUnitario?: number;
-
-  // --- RALACIONES MANY TO ONE ---
 
   @ManyToOne(() => Producto, (producto) => producto.proveedores, {
     onDelete: 'CASCADE',
@@ -59,8 +53,6 @@ export class ProductoProveedor {
   @JoinColumn({ name: 'id_proveedor' })
   proveedor!: Proveedor;
 
-  // --- RELACIONES ONE TO MANY ---
-
   @OneToMany(() => Inventario, (inventario) => inventario.productoProveedor)
   inventarios!: Inventario[];
 
@@ -69,10 +61,4 @@ export class ProductoProveedor {
 
   @OneToMany(() => PedidoProducto, (pp) => pp.productoProveedor)
   pedidoProductos!: PedidoProducto[];
-
-  @OneToMany(() => Inventario, (inventario) => inventario.productoProveedor)
-  inventarios!: Inventario[];
-
-  @OneToMany(() => HistorialPrecio, (historial) => historial.productoProveedor)
-  historialPrecios!: HistorialPrecio[];
 }

@@ -51,8 +51,6 @@ export class PedidoModule {
   })
   estado!: EstadoPedido;
 
-  // -- Relaciones --
-
   @ManyToOne(() => Usuario, (usuario) => usuario.pedidos)
   @JoinColumn({ name: 'id_usuario' })
   usuario!: Usuario;
