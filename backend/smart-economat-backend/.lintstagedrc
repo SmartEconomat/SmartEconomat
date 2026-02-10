@@ -1,5 +1,6 @@
 {
   "*.{ts,js}": [
+    "node scripts/git-hooks/remove-comments.js",
     "prettier --write",
     "eslint --fix"
   ],
