@@ -19,19 +19,19 @@ export const runSeeder = async (dataSource: DataSource) => {
   for (const pp of productosProv) {
     const inventario = new Inventario();
     inventario.productoProveedor = pp;
-    inventario.cantidad_actual = faker.number.int({ min: 0, max: 100 });
-    inventario.cantidad_minima = faker.number.int({
+    inventario.cantidadActual = faker.number.int({ min: 0, max: 100 });
+    inventario.cantidadMinima = faker.number.int({
       min: 0,
-      max: inventario.cantidad_actual,
+      max: inventario.cantidadActual,
     });
-    inventario.cantidad_maxima = faker.number.int({ min: 1, max: 100 });
-    inventario.ubicacion_almacen = faker.helpers.arrayElement(
+    inventario.cantidadMaxima = faker.number.int({ min: 1, max: 100 });
+    inventario.ubicacionAlmacen = faker.helpers.arrayElement(
       Object.values(localInventario)
     );
-    inventario.fecha_entrada = faker.date.recent({ days: 90 });
-    inventario.fecha_caducidad = faker.date.soon({
+    inventario.fechaEntrada = faker.date.recent({ days: 90 });
+    inventario.fechaCaducidad = faker.date.soon({
       days: faker.number.int({ min: 1, max: 365 }),
-      refDate: inventario.fecha_entrada,
+      refDate: inventario.fechaEntrada,
     });
 
     inventarios.push(inventario);
