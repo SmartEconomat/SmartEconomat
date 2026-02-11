@@ -6,6 +6,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 import Checkbox from '../ui/Checkbox';
+import { useNavigate } from 'react-router-dom';
 
 const visuallyHidden = {
     border: 0,
@@ -21,10 +22,12 @@ const visuallyHidden = {
 
 export default function Login() {
     const [formData, setFormData] = useState({ email: '', password: '' });
+    const navigate = useNavigate();
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         console.log('Datos de login:', formData);
+        navigate('/');
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
