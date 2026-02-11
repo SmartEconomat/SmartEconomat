@@ -7,9 +7,9 @@ export class AlertaStockDTO {
 
   @IsInt()
   @Min(0)
-  cantidad_minima: number;
+  cantidadMinima: number;
 
   @IsInt()
   @Min(0)
-  cantidad_actual: number;
+  cantidadActual: number;
 }
