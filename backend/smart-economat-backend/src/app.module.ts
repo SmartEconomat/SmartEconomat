@@ -5,10 +5,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PedidoModule } from './modules/pedidos/pedidos.module';
 import { ProductosModule } from './modules/producto/productos.module';
 import { MovimientoModule } from './modules/movimiento/movimiento.module';
-import { dataSource } from './config/datasource';
+import { typeOrmConfig } from './config/database.config';
 @Module({
   imports: [
-    TypeOrmModule.forRoot(dataSource),
+    TypeOrmModule.forRoot(typeOrmConfig),
     PedidoModule,
     ProductosModule,
     MovimientoModule,

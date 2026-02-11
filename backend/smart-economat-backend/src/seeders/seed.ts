@@ -1,26 +1,24 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
-import { readdirSync } from 'fs';
+import { readdirSync, existsSync } from 'fs';
 import { join } from 'path';
-import { ConfigService } from '@nestjs/config';
 import * as dotenv from 'dotenv';
 import { Seeder } from './interfaces/seeder.interface';
 
 dotenv.config({ path: join(__dirname, '../../../../.env') });
-const configService = new ConfigService();
+
+import { dbConfig } from '../config/database.config';
+
+const isDocker = existsSync('/.dockerenv');
+const host = isDocker
+  ? (dbConfig as any).host
+  : process.env.POSTGRES_HOST_URL || 'localhost';
 
 export const dataSource = new DataSource({
-  type: 'postgres',
-  host: configService.get<string>('POSTGRES_HOST_SEEDER'),
-  port: configService.get<number>('POSTGRES_PORT'),
-  username: configService.get<string>('POSTGRES_USER'),
-  password: configService.get<string>('POSTGRES_PASSWORD'),
-  database: configService.get<string>('POSTGRES_DB'),
-  entities: [join(__dirname, '../**/*.entity.{ts,js}')],
-  synchronize: configService.get<string>('DB_SYNC') === 'true',
+  ...dbConfig,
+  host,
   dropSchema: true,
-  logging: false,
-});
+} as any);
 
 async function runAllSeeders() {
   const seedersInOrder = [
