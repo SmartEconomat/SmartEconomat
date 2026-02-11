@@ -8,9 +8,9 @@ import { Pedido } from '../../pedidos/pedido.entity/pedido.entity.js';
 import { TipoMovimiento } from '../../movimiento/enums/movimiento.enums.js';
 import { EstadoPedido } from '../../pedidos/enums/estado-pedido.enum.js';
 import { PedidoProducto } from '../../pedidos/pedido-producto.entity/pedido-producto.entity.js';
-import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity.js';
-import { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepcion-pedido.entity.js';
-import { RecepcionProducto } from '../../recepcion/recepcion-productos.entity/recepcion-producto.entity.js';
+import { Recepcion } from '../recepcion.entity/recepcion.entity.js';
+import { RecepcionPedido } from '../recepcion-pedido.entity/recepcion-pedido.entity.js';
+import { RecepcionProducto } from '../recepcion-productos.entity/recepcion-producto.entity.js';
 import { Albaran } from '../../albaran/albaran.entity/albaran.entity.js';
 import { localInventario } from '../../inventario/enums/inventario.enums.js';
 
