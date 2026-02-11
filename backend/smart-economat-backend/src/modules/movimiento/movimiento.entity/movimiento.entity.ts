@@ -64,10 +64,7 @@ export class Movimiento {
   @JoinColumn({ name: 'id_usuario', referencedColumnName: 'id' })
   usuario!: Usuario;
 
-  @ManyToOne(() => Inventario, (inventario) => inventario.movimientos, {
-    nullable: false,
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn({ name: 'id_inventario', referencedColumnName: 'id' })
+  @ManyToOne(() => Inventario, { nullable: false, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'id_inventario' })
   inventario!: Inventario;
 }
