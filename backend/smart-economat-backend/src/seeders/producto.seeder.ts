@@ -33,6 +33,8 @@ export const runSeeder = async (dataSource: DataSource) => {
         : undefined,
       tipo: faker.helpers.arrayElement(Object.values(TipoProducto)),
       pathImg: faker.image.url({ width: 640, height: 480 }),
+      cantidad: faker.number.float({ min: 1, max: 500 }),
+      codigo: faker.string.alphanumeric(10).toUpperCase(),
     });
     productos.push(producto);
   }
