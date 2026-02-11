@@ -68,7 +68,7 @@ Con **10 commits** y **5 PRs**, tenemos aquí a alguien que:
 | #2 | Maurizio | **23** | 🔀 **8** | 22.12% | 💪 Activo |
 | #3 | AlexRuiz7687 | **19** | 🔀 **6** | 18.27% | 💪 Activo |
 | #4 | Sergio | **12** | 🔀 **1** | 11.54% | 💪 Activo |
-| #5 | StrayClase | **10** | 🔀 **5** | 9.62% | 🐌 Necesita café |
+| #5 | StrayClase | **10** | 🔀 **5** | 9.62% |  Necesita café |
 
 ---
 
