@@ -42,6 +42,13 @@ export class Movimiento {
   @Column({ type: 'varchar', length: 255 })
   entidadId!: string;
 
+  @ManyToOne(() => Usuario, (usuario) => usuario.movimientos, {
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'id_usuario', referencedColumnName: 'id' })
+  usuario!: Usuario;
+
   @CreateDateColumn({
     name: 'created_at',
   })
@@ -56,15 +63,4 @@ export class Movimiento {
     name: 'deleted_at',
   })
   deletedAt?: Date;
-
-  @ManyToOne(() => Usuario, (usuario) => usuario.movimientos, {
-    nullable: false,
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn({ name: 'id_usuario', referencedColumnName: 'id' })
-  usuario!: Usuario;
-
-  @ManyToOne(() => Inventario, { nullable: false, onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'id_inventario' })
-  inventario!: Inventario;
 }
