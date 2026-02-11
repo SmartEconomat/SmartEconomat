@@ -19,8 +19,7 @@ export const runSeeder = async (dataSource: DataSource) => {
   const usuarios = await usuarioRepo.find();
 
   if (!pedidos.length || !usuarios.length) {
-    console.log('Faltan pedidos o usuarios, saltando seeder de recepciones.');
-    return;
+    throw new Error('Faltan pedidos o usuarios. Ejecuta sus seeders primero.');
   }
   await dataSource.query(
     `TRUNCATE TABLE "recepcion_producto", "recepcion_pedido", "recepcion" RESTART IDENTITY CASCADE;`
