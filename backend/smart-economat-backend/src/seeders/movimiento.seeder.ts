@@ -5,7 +5,6 @@ import {
   TIPOS_DISPONIBLES,
 } from '../modules/movimiento/enums/movimiento.enums';
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
-import { Inventario } from '../modules/inventario/inventario.entity/inventario.entity';
 
 const NUM_MOVIMIENTOS = 50;
 
@@ -14,10 +13,8 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   const movimientoRepo = dataSource.getRepository(Movimiento);
   const usuarioRepo = dataSource.getRepository(Usuario);
-  const inventarioRepo = dataSource.getRepository(Inventario);
 
   const usuarios = await usuarioRepo.find();
-  const inventarios = await inventarioRepo.find();
 
   const movimientos: Movimiento[] = [];
 
@@ -36,7 +33,6 @@ export const runSeeder = async (dataSource: DataSource) => {
       entidad: entidadSeleccionada,
       entidadId: faker.string.uuid(),
       usuario: faker.helpers.arrayElement(usuarios),
-      inventario: faker.helpers.arrayElement(inventarios),
     });
 
     movimientos.push(movimiento);
