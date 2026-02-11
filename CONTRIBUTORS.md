@@ -1,6 +1,6 @@
 # 🏆 Clasificación de Contribuidores - SmartEconomat
 
-> **Última actualización:** 2026-02-06 15:15:59
+> **Última actualización:** 2026-02-10 10:46:09
 
 ---
 
@@ -9,8 +9,8 @@
 ### 🎖️ **Darel**
 
 Este guerrero del código lidera la carga con:
-- 💻 **32** Commits
-- 🔀 **19** PRs Fusionados
+- 💻 **7** Commits
+- 🔀 **18** PRs Fusionados
 
 Demostrando que:
 - ✨ El teclado es su arma favorita
@@ -18,28 +18,28 @@ Demostrando que:
 - 🚀 Git commit es su mantra matutino
 
 **Estadísticas de Dominio:**
-- Posee el **50,00%** de todo el código.
-- Ha logrado fusionar **19** funcionalidades completas.
+- Posee el **9.59%** de todo el código.
+- Ha logrado fusionar **18** funcionalidades completas.
 
 ---
 
 ## 📊 Hall de la Fama
 
 ### 🥈 Maurizio
-- 💻 Commits: **13** (20,31%)
-- 🔀 PRs Fusionados: **6**
-
-### 🥈 Sergio
-- 💻 Commits: **8** (12,50%)
-- 🔀 PRs Fusionados: **1**
+- 💻 Commits: **7** (9.59%)
+- 🔀 PRs Fusionados: **18**
 
 ### 🥈 AlexRuiz7687
-- 💻 Commits: **7** (10,94%)
-- 🔀 PRs Fusionados: **1**
+- 💻 Commits: **7** (9.59%)
+- 🔀 PRs Fusionados: **18**
+
+### 🥈 Sergio
+- 💻 Commits: **7** (9.59%)
+- 🔀 PRs Fusionados: **18**
 
 ### 🥈 StrayClase
-- 💻 Commits: **4** (6,25%)
-- 🔀 PRs Fusionados: **2**
+- 💻 Commits: **7** (9.59%)
+- 🔀 PRs Fusionados: **18**
 
 
 ---
@@ -48,7 +48,7 @@ Demostrando que:
 
 ### 😅 **StrayClase**
 
-Con **4 commits** y **2 PRs**, tenemos aquí a alguien que:
+Con **7 commits** y **18 PRs**, tenemos aquí a alguien que:
 - 🤔 Prefiere la calidad sobre la cantidad (eso espero...)
 - 🏖️ Cree que git es una red social casual
 - 🎯 Está "esperando el momento perfecto" para contribuir
@@ -64,39 +64,39 @@ Con **4 commits** y **2 PRs**, tenemos aquí a alguien que:
 
 | Posición | Contribuidor | Commits | PRs Fusionados | % Código | Estado |
 |----------|--------------|---------|----------------|----------|--------|
-| #1 | Darel | **32** | 🔀 **19** | 50,00% | 👑 Líder |
-| #2 | Maurizio | **13** | 🔀 **6** | 20,31% | 💪 Activo |
-| #3 | Sergio | **8** | 🔀 **1** | 12,50% | 💪 Activo |
-| #4 | AlexRuiz7687 | **7** | 🔀 **1** | 10,94% | 💪 Activo |
-| #5 | StrayClase | **4** | 🔀 **2** | 6,25% | 🐌 Necesita café |
+| #1 | Darel | **7** | 🔀 **18** | 9.59% | 👑 Líder |
+| #2 | Maurizio | **7** | 🔀 **18** | 9.59% | 💪 Activo |
+| #3 | AlexRuiz7687 | **7** | 🔀 **18** | 9.59% | 💪 Activo |
+| #4 | Sergio | **7** | 🔀 **18** | 9.59% | 💪 Activo |
+| #5 | StrayClase | **7** | 🔀 **18** | 9.59% | 🐌 Necesita café |
 
 ---
 
 ## 📊 Estadísticas Generales
 
-- **Total de commits:** 64
-- **Total de PRs fusionados:** 36
+- **Total de commits:** 73
+- **Total de PRs fusionados:** 18
 - **Total de contribuidores:** 5
-- **Promedio de commits por persona:** 12,8
+- **Promedio de commits por persona:** 14.6
 
 ---
 
 ## 🎯 Ranking de Poder (Commits + PRs)
 
 **Darel**
-`████████████████████` 32 commits | 19 PRs
+`████████████████████` 7 commits | 18 PRs
 
 **Maurizio**
-`████████░░░░░░░░░░░░` 13 commits | 6 PRs
-
-**Sergio**
-`█████░░░░░░░░░░░░░░░` 8 commits | 1 PRs
+`████████████████████` 7 commits | 18 PRs
 
 **AlexRuiz7687**
-`████░░░░░░░░░░░░░░░░` 7 commits | 1 PRs
+`████████████████████` 7 commits | 18 PRs
+
+**Sergio**
+`████████████████████` 7 commits | 18 PRs
 
 **StrayClase**
-`██░░░░░░░░░░░░░░░░░░` 4 commits | 2 PRs
+`████████████████████` 7 commits | 18 PRs
 
 ---
 
