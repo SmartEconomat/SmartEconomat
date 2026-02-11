@@ -20,6 +20,12 @@ export class ProductoProveedor {
   @PrimaryGeneratedColumn('uuid', { name: 'id_producto_proveedor' })
   id!: string;
 
+  @ManyToOne(() => Producto, (producto) => producto.proveedores, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'id_producto', referencedColumnName: 'id' })
+  producto!: Producto;
+
   @Column({ type: 'varchar', length: 100, nullable: true })
   marca?: string;
 
@@ -40,12 +46,6 @@ export class ProductoProveedor {
     transformer: new ColumnNumericTransformer(),
   })
   precioUnitario?: number;
-
-  @ManyToOne(() => Producto, (producto) => producto.proveedores, {
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn({ name: 'id_producto' })
-  producto!: Producto;
 
   @ManyToOne(() => Proveedor, (proveedor) => proveedor.productos, {
     onDelete: 'CASCADE',

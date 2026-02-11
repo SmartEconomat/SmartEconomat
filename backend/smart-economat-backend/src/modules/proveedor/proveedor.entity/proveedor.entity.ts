@@ -1,5 +1,6 @@
 import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+
 @Entity({ name: 'proveedor' })
 export class Proveedor {
   @PrimaryGeneratedColumn({ name: 'id_proveedor' })
