@@ -19,13 +19,13 @@ export class InventarioService {
 
     const productos = await this.inventarioRepository.find({
       where: {
-        fecha_caducidad: Between(hoy, limite),
+        fechaCaducidad: Between(hoy, limite),
       },
     });
 
     return productos.map((p) => ({
       id: p.id,
-      fecha_caducidad: p.fecha_caducidad.toISOString(),
+      fechaCaducidad: p.fechaCaducidad.toISOString(),
     }));
   }
 
@@ -37,8 +37,8 @@ export class InventarioService {
 
     return productos.map((p) => ({
       id: p.id,
-      cantidad_actual: p.cantidad_actual,
-      cantidad_minima: p.cantidad_minima,
+      cantidadActual: p.cantidadActual,
+      cantidadMinima: p.cantidadMinima,
     }));
   }
 }
