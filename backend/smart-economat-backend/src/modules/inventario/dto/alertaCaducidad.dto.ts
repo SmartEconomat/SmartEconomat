@@ -7,5 +7,5 @@ export class AlertaCaducidadDTO {
 
   @IsDateString()
   @IsNotEmpty()
-  fecha_caducidad: string;
+  fechaCaducidad: string;
 }

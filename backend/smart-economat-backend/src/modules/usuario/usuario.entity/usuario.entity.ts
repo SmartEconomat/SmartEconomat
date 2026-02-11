@@ -47,11 +47,22 @@ export class Usuario {
   @Column({ type: 'boolean', default: true })
   activo!: boolean;
 
-  @Column({ type: 'varchar', length: 100, unique: true, nullable: true })
-  cial_profesor?: string;
+  @Column({
+    type: 'varchar',
+    length: 100,
+    unique: true,
+    nullable: true,
+    name: 'cial_profesor',
+  })
+  cialProfesor?: string;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  numero_clase?: string;
+  @Column({
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+    name: 'numero_clase',
+  })
+  numeroClase?: string;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
   aula?: string;

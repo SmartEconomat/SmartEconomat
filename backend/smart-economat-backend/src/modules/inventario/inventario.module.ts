@@ -5,19 +5,7 @@ import { InventarioService } from './service/inventario.service';
 import { InventarioController } from './controller/inventario.controller';
 
 @Module({
-  imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'db',
-      port: 5432,
-      username: 'smarteconomat-user',
-      password: 'mysecretpassword',
-      database: 'smarteconomat',
-      entities: [Inventario],
-      synchronize: true,
-    }),
-    TypeOrmModule.forFeature([Inventario]),
-  ],
+  imports: [TypeOrmModule.forFeature([Inventario])],
   controllers: [InventarioController],
   providers: [InventarioService],
 })
