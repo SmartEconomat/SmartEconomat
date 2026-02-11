@@ -5,11 +5,9 @@ export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
   const proveedorRepo = dataSource.getRepository(Proveedor);
 
-  const count = await proveedorRepo.count();
-  if (count > 0) {
-    console.log('Proveedores ya existen. Saltando...');
-    return;
-  }
+  await dataSource.query(
+    `TRUNCATE TABLE "proveedor" RESTART IDENTITY CASCADE;`
+  );
 
   const proveedores: Proveedor[] = [];
   for (let i = 0; i < 10; i++) {

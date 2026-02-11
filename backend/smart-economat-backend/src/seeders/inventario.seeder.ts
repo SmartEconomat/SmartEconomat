@@ -8,10 +8,15 @@ export const runSeeder = async (dataSource: DataSource) => {
   const inventarioRepo = dataSource.getRepository(Inventario);
   const productoProveedorRepo = dataSource.getRepository(ProductoProveedor);
 
+  await dataSource.query(
+    `TRUNCATE TABLE "inventario" RESTART IDENTITY CASCADE;`
+  );
+
   const productosProv = await productoProveedorRepo.find();
   if (productosProv.length === 0) {
-    console.log('No hay producto_proveedor. Saltando seeder de inventario.');
-    return;
+    throw new Error(
+      'No hay producto_proveedor. Ejecuta producto.seeder.ts primero.'
+    );
   }
 
   const inventarios: Inventario[] = [];

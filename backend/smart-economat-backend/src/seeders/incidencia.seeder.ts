@@ -1,5 +1,5 @@
-import { Incidencia } from 'src/modules/incidencia/incidencia.entity/incidencia.entity';
-import { Recepcion } from 'src/modules/recepcion/recepcion.entity/recepcion.entity';
+import { Incidencia } from '../modules/incidencia/incidencia.entity/incidencia.entity';
+import { Recepcion } from '../modules/recepcion/recepcion.entity/recepcion.entity';
 import { DataSource } from 'typeorm';
 
 export const runSeeder = async (dataSource: DataSource) => {
