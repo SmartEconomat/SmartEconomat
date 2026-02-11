@@ -7,12 +7,15 @@ export const runSeeder = async (dataSource: DataSource) => {
   const historialRepo = dataSource.getRepository(HistorialPrecio);
   const productoProveedorRepo = dataSource.getRepository(ProductoProveedor);
 
+  await dataSource.query(
+    `TRUNCATE TABLE "historial_precio" RESTART IDENTITY CASCADE;`
+  );
+
   const productosProv = await productoProveedorRepo.find();
   if (productosProv.length === 0) {
-    console.log(
-      'No hay producto_proveedor. Saltando seeder de historial_precio.'
+    throw new Error(
+      'No hay producto_proveedor. Ejecuta producto.seeder.ts primero.'
     );
-    return;
   }
 
   const historiales: HistorialPrecio[] = [];

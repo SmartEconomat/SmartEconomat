@@ -11,7 +11,7 @@ import { ColumnNumericTransformer } from '../../../common/transformers/column-nu
 import { Producto } from '../producto.entity/producto.entity';
 import { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
 import { PedidoProducto } from '../../pedidos/pedido-producto.entity/pedido-producto.entity';
-import { Inventario } from 'src/modules/inventario/inventario.entity/inventario.entity';
+import { Inventario } from '../../inventario/inventario.entity/inventario.entity';
 import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.entity';
 
 @Unique(['producto', 'proveedor'])

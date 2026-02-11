@@ -19,8 +19,6 @@ export const runSeeder = async (dataSource: DataSource) => {
   const usuarios = await usuarioRepo.find();
   const inventarios = await inventarioRepo.find();
 
-  if (usuarios.length === 0 || inventarios.length === 0) return;
-
   const movimientos: Movimiento[] = [];
 
   const entidades = ['PRODUCTO', 'PEDIDO', 'AJUSTE'] as const;

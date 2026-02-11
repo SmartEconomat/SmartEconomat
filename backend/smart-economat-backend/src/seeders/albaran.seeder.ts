@@ -9,14 +9,18 @@ export const runSeeder = async (dataSource: DataSource) => {
   const recepcionPedidoRepo = dataSource.getRepository(RecepcionPedido);
   const albaranPedidoRepo = dataSource.getRepository(AlbaranPedidoRecepcion);
 
+  await dataSource.query(
+    `TRUNCATE TABLE "albaran_pedido_recepcion", "albaran" RESTART IDENTITY CASCADE;`
+  );
+
   const recepcionPedidos = await recepcionPedidoRepo.find({
     relations: ['pedido', 'recepcion'],
   });
+
   if (!recepcionPedidos.length) {
-    console.log(
-      'No se encontraron recepcion_pedidos, saltando seeder de albaranes.'
+    throw new Error(
+      'No se encontraron recepcion_pedidos. Ejecuta recepcion.seeder.ts primero.'
     );
-    return;
   }
 
   const albaranes: Albaran[] = [];
