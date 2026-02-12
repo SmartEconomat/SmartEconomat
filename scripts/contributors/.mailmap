@@ -1,5 +1,25 @@
-Darel <cls18drl@gmail.com>
-Darel <darelmartinezcaballero@gmail.com>
-Maurizio <mauriziohernandezcamisa17@gmail.com>
-Sergio <sergioherrerarodriguez7@gmail.com>
-Sergio <sergioherrerarodriguez7rgmail.com>
+# Mapeo de identidades de Git para normalizar nombres de autores
+# Formato: Nombre Correcto <email-correcto> Nombre Original <email-original>
+
+# Darel - Unificar variaciones
+Darel <darelmartinezcaballero@gmail.com> Darel M. Caballero <darelmartinezcaballero@gmail.com>
+Darel <darelmartinezcaballero@gmail.com> Darel Martínez Caballero <darelmartinezcaballero@gmail.com>
+Darel <darelmartinezcaballero@gmail.com> Darel Martínez <64102252+DarelShroo@users.noreply.github.com>
+Darel <darelmartinezcaballero@gmail.com> Darel <cls18drl@gmail.com>
+Darel <darelmartinezcaballero@gmail.com> psych <cls18drl@gmail.com>
+
+# Maurizio - Unificar variaciones
+Maurizio <mauriziohernandezcamisa17@gmail.com> Maurizio Giovanni <mauriziohernandezcamisa17@gmail.com>
+Maurizio <mauriziohernandezcamisa17@gmail.com> Mauro <mauriziohernandezcamisa17@gmail.com>
+Maurizio <mauriziohernandezcamisa17@gmail.com> Maurizio <mauriziohernandezcamisa17@gmail.com>
+
+# Sergio - Unificar variaciones
+Sergio <sergioherrerarodriguez7@gmail.com> Sergiohr7 <sergioherrerarodriguez7@gmail.com>
+Sergio <sergioherrerarodriguez7@gmail.com> Sergio <sergioherrerarodriguez7@gmail.com>
+Sergio <sergioherrerarodriguez7@gmail.com> Sergio <sergioherrerarodriguez7rgmail.com>
+
+# Alexis - Unificar variaciones
+Alexis <alexisruiz.daw@gmail.com> AlexRuiz7687 <alexisruiz.daw@gmail.com>
+
+# Guillermo - Unificar variaciones
+Guillermo <Claseguille@gmail.com> StrayClase <Claseguille@gmail.com>
