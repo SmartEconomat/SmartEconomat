@@ -1,16 +1,16 @@
 import React from 'react';
 import { Typography, Box, Paper } from '@mui/material';
 
-const Productos: React.FC = () => {
+const Proveedores: React.FC = () => {
     return (
         <Box>
             <Paper elevation={0} sx={{ p: 4 }}>
                 <Typography variant="body1">
-                    Esta es la página de gestión de productos.
+                    Esta es la página de gestión de proveedores.
                 </Typography>
             </Paper>
         </Box>
     );
 };
 
-export default Productos;
+export default Proveedores;
