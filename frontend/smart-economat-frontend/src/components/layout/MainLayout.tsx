@@ -62,15 +62,17 @@ export default function MainLayout(props: Props) {
             </Toolbar>
             <Divider />
             <List>
-                {['Inicio', 'Productos', 'Pedidos'].map((text, index) => (
-                    <ListItem key={text} disablePadding>
-                        <ListItemButton>
+                {[
+                    { text: 'Inicio', path: '/', icon: <HomeIcon /> },
+                    { text: 'Productos', path: '/productos', icon: <InventoryIcon /> },
+                    { text: 'Pedidos', path: '/pedidos', icon: <ShoppingCartIcon /> }
+                ].map((item) => (
+                    <ListItem key={item.text} disablePadding>
+                        <ListItemButton onClick={() => navigate(item.path)}>
                             <ListItemIcon>
-                                {index === 0 && <HomeIcon />}
-                                {index === 1 && <InventoryIcon />}
-                                {index === 2 && <ShoppingCartIcon />}
+                                {item.icon}
                             </ListItemIcon>
-                            <ListItemText primary={text} />
+                            <ListItemText primary={item.text} />
                         </ListItemButton>
                     </ListItem>
                 ))}
