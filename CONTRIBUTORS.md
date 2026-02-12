@@ -1,6 +1,6 @@
 # 🏆 Clasificación de Contribuidores - SmartEconomat
 
-> **Última actualización:** 2026-02-12 12:23:40
+> **Última actualización:** 2026-02-12 12:29:33
 
 ---
 
@@ -18,7 +18,7 @@ Demostrando que:
 - 🚀 Git commit es su mantra matutino
 
 **Estadísticas de Dominio:**
-- Posee el **38.83%** de todo el código.
+- Posee el **38.46%** de todo el código.
 - Ha logrado fusionar **27** funcionalidades completas.
 
 ---
@@ -26,19 +26,19 @@ Demostrando que:
 ## 📊 Hall de la Fama
 
 ### 🥈 Maurizio
-- 💻 Commits: **23** (22.33%)
+- 💻 Commits: **23** (22.12%)
 - 🔀 PRs Fusionados: **8**
 
 ### 🥈 AlexRuiz7687
-- 💻 Commits: **18** (17.48%)
-- 🔀 PRs Fusionados: **4**
+- 💻 Commits: **19** (18.27%)
+- 🔀 PRs Fusionados: **6**
 
 ### 🥈 Sergio
-- 💻 Commits: **12** (11.65%)
+- 💻 Commits: **12** (11.54%)
 - 🔀 PRs Fusionados: **1**
 
 ### 🥈 StrayClase
-- 💻 Commits: **10** (9.71%)
+- 💻 Commits: **10** (9.62%)
 - 🔀 PRs Fusionados: **5**
 
 
@@ -64,20 +64,20 @@ Con **10 commits** y **5 PRs**, tenemos aquí a alguien que:
 
 | Posición | Contribuidor | Commits | PRs Fusionados | % Código | Estado |
 |----------|--------------|---------|----------------|----------|--------|
-| #1 | Darel | **40** | 🔀 **27** | 38.83% | 👑 Líder |
-| #2 | Maurizio | **23** | 🔀 **8** | 22.33% | 💪 Activo |
-| #3 | AlexRuiz7687 | **18** | 🔀 **4** | 17.48% | 💪 Activo |
-| #4 | Sergio | **12** | 🔀 **1** | 11.65% | 💪 Activo |
-| #5 | StrayClase | **10** | 🔀 **5** | 9.71% | 🐌 Necesita café |
+| #1 | Darel | **40** | 🔀 **27** | 38.46% | 👑 Líder |
+| #2 | Maurizio | **23** | 🔀 **8** | 22.12% | 💪 Activo |
+| #3 | AlexRuiz7687 | **19** | 🔀 **6** | 18.27% | 💪 Activo |
+| #4 | Sergio | **12** | 🔀 **1** | 11.54% | 💪 Activo |
+| #5 | StrayClase | **10** | 🔀 **5** | 9.62% | 🐌 Necesita café |
 
 ---
 
 ## 📊 Estadísticas Generales
 
-- **Total de commits:** 103
-- **Total de PRs fusionados:** 52
+- **Total de commits:** 104
+- **Total de PRs fusionados:** 54
 - **Total de contribuidores:** 5
-- **Promedio de commits por persona:** 20.6
+- **Promedio de commits por persona:** 20.8
 
 ---
 
@@ -90,7 +90,7 @@ Con **10 commits** y **5 PRs**, tenemos aquí a alguien que:
 `███████████░░░░░░░░░` 23 commits | 8 PRs
 
 **AlexRuiz7687**
-`█████████░░░░░░░░░░░` 18 commits | 4 PRs
+`█████████░░░░░░░░░░░` 19 commits | 6 PRs
 
 **Sergio**
 `██████░░░░░░░░░░░░░░` 12 commits | 1 PRs
