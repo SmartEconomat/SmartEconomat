@@ -275,4 +275,4 @@ if [ -n "$HUSKY" ]; then
     git add "$OUTPUT_FILE"
 fi
 
-git add CONTRIBUTORS.md
+git add "$OUTPUT_FILE"
