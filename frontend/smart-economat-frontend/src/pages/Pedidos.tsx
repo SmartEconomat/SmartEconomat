@@ -1,16 +1,15 @@
 import React from 'react';
-import { Typography, Container } from '@mui/material';
+import { Typography, Box, Paper } from '@mui/material';
 
 const Pedidos: React.FC = () => {
     return (
-        <Container>
-            <Typography variant="h4" component="h1" gutterBottom>
-                Pedidos
-            </Typography>
-            <Typography variant="body1">
-                Gestión de pedidos (En construcción)
-            </Typography>
-        </Container>
+        <Box>
+            <Paper elevation={0} sx={{ p: 4 }}>
+                <Typography variant="body1">
+                    Esta es la página de gestión de pedidos.
+                </Typography>
+            </Paper>
+        </Box>
     );
 };
 

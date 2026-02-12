@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
     AppBar,
     Box,
@@ -18,11 +18,13 @@ import {
     Menu,
     MenuItem
 } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import HomeIcon from '@mui/icons-material/Home';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import InventoryIcon from '@mui/icons-material/Inventory';
-import LogoutIcon from '@mui/icons-material/Logout';
+import MenuIcon from '@mui/icons-material/MenuOutlined';
+import PersonIcon from '@mui/icons-material/PersonOutlined';
+import LogoutIcon from '@mui/icons-material/LogoutOutlined';
+import { menuItems } from '../../config/menuConfig';
+import { useAuth } from '../../context/AuthContext';
+// @ts-ignore
+import Logo from '../../assets/images/SVG/logo-smat-economato.svg';
 
 const drawerWidth = 240;
 
@@ -35,6 +37,13 @@ export default function MainLayout(props: Props) {
     const [mobileOpen, setMobileOpen] = useState(false);
     const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
     const navigate = useNavigate();
+    const location = useLocation();
+    const { user, logout } = useAuth();
+
+    const getPageTitle = (pathname: string) => {
+        const item = menuItems.find(item => item.path === pathname);
+        return item ? item.title : 'SmartEconomat';
+    };
 
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
@@ -50,29 +59,33 @@ export default function MainLayout(props: Props) {
 
     const handleLogout = () => {
         handleCloseUserMenu();
+        logout();
         navigate('/login');
     };
 
     const drawer = (
         <div>
-            <Toolbar sx={{ justifyContent: 'center' }}>
-                <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                    SmartEconomat
-                </Typography>
+            <Toolbar sx={{ justifyContent: 'center', py: 2 }}>
+                <Box
+                    component="img"
+                    src={Logo}
+                    alt="SmartEconomat Logo"
+                    sx={{
+                        height: 80,
+                        width: 'auto',
+                        maxWidth: '100%'
+                    }}
+                />
             </Toolbar>
             <Divider />
             <List>
-                {[
-                    { text: 'Inicio', path: '/', icon: <HomeIcon /> },
-                    { text: 'Productos', path: '/productos', icon: <InventoryIcon /> },
-                    { text: 'Pedidos', path: '/pedidos', icon: <ShoppingCartIcon /> }
-                ].map((item) => (
-                    <ListItem key={item.text} disablePadding>
+                {menuItems.filter(item => item.showInMenu).map((item) => (
+                    <ListItem key={item.title} disablePadding>
                         <ListItemButton onClick={() => navigate(item.path)}>
                             <ListItemIcon>
                                 {item.icon}
                             </ListItemIcon>
-                            <ListItemText primary={item.text} />
+                            <ListItemText primary={item.title} />
                         </ListItemButton>
                     </ListItem>
                 ))}
@@ -92,7 +105,7 @@ export default function MainLayout(props: Props) {
                     ml: { sm: `${drawerWidth}px` },
                 }}
             >
-                <Toolbar>
+                <Toolbar sx={{ py: 2, minHeight: 112 }}>
                     <IconButton
                         color="inherit"
                         aria-label="open drawer"
@@ -102,13 +115,16 @@ export default function MainLayout(props: Props) {
                     >
                         <MenuIcon />
                     </IconButton>
-                    <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-                        Dashboard
+                    <Typography variant="h4" noWrap component="div" sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', height: 80, fontWeight: 500 }}>
+                        {getPageTitle(location.pathname)}
                     </Typography>
 
-                    <Box sx={{ flexGrow: 0 }}>
-                        <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                            <Avatar alt="User" src="/static/images/avatar/2.jpg" />
+                    <Box sx={{ flexGrow: 0, display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Typography variant="subtitle1" sx={{ display: { xs: 'none', sm: 'block' } }}>
+                            {user?.name}
+                        </Typography>
+                        <IconButton onClick={handleOpenUserMenu} sx={{ p: 1 }}>
+                            <Avatar alt={user?.name} src="/static/images/avatar/2.jpg" />
                         </IconButton>
                         <Menu
                             sx={{ mt: '45px' }}
@@ -126,6 +142,12 @@ export default function MainLayout(props: Props) {
                             open={Boolean(anchorElUser)}
                             onClose={handleCloseUserMenu}
                         >
+                            <MenuItem onClick={() => { handleCloseUserMenu(); navigate('/usuario'); }}>
+                                <ListItemIcon>
+                                    <PersonIcon fontSize="small" />
+                                </ListItemIcon>
+                                <Typography textAlign="center">Perfil</Typography>
+                            </MenuItem>
                             <MenuItem onClick={handleLogout}>
                                 <ListItemIcon>
                                     <LogoutIcon fontSize="small" />
@@ -136,6 +158,8 @@ export default function MainLayout(props: Props) {
                     </Box>
                 </Toolbar>
             </AppBar>
+
+
             <Box
                 component="nav"
                 sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
@@ -171,7 +195,7 @@ export default function MainLayout(props: Props) {
                 component="main"
                 sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}
             >
-                <Toolbar />
+                <Toolbar sx={{ mb: 6 }} />
                 <Outlet />
             </Box>
         </Box>
