@@ -56,9 +56,3 @@ build/
 # IDEs
 *.idea/
 *.vscode/
-
-#tools
-/tools/
-
-#images
-*.svg
