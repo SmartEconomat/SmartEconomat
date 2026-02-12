@@ -5,7 +5,7 @@ import { validatePassword, validateEmailOrUsername } from "../utils/validator";
 export const LoginForm = () => {
   const { login, isLoading, authError } = useAuth();
 
-  const [emailOrUsername, setEmailOrUsername] = useState("");
+  const [usernameOrEmail, setUsernameOrEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const [errors, setErrors] = useState<{
@@ -16,7 +16,7 @@ export const LoginForm = () => {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    const emailError = validateEmailOrUsername(emailOrUsername);
+    const emailError = validateEmailOrUsername(usernameOrEmail);
     const passwordError = validatePassword(password);
 
     if (emailError || passwordError) {
@@ -28,7 +28,7 @@ export const LoginForm = () => {
     }
 
     setErrors({});
-    await login({ email: emailOrUsername, password });
+    await login({ usernameOrEmail: usernameOrEmail, password });
   };
 
   return (
@@ -47,8 +47,8 @@ export const LoginForm = () => {
           <input
             type="text"
             className="w-full mt-1 p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            value={emailOrUsername}
-            onChange={(e) => setEmailOrUsername(e.target.value)}
+            value={usernameOrEmail}
+            onChange={(e) => setUsernameOrEmail(e.target.value)}
           />
           {errors.emailOrUsername && (
             <p className="text-red-500 text-sm mt-1">
