@@ -36,6 +36,12 @@ export class Producto {
   @Column({ type: 'enum', enum: TipoProducto, nullable: true })
   tipo?: TipoProducto;
 
+  @Column({ type: 'float', default: 0 })
+  cantidad!: number;
+
+  @Column({ type: 'varchar', length: 50, unique: true, nullable: true })
+  codigoDeBarra?: string;
+
   @OneToMany(() => ProductoAlergeno, (pa: ProductoAlergeno) => pa.producto, {
     cascade: true,
   })

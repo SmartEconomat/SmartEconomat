@@ -1,4 +1,4 @@
-import { DataSource } from 'typeorm';
+import { DataSource, DeepPartial } from 'typeorm';
 import { Producto } from '../modules/producto/producto.entity/producto.entity';
 import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
 import { ProductoAlergeno } from '../modules/producto/producto-alergeno.entity/producto-alergeno.entity';
@@ -33,7 +33,9 @@ export const runSeeder = async (dataSource: DataSource) => {
         : undefined,
       tipo: faker.helpers.arrayElement(Object.values(TipoProducto)),
       pathImg: faker.image.url({ width: 640, height: 480 }),
-    });
+      cantidad: faker.number.float({ min: 1, max: 500 }),
+      codigoDeBarra: faker.string.alphanumeric(10).toUpperCase(),
+    } as DeepPartial<Producto>);
     productos.push(producto);
   }
   const productosGuardados = await productoRepo.save(productos);
@@ -57,7 +59,7 @@ export const runSeeder = async (dataSource: DataSource) => {
         precioUnitario: parseFloat(faker.commerce.price({ min: 5, max: 200 })),
         marca: producto.marca,
         codigoBarras: faker.string.numeric({ length: 13 }),
-      });
+      } as DeepPartial<ProductoProveedor>);
       productoProveedores.push(pp);
     }
   }
@@ -77,7 +79,7 @@ export const runSeeder = async (dataSource: DataSource) => {
         productoAlergenoRepo.create({
           producto,
           alergeno,
-        })
+        } as DeepPartial<ProductoAlergeno>)
       );
     }
   }
