@@ -39,8 +39,8 @@ export class Producto {
   @Column({ type: 'float', default: 0 })
   cantidad!: number;
 
-  @Column({ type: 'varchar', length: 50, unique: true })
-  codigo!: string;
+  @Column({ type: 'varchar', length: 50, unique: true, nullable: true })
+  codigoDeBarra?: string;
 
   @OneToMany(() => ProductoAlergeno, (pa: ProductoAlergeno) => pa.producto, {
     cascade: true,
