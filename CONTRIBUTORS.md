@@ -33,6 +33,10 @@ Demostrando que:
 - 💻 Commits: **31** (19,25%)
 - 🔀 PRs Fusionados: **8**
 
+### 🥈 AlexRuiz7687
+- 💻 Commits: **19** (16.52%)
+- 🔀 PRs Fusionados: **4**
+
 ### 🥈 Sergio
 - 💻 Commits: **28** (17,39%)
 - 🔀 PRs Fusionados: **5**
