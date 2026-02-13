@@ -1,13 +1,23 @@
 import React from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import theme from './theme/theme';
+import { ThemeContextProvider, useThemeContext } from './context/ThemeContext';
 import AppRouter from './routers/AppRouter';
 import { AuthProvider } from './context/AuthContext';
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeContextProvider>
+      <Main />
+    </ThemeContextProvider>
+  );
+}
+
+function Main() {
+  const { siteTheme } = useThemeContext();
+
+  return (
+    <ThemeProvider theme={siteTheme}>
       <CssBaseline />
       <AuthProvider>
         <AppRouter />
