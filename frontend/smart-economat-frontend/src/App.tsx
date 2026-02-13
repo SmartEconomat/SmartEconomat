@@ -12,22 +12,16 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AuthProvider>
-        <AppRouter />
-      </AuthProvider>
-    </ThemeProvider>
-/*
-function App() {
-  return (
-    <AuthProvider>
-      <BrowserRouter>
+      <AuthProvider><BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />     
               <ProtectedRoute>
+                <AppRouter />
               </ProtectedRoute>
         </Routes>
       </BrowserRouter>
-    </AuthProvider>*/
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
