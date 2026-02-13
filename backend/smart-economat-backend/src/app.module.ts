@@ -7,6 +7,7 @@ import { ProductoModule } from './modules/producto/producto.module';
 import { MovimientoModule } from './modules/movimiento/movimiento.module';
 import { typeOrmConfig } from './config/database.config';
 import { I18nConfigModule } from './config/i18n.module';
+import { RecepcionModule } from './modules/recepcion/recepcion.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { I18nConfigModule } from './config/i18n.module';
     PedidoModule,
     ProductoModule,
     MovimientoModule,
+    RecepcionModule,
   ],
   controllers: [AppController],
   providers: [AppService],
