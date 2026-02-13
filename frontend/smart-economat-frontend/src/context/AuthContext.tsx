@@ -5,11 +5,11 @@ import React, {
   ReactNode,
   useEffect,
 } from "react";
-import { User ,LoginRequest } from "../types/auth.types";
+import { LoginRequest } from "../types/auth.types";
 import * as authService from "../services/auth.service";
 
 interface AuthContextProps {
-  username?: string;
+  //username?: string;
   token: string | null;
   isLoading: boolean;
   authError: string | null;
