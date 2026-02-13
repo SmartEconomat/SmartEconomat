@@ -23,8 +23,11 @@ import PersonIcon from '@mui/icons-material/PersonOutlined';
 import LogoutIcon from '@mui/icons-material/LogoutOutlined';
 import { menuItems } from '../../config/menuConfig';
 import { useAuth } from '../../context/AuthContext';
-// @ts-ignore
+import { useThemeContext } from '../../context/ThemeContext';
+import SettingsMenu from './SettingsMenu';
 import Logo from '../../assets/images/SVG/logo-smat-economato.svg';
+import LogoBlanco from '../../assets/images/SVG/logo-smart-economat-blanco.svg';
+import LogoNegro from '../../assets/images/SVG/logo-smart-economat-negro.svg';
 
 const drawerWidth = 240;
 
@@ -39,6 +42,7 @@ export default function MainLayout(props: Props) {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, logout } = useAuth();
+    const { currentThemeName } = useThemeContext();
 
     const getPageTitle = (pathname: string) => {
         const item = menuItems.find(item => item.path === pathname);
@@ -68,7 +72,7 @@ export default function MainLayout(props: Props) {
             <Toolbar sx={{ justifyContent: 'center', py: 2 }}>
                 <Box
                     component="img"
-                    src={Logo}
+                    src={currentThemeName === 'dark' || currentThemeName === 'highContrastDark' ? LogoBlanco : currentThemeName === 'highContrastLight' ? LogoNegro : Logo}
                     alt="SmartEconomat Logo"
                     sx={{
                         height: 80,
@@ -81,7 +85,22 @@ export default function MainLayout(props: Props) {
             <List>
                 {menuItems.filter(item => item.showInMenu).map((item) => (
                     <ListItem key={item.title} disablePadding>
-                        <ListItemButton onClick={() => navigate(item.path)}>
+                        <ListItemButton
+                            selected={location.pathname === item.path}
+                            onClick={() => navigate(item.path)}
+                            sx={{
+                                '&.Mui-selected': {
+                                    color: 'primary.main',
+                                    '& .MuiListItemIcon-root': {
+                                        color: 'primary.main',
+                                    },
+                                    '& .MuiTypography-root': {
+                                        color: 'primary.main',
+                                        fontWeight: 'bold',
+                                    },
+                                }
+                            }}
+                        >
                             <ListItemIcon>
                                 {item.icon}
                             </ListItemIcon>
@@ -120,6 +139,7 @@ export default function MainLayout(props: Props) {
                     </Typography>
 
                     <Box sx={{ flexGrow: 0, display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <SettingsMenu />
                         <Typography variant="subtitle1" sx={{ display: { xs: 'none', sm: 'block' } }}>
                             {user?.name}
                         </Typography>
