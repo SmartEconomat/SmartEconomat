@@ -61,7 +61,6 @@ export const ThemeContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setLearningModeState(mode);
         localStorage.setItem('appLearningMode', String(mode));
     };
-
     const siteTheme = getTheme(themeName, fontSize);
 
     return (

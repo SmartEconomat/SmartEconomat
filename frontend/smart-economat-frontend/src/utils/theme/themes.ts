@@ -1,6 +1,9 @@
 import { createTheme, ThemeOptions } from '@mui/material/styles';
 
+<<<<<<< HEAD:frontend/smart-economat-frontend/src/utils/theme/themes.ts
 
+=======
+>>>>>>> 20180e8 (Implementación de ajustes golbales y temas):frontend/smart-economat-frontend/src/theme/themes.ts
 export type ThemeName = 'light' | 'dark' | 'highContrastLight' | 'highContrastDark';
 export type FontSize = 'small' | 'medium' | 'large';
 
