@@ -34,6 +34,10 @@ export const runSeeder = async (dataSource: DataSource) => {
       costeTotal: 0,
     });
 
+    if (pedido.estado === EstadoPedido.CANCELADO) {
+      pedido.motivoCancelacion = faker.lorem.sentence();
+    }
+
     const pedidoGuardado = await pedidoRepo.save(pedido);
 
     const numItems = faker.number.int({ min: 1, max: 5 });

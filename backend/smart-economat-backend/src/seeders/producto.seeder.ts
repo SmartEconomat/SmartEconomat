@@ -29,7 +29,7 @@ export const runSeeder = async (dataSource: DataSource) => {
       marca: faker.company.name(),
       descripcion: faker.commerce.productDescription(),
       unidad: faker.helpers.arrayElement(Object.values(UnidadProducto)),
-      caducidad: faker.datatype.boolean(0.3)
+      fechaCaducidad: faker.datatype.boolean(0.3)
         ? faker.date.soon({ days: 60 })
         : undefined,
       tipo: faker.helpers.arrayElement(Object.values(TipoProducto)),

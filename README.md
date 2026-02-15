@@ -60,9 +60,51 @@ SmartEconomat es una aplicación diseñada para gestionar el inventario de ingre
    docker compose -f docker-compose.prod.yml down
    ```
 
-## Notas adicionales
+## Scripts del Backend
 
-63:ps
+El backend incluye varios scripts útiles para gestionar la base de datos y generar documentación. Estos scripts se ejecutan desde el directorio `backend/smart-economat-backend`.
+
+### Seeders (Datos de Prueba)
+
+Para poblar la base de datos con datos iniciales o de prueba:
+
+- **Todos los seeders**:
+
+  ```bash
+  npm run seed
+  ```
+
+- **Seeder específico**:
+  Puedes ejecutar un seeder específico enviando su nombre como argumento (ej. `usuario`, `producto`, `pedido`, etc.):
+
+  ```bash
+  npm run seed -- usuario
+  ```
+
+- **Reset de datos**:
+  Para reiniciar la base de datos (drop schema + sync) y poblarla nuevamente:
+  ```bash
+  npm run db:reset
+  ```
+
+### Diagrama Entidad-Relación (ERD)
+
+Para generar un diagrama visual de la estructura actual de la base de datos:
+
+```bash
+npm run generate:erd
+```
+
+El archivo generado se guardará en `tools/erd/erd.svg`.
+
+> **Nota para usuarios de Docker**:  
+> Puedes ejecutar estos comandos dentro del contenedor en ejecución:
+>
+> ```bash
+> docker compose -f docker-compose.dev.yml exec backend npm run seed
+> ```
+
+## Notas adicionales
 
 - **Conflicto de puertos**: Ten en cuenta que si intentas levantar el entorno de desarrollo y producción simultáneamente en la misma máquina, es probable que ocurra un conflicto de puertos (por defecto, ambos intentan usar el puerto 3000 para el backend). Detén uno antes de iniciar el otro.
 - **Logs**: Para ver los logs de un entorno específico:
