@@ -45,12 +45,13 @@ export class PedidoProducto {
 
   @Column({
     type: 'numeric',
+    name: 'precio_unitario',
     precision: 10,
     scale: 2,
     nullable: false,
     transformer: new ColumnNumericTransformer(),
   })
-  precio_unitario!: number;
+  precioUnitario!: number;
 
   @Column({ type: 'text', nullable: true })
   observaciones?: string;
@@ -58,21 +59,12 @@ export class PedidoProducto {
   @OneToMany(() => RecepcionProducto, (rp) => rp.pedidoProducto)
   recepcionesProducto!: RecepcionProducto[];
 
-  @CreateDateColumn({
-    type: 'timestamptz',
-    name: 'created_at',
-  })
-  createdAt!: Date;
+  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
+  readonly createdAt!: Date;
 
-  @UpdateDateColumn({
-    type: 'timestamptz',
-    name: 'updated_at',
-  })
-  updatedAt!: Date;
+  @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
+  readonly updatedAt!: Date;
 
-  @DeleteDateColumn({
-    type: 'timestamptz',
-    name: 'deleted_at',
-  })
+  @DeleteDateColumn({ type: 'timestamptz', name: 'deleted_at' })
   deletedAt?: Date;
 }

@@ -12,8 +12,8 @@ import { TipoProducto, UnidadProducto } from '../enums/producto.enums';
 import { ProductoAlergeno } from '../producto-alergeno.entity/producto-alergeno.entity';
 import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
 
-@Check(`"caducidad" IS NULL OR "caducidad" >= CURRENT_DATE`)
 @Entity({ name: 'producto' })
+@Check(`"fecha_caducidad" IS NULL OR "fecha_caducidad" > "created_at"`)
 export class Producto {
   @PrimaryColumn('uuid', {
     name: 'id_producto',
@@ -33,8 +33,8 @@ export class Producto {
   @Column({ type: 'enum', enum: UnidadProducto, nullable: true })
   unidad?: UnidadProducto;
 
-  @Column({ type: 'date', nullable: true })
-  caducidad?: Date;
+  @Column({ type: 'date', nullable: true, name: 'fecha_caducidad' })
+  fechaCaducidad?: Date;
 
   @Column({ type: 'varchar', length: 200, nullable: true, name: 'path_img' })
   pathImg?: string;
@@ -42,7 +42,7 @@ export class Producto {
   @Column({ type: 'enum', enum: TipoProducto, nullable: true })
   tipo?: TipoProducto;
 
-  @Column({ type: 'float', default: 0 })
+  @Column({ type: 'integer', default: 0 })
   cantidad!: number;
 
   @Column({ type: 'varchar', length: 50, unique: true, nullable: true })
@@ -58,21 +58,12 @@ export class Producto {
   })
   proveedores?: ProductoProveedor[];
 
-  @CreateDateColumn({
-    type: 'timestamptz',
-    name: 'created_at',
-  })
-  createdAt!: Date;
+  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
+  readonly createdAt!: Date;
 
-  @UpdateDateColumn({
-    type: 'timestamptz',
-    name: 'updated_at',
-  })
-  updatedAt!: Date;
+  @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
+  readonly updatedAt!: Date;
 
-  @DeleteDateColumn({
-    type: 'timestamptz',
-    name: 'deleted_at',
-  })
+  @DeleteDateColumn({ type: 'timestamptz', name: 'deleted_at' })
   deletedAt?: Date;
 }

@@ -8,6 +8,7 @@ import {
   TipoProducto,
   AlergenoProducto,
 } from '../modules/producto/enums/producto.enums';
+import { SEEDER_MESSAGES } from './constants/messages';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
@@ -18,7 +19,7 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   const proveedores = await proveedorRepo.find();
   if (proveedores.length === 0) {
-    throw new Error('No hay proveedores. Ejecuta proveedor.seeder.ts primero.');
+    throw new Error(SEEDER_MESSAGES.errors.NO_PROVEEDORES);
   }
 
   const productos: Producto[] = [];
@@ -33,7 +34,7 @@ export const runSeeder = async (dataSource: DataSource) => {
         : undefined,
       tipo: faker.helpers.arrayElement(Object.values(TipoProducto)),
       pathImg: faker.image.url({ width: 640, height: 480 }),
-      cantidad: faker.number.float({ min: 1, max: 500 }),
+      cantidad: faker.number.int({ min: 1, max: 500 }),
       codigoDeBarra: faker.string.alphanumeric(10).toUpperCase(),
     } as DeepPartial<Producto>);
     productos.push(producto);

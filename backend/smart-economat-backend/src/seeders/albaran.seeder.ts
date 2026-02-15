@@ -2,6 +2,7 @@ import { DataSource } from 'typeorm';
 import { Albaran } from '../modules/albaran/albaran.entity/albaran.entity';
 import { RecepcionPedido } from '../modules/recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
 import { AlbaranPedidoRecepcion } from '../modules/albaran/albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
+import { SEEDER_MESSAGES } from './constants/messages';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
@@ -18,9 +19,7 @@ export const runSeeder = async (dataSource: DataSource) => {
   });
 
   if (!recepcionPedidos.length) {
-    throw new Error(
-      'No se encontraron recepcion_pedidos. Ejecuta recepcion.seeder.ts primero.'
-    );
+    throw new Error(SEEDER_MESSAGES.errors.NO_RECEPCIONES_PRODUCTOS);
   }
 
   const albaranes: Albaran[] = [];
