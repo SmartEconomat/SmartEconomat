@@ -3,12 +3,10 @@ import { Producto } from '../producto.entity/producto.entity';
 import { ProductoRepository } from '../repository/producto.repository';
 import { CreateProductoDto } from '../dto/create-producto.dto';
 import { UpdateProductoDto } from '../dto/update-producto.dto';
-import { getProductMessage } from '../constants';
-import { ErrorMessages } from '../../../common/enums/messages/errors/error-messages.enum';
-import { LanguageEnum } from '../../../common/enums/languages/language.enum';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 
 @Injectable()
-export class ProductosService {
+export class ProductoService {
   constructor(private readonly productoRepository: ProductoRepository) {}
 
   async create(createProductoDto: CreateProductoDto): Promise<Producto> {
@@ -23,9 +21,7 @@ export class ProductosService {
   async findOne(id: string): Promise<Producto> {
     const producto = await this.productoRepository.findOne({ where: { id } });
     if (!producto) {
-      throw new NotFoundException(
-        getProductMessage(ErrorMessages.NOT_FOUND, LanguageEnum.ES, id)
-      );
+      throw new NotFoundException(I18nHelper.getError('PRODUCT_NOT_FOUND'));
     }
     return producto;
   }
@@ -42,9 +38,7 @@ export class ProductosService {
   async remove(id: string): Promise<void> {
     const result = await this.productoRepository.delete(id);
     if (result.affected === 0) {
-      throw new NotFoundException(
-        getProductMessage(ErrorMessages.NOT_FOUND, LanguageEnum.ES, id)
-      );
+      throw new NotFoundException(I18nHelper.getError('PRODUCT_NOT_FOUND'));
     }
   }
 }

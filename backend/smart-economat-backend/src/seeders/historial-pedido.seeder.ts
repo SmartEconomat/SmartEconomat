@@ -1,6 +1,7 @@
 import { DataSource } from 'typeorm';
 import { HistorialPrecio } from '../modules/producto/historial-precio-proveedor.entity/historial.entity';
 import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
+import { SEEDER_MESSAGES } from './constants/messages';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
@@ -13,9 +14,7 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   const productosProv = await productoProveedorRepo.find();
   if (productosProv.length === 0) {
-    throw new Error(
-      'No hay producto_proveedor. Ejecuta producto.seeder.ts primero.'
-    );
+    throw new Error(SEEDER_MESSAGES.errors.NO_PRODUCTOS_PROVEEDOR);
   }
 
   const historiales: HistorialPrecio[] = [];

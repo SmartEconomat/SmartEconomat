@@ -1,0 +1,53 @@
+{
+  "errors": {
+    "NOT_FOUND": "Resource not found",
+    "INTERNAL_SERVER_ERROR": "Internal server error",
+    "BAD_REQUEST": "Bad request",
+    "UNAUTHORIZED": "Unauthorized",
+    "FORBIDDEN": "Forbidden",
+    "CONFLICT": "Conflict with current resource state",
+    "EMPTY_REQUEST": "Request body is empty",
+    "INVALID_DATA": "The provided data is invalid",
+    "MISSING_REQUIRED_FIELD": "A required field is missing",
+    "NO_PROVEEDORES": "No suppliers found. Run proveedor.seeder.ts first.",
+    "NO_USUARIOS": "No users in the database",
+    "NO_PRODUCTOS_PROVEEDOR": "No products with supplier",
+    "NO_RECEPCIONES": "No receptions created",
+    "NO_PEDIDOS": "Missing orders. Run its seeder first.",
+    "NO_RECEPCIONES_PRODUCTOS": "No product receptions available",
+    "SEEDER_NOT_FOUND": "Seeder not found",
+    "RUN_SEEDER_NOT_FOUND": "runSeeder not found in file",
+    "USER_NOT_FOUND": "User not found",
+    "ORDER_NOT_FOUND": "Order not found",
+    "MOVEMENT_NOT_FOUND": "Movement not found",
+    "PRODUCT_NOT_FOUND": "Product not found",
+    "INSUFFICIENT_STOCK": "Insufficient stock",
+    "INVALID_STATE": "Invalid state",
+    "ORDER_NOT_CANCELLABLE": "Cannot cancel an order that has already been received or is in shipping process",
+    "MOVEMENTS_NOT_FOUND": "No movements found for this entity"
+  },
+  "success": {
+    "CREATED": "Successfully created",
+    "UPDATED": "Successfully updated",
+    "DELETED": "Successfully deleted",
+    "OPERATION_SUCCESSFUL": "Operation completed successfully"
+  },
+  "validation": {
+    "INVALID_EMAIL": "Email is not valid",
+    "INVALID_PASSWORD": "Password is not valid",
+    "PASSWORD_TOO_SHORT": "Password is too short",
+    "PASSWORD_TOO_LONG": "Password is too long",
+    "INVALID_UUID": "UUID is not valid"
+  },
+  "entities": {
+    "usuario": "User",
+    "producto": "Product",
+    "proveedor": "Supplier",
+    "pedido": "Order",
+    "recepcion": "Reception",
+    "inventario": "Inventory",
+    "movimiento": "Movement",
+    "incidencia": "Incident",
+    "albaran": "Delivery Note"
+  }
+}

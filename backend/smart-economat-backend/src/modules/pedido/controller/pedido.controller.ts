@@ -4,7 +4,7 @@ import { UpdatePedidoDto } from '../dto/updatePedido.dto';
 import { PedidoService } from '../service/pedido.service';
 
 @Controller('pedidos')
-export class PedidosController {
+export class PedidoController {
   constructor(private readonly pedidoService: PedidoService) {}
 
   @Patch(':id/fecha-entrega')

@@ -4,6 +4,7 @@ import { CreateMovimientoDto } from '../dto/create-movimiento.dto';
 import { UpdateMovimientoDto } from '../dto/update-movimiento.dto';
 import { MovimientoHistoryDto } from '../dto/movimiento-history.dto';
 import { Movimiento } from '../movimiento.entity/movimiento.entity';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 
 @Injectable()
 export class MovimientoService {
@@ -19,7 +20,9 @@ export class MovimientoService {
 
   async findOne(id: string) {
     const mov = await this.movimientoRepo.findById(id);
-    if (!mov) throw new NotFoundException('Movimiento no encontrado');
+    if (!mov) {
+      throw new NotFoundException(I18nHelper.getError('MOVEMENT_NOT_FOUND'));
+    }
     return mov;
   }
 
@@ -35,9 +38,7 @@ export class MovimientoService {
     const movimientos = await this.movimientoRepo.findMovimientosByEntity(dto);
 
     if (!movimientos || movimientos.length === 0) {
-      throw new NotFoundException(
-        'No se encontraron movimientos para esta entidad'
-      );
+      throw new NotFoundException(I18nHelper.getError('MOVEMENTS_NOT_FOUND'));
     }
 
     return movimientos;

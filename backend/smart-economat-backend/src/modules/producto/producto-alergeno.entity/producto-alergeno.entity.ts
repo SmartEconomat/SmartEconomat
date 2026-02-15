@@ -23,15 +23,9 @@ export class ProductoAlergeno {
   @JoinColumn({ name: 'id_producto', referencedColumnName: 'id' })
   producto!: Producto;
 
-  @CreateDateColumn({
-    type: 'timestamptz',
-    name: 'created_at',
-  })
-  createdAt!: Date;
+  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
+  readonly createdAt!: Date;
 
-  @UpdateDateColumn({
-    type: 'timestamptz',
-    name: 'updated_at',
-  })
-  updatedAt!: Date;
+  @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
+  readonly updatedAt!: Date;
 }

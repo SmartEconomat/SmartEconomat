@@ -9,29 +9,29 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ProductosService } from '../service/productos.service';
+import { ProductoService } from '../service/producto.service';
 import { CreateProductoDto } from '../dto/create-producto.dto';
 import { UpdateProductoDto } from '../dto/update-producto.dto';
 import { Producto } from '../producto.entity/producto.entity';
 
 @Controller('productos')
-export class ProductosController {
-  constructor(private readonly productosService: ProductosService) {}
+export class ProductoController {
+  constructor(private readonly productoService: ProductoService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(@Body() createProductoDto: CreateProductoDto): Promise<Producto> {
-    return this.productosService.create(createProductoDto);
+    return this.productoService.create(createProductoDto);
   }
 
   @Get()
   findAll(): Promise<Producto[]> {
-    return this.productosService.findAll();
+    return this.productoService.findAll();
   }
 
   @Get(':id')
   findOne(@Param('id') id: string): Promise<Producto> {
-    return this.productosService.findOne(id);
+    return this.productoService.findOne(id);
   }
 
   @Patch(':id')
@@ -39,12 +39,12 @@ export class ProductosController {
     @Param('id') id: string,
     @Body() updateProductoDto: UpdateProductoDto
   ): Promise<Producto> {
-    return this.productosService.update(id, updateProductoDto);
+    return this.productoService.update(id, updateProductoDto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string): Promise<void> {
-    return this.productosService.remove(id);
+    return this.productoService.remove(id);
   }
 }

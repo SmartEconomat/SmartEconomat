@@ -2,10 +2,11 @@ import { DataSource } from 'typeorm';
 import {
   Pedido,
   EstadoPedido,
-} from '../modules/pedidos/pedido.entity/pedido.entity';
-import { PedidoProducto } from '../modules/pedidos/pedido-producto.entity/pedido-producto.entity';
+} from '../modules/pedido/pedido.entity/pedido.entity';
+import { PedidoProducto } from '../modules/pedido/pedido-producto.entity/pedido-producto.entity';
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
 import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
+import { SEEDER_MESSAGES } from './constants/messages';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
@@ -17,10 +18,12 @@ export const runSeeder = async (dataSource: DataSource) => {
   const usuarios = await usuarioRepo.find();
   const productosProv = await productoProveedorRepo.find();
 
-  if (usuarios.length === 0)
-    throw new Error('No hay usuarios en la base de datos');
-  if (productosProv.length === 0)
-    throw new Error('No hay productos con proveedor');
+  if (usuarios.length === 0) {
+    throw new Error(SEEDER_MESSAGES.errors.NO_USUARIOS);
+  }
+  if (productosProv.length === 0) {
+    throw new Error(SEEDER_MESSAGES.errors.NO_PRODUCTOS_PROVEEDOR);
+  }
 
   for (let i = 0; i < 8; i++) {
     const pedido = pedidoRepo.create({
@@ -55,7 +58,7 @@ export const runSeeder = async (dataSource: DataSource) => {
           pedido: pedidoGuardado,
           productoProveedor: pp,
           cantidad: cantidad,
-          precio_unitario: precioUnitario,
+          precioUnitario: precioUnitario,
           observaciones: faker.datatype.boolean(0.3)
             ? faker.lorem.sentence()
             : undefined,

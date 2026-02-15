@@ -2,6 +2,7 @@ import { DataSource } from 'typeorm';
 import { Inventario } from '../modules/inventario/inventario.entity/inventario.entity';
 import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
 import { localInventario } from '../modules/inventario/enums/inventario.enums';
+import { SEEDER_MESSAGES } from './constants/messages';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
@@ -14,9 +15,7 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   const productosProv = await productoProveedorRepo.find();
   if (productosProv.length === 0) {
-    throw new Error(
-      'No hay producto_proveedor. Ejecuta producto.seeder.ts primero.'
-    );
+    throw new Error(SEEDER_MESSAGES.errors.NO_PRODUCTOS_PROVEEDOR);
   }
 
   const inventarios: Inventario[] = [];
