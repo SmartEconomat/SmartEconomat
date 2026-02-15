@@ -3,11 +3,29 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import * as dotenv from 'dotenv';
 import { join } from 'path';
 
-dotenv.config({ path: join(process.cwd(), '.env') });
+import { existsSync } from 'fs';
+
+const envPaths = [
+  join(process.cwd(), '.env'),
+  join(process.cwd(), '../../.env'),
+  join(process.cwd(), '../../.env.dev'),
+];
+
+for (const path of envPaths) {
+  if (existsSync(path)) {
+    dotenv.config({ path });
+    console.log(`Loaded environment from ${path}`);
+    break;
+  }
+}
+
+const isDocker = existsSync('/.dockerenv');
+const dbHost = process.env.DB_HOST || process.env.POSTGRES_HOST || 'localhost';
+const finalHost = !isDocker && dbHost === 'db' ? 'localhost' : dbHost;
 
 export const dbConfig: DataSourceOptions = {
   type: 'postgres',
-  host: process.env.DB_HOST || process.env.POSTGRES_HOST || 'localhost',
+  host: finalHost,
   port: parseInt(
     process.env.DB_PORT || process.env.POSTGRES_PORT || '5433',
     10
