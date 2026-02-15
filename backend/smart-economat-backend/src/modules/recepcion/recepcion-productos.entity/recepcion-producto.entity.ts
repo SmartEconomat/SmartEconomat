@@ -4,15 +4,18 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Unique,
 } from 'typeorm';
 import { Recepcion } from '../recepcion.entity/recepcion.entity';
 @Entity('recepcion_producto')
 @Unique(['recepcion', 'pedidoProducto'])
 export class RecepcionProducto {
-  @PrimaryGeneratedColumn({ name: 'id_recepcion_producto' })
-  id!: number;
+  @PrimaryColumn('uuid', {
+    name: 'id_recepcion_producto',
+    default: () => 'uuid_generate_v7()',
+  })
+  readonly id!: string;
 
   @ManyToOne(() => Recepcion, (recepcion) => recepcion.recepcionesProducto, {
     onDelete: 'CASCADE',

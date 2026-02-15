@@ -1,10 +1,13 @@
 import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, PrimaryColumn, Column, OneToMany } from 'typeorm';
 
 @Entity({ name: 'proveedor' })
 export class Proveedor {
-  @PrimaryGeneratedColumn({ name: 'id_proveedor' })
-  id!: number;
+  @PrimaryColumn('uuid', {
+    name: 'id_proveedor',
+    default: () => 'uuid_generate_v7()',
+  })
+  readonly id!: string;
 
   @Column({ type: 'varchar', length: 100 })
   nombre!: string;

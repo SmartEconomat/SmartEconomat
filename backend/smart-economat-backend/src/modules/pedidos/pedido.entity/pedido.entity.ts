@@ -1,6 +1,6 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Column,
   ManyToOne,
   JoinColumn,
@@ -14,8 +14,11 @@ import { PedidoProducto } from '../pedido-producto.entity/pedido-producto.entity
 
 @Entity({ name: 'pedido' })
 export class Pedido {
-  @PrimaryGeneratedColumn('uuid', { name: 'id_pedido' })
-  id!: string;
+  @PrimaryColumn('uuid', {
+    name: 'id_pedido',
+    default: () => 'uuid_generate_v7()',
+  })
+  readonly id!: string;
 
   @ManyToOne(() => Usuario, (usuario) => usuario.pedidos, {
     onDelete: 'CASCADE',
