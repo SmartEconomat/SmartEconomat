@@ -8,6 +8,13 @@ import { SEEDER_MESSAGES } from './constants/messages';
 
 dotenv.config({ path: join(__dirname, '../../../../.env') });
 
+if (process.env.NODE_ENV === 'production') {
+  console.error(
+    '⛔️  ERROR: No puedes ejecutar seeders en entorno de producción!'
+  );
+  process.exit(1);
+}
+
 import { dbConfig } from '../config/database.config';
 
 export const dataSource = new DataSource({
@@ -25,7 +32,7 @@ async function runAllSeeders() {
     'pedido.seeder.ts',
     'recepcion.seeder.ts',
     'albaran.seeder.ts',
-    'historial-pedido.seeder.ts',
+    'historial-precio.seeder.ts',
     'incidencia.seeder.ts',
     'movimiento.seeder.ts',
   ];

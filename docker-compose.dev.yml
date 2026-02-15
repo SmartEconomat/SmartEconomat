@@ -5,14 +5,13 @@ services:
       context: ./database
       dockerfile: Dockerfile
     image: smarteconomat-db:dev
-
     env_file: .env.dev
     ports:
       - "${POSTGRES_PORT}:5432"
     volumes:
       - database_dev:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,11 +20,9 @@ services:
 
   backend:
     build:
-
       context: ./backend/smart-economat-backend
-      dockerfile: Dockerfile.dev
+      dockerfile: ../Dockerfile.dev
     image: smarteconomat-backend:dev
-
     ports:
       - "${BACKEND_PORT}:${BACKEND_PORT}"
     env_file: .env.dev
@@ -41,11 +38,9 @@ services:
 
   frontend:
     build:
-
       context: ./frontend/smart-economat-frontend
-      dockerfile: Dockerfile.dev
+      dockerfile: ../Dockerfile.dev
     image: smarteconomat-frontend:dev
-
     ports:
       - "${FRONTEND_PORT}:5173"
     env_file: .env.dev

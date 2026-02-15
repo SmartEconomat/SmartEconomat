@@ -5,6 +5,8 @@ import {
   TIPOS_DISPONIBLES,
 } from '../modules/movimiento/enums/movimiento.enums';
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
+import { Producto } from '../modules/producto/producto.entity/producto.entity';
+import { Pedido } from '../modules/pedido/pedido.entity/pedido.entity';
 
 const NUM_MOVIMIENTOS = 50;
 
@@ -13,8 +15,12 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   const movimientoRepo = dataSource.getRepository(Movimiento);
   const usuarioRepo = dataSource.getRepository(Usuario);
+  const productoRepo = dataSource.getRepository(Producto);
+  const pedidoRepo = dataSource.getRepository(Pedido);
 
   const usuarios = await usuarioRepo.find();
+  const productos = await productoRepo.find();
+  const pedidos = await pedidoRepo.find();
 
   const movimientos: Movimiento[] = [];
 
@@ -22,6 +28,13 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   for (let i = 0; i < NUM_MOVIMIENTOS; i++) {
     const entidadSeleccionada = faker.helpers.arrayElement(entidades);
+    let entidadId = faker.string.uuid();
+
+    if (entidadSeleccionada === 'PRODUCTO' && productos.length > 0) {
+      entidadId = faker.helpers.arrayElement(productos).id;
+    } else if (entidadSeleccionada === 'PEDIDO' && pedidos.length > 0) {
+      entidadId = faker.helpers.arrayElement(pedidos).id;
+    }
 
     const movimiento = movimientoRepo.create({
       tipo: faker.helpers.arrayElement(TIPOS_DISPONIBLES) as TipoMovimiento,
@@ -31,7 +44,7 @@ export const runSeeder = async (dataSource: DataSource) => {
         : null,
       fecha: faker.date.recent({ days: 30 }),
       entidad: entidadSeleccionada,
-      entidadId: faker.string.uuid(),
+      entidadId: entidadId,
       usuario: faker.helpers.arrayElement(usuarios),
     });
 
@@ -39,4 +52,5 @@ export const runSeeder = async (dataSource: DataSource) => {
   }
 
   await movimientoRepo.save(movimientos);
+  console.log('Seeder de movimientos ejecutado correctamente.');
 };

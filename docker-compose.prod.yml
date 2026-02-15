@@ -11,7 +11,7 @@ services:
     volumes:
       - database_prod:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -22,7 +22,7 @@ services:
     build:
 
       context: ./backend/smart-economat-backend
-      dockerfile: Dockerfile.prod
+      dockerfile: ../Dockerfile.prod
     image: smarteconomat-backend:prod
 
     restart: always
@@ -39,7 +39,7 @@ services:
     build:
 
       context: ./frontend/smart-economat-frontend
-      dockerfile: Dockerfile.prod
+      dockerfile: ../Dockerfile.prod
     image: smarteconomat-frontend:prod
 
     restart: always

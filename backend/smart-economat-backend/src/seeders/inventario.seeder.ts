@@ -45,5 +45,5 @@ export const runSeeder = async (dataSource: DataSource) => {
     await inventarioRepo.save(inventarios);
   }
 
-  console.log('Seeder de historial_precio ejecutado correctamente.');
+  console.log('Seeder de inventario ejecutado correctamente.');
 };
