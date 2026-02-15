@@ -1,17 +1,14 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
+import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
 import { localInventario } from '../enums/inventario.enums';
 
 @Entity({ name: 'inventario' })
 export class Inventario {
-  @PrimaryGeneratedColumn('uuid', { name: 'id_inventario' })
-  id!: string;
+  @PrimaryColumn('uuid', {
+    name: 'id_inventario',
+    default: () => 'uuid_generate_v7()',
+  })
+  readonly id!: string;
 
   @ManyToOne(() => ProductoProveedor, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id_producto_proveedor' })

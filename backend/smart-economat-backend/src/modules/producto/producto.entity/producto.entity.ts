@@ -1,10 +1,4 @@
-import {
-  Entity,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  Column,
-  Check,
-} from 'typeorm';
+import { Entity, OneToMany, PrimaryColumn, Column, Check } from 'typeorm';
 import { TipoProducto, UnidadProducto } from '../enums/producto.enums';
 import { ProductoAlergeno } from '../producto-alergeno.entity/producto-alergeno.entity';
 import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
@@ -12,8 +6,11 @@ import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveed
 @Check(`"caducidad" IS NULL OR "caducidad" >= CURRENT_DATE`)
 @Entity({ name: 'producto' })
 export class Producto {
-  @PrimaryGeneratedColumn('uuid', { name: 'id_producto' })
-  id!: string;
+  @PrimaryColumn('uuid', {
+    name: 'id_producto',
+    default: () => 'uuid_generate_v7()',
+  })
+  readonly id!: string;
 
   @Column({ type: 'varchar', length: 100 })
   nombre!: string;

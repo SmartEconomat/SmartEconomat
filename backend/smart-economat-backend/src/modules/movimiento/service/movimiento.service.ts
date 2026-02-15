@@ -17,17 +17,17 @@ export class MovimientoService {
     return this.movimientoRepo.findAll();
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const mov = await this.movimientoRepo.findById(id);
     if (!mov) throw new NotFoundException('Movimiento no encontrado');
     return mov;
   }
 
-  update(id: number, dto: UpdateMovimientoDto) {
+  update(id: string, dto: UpdateMovimientoDto) {
     return this.movimientoRepo.updateMovimiento(id, dto);
   }
 
-  remove(id: number) {
+  remove(id: string) {
     return this.movimientoRepo.deleteMovimiento(id);
   }
 

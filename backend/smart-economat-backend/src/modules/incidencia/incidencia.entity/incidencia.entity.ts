@@ -1,6 +1,6 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Column,
   ManyToOne,
   JoinColumn,
@@ -12,8 +12,11 @@ import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
 
 @Entity('incidencia')
 export class Incidencia {
-  @PrimaryGeneratedColumn({ name: 'id_incidencia' })
-  id!: number;
+  @PrimaryColumn('uuid', {
+    name: 'id_incidencia',
+    default: () => 'uuid_generate_v7()',
+  })
+  readonly id!: string;
 
   @ManyToOne(() => Recepcion, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id_recepcion' })

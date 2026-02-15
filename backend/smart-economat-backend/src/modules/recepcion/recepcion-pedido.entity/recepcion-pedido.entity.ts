@@ -7,7 +7,7 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Unique,
   UpdateDateColumn,
 } from 'typeorm';
@@ -17,8 +17,11 @@ import { AlbaranPedidoRecepcion } from '../../albaran/albaran-pedido-recepcion.e
 @Entity('recepcion_pedido')
 @Unique(['recepcion', 'pedido'])
 export class RecepcionPedido {
-  @PrimaryGeneratedColumn({ name: 'id_recepcion_pedido' })
-  id!: number;
+  @PrimaryColumn('uuid', {
+    name: 'id_recepcion_pedido',
+    default: () => 'uuid_generate_v7()',
+  })
+  readonly id!: string;
 
   @ManyToOne(() => Recepcion, (recepcion) => recepcion.recepcionesPedido, {
     onDelete: 'CASCADE',

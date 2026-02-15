@@ -1,7 +1,7 @@
 import {
   Entity,
   OneToMany,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Column,
   Index,
   CreateDateColumn,
@@ -15,8 +15,11 @@ import { Incidencia } from '../../incidencia/incidencia.entity/incidencia.entity
 
 @Entity({ name: 'usuario' })
 export class Usuario {
-  @PrimaryGeneratedColumn('uuid', { name: 'id_usuario' })
-  id!: string;
+  @PrimaryColumn('uuid', {
+    name: 'id_usuario',
+    default: () => 'uuid_generate_v7()',
+  })
+  readonly id!: string;
 
   @Column({ type: 'varchar', length: 100 })
   nombre!: string;

@@ -15,32 +15,32 @@ export class MovimientoRepository {
     const movimientoData = {
       ...data,
       usuario: { id: data.usuario },
-      inventario: { id: data.inventario },
     };
-    return this.repo.save(this.repo.create(movimientoData as any));
+    return this.repo.save(this.repo.create(movimientoData));
   }
 
   findAll() {
-    return this.repo.find({ relations: ['usuario', 'inventario'] });
+    return this.repo.find({ relations: ['usuario'] });
   }
 
-  findById(id: number) {
+  findById(id: string) {
     return this.repo.findOne({
       where: { id },
-      relations: ['usuario', 'inventario'],
+      relations: ['usuario'],
     });
   }
 
-  updateMovimiento(id: number, data: UpdateMovimientoDto) {
-    const movimientoData = {
-      ...data,
-      ...(data.usuario && { usuario: { id: data.usuario } }),
-      ...(data.inventario && { inventario: { id: data.inventario } }),
+  updateMovimiento(id: string, data: UpdateMovimientoDto) {
+    const updateData: Partial<Movimiento> = {
+      ...(data.tipo !== undefined && { tipo: data.tipo }),
+      ...(data.cantidad !== undefined && { cantidad: data.cantidad }),
+      ...(data.descripcion !== undefined && { descripcion: data.descripcion }),
+      ...(data.usuario && { usuario: { id: data.usuario } as any }),
     };
-    return this.repo.update(id, movimientoData as any);
+    return this.repo.update(id, updateData);
   }
 
-  deleteMovimiento(id: number) {
+  deleteMovimiento(id: string) {
     return this.repo.softDelete(id);
   }
 
@@ -50,7 +50,6 @@ export class MovimientoRepository {
     const query = this.repo
       .createQueryBuilder('movimiento')
       .leftJoinAndSelect('movimiento.usuario', 'usuario')
-      .leftJoinAndSelect('movimiento.inventario', 'inventario')
       .where('movimiento.entidadId = :entityId', { entityId });
 
     if (type) {
