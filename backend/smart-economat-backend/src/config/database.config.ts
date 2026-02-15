@@ -7,11 +7,16 @@ dotenv.config({ path: join(process.cwd(), '.env') });
 
 export const dbConfig: DataSourceOptions = {
   type: 'postgres',
-  host: process.env.POSTGRES_HOST || 'localhost',
-  port: parseInt(process.env.POSTGRES_PORT || '5433', 10),
-  username: process.env.POSTGRES_USER || 'postgres',
-  password: process.env.POSTGRES_PASSWORD || 'postgres',
-  database: process.env.POSTGRES_DB || 'smart_economat',
+  host: process.env.DB_HOST || process.env.POSTGRES_HOST || 'localhost',
+  port: parseInt(
+    process.env.DB_PORT || process.env.POSTGRES_PORT || '5433',
+    10
+  ),
+  username: process.env.DB_USERNAME || process.env.POSTGRES_USER || 'postgres',
+  password:
+    process.env.DB_PASSWORD || process.env.POSTGRES_PASSWORD || 'postgres',
+  database:
+    process.env.DB_DATABASE || process.env.POSTGRES_DB || 'smart_economat',
   synchronize: process.env.DB_SYNC === 'true',
   logging: process.env.NODE_ENV !== 'production',
   entities: [join(__dirname, '../**/*.entity.{ts,js}')],

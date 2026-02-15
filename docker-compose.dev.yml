@@ -1,58 +1,63 @@
+name: smarteconomat-dev
 services:
   db:
     build:
       context: ./database
       dockerfile: Dockerfile
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    env_file: .env
+    image: smarteconomat-db:dev
+
+    env_file: .env.dev
     ports:
-      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+      - "${POSTGRES_PORT}:5432"
     volumes:
-      - database:/var/lib/postgresql/data
+      - database_dev:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - smarteconomat-network
+      - smarteconomat-dev-network
 
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+
+      context: ./backend/smart-economat-backend
+      dockerfile: Dockerfile.dev
+    image: smarteconomat-backend:dev
+
     ports:
       - "${BACKEND_PORT}:${BACKEND_PORT}"
-    env_file: .env
+    env_file: .env.dev
     command: npm run start:dev
     depends_on:
       db:
         condition: service_healthy
     networks:
-      - smarteconomat-network
+      - smarteconomat-dev-network
     volumes:
       - ./backend/smart-economat-backend:/app
       - /app/node_modules
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+
+      context: ./frontend/smart-economat-frontend
+      dockerfile: Dockerfile.dev
+    image: smarteconomat-frontend:dev
+
     ports:
-      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
-    env_file: .env
+      - "${FRONTEND_PORT}:5173"
+    env_file: .env.dev
     networks:
-      - smarteconomat-network
+      - smarteconomat-dev-network
     volumes:
       - ./frontend/smart-economat-frontend:/app
       - /app/node_modules
 
 volumes:
-  database:
+  database_dev:
 
 networks:
-  smarteconomat-network:
+  smarteconomat-dev-network:
     driver: bridge
