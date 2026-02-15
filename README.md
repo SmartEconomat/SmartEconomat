@@ -11,44 +11,68 @@ SmartEconomat es una aplicación diseñada para gestionar el inventario de ingre
 
 1. **Clonar el repositorio**  
    Clona el repositorio de SmartEconomat en tu máquina local:
+
    ```bash
    git clone https://github.com/SmartEconomat/SmartEconomat.git
    cd SmartEconomat
    ```
 
 2. **Configurar variables de entorno**  
-   - Copia el archivo `.env.example` a un nuevo archivo llamado `.env`:
-     ```bash
-     cp .env.example .env
-     ```
-   - Abre el archivo `.env` con un editor de texto y completa las variables con los valores reales correspondientes (por ejemplo, credenciales de base de datos, claves API, etc.).
+   El proyecto utiliza archivos de entorno separados para desarrollo y producción.
+   - **Desarrollo**:
+     Asegúrate de tener el archivo `.env.dev` configurado con tus variables locales.
+   - **Producción**:
+     Configura el archivo `.env.prod` con las credenciales de producción seguras.
 
-3. **Construir y levantar el proyecto**  
-   - La primera vez, ejecuta el siguiente comando para construir las imágenes de Docker y levantar los servicios:
-     ```bash
-     docker compose up --build
-     ```
-   - En ejecuciones posteriores, simplemente usa:
-     ```bash
-     docker compose up
-     ```
+3. **Ejecutar el proyecto**
+
+   ### Entorno de Desarrollo (Hot Reload)
+
+   Ideal para programar. Incluye recarga automática (HMR) para backend y frontend.
+
+   ```bash
+   docker compose -f docker-compose.dev.yml up --build
+   ```
+
+   - **Frontend**: [http://localhost:5173](http://localhost:5173)
+   - **Backend**: [http://localhost:3000](http://localhost:3000)
+   - **Base de Datos**: localhost:5432
+
+   ### Entorno de Producción
+
+   Despliega la aplicación optimizada para producción (imágenes ligeras, sin código fuente montado).
+
+   ```bash
+   docker compose -f docker-compose.prod.yml up -d --build
+   ```
+
+   - **Frontend**: [http://localhost:80](http://localhost:80)
+   - **Backend**: [http://localhost:3000](http://localhost:3000)
 
 4. **Detener el proyecto**  
-   Para detener los contenedores sin eliminarlos, usa:
+   Para detener y eliminar los contenedores:
+
    ```bash
-   docker compose stop
-   ```
-   Si deseas eliminar los contenedores y liberar recursos, usa:
-   ```bash
-   docker compose down
+   # Desarrollo
+   docker compose -f docker-compose.dev.yml down
+
+   # Producción
+   docker compose -f docker-compose.prod.yml down
    ```
 
 ## Notas adicionales
 
-- Asegúrate de que los puertos especificados en el archivo `docker-compose.yml` no estén en uso por otras aplicaciones.
-- Si encuentras problemas durante la configuración, verifica los logs de Docker con:
+63:ps
+
+- **Conflicto de puertos**: Ten en cuenta que si intentas levantar el entorno de desarrollo y producción simultáneamente en la misma máquina, es probable que ocurra un conflicto de puertos (por defecto, ambos intentan usar el puerto 3000 para el backend). Detén uno antes de iniciar el otro.
+- **Logs**: Para ver los logs de un entorno específico:
+
   ```bash
-  docker compose logs
+  # Desarrollo
+  docker compose -f docker-compose.dev.yml logs -f
+
+  # Producción
+  docker compose -f docker-compose.prod.yml logs -f
   ```
 
 ## Licencia

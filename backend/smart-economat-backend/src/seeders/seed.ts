@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
-import { readdirSync, existsSync } from 'fs';
+import { readdirSync } from 'fs';
 import { join } from 'path';
 import * as dotenv from 'dotenv';
 import { Seeder } from './interfaces/seeder.interface';
@@ -10,16 +10,11 @@ dotenv.config({ path: join(__dirname, '../../../../.env') });
 
 import { dbConfig } from '../config/database.config';
 
-const isDocker = existsSync('/.dockerenv');
-const host = isDocker
-  ? (dbConfig as any).host
-  : process.env.POSTGRES_HOST_URL || 'localhost';
-
 export const dataSource = new DataSource({
   ...dbConfig,
-  host,
-  dropSchema: true,
-} as any);
+  synchronize: false,
+  dropSchema: process.argv.includes('reset'),
+});
 
 async function runAllSeeders() {
   const seedersInOrder = [
@@ -75,7 +70,7 @@ void (async () => {
     await dataSource.initialize();
     const [, , arg] = process.argv;
 
-    if (!arg || arg === 'all') {
+    if (!arg || arg === 'all' || arg === 'reset') {
       await runAllSeeders();
     } else {
       await runSeederByName(arg);

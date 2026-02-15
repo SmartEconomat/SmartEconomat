@@ -56,3 +56,7 @@ build/
 # IDEs
 *.idea/
 *.vscode/
+
+# Environment specific
+.env.dev
+.env.prod
