@@ -5,6 +5,9 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
 } from 'typeorm';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 import { EstadoPedido } from '../enums/estado-pedido.enum';
@@ -57,6 +60,24 @@ export class Pedido {
 
   @Column({ type: 'text', nullable: true, name: 'motivo_cancelacion' })
   motivoCancelacion?: string;
+
+  @CreateDateColumn({
+    type: 'timestamptz',
+    name: 'created_at',
+  })
+  createdAt!: Date;
+
+  @UpdateDateColumn({
+    type: 'timestamptz',
+    name: 'updated_at',
+  })
+  updatedAt!: Date;
+
+  @DeleteDateColumn({
+    type: 'timestamptz',
+    name: 'deleted_at',
+  })
+  deletedAt?: Date;
 }
 
 export { EstadoPedido };

@@ -1,4 +1,11 @@
-import { Entity, PrimaryColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryColumn,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Producto } from '../producto.entity/producto.entity';
 import { AlergenoProducto } from '../enums/producto.enums';
 
@@ -15,4 +22,16 @@ export class ProductoAlergeno {
   })
   @JoinColumn({ name: 'id_producto', referencedColumnName: 'id' })
   producto!: Producto;
+
+  @CreateDateColumn({
+    type: 'timestamptz',
+    name: 'created_at',
+  })
+  createdAt!: Date;
+
+  @UpdateDateColumn({
+    type: 'timestamptz',
+    name: 'updated_at',
+  })
+  updatedAt!: Date;
 }

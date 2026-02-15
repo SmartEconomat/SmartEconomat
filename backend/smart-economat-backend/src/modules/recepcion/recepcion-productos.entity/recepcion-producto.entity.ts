@@ -6,6 +6,9 @@ import {
   ManyToOne,
   PrimaryColumn,
   Unique,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
 } from 'typeorm';
 import { Recepcion } from '../recepcion.entity/recepcion.entity';
 @Entity('recepcion_producto')
@@ -41,4 +44,22 @@ export class RecepcionProducto {
     default: () => 'CURRENT_DATE',
   })
   fechaRecepcion!: Date;
+
+  @CreateDateColumn({
+    type: 'timestamptz',
+    name: 'created_at',
+  })
+  createdAt!: Date;
+
+  @UpdateDateColumn({
+    type: 'timestamptz',
+    name: 'updated_at',
+  })
+  updatedAt!: Date;
+
+  @DeleteDateColumn({
+    type: 'timestamptz',
+    name: 'deleted_at',
+  })
+  deletedAt?: Date;
 }
