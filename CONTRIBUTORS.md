@@ -37,6 +37,10 @@ Demostrando que:
 - 💻 Commits: **17** (13.49%)
 - 🔀 PRs Fusionados: **3**
 
+### 🥈 Alexis
+- 💻 Commits: **19** (14.84%)
+- 🔀 PRs Fusionados: **7**
+
 ### 🥈 Guillermo
 - 💻 Commits: **10** (7.94%)
 - 🔀 PRs Fusionados: **5**
