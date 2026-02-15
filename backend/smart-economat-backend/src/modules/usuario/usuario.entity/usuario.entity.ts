@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { rolUsuario } from '../enums/usuario.enums';
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
-import { Pedido } from '../../pedidos/pedido.entity/pedido.entity';
+import { Pedido } from '../../pedido/pedido.entity/pedido.entity';
 import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
 import { Incidencia } from '../../incidencia/incidencia.entity/incidencia.entity';
 
@@ -84,10 +84,10 @@ export class Usuario {
   incidenciasResueltas!: Incidencia[];
 
   @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
-  createdAt!: Date;
+  readonly createdAt!: Date;
 
   @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
-  updatedAt!: Date;
+  readonly updatedAt!: Date;
 
   @DeleteDateColumn({ type: 'timestamptz', name: 'deleted_at' })
   deletedAt?: Date;

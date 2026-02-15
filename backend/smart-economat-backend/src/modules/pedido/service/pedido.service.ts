@@ -7,6 +7,7 @@ import { Pedido } from '../pedido.entity/pedido.entity';
 import { EstadoPedido } from '../enums/estado-pedido.enum';
 import { CancelPedidoDto } from '../dto/cancelPedido.dto';
 import { UpdatePedidoDto } from '../dto/updatePedido.dto';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 
 @Injectable()
 export class PedidoService {
@@ -16,7 +17,7 @@ export class PedidoService {
     const pedido = this.pedidos.find((p) => p.id === id);
 
     if (!pedido) {
-      throw new NotFoundException(`Pedido no encontrado`);
+      throw new NotFoundException(I18nHelper.getError('ORDER_NOT_FOUND'));
     }
 
     if (
@@ -24,7 +25,7 @@ export class PedidoService {
       pedido.estado === EstadoPedido.EN_PROCESO
     ) {
       throw new BadRequestException(
-        `No se puede cancelar un pedido que ya ha sido recibido o está en proceso de envio`
+        I18nHelper.getError('ORDER_NOT_CANCELLABLE')
       );
     }
     return pedido;

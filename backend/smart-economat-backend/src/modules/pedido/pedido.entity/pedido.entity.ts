@@ -24,7 +24,8 @@ export class Pedido {
   readonly id!: string;
 
   @ManyToOne(() => Usuario, (usuario) => usuario.pedidos, {
-    onDelete: 'CASCADE',
+    nullable: false,
+    onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'id_usuario', referencedColumnName: 'id' })
   usuario!: Usuario;
@@ -61,22 +62,13 @@ export class Pedido {
   @Column({ type: 'text', nullable: true, name: 'motivo_cancelacion' })
   motivoCancelacion?: string;
 
-  @CreateDateColumn({
-    type: 'timestamptz',
-    name: 'created_at',
-  })
-  createdAt!: Date;
+  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
+  readonly createdAt!: Date;
 
-  @UpdateDateColumn({
-    type: 'timestamptz',
-    name: 'updated_at',
-  })
-  updatedAt!: Date;
+  @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
+  readonly updatedAt!: Date;
 
-  @DeleteDateColumn({
-    type: 'timestamptz',
-    name: 'deleted_at',
-  })
+  @DeleteDateColumn({ type: 'timestamptz', name: 'deleted_at' })
   deletedAt?: Date;
 }
 

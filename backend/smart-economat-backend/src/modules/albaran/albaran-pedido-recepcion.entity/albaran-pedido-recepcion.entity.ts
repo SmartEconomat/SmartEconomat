@@ -30,18 +30,12 @@ export class AlbaranPedidoRecepcion {
   @JoinColumn({ name: 'id_pedido_recepcion' })
   recepcionPedido!: RecepcionPedido;
 
-  @CreateDateColumn({
-    name: 'created_at',
-  })
-  createdAt: Date;
+  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
+  readonly createdAt!: Date;
 
-  @UpdateDateColumn({
-    name: 'updated_at',
-  })
-  updatedAt: Date;
+  @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
+  readonly updatedAt!: Date;
 
-  @DeleteDateColumn({
-    name: 'deleted_at',
-  })
+  @DeleteDateColumn({ type: 'timestamptz', name: 'deleted_at' })
   deletedAt?: Date;
 }

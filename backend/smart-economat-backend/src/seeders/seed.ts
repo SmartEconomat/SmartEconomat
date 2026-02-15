@@ -4,6 +4,7 @@ import { readdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import * as dotenv from 'dotenv';
 import { Seeder } from './interfaces/seeder.interface';
+import { SEEDER_MESSAGES } from './constants/messages';
 
 dotenv.config({ path: join(__dirname, '../../../../.env') });
 
@@ -54,11 +55,15 @@ async function runSeederByName(name: string) {
       ? fileJs
       : null;
 
-  if (!filePath) throw new Error(`Seeder no encontrado: ${name}`);
+  if (!filePath) {
+    throw new Error(`${SEEDER_MESSAGES.errors.SEEDER_NOT_FOUND}: ${name}`);
+  }
 
   const seeder: Seeder = require(join(__dirname, filePath));
   if (typeof seeder.runSeeder !== 'function') {
-    throw new Error(`No se encontró runSeeder en ${filePath}`);
+    throw new Error(
+      `${SEEDER_MESSAGES.errors.RUN_SEEDER_NOT_FOUND} ${filePath}`
+    );
   }
 
   console.log(`Ejecutando seeder ${filePath}...`);

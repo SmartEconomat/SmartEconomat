@@ -42,14 +42,14 @@ export class Incidencia {
   @Column({ type: 'text', nullable: true })
   observacionesResolucion?: string;
 
-  @CreateDateColumn({ name: 'fecha_resolucion', type: 'timestamp' })
-  fechaResolucion!: Date;
+  @CreateDateColumn({ name: 'fecha_resolucion', type: 'timestamptz' })
+  readonly fechaResolucion!: Date;
 
   @CreateDateColumn({ type: 'timestamptz' })
-  createdAt: Date;
+  readonly createdAt!: Date;
 
   @UpdateDateColumn({ type: 'timestamptz' })
-  updatedAt: Date;
+  readonly updatedAt!: Date;
 
   @DeleteDateColumn({ type: 'timestamptz' })
   deletedAt?: Date;

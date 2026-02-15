@@ -1,6 +1,7 @@
 import { Incidencia } from '../modules/incidencia/incidencia.entity/incidencia.entity';
 import { Recepcion } from '../modules/recepcion/recepcion.entity/recepcion.entity';
 import { DataSource } from 'typeorm';
+import { SEEDER_MESSAGES } from './constants/messages';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
@@ -12,7 +13,7 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   const recepciones = await recepcionRepo.find();
   if (recepciones.length === 0) {
-    throw new Error('No se han creado recepciones');
+    throw new Error(SEEDER_MESSAGES.errors.NO_RECEPCIONES);
   }
 
   const incidencias: Incidencia[] = [];

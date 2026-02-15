@@ -23,8 +23,8 @@ export class Recepcion {
 
   @Column({
     name: 'fecha_recepcion',
-    type: 'date',
-    default: () => 'CURRENT_DATE',
+    type: 'timestamptz',
+    default: () => 'CURRENT_TIMESTAMP',
   })
   fechaRecepcion!: Date;
 
@@ -33,7 +33,7 @@ export class Recepcion {
 
   @ManyToOne(() => Usuario, (usuario) => usuario.recepciones, {
     nullable: false,
-    onDelete: 'SET NULL',
+    onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'id_usuario_receptor' })
   usuario!: Usuario;
@@ -44,18 +44,12 @@ export class Recepcion {
   @OneToMany(() => RecepcionProducto, (rp) => rp.recepcion)
   recepcionesProducto!: RecepcionProducto[];
 
-  @CreateDateColumn({
-    name: 'created_at',
-  })
-  createdAt: Date;
+  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
+  readonly createdAt!: Date;
 
-  @UpdateDateColumn({
-    name: 'updated_at',
-  })
-  updatedAt: Date;
+  @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
+  readonly updatedAt!: Date;
 
-  @DeleteDateColumn({
-    name: 'deleted_at',
-  })
+  @DeleteDateColumn({ type: 'timestamptz', name: 'deleted_at' })
   deletedAt?: Date;
 }

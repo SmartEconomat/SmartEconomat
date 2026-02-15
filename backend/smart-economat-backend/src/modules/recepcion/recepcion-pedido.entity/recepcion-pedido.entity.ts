@@ -1,4 +1,4 @@
-import { Pedido } from '../../pedidos/pedido.entity/pedido.entity';
+import { Pedido } from '../../pedido/pedido.entity/pedido.entity';
 import {
   Column,
   CreateDateColumn,
@@ -36,26 +36,20 @@ export class RecepcionPedido {
   pedido!: Pedido;
   @Column({
     name: 'fecha_vinculacion',
-    type: 'date',
-    default: () => 'CURRENT_DATE',
+    type: 'timestamptz',
+    default: () => 'CURRENT_TIMESTAMP',
   })
   fechaVinculacion!: Date;
 
   @OneToMany(() => AlbaranPedidoRecepcion, (apr) => apr.recepcionPedido)
   albaranPedidoRecepcion!: AlbaranPedidoRecepcion[];
 
-  @CreateDateColumn({
-    name: 'created_at',
-  })
-  createdAt: Date;
+  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
+  readonly createdAt!: Date;
 
-  @UpdateDateColumn({
-    name: 'updated_at',
-  })
-  updatedAt: Date;
+  @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
+  readonly updatedAt!: Date;
 
-  @DeleteDateColumn({
-    name: 'deleted_at',
-  })
+  @DeleteDateColumn({ type: 'timestamptz', name: 'deleted_at' })
   deletedAt?: Date;
 }

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { UsuarioRepository } from '../repository/usuario.repository';
 import { CreateUsuarioDto } from '../dto/create-usuario.dto';
 import { UpdateUsuarioDto } from '../dto/update-usuario.dto';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 
 @Injectable()
 export class UsuarioService {
@@ -17,7 +18,9 @@ export class UsuarioService {
 
   async findOne(id: string) {
     const usuario = await this.usuarioRepo.findById(id);
-    if (!usuario) throw new NotFoundException('Usuario no encontrado');
+    if (!usuario) {
+      throw new NotFoundException(I18nHelper.getError('USER_NOT_FOUND'));
+    }
     return usuario;
   }
 

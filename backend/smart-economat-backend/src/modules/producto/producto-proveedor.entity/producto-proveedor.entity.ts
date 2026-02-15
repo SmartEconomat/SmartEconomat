@@ -13,7 +13,7 @@ import {
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 import { Producto } from '../producto.entity/producto.entity';
 import { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
-import { PedidoProducto } from '../../pedidos/pedido-producto.entity/pedido-producto.entity';
+import { PedidoProducto } from '../../pedido/pedido-producto.entity/pedido-producto.entity';
 import { Inventario } from '../../inventario/inventario.entity/inventario.entity';
 import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.entity';
 
@@ -68,21 +68,12 @@ export class ProductoProveedor {
   @OneToMany(() => PedidoProducto, (pp) => pp.productoProveedor)
   pedidoProductos!: PedidoProducto[];
 
-  @CreateDateColumn({
-    type: 'timestamptz',
-    name: 'created_at',
-  })
-  createdAt!: Date;
+  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
+  readonly createdAt!: Date;
 
-  @UpdateDateColumn({
-    type: 'timestamptz',
-    name: 'updated_at',
-  })
-  updatedAt!: Date;
+  @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
+  readonly updatedAt!: Date;
 
-  @DeleteDateColumn({
-    type: 'timestamptz',
-    name: 'deleted_at',
-  })
+  @DeleteDateColumn({ type: 'timestamptz', name: 'deleted_at' })
   deletedAt?: Date;
 }

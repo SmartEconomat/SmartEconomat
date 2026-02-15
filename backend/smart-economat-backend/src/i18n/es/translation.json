@@ -1,0 +1,53 @@
+{
+  "errors": {
+    "NOT_FOUND": "Recurso no encontrado",
+    "INTERNAL_SERVER_ERROR": "Error interno del servidor",
+    "BAD_REQUEST": "Solicitud incorrecta",
+    "UNAUTHORIZED": "No autorizado",
+    "FORBIDDEN": "Acceso prohibido",
+    "CONFLICT": "Conflicto con el estado actual del recurso",
+    "EMPTY_REQUEST": "El cuerpo de la petición está vacío",
+    "INVALID_DATA": "Los datos proporcionados no son válidos",
+    "MISSING_REQUIRED_FIELD": "Falta un campo requerido",
+    "NO_PROVEEDORES": "No hay proveedores. Ejecuta proveedor.seeder.ts primero.",
+    "NO_USUARIOS": "No hay usuarios en la base de datos",
+    "NO_PRODUCTOS_PROVEEDOR": "No hay productos con proveedor",
+    "NO_RECEPCIONES": "No se han creado recepciones",
+    "NO_PEDIDOS": "Faltan pedidos. Ejecuta su seeder primero.",
+    "NO_RECEPCIONES_PRODUCTOS": "No hay recepciones de productos disponibles",
+    "SEEDER_NOT_FOUND": "Seeder no encontrado",
+    "RUN_SEEDER_NOT_FOUND": "No se encontró runSeeder en el archivo",
+    "USER_NOT_FOUND": "Usuario no encontrado",
+    "ORDER_NOT_FOUND": "Pedido no encontrado",
+    "MOVEMENT_NOT_FOUND": "Movimiento no encontrado",
+    "PRODUCT_NOT_FOUND": "Producto no encontrado",
+    "INSUFFICIENT_STOCK": "Stock insuficiente",
+    "INVALID_STATE": "Estado inválido",
+    "ORDER_NOT_CANCELLABLE": "No se puede cancelar un pedido que ya ha sido recibido o está en proceso de envio",
+    "MOVEMENTS_NOT_FOUND": "No se encontraron movimientos para esta entidad"
+  },
+  "success": {
+    "CREATED": "Creado exitosamente",
+    "UPDATED": "Actualizado exitosamente",
+    "DELETED": "Eliminado exitosamente",
+    "OPERATION_SUCCESSFUL": "Operación completada exitosamente"
+  },
+  "validation": {
+    "INVALID_EMAIL": "El correo electrónico no es válido",
+    "INVALID_PASSWORD": "La contraseña no es válida",
+    "PASSWORD_TOO_SHORT": "La contraseña es demasiado corta",
+    "PASSWORD_TOO_LONG": "La contraseña es demasiado larga",
+    "INVALID_UUID": "El UUID no es válido"
+  },
+  "entities": {
+    "usuario": "Usuario",
+    "producto": "Producto",
+    "proveedor": "Proveedor",
+    "pedido": "Pedido",
+    "recepcion": "Recepción",
+    "inventario": "Inventario",
+    "movimiento": "Movimiento",
+    "incidencia": "Incidencia",
+    "albaran": "Albarán"
+  }
+}

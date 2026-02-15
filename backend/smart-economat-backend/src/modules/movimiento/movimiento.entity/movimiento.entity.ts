@@ -35,7 +35,7 @@ export class Movimiento {
   @Column({ type: 'text', nullable: true })
   descripcion?: string | null;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   fecha!: Date;
 
   @Column({ type: 'varchar', length: 50 })
@@ -46,23 +46,17 @@ export class Movimiento {
 
   @ManyToOne(() => Usuario, (usuario) => usuario.movimientos, {
     nullable: false,
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'id_usuario', referencedColumnName: 'id' })
   usuario!: Usuario;
 
-  @CreateDateColumn({
-    name: 'created_at',
-  })
-  createdAt: Date;
+  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
+  readonly createdAt!: Date;
 
-  @UpdateDateColumn({
-    name: 'updated_at',
-  })
-  updatedAt: Date;
+  @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
+  readonly updatedAt!: Date;
 
-  @DeleteDateColumn({
-    name: 'deleted_at',
-  })
+  @DeleteDateColumn({ type: 'timestamptz', name: 'deleted_at' })
   deletedAt?: Date;
 }

@@ -2,9 +2,10 @@ import { DataSource } from 'typeorm';
 import { Recepcion } from '../modules/recepcion/recepcion.entity/recepcion.entity';
 import { RecepcionPedido } from '../modules/recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
 import { RecepcionProducto } from '../modules/recepcion/recepcion-productos.entity/recepcion-producto.entity';
-import { Pedido } from '../modules/pedidos/pedido.entity/pedido.entity';
-import { PedidoProducto } from '../modules/pedidos/pedido-producto.entity/pedido-producto.entity';
+import { Pedido } from '../modules/pedido/pedido.entity/pedido.entity';
+import { PedidoProducto } from '../modules/pedido/pedido-producto.entity/pedido-producto.entity';
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
+import { SEEDER_MESSAGES } from './constants/messages';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
@@ -18,12 +19,12 @@ export const runSeeder = async (dataSource: DataSource) => {
   const pedidos = await pedidoRepo.find();
   const usuarios = await usuarioRepo.find();
 
-  if (!pedidos.length || !usuarios.length) {
-    throw new Error('Faltan pedidos o usuarios. Ejecuta sus seeders primero.');
+  if (pedidos.length === 0) {
+    throw new Error(SEEDER_MESSAGES.errors.NO_PEDIDOS);
   }
-  await dataSource.query(
-    `TRUNCATE TABLE "recepcion_producto", "recepcion_pedido", "recepcion" RESTART IDENTITY CASCADE;`
-  );
+  if (usuarios.length === 0) {
+    throw new Error(SEEDER_MESSAGES.errors.NO_USUARIOS);
+  }
 
   for (const pedido of pedidos) {
     const pedidoProductos = await pedidoProductoRepo.find({

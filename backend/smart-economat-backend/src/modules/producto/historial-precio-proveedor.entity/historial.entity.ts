@@ -34,15 +34,9 @@ export class HistorialPrecio {
   @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   fecha!: Date;
 
-  @CreateDateColumn({
-    type: 'timestamptz',
-    name: 'created_at',
-  })
-  createdAt!: Date;
+  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
+  readonly createdAt!: Date;
 
-  @UpdateDateColumn({
-    type: 'timestamptz',
-    name: 'updated_at',
-  })
-  updatedAt!: Date;
+  @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
+  readonly updatedAt!: Date;
 }
