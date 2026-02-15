@@ -4,7 +4,7 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Unique,
 } from 'typeorm';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
@@ -17,8 +17,11 @@ import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.
 @Unique(['producto', 'proveedor'])
 @Entity({ name: 'producto_proveedor' })
 export class ProductoProveedor {
-  @PrimaryGeneratedColumn('uuid', { name: 'id_producto_proveedor' })
-  id!: string;
+  @PrimaryColumn('uuid', {
+    name: 'id_producto_proveedor',
+    default: () => 'uuid_generate_v7()',
+  })
+  readonly id!: string;
 
   @ManyToOne(() => Producto, (producto) => producto.proveedores, {
     onDelete: 'CASCADE',

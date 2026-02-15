@@ -1,7 +1,7 @@
 import { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   ManyToOne,
   JoinColumn,
   CreateDateColumn,
@@ -12,8 +12,11 @@ import { Albaran } from '../albaran.entity/albaran.entity';
 
 @Entity('albaran_pedido_recepcion')
 export class AlbaranPedidoRecepcion {
-  @PrimaryGeneratedColumn({ name: 'id_albaran_pedido_recepcion' })
-  id!: number;
+  @PrimaryColumn('uuid', {
+    name: 'id_albaran_pedido_recepcion',
+    default: () => 'uuid_generate_v7()',
+  })
+  readonly id!: string;
 
   @ManyToOne(() => Albaran, (albaran) => albaran.albaranPedidoRecepcion, {
     onDelete: 'CASCADE',

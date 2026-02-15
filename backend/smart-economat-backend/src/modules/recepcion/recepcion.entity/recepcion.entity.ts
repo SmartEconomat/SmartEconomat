@@ -1,6 +1,6 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Column,
   OneToMany,
   ManyToOne,
@@ -15,8 +15,11 @@ import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 
 @Entity('recepcion')
 export class Recepcion {
-  @PrimaryGeneratedColumn({ name: 'id_recepcion' })
-  id: number;
+  @PrimaryColumn('uuid', {
+    name: 'id_recepcion',
+    default: () => 'uuid_generate_v7()',
+  })
+  readonly id!: string;
 
   @Column({
     name: 'fecha_recepcion',

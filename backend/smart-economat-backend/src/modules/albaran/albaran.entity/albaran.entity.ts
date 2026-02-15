@@ -1,6 +1,6 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Column,
   OneToMany,
   CreateDateColumn,
@@ -11,8 +11,11 @@ import { AlbaranPedidoRecepcion } from '../albaran-pedido-recepcion.entity/albar
 
 @Entity('albaran')
 export class Albaran {
-  @PrimaryGeneratedColumn({ name: 'id_albaran' })
-  id: number;
+  @PrimaryColumn('uuid', {
+    name: 'id_albaran',
+    default: () => 'uuid_generate_v7()',
+  })
+  readonly id!: string;
 
   @Column({ name: 'n_albaran', type: 'varchar', length: 50 })
   nAlbaran: string;

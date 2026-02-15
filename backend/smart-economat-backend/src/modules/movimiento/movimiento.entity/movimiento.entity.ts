@@ -2,7 +2,7 @@ import {
   Entity,
   Column,
   ManyToOne,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Check,
   JoinColumn,
   CreateDateColumn,
@@ -11,13 +11,15 @@ import {
 } from 'typeorm';
 import { TipoMovimiento } from '../enums/movimiento.enums';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
-import { Inventario } from '../../inventario/inventario.entity/inventario.entity';
 
 @Entity({ name: 'movimiento' })
 @Check(`"cantidad" > 0`)
 export class Movimiento {
-  @PrimaryGeneratedColumn({ name: 'id_movimiento', type: 'int' })
-  id!: number;
+  @PrimaryColumn('uuid', {
+    name: 'id_movimiento',
+    default: () => 'uuid_generate_v7()',
+  })
+  readonly id!: string;
 
   @Column({
     type: 'enum',

@@ -33,7 +33,7 @@ export class MovimientoController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: number) {
+  findOne(@Param('id') id: string) {
     return this.movimientoService.findOne(id);
   }
 
@@ -43,12 +43,12 @@ export class MovimientoController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: number, @Body() dto: UpdateMovimientoDto) {
+  update(@Param('id') id: string, @Body() dto: UpdateMovimientoDto) {
     return this.movimientoService.update(id, dto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: number) {
+  remove(@Param('id') id: string) {
     return this.movimientoService.remove(id);
   }
 }
