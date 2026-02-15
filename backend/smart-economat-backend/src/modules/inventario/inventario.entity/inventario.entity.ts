@@ -1,4 +1,12 @@
-import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
 import { localInventario } from '../enums/inventario.enums';
 
@@ -35,4 +43,16 @@ export class Inventario {
 
   @Column({ type: 'timestamptz', name: 'fecha_caducidad' })
   fechaCaducidad!: Date;
+
+  @CreateDateColumn({
+    type: 'timestamptz',
+    name: 'created_at',
+  })
+  createdAt!: Date;
+
+  @UpdateDateColumn({
+    type: 'timestamptz',
+    name: 'updated_at',
+  })
+  updatedAt!: Date;
 }

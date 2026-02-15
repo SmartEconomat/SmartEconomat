@@ -1,5 +1,13 @@
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
-import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
 
 @Entity({ name: 'historial_precio' })
@@ -25,4 +33,16 @@ export class HistorialPrecio {
 
   @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   fecha!: Date;
+
+  @CreateDateColumn({
+    type: 'timestamptz',
+    name: 'created_at',
+  })
+  createdAt!: Date;
+
+  @UpdateDateColumn({
+    type: 'timestamptz',
+    name: 'updated_at',
+  })
+  updatedAt!: Date;
 }

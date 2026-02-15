@@ -6,6 +6,7 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
 } from 'typeorm';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
@@ -49,4 +50,7 @@ export class Incidencia {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
+
+  @DeleteDateColumn({ type: 'timestamptz' })
+  deletedAt?: Date;
 }

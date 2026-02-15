@@ -6,6 +6,7 @@ import {
   Index,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
 } from 'typeorm';
 import { rolUsuario } from '../enums/usuario.enums';
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
@@ -87,4 +88,7 @@ export class Usuario {
 
   @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
   updatedAt!: Date;
+
+  @DeleteDateColumn({ type: 'timestamptz', name: 'deleted_at' })
+  deletedAt?: Date;
 }
