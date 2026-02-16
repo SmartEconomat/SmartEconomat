@@ -1,6 +1,6 @@
 # 🏆 Clasificación de Contribuidores - SmartEconomat
 
-> **Última actualización:** 2026-02-15 20:18:37
+> **Última actualización:** 2026-02-16 10:41:14
 
 ---
 
@@ -9,7 +9,7 @@
 ### 🎖️ **Darel**
 
 Este guerrero del código lidera la carga con:
-- 💻 **49** Commits
+- 💻 **51** Commits
 - 🔀 **37** PRs Fusionados
 
 Demostrando que:
@@ -18,7 +18,7 @@ Demostrando que:
 - 🚀 Git commit es su mantra matutino
 
 **Estadísticas de Dominio:**
-- Posee el **38.28%** de todo el código.
+- Posee el **39.23%** de todo el código.
 - Ha logrado fusionar **37** funcionalidades completas.
 
 ---
@@ -26,19 +26,19 @@ Demostrando que:
 ## 📊 Hall de la Fama
 
 ### 🥈 Maurizio
-- 💻 Commits: **30** (23.44%)
+- 💻 Commits: **30** (23.08%)
 - 🔀 PRs Fusionados: **8**
 
 ### 🥈 Sergio
-- 💻 Commits: **20** (15.62%)
+- 💻 Commits: **20** (15.38%)
 - 🔀 PRs Fusionados: **3**
 
 ### 🥈 Alexis
-- 💻 Commits: **19** (14.84%)
+- 💻 Commits: **19** (14.62%)
 - 🔀 PRs Fusionados: **7**
 
 ### 🥈 Guillermo
-- 💻 Commits: **10** (7.81%)
+- 💻 Commits: **10** (7.69%)
 - 🔀 PRs Fusionados: **5**
 
 
@@ -64,33 +64,33 @@ Con **10 commits** y **5 PRs**, tenemos aquí a alguien que:
 
 | Posición | Contribuidor | Commits | PRs Fusionados | % Código | Estado |
 |----------|--------------|---------|----------------|----------|--------|
-| #1 | Darel | **49** | 🔀 **37** | 38.28% | 👑 Líder |
-| #2 | Maurizio | **30** | 🔀 **8** | 23.44% | 💪 Activo |
-| #3 | Sergio | **20** | 🔀 **3** | 15.62% | 💪 Activo |
-| #4 | Alexis | **19** | 🔀 **7** | 14.84% | 💪 Activo |
-| #5 | Guillermo | **10** | 🔀 **5** | 7.81% | 🐌 Necesita café |
+| #1 | Darel | **51** | 🔀 **37** | 39.23% | 👑 Líder |
+| #2 | Maurizio | **30** | 🔀 **8** | 23.08% | 💪 Activo |
+| #3 | Sergio | **20** | 🔀 **3** | 15.38% | 💪 Activo |
+| #4 | Alexis | **19** | 🔀 **7** | 14.62% | 💪 Activo |
+| #5 | Guillermo | **10** | 🔀 **5** | 7.69% | 🐌 Necesita café |
 
 ---
 
 ## 📊 Estadísticas Generales
 
-- **Total de commits:** 128
+- **Total de commits:** 130
 - **Total de PRs fusionados:** 60
 - **Total de contribuidores:** 5
-- **Promedio de commits por persona:** 25.6
+- **Promedio de commits por persona:** 26.0
 
 ---
 
 ## 🎯 Ranking de Poder (Commits + PRs)
 
 **Darel**
-`████████████████████` 49 commits | 37 PRs
+`████████████████████` 51 commits | 37 PRs
 
 **Maurizio**
-`████████████░░░░░░░░` 30 commits | 8 PRs
+`███████████░░░░░░░░░` 30 commits | 8 PRs
 
 **Sergio**
-`████████░░░░░░░░░░░░` 20 commits | 3 PRs
+`███████░░░░░░░░░░░░░` 20 commits | 3 PRs
 
 **Alexis**
 `███████░░░░░░░░░░░░░` 19 commits | 7 PRs

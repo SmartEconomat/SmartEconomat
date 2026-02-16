@@ -1,7 +1,8 @@
-import { Column, Entity, OneToMany, PrimaryColumn } from 'typeorm';
+import { Column, Entity, Index, OneToMany, PrimaryColumn } from 'typeorm';
 import { DificultadReceta, TiempoReceta } from '../enums/receta.enums';
 import { RecetaIngrediente } from '../receta-ingrediente.entity/receta-ingrediente.entity';
 
+@Index(['dificultad', 'tiempo'])
 @Entity('receta')
 export class Receta {
   @PrimaryColumn('uuid', {
