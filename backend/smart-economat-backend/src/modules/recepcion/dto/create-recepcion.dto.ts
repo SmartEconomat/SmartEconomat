@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, IsString, IsDateString } from 'class-validator';
+import { IsOptional, IsString, IsDateString } from 'class-validator';
 
 export class CreateRecepcionDto {
   @IsOptional()
@@ -9,6 +9,6 @@ export class CreateRecepcionDto {
   @IsString()
   observaciones?: string;
 
-  @IsInt()
+  @IsString()
   usuarioId: string;
 }
