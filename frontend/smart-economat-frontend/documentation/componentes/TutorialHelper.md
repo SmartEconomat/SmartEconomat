@@ -36,8 +36,11 @@ El componente completo que integra:
 -   `mode`: `'icon' | 'listitem'` (Opcional, default: `'icon'`).
 -   `isOpen`: `boolean` (Opcional).
 
-## Accesibilidad
--   Incluye un `Tooltip` descriptivo ("Ver guía de ayuda") que facilita la comprensión del botón para usuarios de lectores de pantalla y navegación por teclado.
+## Accesibilidad y UX
+-   **Tooltip Inteligente:**
+    -   Muestra "Ver guía de ayuda" solo cuando el sidebar está colapsado (`isOpen=false`).
+    -   Se oculta cuando el sidebar está expandido para evitar redundancia con el texto del botón.
+    -   Se adapta al "Modo Aprendizaje" ofreciendo descripciones más largas si está activo.
 
 
 ---
