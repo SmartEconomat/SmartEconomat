@@ -134,7 +134,23 @@ export default function MainLayout(props: Props) {
                     >
                         <MenuIcon />
                     </IconButton>
-                    <Typography variant="h4" noWrap component="div" sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', height: 80, fontWeight: 500 }}>
+                    <Typography
+                        variant="h1"
+                        sx={{
+                            position: 'absolute',
+                            width: '1px',
+                            height: '1px',
+                            padding: 0,
+                            margin: -1,
+                            overflow: 'hidden',
+                            clip: 'rect(0, 0, 0, 0)',
+                            whiteSpace: 'nowrap',
+                            border: 0,
+                        }}
+                    >
+                        SmartEconomat
+                    </Typography>
+                    <Typography variant="h2" noWrap component="h2" sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', height: 80, fontWeight: 500, fontSize: '2.125rem' }}>
                         {getPageTitle(location.pathname)}
                     </Typography>
 
@@ -144,7 +160,16 @@ export default function MainLayout(props: Props) {
                             {user?.name}
                         </Typography>
                         <IconButton onClick={handleOpenUserMenu} sx={{ p: 1 }}>
-                            <Avatar alt={user?.name} src="/static/images/avatar/2.jpg" />
+                            <Avatar
+                                alt={user?.name}
+                                src="/static/images/avatar/2.jpg"
+                                sx={{
+                                    border: '2px solid',
+                                    borderColor: 'background.paper',
+                                    bgcolor: 'background.paper',
+                                    color: 'text.primary'
+                                }}
+                            />
                         </IconButton>
                         <Menu
                             sx={{ mt: '45px' }}
