@@ -25,8 +25,9 @@ src/
 ├── layouts/           # Plantillas de página (MainLayout).
 ├── pages/             # Vistas principales (rutas).
 ├── routes/            # Configuración de navegación.
-├── store/             # Estado global (Context/Redux).
-├── utils/             # Funciones auxiliares y configuración.
+├── store/             # Estado global (Context/Redux: Auth, Theme).
+├── utils/             # Funciones auxiliares.
+│   └── config/        # Configuraciones globales (Menú, Tutorial).
 └── documentation/     # Documentación del proyecto.
 ```
 
