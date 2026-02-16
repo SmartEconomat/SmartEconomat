@@ -23,7 +23,7 @@ export class ProveedorService {
     });
   }
 
-  async findOne(id: number): Promise<Proveedor> {
+  async findOne(id: string): Promise<Proveedor> {
     const proveedor = await this.proveedorRepository.findOne({
       where: { id },
       relations: ['productos'],
@@ -37,7 +37,7 @@ export class ProveedorService {
   }
 
   async update(
-    id: number,
+    id: string,
     updateProveedorDto: UpdateProveedorDto
   ): Promise<Proveedor> {
     const proveedor = await this.findOne(id);
@@ -46,7 +46,7 @@ export class ProveedorService {
     return await this.proveedorRepository.save(proveedor);
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: string): Promise<void> {
     const proveedor = await this.findOne(id);
 
     if (proveedor.productos && proveedor.productos.length > 0) {
