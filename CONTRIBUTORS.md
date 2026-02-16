@@ -1,12 +1,6 @@
 # 🏆 Clasificación de Contribuidores - SmartEconomat
 
-<<<<<<< HEAD
-
-> # **Última actualización:** 2026-02-18 16:33:58
->
-> **Última actualización:** 2026-02-16 10:20:21
->
-> > > > > > > 054e56d (fix: corrección de errores de accesibilirdad)
+> **Última actualización:** 2026-02-18 16:33:58
 
 ---
 
