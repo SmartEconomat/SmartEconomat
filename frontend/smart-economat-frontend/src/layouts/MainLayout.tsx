@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
-    AppBar,
+    AppBar as MuiAppBar,
     Box,
     CssBaseline,
     Divider,
-    Drawer,
+    Drawer as MuiDrawer,
     IconButton,
     List,
     ListItem,
@@ -16,165 +16,269 @@ import {
     Typography,
     Avatar,
     Menu,
-    MenuItem
+    MenuItem,
+    useTheme,
+    Theme,
+    CSSObject,
+    styled,
+    useMediaQuery
 } from '@mui/material';
+import { Tooltip } from '../components/ui/Tooltip';
+import { getTooltipContent } from '../utils/tooltipUtils';
 import MenuIcon from '@mui/icons-material/MenuOutlined';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import PersonIcon from '@mui/icons-material/PersonOutlined';
 import LogoutIcon from '@mui/icons-material/LogoutOutlined';
 import { menuItems } from '../utils/config/menuConfig';
 import { useAuth } from '../store/AuthContext';
 import { useThemeContext } from '../store/ThemeContext';
-import SettingsMenu from './SettingsMenu';
+import SettingsMenu from '../components/common/Settings/SettingsMenu';
+import TutorialHelper from '../components/common/Tutorial/TutorialHelper';
+import LearningModeToggle from '../components/common/Learning/LearningModeToggle';
 import Logo from '../assets/images/SVG/logo-smat-economato.svg';
 import LogoBlanco from '../assets/images/SVG/logo-smart-economat-blanco.svg';
 import LogoNegro from '../assets/images/SVG/logo-smart-economat-negro.svg';
 
 const drawerWidth = 240;
 
-interface Props {
-    window?: () => Window;
+const openedMixin = (theme: Theme): CSSObject => ({
+    width: drawerWidth,
+    transition: theme.transitions.create('width', {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.enteringScreen,
+    }),
+    overflowX: 'hidden',
+});
+
+const closedMixin = (theme: Theme): CSSObject => ({
+    transition: theme.transitions.create('width', {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.leavingScreen,
+    }),
+    overflowX: 'hidden',
+    width: `calc(${theme.spacing(7)} + 1px)`,
+    [theme.breakpoints.up('sm')]: {
+        width: `calc(${theme.spacing(8)} + 1px)`,
+    },
+});
+
+const DrawerHeader = styled('div')(({ theme }) => ({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: theme.spacing(0, 1),
+    ...theme.mixins.toolbar,
+    [theme.breakpoints.down('sm')]: {
+        minHeight: '80px !important',
+    },
+    [theme.breakpoints.up('sm')]: {
+        minHeight: '100px !important',
+    },
+}));
+
+interface AppBarProps extends React.ComponentProps<typeof MuiAppBar> {
+    open?: boolean;
 }
 
-export default function MainLayout(props: Props) {
-    const { window } = props;
-    const [mobileOpen, setMobileOpen] = useState(false);
-    const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
+const AppBar = styled(MuiAppBar, {
+    shouldForwardProp: (prop) => prop !== 'open',
+})<AppBarProps>(({ theme, open }) => ({
+    zIndex: theme.zIndex.drawer + 1,
+    transition: theme.transitions.create(['width', 'margin'], {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.leavingScreen,
+    }),
+    ...(open && {
+        marginLeft: drawerWidth,
+        width: `calc(100% - ${drawerWidth}px)`,
+        transition: theme.transitions.create(['width', 'margin'], {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.enteringScreen,
+        }),
+    }),
+    [theme.breakpoints.down('sm')]: {
+        zIndex: theme.zIndex.appBar,
+        marginLeft: 0,
+        width: '100%',
+    },
+}));
+
+const DesktopDrawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(
+    ({ theme, open }) => ({
+        width: drawerWidth,
+        flexShrink: 0,
+        whiteSpace: 'nowrap',
+        boxSizing: 'border-box',
+        ...(open && {
+            ...openedMixin(theme),
+            '& .MuiDrawer-paper': openedMixin(theme),
+        }),
+        ...(!open && {
+            ...closedMixin(theme),
+            '& .MuiDrawer-paper': closedMixin(theme),
+        }),
+    }),
+);
+
+export default function MainLayout() {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const { currentThemeName, isLearningMode } = useThemeContext();
+    const [open, setOpen] = useState(!isMobile);
+    const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
+    const { logout, user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
-    const { user, logout } = useAuth();
-    const { currentThemeName } = useThemeContext();
 
-    const getPageTitle = (pathname: string) => {
-        const item = menuItems.find(item => item.path === pathname);
-        return item ? item.title : 'SmartEconomat';
+    const getLogo = () => {
+        if (currentThemeName === 'dark' || currentThemeName === 'highContrastDark') {
+            return LogoBlanco;
+        }
+        return Logo;
     };
 
-    const handleDrawerToggle = () => {
-        setMobileOpen(!mobileOpen);
+
+    const handleDrawerOpen = () => {
+        setOpen(true);
     };
 
-    const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
-        setAnchorElUser(event.currentTarget);
+    const handleDrawerClose = () => {
+        setOpen(false);
     };
 
-    const handleCloseUserMenu = () => {
-        setAnchorElUser(null);
+    const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+        setUserMenuAnchor(event.currentTarget);
+    };
+
+    const handleUserMenuClose = () => {
+        setUserMenuAnchor(null);
     };
 
     const handleLogout = () => {
-        handleCloseUserMenu();
+        handleUserMenuClose();
         logout();
         navigate('/login');
     };
 
-    const drawer = (
-        <div>
-            <Toolbar sx={{ justifyContent: 'center', py: 2 }}>
-                <Box
-                    component="img"
-                    src={currentThemeName === 'dark' || currentThemeName === 'highContrastDark' ? LogoBlanco : currentThemeName === 'highContrastLight' ? LogoNegro : Logo}
-                    alt="SmartEconomat Logo"
-                    sx={{
-                        height: 80,
-                        width: 'auto',
-                        maxWidth: '100%'
-                    }}
-                />
-            </Toolbar>
+    const getPageTitle = (path: string) => {
+        const item = menuItems.find(item => item.path === path);
+        return item ? item.title : 'Smart Economat';
+    };
+
+    const drawerContent = (
+        <>
+            <DrawerHeader sx={{ justifyContent: open ? 'center' : 'flex-end', px: 1 }}>
+                {open && <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', mr: 1 }}>
+                    <Box
+                        component="img"
+                        src={getLogo()}
+                        alt="Smart Economat Logo"
+                        sx={{
+                            height: { xs: 60, sm: 80 },
+                            maxWidth: '100%',
+                            objectFit: 'contain'
+                        }}
+                    />
+                </Box>}
+                <IconButton onClick={isMobile ? handleDrawerClose : handleDrawerClose}>
+                    {theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+                </IconButton>
+            </DrawerHeader>
             <Divider />
             <List>
                 {menuItems.filter(item => item.showInMenu).map((item) => (
-                    <ListItem key={item.title} disablePadding>
-                        <ListItemButton
-                            selected={location.pathname === item.path}
-                            onClick={() => navigate(item.path)}
-                            sx={{
-                                '&.Mui-selected': {
-                                    color: 'primary.main',
-                                    '& .MuiListItemIcon-root': {
-                                        color: 'primary.main',
-                                    },
-                                    '& .MuiTypography-root': {
-                                        color: 'primary.main',
-                                        fontWeight: 'bold',
-                                    },
-                                }
-                            }}
+                    <ListItem key={item.path} disablePadding sx={{ display: 'block' }}>
+                        <Tooltip
+                            title={getTooltipContent(open, isLearningMode, item.title, item.description)}
+                            describeChild
                         >
-                            <ListItemIcon>
-                                {item.icon}
-                            </ListItemIcon>
-                            <ListItemText primary={item.title} />
-                        </ListItemButton>
+                            <ListItemButton
+                                sx={{
+                                    minHeight: 48,
+                                    justifyContent: open ? 'initial' : 'center',
+                                    px: 2.5,
+                                }}
+                                selected={location.pathname === item.path}
+                                onClick={() => {
+                                    navigate(item.path);
+                                    if (isMobile) setOpen(false);
+                                }}
+                            >
+                                <ListItemIcon
+                                    sx={{
+                                        minWidth: 0,
+                                        mr: open ? 3 : 'auto',
+                                        justifyContent: 'center',
+                                        color: location.pathname === item.path ? 'primary.main' : 'inherit'
+                                    }}
+                                >
+                                    {item.icon}
+                                </ListItemIcon>
+                                <ListItemText primary={item.title} sx={{ opacity: open ? 1 : 0 }} />
+                            </ListItemButton>
+                        </Tooltip>
                     </ListItem>
                 ))}
             </List>
-        </div>
+            <Box sx={{ marginTop: 'auto' }}>
+                <Divider />
+                <List>
+                    <ListItem disablePadding sx={{ display: 'block' }}>
+                        <TutorialHelper mode="listitem" isOpen={open} />
+                    </ListItem>
+                    <ListItem disablePadding sx={{ display: 'block' }}>
+                        <LearningModeToggle mode="listitem" isOpen={open} />
+                    </ListItem>
+                    <ListItem disablePadding sx={{ display: 'block' }}>
+                        <SettingsMenu mode="listitem" isOpen={open} />
+                    </ListItem>
+                </List>
+            </Box>
+        </>
     );
-
-    const container = window !== undefined ? () => window().document.body : undefined;
 
     return (
         <Box sx={{ display: 'flex' }}>
             <CssBaseline />
-            <AppBar
-                position="fixed"
-                sx={{
-                    width: { sm: `calc(100% - ${drawerWidth}px)` },
-                    ml: { sm: `${drawerWidth}px` },
-                }}
-            >
-                <Toolbar sx={{ py: 2, minHeight: 112 }}>
+            <AppBar position="fixed" open={open} color="inherit" elevation={1}>
+                <Toolbar sx={{
+                    minHeight: { xs: '80px !important', sm: '100px !important' },
+                    px: { xs: 2, sm: 3 }
+                }}>
                     <IconButton
                         color="inherit"
                         aria-label="open drawer"
+                        onClick={handleDrawerOpen}
                         edge="start"
-                        onClick={handleDrawerToggle}
-                        sx={{ mr: 2, display: { sm: 'none' } }}
+                        sx={{
+                            marginRight: 5,
+                            ...(open && !isMobile && { display: 'none' }),
+                        }}
                     >
                         <MenuIcon />
                     </IconButton>
-                    <Typography
-                        variant="h1"
-                        sx={{
-                            position: 'absolute',
-                            width: '1px',
-                            height: '1px',
-                            padding: 0,
-                            margin: -1,
-                            overflow: 'hidden',
-                            clip: 'rect(0, 0, 0, 0)',
-                            whiteSpace: 'nowrap',
-                            border: 0,
-                        }}
-                    >
-                        SmartEconomat
-                    </Typography>
-                    <Typography variant="h2" noWrap component="h2" sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', height: 80, fontWeight: 500, fontSize: '2.125rem' }}>
+
+                    <Typography variant="h2" noWrap component="h2" sx={{ flexGrow: 1, fontSize: '1.5rem', fontWeight: 600 }}>
                         {getPageTitle(location.pathname)}
                     </Typography>
 
                     <Box sx={{ flexGrow: 0, display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <SettingsMenu />
                         <Typography variant="subtitle1" sx={{ display: { xs: 'none', sm: 'block' } }}>
                             {user?.name}
                         </Typography>
-                        <IconButton onClick={handleOpenUserMenu} sx={{ p: 1 }}>
-                            <Avatar
-                                alt={user?.name}
-                                src="/static/images/avatar/2.jpg"
-                                sx={{
-                                    border: '2px solid',
-                                    borderColor: 'background.paper',
-                                    bgcolor: 'background.paper',
-                                    color: 'text.primary'
-                                }}
-                            />
+                        <IconButton
+                            onClick={handleUserMenuOpen}
+                            sx={{ p: 0 }}
+                        >
+                            <Avatar sx={{ bgcolor: 'primary.main' }}>
+                                <PersonIcon />
+                            </Avatar>
                         </IconButton>
                         <Menu
                             sx={{ mt: '45px' }}
                             id="menu-appbar"
-                            anchorEl={anchorElUser}
+                            anchorEl={userMenuAnchor}
                             anchorOrigin={{
                                 vertical: 'top',
                                 horizontal: 'right',
@@ -184,15 +288,19 @@ export default function MainLayout(props: Props) {
                                 vertical: 'top',
                                 horizontal: 'right',
                             }}
-                            open={Boolean(anchorElUser)}
-                            onClose={handleCloseUserMenu}
+                            open={Boolean(userMenuAnchor)}
+                            onClose={handleUserMenuClose}
                         >
-                            <MenuItem onClick={() => { handleCloseUserMenu(); navigate('/usuario'); }}>
+                            <MenuItem onClick={() => {
+                                handleUserMenuClose();
+                                navigate('/usuario');
+                            }}>
                                 <ListItemIcon>
                                     <PersonIcon fontSize="small" />
                                 </ListItemIcon>
-                                <Typography textAlign="center">Perfil</Typography>
+                                <Typography textAlign="center">Mi Perfil</Typography>
                             </MenuItem>
+                            <Divider />
                             <MenuItem onClick={handleLogout}>
                                 <ListItemIcon>
                                     <LogoutIcon fontSize="small" />
@@ -204,45 +312,32 @@ export default function MainLayout(props: Props) {
                 </Toolbar>
             </AppBar>
 
-
-            <Box
-                component="nav"
-                sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-                aria-label="mailbox folders"
-            >
-                <Drawer
-                    container={container}
+            {/* Conditional Rendering of Drawers */}
+            {isMobile ? (
+                <MuiDrawer
                     variant="temporary"
-                    open={mobileOpen}
-                    onClose={handleDrawerToggle}
+                    open={open}
+                    onClose={handleDrawerClose}
                     ModalProps={{
-                        keepMounted: true,
+                        keepMounted: true, // Better open performance on mobile.
                     }}
                     sx={{
                         display: { xs: 'block', sm: 'none' },
                         '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
                     }}
                 >
-                    {drawer}
-                </Drawer>
-                <Drawer
-                    variant="permanent"
-                    sx={{
-                        display: { xs: 'none', sm: 'block' },
-                        '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-                    }}
-                    open
-                >
-                    {drawer}
-                </Drawer>
-            </Box>
-            <Box
-                component="main"
-                sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}
-            >
-                <Toolbar sx={{ mb: 6 }} />
+                    {drawerContent}
+                </MuiDrawer>
+            ) : (
+                <DesktopDrawer variant="permanent" open={open}>
+                    {drawerContent}
+                </DesktopDrawer>
+            )}
+
+            <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+                <DrawerHeader />
                 <Outlet />
             </Box>
-        </Box>
+        </Box >
     );
 }
