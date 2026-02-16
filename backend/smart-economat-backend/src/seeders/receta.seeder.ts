@@ -7,6 +7,7 @@ import {
   DificultadReceta,
   TiempoReceta,
 } from '../modules/receta/enums/receta.enums';
+import { SEEDER_MESSAGES } from './constants/messages';
 
 const NUM_RECETAS = 10;
 
@@ -19,10 +20,7 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   const productos = await productoRepo.find();
   if (productos.length === 0) {
-    console.log(
-      'No hay productos para asignar a las recetas. Seeder detenido.'
-    );
-    return;
+    throw new Error(SEEDER_MESSAGES.errors.NO_PRODUCTOS);
   }
 
   for (let i = 0; i < NUM_RECETAS; i++) {
