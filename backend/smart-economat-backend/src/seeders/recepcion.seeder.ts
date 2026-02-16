@@ -5,7 +5,7 @@ import { RecepcionProducto } from '../modules/recepcion/recepcion-productos.enti
 import { Pedido } from '../modules/pedido/pedido.entity/pedido.entity';
 import { PedidoProducto } from '../modules/pedido/pedido-producto.entity/pedido-producto.entity';
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
-import { SEEDER_MESSAGES } from './constants/messages';
+import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
@@ -20,10 +20,10 @@ export const runSeeder = async (dataSource: DataSource) => {
   const usuarios = await usuarioRepo.find();
 
   if (pedidos.length === 0) {
-    throw new Error(SEEDER_MESSAGES.errors.NO_PEDIDOS);
+    throw new Error(SeederI18nHelper.getError('NO_PEDIDOS'));
   }
   if (usuarios.length === 0) {
-    throw new Error(SEEDER_MESSAGES.errors.NO_USUARIOS);
+    throw new Error(SeederI18nHelper.getError('NO_USUARIOS'));
   }
 
   for (const pedido of pedidos) {
@@ -85,5 +85,5 @@ export const runSeeder = async (dataSource: DataSource) => {
     }
   }
 
-  console.log('✅ Seeder de recepciones completado con éxito.');
+  console.log(SeederI18nHelper.getSeederSuccess('recepciones'));
 };
