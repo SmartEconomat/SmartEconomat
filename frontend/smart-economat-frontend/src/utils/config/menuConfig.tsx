@@ -23,6 +23,7 @@ const Usuario = React.lazy(() => import('../../pages/Usuario'));
 export interface MenuItem {
     path: string;
     title: string;
+    description: string;
     icon?: React.ReactNode;
     component: React.ComponentType<any>;
     showInMenu: boolean;
@@ -32,6 +33,7 @@ export const menuItems: MenuItem[] = [
     {
         path: '/',
         title: 'Inicio',
+        description: 'Ver resumen general y métricas del economato',
         icon: <HomeIconOption />,
         component: Home,
         showInMenu: true
@@ -39,6 +41,7 @@ export const menuItems: MenuItem[] = [
     {
         path: '/productos',
         title: 'Productos',
+        description: 'Gestionar catálogo de productos y precios',
         icon: <CategoryIconOption />,
         component: Productos,
         showInMenu: true
@@ -46,6 +49,7 @@ export const menuItems: MenuItem[] = [
     {
         path: '/pedidos',
         title: 'Pedidos',
+        description: 'Administrar pedidos de usuarios y proveedores',
         icon: <ShoppingCartIconOption />,
         component: Pedidos,
         showInMenu: true
@@ -53,6 +57,7 @@ export const menuItems: MenuItem[] = [
     {
         path: '/recepcion',
         title: 'Recepción',
+        description: 'Registrar entrada de mercancía al almacén',
         icon: <LoginIconOption />,
         component: Recepcion,
         showInMenu: true
@@ -60,6 +65,7 @@ export const menuItems: MenuItem[] = [
     {
         path: '/inventario',
         title: 'Inventario',
+        description: 'Controlar stock y realizar ajustes de inventario',
         icon: <InventoryIconOption />,
         component: Inventario,
         showInMenu: true
@@ -67,6 +73,7 @@ export const menuItems: MenuItem[] = [
     {
         path: '/movimientos',
         title: 'Movimientos',
+        description: 'Consultar historial de movimientos de stock',
         icon: <SwapHorizIconOption />,
         component: Movimientos,
         showInMenu: true
@@ -74,6 +81,7 @@ export const menuItems: MenuItem[] = [
     {
         path: '/proveedores',
         title: 'Proveedores',
+        description: 'Gestionar información de proveedores externos',
         icon: <LocalShippingIconOption />,
         component: Proveedores,
         showInMenu: true
@@ -81,6 +89,7 @@ export const menuItems: MenuItem[] = [
     {
         path: '/incidencias',
         title: 'Incidencias',
+        description: 'Reportar y gestionar problemas o devoluciones',
         icon: <ReportProblemIconOption />,
         component: Incidencias,
         showInMenu: true
@@ -88,6 +97,7 @@ export const menuItems: MenuItem[] = [
     {
         path: '/usuario',
         title: 'Perfil de Usuario',
+        description: 'Configurar datos personales y preferencias',
         icon: <PersonIconOption />,
         component: Usuario,
         showInMenu: false

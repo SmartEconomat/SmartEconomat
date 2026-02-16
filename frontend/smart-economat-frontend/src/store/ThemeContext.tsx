@@ -7,6 +7,8 @@ interface ThemeContextType {
     fontSize: FontSize;
     setTheme: (name: ThemeName) => void;
     setFontSize: (size: FontSize) => void;
+    isLearningMode: boolean;
+    setLearningMode: (mode: boolean) => void;
     siteTheme: Theme;
 }
 
@@ -15,6 +17,8 @@ const ThemeContext = createContext<ThemeContextType>({
     fontSize: 'medium',
     setTheme: () => { },
     setFontSize: () => { },
+    isLearningMode: false,
+    setLearningMode: () => { },
     siteTheme: getTheme('light', 'medium'),
 });
 
@@ -23,6 +27,7 @@ export const useThemeContext = () => useContext(ThemeContext);
 export const ThemeContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [themeName, setThemeName] = useState<ThemeName>('light');
     const [fontSize, setFontSizeState] = useState<FontSize>('medium');
+    const [isLearningMode, setLearningModeState] = useState(false);
 
     useLayoutEffect(() => {
         const savedTheme = localStorage.getItem('appTheme') as ThemeName;
@@ -34,6 +39,11 @@ export const ThemeContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
         if (savedFontSize && ['small', 'medium', 'large'].includes(savedFontSize)) {
             setFontSizeState(savedFontSize);
+        }
+
+        const savedLearningMode = localStorage.getItem('appLearningMode');
+        if (savedLearningMode !== null) {
+            setLearningModeState(savedLearningMode === 'true');
         }
     }, []);
 
@@ -47,6 +57,11 @@ export const ThemeContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
         localStorage.setItem('appFontSize', size);
     };
 
+    const setLearningMode = (mode: boolean) => {
+        setLearningModeState(mode);
+        localStorage.setItem('appLearningMode', String(mode));
+    };
+
     const siteTheme = getTheme(themeName, fontSize);
 
     return (
@@ -55,6 +70,8 @@ export const ThemeContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
             fontSize,
             setTheme,
             setFontSize,
+            isLearningMode,
+            setLearningMode,
             siteTheme
         }}>
             {children}
