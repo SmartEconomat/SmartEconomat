@@ -1,5 +1,6 @@
 import { createTheme, ThemeOptions } from '@mui/material/styles';
 
+
 export type ThemeName = 'light' | 'dark' | 'highContrastLight' | 'highContrastDark';
 export type FontSize = 'small' | 'medium' | 'large';
 
@@ -94,7 +95,7 @@ const highContrastDarkPalette = {
 };
 
 export const getTheme = (themeName: ThemeName, fontSize: FontSize) => {
-  const typography = getTypography(fontSize);
+  const typography: any = getTypography(fontSize);
   let palette;
   let components = {};
 
