@@ -7,6 +7,7 @@ import {
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
 import { Producto } from '../modules/producto/producto.entity/producto.entity';
 import { Pedido } from '../modules/pedido/pedido.entity/pedido.entity';
+import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
 const NUM_MOVIMIENTOS = 50;
 
@@ -52,5 +53,5 @@ export const runSeeder = async (dataSource: DataSource) => {
   }
 
   await movimientoRepo.save(movimientos);
-  console.log('Seeder de movimientos ejecutado correctamente.');
+  console.log(SeederI18nHelper.getSeederSuccess('movimientos'));
 };
