@@ -10,15 +10,15 @@ import LocalShippingIconOption from '@mui/icons-material/LocalShippingOutlined';
 import CategoryIconOption from '@mui/icons-material/CategoryOutlined';
 
 // Lazy load components
-const Home = React.lazy(() => import('../pages/Home'));
-const Productos = React.lazy(() => import('../pages/Productos'));
-const Pedidos = React.lazy(() => import('../pages/Pedidos'));
-const Recepcion = React.lazy(() => import('../pages/Recepcion'));
-const Inventario = React.lazy(() => import('../pages/Inventario'));
-const Incidencias = React.lazy(() => import('../pages/Incidencias'));
-const Movimientos = React.lazy(() => import('../pages/Movimientos'));
-const Proveedores = React.lazy(() => import('../pages/Proveedores'));
-const Usuario = React.lazy(() => import('../pages/Usuario'));
+const Home = React.lazy(() => import('../../pages/Home'));
+const Productos = React.lazy(() => import('../../pages/Productos'));
+const Pedidos = React.lazy(() => import('../../pages/Pedidos'));
+const Recepcion = React.lazy(() => import('../../pages/Recepcion'));
+const Inventario = React.lazy(() => import('../../pages/Inventario'));
+const Incidencias = React.lazy(() => import('../../pages/Incidencias'));
+const Movimientos = React.lazy(() => import('../../pages/Movimientos'));
+const Proveedores = React.lazy(() => import('../../pages/Proveedores'));
+const Usuario = React.lazy(() => import('../../pages/Usuario'));
 
 export interface MenuItem {
     path: string;

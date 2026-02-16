@@ -1,6 +1,6 @@
 import React from 'react';
 import { Typography, Box, Paper } from '@mui/material';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../store/AuthContext';
 
 const Home: React.FC = () => {
     const { user } = useAuth();

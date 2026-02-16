@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useLayoutEffect } from 'react';
 import { Theme } from '@mui/material/styles';
-import { getTheme, ThemeName, FontSize } from '../theme/themes';
+import { getTheme, ThemeName, FontSize } from '../utils/theme/themes';
 
 interface ThemeContextType {
     currentThemeName: ThemeName;
