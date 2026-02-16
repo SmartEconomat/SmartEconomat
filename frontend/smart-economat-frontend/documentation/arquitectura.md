@@ -25,9 +25,14 @@ src/
 ├── layouts/           # Plantillas de página (MainLayout).
 ├── pages/             # Vistas principales (rutas).
 ├── routes/            # Configuración de navegación.
+<<<<<<< HEAD
 ├── store/             # Estado global (Context/Redux: Auth, Theme).
 ├── utils/             # Funciones auxiliares.
 │   └── config/        # Configuraciones globales (Menú, Tutorial).
+=======
+├── store/             # Estado global (Context/Redux).
+├── utils/             # Funciones auxiliares y configuración.
+>>>>>>> 40a2733 (fix:modificación final de componentes y estados globales de la aplicación, creación de tooltips para descripciones guiadas)
 └── documentation/     # Documentación del proyecto.
 ```
 

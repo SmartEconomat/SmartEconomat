@@ -1,6 +1,10 @@
 # 🏆 Clasificación de Contribuidores - SmartEconomat
 
+<<<<<<< HEAD
 > **Última actualización:** 2026-02-18 16:33:58
+=======
+> **Última actualización:** 2026-02-16 13:15:23
+>>>>>>> 40a2733 (fix:modificación final de componentes y estados globales de la aplicación, creación de tooltips para descripciones guiadas)
 
 ---
 
@@ -20,15 +24,21 @@ Demostrando que:
 - 🚀 Git commit es su mantra matutino
 
 **Estadísticas de Dominio:**
+<<<<<<< HEAD
 
 - Posee el **37.16%** de todo el código.
 - Ha logrado fusionar **41** funcionalidades completas.
+=======
+- Posee el **7.89%** de todo el código.
+- Ha logrado fusionar **60** funcionalidades completas.
+>>>>>>> 40a2733 (fix:modificación final de componentes y estados globales de la aplicación, creación de tooltips para descripciones guiadas)
 
 ---
 
 ## 📊 Hall de la Fama
 
 ### 🥈 Alexis
+<<<<<<< HEAD
 
 - 💻 Commits: **30** (20.27%)
 - 🔀 PRs Fusionados: **7**
@@ -44,6 +54,22 @@ Demostrando que:
 - 🔀 PRs Fusionados: **5**
 
 ### 🥈 Guillermo
+=======
+- 💻 Commits: **9** (7.89%)
+- 🔀 PRs Fusionados: **60**
+
+### 🥈 Maurizio
+- 💻 Commits: **9** (7.89%)
+- 🔀 PRs Fusionados: **60**
+
+### 🥈 Sergio
+- 💻 Commits: **9** (7.89%)
+- 🔀 PRs Fusionados: **60**
+
+### 🥈 Guillermo
+- 💻 Commits: **9** (7.89%)
+- 🔀 PRs Fusionados: **60**
+>>>>>>> 40a2733 (fix:modificación final de componentes y estados globales de la aplicación, creación de tooltips para descripciones guiadas)
 
 - 💻 Commits: **10** (6.76%)
 - 🔀 PRs Fusionados: **5**
@@ -70,6 +96,7 @@ Con **9 commits** y **60 PRs**, tenemos aquí a alguien que:
 
 ## 📈 Tabla Comparativa
 
+<<<<<<< HEAD
 | Posición | Contribuidor | Commits | PRs Fusionados | % Código | Estado           |
 | -------- | ------------ | ------- | -------------- | -------- | ---------------- |
 | #1       | Darel        | **55**  | 🔀 **41**      | 37.16%   | 👑 Líder         |
@@ -77,15 +104,31 @@ Con **9 commits** y **60 PRs**, tenemos aquí a alguien que:
 | #3       | Maurizio     | **30**  | 🔀 **8**       | 20.27%   | 💪 Activo        |
 | #4       | Sergio       | **23**  | 🔀 **5**       | 15.54%   | 💪 Activo        |
 | #5       | Guillermo    | **10**  | 🔀 **5**       | 6.76%    | 🐌 Necesita café |
+=======
+| Posición | Contribuidor | Commits | PRs Fusionados | % Código | Estado |
+|----------|--------------|---------|----------------|----------|--------|
+| #1 | Darel | **9** | 🔀 **60** | 7.89% | 👑 Líder |
+| #2 | Alexis | **9** | 🔀 **60** | 7.89% | 💪 Activo |
+| #3 | Maurizio | **9** | 🔀 **60** | 7.89% | 💪 Activo |
+| #4 | Sergio | **9** | 🔀 **60** | 7.89% | 💪 Activo |
+| #5 | Guillermo | **9** | 🔀 **60** | 7.89% | 🐌 Necesita café |
+>>>>>>> 40a2733 (fix:modificación final de componentes y estados globales de la aplicación, creación de tooltips para descripciones guiadas)
 
 ---
 
 ## 📊 Estadísticas Generales
 
+<<<<<<< HEAD
 - **Total de commits:** 148
 - **Total de PRs fusionados:** 66
 - **Total de contribuidores:** 5
 - **Promedio de commits por persona:** 29.6
+=======
+- **Total de commits:** 114
+- **Total de PRs fusionados:** 60
+- **Total de contribuidores:** 5
+- **Promedio de commits por persona:** 22.8
+>>>>>>> 40a2733 (fix:modificación final de componentes y estados globales de la aplicación, creación de tooltips para descripciones guiadas)
 
 ---
 

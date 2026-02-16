@@ -13,7 +13,10 @@ Documentación detallada de los componentes clave, desglosando su construcción 
 -   [Tutorial Onboarding](./componentes/TutorialHelper.md): Guía contextual paso a paso.
 -   [Main Layout](./componentes/MainLayout.md): Estructura principal (Sidebar, Header).
 -   [Settings Menu](./componentes/SettingsMenu.md): Menú de configuración (Tema, Fuentes).
+<<<<<<< HEAD
 -   [Tooltip](./componentes/Tooltip.md): Componente de ayuda visual extendido.
+=======
+>>>>>>> 40a2733 (fix:modificación final de componentes y estados globales de la aplicación, creación de tooltips para descripciones guiadas)
 -   [Login](./componentes/Login.md): Sistema de autenticación.
 
 ---
