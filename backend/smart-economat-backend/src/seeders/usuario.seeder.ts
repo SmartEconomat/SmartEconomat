@@ -4,6 +4,7 @@ import {
   ROLES_DISPONIBLES,
   rolUsuario,
 } from '../modules/usuario/enums/usuario.enums';
+import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
 const NUM_USUARIOS_A_CREAR = 50;
 
@@ -29,5 +30,5 @@ export const runSeeder = async (dataSource: DataSource) => {
   }
 
   await usuarioRepo.save(usuarios);
-  console.log('Seeder de usuarios ejecutado correctamente.');
+  console.log(SeederI18nHelper.getSeederSuccess('usuarios'));
 };

@@ -7,7 +7,7 @@ import {
   DificultadReceta,
   TiempoReceta,
 } from '../modules/receta/enums/receta.enums';
-import { SEEDER_MESSAGES } from './constants/messages';
+import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
 const NUM_RECETAS = 10;
 
@@ -20,7 +20,7 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   const productos = await productoRepo.find();
   if (productos.length === 0) {
-    throw new Error(SEEDER_MESSAGES.errors.NO_PRODUCTOS);
+    throw new Error(SeederI18nHelper.getError('NO_PRODUCTOS'));
   }
 
   for (let i = 0; i < NUM_RECETAS; i++) {
@@ -53,5 +53,5 @@ export const runSeeder = async (dataSource: DataSource) => {
     await ingredienteRepo.save(ingredientes);
   }
 
-  console.log('Seeder de recetas e ingredientes ejecutado correctamente.');
+  console.log(SeederI18nHelper.getSeederSuccess('recetas'));
 };

@@ -24,7 +24,10 @@
     "INSUFFICIENT_STOCK": "Insufficient stock",
     "INVALID_STATE": "Invalid state",
     "ORDER_NOT_CANCELLABLE": "Cannot cancel an order that has already been received or is in shipping process",
-    "MOVEMENTS_NOT_FOUND": "No movements found for this entity"
+    "MOVEMENTS_NOT_FOUND": "No movements found for this entity",
+    "RECEPTION_NOT_FOUND": "Reception not found",
+    "USER_DOES_NOT_EXIST": "User does not exist",
+    "RECEPTION_HAS_RELATIONS": "Cannot delete reception because it has associated relations"
   },
   "success": {
     "CREATED": "Successfully created",
@@ -49,5 +52,24 @@
     "movimiento": "Movement",
     "incidencia": "Incident",
     "albaran": "Delivery Note"
+  },
+  "seeders": {
+    "running": "Running seeder {file}...",
+    "completed": "Seeders executed successfully",
+    "error_running": "Error running seeders",
+    "production_error": "⛔️  ERROR: You cannot run seeders in a production environment!",
+    "success": {
+      "proveedores": "Suppliers seeder executed successfully.",
+      "productos": "✅ Product catalog and supplier relationships generated.",
+      "inventario": "Inventory seeder executed successfully.",
+      "pedidos": "✅ Orders and details seeder completed successfully.",
+      "recepciones": "✅ Receptions seeder completed successfully.",
+      "albaranes": "Delivery notes seeder executed successfully.",
+      "historial_precio": "Price history seeder executed successfully.",
+      "incidencias": "Seeder: {count} incidents created",
+      "movimientos": "Movements seeder executed successfully.",
+      "recetas": "Recipes and ingredients seeder executed successfully.",
+      "usuarios": "Users seeder executed successfully."
+    }
   }
 }
