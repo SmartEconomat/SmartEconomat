@@ -24,5 +24,6 @@ export const SEEDER_MESSAGES = {
     NO_RECEPCIONES_PRODUCTOS: 'No hay recepciones de productos disponibles',
     SEEDER_NOT_FOUND: 'Seeder no encontrado',
     RUN_SEEDER_NOT_FOUND: 'No se encontró runSeeder en el archivo',
+    NO_PRODUCTOS: 'No hay productos disponibles.',
   },
 } as const;
