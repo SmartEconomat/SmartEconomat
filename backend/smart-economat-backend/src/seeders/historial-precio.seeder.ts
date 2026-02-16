@@ -1,7 +1,7 @@
 import { DataSource } from 'typeorm';
 import { HistorialPrecio } from '../modules/producto/historial-precio-proveedor.entity/historial.entity';
 import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
-import { SEEDER_MESSAGES } from './constants/messages';
+import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
@@ -14,7 +14,7 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   const productosProv = await productoProveedorRepo.find();
   if (productosProv.length === 0) {
-    throw new Error(SEEDER_MESSAGES.errors.NO_PRODUCTOS_PROVEEDOR);
+    throw new Error(SeederI18nHelper.getError('NO_PRODUCTOS_PROVEEDOR'));
   }
 
   const historiales: HistorialPrecio[] = [];
@@ -42,5 +42,5 @@ export const runSeeder = async (dataSource: DataSource) => {
     await historialRepo.save(historiales);
   }
 
-  console.log('Seeder de historial_precio ejecutado correctamente.');
+  console.log(SeederI18nHelper.getSeederSuccess('historial_precio'));
 };

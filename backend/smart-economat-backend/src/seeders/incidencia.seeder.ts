@@ -1,7 +1,7 @@
 import { Incidencia } from '../modules/incidencia/incidencia.entity/incidencia.entity';
 import { Recepcion } from '../modules/recepcion/recepcion.entity/recepcion.entity';
 import { DataSource } from 'typeorm';
-import { SEEDER_MESSAGES } from './constants/messages';
+import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
@@ -13,7 +13,7 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   const recepciones = await recepcionRepo.find();
   if (recepciones.length === 0) {
-    throw new Error(SEEDER_MESSAGES.errors.NO_RECEPCIONES);
+    throw new Error(SeederI18nHelper.getError('NO_RECEPCIONES'));
   }
 
   const incidencias: Incidencia[] = [];
@@ -57,5 +57,9 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   await incidenciaRepo.save(incidencias);
 
-  console.log(`Seeder: ${incidencias.length} incidencias creadas`);
+  console.log(
+    SeederI18nHelper.getSeederSuccess('incidencias', {
+      count: incidencias.length,
+    })
+  );
 };
