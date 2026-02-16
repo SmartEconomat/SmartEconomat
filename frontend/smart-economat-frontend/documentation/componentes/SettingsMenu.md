@@ -21,8 +21,10 @@ El **SettingsMenu** es un componente desplegable que permite al usuario personal
 -   `mode`: `'icon' | 'listitem'` (Opcional, default: `'icon'`). Define si se renderiza como botón circular o elemento de lista.
 -   `isOpen`: `boolean` (Opcional, default: `true`). Controla la visibilidad del texto en modo lista.
 
-## Accesibilidad
--   Envuelto en un `Tooltip` que describe la acción ("Configuración de tema y apariencia"), mejorando la experiencia para usuarios que dependen de tecnologías de asistencia.
+## Accesibilidad y UX
+-   **Tooltip Inteligente:**
+    -   Muestra "Configuración" solo cuando el sidebar está colapsado.
+    -   Integra lógica para no duplicar información visual cuando el texto del botón ya es visible.
 
 
 ## Integración
