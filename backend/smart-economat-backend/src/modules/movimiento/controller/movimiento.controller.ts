@@ -6,14 +6,12 @@ import {
   Param,
   Patch,
   Delete,
-  BadRequestException,
   Query,
 } from '@nestjs/common';
 import { MovimientoService } from '../service/movimiento.service';
 import { CreateMovimientoDto } from '../dto/create-movimiento.dto';
 import { UpdateMovimientoDto } from '../dto/update-movimiento.dto';
 import { MovimientoHistoryDto } from '../dto/movimiento-history.dto';
-import { I18nHelper } from '../../../common/helpers/i18n.helper';
 
 @Controller('movimientos')
 export class MovimientoController {
@@ -21,9 +19,6 @@ export class MovimientoController {
 
   @Post()
   create(@Body() dto: CreateMovimientoDto) {
-    if (!dto) {
-      throw new BadRequestException(I18nHelper.getError('EMPTY_REQUEST'));
-    }
     return this.movimientoService.create(dto);
   }
 
