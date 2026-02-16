@@ -6,6 +6,7 @@
 ## Descripción General
 Componente reutilizable que estandariza los tooltips en toda la aplicación. Extiende el `Tooltip` de Material UI preconfigurando animaciones y estilos para mantener la consistencia visual.
 
+<<<<<<< HEAD
 ## Props Extendidas
 
 Además de las props de `MuiTooltip`, incluye:
@@ -31,6 +32,22 @@ import { getTooltipContent } from '../utils/tooltipUtils';
 const content = getTooltipContent(isOpen, isLearningMode, "Título", "Descripción larga...");
 
 <Tooltip title={content} describeChild>
+=======
+## Props
+Acepta todas las props de `MuiTooltip`.
+
+-   **Defaults:**
+    -   `TransitionComponent`: `Zoom` (Animación de zoom al aparecer).
+    -   `arrow`: `true` (Muestra una flecha señalando al elemento).
+    -   `placement`: `'right'` (Se posiciona a la derecha del elemento por defecto, sobrescribible).
+
+## Ejemplo de Uso
+
+```tsx
+import { Tooltip } from '../components/ui/Tooltip';
+
+<Tooltip title="Descripción de la acción">
+>>>>>>> 40a2733 (fix:modificación final de componentes y estados globales de la aplicación, creación de tooltips para descripciones guiadas)
     <IconButton>
         <Icon />
     </IconButton>
