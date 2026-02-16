@@ -6,7 +6,7 @@ import {
 import { PedidoProducto } from '../modules/pedido/pedido-producto.entity/pedido-producto.entity';
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
 import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
-import { SEEDER_MESSAGES } from './constants/messages';
+import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
@@ -19,10 +19,10 @@ export const runSeeder = async (dataSource: DataSource) => {
   const productosProv = await productoProveedorRepo.find();
 
   if (usuarios.length === 0) {
-    throw new Error(SEEDER_MESSAGES.errors.NO_USUARIOS);
+    throw new Error(SeederI18nHelper.getError('NO_USUARIOS'));
   }
   if (productosProv.length === 0) {
-    throw new Error(SEEDER_MESSAGES.errors.NO_PRODUCTOS_PROVEEDOR);
+    throw new Error(SeederI18nHelper.getError('NO_PRODUCTOS_PROVEEDOR'));
   }
 
   for (let i = 0; i < 8; i++) {
@@ -76,5 +76,5 @@ export const runSeeder = async (dataSource: DataSource) => {
     await pedidoRepo.save(pedidoGuardado);
   }
 
-  console.log('✅ Seeder de pedidos y detalles completado con éxito.');
+  console.log(SeederI18nHelper.getSeederSuccess('pedidos'));
 };

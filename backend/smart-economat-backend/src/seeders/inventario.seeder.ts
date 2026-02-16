@@ -2,7 +2,7 @@ import { DataSource } from 'typeorm';
 import { Inventario } from '../modules/inventario/inventario.entity/inventario.entity';
 import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
 import { localInventario } from '../modules/inventario/enums/inventario.enums';
-import { SEEDER_MESSAGES } from './constants/messages';
+import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
@@ -15,7 +15,7 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   const productosProv = await productoProveedorRepo.find();
   if (productosProv.length === 0) {
-    throw new Error(SEEDER_MESSAGES.errors.NO_PRODUCTOS_PROVEEDOR);
+    throw new Error(SeederI18nHelper.getError('NO_PRODUCTOS_PROVEEDOR'));
   }
 
   const inventarios: Inventario[] = [];
@@ -45,5 +45,5 @@ export const runSeeder = async (dataSource: DataSource) => {
     await inventarioRepo.save(inventarios);
   }
 
-  console.log('Seeder de inventario ejecutado correctamente.');
+  console.log(SeederI18nHelper.getSeederSuccess('inventario'));
 };

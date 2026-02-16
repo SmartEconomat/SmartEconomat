@@ -4,14 +4,12 @@ import { readdirSync } from 'fs';
 import { join } from 'path';
 import * as dotenv from 'dotenv';
 import { Seeder } from './interfaces/seeder.interface';
-import { SEEDER_MESSAGES } from './constants/messages';
+import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
 dotenv.config({ path: join(__dirname, '../../../../.env') });
 
 if (process.env.NODE_ENV === 'production') {
-  console.error(
-    '⛔️  ERROR: No puedes ejecutar seeders en entorno de producción!'
-  );
+  console.error(SeederI18nHelper.getSeederMessage('production_error'));
   process.exit(1);
 }
 
@@ -42,7 +40,7 @@ async function runAllSeeders() {
     const seederPath = join(__dirname, file);
     const seeder: Seeder = require(seederPath);
     if (typeof seeder.runSeeder === 'function') {
-      console.log(`Ejecutando seeder ${file}...`);
+      console.log(SeederI18nHelper.getSeederMessage('running', { file }));
       await seeder.runSeeder(dataSource);
     }
   }
@@ -59,17 +57,19 @@ async function runSeederByName(name: string) {
       : null;
 
   if (!filePath) {
-    throw new Error(`${SEEDER_MESSAGES.errors.SEEDER_NOT_FOUND}: ${name}`);
+    throw new Error(
+      `${SeederI18nHelper.getError('SEEDER_NOT_FOUND')}: ${name}`
+    );
   }
 
   const seeder: Seeder = require(join(__dirname, filePath));
   if (typeof seeder.runSeeder !== 'function') {
     throw new Error(
-      `${SEEDER_MESSAGES.errors.RUN_SEEDER_NOT_FOUND} ${filePath}`
+      `${SeederI18nHelper.getError('RUN_SEEDER_NOT_FOUND')} ${filePath}`
     );
   }
 
-  console.log(`Ejecutando seeder ${filePath}...`);
+  console.log(SeederI18nHelper.getSeederMessage('running', { file: filePath }));
   await seeder.runSeeder(dataSource);
 }
 
@@ -85,9 +85,9 @@ void (async () => {
     }
 
     await dataSource.destroy();
-    console.log('Seeders ejecutados correctamente');
+    console.log(SeederI18nHelper.getSeederMessage('completed'));
   } catch (err) {
-    console.error('Error al ejecutar seeders:', err);
+    console.error(SeederI18nHelper.getSeederMessage('error_running'), err);
     process.exit(1);
   }
 })();

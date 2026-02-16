@@ -1,5 +1,6 @@
 import { DataSource } from 'typeorm';
 import { Proveedor } from '../modules/proveedor/proveedor.entity/proveedor.entity';
+import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
@@ -25,5 +26,5 @@ export const runSeeder = async (dataSource: DataSource) => {
   }
 
   await proveedorRepo.save(proveedores);
-  console.log('Seeder de proveedores ejecutado correctamente.');
+  console.log(SeederI18nHelper.getSeederSuccess('proveedores'));
 };

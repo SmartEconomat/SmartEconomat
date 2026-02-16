@@ -8,7 +8,7 @@ import {
   TipoProducto,
   AlergenoProducto,
 } from '../modules/producto/enums/producto.enums';
-import { SEEDER_MESSAGES } from './constants/messages';
+import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
@@ -19,7 +19,7 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   const proveedores = await proveedorRepo.find();
   if (proveedores.length === 0) {
-    throw new Error(SEEDER_MESSAGES.errors.NO_PROVEEDORES);
+    throw new Error(SeederI18nHelper.getError('NO_PROVEEDORES'));
   }
 
   const productos: Producto[] = [];
@@ -86,7 +86,5 @@ export const runSeeder = async (dataSource: DataSource) => {
   }
   if (alergenos.length > 0) await productoAlergenoRepo.save(alergenos);
 
-  console.log(
-    '✅ Catálogo de productos y relaciones con proveedores generado.'
-  );
+  console.log(SeederI18nHelper.getSeederSuccess('productos'));
 };

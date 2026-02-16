@@ -9,6 +9,7 @@ import { Recepcion } from '../recepcion.entity/recepcion.entity';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { CreateRecepcionDto } from '../dto/create-recepcion.dto';
 import { UpdateRecepcionDto } from '../dto/update-recepcion.dto';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 
 @Injectable()
 export class RecepcionService {
@@ -26,7 +27,7 @@ export class RecepcionService {
     });
 
     if (!usuario) {
-      throw new BadRequestException('El usuario no existe');
+      throw new BadRequestException(I18nHelper.getError('USER_DOES_NOT_EXIST'));
     }
 
     const recepcion = this.recepcionRepository.create({
@@ -52,7 +53,7 @@ export class RecepcionService {
     });
 
     if (!recepcion) {
-      throw new NotFoundException('Recepción no encontrada');
+      throw new NotFoundException(I18nHelper.getError('RECEPTION_NOT_FOUND'));
     }
 
     return recepcion;
@@ -67,7 +68,9 @@ export class RecepcionService {
       });
 
       if (!usuario) {
-        throw new BadRequestException('El usuario no existe');
+        throw new BadRequestException(
+          I18nHelper.getError('USER_DOES_NOT_EXIST')
+        );
       }
 
       recepcion.usuario = usuario;
@@ -85,7 +88,7 @@ export class RecepcionService {
     });
 
     if (!recepcion) {
-      throw new NotFoundException('Recepción no encontrada');
+      throw new NotFoundException(I18nHelper.getError('RECEPTION_NOT_FOUND'));
     }
 
     if (
@@ -93,7 +96,7 @@ export class RecepcionService {
       recepcion.recepcionesProducto?.length
     ) {
       throw new BadRequestException(
-        'No se puede eliminar la recepción porque tiene relaciones asociadas'
+        I18nHelper.getError('RECEPTION_HAS_RELATIONS')
       );
     }
 
