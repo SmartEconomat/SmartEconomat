@@ -21,13 +21,13 @@ import {
 import MenuIcon from '@mui/icons-material/MenuOutlined';
 import PersonIcon from '@mui/icons-material/PersonOutlined';
 import LogoutIcon from '@mui/icons-material/LogoutOutlined';
-import { menuItems } from '../../config/menuConfig';
-import { useAuth } from '../../context/AuthContext';
-import { useThemeContext } from '../../context/ThemeContext';
+import { menuItems } from '../utils/config/menuConfig';
+import { useAuth } from '../store/AuthContext';
+import { useThemeContext } from '../store/ThemeContext';
 import SettingsMenu from './SettingsMenu';
-import Logo from '../../assets/images/SVG/logo-smat-economato.svg';
-import LogoBlanco from '../../assets/images/SVG/logo-smart-economat-blanco.svg';
-import LogoNegro from '../../assets/images/SVG/logo-smart-economat-negro.svg';
+import Logo from '../assets/images/SVG/logo-smat-economato.svg';
+import LogoBlanco from '../assets/images/SVG/logo-smart-economat-blanco.svg';
+import LogoNegro from '../assets/images/SVG/logo-smart-economat-negro.svg';
 
 const drawerWidth = 240;
 
