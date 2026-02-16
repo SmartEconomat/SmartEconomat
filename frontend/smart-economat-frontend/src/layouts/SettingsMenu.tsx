@@ -14,7 +14,7 @@ import DarkModeIcon from '@mui/icons-material/DarkModeOutlined';
 import ContrastIcon from '@mui/icons-material/ContrastOutlined';
 import InvertColorsIcon from '@mui/icons-material/InvertColorsOutlined';
 import CheckIcon from '@mui/icons-material/Check';
-import { useThemeContext } from '../../context/ThemeContext';
+import { useThemeContext } from '../store/ThemeContext';
 
 export default function SettingsMenu() {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
