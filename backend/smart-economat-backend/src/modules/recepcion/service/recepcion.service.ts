@@ -45,7 +45,7 @@ export class RecepcionService {
     });
   }
 
-  async findOne(id: number): Promise<Recepcion> {
+  async findOne(id: string): Promise<Recepcion> {
     const recepcion = await this.recepcionRepository.findOne({
       where: { id },
       relations: ['usuario'],
@@ -58,7 +58,7 @@ export class RecepcionService {
     return recepcion;
   }
 
-  async update(id: number, dto: UpdateRecepcionDto): Promise<Recepcion> {
+  async update(id: string, dto: UpdateRecepcionDto): Promise<Recepcion> {
     const recepcion = await this.findOne(id);
 
     if (dto.usuarioId) {
@@ -78,7 +78,7 @@ export class RecepcionService {
     return await this.recepcionRepository.save(recepcion);
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: string): Promise<void> {
     const recepcion = await this.recepcionRepository.findOne({
       where: { id },
       relations: ['recepcionesPedido', 'recepcionesProducto'],

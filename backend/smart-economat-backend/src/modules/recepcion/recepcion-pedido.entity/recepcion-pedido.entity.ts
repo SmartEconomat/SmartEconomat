@@ -24,13 +24,13 @@ export class RecepcionPedido {
   readonly id!: string;
 
   @ManyToOne(() => Recepcion, (recepcion) => recepcion.recepcionesPedido, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'id_recepcion' })
   recepcion!: Recepcion;
 
   @ManyToOne(() => Pedido, (pedido) => pedido.recepcionesPedido, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'id_pedido' })
   pedido!: Pedido;
