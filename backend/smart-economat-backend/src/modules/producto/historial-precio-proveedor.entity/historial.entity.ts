@@ -1,42 +1,55 @@
+import { Entity, Column, ManyToOne, JoinColumn, Index, Check } from 'typeorm';
+import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
-import {
-  Entity,
-  PrimaryColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from 'typeorm';
 import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
 
+/**
+ * Entidad HistorialPrecio
+ *
+ * Mantiene un registro histórico de los cambios de precio de un ProductoProveedor.
+ * Permite analizar la evolución de costes y auditar cambios.
+ * Se debe crear un nuevo registro cada vez que cambia 'precioUnitario' en ProductoProveedor.
+ *
+ * @class HistorialPrecio
+ * @extends {BaseEntity}
+ */
 @Entity({ name: 'historial_precio' })
-export class HistorialPrecio {
-  @PrimaryColumn('uuid', {
-    name: 'id_historial_precio',
-    default: () => 'uuid_generate_v7()',
+@Index('idx_historial_precio_producto_proveedor', ['productoProveedor'])
+@Index('idx_historial_precio_fecha', ['fecha'])
+@Check(`"precio" >= 0`)
+export class HistorialPrecio extends BaseEntity {
+  /**
+   * ProductoProveedor al que pertenece este histórico.
+   * La relación es CASCADE deletion porque es un dato dependiente fuerte.
+   */
+  @ManyToOne(() => ProductoProveedor, (pp) => pp.historialPrecios, {
+    onDelete: 'CASCADE',
+    nullable: false,
   })
-  readonly id!: string;
-
-  @ManyToOne(() => ProductoProveedor, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id_producto_proveedor' })
   productoProveedor!: ProductoProveedor;
 
+  /**
+   * Precio registrado en ese momento histórico.
+   * Constraint: >= 0.
+   * @type {number}
+   */
   @Column({
-    type: 'decimal',
-    nullable: false,
+    type: 'numeric',
     precision: 10,
     scale: 2,
+    nullable: false,
     transformer: new ColumnNumericTransformer(),
   })
-  precio?: number;
+  precio!: number;
 
-  @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+  /**
+   * Fecha en la que se registró (o entró en vigor) este precio.
+   * @type {Date}
+   */
+  @Column({
+    type: 'timestamptz',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   fecha!: Date;
-
-  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
-  readonly createdAt!: Date;
-
-  @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
-  readonly updatedAt!: Date;
 }

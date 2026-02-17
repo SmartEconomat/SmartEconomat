@@ -5,19 +5,27 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
+  VersionColumn,
 } from 'typeorm';
 import { Producto } from '../producto.entity/producto.entity';
 import { AlergenoProducto } from '../enums/producto.enums';
 
+/**
+ * ProductoAlergeno Entity
+ *
+ * Tabla puente entre Producto y alérgenos (composite PK)
+ * No extiende BaseEntity porque usa composite primary key
+ */
 @Entity({ name: 'producto_alergeno' })
 export class ProductoAlergeno {
   @PrimaryColumn('uuid', { name: 'id_producto' })
-  id_producto!: string;
+  idProducto!: string;
 
   @PrimaryColumn({ type: 'enum', enum: AlergenoProducto, name: 'alergeno' })
   alergeno!: AlergenoProducto;
 
-  @ManyToOne(() => Producto, (producto) => producto.alergenos, {
+  @ManyToOne(() => Producto, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'id_producto', referencedColumnName: 'id' })
@@ -28,4 +36,10 @@ export class ProductoAlergeno {
 
   @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
   readonly updatedAt!: Date;
+
+  @DeleteDateColumn({ type: 'timestamptz', name: 'deleted_at' })
+  deletedAt?: Date;
+
+  @VersionColumn({ name: 'version' })
+  version!: number;
 }

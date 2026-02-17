@@ -14,7 +14,9 @@ export const runSeeder = async (dataSource: DataSource) => {
   for (let i = 0; i < 10; i++) {
     const proveedor = new Proveedor();
     proveedor.nombre = faker.company.name();
-    proveedor.contacto = faker.person.fullName();
+    proveedor.email = faker.internet.email();
+    proveedor.direccion = faker.location.streetAddress();
+    proveedor.nif = faker.string.alphanumeric(9).toUpperCase();
 
     const telefonoCompleto = faker.phone.number();
     proveedor.telefono =

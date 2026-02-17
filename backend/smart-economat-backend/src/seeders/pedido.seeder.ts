@@ -63,7 +63,7 @@ export const runSeeder = async (dataSource: DataSource) => {
           productoProveedor: pp,
           cantidad: cantidad,
           precioUnitario: precioUnitario,
-          observaciones: faker.datatype.boolean(0.3)
+          observaciones: faker.datatype.boolean()
             ? faker.lorem.sentence()
             : undefined,
         })

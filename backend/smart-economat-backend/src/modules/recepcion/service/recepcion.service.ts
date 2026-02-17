@@ -92,8 +92,8 @@ export class RecepcionService {
     }
 
     if (
-      recepcion.recepcionesPedido?.length ||
-      recepcion.recepcionesProducto?.length
+      recepcion.recepcionesPedidos?.length ||
+      recepcion.recepcionProductos?.length
     ) {
       throw new BadRequestException(
         I18nHelper.getError('RECEPTION_HAS_RELATIONS')
