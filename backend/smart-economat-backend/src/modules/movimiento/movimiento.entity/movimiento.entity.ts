@@ -20,6 +20,7 @@ import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 @Index('idx_movimiento_usuario', ['usuario'])
 @Index('idx_movimiento_entidad_tipo', ['entidad', 'tipo'])
 @Index('idx_movimiento_entidad_id', ['entidadId'])
+@Index('idx_movimiento_polimorfico', ['entidadId', 'entidad'])
 @Check(`"cantidad" >= 0`)
 export class Movimiento extends BaseEntity {
   /**
