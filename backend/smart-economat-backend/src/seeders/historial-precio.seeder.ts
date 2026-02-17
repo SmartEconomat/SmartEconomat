@@ -32,8 +32,7 @@ export const runSeeder = async (dataSource: DataSource) => {
       const historial = new HistorialPrecio();
       historial.productoProveedor = pp;
       historial.precio = precioAnterior;
-      historial.fecha = faker.date.recent({ days: 90 });
-
+      historial.fecha = faker.date.recent({ days: 3 });
       historiales.push(historial);
     }
   }
