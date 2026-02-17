@@ -35,4 +35,11 @@ export class CreateProductoDto {
   @IsOptional()
   @IsEnum(TipoProducto)
   tipo?: TipoProducto;
+
+  @IsOptional()
+  @IsString()
+  codigoBarras?: string;
+
+  @IsOptional()
+  cantidad?: number;
 }

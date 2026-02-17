@@ -7,7 +7,6 @@ import {
   BeforeUpdate,
 } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
-import { IsEmail } from 'class-validator';
 import * as bcrypt from 'bcrypt';
 import { Pedido } from '../../pedido/pedido.entity/pedido.entity';
 import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
@@ -57,7 +56,6 @@ export class Usuario extends BaseEntity {
    * @type {string}
    */
   @Column({ type: 'varchar', length: 255, unique: true })
-  @IsEmail({}, { message: 'Email inválido' })
   email!: string;
 
   /**
