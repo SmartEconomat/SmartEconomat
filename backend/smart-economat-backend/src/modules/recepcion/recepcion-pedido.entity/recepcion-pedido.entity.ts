@@ -1,39 +1,41 @@
 import { Pedido } from '../../pedido/pedido.entity/pedido.entity';
 import {
   Column,
-  CreateDateColumn,
-  DeleteDateColumn,
   Entity,
-  JoinColumn,
   ManyToOne,
-  OneToMany,
-  PrimaryColumn,
+  JoinColumn,
   Unique,
-  UpdateDateColumn,
+  Index,
+  OneToMany,
 } from 'typeorm';
+import { BaseEntity } from '../../../common/entities/base.entity';
 import { Recepcion } from '../recepcion.entity/recepcion.entity';
 import { AlbaranPedidoRecepcion } from '../../albaran/albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
 
-@Entity('recepcion_pedido')
+/**
+ * RecepcionPedido Entity
+ *
+ * Tabla puente entre Recepcion y Pedido.
+ */
 @Unique(['recepcion', 'pedido'])
-export class RecepcionPedido {
-  @PrimaryColumn('uuid', {
-    name: 'id_recepcion_pedido',
-    default: () => 'uuid_generate_v7()',
-  })
-  readonly id!: string;
-
-  @ManyToOne(() => Recepcion, (recepcion) => recepcion.recepcionesPedido, {
+@Entity({ name: 'recepcion_pedido' })
+@Index('idx_recepcion_pedido_recepcion', ['recepcion'])
+@Index('idx_recepcion_pedido_pedido', ['pedido'])
+export class RecepcionPedido extends BaseEntity {
+  @ManyToOne(() => Recepcion, (recepcion) => recepcion.recepcionesPedidos, {
     onDelete: 'RESTRICT',
+    nullable: false,
   })
-  @JoinColumn({ name: 'id_recepcion' })
+  @JoinColumn({ name: 'id_recepcion', referencedColumnName: 'id' })
   recepcion!: Recepcion;
 
   @ManyToOne(() => Pedido, (pedido) => pedido.recepcionesPedido, {
     onDelete: 'RESTRICT',
+    nullable: false,
   })
-  @JoinColumn({ name: 'id_pedido' })
+  @JoinColumn({ name: 'id_pedido', referencedColumnName: 'id' })
   pedido!: Pedido;
+
   @Column({
     name: 'fecha_vinculacion',
     type: 'timestamptz',
@@ -43,13 +45,4 @@ export class RecepcionPedido {
 
   @OneToMany(() => AlbaranPedidoRecepcion, (apr) => apr.recepcionPedido)
   albaranPedidoRecepcion!: AlbaranPedidoRecepcion[];
-
-  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
-  readonly createdAt!: Date;
-
-  @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
-  readonly updatedAt!: Date;
-
-  @DeleteDateColumn({ type: 'timestamptz', name: 'deleted_at' })
-  deletedAt?: Date;
 }

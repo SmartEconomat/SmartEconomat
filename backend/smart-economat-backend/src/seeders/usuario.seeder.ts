@@ -20,11 +20,11 @@ export const runSeeder = async (dataSource: DataSource) => {
       password: faker.internet.password(),
       email: faker.internet.email(),
       rol: faker.helpers.arrayElement(ROLES_DISPONIBLES) as rolUsuario,
+      activo: faker.datatype.boolean(0.8),
       cialProfesor: `CIAL_${i}${faker.string.numeric(4)}`,
       numeroClase: faker.string.numeric(2),
       aula:
         faker.string.fromCharacters(['A', 'B', 'C']) + faker.string.numeric(1),
-      activo: faker.datatype.boolean(0.8),
     });
     usuarios.push(usuario);
   }
