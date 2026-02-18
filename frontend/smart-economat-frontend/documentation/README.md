@@ -5,7 +5,6 @@ Esta carpeta contiene la documentación técnica y de diseño (UX/UI) del fronte
 ## Estructura
 
 ### Arquitectura
-<<<<<<< HEAD
 
 - [Arquitectura General](./arquitectura.md): Visión global del proyecto, estructura de carpetas y principios de diseño.
 
@@ -22,18 +21,3 @@ Documentación detallada de los componentes clave, desglosando su construcción 
 ---
 
 _Esta documentación debe actualizarse cada vez que se cree o modifique sustancialmente un componente._
-=======
--   [Arquitectura General](./arquitectura.md): Visión global del proyecto, estructura de carpetas y principios de diseño.
-
-### Componentes (Atomic Design)
-Documentación detallada de los componentes clave, desglosando su construcción desde átomos hasta organismos.
-
--   [Tutorial Onboarding](./componentes/TutorialHelper.md): Guía contextual paso a paso.
--   [Main Layout](./componentes/MainLayout.md): Estructura principal (Sidebar, Header).
--   [Settings Menu](./componentes/SettingsMenu.md): Menú de configuración (Tema, Fuentes).
--   [Tooltip](./componentes/Tooltip.md): Componente de ayuda visual extendido.
--   [Login](./componentes/Login.md): Sistema de autenticación.
-
----
-*Esta documentación debe actualizarse cada vez que se cree o modifique sustancialmente un componente.*
->>>>>>> 40a2733 (fix:modificación final de componentes y estados globales de la aplicación, creación de tooltips para descripciones guiadas)
