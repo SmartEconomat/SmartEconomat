@@ -34,6 +34,10 @@ Demostrando que:
 - 🔀 PRs Fusionados: **8**
 
 ### 🥈 Sergio
+- 💻 Commits: **26** (18.98%)
+- 🔀 PRs Fusionados: **4**
+
+### 🥈 Sergio
 - 💻 Commits: **23** (14.74%)
 - 🔀 PRs Fusionados: **5**
 
