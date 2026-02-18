@@ -3,10 +3,10 @@ import {
     Box, Typography, Paper, Avatar, Link
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import Input from '../ui/Input';
-import Button from '../ui/Button';
-import Checkbox from '../ui/Checkbox';
-import { useAuth } from '../../context/AuthContext';
+import Input from '../../components/ui/Input';
+import Button from '../../components/ui/Button';
+import Checkbox from '../../components/ui/Checkbox';
+import { useAuth } from '../../store/AuthContext';
 
 const visuallyHidden = {
     border: 0,
