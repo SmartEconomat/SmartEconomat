@@ -1,6 +1,6 @@
 import React from 'react';
 import { Typography, Box, Paper } from '@mui/material';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../store/AuthContext';
 
 const Home: React.FC = () => {
     const { user } = useAuth();
@@ -14,7 +14,7 @@ const Home: React.FC = () => {
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
                 <Box sx={{ flex: { xs: '1 1 100%', md: '0 1 300px' } }}>
                     <Paper sx={{ p: 3, display: 'flex', flexDirection: 'column', height: 200 }}>
-                        <Typography variant="h6" gutterBottom color="primary">
+                        <Typography variant="h6" component="h3" gutterBottom color="primary">
                             Nuevo Artículo
                         </Typography>
                         <Typography variant="body2">
@@ -24,7 +24,7 @@ const Home: React.FC = () => {
                 </Box>
                 <Box sx={{ flex: { xs: '1 1 100%', md: '0 1 300px' } }}>
                     <Paper sx={{ p: 3, display: 'flex', flexDirection: 'column', height: 200 }}>
-                        <Typography variant="h6" gutterBottom color="primary">
+                        <Typography variant="h6" component="h3" gutterBottom color="primary">
                             Nuevo Pedido
                         </Typography>
                         <Typography variant="body2">
