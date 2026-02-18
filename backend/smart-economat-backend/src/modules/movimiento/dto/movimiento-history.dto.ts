@@ -1,19 +1,35 @@
-import { IsString, IsOptional, IsEnum, IsDateString } from 'class-validator';
+import {
+  IsOptional,
+  IsEnum,
+  IsDateString,
+  IsNotEmpty,
+  IsUUID,
+} from 'class-validator';
 import { TipoMovimiento } from '../enums/movimiento.enums';
 
 export class MovimientoHistoryDto {
-  @IsString()
+  @IsUUID('7', { message: 'El ID de la entidad debe ser un UUID válido' })
+  @IsNotEmpty({ message: 'El ID de la entidad es obligatorio' })
   entityId!: string;
 
   @IsOptional()
-  @IsEnum(TipoMovimiento, { each: true })
+  @IsEnum(TipoMovimiento, {
+    each: true,
+    message: 'El tipo de movimiento no es válido',
+  })
   type?: TipoMovimiento;
 
   @IsOptional()
-  @IsDateString()
+  @IsDateString(
+    {},
+    { message: 'La fecha de inicio debe ser una fecha válida (ISO 8601)' }
+  )
   startDate?: string;
 
   @IsOptional()
-  @IsDateString()
+  @IsDateString(
+    {},
+    { message: 'La fecha de fin debe ser una fecha válida (ISO 8601)' }
+  )
   endDate?: string;
 }
