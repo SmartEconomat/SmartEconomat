@@ -28,7 +28,10 @@ export const runSeeder = async (dataSource: DataSource) => {
       min: 0,
       max: inventario.cantidadActual,
     });
-    inventario.cantidadMaxima = faker.number.int({ min: 1, max: 100 });
+    inventario.cantidadMaxima = faker.number.int({
+      min: Math.max(inventario.cantidadMinima, inventario.cantidadActual) + 10,
+      max: 200,
+    });
     inventario.ubicacionAlmacen = faker.helpers.arrayElement(
       Object.values(localInventario)
     );
