@@ -3,6 +3,8 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeContextProvider, useThemeContext } from './store/ThemeContext';
 import AppRouter from './routes/AppRouter';
 import { AuthProvider } from './store/AuthContext';
+import { ToastProvider } from './store/ToastContext';
+import ToastContainer from './components/common/Notification/ToastContainer';
 
 function App() {
   return (
@@ -18,9 +20,12 @@ function Main() {
   return (
     <ThemeProvider theme={siteTheme}>
       <CssBaseline />
-      <AuthProvider>
-        <AppRouter />
-      </AuthProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <AppRouter />
+        </AuthProvider>
+        <ToastContainer />
+      </ToastProvider>
     </ThemeProvider>
   );
 }
