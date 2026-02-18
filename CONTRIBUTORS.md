@@ -1,6 +1,6 @@
 # 🏆 Clasificación de Contribuidores - SmartEconomat
 
-> **Última actualización:** 2026-02-18 17:27:13
+> **Última actualización:** 2026-02-18 17:42:06
 
 ---
 
@@ -18,7 +18,7 @@ Demostrando que:
 - 🚀 Git commit es su mantra matutino
 
 **Estadísticas de Dominio:**
-- Posee el **34.81%** de todo el código.
+- Posee el **35.26%** de todo el código.
 - Ha logrado fusionar **43** funcionalidades completas.
 
 ---
@@ -26,19 +26,19 @@ Demostrando que:
 ## 📊 Hall de la Fama
 
 ### 🥈 Alexis
-- 💻 Commits: **40** (25.32%)
-- 🔀 PRs Fusionados: **7**
+- 💻 Commits: **38** (24.36%)
+- 🔀 PRs Fusionados: **8**
 
 ### 🥈 Maurizio
-- 💻 Commits: **30** (18.99%)
+- 💻 Commits: **30** (19.23%)
 - 🔀 PRs Fusionados: **8**
 
 ### 🥈 Sergio
-- 💻 Commits: **23** (14.56%)
+- 💻 Commits: **23** (14.74%)
 - 🔀 PRs Fusionados: **5**
 
 ### 🥈 Guillermo
-- 💻 Commits: **10** (6.33%)
+- 💻 Commits: **10** (6.41%)
 - 🔀 PRs Fusionados: **5**
 
 
@@ -64,20 +64,20 @@ Con **10 commits** y **5 PRs**, tenemos aquí a alguien que:
 
 | Posición | Contribuidor | Commits | PRs Fusionados | % Código | Estado |
 |----------|--------------|---------|----------------|----------|--------|
-| #1 | Darel | **55** | 🔀 **43** | 34.81% | 👑 Líder |
-| #2 | Alexis | **40** | 🔀 **7** | 25.32% | 💪 Activo |
-| #3 | Maurizio | **30** | 🔀 **8** | 18.99% | 💪 Activo |
-| #4 | Sergio | **23** | 🔀 **5** | 14.56% | 💪 Activo |
-| #5 | Guillermo | **10** | 🔀 **5** | 6.33% | 🐌 Necesita café |
+| #1 | Darel | **55** | 🔀 **43** | 35.26% | 👑 Líder |
+| #2 | Alexis | **38** | 🔀 **8** | 24.36% | 💪 Activo |
+| #3 | Maurizio | **30** | 🔀 **8** | 19.23% | 💪 Activo |
+| #4 | Sergio | **23** | 🔀 **5** | 14.74% | 💪 Activo |
+| #5 | Guillermo | **10** | 🔀 **5** | 6.41% | 🐌 Necesita café |
 
 ---
 
 ## 📊 Estadísticas Generales
 
-- **Total de commits:** 158
-- **Total de PRs fusionados:** 68
+- **Total de commits:** 156
+- **Total de PRs fusionados:** 69
 - **Total de contribuidores:** 5
-- **Promedio de commits por persona:** 31.6
+- **Promedio de commits por persona:** 31.2
 
 ---
 
@@ -87,7 +87,7 @@ Con **10 commits** y **5 PRs**, tenemos aquí a alguien que:
 `████████████████████` 55 commits | 43 PRs
 
 **Alexis**
-`██████████████░░░░░░` 40 commits | 7 PRs
+`█████████████░░░░░░░` 38 commits | 8 PRs
 
 **Maurizio**
 `███████████░░░░░░░░░` 30 commits | 8 PRs
