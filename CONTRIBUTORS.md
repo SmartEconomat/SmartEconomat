@@ -1,10 +1,14 @@
 # 🏆 Clasificación de Contribuidores - SmartEconomat
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 > **Última actualización:** 2026-02-21 23:42:26
 =======
 > **Última actualización:** 2026-02-21 19:58:13
 >>>>>>> 2c6e997 (feature(spinner): Creación de spinner de carga)
+=======
+> **Última actualización:** 2026-02-21 20:35:48
+>>>>>>> f707102 (feat(modal): Creación de modal genérico)
 
 ---
 
@@ -28,11 +32,15 @@ Demostrando que:
 
 **Estadísticas de Dominio:**
 <<<<<<< HEAD
+<<<<<<< HEAD
 - Posee el **37,28%** de todo el código.
 - Ha logrado fusionar **45** funcionalidades completas.
 =======
 - Posee el **6.10%** de todo el código.
 >>>>>>> 2c6e997 (feature(spinner): Creación de spinner de carga)
+=======
+- Posee el **6.02%** de todo el código.
+>>>>>>> f707102 (feat(modal): Creación de modal genérico)
 - Ha logrado fusionar **71** funcionalidades completas.
 
 ---
@@ -40,6 +48,7 @@ Demostrando que:
 ## 📊 Hall de la Fama
 
 ### 🥈 Alexis
+<<<<<<< HEAD
 <<<<<<< HEAD
 - 💻 Commits: **37** (21,89%)
 - 🔀 PRs Fusionados: **9**
@@ -58,18 +67,21 @@ Demostrando que:
 - 🔀 PRs Fusionados: **71**
 =======
 - 💻 Commits: **10** (6.10%)
+=======
+- 💻 Commits: **10** (6.02%)
+>>>>>>> f707102 (feat(modal): Creación de modal genérico)
 - 🔀 PRs Fusionados: **71**
 
 ### 🥈 Maurizio
-- 💻 Commits: **10** (6.10%)
+- 💻 Commits: **10** (6.02%)
 - 🔀 PRs Fusionados: **71**
 
 ### 🥈 Sergio
-- 💻 Commits: **10** (6.10%)
+- 💻 Commits: **10** (6.02%)
 - 🔀 PRs Fusionados: **71**
 
 ### 🥈 Guillermo
-- 💻 Commits: **10** (6.10%)
+- 💻 Commits: **10** (6.02%)
 - 🔀 PRs Fusionados: **71**
 
 >>>>>>> 2c6e997 (feature(spinner): Creación de spinner de carga)
@@ -97,6 +109,7 @@ Con **10 commits** y **71 PRs**, tenemos aquí a alguien que:
 | Posición | Contribuidor | Commits | PRs Fusionados | % Código | Estado |
 |----------|--------------|---------|----------------|----------|--------|
 <<<<<<< HEAD
+<<<<<<< HEAD
 | #1 | Darel | **63** | 🔀 **45** | 37,28% | 👑 Líder |
 | #2 | Alexis | **37** | 🔀 **9** | 21,89% | 💪 Activo |
 | #3 | Maurizio | **31** | 🔀 **8** | 18,34% | 💪 Activo |
@@ -115,16 +128,27 @@ Con **10 commits** y **71 PRs**, tenemos aquí a alguien que:
 | #3 | Maurizio | **10** | 🔀 **71** | 6.10% | 💪 Activo |
 | #4 | Sergio | **10** | 🔀 **71** | 6.10% | 💪 Activo |
 | #5 | Guillermo | **10** | 🔀 **71** | 6.10% | 🐌 Necesita café |
+=======
+| #1 | Darel | **10** | 🔀 **71** | 6.02% | 👑 Líder |
+| #2 | Alexis | **10** | 🔀 **71** | 6.02% | 💪 Activo |
+| #3 | Maurizio | **10** | 🔀 **71** | 6.02% | 💪 Activo |
+| #4 | Sergio | **10** | 🔀 **71** | 6.02% | 💪 Activo |
+| #5 | Guillermo | **10** | 🔀 **71** | 6.02% | 🐌 Necesita café |
+>>>>>>> f707102 (feat(modal): Creación de modal genérico)
 
 ---
 
 ## 📊 Estadísticas Generales
 
-- **Total de commits:** 164
+- **Total de commits:** 166
 - **Total de PRs fusionados:** 71
 - **Total de contribuidores:** 5
+<<<<<<< HEAD
 - **Promedio de commits por persona:** 32.8
 >>>>>>> 2c6e997 (feature(spinner): Creación de spinner de carga)
+=======
+- **Promedio de commits por persona:** 33.2
+>>>>>>> f707102 (feat(modal): Creación de modal genérico)
 
 ---
 
