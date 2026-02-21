@@ -1,6 +1,6 @@
 # 🏆 Clasificación de Contribuidores - SmartEconomat
 
-> **Última actualización:** 2026-02-21 19:58:13
+> **Última actualización:** 2026-02-21 20:35:48
 
 ---
 
@@ -18,7 +18,7 @@ Demostrando que:
 - 🚀 Git commit es su mantra matutino
 
 **Estadísticas de Dominio:**
-- Posee el **6.10%** de todo el código.
+- Posee el **6.02%** de todo el código.
 - Ha logrado fusionar **71** funcionalidades completas.
 
 ---
@@ -26,19 +26,19 @@ Demostrando que:
 ## 📊 Hall de la Fama
 
 ### 🥈 Alexis
-- 💻 Commits: **10** (6.10%)
+- 💻 Commits: **10** (6.02%)
 - 🔀 PRs Fusionados: **71**
 
 ### 🥈 Maurizio
-- 💻 Commits: **10** (6.10%)
+- 💻 Commits: **10** (6.02%)
 - 🔀 PRs Fusionados: **71**
 
 ### 🥈 Sergio
-- 💻 Commits: **10** (6.10%)
+- 💻 Commits: **10** (6.02%)
 - 🔀 PRs Fusionados: **71**
 
 ### 🥈 Guillermo
-- 💻 Commits: **10** (6.10%)
+- 💻 Commits: **10** (6.02%)
 - 🔀 PRs Fusionados: **71**
 
 
@@ -64,20 +64,20 @@ Con **10 commits** y **71 PRs**, tenemos aquí a alguien que:
 
 | Posición | Contribuidor | Commits | PRs Fusionados | % Código | Estado |
 |----------|--------------|---------|----------------|----------|--------|
-| #1 | Darel | **10** | 🔀 **71** | 6.10% | 👑 Líder |
-| #2 | Alexis | **10** | 🔀 **71** | 6.10% | 💪 Activo |
-| #3 | Maurizio | **10** | 🔀 **71** | 6.10% | 💪 Activo |
-| #4 | Sergio | **10** | 🔀 **71** | 6.10% | 💪 Activo |
-| #5 | Guillermo | **10** | 🔀 **71** | 6.10% | 🐌 Necesita café |
+| #1 | Darel | **10** | 🔀 **71** | 6.02% | 👑 Líder |
+| #2 | Alexis | **10** | 🔀 **71** | 6.02% | 💪 Activo |
+| #3 | Maurizio | **10** | 🔀 **71** | 6.02% | 💪 Activo |
+| #4 | Sergio | **10** | 🔀 **71** | 6.02% | 💪 Activo |
+| #5 | Guillermo | **10** | 🔀 **71** | 6.02% | 🐌 Necesita café |
 
 ---
 
 ## 📊 Estadísticas Generales
 
-- **Total de commits:** 164
+- **Total de commits:** 166
 - **Total de PRs fusionados:** 71
 - **Total de contribuidores:** 5
-- **Promedio de commits por persona:** 32.8
+- **Promedio de commits por persona:** 33.2
 
 ---
 
