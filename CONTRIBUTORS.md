@@ -1,6 +1,10 @@
 # 🏆 Clasificación de Contribuidores - SmartEconomat
 
+<<<<<<< HEAD
 > **Última actualización:** 2026-02-22 00:31:04
+=======
+> **Última actualización:** 2026-02-21 22:01:23
+>>>>>>> 3a072d1 (feat(Chip de estado): creación de componente  chip de estado)
 
 ---
 
@@ -18,14 +22,20 @@ Demostrando que:
 - 🚀 Git commit es su mantra matutino
 
 **Estadísticas de Dominio:**
+<<<<<<< HEAD
 - Posee el **35,16%** de todo el código.
 - Ha logrado fusionar **45** funcionalidades completas.
+=======
+- Posee el **5.92%** de todo el código.
+- Ha logrado fusionar **73** funcionalidades completas.
+>>>>>>> 3a072d1 (feat(Chip de estado): creación de componente  chip de estado)
 
 ---
 
 ## 📊 Hall de la Fama
 
 ### 🥈 Alexis
+<<<<<<< HEAD
 - 💻 Commits: **49** (26,92%)
 - 🔀 PRs Fusionados: **13**
 
@@ -40,6 +50,22 @@ Demostrando que:
 ### 🥈 Guillermo
 - 💻 Commits: **10** (5,49%)
 - 🔀 PRs Fusionados: **5**
+=======
+- 💻 Commits: **10** (5.92%)
+- 🔀 PRs Fusionados: **73**
+
+### 🥈 Maurizio
+- 💻 Commits: **10** (5.92%)
+- 🔀 PRs Fusionados: **73**
+
+### 🥈 Sergio
+- 💻 Commits: **10** (5.92%)
+- 🔀 PRs Fusionados: **73**
+
+### 🥈 Guillermo
+- 💻 Commits: **10** (5.92%)
+- 🔀 PRs Fusionados: **73**
+>>>>>>> 3a072d1 (feat(Chip de estado): creación de componente  chip de estado)
 
 
 ---
@@ -64,20 +90,35 @@ Con **10 commits** y **5 PRs**, tenemos aquí a alguien que:
 
 | Posición | Contribuidor | Commits | PRs Fusionados | % Código | Estado |
 |----------|--------------|---------|----------------|----------|--------|
+<<<<<<< HEAD
 | #1 | Darel | **64** | 🔀 **45** | 35,16% | 👑 Líder |
 | #2 | Alexis | **49** | 🔀 **13** | 26,92% | 💪 Activo |
 | #3 | Maurizio | **31** | 🔀 **8** | 17,03% | 💪 Activo |
 | #4 | Sergio | **28** | 🔀 **6** | 15,38% | 💪 Activo |
 | #5 | Guillermo | **10** | 🔀 **5** | 5,49% | 🐌 Necesita café |
+=======
+| #1 | Darel | **10** | 🔀 **73** | 5.92% | 👑 Líder |
+| #2 | Alexis | **10** | 🔀 **73** | 5.92% | 💪 Activo |
+| #3 | Maurizio | **10** | 🔀 **73** | 5.92% | 💪 Activo |
+| #4 | Sergio | **10** | 🔀 **73** | 5.92% | 💪 Activo |
+| #5 | Guillermo | **10** | 🔀 **73** | 5.92% | 🐌 Necesita café |
+>>>>>>> 3a072d1 (feat(Chip de estado): creación de componente  chip de estado)
 
 ---
 
 ## 📊 Estadísticas Generales
 
+<<<<<<< HEAD
 - **Total de commits:** 182
 - **Total de PRs fusionados:** 77
 - **Total de contribuidores:** 5
 - **Promedio de commits por persona:** 36,4
+=======
+- **Total de commits:** 169
+- **Total de PRs fusionados:** 73
+- **Total de contribuidores:** 5
+- **Promedio de commits por persona:** 33.8
+>>>>>>> 3a072d1 (feat(Chip de estado): creación de componente  chip de estado)
 
 ---
 
