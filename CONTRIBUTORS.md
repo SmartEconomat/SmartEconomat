@@ -31,7 +31,7 @@ Demostrando que:
 
 ### 🥈 Maurizio
 - 💻 Commits: **31** (19,25%)
--  PRs Fusionados: **8**
+- 🔀 PRs Fusionados: **8**
 
 ### 🥈 AlexRuiz7687
 - 💻 Commits: **19** (16.52%)
@@ -115,7 +115,6 @@ Con **1 commits** y **0 PRs**, tenemos aquí a alguien que:
 
 **git stash**
 `█░░░░░░░░░░░░░░░░░░░░` 1 commits | 0 PRs
-
 ---
 
 ## 💡 Notas

@@ -4,12 +4,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
-import { Usuario } from '../../usuario.entity/usuario.entity';
 import { AuthService } from '../auth.service/auth.service';
 import { JwtStrategy } from '../strategies/jwt.strategy';
 import { AuthController } from '../controller/auth.controller';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/role.guard';
+import { Usuario } from 'src/modules/usuario/usuario.entity/usuario.entity';
 
 @Module({
   imports: [
