@@ -138,11 +138,9 @@ export class Pedido extends BaseEntity {
   /**
    * Cancelar pedido con motivo
    */
-  cancelar(motivo: string, usuarioId: string): void {
+  cancelar(motivo: string): void {
     this.estado = EstadoPedido.CANCELADO;
     this.motivoCancelacion = motivo;
-    this.deletedBy = usuarioId;
-    this.deletedAt = new Date();
   }
 }
 

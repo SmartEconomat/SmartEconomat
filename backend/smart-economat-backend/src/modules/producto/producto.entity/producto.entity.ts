@@ -89,17 +89,19 @@ export class Producto extends BaseEntity {
 
   /**
    * Cantidad numérica que, junto con la unidad, define el tamaño del producto.
-   * Ejemplo: Si cantidad=1 y unidad=KILOGRAMO -> 1kg.
+   * Ejemplo: Si contenido=1 y unidad=KILOGRAMO -> 1kg.
    * @type {number}
    */
+
   @Column({
     type: 'numeric',
     precision: 10,
     scale: 2,
     default: 0,
+    name: 'contenido',
     transformer: new ColumnNumericTransformer(),
   })
-  cantidad!: number;
+  contenido!: number;
 
   /**
    * Relación con los alérgenos que contiene el producto.
