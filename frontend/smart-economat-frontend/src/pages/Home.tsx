@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Typography, Box, Paper, Button } from '@mui/material';
+import { Typography, Box, Paper, Button, Stack } from '@mui/material';
 import Modal from '../components/ui/Modal';
 import { useAuth } from '../store/AuthContext';
 import { useToast } from '../store/ToastContext';
+import StatusChip from '../components/ui/StatusChip';
 
 const Home: React.FC = () => {
     const { user } = useAuth();
@@ -21,7 +22,7 @@ const Home: React.FC = () => {
 
 
             {import.meta.env.DEV && (
-                <Box sx={{ display: 'flex', gap: 2, mb: 4 }}>
+                <Box sx={{ display: 'flex', gap: 2, mb: 4, alignItems: 'center', flexWrap: 'wrap' }}>
                     <Button
                         variant="contained"
                         onClick={handleTestToast}
@@ -35,6 +36,13 @@ const Home: React.FC = () => {
                     >
                         Probar Modal
                     </Button>
+
+                    <Stack direction="row" spacing={1}>
+                        <StatusChip status="completed" />
+                        <StatusChip status="pending" />
+                        <StatusChip status="error" label="Fallo Sistema" />
+                        <StatusChip status="active" variant="outlined" />
+                    </Stack>
                 </Box>
             )}
 
