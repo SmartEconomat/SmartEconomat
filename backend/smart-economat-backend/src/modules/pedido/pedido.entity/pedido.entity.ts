@@ -6,13 +6,14 @@ import {
   OneToMany,
   Index,
   Check,
+  type Relation,
 } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 import { EstadoPedido } from '../enums/estado-pedido.enum';
-import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
-import { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
-import { PedidoProducto } from '../pedido-producto.entity/pedido-producto.entity';
+import type { Usuario } from '../../usuario/usuario.entity/usuario.entity';
+import type { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
+import type { PedidoProducto } from '../pedido-producto.entity/pedido-producto.entity';
 
 /**
  * Entidad Pedido
@@ -41,12 +42,12 @@ export class Pedido extends BaseEntity {
    * La relación es SET NULL para mantener histórico si el usuario se borra.
    * @type {Usuario | null}
    */
-  @ManyToOne(() => Usuario, (usuario) => usuario.pedidos, {
+  @ManyToOne('Usuario', (usuario: Usuario) => usuario.pedidos, {
     nullable: true,
     onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'id_usuario', referencedColumnName: 'id' })
-  usuario?: Usuario | null;
+  usuario?: Relation<Usuario> | null;
 
   /**
    * Fecha de creación del pedido.
@@ -96,15 +97,17 @@ export class Pedido extends BaseEntity {
   /**
    * Líneas de detalle del pedido (productos, cantidades, precios).
    */
-  @OneToMany(() => PedidoProducto, (pp) => pp.pedido, { cascade: true })
-  pedidoProductos!: PedidoProducto[];
+  @OneToMany('PedidoProducto', (pp: PedidoProducto) => pp.pedido, {
+    cascade: true,
+  })
+  pedidoProductos!: Relation<PedidoProducto[]>;
 
   /**
    * Relación con las recepciones que se han hecho de este pedido.
    * Puede haber múltiples recepciones para un solo pedido (entregas parciales).
    */
-  @OneToMany(() => RecepcionPedido, (rp) => rp.pedido)
-  recepcionesPedido!: RecepcionPedido[];
+  @OneToMany('RecepcionPedido', (rp: RecepcionPedido) => rp.pedido)
+  recepcionesPedido!: Relation<RecepcionPedido[]>;
 
   /**
    * Motivo de cancelación (solo si estado === CANCELADO).
