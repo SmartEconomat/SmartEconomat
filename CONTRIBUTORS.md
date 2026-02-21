@@ -31,10 +31,10 @@ Demostrando que:
 
 ### 🥈 Maurizio
 - 💻 Commits: **31** (19,25%)
-- 🔀 PRs Fusionados: **8**
+-  PRs Fusionados: **8**
 
-### 🥈 Sergio
-- 💻 Commits: **29** (18.35%)
+### 🥈 AlexRuiz7687
+- 💻 Commits: **19** (16.52%)
 - 🔀 PRs Fusionados: **4**
 
 ### 🥈 Sergio
@@ -103,6 +103,12 @@ Con **1 commits** y **0 PRs**, tenemos aquí a alguien que:
 
 **Sergio**
 `█████████░░░░░░░░░░░` 28 commits | 5 PRs
+
+**Guillermo**
+`███░░░░░░░░░░░░░░░░░` 10 commits | 5 PRs
+
+**git stash**
+`█░░░░░░░░░░░░░░░░░░░░` 1 commits | 0 PRs
 
 **Guillermo**
 `███░░░░░░░░░░░░░░░░░` 10 commits | 5 PRs

@@ -1,3 +1,4 @@
+import type { StringValue } from 'ms';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
@@ -7,6 +8,8 @@ import { Usuario } from '../../usuario.entity/usuario.entity';
 import { AuthService } from '../auth.service/auth.service';
 import { JwtStrategy } from '../strategies/jwt.strategy';
 import { AuthController } from '../controller/auth.controller';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { RolesGuard } from '../guards/role.guard';
 
 @Module({
   imports: [
@@ -15,13 +18,15 @@ import { AuthController } from '../controller/auth.controller';
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET') || 'super-secret',
-        signOptions: { expiresIn: '1h' },
+        secret: config.getOrThrow<string>('JWT_SECRET'),
+        signOptions: {
+          expiresIn: config.getOrThrow<string>('JWT_EXPIRATION') as StringValue,
+        },
       }),
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
-  exports: [PassportModule, JwtModule],
+  providers: [AuthService, JwtStrategy, JwtAuthGuard, RolesGuard],
+  exports: [PassportModule, JwtModule, JwtAuthGuard, RolesGuard],
 })
 export class AuthModule {}
