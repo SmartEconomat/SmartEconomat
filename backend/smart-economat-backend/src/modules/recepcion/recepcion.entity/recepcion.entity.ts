@@ -5,11 +5,12 @@ import {
   JoinColumn,
   OneToMany,
   Index,
+  type Relation,
 } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
-import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
-import { RecepcionPedido } from '../recepcion-pedido.entity/recepcion-pedido.entity';
-import { RecepcionProducto } from '../recepcion-productos.entity/recepcion-producto.entity';
+import type { Usuario } from '../../usuario/usuario.entity/usuario.entity';
+import type { RecepcionPedido } from '../recepcion-pedido.entity/recepcion-pedido.entity';
+import type { RecepcionProducto } from '../recepcion-productos.entity/recepcion-producto.entity';
 
 /**
  * Entidad Recepcion
@@ -30,12 +31,12 @@ export class Recepcion extends BaseEntity {
    * La relación es SET NULL para mantener el histórico.
    * @type {Usuario | null}
    */
-  @ManyToOne(() => Usuario, (usuario) => usuario.recepciones, {
+  @ManyToOne('Usuario', (usuario: Usuario) => usuario.recepciones, {
     nullable: true,
     onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'id_usuario', referencedColumnName: 'id' })
-  usuario?: Usuario | null;
+  usuario?: Relation<Usuario> | null;
 
   /**
    * Fecha y hora en que se recibió la mercancía.
@@ -58,12 +59,16 @@ export class Recepcion extends BaseEntity {
   /**
    * Relación con los pedidos que se están recepcionando.
    */
-  @OneToMany(() => RecepcionPedido, (rp) => rp.recepcion, { cascade: true })
-  recepcionesPedidos!: RecepcionPedido[];
+  @OneToMany('RecepcionPedido', (rp: RecepcionPedido) => rp.recepcion, {
+    cascade: true,
+  })
+  recepcionesPedidos!: Relation<RecepcionPedido[]>;
 
   /**
    * Detalle de los productos recibidos.
    */
-  @OneToMany(() => RecepcionProducto, (rp) => rp.recepcion, { cascade: true })
-  recepcionProductos!: RecepcionProducto[];
+  @OneToMany('RecepcionProducto', (rp: RecepcionProducto) => rp.recepcion, {
+    cascade: true,
+  })
+  recepcionProductos!: Relation<RecepcionProducto[]>;
 }
