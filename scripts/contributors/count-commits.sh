@@ -35,7 +35,7 @@ while read -r line; do
     count=$(echo "$line" | awk '{print $1}')
     name=$(echo "$line" | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//')
     
-    if [ -n "$name" ]; then
+    if [ -n "$name" ] && [ "$name" != "git stash" ]; then
         commit_counts["$name"]=$count
         # Añadir a la lista de todos los contribuidores si no está (solo para inicializar orden de shortlog como base)
         all_contributors+=("$name")
@@ -63,7 +63,7 @@ while read -r parents; do
         # Limpiar espacios en blanco del nombre (trim)
         author=$(echo "$author" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
         
-        if [ -n "$author" ]; then
+        if [ -n "$author" ] && [ "$author" != "git stash" ]; then
             # Incrementar contador de PRs
             if [ -z "${pr_counts["$author"]}" ]; then
                 pr_counts["$author"]=1
@@ -75,7 +75,10 @@ while read -r parents; do
 done <<< "$merges"
 
 # Calcular totales globales
-TOTAL_COMMITS=$(git rev-list --all --count --no-merges)
+TOTAL_COMMITS=0
+for val in "${commit_counts[@]}"; do
+    ((TOTAL_COMMITS+=val))
+done
 TOTAL_PRS=0
 for val in "${pr_counts[@]}"; do
     ((TOTAL_PRS+=val))
