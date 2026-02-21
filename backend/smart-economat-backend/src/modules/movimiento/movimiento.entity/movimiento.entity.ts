@@ -3,6 +3,8 @@ import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 import { TipoMovimiento } from '../enums/movimiento.enums';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
+import { Inventario } from '../../inventario/inventario.entity/inventario.entity';
+import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
 
 /**
  * Entidad Movimiento
@@ -21,6 +23,8 @@ import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 @Index('idx_movimiento_entidad_tipo', ['entidad', 'tipo'])
 @Index('idx_movimiento_entidad_id', ['entidadId'])
 @Index('idx_movimiento_polimorfico', ['entidadId', 'entidad'])
+@Index('idx_movimiento_inventario', ['inventario'])
+@Index('idx_movimiento_producto_proveedor', ['productoProveedor'])
 @Check(`"cantidad" >= 0`)
 export class Movimiento extends BaseEntity {
   /**
@@ -54,6 +58,23 @@ export class Movimiento extends BaseEntity {
   })
   @JoinColumn({ name: 'id_usuario', referencedColumnName: 'id' })
   usuario?: Usuario | null;
+
+  /**
+   * Inventario afectado por el movimiento.
+   * Permite conocer el lote exacto y ubicación.
+   * ON DELETE SET NULL permite mantener el historial aunque se borre el inventario físico.
+   */
+  @ManyToOne(() => Inventario, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'id_inventario' })
+  inventario?: Inventario | null;
+
+  /**
+   * ProductoProveedor asociado.
+   * Facilita consultar "todos los movimientos de Coca-Cola" sin joins complejos.
+   */
+  @ManyToOne(() => ProductoProveedor, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'id_producto_proveedor' })
+  productoProveedor?: ProductoProveedor | null;
 
   /**
    * Tipo de entidad origen que causó el movimiento ('Recepcion', 'Pedido', 'AjusteManual').
