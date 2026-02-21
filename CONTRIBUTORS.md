@@ -3,6 +3,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 > **Última actualización:** 2026-02-21 23:42:26
 =======
 > **Última actualización:** 2026-02-21 19:58:13
@@ -13,6 +14,9 @@
 =======
 > **Última actualización:** 2026-02-21 21:22:31
 >>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
+=======
+> **Última actualización:** 2026-02-21 19:58:13
+>>>>>>> 2c6e997 (feature(spinner): Creación de spinner de carga)
 
 ---
 
@@ -21,6 +25,7 @@
 ### 🎖️ **Darel**
 
 Este guerrero del código lidera la carga con:
+<<<<<<< HEAD
 <<<<<<< HEAD
 - 💻 **63** Commits
 - 🔀 **45** PRs Fusionados
@@ -32,6 +37,10 @@ Este guerrero del código lidera la carga con:
 =======
 - 🔀 **73** PRs Fusionados
 >>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
+=======
+- 💻 **10** Commits
+- 🔀 **71** PRs Fusionados
+>>>>>>> 2c6e997 (feature(spinner): Creación de spinner de carga)
 
 Demostrando que:
 - ✨ El teclado es su arma favorita
@@ -39,6 +48,7 @@ Demostrando que:
 - 🚀 Git commit es su mantra matutino
 
 **Estadísticas de Dominio:**
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -55,12 +65,17 @@ Demostrando que:
 - Posee el **5.99%** de todo el código.
 - Ha logrado fusionar **73** funcionalidades completas.
 >>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
+=======
+- Posee el **6.10%** de todo el código.
+- Ha logrado fusionar **71** funcionalidades completas.
+>>>>>>> 2c6e997 (feature(spinner): Creación de spinner de carga)
 
 ---
 
 ## 📊 Hall de la Fama
 
 ### 🥈 Alexis
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -88,6 +103,22 @@ Demostrando que:
 =======
 - 💻 Commits: **10** (5.99%)
 - 🔀 PRs Fusionados: **73**
+=======
+- 💻 Commits: **10** (6.10%)
+- 🔀 PRs Fusionados: **71**
+
+### 🥈 Maurizio
+- 💻 Commits: **10** (6.10%)
+- 🔀 PRs Fusionados: **71**
+
+### 🥈 Sergio
+- 💻 Commits: **10** (6.10%)
+- 🔀 PRs Fusionados: **71**
+
+### 🥈 Guillermo
+- 💻 Commits: **10** (6.10%)
+- 🔀 PRs Fusionados: **71**
+>>>>>>> 2c6e997 (feature(spinner): Creación de spinner de carga)
 
 ### 🥈 Maurizio
 - 💻 Commits: **10** (5.99%)
@@ -123,10 +154,14 @@ Demostrando que:
 ### 😅 **Guillermo**
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 Con **10 commits** y **71 PRs**, tenemos aquí a alguien que:
 =======
 Con **10 commits** y **73 PRs**, tenemos aquí a alguien que:
 >>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
+=======
+Con **10 commits** y **71 PRs**, tenemos aquí a alguien que:
+>>>>>>> 2c6e997 (feature(spinner): Creación de spinner de carga)
 - 🤔 Prefiere la calidad sobre la cantidad (eso espero...)
 - 🏖️ Cree que git es una red social casual
 - 🎯 Está "esperando el momento perfecto" para contribuir
@@ -145,6 +180,7 @@ Con **10 commits** y **73 PRs**, tenemos aquí a alguien que:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 | #1 | Darel | **63** | 🔀 **45** | 37,28% | 👑 Líder |
 | #2 | Alexis | **37** | 🔀 **9** | 21,89% | 💪 Activo |
 | #3 | Maurizio | **31** | 🔀 **8** | 18,34% | 💪 Activo |
@@ -158,11 +194,14 @@ Con **10 commits** y **73 PRs**, tenemos aquí a alguien que:
 - **Total de contribuidores:** 5
 - **Promedio de commits por persona:** 33,8
 =======
+=======
+>>>>>>> 2c6e997 (feature(spinner): Creación de spinner de carga)
 | #1 | Darel | **10** | 🔀 **71** | 6.10% | 👑 Líder |
 | #2 | Alexis | **10** | 🔀 **71** | 6.10% | 💪 Activo |
 | #3 | Maurizio | **10** | 🔀 **71** | 6.10% | 💪 Activo |
 | #4 | Sergio | **10** | 🔀 **71** | 6.10% | 💪 Activo |
 | #5 | Guillermo | **10** | 🔀 **71** | 6.10% | 🐌 Necesita café |
+<<<<<<< HEAD
 =======
 | #1 | Darel | **10** | 🔀 **71** | 6.02% | 👑 Líder |
 | #2 | Alexis | **10** | 🔀 **71** | 6.02% | 💪 Activo |
@@ -177,11 +216,14 @@ Con **10 commits** y **73 PRs**, tenemos aquí a alguien que:
 | #4 | Sergio | **10** | 🔀 **73** | 5.99% | 💪 Activo |
 | #5 | Guillermo | **10** | 🔀 **73** | 5.99% | 🐌 Necesita café |
 >>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
+=======
+>>>>>>> 2c6e997 (feature(spinner): Creación de spinner de carga)
 
 ---
 
 ## 📊 Estadísticas Generales
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 - **Total de commits:** 166
 - **Total de PRs fusionados:** 71
@@ -196,12 +238,19 @@ Con **10 commits** y **73 PRs**, tenemos aquí a alguien que:
 =======
 - **Promedio de commits por persona:** 33.2
 >>>>>>> f707102 (feat(modal): Creación de modal genérico)
+=======
+- **Total de commits:** 164
+- **Total de PRs fusionados:** 71
+- **Total de contribuidores:** 5
+- **Promedio de commits por persona:** 32.8
+>>>>>>> 2c6e997 (feature(spinner): Creación de spinner de carga)
 
 ---
 
 ## 🎯 Ranking de Poder (Commits + PRs)
 
 **Darel**
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 `████████████████████` 63 commits | 45 PRs
@@ -244,6 +293,21 @@ Con **10 commits** y **73 PRs**, tenemos aquí a alguien que:
 **Guillermo**
 `████████████████████` 10 commits | 73 PRs
 >>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
+=======
+`████████████████████` 10 commits | 71 PRs
+
+**Alexis**
+`████████████████████` 10 commits | 71 PRs
+
+**Maurizio**
+`████████████████████` 10 commits | 71 PRs
+
+**Sergio**
+`████████████████████` 10 commits | 71 PRs
+
+**Guillermo**
+`████████████████████` 10 commits | 71 PRs
+>>>>>>> 2c6e997 (feature(spinner): Creación de spinner de carga)
 
 ---
 
