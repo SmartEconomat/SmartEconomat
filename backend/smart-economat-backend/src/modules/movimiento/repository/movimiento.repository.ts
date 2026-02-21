@@ -15,8 +15,9 @@ export class MovimientoRepository {
     const movimientoData = {
       ...data,
       usuario: { id: data.usuario },
+      inventario: { id: data.inventario },
     };
-    return this.repo.save(this.repo.create(movimientoData));
+    return this.repo.save(this.repo.create(movimientoData as any));
   }
 
   findAll() {
