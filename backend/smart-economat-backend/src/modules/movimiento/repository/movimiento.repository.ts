@@ -12,30 +12,32 @@ export class MovimientoRepository {
   ) {}
 
   createMovimiento(data: CreateMovimientoDto) {
+    const { usuario, inventario, ...rest } = data;
     const movimientoData = {
-      ...data,
-      usuario: { id: data.usuario },
+      ...rest,
+      usuario: { id: usuario },
+      inventario: { id: inventario },
     };
-    return this.repo.save(this.repo.create(movimientoData));
+    return this.repo.save(this.repo.create(movimientoData as any));
   }
 
   findAll() {
-    return this.repo.find({ relations: ['usuario'] });
+    return this.repo.find({ relations: ['usuario', 'inventario'] });
   }
 
   findById(id: string) {
     return this.repo.findOne({
       where: { id },
-      relations: ['usuario'],
+      relations: ['usuario', 'inventario'],
     });
   }
 
   updateMovimiento(id: string, data: UpdateMovimientoDto) {
-    const updateData: Partial<Movimiento> = {
-      ...(data.tipo !== undefined && { tipo: data.tipo }),
-      ...(data.cantidad !== undefined && { cantidad: data.cantidad }),
-      ...(data.descripcion !== undefined && { descripcion: data.descripcion }),
-      ...(data.usuario && { usuario: { id: data.usuario } as any }),
+    const { usuario, inventario, ...rest } = data;
+    const updateData: any = {
+      ...rest,
+      ...(usuario && { usuario: { id: usuario } }),
+      ...(inventario && { inventario: { id: inventario } }),
     };
     return this.repo.update(id, updateData);
   }

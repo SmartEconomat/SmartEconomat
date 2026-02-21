@@ -29,4 +29,14 @@ export class CreateMovimientoDto {
 
   @IsUUID('7', { message: 'El ID del usuario debe ser un UUID válido' })
   usuario!: string;
+
+  @IsString({
+    message: 'El nombre de la entidad origen debe ser una cadena de texto',
+  })
+  entidad!: string;
+
+  @IsUUID('7', {
+    message: 'El ID de la entidad origen debe ser un UUID válido',
+  })
+  entidadId!: string;
 }
