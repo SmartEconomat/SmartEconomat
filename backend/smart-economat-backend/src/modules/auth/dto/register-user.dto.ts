@@ -5,7 +5,7 @@ import {
   IsEmail,
   IsEnum,
 } from 'class-validator';
-import { rolUsuario } from '../../enums/usuario.enums';
+import { rolUsuario } from '../../usuario/enums/usuario.enums';
 
 export class RegisterUserDto {
   @IsString()
