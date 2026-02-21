@@ -7,11 +7,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import { Usuario } from '../../usuario.entity/usuario.entity';
 import { RegisterUserDto } from '../dto/register-user.dto';
 import { LoginUserDto } from '../dto/login-user.dto';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
+import { Usuario } from 'src/modules/usuario/usuario.entity/usuario.entity';
 
 @Injectable()
 export class AuthService {
@@ -19,8 +18,7 @@ export class AuthService {
     @InjectRepository(Usuario)
     private readonly usuarioRepo: Repository<Usuario>,
     private readonly jwtService: JwtService,
-    private readonly dataSource: DataSource,
-    private readonly configService: ConfigService
+    private readonly dataSource: DataSource
   ) {}
 
   async register(dto: RegisterUserDto) {
@@ -61,7 +59,7 @@ export class AuthService {
   private generateToken(usuario: Usuario) {
     const payload: JwtPayload = {
       sub: usuario.id,
-      email: usuario.email,
+      nombre: usuario.nombre,
       role: usuario.rol,
     };
 
