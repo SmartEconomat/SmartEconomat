@@ -1,6 +1,10 @@
 # 🏆 Clasificación de Contribuidores - SmartEconomat
 
+<<<<<<< HEAD
 > **Última actualización:** 2026-02-22 00:27:12
+=======
+> **Última actualización:** 2026-02-21 21:22:31
+>>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
 
 ---
 
@@ -9,8 +13,13 @@
 ### 🎖️ **Darel**
 
 Este guerrero del código lidera la carga con:
+<<<<<<< HEAD
 - 💻 **64** Commits
 - 🔀 **45** PRs Fusionados
+=======
+- 💻 **10** Commits
+- 🔀 **73** PRs Fusionados
+>>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
 
 Demostrando que:
 - ✨ El teclado es su arma favorita
@@ -18,14 +27,20 @@ Demostrando que:
 - 🚀 Git commit es su mantra matutino
 
 **Estadísticas de Dominio:**
+<<<<<<< HEAD
 - Posee el **36,16%** de todo el código.
 - Ha logrado fusionar **45** funcionalidades completas.
+=======
+- Posee el **5.99%** de todo el código.
+- Ha logrado fusionar **73** funcionalidades completas.
+>>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
 
 ---
 
 ## 📊 Hall de la Fama
 
 ### 🥈 Alexis
+<<<<<<< HEAD
 - 💻 Commits: **44** (24,86%)
 - 🔀 PRs Fusionados: **12**
 
@@ -40,6 +55,22 @@ Demostrando que:
 ### 🥈 Guillermo
 - 💻 Commits: **10** (5,65%)
 - 🔀 PRs Fusionados: **5**
+=======
+- 💻 Commits: **10** (5.99%)
+- 🔀 PRs Fusionados: **73**
+
+### 🥈 Maurizio
+- 💻 Commits: **10** (5.99%)
+- 🔀 PRs Fusionados: **73**
+
+### 🥈 Sergio
+- 💻 Commits: **10** (5.99%)
+- 🔀 PRs Fusionados: **73**
+
+### 🥈 Guillermo
+- 💻 Commits: **10** (5.99%)
+- 🔀 PRs Fusionados: **73**
+>>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
 
 
 ---
@@ -48,7 +79,11 @@ Demostrando que:
 
 ### 😅 **Guillermo**
 
+<<<<<<< HEAD
 Con **10 commits** y **5 PRs**, tenemos aquí a alguien que:
+=======
+Con **10 commits** y **73 PRs**, tenemos aquí a alguien que:
+>>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
 - 🤔 Prefiere la calidad sobre la cantidad (eso espero...)
 - 🏖️ Cree que git es una red social casual
 - 🎯 Está "esperando el momento perfecto" para contribuir
@@ -64,18 +99,31 @@ Con **10 commits** y **5 PRs**, tenemos aquí a alguien que:
 
 | Posición | Contribuidor | Commits | PRs Fusionados | % Código | Estado |
 |----------|--------------|---------|----------------|----------|--------|
+<<<<<<< HEAD
 | #1 | Darel | **64** | 🔀 **45** | 36,16% | 👑 Líder |
 | #2 | Alexis | **44** | 🔀 **12** | 24,86% | 💪 Activo |
 | #3 | Maurizio | **31** | 🔀 **8** | 17,51% | 💪 Activo |
 | #4 | Sergio | **28** | 🔀 **6** | 15,82% | 💪 Activo |
 | #5 | Guillermo | **10** | 🔀 **5** | 5,65% | 🐌 Necesita café |
+=======
+| #1 | Darel | **10** | 🔀 **73** | 5.99% | 👑 Líder |
+| #2 | Alexis | **10** | 🔀 **73** | 5.99% | 💪 Activo |
+| #3 | Maurizio | **10** | 🔀 **73** | 5.99% | 💪 Activo |
+| #4 | Sergio | **10** | 🔀 **73** | 5.99% | 💪 Activo |
+| #5 | Guillermo | **10** | 🔀 **73** | 5.99% | 🐌 Necesita café |
+>>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
 
 ---
 
 ## 📊 Estadísticas Generales
 
+<<<<<<< HEAD
 - **Total de commits:** 177
 - **Total de PRs fusionados:** 76
+=======
+- **Total de commits:** 167
+- **Total de PRs fusionados:** 73
+>>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
 - **Total de contribuidores:** 5
 - **Promedio de commits por persona:** 35,4
 
@@ -84,6 +132,7 @@ Con **10 commits** y **5 PRs**, tenemos aquí a alguien que:
 ## 🎯 Ranking de Poder (Commits + PRs)
 
 **Darel**
+<<<<<<< HEAD
 `████████████████████` 64 commits | 45 PRs
 
 **Alexis**
@@ -97,6 +146,21 @@ Con **10 commits** y **5 PRs**, tenemos aquí a alguien que:
 
 **Guillermo**
 `███░░░░░░░░░░░░░░░░░` 10 commits | 5 PRs
+=======
+`████████████████████` 10 commits | 73 PRs
+
+**Alexis**
+`████████████████████` 10 commits | 73 PRs
+
+**Maurizio**
+`████████████████████` 10 commits | 73 PRs
+
+**Sergio**
+`████████████████████` 10 commits | 73 PRs
+
+**Guillermo**
+`████████████████████` 10 commits | 73 PRs
+>>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
 
 ---
 
