@@ -1,6 +1,6 @@
 # 🏆 Clasificación de Contribuidores - SmartEconomat
 
-> **Última actualización:** 2026-02-17 15:04:05
+> **Última actualización:** 2026-02-21 19:44:04
 
 ---
 
@@ -9,7 +9,7 @@
 ### 🎖️ **Darel**
 
 Este guerrero del código lidera la carga con:
-- 💻 **55** Commits
+- 💻 **58** Commits
 - 🔀 **41** PRs Fusionados
 
 Demostrando que:
@@ -18,31 +18,31 @@ Demostrando que:
 - 🚀 Git commit es su mantra matutino
 
 **Estadísticas de Dominio:**
-- Posee el **37,67%** de todo el código.
+- Posee el **36,25%** de todo el código.
 - Ha logrado fusionar **41** funcionalidades completas.
 
 ---
 
 ## 📊 Hall de la Fama
 
+### 🥈 Alexis
+- 💻 Commits: **32** (20,00%)
+- 🔀 PRs Fusionados: **7**
+
 ### 🥈 Maurizio
-- 💻 Commits: **30** (20,55%)
+- 💻 Commits: **31** (19,38%)
 - 🔀 PRs Fusionados: **8**
 
 ### 🥈 Sergio
-- 💻 Commits: **26** (17,81%)
+- 💻 Commits: **28** (17,50%)
 - 🔀 PRs Fusionados: **5**
 
-### 🥈 Alexis
-- 💻 Commits: **24** (16,44%)
-- 🔀 PRs Fusionados: **7**
-
 ### 🥈 Guillermo
-- 💻 Commits: **10** (6,85%)
+- 💻 Commits: **10** (6,25%)
 - 🔀 PRs Fusionados: **5**
 
 ### 🥈 git stash
-- 💻 Commits: **1** (0,68%)
+- 💻 Commits: **1** (0,62%)
 - 🔀 PRs Fusionados: **0**
 
 
@@ -68,37 +68,37 @@ Con **1 commits** y **0 PRs**, tenemos aquí a alguien que:
 
 | Posición | Contribuidor | Commits | PRs Fusionados | % Código | Estado |
 |----------|--------------|---------|----------------|----------|--------|
-| #1 | Darel | **55** | 🔀 **41** | 37,67% | 👑 Líder |
-| #2 | Maurizio | **30** | 🔀 **8** | 20,55% | 💪 Activo |
-| #3 | Sergio | **26** | 🔀 **5** | 17,81% | 💪 Activo |
-| #4 | Alexis | **24** | 🔀 **7** | 16,44% | 💪 Activo |
-| #5 | Guillermo | **10** | 🔀 **5** | 6,85% | 💪 Activo |
-| #6 | git stash | **1** | 🔀 **0** | 0,68% | 🐌 Necesita café |
+| #1 | Darel | **58** | 🔀 **41** | 36,25% | 👑 Líder |
+| #2 | Alexis | **32** | 🔀 **7** | 20,00% | 💪 Activo |
+| #3 | Maurizio | **31** | 🔀 **8** | 19,38% | 💪 Activo |
+| #4 | Sergio | **28** | 🔀 **5** | 17,50% | 💪 Activo |
+| #5 | Guillermo | **10** | 🔀 **5** | 6,25% | 💪 Activo |
+| #6 | git stash | **1** | 🔀 **0** | 0,62% | 🐌 Necesita café |
 
 ---
 
 ## 📊 Estadísticas Generales
 
-- **Total de commits:** 146
+- **Total de commits:** 160
 - **Total de PRs fusionados:** 66
 - **Total de contribuidores:** 6
-- **Promedio de commits por persona:** 24,3
+- **Promedio de commits por persona:** 26,7
 
 ---
 
 ## 🎯 Ranking de Poder (Commits + PRs)
 
 **Darel**
-`████████████████████` 55 commits | 41 PRs
-
-**Maurizio**
-`███████████░░░░░░░░░` 30 commits | 8 PRs
-
-**Sergio**
-`█████████░░░░░░░░░░░` 26 commits | 5 PRs
+`████████████████████` 58 commits | 41 PRs
 
 **Alexis**
-`████████░░░░░░░░░░░░` 24 commits | 7 PRs
+`███████████░░░░░░░░░` 32 commits | 7 PRs
+
+**Maurizio**
+`██████████░░░░░░░░░░` 31 commits | 8 PRs
+
+**Sergio**
+`█████████░░░░░░░░░░░` 28 commits | 5 PRs
 
 **Guillermo**
 `███░░░░░░░░░░░░░░░░░` 10 commits | 5 PRs

@@ -41,5 +41,5 @@ export class CreateProductoDto {
   codigoBarras?: string;
 
   @IsOptional()
-  cantidad?: number;
+  contenido?: number;
 }
