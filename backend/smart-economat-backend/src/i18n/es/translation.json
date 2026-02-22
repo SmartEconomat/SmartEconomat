@@ -21,13 +21,20 @@
     "ORDER_NOT_FOUND": "Pedido no encontrado",
     "MOVEMENT_NOT_FOUND": "Movimiento no encontrado",
     "PRODUCT_NOT_FOUND": "Producto no encontrado",
+    "PRODUCT_PROVIDER_NOT_FOUND": "Relación producto-proveedor no encontrada",
+    "PRICE_NOT_CHANGED": "El precio indicado es igual al actual",
     "INSUFFICIENT_STOCK": "Stock insuficiente",
     "INVALID_STATE": "Estado inválido",
     "ORDER_NOT_CANCELLABLE": "No se puede cancelar un pedido que ya ha sido recibido o está en proceso de envio",
     "MOVEMENTS_NOT_FOUND": "No se encontraron movimientos para esta entidad",
     "RECEPTION_NOT_FOUND": "Recepción no encontrada",
     "USER_DOES_NOT_EXIST": "El usuario no existe",
-    "RECEPTION_HAS_RELATIONS": "No se puede eliminar la recepción porque tiene relaciones asociadas"
+    "RECEPTION_HAS_RELATIONS": "No se puede eliminar la recepción porque tiene relaciones asociadas",
+    "USER_OR_EMAIL_ALREADY_REGISTERED": "Usuario o email ya registrado",
+    "INVALID_CREDENTIALS": "Credenciales incorrectas",
+    "RECEPTION_FAILED": "Fallo en la recepción: {message}",
+    "PROVIDER_NOT_FOUND": "Proveedor no encontrado",
+    "PROVIDER_HAS_PRODUCTS": "No se puede eliminar el proveedor porque tiene productos asociados"
   },
   "success": {
     "CREATED": "Creado exitosamente",
@@ -54,22 +61,22 @@
     "albaran": "Albarán"
   },
   "seeders": {
-    "running": "Ejecutando seeder {file}...",
+    "running": "🌱 Ejecutando seeder {file}...",
     "completed": "Seeders ejecutados correctamente",
     "error_running": "Error al ejecutar seeders",
     "production_error": "⛔️  ERROR: No puedes ejecutar seeders en entorno de producción!",
     "success": {
-      "proveedores": "Seeder de proveedores ejecutado correctamente.",
+      "proveedores": "✅ Seeder de proveedores ejecutado correctamente.",
       "productos": "✅ Catálogo de productos y relaciones con proveedores generado.",
-      "inventario": "Seeder de inventario ejecutado correctamente.",
+      "inventario": "✅ Seeder de inventario ejecutado correctamente.",
       "pedidos": "✅ Seeder de pedidos y detalles completado con éxito.",
       "recepciones": "✅ Seeder de recepciones completado con éxito.",
-      "albaranes": "Seeder de albaranes ejecutado correctamente.",
-      "historial_precio": "Seeder de historial_precio ejecutado correctamente.",
-      "incidencias": "Seeder: {count} incidencias creadas",
-      "movimientos": "Seeder de movimientos ejecutado correctamente.",
-      "recetas": "Seeder de recetas e ingredientes ejecutado correctamente.",
-      "usuarios": "Seeder de usuarios ejecutado correctamente."
+      "albaranes": "✅ Seeder de albaranes ejecutado correctamente.",
+      "historial_precio": "✅ Seeder de historial_precio ejecutado correctamente.",
+      "incidencias": "✅ Seeder: {count} incidencias creadas",
+      "movimientos": "✅ Seeder de movimientos ejecutado correctamente.",
+      "recetas": "✅ Seeder de recetas e ingredientes ejecutado correctamente.",
+      "usuarios": "✅ Seeder de usuarios ejecutado correctamente."
     }
   }
 }

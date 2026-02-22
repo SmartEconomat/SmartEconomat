@@ -2,6 +2,7 @@ import { Controller, Get } from '@nestjs/common';
 import { InventarioService } from '../service/inventario.service';
 import { AlertaCaducidadDTO } from '../dto/alertaCaducidad.dto';
 import { AlertaStockDTO } from '../dto/alertaStock.dto';
+
 @Controller('Alertas')
 export class InventarioController {
   constructor(private readonly inventarioService: InventarioService) {}
