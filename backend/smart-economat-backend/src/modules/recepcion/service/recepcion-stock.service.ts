@@ -4,10 +4,10 @@ import { CreateRecepcionDto } from '../dto/create-recepcion.dto';
 import { AlbaranPedidoRecepcion } from '../../albaran/albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
 import { Inventario } from '../../inventario/inventario.entity/inventario.entity';
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
-import { Pedido } from '../../pedidos/pedido.entity/pedido.entity';
+import { Pedido } from '../../pedido/pedido.entity/pedido.entity';
 import { TipoMovimiento } from '../../movimiento/enums/movimiento.enums';
-import { EstadoPedido } from '../../pedidos/enums/estado-pedido.enum';
-import { PedidoProducto } from '../../pedidos/pedido-producto.entity/pedido-producto.entity';
+import { EstadoPedido } from '../../pedido/enums/estado-pedido.enum';
+import { PedidoProducto } from '../../pedido/pedido-producto.entity/pedido-producto.entity';
 import { Recepcion } from '../recepcion.entity/recepcion.entity';
 import { RecepcionPedido } from '../recepcion-pedido.entity/recepcion-pedido.entity';
 import { RecepcionProducto } from '../recepcion-productos.entity/recepcion-producto.entity';
@@ -25,7 +25,7 @@ export class RecepcionStockService {
 
     try {
       const recepcion = queryRunner.manager.create(Recepcion, {
-        usuario: { id: '550e8400-e29b-41d4-a716-446655440001' },
+        usuario: { id: dto.usuarioId },
       });
       const savedRecepcion = await queryRunner.manager.save(recepcion);
 
@@ -86,19 +86,21 @@ export class RecepcionStockService {
 
         let stock = await queryRunner.manager.findOne(Inventario, {
           where: {
-            productoProveedor: { id: pedidoProducto.productoProveedor.id },
+            productoProveedor: {
+              id: (pedidoProducto.productoProveedor as any).id,
+            },
           },
         });
 
         if (stock) {
-          stock.cantidad_actual += linea.cantidadRecibida;
+          stock.cantidadActual += linea.cantidadRecibida;
         } else {
           stock = queryRunner.manager.create(Inventario, {
-            productoProveedor: { id: pedidoProducto.productoProveedor.id },
-            cantidad_actual: linea.cantidadRecibida,
-            cantidad_minima: 10,
-            ubicacion_almacen: localInventario.ALMACEN_A,
-            fecha_caducidad: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+            productoProveedor: pedidoProducto.productoProveedor,
+            cantidadActual: linea.cantidadRecibida,
+            cantidadMinima: 10,
+            ubicacionAlmacen: localInventario.ALMACEN_A,
+            fechaCaducidad: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
           });
         }
         stock = await queryRunner.manager.save(stock);
@@ -106,9 +108,9 @@ export class RecepcionStockService {
         await queryRunner.manager.save(Movimiento, {
           tipo: TipoMovimiento.ENTRADA_COMPRA,
           cantidad: linea.cantidadRecibida,
-          inventario: stock.id,
+          inventario: { id: stock.id } as any,
           descripcion: `Recepción Pedido ${dto.pedidoId} - Albarán ${dto.nAlbaran || 'N/A'}`,
-          usuario: { id: '550e8400-e29b-41d4-a716-446655440001' },
+          usuario: { id: dto.usuarioId },
         });
       }
 
@@ -143,19 +145,21 @@ export class RecepcionStockService {
       where: { pedido: { id: pedido.id } },
       relations: [
         'recepcion',
-        'recepcion.recepcionesProducto',
-        'recepcion.recepcionesProducto.pedidoProducto',
+        'recepcion.recepcionProductos',
+        'recepcion.recepcionProductos.pedidoProducto',
       ],
     });
 
-    const orderProductIds = new Set(pedido.pedidoProductos.map((pp) => pp.id));
+    const pedidoProductosList =
+      pedido.pedidoProductos as unknown as PedidoProducto[];
+    const orderProductIds = new Set(pedidoProductosList.map((pp) => pp.id));
 
     let totalRecibido = 0;
     for (const repPedido of recepcionPedidos) {
-      if (!repPedido.recepcion || !repPedido.recepcion.recepcionesProducto)
+      if (!repPedido.recepcion || !repPedido.recepcion.recepcionProductos)
         continue;
 
-      for (const repProd of repPedido.recepcion.recepcionesProducto) {
+      for (const repProd of repPedido.recepcion.recepcionProductos) {
         if (
           repProd.pedidoProducto &&
           orderProductIds.has(repProd.pedidoProducto.id)
@@ -166,14 +170,14 @@ export class RecepcionStockService {
     }
 
     let totalSolicitado = 0;
-    for (const pp of pedido.pedidoProductos) {
+    for (const pp of pedidoProductosList) {
       totalSolicitado += Number(pp.cantidad);
     }
 
     if (totalRecibido >= totalSolicitado) {
-      pedido.estado = EstadoPedido.RECIBIDO;
+      (pedido as any).estado = EstadoPedido.RECIBIDO;
     } else if (totalRecibido > 0) {
-      pedido.estado = EstadoPedido.PARCIAL;
+      (pedido as any).estado = EstadoPedido.PARCIAL;
     }
 
     await manager.save(Pedido, pedido);
