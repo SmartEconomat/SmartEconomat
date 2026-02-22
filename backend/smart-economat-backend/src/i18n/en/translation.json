@@ -21,13 +21,20 @@
     "ORDER_NOT_FOUND": "Order not found",
     "MOVEMENT_NOT_FOUND": "Movement not found",
     "PRODUCT_NOT_FOUND": "Product not found",
+    "PRODUCT_PROVIDER_NOT_FOUND": "Product-provider relationship not found",
+    "PRICE_NOT_CHANGED": "The specified price is identical to the current one",
     "INSUFFICIENT_STOCK": "Insufficient stock",
     "INVALID_STATE": "Invalid state",
     "ORDER_NOT_CANCELLABLE": "Cannot cancel an order that has already been received or is in shipping process",
     "MOVEMENTS_NOT_FOUND": "No movements found for this entity",
     "RECEPTION_NOT_FOUND": "Reception not found",
     "USER_DOES_NOT_EXIST": "User does not exist",
-    "RECEPTION_HAS_RELATIONS": "Cannot delete reception because it has associated relations"
+    "RECEPTION_HAS_RELATIONS": "Cannot delete reception because it has associated relations",
+    "USER_OR_EMAIL_ALREADY_REGISTERED": "User or email already registered",
+    "INVALID_CREDENTIALS": "Invalid credentials",
+    "RECEPTION_FAILED": "Reception failed: {message}",
+    "PROVIDER_NOT_FOUND": "Provider not found",
+    "PROVIDER_HAS_PRODUCTS": "Cannot delete the provider because it has associated products"
   },
   "success": {
     "CREATED": "Successfully created",
@@ -54,22 +61,22 @@
     "albaran": "Delivery Note"
   },
   "seeders": {
-    "running": "Running seeder {file}...",
+    "running": "🌱 Running seeder {file}...",
     "completed": "Seeders executed successfully",
     "error_running": "Error running seeders",
     "production_error": "⛔️  ERROR: You cannot run seeders in a production environment!",
     "success": {
-      "proveedores": "Suppliers seeder executed successfully.",
+      "proveedores": "✅ Suppliers seeder executed successfully.",
       "productos": "✅ Product catalog and supplier relationships generated.",
-      "inventario": "Inventory seeder executed successfully.",
+      "inventario": "✅ Inventory seeder executed successfully.",
       "pedidos": "✅ Orders and details seeder completed successfully.",
       "recepciones": "✅ Receptions seeder completed successfully.",
-      "albaranes": "Delivery notes seeder executed successfully.",
-      "historial_precio": "Price history seeder executed successfully.",
-      "incidencias": "Seeder: {count} incidents created",
-      "movimientos": "Movements seeder executed successfully.",
-      "recetas": "Recipes and ingredients seeder executed successfully.",
-      "usuarios": "Users seeder executed successfully."
+      "albaranes": "✅ Delivery notes seeder executed successfully.",
+      "historial_precio": "✅ Price history seeder executed successfully.",
+      "incidencias": "✅ Seeder: {count} incidents created",
+      "movimientos": "✅ Movements seeder executed successfully.",
+      "recetas": "✅ Recipes and ingredients seeder executed successfully.",
+      "usuarios": "✅ Users seeder executed successfully."
     }
   }
 }
