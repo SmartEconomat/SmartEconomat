@@ -1,10 +1,6 @@
 # 🏆 Clasificación de Contribuidores - SmartEconomat
 
-<<<<<<< HEAD
-> **Última actualización:** 2026-02-22 00:31:04
-=======
-> **Última actualización:** 2026-02-21 22:01:23
->>>>>>> 3a072d1 (feat(Chip de estado): creación de componente  chip de estado)
+> **Última actualización:** 2026-02-22 00:53:22
 
 ---
 
@@ -22,50 +18,28 @@ Demostrando que:
 - 🚀 Git commit es su mantra matutino
 
 **Estadísticas de Dominio:**
-<<<<<<< HEAD
-- Posee el **35,16%** de todo el código.
+- Posee el **34,97%** de todo el código.
 - Ha logrado fusionar **45** funcionalidades completas.
-=======
-- Posee el **5.92%** de todo el código.
-- Ha logrado fusionar **73** funcionalidades completas.
->>>>>>> 3a072d1 (feat(Chip de estado): creación de componente  chip de estado)
 
 ---
 
 ## 📊 Hall de la Fama
 
 ### 🥈 Alexis
-<<<<<<< HEAD
-- 💻 Commits: **49** (26,92%)
-- 🔀 PRs Fusionados: **13**
+- 💻 Commits: **47** (25,68%)
+- 🔀 PRs Fusionados: **14**
 
 ### 🥈 Maurizio
-- 💻 Commits: **31** (17,03%)
+- 💻 Commits: **32** (17,49%)
 - 🔀 PRs Fusionados: **8**
 
 ### 🥈 Sergio
-- 💻 Commits: **28** (15,38%)
+- 💻 Commits: **28** (15,30%)
 - 🔀 PRs Fusionados: **6**
 
 ### 🥈 Guillermo
-- 💻 Commits: **10** (5,49%)
+- 💻 Commits: **12** (6,56%)
 - 🔀 PRs Fusionados: **5**
-=======
-- 💻 Commits: **10** (5.92%)
-- 🔀 PRs Fusionados: **73**
-
-### 🥈 Maurizio
-- 💻 Commits: **10** (5.92%)
-- 🔀 PRs Fusionados: **73**
-
-### 🥈 Sergio
-- 💻 Commits: **10** (5.92%)
-- 🔀 PRs Fusionados: **73**
-
-### 🥈 Guillermo
-- 💻 Commits: **10** (5.92%)
-- 🔀 PRs Fusionados: **73**
->>>>>>> 3a072d1 (feat(Chip de estado): creación de componente  chip de estado)
 
 
 ---
@@ -74,7 +48,7 @@ Demostrando que:
 
 ### 😅 **Guillermo**
 
-Con **10 commits** y **5 PRs**, tenemos aquí a alguien que:
+Con **12 commits** y **5 PRs**, tenemos aquí a alguien que:
 - 🤔 Prefiere la calidad sobre la cantidad (eso espero...)
 - 🏖️ Cree que git es una red social casual
 - 🎯 Está "esperando el momento perfecto" para contribuir
@@ -90,35 +64,20 @@ Con **10 commits** y **5 PRs**, tenemos aquí a alguien que:
 
 | Posición | Contribuidor | Commits | PRs Fusionados | % Código | Estado |
 |----------|--------------|---------|----------------|----------|--------|
-<<<<<<< HEAD
-| #1 | Darel | **64** | 🔀 **45** | 35,16% | 👑 Líder |
-| #2 | Alexis | **49** | 🔀 **13** | 26,92% | 💪 Activo |
-| #3 | Maurizio | **31** | 🔀 **8** | 17,03% | 💪 Activo |
-| #4 | Sergio | **28** | 🔀 **6** | 15,38% | 💪 Activo |
-| #5 | Guillermo | **10** | 🔀 **5** | 5,49% | 🐌 Necesita café |
-=======
-| #1 | Darel | **10** | 🔀 **73** | 5.92% | 👑 Líder |
-| #2 | Alexis | **10** | 🔀 **73** | 5.92% | 💪 Activo |
-| #3 | Maurizio | **10** | 🔀 **73** | 5.92% | 💪 Activo |
-| #4 | Sergio | **10** | 🔀 **73** | 5.92% | 💪 Activo |
-| #5 | Guillermo | **10** | 🔀 **73** | 5.92% | 🐌 Necesita café |
->>>>>>> 3a072d1 (feat(Chip de estado): creación de componente  chip de estado)
+| #1 | Darel | **64** | 🔀 **45** | 34,97% | 👑 Líder |
+| #2 | Alexis | **47** | 🔀 **14** | 25,68% | 💪 Activo |
+| #3 | Maurizio | **32** | 🔀 **8** | 17,49% | 💪 Activo |
+| #4 | Sergio | **28** | 🔀 **6** | 15,30% | 💪 Activo |
+| #5 | Guillermo | **12** | 🔀 **5** | 6,56% | 🐌 Necesita café |
 
 ---
 
 ## 📊 Estadísticas Generales
 
-<<<<<<< HEAD
-- **Total de commits:** 182
-- **Total de PRs fusionados:** 77
+- **Total de commits:** 183
+- **Total de PRs fusionados:** 78
 - **Total de contribuidores:** 5
-- **Promedio de commits por persona:** 36,4
-=======
-- **Total de commits:** 169
-- **Total de PRs fusionados:** 73
-- **Total de contribuidores:** 5
-- **Promedio de commits por persona:** 33.8
->>>>>>> 3a072d1 (feat(Chip de estado): creación de componente  chip de estado)
+- **Promedio de commits por persona:** 36,6
 
 ---
 
@@ -128,16 +87,16 @@ Con **10 commits** y **5 PRs**, tenemos aquí a alguien que:
 `████████████████████` 64 commits | 45 PRs
 
 **Alexis**
-`███████████████░░░░░` 49 commits | 13 PRs
+`██████████████░░░░░░` 47 commits | 14 PRs
 
 **Maurizio**
-`█████████░░░░░░░░░░░` 31 commits | 8 PRs
+`██████████░░░░░░░░░░` 32 commits | 8 PRs
 
 **Sergio**
 `████████░░░░░░░░░░░░` 28 commits | 6 PRs
 
 **Guillermo**
-`███░░░░░░░░░░░░░░░░░` 10 commits | 5 PRs
+`███░░░░░░░░░░░░░░░░░` 12 commits | 5 PRs
 
 ---
 
