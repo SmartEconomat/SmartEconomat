@@ -3,7 +3,14 @@ import { Box, Paper, IconButton, Typography } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DataTable, { Column } from '../components/ui/DataTable';
+<<<<<<< HEAD
+<<<<<<< HEAD
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+=======
+>>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
+=======
+import ConfirmDialog from '../components/ui/ConfirmDialog';
+>>>>>>> b2dfa12 (feat(confirmDialog): Creación del componente de dialogo de confirmación basado en el componente modal)
 
 // Interfaz para los productos
 interface Producto {
@@ -26,7 +33,14 @@ const mockProductos: Producto[] = [
 const Productos: React.FC = () => {
     const [page, setPage] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
+<<<<<<< HEAD
+<<<<<<< HEAD
     const [productToDelete, setProductToDelete] = useState<Producto | null>(null);
+=======
+>>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
+=======
+    const [productToDelete, setProductToDelete] = useState<Producto | null>(null);
+>>>>>>> b2dfa12 (feat(confirmDialog): Creación del componente de dialogo de confirmación basado en el componente modal)
 
     const columns: Column<Producto>[] = [
         { id: 'id', label: 'ID', align: 'center' },
@@ -58,7 +72,15 @@ const Productos: React.FC = () => {
             <IconButton color="secondary" onClick={() => console.log('Edit', row)} size="small" aria-label="Editar">
                 <EditIcon fontSize="small" />
             </IconButton>
+<<<<<<< HEAD
+<<<<<<< HEAD
             <IconButton color="error" onClick={() => setProductToDelete(row)} size="small" aria-label="Borrar">
+=======
+            <IconButton color="error" onClick={() => console.log('Delete', row)} size="small" aria-label="Borrar">
+>>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
+=======
+            <IconButton color="error" onClick={() => setProductToDelete(row)} size="small" aria-label="Borrar">
+>>>>>>> b2dfa12 (feat(confirmDialog): Creación del componente de dialogo de confirmación basado en el componente modal)
                 <DeleteIcon fontSize="small" />
             </IconButton>
         </>
@@ -81,6 +103,10 @@ const Productos: React.FC = () => {
                     }}
                     renderActions={renderActions}
                 />
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> b2dfa12 (feat(confirmDialog): Creación del componente de dialogo de confirmación basado en el componente modal)
 
                 <ConfirmDialog
                     isOpen={!!productToDelete}
@@ -99,6 +125,11 @@ const Productos: React.FC = () => {
                     confirmText="Me aseguro, Borrar"
                     cancelText="Cancelar"
                 />
+<<<<<<< HEAD
+=======
+>>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
+=======
+>>>>>>> b2dfa12 (feat(confirmDialog): Creación del componente de dialogo de confirmación basado en el componente modal)
             </Paper>
         </Box>
     );
