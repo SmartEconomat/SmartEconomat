@@ -25,4 +25,9 @@ export enum EstadoPedido {
    * Pedido anulado antes de ser servido completamente.
    */
   CANCELADO = 'cancelado',
+
+  /**
+   * Pedido recibido parcialmente.
+   */
+  PARCIAL = 'parcial',
 }

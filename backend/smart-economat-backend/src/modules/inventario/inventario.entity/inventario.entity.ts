@@ -1,7 +1,15 @@
-import { Entity, Column, ManyToOne, JoinColumn, Index, Check } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  Index,
+  Check,
+  type Relation,
+} from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
-import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
+import type { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
 import { localInventario } from '../enums/inventario.enums';
 
 /**
@@ -34,12 +42,12 @@ export class Inventario extends BaseEntity {
    * Representa qué producto concreto (de qué proveedor) está almacenado.
    * Constraint: RESTRICT evita orphan records si se intenta borrar el proveedor.
    */
-  @ManyToOne(() => ProductoProveedor, (pp) => pp.inventarios, {
+  @ManyToOne('ProductoProveedor', (pp: ProductoProveedor) => pp.inventarios, {
     onDelete: 'RESTRICT',
     nullable: false,
   })
   @JoinColumn({ name: 'id_producto_proveedor' })
-  productoProveedor!: ProductoProveedor;
+  productoProveedor!: Relation<ProductoProveedor>;
 
   /**
    * Cantidad actual disponible en esta ubicación.

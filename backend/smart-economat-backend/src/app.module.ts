@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -10,9 +11,13 @@ import { typeOrmConfig } from './config/database.config';
 import { I18nConfigModule } from './config/i18n.module';
 import { RecepcionModule } from './modules/recepcion/recepcion.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { UsuarioModule } from './modules/usuario/usuario.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     TypeOrmModule.forRoot(typeOrmConfig),
     I18nConfigModule,
     PedidoModule,
@@ -21,6 +26,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     RecepcionModule,
     DashboardModule,
     ProveedorModule,
+    UsuarioModule,
   ],
   controllers: [AppController],
   providers: [AppService],
