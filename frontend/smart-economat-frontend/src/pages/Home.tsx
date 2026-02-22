@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { Typography, Box, Paper, Button } from '@mui/material';
+import Modal from '../components/ui/Modal';
 import { useAuth } from '../store/AuthContext';
 import { useToast } from '../store/ToastContext';
 
 const Home: React.FC = () => {
     const { user } = useAuth();
     const toast = useToast();
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const handleTestToast = () => {
         toast.success('¡Sistema de notificaciones funcionando correctamente!');
@@ -16,13 +19,52 @@ const Home: React.FC = () => {
                 Hola, <strong>{user?.name}</strong>. Bienvenido al sistema de gestión Smart Economat.
             </Typography>
 
-            <Button
-                variant="contained"
-                onClick={handleTestToast}
-                sx={{ mb: 4 }}
+
+            {import.meta.env.DEV && (
+                <Box sx={{ display: 'flex', gap: 2, mb: 4 }}>
+                    <Button
+                        variant="contained"
+                        onClick={handleTestToast}
+                    >
+                        Probar Notificación
+                    </Button>
+
+                    <Button
+                        variant="outlined"
+                        onClick={() => setIsModalOpen(true)}
+                    >
+                        Probar Modal
+                    </Button>
+                </Box>
+            )}
+
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title="Prueba de Modal"
+                size="sm"
             >
-                Probar Notificación
-            </Button>
+                <Typography variant="body1" sx={{ mb: 3 }}>
+                    Este es un ejemplo en vivo del componente Modal Genérico.
+                    Prueba a presionar ESC o hacer clic fuera de este cuadro en el fondo difuminado para cerrarlo.
+                </Typography>
+
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                    <Button onClick={() => setIsModalOpen(false)} color="inherit">
+                        Cancelar
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => {
+                            toast.success("¡Acción confirmada desde el modal!");
+                            setIsModalOpen(false);
+                        }}
+                    >
+                        Confirmar
+                    </Button>
+                </Box>
+            </Modal>
 
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
                 <Box sx={{ flex: { xs: '1 1 100%', md: '0 1 300px' } }}>

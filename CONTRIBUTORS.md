@@ -20,6 +20,7 @@ Demostrando que:
 **Estadísticas de Dominio:**
 - Posee el **37,28%** de todo el código.
 - Ha logrado fusionar **45** funcionalidades completas.
+- Ha logrado fusionar **71** funcionalidades completas.
 
 ---
 
@@ -40,7 +41,7 @@ Demostrando que:
 ### 🥈 Guillermo
 - 💻 Commits: **10** (5,92%)
 - 🔀 PRs Fusionados: **5**
-
+- 🔀 PRs Fusionados: **71**
 
 ---
 
@@ -69,8 +70,6 @@ Con **10 commits** y **71 PRs**, tenemos aquí a alguien que:
 | #3 | Maurizio | **31** | 🔀 **8** | 18,34% | 💪 Activo |
 | #4 | Sergio | **28** | 🔀 **6** | 16,57% | 💪 Activo |
 | #5 | Guillermo | **10** | 🔀 **5** | 5,92% | 🐌 Necesita café |
-
----
 
 ## 📊 Estadísticas Generales
 
