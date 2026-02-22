@@ -1,4 +1,4 @@
-import { Pedido } from '../../pedido/pedido.entity/pedido.entity';
+import type { Pedido } from '../../pedido/pedido.entity/pedido.entity';
 import {
   Column,
   Entity,
@@ -7,10 +7,11 @@ import {
   Unique,
   Index,
   OneToMany,
+  type Relation,
 } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
-import { Recepcion } from '../recepcion.entity/recepcion.entity';
-import { AlbaranPedidoRecepcion } from '../../albaran/albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
+import type { Recepcion } from '../recepcion.entity/recepcion.entity';
+import type { AlbaranPedidoRecepcion } from '../../albaran/albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
 
 /**
  * RecepcionPedido Entity
@@ -22,19 +23,23 @@ import { AlbaranPedidoRecepcion } from '../../albaran/albaran-pedido-recepcion.e
 @Index('idx_recepcion_pedido_recepcion', ['recepcion'])
 @Index('idx_recepcion_pedido_pedido', ['pedido'])
 export class RecepcionPedido extends BaseEntity {
-  @ManyToOne(() => Recepcion, (recepcion) => recepcion.recepcionesPedidos, {
-    onDelete: 'RESTRICT',
-    nullable: false,
-  })
+  @ManyToOne(
+    'Recepcion',
+    (recepcion: Recepcion) => recepcion.recepcionesPedidos,
+    {
+      onDelete: 'RESTRICT',
+      nullable: false,
+    }
+  )
   @JoinColumn({ name: 'id_recepcion', referencedColumnName: 'id' })
-  recepcion!: Recepcion;
+  recepcion!: Relation<Recepcion>;
 
-  @ManyToOne(() => Pedido, (pedido) => pedido.recepcionesPedido, {
+  @ManyToOne('Pedido', (pedido: Pedido) => pedido.recepcionesPedido, {
     onDelete: 'RESTRICT',
     nullable: false,
   })
   @JoinColumn({ name: 'id_pedido', referencedColumnName: 'id' })
-  pedido!: Pedido;
+  pedido!: Relation<Pedido>;
 
   @Column({
     name: 'fecha_vinculacion',
@@ -43,6 +48,9 @@ export class RecepcionPedido extends BaseEntity {
   })
   fechaVinculacion!: Date;
 
-  @OneToMany(() => AlbaranPedidoRecepcion, (apr) => apr.recepcionPedido)
-  albaranPedidoRecepcion!: AlbaranPedidoRecepcion[];
+  @OneToMany(
+    'AlbaranPedidoRecepcion',
+    (apr: AlbaranPedidoRecepcion) => apr.recepcionPedido
+  )
+  albaranPedidoRecepcion!: Relation<AlbaranPedidoRecepcion[]>;
 }

@@ -7,8 +7,9 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   VersionColumn,
+  type Relation,
 } from 'typeorm';
-import { Producto } from '../producto.entity/producto.entity';
+import type { Producto } from '../producto.entity/producto.entity';
 import { AlergenoProducto } from '../enums/producto.enums';
 
 /**
@@ -25,11 +26,11 @@ export class ProductoAlergeno {
   @PrimaryColumn({ type: 'enum', enum: AlergenoProducto, name: 'alergeno' })
   alergeno!: AlergenoProducto;
 
-  @ManyToOne(() => Producto, {
+  @ManyToOne('Producto', {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'id_producto', referencedColumnName: 'id' })
-  producto!: Producto;
+  producto!: Relation<Producto>;
 
   @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
   readonly createdAt!: Date;

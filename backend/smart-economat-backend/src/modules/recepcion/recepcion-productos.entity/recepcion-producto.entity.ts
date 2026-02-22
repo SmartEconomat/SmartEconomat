@@ -1,8 +1,16 @@
-import { Entity, Column, ManyToOne, JoinColumn, Index, Check } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  Index,
+  Check,
+  type Relation,
+} from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
-import { Recepcion } from '../recepcion.entity/recepcion.entity';
-import { PedidoProducto } from '../../pedido/pedido-producto.entity/pedido-producto.entity';
+import type { Recepcion } from '../recepcion.entity/recepcion.entity';
+import type { PedidoProducto } from '../../pedido/pedido-producto.entity/pedido-producto.entity';
 
 /**
  * Entidad RecepcionProducto
@@ -22,23 +30,27 @@ export class RecepcionProducto extends BaseEntity {
    * Recepción a la que pertenece este detalle.
    * CASCADE onDelete para borrar los detalles si se borra la cabecera.
    */
-  @ManyToOne(() => Recepcion, (recepcion) => recepcion.recepcionProductos, {
-    onDelete: 'CASCADE',
-    nullable: false,
-  })
+  @ManyToOne(
+    'Recepcion',
+    (recepcion: Recepcion) => recepcion.recepcionProductos,
+    {
+      onDelete: 'CASCADE',
+      nullable: false,
+    }
+  )
   @JoinColumn({ name: 'id_recepcion', referencedColumnName: 'id' })
-  recepcion!: Recepcion;
+  recepcion!: Relation<Recepcion>;
 
   /**
    * Línea de pedido original que se está recibiendo.
    * Permite calcular diferencias (pedido - recibido).
    */
-  @ManyToOne(() => PedidoProducto, {
+  @ManyToOne('PedidoProducto', {
     onDelete: 'RESTRICT',
     nullable: false,
   })
   @JoinColumn({ name: 'id_pedido_producto' })
-  pedidoProducto!: PedidoProducto;
+  pedidoProducto!: Relation<PedidoProducto>;
 
   /**
    * Cantidad realmente recibida.

@@ -1,6 +1,13 @@
-import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { Receta } from '../receta.entity/receta.entity';
-import { Producto } from '../../producto/producto.entity/producto.entity';
+import {
+  Entity,
+  PrimaryColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  type Relation,
+} from 'typeorm';
+import type { Receta } from '../receta.entity/receta.entity';
+import type { Producto } from '../../producto/producto.entity/producto.entity';
 import { UnidadIngrediente } from '../enums/receta.enums';
 
 @Entity('receta_ingrediente')
@@ -17,13 +24,13 @@ export class RecetaIngrediente {
   @Column({ type: 'enum', enum: UnidadIngrediente })
   unidad!: UnidadIngrediente;
 
-  @ManyToOne(() => Receta, (receta) => receta.ingredientes, {
+  @ManyToOne('Receta', (receta: Receta) => receta.ingredientes, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'receta_id' })
-  receta!: Receta;
+  receta!: Relation<Receta>;
 
-  @ManyToOne(() => Producto, { nullable: false })
+  @ManyToOne('Producto', { nullable: false })
   @JoinColumn({ name: 'producto_id' })
-  producto!: Producto;
+  producto!: Relation<Producto>;
 }
