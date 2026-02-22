@@ -15,11 +15,16 @@ export class ProductoService {
   }
 
   async findAll(): Promise<Producto[]> {
-    return this.productoRepository.find();
+    return this.productoRepository.find({
+      relations: ['proveedores', 'proveedores.proveedor'],
+    });
   }
 
   async findOne(id: string): Promise<Producto> {
-    const producto = await this.productoRepository.findOne({ where: { id } });
+    const producto = await this.productoRepository.findOne({
+      where: { id },
+      relations: ['proveedores', 'proveedores.proveedor'],
+    });
     if (!producto) {
       throw new NotFoundException(I18nHelper.getError('PRODUCT_NOT_FOUND'));
     }
@@ -32,7 +37,8 @@ export class ProductoService {
   ): Promise<Producto> {
     const producto = await this.findOne(id);
     this.productoRepository.merge(producto, updateProductoDto);
-    return this.productoRepository.save(producto);
+    await this.productoRepository.save(producto);
+    return this.findOne(id);
   }
 
   async remove(id: string): Promise<void> {
