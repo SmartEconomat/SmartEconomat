@@ -3,6 +3,7 @@ import { Box, Paper, IconButton, Typography } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DataTable, { Column } from '../components/ui/DataTable';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
 
 // Interfaz para los productos
 interface Producto {
@@ -25,6 +26,7 @@ const mockProductos: Producto[] = [
 const Productos: React.FC = () => {
     const [page, setPage] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
+    const [productToDelete, setProductToDelete] = useState<Producto | null>(null);
 
     const columns: Column<Producto>[] = [
         { id: 'id', label: 'ID', align: 'center' },
@@ -56,7 +58,7 @@ const Productos: React.FC = () => {
             <IconButton color="secondary" onClick={() => console.log('Edit', row)} size="small" aria-label="Editar">
                 <EditIcon fontSize="small" />
             </IconButton>
-            <IconButton color="error" onClick={() => console.log('Delete', row)} size="small" aria-label="Borrar">
+            <IconButton color="error" onClick={() => setProductToDelete(row)} size="small" aria-label="Borrar">
                 <DeleteIcon fontSize="small" />
             </IconButton>
         </>
@@ -78,6 +80,24 @@ const Productos: React.FC = () => {
                         onPageChange: (_, newPage) => setPage(newPage)
                     }}
                     renderActions={renderActions}
+                />
+
+                <ConfirmDialog
+                    isOpen={!!productToDelete}
+                    onClose={() => setProductToDelete(null)}
+                    onConfirm={() => {
+                        console.log('Se simuló el borrado de:', productToDelete?.nombre);
+                        setProductToDelete(null);
+                    }}
+                    title="Eliminar producto"
+                    message={
+                        <>
+                            ¿Estás seguro de que deseas eliminar el producto <strong>{productToDelete?.nombre}</strong>?
+                            Esta acción no se puede deshacer.
+                        </>
+                    }
+                    confirmText="Me aseguro, Borrar"
+                    cancelText="Cancelar"
                 />
             </Paper>
         </Box>
