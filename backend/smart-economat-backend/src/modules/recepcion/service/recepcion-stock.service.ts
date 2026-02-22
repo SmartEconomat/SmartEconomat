@@ -13,6 +13,7 @@ import { RecepcionPedido } from '../recepcion-pedido.entity/recepcion-pedido.ent
 import { RecepcionProducto } from '../recepcion-productos.entity/recepcion-producto.entity';
 import { Albaran } from '../../albaran/albaran.entity/albaran.entity';
 import { localInventario } from '../../inventario/enums/inventario.enums';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 
 @Injectable()
 export class RecepcionStockService {
@@ -124,7 +125,9 @@ export class RecepcionStockService {
       return savedRecepcion;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      throw new BadRequestException('Fallo en la recepción: ' + error.message);
+      throw new BadRequestException(
+        I18nHelper.getError('RECEPTION_FAILED', { message: error.message })
+      );
     } finally {
       await queryRunner.release();
     }
