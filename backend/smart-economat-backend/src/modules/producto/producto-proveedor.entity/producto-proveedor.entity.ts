@@ -7,14 +7,15 @@ import {
   Unique,
   Index,
   Check,
+  type Relation,
 } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
-import { Producto } from '../producto.entity/producto.entity';
-import { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
-import { PedidoProducto } from '../../pedido/pedido-producto.entity/pedido-producto.entity';
-import { Inventario } from '../../inventario/inventario.entity/inventario.entity';
-import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.entity';
+import type { Producto } from '../producto.entity/producto.entity';
+import type { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
+import type { PedidoProducto } from '../../pedido/pedido-producto.entity/pedido-producto.entity';
+import type { Inventario } from '../../inventario/inventario.entity/inventario.entity';
+import type { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.entity';
 
 /**
  * Entidad ProductoProveedor
@@ -37,12 +38,12 @@ export class ProductoProveedor extends BaseEntity {
    * Referencia al Producto base.
    * Constraint: No se puede eliminar el producto si tiene proveedores vinculados (RESTRICT).
    */
-  @ManyToOne(() => Producto, (producto) => producto.proveedores, {
+  @ManyToOne('Producto', (producto: Producto) => producto.proveedores, {
     onDelete: 'RESTRICT',
     nullable: false,
   })
   @JoinColumn({ name: 'id_producto', referencedColumnName: 'id' })
-  producto!: Producto;
+  producto!: Relation<Producto>;
 
   /**
    * Marca específica que ofrece este proveedor para el producto.
@@ -83,28 +84,34 @@ export class ProductoProveedor extends BaseEntity {
    * Referencia al Proveedor.
    * Constraint: No se puede eliminar el proveedor si tiene productos vinculados (RESTRICT).
    */
-  @ManyToOne(() => Proveedor, (proveedor) => proveedor.productos, {
+  @ManyToOne('Proveedor', (proveedor: Proveedor) => proveedor.productos, {
     onDelete: 'RESTRICT',
     nullable: false,
   })
   @JoinColumn({ name: 'id_proveedor' })
-  proveedor!: Proveedor;
+  proveedor!: Relation<Proveedor>;
 
   /**
    * Relación con el inventario físico (stock) de este producto-proveedor.
    */
-  @OneToMany(() => Inventario, (inventario) => inventario.productoProveedor)
-  inventarios!: Inventario[];
+  @OneToMany(
+    'Inventario',
+    (inventario: Inventario) => inventario.productoProveedor
+  )
+  inventarios!: Relation<Inventario[]>;
 
   /**
    * Historial de variaciones de precio.
    */
-  @OneToMany(() => HistorialPrecio, (historial) => historial.productoProveedor)
-  historialPrecios!: HistorialPrecio[];
+  @OneToMany(
+    'HistorialPrecio',
+    (historial: HistorialPrecio) => historial.productoProveedor
+  )
+  historialPrecios!: Relation<HistorialPrecio[]>;
 
   /**
    * Pedidos realizados de este producto a este proveedor.
    */
-  @OneToMany(() => PedidoProducto, (pp) => pp.productoProveedor)
-  pedidoProductos!: PedidoProducto[];
+  @OneToMany('PedidoProducto', (pp: PedidoProducto) => pp.productoProveedor)
+  pedidoProductos!: Relation<PedidoProducto[]>;
 }

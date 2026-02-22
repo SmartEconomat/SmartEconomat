@@ -1,9 +1,16 @@
-import { Entity, Column, OneToMany, Index, Check } from 'typeorm';
+import {
+  Entity,
+  Column,
+  OneToMany,
+  Index,
+  Check,
+  type Relation,
+} from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 import { TipoProducto, UnidadProducto } from '../enums/producto.enums';
-import { ProductoAlergeno } from '../producto-alergeno.entity/producto-alergeno.entity';
-import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
+import type { ProductoAlergeno } from '../producto-alergeno.entity/producto-alergeno.entity';
+import type { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
 
 /**
  * Producto Entity
@@ -106,14 +113,14 @@ export class Producto extends BaseEntity {
   /**
    * Relación con los alérgenos que contiene el producto.
    */
-  @OneToMany(() => ProductoAlergeno, (pa) => pa.producto, {
+  @OneToMany('ProductoAlergeno', (pa: ProductoAlergeno) => pa.producto, {
     cascade: true,
   })
-  alergenos?: ProductoAlergeno[];
+  alergenos?: Relation<ProductoAlergeno[]>;
 
   /**
    * Relación con los proveedores que suministran este producto.
    */
-  @OneToMany(() => ProductoProveedor, (pp) => pp.producto)
-  proveedores!: ProductoProveedor[];
+  @OneToMany('ProductoProveedor', (pp: ProductoProveedor) => pp.producto)
+  proveedores!: Relation<ProductoProveedor[]>;
 }

@@ -1,14 +1,20 @@
 import { Module } from '@nestjs/common';
 import { ProductoService } from './service/producto.service';
 import { ProductoController } from './controller/producto.controller';
+import { ProductoProveedorService } from './service/producto-proveedor.service';
+import { ProductoProveedorController } from './controller/producto-proveedor.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Producto } from './producto.entity/producto.entity';
 import { ProductoRepository } from './repository/producto.repository';
+import { ProductoProveedor } from './producto-proveedor.entity/producto-proveedor.entity';
+import { HistorialPrecio } from './historial-precio-proveedor.entity/historial.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Producto])],
-  controllers: [ProductoController],
-  providers: [ProductoService, ProductoRepository],
-  exports: [ProductoService, ProductoRepository],
+  imports: [
+    TypeOrmModule.forFeature([Producto, ProductoProveedor, HistorialPrecio]),
+  ],
+  controllers: [ProductoController, ProductoProveedorController],
+  providers: [ProductoService, ProductoRepository, ProductoProveedorService],
+  exports: [ProductoService, ProductoRepository, ProductoProveedorService],
 })
 export class ProductoModule {}

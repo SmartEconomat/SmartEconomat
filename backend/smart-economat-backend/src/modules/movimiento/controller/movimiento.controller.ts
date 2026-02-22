@@ -27,14 +27,14 @@ export class MovimientoController {
     return this.movimientoService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.movimientoService.findOne(id);
-  }
-
   @Get('historial')
   getMovimientoHistory(@Query() dto: MovimientoHistoryDto) {
     return this.movimientoService.getMovimientoHistory(dto);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.movimientoService.findOne(id);
   }
 
   @Patch(':id')
