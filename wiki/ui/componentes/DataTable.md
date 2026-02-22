@@ -1,0 +1,93 @@
+# Componente visual genérico: DataTable
+
+El componente \`DataTable\` es una tabla de datos altamente personalizable y reutilizable diseñada con Material UI. Está construido con TypeScript para aceptar genéricos, permitiéndo ser estricto con los tipos de las columnas en relación a los datos.
+
+## Propósito
+
+Ofrecer una solución unificada en toda la aplicación para mostrar listas, evitando la duplicación del marcado de tablas. Soporta de fábrica:
+- Columnas configurables con soporte para enlazado rápido a propiedades de la interfaz, o renderizado de valor custom (\`render\`).
+- Controles incrustados de paginación de Material UI (\`<Pagination />\`).
+- Gestión integrada de estados de \`loading\` (empleando el componente \`<Spinner />\`).
+- Personalización de vistas de estados vacíos (\`empty states\`).
+- *Slots* dedicados opcionales para botones de acciones en cada fila (por ejemplo: "Ver Detalles", "Editar", "Eliminar").
+
+## Props Principales (\`DataTableProps<T>\`)
+
+| Propiedad | Tipo | Descripción |
+| :--- | :--- | :--- |
+| \`columns\` | \`Column<T>[]\` | Array de configuración de las columnas. Cada objeto \`Column\` debe especificar \`id\`, \`label\`, (opc) \`align\` y (opc) función \`render(row: T)\`. |
+| \`data\` | \`T[]\` | Los datos crudos que alimentarán el cuerpo de la tabla. |
+| \`isLoading\` | \`boolean\` | (Opcional) Indica a la tabla que debe mostrar el \`Spinner\` en lugar de los datos. |
+| \`emptyStateMessage\`| \`ReactNode\` | (Opcional) Contenido a renderizar cuando el array \`data\` esté vacío. |
+| \`pagination\` | \`Object\` | (Opcional) Estructura con \`currentPage\`, \`totalPages\` y la función manejadora de UI \`onPageChange\`. |
+| \`renderActions\` | \`(row: T) => ReactNode\`| (Opcional) Render prop que inyectará una celda adicional de acciones al final de cada fila. |
+
+## Ejemplo Recomendado de Uso
+
+\`\`\`tsx
+import React, { useState } from 'react';
+import DataTable, { Column } from '@/components/ui/DataTable';
+import { Button, IconButton } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+
+// Definimos el tipo de nuestros datos
+interface UserData {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+}
+
+const mockData: UserData[] = [
+  { id: 1, name: 'Nombre Apellido', email: 'correo@example.com', role: 'Admin' },
+  { id: 2, name: 'Nombre Apellido', email: 'correo@example.com', role: 'Editor' },
+];
+
+// Configuración de columnas asociadas al tipo
+const columns: Column<UserData>[] = [
+  { id: 'id', label: 'ID' },
+  { id: 'name', label: 'Nombre Completo' },
+  { id: 'email', label: 'Correo' },
+  {
+    id: 'role',
+    label: 'Rol',
+    // Usamos render si queremos formatear el valor
+    render: (row) => <strong>{row.role.toUpperCase()}</strong>,
+  }
+];
+
+export const UsuariosList = () => {
+    const [page, setPage] = useState(1);
+
+    const handleEdit = (user: UserData) => alert(\`Editando a \${user.name}\`);
+    const handleDelete = (user: UserData) => alert(\`Borrando a \${user.name}\`);
+
+    // Renderizamos los botones de acción para cada fila
+    const productActions = (row: UserData) => (
+        <>
+            <IconButton color="primary" onClick={() => handleEdit(row)} size="small">
+                <EditIcon fontSize="small" />
+            </IconButton>
+            <IconButton color="error" onClick={() => handleDelete(row)} size="small">
+                <DeleteIcon fontSize="small" />
+            </IconButton>
+        </>
+    );
+
+    return (
+        <DataTable
+            columns={columns}
+            data={mockData}
+            isLoading={false}
+            emptyStateMessage="No hay usuarios registrados"
+            renderActions={productActions}
+            pagination={{
+                currentPage: page,
+                totalPages: 3,
+                onPageChange: (e, newPage) => setPage(newPage)
+            }}
+        />
+    )
+}
+\`\`\`

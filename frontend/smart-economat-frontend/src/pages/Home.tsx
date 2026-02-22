@@ -95,7 +95,6 @@ const Home: React.FC = () => {
                         </Typography>
                     </Paper>
                 </Box>
-                {/* Añadir más tarjetas aquí */}
             </Box>
         </Box>
     );
