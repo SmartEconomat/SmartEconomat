@@ -1,56 +1,77 @@
-import React, { useState } from 'react';
-import { Box, Paper, IconButton, Typography } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Paper, IconButton, Typography, Alert } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DataTable, { Column } from '../components/ui/DataTable';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
-
-// Interfaz para los productos
-interface Producto {
-    id: number;
-    nombre: string;
-    categoria: string;
-    precio: number;
-    stock: number;
-}
-
-// Datos falsos por ahora
-const mockProductos: Producto[] = [
-    { id: 1, nombre: 'Manzanas', categoria: 'Frutas', precio: 1.5, stock: 150 },
-    { id: 2, nombre: 'Pan de molde', categoria: 'Panadería', precio: 2.1, stock: 45 },
-    { id: 3, nombre: 'Leche entera', categoria: 'Lácteos', precio: 0.9, stock: 200 },
-    { id: 4, nombre: 'Huevos Docena', categoria: 'Lácteos', precio: 3.2, stock: 80 },
-    { id: 5, nombre: 'Detergente Líquido', categoria: 'Limpieza', precio: 8.5, stock: 20 },
-];
+import { Producto } from '../services/producto.types';
+import { fetchProductos } from '../services/producto.service';
+import { deleteResource } from '../services/api.service';
+import { useToast } from '../store/ToastContext';
 
 const Productos: React.FC = () => {
     const [page, setPage] = useState(1);
-    const [isLoading, setIsLoading] = useState(false);
+    const [data, setData] = useState<Producto[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [productToDelete, setProductToDelete] = useState<Producto | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const toast = useToast();
+
+    useEffect(() => {
+        setIsLoading(true);
+        setError(null);
+        fetchProductos()
+            .then(setData)
+            .catch((err: unknown) => {
+                const message = err instanceof Error ? err.message : 'Error desconocido al cargar productos.';
+                setError(message);
+            })
+            .finally(() => setIsLoading(false));
+    }, []);
+
+    const handleDeleteConfirm = async () => {
+        if (!productToDelete) return;
+        setIsDeleting(true);
+        try {
+            await deleteResource(`/productos/${productToDelete.id}`);
+            setData((prev) => prev.filter((p) => p.id !== productToDelete.id));
+            toast.success(`Producto "${productToDelete.nombre}" eliminado correctamente.`);
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Error al eliminar el producto.';
+            toast.error(message);
+        } finally {
+            setIsDeleting(false);
+            setProductToDelete(null);
+        }
+    };
 
     const columns: Column<Producto>[] = [
-        { id: 'id', label: 'ID', align: 'center' },
         { id: 'nombre', label: 'Nombre' },
-        { id: 'categoria', label: 'Categoría' },
         {
-            id: 'precio',
-            label: 'Precio',
-            align: 'right',
-            render: (row) => `${row.precio.toFixed(2)} €`,
+            id: 'marca',
+            label: 'Marca',
+            render: (row) => row.marca ?? '—',
         },
         {
-            id: 'stock',
-            label: 'Stock',
+            id: 'tipo',
+            label: 'Tipo',
+            render: (row) => row.tipo ?? '—',
+        },
+        {
+            id: 'contenido',
+            label: 'Contenido',
             align: 'right',
-            render: (row) => (
-                <Typography
-                    color={row.stock < 30 ? 'error' : 'text.primary'}
-                    fontWeight={row.stock < 30 ? 'bold' : 'normal'}
-                >
-                    {row.stock}
-                </Typography>
-            ),
-        }
+            render: (row) =>
+                row.unidad
+                    ? `${row.contenido} ${row.unidad}`
+                    : `${row.contenido}`,
+        },
+        {
+            id: 'codigoBarras',
+            label: 'Cód. Barras',
+            render: (row) => row.codigoBarras ?? '—',
+        },
     ];
 
     const renderActions = (row: Producto) => (
@@ -67,40 +88,43 @@ const Productos: React.FC = () => {
     return (
         <Box>
             <Paper elevation={0} sx={{ p: 4 }}>
-                <Typography variant="body1" sx={{ mb: 3 }}>
-                    Prueba de componente tabla.
+                <Typography variant="h6" sx={{ mb: 3 }}>
+                    Gestión de Productos
                 </Typography>
+
+                {error && (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                        {error}
+                    </Alert>
+                )}
+
                 <DataTable
                     columns={columns}
-                    data={mockProductos}
+                    data={data}
                     isLoading={isLoading}
                     pagination={{
                         currentPage: page,
                         totalPages: 1,
-                        onPageChange: (_, newPage) => setPage(newPage)
+                        onPageChange: (_, newPage) => setPage(newPage),
                     }}
                     renderActions={renderActions}
                 />
 
-
                 <ConfirmDialog
                     isOpen={!!productToDelete}
-                    onClose={() => setProductToDelete(null)}
-                    onConfirm={() => {
-                        console.log('Se simuló el borrado de:', productToDelete?.nombre);
-                        setProductToDelete(null);
-                    }}
+                    onClose={() => !isDeleting && setProductToDelete(null)}
+                    onConfirm={() => void handleDeleteConfirm()}
                     title="Eliminar producto"
                     message={
                         <>
-                            ¿Estás seguro de que deseas eliminar el producto <strong>{productToDelete?.nombre}</strong>?
+                            ¿Estás seguro de que deseas eliminar el producto{' '}
+                            <strong>{productToDelete?.nombre}</strong>?{' '}
                             Esta acción no se puede deshacer.
                         </>
                     }
-                    confirmText="Me aseguro, Borrar"
+                    confirmText={isDeleting ? 'Eliminando…' : 'Sí, eliminar'}
                     cancelText="Cancelar"
                 />
-
             </Paper>
         </Box>
     );
