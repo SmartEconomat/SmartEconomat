@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Script para contar commits y PRs (merges) por contribuidor
 # Este script genera automáticamente el archivo CONTRIBUTORS.md
