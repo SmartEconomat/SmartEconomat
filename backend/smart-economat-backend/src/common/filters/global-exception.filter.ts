@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { randomUUID } from 'node:crypto';
 import { ApiResponse } from '../interfaces/api-response.interface';
 import { APP_VERSION } from '../helpers/app-version.helper';
 import { I18nHelper } from '../helpers/i18n.helper';
@@ -15,13 +16,13 @@ import { I18nHelper } from '../helpers/i18n.helper';
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
 
-  async catch(exception: unknown, host: ArgumentsHost) {
+  catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    const { v7: uuidv7 } = await import('uuid');
-    const requestId = (request.headers['x-request-id'] as string) || uuidv7();
+    const requestId =
+      (request.headers['x-request-id'] as string) || randomUUID();
     response.setHeader('x-request-id', requestId);
 
     const status =

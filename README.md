@@ -28,36 +28,37 @@ SmartEconomat es una aplicación diseñada para gestionar el inventario de ingre
 
    ### Entorno de Desarrollo (Hot Reload)
 
-   Ideal para programar. Incluye recarga automática (HMR) para backend y frontend.
+   Ideal para programar. Incluye recarga automática (HMR) para backend y frontend. Se utiliza el archivo de entorno `.env.dev`.
 
    ```bash
-   docker compose -f docker-compose.dev.yml up --build
+   docker compose --env-file .env.dev --file docker-compose.dev.yml up --build
    ```
 
    - **Frontend**: [http://localhost:5173](http://localhost:5173)
    - **Backend**: [http://localhost:3000](http://localhost:3000)
+   - **Swagger Docs**: [http://localhost:3000/docs](http://localhost:3000/docs)
    - **Base de Datos**: localhost:5432
 
    ### Entorno de Producción
 
-   Despliega la aplicación optimizada para producción (imágenes ligeras, sin código fuente montado).
+   Despliega la aplicación optimizada para producción (imágenes ligeras, sin código fuente montado). Se utiliza el archivo de entorno `.env.prod`.
 
    ```bash
-   docker compose -f docker-compose.prod.yml up -d --build
+   docker compose --env-file .env.prod --file docker-compose.prod.yml up --build --detach
    ```
 
    - **Frontend**: [http://localhost:80](http://localhost:80)
    - **Backend**: [http://localhost:3000](http://localhost:3000)
 
 4. **Detener el proyecto**  
-   Para detener y eliminar los contenedores:
+   Para detener y eliminar los contenedores, asegúrate de referenciar el archivo de configuración correcto:
 
    ```bash
    # Desarrollo
-   docker compose -f docker-compose.dev.yml down
+   docker compose --file docker-compose.dev.yml down
 
    # Producción
-   docker compose -f docker-compose.prod.yml down
+   docker compose --file docker-compose.prod.yml down
    ```
 
 ## Scripts del Backend
@@ -87,6 +88,11 @@ Para poblar la base de datos con datos iniciales o de prueba:
   npm run db:reset
   ```
 
+### Documentación de la API
+
+Para una guía detallada de todos los endpoints, controladores y casos de uso, consulta el archivo:
+[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)
+
 ### Diagrama Entidad-Relación (ERD)
 
 Para generar un diagrama visual de la estructura actual de la base de datos:
@@ -101,20 +107,23 @@ El archivo generado se guardará en `tools/erd/erd.svg`.
 > Puedes ejecutar estos comandos dentro del contenedor en ejecución:
 >
 > ```bash
-> docker compose -f docker-compose.dev.yml exec backend npm run seed
+> docker compose --env-file .env.dev --file docker-compose.dev.yml exec backend npm run seed
 > ```
 
 ## Notas adicionales
 
 - **Conflicto de puertos**: Ten en cuenta que si intentas levantar el entorno de desarrollo y producción simultáneamente en la misma máquina, es probable que ocurra un conflicto de puertos (por defecto, ambos intentan usar el puerto 3000 para el backend). Detén uno antes de iniciar el otro.
-- **Logs**: Para ver los logs de un entorno específico:
+- **Logs**: Para ver los logs de un entorno específico o de un servicio concreto:
 
   ```bash
-  # Desarrollo
-  docker compose -f docker-compose.dev.yml logs -f
+  # Desarrollo (Todos los servicios)
+  docker compose --env-file .env.dev --file docker-compose.dev.yml logs -f
+
+  # Desarrollo (Solo backend)
+  docker compose --env-file .env.dev --file docker-compose.dev.yml logs -f backend
 
   # Producción
-  docker compose -f docker-compose.prod.yml logs -f
+  docker compose --env-file .env.prod --file docker-compose.prod.yml logs -f
   ```
 
 ## Licencia

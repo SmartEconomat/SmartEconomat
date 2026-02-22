@@ -11,6 +11,7 @@ import { RegisterUserDto } from '../dto/register-user.dto';
 import { LoginUserDto } from '../dto/login-user.dto';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { Usuario } from 'src/modules/usuario/usuario.entity/usuario.entity';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 
 @Injectable()
 export class AuthService {
@@ -28,7 +29,9 @@ export class AuthService {
       });
 
       if (existing) {
-        throw new ConflictException('Usuario o email ya registrado');
+        throw new ConflictException(
+          I18nHelper.getError('USER_OR_EMAIL_ALREADY_REGISTERED')
+        );
       }
 
       const hashedPassword = await bcrypt.hash(dto.password, 10);
@@ -50,7 +53,7 @@ export class AuthService {
     });
 
     if (!usuario || !(await bcrypt.compare(dto.password, usuario.password))) {
-      throw new BadRequestException('Credenciales incorrectas');
+      throw new BadRequestException(I18nHelper.getError('INVALID_CREDENTIALS'));
     }
 
     return this.generateToken(usuario);
