@@ -8,6 +8,7 @@ import {
   type Relation,
 } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
+import { EstadoRecepcion } from '../enums/estado-recepcion.enum';
 import type { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import type { RecepcionPedido } from '../recepcion-pedido.entity/recepcion-pedido.entity';
 import type { RecepcionProducto } from '../recepcion-productos.entity/recepcion-producto.entity';
@@ -25,6 +26,7 @@ import type { RecepcionProducto } from '../recepcion-productos.entity/recepcion-
 @Entity({ name: 'recepcion' })
 @Index('idx_recepcion_usuario', ['usuario'])
 @Index('idx_recepcion_fecha', ['fechaRecepcion'])
+@Index('idx_recepcion_estado', ['estado'])
 export class Recepcion extends BaseEntity {
   /**
    * Usuario que realiza la recepción.
@@ -50,6 +52,24 @@ export class Recepcion extends BaseEntity {
   fechaRecepcion!: Date;
 
   /**
+   * Estado resultante de la recepción, calculado al finalizar la transacción.
+   *
+   * - COMPLETADA:      Todas las cantidades recibidas coinciden con lo pedido.
+   * - PARCIAL:         Al menos un ítem recibido con cantidad inferior a la pedida.
+   *                    El pedido vinculado permanece EN_PROCESO.
+   * - CON_INCIDENCIAS: Al menos un ítem con diferencia (exceso, falta, cantidad=0).
+   *                    Se generan registros en `incidencia` automáticamente.
+   *
+   * @type {EstadoRecepcion}
+   */
+  @Column({
+    type: 'enum',
+    enum: EstadoRecepcion,
+    default: EstadoRecepcion.COMPLETADA,
+  })
+  estado!: EstadoRecepcion;
+
+  /**
    * Observaciones generales sobre la recepción (ej: "Cajas golpeadas").
    * @type {string | undefined}
    */
@@ -72,3 +92,5 @@ export class Recepcion extends BaseEntity {
   })
   recepcionProductos!: Relation<RecepcionProducto[]>;
 }
+
+export { EstadoRecepcion };
