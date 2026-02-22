@@ -1,7 +1,7 @@
-import { Entity, ManyToOne, JoinColumn, Index } from 'typeorm';
+import { Entity, ManyToOne, JoinColumn, Index, type Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
-import { Albaran } from '../albaran.entity/albaran.entity';
-import { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
+import type { Albaran } from '../albaran.entity/albaran.entity';
+import type { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
 
 /**
  * AlbaranPedidoRecepcion Entity
@@ -12,15 +12,15 @@ import { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepci
 @Index('idx_albaran_pedido_recepcion_albaran', ['albaran'])
 @Index('idx_albaran_pedido_recepcion_recepcion_pedido', ['recepcionPedido'])
 export class AlbaranPedidoRecepcion extends BaseEntity {
-  @ManyToOne(() => Albaran, (albaran) => albaran.albaranPedidoRecepcion, {
+  @ManyToOne('Albaran', (albaran: Albaran) => albaran.albaranPedidoRecepcion, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'id_albaran' })
-  albaran!: Albaran;
+  albaran!: Relation<Albaran>;
 
-  @ManyToOne(() => RecepcionPedido, {
+  @ManyToOne('RecepcionPedido', {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'id_pedido_recepcion' })
-  recepcionPedido!: RecepcionPedido;
+  recepcionPedido!: Relation<RecepcionPedido>;
 }
