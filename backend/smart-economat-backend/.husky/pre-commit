@@ -3,7 +3,7 @@ echo "🚀 Running pre-commit hooks"
 
 echo "🧹 [1/2] Limpiando comentarios y verificando código (Backend)..."
 # Usamos paréntesis para ejecutar en subshell y no afectar el directorio actual
-(cd backend/smart-economat-backend && npx lint-staged)
+(cd backend/smart-economat-backend && npx lint-staged && npx tsc --noEmit)
 
 echo "📊 [2/2] Actualizando estadísticas de contribuidores..."
 ./scripts/contributors/count-commits.sh

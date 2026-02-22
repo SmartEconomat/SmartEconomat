@@ -1,6 +1,13 @@
-import { Column, Entity, Index, OneToMany, PrimaryColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  OneToMany,
+  PrimaryColumn,
+  type Relation,
+} from 'typeorm';
 import { DificultadReceta, TiempoReceta } from '../enums/receta.enums';
-import { RecetaIngrediente } from '../receta-ingrediente.entity/receta-ingrediente.entity';
+import type { RecetaIngrediente } from '../receta-ingrediente.entity/receta-ingrediente.entity';
 
 @Index(['dificultad', 'tiempo'])
 @Entity('receta')
@@ -39,6 +46,6 @@ export class Receta {
   })
   tiempoPreparacion!: string;
 
-  @OneToMany(() => RecetaIngrediente, (ri) => ri.receta)
-  ingredientes!: RecetaIngrediente[];
+  @OneToMany('RecetaIngrediente', (ri: RecetaIngrediente) => ri.receta)
+  ingredientes!: Relation<RecetaIngrediente[]>;
 }
