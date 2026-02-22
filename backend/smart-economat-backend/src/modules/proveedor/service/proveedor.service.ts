@@ -7,6 +7,7 @@ import { Proveedor } from '../proveedor.entity/proveedor.entity';
 import { ProveedorRepository } from '../repository/proveedor.repository';
 import { CreateProveedorDto } from '../dto/create-proveedor.dto';
 import { UpdateProveedorDto } from '../dto/update-proveedor.dto';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 
 @Injectable()
 export class ProveedorService {
@@ -30,7 +31,7 @@ export class ProveedorService {
     });
 
     if (!proveedor) {
-      throw new NotFoundException('Proveedor no encontrado');
+      throw new NotFoundException(I18nHelper.getError('PROVIDER_NOT_FOUND'));
     }
 
     return proveedor;
@@ -51,7 +52,7 @@ export class ProveedorService {
 
     if (proveedor.productos && proveedor.productos.length > 0) {
       throw new BadRequestException(
-        'No se puede eliminar el proveedor porque tiene productos asociados'
+        I18nHelper.getError('PROVIDER_HAS_PRODUCTS')
       );
     }
 
