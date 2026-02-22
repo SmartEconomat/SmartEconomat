@@ -2,17 +2,13 @@
 
 <<<<<<< HEAD
 <<<<<<< HEAD
-<<<<<<< HEAD
-> **Última actualización:** 2026-02-21 23:42:26
-=======
-> **Última actualización:** 2026-02-21 19:58:13
->>>>>>> 2c6e997 (feature(spinner): Creación de spinner de carga)
-=======
-> **Última actualización:** 2026-02-21 20:35:48
->>>>>>> f707102 (feat(modal): Creación de modal genérico)
+> **Última actualización:** 2026-02-22 00:27:12
 =======
 > **Última actualización:** 2026-02-21 21:22:31
 >>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
+=======
+> **Última actualización:** 2026-02-21 21:45:28
+>>>>>>> b2dfa12 (feat(confirmDialog): Creación del componente de dialogo de confirmación basado en el componente modal)
 
 ---
 
@@ -22,14 +18,10 @@
 
 Este guerrero del código lidera la carga con:
 <<<<<<< HEAD
-- 💻 **63** Commits
+- 💻 **64** Commits
 - 🔀 **45** PRs Fusionados
 =======
 - 💻 **10** Commits
-<<<<<<< HEAD
-- 🔀 **71** PRs Fusionados
->>>>>>> 2c6e997 (feature(spinner): Creación de spinner de carga)
-=======
 - 🔀 **73** PRs Fusionados
 >>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
 
@@ -41,18 +33,13 @@ Demostrando que:
 **Estadísticas de Dominio:**
 <<<<<<< HEAD
 <<<<<<< HEAD
-<<<<<<< HEAD
-- Posee el **37,28%** de todo el código.
+- Posee el **36,16%** de todo el código.
 - Ha logrado fusionar **45** funcionalidades completas.
 =======
-- Posee el **6.10%** de todo el código.
->>>>>>> 2c6e997 (feature(spinner): Creación de spinner de carga)
-=======
-- Posee el **6.02%** de todo el código.
->>>>>>> f707102 (feat(modal): Creación de modal genérico)
-- Ha logrado fusionar **71** funcionalidades completas.
-=======
 - Posee el **5.99%** de todo el código.
+=======
+- Posee el **5.95%** de todo el código.
+>>>>>>> b2dfa12 (feat(confirmDialog): Creación del componente de dialogo de confirmación basado en el componente modal)
 - Ha logrado fusionar **73** funcionalidades completas.
 >>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
 
@@ -63,58 +50,40 @@ Demostrando que:
 ### 🥈 Alexis
 <<<<<<< HEAD
 <<<<<<< HEAD
-<<<<<<< HEAD
-- 💻 Commits: **37** (21,89%)
-- 🔀 PRs Fusionados: **9**
+- 💻 Commits: **44** (24,86%)
+- 🔀 PRs Fusionados: **12**
 
 ### 🥈 Maurizio
-- 💻 Commits: **31** (18,34%)
+- 💻 Commits: **31** (17,51%)
 - 🔀 PRs Fusionados: **8**
 
 ### 🥈 Sergio
-- 💻 Commits: **28** (16,57%)
+- 💻 Commits: **28** (15,82%)
 - 🔀 PRs Fusionados: **6**
 
 ### 🥈 Guillermo
-- 💻 Commits: **10** (5,92%)
+- 💻 Commits: **10** (5,65%)
 - 🔀 PRs Fusionados: **5**
-- 🔀 PRs Fusionados: **71**
-=======
-- 💻 Commits: **10** (6.10%)
-=======
-- 💻 Commits: **10** (6.02%)
->>>>>>> f707102 (feat(modal): Creación de modal genérico)
-- 🔀 PRs Fusionados: **71**
 =======
 - 💻 Commits: **10** (5.99%)
+=======
+- 💻 Commits: **10** (5.95%)
+>>>>>>> b2dfa12 (feat(confirmDialog): Creación del componente de dialogo de confirmación basado en el componente modal)
 - 🔀 PRs Fusionados: **73**
 
 ### 🥈 Maurizio
-- 💻 Commits: **10** (5.99%)
+- 💻 Commits: **10** (5.95%)
 - 🔀 PRs Fusionados: **73**
 
 ### 🥈 Sergio
-- 💻 Commits: **10** (5.99%)
+- 💻 Commits: **10** (5.95%)
 - 🔀 PRs Fusionados: **73**
 
 ### 🥈 Guillermo
-- 💻 Commits: **10** (5.99%)
+- 💻 Commits: **10** (5.95%)
 - 🔀 PRs Fusionados: **73**
 >>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
 
-### 🥈 Maurizio
-- 💻 Commits: **10** (6.02%)
-- 🔀 PRs Fusionados: **71**
-
-### 🥈 Sergio
-- 💻 Commits: **10** (6.02%)
-- 🔀 PRs Fusionados: **71**
-
-### 🥈 Guillermo
-- 💻 Commits: **10** (6.02%)
-- 🔀 PRs Fusionados: **71**
-
->>>>>>> 2c6e997 (feature(spinner): Creación de spinner de carga)
 
 ---
 
@@ -123,7 +92,7 @@ Demostrando que:
 ### 😅 **Guillermo**
 
 <<<<<<< HEAD
-Con **10 commits** y **71 PRs**, tenemos aquí a alguien que:
+Con **10 commits** y **5 PRs**, tenemos aquí a alguien que:
 =======
 Con **10 commits** y **73 PRs**, tenemos aquí a alguien que:
 >>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
@@ -144,32 +113,11 @@ Con **10 commits** y **73 PRs**, tenemos aquí a alguien que:
 |----------|--------------|---------|----------------|----------|--------|
 <<<<<<< HEAD
 <<<<<<< HEAD
-<<<<<<< HEAD
-| #1 | Darel | **63** | 🔀 **45** | 37,28% | 👑 Líder |
-| #2 | Alexis | **37** | 🔀 **9** | 21,89% | 💪 Activo |
-| #3 | Maurizio | **31** | 🔀 **8** | 18,34% | 💪 Activo |
-| #4 | Sergio | **28** | 🔀 **6** | 16,57% | 💪 Activo |
-| #5 | Guillermo | **10** | 🔀 **5** | 5,92% | 🐌 Necesita café |
-
-## 📊 Estadísticas Generales
-
-- **Total de commits:** 169
-- **Total de PRs fusionados:** 73
-- **Total de contribuidores:** 5
-- **Promedio de commits por persona:** 33,8
-=======
-| #1 | Darel | **10** | 🔀 **71** | 6.10% | 👑 Líder |
-| #2 | Alexis | **10** | 🔀 **71** | 6.10% | 💪 Activo |
-| #3 | Maurizio | **10** | 🔀 **71** | 6.10% | 💪 Activo |
-| #4 | Sergio | **10** | 🔀 **71** | 6.10% | 💪 Activo |
-| #5 | Guillermo | **10** | 🔀 **71** | 6.10% | 🐌 Necesita café |
-=======
-| #1 | Darel | **10** | 🔀 **71** | 6.02% | 👑 Líder |
-| #2 | Alexis | **10** | 🔀 **71** | 6.02% | 💪 Activo |
-| #3 | Maurizio | **10** | 🔀 **71** | 6.02% | 💪 Activo |
-| #4 | Sergio | **10** | 🔀 **71** | 6.02% | 💪 Activo |
-| #5 | Guillermo | **10** | 🔀 **71** | 6.02% | 🐌 Necesita café |
->>>>>>> f707102 (feat(modal): Creación de modal genérico)
+| #1 | Darel | **64** | 🔀 **45** | 36,16% | 👑 Líder |
+| #2 | Alexis | **44** | 🔀 **12** | 24,86% | 💪 Activo |
+| #3 | Maurizio | **31** | 🔀 **8** | 17,51% | 💪 Activo |
+| #4 | Sergio | **28** | 🔀 **6** | 15,82% | 💪 Activo |
+| #5 | Guillermo | **10** | 🔀 **5** | 5,65% | 🐌 Necesita café |
 =======
 | #1 | Darel | **10** | 🔀 **73** | 5.99% | 👑 Líder |
 | #2 | Alexis | **10** | 🔀 **73** | 5.99% | 💪 Activo |
@@ -177,25 +125,35 @@ Con **10 commits** y **73 PRs**, tenemos aquí a alguien que:
 | #4 | Sergio | **10** | 🔀 **73** | 5.99% | 💪 Activo |
 | #5 | Guillermo | **10** | 🔀 **73** | 5.99% | 🐌 Necesita café |
 >>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
+=======
+| #1 | Darel | **10** | 🔀 **73** | 5.95% | 👑 Líder |
+| #2 | Alexis | **10** | 🔀 **73** | 5.95% | 💪 Activo |
+| #3 | Maurizio | **10** | 🔀 **73** | 5.95% | 💪 Activo |
+| #4 | Sergio | **10** | 🔀 **73** | 5.95% | 💪 Activo |
+| #5 | Guillermo | **10** | 🔀 **73** | 5.95% | 🐌 Necesita café |
+>>>>>>> b2dfa12 (feat(confirmDialog): Creación del componente de dialogo de confirmación basado en el componente modal)
 
 ---
 
 ## 📊 Estadísticas Generales
 
 <<<<<<< HEAD
-- **Total de commits:** 166
-- **Total de PRs fusionados:** 71
+<<<<<<< HEAD
+- **Total de commits:** 177
+- **Total de PRs fusionados:** 76
 =======
 - **Total de commits:** 167
+=======
+- **Total de commits:** 168
+>>>>>>> b2dfa12 (feat(confirmDialog): Creación del componente de dialogo de confirmación basado en el componente modal)
 - **Total de PRs fusionados:** 73
 >>>>>>> 71e17ee (feat(dataTable): Creación de componente genérico para listado por tabla)
 - **Total de contribuidores:** 5
 <<<<<<< HEAD
-- **Promedio de commits por persona:** 32.8
->>>>>>> 2c6e997 (feature(spinner): Creación de spinner de carga)
+- **Promedio de commits por persona:** 35,4
 =======
-- **Promedio de commits por persona:** 33.2
->>>>>>> f707102 (feat(modal): Creación de modal genérico)
+- **Promedio de commits por persona:** 33.6
+>>>>>>> b2dfa12 (feat(confirmDialog): Creación del componente de dialogo de confirmación basado en el componente modal)
 
 ---
 
@@ -203,32 +161,19 @@ Con **10 commits** y **73 PRs**, tenemos aquí a alguien que:
 
 **Darel**
 <<<<<<< HEAD
-<<<<<<< HEAD
-`████████████████████` 63 commits | 45 PRs
+`████████████████████` 64 commits | 45 PRs
 
 **Alexis**
-`███████████░░░░░░░░░` 37 commits | 9 PRs
+`█████████████░░░░░░░` 44 commits | 12 PRs
 
 **Maurizio**
 `█████████░░░░░░░░░░░` 31 commits | 8 PRs
 
 **Sergio**
 `████████░░░░░░░░░░░░` 28 commits | 6 PRs
-=======
-`████████████████████` 10 commits | 71 PRs
-
-**Alexis**
-`████████████████████` 10 commits | 71 PRs
-
-**Maurizio**
-`████████████████████` 10 commits | 71 PRs
-
-**Sergio**
-`████████████████████` 10 commits | 71 PRs
->>>>>>> 2c6e997 (feature(spinner): Creación de spinner de carga)
 
 **Guillermo**
-`████████████████████` 10 commits | 71 PRs
+`███░░░░░░░░░░░░░░░░░` 10 commits | 5 PRs
 =======
 `████████████████████` 10 commits | 73 PRs
 
