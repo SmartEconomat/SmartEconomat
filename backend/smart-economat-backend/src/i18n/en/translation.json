@@ -36,7 +36,8 @@
     "PROVIDER_NOT_FOUND": "Provider not found",
     "PROVIDER_HAS_PRODUCTS": "Cannot delete the provider because it has associated products",
     "ENTITY_HAS_RELATIONS": "This record cannot be deleted because it is being used in other parts of the system.",
-    "DUPLICATE_ENTRY": "A record with that value already exists. Please use a different one."
+    "DUPLICATE_ENTRY": "A record with that value already exists. Please use a different one.",
+    "RECIPE_NOT_FOUND": "Recipe not found"
   },
   "success": {
     "CREATED": "Successfully created",
@@ -60,7 +61,8 @@
     "inventario": "Inventory",
     "movimiento": "Movement",
     "incidencia": "Incident",
-    "albaran": "Delivery Note"
+    "albaran": "Delivery Note",
+    "receta": "Recipe"
   },
   "seeders": {
     "running": "🌱 Running seeder {file}...",
