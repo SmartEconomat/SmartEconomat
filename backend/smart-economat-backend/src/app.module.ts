@@ -23,6 +23,7 @@ import { AlbaranModule } from './modules/albaran/albaran.module';
     }),
     TypeOrmModule.forRoot(typeOrmConfig),
     I18nConfigModule,
+    UsuarioModule,
     PedidoModule,
     ProductoModule,
     MovimientoModule,
