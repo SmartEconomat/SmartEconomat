@@ -1,10 +1,4 @@
-import { IsDateString, IsNotEmpty } from 'class-validator';
+import { PartialType } from '@nestjs/mapped-types';
+import { CreatePedidoDto } from './create-pedido.dto';
 
-export class UpdatePedidoDto {
-  @IsDateString(
-    {},
-    { message: 'La fecha de entrega debe ser una fecha válida (ISO 8601)' }
-  )
-  @IsNotEmpty({ message: 'La fecha de entrega es obligatoria' })
-  fechaEntrega: string;
-}
+export class UpdatePedidoDto extends PartialType(CreatePedidoDto) {}
