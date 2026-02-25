@@ -1,5 +1,19 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Patch,
+  Delete,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+} from '@nestjs/common';
 import { InventarioService } from '../service/inventario.service';
+import { CreateInventarioDto } from '../dto/create-inventario.dto';
+import { UpdateInventarioDto } from '../dto/update-inventario.dto';
+import { Inventario } from '../inventario.entity/inventario.entity';
 import { AlertaCaducidadDTO } from '../dto/alertaCaducidad.dto';
 import { AlertaStockDTO } from '../dto/alertaStock.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -8,19 +22,56 @@ import { Roles } from '../../auth/decorators/roles.decorator';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('Alertas')
+@Controller('inventario')
 export class InventarioController {
   constructor(private readonly inventarioService: InventarioService) {}
 
-  @Get('caducidad')
+  @Post()
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
-  async alertasCaducidad(): Promise<AlertaCaducidadDTO[]> {
+  @HttpCode(HttpStatus.CREATED)
+  create(
+    @Body() createInventarioDto: CreateInventarioDto
+  ): Promise<Inventario> {
+    return this.inventarioService.create(createInventarioDto);
+  }
+
+  @Get()
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  findAll(): Promise<Inventario[]> {
+    return this.inventarioService.findAll();
+  }
+
+  @Get('alertas/caducidad')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  alertasCaducidad(): Promise<AlertaCaducidadDTO[]> {
     return this.inventarioService.obtenerAlertasCaducidad();
   }
 
-  @Get('stock')
+  @Get('alertas/stock')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
-  async alertasStock(): Promise<AlertaStockDTO[]> {
+  alertasStock(): Promise<AlertaStockDTO[]> {
     return this.inventarioService.obtenerAlertasStock();
+  }
+
+  @Get(':id')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  findOne(@Param('id') id: string): Promise<Inventario> {
+    return this.inventarioService.findOne(id);
+  }
+
+  @Patch(':id')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  update(
+    @Param('id') id: string,
+    @Body() updateInventarioDto: UpdateInventarioDto
+  ): Promise<Inventario> {
+    return this.inventarioService.update(id, updateInventarioDto);
+  }
+
+  @Delete(':id')
+  @Roles(rolUsuario.ADMINISTRADOR)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param('id') id: string): Promise<void> {
+    return this.inventarioService.remove(id);
   }
 }

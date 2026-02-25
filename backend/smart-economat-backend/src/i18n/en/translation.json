@@ -37,7 +37,9 @@
     "PROVIDER_HAS_PRODUCTS": "Cannot delete the provider because it has associated products",
     "ENTITY_HAS_RELATIONS": "This record cannot be deleted because it is being used in other parts of the system.",
     "DUPLICATE_ENTRY": "A record with that value already exists. Please use a different one.",
-    "RECIPE_NOT_FOUND": "Recipe not found"
+    "RECIPE_NOT_FOUND": "Recipe not found",
+    "INVENTARIO_NOT_FOUND": "Inventory record not found",
+    "INVENTARIO_CONSTRAINT_VIOLATION": "Constraint violation: ensure cantidad_maxima >= cantidad_minima and all quantities are non-negative"
   },
   "success": {
     "CREATED": "Successfully created",
