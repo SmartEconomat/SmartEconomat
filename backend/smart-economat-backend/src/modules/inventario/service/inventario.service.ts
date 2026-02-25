@@ -1,16 +1,129 @@
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Between, QueryFailedError, Repository } from 'typeorm';
 import { Inventario } from '../inventario.entity/inventario.entity';
-import { Injectable } from '@nestjs/common';
-import { Between, Repository } from 'typeorm';
+import { InventarioRepository } from '../repository/inventario.repository';
+import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
+import { CreateInventarioDto } from '../dto/create-inventario.dto';
+import { UpdateInventarioDto } from '../dto/update-inventario.dto';
 import { AlertaStockDTO } from '../dto/alertaStock.dto';
 import { AlertaCaducidadDTO } from '../dto/alertaCaducidad.dto';
-import { InjectRepository } from '@nestjs/typeorm';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 
 @Injectable()
 export class InventarioService {
   constructor(
-    @InjectRepository(Inventario)
-    private inventarioRepository: Repository<Inventario>
+    private readonly inventarioRepository: InventarioRepository,
+    @InjectRepository(ProductoProveedor)
+    private readonly productoProveedorRepository: Repository<ProductoProveedor>
   ) {}
+
+  async create(dto: CreateInventarioDto): Promise<Inventario> {
+    const productoProveedor = await this.productoProveedorRepository.findOne({
+      where: { id: dto.productoProveedorId },
+    });
+    if (!productoProveedor) {
+      throw new NotFoundException(
+        I18nHelper.getError('PRODUCT_PROVIDER_NOT_FOUND')
+      );
+    }
+
+    const inventario = this.inventarioRepository.create({
+      productoProveedor,
+      cantidadActual: dto.cantidadActual,
+      cantidadMinima: dto.cantidadMinima,
+      cantidadMaxima: dto.cantidadMaxima ?? null,
+      ubicacionAlmacen: dto.ubicacionAlmacen,
+      fechaCaducidad: new Date(dto.fechaCaducidad),
+    });
+
+    try {
+      return await this.inventarioRepository.save(inventario);
+    } catch (err) {
+      if (err instanceof QueryFailedError) {
+        throw new BadRequestException(
+          I18nHelper.getError('INVENTARIO_CONSTRAINT_VIOLATION')
+        );
+      }
+      throw err;
+    }
+  }
+
+  async findAll(): Promise<Inventario[]> {
+    return this.inventarioRepository.find({
+      relations: [
+        'productoProveedor',
+        'productoProveedor.producto',
+        'productoProveedor.proveedor',
+      ],
+    });
+  }
+
+  async findOne(id: string): Promise<Inventario> {
+    const inventario = await this.inventarioRepository.findOne({
+      where: { id },
+      relations: [
+        'productoProveedor',
+        'productoProveedor.producto',
+        'productoProveedor.proveedor',
+      ],
+    });
+    if (!inventario) {
+      throw new NotFoundException(I18nHelper.getError('INVENTARIO_NOT_FOUND'));
+    }
+    return inventario;
+  }
+
+  async update(id: string, dto: UpdateInventarioDto): Promise<Inventario> {
+    const inventario = await this.findOne(id);
+
+    if (dto.productoProveedorId !== undefined) {
+      const productoProveedor = await this.productoProveedorRepository.findOne({
+        where: { id: dto.productoProveedorId },
+      });
+      if (!productoProveedor) {
+        throw new NotFoundException(
+          I18nHelper.getError('PRODUCT_PROVIDER_NOT_FOUND')
+        );
+      }
+      inventario.productoProveedor = productoProveedor;
+    }
+
+    if (dto.cantidadActual !== undefined)
+      inventario.cantidadActual = dto.cantidadActual;
+    if (dto.cantidadMinima !== undefined)
+      inventario.cantidadMinima = dto.cantidadMinima;
+    if (dto.cantidadMaxima !== undefined)
+      inventario.cantidadMaxima = dto.cantidadMaxima ?? null;
+    if (dto.ubicacionAlmacen !== undefined)
+      inventario.ubicacionAlmacen = dto.ubicacionAlmacen;
+    if (dto.fechaCaducidad !== undefined)
+      inventario.fechaCaducidad = new Date(dto.fechaCaducidad);
+
+    try {
+      await this.inventarioRepository.save(inventario);
+    } catch (err) {
+      if (err instanceof QueryFailedError) {
+        throw new BadRequestException(
+          I18nHelper.getError('INVENTARIO_CONSTRAINT_VIOLATION')
+        );
+      }
+      throw err;
+    }
+
+    return this.findOne(id);
+  }
+
+  async remove(id: string): Promise<void> {
+    const result = await this.inventarioRepository.softDelete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(I18nHelper.getError('INVENTARIO_NOT_FOUND'));
+    }
+  }
 
   async obtenerAlertasCaducidad(): Promise<AlertaCaducidadDTO[]> {
     const hoy = new Date();
@@ -18,9 +131,7 @@ export class InventarioService {
     limite.setDate(hoy.getDate() + 7);
 
     const productos = await this.inventarioRepository.find({
-      where: {
-        fechaCaducidad: Between(hoy, limite),
-      },
+      where: { fechaCaducidad: Between(hoy, limite) },
     });
 
     return productos.map((p) => ({
