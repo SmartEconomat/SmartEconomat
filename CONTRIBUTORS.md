@@ -46,7 +46,7 @@ Demostrando que:
 - 🔀 PRs Fusionados: **8**
 
 ### 🥈 Maurizio
-- 💻 Commits: **31** (15.74%)
+- 💻 Commits: **31** (15.66%)
 - 🔀 PRs Fusionados: **8**
 
 ### 🥈 Guillermo
