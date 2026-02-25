@@ -19,6 +19,7 @@ const Incidencias = React.lazy(() => import('../../pages/Incidencias'));
 const Movimientos = React.lazy(() => import('../../pages/Movimientos'));
 const Proveedores = React.lazy(() => import('../../pages/Proveedores'));
 const Usuario = React.lazy(() => import('../../pages/Usuario'));
+const Usuarios = React.lazy(() => import('../../pages/Usuarios/Usuarios'));
 
 export interface MenuItem {
     path: string;
@@ -92,6 +93,14 @@ export const menuItems: MenuItem[] = [
         description: 'Reportar y gestionar problemas o devoluciones',
         icon: <ReportProblemIconOption />,
         component: Incidencias,
+        showInMenu: true
+    },
+    {
+        path: '/usuarios',
+        title: 'Usuarios',
+        description: 'Gestión de profesores, alumnos y administradores',
+        icon: <PersonIconOption />, // Using PersonIconOption as requested/available
+        component: Usuarios,
         showInMenu: true
     },
     {
