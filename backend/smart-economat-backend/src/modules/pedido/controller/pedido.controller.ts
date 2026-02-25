@@ -69,4 +69,5 @@ export class PedidoController {
   cancelarPedido(@Param('id', ParseUUIDPipe) id: string, @Body() dto: CancelPedidoDto): Promise<Pedido> {
     return this.pedidoService.cancelarPedido(id, dto);
   }
+
 }
