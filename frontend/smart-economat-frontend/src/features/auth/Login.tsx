@@ -30,7 +30,7 @@ export default function Login() {
         login({
             name: 'Usuario Demo',
             email: formData.email
-        });
+        }, 'dummy-token');
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
