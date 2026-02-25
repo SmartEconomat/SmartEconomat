@@ -1,57 +1,35 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Pedido } from '../pedido.entity/pedido.entity';
-import { CreatePedidoDto } from '../dto/create-pedido.dto';
-import { UpdatePedidoDto } from '../dto/create-pedido.dto';
+import { EstadoPedido } from '../enums/estado-pedido.enum';
+import { CreatePedidoDto, UpdatePedidoDto } from '../dto/create-pedido.dto';
+import { CancelPedidoDto } from '../dto/cancelPedido.dto';
+import { PedidoRepository } from '../repository/pedido.repository';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 
 @Injectable()
 export class PedidoService {
-  constructor(
-    @InjectRepository(Pedido)
-    private readonly pedidoRepository: Repository<Pedido>
-  ) {}
+  constructor(private readonly pedidoRepository: PedidoRepository) {}
 
   async create(createPedidoDto: CreatePedidoDto): Promise<Pedido> {
-    const { pedidoProductos, ...rest } = createPedidoDto;
-    const pedido = this.pedidoRepository.create(rest);
+    const pedido = this.pedidoRepository.create({
+      ...createPedidoDto,
+      estado: EstadoPedido.PENDIENTE,
+      costeTotal: createPedidoDto.costeTotal || 0,
+    });
 
-    if (pedidoProductos && pedidoProductos.length > 0) {
-      pedido.pedidoProductos = pedidoProductos.map((pp) => ({
-        ...pp,
-        productoProveedor: { id: pp.productoProveedorId } as any,
-      })) as any;
+    if (createPedidoDto.fechaEntrega) {
+      pedido.fechaEntrega = new Date(createPedidoDto.fechaEntrega);
     }
 
-    const saved = await this.pedidoRepository.save(pedido);
-    return this.findOne(saved.id);
+    return await this.pedidoRepository.save(pedido);
   }
 
   async findAll(): Promise<Pedido[]> {
-    return this.pedidoRepository.find({
-      relations: [
-        'usuario',
-        'pedidoProductos',
-        'pedidoProductos.productoProveedor',
-        'pedidoProductos.productoProveedor.producto',
-        'pedidoProductos.productoProveedor.proveedor',
-      ],
-      order: { createdAt: 'DESC' },
-    });
+    return await this.pedidoRepository.findAllWithRelations();
   }
 
   async findOne(id: string): Promise<Pedido> {
-    const pedido = await this.pedidoRepository.findOne({
-      where: { id },
-      relations: [
-        'usuario',
-        'pedidoProductos',
-        'pedidoProductos.productoProveedor',
-        'pedidoProductos.productoProveedor.producto',
-        'pedidoProductos.productoProveedor.proveedor',
-      ],
-    });
+    const pedido = await this.pedidoRepository.findOneWithRelations(id);
     if (!pedido) {
       throw new NotFoundException(I18nHelper.getError('ORDER_NOT_FOUND'));
     }
@@ -59,35 +37,58 @@ export class PedidoService {
   }
 
   async update(id: string, updatePedidoDto: UpdatePedidoDto): Promise<Pedido> {
-    const { pedidoProductos, ...rest } = updatePedidoDto;
     const pedido = await this.findOne(id);
 
-    this.pedidoRepository.merge(pedido, rest);
-
-    if (pedidoProductos) {
-      pedido.pedidoProductos = pedidoProductos.map((pp) => ({
-        ...pp,
-        id_pedido: id,
-        productoProveedor: { id: pp.productoProveedorId } as any,
-      })) as any;
+    if (updatePedidoDto.fechaEntrega) {
+      pedido.fechaEntrega = new Date(updatePedidoDto.fechaEntrega);
     }
 
-    await this.pedidoRepository.save(pedido);
-    return this.findOne(id);
+    if (updatePedidoDto.estado) {
+        pedido.estado = updatePedidoDto.estado;
+    }
+
+    return await this.pedidoRepository.save(pedido);
+  }
+
+  async updateFechaEntrega(id: string, dto: UpdatePedidoDto): Promise<Pedido> {
+    const pedido = await this.findOne(id);
+
+    if (dto.fechaEntrega) {
+      pedido.fechaEntrega = new Date(dto.fechaEntrega);
+      return await this.pedidoRepository.save(pedido);
+    }
+
+    return pedido;
+  }
+
+  async cancelarPedido(id: string, dto: CancelPedidoDto): Promise<Pedido> {
+    const pedido = await this.findOne(id);
+
+    if (
+      pedido.estado === EstadoPedido.RECIBIDO ||
+      pedido.estado === EstadoPedido.EN_PROCESO
+    ) {
+      throw new BadRequestException(
+        I18nHelper.getError('ORDER_NOT_CANCELLABLE')
+      );
+    }
+
+    pedido.cancelar(dto.motivoCancelacion);
+    return await this.pedidoRepository.save(pedido);
   }
 
   async remove(id: string): Promise<void> {
-    const result = await this.pedidoRepository.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException(I18nHelper.getError('ORDER_NOT_FOUND'));
+    const pedido = await this.findOne(id);
+
+    if (
+      pedido.estado !== EstadoPedido.PENDIENTE &&
+      pedido.estado !== EstadoPedido.CANCELADO
+    ) {
+      throw new BadRequestException(
+        I18nHelper.getError('ORDER_CANNOT_BE_DELETED')
+      );
     }
-  }
 
-  async updateFechaEntrega(id: string, dto: any): Promise<Pedido> {
-    return this.update(id, dto);
-  }
-
-  async cancelarPedido(id: string, dto: any): Promise<Pedido> {
-    return this.update(id, { estado: 'cancelado' as any, ...dto });
+    await this.pedidoRepository.remove(pedido);
   }
 }
