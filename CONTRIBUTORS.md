@@ -6,7 +6,7 @@
 
 ## 👑 **CAMPEÓN SUPREMO** 👑
 
-### 🎖️ **Darel**
+### 🎖️ **Alexis**
 
 Este guerrero del código lidera la carga con:
 - 💻 **71** Commits

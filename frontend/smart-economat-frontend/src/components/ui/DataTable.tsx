@@ -19,6 +19,7 @@ export interface Column<T> {
     label: string;
     render?: (row: T) => ReactNode;
     align?: 'inherit' | 'left' | 'center' | 'right' | 'justify';
+    hideOnMobile?: boolean;
 }
 
 export interface DataTableProps<T> {
@@ -68,14 +69,17 @@ export function DataTable<T extends Record<string, any>>({
     return (
         <Box sx={{ width: '100%', mb: 2 }}>
             <TableContainer component={Paper}>
-                <Table sx={{ minWidth: 650 }} aria-label="data table">
+                <Table sx={{ minWidth: { xs: '100%', md: 650 } }} aria-label="data table">
                     <TableHead>
                         <TableRow>
                             {columns.map((column) => (
                                 <TableCell
                                     key={String(column.id)}
                                     align={column.align || 'left'}
-                                    sx={{ fontWeight: 'bold' }}
+                                    sx={{
+                                        fontWeight: 'bold',
+                                        display: column.hideOnMobile ? { xs: 'none', md: 'table-cell' } : undefined
+                                    }}
                                 >
                                     {column.label}
                                 </TableCell>
@@ -125,6 +129,9 @@ export function DataTable<T extends Record<string, any>>({
                                         <TableCell
                                             key={String(column.id)}
                                             align={column.align || 'left'}
+                                            sx={{
+                                                display: column.hideOnMobile ? { xs: 'none', md: 'table-cell' } : undefined
+                                            }}
                                         >
                                             {column.render
                                                 ? column.render(row)

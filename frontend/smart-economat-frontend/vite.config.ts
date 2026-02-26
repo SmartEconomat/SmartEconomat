@@ -14,7 +14,7 @@ export default defineConfig(() => {
         open: false, // Prevent opening browser in Docker (xdg-open error)
         proxy: {
             '/api': {
-                target: 'http://backend:3000',
+                target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:3000',
                 changeOrigin: true,
                 rewrite: (path) => path.replace(/^\/api/, ''),
             },
