@@ -13,6 +13,8 @@ Esta carpeta contiene la documentación técnica y de diseño (UX/UI) del fronte
 Documentación detallada de los componentes clave, desglosando su construcción desde átomos hasta organismos.
 
 #### Base y UI Genérica
+- [DynamicFormModal](./componentes/DynamicFormModal.md): Modal dinámico genérico para generación automática de formularios.
+- [Select](./componentes/Select.md): Componente desplegable base de UI iterado sobre Select de MUI.
 - [Spinner](./componentes/Spinner.md): Indicador de carga dinámico y bloqueador de pantalla.
 - [Modal](./componentes/Modal.md): Ventana de diálogo base reutilizable con gestión de desenfoque.
 - [ConfirmDialog](./componentes/ConfirmDialog.md): Modal para intercepción y confirmación de acciones críticas.
@@ -20,6 +22,7 @@ Documentación detallada de los componentes clave, desglosando su construcción 
 - [DataTable](./componentes/DataTable.md): Tabla general para visualización de registros con paginación integrada.
 - [Tooltip](./componentes/Tooltip.md): Componente de ayuda visual extendido.
 - [StatusChip](./componentes/StatusChip.md): Indicadores de estado visuales y semánticos (Rojo, Amarillo, Verde).
+- [AllergenSelector](./componentes/AllergenSelector.md): Selector visual 100% responsivo para los 14 alérgenos de declaración obligatoria (UE).
 
 #### Funcionales y Layout
 - [Tutorial Onboarding](./componentes/TutorialHelper.md): Guía contextual paso a paso.
