@@ -36,7 +36,8 @@
     "PROVIDER_NOT_FOUND": "Proveedor no encontrado",
     "PROVIDER_HAS_PRODUCTS": "No se puede eliminar el proveedor porque tiene productos asociados",
     "ENTITY_HAS_RELATIONS": "No se puede eliminar este registro porque está siendo utilizado en otras partes del sistema.",
-    "DUPLICATE_ENTRY": "Ya existe un registro con ese valor. Por favor, usa uno diferente."
+    "DUPLICATE_ENTRY": "Ya existe un registro con ese valor. Por favor, usa uno diferente.",
+    "RECIPE_NOT_FOUND": "Receta no encontrada"
   },
   "success": {
     "CREATED": "Creado exitosamente",
@@ -60,7 +61,8 @@
     "inventario": "Inventario",
     "movimiento": "Movimiento",
     "incidencia": "Incidencia",
-    "albaran": "Albarán"
+    "albaran": "Albarán",
+    "receta": "Receta"
   },
   "seeders": {
     "running": "🌱 Ejecutando seeder {file}...",
