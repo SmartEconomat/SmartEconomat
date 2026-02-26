@@ -6,9 +6,10 @@ import DataTable, { Column } from '../components/ui/DataTable';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import DynamicFormModal, { DynamicField } from '../components/ui/DynamicFormModal';
 import { Producto, CategoriaProducto, UnidadMedida } from '../services/producto.types';
-import { fetchProductos } from '../services/producto.service';
+import { fetchProductos, createProducto, updateProducto } from '../services/producto.service';
 import { deleteResource } from '../services/api.service';
 import { useToast } from '../store/ToastContext';
+import StatusChip from '../components/ui/StatusChip';
 
 import FastfoodOutlinedIcon from '@mui/icons-material/FastfoodOutlined';
 import LocalDrinkOutlinedIcon from '@mui/icons-material/LocalDrinkOutlined';
@@ -88,6 +89,7 @@ const Productos: React.FC = () => {
     const [productToDelete, setProductToDelete] = useState<Producto | null>(null);
     const [productToEdit, setProductToEdit] = useState<Record<string, any> | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const toast = useToast();
 
     useEffect(() => {
@@ -119,9 +121,43 @@ const Productos: React.FC = () => {
     };
 
     const handleSaveProduct = async (formData: Record<string, any>) => {
-        console.log("Datos del formulario guardados:", formData);
-        toast.info("Prueba de Modal completada. Datos en consola.");
-        setProductToEdit(null);
+        setIsSaving(true);
+        try {
+            // Preparar datos para el backend
+            // Solo enviamos los campos que el DTO del backend espera
+            const payload: any = {
+                nombre: formData.nombre,
+                marca: formData.marca,
+                descripcion: formData.descripcion,
+                unidad: formData.unidad,
+                tipo: formData.tipo,
+                contenido: formData.contenido,
+                codigoBarras: formData.codigoBarras,
+                fechaCaducidad: formData.fechaCaducidad,
+                alergenos: formData.alergenos,
+            };
+            
+            // Eliminar campos vacíos o nulos si es necesario, 
+            // aunque el backend los maneja con @IsOptional()
+            
+            if (formData.id) {
+                await updateProducto(formData.id, payload);
+                toast.success('Producto actualizado correctamente.');
+            } else {
+                await createProducto(payload);
+                toast.success('Producto creado correctamente.');
+            }
+            
+            // Recargar datos
+            const updatedData = await fetchProductos();
+            setData(updatedData);
+            setProductToEdit(null);
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Error al guardar el producto.';
+            toast.error(message);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const columns: Column<Producto>[] = [
@@ -272,6 +308,7 @@ const Productos: React.FC = () => {
                     fields={productoSchema}
                     initialData={productToEdit || {}}
                     onSubmit={handleSaveProduct}
+                    isSubmitting={isSaving}
                 />
             </Paper>
         </Box>
