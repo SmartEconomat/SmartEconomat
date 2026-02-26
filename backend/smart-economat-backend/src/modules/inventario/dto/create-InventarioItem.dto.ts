@@ -9,7 +9,7 @@ import {
 } from 'class-validator';
 import { localInventario } from '../enums/inventario.enums';
 
-export class CreateInventarioDto {
+export class CreateInventarioItemDto {
   @IsUUID('all', {
     message: 'El id del producto-proveedor debe ser un UUID válido',
   })
@@ -32,10 +32,10 @@ export class CreateInventarioDto {
   @IsEnum(localInventario, { message: 'La ubicación del almacén no es válida' })
   ubicacionAlmacen: localInventario;
 
+  @IsOptional()
   @IsDateString(
     {},
     { message: 'La fecha de caducidad debe ser una fecha válida (ISO 8601)' }
   )
-  @IsNotEmpty({ message: 'La fecha de caducidad es obligatoria' })
-  fechaCaducidad: string;
+  fechaCaducidad?: string;
 }

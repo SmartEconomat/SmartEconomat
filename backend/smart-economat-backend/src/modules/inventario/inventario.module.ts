@@ -10,6 +10,6 @@ import { ProductoProveedor } from '../producto/producto-proveedor.entity/product
   imports: [TypeOrmModule.forFeature([Inventario, ProductoProveedor])],
   controllers: [InventarioController],
   providers: [InventarioService, InventarioRepository],
-  exports: [InventarioService, InventarioRepository],
+  exports: [InventarioService],
 })
 export class InventarioModule {}
