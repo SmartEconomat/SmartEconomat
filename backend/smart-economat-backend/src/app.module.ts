@@ -12,6 +12,8 @@ import { I18nConfigModule } from './config/i18n.module';
 import { RecepcionModule } from './modules/recepcion/recepcion.module';
 import { UsuarioModule } from './modules/usuario/usuario.module';
 import { RecetaModule } from './modules/receta/receta.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { InventarioModule } from './modules/inventario/inventario.module';
 
 @Module({
   imports: [
@@ -27,6 +29,8 @@ import { RecetaModule } from './modules/receta/receta.module';
     RecetaModule,
     ProveedorModule,
     UsuarioModule,
+    DashboardModule,
+    InventarioModule,
   ],
   controllers: [AppController],
   providers: [AppService],
