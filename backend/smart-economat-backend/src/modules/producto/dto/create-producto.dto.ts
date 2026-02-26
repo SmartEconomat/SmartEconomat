@@ -37,7 +37,7 @@ export class CreateProductoDto {
     {},
     { message: 'La fecha de caducidad debe ser una fecha válida (ISO 8601)' }
   )
-  caducidad?: Date;
+  fechaCaducidad?: Date;
 
   @IsOptional()
   @IsString({ message: 'La ruta de la imagen debe ser una cadena de texto' })
@@ -60,4 +60,8 @@ export class CreateProductoDto {
   @IsNumber({}, { message: 'La cantidad debe ser un número' })
   @Min(0, { message: 'La cantidad no puede ser negativa' })
   contenido?: number;
+
+  @IsOptional()
+  @IsString({ each: true })
+  alergenos?: string[];
 }

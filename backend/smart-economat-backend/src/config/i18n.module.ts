@@ -13,7 +13,7 @@ import * as path from 'path';
  *
  * Configuración principal:
  * - **Idioma por defecto:** Español ('es').
- * - **Ubicación de archivos:** `src/i18n/`.
+ * - **Ubicación de archivos:** `src/i18n/` (dev) o `dist/i18n/` (prod).
  * - **Resolvers:**
  *   1. Query param: `?lang=en`
  *   2. Header estándar: `Accept-Language`
@@ -21,13 +21,19 @@ import * as path from 'path';
  *
  * @module I18nConfigModule
  */
+
+const isProduction = process.env.NODE_ENV === 'production';
+const i18nPath = isProduction
+  ? path.join(__dirname, '../i18n/')
+  : path.join(process.cwd(), 'src/i18n/');
+
 @Module({
   imports: [
     I18nModule.forRoot({
       fallbackLanguage: 'es',
       loaderOptions: {
-        path: path.join(__dirname, '../i18n/'),
-        watch: true,
+        path: i18nPath,
+        watch: !isProduction,
       },
       resolvers: [
         { use: QueryResolver, options: ['lang'] },

@@ -10,7 +10,15 @@ export class ProductoService {
   constructor(private readonly productoRepository: ProductoRepository) {}
 
   async create(createProductoDto: CreateProductoDto): Promise<Producto> {
-    const producto = this.productoRepository.create(createProductoDto);
+    const { alergenos, ...rest } = createProductoDto;
+    const producto = this.productoRepository.create(rest);
+
+    if (alergenos && alergenos.length > 0) {
+      producto.alergenos = alergenos.map((a) => ({
+        alergeno: a,
+      })) as any;
+    }
+
     return this.productoRepository.save(producto);
   }
 
@@ -35,8 +43,18 @@ export class ProductoService {
     id: string,
     updateProductoDto: UpdateProductoDto
   ): Promise<Producto> {
+    const { alergenos, ...rest } = updateProductoDto;
     const producto = await this.findOne(id);
-    this.productoRepository.merge(producto, updateProductoDto);
+
+    this.productoRepository.merge(producto, rest);
+
+    if (alergenos) {
+      producto.alergenos = alergenos.map((a) => ({
+        alergeno: a,
+        idProducto: id,
+      })) as any;
+    }
+
     await this.productoRepository.save(producto);
     return this.findOne(id);
   }
