@@ -10,7 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { RegisterUserDto } from '../dto/register-user.dto';
 import { LoginUserDto } from '../dto/login-user.dto';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
-import { Usuario } from 'src/modules/usuario/usuario.entity/usuario.entity';
+import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
 
