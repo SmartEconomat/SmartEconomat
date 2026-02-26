@@ -8,39 +8,45 @@ export class PedidoRepository extends Repository<Pedido> {
     super(Pedido, dataSource.createEntityManager());
   }
 
-  async findAllWithRelations(): Promise<Pedido[]> {
+  async findAllWithRelations(loadRelations = false): Promise<Pedido[]> {
     return await this.find({
-      relations: ['usuario', 'pedidoProductos', 'recepcionesPedido'],
+      relations: loadRelations
+        ? ['usuario', 'pedidoProductos', 'recepcionesPedido']
+        : [],
       order: {
         createdAt: 'DESC',
       },
     });
   }
 
-  async findOneWithRelations(id: string): Promise<Pedido | null> {
+  async findOneWithRelations(
+    id: string,
+    loadRelations = false
+  ): Promise<Pedido | null> {
     return await this.findOne({
       where: { id },
-      relations: ['usuario', 'pedidoProductos', 'recepcionesPedido'],
+      relations: loadRelations
+        ? ['usuario', 'pedidoProductos', 'recepcionesPedido']
+        : [],
     });
   }
 
-  async findByEstado(estado: string): Promise<Pedido[]> {
+  async findByEstado(estado: string, loadRelations = false): Promise<Pedido[]> {
     return await this.find({
       where: { estado: estado as any },
-      relations: ['usuario', 'pedidoProductos'],
-      order: {
-        createdAt: 'DESC',
-      },
+      relations: loadRelations ? ['usuario', 'pedidoProductos'] : [],
+      order: { createdAt: 'DESC' },
     });
   }
 
-  async findByUsuario(idUsuario: string): Promise<Pedido[]> {
+  async findByUsuario(
+    idUsuario: string,
+    loadRelations = false
+  ): Promise<Pedido[]> {
     return await this.find({
       where: { usuario: { id: idUsuario } },
-      relations: ['usuario', 'pedidoProductos'],
-      order: {
-        createdAt: 'DESC',
-      },
+      relations: loadRelations ? ['usuario', 'pedidoProductos'] : [],
+      order: { createdAt: 'DESC' },
     });
   }
 }

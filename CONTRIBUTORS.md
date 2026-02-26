@@ -1,6 +1,10 @@
 # 🏆 Clasificación de Contribuidores - SmartEconomat
 
+<<<<<<< HEAD
 > **Última actualización:** 2026-02-28 14:53:13
+=======
+> **Última actualización:** 2026-02-26 18:44:16
+>>>>>>> ae6e501 (fix:Faltó un cambio por realizar en el repository)
 
 ---
 
@@ -18,14 +22,20 @@ Demostrando que:
 - 🚀 Git commit es su mantra matutino
 
 **Estadísticas de Dominio:**
+<<<<<<< HEAD
 - Posee el **36,49%** de todo el código.
 - Ha logrado fusionar **50** funcionalidades completas.
+=======
+- Posee el **32.84%** de todo el código.
+- Ha logrado fusionar **49** funcionalidades completas.
+>>>>>>> ae6e501 (fix:Faltó un cambio por realizar en el repository)
 
 ---
 
 ## 📊 Hall de la Fama
 
 ### 🥈 Alexis
+<<<<<<< HEAD
 - 💻 Commits: **58** (26,13%)
 - 🔀 PRs Fusionados: **17**
 
@@ -44,13 +54,25 @@ Demostrando que:
 ### 🥈 Maurizio
 - 💻 Commits: **31** (15.82%)
 - 🔀 PRs Fusionados: **8**
+=======
+- 💻 Commits: **54** (26.87%)
+- 🔀 PRs Fusionados: **17**
+
+### 🥈 Sergio
+- 💻 Commits: **40** (19.90%)
+- 🔀 PRs Fusionados: **6**
+>>>>>>> ae6e501 (fix:Faltó un cambio por realizar en el repository)
 
 ### 🥈 Maurizio
-- 💻 Commits: **31** (15.50%)
+- 💻 Commits: **31** (15.42%)
 - 🔀 PRs Fusionados: **8**
 
 ### 🥈 Guillermo
+<<<<<<< HEAD
 - 💻 Commits: **11** (4,95%)
+=======
+- 💻 Commits: **10** (4.98%)
+>>>>>>> ae6e501 (fix:Faltó un cambio por realizar en el repository)
 - 🔀 PRs Fusionados: **5**
 
 ### 🥈 Your Name
@@ -80,21 +102,36 @@ Con **4 commits** y **1 PRs**, tenemos aquí a alguien que:
 
 | Posición | Contribuidor | Commits | PRs Fusionados | % Código | Estado |
 |----------|--------------|---------|----------------|----------|--------|
+<<<<<<< HEAD
 | #1 | Darel | **81** | 🔀 **50** | 36,49% | 👑 Líder |
 | #2 | Alexis | **58** | 🔀 **17** | 26,13% | 💪 Activo |
 | #3 | Sergio | **37** | 🔀 **7** | 16,67% | 💪 Activo |
 | #4 | Maurizio | **31** | 🔀 **8** | 13,96% | 💪 Activo |
 | #5 | Guillermo | **11** | 🔀 **5** | 4,95% | 💪 Activo |
 | #6 | Your Name | **4** | 🔀 **1** | 1,80% | 🐌 Necesita café |
+=======
+| #1 | Darel | **66** | 🔀 **49** | 32.84% | 👑 Líder |
+| #2 | Alexis | **54** | 🔀 **17** | 26.87% | 💪 Activo |
+| #3 | Sergio | **40** | 🔀 **6** | 19.90% | 💪 Activo |
+| #4 | Maurizio | **31** | 🔀 **8** | 15.42% | 💪 Activo |
+| #5 | Guillermo | **10** | 🔀 **5** | 4.98% | 🐌 Necesita café |
+>>>>>>> ae6e501 (fix:Faltó un cambio por realizar en el repository)
 
 ---
 
 ## 📊 Estadísticas Generales
 
+<<<<<<< HEAD
 - **Total de commits:** 222
 - **Total de PRs fusionados:** 88
 - **Total de contribuidores:** 6
 - **Promedio de commits por persona:** 37,0
+=======
+- **Total de commits:** 201
+- **Total de PRs fusionados:** 85
+- **Total de contribuidores:** 5
+- **Promedio de commits por persona:** 40.2
+>>>>>>> ae6e501 (fix:Faltó un cambio por realizar en el repository)
 
 ---
 
@@ -107,7 +144,11 @@ Con **4 commits** y **1 PRs**, tenemos aquí a alguien que:
 `██████████████░░░░░░` 58 commits | 17 PRs
 
 **Sergio**
+<<<<<<< HEAD
 `█████████░░░░░░░░░░░` 37 commits | 7 PRs
+=======
+`████████████░░░░░░░░` 40 commits | 6 PRs
+>>>>>>> ae6e501 (fix:Faltó un cambio por realizar en el repository)
 
 **Maurizio**
 `███████░░░░░░░░░░░░░` 31 commits | 8 PRs
