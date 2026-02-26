@@ -1,15 +1,33 @@
 export enum CategoriaProducto {
-    PERECEDERO = 'PERECEDERO',
-    LACTEO = 'LACTEO',
-    LIMPIEZA = 'LIMPIEZA',
-    NO_PERECEDERO = 'NO_PERECEDERO',
-    OTROS = 'OTROS'
+    VERDURA = 'verdura',
+    FRUTA = 'fruta',
+    CARNE = 'carne',
+    PESCADO = 'pescado',
+    MARISCO = 'marisco',
+    LACTEO = 'lacteo',
+    HUEVO = 'huevo',
+    CEREAL = 'cereal',
+    LEGUMBRE = 'legumbre',
+    FRUTO_SECO = 'fruto_seco',
+    CONDIMENTO = 'condimento',
+    ACEITE = 'aceite',
+    AZUCAR = 'azucar',
+    BEBIDA = 'bebida',
+    OTRO = 'otro',
 }
 
 export enum UnidadMedida {
-    KILOGRAMO = 'KILOGRAMO',
-    LITRO = 'LITRO',
-    UNIDAD = 'UNIDAD'
+    KG = 'kg',
+    G = 'g',
+    L = 'l',
+    ML = 'ml',
+    UNIDAD = 'unidad',
+    PAQ = 'paq',
+}
+
+export interface ProductoAlergeno {
+    id_producto: string;
+    alergeno: string;
 }
 
 export interface Producto {
@@ -21,4 +39,7 @@ export interface Producto {
     unidad?: UnidadMedida;
     codigoBarras?: string;
     contenido: number;
+    alergenos?: ProductoAlergeno[];
+    pathImg?: string;
+    fechaCaducidad?: string;
 }

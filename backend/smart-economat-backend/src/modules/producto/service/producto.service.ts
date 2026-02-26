@@ -16,14 +16,14 @@ export class ProductoService {
 
   async findAll(): Promise<Producto[]> {
     return this.productoRepository.find({
-      relations: ['proveedores', 'proveedores.proveedor'],
+      relations: ['proveedores', 'proveedores.proveedor', 'alergenos'],
     });
   }
 
   async findOne(id: string): Promise<Producto> {
     const producto = await this.productoRepository.findOne({
       where: { id },
-      relations: ['proveedores', 'proveedores.proveedor'],
+      relations: ['proveedores', 'proveedores.proveedor', 'alergenos'],
     });
     if (!producto) {
       throw new NotFoundException(I18nHelper.getError('PRODUCT_NOT_FOUND'));
