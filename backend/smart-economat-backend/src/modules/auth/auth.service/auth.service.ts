@@ -49,7 +49,10 @@ export class AuthService {
 
   async login(dto: LoginUserDto) {
     const usuario = await this.usuarioRepo.findOne({
-      where: { email: dto.email, activo: true },
+      where: [
+        { email: dto.email, activo: true },
+        { username: dto.email, activo: true },
+      ],
     });
 
     if (!usuario || !(await bcrypt.compare(dto.password, usuario.password))) {
