@@ -4,11 +4,11 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, QueryFailedError, Repository } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 import { Inventario } from '../inventario.entity/inventario.entity';
 import { InventarioRepository } from '../repository/inventario.repository';
 import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
-import { CreateInventarioDto } from '../dto/create-inventario.dto';
+import { CreateInventarioItemDto } from '../dto/create-InventarioItem.dto';
 import { UpdateInventarioDto } from '../dto/update-inventario.dto';
 import { AlertaStockDTO } from '../dto/alertaStock.dto';
 import { AlertaCaducidadDTO } from '../dto/alertaCaducidad.dto';
@@ -22,7 +22,7 @@ export class InventarioService {
     private readonly productoProveedorRepository: Repository<ProductoProveedor>
   ) {}
 
-  async create(dto: CreateInventarioDto): Promise<Inventario> {
+  async create(dto: CreateInventarioItemDto): Promise<Inventario> {
     const productoProveedor = await this.productoProveedorRepository.findOne({
       where: { id: dto.productoProveedorId },
     });
@@ -38,7 +38,7 @@ export class InventarioService {
       cantidadMinima: dto.cantidadMinima,
       cantidadMaxima: dto.cantidadMaxima ?? null,
       ubicacionAlmacen: dto.ubicacionAlmacen,
-      fechaCaducidad: new Date(dto.fechaCaducidad),
+      fechaCaducidad: dto.fechaCaducidad ? new Date(dto.fechaCaducidad) : null,
     });
 
     try {
@@ -102,7 +102,9 @@ export class InventarioService {
     if (dto.ubicacionAlmacen !== undefined)
       inventario.ubicacionAlmacen = dto.ubicacionAlmacen;
     if (dto.fechaCaducidad !== undefined)
-      inventario.fechaCaducidad = new Date(dto.fechaCaducidad);
+      inventario.fechaCaducidad = dto.fechaCaducidad
+        ? new Date(dto.fechaCaducidad)
+        : null;
 
     try {
       await this.inventarioRepository.save(inventario);
@@ -126,26 +128,17 @@ export class InventarioService {
   }
 
   async obtenerAlertasCaducidad(): Promise<AlertaCaducidadDTO[]> {
-    const hoy = new Date();
-    const limite = new Date();
-    limite.setDate(hoy.getDate() + 7);
-
-    const productos = await this.inventarioRepository.find({
-      where: { fechaCaducidad: Between(hoy, limite) },
-    });
-
-    return productos.map((p) => ({
-      id: p.id,
-      fechaCaducidad: p.fechaCaducidad?.toISOString() ?? '',
-    }));
+    const productos = await this.inventarioRepository.findCaducidadProxima();
+    return productos
+      .filter((p) => p.fechaCaducidad !== null)
+      .map((p) => ({
+        id: p.id,
+        fechaCaducidad: p.fechaCaducidad!.toISOString(),
+      }));
   }
 
   async obtenerAlertasStock(): Promise<AlertaStockDTO[]> {
-    const productos = await this.inventarioRepository
-      .createQueryBuilder('inventario')
-      .where('inventario.cantidad_actual < inventario.cantidad_minima')
-      .getMany();
-
+    const productos = await this.inventarioRepository.findStockBajo();
     return productos.map((p) => ({
       id: p.id,
       cantidadActual: p.cantidadActual,

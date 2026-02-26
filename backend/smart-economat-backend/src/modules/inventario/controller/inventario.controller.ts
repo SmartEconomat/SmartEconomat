@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { InventarioService } from '../service/inventario.service';
-import { CreateInventarioDto } from '../dto/create-inventario.dto';
+import { CreateInventarioItemDto } from '../dto/create-InventarioItem.dto';
 import { UpdateInventarioDto } from '../dto/update-inventario.dto';
 import { Inventario } from '../inventario.entity/inventario.entity';
 import { AlertaCaducidadDTO } from '../dto/alertaCaducidad.dto';
@@ -30,7 +30,7 @@ export class InventarioController {
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.CREATED)
   create(
-    @Body() createInventarioDto: CreateInventarioDto
+    @Body() createInventarioDto: CreateInventarioItemDto
   ): Promise<Inventario> {
     return this.inventarioService.create(createInventarioDto);
   }
