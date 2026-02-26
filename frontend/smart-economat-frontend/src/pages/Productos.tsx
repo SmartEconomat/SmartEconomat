@@ -1,13 +1,71 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Paper, IconButton, Typography, Alert } from '@mui/material';
+import { Box, Paper, IconButton, Typography, Alert, Button, Tooltip, Fab } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DataTable, { Column } from '../components/ui/DataTable';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import DynamicFormModal, { DynamicField } from '../components/ui/DynamicFormModal';
 import { Producto } from '../services/producto.types';
 import { fetchProductos } from '../services/producto.service';
 import { deleteResource } from '../services/api.service';
 import { useToast } from '../store/ToastContext';
+
+import FastfoodOutlinedIcon from '@mui/icons-material/FastfoodOutlined';
+import LocalDrinkOutlinedIcon from '@mui/icons-material/LocalDrinkOutlined';
+import SanitizerOutlinedIcon from '@mui/icons-material/SanitizerOutlined';
+import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
+import ShoppingBasketOutlinedIcon from '@mui/icons-material/ShoppingBasketOutlined';
+import AddIcon from '@mui/icons-material/Add';
+
+const productoSchema: DynamicField[] = [
+    { name: 'nombre', label: 'Nombre Comercial', required: true },
+    { name: 'marca', label: 'Marca' },
+    { name: 'contenido', label: 'Contenido Numérico', type: 'number', required: true },
+    {
+        name: 'unidad',
+        label: 'Unidad de Medida',
+        type: 'select',
+        options: [
+            { value: 'KILOGRAMO', label: 'Kg' },
+            { value: 'LITRO', label: 'Litro' },
+            { value: 'UNIDAD', label: 'Uds' }
+        ],
+        required: true,
+        width: 4
+    },
+    {
+        name: 'tipo', label: 'Categoría', type: 'select', width: 4, options: [
+            { value: 'PERECEDERO', label: 'Perecedero / Alimento' },
+            { value: 'LACTEO', label: 'Lácteo / Bebida' },
+            { value: 'LIMPIEZA', label: 'Limpieza' },
+            { value: 'NO_PERECEDERO', label: 'No Perecedero' },
+            { value: 'OTROS', label: 'Otros' }
+        ]
+    },
+    { name: 'fechaCaducidad', label: 'Fecha de Caducidad', type: 'date', width: 4 },
+    { name: 'codigoBarras', label: 'Código de Barras' },
+    {
+        name: 'imagen',
+        label: 'Cargar Imagen',
+        type: 'image',
+        getFallbackIcon: (formData) => {
+            const tipo = formData.tipo;
+            const iconProps = { sx: { fontSize: 80, color: 'text.secondary', opacity: 0.5 } };
+
+            if (tipo === 'LACTEO') return <LocalDrinkOutlinedIcon {...iconProps} />;
+            if (tipo === 'PERECEDERO') return <FastfoodOutlinedIcon {...iconProps} />;
+            if (tipo === 'LIMPIEZA') return <SanitizerOutlinedIcon {...iconProps} />;
+            if (tipo === 'NO_PERECEDERO') return <ShoppingBasketOutlinedIcon {...iconProps} />;
+            return <CategoryOutlinedIcon {...iconProps} />;
+        }
+    },
+    {
+        name: 'alergenos',
+        label: 'Alérgenos Presentes',
+        type: 'allergens',
+        position: 'bottom'
+    }
+];
 
 const Productos: React.FC = () => {
     const [page, setPage] = useState(1);
@@ -15,6 +73,7 @@ const Productos: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [productToDelete, setProductToDelete] = useState<Producto | null>(null);
+    const [productToEdit, setProductToEdit] = useState<Partial<Producto> | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const toast = useToast();
 
@@ -46,17 +105,25 @@ const Productos: React.FC = () => {
         }
     };
 
+    const handleSaveProduct = async (formData: Record<string, any>) => {
+        console.log("Datos del formulario guardados:", formData);
+        toast.info("Prueba de Modal completada. Datos en consola.");
+        setProductToEdit(null);
+    };
+
     const columns: Column<Producto>[] = [
         { id: 'nombre', label: 'Nombre' },
         {
             id: 'marca',
             label: 'Marca',
             render: (row) => row.marca ?? '—',
+            hideOnMobile: true,
         },
         {
             id: 'tipo',
             label: 'Tipo',
             render: (row) => row.tipo ?? '—',
+            hideOnMobile: true,
         },
         {
             id: 'contenido',
@@ -71,12 +138,13 @@ const Productos: React.FC = () => {
             id: 'codigoBarras',
             label: 'Cód. Barras',
             render: (row) => row.codigoBarras ?? '—',
+            hideOnMobile: true,
         },
     ];
 
     const renderActions = (row: Producto) => (
         <>
-            <IconButton color="secondary" onClick={() => console.log('Edit', row)} size="small" aria-label="Editar">
+            <IconButton color="secondary" onClick={() => setProductToEdit(row)} size="small" aria-label="Editar">
                 <EditIcon fontSize="small" />
             </IconButton>
             <IconButton color="error" onClick={() => setProductToDelete(row)} size="small" aria-label="Borrar">
@@ -87,10 +155,38 @@ const Productos: React.FC = () => {
 
     return (
         <Box>
-            <Paper elevation={0} sx={{ p: 4 }}>
-                <Typography variant="h6" sx={{ mb: 3 }}>
-                    Gestión de Productos
-                </Typography>
+            <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 } }}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                    <Typography variant="h6">
+                        Gestión de Productos
+                    </Typography>
+
+                    {/* Desktop Button */}
+                    <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => setProductToEdit({})}
+                        sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+                    >
+                        Nuevo Producto
+                    </Button>
+
+                    {/* Mobile Button */}
+                    <Tooltip title="Nuevo Producto">
+                        <IconButton
+                            color="primary"
+                            onClick={() => setProductToEdit({})}
+                            sx={{
+                                display: { xs: 'inline-flex', sm: 'none' },
+                                bgcolor: 'primary.main',
+                                color: 'white',
+                                '&:hover': { bgcolor: 'primary.dark' }
+                            }}
+                        >
+                            <AddIcon />
+                        </IconButton>
+                    </Tooltip>
+                </Box>
 
                 {error && (
                     <Alert severity="error" sx={{ mb: 2 }}>
@@ -124,6 +220,16 @@ const Productos: React.FC = () => {
                     }
                     confirmText={isDeleting ? 'Eliminando…' : 'Sí, eliminar'}
                     cancelText="Cancelar"
+                />
+
+                <DynamicFormModal
+                    isOpen={!!productToEdit}
+                    onClose={() => setProductToEdit(null)}
+                    title={productToEdit?.id ? `Editar: ${productToEdit.nombre || ''}` : "Crear Nuevo Producto"}
+                    size="lg"
+                    fields={productoSchema}
+                    initialData={productToEdit || {}}
+                    onSubmit={handleSaveProduct}
                 />
             </Paper>
         </Box>
