@@ -1,14 +1,20 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
-import { RecepcionStockService } from '../service/recepcion-stock.service.js';
-import { CreateRecepcionDto } from '../dto/create-recepcion.dto.js';
+import { RecepcionStockService } from '../service/recepcion-stock.service';
+import { CreateRecepcionDto } from '../dto/create-recepcion.dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/role.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { rolUsuario } from '../../usuario/enums/usuario.enums';
 
 @ApiTags('Recepcion Stock')
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('recepcion-stock')
 export class RecepcionStockController {
   constructor(private readonly recepcionService: RecepcionStockService) {}
 
   @Post()
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @ApiOperation({
     summary: 'Procesar recepción de stock vinculada a un pedido',
   })

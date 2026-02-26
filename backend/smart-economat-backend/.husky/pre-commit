@@ -7,3 +7,6 @@ echo "🧹 [1/2] Limpiando comentarios y verificando código (Backend)..."
 
 echo "📊 [2/2] Actualizando estadísticas de contribuidores..."
 ./scripts/contributors/count-commits.sh
+
+echo "🧪 [3/3] Ejecutando tests E2E..."
+(cd backend/smart-economat-backend && npm run test:e2e)
