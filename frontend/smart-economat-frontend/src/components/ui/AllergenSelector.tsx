@@ -1,16 +1,20 @@
 import React from 'react';
 import { Box, Typography, Tooltip } from '@mui/material';
 
-// Import icons to be used as approximations for the allergens
 import EggIcon from '@mui/icons-material/Egg';
 import SetMealIcon from '@mui/icons-material/SetMeal';
-import GrassIcon from '@mui/icons-material/Grass'; // For Cereals/Gluten
-import LocalCafeIcon from '@mui/icons-material/LocalCafe'; // For Soy/Lupin/Mustard/Sesame
-import LocalDrinkIcon from '@mui/icons-material/LocalDrink'; // Dairy
-import BugReportIcon from '@mui/icons-material/BugReport'; // Crustaceans
-import WaterIcon from '@mui/icons-material/Water'; // Molluscs
-import ScienceIcon from '@mui/icons-material/Science'; // Sulphites
-import SpaIcon from '@mui/icons-material/Spa'; // Nuts/Peanuts/Celery
+import GrassIcon from '@mui/icons-material/Grass';
+import BugReportIcon from '@mui/icons-material/BugReport';
+import GrainIcon from '@mui/icons-material/Grain';
+import NatureIcon from '@mui/icons-material/Nature';
+import LocalDrinkIcon from '@mui/icons-material/LocalDrink';
+import SpaIcon from '@mui/icons-material/Spa';
+import YardIcon from '@mui/icons-material/Yard';
+import ColorizeIcon from '@mui/icons-material/Colorize';
+import ScatterPlotIcon from '@mui/icons-material/ScatterPlot';
+import ScienceIcon from '@mui/icons-material/Science';
+import LocalFloristIcon from '@mui/icons-material/LocalFlorist';
+import WaterIcon from '@mui/icons-material/Water';
 
 export interface Allergen {
     id: string;
@@ -23,31 +27,24 @@ export const EU_ALLERGENS: Allergen[] = [
     { id: 'crustaceans', label: 'Crustáceos', icon: <BugReportIcon /> },
     { id: 'eggs', label: 'Huevos', icon: <EggIcon /> },
     { id: 'fish', label: 'Pescado', icon: <SetMealIcon /> },
-    { id: 'peanuts', label: 'Cacahuetes', icon: <SpaIcon /> },
-    { id: 'soybeans', label: 'Soja', icon: <LocalCafeIcon /> },
+    { id: 'peanuts', label: 'Cacahuetes', icon: <GrainIcon /> },
+    { id: 'soybeans', label: 'Soja', icon: <NatureIcon /> },
     { id: 'milk', label: 'Lácteos', icon: <LocalDrinkIcon /> },
     { id: 'nuts', label: 'Frutos de cáscara', icon: <SpaIcon /> },
-    { id: 'celery', label: 'Apio', icon: <SpaIcon /> },
-    { id: 'mustard', label: 'Mostaza', icon: <LocalCafeIcon /> },
-    { id: 'sesame', label: 'Sésamo', icon: <LocalCafeIcon /> },
+    { id: 'celery', label: 'Apio', icon: <YardIcon /> },
+    { id: 'mustard', label: 'Mostaza', icon: <ColorizeIcon /> },
+    { id: 'sesame', label: 'Sésamo', icon: <ScatterPlotIcon /> },
     { id: 'sulphites', label: 'Sulfitos', icon: <ScienceIcon /> },
-    { id: 'lupin', label: 'Altramuces', icon: <LocalCafeIcon /> },
+    { id: 'lupin', label: 'Altramuces', icon: <LocalFloristIcon /> },
     { id: 'molluscs', label: 'Moluscos', icon: <WaterIcon /> },
 ];
 
 export interface AllergenSelectorProps {
-    /** Array of selected allergen IDs */
     value: string[];
-    /** Callback fired when the selection changes */
     onChange: (newValue: string[]) => void;
-    /** If true, the component is disabled */
     disabled?: boolean;
 }
 
-/**
- * Visual grid of European Union mandatory allergens mapped to generic Material-UI icons.
- * Allows multiple selection.
- */
 const AllergenSelector: React.FC<AllergenSelectorProps> = ({ value = [], onChange, disabled }) => {
 
     const handleToggle = (id: string) => {
