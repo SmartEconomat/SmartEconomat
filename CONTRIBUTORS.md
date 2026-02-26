@@ -96,7 +96,7 @@ Con **10 commits** y **5 PRs**, tenemos aquí a alguien que:
 `████████░░░░░░░░░░░░` 31 commits | 8 PRs
 
 **Guillermo**
-`███░░░░░░░░░░░░░░░░░` 10 commits | 5 PRs
+`██░░░░░░░░░░░░░░░░░░` 10 commits | 5 PRs
 
 ---
 

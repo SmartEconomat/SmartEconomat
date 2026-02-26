@@ -5,7 +5,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import DataTable, { Column } from '../components/ui/DataTable';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import DynamicFormModal, { DynamicField } from '../components/ui/DynamicFormModal';
-import { Producto } from '../services/producto.types';
+import { Producto, CategoriaProducto, UnidadMedida } from '../services/producto.types';
 import { fetchProductos } from '../services/producto.service';
 import { deleteResource } from '../services/api.service';
 import { useToast } from '../store/ToastContext';
@@ -26,20 +26,20 @@ const productoSchema: DynamicField[] = [
         label: 'Unidad de Medida',
         type: 'select',
         options: [
-            { value: 'KILOGRAMO', label: 'Kg' },
-            { value: 'LITRO', label: 'Litro' },
-            { value: 'UNIDAD', label: 'Uds' }
+            { value: UnidadMedida.KILOGRAMO, label: 'Kg' },
+            { value: UnidadMedida.LITRO, label: 'Litro' },
+            { value: UnidadMedida.UNIDAD, label: 'Uds' }
         ],
         required: true,
         width: 4
     },
     {
         name: 'tipo', label: 'Categoría', type: 'select', width: 4, options: [
-            { value: 'PERECEDERO', label: 'Perecedero / Alimento' },
-            { value: 'LACTEO', label: 'Lácteo / Bebida' },
-            { value: 'LIMPIEZA', label: 'Limpieza' },
-            { value: 'NO_PERECEDERO', label: 'No Perecedero' },
-            { value: 'OTROS', label: 'Otros' }
+            { value: CategoriaProducto.PERECEDERO, label: 'Perecedero / Alimento' },
+            { value: CategoriaProducto.LACTEO, label: 'Lácteo / Bebida' },
+            { value: CategoriaProducto.LIMPIEZA, label: 'Limpieza' },
+            { value: CategoriaProducto.NO_PERECEDERO, label: 'No Perecedero' },
+            { value: CategoriaProducto.OTROS, label: 'Otros' }
         ]
     },
     { name: 'fechaCaducidad', label: 'Fecha de Caducidad', type: 'date', width: 4 },
@@ -49,13 +49,13 @@ const productoSchema: DynamicField[] = [
         label: 'Cargar Imagen',
         type: 'image',
         getFallbackIcon: (formData) => {
-            const tipo = formData.tipo;
+            const tipo = formData.tipo as CategoriaProducto;
             const iconProps = { sx: { fontSize: 80, color: 'text.secondary', opacity: 0.5 } };
 
-            if (tipo === 'LACTEO') return <LocalDrinkOutlinedIcon {...iconProps} />;
-            if (tipo === 'PERECEDERO') return <FastfoodOutlinedIcon {...iconProps} />;
-            if (tipo === 'LIMPIEZA') return <SanitizerOutlinedIcon {...iconProps} />;
-            if (tipo === 'NO_PERECEDERO') return <ShoppingBasketOutlinedIcon {...iconProps} />;
+            if (tipo === CategoriaProducto.LACTEO) return <LocalDrinkOutlinedIcon {...iconProps} />;
+            if (tipo === CategoriaProducto.PERECEDERO) return <FastfoodOutlinedIcon {...iconProps} />;
+            if (tipo === CategoriaProducto.LIMPIEZA) return <SanitizerOutlinedIcon {...iconProps} />;
+            if (tipo === CategoriaProducto.NO_PERECEDERO) return <ShoppingBasketOutlinedIcon {...iconProps} />;
             return <CategoryOutlinedIcon {...iconProps} />;
         }
     },
