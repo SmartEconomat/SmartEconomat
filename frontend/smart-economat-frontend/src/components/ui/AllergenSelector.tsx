@@ -24,19 +24,19 @@ export interface Allergen {
 
 export const EU_ALLERGENS: Allergen[] = [
     { id: 'gluten', label: 'Gluten', icon: <GrassIcon /> },
-    { id: 'crustaceans', label: 'Crustáceos', icon: <BugReportIcon /> },
-    { id: 'eggs', label: 'Huevos', icon: <EggIcon /> },
-    { id: 'fish', label: 'Pescado', icon: <SetMealIcon /> },
-    { id: 'peanuts', label: 'Cacahuetes', icon: <GrainIcon /> },
-    { id: 'soybeans', label: 'Soja', icon: <NatureIcon /> },
-    { id: 'milk', label: 'Lácteos', icon: <LocalDrinkIcon /> },
-    { id: 'nuts', label: 'Frutos de cáscara', icon: <SpaIcon /> },
-    { id: 'celery', label: 'Apio', icon: <YardIcon /> },
-    { id: 'mustard', label: 'Mostaza', icon: <ColorizeIcon /> },
-    { id: 'sesame', label: 'Sésamo', icon: <ScatterPlotIcon /> },
-    { id: 'sulphites', label: 'Sulfitos', icon: <ScienceIcon /> },
-    { id: 'lupin', label: 'Altramuces', icon: <LocalFloristIcon /> },
-    { id: 'molluscs', label: 'Moluscos', icon: <WaterIcon /> },
+    { id: 'crustaceos', label: 'Crustáceos', icon: <BugReportIcon /> },
+    { id: 'huevos', label: 'Huevos', icon: <EggIcon /> },
+    { id: 'pescado', label: 'Pescado', icon: <SetMealIcon /> },
+    { id: 'cacahuetes', label: 'Cacahuetes', icon: <GrainIcon /> },
+    { id: 'soja', label: 'Soja', icon: <NatureIcon /> },
+    { id: 'lacteos', label: 'Lácteos', icon: <LocalDrinkIcon /> },
+    { id: 'frutos_con_cascara', label: 'Frutos de cáscara', icon: <SpaIcon /> },
+    { id: 'apio', label: 'Apio', icon: <YardIcon /> },
+    { id: 'mostaza', label: 'Mostaza', icon: <ColorizeIcon /> },
+    { id: 'sesamo', label: 'Sésamo', icon: <ScatterPlotIcon /> },
+    { id: 'sulfito', label: 'Sulfitos', icon: <ScienceIcon /> },
+    { id: 'altramuces', label: 'Altramuces', icon: <LocalFloristIcon /> },
+    { id: 'moluscos', label: 'Moluscos', icon: <WaterIcon /> },
 ];
 
 export interface AllergenSelectorProps {
