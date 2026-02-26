@@ -198,6 +198,24 @@ const Productos: React.FC = () => {
                     columns={columns}
                     data={data}
                     isLoading={isLoading}
+                    emptyStateMessage={
+                        <Box sx={{ py: 4, textAlign: 'center' }}>
+                            <ShoppingBasketOutlinedIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
+                            <Typography variant="h6" color="text.secondary" gutterBottom>
+                                No se encontraron productos
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                                Empieza añadiendo el primer producto a tu inventario.
+                            </Typography>
+                            <Button 
+                                variant="outlined" 
+                                startIcon={<AddIcon />}
+                                onClick={() => setProductToEdit({})}
+                            >
+                                Añadir Producto
+                            </Button>
+                        </Box>
+                    }
                     pagination={{
                         currentPage: page,
                         totalPages: 1,
