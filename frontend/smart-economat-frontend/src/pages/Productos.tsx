@@ -20,26 +20,40 @@ import AddIcon from '@mui/icons-material/Add';
 const productoSchema: DynamicField[] = [
     { name: 'nombre', label: 'Nombre Comercial', required: true },
     { name: 'marca', label: 'Marca' },
+    { name: 'descripcion', label: 'Descripción' },
     { name: 'contenido', label: 'Contenido Numérico', type: 'number', required: true },
     {
         name: 'unidad',
         label: 'Unidad de Medida',
         type: 'select',
         options: [
-            { value: UnidadMedida.KILOGRAMO, label: 'Kg' },
-            { value: UnidadMedida.LITRO, label: 'Litro' },
-            { value: UnidadMedida.UNIDAD, label: 'Uds' }
+            { value: UnidadMedida.KG, label: 'Kg' },
+            { value: UnidadMedida.G, label: 'Gramo' },
+            { value: UnidadMedida.L, label: 'Litro' },
+            { value: UnidadMedida.ML, label: 'Mililitro' },
+            { value: UnidadMedida.UNIDAD, label: 'Unidad' },
+            { value: UnidadMedida.PAQ, label: 'Paquete' }
         ],
         required: true,
         width: 4
     },
     {
         name: 'tipo', label: 'Categoría', type: 'select', width: 4, options: [
-            { value: CategoriaProducto.PERECEDERO, label: 'Perecedero / Alimento' },
-            { value: CategoriaProducto.LACTEO, label: 'Lácteo / Bebida' },
-            { value: CategoriaProducto.LIMPIEZA, label: 'Limpieza' },
-            { value: CategoriaProducto.NO_PERECEDERO, label: 'No Perecedero' },
-            { value: CategoriaProducto.OTROS, label: 'Otros' }
+            { value: CategoriaProducto.VERDURA, label: 'Verdura' },
+            { value: CategoriaProducto.FRUTA, label: 'Fruta' },
+            { value: CategoriaProducto.CARNE, label: 'Carne' },
+            { value: CategoriaProducto.PESCADO, label: 'Pescado' },
+            { value: CategoriaProducto.MARISCO, label: 'Marisco' },
+            { value: CategoriaProducto.LACTEO, label: 'Lácteo' },
+            { value: CategoriaProducto.HUEVO, label: 'Huevo' },
+            { value: CategoriaProducto.CEREAL, label: 'Cereal' },
+            { value: CategoriaProducto.LEGUMBRE, label: 'Legumbre' },
+            { value: CategoriaProducto.FRUTO_SECO, label: 'Fruto Seco' },
+            { value: CategoriaProducto.CONDIMENTO, label: 'Condimento' },
+            { value: CategoriaProducto.ACEITE, label: 'Aceite' },
+            { value: CategoriaProducto.AZUCAR, label: 'Azúcar' },
+            { value: CategoriaProducto.BEBIDA, label: 'Bebida' },
+            { value: CategoriaProducto.OTRO, label: 'Otro' }
         ]
     },
     { name: 'fechaCaducidad', label: 'Fecha de Caducidad', type: 'date', width: 4 },
@@ -52,10 +66,9 @@ const productoSchema: DynamicField[] = [
             const tipo = formData.tipo as CategoriaProducto;
             const iconProps = { sx: { fontSize: 80, color: 'text.secondary', opacity: 0.5 } };
 
-            if (tipo === CategoriaProducto.LACTEO) return <LocalDrinkOutlinedIcon {...iconProps} />;
-            if (tipo === CategoriaProducto.PERECEDERO) return <FastfoodOutlinedIcon {...iconProps} />;
-            if (tipo === CategoriaProducto.LIMPIEZA) return <SanitizerOutlinedIcon {...iconProps} />;
-            if (tipo === CategoriaProducto.NO_PERECEDERO) return <ShoppingBasketOutlinedIcon {...iconProps} />;
+            if (tipo === CategoriaProducto.LACTEO || tipo === CategoriaProducto.BEBIDA) return <LocalDrinkOutlinedIcon {...iconProps} />;
+            if (tipo === CategoriaProducto.CARNE || tipo === CategoriaProducto.PESCADO || tipo === CategoriaProducto.MARISCO || tipo === CategoriaProducto.HUEVO) return <FastfoodOutlinedIcon {...iconProps} />;
+            if (tipo === CategoriaProducto.VERDURA || tipo === CategoriaProducto.FRUTA || tipo === CategoriaProducto.CEREAL || tipo === CategoriaProducto.LEGUMBRE || tipo === CategoriaProducto.FRUTO_SECO) return <ShoppingBasketOutlinedIcon {...iconProps} />;
             return <CategoryOutlinedIcon {...iconProps} />;
         }
     },
@@ -73,7 +86,7 @@ const Productos: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [productToDelete, setProductToDelete] = useState<Producto | null>(null);
-    const [productToEdit, setProductToEdit] = useState<Partial<Producto> | null>(null);
+    const [productToEdit, setProductToEdit] = useState<Record<string, any> | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const toast = useToast();
 
@@ -142,9 +155,20 @@ const Productos: React.FC = () => {
         },
     ];
 
+    const handleEditClick = (row: Producto) => {
+        const editData: Record<string, any> = { ...row };
+        if (row.pathImg) editData.imagen = row.pathImg;
+        if (row.alergenos) {
+            editData.alergenos = row.alergenos.map((a: any) => 
+                typeof a === 'string' ? a : (a.alergeno || a)
+            );
+        }
+        setProductToEdit(editData);
+    };
+
     const renderActions = (row: Producto) => (
         <>
-            <IconButton color="secondary" onClick={() => setProductToEdit(row)} size="small" aria-label="Editar">
+            <IconButton color="secondary" onClick={() => handleEditClick(row)} size="small" aria-label="Editar">
                 <EditIcon fontSize="small" />
             </IconButton>
             <IconButton color="error" onClick={() => setProductToDelete(row)} size="small" aria-label="Borrar">
