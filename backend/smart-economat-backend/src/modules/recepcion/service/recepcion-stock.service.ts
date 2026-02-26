@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { CreateRecepcionDto } from '../dto/create-recepcion.dto';
 import { AlbaranPedidoRecepcion } from '../../albaran/albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
@@ -14,12 +18,27 @@ import { RecepcionProducto } from '../recepcion-productos.entity/recepcion-produ
 import { Albaran } from '../../albaran/albaran.entity/albaran.entity';
 import { localInventario } from '../../inventario/enums/inventario.enums';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
+import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 
 @Injectable()
 export class RecepcionStockService {
   constructor(private dataSource: DataSource) {}
 
   async procesarRecepcion(dto: CreateRecepcionDto) {
+    const usuario = await this.dataSource.manager.findOne(Usuario, {
+      where: { id: dto.usuarioId },
+    });
+    if (!usuario) {
+      throw new NotFoundException(I18nHelper.getError('USER_NOT_FOUND'));
+    }
+
+    const pedido = await this.dataSource.manager.findOne(Pedido, {
+      where: { id: dto.pedidoId },
+    });
+    if (!pedido) {
+      throw new NotFoundException(I18nHelper.getError('ORDER_NOT_FOUND'));
+    }
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
