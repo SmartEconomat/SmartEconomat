@@ -10,7 +10,18 @@ export const runSeeder = async (dataSource: DataSource) => {
   const usuarioRepo = dataSource.getRepository(Usuario);
 
   const usuarios: Usuario[] = [];
-  for (let i = 0; i < NUM_USUARIOS_A_CREAR; i++) {
+
+  const adminDefault = usuarioRepo.create({
+    nombre: 'Administrador Principal',
+    username: 'admin',
+    password: '123456',
+    email: 'admin@smarteconomat.com',
+    rol: rolUsuario.ADMINISTRADOR,
+    activo: true,
+  });
+  usuarios.push(adminDefault);
+
+  for (let i = 0; i < NUM_USUARIOS_A_CREAR - 1; i++) {
     const usuario = usuarioRepo.create({
       nombre: faker.person.fullName(),
       username: faker.internet.username(),
