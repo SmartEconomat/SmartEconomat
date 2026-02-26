@@ -12,6 +12,7 @@ import { LoginUserDto } from '../dto/login-user.dto';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { Usuario } from 'src/modules/usuario/usuario.entity/usuario.entity';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
+import { rolUsuario } from '../../usuario/enums/usuario.enums';
 
 @Injectable()
 export class AuthService {
@@ -34,11 +35,10 @@ export class AuthService {
         );
       }
 
-      const hashedPassword = await bcrypt.hash(dto.password, 10);
-
       const usuario = manager.create(Usuario, {
         ...dto,
-        password: hashedPassword,
+        activo: false,
+        rol: rolUsuario.INVITADO,
       });
 
       await manager.save(usuario);
