@@ -8,6 +8,7 @@ import DynamicFormModal, { DynamicField } from '../components/ui/DynamicFormModa
 import { Producto, CategoriaProducto, UnidadMedida } from '../services/producto.types';
 import { fetchProductos, createProducto, updateProducto } from '../services/producto.service';
 import { deleteResource } from '../services/api.service';
+import { cleanPayload } from '../services/api.utils';
 import { useToast } from '../store/ToastContext';
 import StatusChip from '../components/ui/StatusChip';
 
@@ -133,8 +134,14 @@ const Productos: React.FC = () => {
                 tipo: formData.tipo,
                 contenido: formData.contenido,
                 codigoBarras: formData.codigoBarras,
-                fechaCaducidad: formData.fechaCaducidad,
-                alergenos: formData.alergenos,
+                // Normalizar fecha: el input devuelve YYYY-MM-DD, pero si viene
+                // de la BD puede ser ISO completo. Tomamos solo los primeros 10 chars.
+                fechaCaducidad: formData.fechaCaducidad
+                    ? String(formData.fechaCaducidad).substring(0, 10)
+                    : undefined,
+                alergenos: Array.isArray(formData.alergenos)
+                    ? formData.alergenos.map((a: any) => typeof a === 'string' ? a : a.alergeno)
+                    : undefined,
             };
             
             // Eliminar campos vacíos o nulos si es necesario, 
