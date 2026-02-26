@@ -6,14 +6,21 @@ import {
   Body,
   HttpCode,
   HttpStatus,
+  UseGuards,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { ProductoProveedorService } from '../service/producto-proveedor.service';
 import { UpdatePrecioProductoDto } from '../dto/update-precio-producto.dto';
 import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
 import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.entity';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/role.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { rolUsuario } from '../../usuario/enums/usuario.enums';
 
 @ApiTags('Producto Proveedor')
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('producto-proveedor')
 export class ProductoProveedorController {
   constructor(
@@ -21,6 +28,7 @@ export class ProductoProveedorController {
   ) {}
 
   @Patch(':id/precio')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
@@ -40,7 +48,7 @@ export class ProductoProveedorController {
     description: 'El precio es igual al actual',
   })
   async updatePrecio(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updatePrecioProductoDto: UpdatePrecioProductoDto
   ): Promise<ProductoProveedor> {
     return this.productoProveedorService.updatePrecio(
@@ -50,6 +58,7 @@ export class ProductoProveedorController {
   }
 
   @Get(':id/historial')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @ApiOperation({
     summary: 'Obtener el historial de precios de un producto proveedor',
   })
@@ -63,7 +72,9 @@ export class ProductoProveedorController {
     status: HttpStatus.NOT_FOUND,
     description: 'Producto proveedor no encontrado',
   })
-  async getHistorial(@Param('id') id: string): Promise<HistorialPrecio[]> {
+  async getHistorial(
+    @Param('id', ParseUUIDPipe) id: string
+  ): Promise<HistorialPrecio[]> {
     return this.productoProveedorService.getHistorial(id);
   }
 }

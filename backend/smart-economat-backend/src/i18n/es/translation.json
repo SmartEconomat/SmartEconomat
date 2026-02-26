@@ -37,7 +37,9 @@
     "PROVIDER_HAS_PRODUCTS": "No se puede eliminar el proveedor porque tiene productos asociados",
     "ENTITY_HAS_RELATIONS": "No se puede eliminar este registro porque está siendo utilizado en otras partes del sistema.",
     "DUPLICATE_ENTRY": "Ya existe un registro con ese valor. Por favor, usa uno diferente.",
-    "RECIPE_NOT_FOUND": "Receta no encontrada"
+    "RECIPE_NOT_FOUND": "Receta no encontrada",
+    "USER_INACTIVE_CANNOT_RESET_PASSWORD": "No se puede cambiar la contraseña de un usuario inactivo",
+    "INVALID_OLD_PASSWORD": "La contraseña actual no es correcta"
   },
   "success": {
     "CREATED": "Creado exitosamente",
