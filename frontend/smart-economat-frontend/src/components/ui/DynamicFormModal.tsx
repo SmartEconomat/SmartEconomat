@@ -8,8 +8,11 @@ import Button from './Button';
 import Checkbox from './Checkbox';
 import Select, { SelectOption } from './Select';
 import AllergenSelector from './AllergenSelector';
+import ConfirmDialog from './ConfirmDialog';
+import ProveedorSelector, { ProveedorAsociado } from './ProveedorSelector';
+import DatePicker from './DatePicker';
 
-export type FieldType = 'text' | 'number' | 'boolean' | 'select' | 'date' | 'image' | 'allergens';
+export type FieldType = 'text' | 'textarea' | 'number' | 'boolean' | 'select' | 'date' | 'image' | 'allergens' | 'proveedores';
 
 export interface DynamicField {
     name: string;
@@ -20,6 +23,7 @@ export interface DynamicField {
     defaultValue?: any;
     disabled?: boolean;
     position?: 'left' | 'right' | 'bottom';
+    multiple?: boolean;
     /** Opcional: Define el ancho del campo en una cuadrícula de 1-12 (Por defecto 12). Se aplica a partir del breakpoint 'sm'. */
     width?: number;
     getFallbackIcon?: (formData: Record<string, any>) => React.ReactNode;
@@ -33,6 +37,8 @@ export interface DynamicFormModalProps extends Omit<ModalProps, 'children'> {
     submitLabel?: string;
     cancelLabel?: string;
     isSubmitting?: boolean;
+    requireConfirmation?: boolean;
+    confirmationMessage?: React.ReactNode;
 }
 
 const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
@@ -47,8 +53,11 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
     submitLabel = 'Aceptar',
     cancelLabel = 'Cancelar',
     isSubmitting = false,
+    requireConfirmation = false,
+    confirmationMessage,
 }) => {
     const [formData, setFormData] = useState<Record<string, any>>({});
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -77,6 +86,10 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
         setFormData(prev => ({ ...prev, [name]: checked }));
     };
 
+    const handleDateChange = (name: string, value: string) => {
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
     const handleAllergensChange = (name: string) => (newValue: string[]) => {
         setFormData(prev => ({ ...prev, [name]: newValue }));
     };
@@ -90,6 +103,15 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (requireConfirmation) {
+            setIsConfirmOpen(true);
+        } else {
+            await onSubmit(formData);
+        }
+    };
+
+    const handleConfirmSubmit = async () => {
+        setIsConfirmOpen(false);
         await onSubmit(formData);
     };
 
@@ -207,7 +229,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                     <Box flex={1} width="100%">
                         <Box display="grid" gridTemplateColumns="repeat(12, 1fr)" gap={1.5}>
                             {rightFields.map((field) => {
-                                const { name, label, type = 'text', required, options, disabled, width = 12 } = field;
+                                const { name, label, type = 'text', required, options, disabled, multiple, width = 12 } = field;
                                 const value = formData[name];
 
                                 const renderField = () => {
@@ -230,11 +252,12 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                                                     key={name}
                                                     name={name}
                                                     label={label}
-                                                    value={value ?? ''}
+                                                    value={value ?? (multiple ? [] : '')}
                                                     onChange={(e) => handleTextChange(e as any)}
                                                     options={options || []}
                                                     required={required}
                                                     disabled={disabled}
+                                                    multiple={multiple}
                                                 />
                                             );
 
@@ -253,18 +276,15 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                                             );
 
                                         case 'date':
-                                            const dateValue = value ? new Date(value).toISOString().split('T')[0] : '';
                                             return (
-                                                <Input
+                                                <DatePicker
                                                     key={name}
                                                     name={name}
                                                     label={label}
-                                                    type="date"
-                                                    value={dateValue}
-                                                    onChange={handleTextChange}
+                                                    value={value || ''}
+                                                    onChange={handleDateChange}
                                                     required={required}
                                                     disabled={disabled}
-                                                    InputLabelProps={{ shrink: true }}
                                                 />
                                             );
 
@@ -275,6 +295,22 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                                                     value={Array.isArray(value) ? value : []}
                                                     onChange={handleAllergensChange(name)}
                                                     disabled={disabled}
+                                                />
+                                            );
+
+                                        case 'textarea':
+                                            return (
+                                                <Input
+                                                    key={name}
+                                                    name={name}
+                                                    label={label}
+                                                    type="text"
+                                                    value={value ?? ''}
+                                                    onChange={handleTextChange}
+                                                    required={required}
+                                                    disabled={disabled}
+                                                    multiline
+                                                    rows={4}
                                                 />
                                             );
 
@@ -322,6 +358,17 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                                         />
                                     );
                                 }
+                                if (type === 'proveedores') {
+                                    return (
+                                        <ProveedorSelector 
+                                            key={name}
+                                            value={Array.isArray(value) ? value : []}
+                                            onChange={(val: ProveedorAsociado[]) => setFormData(prev => ({ ...prev, [name]: val }))}
+                                            proveedores={field.options?.map(o => ({ id: o.value as string, nombre: o.label, email: '', nifNie: '' })) || []}
+                                            disabled={disabled}
+                                        />
+                                    );
+                                }
                                 return null;
                             })}
                         </Stack>
@@ -337,6 +384,17 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                     </Button>
                 </Box>
             </form>
+
+            <ConfirmDialog
+                isOpen={isConfirmOpen}
+                onClose={() => setIsConfirmOpen(false)}
+                onConfirm={handleConfirmSubmit}
+                title="Confirmar acción"
+                message={confirmationMessage || "¿Estás seguro de que deseas guardar estos datos?"}
+                confirmText="Guardar"
+                cancelText="Cerrar"
+                confirmColor="primary"
+            />
         </Modal>
     );
 };

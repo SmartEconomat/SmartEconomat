@@ -235,8 +235,9 @@ const Pedidos: React.FC = () => {
                             Esta acción no se puede deshacer.
                         </>
                     }
-                    confirmText={isDeleting ? 'Eliminando…' : 'Sí, eliminar'}
+                    confirmText="Sí, eliminar"
                     cancelText="Cancelar"
+                    isLoading={isDeleting}
                 />
 
                 <DynamicFormModal
@@ -248,6 +249,12 @@ const Pedidos: React.FC = () => {
                     initialData={itemToEdit || {}}
                     onSubmit={handleSave}
                     isSubmitting={isSaving}
+                    requireConfirmation={true}
+                    confirmationMessage={
+                        itemToEdit?.id
+                            ? "¿Estás seguro de que deseas guardar los cambios en este pedido?"
+                            : "¿Estás seguro de que deseas registrar este nuevo pedido?"
+                    }
                 />
             </Paper>
         </Box>

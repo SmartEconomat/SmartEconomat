@@ -1,33 +1,66 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Paper, IconButton, Typography, Alert, Button, Tooltip } from '@mui/material';
+import { Box, Paper, IconButton, Typography, Alert, Button, Tooltip, Chip } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DataTable, { Column } from '../components/ui/DataTable';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import DynamicFormModal, { DynamicField } from '../components/ui/DynamicFormModal';
-import { Proveedor } from '../services/proveedor.types';
-import { fetchProveedores, createProveedor, updateProveedor } from '../services/proveedor.service';
+import { Receta, DificultadReceta, TiempoReceta } from '../services/receta.types';
+import { fetchRecetas, createReceta, updateReceta } from '../services/receta.service';
 import { deleteResource } from '../services/api.service';
 import { useToast } from '../store/ToastContext';
+import StatusChip from '../components/ui/StatusChip';
 
-import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
+import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import AddIcon from '@mui/icons-material/Add';
+import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
 
-const proveedorSchema: DynamicField[] = [
-    { name: 'nif', label: 'NIF / CUIT', required: true, width: 4 },
-    { name: 'nombre', label: 'Razón Social', required: true, width: 8 },
-    { name: 'contacto', label: 'Persona de Contacto' },
-    { name: 'telefono', label: 'Teléfono', width: 6 },
-    { name: 'email', label: 'Email', type: 'text', width: 6 },
-    { name: 'direccion', label: 'Dirección' }
+
+
+const recetaSchema: DynamicField[] = [
+    { name: 'nombre', label: 'Nombre de la Receta', required: true, width: 8 },
+    { name: 'tiempoPreparacion', label: 'Tiempo (ej: 30 min)', required: true, width: 4 },
+    {
+        name: 'tiempo',
+        label: 'Franja de tiempo',
+        type: 'select',
+        required: true,
+        width: 6,
+        options: [
+            { value: TiempoReceta.MIN_10, label: '10 min' },
+            { value: TiempoReceta.MIN_20, label: '20 min' },
+            { value: TiempoReceta.MIN_30, label: '30 min' },
+            { value: TiempoReceta.MIN_45, label: '45 min' },
+            { value: TiempoReceta.MIN_60, label: '60 min' },
+        ],
+    },
+    {
+        name: 'dificultad',
+        label: 'Dificultad',
+        type: 'select',
+        required: true,
+        width: 6,
+        options: [
+            { value: DificultadReceta.FACIL, label: 'Fácil' },
+            { value: DificultadReceta.MEDIA, label: 'Media' },
+            { value: DificultadReceta.DIFICIL, label: 'Difícil' },
+        ],
+    },
+    {
+        name: 'instrucciones',
+        label: 'Instrucciones de elaboración',
+        type: 'textarea',
+        required: true,
+        width: 12,
+    },
 ];
 
-const Proveedores: React.FC = () => {
+const Recetas: React.FC = () => {
     const [page, setPage] = useState(1);
-    const [data, setData] = useState<Proveedor[]>([]);
+    const [data, setData] = useState<Receta[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [itemToDelete, setItemToDelete] = useState<Proveedor | null>(null);
+    const [itemToDelete, setItemToDelete] = useState<Receta | null>(null);
     const [itemToEdit, setItemToEdit] = useState<Record<string, any> | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -37,10 +70,10 @@ const Proveedores: React.FC = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const proveedoresData = await fetchProveedores();
-            setData(proveedoresData);
+            const recetasData = await fetchRecetas();
+            setData(recetasData);
         } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Error desconocido al cargar proveedores.';
+            const message = err instanceof Error ? err.message : 'Error desconocido al cargar recetas.';
             setError(message);
         } finally {
             setIsLoading(false);
@@ -55,11 +88,11 @@ const Proveedores: React.FC = () => {
         if (!itemToDelete) return;
         setIsDeleting(true);
         try {
-            await deleteResource(`/proveedor/${itemToDelete.id}`);
-            setData((prev) => prev.filter((p) => p.id !== itemToDelete.id));
-            toast.success(`Proveedor "${itemToDelete.nombre}" eliminado correctamente.`);
+            await deleteResource(`/recetas/${itemToDelete.id}`);
+            setData((prev) => prev.filter((r) => r.id !== itemToDelete.id));
+            toast.success(`Receta "${itemToDelete.nombre}" eliminada correctamente.`);
         } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Error al eliminar el proveedor.';
+            const message = err instanceof Error ? err.message : 'Error al eliminar la receta.';
             toast.error(message);
         } finally {
             setIsDeleting(false);
@@ -70,65 +103,77 @@ const Proveedores: React.FC = () => {
     const handleSave = async (formData: Record<string, any>) => {
         setIsSaving(true);
         try {
-            // Limpiar datos para el backend
             const payload = {
                 nombre: formData.nombre,
-                contacto: formData.contacto,
-                telefono: formData.telefono,
-                email: formData.email,
-                direccion: formData.direccion,
-                nif: formData.nif,
+                instrucciones: formData.instrucciones,
+                tiempo: formData.tiempo,
+                dificultad: formData.dificultad,
+                tiempoPreparacion: formData.tiempoPreparacion,
             };
 
             if (formData.id) {
-                await updateProveedor(formData.id, payload);
-                toast.success('Proveedor actualizado correctamente.');
+                await updateReceta(formData.id, payload);
+                toast.success('Receta actualizada correctamente.');
             } else {
-                await createProveedor(payload);
-                toast.success('Proveedor creado correctamente.');
+                await createReceta(payload);
+                toast.success('Receta creada correctamente.');
             }
             await loadData();
             setItemToEdit(null);
         } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Error al guardar el proveedor.';
+            const message = err instanceof Error ? err.message : 'Error al guardar la receta.';
             toast.error(message);
         } finally {
             setIsSaving(false);
         }
     };
 
-    const handleEditClick = (row: Proveedor) => {
+    const handleEditClick = (row: Receta) => {
         setItemToEdit({ ...row });
     };
 
-    const columns: Column<Proveedor>[] = [
+    const columns: Column<Receta>[] = [
         { id: 'nombre', label: 'Nombre' },
         {
-            id: 'nif',
-            label: 'NIF',
-            render: (row) => row.nif ?? '—',
-        },
-        {
-            id: 'contacto',
-            label: 'Contacto',
-            render: (row) => row.contacto ?? '—',
+            id: 'dificultad',
+            label: 'Dificultad',
+            render: (row) => row.dificultad ? (
+                <StatusChip
+                    status={row.dificultad}
+                    size="small"
+                    variant="outlined"
+                />
+            ) : <span>—</span>,
             hideOnMobile: true,
         },
         {
-            id: 'telefono',
-            label: 'Teléfono',
-            render: (row) => row.telefono ?? '—',
+            id: 'tiempo',
+            label: 'Franja',
+            render: (row) => row.tiempo ?? '—',
             hideOnMobile: true,
         },
         {
-            id: 'email',
-            label: 'Email',
-            render: (row) => row.email ?? '—',
+            id: 'tiempoPreparacion',
+            label: 'Preparación',
+            render: (row) => row.tiempoPreparacion
+                ? (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <AccessTimeOutlinedIcon fontSize="inherit" sx={{ opacity: 0.6 }} />
+                        {row.tiempoPreparacion}
+                    </Box>
+                )
+                : <span>—</span>,
+        },
+        {
+            id: 'ingredientes',
+            label: 'Ingredientes',
+            align: 'right',
+            render: (row) => row.ingredientes?.length ?? 0,
             hideOnMobile: true,
         },
     ];
 
-    const renderActions = (row: Proveedor) => (
+    const renderActions = (row: Receta) => (
         <>
             <IconButton color="secondary" onClick={() => handleEditClick(row)} size="small" aria-label="Editar">
                 <EditIcon fontSize="small" />
@@ -144,19 +189,21 @@ const Proveedores: React.FC = () => {
             <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 } }}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                     <Typography variant="h6">
-                        Gestión de Proveedores
+                        Gestión de Recetas
                     </Typography>
 
+                    {/* Desktop Button */}
                     <Button
                         variant="contained"
                         startIcon={<AddIcon />}
                         onClick={() => setItemToEdit({})}
                         sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
                     >
-                        Nuevo Proveedor
+                        Nueva Receta
                     </Button>
 
-                    <Tooltip title="Nuevo Proveedor">
+                    {/* Mobile Button */}
+                    <Tooltip title="Nueva Receta">
                         <IconButton
                             color="primary"
                             onClick={() => setItemToEdit({})}
@@ -184,19 +231,19 @@ const Proveedores: React.FC = () => {
                     isLoading={isLoading}
                     emptyStateMessage={
                         <Box sx={{ py: 4, textAlign: 'center' }}>
-                            <StorefrontOutlinedIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
+                            <MenuBookOutlinedIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
                             <Typography variant="h6" color="text.secondary" gutterBottom>
-                                No se encontraron proveedores
+                                No hay recetas registradas
                             </Typography>
                             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                                Empieza añadiendo el primer proveedor a tu catálogo.
+                                Crea la primera receta del economato para comenzar.
                             </Typography>
-                            <Button 
-                                variant="outlined" 
+                            <Button
+                                variant="outlined"
                                 startIcon={<AddIcon />}
                                 onClick={() => setItemToEdit({})}
                             >
-                                Añadir Proveedor
+                                Añadir Receta
                             </Button>
                         </Box>
                     }
@@ -212,10 +259,10 @@ const Proveedores: React.FC = () => {
                     isOpen={!!itemToDelete}
                     onClose={() => !isDeleting && setItemToDelete(null)}
                     onConfirm={() => void handleDeleteConfirm()}
-                    title="Eliminar proveedor"
+                    title="Eliminar receta"
                     message={
                         <>
-                            ¿Estás seguro de que deseas eliminar el proveedor{' '}
+                            ¿Estás seguro de que deseas eliminar la receta{' '}
                             <strong>{itemToDelete?.nombre}</strong>?{' '}
                             Esta acción no se puede deshacer.
                         </>
@@ -228,17 +275,17 @@ const Proveedores: React.FC = () => {
                 <DynamicFormModal
                     isOpen={!!itemToEdit}
                     onClose={() => setItemToEdit(null)}
-                    title={itemToEdit?.id ? `Editar: ${itemToEdit.nombre || ''}` : "Crear Nuevo Proveedor"}
+                    title={itemToEdit?.id ? `Editar: ${itemToEdit.nombre || ''}` : 'Nueva Receta'}
                     size="md"
-                    fields={proveedorSchema}
+                    fields={recetaSchema}
                     initialData={itemToEdit || {}}
                     onSubmit={handleSave}
                     isSubmitting={isSaving}
                     requireConfirmation={true}
                     confirmationMessage={
                         itemToEdit?.id
-                            ? "¿Estás seguro de que deseas guardar los cambios realizados en este proveedor?"
-                            : "¿Estás seguro de que deseas añadir este nuevo proveedor al sistema?"
+                            ? "¿Estás seguro de que deseas guardar los cambios realizados en esta receta?"
+                            : "¿Estás seguro de que deseas añadir esta nueva receta al sistema?"
                     }
                 />
             </Paper>
@@ -246,4 +293,4 @@ const Proveedores: React.FC = () => {
     );
 };
 
-export default Proveedores;
+export default Recetas;
