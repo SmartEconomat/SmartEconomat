@@ -12,11 +12,11 @@ import 'dayjs/locale/es';
 
 function App() {
   return (
-    <ThemeContextProvider>
-      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
+    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
+      <ThemeContextProvider>
         <Main />
-      </LocalizationProvider>
-    </ThemeContextProvider>
+      </ThemeContextProvider>
+    </LocalizationProvider>
   );
 }
 
