@@ -13,6 +13,27 @@ export interface UsuarioBasico {
     email: string;
 }
 
+export interface PedidoProducto {
+    id: string;
+    id_producto_proveedor: string;
+    cantidad: number;
+    precioUnitario: number;
+    observaciones?: string;
+    productoProveedor?: {
+        id: string;
+        precioUnitario: number;
+        marca?: string;
+        producto: {
+            id: string;
+            nombre: string;
+        };
+        proveedor: {
+            id: string;
+            nombre: string;
+        };
+    };
+}
+
 export interface Pedido {
     id: string;
     fechaPedido: string;
@@ -21,4 +42,5 @@ export interface Pedido {
     estado: EstadoPedido;
     motivoCancelacion?: string;
     usuario?: UsuarioBasico;
+    pedidoProductos?: PedidoProducto[];
 }
