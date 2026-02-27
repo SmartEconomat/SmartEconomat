@@ -14,18 +14,43 @@ export class PedidoService {
   ) {}
 
   async create(createPedidoDto: CreatePedidoDto): Promise<Pedido> {
-    const pedido = this.pedidoRepository.create(createPedidoDto);
-    return this.pedidoRepository.save(pedido);
+    const { pedidoProductos, ...rest } = createPedidoDto;
+    const pedido = this.pedidoRepository.create(rest);
+
+    if (pedidoProductos && pedidoProductos.length > 0) {
+      pedido.pedidoProductos = pedidoProductos.map((pp) => ({
+        ...pp,
+        productoProveedor: { id: pp.productoProveedorId } as any,
+      })) as any;
+    }
+
+    const saved = await this.pedidoRepository.save(pedido);
+    return this.findOne(saved.id);
   }
 
   async findAll(): Promise<Pedido[]> {
-    return this.pedidoRepository.find({ relations: ['usuario'] });
+    return this.pedidoRepository.find({
+      relations: [
+        'usuario',
+        'pedidoProductos',
+        'pedidoProductos.productoProveedor',
+        'pedidoProductos.productoProveedor.producto',
+        'pedidoProductos.productoProveedor.proveedor',
+      ],
+      order: { createdAt: 'DESC' },
+    });
   }
 
   async findOne(id: string): Promise<Pedido> {
     const pedido = await this.pedidoRepository.findOne({
       where: { id },
-      relations: ['usuario'],
+      relations: [
+        'usuario',
+        'pedidoProductos',
+        'pedidoProductos.productoProveedor',
+        'pedidoProductos.productoProveedor.producto',
+        'pedidoProductos.productoProveedor.proveedor',
+      ],
     });
     if (!pedido) {
       throw new NotFoundException(I18nHelper.getError('ORDER_NOT_FOUND'));
@@ -34,9 +59,21 @@ export class PedidoService {
   }
 
   async update(id: string, updatePedidoDto: UpdatePedidoDto): Promise<Pedido> {
+    const { pedidoProductos, ...rest } = updatePedidoDto;
     const pedido = await this.findOne(id);
-    this.pedidoRepository.merge(pedido, updatePedidoDto);
-    return this.pedidoRepository.save(pedido);
+
+    this.pedidoRepository.merge(pedido, rest);
+
+    if (pedidoProductos) {
+      pedido.pedidoProductos = pedidoProductos.map((pp) => ({
+        ...pp,
+        id_pedido: id,
+        productoProveedor: { id: pp.productoProveedorId } as any,
+      })) as any;
+    }
+
+    await this.pedidoRepository.save(pedido);
+    return this.findOne(id);
   }
 
   async remove(id: string): Promise<void> {

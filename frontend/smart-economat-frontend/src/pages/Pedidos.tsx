@@ -15,13 +15,12 @@ import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined
 import AddIcon from '@mui/icons-material/Add';
 
 const pedidoSchema: DynamicField[] = [
-    { name: 'costeTotal', label: 'Coste Total (€)', type: 'number', required: true, width: 4 },
     { 
         name: 'estado', 
         label: 'Estado del Pedido', 
         type: 'select', 
         required: true, 
-        width: 4,
+        width: 6,
         options: [
             { value: EstadoPedido.PENDIENTE, label: 'Pendiente' },
             { value: EstadoPedido.EN_PROCESO, label: 'En Proceso' },
@@ -31,8 +30,14 @@ const pedidoSchema: DynamicField[] = [
             { value: EstadoPedido.CANCELADO, label: 'Cancelado' }
         ]
     },
-    { name: 'fechaEntrega', label: 'Fecha de Entrega', type: 'date', width: 4 },
-    { name: 'motivoCancelacion', label: 'Motivo de Cancelación (Si aplica)', type: 'text', width: 12 }
+    { name: 'fechaEntrega', label: 'Fecha de Entrega', type: 'date', width: 6 },
+    { name: 'motivoCancelacion', label: 'Motivo de Cancelación (Si aplica)', type: 'text', width: 12 },
+    {
+        name: 'pedidoProductos',
+        label: 'Detalle de Productos',
+        type: 'orderLines',
+        position: 'bottom'
+    }
 ];
 
 const Pedidos: React.FC = () => {
@@ -83,12 +88,24 @@ const Pedidos: React.FC = () => {
     const handleSave = async (formData: Record<string, any>) => {
         setIsSaving(true);
         try {
+            // Calcular coste total basado en las líneas
+            const lines = formData.pedidoProductos || [];
+            const calculatedTotal = lines.reduce((sum: number, line: any) => 
+                sum + (Number(line.cantidad || 0) * Number(line.precioUnitario || 0)), 0
+            );
+
             // Limpiar datos para el backend
             const payload = {
-                costeTotal: formData.costeTotal ? Number(formData.costeTotal) : undefined,
+                costeTotal: calculatedTotal,
                 estado: formData.estado,
                 fechaEntrega: formData.fechaEntrega,
                 motivoCancelacion: formData.motivoCancelacion,
+                pedidoProductos: lines.map((l: any) => ({
+                    productoProveedorId: l.productoProveedorId || l.id_producto_proveedor,
+                    cantidad: Number(l.cantidad),
+                    precioUnitario: Number(l.precioUnitario),
+                    observaciones: l.observaciones
+                }))
             };
 
             if (formData.id) {
@@ -109,7 +126,17 @@ const Pedidos: React.FC = () => {
     };
 
     const handleEditClick = (row: Pedido) => {
-        setItemToEdit({ ...row });
+        const editData = {
+            ...row,
+            pedidoProductos: row.pedidoProductos?.map(pp => ({
+                id: pp.id,
+                productoProveedorId: pp.productoProveedor?.id,
+                cantidad: pp.cantidad,
+                precioUnitario: pp.precioUnitario,
+                observaciones: pp.observaciones
+            })) || []
+        };
+        setItemToEdit(editData);
     };
 
     const columns: Column<Pedido>[] = [
@@ -244,7 +271,7 @@ const Pedidos: React.FC = () => {
                     isOpen={!!itemToEdit}
                     onClose={() => setItemToEdit(null)}
                     title={itemToEdit?.id ? `Editar Pedido` : "Crear Nuevo Pedido"}
-                    size="md"
+                    size="lg"
                     fields={pedidoSchema}
                     initialData={itemToEdit || {}}
                     onSubmit={handleSave}

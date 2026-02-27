@@ -11,8 +11,9 @@ import AllergenSelector from './AllergenSelector';
 import ConfirmDialog from './ConfirmDialog';
 import ProveedorSelector, { ProveedorAsociado } from './ProveedorSelector';
 import DatePicker from './DatePicker';
+import PedidoLineasSelector from './PedidoLineasSelector';
 
-export type FieldType = 'text' | 'textarea' | 'number' | 'boolean' | 'select' | 'date' | 'image' | 'allergens' | 'proveedores';
+export type FieldType = 'text' | 'textarea' | 'number' | 'boolean' | 'select' | 'date' | 'image' | 'allergens' | 'proveedores' | 'orderLines';
 
 export interface DynamicField {
     name: string;
@@ -366,6 +367,15 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                                             onChange={(val: ProveedorAsociado[]) => setFormData(prev => ({ ...prev, [name]: val }))}
                                             proveedores={field.options?.map(o => ({ id: o.value as string, nombre: o.label, email: '', nifNie: '' })) || []}
                                             disabled={disabled}
+                                        />
+                                    );
+                                }
+                                if (type === 'orderLines') {
+                                    return (
+                                        <PedidoLineasSelector 
+                                            key={name}
+                                            value={Array.isArray(value) ? value : []}
+                                            onChange={(val) => setFormData(prev => ({ ...prev, [name]: val }))}
                                         />
                                     );
                                 }
