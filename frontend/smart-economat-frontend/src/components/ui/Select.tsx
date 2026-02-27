@@ -36,6 +36,13 @@ const Select: React.FC<SelectProps> = ({
     const isValueEmpty = value === undefined || value === null || value === '';
     const formMargin = (margin as 'none' | 'normal' | 'dense' | undefined) || 'normal';
 
+    const renderValue = () => {
+        if (props.multiple) {
+            return Array.isArray(value) ? value : [];
+        }
+        return isValueEmpty ? '' : value;
+    };
+
     return (
         <FormControl fullWidth={fullWidth} margin={formMargin} error={error} required={required}>
             <InputLabel id={`${name}-label`}>{label}</InputLabel>
@@ -43,7 +50,7 @@ const Select: React.FC<SelectProps> = ({
                 labelId={`${name}-label`}
                 id={name}
                 name={name}
-                value={isValueEmpty ? '' : value}
+                value={renderValue()}
                 label={label}
                 onChange={onChange}
                 {...props}

@@ -42,4 +42,5 @@ export interface Producto {
     alergenos?: ProductoAlergeno[];
     pathImg?: string;
     fechaCaducidad?: string;
+    proveedores?: { id: string; proveedor?: { id: string; nombre: string } }[];
 }

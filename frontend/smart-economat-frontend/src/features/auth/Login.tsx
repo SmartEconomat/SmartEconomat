@@ -35,10 +35,12 @@ const visuallyHidden = {
 
 export default function Login() {
     const [formData, setFormData] = useState({ email: '', username: '', password: '' });
+    const [isLoading, setIsLoading] = useState(false);
     const { login } = useAuth();
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        setIsLoading(true);
         try {
             const response = await fetch('/api/v1/auth/login', {
                 method: 'POST',
@@ -68,6 +70,8 @@ export default function Login() {
             }
         } catch (error) {
             console.error('Network error during login:', error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -205,6 +209,7 @@ export default function Login() {
                         />
                         <Button
                             type="submit"
+                            isLoading={isLoading}
                         >
                             Acceder
                         </Button>

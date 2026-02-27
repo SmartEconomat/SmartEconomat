@@ -6,10 +6,16 @@ import { AuthProvider } from './store/AuthContext';
 import { ToastProvider } from './store/ToastContext';
 import ToastContainer from './components/common/Notification/ToastContainer';
 
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import 'dayjs/locale/es';
+
 function App() {
   return (
     <ThemeContextProvider>
-      <Main />
+      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
+        <Main />
+      </LocalizationProvider>
     </ThemeContextProvider>
   );
 }

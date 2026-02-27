@@ -2,12 +2,13 @@ import {
   IsString,
   IsOptional,
   IsEnum,
-  IsDateString,
   IsNotEmpty,
   MaxLength,
   IsNumber,
   Min,
+  IsDate,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { TipoProducto, UnidadProducto } from '../enums/producto.enums';
 
 export class CreateProductoDto {
@@ -33,10 +34,10 @@ export class CreateProductoDto {
   unidad?: UnidadProducto;
 
   @IsOptional()
-  @IsDateString(
-    {},
-    { message: 'La fecha de caducidad debe ser una fecha válida (ISO 8601)' }
-  )
+  @Type(() => Date)
+  @IsDate({
+    message: 'La fecha de caducidad debe ser una fecha válida (ISO 8601)',
+  })
   fechaCaducidad?: Date;
 
   @IsOptional()
@@ -64,4 +65,7 @@ export class CreateProductoDto {
   @IsOptional()
   @IsString({ each: true })
   alergenos?: string[];
+
+  @IsOptional()
+  proveedores?: import('./producto-proveedor.dto/producto-proveedor.dto').ProductoProveedorDto[];
 }

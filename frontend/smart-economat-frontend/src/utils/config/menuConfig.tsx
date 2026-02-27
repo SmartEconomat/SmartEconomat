@@ -8,6 +8,7 @@ import ReportProblemIconOption from '@mui/icons-material/ReportProblemOutlined';
 import SwapHorizIconOption from '@mui/icons-material/SwapHorizOutlined';
 import LocalShippingIconOption from '@mui/icons-material/LocalShippingOutlined';
 import CategoryIconOption from '@mui/icons-material/CategoryOutlined';
+import MenuBookIconOption from '@mui/icons-material/MenuBookOutlined';
 
 // Lazy load components
 const Home = React.lazy(() => import('../../pages/Home'));
@@ -18,7 +19,9 @@ const Inventario = React.lazy(() => import('../../pages/Inventario'));
 const Incidencias = React.lazy(() => import('../../pages/Incidencias'));
 const Movimientos = React.lazy(() => import('../../pages/Movimientos'));
 const Proveedores = React.lazy(() => import('../../pages/Proveedores'));
+const Recetas = React.lazy(() => import('../../pages/Recetas'));
 const Usuario = React.lazy(() => import('../../pages/Usuario'));
+
 
 export interface MenuItem {
     path: string;
@@ -84,6 +87,14 @@ export const menuItems: MenuItem[] = [
         description: 'Gestionar información de proveedores externos',
         icon: <LocalShippingIconOption />,
         component: Proveedores,
+        showInMenu: true
+    },
+    {
+        path: '/recetas',
+        title: 'Recetas',
+        description: 'Catálogo de recetas y escandallos',
+        icon: <MenuBookIconOption />,
+        component: Recetas,
         showInMenu: true
     },
     {
