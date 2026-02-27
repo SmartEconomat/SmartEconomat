@@ -1,5 +1,5 @@
 import React from 'react';
-import { DatePicker as MUIDatePicker } from '@mui/x-date-pickers/DatePicker';
+import { DatePicker as MUIDatePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
 import { Box } from '@mui/material';
 
