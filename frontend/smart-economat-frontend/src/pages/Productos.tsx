@@ -11,6 +11,8 @@ import { deleteResource } from '../services/api.service';
 import { cleanPayload } from '../services/api.utils';
 import { useToast } from '../store/ToastContext';
 import StatusChip from '../components/ui/StatusChip';
+import { fetchProveedores } from '../services/proveedor.service';
+import { Proveedor } from '../services/proveedor.types';
 
 import FastfoodOutlinedIcon from '@mui/icons-material/FastfoodOutlined';
 import LocalDrinkOutlinedIcon from '@mui/icons-material/LocalDrinkOutlined';
@@ -85,6 +87,7 @@ const productoSchema: DynamicField[] = [
 const Productos: React.FC = () => {
     const [page, setPage] = useState(1);
     const [data, setData] = useState<Producto[]>([]);
+    const [proveedores, setProveedores] = useState<Proveedor[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [productToDelete, setProductToDelete] = useState<Producto | null>(null);
@@ -96,10 +99,17 @@ const Productos: React.FC = () => {
     useEffect(() => {
         setIsLoading(true);
         setError(null);
-        fetchProductos()
-            .then(setData)
+        
+        Promise.all([
+            fetchProductos(),
+            fetchProveedores().catch(() => [])
+        ])
+            .then(([productosData, proveedoresData]) => {
+                setData(productosData);
+                setProveedores(proveedoresData);
+            })
             .catch((err: unknown) => {
-                const message = err instanceof Error ? err.message : 'Error desconocido al cargar productos.';
+                const message = err instanceof Error ? err.message : 'Error desconocido al cargar datos.';
                 setError(message);
             })
             .finally(() => setIsLoading(false));
@@ -134,13 +144,26 @@ const Productos: React.FC = () => {
                 tipo: formData.tipo,
                 contenido: formData.contenido,
                 codigoBarras: formData.codigoBarras,
-                // Normalizar fecha: el input devuelve YYYY-MM-DD, pero si viene
-                // de la BD puede ser ISO completo. Tomamos solo los primeros 10 chars.
-                fechaCaducidad: formData.fechaCaducidad
-                    ? String(formData.fechaCaducidad).substring(0, 10)
+                // Normalizar fecha a ISO 8601 (el input devuelve YYYY-MM-DD,
+                // le agregamos la hora base en UTC para que el backend la valide bien).
+                fechaCaducidad: formData.fechaCaducidad && formData.fechaCaducidad.toString().trim() !== ''
+                    ? (() => {
+                          const str = String(formData.fechaCaducidad);
+                          const toParse = str.includes('T') ? str : `${str}T00:00:00Z`;
+                          const d = new Date(toParse);
+                          return isNaN(d.getTime()) ? undefined : d.toISOString();
+                      })()
                     : undefined,
                 alergenos: Array.isArray(formData.alergenos)
                     ? formData.alergenos.map((a: any) => typeof a === 'string' ? a : a.alergeno)
+                    : undefined,
+                proveedores: Array.isArray(formData.proveedores) 
+                    ? formData.proveedores.map((p: any) => ({
+                        proveedorId: p.proveedorId,
+                        marca: p.marca || undefined,
+                        codigoBarras: p.codigoBarras || undefined,
+                        precioUnitario: p.precioUnitario ? Number(p.precioUnitario) : undefined
+                      }))
                     : undefined,
             };
             
@@ -178,7 +201,7 @@ const Productos: React.FC = () => {
         {
             id: 'tipo',
             label: 'Tipo',
-            render: (row) => row.tipo ?? '—',
+            render: (row) => row.tipo ? <StatusChip status={row.tipo} variant="outlined" /> : '—',
             hideOnMobile: true,
         },
         {
@@ -206,8 +229,29 @@ const Productos: React.FC = () => {
                 typeof a === 'string' ? a : (a.alergeno || a)
             );
         }
+        if (row.proveedores) {
+            editData.proveedores = row.proveedores.map((p: any) => ({
+                proveedorId: p.proveedor?.id || p.id,
+                nombre: p.proveedor?.nombre || '',
+                marca: p.marca || '',
+                codigoBarras: p.codigoBarras || '',
+                precioUnitario: p.precioUnitario || ''
+            }));
+        }
         setProductToEdit(editData);
     };
+
+    const dynamicSchema = React.useMemo(() => {
+        const schema = [...productoSchema];
+        schema.push({
+            name: 'proveedores',
+            label: 'Proveedores Asociados',
+            type: 'proveedores',
+            position: 'bottom',
+            options: proveedores.map(p => ({ value: p.id, label: p.nombre })),
+        });
+        return schema;
+    }, [proveedores]);
 
     const renderActions = (row: Producto) => (
         <>
@@ -242,6 +286,7 @@ const Productos: React.FC = () => {
                     <Tooltip title="Nuevo Producto">
                         <IconButton
                             color="primary"
+                            aria-label="Nuevo Producto"
                             onClick={() => setProductToEdit({})}
                             sx={{
                                 display: { xs: 'inline-flex', sm: 'none' },
@@ -303,8 +348,9 @@ const Productos: React.FC = () => {
                             Esta acción no se puede deshacer.
                         </>
                     }
-                    confirmText={isDeleting ? 'Eliminando…' : 'Sí, eliminar'}
+                    confirmText="Sí, eliminar"
                     cancelText="Cancelar"
+                    isLoading={isDeleting}
                 />
 
                 <DynamicFormModal
@@ -312,10 +358,16 @@ const Productos: React.FC = () => {
                     onClose={() => setProductToEdit(null)}
                     title={productToEdit?.id ? `Editar: ${productToEdit.nombre || ''}` : "Crear Nuevo Producto"}
                     size="lg"
-                    fields={productoSchema}
+                    fields={dynamicSchema}
                     initialData={productToEdit || {}}
                     onSubmit={handleSaveProduct}
                     isSubmitting={isSaving}
+                    requireConfirmation={true}
+                    confirmationMessage={
+                        productToEdit?.id
+                            ? "¿Estás seguro de que deseas guardar los cambios realizados en este producto?"
+                            : "¿Estás seguro de que deseas añadir este nuevo producto al inventario?"
+                    }
                 />
             </Paper>
         </Box>

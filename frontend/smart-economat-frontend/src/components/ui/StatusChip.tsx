@@ -6,6 +6,7 @@ export type StatusType =
     | 'error' | 'failed' | 'cancelled' | 'rejected'
     | 'warning' | 'pending' | 'in_progress' | 'review'
     | 'info' | 'active' | 'archived'
+    | 'fácil' | 'media' | 'difícil'
     | 'default' | 'unknown';
 
 export interface StatusChipProps extends Omit<ChipProps, 'color'> {
@@ -16,23 +17,27 @@ export interface StatusChipProps extends Omit<ChipProps, 'color'> {
 const getStatusColor = (
     status: string
 ): 'success' | 'error' | 'warning' | 'info' | 'default' => {
-    const normalizedStatus = status.toLowerCase();
+    if (!status) return 'default';
+    const normalizedStatus = typeof status === 'string' ? status.toLowerCase() : String(status).toLowerCase();
 
     switch (normalizedStatus) {
         case 'success':
         case 'completed':
         case 'delivered':
         case 'approved':
+        case 'fácil':
             return 'success';
         case 'error':
         case 'failed':
         case 'cancelled':
         case 'rejected':
+        case 'difícil':
             return 'error';
         case 'warning':
         case 'pending':
         case 'in_progress':
         case 'review':
+        case 'media':
             return 'warning';
         case 'info':
         case 'active':
@@ -59,6 +64,9 @@ const statusTranslations: Record<string, string> = {
     info: 'Info',
     active: 'Activo',
     archived: 'Archivado',
+    fácil: 'Fácil',
+    media: 'Media',
+    difícil: 'Difícil',
     unknown: 'Desconocido',
     default: 'Por defecto'
 };
@@ -70,11 +78,12 @@ const capitalize = (text: string) => {
 };
 
 const getTranslatedStatus = (status: string) => {
-    const normalized = status.toLowerCase();
+    if (!status) return '—';
+    const normalized = typeof status === 'string' ? status.toLowerCase() : String(status).toLowerCase();
     if (statusTranslations[normalized]) {
         return statusTranslations[normalized];
     }
-    return capitalize(status);
+    return capitalize(String(status));
 };
 
 export const StatusChip: React.FC<StatusChipProps> = ({
