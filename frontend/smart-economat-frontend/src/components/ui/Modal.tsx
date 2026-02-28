@@ -1,20 +1,16 @@
-import React, { useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import React from 'react';
 import {
-    Box,
-    Paper,
-    Typography,
+    Dialog,
+    DialogTitle,
+    DialogContent,
     IconButton,
-    Backdrop,
-    Fade,
-    useTheme,
+    Typography,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
 export interface ModalProps {
-
     isOpen: boolean;
     onClose: () => void;
     title?: string | React.ReactNode;
@@ -22,7 +18,8 @@ export interface ModalProps {
     children: React.ReactNode;
 }
 
-const sizeMaxWidths: Record<ModalSize, string> = {
+// Mapeamos nuestro ModalSize a los maxWidth de Dialog de MUI
+const sizeToPaperMaxWidth: Record<ModalSize, string> = {
     sm: '400px',
     md: '600px',
     lg: '900px',
@@ -37,106 +34,68 @@ const Modal = ({
     size = 'md',
     children,
 }: ModalProps) => {
-    const theme = useTheme();
 
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && isOpen) {
-                onClose();
-            }
-        };
-
-        if (isOpen) {
-            document.body.style.overflow = 'hidden';
-            document.addEventListener('keydown', handleKeyDown);
-        } else {
-            document.body.style.overflow = '';
-        }
-
-        return () => {
-            document.body.style.overflow = '';
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [isOpen, onClose]);
-    if (!isOpen) return null;
-
-    return createPortal(
-        <Backdrop
-            sx={{
-                zIndex: theme.zIndex.modal,
-                backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                backdropFilter: 'blur(3px)',
-            }}
+    return (
+        <Dialog
             open={isOpen}
-            onClick={onClose}
+            onClose={onClose}
+            // Dialog de MUI gestiona el focus trap ANTES de aplicar
+            // aria-hidden al resto del DOM, evitando el warning de accesibilidad.
+            scroll="paper"
+            fullScreen={size === 'full'}
+            PaperProps={{
+                sx: {
+                    width: '100%',
+                    maxWidth: sizeToPaperMaxWidth[size],
+                    maxHeight: size === 'full' ? '100vh' : '90vh',
+                    m: size === 'full' ? 0 : 2,
+                    bgcolor: 'background.paper',
+                    backgroundImage: 'none',
+                },
+            }}
+            aria-labelledby={title ? 'modal-title' : undefined}
+            // Transición suave
+            transitionDuration={225}
         >
-            <Fade in={isOpen}>
-                <Paper
-                    elevation={24}
-                    onClick={(e) => e.stopPropagation()}
+            {/* Header */}
+            <DialogTitle
+                id="modal-title"
+                component="div"
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    px: 3,
+                    py: 2,
+                    borderBottom: 1,
+                    borderColor: 'divider',
+                    minHeight: 56,
+                }}
+            >
+                {title && (
+                    <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
+                        {title}
+                    </Typography>
+                )}
+                <IconButton
+                    aria-label="Cerrar modal"
+                    onClick={onClose}
+                    size="small"
                     sx={{
-                        position: 'relative',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        width: size === 'full' ? '100vw' : '100%',
-                        height: size === 'full' ? '100vh' : 'auto',
-                        maxWidth: sizeMaxWidths[size],
-                        maxHeight: size === 'full' ? '100vh' : '90vh',
-                        m: size === 'full' ? 0 : 2,
-                        borderRadius: size === 'full' ? 0 : 2,
-                        bgcolor: 'background.paper',
-                        overflow: 'hidden',
-                        outline: 'none',
+                        ml: 'auto',
+                        color: 'text.secondary',
+                        '&:hover': { color: 'text.primary', bgcolor: 'action.hover' },
                     }}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby={title ? 'modal-title' : undefined}
                 >
+                    <CloseIcon fontSize="small" />
+                </IconButton>
+            </DialogTitle>
 
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            px: 3,
-                            py: 2,
-                            borderBottom: 1,
-                            borderColor: 'divider',
-                        }}
-                    >
-                        {title && (
-                            <Typography variant="h6" id="modal-title" component="h2" sx={{ fontWeight: 600 }}>
-                                {title}
-                            </Typography>
-                        )}
-                        <IconButton
-                            aria-label="Cerrar modal"
-                            onClick={onClose}
-                            size="small"
-                            sx={{
-                                ml: 'auto',
-                                color: 'text.secondary',
-                                '&:hover': { color: 'text.primary', bgcolor: 'action.hover' },
-                            }}
-                        >
-                            <CloseIcon fontSize="small" />
-                        </IconButton>
-                    </Box>
-
-
-                    <Box
-                        sx={{
-                            p: 3,
-                            overflowY: 'auto',
-                            flex: 1,
-                        }}
-                    >
-                        {children}
-                    </Box>
-                </Paper>
-            </Fade>
-        </Backdrop>,
-        document.body
+            {/* Content */}
+            <DialogContent sx={{ p: 3, overflowY: 'auto' }}>
+                {children}
+            </DialogContent>
+        </Dialog>
     );
 };
 

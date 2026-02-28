@@ -9,7 +9,7 @@ import { JwtStrategy } from '../strategies/jwt.strategy';
 import { AuthController } from '../controller/auth.controller';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/role.guard';
-import { Usuario } from 'src/modules/usuario/usuario.entity/usuario.entity';
+import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 
 @Module({
   imports: [

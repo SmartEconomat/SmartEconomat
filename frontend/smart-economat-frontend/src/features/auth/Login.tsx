@@ -8,6 +8,19 @@ import Button from '../../components/ui/Button';
 import Checkbox from '../../components/ui/Checkbox';
 import { useAuth } from '../../store/AuthContext';
 
+function parseJwt(token: string) {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        return null;
+    }
+}
+
 const visuallyHidden = {
     border: 0,
     clip: 'rect(0 0 0 0)',
@@ -22,15 +35,44 @@ const visuallyHidden = {
 
 export default function Login() {
     const [formData, setFormData] = useState({ email: '', username: '', password: '' });
+    const [isLoading, setIsLoading] = useState(false);
     const { login } = useAuth();
 
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        console.log('Datos de login:', formData);
-        login({
-            name: 'Usuario Demo',
-            email: formData.email
-        }, 'dummy-token');
+        setIsLoading(true);
+        try {
+            const response = await fetch('/api/v1/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: formData.email || formData.username,
+                    password: formData.password
+                }),
+                // The backend will set an HTTP-only cookie containing the token
+            });
+
+            if (response.ok) {
+                const json = await response.json();
+                // token is still returned in body, parse it for UI data
+                const token = json.data?.access_token || json.access_token;
+                const decoded = token ? parseJwt(token) : null;
+                
+                login({
+                    name: decoded?.nombre || formData.email,
+                    email: formData.email
+                });
+            } else {
+                const errJson = await response.json();
+                console.error('Error logging in:', response.status, errJson);
+            }
+        } catch (error) {
+            console.error('Network error during login:', error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -167,6 +209,7 @@ export default function Login() {
                         />
                         <Button
                             type="submit"
+                            isLoading={isLoading}
                         >
                             Acceder
                         </Button>

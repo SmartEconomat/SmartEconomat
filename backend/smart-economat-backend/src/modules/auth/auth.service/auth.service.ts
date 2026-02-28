@@ -10,8 +10,9 @@ import { JwtService } from '@nestjs/jwt';
 import { RegisterUserDto } from '../dto/register-user.dto';
 import { LoginUserDto } from '../dto/login-user.dto';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
-import { Usuario } from 'src/modules/usuario/usuario.entity/usuario.entity';
+import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
+import { rolUsuario } from '../../usuario/enums/usuario.enums';
 
 @Injectable()
 export class AuthService {
@@ -34,11 +35,10 @@ export class AuthService {
         );
       }
 
-      const hashedPassword = await bcrypt.hash(dto.password, 10);
-
       const usuario = manager.create(Usuario, {
         ...dto,
-        password: hashedPassword,
+        activo: false,
+        rol: rolUsuario.INVITADO,
       });
 
       await manager.save(usuario);
@@ -49,7 +49,10 @@ export class AuthService {
 
   async login(dto: LoginUserDto) {
     const usuario = await this.usuarioRepo.findOne({
-      where: { email: dto.email, activo: true },
+      where: [
+        { email: dto.email, activo: true },
+        { username: dto.email, activo: true },
+      ],
     });
 
     if (!usuario || !(await bcrypt.compare(dto.password, usuario.password))) {

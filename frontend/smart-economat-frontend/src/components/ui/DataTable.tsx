@@ -19,7 +19,8 @@ export interface Column<T> {
     label: string;
     render?: (row: T) => ReactNode;
     align?: 'inherit' | 'left' | 'center' | 'right' | 'justify';
-    hiddenOnMobile?: boolean;
+
+    hideOnMobile?: boolean;
 }
 
 export interface DataTableProps<T> {
@@ -69,7 +70,8 @@ export function DataTable<T extends Record<string, any>>({
     return (
         <Box sx={{ width: '100%', mb: 2 }}>
             <TableContainer component={Paper}>
-                <Table sx={{ minWidth: { xs: 300, md: 650 } }} aria-label="data table">
+
+                <Table sx={{ minWidth: { xs: '100%', md: 650 } }} aria-label="data table">
                     <TableHead>
                         <TableRow>
                             {columns.map((column) => (
@@ -78,7 +80,7 @@ export function DataTable<T extends Record<string, any>>({
                                     align={column.align || 'left'}
                                     sx={{
                                         fontWeight: 'bold',
-                                        display: column.hiddenOnMobile ? { xs: 'none', md: 'table-cell' } : 'table-cell'
+                                        display: column.hideOnMobile ? { xs: 'none', md: 'table-cell' } : undefined
                                     }}
                                 >
                                     {column.label}
@@ -129,7 +131,10 @@ export function DataTable<T extends Record<string, any>>({
                                         <TableCell
                                             key={String(column.id)}
                                             align={column.align || 'left'}
-                                            sx={{ display: column.hiddenOnMobile ? { xs: 'none', md: 'table-cell' } : 'table-cell' }}
+
+                                            sx={{
+                                                display: column.hideOnMobile ? { xs: 'none', md: 'table-cell' } : undefined
+                                            }}
                                         >
                                             {column.render
                                                 ? column.render(row)
