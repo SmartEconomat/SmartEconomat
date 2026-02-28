@@ -28,7 +28,21 @@ Documentación detallada de los componentes clave, desglosando su construcción 
 - [Tutorial Onboarding](./componentes/TutorialHelper.md): Guía contextual paso a paso.
 - [Main Layout](./componentes/MainLayout.md): Estructura principal (Sidebar, Header).
 - [Settings Menu](./componentes/SettingsMenu.md): Menú de configuración (Tema, Fuentes).
-- [Login](./componentes/Login.md): Sistema de autenticación.
+
+#### Autenticación
+- [Login](./componentes/Login.md): Orquestador de la pantalla de auth — fases, animaciones y flujos de login/registro.
+- [AuthSlide](./componentes/AuthSlide.md): Panel informativo con gradiente animado, icono giratorio y carrusel.
+- [LoginForm](./componentes/LoginForm.md): Formulario de inicio de sesión con toggle de contraseña.
+- [RegisterForm](./componentes/RegisterForm.md): Formulario de alta de nuevos usuarios.
+
+---
+
+### Páginas
+
+Documentación de las vistas completas (componentes raíz de cada ruta).
+
+- [Auth (Login / Registro)](./paginas/Auth.md): Sistema completo de autenticación — diseño, animaciones, seguridad y flujos.
+- [Usuarios](./paginas/Usuarios.md): Gestión de usuarios con tabla y operaciones CRUD.
 
 ---
 
