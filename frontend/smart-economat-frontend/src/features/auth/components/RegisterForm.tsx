@@ -69,19 +69,16 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm, onRegisterSuc
     const togglePasswordVisibility = () => setShowPassword(v => !v);
 
     return (
-        <Box sx={{ my: 8, mx: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            {/* Logo visible solo en móvil */}
-            <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', alignItems: 'center', mb: 4 }}>
-                <Box sx={{ width: 80, height: 80, bgcolor: 'secondary.main', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-                    <PersonAddOutlinedIcon sx={{ fontSize: 40, color: 'white' }} />
-                </Box>
-            </Box>
+        <Box sx={{ my: { xs: 4, md: 8 }, mx: 4, pt: { xs: 2, md: 0 }, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 
-            {/* Logo de SmartEconomat en lugar del icono de registro */}
-            <Box sx={{ mb: 1, mt: 1 }}>
-                <img src={Logo} alt="SmartEconomat" style={{ height: 150, width: 'auto' }} />
+            {/* Logo responsivo: más pequeño en móvil, más grande en desktop */}
+            <Box sx={{ mb: 1, mt: { xs: 0, md: 1 } }}>
+                <img
+                    src={Logo}
+                    alt="SmartEconomat"
+                    style={{ height: 'clamp(90px, 15vw, 130px)', width: 'auto' }}
+                />
             </Box>
-            {/* <Typography component="h2" variant="h5">Crear Cuenta</Typography> */}
 
             {errorMsg && <Alert severity="error" sx={{ width: '100%', maxWidth: 400, mt: 2 }}>{errorMsg}</Alert>}
 
