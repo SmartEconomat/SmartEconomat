@@ -118,14 +118,15 @@ export class Inventario extends BaseEntity {
   /**
    * Fecha de caducidad de este lote específico.
    * Fundamental para la rotación de stock (FEFO - First Expired, First Out).
-   * @type {Date}
+   * Opcional: no todos los productos tienen fecha de caducidad relevante.
+   * @type {Date | undefined}
    */
   @Column({
     type: 'timestamptz',
-    nullable: false,
+    nullable: true,
     name: 'fecha_caducidad',
   })
-  fechaCaducidad!: Date;
+  fechaCaducidad?: Date;
 
   /* --- Métodos de Dominio --- */
 
@@ -161,6 +162,7 @@ export class Inventario extends BaseEntity {
    * @returns {boolean} True si caduca en 'diasUmbral' o menos (o ya ha caducado).
    */
   proximoACaducar(diasUmbral: number = 7): boolean {
+    if (!this.fechaCaducidad) return false;
     const umbralFecha = new Date();
     umbralFecha.setDate(umbralFecha.getDate() + diasUmbral);
     return this.fechaCaducidad <= umbralFecha;

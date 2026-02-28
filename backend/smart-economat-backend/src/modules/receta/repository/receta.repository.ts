@@ -62,21 +62,33 @@ export class RecetaRepository {
 
       return manager.findOneOrFail(Receta, {
         where: { id: receta.id },
-        relations: ['ingredientes', 'ingredientes.producto'],
+        relations: [
+          'ingredientes',
+          'ingredientes.producto',
+          'ingredientes.producto.alergenos',
+        ],
       });
     });
   }
 
   async findAll(): Promise<Receta[]> {
     return this.recetaRepo.find({
-      relations: ['ingredientes', 'ingredientes.producto'],
+      relations: [
+        'ingredientes',
+        'ingredientes.producto',
+        'ingredientes.producto.alergenos',
+      ],
     });
   }
 
   async findById(id: string): Promise<Receta | null> {
     return this.recetaRepo.findOne({
       where: { id },
-      relations: ['ingredientes', 'ingredientes.producto'],
+      relations: [
+        'ingredientes',
+        'ingredientes.producto',
+        'ingredientes.producto.alergenos',
+      ],
     });
   }
 
@@ -87,21 +99,55 @@ export class RecetaRepository {
       throw new NotFoundException(I18nHelper.getError('RECIPE_NOT_FOUND'));
     }
 
-    const updateData: Partial<Receta> = {
-      ...(dto.nombre !== undefined && { nombre: dto.nombre }),
-      ...(dto.instrucciones !== undefined && {
-        instrucciones: dto.instrucciones,
-      }),
-      ...(dto.tiempo !== undefined && { tiempo: dto.tiempo }),
-      ...(dto.dificultad !== undefined && { dificultad: dto.dificultad }),
-      ...(dto.tiempoPreparacion !== undefined && {
-        tiempoPreparacion: dto.tiempoPreparacion,
-      }),
-    };
+    return this.dataSource.transaction(async (manager) => {
+      const updateData: Partial<Receta> = {
+        ...(dto.nombre !== undefined && { nombre: dto.nombre }),
+        ...(dto.instrucciones !== undefined && {
+          instrucciones: dto.instrucciones,
+        }),
+        ...(dto.tiempo !== undefined && { tiempo: dto.tiempo }),
+        ...(dto.dificultad !== undefined && { dificultad: dto.dificultad }),
+        ...(dto.tiempoPreparacion !== undefined && {
+          tiempoPreparacion: dto.tiempoPreparacion,
+        }),
+      };
 
-    await this.recetaRepo.update(id, updateData);
+      await manager.update(Receta, id, updateData);
 
-    return this.findById(id) as Promise<Receta>;
+      if (dto.ingredientes) {
+        await manager.delete(RecetaIngrediente, { receta: { id } });
+
+        for (const ing of dto.ingredientes) {
+          const producto = await manager.findOne(Producto, {
+            where: { id: ing.productoId },
+          });
+
+          if (!producto) {
+            throw new BadRequestException(
+              I18nHelper.getError('PRODUCT_NOT_FOUND')
+            );
+          }
+
+          const recetaIngrediente = manager.create(RecetaIngrediente, {
+            cantidad: ing.cantidad,
+            unidad: ing.unidad,
+            receta: { id } as Receta,
+            producto,
+          });
+
+          await manager.save(recetaIngrediente);
+        }
+      }
+
+      return manager.findOneOrFail(Receta, {
+        where: { id },
+        relations: [
+          'ingredientes',
+          'ingredientes.producto',
+          'ingredientes.producto.alergenos',
+        ],
+      });
+    });
   }
 
   async remove(id: string): Promise<void> {

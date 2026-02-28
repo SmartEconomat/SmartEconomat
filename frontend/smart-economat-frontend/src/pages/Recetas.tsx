@@ -10,6 +10,7 @@ import { fetchRecetas, createReceta, updateReceta } from '../services/receta.ser
 import { deleteResource } from '../services/api.service';
 import { useToast } from '../store/ToastContext';
 import StatusChip from '../components/ui/StatusChip';
+import RecipeCarousel from '../components/ui/RecipeCarousel';
 
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import AddIcon from '@mui/icons-material/Add';
@@ -52,6 +53,12 @@ const recetaSchema: DynamicField[] = [
         type: 'textarea',
         required: true,
         width: 12,
+    },
+    {
+        name: 'ingredientes',
+        label: 'Ingredientes de la receta',
+        type: 'recipeIngredients',
+        position: 'bottom',
     },
 ];
 
@@ -110,6 +117,11 @@ const Recetas: React.FC = () => {
                 tiempo: formData.tiempo,
                 dificultad: formData.dificultad,
                 tiempoPreparacion: formData.tiempoPreparacion,
+                ingredientes: Array.isArray(formData.ingredientes) ? formData.ingredientes.map((ing: any) => ({
+                    productoId: ing.productoId,
+                    cantidad: Number(ing.cantidad),
+                    unidad: ing.unidad
+                })) : [],
             };
 
             if (formData.id) {
@@ -187,6 +199,7 @@ const Recetas: React.FC = () => {
 
     return (
         <Box>
+            <RecipeCarousel />
             <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 } }}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                     <Typography variant="h6">
