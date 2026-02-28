@@ -13,6 +13,7 @@ import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
 import { Incidencia } from '../../incidencia/incidencia.entity/incidencia.entity';
 import { rolUsuario } from '../enums/usuario.enums';
+import { Exclude } from 'class-transformer';
 
 /**
  * Entidad Usuario
@@ -47,7 +48,8 @@ export class Usuario extends BaseEntity {
    * Nunca se guarda en texto plano.
    * @type {string}
    */
-  @Column({ type: 'varchar', length: 100, select: false })
+  @Column({ type: 'varchar', length: 100 })
+  @Exclude()
   password!: string;
 
   /**
@@ -63,7 +65,7 @@ export class Usuario extends BaseEntity {
    * (ADMIN, PROFESOR, ALUMNO, etc.)
    * @type {rolUsuario}
    */
-  @Column({ type: 'enum', enum: rolUsuario, default: rolUsuario.ALUMNO })
+  @Column({ type: 'enum', enum: rolUsuario, default: rolUsuario.INVITADO })
   rol!: rolUsuario;
 
   /**

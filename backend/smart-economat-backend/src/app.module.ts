@@ -10,8 +10,10 @@ import { MovimientoModule } from './modules/movimiento/movimiento.module';
 import { typeOrmConfig } from './config/database.config';
 import { I18nConfigModule } from './config/i18n.module';
 import { RecepcionModule } from './modules/recepcion/recepcion.module';
-import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { UsuarioModule } from './modules/usuario/usuario.module';
+import { RecetaModule } from './modules/receta/receta.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { InventarioModule } from './modules/inventario/inventario.module';
 
 @Module({
   imports: [
@@ -24,9 +26,11 @@ import { UsuarioModule } from './modules/usuario/usuario.module';
     ProductoModule,
     MovimientoModule,
     RecepcionModule,
-    DashboardModule,
+    RecetaModule,
     ProveedorModule,
     UsuarioModule,
+    DashboardModule,
+    InventarioModule,
   ],
   controllers: [AppController],
   providers: [AppService],

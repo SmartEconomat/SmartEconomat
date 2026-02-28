@@ -1,5 +1,5 @@
 import React from 'react';
-import { TextField, TextFieldProps } from '@mui/material';
+import { TextField, TextFieldProps, useTheme } from '@mui/material';
 
 type InputProps = TextFieldProps & {
     label: string;
@@ -10,6 +10,8 @@ type InputProps = TextFieldProps & {
 };
 
 const Input: React.FC<InputProps> = ({ label, name, type = 'text', value, onChange, ...props }) => {
+    const theme = useTheme();
+
     return (
         <TextField
             margin="normal"

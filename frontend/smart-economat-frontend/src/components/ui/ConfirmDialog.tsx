@@ -1,6 +1,7 @@
 import React, { ReactNode } from 'react';
 import { Button, Box, Typography } from '@mui/material';
 import Modal from './Modal';
+import Spinner from './Spinner';
 
 type ButtonColor =
     | 'inherit'
@@ -21,6 +22,7 @@ export interface ConfirmDialogProps {
     cancelText?: string;
     confirmColor?: ButtonColor;
     confirmVariant?: 'contained' | 'outlined' | 'text';
+    isLoading?: boolean;
 }
 
 export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
@@ -33,6 +35,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     cancelText = 'Cancelar',
     confirmColor = 'error',
     confirmVariant = 'contained',
+    isLoading = false,
 }) => {
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
@@ -56,6 +59,8 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                     color={confirmColor}
                     variant={confirmVariant}
                     disableElevation
+                    disabled={isLoading}
+                    startIcon={isLoading ? <Spinner size="sm" color="inherit" /> : undefined}
                 >
                     {confirmText}
                 </Button>

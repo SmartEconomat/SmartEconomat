@@ -21,7 +21,10 @@ export class I18nHelper {
    */
   static getError(key: string, args?: Record<string, any>): string {
     const i18n = I18nContext.current();
-    return i18n?.translate(`errors.${key}`, { args }) || `errors.${key}`;
+    return (
+      i18n?.translate(`translation.errors.${key}`, { args }) ||
+      `translation.errors.${key}`
+    );
   }
 
   /**
@@ -35,7 +38,10 @@ export class I18nHelper {
    */
   static getSuccess(key: string, args?: Record<string, any>): string {
     const i18n = I18nContext.current();
-    return i18n?.translate(`success.${key}`, { args }) || `success.${key}`;
+    return (
+      i18n?.translate(`translation.success.${key}`, { args }) ||
+      `translation.success.${key}`
+    );
   }
 
   /**
@@ -50,7 +56,8 @@ export class I18nHelper {
   static getValidation(key: string, args?: Record<string, any>): string {
     const i18n = I18nContext.current();
     return (
-      i18n?.translate(`validation.${key}`, { args }) || `validation.${key}`
+      i18n?.translate(`translation.validation.${key}`, { args }) ||
+      `translation.validation.${key}`
     );
   }
 
@@ -65,7 +72,10 @@ export class I18nHelper {
    */
   static getEntity(key: string): string {
     const i18n = I18nContext.current();
-    return i18n?.translate(`entities.${key}`) || `entities.${key}`;
+    return (
+      i18n?.translate(`translation.entities.${key}`) ||
+      `translation.entities.${key}`
+    );
   }
 
   /**

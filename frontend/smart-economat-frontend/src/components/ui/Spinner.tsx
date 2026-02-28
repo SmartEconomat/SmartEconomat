@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, CircularProgress, useTheme } from '@mui/material';
 
 type SpinnerSize = 'sm' | 'md' | 'lg';
-type SpinnerColor = 'primary' | 'white' | 'gray';
+type SpinnerColor = 'primary' | 'white' | 'gray' | 'inherit';
 
 export interface SpinnerProps {
     size?: SpinnerSize;
@@ -31,6 +31,8 @@ const Spinner: React.FC<SpinnerProps> = ({
                 return '#ffffff';
             case 'gray':
                 return theme.palette.grey[500];
+            case 'inherit':
+                return 'inherit';
             case 'primary':
             default:
                 return theme.palette.primary.main;

@@ -28,7 +28,12 @@ export class UsuarioRepository {
   }
 
   async updateUsuario(id: string, data: Partial<Usuario>) {
-    await this.repo.update(id, data);
+    const usuario = await this.findById(id);
+    if (!usuario) return null;
+
+    Object.assign(usuario, data);
+    await this.repo.save(usuario);
+
     return this.findById(id);
   }
 
