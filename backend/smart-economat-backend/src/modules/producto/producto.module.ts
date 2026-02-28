@@ -8,13 +8,21 @@ import { Producto } from './producto.entity/producto.entity';
 import { ProductoRepository } from './repository/producto.repository';
 import { ProductoProveedor } from './producto-proveedor.entity/producto-proveedor.entity';
 import { HistorialPrecio } from './historial-precio-proveedor.entity/historial.entity';
+import { MovimientoModule } from '../movimiento/movimiento.module';
+import { MovimientoHelper } from '../../common/helpers/movimiento.helper';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Producto, ProductoProveedor, HistorialPrecio]),
+    MovimientoModule,
   ],
   controllers: [ProductoController, ProductoProveedorController],
-  providers: [ProductoService, ProductoRepository, ProductoProveedorService],
+  providers: [
+    ProductoService,
+    ProductoRepository,
+    ProductoProveedorService,
+    MovimientoHelper,
+  ],
   exports: [ProductoService, ProductoRepository, ProductoProveedorService],
 })
 export class ProductoModule {}

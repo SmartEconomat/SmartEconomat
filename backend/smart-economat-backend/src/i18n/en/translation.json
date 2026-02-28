@@ -26,6 +26,7 @@
     "INSUFFICIENT_STOCK": "Insufficient stock",
     "INVALID_STATE": "Invalid state",
     "ORDER_NOT_CANCELLABLE": "Cannot cancel an order that has already been received or is in shipping process",
+    "ORDER_CANNOT_BE_DELETED": "Only orders in PENDING or CANCELLED state can be deleted",
     "MOVEMENTS_NOT_FOUND": "No movements found for this entity",
     "RECEPTION_NOT_FOUND": "Reception not found",
     "USER_DOES_NOT_EXIST": "User does not exist",
@@ -39,7 +40,9 @@
     "DUPLICATE_ENTRY": "A record with that value already exists. Please use a different one.",
     "RECIPE_NOT_FOUND": "Recipe not found",
     "INVENTARIO_NOT_FOUND": "Inventory record not found",
-    "INVENTARIO_CONSTRAINT_VIOLATION": "Constraint violation: ensure cantidad_maxima >= cantidad_minima and all quantities are non-negative"
+    "INVENTARIO_CONSTRAINT_VIOLATION": "Constraint violation: ensure cantidad_maxima >= cantidad_minima and all quantities are non-negative",
+    "USER_INACTIVE_CANNOT_RESET_PASSWORD": "Cannot change the password of an inactive user",
+    "INVALID_OLD_PASSWORD": "Current password is incorrect"
   },
   "success": {
     "CREATED": "Successfully created",

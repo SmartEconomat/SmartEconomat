@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { InventarioService } from '../service/inventario.service';
 import { CreateInventarioItemDto } from '../dto/create-InventarioItem.dto';
@@ -28,9 +29,11 @@ export class InventarioController {
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.CREATED)
   create(
-    @Body() createInventarioDto: CreateInventarioItemDto
+    @Body() createInventarioDto: CreateInventarioItemDto,
+    @Request() req: any
   ): Promise<Inventario> {
-    return this.inventarioService.create(createInventarioDto);
+    const userId = req.user.sub;
+    return this.inventarioService.create(createInventarioDto, userId);
   }
 
   @Get()
@@ -49,15 +52,18 @@ export class InventarioController {
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   update(
     @Param('id') id: string,
-    @Body() updateInventarioDto: UpdateInventarioDto
+    @Body() updateInventarioDto: UpdateInventarioDto,
+    @Request() req: any
   ): Promise<Inventario> {
-    return this.inventarioService.update(id, updateInventarioDto);
+    const userId = req.user.sub;
+    return this.inventarioService.update(id, updateInventarioDto, userId);
   }
 
   @Delete(':id')
   @Roles(rolUsuario.ADMINISTRADOR)
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id') id: string): Promise<void> {
-    return this.inventarioService.remove(id);
+  remove(@Param('id') id: string, @Request() req: any): Promise<void> {
+    const userId = req.user.sub;
+    return this.inventarioService.remove(id, userId);
   }
 }

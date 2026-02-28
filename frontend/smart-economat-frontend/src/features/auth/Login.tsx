@@ -61,8 +61,11 @@ export default function Login() {
                 const decoded = token ? parseJwt(token) : null;
 
                 login({
+                    id: decoded?.sub || '',
                     name: decoded?.nombre || formData.email,
-                    email: formData.email
+                    email: formData.email,
+                    rol: decoded?.role || '',
+                    username: decoded?.username,
                 }, token);
             } else {
                 const errJson = await response.json();

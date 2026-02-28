@@ -10,8 +10,12 @@ import {
   HttpStatus,
   UseGuards,
   ParseUUIDPipe,
+  Query,
+  Request,
 } from '@nestjs/common';
 import { ProductoService } from '../service/producto.service';
+import { ApiQuery } from '@nestjs/swagger';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { CreateProductoDto } from '../dto/create-producto.dto';
 import { UpdateProductoDto } from '../dto/update-producto.dto';
 import { Producto } from '../producto.entity/producto.entity';
@@ -29,14 +33,24 @@ export class ProductoController {
   @Post()
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() createProductoDto: CreateProductoDto): Promise<Producto> {
-    return this.productoService.create(createProductoDto);
+  create(
+    @Body() createProductoDto: CreateProductoDto,
+    @Request() req: any
+  ): Promise<Producto> {
+    const userId = req.user.sub;
+    return this.productoService.create(createProductoDto, userId);
   }
 
   @Get()
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
-  findAll(): Promise<Producto[]> {
-    return this.productoService.findAll();
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  findAll(
+    @Query() query: PaginationQueryDto
+  ): Promise<
+    import('../../../common/dto/paginated-response.dto').PaginatedResponseDto<Producto>
+  > {
+    return this.productoService.findAll(query);
   }
 
   @Get(':id')
@@ -49,15 +63,21 @@ export class ProductoController {
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateProductoDto: UpdateProductoDto
+    @Body() updateProductoDto: UpdateProductoDto,
+    @Request() req: any
   ): Promise<Producto> {
-    return this.productoService.update(id, updateProductoDto);
+    const userId = req.user.sub;
+    return this.productoService.update(id, updateProductoDto, userId);
   }
 
   @Delete(':id')
   @Roles(rolUsuario.ADMINISTRADOR)
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    return this.productoService.remove(id);
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: any
+  ): Promise<void> {
+    const userId = req.user.sub;
+    return this.productoService.remove(id, userId);
   }
 }

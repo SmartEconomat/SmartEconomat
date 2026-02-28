@@ -1,19 +1,13 @@
 import { Recepcion } from './recepcion.types';
-import { baseFetch } from './api.service';
-
-interface ApiResponse<T> {
-    success: boolean;
-    message: string;
-    data: T;
-}
+import { baseFetch, ApiResponse, unwrapList } from './api.service';
 
 export async function fetchRecepciones(): Promise<Recepcion[]> {
-    const response = await baseFetch('/recepcion');
+    const response = await baseFetch('/recepcion?limit=500');
     if (!response.ok) {
         throw new Error(`Error al obtener recepciones: ${response.status} ${response.statusText}`);
     }
-    const body = await response.json() as ApiResponse<Recepcion[]>;
-    return body.data;
+    const body = await response.json() as ApiResponse<unknown>;
+    return unwrapList<Recepcion>(body.data);
 }
 
 export async function createRecepcion(recepcion: Partial<Recepcion>): Promise<Recepcion> {

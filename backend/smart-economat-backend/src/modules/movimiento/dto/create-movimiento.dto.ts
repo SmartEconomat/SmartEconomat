@@ -14,8 +14,14 @@ export class CreateMovimientoDto {
   tipo!: TipoMovimiento;
 
   @IsInt({ message: 'La cantidad debe ser un número entero' })
-  @Min(1, { message: 'La cantidad debe ser al menos 1' })
+  @Min(0, { message: 'La cantidad no puede ser negativa' })
   cantidad!: number;
+
+  @IsString({ message: 'El tipo de entidad debe ser una cadena de texto' })
+  entidadTipo!: string;
+
+  @IsString({ message: 'El ID de entidad debe ser una cadena de texto' })
+  entidadId!: string;
 
   @IsString({ message: 'La descripción debe ser una cadena de texto' })
   @IsOptional()
@@ -25,8 +31,10 @@ export class CreateMovimientoDto {
   descripcion?: string;
 
   @IsUUID('7', { message: 'El ID del inventario debe ser un UUID válido' })
-  inventario!: string;
+  @IsOptional()
+  inventario?: string;
 
   @IsUUID('7', { message: 'El ID del usuario debe ser un UUID válido' })
-  usuario!: string;
+  @IsOptional()
+  usuario?: string;
 }

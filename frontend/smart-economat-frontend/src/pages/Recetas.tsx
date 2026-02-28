@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Paper, IconButton, Typography, Alert, Button, Tooltip, Chip, Card, CardContent, CardActions, Divider } from '@mui/material';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Box, Paper, IconButton, Typography, Alert, Button, Tooltip, Chip, Card, CardContent, CardActions, Divider, TextField, InputAdornment } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DataTable, { Column } from '../components/ui/DataTable';
@@ -15,6 +15,7 @@ import RecipeCarousel from '../components/ui/RecipeCarousel';
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
+import SearchIcon from '@mui/icons-material/SearchOutlined';
 
 
 
@@ -65,6 +66,7 @@ const recetaSchema: DynamicField[] = [
 const Recetas: React.FC = () => {
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
+    const [searchTerm, setSearchTerm] = useState('');
     const [data, setData] = useState<Receta[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -144,6 +146,22 @@ const Recetas: React.FC = () => {
     const handleEditClick = (row: Receta) => {
         setItemToEdit({ ...row });
     };
+
+    const filteredData = useMemo(() => {
+        if (!searchTerm.trim()) return data;
+        const term = searchTerm.toLowerCase().trim();
+        return data.filter(
+            (r) =>
+                r.nombre?.toLowerCase().includes(term) ||
+                r.instrucciones?.toLowerCase().includes(term) ||
+                r.dificultad?.toLowerCase().includes(term) ||
+                r.tiempo?.toLowerCase().includes(term) ||
+                r.tiempoPreparacion?.toLowerCase().includes(term) ||
+                r.ingredientes?.some((ing) =>
+                    ing.producto?.nombre?.toLowerCase().includes(term)
+                )
+        );
+    }, [data, searchTerm]);
 
     const columns: Column<Receta>[] = [
         { id: 'nombre', label: 'Nombre' },
@@ -239,31 +257,55 @@ const Recetas: React.FC = () => {
                     </Alert>
                 )}
 
+                <TextField
+                    placeholder="Buscar por nombre, instrucciones, ingredientes..."
+                    value={searchTerm}
+                    onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setPage(1);
+                    }}
+                    size="small"
+                    sx={{ mb: 2, width: '100%', maxWidth: 400 }}
+                    InputProps={{
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <SearchIcon color="action" />
+                            </InputAdornment>
+                        ),
+                    }}
+                />
+
                 <DataTable
                     columns={columns}
-                    data={data.slice((page - 1) * pageSize, page * pageSize)}
+                    data={filteredData.slice((page - 1) * pageSize, page * pageSize)}
                     isLoading={isLoading}
                     emptyStateMessage={
                         <Box sx={{ py: 4, textAlign: 'center' }}>
                             <MenuBookOutlinedIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
                             <Typography variant="h6" color="text.secondary" gutterBottom>
-                                No hay recetas registradas
+                                {searchTerm.trim()
+                                    ? 'No hay recetas que coincidan con tu búsqueda'
+                                    : 'No hay recetas registradas'}
                             </Typography>
                             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                                Crea la primera receta del economato para comenzar.
+                                {searchTerm.trim()
+                                    ? 'Prueba con otros términos o limpia el filtro.'
+                                    : 'Crea la primera receta del economato para comenzar.'}
                             </Typography>
-                            <Button
-                                variant="outlined"
-                                startIcon={<AddIcon />}
-                                onClick={() => setItemToEdit({})}
-                            >
-                                Añadir Receta
-                            </Button>
+                            {!searchTerm.trim() && (
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<AddIcon />}
+                                    onClick={() => setItemToEdit({})}
+                                >
+                                    Añadir Receta
+                                </Button>
+                            )}
                         </Box>
                     }
                     pagination={{
                         currentPage: page,
-                        totalPages: Math.ceil(data.length / pageSize) || 1,
+                        totalPages: Math.ceil(filteredData.length / pageSize) || 1,
                         onPageChange: (_, newPage) => setPage(newPage),
                         pageSize: pageSize,
                         pageSizeOptions: [5, 10, 25, 50],

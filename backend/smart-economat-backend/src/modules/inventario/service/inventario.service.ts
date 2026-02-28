@@ -13,16 +13,22 @@ import { UpdateInventarioDto } from '../dto/update-inventario.dto';
 import { AlertaStockDTO } from '../dto/alertaStock.dto';
 import { AlertaCaducidadDTO } from '../dto/alertaCaducidad.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
+import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
+import { TipoMovimiento } from '../../movimiento/enums/movimiento.enums';
 
 @Injectable()
 export class InventarioService {
   constructor(
     private readonly inventarioRepository: InventarioRepository,
     @InjectRepository(ProductoProveedor)
-    private readonly productoProveedorRepository: Repository<ProductoProveedor>
+    private readonly productoProveedorRepository: Repository<ProductoProveedor>,
+    private readonly movimientoHelper: MovimientoHelper
   ) {}
 
-  async create(dto: CreateInventarioItemDto): Promise<Inventario> {
+  async create(
+    dto: CreateInventarioItemDto,
+    userId: string
+  ): Promise<Inventario> {
     const productoProveedor = await this.productoProveedorRepository.findOne({
       where: { id: dto.productoProveedorId },
     });
@@ -42,7 +48,20 @@ export class InventarioService {
     });
 
     try {
-      return await this.inventarioRepository.save(inventario);
+      const savedInventario = await this.inventarioRepository.save(inventario);
+
+      await this.movimientoHelper.trackInventarioMovimiento(
+        userId,
+        savedInventario.id,
+        TipoMovimiento.ENTRADA,
+        dto.cantidadActual,
+        dto.productoProveedorId,
+        'Inventario',
+        savedInventario.id,
+        `Creación de inventario: ${productoProveedor.producto.nombre}`
+      );
+
+      return savedInventario;
     } catch (err) {
       if (err instanceof QueryFailedError) {
         throw new BadRequestException(
@@ -78,8 +97,13 @@ export class InventarioService {
     return inventario;
   }
 
-  async update(id: string, dto: UpdateInventarioDto): Promise<Inventario> {
+  async update(
+    id: string,
+    dto: UpdateInventarioDto,
+    userId: string
+  ): Promise<Inventario> {
     const inventario = await this.findOne(id);
+    const oldCantidad = inventario.cantidadActual;
 
     if (dto.productoProveedorId !== undefined) {
       const productoProveedor = await this.productoProveedorRepository.findOne({
@@ -108,6 +132,28 @@ export class InventarioService {
 
     try {
       await this.inventarioRepository.save(inventario);
+
+      if (
+        dto.cantidadActual !== undefined &&
+        dto.cantidadActual !== oldCantidad
+      ) {
+        const cantidad = Math.abs(dto.cantidadActual - oldCantidad);
+        const tipo =
+          dto.cantidadActual > oldCantidad
+            ? TipoMovimiento.ENTRADA
+            : TipoMovimiento.SALIDA;
+
+        await this.movimientoHelper.trackInventarioMovimiento(
+          userId,
+          id,
+          tipo,
+          cantidad,
+          inventario.productoProveedor.id,
+          'Inventario',
+          id,
+          `Ajuste de inventario: ${inventario.productoProveedor.producto.nombre} (${oldCantidad} -> ${dto.cantidadActual})`
+        );
+      }
     } catch (err) {
       if (err instanceof QueryFailedError) {
         throw new BadRequestException(
@@ -120,11 +166,23 @@ export class InventarioService {
     return this.findOne(id);
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, userId: string): Promise<void> {
+    const inventario = await this.findOne(id);
     const result = await this.inventarioRepository.softDelete(id);
     if (result.affected === 0) {
       throw new NotFoundException(I18nHelper.getError('INVENTARIO_NOT_FOUND'));
     }
+
+    await this.movimientoHelper.trackInventarioMovimiento(
+      userId,
+      id,
+      TipoMovimiento.SALIDA,
+      inventario.cantidadActual,
+      inventario.productoProveedor.id,
+      'Inventario',
+      id,
+      `Eliminación de inventario: ${inventario.productoProveedor.producto.nombre}`
+    );
   }
 
   async obtenerAlertasCaducidad(): Promise<AlertaCaducidadDTO[]> {

@@ -1,19 +1,13 @@
 import { Proveedor } from './proveedor.types';
-import { baseFetch } from './api.service';
-
-interface ApiResponse<T> {
-    success: boolean;
-    message: string;
-    data: T;
-}
+import { baseFetch, ApiResponse, unwrapList } from './api.service';
 
 export async function fetchProveedores(): Promise<Proveedor[]> {
-    const response = await baseFetch('/proveedor');
+    const response = await baseFetch('/proveedor?limit=500');
     if (!response.ok) {
         throw new Error(`Error al obtener proveedores: ${response.status} ${response.statusText}`);
     }
-    const body = await response.json() as ApiResponse<Proveedor[]>;
-    return body.data;
+    const body = await response.json() as ApiResponse<unknown>;
+    return unwrapList<Proveedor>(body.data);
 }
 
 export async function createProveedor(proveedor: Partial<Proveedor>): Promise<Proveedor> {

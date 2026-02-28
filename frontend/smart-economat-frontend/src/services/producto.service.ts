@@ -1,19 +1,13 @@
 import { Producto } from './producto.types';
-import { baseFetch } from './api.service';
-
-interface ApiResponse<T> {
-    success: boolean;
-    message: string;
-    data: T;
-}
+import { baseFetch, ApiResponse, unwrapList } from './api.service';
 
 export async function fetchProductos(): Promise<Producto[]> {
-    const response = await baseFetch('/productos');
+    const response = await baseFetch('/productos?limit=500');
     if (!response.ok) {
         throw new Error(`Error al obtener productos: ${response.status} ${response.statusText}`);
     }
-    const body = await response.json() as ApiResponse<Producto[]>;
-    return body.data;
+    const body = await response.json() as ApiResponse<unknown>;
+    return unwrapList<Producto>(body.data);
 }
 
 export async function createProducto(producto: Partial<Producto>): Promise<Producto> {

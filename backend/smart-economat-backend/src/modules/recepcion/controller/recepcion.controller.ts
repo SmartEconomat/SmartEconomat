@@ -10,11 +10,15 @@ import {
   HttpStatus,
   UseGuards,
   ParseUUIDPipe,
+  Query,
+  Request,
 } from '@nestjs/common';
 import { CreateRecepcionDto } from '../dto/create-recepcion.dto';
+import { ApiQuery } from '@nestjs/swagger';
 import { UpdateRecepcionDto } from '../dto/update-recepcion.dto';
 import { Recepcion } from '../recepcion.entity/recepcion.entity';
 import { RecepcionService } from '../service/recepcion.service';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/role.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
@@ -28,14 +32,24 @@ export class RecepcionController {
   @Post()
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() dto: CreateRecepcionDto): Promise<Recepcion> {
-    return this.recepcionService.create(dto);
+  create(
+    @Body() dto: CreateRecepcionDto,
+    @Request() req: any
+  ): Promise<Recepcion> {
+    const userId = req.user.sub;
+    return this.recepcionService.create(dto, userId);
   }
 
   @Get()
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
-  findAll(): Promise<Recepcion[]> {
-    return this.recepcionService.findAll();
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  findAll(
+    @Query() query: PaginationQueryDto
+  ): Promise<
+    import('../../../common/dto/paginated-response.dto').PaginatedResponseDto<Recepcion>
+  > {
+    return this.recepcionService.findAll(query);
   }
 
   @Get(':id')

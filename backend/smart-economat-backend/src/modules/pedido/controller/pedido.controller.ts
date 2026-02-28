@@ -10,6 +10,7 @@ import {
   HttpStatus,
   UseGuards,
   ParseUUIDPipe,
+  Request,
 } from '@nestjs/common';
 import { CreatePedidoDto } from '../dto/create-pedido.dto';
 import { CancelPedidoDto } from '../dto/cancelPedido.dto';
@@ -29,8 +30,9 @@ export class PedidoController {
   @Post()
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() dto: CreatePedidoDto): Promise<Pedido> {
-    return this.pedidoService.create(dto);
+  create(@Body() dto: CreatePedidoDto, @Request() req: any): Promise<Pedido> {
+    const userId = req.user.sub;
+    return this.pedidoService.create(dto, userId);
   }
 
   @Get()
@@ -47,7 +49,10 @@ export class PedidoController {
 
   @Patch(':id')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdatePedidoDto): Promise<Pedido> {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdatePedidoDto
+  ): Promise<Pedido> {
     return this.pedidoService.update(id, dto);
   }
 
@@ -60,14 +65,19 @@ export class PedidoController {
 
   @Patch(':id/fecha-entrega')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
-  updateFechaEntrega(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdatePedidoDto): Promise<Pedido> {
+  updateFechaEntrega(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdatePedidoDto
+  ): Promise<Pedido> {
     return this.pedidoService.updateFechaEntrega(id, dto);
   }
 
   @Patch(':id/cancelar')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
-  cancelarPedido(@Param('id', ParseUUIDPipe) id: string, @Body() dto: CancelPedidoDto): Promise<Pedido> {
+  cancelarPedido(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CancelPedidoDto
+  ): Promise<Pedido> {
     return this.pedidoService.cancelarPedido(id, dto);
   }
-
 }

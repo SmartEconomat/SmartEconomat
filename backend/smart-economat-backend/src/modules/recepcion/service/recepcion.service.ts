@@ -10,6 +10,7 @@ import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { CreateRecepcionDto } from '../dto/create-recepcion.dto';
 import { UpdateRecepcionDto } from '../dto/update-recepcion.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
+import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
 
 @Injectable()
 export class RecepcionService {
@@ -18,10 +19,11 @@ export class RecepcionService {
     private readonly recepcionRepository: Repository<Recepcion>,
 
     @InjectRepository(Usuario)
-    private readonly usuarioRepository: Repository<Usuario>
+    private readonly usuarioRepository: Repository<Usuario>,
+    private readonly movimientoHelper: MovimientoHelper
   ) {}
 
-  async create(dto: CreateRecepcionDto): Promise<Recepcion> {
+  async create(dto: CreateRecepcionDto, userId: string): Promise<Recepcion> {
     const usuario = await this.usuarioRepository.findOne({
       where: { id: dto.usuarioId },
     });
@@ -36,14 +38,37 @@ export class RecepcionService {
       usuario,
     });
 
-    return await this.recepcionRepository.save(recepcion);
+    const savedRecepcion = await this.recepcionRepository.save(recepcion);
+
+    await this.movimientoHelper.trackRecepcion(
+      userId,
+      savedRecepcion.id,
+      0,
+      undefined,
+      undefined,
+      `Recepción creada: ${savedRecepcion.observaciones || 'Sin observaciones'}`
+    );
+
+    return savedRecepcion;
   }
 
-  async findAll(): Promise<Recepcion[]> {
-    return await this.recepcionRepository.find({
+  async findAll(
+    query: import('../../../common/dto/pagination-query.dto').PaginationQueryDto
+  ): Promise<
+    import('../../../common/dto/paginated-response.dto').PaginatedResponseDto<Recepcion>
+  > {
+    const page = query.page ?? 1;
+    const limit = Math.min(query.limit ?? 20, 100);
+    const [data, total] = await this.recepcionRepository.findAndCount({
       relations: ['usuario'],
       withDeleted: false,
+      order: { fechaRecepcion: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
     });
+
+    const totalPages = Math.ceil(total / limit) || 1;
+    return { data, total, page, limit, totalPages };
   }
 
   async findOne(id: string): Promise<Recepcion> {

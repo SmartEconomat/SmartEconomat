@@ -12,25 +12,46 @@ export class MovimientoRepository {
   ) {}
 
   createMovimiento(data: CreateMovimientoDto) {
-    const movimientoData = {
-      ...data,
-      usuario: { id: data.usuario },
-      inventario: { id: data.inventario },
+    const movimientoData: Record<string, unknown> = {
+      tipo: data.tipo,
+      cantidad: data.cantidad,
+      entidad: data.entidadTipo,
+      entidadId: data.entidadId,
+      descripcion: data.descripcion,
+      ...(data.usuario ? { usuario: { id: data.usuario } } : {}),
+      ...(data.inventario ? { inventario: { id: data.inventario } } : {}),
     };
     return this.repo.save(this.repo.create(movimientoData as any));
   }
 
-  findAll() {
-    return this.repo.find({
-      relations: ['usuario'],
-      order: { createdAt: 'DESC' },
-    });
+  findAll(
+    query: import('../../../common/dto/pagination-query.dto').PaginationQueryDto
+  ) {
+    const page = query.page ?? 1;
+    const limit = Math.min(query.limit ?? 20, 100);
+    return this.repo
+      .findAndCount({
+        relations: ['usuario', 'productoProveedor', 'inventario'],
+        order: { createdAt: 'DESC' },
+        skip: (page - 1) * limit,
+        take: limit,
+      })
+      .then(
+        ([data, total]) =>
+          ({
+            data,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit) || 1,
+          }) as import('../../../common/dto/paginated-response.dto').PaginatedResponseDto<any>
+      );
   }
 
   findById(id: string) {
     return this.repo.findOne({
       where: { id },
-      relations: ['usuario'],
+      relations: ['usuario', 'productoProveedor', 'inventario'],
     });
   }
 
@@ -48,27 +69,62 @@ export class MovimientoRepository {
     return this.repo.softDelete(id);
   }
 
+  /**
+   * Busca movimientos de un producto o usuario específico con filtros opcionales.
+   *
+   * @param dto - DTO con entityId (ProductoProveedor), userId, tipo, rango de fechas
+   * @returns Array de movimientos ordenados cronológicamente (DESC)
+   */
   async findMovimientosByEntity(dto: MovimientoHistoryDto) {
-    const { entityId, type, startDate, endDate } = dto;
+    const {
+      entityId,
+      userId,
+      type,
+      startDate,
+      endDate,
+      sortBy = 'createdAt',
+      sortOrder = 'DESC',
+    } = dto;
+
+    if (!entityId && !userId) {
+      return [];
+    }
 
     const query = this.repo
       .createQueryBuilder('movimiento')
       .leftJoinAndSelect('movimiento.usuario', 'usuario')
-      .where('movimiento.entidadId = :entityId', { entityId });
+      .leftJoinAndSelect('movimiento.productoProveedor', 'productoProveedor')
+      .leftJoinAndSelect('movimiento.inventario', 'inventario');
+
+    if (entityId) {
+      query.where('movimiento.id_producto_proveedor = :entityId', { entityId });
+    }
+
+    if (userId) {
+      if (entityId) {
+        query.orWhere('movimiento.id_usuario = :userId', { userId });
+      } else {
+        query.where('movimiento.id_usuario = :userId', { userId });
+      }
+    }
 
     if (type) {
       query.andWhere('movimiento.tipo = :type', { type });
     }
 
     if (startDate) {
-      query.andWhere('movimiento.createdAt >= :startDate', { startDate });
+      query.andWhere('movimiento.createdAt >= :startDate', {
+        startDate: new Date(startDate),
+      });
     }
 
     if (endDate) {
-      query.andWhere('movimiento.createdAt <= :endDate', { endDate });
+      query.andWhere('movimiento.createdAt <= :endDate', {
+        endDate: new Date(endDate),
+      });
     }
 
-    query.orderBy('movimiento.createdAt', 'DESC');
+    query.orderBy(`movimiento.${sortBy}`, sortOrder);
 
     return query.getMany();
   }

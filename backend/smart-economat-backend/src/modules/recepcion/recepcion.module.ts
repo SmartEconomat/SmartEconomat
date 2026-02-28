@@ -14,6 +14,8 @@ import { Movimiento } from '../movimiento/movimiento.entity/movimiento.entity';
 import { AlbaranPedidoRecepcion } from '../albaran/albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
 import { Pedido } from '../pedido/pedido.entity/pedido.entity';
 import { PedidoProducto } from '../pedido/pedido-producto.entity/pedido-producto.entity';
+import { MovimientoModule } from '../movimiento/movimiento.module';
+import { MovimientoHelper } from '../../common/helpers/movimiento.helper';
 
 @Module({
   imports: [
@@ -29,9 +31,10 @@ import { PedidoProducto } from '../pedido/pedido-producto.entity/pedido-producto
       Pedido,
       PedidoProducto,
     ]),
+    MovimientoModule,
   ],
   controllers: [RecepcionController, RecepcionStockController],
-  providers: [RecepcionService, RecepcionStockService],
+  providers: [RecepcionService, RecepcionStockService, MovimientoHelper],
   exports: [RecepcionService, RecepcionStockService],
 })
 export class RecepcionModule {}
