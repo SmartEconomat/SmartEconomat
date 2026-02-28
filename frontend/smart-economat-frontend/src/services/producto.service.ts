@@ -1,19 +1,55 @@
-import { Producto } from './producto.types';
+import { Producto, ProductosQueryParams } from './producto.types';
 import { baseFetch, ApiResponse, PaginatedData } from './api.service';
 
-export async function fetchProductos(page: number = 1, limit: number = 10, search: string = ''): Promise<PaginatedData<Producto>> {
-    const params = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-    });
-    if (search) params.append('searchTerm', search);
+function buildProductosQueryString(params?: ProductosQueryParams): string {
+    if (!params) return '?limit=500';
+    const search = new URLSearchParams();
+    if (params.page != null) search.set('page', String(params.page));
+    if (params.limit != null) search.set('limit', String(params.limit));
+    if (params.searchTerm?.trim()) search.set('searchTerm', params.searchTerm.trim());
+    if (params.codigoBarras?.trim()) search.set('codigoBarras', params.codigoBarras.trim());
+    if (params.tipo) search.set('tipo', params.tipo);
+    if (params.alergenos?.length) search.set('alergenos', params.alergenos.join(','));
+    const qs = search.toString();
+    return qs ? `?${qs}` : '?limit=500';
+}
 
-    const response = await baseFetch(`/productos?${params.toString()}`);
+export async function fetchProductos(page: number = 1, limit: number = 10, search: string = ''): Promise<PaginatedData<Producto>> {
+    const query = buildProductosQueryString({ page, limit, searchTerm: search });
+    const response = await baseFetch(`/productos${query}`);
     if (!response.ok) {
         throw new Error(`Error al obtener productos: ${response.status} ${response.statusText}`);
     }
     const body = await response.json() as ApiResponse<PaginatedData<Producto>>;
     return body.data;
+}
+
+export interface ProductosPaginatedResult extends PaginatedData<Producto> {}
+
+export async function fetchProductosPaginated(params?: ProductosQueryParams): Promise<ProductosPaginatedResult> {
+    const query = buildProductosQueryString({ limit: 20, ...params });
+    const response = await baseFetch(`/productos${query}`);
+    if (!response.ok) {
+        throw new Error(`Error al obtener productos: ${response.status} ${response.statusText}`);
+    }
+    const body = await response.json() as ApiResponse<PaginatedData<Producto>>;
+    const inner = body.data;
+    if (!inner || !Array.isArray(inner.data)) {
+        return {
+            data: [],
+            total: 0,
+            page: 1,
+            limit: 20,
+            totalPages: 1,
+        };
+    }
+    return {
+        data: inner.data,
+        total: inner.total ?? inner.data.length,
+        page: inner.page ?? 1,
+        limit: inner.limit ?? 20,
+        totalPages: inner.totalPages ?? 1,
+    };
 }
 
 export async function createProducto(producto: Partial<Producto>): Promise<Producto> {

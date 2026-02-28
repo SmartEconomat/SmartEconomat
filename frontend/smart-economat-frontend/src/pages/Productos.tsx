@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Box, Paper, IconButton, Typography, Alert, Button, Tooltip, Card, CardContent, CardMedia, CardActions, TextField, InputAdornment } from '@mui/material';
+import {
+    Box,
+    Paper,
+    IconButton,
+    Typography,
+    Alert,
+    Button,
+    Tooltip,
+    TextField,
+    InputAdornment,
+} from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DataTable, { Column } from '../components/ui/DataTable';
@@ -8,16 +18,13 @@ import DynamicFormModal, { DynamicField } from '../components/ui/DynamicFormModa
 import { Producto, CategoriaProducto, UnidadMedida } from '../services/producto.types';
 import { fetchProductos, createProducto, updateProducto } from '../services/producto.service';
 import { deleteResource } from '../services/api.service';
-import { cleanPayload } from '../services/api.utils';
 import { useToast } from '../store/ToastContext';
 import StatusChip from '../components/ui/StatusChip';
 import { fetchProveedores } from '../services/proveedor.service';
 import { Proveedor } from '../services/proveedor.types';
-
-import FastfoodOutlinedIcon from '@mui/icons-material/FastfoodOutlined';
-import LocalDrinkOutlinedIcon from '@mui/icons-material/LocalDrinkOutlined';
-import SanitizerOutlinedIcon from '@mui/icons-material/SanitizerOutlined';
-import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
+import ProductCard from '../features/productos/ProductCard';
+import ProductFilters, { ProductFiltersState } from '../features/productos/ProductFilters';
+import { getCategoryIcon } from '../features/productos/utils/getCategoryIcon';
 import ShoppingBasketOutlinedIcon from '@mui/icons-material/ShoppingBasketOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/SearchOutlined';
@@ -67,15 +74,10 @@ const productoSchema: DynamicField[] = [
         name: 'imagen',
         label: 'Cargar Imagen',
         type: 'image',
-        getFallbackIcon: (formData) => {
-            const tipo = formData.tipo as CategoriaProducto;
-            const iconProps = { sx: { fontSize: 80, color: 'text.secondary', opacity: 0.5 } };
-
-            if (tipo === CategoriaProducto.LACTEO || tipo === CategoriaProducto.BEBIDA) return <LocalDrinkOutlinedIcon {...iconProps} />;
-            if (tipo === CategoriaProducto.CARNE || tipo === CategoriaProducto.PESCADO || tipo === CategoriaProducto.MARISCO || tipo === CategoriaProducto.HUEVO) return <FastfoodOutlinedIcon {...iconProps} />;
-            if (tipo === CategoriaProducto.VERDURA || tipo === CategoriaProducto.FRUTA || tipo === CategoriaProducto.CEREAL || tipo === CategoriaProducto.LEGUMBRE || tipo === CategoriaProducto.FRUTO_SECO) return <ShoppingBasketOutlinedIcon {...iconProps} />;
-            return <CategoryOutlinedIcon {...iconProps} />;
-        }
+        getFallbackIcon: (formData) =>
+            getCategoryIcon(formData.tipo as CategoriaProducto, {
+                sx: { fontSize: 80, color: 'text.secondary', opacity: 0.5 },
+            }),
     },
     {
         name: 'alergenos',
@@ -85,17 +87,23 @@ const productoSchema: DynamicField[] = [
     }
 ];
 
+const initialFilters: ProductFiltersState = {
+    categorias: [],
+    alergenos: [],
+};
+
 const Productos: React.FC = () => {
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
+    const [filters, setFilters] = useState<ProductFiltersState>(initialFilters);
     const [data, setData] = useState<Producto[]>([]);
     const [proveedores, setProveedores] = useState<Proveedor[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [productToDelete, setProductToDelete] = useState<Producto | null>(null);
-    const [productToEdit, setProductToEdit] = useState<Record<string, any> | null>(null);
+    const [productToEdit, setProductToEdit] = useState<Record<string, unknown> | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const toast = useToast();
@@ -124,16 +132,22 @@ const Productos: React.FC = () => {
         loadData();
     }, [page, pageSize, searchTerm]);
 
+    useEffect(() => {
+        setPage(1);
+    }, [filters.categorias, filters.alergenos]);
+
     const handleDeleteConfirm = async () => {
         if (!productToDelete) return;
         setIsDeleting(true);
         try {
             await deleteResource(`/productos/${productToDelete.id}`);
             setData((prev) => prev.filter((p) => p.id !== productToDelete.id));
-            toast.success(`Producto "${productToDelete.nombre}" eliminado correctamente.`);
+            toast.success(`Producto "${productToDelete.nombre}" eliminado correctamente.`, undefined, {
+                productCategory: productToDelete.tipo,
+            });
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Error al eliminar el producto.';
-            toast.error(message);
+            toast.error(message, undefined, { productCategory: productToDelete.tipo });
         } finally {
             setIsDeleting(false);
             setProductToDelete(null);
@@ -166,12 +180,13 @@ const Productos: React.FC = () => {
                     : [],
             };
 
+            const category = formData.tipo as CategoriaProducto | undefined;
             if (formData.id) {
                 await updateProducto(formData.id, payload);
-                toast.success('Producto actualizado correctamente.');
+                toast.success('Producto actualizado correctamente.', undefined, { productCategory: category });
             } else {
                 await createProducto(payload);
-                toast.success('Producto creado correctamente.');
+                toast.success('Producto creado correctamente.', undefined, { productCategory: category });
             }
 
             // Recargar datos
@@ -179,7 +194,7 @@ const Productos: React.FC = () => {
             setProductToEdit(null);
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Error al guardar el producto.';
-            toast.error(message);
+            toast.error(message, undefined, { productCategory: formData.tipo as CategoriaProducto | undefined });
         } finally {
             setIsSaving(false);
         }
@@ -263,40 +278,45 @@ const Productos: React.FC = () => {
         </>
     );
 
+    const hasActiveFilters =
+        (filters.categorias && filters.categorias.length > 0) ||
+        (filters.alergenos && filters.alergenos.length > 0);
+    const hasSearchOrFilters = searchTerm.trim() !== '' || hasActiveFilters;
+
     return (
         <Box>
             <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 } }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
                     <Typography variant="h6">
                         Gestión de Productos
                     </Typography>
 
-                    {/* Desktop Button */}
-                    <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={() => setProductToEdit({})}
-                        sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
-                    >
-                        Nuevo Producto
-                    </Button>
-
-                    {/* Mobile Button */}
-                    <Tooltip title="Nuevo Producto">
-                        <IconButton
-                            color="primary"
-                            aria-label="Nuevo Producto"
+                    <Box display="flex" alignItems="center" gap={1}>
+                        <Button
+                            variant="contained"
+                            startIcon={<AddIcon />}
                             onClick={() => setProductToEdit({})}
-                            sx={{
-                                display: { xs: 'inline-flex', sm: 'none' },
-                                bgcolor: 'primary.main',
-                                color: 'white',
-                                '&:hover': { bgcolor: 'primary.dark' }
-                            }}
+                            sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
                         >
-                            <AddIcon />
-                        </IconButton>
-                    </Tooltip>
+                            Nuevo Producto
+                        </Button>
+
+                        <Tooltip title="Nuevo Producto">
+                            <IconButton
+                                color="primary"
+                                aria-label="Nuevo Producto"
+                                onClick={() => setProductToEdit({})}
+                                sx={{
+                                    display: { xs: 'inline-flex', sm: 'none' },
+                                    bgcolor: 'primary.main',
+                                    color: 'white',
+                                    '&:hover': { bgcolor: 'primary.dark' },
+                                }}
+                            >
+                                <AddIcon />
+                            </IconButton>
+                        </Tooltip>
+                    </Box>
                 </Box>
 
                 {error && (
@@ -305,42 +325,62 @@ const Productos: React.FC = () => {
                     </Alert>
                 )}
 
-                <TextField
-                    placeholder="Buscar por nombre, marca, código de barras..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                        setSearchTerm(e.target.value);
-                        setPage(1);
+                <Box
+                    sx={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        alignItems: 'center',
+                        gap: 2,
+                        mb: 2,
                     }}
-                    size="small"
-                    sx={{ mb: 2, width: '100%', maxWidth: 400 }}
-                    InputProps={{
-                        startAdornment: (
-                            <InputAdornment position="start">
-                                <SearchIcon color="action" />
-                            </InputAdornment>
-                        ),
-                    }}
-                />
+                >
+                    <TextField
+                        placeholder="Buscar por nombre, marca, código de barras..."
+                        value={searchTerm}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            setPage(1);
+                        }}
+                        size="small"
+                        sx={{ minWidth: 200, flex: '1 1 200px' }}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon color="action" />
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
+                    <ProductFilters
+                        filters={filters}
+                        onChange={setFilters}
+                        onClear={() => {
+                            setFilters(initialFilters);
+                            setPage(1);
+                        }}
+                        inline
+                    />
+                </Box>
 
                 <DataTable
                     columns={columns}
                     data={filteredData}
                     isLoading={isLoading}
+                    defaultViewMode="grid"
                     emptyStateMessage={
                         <Box sx={{ py: 4, textAlign: 'center' }}>
                             <ShoppingBasketOutlinedIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
                             <Typography variant="h6" color="text.secondary" gutterBottom>
-                                {searchTerm.trim()
-                                    ? 'No hay productos que coincidan con tu búsqueda'
+                                {hasSearchOrFilters
+                                    ? 'No hay productos que coincidan con tu búsqueda o filtros'
                                     : 'No se encontraron productos'}
                             </Typography>
                             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                                {searchTerm.trim()
-                                    ? 'Prueba con otros términos o limpia el filtro.'
+                                {hasSearchOrFilters
+                                    ? 'Prueba con otros términos o limpia los filtros.'
                                     : 'Empieza añadiendo el primer producto a tu inventario.'}
                             </Typography>
-                            {!searchTerm.trim() && (
+                            {!hasSearchOrFilters && (
                                 <Button
                                     variant="outlined"
                                     startIcon={<AddIcon />}
@@ -363,40 +403,11 @@ const Productos: React.FC = () => {
                         },
                     }}
                     renderGridItem={(producto) => (
-                        <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                            {producto.pathImg ? (
-                                <CardMedia
-                                    component="img"
-                                    height="140"
-                                    image={producto.pathImg}
-                                    alt={producto.nombre}
-                                    sx={{ objectFit: 'cover' }}
-                                />
-                            ) : (
-                                <Box sx={{ height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'grey.100' }}>
-                                    <ShoppingBasketOutlinedIcon sx={{ fontSize: 60, color: 'text.disabled' }} />
-                                </Box>
-                            )}
-                            <CardContent sx={{ flexGrow: 1 }}>
-                                <Typography gutterBottom variant="h6" component="div">
-                                    {producto.nombre}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary" gutterBottom>
-                                    {producto.marca || 'Sin marca'}
-                                </Typography>
-                                {producto.tipo && (
-                                    <Box sx={{ mt: 1, mb: 1 }}>
-                                        <StatusChip status={producto.tipo} size="small" variant="outlined" />
-                                    </Box>
-                                )}
-                                <Typography variant="body1" fontWeight="bold" sx={{ mt: 1 }}>
-                                    {String(producto.contenido)} {producto.unidad || ''}
-                                </Typography>
-                            </CardContent>
-                            <CardActions sx={{ justifyContent: 'flex-end', borderTop: '1px solid', borderColor: 'divider' }}>
-                                {renderActions(producto)}
-                            </CardActions>
-                        </Card>
+                        <ProductCard
+                            producto={producto}
+                            onEdit={handleEditClick}
+                            onDelete={setProductToDelete}
+                        />
                     )}
                     renderActions={renderActions}
                 />

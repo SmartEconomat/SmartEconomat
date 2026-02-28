@@ -3,6 +3,7 @@ import { Producto } from '../producto.entity/producto.entity';
 import { ProductoRepository } from '../repository/producto.repository';
 import { CreateProductoDto } from '../dto/create-producto.dto';
 import { UpdateProductoDto } from '../dto/update-producto.dto';
+import { ProductoListQueryDto } from '../dto/producto-list-query.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,6 +12,8 @@ import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveed
 import { ProductFilterDto } from '../dto/product-filter.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { ProductoProveedorDto } from '../dto/producto-proveedor.dto/producto-proveedor.dto';
+import { ProductoAlergeno } from '../producto-alergeno.entity/producto-alergeno.entity';
+import { AlergenoProducto } from '../enums/producto.enums';
 
 @Injectable()
 export class ProductoService {
@@ -18,6 +21,8 @@ export class ProductoService {
     private readonly productoRepository: ProductoRepository,
     @InjectRepository(ProductoProveedor)
     private readonly productoProveedorRepository: Repository<ProductoProveedor>,
+    @InjectRepository(ProductoAlergeno)
+    private readonly productoAlergenoRepository: Repository<ProductoAlergeno>,
     private readonly movimientoHelper: MovimientoHelper
   ) {}
 

@@ -54,3 +54,12 @@ export interface ProductoNuevoDto {
     tipo: CategoriaProducto;
     contenido: number;
 }
+
+export interface ProductosQueryParams {
+    page?: number;
+    limit?: number;
+    searchTerm?: string;
+    codigoBarras?: string;
+    tipo?: CategoriaProducto;
+    alergenos?: string[];
+}
