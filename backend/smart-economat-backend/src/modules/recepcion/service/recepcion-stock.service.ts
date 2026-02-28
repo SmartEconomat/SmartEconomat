@@ -39,8 +39,21 @@ export class RecepcionStockService {
       throw new NotFoundException(I18nHelper.getError('USER_NOT_FOUND'));
     }
 
+    const listaPedidos =
+      dto.pedidos ||
+      (dto.pedidoIds || []).map((id) => ({
+        pedidoId: id,
+        nAlbaran: dto.nAlbaran,
+        observaciones: dto.observaciones,
+      }));
+    const pedidoIdsList = listaPedidos.map((p) => p.pedidoId);
+
+    if (pedidoIdsList.length === 0) {
+      throw new BadRequestException('No se han especificado pedidos.');
+    }
+
     const pedidosArr = await this.dataSource.manager.find(Pedido, {
-      where: { id: In(dto.pedidoIds) },
+      where: { id: In(pedidoIdsList) },
       relations: [
         'pedidoProductos',
         'pedidoProductos.productoProveedor',
@@ -49,7 +62,7 @@ export class RecepcionStockService {
       ],
     });
 
-    if (pedidosArr.length !== dto.pedidoIds.length) {
+    if (pedidosArr.length !== pedidoIdsList.length) {
       throw new NotFoundException(I18nHelper.getError('ORDER_NOT_FOUND'));
     }
 
@@ -82,10 +95,17 @@ export class RecepcionStockService {
 
       const defaultProvider = pedidosArr[0].proveedor;
 
+      const observacionesGlobales =
+        dto.observaciones ||
+        listaPedidos
+          .map((p) => p.observaciones)
+          .filter(Boolean)
+          .join(' | ');
+
       const recepcion = queryRunner.manager.create(Recepcion, {
         usuario: { id: dto.usuarioId },
         fechaRecepcion: dto.fechaRecepcion || new Date(),
-        observaciones: dto.observaciones,
+        observaciones: observacionesGlobales,
         estado: EstadoRecepcion.COMPLETADA,
       });
       const savedRecepcion = await queryRunner.manager.save(recepcion);
@@ -144,28 +164,27 @@ export class RecepcionStockService {
       }
 
       const savedRecepcionPedidos: RecepcionPedido[] = [];
-      for (const pedidoId of dto.pedidoIds) {
-        const rp = queryRunner.manager.create(RecepcionPedido, {
+      for (const pRef of listaPedidos) {
+        let rp = queryRunner.manager.create(RecepcionPedido, {
           recepcion: savedRecepcion,
-          pedido: { id: pedidoId },
+          pedido: { id: pRef.pedidoId },
         });
-        savedRecepcionPedidos.push(await queryRunner.manager.save(rp));
-      }
+        rp = await queryRunner.manager.save(rp);
+        savedRecepcionPedidos.push(rp);
 
-      if (dto.nAlbaran) {
-        let albaran = await queryRunner.manager.findOne(Albaran, {
-          where: { nAlbaran: dto.nAlbaran },
-        });
-
-        if (!albaran) {
-          albaran = queryRunner.manager.create(Albaran, {
-            nAlbaran: dto.nAlbaran,
-            fecha: new Date(),
+        if (pRef.nAlbaran) {
+          let albaran = await queryRunner.manager.findOne(Albaran, {
+            where: { nAlbaran: pRef.nAlbaran },
           });
-          albaran = await queryRunner.manager.save(albaran);
-        }
 
-        for (const rp of savedRecepcionPedidos) {
+          if (!albaran) {
+            albaran = queryRunner.manager.create(Albaran, {
+              nAlbaran: pRef.nAlbaran,
+              fecha: new Date(),
+            });
+            albaran = await queryRunner.manager.save(albaran);
+          }
+
           const apr = queryRunner.manager.create(AlbaranPedidoRecepcion, {
             albaran: albaran,
             recepcionPedido: rp,
@@ -265,10 +284,12 @@ export class RecepcionStockService {
 
         if (lineasIncidencia.length > 0) {
           recepcionEstadoEnum = EstadoRecepcion.CON_INCIDENCIAS;
+          const refPedido = listaPedidos.find((lp) => lp.pedidoId === p.id);
           const incidenciaRec = queryRunner.manager.create(Incidencia, {
             recepcion: savedRecepcion,
             pedido: { id: p.id } as any,
-            observacionesRecepcion: dto.observaciones,
+            observacionesRecepcion:
+              refPedido?.observaciones || observacionesGlobales,
             datosOriginales: { productos: lineasIncidencia },
           });
           const savedInci = await queryRunner.manager.save(incidenciaRec);

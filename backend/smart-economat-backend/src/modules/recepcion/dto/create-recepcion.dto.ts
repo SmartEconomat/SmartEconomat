@@ -6,7 +6,6 @@ import {
   ValidateNested,
   IsBoolean,
   IsEnum,
-  ArrayNotEmpty,
   IsNumber,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -103,15 +102,46 @@ export class ProductoNuevoRecepcionDto extends ProductoNuevoDto {
   observaciones?: string;
 }
 
+export class PedidoRecepcionDto {
+  @ApiProperty({ description: 'ID del pedido al que pertenece la recepción' })
+  @IsString()
+  pedidoId: string;
+
+  @ApiPropertyOptional({
+    description: 'Nº de albarán referenciado en el pedido',
+  })
+  @IsOptional()
+  @IsString()
+  nAlbaran?: string;
+
+  @ApiPropertyOptional({
+    description: 'Firma / Observaciones generales para el pedido',
+  })
+  @IsOptional()
+  @IsString()
+  observaciones?: string;
+}
+
 export class CreateRecepcionDto {
-  @ApiProperty({
-    description: 'IDs de pedidos vinculados a esta recepción',
+  @ApiPropertyOptional({
+    description:
+      'IDs de pedidos vinculados a esta recepción (opcional por retrocompatibilidad)',
     type: [String],
   })
+  @IsOptional()
   @IsArray()
-  @ArrayNotEmpty()
   @IsString({ each: true })
-  pedidoIds: string[];
+  pedidoIds?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Pedidos con su albarán individual',
+    type: [PedidoRecepcionDto],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PedidoRecepcionDto)
+  pedidos?: PedidoRecepcionDto[];
 
   @ApiPropertyOptional({
     description: 'Número de albarán general de entrega',
