@@ -14,10 +14,34 @@ export class UsuarioRepository {
     return this.repo.save(this.repo.create(data));
   }
 
-  findAll() {
-    return this.repo.find({
-      relations: ['movimientos', 'pedidos', 'recepciones'],
-    });
+  findAll(
+    query: import('../../../common/dto/pagination-query.dto').PaginationQueryDto
+  ) {
+    const page = query.page ?? 1;
+    const limit = Math.min(query.limit ?? 20, 100);
+    return this.repo
+      .findAndCount({
+        relations: ['movimientos', 'pedidos', 'recepciones'],
+        order: { nombre: 'ASC' },
+        skip: (page - 1) * limit,
+        take: limit,
+      })
+      .then(([data, total]) => {
+        const processedData = data.map((usuario) => ({
+          ...usuario,
+          movimientos: usuario.movimientos || [],
+          pedidos: usuario.pedidos || [],
+          recepciones: usuario.recepciones || [],
+        }));
+
+        return {
+          data: processedData,
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit) || 1,
+        } as import('../../../common/dto/paginated-response.dto').PaginatedResponseDto<any>;
+      });
   }
 
   findById(id: string) {

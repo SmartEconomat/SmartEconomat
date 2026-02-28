@@ -10,9 +10,12 @@ import {
   HttpStatus,
   UseGuards,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { CreateProveedorDto } from '../dto/create-proveedor.dto';
+import { ApiQuery } from '@nestjs/swagger';
 import { UpdateProveedorDto } from '../dto/update-proveedor.dto';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { Proveedor } from '../proveedor.entity/proveedor.entity';
 import { ProveedorService } from '../service/proveedor.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -34,8 +37,14 @@ export class ProveedorController {
 
   @Get()
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
-  findAll(): Promise<Proveedor[]> {
-    return this.proveedorService.findAll();
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  findAll(
+    @Query() query: PaginationQueryDto
+  ): Promise<
+    import('../../../common/dto/paginated-response.dto').PaginatedResponseDto<Proveedor>
+  > {
+    return this.proveedorService.findAll(query);
   }
 
   @Get(':id')

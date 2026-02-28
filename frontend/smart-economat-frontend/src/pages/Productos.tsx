@@ -137,31 +137,28 @@ const Productos: React.FC = () => {
     const handleSaveProduct = async (formData: Record<string, any>) => {
         setIsSaving(true);
         try {
-            // Preparar datos para el backend
-            // Solo enviamos los campos que el DTO del backend espera
+            const orUndefined = (v: any) => (v && String(v).trim() !== '' ? v : undefined);
+
             const payload: any = {
                 nombre: formData.nombre,
-                marca: formData.marca,
-                descripcion: formData.descripcion,
+                marca: orUndefined(formData.marca),
+                descripcion: orUndefined(formData.descripcion),
                 unidad: formData.unidad,
                 tipo: formData.tipo,
                 contenido: formData.contenido,
-                codigoBarras: formData.codigoBarras,
+                codigoBarras: orUndefined(formData.codigoBarras),
                 alergenos: Array.isArray(formData.alergenos)
                     ? formData.alergenos.map((a: any) => typeof a === 'string' ? a : a.alergeno)
                     : undefined,
                 proveedores: Array.isArray(formData.proveedores)
                     ? formData.proveedores.map((p: any) => ({
                         proveedorId: p.proveedorId,
-                        marca: p.marca || undefined,
-                        codigoBarras: p.codigoBarras || undefined,
+                        marca: orUndefined(p.marca),
+                        codigoBarras: orUndefined(p.codigoBarras),
                         precioUnitario: p.precioUnitario ? Number(p.precioUnitario) : undefined
                       }))
                     : [],
             };
-
-            // Eliminar campos vacíos o nulos si es necesario, 
-            // aunque el backend los maneja con @IsOptional()
 
             if (formData.id) {
                 await updateProducto(formData.id, payload);

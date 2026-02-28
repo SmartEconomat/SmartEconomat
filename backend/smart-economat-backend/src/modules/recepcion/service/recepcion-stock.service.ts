@@ -127,9 +127,11 @@ export class RecepcionStockService {
         await queryRunner.manager.save(Movimiento, {
           tipo: TipoMovimiento.ENTRADA_COMPRA,
           cantidad: linea.cantidadRecibida,
+          entidad: 'Recepcion',
+          entidadId: savedRecepcion.id,
           inventario: { id: stock.id } as any,
           descripcion: `Recepción Pedido ${dto.pedidoId} - Albarán ${dto.nAlbaran || 'N/A'}`,
-          usuario: { id: dto.usuarioId },
+          ...(dto.usuarioId ? { usuario: { id: dto.usuarioId } } : {}),
         });
       }
 

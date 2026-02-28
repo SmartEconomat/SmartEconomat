@@ -1,19 +1,13 @@
 import { Movimiento } from './movimiento.types';
-import { baseFetch } from './api.service';
-
-interface ApiResponse<T> {
-    success: boolean;
-    message: string;
-    data: T;
-}
+import { baseFetch, ApiResponse, unwrapList } from './api.service';
 
 export async function fetchMovimientos(): Promise<Movimiento[]> {
-    const response = await baseFetch('/movimientos');
+    const response = await baseFetch('/movimientos?limit=500');
     if (!response.ok) {
         throw new Error(`Error al obtener movimientos: ${response.status} ${response.statusText}`);
     }
-    const body = await response.json() as ApiResponse<Movimiento[]>;
-    return body.data;
+    const body = await response.json() as ApiResponse<unknown>;
+    return unwrapList<Movimiento>(body.data);
 }
 
 export async function createMovimiento(movimiento: Partial<Movimiento>): Promise<Movimiento> {

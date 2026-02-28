@@ -1,4 +1,4 @@
-import { baseFetch } from './api.service';
+import { baseFetch, ApiResponse } from './api.service';
 
 export interface DashboardMovimiento {
   id: string;
@@ -33,11 +33,7 @@ export interface DashboardStats {
   movimientosRecientes: DashboardMovimiento[];
 }
 
-interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
+
 
 export async function fetchDashboardStats(): Promise<DashboardStats> {
   const response = await baseFetch('/dashboard/stats');

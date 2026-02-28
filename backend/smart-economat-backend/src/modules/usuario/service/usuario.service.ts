@@ -20,8 +20,10 @@ export class UsuarioService {
     return this.usuarioRepo.createUsuario(dto);
   }
 
-  findAll() {
-    return this.usuarioRepo.findAll();
+  findAll(
+    query: import('../../../common/dto/pagination-query.dto').PaginationQueryDto
+  ) {
+    return this.usuarioRepo.findAll(query);
   }
 
   async findOne(id: string) {

@@ -7,9 +7,12 @@ import {
   Delete,
   UseGuards,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { UsuarioService } from '../service/usuario.service';
 import { UpdateUsuarioDto } from '../dto/update-usuario.dto';
+import { ApiQuery } from '@nestjs/swagger';
 import { UpdateUsuarioStatusDto } from '../dto/update-status.dto';
 import { UpdateUsuarioRolDto } from '../dto/update-rol.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
@@ -42,8 +45,10 @@ export class UsuarioController {
 
   @Get()
   @Roles(rolUsuario.ADMINISTRADOR)
-  findAll() {
-    return this.usuarioService.findAll();
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  findAll(@Query() query: PaginationQueryDto) {
+    return this.usuarioService.findAll(query);
   }
 
   @Get(':id')

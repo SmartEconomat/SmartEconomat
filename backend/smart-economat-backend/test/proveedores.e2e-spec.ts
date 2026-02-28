@@ -76,7 +76,10 @@ describe('ProveedorController (e2e)', () => {
       return request(app.getHttpServer())
         .get('/api/v1/proveedor')
         .set('Authorization', `Bearer ${adminToken}`)
-        .expect(200);
+        .expect(200)
+        .expect((res) => {
+          expect(Array.isArray(res.body.data.data)).toBe(true);
+        });
     });
 
     /**

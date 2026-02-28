@@ -441,23 +441,89 @@
       "name": "09. Movimientos",
       "item": [
         {
-          "name": "List Movements",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/movimientos"
-          }
-        },
-        {
-          "name": "Get Movement History (Query)",
+          "name": "List All Movements",
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{base_url}}/movimientos/historial?entidadId=uuid&tipoEntidad=producto",
+              "raw": "{{base_url}}/movimientos",
+              "host": ["{{base_url}}"],
+              "path": ["movimientos"]
+            },
+            "description": "Listar todos los movimientos de stock (ADMINISTRADOR, PROFESOR, ALUMNO)"
+          }
+        },
+        {
+          "name": "Get Movement History - By Product",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/movimientos/historial?entityId=019c9b4f-74f8-7a6e-8b5b-96191c30c1e5&type=entrada&startDate=2026-01-01&endDate=2026-02-28&sortBy=createdAt&sortOrder=DESC",
+              "host": ["{{base_url}}"],
+              "path": ["movimientos", "historial"],
               "query": [
-                { "key": "entidadId", "value": "uuid" },
-                { "key": "tipoEntidad", "value": "producto" }
+                {
+                  "key": "entityId",
+                  "value": "019c9b4f-74f8-7a6e-8b5b-96191c30c1e5",
+                  "description": "UUID del ProductoProveedor"
+                },
+                {
+                  "key": "type",
+                  "value": "entrada",
+                  "description": "Tipo de movimiento (entrada, salida, ajuste, pedido, entrada_compra)",
+                  "disabled": true
+                },
+                {
+                  "key": "startDate",
+                  "value": "2026-01-01",
+                  "description": "Fecha de inicio (ISO 8601)",
+                  "disabled": true
+                },
+                {
+                  "key": "endDate",
+                  "value": "2026-02-28",
+                  "description": "Fecha de fin (ISO 8601)",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt",
+                  "description": "Campo para ordenar (createdAt, cantidad)",
+                  "disabled": true
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "DESC",
+                  "description": "Orden (ASC, DESC)",
+                  "disabled": true
+                }
               ]
-            }
+            },
+            "description": "Obtener historial de movimientos de un producto. Soporta filtros por tipo, rango de fechas y ordenamiento. Ordena cronológicamente inverso por defecto. (ADMINISTRADOR, PROFESOR)"
+          }
+        },
+        {
+          "name": "Get Movement History - By User",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/movimientos/historial?userId=019c9b4f-74f8-7a6e-8b5b-96191c30c1e5",
+              "host": ["{{base_url}}"],
+              "path": ["movimientos", "historial"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "019c9b4f-74f8-7a6e-8b5b-96191c30c1e5",
+                  "description": "UUID del Usuario"
+                },
+                {
+                  "key": "type",
+                  "value": "salida",
+                  "description": "Tipo de movimiento",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Obtener historial de movimientos realizados por un usuario específico. (ADMINISTRADOR, PROFESOR)"
           }
         },
         {
@@ -466,10 +532,19 @@
             "method": "POST",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"productoId\": \"uuid\",\n  \"cantidad\": 10,\n  \"tipo\": \"entrada\",\n  \"motivo\": \"Manual\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n  \"usuario\": \"uuid-del-usuario\",\n  \"inventario\": \"uuid-del-inventario\",\n  \"cantidad\": 10,\n  \"tipo\": \"entrada\",\n  \"descripcion\": \"Movimiento manual de prueba\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": "{{base_url}}/movimientos"
+            "url": {
+              "raw": "{{base_url}}/movimientos",
+              "host": ["{{base_url}}"],
+              "path": ["movimientos"]
+            },
+            "description": "Crear un nuevo movimiento de stock. (ADMINISTRADOR, PROFESOR)"
           }
         },
         {
@@ -478,8 +553,17 @@
             "method": "GET",
             "url": {
               "raw": "{{base_url}}/movimientos/:id",
-              "variable": [{ "key": "id", "value": "" }]
-            }
+              "host": ["{{base_url}}"],
+              "path": ["movimientos", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "019c9b4f-74f8-7a6e-8b5b-96191c30c1e5",
+                  "description": "UUID del movimiento"
+                }
+              ]
+            },
+            "description": "Obtener detalles completos de un movimiento específico. (ADMINISTRADOR, PROFESOR, ALUMNO)"
           }
         },
         {
@@ -488,13 +572,26 @@
             "method": "PATCH",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"cantidad\": 15,\n  \"motivo\": \"Error en conteo\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n  \"cantidad\": 15,\n  \"tipo\": \"ajuste\",\n  \"descripcion\": \"Movimiento actualizado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/movimientos/:id",
-              "variable": [{ "key": "id", "value": "" }]
-            }
+              "host": ["{{base_url}}"],
+              "path": ["movimientos", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "019c9b4f-74f8-7a6e-8b5b-96191c30c1e5",
+                  "description": "UUID del movimiento"
+                }
+              ]
+            },
+            "description": "Actualizar un movimiento existente. Solo campos parciales. (ADMINISTRADOR)"
           }
         },
         {
@@ -503,8 +600,17 @@
             "method": "DELETE",
             "url": {
               "raw": "{{base_url}}/movimientos/:id",
-              "variable": [{ "key": "id", "value": "" }]
-            }
+              "host": ["{{base_url}}"],
+              "path": ["movimientos", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "019c9b4f-74f8-7a6e-8b5b-96191c30c1e5",
+                  "description": "UUID del movimiento"
+                }
+              ]
+            },
+            "description": "Eliminar (soft delete) un movimiento. Retorna 204 No Content. (ADMINISTRADOR)"
           }
         }
       ]

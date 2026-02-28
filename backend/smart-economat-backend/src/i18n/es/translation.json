@@ -26,6 +26,7 @@
     "INSUFFICIENT_STOCK": "Stock insuficiente",
     "INVALID_STATE": "Estado inválido",
     "ORDER_NOT_CANCELLABLE": "No se puede cancelar un pedido que ya ha sido recibido o está en proceso de envio",
+    "ORDER_CANNOT_BE_DELETED": "Solo se pueden eliminar pedidos en estado PENDIENTE o CANCELADO",
     "MOVEMENTS_NOT_FOUND": "No se encontraron movimientos para esta entidad",
     "RECEPTION_NOT_FOUND": "Recepción no encontrada",
     "USER_DOES_NOT_EXIST": "El usuario no existe",
