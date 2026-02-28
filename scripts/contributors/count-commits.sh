@@ -10,6 +10,21 @@ NC='\033[0m' # No Color
 
 echo -e "${BLUE}📊 Analizando contribuciones (commits y PRs)...${NC}"
 
+# --- CONFIGURACIÓN ---
+# Solo incluir estos contribuidores oficiales
+ALLOWED_CONTRIBUTORS=("Darel" "Alexis" "Sergio" "Maurizio" "Guillermo")
+
+# Función para verificar si un contribuidor está permitido
+is_contributor_allowed() {
+    local name="$1"
+    for allowed in "${ALLOWED_CONTRIBUTORS[@]}"; do
+        if [[ "$name" == "$allowed" ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
 # Obtener el directorio raíz del repositorio (usando git para ser preciso)
 REPO_ROOT=$(git rev-parse --show-toplevel)
 OUTPUT_FILE="$REPO_ROOT/CONTRIBUTORS.md"
@@ -35,7 +50,7 @@ while read -r line; do
     count=$(echo "$line" | awk '{print $1}')
     name=$(echo "$line" | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//')
     
-    if [ -n "$name" ] && [ "$name" != "git stash" ]; then
+    if [ -n "$name" ] && [ "$name" != "git stash" ] && is_contributor_allowed "$name"; then
         commit_counts["$name"]=$count
         # Añadir a la lista de todos los contribuidores si no está (solo para inicializar orden de shortlog como base)
         all_contributors+=("$name")
@@ -63,7 +78,7 @@ while read -r parents; do
         # Limpiar espacios en blanco del nombre (trim)
         author=$(echo "$author" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
         
-        if [ -n "$author" ] && [ "$author" != "git stash" ]; then
+        if [ -n "$author" ] && [ "$author" != "git stash" ] && is_contributor_allowed "$author"; then
             # Incrementar contador de PRs
             if [ -z "${pr_counts["$author"]}" ]; then
                 pr_counts["$author"]=1

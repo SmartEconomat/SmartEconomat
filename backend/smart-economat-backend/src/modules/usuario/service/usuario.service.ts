@@ -37,7 +37,7 @@ export class UsuarioService {
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto) {
-    const usuario = await this.usuarioRepo.findById(userId);
+    const usuario = await this.usuarioRepo.findByIdWithPassword(userId);
     if (!usuario) throw new NotFoundException();
 
     const isMatch = await bcrypt.compare(dto.oldPassword, usuario.password);
