@@ -21,7 +21,10 @@ export class MovimientoRepository {
   }
 
   findAll() {
-    return this.repo.find({ relations: ['usuario'] });
+    return this.repo.find({
+      relations: ['usuario'],
+      order: { createdAt: 'DESC' },
+    });
   }
 
   findById(id: string) {
@@ -58,14 +61,14 @@ export class MovimientoRepository {
     }
 
     if (startDate) {
-      query.andWhere('movimiento.fecha >= :startDate', { startDate });
+      query.andWhere('movimiento.createdAt >= :startDate', { startDate });
     }
 
     if (endDate) {
-      query.andWhere('movimiento.fecha <= :endDate', { endDate });
+      query.andWhere('movimiento.createdAt <= :endDate', { endDate });
     }
 
-    query.orderBy('movimiento.fecha', 'DESC');
+    query.orderBy('movimiento.createdAt', 'DESC');
 
     return query.getMany();
   }

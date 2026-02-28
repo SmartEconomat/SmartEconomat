@@ -39,7 +39,8 @@
     "DUPLICATE_ENTRY": "Ya existe un registro con ese valor. Por favor, usa uno diferente.",
     "RECIPE_NOT_FOUND": "Receta no encontrada",
     "USER_INACTIVE_CANNOT_RESET_PASSWORD": "No se puede cambiar la contraseña de un usuario inactivo",
-    "INVALID_OLD_PASSWORD": "La contraseña actual no es correcta"
+    "INVALID_OLD_PASSWORD": "La contraseña actual no es correcta",
+    "ALBARAN_NOT_FOUND": "Albarán no encontrado"
   },
   "success": {
     "CREATED": "Creado exitosamente",

@@ -1,6 +1,15 @@
-import { IsObject } from 'class-validator';
+import { IsNumber, IsObject } from 'class-validator';
 
 export class DashboardStatsDto {
+  @IsNumber()
+  totalProductos: number;
+
+  @IsNumber()
+  productosEsteMes: number;
+
+  @IsNumber()
+  totalProveedores: number;
+
   @IsObject()
   inventario: {
     valorTotal: number;

@@ -18,7 +18,7 @@ export interface Movimiento {
     cantidad: number;
     entidad: string;
     entidadId: string;
-    fecha: string;
+    createdAt: string;
     descripcion?: string;
     usuario?: UsuarioBasico;
 }
