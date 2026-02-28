@@ -12,6 +12,12 @@ export default defineConfig(() => {
         port: Number(process.env.FRONTEND_PORT) || 5173,
         host: true, // Needed for Docker
         open: false, // Prevent opening browser in Docker (xdg-open error)
+        proxy: {
+            '/api': {
+                target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:3000',
+                changeOrigin: true,
+            },
+        },
     },
     resolve: {
         alias: {

@@ -30,8 +30,11 @@ export class MovimientoService {
     return this.movimientoRepo.updateMovimiento(id, dto);
   }
 
-  remove(id: string) {
-    return this.movimientoRepo.deleteMovimiento(id);
+  async remove(id: string) {
+    const result = await this.movimientoRepo.deleteMovimiento(id);
+    if (!result.affected) {
+      throw new NotFoundException(I18nHelper.getError('MOVEMENT_NOT_FOUND'));
+    }
   }
 
   async getMovimientoHistory(dto: MovimientoHistoryDto): Promise<Movimiento[]> {
