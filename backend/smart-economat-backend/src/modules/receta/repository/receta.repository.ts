@@ -4,13 +4,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, ILike } from 'typeorm';
 import { Receta } from '../receta.entity/receta.entity';
 import { RecetaIngrediente } from '../receta-ingrediente.entity/receta-ingrediente.entity';
 import { Producto } from '../../producto/producto.entity/producto.entity';
 import { CreateRecetaDto } from '../dto/create-receta.dto';
 import { UpdateRecetaDto } from '../dto/update-receta.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @Injectable()
 export class RecetaRepository {
@@ -79,6 +81,40 @@ export class RecetaRepository {
         'ingredientes.producto.alergenos',
       ],
     });
+  }
+
+  async findAllPaginated(
+    query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<Receta>> {
+    const page = query.page ?? 1;
+    const limit = Math.min(query.limit ?? 100, 100);
+
+    const whereCondition = query.searchTerm
+      ? [
+          { nombre: ILike(`%${query.searchTerm}%`) },
+          { instrucciones: ILike(`%${query.searchTerm}%`) },
+        ]
+      : {};
+
+    const [data, total] = await this.recetaRepo.findAndCount({
+      where: whereCondition,
+      relations: [
+        'ingredientes',
+        'ingredientes.producto',
+        'ingredientes.producto.alergenos',
+      ],
+      order: { nombre: 'ASC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
+    };
   }
 
   async findById(id: string): Promise<Receta | null> {

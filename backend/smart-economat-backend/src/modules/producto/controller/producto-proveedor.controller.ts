@@ -27,6 +27,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/role.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @ApiTags('Producto Proveedor')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -96,9 +97,7 @@ export class ProductoProveedorController {
   async getHistorial(
     @Param('id', ParseUUIDPipe) id: string,
     @Query() query: PaginationQueryDto
-  ): Promise<
-    import('../../../common/dto/paginated-response.dto').PaginatedResponseDto<HistorialPrecio>
-  > {
+  ): Promise<PaginatedResponseDto<HistorialPrecio>> {
     return this.productoProveedorService.getHistorial(id, query);
   }
 }

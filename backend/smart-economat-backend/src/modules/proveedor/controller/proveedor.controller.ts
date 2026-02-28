@@ -22,6 +22,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/role.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('proveedor')
@@ -41,9 +42,7 @@ export class ProveedorController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   findAll(
     @Query() query: PaginationQueryDto
-  ): Promise<
-    import('../../../common/dto/paginated-response.dto').PaginatedResponseDto<Proveedor>
-  > {
+  ): Promise<PaginatedResponseDto<Proveedor>> {
     return this.proveedorService.findAll(query);
   }
 

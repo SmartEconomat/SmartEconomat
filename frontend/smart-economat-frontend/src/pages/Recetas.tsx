@@ -66,6 +66,7 @@ const recetaSchema: DynamicField[] = [
 const Recetas: React.FC = () => {
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
     const [data, setData] = useState<Receta[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -80,8 +81,9 @@ const Recetas: React.FC = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const recetasData = await fetchRecetas();
-            setData(recetasData);
+            const recetasData = await fetchRecetas(page, pageSize, searchTerm);
+            setData(recetasData.data);
+            setTotalPages(recetasData.totalPages);
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Error desconocido al cargar recetas.';
             setError(message);
@@ -92,7 +94,7 @@ const Recetas: React.FC = () => {
 
     useEffect(() => {
         loadData();
-    }, []);
+    }, [page, pageSize, searchTerm]);
 
     const handleDeleteConfirm = async () => {
         if (!itemToDelete) return;
@@ -147,21 +149,7 @@ const Recetas: React.FC = () => {
         setItemToEdit({ ...row });
     };
 
-    const filteredData = useMemo(() => {
-        if (!searchTerm.trim()) return data;
-        const term = searchTerm.toLowerCase().trim();
-        return data.filter(
-            (r) =>
-                r.nombre?.toLowerCase().includes(term) ||
-                r.instrucciones?.toLowerCase().includes(term) ||
-                r.dificultad?.toLowerCase().includes(term) ||
-                r.tiempo?.toLowerCase().includes(term) ||
-                r.tiempoPreparacion?.toLowerCase().includes(term) ||
-                r.ingredientes?.some((ing) =>
-                    ing.producto?.nombre?.toLowerCase().includes(term)
-                )
-        );
-    }, [data, searchTerm]);
+    const filteredData = data;
 
     const columns: Column<Receta>[] = [
         { id: 'nombre', label: 'Nombre' },
@@ -277,7 +265,7 @@ const Recetas: React.FC = () => {
 
                 <DataTable
                     columns={columns}
-                    data={filteredData.slice((page - 1) * pageSize, page * pageSize)}
+                    data={filteredData}
                     isLoading={isLoading}
                     emptyStateMessage={
                         <Box sx={{ py: 4, textAlign: 'center' }}>
@@ -305,7 +293,7 @@ const Recetas: React.FC = () => {
                     }
                     pagination={{
                         currentPage: page,
-                        totalPages: Math.ceil(filteredData.length / pageSize) || 1,
+                        totalPages: totalPages,
                         onPageChange: (_, newPage) => setPage(newPage),
                         pageSize: pageSize,
                         pageSizeOptions: [5, 10, 25, 50],

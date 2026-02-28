@@ -294,7 +294,7 @@ export function DataTable<T extends Record<string, any>>({
                 </Grid>
             )}
 
-            {pagination && pagination.totalPages > 1 && (
+            {pagination && pagination.totalPages > 0 && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
                     <Pagination
                         count={pagination.totalPages}

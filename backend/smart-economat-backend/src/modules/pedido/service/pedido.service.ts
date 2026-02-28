@@ -12,6 +12,8 @@ import { PedidoRepository } from '../repository/pedido.repository';
 import { PedidoProducto } from '../pedido-producto.entity/pedido-producto.entity';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @Injectable()
 export class PedidoService {
@@ -74,8 +76,10 @@ export class PedidoService {
     return savedPedido;
   }
 
-  async findAll(): Promise<Pedido[]> {
-    return await this.pedidoRepository.findAllWithRelations(true);
+  async findAll(
+    query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<Pedido>> {
+    return await this.pedidoRepository.findAllPaginated(query, true);
   }
 
   async findOne(id: string): Promise<Pedido> {

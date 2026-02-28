@@ -1,9 +1,10 @@
-import { Repository } from 'typeorm';
+import { Repository, DeepPartial } from 'typeorm';
 import { Movimiento } from '../movimiento.entity/movimiento.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateMovimientoDto } from '../dto/create-movimiento.dto';
 import { UpdateMovimientoDto } from '../dto/update-movimiento.dto';
 import { MovimientoHistoryDto } from '../dto/movimiento-history.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 export class MovimientoRepository {
   constructor(
@@ -12,7 +13,7 @@ export class MovimientoRepository {
   ) {}
 
   createMovimiento(data: CreateMovimientoDto) {
-    const movimientoData: Record<string, unknown> = {
+    const movimientoData: DeepPartial<Movimiento> = {
       tipo: data.tipo,
       cantidad: data.cantidad,
       entidad: data.entidadTipo,
@@ -21,7 +22,7 @@ export class MovimientoRepository {
       ...(data.usuario ? { usuario: { id: data.usuario } } : {}),
       ...(data.inventario ? { inventario: { id: data.inventario } } : {}),
     };
-    return this.repo.save(this.repo.create(movimientoData as any));
+    return this.repo.save(this.repo.create(movimientoData));
   }
 
   findAll(
@@ -44,7 +45,7 @@ export class MovimientoRepository {
             page,
             limit,
             totalPages: Math.ceil(total / limit) || 1,
-          }) as import('../../../common/dto/paginated-response.dto').PaginatedResponseDto<any>
+          }) as PaginatedResponseDto<Movimiento>
       );
   }
 

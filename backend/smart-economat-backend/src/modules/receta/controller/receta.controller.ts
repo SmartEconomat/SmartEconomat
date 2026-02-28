@@ -10,6 +10,7 @@ import {
   HttpStatus,
   UseGuards,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { RecetaService } from '../service/receta.service';
 import { CreateRecetaDto } from '../dto/create-receta.dto';
@@ -19,6 +20,8 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/role.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('recetas')
@@ -34,8 +37,10 @@ export class RecetaController {
 
   @Get()
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
-  findAll(): Promise<Receta[]> {
-    return this.recetaService.findAll();
+  findAll(
+    @Query() query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<Receta>> {
+    return this.recetaService.findAll(query);
   }
 
   @Get(':id')

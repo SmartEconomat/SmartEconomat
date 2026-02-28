@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { Pedido } from '../pedido.entity/pedido.entity';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @Injectable()
 export class PedidoRepository extends Repository<Pedido> {
@@ -25,6 +27,39 @@ export class PedidoRepository extends Repository<Pedido> {
         createdAt: 'DESC',
       },
     });
+  }
+
+  async findAllPaginated(
+    query: PaginationQueryDto,
+    loadRelations = false
+  ): Promise<PaginatedResponseDto<Pedido>> {
+    const page = query.page ?? 1;
+    const limit = Math.min(query.limit ?? 100, 100);
+
+    const [data, total] = await this.findAndCount({
+      relations: loadRelations
+        ? [
+            'usuario',
+            'proveedor',
+            'pedidoProductos',
+            'pedidoProductos.productoProveedor',
+            'pedidoProductos.productoProveedor.producto',
+            'pedidoProductos.productoProveedor.proveedor',
+            'recepcionesPedido',
+          ]
+        : [],
+      order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
+    };
   }
 
   async findOneWithRelations(

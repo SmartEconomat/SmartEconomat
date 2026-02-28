@@ -25,6 +25,7 @@ import { Roles } from '../../auth/decorators/roles.decorator';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
 import { RecepcionStockService } from '../service/recepcion-stock.service';
 import { RecepcionResultadoDto } from '../dto/recepcion-resultado.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('recepcion')
@@ -53,9 +54,7 @@ export class RecepcionController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   findAll(
     @Query() query: PaginationQueryDto
-  ): Promise<
-    import('../../../common/dto/paginated-response.dto').PaginatedResponseDto<Recepcion>
-  > {
+  ): Promise<PaginatedResponseDto<Recepcion>> {
     return this.recepcionService.findAll(query);
   }
 
