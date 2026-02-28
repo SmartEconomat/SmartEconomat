@@ -40,7 +40,9 @@
     "RECIPE_NOT_FOUND": "Receta no encontrada",
     "USER_INACTIVE_CANNOT_RESET_PASSWORD": "No se puede cambiar la contraseña de un usuario inactivo",
     "INVALID_OLD_PASSWORD": "La contraseña actual no es correcta",
-    "ALBARAN_NOT_FOUND": "Albarán no encontrado"
+    "ALBARAN_NOT_FOUND": "Albarán no encontrado",
+    "INVENTARIO_NOT_FOUND": "Inventario no encontrado",
+    "INVENTARIO_CONSTRAINT_VIOLATION": "Violación de restricción: verifique que cantidad_maxima >= cantidad_minima y que las cantidades no sean negativas"
   },
   "success": {
     "CREATED": "Creado exitosamente",

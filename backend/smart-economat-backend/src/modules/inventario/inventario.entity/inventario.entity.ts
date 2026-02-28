@@ -126,7 +126,7 @@ export class Inventario extends BaseEntity {
     nullable: true,
     name: 'fecha_caducidad',
   })
-  fechaCaducidad?: Date;
+  fechaCaducidad?: Date | null;
 
   /* --- Métodos de Dominio --- */
 
