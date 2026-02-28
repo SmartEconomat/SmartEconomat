@@ -1,6 +1,6 @@
 import { Usuario, CrearUsuarioDTO, ActualizarUsuarioDTO, PaginatedResponse, ApiResponse } from '../types/usuario';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/v1';
+const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
 const getHeaders = () => {
     const token = localStorage.getItem('token');
@@ -54,7 +54,7 @@ let mockUsuarios: Usuario[] = [
 ];
 
 export const usuarioService = {
-    async getUsuarios(page: number = 1, limit: number = 10, search?: string, filterRol?: string): Promise<PaginatedResponse<Usuario>> {
+    async getUsuarios(page: number = 1, limit: number = 10, search?: string, filterRol?: string, sortBy?: string, sortOrder?: 'asc' | 'desc'): Promise<PaginatedResponse<Usuario>> {
         let mappedData: Usuario[] = [];
         
         try {
@@ -88,6 +88,26 @@ export const usuarioService = {
 
         if (filterRol && filterRol !== 'Todos') {
             filteredData = filteredData.filter((u: Usuario) => u.rol === filterRol);
+        }
+
+        if (sortBy) {
+            filteredData.sort((a: any, b: any) => {
+                let aValue = a[sortBy];
+                let bValue = b[sortBy];
+                
+                if (aValue === null || aValue === undefined) aValue = '';
+                if (bValue === null || bValue === undefined) bValue = '';
+                
+                if (typeof aValue === 'string' && typeof bValue === 'string') {
+                    return sortOrder === 'desc' 
+                        ? bValue.localeCompare(aValue, undefined, { numeric: true, sensitivity: 'base' })
+                        : aValue.localeCompare(bValue, undefined, { numeric: true, sensitivity: 'base' });
+                }
+
+                if (aValue < bValue) return sortOrder === 'desc' ? 1 : -1;
+                if (aValue > bValue) return sortOrder === 'desc' ? -1 : 1;
+                return 0;
+            });
         }
 
         const total = filteredData.length;
