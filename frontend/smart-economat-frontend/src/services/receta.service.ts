@@ -1,20 +1,31 @@
 import { Receta } from './receta.types';
 import { baseFetch } from './api.service';
 
+import { PaginatedData } from './api.service';
+
 interface ApiResponse<T> {
     success: boolean;
     message: string;
     data: T;
 }
 
-export async function fetchRecetas(): Promise<Receta[]> {
-    const response = await baseFetch('/recetas');
+export async function fetchRecetas(
+    page: number = 1,
+    limit: number = 100,
+    search: string = ''
+): Promise<PaginatedData<Receta>> {
+    const query = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+    if (search) query.append('searchTerm', search);
+
+    const response = await baseFetch(`/recetas?${query.toString()}`);
     if (!response.ok) {
         throw new Error(`Error al obtener recetas: ${response.status} ${response.statusText}`);
     }
-    const body = await response.json() as ApiResponse<Receta[]>;
-    // El backend de recetas puede devolver el array directamente o envuelto en data
-    return Array.isArray(body) ? body : (body.data ?? []);
+    const body = await response.json() as ApiResponse<PaginatedData<Receta>>;
+    return body.data;
 }
 
 export async function createReceta(receta: Partial<Receta> | any): Promise<Receta> {

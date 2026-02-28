@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Usuario } from '../usuario.entity/usuario.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @Injectable()
 export class UsuarioRepository {
@@ -40,7 +41,7 @@ export class UsuarioRepository {
           page,
           limit,
           totalPages: Math.ceil(total / limit) || 1,
-        } as import('../../../common/dto/paginated-response.dto').PaginatedResponseDto<any>;
+        } as PaginatedResponseDto<Usuario>;
       });
   }
 

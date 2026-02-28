@@ -1,13 +1,19 @@
 import { Producto } from './producto.types';
-import { baseFetch, ApiResponse, unwrapList } from './api.service';
+import { baseFetch, ApiResponse, PaginatedData } from './api.service';
 
-export async function fetchProductos(): Promise<Producto[]> {
-    const response = await baseFetch('/productos?limit=500');
+export async function fetchProductos(page: number = 1, limit: number = 10, search: string = ''): Promise<PaginatedData<Producto>> {
+    const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+    });
+    if (search) params.append('searchTerm', search);
+
+    const response = await baseFetch(`/productos?${params.toString()}`);
     if (!response.ok) {
         throw new Error(`Error al obtener productos: ${response.status} ${response.statusText}`);
     }
-    const body = await response.json() as ApiResponse<unknown>;
-    return unwrapList<Producto>(body.data);
+    const body = await response.json() as ApiResponse<PaginatedData<Producto>>;
+    return body.data;
 }
 
 export async function createProducto(producto: Partial<Producto>): Promise<Producto> {
@@ -41,14 +47,14 @@ export async function updateProducto(id: string, producto: Partial<Producto>): P
 export async function getProductoByBarcode(barcode: string): Promise<Producto | null> {
     const response = await baseFetch(`/productos?codigoBarras=${barcode}`);
     if (!response.ok) return null;
-    const body = await response.json() as ApiResponse<unknown>;
-    const list = unwrapList<Producto>(body.data);
+    const body = await response.json() as ApiResponse<PaginatedData<Producto>>;
+    const list = body.data.data;
     return list.length > 0 ? list[0] : null;
 }
 
 export async function searchProductosByName(name: string): Promise<Producto[]> {
     const response = await baseFetch(`/productos?searchTerm=${name}&limit=10`);
     if (!response.ok) return [];
-    const body = await response.json() as ApiResponse<unknown>;
-    return unwrapList<Producto>(body.data);
+    const body = await response.json() as ApiResponse<PaginatedData<Producto>>;
+    return body.data.data;
 }

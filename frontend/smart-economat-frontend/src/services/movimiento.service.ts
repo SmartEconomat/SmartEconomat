@@ -1,13 +1,18 @@
 import { Movimiento } from './movimiento.types';
-import { baseFetch, ApiResponse, unwrapList } from './api.service';
+import { baseFetch, ApiResponse, PaginatedData } from './api.service';
 
-export async function fetchMovimientos(): Promise<Movimiento[]> {
-    const response = await baseFetch('/movimientos?limit=500');
+export async function fetchMovimientos(page: number = 1, limit: number = 10): Promise<PaginatedData<Movimiento>> {
+    const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+    });
+
+    const response = await baseFetch(`/movimientos?${params.toString()}`);
     if (!response.ok) {
         throw new Error(`Error al obtener movimientos: ${response.status} ${response.statusText}`);
     }
-    const body = await response.json() as ApiResponse<unknown>;
-    return unwrapList<Movimiento>(body.data);
+    const body = await response.json() as ApiResponse<PaginatedData<Movimiento>>;
+    return body.data;
 }
 
 export async function createMovimiento(movimiento: Partial<Movimiento>): Promise<Movimiento> {

@@ -88,6 +88,7 @@ const productoSchema: DynamicField[] = [
 const Productos: React.FC = () => {
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
     const [data, setData] = useState<Producto[]>([]);
     const [proveedores, setProveedores] = useState<Proveedor[]>([]);
@@ -99,24 +100,29 @@ const Productos: React.FC = () => {
     const [isSaving, setIsSaving] = useState(false);
     const toast = useToast();
 
-    useEffect(() => {
+    const loadData = async () => {
         setIsLoading(true);
         setError(null);
 
         Promise.all([
-            fetchProductos(),
-            fetchProveedores().catch(() => [])
+            fetchProductos(page, pageSize, searchTerm),
+            fetchProveedores(1, 100).catch(() => ({ data: [], totalItems: 0, itemsPerPage: 100, totalPages: 1, page: 1 } as any))
         ])
             .then(([productosData, proveedoresData]) => {
-                setData(productosData);
-                setProveedores(proveedoresData);
+                setData(productosData.data);
+                setTotalPages(productosData.totalPages);
+                setProveedores(proveedoresData.data);
             })
             .catch((err: unknown) => {
                 const message = err instanceof Error ? err.message : 'Error desconocido al cargar datos.';
                 setError(message);
             })
             .finally(() => setIsLoading(false));
-    }, []);
+    };
+
+    useEffect(() => {
+        loadData();
+    }, [page, pageSize, searchTerm]);
 
     const handleDeleteConfirm = async () => {
         if (!productToDelete) return;
@@ -169,8 +175,7 @@ const Productos: React.FC = () => {
             }
 
             // Recargar datos
-            const updatedData = await fetchProductos();
-            setData(updatedData);
+            await loadData();
             setProductToEdit(null);
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Error al guardar el producto.';
@@ -231,18 +236,8 @@ const Productos: React.FC = () => {
         setProductToEdit(editData);
     };
 
-    const filteredData = useMemo(() => {
-        if (!searchTerm.trim()) return data;
-        const term = searchTerm.toLowerCase().trim();
-        return data.filter(
-            (p) =>
-                p.nombre?.toLowerCase().includes(term) ||
-                p.marca?.toLowerCase().includes(term) ||
-                p.descripcion?.toLowerCase().includes(term) ||
-                p.codigoBarras?.toLowerCase().includes(term) ||
-                p.tipo?.toLowerCase().includes(term)
-        );
-    }, [data, searchTerm]);
+    // filteredData local ya no es necesario ya que se hace filtering en el backend.
+    const filteredData = data;
 
     const dynamicSchema = React.useMemo(() => {
         const schema = [...productoSchema];
@@ -330,7 +325,7 @@ const Productos: React.FC = () => {
 
                 <DataTable
                     columns={columns}
-                    data={filteredData.slice((page - 1) * pageSize, page * pageSize)}
+                    data={filteredData}
                     isLoading={isLoading}
                     emptyStateMessage={
                         <Box sx={{ py: 4, textAlign: 'center' }}>
@@ -358,7 +353,7 @@ const Productos: React.FC = () => {
                     }
                     pagination={{
                         currentPage: page,
-                        totalPages: Math.ceil(filteredData.length / pageSize) || 1,
+                        totalPages: totalPages,
                         onPageChange: (_, newPage) => setPage(newPage),
                         pageSize: pageSize,
                         pageSizeOptions: [5, 10, 25, 50],
