@@ -1,6 +1,5 @@
 import { Recepcion } from './recepcion.types';
-
-const API_BASE = '/api/v1';
+import { baseFetch } from './api.service';
 
 interface ApiResponse<T> {
     success: boolean;
@@ -9,7 +8,7 @@ interface ApiResponse<T> {
 }
 
 export async function fetchRecepciones(): Promise<Recepcion[]> {
-    const response = await fetch(`${API_BASE}/recepcion`);
+    const response = await baseFetch('/recepcion');
     if (!response.ok) {
         throw new Error(`Error al obtener recepciones: ${response.status} ${response.statusText}`);
     }
@@ -18,7 +17,7 @@ export async function fetchRecepciones(): Promise<Recepcion[]> {
 }
 
 export async function createRecepcion(recepcion: Partial<Recepcion>): Promise<Recepcion> {
-    const response = await fetch(`${API_BASE}/recepcion`, {
+    const response = await baseFetch('/recepcion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(recepcion),
@@ -32,7 +31,7 @@ export async function createRecepcion(recepcion: Partial<Recepcion>): Promise<Re
 }
 
 export async function updateRecepcion(id: string, recepcion: Partial<Recepcion>): Promise<Recepcion> {
-    const response = await fetch(`${API_BASE}/recepcion/${id}`, {
+    const response = await baseFetch(`/recepcion/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(recepcion),
