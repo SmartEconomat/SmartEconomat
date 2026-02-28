@@ -25,7 +25,7 @@ export class InventarioService {
 
     return productos.map((p) => ({
       id: p.id,
-      fechaCaducidad: p.fechaCaducidad.toISOString(),
+      fechaCaducidad: p.fechaCaducidad?.toISOString() ?? '',
     }));
   }
 

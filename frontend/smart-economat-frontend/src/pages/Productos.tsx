@@ -60,7 +60,7 @@ const productoSchema: DynamicField[] = [
             { value: CategoriaProducto.OTRO, label: 'Otro' }
         ]
     },
-    { name: 'fechaCaducidad', label: 'Fecha de Caducidad', type: 'date', width: 4 },
+
     { name: 'codigoBarras', label: 'Código de Barras' },
     {
         name: 'imagen',
@@ -144,16 +144,7 @@ const Productos: React.FC = () => {
                 tipo: formData.tipo,
                 contenido: formData.contenido,
                 codigoBarras: formData.codigoBarras,
-                // Normalizar fecha a ISO 8601 (el input devuelve YYYY-MM-DD,
-                // le agregamos la hora base en UTC para que el backend la valide bien).
-                fechaCaducidad: formData.fechaCaducidad && formData.fechaCaducidad.toString().trim() !== ''
-                    ? (() => {
-                          const str = String(formData.fechaCaducidad);
-                          const toParse = str.includes('T') ? str : `${str}T00:00:00Z`;
-                          const d = new Date(toParse);
-                          return isNaN(d.getTime()) ? undefined : d.toISOString();
-                      })()
-                    : undefined,
+
                 alergenos: Array.isArray(formData.alergenos)
                     ? formData.alergenos.map((a: any) => typeof a === 'string' ? a : a.alergeno)
                     : undefined,
@@ -164,7 +155,7 @@ const Productos: React.FC = () => {
                         codigoBarras: p.codigoBarras || undefined,
                         precioUnitario: p.precioUnitario ? Number(p.precioUnitario) : undefined
                       }))
-                    : undefined,
+                    : [],
             };
             
             // Eliminar campos vacíos o nulos si es necesario, 
@@ -248,6 +239,7 @@ const Productos: React.FC = () => {
             label: 'Proveedores Asociados',
             type: 'proveedores',
             position: 'bottom',
+            defaultValue: [],
             options: proveedores.map(p => ({ value: p.id, label: p.nombre })),
         });
         return schema;

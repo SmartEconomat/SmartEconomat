@@ -5,6 +5,7 @@ import { Inventario } from '../../inventario/inventario.entity/inventario.entity
 import { Pedido, EstadoPedido } from '../../pedido/pedido.entity/pedido.entity';
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
 import { Producto } from '../../producto/producto.entity/producto.entity';
+import { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
 import { DashboardStatsDto } from '../dto/dashboard-stats.dto';
 
 @Injectable()
@@ -19,7 +20,9 @@ export class DashboardService {
     @InjectRepository(Movimiento)
     private readonly movimientoRepository: Repository<Movimiento>,
     @InjectRepository(Producto)
-    private readonly productoRepository: Repository<Producto>
+    private readonly productoRepository: Repository<Producto>,
+    @InjectRepository(Proveedor)
+    private readonly proveedorRepository: Repository<Proveedor>
   ) {}
 
   async getStats(): Promise<DashboardStatsDto> {
@@ -35,6 +38,26 @@ export class DashboardService {
 
     const endOfDay = new Date(now);
     endOfDay.setHours(23, 59, 59, 999);
+
+    const startOfMonth = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      1,
+      0,
+      0,
+      0,
+      0
+    );
+
+    const endOfMonth = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+      999
+    );
 
     const valorInventarioRaw = await this.inventarioRepository
       .createQueryBuilder('inventario')
@@ -103,10 +126,20 @@ export class DashboardService {
       costePendienteRaw?.costeTotal ? String(costePendienteRaw.costeTotal) : '0'
     );
 
+    const totalProductos = await this.productoRepository.count();
+
+    const productosEsteMes = await this.productoRepository.count({
+      where: {
+        createdAt: Between(startOfMonth, endOfMonth),
+      },
+    });
+
+    const totalProveedores = await this.proveedorRepository.count();
+
     const movimientosRecientes = await this.movimientoRepository.find({
-      take: 10,
+      take: 5,
       order: {
-        fecha: 'DESC',
+        createdAt: 'DESC',
       },
       relations: ['usuario'],
     });
@@ -133,6 +166,9 @@ export class DashboardService {
     });
 
     return {
+      totalProductos,
+      productosEsteMes,
+      totalProveedores,
       inventario: {
         valorTotal,
         totalItems,
