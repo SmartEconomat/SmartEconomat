@@ -19,7 +19,8 @@ import {
     SelectChangeEvent,
     Grid,
     TableSortLabel,
-    IconButton
+    IconButton,
+    Skeleton,
 } from '@mui/material';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
@@ -267,7 +268,24 @@ export function DataTable<T extends Record<string, any>>({
                 </TableContainer>
             ) : (
                 <Grid container spacing={3}>
-                    {isLoading && (
+                    {isLoading && viewMode === 'grid' && (
+                        <>
+                            {Array.from({ length: 8 }).map((_, i) => (
+                                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={`skeleton-${i}`}>
+                                    <Paper variant="outlined" sx={{ p: 0, overflow: 'hidden' }}>
+                                        <Skeleton variant="rectangular" height={140} animation="wave" />
+                                        <Box sx={{ p: 2 }}>
+                                            <Skeleton variant="text" width="80%" height={28} />
+                                            <Skeleton variant="text" width="50%" height={20} sx={{ mt: 1 }} />
+                                            <Skeleton variant="rounded" width={64} height={24} sx={{ mt: 1.5 }} />
+                                            <Skeleton variant="text" width="40%" height={24} sx={{ mt: 1 }} />
+                                        </Box>
+                                    </Paper>
+                                </Grid>
+                            ))}
+                        </>
+                    )}
+                    {isLoading && viewMode !== 'grid' && (
                         <Grid size={{ xs: 12 }}>
                             <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" py={6}>
                                 <Spinner size="md" color="primary" />

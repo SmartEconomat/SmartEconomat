@@ -1,17 +1,23 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import type { CategoriaProducto } from '../services/producto.types';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
+
+export interface ToastOptions {
+    productCategory?: CategoriaProducto;
+}
 
 export interface Toast {
     id: string;
     message: string;
     type: ToastType;
     duration?: number;
+    productCategory?: CategoriaProducto;
 }
 
 interface ToastContextType {
     toasts: Toast[];
-    addToast: (message: string, type: ToastType, duration?: number) => void;
+    addToast: (message: string, type: ToastType, duration?: number, options?: ToastOptions) => void;
     removeToast: (id: string) => void;
 }
 
@@ -24,9 +30,9 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
     }, []);
 
-    const addToast = useCallback((message: string, type: ToastType, duration = 3000) => {
+    const addToast = useCallback((message: string, type: ToastType, duration = 3000, options?: ToastOptions) => {
         const id = Math.random().toString(36).substring(2, 9);
-        const newToast: Toast = { id, message, type, duration };
+        const newToast: Toast = { id, message, type, duration, productCategory: options?.productCategory };
 
         setToasts((prevToasts) => [...prevToasts, newToast]);
 
@@ -53,10 +59,10 @@ export const useToast = () => {
     const { addToast } = context;
 
     return React.useMemo(() => ({
-        success: (msg: string, dur?: number) => addToast(msg, 'success', dur),
-        error: (msg: string, dur?: number) => addToast(msg, 'error', dur),
-        info: (msg: string, dur?: number) => addToast(msg, 'info', dur),
-        warning: (msg: string, dur?: number) => addToast(msg, 'warning', dur),
+        success: (msg: string, dur?: number, options?: ToastOptions) => addToast(msg, 'success', dur, options),
+        error: (msg: string, dur?: number, options?: ToastOptions) => addToast(msg, 'error', dur, options),
+        info: (msg: string, dur?: number, options?: ToastOptions) => addToast(msg, 'info', dur, options),
+        warning: (msg: string, dur?: number, options?: ToastOptions) => addToast(msg, 'warning', dur, options),
     }), [addToast]);
 };
 
