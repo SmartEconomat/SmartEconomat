@@ -248,8 +248,12 @@ export default function Login() {
                         height: { xs: 'auto', md: '100%' },
                         display: 'flex',
                         flexDirection: 'column',
-                        justifyContent: 'center',
-                        overflow: 'hidden',
+                        // En móvil: alineamos desde arriba para que el scroll sea natural.
+                        // En desktop: centramos verticalmente (el panel tiene 100vh).
+                        justifyContent: { xs: 'flex-start', md: 'center' },
+                        // En móvil habilitamos scroll para formularios largos (registro).
+                        // En desktop ocultamos overflow para que la animación de peel no se vea fuera.
+                        overflow: { xs: 'auto', md: 'hidden' },
                         zIndex: 2,
                         animation: { xs: 'none', md: peelCss(formAnim) },
                     }}
