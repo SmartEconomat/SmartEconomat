@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Paper, IconButton, Typography, Alert, Button, Tooltip, Fab, Card, CardContent, CardMedia, CardActions, Chip } from '@mui/material';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Box, Paper, IconButton, Typography, Alert, Button, Tooltip, Card, CardContent, CardMedia, CardActions, TextField, InputAdornment } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DataTable, { Column } from '../components/ui/DataTable';
@@ -20,6 +20,7 @@ import SanitizerOutlinedIcon from '@mui/icons-material/SanitizerOutlined';
 import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
 import ShoppingBasketOutlinedIcon from '@mui/icons-material/ShoppingBasketOutlined';
 import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/SearchOutlined';
 
 const productoSchema: DynamicField[] = [
     { name: 'nombre', label: 'Nombre Comercial', required: true },
@@ -87,6 +88,7 @@ const productoSchema: DynamicField[] = [
 const Productos: React.FC = () => {
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
+    const [searchTerm, setSearchTerm] = useState('');
     const [data, setData] = useState<Producto[]>([]);
     const [proveedores, setProveedores] = useState<Proveedor[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -232,6 +234,19 @@ const Productos: React.FC = () => {
         setProductToEdit(editData);
     };
 
+    const filteredData = useMemo(() => {
+        if (!searchTerm.trim()) return data;
+        const term = searchTerm.toLowerCase().trim();
+        return data.filter(
+            (p) =>
+                p.nombre?.toLowerCase().includes(term) ||
+                p.marca?.toLowerCase().includes(term) ||
+                p.descripcion?.toLowerCase().includes(term) ||
+                p.codigoBarras?.toLowerCase().includes(term) ||
+                p.tipo?.toLowerCase().includes(term)
+        );
+    }, [data, searchTerm]);
+
     const dynamicSchema = React.useMemo(() => {
         const schema = [...productoSchema];
         schema.push({
@@ -298,31 +313,55 @@ const Productos: React.FC = () => {
                     </Alert>
                 )}
 
+                <TextField
+                    placeholder="Buscar por nombre, marca, código de barras..."
+                    value={searchTerm}
+                    onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setPage(1);
+                    }}
+                    size="small"
+                    sx={{ mb: 2, width: '100%', maxWidth: 400 }}
+                    InputProps={{
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <SearchIcon color="action" />
+                            </InputAdornment>
+                        ),
+                    }}
+                />
+
                 <DataTable
                     columns={columns}
-                    data={data.slice((page - 1) * pageSize, page * pageSize)}
+                    data={filteredData.slice((page - 1) * pageSize, page * pageSize)}
                     isLoading={isLoading}
                     emptyStateMessage={
                         <Box sx={{ py: 4, textAlign: 'center' }}>
                             <ShoppingBasketOutlinedIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
                             <Typography variant="h6" color="text.secondary" gutterBottom>
-                                No se encontraron productos
+                                {searchTerm.trim()
+                                    ? 'No hay productos que coincidan con tu búsqueda'
+                                    : 'No se encontraron productos'}
                             </Typography>
                             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                                Empieza añadiendo el primer producto a tu inventario.
+                                {searchTerm.trim()
+                                    ? 'Prueba con otros términos o limpia el filtro.'
+                                    : 'Empieza añadiendo el primer producto a tu inventario.'}
                             </Typography>
-                            <Button
-                                variant="outlined"
-                                startIcon={<AddIcon />}
-                                onClick={() => setProductToEdit({})}
-                            >
-                                Añadir Producto
-                            </Button>
+                            {!searchTerm.trim() && (
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<AddIcon />}
+                                    onClick={() => setProductToEdit({})}
+                                >
+                                    Añadir Producto
+                                </Button>
+                            )}
                         </Box>
                     }
                     pagination={{
                         currentPage: page,
-                        totalPages: Math.ceil(data.length / pageSize) || 1,
+                        totalPages: Math.ceil(filteredData.length / pageSize) || 1,
                         onPageChange: (_, newPage) => setPage(newPage),
                         pageSize: pageSize,
                         pageSizeOptions: [5, 10, 25, 50],
