@@ -1,6 +1,6 @@
 # 🏆 Clasificación de Contribuidores - SmartEconomat
 
-> **Última actualización:** 2026-02-28 13:19:12
+> **Última actualización:** 2026-02-28 14:52:11
 
 ---
 
@@ -43,7 +43,7 @@ Demostrando que:
 
 ### 🥈 Your Name
 - 💻 Commits: **3** (1,38%)
-- 🔀 PRs Fusionados: **0**
+- 🔀 PRs Fusionados: **1**
 
 
 ---
@@ -52,7 +52,7 @@ Demostrando que:
 
 ### 😅 **Your Name**
 
-Con **3 commits** y **0 PRs**, tenemos aquí a alguien que:
+Con **3 commits** y **1 PRs**, tenemos aquí a alguien que:
 - 🤔 Prefiere la calidad sobre la cantidad (eso espero...)
 - 🏖️ Cree que git es una red social casual
 - 🎯 Está "esperando el momento perfecto" para contribuir
@@ -73,14 +73,14 @@ Con **3 commits** y **0 PRs**, tenemos aquí a alguien que:
 | #3 | Sergio | **37** | 🔀 **7** | 16,97% | 💪 Activo |
 | #4 | Maurizio | **31** | 🔀 **8** | 14,22% | 💪 Activo |
 | #5 | Guillermo | **10** | 🔀 **5** | 4,59% | 💪 Activo |
-| #6 | Your Name | **3** | 🔀 **0** | 1,38% | 🐌 Necesita café |
+| #6 | Your Name | **3** | 🔀 **1** | 1,38% | 🐌 Necesita café |
 
 ---
 
 ## 📊 Estadísticas Generales
 
 - **Total de commits:** 218
-- **Total de PRs fusionados:** 87
+- **Total de PRs fusionados:** 88
 - **Total de contribuidores:** 6
 - **Promedio de commits por persona:** 36,3
 
@@ -104,7 +104,7 @@ Con **3 commits** y **0 PRs**, tenemos aquí a alguien que:
 `██░░░░░░░░░░░░░░░░░░` 10 commits | 5 PRs
 
 **Your Name**
-`█░░░░░░░░░░░░░░░░░░░░` 3 commits | 0 PRs
+`█░░░░░░░░░░░░░░░░░░░░` 3 commits | 1 PRs
 
 ---
 
