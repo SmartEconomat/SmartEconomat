@@ -1,3 +1,5 @@
+import { ProductoAlergeno } from './producto.types';
+
 export enum DificultadReceta {
     FACIL = 'Fácil',
     MEDIA = 'Media',
@@ -29,6 +31,7 @@ export interface RecetaIngrediente {
     producto?: {
         id: string;
         nombre: string;
+        alergenos?: ProductoAlergeno[];
     };
 }
 

@@ -12,8 +12,9 @@ import ConfirmDialog from './ConfirmDialog';
 import ProveedorSelector, { ProveedorAsociado } from './ProveedorSelector';
 import DatePicker from './DatePicker';
 import PedidoLineasSelector from './PedidoLineasSelector';
+import RecetaIngredientesSelector from './RecetaIngredientesSelector';
 
-export type FieldType = 'text' | 'textarea' | 'number' | 'boolean' | 'select' | 'date' | 'image' | 'allergens' | 'proveedores' | 'orderLines';
+export type FieldType = 'text' | 'textarea' | 'number' | 'boolean' | 'select' | 'date' | 'image' | 'allergens' | 'proveedores' | 'orderLines' | 'recipeIngredients';
 
 export interface DynamicField {
     name: string;
@@ -373,6 +374,15 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                                 if (type === 'orderLines') {
                                     return (
                                         <PedidoLineasSelector 
+                                            key={name}
+                                            value={Array.isArray(value) ? value : []}
+                                            onChange={(val) => setFormData(prev => ({ ...prev, [name]: val }))}
+                                        />
+                                    );
+                                }
+                                if (type === 'recipeIngredients') {
+                                    return (
+                                        <RecetaIngredientesSelector 
                                             key={name}
                                             value={Array.isArray(value) ? value : []}
                                             onChange={(val) => setFormData(prev => ({ ...prev, [name]: val }))}

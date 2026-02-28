@@ -54,6 +54,12 @@ const recetaSchema: DynamicField[] = [
         required: true,
         width: 12,
     },
+    {
+        name: 'ingredientes',
+        label: 'Ingredientes de la receta',
+        type: 'recipeIngredients',
+        position: 'bottom',
+    },
 ];
 
 const Recetas: React.FC = () => {
@@ -110,6 +116,11 @@ const Recetas: React.FC = () => {
                 tiempo: formData.tiempo,
                 dificultad: formData.dificultad,
                 tiempoPreparacion: formData.tiempoPreparacion,
+                ingredientes: Array.isArray(formData.ingredientes) ? formData.ingredientes.map((ing: any) => ({
+                    productoId: ing.productoId,
+                    cantidad: Number(ing.cantidad),
+                    unidad: ing.unidad
+                })) : [],
             };
 
             if (formData.id) {
