@@ -44,3 +44,13 @@ export interface Producto {
     fechaCaducidad?: string;
     proveedores?: { id: string; proveedor?: { id: string; nombre: string } }[];
 }
+
+export interface ProductoNuevoDto {
+    pendienteCreacion: boolean;
+    codigoBarras: string;
+    nombre: string;
+    marca?: string;
+    unidad: UnidadMedida;
+    tipo: CategoriaProducto;
+    contenido: number;
+}

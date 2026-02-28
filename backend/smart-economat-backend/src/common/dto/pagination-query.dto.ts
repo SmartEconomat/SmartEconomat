@@ -14,4 +14,10 @@ export class PaginationQueryDto {
   @Min(1)
   @Max(500)
   limit?: number = 20;
+
+  @IsOptional()
+  searchTerm?: string;
+
+  @IsOptional()
+  codigoBarras?: string;
 }

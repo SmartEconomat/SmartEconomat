@@ -11,7 +11,15 @@ export class PedidoRepository extends Repository<Pedido> {
   async findAllWithRelations(loadRelations = false): Promise<Pedido[]> {
     return await this.find({
       relations: loadRelations
-        ? ['usuario', 'pedidoProductos', 'recepcionesPedido']
+        ? [
+            'usuario',
+            'proveedor',
+            'pedidoProductos',
+            'pedidoProductos.productoProveedor',
+            'pedidoProductos.productoProveedor.producto',
+            'pedidoProductos.productoProveedor.proveedor',
+            'recepcionesPedido',
+          ]
         : [],
       order: {
         createdAt: 'DESC',
@@ -26,7 +34,15 @@ export class PedidoRepository extends Repository<Pedido> {
     return await this.findOne({
       where: { id },
       relations: loadRelations
-        ? ['usuario', 'pedidoProductos', 'recepcionesPedido']
+        ? [
+            'usuario',
+            'proveedor',
+            'pedidoProductos',
+            'pedidoProductos.productoProveedor',
+            'pedidoProductos.productoProveedor.producto',
+            'pedidoProductos.productoProveedor.proveedor',
+            'recepcionesPedido',
+          ]
         : [],
     });
   }
@@ -34,7 +50,16 @@ export class PedidoRepository extends Repository<Pedido> {
   async findByEstado(estado: string, loadRelations = false): Promise<Pedido[]> {
     return await this.find({
       where: { estado: estado as any },
-      relations: loadRelations ? ['usuario', 'pedidoProductos'] : [],
+      relations: loadRelations
+        ? [
+            'usuario',
+            'proveedor',
+            'pedidoProductos',
+            'pedidoProductos.productoProveedor',
+            'pedidoProductos.productoProveedor.producto',
+            'pedidoProductos.productoProveedor.proveedor',
+          ]
+        : [],
       order: { createdAt: 'DESC' },
     });
   }
@@ -45,7 +70,16 @@ export class PedidoRepository extends Repository<Pedido> {
   ): Promise<Pedido[]> {
     return await this.find({
       where: { usuario: { id: idUsuario } },
-      relations: loadRelations ? ['usuario', 'pedidoProductos'] : [],
+      relations: loadRelations
+        ? [
+            'usuario',
+            'proveedor',
+            'pedidoProductos',
+            'pedidoProductos.productoProveedor',
+            'pedidoProductos.productoProveedor.producto',
+            'pedidoProductos.productoProveedor.proveedor',
+          ]
+        : [],
       order: { createdAt: 'DESC' },
     });
   }

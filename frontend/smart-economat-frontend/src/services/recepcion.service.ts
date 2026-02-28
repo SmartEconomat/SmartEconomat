@@ -1,39 +1,60 @@
-import { Recepcion } from './recepcion.types';
+import { CreateRecepcionDto, RecepcionResultado } from './recepcion.types';
 import { baseFetch, ApiResponse, unwrapList } from './api.service';
 
-export async function fetchRecepciones(): Promise<Recepcion[]> {
+/**
+ * Obtiene todas las recepciones registradas en el sistema.
+ * El endpoint subyacente devolverá las entidades Recepcion con sus relaciones principales.
+ */
+export async function fetchRecepciones(): Promise<any[]> {
     const response = await baseFetch('/recepcion?limit=500');
     if (!response.ok) {
         throw new Error(`Error al obtener recepciones: ${response.status} ${response.statusText}`);
     }
     const body = await response.json() as ApiResponse<unknown>;
-    return unwrapList<Recepcion>(body.data);
+    return unwrapList<any>(body.data); 
 }
 
-export async function createRecepcion(recepcion: Partial<Recepcion>): Promise<Recepcion> {
+/**
+ * Procesa un lote (Wizard) de recepción contra uno o varios Pedidos.
+ * Endpoint atómico. Genera inventario, actualiza pedido y crea incidencias automáticamente.
+ */
+export async function createRecepcion(payload: CreateRecepcionDto): Promise<RecepcionResultado> {
     const response = await baseFetch('/recepcion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(recepcion),
+        body: JSON.stringify(payload),
     });
+    
     if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({}));
-        throw new Error(errorBody.message || `Error al crear recepción: ${response.status}`);
+        let errorMsg = `Error al registrar recepción: ${response.status}`;
+        try {
+            const errorBody = await response.json();
+            if (errorBody.message) errorMsg = typeof errorBody.message === 'string' ? errorBody.message : errorBody.message.join(', ');
+        } catch {
+            // Fallback to text
+        }
+        throw new Error(errorMsg);
     }
-    const body = await response.json() as ApiResponse<Recepcion>;
+    
+    const body = await response.json() as ApiResponse<RecepcionResultado>;
     return body.data;
 }
 
-export async function updateRecepcion(id: string, recepcion: Partial<Recepcion>): Promise<Recepcion> {
+/**
+ * Elimina una nota de entrega / recepción.
+ * OJO: El backend actual probablemente impida esto si afecta inventario cerrado.
+ */
+export async function deleteRecepcion(id: string): Promise<void> {
     const response = await baseFetch(`/recepcion/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(recepcion),
+        method: 'DELETE',
     });
+    
     if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({}));
-        throw new Error(errorBody.message || `Error al actualizar recepción: ${response.status}`);
+        let errorMsg = `Error al eliminar recepción: ${response.status}`;
+        try {
+             const errorBody = await response.json();
+             if (errorBody.message) errorMsg = errorBody.message;
+        } catch {}
+        throw new Error(errorMsg);
     }
-    const body = await response.json() as ApiResponse<Recepcion>;
-    return body.data;
 }

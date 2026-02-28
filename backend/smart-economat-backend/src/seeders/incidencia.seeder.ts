@@ -1,5 +1,10 @@
 import { Incidencia } from '../modules/incidencia/incidencia.entity/incidencia.entity';
-import { Recepcion } from '../modules/recepcion/recepcion.entity/recepcion.entity';
+import { RecepcionPedido } from '../modules/recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
+import {
+  IncidenciaLinea,
+  TipoDiferencia,
+  EstadoReclamacion,
+} from '../modules/incidencia/incidencia-linea.entity/incidencia-linea.entity';
 import { DataSource } from 'typeorm';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
@@ -7,49 +12,58 @@ export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
 
   const incidenciaRepo = dataSource.getRepository(Incidencia);
-  const recepcionRepo = dataSource.getRepository(Recepcion);
+  const incidenciaLineaRepo = dataSource.getRepository(IncidenciaLinea);
+  const recepcionPedidoRepo = dataSource.getRepository(RecepcionPedido);
 
   const MAX_INCIDENCIA = 5;
 
-  const recepciones = await recepcionRepo.find();
-  if (recepciones.length === 0) {
+  const recepcionPedidos = await recepcionPedidoRepo.find({
+    relations: ['recepcion', 'pedido', 'pedido.pedidoProductos'],
+  });
+
+  if (recepcionPedidos.length === 0) {
     throw new Error(SeederI18nHelper.getError('NO_RECEPCIONES'));
   }
 
   const incidencias: Incidencia[] = [];
 
-  for (let i = 0; i < MAX_INCIDENCIA; i++) {
-    const recepcion = faker.helpers.arrayElement(recepciones);
+  for (let i = 0; i < Math.min(MAX_INCIDENCIA, recepcionPedidos.length); i++) {
+    const rp = recepcionPedidos[i];
 
-    const productos = Array.from({
-      length: faker.number.int({ min: 1, max: 5 }),
-    }).map(() => {
-      const cantidadPedida = faker.number.int({ min: 1, max: 20 });
+    const ppArr = rp.pedido.pedidoProductos as any[];
+    if (!ppArr || ppArr.length === 0) continue;
+
+    const numDiffs = faker.number.int({ min: 1, max: ppArr.length });
+    const ppsToDiff = faker.helpers.arrayElements(ppArr, numDiffs);
+
+    const lineas = ppsToDiff.map((pp) => {
+      const cantidadEsperada = Number(pp.cantidad);
       const cantidadRecibida = faker.number.int({
         min: 0,
-        max: cantidadPedida,
+        max: cantidadEsperada - 1,
       });
 
-      return {
-        idPedidoProducto: faker.string.uuid(),
-        cantidadPedida,
+      return incidenciaLineaRepo.create({
+        pedidoProducto: pp,
+        cantidadEsperada,
         cantidadRecibida,
-        diferencia: cantidadRecibida - cantidadPedida,
+        diferencia: cantidadRecibida - cantidadEsperada,
+        tipoDiferencia: TipoDiferencia.FALTANTE,
+        estadoReclamacion: EstadoReclamacion.PENDIENTE,
         observaciones: faker.helpers.maybe(() => faker.lorem.sentence()),
-      };
+      });
     });
 
     const incidencia = incidenciaRepo.create({
-      recepcion,
-      datosOriginales: {
-        productos,
-        observacionesRecepcion: faker.helpers.maybe(() =>
-          faker.lorem.paragraph()
-        ),
-      },
+      recepcion: rp.recepcion,
+      pedido: rp.pedido,
+      observacionesRecepcion: faker.helpers.maybe(() =>
+        faker.lorem.paragraph()
+      ),
       observacionesResolucion: faker.helpers.maybe(() =>
         faker.lorem.paragraph()
       ),
+      lineas: lineas,
     });
 
     incidencias.push(incidencia);

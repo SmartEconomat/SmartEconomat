@@ -4,7 +4,6 @@ import { Recepcion } from './recepcion.entity/recepcion.entity';
 import { Usuario } from '../usuario/usuario.entity/usuario.entity';
 import { RecepcionController } from './controller/recepcion.controller';
 import { RecepcionService } from './service/recepcion.service';
-import { RecepcionStockController } from './controller/recepcion-stock.controller';
 import { RecepcionStockService } from './service/recepcion-stock.service';
 import { RecepcionPedido } from './recepcion-pedido.entity/recepcion-pedido.entity';
 import { RecepcionProducto } from './recepcion-productos.entity/recepcion-producto.entity';
@@ -33,7 +32,7 @@ import { MovimientoHelper } from '../../common/helpers/movimiento.helper';
     ]),
     MovimientoModule,
   ],
-  controllers: [RecepcionController, RecepcionStockController],
+  controllers: [RecepcionController],
   providers: [RecepcionService, RecepcionStockService, MovimientoHelper],
   exports: [RecepcionService, RecepcionStockService],
 })

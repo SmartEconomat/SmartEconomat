@@ -37,3 +37,18 @@ export async function updateProducto(id: string, producto: Partial<Producto>): P
     const body = await response.json() as ApiResponse<Producto>;
     return body.data;
 }
+
+export async function getProductoByBarcode(barcode: string): Promise<Producto | null> {
+    const response = await baseFetch(`/productos?codigoBarras=${barcode}`);
+    if (!response.ok) return null;
+    const body = await response.json() as ApiResponse<unknown>;
+    const list = unwrapList<Producto>(body.data);
+    return list.length > 0 ? list[0] : null;
+}
+
+export async function searchProductosByName(name: string): Promise<Producto[]> {
+    const response = await baseFetch(`/productos?searchTerm=${name}&limit=10`);
+    if (!response.ok) return [];
+    const body = await response.json() as ApiResponse<unknown>;
+    return unwrapList<Producto>(body.data);
+}

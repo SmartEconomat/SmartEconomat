@@ -5,9 +5,11 @@ import {
 } from '@nestjs/common';
 import { Pedido } from '../pedido.entity/pedido.entity';
 import { EstadoPedido } from '../enums/estado-pedido.enum';
-import { CreatePedidoDto, UpdatePedidoDto } from '../dto/create-pedido.dto';
+import { CreatePedidoDto } from '../dto/create-pedido.dto';
+import { UpdatePedidoDto } from '../dto/updatePedido.dto';
 import { CancelPedidoDto } from '../dto/cancelPedido.dto';
 import { PedidoRepository } from '../repository/pedido.repository';
+import { PedidoProducto } from '../pedido-producto.entity/pedido-producto.entity';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
 
@@ -22,8 +24,13 @@ export class PedidoService {
     createPedidoDto: CreatePedidoDto,
     userId: string
   ): Promise<Pedido> {
-    const { pedidoProductos, productos, fechaEntrega, ...pedidoFields } =
-      createPedidoDto;
+    const {
+      pedidoProductos,
+      productos,
+      fechaEntrega,
+      proveedorId,
+      ...pedidoFields
+    } = createPedidoDto;
 
     const lineas = (pedidoProductos ?? [])
       .map((pp) => ({
@@ -41,8 +48,15 @@ export class PedidoService {
         }))
       );
 
+    if (lineas.length === 0) {
+      throw new BadRequestException(
+        'El pedido debe contener al menos un producto.'
+      );
+    }
+
     const pedido = this.pedidoRepository.create({
       ...pedidoFields,
+      proveedor: { id: proveedorId },
       estado: EstadoPedido.PENDIENTE,
       costeTotal: createPedidoDto.costeTotal || 0,
       pedidoProductos: lineas as any,
@@ -61,11 +75,11 @@ export class PedidoService {
   }
 
   async findAll(): Promise<Pedido[]> {
-    return await this.pedidoRepository.findAllWithRelations();
+    return await this.pedidoRepository.findAllWithRelations(true);
   }
 
   async findOne(id: string): Promise<Pedido> {
-    const pedido = await this.pedidoRepository.findOneWithRelations(id);
+    const pedido = await this.pedidoRepository.findOneWithRelations(id, true);
     if (!pedido) {
       throw new NotFoundException(I18nHelper.getError('ORDER_NOT_FOUND'));
     }
@@ -81,6 +95,53 @@ export class PedidoService {
 
     if (updatePedidoDto.estado) {
       pedido.estado = updatePedidoDto.estado;
+    }
+
+    if (updatePedidoDto.proveedorId) {
+      pedido.proveedor = { id: updatePedidoDto.proveedorId } as any;
+    }
+
+    const lineasOriginales = (updatePedidoDto.pedidoProductos ?? [])
+      .map((pp) => ({
+        productoProveedor: { id: pp.productoProveedorId },
+        cantidad: pp.cantidad,
+        precioUnitario: pp.precioUnitario,
+        observaciones: pp.observaciones,
+      }))
+      .concat(
+        (updatePedidoDto.productos ?? []).map((p) => ({
+          productoProveedor: { id: p.idProductoProveedor },
+          cantidad: p.cantidad,
+          precioUnitario: p.precioUnitario,
+          observaciones: p.observaciones,
+        }))
+      );
+
+    if (
+      lineasOriginales.length === 0 &&
+      (updatePedidoDto.pedidoProductos !== undefined ||
+        updatePedidoDto.productos !== undefined)
+    ) {
+      throw new BadRequestException(
+        'El pedido debe contener al menos un producto.'
+      );
+    }
+
+    if (
+      updatePedidoDto.pedidoProductos !== undefined ||
+      updatePedidoDto.productos !== undefined
+    ) {
+      await this.pedidoRepository.manager.delete(PedidoProducto, {
+        pedido: { id },
+      });
+
+      pedido.pedidoProductos = lineasOriginales as any;
+
+      const costeRedux = lineasOriginales.reduce(
+        (total, l) => total + l.cantidad * l.precioUnitario,
+        0
+      );
+      pedido.costeTotal = updatePedidoDto.costeTotal ?? costeRedux;
     }
 
     return await this.pedidoRepository.save(pedido);
