@@ -166,7 +166,7 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
                 sx={{
                     position: 'relative',
                     zIndex: 2,
-                    flex: 1,                // ocupa todo el espacio vertical disponible
+                    flex: 1,
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'center',
@@ -174,19 +174,15 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
                     textAlign: 'center',
                     px: 5,
                     color: 'white',
-                    pb: 8,                  // padding-bottom para dejar espacio a los dots fijos
+                    // En móvil damos más pb para que los dots (48px) no tapen el texto
+                    pb: { xs: 7, md: 8 },
+                    pt: { xs: 3, md: 0 },
                 }}
             >
-                {/* Icono con animación de spin natural al cambiar de modo */}
+                {/* Icono — oculto en móvil para ahorrar espacio vertical */}
                 <Box
                     key={isLogin ? 'icon-lock' : 'icon-person'}
                     sx={{
-                        /*
-                         * 0%   → empieza a –360 deg (vuelta completa atrás) y pequeño scale↓
-                         * 65%  → llega a 0 deg con un leve overshoot (+8 deg)
-                         * 100% → se asienta en 0 deg
-                         * Duración 1.1 s para que el movimiento sea perceptible y fluido.
-                         */
                         '@keyframes iconSpinNatural': {
                             '0%': { transform: 'rotate(-360deg) scale(0.75)', opacity: 0 },
                             '55%': { opacity: 1 },
@@ -194,12 +190,12 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
                             '100%': { transform: 'rotate(0deg) scale(1)', opacity: 1 },
                         },
                         animation: 'iconSpinNatural 1.1s cubic-bezier(0.34, 1.2, 0.64, 1) both',
+                        display: { xs: 'none', md: 'flex' },  // ← oculto en móvil
                         width: 110,
                         height: 110,
                         bgcolor: 'rgba(255,255,255,0.15)',
                         border: '1.5px solid rgba(255,255,255,0.30)',
                         borderRadius: '50%',
-                        display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         backdropFilter: 'blur(10px)',
@@ -212,7 +208,6 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
                     }
                 </Box>
 
-                {/* Texto del slide activo */}
                 <Box
                     key={`slide-text-${slideKey}`}
                     sx={{
@@ -224,10 +219,16 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
                         maxWidth: 440,
                     }}
                 >
-                    <Typography variant="h4" fontWeight={700} gutterBottom sx={{ lineHeight: 1.3 }}>
+                    {/* Título más pequeño en móvil para que quepa en el panel reducido */}
+                    <Typography
+                        variant="h4"
+                        fontWeight={700}
+                        gutterBottom
+                        sx={{ lineHeight: 1.3, fontSize: { xs: '1.55rem', md: '2.125rem' } }}
+                    >
                         {slides[activeSlide].title}
                     </Typography>
-                    <Typography variant="body1" sx={{ opacity: 0.82, lineHeight: 1.7 }}>
+                    <Typography variant="body1" sx={{ opacity: 0.9, lineHeight: 1.7, fontSize: { xs: '1em', md: '1rem' } }}>
                         {slides[activeSlide].description}
                     </Typography>
                 </Box>
@@ -238,10 +239,11 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
                 position: absolute para que nunca afecten al
                 layout del contenido superior.
             ═══════════════════════════════════════════════ */}
+            {/* Dots — bottom adaptado a móvil (más cerca del fondo por el panel más alto) */}
             <Box
                 sx={{
                     position: 'absolute',
-                    bottom: 32,
+                    bottom: { xs: 16, md: 32 },
                     left: 0,
                     right: 0,
                     display: 'flex',

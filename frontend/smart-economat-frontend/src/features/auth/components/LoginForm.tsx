@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Box, Typography, Link, InputAdornment, IconButton, Alert } from '@mui/material';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Input from '../../../components/ui/Input';
@@ -26,11 +25,6 @@ interface LoginFormProps {
     onLoginSuccess: (user: User, token: string) => void;
 }
 
-/**
- * Parsea un JWT y devuelve el payload deserializado, o `null` si no es válido.
- * @param {string} token - JWT crudo.
- * @returns {Record<string, any> | null}
- */
 function parseJwt(token: string): Record<string, any> | null {
     try {
         const base64Url = token.split('.')[1];
@@ -46,14 +40,8 @@ function parseJwt(token: string): Record<string, any> | null {
 
 /**
  * Formulario de inicio de sesión.
- *
- * - Incluye campo de email/usuario y contraseña con toggle de visibilidad.
- * - Al completar correctamente, invoca `onLoginSuccess` con los datos del usuario y el token.
- *   El componente padre (`Login.tsx`) es responsable de ejecutar la animación de salida
- *   y luego llamar a `AuthContext.login()` para navegar al dashboard.
- *
- * @param {LoginFormProps} props - Propiedades del componente.
- * @returns {JSX.Element} Formulario de acceso.
+ * Delega la navegación al padre mediante `onLoginSuccess` para permitir la
+ * animación de salida antes de llamar a AuthContext.login().
  */
 const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onLoginSuccess }) => {
     const [formData, setFormData] = useState({ email: '', password: '' });
@@ -71,7 +59,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onLoginSuccess }) =
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: formData.email, password: formData.password }),
             });
-
             if (res.ok) {
                 const json = await res.json();
                 const token = json.data?.access_token || json.access_token;
@@ -100,30 +87,36 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onLoginSuccess }) =
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
-    /** Alterna la visibilidad del campo de contraseña. */
     const togglePasswordVisibility = () => setShowPassword(v => !v);
 
     return (
-        <Box sx={{ my: 8, mx: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            {/* Logo visible solo en móvil */}
-            <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', alignItems: 'center', mb: 4 }}>
-                <Box sx={{ width: 80, height: 80, bgcolor: 'primary.main', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-                    <LockOutlinedIcon sx={{ fontSize: 40, color: 'white' }} />
-                </Box>
-            </Box>
-
+        <Box sx={{ my: { xs: 4, md: 8 }, mx: 4, pt: { xs: 2, md: 0 }, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Typography component="h1" sx={visuallyHidden}>Iniciar Sesión en Smart Economat</Typography>
 
-            {/* Logo de SmartEconomat en lugar del icono de candado */}
-            <Box sx={{ mb: 1, mt: 1 }}>
-                <img src={Logo} alt="SmartEconomat" style={{ height: 150, width: 'auto' }} />
+            {/* Logo responsivo: más pequeño en móvil, más grande en desktop */}
+            <Box sx={{ mb: 1, mt: { xs: 0, md: 1 } }}>
+                <img
+                    src={Logo}
+                    alt="SmartEconomat"
+                    style={{ height: 'clamp(90px, 15vw, 130px)', width: 'auto' }}
+                />
             </Box>
-            {/* <Typography component="h2" variant="h5">Smart Economat</Typography> */}
 
-            {errorMsg && <Alert severity="error" sx={{ width: '100%', maxWidth: 400, mt: 2 }}>{errorMsg}</Alert>}
+            {errorMsg && (
+                <Alert severity="error" sx={{ width: '100%', maxWidth: 400, mt: 2 }}>
+                    {errorMsg}
+                </Alert>
+            )}
 
             <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 1, width: '100%', maxWidth: 400 }}>
-                <Input label="Usuario o Email" name="email" autoComplete="email" autoFocus value={formData.email} onChange={handleChange} />
+                <Input
+                    label="Usuario o Email"
+                    name="email"
+                    autoComplete="email"
+                    autoFocus
+                    value={formData.email}
+                    onChange={handleChange}
+                />
                 <Input
                     label="Contraseña"
                     name="password"
