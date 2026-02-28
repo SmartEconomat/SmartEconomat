@@ -52,12 +52,12 @@ export const useToast = () => {
 
     const { addToast } = context;
 
-    return {
+    return React.useMemo(() => ({
         success: (msg: string, dur?: number) => addToast(msg, 'success', dur),
         error: (msg: string, dur?: number) => addToast(msg, 'error', dur),
         info: (msg: string, dur?: number) => addToast(msg, 'info', dur),
         warning: (msg: string, dur?: number) => addToast(msg, 'warning', dur),
-    };
+    }), [addToast]);
 };
 
 export const useToastList = () => {
