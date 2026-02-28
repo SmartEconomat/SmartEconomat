@@ -18,7 +18,6 @@ import { ProductoProveedor } from '../../producto/producto-proveedor.entity/prod
  */
 @Entity({ name: 'movimiento' })
 @Index('idx_movimiento_tipo', ['tipo'])
-@Index('idx_movimiento_fecha', ['fecha'])
 @Index('idx_movimiento_usuario', ['usuario'])
 @Index('idx_movimiento_entidad_tipo', ['entidad', 'tipo'])
 @Index('idx_movimiento_entidad_id', ['entidadId'])
@@ -90,16 +89,6 @@ export class Movimiento extends BaseEntity {
    */
   @Column({ type: 'uuid', name: 'entidad_id' })
   entidadId!: string;
-
-  /**
-   * Fecha y hora exacta del movimiento.
-   * @type {Date}
-   */
-  @Column({
-    type: 'timestamptz',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
-  fecha!: Date;
 
   /**
    * Descripción o justificación del movimiento.

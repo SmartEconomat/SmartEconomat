@@ -16,7 +16,10 @@ const Movimientos: React.FC = () => {
         setError(null);
         try {
             const dataLoad = await fetchMovimientos();
-            setData(dataLoad);
+            const sorted = [...dataLoad].sort((a, b) =>
+                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+            setData(sorted);
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Error desconocido al cargar movimientos.';
             setError(message);
@@ -31,9 +34,9 @@ const Movimientos: React.FC = () => {
 
     const columns: Column<Movimiento>[] = [
         { 
-            id: 'fecha', 
+            id: 'createdAt', 
             label: 'Fecha',
-            render: (row) => row.fecha ? new Date(row.fecha).toLocaleDateString() : '—',
+            render: (row) => row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '—',
             hideOnMobile: true,
         },
         {

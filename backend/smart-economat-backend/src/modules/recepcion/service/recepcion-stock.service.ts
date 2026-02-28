@@ -120,7 +120,6 @@ export class RecepcionStockService {
             cantidadActual: linea.cantidadRecibida,
             cantidadMinima: 10,
             ubicacionAlmacen: localInventario.ALMACEN_A,
-            fechaCaducidad: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
           });
         }
         stock = await queryRunner.manager.save(stock);
