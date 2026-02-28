@@ -27,6 +27,14 @@ export class UsuarioRepository {
     });
   }
 
+  findByIdWithPassword(id: string) {
+    return this.repo
+      .createQueryBuilder('usuario')
+      .addSelect('usuario.password')
+      .where('usuario.id = :id', { id })
+      .getOne();
+  }
+
   async updateUsuario(id: string, data: Partial<Usuario>) {
     const usuario = await this.findById(id);
     if (!usuario) return null;

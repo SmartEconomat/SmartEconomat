@@ -53,9 +53,9 @@ describe('InventarioController - Alertas (e2e)', () => {
     /**
      * @test Debe obtener las alertas de caducidad próximas.
      */
-    it('GET /Alertas/caducidad - Debe listar alertas de caducidad (200)', () => {
+    it('GET /alertas/caducidad - Debe listar alertas de caducidad (200)', () => {
       return request(app.getHttpServer())
-        .get('/api/v1/Alertas/caducidad')
+        .get('/api/v1/alertas/caducidad')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200)
         .expect((res) => {
@@ -67,9 +67,9 @@ describe('InventarioController - Alertas (e2e)', () => {
     /**
      * @test Debe obtener las alertas de productos con bajo stock.
      */
-    it('GET /Alertas/stock - Debe listar alertas de stock (200)', () => {
+    it('GET /alertas/stock - Debe listar alertas de stock (200)', () => {
       return request(app.getHttpServer())
-        .get('/api/v1/Alertas/stock')
+        .get('/api/v1/alertas/stock')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200)
         .expect((res) => {
