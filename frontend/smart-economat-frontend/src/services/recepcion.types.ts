@@ -27,8 +27,15 @@ export interface ProductoNuevoRecepcionDto extends ProductoNuevoDto {
     observaciones?: string;
 }
 
+export interface PedidoRecepcionDto {
+    pedidoId: string;
+    nAlbaran?: string;
+    observaciones?: string;
+}
+
 export interface CreateRecepcionDto {
-    pedidoIds: string[];
+    pedidos?: PedidoRecepcionDto[];
+    pedidoIds?: string[];
     nAlbaran?: string;
     fechaRecepcion?: string;
     observaciones?: string;
@@ -75,6 +82,8 @@ export interface PedidoDraft {
   descripcion: string;
   proveedor: string;
   lineas: LineaDraft[];
+  nAlbaran?: string;
+  observaciones?: string;
 }
 
 export interface RecepcionDraft {

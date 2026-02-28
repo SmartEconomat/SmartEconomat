@@ -203,9 +203,9 @@ const Recepcion: React.FC = () => {
           nombreProducto: pp.productoProveedor?.producto?.nombre || 'Producto',
           unidad: pp.productoProveedor?.producto?.unidad || 'unidades',
           cantidadPedida: Number(pp.cantidad),
-          cantidadRecibida: '',
+          cantidadRecibida: 0,
           observaciones: '',
-          estado: 'sin_rellenar'
+          estado: calculateEstado(0, Number(pp.cantidad))
         }))
       };
       newPedidos.push(pedidoDraft);
@@ -377,8 +377,10 @@ const Recepcion: React.FC = () => {
     setError(null);
 
     const payload: CreateRecepcionDto = {
-      pedidoIds: draft.pedidosSeleccionados.map(p => p.id),
-      nAlbaran: draft.nAlbaran,
+      pedidos: draft.pedidosSeleccionados.map(p => ({
+        pedidoId: p.id,
+        nAlbaran: p.nAlbaran,
+      })),
       observaciones: draft.observaciones,
       productos: draft.pedidosSeleccionados.flatMap(p => p.lineas)
                    .filter(l => Number(l.cantidadRecibida) > 0)
@@ -478,14 +480,14 @@ const Recepcion: React.FC = () => {
       {draft.pedidosSeleccionados.map((p, pIdx) => (
         <Paper key={p.id} sx={{ p: 2, mb: 2, border: '1px solid #eee' }} elevation={0}>
           <Typography variant="subtitle2" color="primary">{p.proveedor}</Typography>
-          <Table size="small">
+          <Table size="small" sx={{ tableLayout: 'fixed' }}>
             <TableHead>
               <TableRow>
-                <TableCell>Producto</TableCell>
-                <TableCell align="center" sx={{ width: 100 }}>Unidad</TableCell>
-                <TableCell align="right" sx={{ width: 100 }}>Pedida</TableCell>
-                <TableCell align="right" sx={{ width: 100 }}>Recibida</TableCell>
-                <TableCell align="center" sx={{ width: 150 }}>Estado</TableCell>
+                <TableCell sx={{ width: '40%' }}>Producto</TableCell>
+                <TableCell align="center" sx={{ width: '15%' }}>Unidad</TableCell>
+                <TableCell align="right" sx={{ width: '15%' }}>Pedida</TableCell>
+                <TableCell align="right" sx={{ width: '15%' }}>Recibida</TableCell>
+                <TableCell align="center" sx={{ width: '15%' }}>Estado</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -518,13 +520,13 @@ const Recepcion: React.FC = () => {
       {draft.productosEspontaneos.length > 0 && (
         <Paper sx={{ p: 2, bgcolor: '#fafafa' }} elevation={0}>
            <Typography variant="subtitle2" color="secondary">Especial / Fuera de Pedido 🆕</Typography>
-           <Table size="small">
+           <Table size="small" sx={{ tableLayout: 'fixed' }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>Producto</TableCell>
-                  <TableCell align="center" sx={{ width: 100 }}>Unidad</TableCell>
-                  <TableCell align="right" sx={{ width: 100 }}>Recibida</TableCell>
-                  <TableCell align="center" sx={{ width: 150 }}>Acción</TableCell>
+                  <TableCell sx={{ width: '40%' }}>Producto</TableCell>
+                  <TableCell align="center" sx={{ width: '15%' }}>Unidad</TableCell>
+                  <TableCell align="right" sx={{ width: '15%' }}>Recibida</TableCell>
+                  <TableCell align="center" sx={{ width: '30%' }}>Acción</TableCell>
                 </TableRow>
               </TableHead>
             <TableBody>
@@ -570,24 +572,36 @@ const Recepcion: React.FC = () => {
   const renderStep3 = () => (
     <Box>
       <Alert severity="warning" sx={{ mb: 2 }}>Revisa los totales y añade el Nº de Albarán del repartidor.</Alert>
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 2, mb: 3 }}>
-         <TextField label="Nº Albarán" value={draft.nAlbaran} onChange={(e) => setDraft({...draft, nAlbaran: e.target.value})} fullWidth />
-         <TextField label="Firma / Observaciones" value={draft.observaciones} onChange={(e) => setDraft({...draft, observaciones: e.target.value})} fullWidth multiline rows={1} />
+      <Box sx={{ mb: 3 }}>
+         <TextField label="Firma / Observaciones generales" value={draft.observaciones} onChange={(e) => setDraft({...draft, observaciones: e.target.value})} fullWidth multiline rows={1} />
       </Box>
 
       {draft.pedidosSeleccionados.map((p, pIdx) => (
-        <Box key={p.id} sx={{ mb: 3 }}>
-           <Typography variant="subtitle1" fontWeight="bold">{p.descripcion}</Typography>
+        <Paper key={p.id} sx={{ p: 2, mb: 2, border: '1px solid #eee' }} elevation={0}>
+           <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+             <Typography variant="subtitle2" color="primary">{p.proveedor} - {p.descripcion}</Typography>
+             <TextField 
+               size="small" 
+               label="Nº Albarán del Pedido" 
+               value={p.nAlbaran || ''} 
+               onChange={(e) => {
+                  const newPedidos = [...draft.pedidosSeleccionados];
+                  newPedidos[pIdx] = { ...p, nAlbaran: e.target.value };
+                  setDraft({ ...draft, pedidosSeleccionados: newPedidos });
+               }}
+               sx={{ width: 200 }}
+             />
+           </Box>
            
-           <TableContainer component={Paper} variant="outlined">
-             <Table size="small">
+           <TableContainer component={Paper} variant="outlined" sx={{ mt: 1, border: 'none', boxShadow: 'none' }}>
+             <Table size="small" sx={{ tableLayout: 'fixed' }}>
                <TableHead>
                 <TableRow>
-                  <TableCell>Item</TableCell>
-                  <TableCell align="center" sx={{ width: 100 }}>Unidad</TableCell>
-                  <TableCell align="right" sx={{ width: 100 }}>Exp.</TableCell>
-                  <TableCell align="right" sx={{ width: 100 }}>Real</TableCell>
-                  <TableCell>Notas del incidente</TableCell>
+                  <TableCell sx={{ width: '35%' }}>Item</TableCell>
+                  <TableCell align="center" sx={{ width: '10%' }}>Unidad</TableCell>
+                  <TableCell align="right" sx={{ width: '10%' }}>Exp.</TableCell>
+                  <TableCell align="right" sx={{ width: '10%' }}>Real</TableCell>
+                  <TableCell sx={{ width: '35%' }}>Notas del incidente</TableCell>
                 </TableRow>
                </TableHead>
                <TableBody>
@@ -617,8 +631,50 @@ const Recepcion: React.FC = () => {
                </TableBody>
              </Table>
            </TableContainer>
-        </Box>
+        </Paper>
       ))}
+
+      {draft.productosEspontaneos.length > 0 && (
+        <Paper sx={{ p: 2, mb: 2, bgcolor: '#fafafa', border: '1px solid #eee' }} elevation={0}>
+          <Typography variant="subtitle2" color="secondary">Especial / Fuera de Pedido 🆕</Typography>
+          
+          <TableContainer component={Paper} variant="outlined" sx={{ mt: 1, border: 'none', boxShadow: 'none', bgcolor: 'transparent' }}>
+            <Table size="small" sx={{ tableLayout: 'fixed' }}>
+              <TableHead>
+               <TableRow>
+                 <TableCell sx={{ width: '35%' }}>Item</TableCell>
+                 <TableCell align="center" sx={{ width: '10%' }}>Unidad</TableCell>
+                 <TableCell align="right" sx={{ width: '10%' }}>Exp.</TableCell>
+                 <TableCell align="right" sx={{ width: '10%' }}>Real</TableCell>
+                 <TableCell sx={{ width: '35%' }}>Notas del incidente</TableCell>
+               </TableRow>
+              </TableHead>
+              <TableBody>
+                {draft.productosEspontaneos.map((l, lIdx) => (
+                  <TableRow key={lIdx}>
+                    <TableCell>{l.nombreProducto}</TableCell>
+                    <TableCell align="center">
+                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>{l.unidad}</Typography>
+                    </TableCell>
+                    <TableCell align="right">0</TableCell>
+                    <TableCell align="right" sx={{ color: 'orange', fontWeight: 'bold' }}>{l.cantidadRecibida || 0}</TableCell>
+                    <TableCell>
+                      <TextField 
+                        placeholder="Motivo discrepancia..." 
+                        size="small" fullWidth 
+                        value={l.observaciones}
+                        onChange={(e) => {
+                            handleUpdateLinea(null, lIdx, 'observaciones', e.target.value);
+                        }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
+      )}
     </Box>
   );
 
