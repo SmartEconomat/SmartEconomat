@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Paper, IconButton, Typography, Alert, Button, Tooltip, Chip } from '@mui/material';
+import { Box, Paper, IconButton, Typography, Alert, Button, Tooltip, Chip, Card, CardContent, CardActions, Divider } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DataTable, { Column } from '../components/ui/DataTable';
@@ -64,6 +64,7 @@ const recetaSchema: DynamicField[] = [
 
 const Recetas: React.FC = () => {
     const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
     const [data, setData] = useState<Receta[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -240,7 +241,7 @@ const Recetas: React.FC = () => {
 
                 <DataTable
                     columns={columns}
-                    data={data}
+                    data={data.slice((page - 1) * pageSize, page * pageSize)}
                     isLoading={isLoading}
                     emptyStateMessage={
                         <Box sx={{ py: 4, textAlign: 'center' }}>
@@ -262,9 +263,54 @@ const Recetas: React.FC = () => {
                     }
                     pagination={{
                         currentPage: page,
-                        totalPages: 1,
+                        totalPages: Math.ceil(data.length / pageSize) || 1,
                         onPageChange: (_, newPage) => setPage(newPage),
+                        pageSize: pageSize,
+                        pageSizeOptions: [5, 10, 25, 50],
+                        onPageSizeChange: (e) => {
+                            setPageSize(Number(e.target.value));
+                            setPage(1);
+                        },
                     }}
+                    renderGridItem={(receta) => (
+                        <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                            <CardContent sx={{ flexGrow: 1 }}>
+                                <Typography gutterBottom variant="h6" component="div">
+                                    {receta.nombre}
+                                </Typography>
+                                <Box display="flex" gap={1} flexWrap="wrap" mb={2} mt={1}>
+                                    {receta.dificultad && (
+                                        <StatusChip status={receta.dificultad} size="small" variant="outlined" />
+                                    )}
+                                    {receta.tiempoPreparacion && (
+                                        <Chip
+                                            icon={<AccessTimeOutlinedIcon />}
+                                            label={receta.tiempoPreparacion}
+                                            size="small"
+                                            variant="outlined"
+                                        />
+                                    )}
+                                </Box>
+                                <Typography variant="body2" color="text.secondary" sx={{
+                                    display: '-webkit-box',
+                                    WebkitLineClamp: 3,
+                                    WebkitBoxOrient: 'vertical',
+                                    overflow: 'hidden'
+                                }}>
+                                    {receta.instrucciones}
+                                </Typography>
+                            </CardContent>
+                            <Divider />
+                            <CardActions sx={{ justifyContent: 'space-between', px: 2 }}>
+                                <Typography variant="caption" color="text.secondary">
+                                    {receta.ingredientes?.length || 0} ingredientes
+                                </Typography>
+                                <Box>
+                                    {renderActions(receta)}
+                                </Box>
+                            </CardActions>
+                        </Card>
+                    )}
                     renderActions={renderActions}
                 />
 

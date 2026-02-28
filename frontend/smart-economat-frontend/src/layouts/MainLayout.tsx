@@ -168,7 +168,7 @@ export default function MainLayout() {
 
     const drawerContent = (
         <>
-            <DrawerHeader sx={{ justifyContent: open ? 'center' : 'flex-end', px: 1 }}>
+            <DrawerHeader sx={{ justifyContent: open ? 'center' : 'center', px: 1 }}>
                 {open && <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', mr: 1 }}>
                     <Box
                         component="img"
@@ -181,12 +181,19 @@ export default function MainLayout() {
                         }}
                     />
                 </Box>}
-                <IconButton onClick={isMobile ? handleDrawerClose : handleDrawerClose}>
-                    {theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-                </IconButton>
+                <Tooltip title={open ? "Minimizar menú" : "Expandir menú"}>
+                    <IconButton
+                        aria-label={open ? "Minimizar menú" : "Expandir menú"}
+                        onClick={open ? handleDrawerClose : handleDrawerOpen}
+                    >
+                        {theme.direction === 'rtl'
+                            ? (open ? <ChevronRightIcon /> : <ChevronLeftIcon />)
+                            : (open ? <ChevronLeftIcon /> : <ChevronRightIcon />)}
+                    </IconButton>
+                </Tooltip>
             </DrawerHeader>
             <Divider />
-            <List>
+            <List aria-label="Navegación principal">
                 {menuItems.filter(item => item.showInMenu).map((item) => (
                     <ListItem key={item.path} disablePadding sx={{ display: 'block' }}>
                         <Tooltip
@@ -223,7 +230,7 @@ export default function MainLayout() {
             </List>
             <Box sx={{ marginTop: 'auto' }}>
                 <Divider />
-                <List>
+                <List aria-label="Opciones del sistema">
                     <ListItem disablePadding sx={{ display: 'block' }}>
                         <TutorialHelper mode="listitem" isOpen={open} />
                     </ListItem>
@@ -246,18 +253,20 @@ export default function MainLayout() {
                     minHeight: { xs: '80px !important', sm: '100px !important' },
                     px: { xs: 2, sm: 3 }
                 }}>
-                    <IconButton
-                        color="inherit"
-                        aria-label="open drawer"
-                        onClick={handleDrawerOpen}
-                        edge="start"
-                        sx={{
-                            marginRight: 5,
-                            ...(open && !isMobile && { display: 'none' }),
-                        }}
-                    >
-                        <MenuIcon />
-                    </IconButton>
+                    <Tooltip title="Expandir menú">
+                        <IconButton
+                            color="inherit"
+                            aria-label="Expandir menú"
+                            onClick={handleDrawerOpen}
+                            edge="start"
+                            sx={{
+                                marginRight: 5,
+                                ...(open && !isMobile && { display: 'none' }),
+                            }}
+                        >
+                            <MenuIcon />
+                        </IconButton>
+                    </Tooltip>
 
                     <Typography variant="h2" noWrap component="h2" sx={{ flexGrow: 1, fontSize: '1.5rem', fontWeight: 600 }}>
                         {getPageTitle(location.pathname)}

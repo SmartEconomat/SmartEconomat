@@ -9,7 +9,7 @@ export interface User {
 interface AuthContextType {
     isAuthenticated: boolean;
     user: User | null;
-    login: (userData: User) => void;
+    login: (userData: User, token: string) => void;
     logout: () => void;
 }
 
@@ -21,14 +21,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return storedUser ? JSON.parse(storedUser) : null;
     });
 
-    const login = (userData: User) => {
+    const login = (userData: User, token: string) => {
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem('token', token);
     };
 
     const logout = () => {
         setUser(null);
         localStorage.removeItem('user');
+        localStorage.removeItem('token');
     };
 
     useEffect(() => {
