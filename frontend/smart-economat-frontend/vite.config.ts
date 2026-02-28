@@ -9,7 +9,7 @@ export default defineConfig(() => {
     },
     plugins: [react()],
     server: {
-        port: Number(process.env.FRONTEND_PORT) || 3000,
+        port: Number(process.env.FRONTEND_PORT) || 5173,
         host: true, // Needed for Docker
         open: false, // Prevent opening browser in Docker (xdg-open error)
         proxy: {
