@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Paper, IconButton, Typography, Alert, Button, Tooltip, Fab } from '@mui/material';
+import { Box, Paper, IconButton, Typography, Alert, Button, Tooltip, Fab, Card, CardContent, CardMedia, CardActions, Chip } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DataTable, { Column } from '../components/ui/DataTable';
@@ -86,6 +86,7 @@ const productoSchema: DynamicField[] = [
 
 const Productos: React.FC = () => {
     const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
     const [data, setData] = useState<Producto[]>([]);
     const [proveedores, setProveedores] = useState<Proveedor[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -99,7 +100,7 @@ const Productos: React.FC = () => {
     useEffect(() => {
         setIsLoading(true);
         setError(null);
-        
+
         Promise.all([
             fetchProductos(),
             fetchProveedores().catch(() => [])
@@ -148,28 +149,28 @@ const Productos: React.FC = () => {
                 // le agregamos la hora base en UTC para que el backend la valide bien).
                 fechaCaducidad: formData.fechaCaducidad && formData.fechaCaducidad.toString().trim() !== ''
                     ? (() => {
-                          const str = String(formData.fechaCaducidad);
-                          const toParse = str.includes('T') ? str : `${str}T00:00:00Z`;
-                          const d = new Date(toParse);
-                          return isNaN(d.getTime()) ? undefined : d.toISOString();
-                      })()
+                        const str = String(formData.fechaCaducidad);
+                        const toParse = str.includes('T') ? str : `${str}T00:00:00Z`;
+                        const d = new Date(toParse);
+                        return isNaN(d.getTime()) ? undefined : d.toISOString();
+                    })()
                     : undefined,
                 alergenos: Array.isArray(formData.alergenos)
                     ? formData.alergenos.map((a: any) => typeof a === 'string' ? a : a.alergeno)
                     : undefined,
-                proveedores: Array.isArray(formData.proveedores) 
+                proveedores: Array.isArray(formData.proveedores)
                     ? formData.proveedores.map((p: any) => ({
                         proveedorId: p.proveedorId,
                         marca: p.marca || undefined,
                         codigoBarras: p.codigoBarras || undefined,
                         precioUnitario: p.precioUnitario ? Number(p.precioUnitario) : undefined
-                      }))
+                    }))
                     : undefined,
             };
-            
+
             // Eliminar campos vacíos o nulos si es necesario, 
             // aunque el backend los maneja con @IsOptional()
-            
+
             if (formData.id) {
                 await updateProducto(formData.id, payload);
                 toast.success('Producto actualizado correctamente.');
@@ -177,7 +178,7 @@ const Productos: React.FC = () => {
                 await createProducto(payload);
                 toast.success('Producto creado correctamente.');
             }
-            
+
             // Recargar datos
             const updatedData = await fetchProductos();
             setData(updatedData);
@@ -225,7 +226,7 @@ const Productos: React.FC = () => {
         const editData: Record<string, any> = { ...row };
         if (row.pathImg) editData.imagen = row.pathImg;
         if (row.alergenos) {
-            editData.alergenos = row.alergenos.map((a: any) => 
+            editData.alergenos = row.alergenos.map((a: any) =>
                 typeof a === 'string' ? a : (a.alergeno || a)
             );
         }
@@ -308,7 +309,7 @@ const Productos: React.FC = () => {
 
                 <DataTable
                     columns={columns}
-                    data={data}
+                    data={data.slice((page - 1) * pageSize, page * pageSize)}
                     isLoading={isLoading}
                     emptyStateMessage={
                         <Box sx={{ py: 4, textAlign: 'center' }}>
@@ -319,8 +320,8 @@ const Productos: React.FC = () => {
                             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                                 Empieza añadiendo el primer producto a tu inventario.
                             </Typography>
-                            <Button 
-                                variant="outlined" 
+                            <Button
+                                variant="outlined"
                                 startIcon={<AddIcon />}
                                 onClick={() => setProductToEdit({})}
                             >
@@ -330,9 +331,51 @@ const Productos: React.FC = () => {
                     }
                     pagination={{
                         currentPage: page,
-                        totalPages: 1,
+                        totalPages: Math.ceil(data.length / pageSize) || 1,
                         onPageChange: (_, newPage) => setPage(newPage),
+                        pageSize: pageSize,
+                        pageSizeOptions: [5, 10, 25, 50],
+                        onPageSizeChange: (e) => {
+                            setPageSize(Number(e.target.value));
+                            setPage(1);
+                        },
                     }}
+                    renderGridItem={(producto) => (
+                        <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                            {producto.pathImg ? (
+                                <CardMedia
+                                    component="img"
+                                    height="140"
+                                    image={producto.pathImg}
+                                    alt={producto.nombre}
+                                    sx={{ objectFit: 'cover' }}
+                                />
+                            ) : (
+                                <Box sx={{ height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'grey.100' }}>
+                                    <ShoppingBasketOutlinedIcon sx={{ fontSize: 60, color: 'text.disabled' }} />
+                                </Box>
+                            )}
+                            <CardContent sx={{ flexGrow: 1 }}>
+                                <Typography gutterBottom variant="h6" component="div">
+                                    {producto.nombre}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary" gutterBottom>
+                                    {producto.marca || 'Sin marca'}
+                                </Typography>
+                                {producto.tipo && (
+                                    <Box sx={{ mt: 1, mb: 1 }}>
+                                        <StatusChip status={producto.tipo} size="small" variant="outlined" />
+                                    </Box>
+                                )}
+                                <Typography variant="body1" fontWeight="bold" sx={{ mt: 1 }}>
+                                    {String(producto.contenido)} {producto.unidad || ''}
+                                </Typography>
+                            </CardContent>
+                            <CardActions sx={{ justifyContent: 'flex-end', borderTop: '1px solid', borderColor: 'divider' }}>
+                                {renderActions(producto)}
+                            </CardActions>
+                        </Card>
+                    )}
                     renderActions={renderActions}
                 />
 

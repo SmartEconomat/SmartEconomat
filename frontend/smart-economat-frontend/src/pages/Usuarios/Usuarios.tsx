@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Paper, IconButton, Typography, Button, TextField, MenuItem, Grid, Stack } from '@mui/material';
+import { Box, Paper, IconButton, Typography, Button, TextField, MenuItem, Grid, Stack, Card, CardContent, Divider, CardActions, Avatar } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -28,6 +28,8 @@ const Usuarios: React.FC = () => {
     const [limit, setLimit] = useState(10);
     const [search, setSearch] = useState('');
     const [filterRol, setFilterRol] = useState('Todos');
+    const [sortBy, setSortBy] = useState<string | undefined>(undefined);
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
     // Modales y acciones
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -42,7 +44,7 @@ const Usuarios: React.FC = () => {
     const fetchUsuarios = useCallback(async () => {
         setIsLoading(true);
         try {
-            const response = await usuarioService.getUsuarios(page, limit, search, filterRol);
+            const response = await usuarioService.getUsuarios(page, limit, search, filterRol, sortBy, sortOrder);
             setUsuarios(response.data);
             setTotalPages(response.totalPages);
             setPage(response.page);
@@ -52,7 +54,7 @@ const Usuarios: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [page, limit, search, filterRol, toast]);
+    }, [page, limit, search, filterRol, sortBy, sortOrder, toast]);
 
     useEffect(() => {
         fetchUsuarios();
@@ -66,6 +68,13 @@ const Usuarios: React.FC = () => {
 
     const handleRolFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFilterRol(e.target.value);
+        setPage(1);
+    };
+
+    const handleSort = (key: keyof Usuario | string) => {
+        const isAsc = sortBy === key && sortOrder === 'asc';
+        setSortOrder(isAsc ? 'desc' : 'asc');
+        setSortBy(key as string);
         setPage(1);
     };
 
@@ -133,17 +142,20 @@ const Usuarios: React.FC = () => {
 
     // Configuración de tabla
     const columns: Column<Usuario>[] = [
-        { id: 'id', label: 'ID', align: 'center', hiddenOnMobile: true },
-        { id: 'nombre', label: 'Nombre' },
-        { id: 'email', label: 'Correo', hiddenOnMobile: true },
+        { id: 'id', label: 'ID', hideOnMobile: true, sortable: true },
+        { id: 'nombre', label: 'Nombre', sortable: true },
+        { id: 'email', label: 'Correo', hideOnMobile: true, sortable: true },
         {
             id: 'rol',
             label: 'Rol',
+            align: 'center',
+            sortable: true,
             render: (row) => <RoleBadge rol={row.rol} />
         },
         {
             id: 'estado',
             label: 'Estado',
+            sortable: true,
             render: (row) => <StatusChip status={row.estado === 'Activo' ? 'success' : 'default'} label={row.estado} />
         }
     ];
@@ -231,11 +243,44 @@ const Usuarios: React.FC = () => {
                     columns={columns}
                     data={usuarios}
                     isLoading={isLoading}
+                    sortConfig={sortBy ? { key: sortBy, direction: sortOrder } : undefined}
+                    onSort={handleSort}
                     pagination={{
                         currentPage: page,
                         totalPages: totalPages,
-                        onPageChange: (_, newPage) => setPage(newPage)
+                        onPageChange: (_, newPage) => setPage(newPage),
+                        pageSize: limit,
+                        pageSizeOptions: [8, 16, 32],
+                        onPageSizeChange: (e) => {
+                            setLimit(Number(e.target.value));
+                            setPage(1);
+                        }
                     }}
+                    renderGridItem={(usuario) => (
+                        <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                            <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <Avatar sx={{ width: 64, height: 64, mb: 2, bgcolor: 'primary.main' }}>
+                                    {usuario.nombre.substring(0, 2).toUpperCase()}
+                                </Avatar>
+                                <Typography gutterBottom variant="h6" component="div" align="center">
+                                    {usuario.nombre}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary" gutterBottom align="center">
+                                    {usuario.email}
+                                </Typography>
+                                <Box sx={{ mt: 2, mb: 1 }}>
+                                    <RoleBadge rol={usuario.rol} />
+                                </Box>
+                                <Box sx={{ mt: 'auto', pt: 2 }}>
+                                    <StatusChip status={usuario.estado === 'Activo' ? 'success' : 'default'} label={usuario.estado} size="small" />
+                                </Box>
+                            </CardContent>
+                            <Divider />
+                            <CardActions sx={{ justifyContent: 'center', p: 1.5 }}>
+                                {renderActions(usuario)}
+                            </CardActions>
+                        </Card>
+                    )}
                     renderActions={renderActions}
                 />
             </Paper>

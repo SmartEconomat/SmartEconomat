@@ -6,6 +6,7 @@ export type RolType = 'Administrador' | 'Profesor' | 'Alumno' | string;
 export interface RoleBadgeProps {
     rol: RolType;
     size?: 'small' | 'medium';
+    sx?: any;
 }
 
 const mapRolToStatusType = (rol: RolType): StatusType => {
@@ -21,7 +22,7 @@ const mapRolToStatusType = (rol: RolType): StatusType => {
     }
 };
 
-export const RoleBadge: React.FC<RoleBadgeProps> = ({ rol, size = 'small' }) => {
+export const RoleBadge: React.FC<RoleBadgeProps> = ({ rol, size = 'small', sx }) => {
     const statusType = mapRolToStatusType(rol);
 
     return (
@@ -30,6 +31,7 @@ export const RoleBadge: React.FC<RoleBadgeProps> = ({ rol, size = 'small' }) => 
             label={rol}
             size={size}
             variant="outlined"
+            sx={{ width: '130px', ...sx }}
         />
     );
 };

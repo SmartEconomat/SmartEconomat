@@ -1,6 +1,6 @@
 # 🏆 Clasificación de Contribuidores - SmartEconomat
 
-> **Última actualización:** 2026-02-28 10:43:17
+> **Última actualización:** 2026-02-28 13:12:19
 
 ---
 
@@ -10,7 +10,7 @@
 
 Este guerrero del código lidera la carga con:
 - 💻 **76** Commits
-- 🔀 **49** PRs Fusionados
+- 🔀 **51** PRs Fusionados
 
 Demostrando que:
 - ✨ El teclado es su arma favorita
@@ -19,7 +19,7 @@ Demostrando que:
 
 **Estadísticas de Dominio:**
 - Posee el **34.08%** de todo el código.
-- Ha logrado fusionar **49** funcionalidades completas.
+- Ha logrado fusionar **51** funcionalidades completas.
 
 ---
 
@@ -27,11 +27,11 @@ Demostrando que:
 
 ### 🥈 Alexis
 - 💻 Commits: **71** (31.84%)
-- 🔀 PRs Fusionados: **16**
+- 🔀 PRs Fusionados: **17**
 
 ### 🥈 Sergio
 - 💻 Commits: **34** (15.25%)
-- 🔀 PRs Fusionados: **6**
+- 🔀 PRs Fusionados: **7**
 
 ### 🥈 Maurizio
 - 💻 Commits: **31** (13.90%)
@@ -64,9 +64,9 @@ Con **11 commits** y **5 PRs**, tenemos aquí a alguien que:
 
 | Posición | Contribuidor | Commits | PRs Fusionados | % Código | Estado |
 |----------|--------------|---------|----------------|----------|--------|
-| #1 | Darel | **76** | 🔀 **49** | 34.08% | 👑 Líder |
-| #2 | Alexis | **71** | 🔀 **16** | 31.84% | 💪 Activo |
-| #3 | Sergio | **34** | 🔀 **6** | 15.25% | 💪 Activo |
+| #1 | Darel | **76** | 🔀 **51** | 34.08% | 👑 Líder |
+| #2 | Alexis | **71** | 🔀 **17** | 31.84% | 💪 Activo |
+| #3 | Sergio | **34** | 🔀 **7** | 15.25% | 💪 Activo |
 | #4 | Maurizio | **31** | 🔀 **8** | 13.90% | 💪 Activo |
 | #5 | Guillermo | **11** | 🔀 **5** | 4.93% | 🐌 Necesita café |
 
@@ -75,7 +75,7 @@ Con **11 commits** y **5 PRs**, tenemos aquí a alguien que:
 ## 📊 Estadísticas Generales
 
 - **Total de commits:** 223
-- **Total de PRs fusionados:** 84
+- **Total de PRs fusionados:** 88
 - **Total de contribuidores:** 5
 - **Promedio de commits por persona:** 44.6
 
@@ -84,13 +84,13 @@ Con **11 commits** y **5 PRs**, tenemos aquí a alguien que:
 ## 🎯 Ranking de Poder (Commits + PRs)
 
 **Darel**
-`████████████████████` 76 commits | 49 PRs
+`████████████████████` 76 commits | 51 PRs
 
 **Alexis**
-`██████████████████░░` 71 commits | 16 PRs
+`██████████████████░░` 71 commits | 17 PRs
 
 **Sergio**
-`█████████░░░░░░░░░░░` 34 commits | 6 PRs
+`█████████░░░░░░░░░░░` 34 commits | 7 PRs
 
 **Maurizio**
 `████████░░░░░░░░░░░░` 31 commits | 8 PRs
