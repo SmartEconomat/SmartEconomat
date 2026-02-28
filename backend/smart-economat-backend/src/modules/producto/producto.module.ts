@@ -5,6 +5,7 @@ import { ProductoProveedorService } from './service/producto-proveedor.service';
 import { ProductoProveedorController } from './controller/producto-proveedor.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Producto } from './producto.entity/producto.entity';
+import { ProductoAlergeno } from './producto-alergeno.entity/producto-alergeno.entity';
 import { ProductoRepository } from './repository/producto.repository';
 import { ProductoProveedor } from './producto-proveedor.entity/producto-proveedor.entity';
 import { HistorialPrecio } from './historial-precio-proveedor.entity/historial.entity';
@@ -13,7 +14,12 @@ import { MovimientoHelper } from '../../common/helpers/movimiento.helper';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Producto, ProductoProveedor, HistorialPrecio]),
+    TypeOrmModule.forFeature([
+      Producto,
+      ProductoProveedor,
+      ProductoAlergeno,
+      HistorialPrecio,
+    ]),
     MovimientoModule,
   ],
   controllers: [ProductoController, ProductoProveedorController],
