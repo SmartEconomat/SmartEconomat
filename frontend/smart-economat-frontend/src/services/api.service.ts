@@ -1,9 +1,24 @@
+import { eventBus, AUTH_EVENTS } from '../utils/eventBus';
+
 /**
- * Servicio API genérico y reutilizable.
- * No está acoplado a ninguna entidad del dominio.
+ * Servicio API genérico y reutilizable con manejo global de errores.
  */
 
 const API_BASE = '/api/v1';
+
+/**
+ * Wrapper de fetch que maneja errores comunes (como 401 Unauthorized).
+ */
+export async function baseFetch(path: string, options: RequestInit = {}): Promise<Response> {
+    const response = await fetch(`${API_BASE}${path}`, options);
+
+    if (response.status === 401) {
+        eventBus.emit(AUTH_EVENTS.UNAUTHORIZED);
+        throw new Error('Sesión expirada o no autorizada');
+    }
+
+    return response;
+}
 
 /**
  * Elimina un recurso en la API mediante su ruta relativa.
@@ -16,7 +31,7 @@ const API_BASE = '/api/v1';
  * await deleteResource(`/proveedores/${id}`);
  */
 export async function deleteResource(resourcePath: string): Promise<void> {
-    const response = await fetch(`${API_BASE}${resourcePath}`, {
+    const response = await baseFetch(resourcePath, {
         method: 'DELETE',
     });
 

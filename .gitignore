@@ -62,3 +62,4 @@ build/
 .env.prod
 
 AGENTS.md
+.aider*
