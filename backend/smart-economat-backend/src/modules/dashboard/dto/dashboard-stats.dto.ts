@@ -22,6 +22,7 @@ export class DashboardStatsDto {
     pendientes: number;
     completadosHoy: number;
     costeTotalPendiente: number;
+    incidencias: number;
   };
 
   @IsObject()

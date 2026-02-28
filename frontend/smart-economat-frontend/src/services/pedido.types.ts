@@ -16,6 +16,7 @@ export interface UsuarioBasico {
 export interface PedidoProducto {
     id: string;
     id_producto_proveedor: string;
+    productoProveedorId?: string;
     cantidad: number;
     precioUnitario: number;
     observaciones?: string;
@@ -26,6 +27,7 @@ export interface PedidoProducto {
         producto: {
             id: string;
             nombre: string;
+            codigoBarras?: string;
         };
         proveedor: {
             id: string;
@@ -42,5 +44,9 @@ export interface Pedido {
     estado: EstadoPedido;
     motivoCancelacion?: string;
     usuario?: UsuarioBasico;
+    proveedor?: {
+        id: string;
+        nombre: string;
+    };
     pedidoProductos?: PedidoProducto[];
 }

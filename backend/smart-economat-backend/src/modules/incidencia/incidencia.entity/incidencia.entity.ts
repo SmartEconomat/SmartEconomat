@@ -2,6 +2,9 @@ import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
+import { Pedido } from '../../pedido/pedido.entity/pedido.entity';
+import { OneToMany, type Relation } from 'typeorm';
+import { IncidenciaLinea } from '../incidencia-linea.entity/incidencia-linea.entity';
 
 /**
  * Entidad Incidencia
@@ -17,6 +20,7 @@ import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
  */
 @Entity({ name: 'incidencia' })
 @Index('idx_incidencia_recepcion', ['recepcion'])
+@Index('idx_incidencia_pedido', ['pedido'])
 @Index('idx_incidencia_usuario_resolutor', ['usuarioResolutor'])
 export class Incidencia extends BaseEntity {
   /**
@@ -31,6 +35,17 @@ export class Incidencia extends BaseEntity {
   recepcion!: Recepcion;
 
   /**
+   * Pedido en el que se detectó la discrepancia.
+   * Esto vincula la incidencia directamente con un proveedor.
+   */
+  @ManyToOne(() => Pedido, {
+    onDelete: 'RESTRICT',
+    nullable: true,
+  })
+  @JoinColumn({ name: 'id_pedido' })
+  pedido?: Pedido | null;
+
+  /**
    * Usuario que resolvió la incidencia.
    * La relación es SET NULL para mantener el histórico de resolución.
    * @type {Usuario | null}
@@ -43,31 +58,22 @@ export class Incidencia extends BaseEntity {
   usuarioResolutor?: Usuario | null;
 
   /**
-   * Instantánea de los datos que generaron la incidencia (discrepancias).
-   * Almacenado como JSONB para flexibilidad y auditoría inmutable.
-   * Estructura:
-   * {
-   *   productos: Array<{
-   *     idPedidoProducto: string,
-   *     cantidadPedida: number,
-   *     cantidadRecibida: number,
-   *     diferencia: number,
-   *     observaciones?: string
-   *   }>,
-   *   observacionesRecepcion?: string
-   * }
+   * Líneas de discrepancia detectadas. Relación con IncidenciaLinea.
    */
-  @Column({ type: 'jsonb', name: 'datos_originales' })
-  datosOriginales!: {
-    productos: {
-      idPedidoProducto: string;
-      cantidadPedida: number;
-      cantidadRecibida: number;
-      diferencia: number;
-      observaciones?: string;
-    }[];
-    observacionesRecepcion?: string;
-  };
+  @OneToMany(
+    () => IncidenciaLinea,
+    (linea: IncidenciaLinea) => linea.incidencia,
+    {
+      cascade: true,
+    }
+  )
+  lineas!: Relation<IncidenciaLinea[]>;
+
+  /**
+   * Observaciones generales de la recepción relativas a esta incidencia.
+   */
+  @Column({ type: 'text', nullable: true, name: 'observaciones_recepcion' })
+  observacionesRecepcion?: string;
 
   /**
    * Notas o comentarios añadidos al resolver la incidencia.

@@ -74,7 +74,15 @@ export class RecepcionService {
   async findOne(id: string): Promise<Recepcion> {
     const recepcion = await this.recepcionRepository.findOne({
       where: { id },
-      relations: ['usuario'],
+      relations: [
+        'usuario',
+        'recepcionesPedidos',
+        'recepcionesPedidos.pedido',
+        'recepcionProductos',
+        'recepcionProductos.pedidoProducto',
+        'recepcionProductos.pedidoProducto.productoProveedor',
+        'recepcionProductos.pedidoProducto.productoProveedor.producto',
+      ],
     });
 
     if (!recepcion) {

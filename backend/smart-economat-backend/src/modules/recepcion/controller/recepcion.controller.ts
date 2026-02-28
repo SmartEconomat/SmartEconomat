@@ -23,11 +23,16 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/role.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { RecepcionStockService } from '../service/recepcion-stock.service';
+import { RecepcionResultadoDto } from '../dto/recepcion-resultado.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('recepcion')
 export class RecepcionController {
-  constructor(private readonly recepcionService: RecepcionService) {}
+  constructor(
+    private readonly recepcionService: RecepcionService,
+    private readonly recepcionStockService: RecepcionStockService
+  ) {}
 
   @Post()
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
@@ -35,9 +40,11 @@ export class RecepcionController {
   create(
     @Body() dto: CreateRecepcionDto,
     @Request() req: any
-  ): Promise<Recepcion> {
+  ): Promise<RecepcionResultadoDto> {
     const userId = req.user.sub;
-    return this.recepcionService.create(dto, userId);
+
+    dto.usuarioId = dto.usuarioId || userId;
+    return this.recepcionStockService.procesarRecepcion(dto);
   }
 
   @Get()

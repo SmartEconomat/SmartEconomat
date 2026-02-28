@@ -14,6 +14,7 @@ import { EstadoPedido } from '../enums/estado-pedido.enum';
 import type { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import type { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
 import type { PedidoProducto } from '../pedido-producto.entity/pedido-producto.entity';
+import type { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
 
 /**
  * Entidad Pedido
@@ -34,6 +35,7 @@ import type { PedidoProducto } from '../pedido-producto.entity/pedido-producto.e
 @Index('idx_pedido_estado', ['estado'])
 @Index('idx_pedido_fecha', ['fechaPedido'])
 @Index('idx_pedido_usuario', ['usuario'])
+@Index('idx_pedido_proveedor', ['proveedor'])
 @Index('idx_pedido_estado_created', ['estado', 'createdAt'])
 @Check(`"coste_total" >= 0`)
 export class Pedido extends BaseEntity {
@@ -48,6 +50,17 @@ export class Pedido extends BaseEntity {
   })
   @JoinColumn({ name: 'id_usuario', referencedColumnName: 'id' })
   usuario?: Relation<Usuario> | null;
+
+  /**
+   * Proveedor al que se realiza el pedido.
+   * Obligatorio para trazar reclamaciones y facturación.
+   */
+  @ManyToOne('Proveedor', (proveedor: Proveedor) => proveedor.pedidos, {
+    nullable: true,
+    onDelete: 'RESTRICT',
+  })
+  @JoinColumn({ name: 'id_proveedor', referencedColumnName: 'id' })
+  proveedor?: Relation<Proveedor> | null;
 
   /**
    * Fecha de creación del pedido.

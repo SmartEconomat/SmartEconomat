@@ -89,6 +89,7 @@ export class ProductoProveedorService {
       proveedorNombre: string;
       marca?: string;
       codigoBarras?: string;
+      precioUnitario?: number;
     }>
   > {
     const q = (dto.q ?? '').trim();
@@ -104,6 +105,7 @@ export class ProductoProveedorService {
         'pp.id',
         'pp.marca',
         'pp.codigoBarras',
+        'pp.precioUnitario',
         'producto.id',
         'producto.nombre',
         'proveedor.id',
@@ -131,6 +133,7 @@ export class ProductoProveedorService {
       proveedorNombre: pp.proveedor?.nombre,
       marca: pp.marca,
       codigoBarras: pp.codigoBarras,
+      precioUnitario: pp.precioUnitario,
     }));
   }
 }

@@ -42,7 +42,8 @@
     "INVENTARIO_NOT_FOUND": "Inventory record not found",
     "INVENTARIO_CONSTRAINT_VIOLATION": "Constraint violation: ensure cantidad_maxima >= cantidad_minima and all quantities are non-negative",
     "USER_INACTIVE_CANNOT_RESET_PASSWORD": "Cannot change the password of an inactive user",
-    "INVALID_OLD_PASSWORD": "Current password is incorrect"
+    "INVALID_OLD_PASSWORD": "Current password is incorrect",
+    "ORDER_NOT_RECEPTABLE": "The order is not in a valid state to be received (must be EN_PROCESO or PENDIENTE)"
   },
   "success": {
     "CREATED": "Successfully created",

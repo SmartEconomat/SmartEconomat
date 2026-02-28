@@ -6,7 +6,7 @@ import { UpdateProductoDto } from '../dto/update-producto.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, ILike, FindOptionsWhere } from 'typeorm';
 import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
 
 @Injectable()
@@ -58,7 +58,16 @@ export class ProductoService {
   > {
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 100);
+
+    const where: FindOptionsWhere<Producto> = {};
+    if (query.codigoBarras) {
+      where.codigoBarras = query.codigoBarras;
+    } else if (query.searchTerm) {
+      where.nombre = ILike(`%${query.searchTerm}%`);
+    }
+
     const [data, total] = await this.productoRepository.findAndCount({
+      where,
       relations: ['proveedores', 'proveedores.proveedor', 'alergenos'],
       order: { nombre: 'ASC' },
       skip: (page - 1) * limit,

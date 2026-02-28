@@ -3,7 +3,9 @@ import { baseFetch } from './api.service';
 export interface ProductoProveedorOption {
     id: string;
     productoNombre: string;
+    productoId?: string;
     proveedorNombre: string;
+    proveedorId?: string;
     marca?: string;
     codigoBarras?: string;
     label: string;
@@ -30,7 +32,9 @@ export async function searchProductoProveedor(q: string, limit: number = 20, off
     const body = await response.json() as ApiResponse<Array<{
         id: string;
         productoNombre: string;
+        productoId?: string;
         proveedorNombre: string;
+        proveedorId?: string;
         marca?: string;
         codigoBarras?: string;
     }>>;

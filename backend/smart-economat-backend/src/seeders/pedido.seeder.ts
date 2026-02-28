@@ -5,7 +5,7 @@ import {
 } from '../modules/pedido/pedido.entity/pedido.entity';
 import { PedidoProducto } from '../modules/pedido/pedido-producto.entity/pedido-producto.entity';
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
-import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
+import { Proveedor } from '../modules/proveedor/proveedor.entity/proveedor.entity';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
 export const runSeeder = async (dataSource: DataSource) => {
@@ -13,21 +13,27 @@ export const runSeeder = async (dataSource: DataSource) => {
   const pedidoRepo = dataSource.getRepository(Pedido);
   const pedidoProductoRepo = dataSource.getRepository(PedidoProducto);
   const usuarioRepo = dataSource.getRepository(Usuario);
-  const productoProveedorRepo = dataSource.getRepository(ProductoProveedor);
+  const proveedorRepo = dataSource.getRepository(Proveedor);
 
   const usuarios = await usuarioRepo.find();
-  const productosProv = await productoProveedorRepo.find();
+  const proveedores = await proveedorRepo.find({ relations: ['productos'] });
+
+  const proveedoresValidos = proveedores.filter(
+    (p) => p.productos && p.productos.length > 0
+  );
 
   if (usuarios.length === 0) {
     throw new Error(SeederI18nHelper.getError('NO_USUARIOS'));
   }
-  if (productosProv.length === 0) {
+  if (proveedoresValidos.length === 0) {
     throw new Error(SeederI18nHelper.getError('NO_PRODUCTOS_PROVEEDOR'));
   }
 
   for (let i = 0; i < 8; i++) {
+    const randomProveedor = faker.helpers.arrayElement(proveedoresValidos);
     const pedido = pedidoRepo.create({
       usuario: faker.helpers.arrayElement(usuarios),
+      proveedor: randomProveedor,
       fechaPedido: faker.date.recent({ days: 7 }),
       fechaEntrega: faker.date.soon({ days: 14 }),
       estado: faker.helpers.arrayElement(Object.values(EstadoPedido)),
@@ -38,11 +44,12 @@ export const runSeeder = async (dataSource: DataSource) => {
       pedido.motivoCancelacion = faker.lorem.sentence();
     }
 
-    const pedidoGuardado = await pedidoRepo.save(pedido);
-
-    const numItems = faker.number.int({ min: 1, max: 5 });
+    const numItems = faker.number.int({
+      min: 1,
+      max: Math.min(5, randomProveedor.productos.length),
+    });
     const itemsSeleccionados = faker.helpers.arrayElements(
-      productosProv,
+      randomProveedor.productos,
       numItems
     );
 
@@ -59,7 +66,6 @@ export const runSeeder = async (dataSource: DataSource) => {
 
       detallesPedido.push(
         pedidoProductoRepo.create({
-          pedido: pedidoGuardado,
           productoProveedor: pp,
           cantidad: cantidad,
           precioUnitario: precioUnitario,
@@ -70,10 +76,10 @@ export const runSeeder = async (dataSource: DataSource) => {
       );
     }
 
-    await pedidoProductoRepo.save(detallesPedido);
+    pedido.pedidoProductos = detallesPedido as any;
+    pedido.costeTotal = parseFloat(acumuladoTotal.toFixed(2));
 
-    pedidoGuardado.costeTotal = parseFloat(acumuladoTotal.toFixed(2));
-    await pedidoRepo.save(pedidoGuardado);
+    await pedidoRepo.save(pedido);
   }
 
   console.log(SeederI18nHelper.getSeederSuccess('pedidos'));
