@@ -50,11 +50,11 @@ export class AuthService {
   async login(dto: LoginUserDto) {
     const usuario = await this.usuarioRepo
       .createQueryBuilder('usuario')
+      .where('(usuario.email = :email OR usuario.username = :email)', {
+        email: dto.email,
+      })
+      .andWhere('usuario.activo = :activo', { activo: true })
       .addSelect('usuario.password')
-      .where(
-        '(usuario.email = :email OR usuario.username = :email) AND usuario.activo = :activo',
-        { email: dto.email, activo: true }
-      )
       .getOne();
 
     if (!usuario || !(await bcrypt.compare(dto.password, usuario.password))) {
