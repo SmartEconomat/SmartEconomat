@@ -17,7 +17,7 @@ export async function fetchRecetas(): Promise<Receta[]> {
     return Array.isArray(body) ? body : (body.data ?? []);
 }
 
-export async function createReceta(receta: Partial<Receta>): Promise<Receta> {
+export async function createReceta(receta: Partial<Receta> | any): Promise<Receta> {
     const response = await baseFetch('/recetas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -31,7 +31,7 @@ export async function createReceta(receta: Partial<Receta>): Promise<Receta> {
     return body.data ?? body as unknown as Receta;
 }
 
-export async function updateReceta(id: string, receta: Partial<Receta>): Promise<Receta> {
+export async function updateReceta(id: string, receta: Partial<Receta> | any): Promise<Receta> {
     const response = await baseFetch(`/recetas/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
