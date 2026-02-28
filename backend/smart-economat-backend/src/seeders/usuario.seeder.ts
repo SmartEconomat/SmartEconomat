@@ -11,20 +11,28 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   const usuarios: Usuario[] = [];
 
-  const adminDefault = usuarioRepo.create({
-    nombre: 'Administrador Principal',
-    username: 'admin',
-    password: '123456',
-    email: 'admin@smarteconomat.com',
-    rol: rolUsuario.ADMINISTRADOR,
-    activo: true,
+  const adminExists = await usuarioRepo.findOne({
+    where: { username: 'admin' },
   });
-  usuarios.push(adminDefault);
+
+  if (!adminExists) {
+    const adminDefault = usuarioRepo.create({
+      nombre: 'Administrador Principal',
+      username: 'admin',
+      password: '123456',
+      email: 'admin@smarteconomat.com',
+      rol: rolUsuario.ADMINISTRADOR,
+      activo: true,
+    });
+    usuarios.push(adminDefault);
+  }
 
   for (let i = 0; i < NUM_USUARIOS_A_CREAR - 1; i++) {
+    const randomUsername =
+      faker.internet.username() + faker.string.alphanumeric(4);
     const usuario = usuarioRepo.create({
       nombre: faker.person.fullName(),
-      username: faker.internet.username(),
+      username: randomUsername,
       password: faker.internet.password(),
       email: faker.internet.email(),
       rol: faker.helpers.arrayElement(Object.values(rolUsuario)) as rolUsuario,
@@ -37,6 +45,15 @@ export const runSeeder = async (dataSource: DataSource) => {
     usuarios.push(usuario);
   }
 
-  await usuarioRepo.save(usuarios);
+  for (const user of usuarios) {
+    try {
+      await usuarioRepo.save(user);
+    } catch (e: any) {
+      if (e.code !== '23505') {
+        throw e;
+      }
+    }
+  }
+
   console.log(SeederI18nHelper.getSeederSuccess('usuarios'));
 };

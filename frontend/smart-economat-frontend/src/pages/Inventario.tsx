@@ -225,7 +225,7 @@ const Inventario: React.FC = () => {
   const normalize = (s: string) =>
     s
       .normalize('NFD')
-      .replace(/\p{Diacritic}/gu, '')
+      .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase();
 
   const filteredData = useMemo(() => {

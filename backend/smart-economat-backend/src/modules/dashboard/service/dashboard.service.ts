@@ -103,6 +103,12 @@ export class DashboardService {
       },
     });
 
+    const incidenciasCount = await this.pedidoRepository.count({
+      where: {
+        estado: EstadoPedido.INCIDENCIA,
+      },
+    });
+
     const completadosHoy = await this.pedidoRepository.count({
       where: {
         estado: EstadoPedido.RECIBIDO,
@@ -178,6 +184,7 @@ export class DashboardService {
         pendientes: pedidosPendientes,
         completadosHoy,
         costeTotalPendiente,
+        incidencias: incidenciasCount,
       },
       alertas: {
         porCaducar,

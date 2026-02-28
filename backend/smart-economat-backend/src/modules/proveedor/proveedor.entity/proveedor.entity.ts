@@ -1,6 +1,7 @@
 import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
 import { Entity, Column, OneToMany, Index } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
+import { Pedido } from '../../pedido/pedido.entity/pedido.entity';
 
 /**
  * Proveedor Entity
@@ -29,4 +30,7 @@ export class Proveedor extends BaseEntity {
 
   @OneToMany(() => ProductoProveedor, (pp) => pp.proveedor)
   productos!: ProductoProveedor[];
+
+  @OneToMany(() => Pedido, (pedido) => pedido.proveedor)
+  pedidos!: Pedido[];
 }

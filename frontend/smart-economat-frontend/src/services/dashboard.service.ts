@@ -24,6 +24,7 @@ export interface DashboardStats {
   pedidos: {
     pendientes: number;
     completadosHoy: number;
+    incidencias: number;
     costeTotalPendiente: number;
   };
   alertas: {
@@ -33,13 +34,13 @@ export interface DashboardStats {
   movimientosRecientes: DashboardMovimiento[];
 }
 
-
-
 export async function fetchDashboardStats(): Promise<DashboardStats> {
   const response = await baseFetch('/dashboard/stats');
   if (!response.ok) {
-    throw new Error(`Error al obtener estadísticas del dashboard: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `Error al obtener estadísticas del dashboard: ${response.status} ${response.statusText}`
+    );
   }
-  const body = await response.json() as ApiResponse<DashboardStats>;
+  const body = (await response.json()) as ApiResponse<DashboardStats>;
   return body.data;
 }

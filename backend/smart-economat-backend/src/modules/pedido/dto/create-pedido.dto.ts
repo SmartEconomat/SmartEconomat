@@ -7,7 +7,7 @@ import {
   IsArray,
   ValidateNested,
   IsUUID,
-  ArrayMinSize,
+  IsNotEmpty,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { EstadoPedido } from '../enums/estado-pedido.enum';
@@ -16,8 +16,12 @@ import { CreatePedidoProductoDto } from './create-PedidoProducto.dto';
 
 export class CreatePedidoDto {
   @IsOptional()
-  @IsUUID('4', { message: 'El ID del usuario debe ser un UUID válido' })
+  @IsUUID('all', { message: 'El ID del usuario debe ser un UUID válido' })
   idUsuario?: string;
+
+  @IsNotEmpty()
+  @IsUUID('all', { message: 'El ID del proveedor debe ser un UUID válido' })
+  proveedorId!: string;
 
   @IsOptional()
   @IsNumber()
@@ -45,10 +49,8 @@ export class CreatePedidoDto {
   pedidoProductos?: PedidoProductoDto[];
 
   @IsOptional()
-  @IsArray({ message: 'Debe enviar una lista de productos' })
+  @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreatePedidoProductoDto)
   productos?: CreatePedidoProductoDto[];
 }
-
-export class UpdatePedidoDto extends CreatePedidoDto {}
