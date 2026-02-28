@@ -14,8 +14,6 @@ import { InventarioService } from '../service/inventario.service';
 import { CreateInventarioItemDto } from '../dto/create-InventarioItem.dto';
 import { UpdateInventarioDto } from '../dto/update-inventario.dto';
 import { Inventario } from '../inventario.entity/inventario.entity';
-import { AlertaCaducidadDTO } from '../dto/alertaCaducidad.dto';
-import { AlertaStockDTO } from '../dto/alertaStock.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/role.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
@@ -39,18 +37,6 @@ export class InventarioController {
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   findAll(): Promise<Inventario[]> {
     return this.inventarioService.findAll();
-  }
-
-  @Get('alertas/caducidad')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
-  alertasCaducidad(): Promise<AlertaCaducidadDTO[]> {
-    return this.inventarioService.obtenerAlertasCaducidad();
-  }
-
-  @Get('alertas/stock')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
-  alertasStock(): Promise<AlertaStockDTO[]> {
-    return this.inventarioService.obtenerAlertasStock();
   }
 
   @Get(':id')

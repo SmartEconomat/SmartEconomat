@@ -48,12 +48,14 @@ export class AuthService {
   }
 
   async login(dto: LoginUserDto) {
-    const usuario = await this.usuarioRepo.findOne({
-      where: [
-        { email: dto.email, activo: true },
-        { username: dto.email, activo: true },
-      ],
-    });
+    const usuario = await this.usuarioRepo
+      .createQueryBuilder('usuario')
+      .addSelect('usuario.password')
+      .where(
+        '(usuario.email = :email OR usuario.username = :email) AND usuario.activo = :activo',
+        { email: dto.email, activo: true }
+      )
+      .getOne();
 
     if (!usuario || !(await bcrypt.compare(dto.password, usuario.password))) {
       throw new BadRequestException(I18nHelper.getError('INVALID_CREDENTIALS'));
