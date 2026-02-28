@@ -1,6 +1,5 @@
-import { Producto, CategoriaProducto, UnidadMedida } from './producto.types';
-
-const API_BASE = '/api/v1';
+import { Producto } from './producto.types';
+import { baseFetch } from './api.service';
 
 interface ApiResponse<T> {
     success: boolean;
@@ -9,7 +8,7 @@ interface ApiResponse<T> {
 }
 
 export async function fetchProductos(): Promise<Producto[]> {
-    const response = await fetch(`${API_BASE}/productos`);
+    const response = await baseFetch('/productos');
     if (!response.ok) {
         throw new Error(`Error al obtener productos: ${response.status} ${response.statusText}`);
     }
@@ -18,7 +17,7 @@ export async function fetchProductos(): Promise<Producto[]> {
 }
 
 export async function createProducto(producto: Partial<Producto>): Promise<Producto> {
-    const response = await fetch(`${API_BASE}/productos`, {
+    const response = await baseFetch('/productos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(producto),
@@ -32,7 +31,7 @@ export async function createProducto(producto: Partial<Producto>): Promise<Produ
 }
 
 export async function updateProducto(id: string, producto: Partial<Producto>): Promise<Producto> {
-    const response = await fetch(`${API_BASE}/productos/${id}`, {
+    const response = await baseFetch(`/productos/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(producto),
