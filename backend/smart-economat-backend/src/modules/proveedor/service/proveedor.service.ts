@@ -18,10 +18,27 @@ export class ProveedorService {
     return await this.proveedorRepository.save(proveedor);
   }
 
-  async findAll(): Promise<Proveedor[]> {
-    return await this.proveedorRepository.find({
+  async findAll(
+    query: import('../../../common/dto/pagination-query.dto').PaginationQueryDto
+  ): Promise<
+    import('../../../common/dto/paginated-response.dto').PaginatedResponseDto<Proveedor>
+  > {
+    const page = query.page ?? 1;
+    const limit = Math.min(query.limit ?? 20, 100);
+    const [data, total] = await this.proveedorRepository.findAndCount({
       relations: ['productos'],
+      order: { nombre: 'ASC' },
+      skip: (page - 1) * limit,
+      take: limit,
     });
+
+    const processedData = data.map((proveedor) => ({
+      ...proveedor,
+      productos: proveedor.productos || [],
+    }));
+
+    const totalPages = Math.ceil(total / limit) || 1;
+    return { data: processedData, total, page, limit, totalPages };
   }
 
   async findOne(id: string): Promise<Proveedor> {
@@ -34,7 +51,10 @@ export class ProveedorService {
       throw new NotFoundException(I18nHelper.getError('PROVIDER_NOT_FOUND'));
     }
 
-    return proveedor;
+    return {
+      ...proveedor,
+      productos: proveedor.productos || [],
+    };
   }
 
   async update(

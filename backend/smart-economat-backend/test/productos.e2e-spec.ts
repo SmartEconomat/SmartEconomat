@@ -79,7 +79,7 @@ describe('ProductoController (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200)
         .expect((res) => {
-          expect(Array.isArray(res.body.data)).toBe(true);
+          expect(Array.isArray(res.body.data.data)).toBe(true);
         });
     });
 

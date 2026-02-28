@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Paper, IconButton, Typography, Alert, Button, Tooltip } from '@mui/material';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Box, Paper, IconButton, Typography, Alert, Button, Tooltip, TextField, InputAdornment } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DataTable, { Column } from '../components/ui/DataTable';
@@ -12,6 +12,7 @@ import { useToast } from '../store/ToastContext';
 
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/SearchOutlined';
 
 const proveedorSchema: DynamicField[] = [
     { name: 'nif', label: 'NIF / CUIT', required: true, width: 4 },
@@ -24,6 +25,8 @@ const proveedorSchema: DynamicField[] = [
 
 const Proveedores: React.FC = () => {
     const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [searchTerm, setSearchTerm] = useState('');
     const [data, setData] = useState<Proveedor[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -100,6 +103,20 @@ const Proveedores: React.FC = () => {
     const handleEditClick = (row: Proveedor) => {
         setItemToEdit({ ...row });
     };
+
+    const filteredData = useMemo(() => {
+        if (!searchTerm.trim()) return data;
+        const term = searchTerm.toLowerCase().trim();
+        return data.filter(
+            (p) =>
+                p.nombre?.toLowerCase().includes(term) ||
+                p.nif?.toLowerCase().includes(term) ||
+                p.contacto?.toLowerCase().includes(term) ||
+                p.email?.toLowerCase().includes(term) ||
+                p.telefono?.toLowerCase().includes(term) ||
+                p.direccion?.toLowerCase().includes(term)
+        );
+    }, [data, searchTerm]);
 
     const columns: Column<Proveedor>[] = [
         { id: 'nombre', label: 'Nombre' },
@@ -178,32 +195,62 @@ const Proveedores: React.FC = () => {
                     </Alert>
                 )}
 
+                <TextField
+                    placeholder="Buscar por nombre, NIF, contacto, email..."
+                    value={searchTerm}
+                    onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setPage(1);
+                    }}
+                    size="small"
+                    sx={{ mb: 2, width: '100%', maxWidth: 400 }}
+                    InputProps={{
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <SearchIcon color="action" />
+                            </InputAdornment>
+                        ),
+                    }}
+                />
+
                 <DataTable
                     columns={columns}
-                    data={data}
+                    data={filteredData.slice((page - 1) * pageSize, page * pageSize)}
                     isLoading={isLoading}
                     emptyStateMessage={
                         <Box sx={{ py: 4, textAlign: 'center' }}>
                             <StorefrontOutlinedIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
                             <Typography variant="h6" color="text.secondary" gutterBottom>
-                                No se encontraron proveedores
+                                {searchTerm.trim()
+                                    ? 'No hay proveedores que coincidan con tu búsqueda'
+                                    : 'No se encontraron proveedores'}
                             </Typography>
                             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                                Empieza añadiendo el primer proveedor a tu catálogo.
+                                {searchTerm.trim()
+                                    ? 'Prueba con otros términos o limpia el filtro.'
+                                    : 'Empieza añadiendo el primer proveedor a tu catálogo.'}
                             </Typography>
-                            <Button 
-                                variant="outlined" 
-                                startIcon={<AddIcon />}
-                                onClick={() => setItemToEdit({})}
-                            >
-                                Añadir Proveedor
-                            </Button>
+                            {!searchTerm.trim() && (
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<AddIcon />}
+                                    onClick={() => setItemToEdit({})}
+                                >
+                                    Añadir Proveedor
+                                </Button>
+                            )}
                         </Box>
                     }
                     pagination={{
                         currentPage: page,
-                        totalPages: 1,
+                        totalPages: Math.ceil(filteredData.length / pageSize) || 1,
                         onPageChange: (_, newPage) => setPage(newPage),
+                        pageSize: pageSize,
+                        pageSizeOptions: [5, 10, 25, 50],
+                        onPageSizeChange: (e) => {
+                            setPageSize(Number(e.target.value));
+                            setPage(1);
+                        },
                     }}
                     renderActions={renderActions}
                 />

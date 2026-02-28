@@ -113,9 +113,9 @@ describe('UsuarioController (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
-      expect(Array.isArray(res.body.data)).toBe(true);
-      if (res.body.data.length > 0) {
-        testUserId = res.body.data[0].id;
+      expect(Array.isArray(res.body.data.data)).toBe(true);
+      if (res.body.data.data.length > 0) {
+        testUserId = res.body.data.data[0].id;
       }
     });
 

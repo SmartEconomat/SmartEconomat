@@ -6,6 +6,48 @@ import { eventBus, AUTH_EVENTS } from '../utils/eventBus';
 
 const API_BASE = '/api/v1';
 
+// ─── Tipos compartidos de la API ────────────────────────────────────────────
+
+/**
+ * Envoltorio estándar del interceptor global del backend.
+ * Todos los endpoints devuelven `{ success, message, data }`.
+ */
+export interface ApiResponse<T> {
+    success: boolean;
+    message: string;
+    data: T;
+}
+
+/**
+ * Forma que devuelven los endpoints paginados del backend.
+ * Las respuestas de listado tienen la forma `{ data: T[], total, page, limit, totalPages }`.
+ */
+export interface PaginatedData<T> {
+    data: T[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}
+
+/**
+ * Extrae el array de items de una respuesta que puede ser:
+ *  - Un array directo: `T[]`
+ *  - Un wrapper paginado: `PaginatedData<T>` (donde los items están en `.data`)
+ *
+ * Esto es necesario porque el interceptor global envuelve la respuesta en
+ * `{ success, message, data }`, y los endpoints paginados añaden otro nivel:
+ * `{ data: { data: T[], total, page, ... } }`.
+ */
+export function unwrapList<T>(payload: unknown): T[] {
+    if (Array.isArray(payload)) return payload as T[];
+    const paginated = payload as PaginatedData<T> | null | undefined;
+    if (paginated != null && Array.isArray(paginated.data)) return paginated.data;
+    return [];
+}
+
+// ─── Helpers de fetch ───────────────────────────────────────────────────────
+
 /**
  * Wrapper de fetch que maneja errores comunes (como 401 Unauthorized).
  */

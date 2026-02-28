@@ -25,7 +25,7 @@ const Usuarios: React.FC = () => {
     // Filtros y Paginación
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const [limit, setLimit] = useState(10);
+    const [limit, setLimit] = useState(8);
     const [search, setSearch] = useState('');
     const [filterRol, setFilterRol] = useState('Todos');
     const [sortBy, setSortBy] = useState<string | undefined>(undefined);

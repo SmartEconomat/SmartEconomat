@@ -68,8 +68,9 @@ export const usuarioService = {
             }
 
             const result = await response.json();
-            // Unwrap from the global TransformInterceptor { success, message, data, meta }
-            mappedData = (result.data || []).map(mapBackendToFrontend);
+            const payload = result.data;
+            const rawList: unknown[] = Array.isArray(payload) ? payload : (Array.isArray(payload?.data) ? payload.data : []);
+            mappedData = rawList.map(mapBackendToFrontend);
         } catch (error) {
             console.error('Error al obtener usuarios', error);
             throw error;

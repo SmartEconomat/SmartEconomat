@@ -2,8 +2,11 @@ import React, { createContext, useState, useContext, ReactNode, useEffect } from
 import { eventBus, AUTH_EVENTS } from '../utils/eventBus';
 
 export interface User {
+    id: string;
     name: string;
     email: string;
+    rol: string;
+    username?: string;
 }
 
 interface AuthContextType {
