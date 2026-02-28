@@ -1,6 +1,5 @@
 import { Movimiento } from './movimiento.types';
-
-const API_BASE = '/api/v1';
+import { baseFetch } from './api.service';
 
 interface ApiResponse<T> {
     success: boolean;
@@ -9,7 +8,7 @@ interface ApiResponse<T> {
 }
 
 export async function fetchMovimientos(): Promise<Movimiento[]> {
-    const response = await fetch(`${API_BASE}/movimientos`);
+    const response = await baseFetch('/movimientos');
     if (!response.ok) {
         throw new Error(`Error al obtener movimientos: ${response.status} ${response.statusText}`);
     }
@@ -18,7 +17,7 @@ export async function fetchMovimientos(): Promise<Movimiento[]> {
 }
 
 export async function createMovimiento(movimiento: Partial<Movimiento>): Promise<Movimiento> {
-    const response = await fetch(`${API_BASE}/movimientos`, {
+    const response = await baseFetch('/movimientos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(movimiento),
@@ -32,7 +31,7 @@ export async function createMovimiento(movimiento: Partial<Movimiento>): Promise
 }
 
 export async function updateMovimiento(id: string, movimiento: Partial<Movimiento>): Promise<Movimiento> {
-    const response = await fetch(`${API_BASE}/movimientos/${id}`, {
+    const response = await baseFetch(`/movimientos/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(movimiento),

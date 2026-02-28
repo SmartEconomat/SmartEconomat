@@ -1,6 +1,5 @@
 import { Pedido } from './pedido.types';
-
-const API_BASE = '/api/v1';
+import { baseFetch } from './api.service';
 
 interface ApiResponse<T> {
     success: boolean;
@@ -9,7 +8,7 @@ interface ApiResponse<T> {
 }
 
 export async function fetchPedidos(): Promise<Pedido[]> {
-    const response = await fetch(`${API_BASE}/pedidos`);
+    const response = await baseFetch('/pedidos');
     if (!response.ok) {
         throw new Error(`Error al obtener pedidos: ${response.status} ${response.statusText}`);
     }
@@ -18,7 +17,7 @@ export async function fetchPedidos(): Promise<Pedido[]> {
 }
 
 export async function createPedido(pedido: Partial<Pedido>): Promise<Pedido> {
-    const response = await fetch(`${API_BASE}/pedidos`, {
+    const response = await baseFetch('/pedidos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(pedido),
@@ -32,7 +31,7 @@ export async function createPedido(pedido: Partial<Pedido>): Promise<Pedido> {
 }
 
 export async function updatePedido(id: string, pedido: Partial<Pedido>): Promise<Pedido> {
-    const response = await fetch(`${API_BASE}/pedidos/${id}`, {
+    const response = await baseFetch(`/pedidos/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(pedido),
