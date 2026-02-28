@@ -30,7 +30,6 @@ import { AlbaranModule } from './modules/albaran/albaran.module';
     RecepcionModule,
     RecetaModule,
     ProveedorModule,
-    UsuarioModule,
     DashboardModule,
     InventarioModule,
     AlbaranModule,
