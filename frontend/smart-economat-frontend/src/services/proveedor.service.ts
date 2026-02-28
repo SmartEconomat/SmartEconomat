@@ -1,6 +1,5 @@
 import { Proveedor } from './proveedor.types';
-
-const API_BASE = '/api/v1';
+import { baseFetch } from './api.service';
 
 interface ApiResponse<T> {
     success: boolean;
@@ -9,7 +8,7 @@ interface ApiResponse<T> {
 }
 
 export async function fetchProveedores(): Promise<Proveedor[]> {
-    const response = await fetch(`${API_BASE}/proveedor`);
+    const response = await baseFetch('/proveedor');
     if (!response.ok) {
         throw new Error(`Error al obtener proveedores: ${response.status} ${response.statusText}`);
     }
@@ -18,7 +17,7 @@ export async function fetchProveedores(): Promise<Proveedor[]> {
 }
 
 export async function createProveedor(proveedor: Partial<Proveedor>): Promise<Proveedor> {
-    const response = await fetch(`${API_BASE}/proveedor`, {
+    const response = await baseFetch('/proveedor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(proveedor),
@@ -32,7 +31,7 @@ export async function createProveedor(proveedor: Partial<Proveedor>): Promise<Pr
 }
 
 export async function updateProveedor(id: string, proveedor: Partial<Proveedor>): Promise<Proveedor> {
-    const response = await fetch(`${API_BASE}/proveedor/${id}`, {
+    const response = await baseFetch(`/proveedor/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(proveedor),

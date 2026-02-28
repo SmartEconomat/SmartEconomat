@@ -70,7 +70,7 @@ export class ProductoService {
 
     await this.productoRepository.save(producto);
 
-    if (proveedores) {
+    if (proveedores !== undefined) {
       await this.syncProveedores(id, proveedores);
     }
 
@@ -133,16 +133,9 @@ export class ProductoService {
 
     if (idsToRemove.length > 0) {
       for (const id of idsToRemove) {
-        try {
-          const toDelete = existing.find((e) => e.proveedor.id === id);
-          if (toDelete) {
-            await this.productoProveedorRepository.delete(toDelete.id);
-          }
-        } catch (error) {
-          console.error(
-            `Failed to delete product provider association for provider ID ${id}:`,
-            error
-          );
+        const toDelete = existing.find((e) => e.proveedor.id === id);
+        if (toDelete) {
+          await this.productoProveedorRepository.softDelete(toDelete.id);
         }
       }
     }

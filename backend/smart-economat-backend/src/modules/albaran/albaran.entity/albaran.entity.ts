@@ -2,9 +2,6 @@ import { Entity, Column, OneToMany, Index } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { AlbaranPedidoRecepcion } from '../albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
 
-/**
- * Albaran Entity
- */
 @Entity({ name: 'albaran' })
 @Index('idx_albaran_n_albaran', ['nAlbaran'])
 @Index('idx_albaran_fecha', ['fecha'])

@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import { eventBus, AUTH_EVENTS } from '../utils/eventBus';
 
 export interface User {
     name: string;
@@ -31,6 +32,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         localStorage.removeItem('user');
         localStorage.removeItem('token');
     };
+
+    useEffect(() => {
+        const handleUnauthorized = () => {
+            logout();
+        };
+
+        eventBus.on(AUTH_EVENTS.UNAUTHORIZED, handleUnauthorized);
+        return () => {
+            eventBus.off(AUTH_EVENTS.UNAUTHORIZED, handleUnauthorized);
+        };
+    }, []);
 
     return (
         <AuthContext.Provider value={{ isAuthenticated: !!user, user, login, logout }}>
