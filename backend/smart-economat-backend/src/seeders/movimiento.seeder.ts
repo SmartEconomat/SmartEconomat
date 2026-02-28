@@ -43,7 +43,6 @@ export const runSeeder = async (dataSource: DataSource) => {
       descripcion: faker.datatype.boolean({ probability: 0.7 })
         ? faker.lorem.sentence()
         : undefined,
-      fecha: faker.date.recent({ days: 30 }),
       entidad: entidadSeleccionada,
       entidadId: entidadId,
       usuario: faker.helpers.arrayElement(usuarios),

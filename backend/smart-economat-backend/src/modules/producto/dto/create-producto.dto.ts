@@ -7,8 +7,11 @@ import {
   IsNumber,
   Min,
   IsDate,
+  IsArray,
+  ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ProductoProveedorDto } from './producto-proveedor.dto/producto-proveedor.dto';
 import { TipoProducto, UnidadProducto } from '../enums/producto.enums';
 
 export class CreateProductoDto {
@@ -67,5 +70,8 @@ export class CreateProductoDto {
   alergenos?: string[];
 
   @IsOptional()
-  proveedores?: import('./producto-proveedor.dto/producto-proveedor.dto').ProductoProveedorDto[];
+  @IsArray({ message: 'Los proveedores deben ser un array' })
+  @ValidateNested({ each: true })
+  @Type(() => ProductoProveedorDto)
+  proveedores?: ProductoProveedorDto[];
 }
