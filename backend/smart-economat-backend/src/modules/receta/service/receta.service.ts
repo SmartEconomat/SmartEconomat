@@ -4,6 +4,8 @@ import { RecetaRepository } from '../repository/receta.repository';
 import { CreateRecetaDto } from '../dto/create-receta.dto';
 import { UpdateRecetaDto } from '../dto/update-receta.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @Injectable()
 export class RecetaService {
@@ -13,8 +15,10 @@ export class RecetaService {
     return this.recetaRepository.create(createRecetaDto);
   }
 
-  async findAll(): Promise<Receta[]> {
-    return this.recetaRepository.findAll();
+  async findAll(
+    query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<Receta>> {
+    return this.recetaRepository.findAllPaginated(query);
   }
 
   async findOne(id: string): Promise<Receta> {

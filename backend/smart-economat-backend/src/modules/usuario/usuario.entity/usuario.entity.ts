@@ -13,7 +13,6 @@ import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
 import { Incidencia } from '../../incidencia/incidencia.entity/incidencia.entity';
 import { rolUsuario } from '../enums/usuario.enums';
-import { Exclude } from 'class-transformer';
 
 @Entity({ name: 'usuario' })
 @Index('idx_usuario_username', ['username'])

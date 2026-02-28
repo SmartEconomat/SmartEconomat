@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { ILike } from 'typeorm';
 import { Proveedor } from '../proveedor.entity/proveedor.entity';
 import { ProveedorRepository } from '../repository/proveedor.repository';
 import { CreateProveedorDto } from '../dto/create-proveedor.dto';
@@ -25,7 +26,18 @@ export class ProveedorService {
   > {
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 100);
+
+    const whereCondition = query.searchTerm
+      ? [
+          { nombre: ILike(`%${query.searchTerm}%`) },
+          { nif: ILike(`%${query.searchTerm}%`) },
+          { contacto: ILike(`%${query.searchTerm}%`) },
+          { email: ILike(`%${query.searchTerm}%`) },
+        ]
+      : {};
+
     const [data, total] = await this.proveedorRepository.findAndCount({
+      where: whereCondition,
       relations: ['productos'],
       order: { nombre: 'ASC' },
       skip: (page - 1) * limit,

@@ -70,6 +70,8 @@ const pedidoSchema: DynamicField[] = [
 
 const Pedidos: React.FC = () => {
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
   const [data, setData] = useState<Pedido[]>([]);
   const [proveedores, setProveedores] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -87,11 +89,12 @@ const Pedidos: React.FC = () => {
     setError(null);
     try {
       const [dataLoad, provLoad] = await Promise.all([
-        fetchPedidos(),
-        fetchProveedores(),
+        fetchPedidos(page, pageSize),
+        fetchProveedores(1, 100).catch(() => ({ data: [], totalItems: 0, itemsPerPage: 100, totalPages: 1, page: 1 } as any)),
       ]);
-      setData(dataLoad);
-      setProveedores(provLoad);
+      setData(dataLoad.data);
+      setTotalPages(dataLoad.totalPages);
+      setProveedores(provLoad.data);
     } catch (err: unknown) {
       const message =
         err instanceof Error
@@ -105,7 +108,7 @@ const Pedidos: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [page, pageSize]);
 
   const handleDeleteConfirm = async () => {
     if (!itemToDelete) return;
@@ -332,8 +335,14 @@ const Pedidos: React.FC = () => {
           }
           pagination={{
             currentPage: page,
-            totalPages: 1,
+            totalPages: totalPages,
             onPageChange: (_, newPage) => setPage(newPage),
+            pageSize: pageSize,
+            pageSizeOptions: [5, 10, 25, 50],
+            onPageSizeChange: (e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+            },
           }}
           renderActions={renderActions}
         />

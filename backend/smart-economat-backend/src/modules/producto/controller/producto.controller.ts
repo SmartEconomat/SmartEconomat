@@ -24,6 +24,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/role.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('productos')
@@ -37,7 +38,7 @@ export class ProductoController {
     @Body() createProductoDto: CreateProductoDto,
     @Request() req: any
   ): Promise<Producto> {
-    const userId = req.user.sub;
+    const userId = req.user.sub as string;
     return this.productoService.create(createProductoDto, userId);
   }
 
@@ -47,9 +48,7 @@ export class ProductoController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   findAll(
     @Query() query: PaginationQueryDto
-  ): Promise<
-    import('../../../common/dto/paginated-response.dto').PaginatedResponseDto<Producto>
-  > {
+  ): Promise<PaginatedResponseDto<Producto>> {
     return this.productoService.findAll(query);
   }
 
@@ -66,7 +65,7 @@ export class ProductoController {
     @Body() updateProductoDto: UpdateProductoDto,
     @Request() req: any
   ): Promise<Producto> {
-    const userId = req.user.sub;
+    const userId = req.user.sub as string;
     return this.productoService.update(id, updateProductoDto, userId);
   }
 
@@ -77,7 +76,7 @@ export class ProductoController {
     @Param('id', ParseUUIDPipe) id: string,
     @Request() req: any
   ): Promise<void> {
-    const userId = req.user.sub;
+    const userId = req.user.sub as string;
     return this.productoService.remove(id, userId);
   }
 }

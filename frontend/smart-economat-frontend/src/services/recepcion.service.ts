@@ -6,7 +6,7 @@ import { baseFetch, ApiResponse, unwrapList } from './api.service';
  * El endpoint subyacente devolverá las entidades Recepcion con sus relaciones principales.
  */
 export async function fetchRecepciones(): Promise<any[]> {
-    const response = await baseFetch('/recepcion?limit=500');
+    const response = await baseFetch('/recepcion?limit=100'); // Note limit 100
     if (!response.ok) {
         throw new Error(`Error al obtener recepciones: ${response.status} ${response.statusText}`);
     }

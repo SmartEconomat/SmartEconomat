@@ -22,6 +22,8 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/role.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { Movimiento } from '../movimiento.entity/movimiento.entity';
 
 @ApiTags('movimientos')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -66,9 +68,7 @@ export class MovimientoController {
   })
   findAll(
     @Query() query: PaginationQueryDto
-  ): Promise<
-    import('../../../common/dto/paginated-response.dto').PaginatedResponseDto<any>
-  > {
+  ): Promise<PaginatedResponseDto<Movimiento>> {
     return this.movimientoService.findAll(query);
   }
 

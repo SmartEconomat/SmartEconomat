@@ -8,6 +8,8 @@ import CompareArrowsOutlinedIcon from '@mui/icons-material/CompareArrowsOutlined
 
 const Movimientos: React.FC = () => {
     const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
     const [data, setData] = useState<Movimiento[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -15,11 +17,10 @@ const Movimientos: React.FC = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const dataLoad = await fetchMovimientos();
-            const sorted = [...dataLoad].sort((a, b) =>
-                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-            );
-            setData(sorted);
+            const dataLoad = await fetchMovimientos(page, pageSize);
+            // Ya vienen ordenados por backend, asi que solo se asginan
+            setData(dataLoad.data);
+            setTotalPages(dataLoad.totalPages);
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Error desconocido al cargar movimientos.';
             setError(message);
@@ -30,7 +31,7 @@ const Movimientos: React.FC = () => {
 
     useEffect(() => {
         loadData();
-    }, []);
+    }, [page, pageSize]);
 
     const columns: Column<Movimiento>[] = [
         { 
@@ -96,8 +97,14 @@ const Movimientos: React.FC = () => {
                     }
                     pagination={{
                         currentPage: page,
-                        totalPages: 1,
+                        totalPages: totalPages,
                         onPageChange: (_, newPage) => setPage(newPage),
+                        pageSize: pageSize,
+                        pageSizeOptions: [5, 10, 25, 50],
+                        onPageSizeChange: (e) => {
+                            setPageSize(Number(e.target.value));
+                            setPage(1);
+                        },
                     }}
                 />
             </Paper>

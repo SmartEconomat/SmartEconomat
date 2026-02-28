@@ -26,6 +26,7 @@ const proveedorSchema: DynamicField[] = [
 const Proveedores: React.FC = () => {
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
     const [data, setData] = useState<Proveedor[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -40,8 +41,9 @@ const Proveedores: React.FC = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const proveedoresData = await fetchProveedores();
-            setData(proveedoresData);
+            const proveedoresData = await fetchProveedores(page, pageSize, searchTerm);
+            setData(proveedoresData.data);
+            setTotalPages(proveedoresData.totalPages);
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Error desconocido al cargar proveedores.';
             setError(message);
@@ -52,7 +54,7 @@ const Proveedores: React.FC = () => {
 
     useEffect(() => {
         loadData();
-    }, []);
+    }, [page, pageSize, searchTerm]);
 
     const handleDeleteConfirm = async () => {
         if (!itemToDelete) return;
@@ -104,19 +106,8 @@ const Proveedores: React.FC = () => {
         setItemToEdit({ ...row });
     };
 
-    const filteredData = useMemo(() => {
-        if (!searchTerm.trim()) return data;
-        const term = searchTerm.toLowerCase().trim();
-        return data.filter(
-            (p) =>
-                p.nombre?.toLowerCase().includes(term) ||
-                p.nif?.toLowerCase().includes(term) ||
-                p.contacto?.toLowerCase().includes(term) ||
-                p.email?.toLowerCase().includes(term) ||
-                p.telefono?.toLowerCase().includes(term) ||
-                p.direccion?.toLowerCase().includes(term)
-        );
-    }, [data, searchTerm]);
+    // filteredData local ya no es necesario
+    const filteredData = data;
 
     const columns: Column<Proveedor>[] = [
         { id: 'nombre', label: 'Nombre' },
@@ -215,7 +206,7 @@ const Proveedores: React.FC = () => {
 
                 <DataTable
                     columns={columns}
-                    data={filteredData.slice((page - 1) * pageSize, page * pageSize)}
+                    data={filteredData}
                     isLoading={isLoading}
                     emptyStateMessage={
                         <Box sx={{ py: 4, textAlign: 'center' }}>
@@ -243,7 +234,7 @@ const Proveedores: React.FC = () => {
                     }
                     pagination={{
                         currentPage: page,
-                        totalPages: Math.ceil(filteredData.length / pageSize) || 1,
+                        totalPages: totalPages,
                         onPageChange: (_, newPage) => setPage(newPage),
                         pageSize: pageSize,
                         pageSizeOptions: [5, 10, 25, 50],

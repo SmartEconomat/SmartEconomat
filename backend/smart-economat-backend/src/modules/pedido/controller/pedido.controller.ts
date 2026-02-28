@@ -11,6 +11,7 @@ import {
   UseGuards,
   ParseUUIDPipe,
   Request,
+  Query,
 } from '@nestjs/common';
 import { CreatePedidoDto } from '../dto/create-pedido.dto';
 import { CancelPedidoDto } from '../dto/cancelPedido.dto';
@@ -21,6 +22,8 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/role.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('pedidos')
@@ -31,14 +34,16 @@ export class PedidoController {
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreatePedidoDto, @Request() req: any): Promise<Pedido> {
-    const userId = req.user.sub;
+    const userId = req.user.sub as string;
     return this.pedidoService.create(dto, userId);
   }
 
   @Get()
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
-  findAll(): Promise<Pedido[]> {
-    return this.pedidoService.findAll();
+  findAll(
+    @Query() query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<Pedido>> {
+    return this.pedidoService.findAll(query);
   }
 
   @Get(':id')

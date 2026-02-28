@@ -170,9 +170,9 @@ const Recepcion: React.FC = () => {
   const loadPedidos = async () => {
     setLoadingPedidos(true);
     try {
-      const data = await fetchPedidos();
+      const resp = await fetchPedidos(1, 100);
       // Solo pedidos pendientes, en proceso o parciales
-      setPedidosDisponibles(data.filter(p => 
+      setPedidosDisponibles(resp.data.filter((p: Pedido) => 
         p.estado === EstadoPedido.PENDIENTE || 
         p.estado === EstadoPedido.EN_PROCESO || 
         p.estado === EstadoPedido.PARCIAL

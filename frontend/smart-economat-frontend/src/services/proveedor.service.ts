@@ -1,13 +1,19 @@
 import { Proveedor } from './proveedor.types';
-import { baseFetch, ApiResponse, unwrapList } from './api.service';
+import { baseFetch, ApiResponse, PaginatedData } from './api.service';
 
-export async function fetchProveedores(): Promise<Proveedor[]> {
-    const response = await baseFetch('/proveedor?limit=500');
+export async function fetchProveedores(page: number = 1, limit: number = 10, search: string = ''): Promise<PaginatedData<Proveedor>> {
+    const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+    });
+    if (search) params.append('searchTerm', search);
+
+    const response = await baseFetch(`/proveedor?${params.toString()}`);
     if (!response.ok) {
         throw new Error(`Error al obtener proveedores: ${response.status} ${response.statusText}`);
     }
-    const body = await response.json() as ApiResponse<unknown>;
-    return unwrapList<Proveedor>(body.data);
+    const body = await response.json() as ApiResponse<PaginatedData<Proveedor>>;
+    return body.data;
 }
 
 export async function createProveedor(proveedor: Partial<Proveedor>): Promise<Proveedor> {
