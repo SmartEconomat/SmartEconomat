@@ -1,6 +1,5 @@
 import { Receta } from './receta.types';
-
-const API_BASE = '/api/v1';
+import { baseFetch } from './api.service';
 
 interface ApiResponse<T> {
     success: boolean;
@@ -9,7 +8,7 @@ interface ApiResponse<T> {
 }
 
 export async function fetchRecetas(): Promise<Receta[]> {
-    const response = await fetch(`${API_BASE}/recetas`);
+    const response = await baseFetch('/recetas');
     if (!response.ok) {
         throw new Error(`Error al obtener recetas: ${response.status} ${response.statusText}`);
     }
@@ -19,7 +18,7 @@ export async function fetchRecetas(): Promise<Receta[]> {
 }
 
 export async function createReceta(receta: Partial<Receta>): Promise<Receta> {
-    const response = await fetch(`${API_BASE}/recetas`, {
+    const response = await baseFetch('/recetas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(receta),
@@ -33,7 +32,7 @@ export async function createReceta(receta: Partial<Receta>): Promise<Receta> {
 }
 
 export async function updateReceta(id: string, receta: Partial<Receta>): Promise<Receta> {
-    const response = await fetch(`${API_BASE}/recetas/${id}`, {
+    const response = await baseFetch(`/recetas/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(receta),
