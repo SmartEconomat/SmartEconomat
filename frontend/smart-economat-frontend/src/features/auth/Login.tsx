@@ -12,7 +12,7 @@ function parseJwt(token: string) {
     try {
         const base64Url = token.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+        const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
             return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
         }).join(''));
         return JSON.parse(jsonPayload);
@@ -59,11 +59,11 @@ export default function Login() {
                 // token is still returned in body, parse it for UI data
                 const token = json.data?.access_token || json.access_token;
                 const decoded = token ? parseJwt(token) : null;
-                
+
                 login({
                     name: decoded?.nombre || formData.email,
                     email: formData.email
-                });
+                }, token);
             } else {
                 const errJson = await response.json();
                 console.error('Error logging in:', response.status, errJson);
