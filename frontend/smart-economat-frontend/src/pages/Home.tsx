@@ -14,6 +14,8 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCartOutlined';
 import LocalShippingIcon from '@mui/icons-material/LocalShippingOutlined';
 import WarningAmberIcon from '@mui/icons-material/WarningAmberOutlined';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import SwapHorizIcon from '@mui/icons-material/SwapHorizOutlined';
+import LoginIcon from '@mui/icons-material/LoginOutlined';
 import AssignmentIcon from '@mui/icons-material/AssignmentOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CalendarTodayIcon from '@mui/icons-material/CalendarTodayOutlined';
@@ -92,7 +94,7 @@ const QuickAction = ({ title, icon, color, onClick }: {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function tiempoRelativo(fechaStr: string): string {
+function tiempoRelativoCorto(fechaStr: string): string {
     const fecha = new Date(fechaStr);
     const ahora = new Date();
     const diffMs = ahora.getTime() - fecha.getTime();
@@ -100,37 +102,42 @@ function tiempoRelativo(fechaStr: string): string {
     const diffH = Math.floor(diffMin / 60);
     const diffD = Math.floor(diffH / 24);
 
-    if (diffMin < 1) return 'ahora mismo';
-    if (diffMin < 60) return `hace ${diffMin} min`;
-    if (diffH < 24) return `hace ${diffH} h`;
+    if (diffMin < 1) return 'ahora';
+    if (diffMin < 60) return `${diffMin}min`;
+    if (diffH < 24) return `${diffH}h`;
     if (diffD === 1) return 'ayer';
-    if (diffD < 7) return `hace ${diffD} días`;
+    if (diffD < 7) return `${diffD}d`;
     return fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
 }
 
-function tipoMovimientoLabel(mov: DashboardMovimiento): string {
+function tipoActividadLabel(mov: DashboardMovimiento): string {
     const labels: Record<string, string> = {
-        entrada: 'Entrada de stock',
-        salida: 'Salida de stock',
-        ajuste: 'Ajuste de inventario',
-        pedido: 'Pedido registrado',
-        entrada_compra: 'Recepción de compra',
+        entrada: 'Se ha registrado una entrada de stock',
+        salida: 'Se ha registrado una salida de stock',
+        ajuste: 'Se ha realizado un ajuste de inventario',
+        pedido: 'Se ha registrado un pedido',
+        entrada_compra: 'Se ha registrado una recepción de compra',
     };
-    const base = labels[mov.tipo] ?? mov.tipo;
+    const base = labels[mov.tipo] ?? `Se ha registrado actividad (${mov.tipo})`;
     if (mov.productoNombre) return `${base}: ${mov.productoNombre}`;
-    if (mov.descripcion) return mov.descripcion;
+    if (mov.descripcion) return `${base}: ${mov.descripcion}`;
     return base;
 }
 
-function tipoMovimientoColor(tipo: string): string {
-    const colores: Record<string, string> = {
-        entrada: 'success',
-        salida: 'error',
-        ajuste: 'warning',
-        pedido: 'info',
-        entrada_compra: 'success',
-    };
-    return colores[tipo] ?? 'info';
+const TIPO_ACTIVIDAD_CONFIG: Record<string, { color: string; icon: React.ReactNode }> = {
+    entrada: { color: 'success', icon: <InventoryIcon fontSize="small" /> },
+    salida: { color: 'error', icon: <SwapHorizIcon fontSize="small" /> },
+    ajuste: { color: 'warning', icon: <SwapHorizIcon fontSize="small" /> },
+    pedido: { color: 'info', icon: <ShoppingCartIcon fontSize="small" /> },
+    entrada_compra: { color: 'secondary', icon: <LoginIcon fontSize="small" /> },
+};
+
+function getActividadIcon(tipo: string): React.ReactNode {
+    return TIPO_ACTIVIDAD_CONFIG[tipo]?.icon ?? <AssignmentIcon fontSize="small" />;
+}
+
+function getActividadColor(tipo: string): string {
+    return TIPO_ACTIVIDAD_CONFIG[tipo]?.color ?? 'info';
 }
 
 // ─── Home ─────────────────────────────────────────────────────────────────────
@@ -359,24 +366,24 @@ const Home: React.FC = () => {
                         ) : (
                             <Stack spacing={3}>
                                 {movimientos.map((mov) => (
-                                    <Box key={mov.id} display="flex" gap={2}>
+                                    <Box key={mov.id} display="flex" gap={2} alignItems="flex-start">
                                         <Box
                                             sx={{
-                                                mt: 0.5,
-                                                width: 8,
-                                                height: 8,
-                                                borderRadius: '50%',
-                                                bgcolor: `${tipoMovimientoColor(mov.tipo)}.main`,
-                                                flexShrink: 0
+                                                color: `${getActividadColor(mov.tipo)}.main`,
+                                                display: 'flex',
+                                                flexShrink: 0,
+                                                mt: 0.25
                                             }}
-                                        />
+                                        >
+                                            {getActividadIcon(mov.tipo)}
+                                        </Box>
                                         <Box>
                                             <Typography variant="body2" fontWeight={500}>
-                                                {tipoMovimientoLabel(mov)}
+                                                {tipoActividadLabel(mov)}
                                             </Typography>
                                             <Typography variant="caption" color="text.secondary">
-                                                {tiempoRelativo(mov.createdAt)}
-                                                {mov.usuario ? ` · ${mov.usuario.nombre}` : ''}
+                                                {tiempoRelativoCorto(mov.createdAt)}
+                                                {mov.usuario ? ` ${mov.usuario.nombre}` : ''}
                                             </Typography>
                                         </Box>
                                     </Box>
