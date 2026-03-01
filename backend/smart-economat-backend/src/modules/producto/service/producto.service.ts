@@ -6,7 +6,7 @@ import { UpdateProductoDto } from '../dto/update-producto.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, ILike, FindOptionsWhere } from 'typeorm';
+import { Repository } from 'typeorm';
 import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
 
 @Injectable()
@@ -52,27 +52,63 @@ export class ProductoService {
   }
 
   async findAll(
-    query: import('../../../common/dto/pagination-query.dto').PaginationQueryDto
+    query: import('../dto/product-filter.dto').ProductFilterDto
   ): Promise<
     import('../../../common/dto/paginated-response.dto').PaginatedResponseDto<Producto>
   > {
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 100);
 
-    const where: FindOptionsWhere<Producto> = {};
+    const queryBuilder = this.productoRepository
+      .createQueryBuilder('producto')
+      .leftJoinAndSelect('producto.proveedores', 'proveedores')
+      .leftJoinAndSelect('proveedores.proveedor', 'proveedor')
+      .leftJoinAndSelect('producto.alergenos', 'alergenos');
+
     if (query.codigoBarras) {
-      where.codigoBarras = query.codigoBarras;
+      queryBuilder.andWhere('producto.codigoBarras = :codigoBarras', {
+        codigoBarras: query.codigoBarras,
+      });
     } else if (query.searchTerm) {
-      where.nombre = ILike(`%${query.searchTerm}%`);
+      queryBuilder.andWhere('producto.nombre ILIKE :searchTerm', {
+        searchTerm: `%${query.searchTerm}%`,
+      });
     }
 
-    const [data, total] = await this.productoRepository.findAndCount({
-      where,
-      relations: ['proveedores', 'proveedores.proveedor', 'alergenos'],
-      order: { nombre: 'ASC' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    if (query.categorias && query.categorias.length > 0) {
+      queryBuilder.andWhere('producto.tipo IN (:...categorias)', {
+        categorias: query.categorias,
+      });
+    }
+
+    if (query.marcas && query.marcas.length > 0) {
+      queryBuilder.andWhere('producto.marca IN (:...marcas)', {
+        marcas: query.marcas,
+      });
+    }
+
+    if (query.alergenos && query.alergenos.length > 0) {
+      queryBuilder.innerJoin(
+        'producto.alergenos',
+        'alergenoFiltro',
+        'alergenoFiltro.alergeno IN (:...alergenos)',
+        { alergenos: query.alergenos }
+      );
+    }
+
+    if (query.minStock) {
+      queryBuilder.innerJoin(
+        'proveedores.inventarios',
+        'inventarios',
+        'inventarios.cantidad_actual > 0'
+      );
+    }
+
+    queryBuilder.orderBy('producto.nombre', 'ASC');
+
+    queryBuilder.skip((page - 1) * limit).take(limit);
+
+    const [data, total] = await queryBuilder.getManyAndCount();
 
     const processedData = data.map((producto) => ({
       ...producto,
