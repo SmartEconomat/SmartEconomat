@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { ProductoService } from '../service/producto.service';
 import { ApiQuery } from '@nestjs/swagger';
-import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { ProductFilterDto } from '../dto/product-filter.dto';
 import { CreateProductoDto } from '../dto/create-producto.dto';
 import { UpdateProductoDto } from '../dto/update-producto.dto';
 import { Producto } from '../producto.entity/producto.entity';
@@ -47,7 +47,7 @@ export class ProductoController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   findAll(
-    @Query() query: PaginationQueryDto
+    @Query() query: ProductFilterDto
   ): Promise<PaginatedResponseDto<Producto>> {
     return this.productoService.findAll(query);
   }
