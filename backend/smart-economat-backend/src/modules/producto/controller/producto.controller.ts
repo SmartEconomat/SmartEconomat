@@ -15,16 +15,16 @@ import {
 } from '@nestjs/common';
 import { ProductoService } from '../service/producto.service';
 import { ApiQuery } from '@nestjs/swagger';
-import { ProductFilterDto } from '../dto/product-filter.dto';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { CreateProductoDto } from '../dto/create-producto.dto';
 import { UpdateProductoDto } from '../dto/update-producto.dto';
 import { Producto } from '../producto.entity/producto.entity';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/role.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
-import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('productos')
@@ -38,7 +38,7 @@ export class ProductoController {
     @Body() createProductoDto: CreateProductoDto,
     @Request() req: any
   ): Promise<Producto> {
-    const userId = req.user.sub as string;
+    const userId = req.user.sub;
     return this.productoService.create(createProductoDto, userId);
   }
 
@@ -47,7 +47,7 @@ export class ProductoController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   findAll(
-    @Query() query: ProductFilterDto
+    @Query() query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Producto>> {
     return this.productoService.findAll(query);
   }
@@ -65,7 +65,7 @@ export class ProductoController {
     @Body() updateProductoDto: UpdateProductoDto,
     @Request() req: any
   ): Promise<Producto> {
-    const userId = req.user.sub as string;
+    const userId = req.user.sub;
     return this.productoService.update(id, updateProductoDto, userId);
   }
 
@@ -76,7 +76,7 @@ export class ProductoController {
     @Param('id', ParseUUIDPipe) id: string,
     @Request() req: any
   ): Promise<void> {
-    const userId = req.user.sub as string;
+    const userId = req.user.sub;
     return this.productoService.remove(id, userId);
   }
 }

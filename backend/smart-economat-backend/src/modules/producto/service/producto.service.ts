@@ -8,6 +8,9 @@ import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
+import { ProductFilterDto } from '../dto/product-filter.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { ProductoProveedorDto } from '../dto/producto-proveedor.dto/producto-proveedor.dto';
 
 @Injectable()
 export class ProductoService {
@@ -52,10 +55,8 @@ export class ProductoService {
   }
 
   async findAll(
-    query: import('../dto/product-filter.dto').ProductFilterDto
-  ): Promise<
-    import('../../../common/dto/paginated-response.dto').PaginatedResponseDto<Producto>
-  > {
+    query: ProductFilterDto
+  ): Promise<PaginatedResponseDto<Producto>> {
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 100);
 
@@ -186,7 +187,7 @@ export class ProductoService {
 
   private async syncProveedores(
     productoId: string,
-    proveedores: import('../dto/producto-proveedor.dto/producto-proveedor.dto').ProductoProveedorDto[]
+    proveedores: ProductoProveedorDto[]
   ) {
     const existing = await this.productoProveedorRepository.find({
       where: { producto: { id: productoId } },

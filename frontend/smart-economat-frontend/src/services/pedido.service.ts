@@ -1,30 +1,20 @@
 import { Pedido } from './pedido.types';
 import { baseFetch } from './api.service';
 
-import { PaginatedData } from './api.service';
-
 interface ApiResponse<T> {
   success: boolean;
   message: string;
   data: T;
 }
 
-export async function fetchPedidos(
-  page: number = 1,
-  limit: number = 100
-): Promise<PaginatedData<Pedido>> {
-  const query = new URLSearchParams({
-    page: page.toString(),
-    limit: limit.toString(),
-  });
-
-  const response = await baseFetch(`/pedidos?${query.toString()}`);
+export async function fetchPedidos(): Promise<Pedido[]> {
+  const response = await baseFetch('/pedidos');
   if (!response.ok) {
     throw new Error(
       `Error al obtener pedidos: ${response.status} ${response.statusText}`
     );
   }
-  const body = (await response.json()) as ApiResponse<PaginatedData<Pedido>>;
+  const body = (await response.json()) as ApiResponse<Pedido[]>;
   return body.data;
 }
 

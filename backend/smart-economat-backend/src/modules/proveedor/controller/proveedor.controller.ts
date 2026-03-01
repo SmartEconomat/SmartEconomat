@@ -18,11 +18,12 @@ import { UpdateProveedorDto } from '../dto/update-proveedor.dto';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { Proveedor } from '../proveedor.entity/proveedor.entity';
 import { ProveedorService } from '../service/proveedor.service';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/role.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
-import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('proveedor')

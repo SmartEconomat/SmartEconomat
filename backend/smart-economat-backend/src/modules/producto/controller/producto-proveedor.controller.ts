@@ -23,11 +23,12 @@ import { UpdatePrecioProductoDto } from '../dto/update-precio-producto.dto';
 import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
 import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.entity';
 import { SearchProductoProveedorDto } from '../dto/search-producto-proveedor.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/role.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
-import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @ApiTags('Producto Proveedor')
 @UseGuards(JwtAuthGuard, RolesGuard)

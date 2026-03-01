@@ -1,9 +1,10 @@
-import { Repository, DeepPartial } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Movimiento } from '../movimiento.entity/movimiento.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateMovimientoDto } from '../dto/create-movimiento.dto';
 import { UpdateMovimientoDto } from '../dto/update-movimiento.dto';
 import { MovimientoHistoryDto } from '../dto/movimiento-history.dto';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 export class MovimientoRepository {
@@ -13,7 +14,7 @@ export class MovimientoRepository {
   ) {}
 
   createMovimiento(data: CreateMovimientoDto) {
-    const movimientoData: DeepPartial<Movimiento> = {
+    const movimientoData: Record<string, unknown> = {
       tipo: data.tipo,
       cantidad: data.cantidad,
       entidad: data.entidadTipo,
@@ -22,12 +23,12 @@ export class MovimientoRepository {
       ...(data.usuario ? { usuario: { id: data.usuario } } : {}),
       ...(data.inventario ? { inventario: { id: data.inventario } } : {}),
     };
-    return this.repo.save(this.repo.create(movimientoData));
+    return this.repo.save(
+      this.repo.create(movimientoData as Partial<Movimiento>)
+    );
   }
 
-  findAll(
-    query: import('../../../common/dto/pagination-query.dto').PaginationQueryDto
-  ) {
+  findAll(query: PaginationQueryDto) {
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 100);
     return this.repo
@@ -45,7 +46,7 @@ export class MovimientoRepository {
             page,
             limit,
             totalPages: Math.ceil(total / limit) || 1,
-          }) as PaginatedResponseDto<Movimiento>
+          }) as PaginatedResponseDto<any>
       );
   }
 
