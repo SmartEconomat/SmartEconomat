@@ -184,27 +184,27 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
     fields.length > 0
       ? fields
       : Object.keys(initialData).map((key) => {
-          const val = initialData[key];
-          const typeOfVal = typeof val;
-          let type: FieldType = 'text';
+        const val = initialData[key];
+        const typeOfVal = typeof val;
+        let type: FieldType = 'text';
 
-          if (typeOfVal === 'number') type = 'number';
-          if (typeOfVal === 'boolean') type = 'boolean';
-          if (
-            typeOfVal === 'string' &&
-            !isNaN(Date.parse(val)) &&
-            val.includes('-')
-          )
-            type = 'date';
+        if (typeOfVal === 'number') type = 'number';
+        if (typeOfVal === 'boolean') type = 'boolean';
+        if (
+          typeOfVal === 'string' &&
+          !isNaN(Date.parse(val)) &&
+          val.includes('-')
+        )
+          type = 'date';
 
-          if (Array.isArray(val)) type = 'allergens';
+        if (Array.isArray(val)) type = 'allergens';
 
-          return {
-            name: key,
-            label: key.charAt(0).toUpperCase() + key.slice(1),
-            type,
-          } as DynamicField;
-        });
+        return {
+          name: key,
+          label: key.charAt(0).toUpperCase() + key.slice(1),
+          type,
+        } as DynamicField;
+      });
 
   const imageFields = formFields.filter((f) => f.type === 'image');
   const mainImageField = imageFields[0];
