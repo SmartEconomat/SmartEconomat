@@ -10,7 +10,7 @@ export default function ToastContainer() {
 
     return (
         <Stack
-            spacing={2}
+            spacing={1.5}
             sx={{
                 position: 'fixed',
                 bottom: 24,
@@ -19,7 +19,7 @@ export default function ToastContainer() {
                 zIndex: 9999,
                 width: { xs: 'calc(100% - 48px)', sm: TOAST_WIDTH },
                 maxWidth: TOAST_WIDTH,
-                alignItems: 'center',
+                alignItems: 'stretch',
             }}
         >
             {toasts.map((toast) => (
@@ -33,34 +33,46 @@ export default function ToastContainer() {
                         onClose={() => removeToast(toast.id)}
                         severity={toast.type}
                         variant="filled"
+                        icon={false}
                         sx={{
-                            width: '100%',
+                            width: `${TOAST_WIDTH}px`,
+                            maxWidth: '100%',
                             boxShadow: 3,
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            textAlign: 'center',
+                            py: 1,
+                            px: 2,
                             '& .MuiAlert-message': {
                                 width: '100%',
+                                p: 0,
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'center',
                                 gap: 1.5,
+                            },
+                            '& .MuiAlert-action': {
+                                pt: 0,
+                                pr: 0,
+                                ml: 'auto',
+                                alignItems: 'center',
                             },
                         }}
                     >
-                        {toast.productCategory != null ? (
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
-                                <Box component="span" sx={{ display: 'flex', color: 'inherit' }}>
-                                    {getCategoryIconFilled(toast.productCategory)}
-                                </Box>
-                                <Typography component="span" variant="body2" sx={{ color: 'inherit' }}>
-                                    {toast.message}
-                                </Typography>
-                            </Box>
-                        ) : (
-                            toast.message
-                        )}
+                        {/* Icono de categoría de producto (siempre visible) */}
+                        <Box
+                            component="span"
+                            sx={{ display: 'flex', alignItems: 'center', color: 'inherit', flexShrink: 0 }}
+                        >
+                            {getCategoryIconFilled(toast.productCategory, { sx: { fontSize: 20 } })}
+                        </Box>
+
+                        {/* Mensaje */}
+                        <Typography
+                            component="span"
+                            variant="body2"
+                            sx={{ color: 'inherit', lineHeight: 1.4 }}
+                        >
+                            {toast.message}
+                        </Typography>
                     </Alert>
                 </Snackbar>
             ))}
