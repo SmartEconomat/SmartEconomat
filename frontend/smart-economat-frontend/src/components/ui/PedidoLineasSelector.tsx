@@ -36,6 +36,10 @@ interface FlatProductoProveedor {
   marca?: string;
 }
 
+interface PedidoProductoWithKey extends Partial<PedidoProducto> {
+  _key?: string;
+}
+
 const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
   value = [],
   onChange,
@@ -73,7 +77,12 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
   const handleAddLine = () => {
     const newLines = [
       ...value,
-      { productoProveedorId: '', cantidad: 1, precioUnitario: 0 },
+      {
+        productoProveedorId: '',
+        cantidad: 1,
+        precioUnitario: 0,
+        _key: `${Date.now()}-${Math.random()}`,
+      },
     ];
     onChange(newLines);
   };
@@ -125,7 +134,13 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
 
   const handleUpdateLine = (index: number, field: string, newValue: any) => {
     const newLines = [...value];
+    const lineData = newLines[index] as any;
     newLines[index] = { ...newLines[index], [field]: newValue };
+    
+    // Preservar la clave única si existe
+    if (lineData._key) {
+      (newLines[index] as any)._key = lineData._key;
+    }
 
     // Si cambiamos el producto, actualizamos automáticamente el precio unitario
     if (field === 'productoProveedorId') {
@@ -234,9 +249,10 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                   const selectedProduct = getAutocompleteOptions.find(
                     (p) => p.id === lineData.productoProveedorId
                   );
+                  const uniqueKey = lineData._key || `${index}-${Date.now()}`;
 
                   return (
-                    <TableRow key={index}>
+                    <TableRow key={uniqueKey}>
                       <TableCell>
                         <Autocomplete
                           options={getAutocompleteOptions}
