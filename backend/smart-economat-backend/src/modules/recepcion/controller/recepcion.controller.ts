@@ -25,6 +25,7 @@ import { Roles } from '../../auth/decorators/roles.decorator';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
 import { RecepcionStockService } from '../service/recepcion-stock.service';
 import { RecepcionResultadoDto } from '../dto/recepcion-resultado.dto';
+import { RecepcionMasivaLoteDto } from '../dto/recepcion-masiva.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -42,10 +43,21 @@ export class RecepcionController {
     @Body() dto: CreateRecepcionDto,
     @Request() req: any
   ): Promise<RecepcionResultadoDto> {
-    const userId = req.user.sub;
+    const userId = req.user.sub as string;
 
     dto.usuarioId = dto.usuarioId || userId;
     return this.recepcionStockService.procesarRecepcion(dto);
+  }
+
+  @Post('masiva')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @HttpCode(HttpStatus.CREATED)
+  procesarMasiva(
+    @Body() dto: RecepcionMasivaLoteDto,
+    @Request() req: any
+  ): Promise<RecepcionResultadoDto> {
+    const userId = req.user.sub as string;
+    return this.recepcionStockService.procesarRecepcionMasiva(dto, userId);
   }
 
   @Get()
