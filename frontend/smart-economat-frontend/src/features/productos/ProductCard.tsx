@@ -38,10 +38,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ producto, onEdit, onDelete, o
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        bgcolor: 'grey.100',
+                        bgcolor: 'action.hover',
                     }}
                 >
-                    {getCategoryIcon(producto.tipo)}
+                    {getCategoryIcon(producto.tipo, { sx: { fontSize: 56, color: 'primary.main', opacity: 0.7 } })}
                 </Box>
             )}
 
@@ -143,7 +143,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ producto, onEdit, onDelete, o
                     </>
                 )}
             </CardActions>
-        </Card>
+        </Card >
     );
 };
 

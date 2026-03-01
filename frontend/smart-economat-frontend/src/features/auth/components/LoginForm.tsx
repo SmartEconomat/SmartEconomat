@@ -48,6 +48,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onLoginSuccess }) =
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
+    const [isForgotPassword, setIsForgotPassword] = useState(false);
+    const [forgotSuccess, setForgotSuccess] = useState('');
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -84,6 +86,38 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onLoginSuccess }) =
         }
     };
 
+    const handleForgotSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setErrorMsg('');
+        setForgotSuccess('');
+
+        if (!formData.email.trim()) {
+            setErrorMsg('Por favor ingresa tu correo electrónico.');
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const res = await fetch('/api/v1/auth/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: formData.email }),
+            });
+            if (res.ok) {
+                setForgotSuccess('Si el correo electrónico figura en nuestro sistema, recibirás instrucciones para restablecer tu contraseña en breve.');
+            } else {
+                const err = await res.json();
+                console.error('Forgot password error:', res.status, err);
+                setErrorMsg(err.message || 'Error al procesar la solicitud.');
+            }
+        } catch (err) {
+            console.error('Network error:', err);
+            setErrorMsg('Error de conexión al servidor.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
@@ -108,42 +142,90 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onLoginSuccess }) =
                 </Alert>
             )}
 
-            <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 1, width: '100%', maxWidth: 400 }}>
-                <Input
-                    label="Usuario o Email"
-                    name="email"
-                    autoComplete="email"
-                    autoFocus
-                    value={formData.email}
-                    onChange={handleChange}
-                />
-                <Input
-                    label="Contraseña"
-                    name="password"
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="current-password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    InputProps={{
-                        endAdornment: (
-                            <InputAdornment position="end">
-                                <IconButton aria-label="revelar contraseña" onClick={togglePasswordVisibility} edge="end">
-                                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                                </IconButton>
-                            </InputAdornment>
-                        ),
-                    }}
-                />
-                <Checkbox value="remember" label="Recordarme" />
-                <Button type="submit" isLoading={isLoading} sx={{ mt: 2, mb: 1 }}>Acceder</Button>
+            {forgotSuccess && (
+                <Alert severity="success" sx={{ width: '100%', maxWidth: 400, mt: 2 }}>
+                    {forgotSuccess}
+                </Alert>
+            )}
 
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center', mt: 2 }}>
-                    <Link href="#" variant="body2">¿Olvidaste tu contraseña?</Link>
-                    <Link href="#" variant="body2" onClick={e => { e.preventDefault(); onToggleForm(); }}>
-                        ¿No tienes cuenta? Regístrate aquí.
-                    </Link>
+            {isForgotPassword ? (
+                <Box component="form" noValidate onSubmit={handleForgotSubmit} sx={{ mt: 1, width: '100%', maxWidth: 400 }}>
+                    <Typography variant="body1" sx={{ textAlign: 'center', mb: 2, color: 'text.secondary' }}>
+                        Introduce la dirección de correo electrónico vinculada a tu cuenta para recibir un enlace temporal de reestablecimiento.
+                    </Typography>
+                    <Input
+                        label="Correo Electrónico"
+                        name="email"
+                        autoComplete="email"
+                        autoFocus
+                        value={formData.email}
+                        onChange={handleChange}
+                    />
+                    <Button type="submit" isLoading={isLoading} sx={{ mt: 2, mb: 0 }}>Restablecer Contraseña</Button>
+
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center', mt: 1 }}>
+                        <Button
+                            variant="outlined"
+                            color="primary"
+                            onClick={() => { setIsForgotPassword(false); setForgotSuccess(''); setErrorMsg(''); }}
+                            sx={{ mt: 1 }}
+                        >
+                            Volver al inicio de sesión
+                        </Button>
+                        <Link
+                            href="#"
+                            variant="body2"
+                            onClick={e => { e.preventDefault(); onToggleForm(); }}
+                        >
+                            ¿No tienes cuenta? Regístrate aquí.
+                        </Link>
+                    </Box>
                 </Box>
-            </Box>
+            ) : (
+                <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 1, width: '100%', maxWidth: 400 }}>
+                    <Input
+                        label="Usuario o Email"
+                        name="email"
+                        autoComplete="email"
+                        autoFocus
+                        value={formData.email}
+                        onChange={handleChange}
+                    />
+                    <Input
+                        label="Contraseña"
+                        name="password"
+                        type={showPassword ? 'text' : 'password'}
+                        autoComplete="current-password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        InputProps={{
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <IconButton aria-label="revelar contraseña" onClick={togglePasswordVisibility} edge="end">
+                                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                                    </IconButton>
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
+                    <Checkbox value="remember" label="Recordarme" />
+                    <Button type="submit" isLoading={isLoading} sx={{ mt: 2, mb: 0 }}>Acceder</Button>
+
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center', mt: 1 }}>
+                        <Button
+                            variant="outlined"
+                            color="primary"
+                            onClick={() => onToggleForm()}
+                            sx={{ mt: 1 }}
+                        >
+                            ¿No tienes cuenta? Regístrate aquí.
+                        </Button>
+                        <Link href="#" variant="body2" onClick={(e) => { e.preventDefault(); setIsForgotPassword(true); setErrorMsg(''); setForgotSuccess(''); }}>
+                            ¿Olvidaste tu contraseña?
+                        </Link>
+                    </Box>
+                </Box>
+            )}
         </Box>
     );
 };
