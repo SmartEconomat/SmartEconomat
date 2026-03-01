@@ -21,7 +21,7 @@ import { RecepcionPedido } from '../recepcion-pedido.entity/recepcion-pedido.ent
 import { RecepcionProducto } from '../recepcion-productos.entity/recepcion-producto.entity';
 import { Incidencia } from '../../incidencia/incidencia.entity/incidencia.entity';
 import { Albaran } from '../../albaran/albaran.entity/albaran.entity';
-import { localInventario } from '../../inventario/enums/inventario.enums';
+import { Ubicacion } from '../../ubicacion/ubicacion.entity/ubicacion.entity';
 import { EstadoRecepcion } from '../enums/estado-recepcion.enum';
 import { EstadoVisualProducto } from '../enums/estado-visual.enum';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
@@ -104,6 +104,17 @@ export class RecepcionStockService {
       const incidenciasGeneradas: IncidenciaGenerada[] = [];
       let recepcionEstadoEnum = EstadoRecepcion.COMPLETADA;
 
+      let defaultUbicacion = await queryRunner.manager.findOne(Ubicacion, {
+        where: { nombre: 'Almacén Principal' },
+      });
+      if (!defaultUbicacion) {
+        defaultUbicacion = queryRunner.manager.create(Ubicacion, {
+          nombre: 'Almacén Principal',
+          descripcion: 'Ubicación por defecto del economato',
+        });
+        defaultUbicacion = await queryRunner.manager.save(defaultUbicacion);
+      }
+
       const recepcion = queryRunner.manager.create(Recepcion, {
         usuario: { id: userId },
         fechaRecepcion: new Date(),
@@ -182,10 +193,7 @@ export class RecepcionStockService {
           })
         );
 
-        if (
-          linea.cantidadRecibida > 0 &&
-          linea.estadoVisual === EstadoVisualProducto.OPTIMO
-        ) {
+        if (linea.cantidadRecibida > 0) {
           const defaultExpiration = new Date(
             Date.now() + 30 * 24 * 60 * 60 * 1000
           );
@@ -194,7 +202,7 @@ export class RecepcionStockService {
             cantidadActual: linea.cantidadRecibida,
             cantidadMinima: 10,
             fechaEntrada: new Date(),
-            ubicacionAlmacen: localInventario.ALMACEN_A,
+            ubicacion: defaultUbicacion,
             fechaCaducidad: linea.fechaCaducidad
               ? new Date(linea.fechaCaducidad)
               : defaultExpiration,
@@ -223,7 +231,7 @@ export class RecepcionStockService {
               inventario: {
                 id: item.stockNuevo.id,
               } as Movimiento['inventario'],
-              descripcion: `Recepción Masiva Pedido ${item.ppRef.id} - Lote ÓPTIMO - Albarán ${dto.nAlbaran || 'N/A'}`,
+              descripcion: `Recepción Masiva Pedido ${item.ppRef.id} - Lote ${item.linea.estadoVisual || 'ÓPTIMO'} - Albarán ${dto.nAlbaran || 'N/A'}`,
               usuario: { id: userId },
             })
           );
@@ -370,8 +378,10 @@ export class RecepcionStockService {
       throw new BadRequestException('No se han especificado pedidos.');
     }
 
+    const uniquePedidoIds = [...new Set(pedidoIdsList)];
+
     const pedidosArr = await this.dataSource.manager.find(Pedido, {
-      where: { id: In(pedidoIdsList) },
+      where: { id: In(uniquePedidoIds) },
       relations: [
         'pedidoProductos',
         'pedidoProductos.productoProveedor',
@@ -380,8 +390,12 @@ export class RecepcionStockService {
       ],
     });
 
-    if (pedidosArr.length !== pedidoIdsList.length) {
-      throw new NotFoundException(I18nHelper.getError('ORDER_NOT_FOUND'));
+    if (pedidosArr.length !== uniquePedidoIds.length) {
+      const foundIds = pedidosArr.map((p) => p.id);
+      const missingIds = uniquePedidoIds.filter((id) => !foundIds.includes(id));
+      throw new NotFoundException(
+        `${I18nHelper.getError('ORDER_NOT_FOUND')}: ${missingIds.join(', ')}`
+      );
     }
 
     const pedidosInvalidos = pedidosArr.filter(
@@ -391,8 +405,9 @@ export class RecepcionStockService {
         p.estado !== EstadoPedido.PARCIAL
     );
     if (pedidosInvalidos.length > 0) {
+      const invalidIds = pedidosInvalidos.map((p) => p.id);
       throw new BadRequestException(
-        I18nHelper.getError('ORDER_NOT_RECEPTABLE')
+        `${I18nHelper.getError('ORDER_NOT_RECEPTABLE')}: ${invalidIds.join(', ')}`
       );
     }
 
@@ -428,6 +443,17 @@ export class RecepcionStockService {
       });
       const savedRecepcion = await queryRunner.manager.save(recepcion);
 
+      let defaultUbicacion = await queryRunner.manager.findOne(Ubicacion, {
+        where: { nombre: 'Almacén Principal' },
+      });
+      if (!defaultUbicacion) {
+        defaultUbicacion = queryRunner.manager.create(Ubicacion, {
+          nombre: 'Almacén Principal',
+          descripcion: 'Ubicación por defecto del economato',
+        });
+        defaultUbicacion = await queryRunner.manager.save(defaultUbicacion);
+      }
+
       if (dto.productosNuevos && dto.productosNuevos.length > 0) {
         for (const pNew of dto.productosNuevos) {
           const prod = queryRunner.manager.create(Producto, {
@@ -461,7 +487,7 @@ export class RecepcionStockService {
               cantidadActual: pNew.cantidadRecibida,
               cantidadMinima: 10,
               fechaEntrada: new Date(),
-              ubicacionAlmacen: localInventario.ALMACEN_A,
+              ubicacion: defaultUbicacion,
               fechaCaducidad: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
             });
             const savedInv = await queryRunner.manager.save(inv);
@@ -555,10 +581,7 @@ export class RecepcionStockService {
 
         await queryRunner.manager.save(recepcionProducto);
 
-        if (
-          linea.cantidadRecibida > 0 &&
-          estadoVirtualDefault === EstadoVisualProducto.OPTIMO
-        ) {
+        if (linea.cantidadRecibida > 0) {
           const defaultExpiration = new Date(
             Date.now() + 30 * 24 * 60 * 60 * 1000
           );
@@ -567,7 +590,7 @@ export class RecepcionStockService {
             cantidadActual: linea.cantidadRecibida,
             cantidadMinima: 10,
             fechaEntrada: new Date(),
-            ubicacionAlmacen: localInventario.ALMACEN_A,
+            ubicacion: defaultUbicacion,
             fechaCaducidad: linea.fechaCaducidad
               ? new Date(linea.fechaCaducidad)
               : defaultExpiration,
@@ -582,7 +605,7 @@ export class RecepcionStockService {
             entidadId: savedRecepcion.id,
             entidad: 'Recepcion',
             inventario: { id: savedStock.id } as any,
-            descripcion: `Recepción Pedido ${ppRef.id} - Lote ÓPTIMO - Albarán ${dto.nAlbaran || 'N/A'}`,
+            descripcion: `Recepción Pedido ${ppRef.id} - Lote ${estadoVirtualDefault} - Albarán ${dto.nAlbaran || 'N/A'}`,
             usuario: { id: dto.usuarioId },
           });
           movimientosGenerados++;

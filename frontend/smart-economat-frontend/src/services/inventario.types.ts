@@ -6,7 +6,7 @@ export interface InventarioItem {
   cantidadActual: number;
   cantidadMinima: number;
   cantidadMaxima?: number | null;
-  ubicacionAlmacen: string;
+  ubicacion?: { id: string; nombre: string; descripcion?: string };
   fechaCaducidad?: string | null;
   productoProveedor?: {
     id: string;
@@ -35,14 +35,3 @@ export interface InventarioPorProducto {
   ubicaciones?: string[];
 }
 
-// exportamos los valores posibles para la ubicación de inventario
-export const localInventarioValues = [
-  'Almacen A',
-  'Frigorifico A',
-  'Bodega A',
-  'Almacen B',
-  'Frigorifico B',
-  'Bodega B',
-] as const;
-
-export type LocalInventario = (typeof localInventarioValues)[number];

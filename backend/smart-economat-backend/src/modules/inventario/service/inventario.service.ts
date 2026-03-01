@@ -43,7 +43,7 @@ export class InventarioService {
       cantidadActual: dto.cantidadActual,
       cantidadMinima: dto.cantidadMinima,
       cantidadMaxima: dto.cantidadMaxima ?? null,
-      ubicacionAlmacen: dto.ubicacionAlmacen,
+      ubicacion: { id: dto.ubicacionId } as any,
       fechaCaducidad: dto.fechaCaducidad ? new Date(dto.fechaCaducidad) : null,
     });
 
@@ -78,6 +78,7 @@ export class InventarioService {
         'productoProveedor',
         'productoProveedor.producto',
         'productoProveedor.proveedor',
+        'ubicacion',
       ],
     });
   }
@@ -89,6 +90,7 @@ export class InventarioService {
         'productoProveedor',
         'productoProveedor.producto',
         'productoProveedor.proveedor',
+        'ubicacion',
       ],
     });
     if (!inventario) {
@@ -123,8 +125,8 @@ export class InventarioService {
       inventario.cantidadMinima = dto.cantidadMinima;
     if (dto.cantidadMaxima !== undefined)
       inventario.cantidadMaxima = dto.cantidadMaxima ?? null;
-    if (dto.ubicacionAlmacen !== undefined)
-      inventario.ubicacionAlmacen = dto.ubicacionAlmacen;
+    if (dto.ubicacionId !== undefined)
+      inventario.ubicacion = { id: dto.ubicacionId } as any;
     if (dto.fechaCaducidad !== undefined)
       inventario.fechaCaducidad = dto.fechaCaducidad
         ? new Date(dto.fechaCaducidad)

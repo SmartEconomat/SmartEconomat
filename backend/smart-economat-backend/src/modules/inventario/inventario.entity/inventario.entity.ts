@@ -10,7 +10,7 @@ import {
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 import type { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
-import { localInventario } from '../enums/inventario.enums';
+import type { Ubicacion } from '../../ubicacion/ubicacion.entity/ubicacion.entity';
 
 /**
  * Entidad Inventario
@@ -27,12 +27,9 @@ import { localInventario } from '../enums/inventario.enums';
  */
 @Entity({ name: 'inventario' })
 @Index('idx_inventario_producto_proveedor', ['productoProveedor'])
-@Index('idx_inventario_ubicacion', ['ubicacionAlmacen'])
+@Index('idx_inventario_ubicacion', ['ubicacion'])
 @Index('idx_inventario_fecha_caducidad', ['fechaCaducidad'])
-@Index('idx_inventario_ubicacion_caducidad', [
-  'ubicacionAlmacen',
-  'fechaCaducidad',
-])
+@Index('idx_inventario_ubicacion_caducidad', ['ubicacion', 'fechaCaducidad'])
 @Check(`"cantidad_actual" >= 0`)
 @Check(`"cantidad_minima" >= 0`)
 @Check(`"cantidad_maxima" IS NULL OR "cantidad_maxima" >= "cantidad_minima"`)
@@ -94,15 +91,15 @@ export class Inventario extends BaseEntity {
   cantidadMaxima?: number | null;
 
   /**
-   * Ubicación física dentro del almacén (Pasillo, Estantería, etc. o Zona genérica).
-   * @type {localInventario}
+   * Ubicación física dentro del almacén.
+   * Modificado para ser dinámico gestionado en BDD en lugar de enum.
    */
-  @Column({
-    type: 'enum',
-    enum: localInventario,
-    name: 'ubicacion_almacen',
+  @ManyToOne('Ubicacion', (ubicacion: Ubicacion) => ubicacion.inventarios, {
+    onDelete: 'RESTRICT',
+    nullable: false,
   })
-  ubicacionAlmacen!: localInventario;
+  @JoinColumn({ name: 'id_ubicacion' })
+  ubicacion!: Relation<Ubicacion>;
 
   /**
    * Fecha en la que este lote entró al inventario.
