@@ -12,9 +12,11 @@ import {
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import DataTable, { Column } from '../components/ui/DataTable';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import DynamicFormModal, { DynamicField } from '../components/ui/DynamicFormModal';
+import DetailModal from '../components/ui/DetailModal';
 import { Producto, CategoriaProducto, UnidadMedida } from '../services/producto.types';
 import { fetchProductos, createProducto, updateProducto } from '../services/producto.service';
 import { deleteResource } from '../services/api.service';
@@ -25,6 +27,7 @@ import { Proveedor } from '../services/proveedor.types';
 import ProductCard from '../features/productos/ProductCard';
 import ProductFilters, { ProductFiltersState } from '../features/productos/ProductFilters';
 import { getCategoryIcon } from '../features/productos/utils/getCategoryIcon';
+import { EU_ALLERGENS } from '../components/ui/AllergenSelector';
 import ShoppingBasketOutlinedIcon from '@mui/icons-material/ShoppingBasketOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/SearchOutlined';
@@ -104,6 +107,7 @@ const Productos: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [productToDelete, setProductToDelete] = useState<Producto | null>(null);
     const [productToEdit, setProductToEdit] = useState<Record<string, unknown> | null>(null);
+    const [productToView, setProductToView] = useState<Producto | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const toast = useToast();
@@ -176,7 +180,7 @@ const Productos: React.FC = () => {
                         marca: orUndefined(p.marca),
                         codigoBarras: orUndefined(p.codigoBarras),
                         precioUnitario: p.precioUnitario ? Number(p.precioUnitario) : undefined
-                      }))
+                    }))
                     : [],
             };
 
@@ -231,7 +235,7 @@ const Productos: React.FC = () => {
         },
     ];
 
-    const handleEditClick = (row: Producto) => {
+    const buildEditData = (row: Producto): Record<string, any> => {
         const editData: Record<string, any> = { ...row };
         if (row.pathImg) editData.imagen = row.pathImg;
         if (row.alergenos) {
@@ -248,7 +252,15 @@ const Productos: React.FC = () => {
                 precioUnitario: p.precioUnitario || ''
             }));
         }
-        setProductToEdit(editData);
+        return editData;
+    };
+
+    const handleEditClick = (row: Producto) => {
+        setProductToEdit(buildEditData(row));
+    };
+
+    const handleViewClick = (row: Producto) => {
+        setProductToView(row);
     };
 
     // filteredData local ya no es necesario ya que se hace filtering en el backend.
@@ -269,12 +281,21 @@ const Productos: React.FC = () => {
 
     const renderActions = (row: Producto) => (
         <>
-            <IconButton color="secondary" onClick={() => handleEditClick(row)} size="small" aria-label="Editar">
-                <EditIcon fontSize="small" />
-            </IconButton>
-            <IconButton color="error" onClick={() => setProductToDelete(row)} size="small" aria-label="Borrar">
-                <DeleteIcon fontSize="small" />
-            </IconButton>
+            <Tooltip title="Ver detalle">
+                <IconButton color="info" onClick={() => handleViewClick(row)} size="small" aria-label="Ver detalle">
+                    <VisibilityIcon fontSize="small" />
+                </IconButton>
+            </Tooltip>
+            <Tooltip title="Editar">
+                <IconButton color="secondary" onClick={() => handleEditClick(row)} size="small" aria-label="Editar">
+                    <EditIcon fontSize="small" />
+                </IconButton>
+            </Tooltip>
+            <Tooltip title="Eliminar">
+                <IconButton color="error" onClick={() => setProductToDelete(row)} size="small" aria-label="Borrar">
+                    <DeleteIcon fontSize="small" />
+                </IconButton>
+            </Tooltip>
         </>
     );
 
@@ -407,6 +428,7 @@ const Productos: React.FC = () => {
                             producto={producto}
                             onEdit={handleEditClick}
                             onDelete={setProductToDelete}
+                            onView={handleViewClick}
                         />
                     )}
                     renderActions={renderActions}
@@ -445,6 +467,87 @@ const Productos: React.FC = () => {
                             : "¿Estás seguro de que deseas añadir este nuevo producto al inventario?"
                     }
                 />
+
+                {/* ── Modal de DETALLE ── */}
+                {productToView && (() => {
+                    const p = productToView;
+                    const alergenoIds = p.alergenos?.map((a) => a.alergeno) ?? [];
+                    const alergenosActivos = EU_ALLERGENS.filter((a) => alergenoIds.includes(a.id));
+
+                    return (
+                        <DetailModal
+                            isOpen={true}
+                            onClose={() => setProductToView(null)}
+                            title={p.nombre}
+                            subtitle={p.marca || undefined}
+                            size="md"
+                            headerMedia={
+                                p.pathImg
+                                    ? <img src={p.pathImg} alt={p.nombre} style={{ height: 160, objectFit: 'cover', width: '100%' }} />
+                                    : getCategoryIcon(p.tipo, { sx: { fontSize: 80, color: 'text.secondary', opacity: 0.6 } })
+                            }
+                            sections={[
+                                {
+                                    title: 'Información general',
+                                    fields: [
+                                        {
+                                            label: 'Tipo',
+                                            value: p.tipo
+                                                ? <StatusChip status={p.tipo} size="small" variant="outlined" />
+                                                : undefined,
+                                        },
+                                        {
+                                            label: 'Contenido',
+                                            value: `${p.contenido}${p.unidad ? ' ' + p.unidad : ''}`,
+                                        },
+                                        {
+                                            label: 'Código de Barras',
+                                            value: p.codigoBarras ?? undefined,
+                                        },
+                                        {
+                                            label: 'Descripción',
+                                            value: p.descripcion ?? undefined,
+                                            fullWidth: true,
+                                        },
+                                    ],
+                                },
+                                ...(alergenosActivos.length > 0 ? [{
+                                    title: 'Alérgenos',
+                                    fields: alergenosActivos.map((a) => ({
+                                        label: a.label,
+                                        value: (
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary', '& svg': { fontSize: 20 } }}>
+                                                {a.icon}
+                                            </Box>
+                                        ),
+                                    })),
+                                }] : []),
+                                ...(p.proveedores && p.proveedores.length > 0 ? [{
+                                    title: 'Proveedores asociados',
+                                    fields: p.proveedores.map((pv: any, idx: number) => ({
+                                        label: `Proveedor ${p.proveedores!.length > 1 ? idx + 1 : ''}`.trim(),
+                                        value: [
+                                            pv.proveedor?.nombre ?? pv.nombre,
+                                            pv.marca && `Marca: ${pv.marca}`,
+                                            pv.precioUnitario && `Precio: ${pv.precioUnitario}€`,
+                                            pv.codigoBarras && `Cód. Barras: ${pv.codigoBarras}`,
+                                        ].filter(Boolean).join(' · ') || '—',
+                                        fullWidth: true,
+                                    })),
+                                }] : []),
+                            ]}
+                            editConfig={{
+                                title: `Editar: ${p.nombre}`,
+                                fields: dynamicSchema,
+                                initialData: buildEditData(p),
+                                onSubmit: handleSaveProduct,
+                                isSubmitting: isSaving,
+                                requireConfirmation: true,
+                                size: 'lg',
+                            }}
+                        />
+                    );
+                })()}
             </Paper>
         </Box>
     );
