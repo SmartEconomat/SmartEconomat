@@ -3,6 +3,7 @@ import { Receta } from '../receta.entity/receta.entity';
 import { RecetaRepository } from '../repository/receta.repository';
 import { CreateRecetaDto } from '../dto/create-receta.dto';
 import { UpdateRecetaDto } from '../dto/update-receta.dto';
+import { DuplicateRecetaDto } from '../dto/duplicate-receta.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
@@ -39,5 +40,12 @@ export class RecetaService {
   async remove(id: string): Promise<void> {
     await this.findOne(id);
     await this.recetaRepository.remove(id);
+  }
+
+  async duplicate(duplicateRecetaDto: DuplicateRecetaDto): Promise<Receta> {
+    return this.recetaRepository.duplicate(
+      duplicateRecetaDto.sourceId,
+      duplicateRecetaDto.newName
+    );
   }
 }
