@@ -23,7 +23,8 @@
     "schema:sync": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js schema:sync -d src/config/typeorm.config.ts",
     "db:reset": "npm run schema:drop && npm run schema:sync && npm run seed",
     "generate:erd": "ts-node tools/scripts/generate-erd.ts",
-    "prepare": "cd ../.. && husky backend/smart-economat-backend/.husky"
+    "prepare": "cd ../.. && husky backend/smart-economat-backend/.husky",
+    "seed:large": "ts-node tools/scripts/generate-large-pedidos.ts"
   },
   "dependencies": {
     "@faker-js/faker": "^10.1.0",

@@ -405,6 +405,10 @@ const Recepcion: React.FC = () => {
   };
 
   const handleUpdateLinea = (pIdx: number | null, lIdx: number, field: string, value: any) => {
+    if (field === 'cantidadRecibida') {
+      const numValue = Number(value);
+      value = (!isNaN(numValue) && numValue >= 0) ? numValue : 0;
+    }
     if (pIdx !== null) {
       const newPedidos = [...draft.pedidosSeleccionados];
       const linea = { ...newPedidos[pIdx].lineas[lIdx], [field]: value };
@@ -472,6 +476,19 @@ const Recepcion: React.FC = () => {
                       fechaCaducidad: l.fechaCaducidad ? new Date(l.fechaCaducidad) : undefined,
                       observaciones: l.observaciones
                    })),
+      productosNuevos: draft.productosEspontaneos.map(p => ({
+         pendienteCreacion: true,
+         codigoBarras: p.productoNuevo?.codigoBarras || p.codigoBarras || '',
+         nombre: p.productoNuevo?.nombre || p.nombreProducto,
+         marca: p.productoNuevo?.marca || '',
+         unidad: p.productoNuevo?.unidad || p.unidad || UnidadMedida.KG,
+         tipo: p.productoNuevo?.tipo || CategoriaProducto.OTRO,
+         contenido: p.productoNuevo?.contenido || 1,
+         cantidadRecibida: Number(p.cantidadRecibida),
+         estadoVisual: p.estadoVisual,
+         fechaCaducidad: p.fechaCaducidad ? new Date(p.fechaCaducidad) : undefined,
+         observaciones: p.observaciones
+      }))
     };
 
     try {
@@ -482,7 +499,15 @@ const Recepcion: React.FC = () => {
       localStorage.removeItem(LOCAL_STORAGE_KEY);
       setDraft(defaultDraft()); 
     } catch (err: any) {
-      setError(`Error crítico en la transacción: ${err.message}. Los datos siguen guardados localmente; puedes intentar enviarlos de nuevo.`);
+      const errorMessage = err.message || '';
+      if (errorMessage.includes('Pedido no encontrado') || errorMessage.includes('ORDER_NOT_FOUND')) {
+         localStorage.removeItem(LOCAL_STORAGE_KEY);
+         setDraft(defaultDraft());
+         setActiveStep(0);
+         setError(`Error crítico: El pedido que intentabas recepcionar ya no existe o fue procesado. El borrador local obsoleto ha sido eliminado por seguridad. Por favor, selecciona nuevamente los pedidos a recepcionar.`);
+      } else {
+         setError(`Error crítico en la transacción: ${errorMessage}. Los datos siguen guardados localmente; puedes intentar enviarlos de nuevo.`);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -637,6 +662,7 @@ const Recepcion: React.FC = () => {
                       <TextField 
                         type="number" 
                         size="small" 
+                        InputProps={{ inputProps: { min: 0 } }}
                         value={l.cantidadRecibida} 
                         onChange={(e) => handleUpdateLinea(pIdx, lIdx, 'cantidadRecibida', e.target.value)}
                         sx={{ width: 80 }}
@@ -707,6 +733,7 @@ const Recepcion: React.FC = () => {
                      <TextField 
                       type="number" 
                       size="small" 
+                      InputProps={{ inputProps: { min: 0 } }}
                       value={l.cantidadRecibida} 
                       onChange={(e) => handleUpdateLinea(null, lIdx, 'cantidadRecibida', e.target.value)}
                       sx={{ width: 80 }}
@@ -1112,7 +1139,7 @@ const Recepcion: React.FC = () => {
                      {Object.values(CategoriaProducto).map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
                   </TextField>
                </Box>
-               <TextField label="Contenido (Neto)" type="number" value={modalData.contenido} onChange={e => setModalData({...modalData, contenido: Number(e.target.value)})} fullWidth />
+               <TextField label="Contenido (Neto)" type="number" InputProps={{ inputProps: { min: 0 } }} value={modalData.contenido} onChange={e => setModalData({...modalData, contenido: Math.max(0, Number(e.target.value) || 0)})} fullWidth />
             </Box>
          </DialogContent>
          <DialogActions>

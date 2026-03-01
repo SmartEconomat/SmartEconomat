@@ -32,7 +32,7 @@ export function agregarInventarioPorProducto(
     const cantidadActual = Number(item.cantidadActual) || 0;
     const cantidadMinima = Number(item.cantidadMinima) || 0;
     const proveedorNombre = pp.proveedor?.nombre;
-    const ubicacion = item.ubicacionAlmacen;
+    const ubicacion = item.ubicacion?.nombre;
 
     const existing = map.get(productoId);
     if (existing) {
@@ -72,7 +72,7 @@ export interface CreateInventarioPayload {
   cantidadActual: number;
   cantidadMinima: number;
   cantidadMaxima?: number;
-  ubicacionAlmacen: string;
+  ubicacionId: string;
   fechaCaducidad?: string;
 }
 
