@@ -17,7 +17,7 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   if (!adminExists) {
     const adminDefault = usuarioRepo.create({
-      nombre: 'Administrador Principal',
+      nombre: 'Z-Administrador del Sistema',
       username: 'admin',
       password: '123456',
       email: 'admin@smarteconomat.com',
