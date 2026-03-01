@@ -18,6 +18,10 @@ export default defineConfig(() => {
                 changeOrigin: true,
             },
         },
+        watch: {
+            usePolling: true, // Required for Docker volume mounts to detect file changes (HMR)
+            interval: 300,
+        },
     },
     resolve: {
         alias: {

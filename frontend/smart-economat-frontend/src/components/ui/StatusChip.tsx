@@ -1,5 +1,7 @@
 import React from 'react';
 import { Chip, ChipProps } from '@mui/material';
+import { CategoriaProducto } from '../../services/producto.types';
+import { getCategoryIconFilled } from '../../features/productos/utils/getCategoryIconFilled';
 
 export type StatusType =
     | 'success' | 'completed' | 'delivered' | 'approved'
@@ -13,6 +15,15 @@ export interface StatusChipProps extends Omit<ChipProps, 'color'> {
     status: StatusType | string;
     label?: string;
 }
+
+// Ancho fijo para chips de categoría de producto
+const CATEGORY_CHIP_MIN_WIDTH = 110;
+
+// Conjunto de valores de CategoriaProducto para detección rápida
+const CATEGORIA_VALUES = new Set<string>(Object.values(CategoriaProducto));
+
+const isCategoriaProducto = (status: string): status is CategoriaProducto =>
+    CATEGORIA_VALUES.has(status.toLowerCase());
 
 const getStatusColor = (
     status: string
@@ -68,7 +79,25 @@ const statusTranslations: Record<string, string> = {
     media: 'Media',
     difícil: 'Difícil',
     unknown: 'Desconocido',
-    default: 'Por defecto'
+    default: 'Por defecto',
+};
+
+const categoriaTranslations: Record<CategoriaProducto, string> = {
+    [CategoriaProducto.VERDURA]: 'Verdura',
+    [CategoriaProducto.FRUTA]: 'Fruta',
+    [CategoriaProducto.CARNE]: 'Carne',
+    [CategoriaProducto.PESCADO]: 'Pescado',
+    [CategoriaProducto.MARISCO]: 'Marisco',
+    [CategoriaProducto.LACTEO]: 'Lácteo',
+    [CategoriaProducto.HUEVO]: 'Huevo',
+    [CategoriaProducto.CEREAL]: 'Cereal',
+    [CategoriaProducto.LEGUMBRE]: 'Legumbre',
+    [CategoriaProducto.FRUTO_SECO]: 'Fruto seco',
+    [CategoriaProducto.CONDIMENTO]: 'Condimento',
+    [CategoriaProducto.ACEITE]: 'Aceite',
+    [CategoriaProducto.AZUCAR]: 'Azúcar',
+    [CategoriaProducto.BEBIDA]: 'Bebida',
+    [CategoriaProducto.OTRO]: 'Otro',
 };
 
 const capitalize = (text: string) => {
@@ -93,8 +122,19 @@ export const StatusChip: React.FC<StatusChipProps> = ({
     variant = 'filled',
     ...rest
 }) => {
-    const resolvedColor = getStatusColor(status as string);
-    const displayLabel = label || getTranslatedStatus(status as string);
+    const statusStr = status as string;
+    const isCategoria = isCategoriaProducto(statusStr);
+
+    const resolvedColor = getStatusColor(statusStr);
+    const displayLabel = label || (
+        isCategoria
+            ? categoriaTranslations[statusStr.toLowerCase() as CategoriaProducto]
+            : getTranslatedStatus(statusStr)
+    );
+
+    const categoryIcon = isCategoria
+        ? getCategoryIconFilled(statusStr.toLowerCase() as CategoriaProducto, { sx: { fontSize: 14 } })
+        : undefined;
 
     return (
         <Chip
@@ -103,8 +143,18 @@ export const StatusChip: React.FC<StatusChipProps> = ({
             color={resolvedColor}
             size={size}
             variant={variant}
+            icon={categoryIcon}
             sx={{
                 fontWeight: 500,
+                ...(isCategoria && {
+                    minWidth: CATEGORY_CHIP_MIN_WIDTH,
+                    justifyContent: 'center',
+                    '& .MuiChip-icon': {
+                        marginLeft: '0px',
+                        marginRight: '2px',
+                        fontSize: 14,
+                    },
+                }),
                 ...rest.sx,
             }}
         />
