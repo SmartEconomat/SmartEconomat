@@ -10,6 +10,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { EstadoVisualProducto } from '../enums/estado-visual.enum';
 import {
   TipoProducto,
   UnidadProducto,
@@ -73,6 +74,23 @@ export class RecepcionLineDto {
   @IsNumber()
   @Min(0)
   cantidadRecibida: number;
+
+  @ApiPropertyOptional({
+    description: 'Estado exterior / visual con el que llega la mercancía',
+    enum: EstadoVisualProducto,
+    example: EstadoVisualProducto.OPTIMO,
+  })
+  @IsEnum(EstadoVisualProducto)
+  @IsOptional()
+  estadoVisual?: EstadoVisualProducto;
+
+  @ApiPropertyOptional({
+    description: 'Fecha de caducidad del lote físico recibido',
+    example: '2026-10-15T00:00:00.000Z',
+  })
+  @IsOptional()
+  @Type(() => Date)
+  fechaCaducidad?: Date;
 
   @ApiPropertyOptional({
     description: 'Observaciones de la línea (e.g. "Caja abollada")',
@@ -187,6 +205,7 @@ export class CreateRecepcionDto {
     description: 'ID del usuario operario (usualmente sacado del token JWT)',
     example: 'uuid-string',
   })
+  @IsOptional()
   @IsString()
-  usuarioId: string;
+  usuarioId?: string;
 }
