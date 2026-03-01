@@ -96,3 +96,9 @@ Este documento detalla los **Casos de Uso (UC)** del sistema SmartEconomat, desc
 - **Explicación Técnica**:
     - **Incidencias**: Generación automática de discrepancias si la cantidad recibida no coincide con el pedido (tipos: `FALTA`, `EXCESO`, `DEFECTUOSO`).
     - **Albaranes**: Registro del documento físico en la entidad `Albaran` vinculado a la `Recepcion`.
+
+## 👤 12. Gestión de Perfil de Usuario
+**Propósito**: Permitir a los usuarios gestionar su propia información y credenciales.
+
+- **Descripción**: El usuario puede ver su perfil, actualizar datos personales (nombre) y cambiar su contraseña de forma segura.
+- **Detalles**: Ver [Caso de Uso: Perfil de Usuario](./perfil-usuario.md) para más detalles técnicos.

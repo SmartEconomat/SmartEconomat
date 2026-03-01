@@ -326,6 +326,7 @@ Gestión integrada de fórmulas culinarias y sus ingredientes. *Requiere `JwtAut
 | Método | Endpoint | Descripción | Roles Permitidos |
 | :--- | :--- | :--- | :--- |
 | `POST` | `/recetas` | Crear nueva receta e ingredientes | `ADMINISTRADOR`, `PROFESOR` |
+| `POST` | `/recetas/duplicate` | **Duplicar una receta existente** | `ADMINISTRADOR`, `PROFESOR` |
 | `GET` | `/recetas` | Listar recetas (paginado + búsqueda) | `ADMIN`, `PROFESOR`, `ALUMNO` |
 | `GET` | `/recetas/:id` | Ficha completa (incluye alérgenos) | `ADMIN`, `PROFESOR`, `ALUMNO` |
 | `PATCH` | `/recetas/:id` | Actualizar datos o ingredientes | `ADMINISTRADOR`, `PROFESOR` |

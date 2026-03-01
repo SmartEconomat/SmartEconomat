@@ -102,5 +102,48 @@ describe('RecetaController (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(204);
     });
+
+    /**
+     * @test Debe duplicar una receta.
+     */
+    it('POST /recetas/duplicate - Debe duplicar una receta (201)', async () => {
+      const createRes = await request(app.getHttpServer())
+        .post('/api/v1/recetas')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          nombre: 'Receta Original',
+          instrucciones: 'Instrucciones originales',
+          tiempo: '10 min',
+          dificultad: 'Fácil',
+          tiempoPreparacion: '5 min',
+          ingredientes: [],
+        })
+        .expect(201);
+
+      const originalId = createRes.body.data.id;
+
+      const duplicateRes = await request(app.getHttpServer())
+        .post('/api/v1/recetas/duplicate')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          sourceId: originalId,
+          newName: 'Receta Duplicada',
+        })
+        .expect(201);
+
+      expect(duplicateRes.body.success).toBe(true);
+      expect(duplicateRes.body.data.nombre).toBe('Receta Duplicada');
+      const duplicatedId = duplicateRes.body.data.id;
+
+      await request(app.getHttpServer())
+        .delete(`/api/v1/recetas/${originalId}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(204);
+
+      await request(app.getHttpServer())
+        .delete(`/api/v1/recetas/${duplicatedId}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(204);
+    });
   });
 });

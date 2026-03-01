@@ -15,6 +15,7 @@ import {
 import { RecetaService } from '../service/receta.service';
 import { CreateRecetaDto } from '../dto/create-receta.dto';
 import { UpdateRecetaDto } from '../dto/update-receta.dto';
+import { DuplicateRecetaDto } from '../dto/duplicate-receta.dto';
 import { Receta } from '../receta.entity/receta.entity';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/role.guard';
@@ -33,6 +34,13 @@ export class RecetaController {
   @HttpCode(HttpStatus.CREATED)
   create(@Body() createRecetaDto: CreateRecetaDto): Promise<Receta> {
     return this.recetaService.create(createRecetaDto);
+  }
+
+  @Post('duplicate')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @HttpCode(HttpStatus.CREATED)
+  duplicate(@Body() duplicateRecetaDto: DuplicateRecetaDto): Promise<Receta> {
+    return this.recetaService.duplicate(duplicateRecetaDto);
   }
 
   @Get()

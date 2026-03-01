@@ -192,4 +192,46 @@ export class RecetaRepository {
       throw new NotFoundException(I18nHelper.getError('RECIPE_NOT_FOUND'));
     }
   }
+
+  async duplicate(sourceId: string, newName: string): Promise<Receta> {
+    const sourceReceta = await this.findById(sourceId);
+
+    if (!sourceReceta) {
+      throw new NotFoundException(I18nHelper.getError('RECIPE_NOT_FOUND'));
+    }
+
+    return this.dataSource.transaction(async (manager) => {
+      const newReceta = manager.create(Receta, {
+        nombre: newName,
+        instrucciones: sourceReceta.instrucciones,
+        tiempo: sourceReceta.tiempo,
+        dificultad: sourceReceta.dificultad,
+        tiempoPreparacion: sourceReceta.tiempoPreparacion,
+      });
+
+      await manager.save(newReceta);
+
+      if (sourceReceta.ingredientes) {
+        for (const ing of sourceReceta.ingredientes) {
+          const newIngrediente = manager.create(RecetaIngrediente, {
+            cantidad: ing.cantidad,
+            unidad: ing.unidad,
+            receta: newReceta,
+            producto: ing.producto,
+          });
+
+          await manager.save(newIngrediente);
+        }
+      }
+
+      return manager.findOneOrFail(Receta, {
+        where: { id: newReceta.id },
+        relations: [
+          'ingredientes',
+          'ingredientes.producto',
+          'ingredientes.producto.alergenos',
+        ],
+      });
+    });
+  }
 }

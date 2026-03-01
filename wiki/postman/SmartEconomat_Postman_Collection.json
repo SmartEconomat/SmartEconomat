@@ -403,6 +403,19 @@
             },
             "url": "{{base_url}}/recetas"
           }
+        },
+        {
+          "name": "Duplicate Recipe",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceId\": \"uuid-receta-original\",\n  \"newName\": \"Tortilla de Patatas Vegana\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/recetas/duplicate",
+            "description": "Crea una copia exacta de una receta (incluyendo ingredientes) con un nuevo nombre."
+          }
         }
       ]
     },
