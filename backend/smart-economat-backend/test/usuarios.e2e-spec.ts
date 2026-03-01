@@ -1,3 +1,4 @@
+import { Server } from 'http';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   INestApplication,
@@ -37,7 +38,7 @@ describe('UsuarioController (e2e)', () => {
     app.useGlobalFilters(new GlobalExceptionFilter());
     await app.init();
 
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as Server)
       .post('/api/v1/auth/login')
       .send({
         email: 'admin@smarteconomat.com',
@@ -55,7 +56,7 @@ describe('UsuarioController (e2e)', () => {
      * @test Debe obtener la información del perfil del usuario logueado.
      */
     it('GET /usuarios/perfil - Debe obtener mi perfil (200)', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as Server)
         .get('/api/v1/usuarios/perfil')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200)
@@ -69,7 +70,7 @@ describe('UsuarioController (e2e)', () => {
      * @test Debe actualizar los datos básicos del perfil.
      */
     it('PATCH /usuarios/perfil - Debe actualizar mi nombre (200)', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as Server)
         .patch('/api/v1/usuarios/perfil')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ nombre: 'Admin Master' })
@@ -83,19 +84,19 @@ describe('UsuarioController (e2e)', () => {
      * @test Debe validar la contraseña antigua antes de cambiarla por una nueva.
      */
     it('PATCH /usuarios/perfil/password - Debe cambiar contraseña validando la anterior (200)', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as Server)
         .patch('/api/v1/usuarios/perfil/password')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ oldPassword: 'wrong', newPassword: 'NewPassword123!' })
         .expect(401);
 
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as Server)
         .patch('/api/v1/usuarios/perfil/password')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ oldPassword: '123456', newPassword: 'NewPassword123!' })
         .expect(200);
 
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as Server)
         .patch('/api/v1/usuarios/perfil/password')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ oldPassword: 'NewPassword123!', newPassword: '123456' })
@@ -114,8 +115,15 @@ describe('UsuarioController (e2e)', () => {
         .expect(200);
 
       expect(Array.isArray(res.body.data.data)).toBe(true);
-      if (res.body.data.data.length > 0) {
-        testUserId = res.body.data.data[0].id;
+      const profileRes = await request(app.getHttpServer())
+        .get('/api/v1/usuarios/perfil')
+        .set('Authorization', `Bearer ${adminToken}`);
+      const adminId = (profileRes.body as { data: { id: string } }).data.id;
+
+      const users = res.body.data.data as Array<{ id: string }>;
+      const otherUser = users.find((u) => u.id !== adminId);
+      if (otherUser) {
+        testUserId = otherUser.id;
       }
     });
 
@@ -124,7 +132,7 @@ describe('UsuarioController (e2e)', () => {
      */
     it('GET /usuarios/:id - Debe obtener un usuario (200)', async () => {
       if (!testUserId) return;
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as Server)
         .get(`/api/v1/usuarios/${testUserId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
@@ -135,7 +143,7 @@ describe('UsuarioController (e2e)', () => {
      */
     it('PATCH /usuarios/:id/activar - Debe cambiar estado activo (200)', async () => {
       if (!testUserId) return;
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as Server)
         .patch(`/api/v1/usuarios/${testUserId}/activar`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ activo: true })
@@ -147,7 +155,7 @@ describe('UsuarioController (e2e)', () => {
      */
     it('PATCH /usuarios/:id/rol - Debe cambiar el rol (200)', async () => {
       if (!testUserId) return;
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as Server)
         .patch(`/api/v1/usuarios/${testUserId}/rol`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ rol: 'profesor' })
