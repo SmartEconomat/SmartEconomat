@@ -19,7 +19,7 @@ export async function fetchRecepciones(): Promise<any[]> {
  * Endpoint atómico. Genera inventario, actualiza pedido y crea incidencias automáticamente.
  */
 export async function createRecepcion(payload: CreateRecepcionDto): Promise<RecepcionResultado> {
-    const response = await baseFetch('/recepcion/masiva', {
+    const response = await baseFetch('/recepcion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

@@ -4,7 +4,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { DataSource, EntityManager, In } from 'typeorm';
-import { CreateRecepcionDto } from '../dto/create-recepcion.dto';
+import {
+  CreateRecepcionDto,
+  RecepcionLineDto,
+} from '../dto/create-recepcion.dto';
 import { RecepcionResultadoDto } from '../dto/recepcion-resultado.dto';
 import { AlbaranPedidoRecepcion } from '../../albaran/albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
 import { Inventario } from '../../inventario/inventario.entity/inventario.entity';
@@ -517,8 +520,12 @@ export class RecepcionStockService {
       }
 
       const sumadoRecibidoPorPP = new Map<string, number>();
+      const detallesRecibidos = new Map<string, RecepcionLineDto[]>();
 
       for (const linea of dto.productos) {
+        const estadoVirtualDefault =
+          linea.estadoVisual || EstadoVisualProducto.OPTIMO;
+
         const ppRef = mapPedidoProductos.get(linea.pedidoProductoId);
         if (!ppRef) {
           throw new BadRequestException(
@@ -532,6 +539,10 @@ export class RecepcionStockService {
           valActual + Number(linea.cantidadRecibida)
         );
 
+        const detallesLinea = detallesRecibidos.get(ppRef.id) || [];
+        detallesLinea.push({ ...linea, estadoVisual: estadoVirtualDefault });
+        detallesRecibidos.set(ppRef.id, detallesLinea);
+
         const recepcionProducto = queryRunner.manager.create(
           RecepcionProducto,
           {
@@ -544,14 +555,22 @@ export class RecepcionStockService {
 
         await queryRunner.manager.save(recepcionProducto);
 
-        if (linea.cantidadRecibida > 0) {
+        if (
+          linea.cantidadRecibida > 0 &&
+          estadoVirtualDefault === EstadoVisualProducto.OPTIMO
+        ) {
+          const defaultExpiration = new Date(
+            Date.now() + 30 * 24 * 60 * 60 * 1000
+          );
           const stockNuevo = queryRunner.manager.create(Inventario, {
             productoProveedor: ppRef.productoProveedor as any,
             cantidadActual: linea.cantidadRecibida,
             cantidadMinima: 10,
             fechaEntrada: new Date(),
             ubicacionAlmacen: localInventario.ALMACEN_A,
-            fechaCaducidad: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            fechaCaducidad: linea.fechaCaducidad
+              ? new Date(linea.fechaCaducidad)
+              : defaultExpiration,
           });
 
           const savedStock = await queryRunner.manager.save(stockNuevo);
@@ -563,7 +582,7 @@ export class RecepcionStockService {
             entidadId: savedRecepcion.id,
             entidad: 'Recepcion',
             inventario: { id: savedStock.id } as any,
-            descripcion: `Recepción Pedido ${ppRef.id} - Albarán ${dto.nAlbaran || 'N/A'}`,
+            descripcion: `Recepción Pedido ${ppRef.id} - Lote ÓPTIMO - Albarán ${dto.nAlbaran || 'N/A'}`,
             usuario: { id: dto.usuarioId },
           });
           movimientosGenerados++;
@@ -575,24 +594,56 @@ export class RecepcionStockService {
         const lineasIncidencia: LineaIncidencia[] = [];
 
         for (const pp of ppArr) {
-          const cantRecibida = sumadoRecibidoPorPP.get(pp.id) || 0;
+          const lineasRecibidas = detallesRecibidos.get(pp.id) || [];
           const cantPedida = Number(pp.cantidad);
-          const dif = cantRecibida - cantPedida;
 
-          if (dif !== 0) {
+          let subCantOptima = 0;
+          let subCantRotaDefectuosa = 0;
+
+          for (const lr of lineasRecibidas) {
+            if (lr.estadoVisual === EstadoVisualProducto.OPTIMO) {
+              subCantOptima += Number(lr.cantidadRecibida);
+            } else {
+              subCantRotaDefectuosa += Number(lr.cantidadRecibida);
+            }
+          }
+
+          const cantRecibidaTotal = subCantOptima + subCantRotaDefectuosa;
+          const difNumerica = cantRecibidaTotal - cantPedida;
+
+          if (difNumerica !== 0) {
             lineasIncidencia.push({
               idPedidoProducto: pp.id,
               nombreProducto:
                 pp.productoProveedor?.producto?.nombre || 'Producto',
               cantidadPedida: cantPedida,
-              cantidadRecibida: cantRecibida,
-              diferencia: dif,
+              cantidadRecibida: cantRecibidaTotal,
+              diferencia: difNumerica,
               tipo:
-                cantRecibida === 0
+                cantRecibidaTotal === 0
                   ? 'NO_ENTREGADO'
-                  : dif < 0
+                  : difNumerica < 0
                     ? 'FALTA'
                     : 'EXCESO',
+            });
+          }
+
+          if (subCantRotaDefectuosa > 0) {
+            const observacionesMermas = lineasRecibidas
+              .filter((lr) => lr.estadoVisual !== EstadoVisualProducto.OPTIMO)
+              .map((lr) => lr.observaciones)
+              .filter(Boolean)
+              .join('; ');
+
+            lineasIncidencia.push({
+              idPedidoProducto: pp.id,
+              nombreProducto:
+                pp.productoProveedor?.producto?.nombre || 'Producto',
+              cantidadPedida: cantPedida,
+              cantidadRecibida: subCantRotaDefectuosa,
+              diferencia: -subCantRotaDefectuosa,
+              tipo: 'DEFECTUOSO',
+              observaciones: observacionesMermas,
             });
           }
         }
