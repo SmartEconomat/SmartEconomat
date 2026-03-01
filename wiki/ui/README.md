@@ -17,6 +17,7 @@ Documentación detallada de los componentes clave, desglosando su construcción 
 - [Select](./componentes/Select.md): Componente desplegable base de UI iterado sobre Select de MUI.
 - [Spinner](./componentes/Spinner.md): Indicador de carga dinámico y bloqueador de pantalla.
 - [Modal](./componentes/Modal.md): Ventana de diálogo base reutilizable con gestión de desenfoque.
+- [DetailModal](./componentes/DetailModal.md): Variante modal especializada en presentación de entidades con layouts de grilla en secciones dinámicas.
 - [ConfirmDialog](./componentes/ConfirmDialog.md): Modal para intercepción y confirmación de acciones críticas.
 - [ToastContainer](./componentes/ToastContainer.md): Sistema de notificaciones emergentes (Toasts).
 - [DataTable](./componentes/DataTable.md): Tabla general para visualización de registros con paginación integrada.
@@ -28,6 +29,7 @@ Documentación detallada de los componentes clave, desglosando su construcción 
 - [Tutorial Onboarding](./componentes/TutorialHelper.md): Guía contextual paso a paso.
 - [Main Layout](./componentes/MainLayout.md): Estructura principal (Sidebar, Header).
 - [Settings Menu](./componentes/SettingsMenu.md): Menú de configuración (Tema, Fuentes).
+- [ProductFilters](./componentes/ProductFilters.md): Bloque funcional de selectores condicionales y colapsables para búsquedas filtradas.
 
 #### Autenticación
 - [Login](./componentes/Login.md): Orquestador de la pantalla de auth — fases, animaciones y flujos de login/registro.

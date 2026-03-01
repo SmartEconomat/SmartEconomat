@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Modal genérico y animado para presentar el detalle en formato de solo lectura de cualquier entidad.
+ * Este componente incluye la capacidad de transmutar (morphing) de la vista de solo lectura 
+ * a un formulario interactivo de edición usando form schemas reutilizando el contexto visual sin perder la ubicación.
+ */
+
 import React, { useState } from 'react';
 import {
     Box,
@@ -24,13 +30,20 @@ export interface DetailField {
     label: string;
     /** Texto, número o cualquier ReactNode (chip, icono…). */
     value: React.ReactNode;
-    /** Si true, ocupa todo el ancho de la fila. */
+    /** Si true, ocupa todo el ancho de la fila (1 / -1). */
     fullWidth?: boolean;
+    /** Cuantas columnas ocupa en pantallas medianas/grandes. Por defecto 1. */
+    colSpan?: number;
 }
 
 export interface DetailSection {
     title?: string;
-    fields: DetailField[];
+    /** Opcional: Número de columnas que componen el grid de esta sección. Por defecto: 2 */
+    columns?: number;
+    /** Matriz de campos clásicos conformados por clave: valor */
+    fields?: DetailField[];
+    /** Módulo inyectable personalizado en lugar del sistema tradicional de campos rígidos */
+    content?: React.ReactNode;
 }
 
 export interface DetailModalProps {
@@ -202,34 +215,46 @@ const DetailModal: React.FC<DetailModalProps> = ({
                                 </>
                             )}
 
-                            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
-                                {section.fields.map((field, fIdx) => (
-                                    <Box key={fIdx} sx={{ gridColumn: field.fullWidth ? 'span 2' : 'span 1' }}>
-                                        <Typography
-                                            variant="caption"
-                                            color="text.secondary"
-                                            sx={{
-                                                fontWeight: 600,
-                                                textTransform: 'uppercase',
-                                                letterSpacing: 0.5,
-                                                display: 'block',
-                                                mb: 0.25,
-                                            }}
-                                        >
-                                            {field.label}
-                                        </Typography>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5, minHeight: 28 }}>
-                                            {field.value != null && field.value !== '' ? (
-                                                typeof field.value === 'string' || typeof field.value === 'number'
-                                                    ? <Typography variant="body2">{field.value}</Typography>
-                                                    : field.value
-                                            ) : (
-                                                <Typography variant="body2" color="text.disabled">—</Typography>
-                                            )}
+                            {section.fields && section.fields.length > 0 && (
+                                <Box sx={{
+                                    display: 'grid',
+                                    gridTemplateColumns: section.columns ? `repeat(${section.columns}, 1fr)` : { xs: '1fr', sm: 'repeat(2, 1fr)' },
+                                    gap: { xs: 1, sm: 2 }
+                                }}>
+                                    {section.fields.map((field, fIdx) => (
+                                        <Box key={fIdx} sx={{ gridColumn: field.fullWidth ? '1 / -1' : (section.columns ? `span ${field.colSpan || 1}` : { xs: '1 / -1', sm: `span ${field.colSpan || 1}` }) }}>
+                                            <Typography
+                                                variant="caption"
+                                                color="text.secondary"
+                                                sx={{
+                                                    fontWeight: 600,
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: 0.5,
+                                                    display: 'block',
+                                                    mb: 0.25,
+                                                }}
+                                            >
+                                                {field.label}
+                                            </Typography>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5, minHeight: 28 }}>
+                                                {field.value != null && field.value !== '' ? (
+                                                    typeof field.value === 'string' || typeof field.value === 'number'
+                                                        ? <Typography variant="body2">{field.value}</Typography>
+                                                        : field.value
+                                                ) : (
+                                                    <Typography variant="body2" color="text.disabled">—</Typography>
+                                                )}
+                                            </Box>
                                         </Box>
-                                    </Box>
-                                ))}
-                            </Box>
+                                    ))}
+                                </Box>
+                            )}
+
+                            {section.content && (
+                                <Box sx={{ mt: section.fields?.length ? 2 : 0 }}>
+                                    {section.content}
+                                </Box>
+                            )}
 
                             {sIdx < sections.length - 1 && <Divider sx={{ mt: 2 }} />}
                         </Box>

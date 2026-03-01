@@ -104,12 +104,17 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm, onRegisterSuc
                     }}
                 />
 
-                <Button type="submit" isLoading={isLoading} sx={{ mt: 4, mb: 1 }}>Registrarse</Button>
+                <Button type="submit" isLoading={isLoading} sx={{ mt: 4, mb: 0 }}>Registrarse</Button>
 
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-                    <Link href="#" variant="body2" onClick={e => { e.preventDefault(); onToggleForm(); }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+                    <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={() => onToggleForm()}
+                        sx={{ mt: 1 }}
+                    >
                         ¿Ya tienes cuenta? Inicia sesión
-                    </Link>
+                    </Button>
                 </Box>
             </Box>
         </Box>
