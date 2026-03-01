@@ -20,14 +20,329 @@ import { Incidencia } from '../../incidencia/incidencia.entity/incidencia.entity
 import { Albaran } from '../../albaran/albaran.entity/albaran.entity';
 import { localInventario } from '../../inventario/enums/inventario.enums';
 import { EstadoRecepcion } from '../enums/estado-recepcion.enum';
+import { EstadoVisualProducto } from '../enums/estado-visual.enum';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { Producto } from '../../producto/producto.entity/producto.entity';
 import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
+import {
+  RecepcionMasivaLoteDto,
+  RecepcionMasivaProductoDto,
+} from '../dto/recepcion-masiva.dto';
+
+interface LineaIncidencia {
+  idPedidoProducto: string;
+  nombreProducto: string;
+  cantidadPedida: number;
+  cantidadRecibida: number;
+  diferencia: number;
+  tipo: string;
+  observaciones?: string;
+}
+
+interface IncidenciaGenerada {
+  id: string;
+  estado: string;
+  datosOriginales: { productos: LineaIncidencia[] };
+}
+
+interface PedidoActualizado {
+  id: string;
+  estadoAnterior: string;
+  estadoNuevo: string;
+}
 
 @Injectable()
 export class RecepcionStockService {
   constructor(private dataSource: DataSource) {}
+
+  async procesarRecepcionMasiva(
+    dto: RecepcionMasivaLoteDto,
+    userId: string
+  ): Promise<RecepcionResultadoDto> {
+    const usuario = await this.dataSource.manager.findOne(Usuario, {
+      where: { id: userId },
+    });
+    if (!usuario) {
+      throw new NotFoundException(I18nHelper.getError('USER_NOT_FOUND'));
+    }
+
+    const pedido = await this.dataSource.manager.findOne(Pedido, {
+      where: { id: dto.pedidoId },
+      relations: [
+        'pedidoProductos',
+        'pedidoProductos.productoProveedor',
+        'pedidoProductos.productoProveedor.producto',
+        'proveedor',
+      ],
+    });
+
+    if (!pedido) {
+      throw new NotFoundException(I18nHelper.getError('ORDER_NOT_FOUND'));
+    }
+
+    if (
+      pedido.estado !== EstadoPedido.PENDIENTE &&
+      pedido.estado !== EstadoPedido.EN_PROCESO &&
+      pedido.estado !== EstadoPedido.PARCIAL
+    ) {
+      throw new BadRequestException(
+        I18nHelper.getError('ORDER_NOT_RECEPTABLE')
+      );
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      let movimientosGenerados = 0;
+      let inventariosCreados = 0;
+      const incidenciasGeneradas: IncidenciaGenerada[] = [];
+      let recepcionEstadoEnum = EstadoRecepcion.COMPLETADA;
+
+      const recepcion = queryRunner.manager.create(Recepcion, {
+        usuario: { id: userId },
+        fechaRecepcion: new Date(),
+        observaciones: dto.observaciones,
+        estado: EstadoRecepcion.COMPLETADA,
+      });
+      const savedRecepcion = await queryRunner.manager.save(recepcion);
+
+      let rp = queryRunner.manager.create(RecepcionPedido, {
+        recepcion: savedRecepcion,
+        pedido: { id: pedido.id },
+      });
+      rp = await queryRunner.manager.save(rp);
+
+      if (dto.nAlbaran) {
+        let albaran = await queryRunner.manager.findOne(Albaran, {
+          where: { nAlbaran: dto.nAlbaran },
+        });
+
+        if (!albaran) {
+          albaran = queryRunner.manager.create(Albaran, {
+            nAlbaran: dto.nAlbaran,
+            fecha: new Date(),
+          });
+          albaran = await queryRunner.manager.save(albaran);
+        }
+
+        const apr = queryRunner.manager.create(AlbaranPedidoRecepcion, {
+          albaran: albaran,
+          recepcionPedido: rp,
+        });
+        await queryRunner.manager.save(apr);
+      }
+
+      const mapPedidoProductos = new Map<string, PedidoProducto>();
+      const ppArr = pedido.pedidoProductos as unknown as PedidoProducto[];
+      for (const pp of ppArr) {
+        mapPedidoProductos.set(pp.id, pp);
+      }
+
+      const sumadoRecibidoPorPP = new Map<string, number>();
+      const detallesRecibidos = new Map<string, RecepcionMasivaProductoDto[]>();
+
+      const batchRecepcionProductos: RecepcionProducto[] = [];
+      const batchInventarios: Inventario[] = [];
+      const lineasConInventario: {
+        linea: RecepcionMasivaProductoDto;
+        ppRef: PedidoProducto;
+        stockNuevo: Inventario;
+      }[] = [];
+
+      for (const linea of dto.productosRecibidos) {
+        const ppRef = mapPedidoProductos.get(linea.pedidoProductoId);
+        if (!ppRef) {
+          throw new BadRequestException(
+            `PedidoProducto ${linea.pedidoProductoId} no pertenece al pedido seleccionado.`
+          );
+        }
+
+        const valActual = sumadoRecibidoPorPP.get(ppRef.id) || 0;
+        sumadoRecibidoPorPP.set(
+          ppRef.id,
+          valActual + Number(linea.cantidadRecibida)
+        );
+
+        const detallesLinea = detallesRecibidos.get(ppRef.id) || [];
+        detallesLinea.push(linea);
+        detallesRecibidos.set(ppRef.id, detallesLinea);
+
+        batchRecepcionProductos.push(
+          queryRunner.manager.create(RecepcionProducto, {
+            recepcion: savedRecepcion,
+            cantidadRecibida: linea.cantidadRecibida,
+            observaciones: linea.observaciones,
+            pedidoProducto: { id: ppRef.id },
+          })
+        );
+
+        if (
+          linea.cantidadRecibida > 0 &&
+          linea.estadoVisual === EstadoVisualProducto.OPTIMO
+        ) {
+          const defaultExpiration = new Date(
+            Date.now() + 30 * 24 * 60 * 60 * 1000
+          );
+          const stockNuevo = queryRunner.manager.create(Inventario, {
+            productoProveedor: ppRef.productoProveedor,
+            cantidadActual: linea.cantidadRecibida,
+            cantidadMinima: 10,
+            fechaEntrada: new Date(),
+            ubicacionAlmacen: localInventario.ALMACEN_A,
+            fechaCaducidad: linea.fechaCaducidad
+              ? new Date(linea.fechaCaducidad)
+              : defaultExpiration,
+          });
+          batchInventarios.push(stockNuevo);
+          lineasConInventario.push({ linea, ppRef, stockNuevo });
+        }
+      }
+
+      if (batchRecepcionProductos.length > 0) {
+        await queryRunner.manager.save(batchRecepcionProductos);
+      }
+
+      if (batchInventarios.length > 0) {
+        await queryRunner.manager.save(batchInventarios);
+        inventariosCreados = batchInventarios.length;
+
+        const batchMovimientos: Movimiento[] = [];
+        for (const item of lineasConInventario) {
+          batchMovimientos.push(
+            queryRunner.manager.create(Movimiento, {
+              tipo: TipoMovimiento.ENTRADA_COMPRA,
+              cantidad: item.linea.cantidadRecibida,
+              entidadId: savedRecepcion.id,
+              entidad: 'Recepcion',
+              inventario: {
+                id: item.stockNuevo.id,
+              } as Movimiento['inventario'],
+              descripcion: `Recepción Masiva Pedido ${item.ppRef.id} - Lote ÓPTIMO - Albarán ${dto.nAlbaran || 'N/A'}`,
+              usuario: { id: userId },
+            })
+          );
+        }
+        await queryRunner.manager.save(batchMovimientos);
+        movimientosGenerados = batchMovimientos.length;
+      }
+
+      const lineasIncidencia: LineaIncidencia[] = [];
+
+      for (const pp of ppArr) {
+        const cantPedida = Number(pp.cantidad);
+        const lineasRecibidas = detallesRecibidos.get(pp.id) || [];
+
+        let subCantOptima = 0;
+        let subCantRotaDefectuosa = 0;
+
+        for (const lr of lineasRecibidas) {
+          if (lr.estadoVisual === EstadoVisualProducto.OPTIMO) {
+            subCantOptima += Number(lr.cantidadRecibida);
+          } else {
+            subCantRotaDefectuosa += Number(lr.cantidadRecibida);
+          }
+        }
+
+        const cantRecibidaTotal = subCantOptima + subCantRotaDefectuosa;
+        const difNumerica = cantRecibidaTotal - cantPedida;
+
+        if (difNumerica !== 0) {
+          lineasIncidencia.push({
+            idPedidoProducto: pp.id,
+            nombreProducto:
+              pp.productoProveedor?.producto?.nombre || 'Producto',
+            cantidadPedida: cantPedida,
+            cantidadRecibida: cantRecibidaTotal,
+            diferencia: difNumerica,
+            tipo:
+              cantRecibidaTotal === 0
+                ? 'NO_ENTREGADO'
+                : difNumerica < 0
+                  ? 'FALTA'
+                  : 'EXCESO',
+          });
+        }
+
+        if (subCantRotaDefectuosa > 0) {
+          const observacionesMermas = lineasRecibidas
+            .filter((lr) => lr.estadoVisual !== EstadoVisualProducto.OPTIMO)
+            .map((lr) => lr.observaciones)
+            .filter(Boolean)
+            .join('; ');
+
+          lineasIncidencia.push({
+            idPedidoProducto: pp.id,
+            nombreProducto:
+              pp.productoProveedor?.producto?.nombre || 'Producto',
+            cantidadPedida: cantPedida,
+            cantidadRecibida: subCantRotaDefectuosa,
+            diferencia: -subCantRotaDefectuosa,
+            tipo: 'DEFECTUOSO',
+            observaciones: observacionesMermas,
+          });
+        }
+      }
+
+      if (lineasIncidencia.length > 0) {
+        recepcionEstadoEnum = EstadoRecepcion.CON_INCIDENCIAS;
+        const incidenciaRec = queryRunner.manager.create(Incidencia, {
+          recepcion: savedRecepcion,
+          pedido: { id: pedido.id } as Pedido,
+          observacionesRecepcion:
+            dto.observaciones ||
+            'Generado vía Recepción Masiva con discrepancias.',
+          datosOriginales: { productos: lineasIncidencia },
+        });
+        const savedInci = await queryRunner.manager.save(incidenciaRec);
+
+        incidenciasGeneradas.push({
+          id: savedInci.id,
+          estado: 'PENDIENTE DE RESOLUCIÓN',
+          datosOriginales: { productos: lineasIncidencia },
+        });
+      }
+
+      savedRecepcion.estado = recepcionEstadoEnum;
+      await queryRunner.manager.save(savedRecepcion);
+
+      const estadoPasado = pedido.estado;
+      const finalState = await this.actualizarEstadoPedido(
+        pedido.id,
+        queryRunner.manager
+      );
+
+      await queryRunner.commitTransaction();
+
+      return {
+        id: savedRecepcion.id,
+        fechaRecepcion: savedRecepcion.fechaRecepcion,
+        incidencias: incidenciasGeneradas,
+        pedidosActualizados: [
+          {
+            id: pedido.id,
+            estadoAnterior: estadoPasado,
+            estadoNuevo: finalState,
+          },
+        ],
+        movimientosGenerados,
+        inventariosCreados,
+        productosCreados: [],
+      };
+    } catch (error: unknown) {
+      if (queryRunner.isTransactionActive) {
+        await queryRunner.rollbackTransaction();
+      }
+      const err = error as Error;
+      throw new BadRequestException(
+        I18nHelper.getError('RECEPTION_FAILED', { message: err.message })
+      );
+    } finally {
+      await queryRunner.release();
+    }
+  }
 
   async procesarRecepcion(
     dto: CreateRecepcionDto
@@ -85,7 +400,7 @@ export class RecepcionStockService {
     try {
       let movimientosGenerados = 0;
       let inventariosCreados = 0;
-      const incidenciasGeneradas: any[] = [];
+      const incidenciasGeneradas: IncidenciaGenerada[] = [];
       const productosCreados: {
         id: string;
         nombre: string;
@@ -257,7 +572,7 @@ export class RecepcionStockService {
 
       for (const p of pedidosArr) {
         const ppArr = p.pedidoProductos as unknown as PedidoProducto[];
-        const lineasIncidencia: any[] = [];
+        const lineasIncidencia: LineaIncidencia[] = [];
 
         for (const pp of ppArr) {
           const cantRecibida = sumadoRecibidoPorPP.get(pp.id) || 0;
@@ -304,7 +619,7 @@ export class RecepcionStockService {
       savedRecepcion.estado = recepcionEstadoEnum;
       await queryRunner.manager.save(savedRecepcion);
 
-      const pedidosActualizadosFinal: any[] = [];
+      const pedidosActualizadosFinal: PedidoActualizado[] = [];
       for (const p of pedidosArr) {
         const estadoPasado = p.estado;
         const finalState = await this.actualizarEstadoPedido(

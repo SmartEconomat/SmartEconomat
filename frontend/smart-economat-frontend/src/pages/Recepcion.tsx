@@ -32,6 +32,8 @@ import {
   FormControl,
   IconButton,
   Tooltip,
+  Snackbar,
+  Backdrop,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
@@ -44,7 +46,7 @@ import {
   LineaDraft,
   PasoWizard,
   RecepcionResultado,
-  CreateRecepcionDto,
+  EstadoVisualProducto,
 } from '../services/recepcion.types';
 import { createRecepcion } from '../services/recepcion.service';
 import { fetchPedidos } from '../services/pedido.service';
@@ -204,6 +206,8 @@ const Recepcion: React.FC = () => {
           unidad: pp.productoProveedor?.producto?.unidad || 'unidades',
           cantidadPedida: Number(pp.cantidad),
           cantidadRecibida: 0,
+          estadoVisual: EstadoVisualProducto.OPTIMO,
+          fechaCaducidad: '',
           observaciones: '',
           estado: calculateEstado(0, Number(pp.cantidad))
         }))
@@ -310,6 +314,8 @@ const Recepcion: React.FC = () => {
             unidad: prod.unidad || 'uds',
             cantidadPedida: 0,
             cantidadRecibida: 1,
+            estadoVisual: EstadoVisualProducto.OPTIMO,
+            fechaCaducidad: '',
             observaciones: '',
             estado: '🆕 Nuevo' as any
          };
@@ -357,6 +363,11 @@ const Recepcion: React.FC = () => {
        return false;
     }
 
+    if (draft.pedidosSeleccionados.length > 1) {
+       setError("La recepción masiva actualmente solo soporta un pedido primario por operación de lote.");
+       return false;
+    }
+
     // Validar observaciones si hay discrepancia (negocio)
     draft.pedidosSeleccionados.forEach(p => {
       p.lineas.forEach(l => {
@@ -376,42 +387,32 @@ const Recepcion: React.FC = () => {
     setIsSubmitting(true);
     setError(null);
 
-    const payload: CreateRecepcionDto = {
-      pedidos: draft.pedidosSeleccionados.map(p => ({
-        pedidoId: p.id,
-        nAlbaran: p.nAlbaran,
-      })),
+    const pedidoPrincipal = draft.pedidosSeleccionados[0] || { id: '', nAlbaran: '' };
+
+    const payload: any = {
+      pedidoId: pedidoPrincipal.id,
+      nAlbaran: pedidoPrincipal.nAlbaran || draft.nAlbaran,
       observaciones: draft.observaciones,
-      productos: draft.pedidosSeleccionados.flatMap(p => p.lineas)
+      productosRecibidos: draft.pedidosSeleccionados.flatMap(p => p.lineas)
                    .filter(l => Number(l.cantidadRecibida) > 0)
                    .map(l => ({
                       pedidoProductoId: l.pedidoProductoId!,
                       cantidadRecibida: Number(l.cantidadRecibida),
+                      estadoVisual: l.estadoVisual,
+                      fechaCaducidad: l.fechaCaducidad ? new Date(l.fechaCaducidad) : undefined,
                       observaciones: l.observaciones
                    })),
-      productosNuevos: draft.productosEspontaneos
-                        .filter(l => Number(l.cantidadRecibida) > 0)
-                        .map(l => ({
-                          pendienteCreacion: true,
-                          nombre: l.productoNuevo?.nombre || l.nombreProducto,
-                          marca: l.productoNuevo?.marca,
-                          unidad: (l.productoNuevo?.unidad || (l.unidad as any)) as any,
-                          tipo: (l.productoNuevo?.tipo || 'otro') as any,
-                          codigoBarras: l.productoNuevo?.codigoBarras || '',
-                          contenido: l.productoNuevo?.contenido || 1,
-                          cantidadRecibida: Number(l.cantidadRecibida),
-                          observaciones: l.observaciones
-                        })),
-      usuarioId: user?.id
     };
 
     try {
       const res = await createRecepcion(payload);
       setResultado(res);
       setActiveStep(3);
+      // Solo eliminamos el borrador si la operación fue exitosa
       localStorage.removeItem(LOCAL_STORAGE_KEY);
+      setDraft(defaultDraft()); 
     } catch (err: any) {
-      setError(err.message || 'Error al procesar la recepción');
+      setError(`Error crítico en la transacción: ${err.message}. Los datos siguen guardados localmente; puedes intentar enviarlos de nuevo.`);
     } finally {
       setIsSubmitting(false);
     }
@@ -483,11 +484,13 @@ const Recepcion: React.FC = () => {
           <Table size="small" sx={{ tableLayout: 'fixed' }}>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ width: '40%' }}>Producto</TableCell>
-                <TableCell align="center" sx={{ width: '15%' }}>Unidad</TableCell>
-                <TableCell align="right" sx={{ width: '15%' }}>Pedida</TableCell>
-                <TableCell align="right" sx={{ width: '15%' }}>Recibida</TableCell>
-                <TableCell align="center" sx={{ width: '15%' }}>Estado</TableCell>
+                <TableCell sx={{ width: '30%' }}>Producto</TableCell>
+                <TableCell align="center" sx={{ width: '10%' }}>Unidad</TableCell>
+                <TableCell align="right" sx={{ width: '10%' }}>Pedida</TableCell>
+                <TableCell align="right" sx={{ width: '10%' }}>Recibida</TableCell>
+                <TableCell sx={{ width: '15%' }}>Físico</TableCell>
+                <TableCell sx={{ width: '15%' }}>Caducidad</TableCell>
+                <TableCell align="center" sx={{ width: '10%' }}>Sync</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -507,6 +510,30 @@ const Recepcion: React.FC = () => {
                       sx={{ width: 80 }}
                     />
                   </TableCell>
+                  <TableCell>
+                    <FormControl size="small" fullWidth>
+                      <Select
+                        value={l.estadoVisual || EstadoVisualProducto.OPTIMO}
+                        onChange={(e) => handleUpdateLinea(pIdx, lIdx, 'estadoVisual', e.target.value)}
+                        sx={{ fontSize: '0.8rem' }}
+                      >
+                        <MenuItem value={EstadoVisualProducto.OPTIMO}>Óptimo</MenuItem>
+                        <MenuItem value={EstadoVisualProducto.ROTO}>Roto</MenuItem>
+                        <MenuItem value={EstadoVisualProducto.DEFECTUOSO}>Defecto</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </TableCell>
+                  <TableCell>
+                    <TextField
+                      type="date"
+                      size="small"
+                      fullWidth
+                      value={l.fechaCaducidad || ''}
+                      onChange={(e) => handleUpdateLinea(pIdx, lIdx, 'fechaCaducidad', e.target.value)}
+                      slotProps={{ inputLabel: { shrink: true } }}
+                      inputProps={{ style: { fontSize: '0.8rem', padding: '6px' } }}
+                    />
+                  </TableCell>
                   <TableCell align="center">
                     <Chip label={l.estado} size="small" color={getStatusColor(l.estado)} variant="outlined" />
                   </TableCell>
@@ -523,10 +550,12 @@ const Recepcion: React.FC = () => {
            <Table size="small" sx={{ tableLayout: 'fixed' }}>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ width: '40%' }}>Producto</TableCell>
-                  <TableCell align="center" sx={{ width: '15%' }}>Unidad</TableCell>
-                  <TableCell align="right" sx={{ width: '15%' }}>Recibida</TableCell>
-                  <TableCell align="center" sx={{ width: '30%' }}>Acción</TableCell>
+                  <TableCell sx={{ width: '30%' }}>Producto</TableCell>
+                  <TableCell align="center" sx={{ width: '10%' }}>Unidad</TableCell>
+                  <TableCell align="right" sx={{ width: '10%' }}>Recibida</TableCell>
+                  <TableCell sx={{ width: '15%' }}>Físico</TableCell>
+                  <TableCell sx={{ width: '15%' }}>Caducidad</TableCell>
+                  <TableCell align="center" sx={{ width: '20%' }}>Acción</TableCell>
                 </TableRow>
               </TableHead>
             <TableBody>
@@ -543,6 +572,30 @@ const Recepcion: React.FC = () => {
                       value={l.cantidadRecibida} 
                       onChange={(e) => handleUpdateLinea(null, lIdx, 'cantidadRecibida', e.target.value)}
                       sx={{ width: 80 }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <FormControl size="small" fullWidth>
+                      <Select
+                        value={l.estadoVisual || EstadoVisualProducto.OPTIMO}
+                        onChange={(e) => handleUpdateLinea(null, lIdx, 'estadoVisual', e.target.value)}
+                        sx={{ fontSize: '0.8rem' }}
+                      >
+                        <MenuItem value={EstadoVisualProducto.OPTIMO}>Óptimo</MenuItem>
+                        <MenuItem value={EstadoVisualProducto.ROTO}>Roto</MenuItem>
+                        <MenuItem value={EstadoVisualProducto.DEFECTUOSO}>Defecto</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </TableCell>
+                  <TableCell>
+                    <TextField
+                      type="date"
+                      size="small"
+                      fullWidth
+                      value={l.fechaCaducidad || ''}
+                      onChange={(e) => handleUpdateLinea(null, lIdx, 'fechaCaducidad', e.target.value)}
+                      slotProps={{ inputLabel: { shrink: true } }}
+                      inputProps={{ style: { fontSize: '0.8rem', padding: '6px' } }}
                     />
                   </TableCell>
                   <TableCell align="center">
@@ -597,11 +650,13 @@ const Recepcion: React.FC = () => {
              <Table size="small" sx={{ tableLayout: 'fixed' }}>
                <TableHead>
                 <TableRow>
-                  <TableCell sx={{ width: '35%' }}>Item</TableCell>
+                  <TableCell sx={{ width: '25%' }}>Item</TableCell>
                   <TableCell align="center" sx={{ width: '10%' }}>Unidad</TableCell>
                   <TableCell align="right" sx={{ width: '10%' }}>Exp.</TableCell>
                   <TableCell align="right" sx={{ width: '10%' }}>Real</TableCell>
-                  <TableCell sx={{ width: '35%' }}>Notas del incidente</TableCell>
+                  <TableCell sx={{ width: '15%' }}>Estado Físico</TableCell>
+                  <TableCell sx={{ width: '15%' }}>Caducidad</TableCell>
+                  <TableCell sx={{ width: '15%' }}>Notas</TableCell>
                 </TableRow>
                </TableHead>
                <TableBody>
@@ -616,8 +671,32 @@ const Recepcion: React.FC = () => {
                         <TableCell align="right">{l.cantidadPedida}</TableCell>
                         <TableCell align="right" sx={{ color: Number(l.cantidadRecibida) !== l.cantidadPedida ? 'orange' : 'inherit', fontWeight: 'bold' }}>{l.cantidadRecibida || 0}</TableCell>
                         <TableCell>
+                          <FormControl size="small" fullWidth>
+                            <Select
+                              value={l.estadoVisual}
+                              onChange={(e) => handleUpdateLinea(pIdx, realLineIdx, 'estadoVisual', e.target.value)}
+                            >
+                              <MenuItem value={EstadoVisualProducto.OPTIMO}>Óptimo</MenuItem>
+                              <MenuItem value={EstadoVisualProducto.ROTO}>Roto</MenuItem>
+                              <MenuItem value={EstadoVisualProducto.DEFECTUOSO}>Defectuoso</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            type="date"
+                            size="small"
+                            fullWidth
+                            value={l.fechaCaducidad || ''}
+                            onChange={(e) => handleUpdateLinea(pIdx, realLineIdx, 'fechaCaducidad', e.target.value)}
+                            slotProps={{
+                                inputLabel: { shrink: true }
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
                           <TextField 
-                            placeholder="Motivo discrepancia..." 
+                            placeholder="Discrepancia..." 
                             size="small" fullWidth 
                             value={l.observaciones}
                             onChange={(e) => {
@@ -642,11 +721,13 @@ const Recepcion: React.FC = () => {
             <Table size="small" sx={{ tableLayout: 'fixed' }}>
               <TableHead>
                <TableRow>
-                 <TableCell sx={{ width: '35%' }}>Item</TableCell>
+                 <TableCell sx={{ width: '25%' }}>Item</TableCell>
                  <TableCell align="center" sx={{ width: '10%' }}>Unidad</TableCell>
                  <TableCell align="right" sx={{ width: '10%' }}>Exp.</TableCell>
                  <TableCell align="right" sx={{ width: '10%' }}>Real</TableCell>
-                 <TableCell sx={{ width: '35%' }}>Notas del incidente</TableCell>
+                 <TableCell sx={{ width: '15%' }}>Estado Físico</TableCell>
+                 <TableCell sx={{ width: '15%' }}>Caducidad</TableCell>
+                 <TableCell sx={{ width: '15%' }}>Notas</TableCell>
                </TableRow>
               </TableHead>
               <TableBody>
@@ -659,8 +740,32 @@ const Recepcion: React.FC = () => {
                     <TableCell align="right">0</TableCell>
                     <TableCell align="right" sx={{ color: 'orange', fontWeight: 'bold' }}>{l.cantidadRecibida || 0}</TableCell>
                     <TableCell>
+                      <FormControl size="small" fullWidth>
+                        <Select
+                          value={l.estadoVisual || EstadoVisualProducto.OPTIMO}
+                          onChange={(e) => handleUpdateLinea(null, lIdx, 'estadoVisual', e.target.value)}
+                        >
+                          <MenuItem value={EstadoVisualProducto.OPTIMO}>Óptimo</MenuItem>
+                          <MenuItem value={EstadoVisualProducto.ROTO}>Roto</MenuItem>
+                          <MenuItem value={EstadoVisualProducto.DEFECTUOSO}>Defectuoso</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </TableCell>
+                    <TableCell>
+                      <TextField
+                        type="date"
+                        size="small"
+                        fullWidth
+                        value={l.fechaCaducidad || ''}
+                        onChange={(e) => handleUpdateLinea(null, lIdx, 'fechaCaducidad', e.target.value)}
+                        slotProps={{
+                            inputLabel: { shrink: true }
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>
                       <TextField 
-                        placeholder="Motivo discrepancia..." 
+                        placeholder="Discrepancia..." 
                         size="small" fullWidth 
                         value={l.observaciones}
                         onChange={(e) => {
@@ -772,6 +877,8 @@ const Recepcion: React.FC = () => {
         unidad: modalData.unidad,
         cantidadPedida: 0,
         cantidadRecibida: 1,
+        estadoVisual: EstadoVisualProducto.OPTIMO,
+        fechaCaducidad: '',
         observaciones: '',
         estado: '🆕 Nuevo' as any,
         productoNuevo: {
@@ -860,6 +967,21 @@ const Recepcion: React.FC = () => {
             <Button variant="contained" onClick={handleConfirmNewProduct} disabled={!modalData.nombre}>Confirmar y Añadir</Button>
          </DialogActions>
       </Dialog>
+
+      <Snackbar open={!!error} autoHideDuration={10000} onClose={() => setError(null)}>
+        <Alert onClose={() => setError(null)} severity="error" variant="filled">
+          {error}
+        </Alert>
+      </Snackbar>
+
+      <Backdrop
+        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1, flexDirection: 'column', gap: 2 }}
+        open={isSubmitting}
+      >
+        <CircularProgress color="inherit" />
+        <Typography variant="h6">Procesando Recepción Masiva...</Typography>
+        <Typography variant="body2">Garantizando integridad transaccional (ACID). Por favor, no cierres el navegador.</Typography>
+      </Backdrop>
     </Box>
   );
 };

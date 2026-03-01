@@ -10,6 +10,12 @@ export enum EstadoRecepcion {
   CANCELADA = 'CANCELADA',
 }
 
+export enum EstadoVisualProducto {
+  OPTIMO = 'OPTIMO',
+  ROTO = 'ROTO',
+  DEFECTUOSO = 'DEFECTUOSO',
+}
+
 export type PasoWizard =
   | 'SELECCION_PEDIDOS'
   | 'ESCANEO_LOTE'
@@ -19,6 +25,8 @@ export type PasoWizard =
 export interface RecepcionLineDto {
     pedidoProductoId: string; 
     cantidadRecibida: number;  
+    estadoVisual: EstadoVisualProducto;
+    fechaCaducidad?: Date;
     observaciones?: string;    
 }
 
@@ -71,6 +79,8 @@ export interface LineaDraft {
 
   // ── Campos editables ───────────────────────────────
   cantidadRecibida: number | '';
+  estadoVisual: EstadoVisualProducto;
+  fechaCaducidad?: string; // Formato YYYY-MM-DD
   observaciones: string;
 
   // ── Estado visual ──────────────────────────────────
