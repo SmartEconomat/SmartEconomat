@@ -1,5 +1,4 @@
 import {
-  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -7,8 +6,6 @@ import {
   Min,
   IsDateString,
 } from 'class-validator';
-import { localInventario } from '../enums/inventario.enums';
-
 export class CreateInventarioItemDto {
   @IsUUID('all', {
     message: 'El id del producto-proveedor debe ser un UUID válido',
@@ -29,8 +26,9 @@ export class CreateInventarioItemDto {
   @Min(0, { message: 'La cantidad máxima no puede ser negativa' })
   cantidadMaxima?: number;
 
-  @IsEnum(localInventario, { message: 'La ubicación del almacén no es válida' })
-  ubicacionAlmacen: localInventario;
+  @IsUUID('all', { message: 'El id de la ubicación debe ser un UUID válido' })
+  @IsNotEmpty({ message: 'El id de la ubicación es obligatorio' })
+  ubicacionId: string;
 
   @IsOptional()
   @IsDateString(

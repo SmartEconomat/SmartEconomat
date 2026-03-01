@@ -1,7 +1,7 @@
 import { DataSource } from 'typeorm';
 import { Inventario } from '../modules/inventario/inventario.entity/inventario.entity';
 import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
-import { localInventario } from '../modules/inventario/enums/inventario.enums';
+import { Ubicacion } from '../modules/ubicacion/ubicacion.entity/ubicacion.entity';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
 export const runSeeder = async (dataSource: DataSource) => {
@@ -18,6 +18,29 @@ export const runSeeder = async (dataSource: DataSource) => {
     throw new Error(SeederI18nHelper.getError('NO_PRODUCTOS_PROVEEDOR'));
   }
 
+  const ubicacionRepo = dataSource.getRepository(Ubicacion);
+  await dataSource.query(
+    `TRUNCATE TABLE "ubicacion" RESTART IDENTITY CASCADE;`
+  );
+
+  const nombresUbicaciones = [
+    'Almacen A',
+    'Frigorifico A',
+    'Bodega A',
+    'Almacen B',
+    'Frigorifico B',
+    'Bodega B',
+  ];
+
+  const dbUbicaciones: Ubicacion[] = [];
+  for (const nombre of nombresUbicaciones) {
+    const u = ubicacionRepo.create({
+      nombre,
+      descripcion: `Seeder: ${nombre}`,
+    });
+    dbUbicaciones.push(await ubicacionRepo.save(u));
+  }
+
   const inventarios: Inventario[] = [];
 
   for (const pp of productosProv) {
@@ -32,9 +55,7 @@ export const runSeeder = async (dataSource: DataSource) => {
       min: Math.max(inventario.cantidadMinima, inventario.cantidadActual) + 10,
       max: 200,
     });
-    inventario.ubicacionAlmacen = faker.helpers.arrayElement(
-      Object.values(localInventario)
-    );
+    inventario.ubicacion = faker.helpers.arrayElement(dbUbicaciones);
     inventario.fechaEntrada = faker.date.recent({ days: 90 });
     inventario.fechaCaducidad = faker.date.soon({
       days: faker.number.int({ min: 1, max: 365 }),

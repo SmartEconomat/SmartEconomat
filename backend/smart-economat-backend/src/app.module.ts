@@ -15,6 +15,7 @@ import { RecetaModule } from './modules/receta/receta.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { InventarioModule } from './modules/inventario/inventario.module';
 import { AlbaranModule } from './modules/albaran/albaran.module';
+import { UbicacionModule } from './modules/ubicacion/ubicacion.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { AlbaranModule } from './modules/albaran/albaran.module';
     DashboardModule,
     InventarioModule,
     AlbaranModule,
+    UbicacionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -22,11 +22,10 @@ import {
   agregarInventarioPorProducto,
   createInventarioItem,
 } from '../services/inventario.service';
-import type {
-  InventarioPorProducto,
-  LocalInventario,
-} from '../services/inventario.types';
-import { localInventarioValues } from '../services/inventario.types';
+import type { InventarioPorProducto } from '../services/inventario.types';
+import { UbicacionService } from '../services/ubicacion.service';
+import type { Ubicacion } from '../services/ubicacion.types';
+import UbicacionesModal from '../components/inventario/UbicacionesModal';
 import { useToast } from '../store/ToastContext';
 import {
   searchProductoProveedor,
@@ -59,10 +58,27 @@ const Inventario: React.FC = () => {
   const [cantidadActual, setCantidadActual] = useState('');
   const [cantidadMinima, setCantidadMinima] = useState('');
   const [cantidadMaxima, setCantidadMaxima] = useState('');
-  const [ubicacionAlmacen, setUbicacionAlmacen] = useState<LocalInventario>(
-    localInventarioValues[0]
-  );
+  const [ubicacionId, setUbicacionId] = useState<string>('');
   const [fechaCaducidad, setFechaCaducidad] = useState('');
+  
+  const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
+  const [isUbicacionesModalOpen, setIsUbicacionesModalOpen] = useState(false);
+
+  const loadUbicaciones = async () => {
+    try {
+      const data = await UbicacionService.findAll();
+      setUbicaciones(data);
+      if (data.length > 0 && !ubicacionId) {
+        setUbicacionId(data[0].id);
+      }
+    } catch (e: any) {
+      toast.error('Error al cargar ubicaciones');
+    }
+  };
+
+  useEffect(() => {
+    loadUbicaciones();
+  }, []);
 
   const toast = useToast();
 
@@ -184,7 +200,7 @@ const Inventario: React.FC = () => {
         cantidadActual: cantActual,
         cantidadMinima: cantMin,
         cantidadMaxima: cantMax,
-        ubicacionAlmacen,
+        ubicacionId,
         fechaCaducidad: fechaCaducidad || undefined,
       });
       toast.success('Entrada de inventario creada correctamente.');
@@ -195,7 +211,7 @@ const Inventario: React.FC = () => {
       setCantidadActual('');
       setCantidadMinima('');
       setCantidadMaxima('');
-      setUbicacionAlmacen('Almacen A');
+      if (ubicaciones.length > 0) setUbicacionId(ubicaciones[0].id);
       setFechaCaducidad('');
       await reloadInventario();
     } catch (err: unknown) {
@@ -333,6 +349,13 @@ const Inventario: React.FC = () => {
               sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
             >
               Añadir al inventario
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => setIsUbicacionesModalOpen(true)}
+              sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+            >
+              Gestionar Ubicaciones
             </Button>
             <IconButton
               color="primary"
@@ -534,15 +557,14 @@ const Inventario: React.FC = () => {
                 <TextField
                   select
                   label="Ubicación de almacén"
-                  value={ubicacionAlmacen}
-                  onChange={(e) =>
-                    setUbicacionAlmacen(e.target.value as LocalInventario)
-                  }
+                  value={ubicacionId}
+                  onChange={(e) => setUbicacionId(e.target.value)}
                   fullWidth
+                  required
                 >
-                  {localInventarioValues.map((loc) => (
-                    <MenuItem key={loc} value={loc}>
-                      {loc}
+                  {ubicaciones.map((loc) => (
+                    <MenuItem key={loc.id} value={loc.id}>
+                      {loc.nombre}
                     </MenuItem>
                   ))}
                 </TextField>
@@ -572,6 +594,11 @@ const Inventario: React.FC = () => {
           </DialogActions>
         </Dialog>
       </Paper>
+      <UbicacionesModal 
+        open={isUbicacionesModalOpen} 
+        onClose={() => setIsUbicacionesModalOpen(false)} 
+        onChanged={loadUbicaciones}
+      />
     </Box>
   );
 };
