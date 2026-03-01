@@ -46,8 +46,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ producto, onEdit, onDelete, o
             )}
 
             <CardContent sx={{ flexGrow: 1 }}>
-                {/* Nombre */}
-                <Typography gutterBottom variant="h6" component="div">
+                {/* Nombre — siempre 2 líneas reservadas */}
+                <Typography
+                    gutterBottom
+                    variant="h6"
+                    component="div"
+                    sx={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        minHeight: '3.2em', // 2 líneas × line-height ~1.6
+                    }}
+                >
                     {producto.nombre}
                 </Typography>
 
@@ -56,42 +67,41 @@ const ProductCard: React.FC<ProductCardProps> = ({ producto, onEdit, onDelete, o
                     {producto.marca || 'Sin marca'}
                 </Typography>
 
-                {/* Chip de tipo — centrado */}
-                {producto.tipo && (
-                    <Box sx={{ mt: 1, mb: 1, display: 'flex', justifyContent: 'center' }}>
+                {/* Chip de tipo — centrado, espacio siempre reservado */}
+                <Box sx={{ mt: 1, mb: 1, minHeight: 28, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    {producto.tipo && (
                         <StatusChip status={producto.tipo} size="small" variant="outlined" />
-                    </Box>
-                )}
+                    )}
+                </Box>
 
-                {/* Contenido + unidad + iconos de alérgenos en la misma fila */}
+                {/* Contenido + unidad + iconos de alérgenos — espacio de alérgenos siempre reservado */}
                 <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 0.75 }}>
                     <Typography variant="body1" fontWeight="bold">
                         {String(producto.contenido)} {producto.unidad || ''}
                     </Typography>
 
-                    {alergenosActivos.length > 0 && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
-                            {alergenosActivos.map((a) => (
-                                <Tooltip key={a.id} title={a.label} arrow>
-                                    <Box
-                                        sx={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            color: 'text.secondary',
-                                            '& svg': { fontSize: 16 },
-                                        }}
-                                    >
-                                        {a.icon}
-                                    </Box>
-                                </Tooltip>
-                            ))}
-                        </Box>
-                    )}
+                    {/* Área de alérgenos con minHeight para mantener la alineación */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', minHeight: 24 }}>
+                        {alergenosActivos.map((a) => (
+                            <Tooltip key={a.id} title={a.label} arrow>
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: 'text.secondary',
+                                        '& svg': { fontSize: 16 },
+                                    }}
+                                >
+                                    {a.icon}
+                                </Box>
+                            </Tooltip>
+                        ))}
+                    </Box>
                 </Box>
             </CardContent>
 
-            <CardActions sx={{ justifyContent: 'flex-end', borderTop: '1px solid', borderColor: 'divider' }}>
+            <CardActions sx={{ justifyContent: 'space-between', borderTop: '1px solid', borderColor: 'divider' }}>
                 {actions ?? (
                     <>
                         {onView && (
