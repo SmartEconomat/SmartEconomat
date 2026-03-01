@@ -3,6 +3,7 @@ import { Repository } from 'typeorm';
 import { Usuario } from '../usuario.entity/usuario.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 
 @Injectable()
 export class UsuarioRepository {
@@ -15,10 +16,9 @@ export class UsuarioRepository {
     return this.repo.save(this.repo.create(data));
   }
 
-  findAll(
-    query: import('../../../common/dto/pagination-query.dto').PaginationQueryDto
-  ) {
+  findAll(query: PaginationQueryDto) {
     const page = query.page ?? 1;
+
     const limit = Math.min(query.limit ?? 20, 100);
     return this.repo
       .findAndCount({

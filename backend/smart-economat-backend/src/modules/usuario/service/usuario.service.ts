@@ -8,7 +8,9 @@ import { UsuarioRepository } from '../repository/usuario.repository';
 import { CreateUsuarioDto } from '../dto/create-usuario.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { Usuario } from '../usuario.entity/usuario.entity';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
+
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import * as bcrypt from 'bcrypt';
 
@@ -20,9 +22,7 @@ export class UsuarioService {
     return this.usuarioRepo.createUsuario(dto);
   }
 
-  findAll(
-    query: import('../../../common/dto/pagination-query.dto').PaginationQueryDto
-  ) {
+  findAll(query: PaginationQueryDto) {
     return this.usuarioRepo.findAll(query);
   }
 

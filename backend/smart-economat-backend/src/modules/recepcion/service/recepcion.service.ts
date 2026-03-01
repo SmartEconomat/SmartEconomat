@@ -11,6 +11,8 @@ import { CreateRecepcionDto } from '../dto/create-recepcion.dto';
 import { UpdateRecepcionDto } from '../dto/update-recepcion.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @Injectable()
 export class RecepcionService {
@@ -53,10 +55,8 @@ export class RecepcionService {
   }
 
   async findAll(
-    query: import('../../../common/dto/pagination-query.dto').PaginationQueryDto
-  ): Promise<
-    import('../../../common/dto/paginated-response.dto').PaginatedResponseDto<Recepcion>
-  > {
+    query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<Recepcion>> {
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 100);
     const [data, total] = await this.recepcionRepository.findAndCount({
