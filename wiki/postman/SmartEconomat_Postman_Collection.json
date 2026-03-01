@@ -1,0 +1,1516 @@
+{
+  "info": {
+    "_postman_id": "75c3214a-8e2b-4b2a-9e1a-96bad0e1f203",
+    "name": "SmartEconomat API v1",
+    "description": "Colección exhaustiva con todos los endpoints (v1). Incluye correctos valores de Enums y validación de UUIDs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01. Auth",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Usuario Demo\",\n  \"username\": \"userdemo\",\n  \"password\": \"PasswordFuerte123!\",\n  \"email\": \"demo@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data && jsonData.data.access_token) {",
+                  "    pm.environment.set(\"jwt_token\", jsonData.data.access_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@smarteconomat.com\",\n  \"password\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02. Profiles (Self-Service)",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/usuarios/perfil"
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PATCH",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Mi Nuevo Nombre\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{base_url}}/usuarios/perfil"
+          }
+        },
+        {
+          "name": "Change My Password (Secure)",
+          "request": {
+            "method": "PATCH",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oldPassword\": \"123456\",\n  \"newPassword\": \"NuevaSegura999!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{base_url}}/usuarios/perfil/password"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03. Dashboard",
+      "item": [
+        {
+          "name": "Get Stats",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/dashboard/stats",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dashboard",
+                "stats"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "04. Usuarios (Admin Only)",
+      "item": [
+        {
+          "name": "List All Users",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/usuarios"
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/usuarios/:id",
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PATCH",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Nombre Actualizado\",\n  \"email\": \"nuevo@email.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/usuarios/:id",
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Activate/Deactivate User",
+          "request": {
+            "method": "PATCH",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/usuarios/:id/activar",
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change User Role",
+          "request": {
+            "method": "PATCH",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rol\": \"profesor\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/usuarios/:id/rol",
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "PATCH",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"NuevaPassword123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/usuarios/:id/password",
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/usuarios/:id",
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05. Productos",
+      "item": [
+        {
+          "name": "List Products",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/productos"
+          }
+        },
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Leche Entera\",\n  \"marca\": \"Pascual\",\n  \"descripcion\": \"Leche de vaca 1L\",\n  \"unidad\": \"l\",\n  \"tipo\": \"lacteo\",\n  \"contenido\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{base_url}}/productos"
+          }
+        },
+        {
+          "name": "Get Product Detail",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/productos/:id",
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PATCH",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Leche Desnatada\",\n  \"contenido\": 1.5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/productos/:id",
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/productos/:id",
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Producto-Proveedor",
+          "item": [
+            {
+              "name": "Update Price",
+              "request": {
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"precioActual\": 1.25\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/producto-proveedor/:id/precio",
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": ""
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Price History",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/producto-proveedor/:id/historial",
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": ""
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Search relations",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/producto-proveedor/search",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "producto-proveedor",
+                    "search"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06. Proveedores",
+      "item": [
+        {
+          "name": "List Proveedores",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/proveedor"
+          }
+        },
+        {
+          "name": "Create Proveedor",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Proveedor España S.A.\",\n  \"cif\": \"A12345678\",\n  \"email\": \"contacto@provespana.com\",\n  \"telefono\": \"912344556\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{base_url}}/proveedor"
+          }
+        },
+        {
+          "name": "Get Proveedor",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/proveedor/:id",
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Proveedor",
+          "request": {
+            "method": "PATCH",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Proveedor Global S.L.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/proveedor/:id",
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Proveedor",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/proveedor/:id",
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "07. Ubicaciones",
+      "item": [
+        {
+          "name": "List Ubicaciones",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/ubicacion",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ubicacion"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Ubicacion",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/ubicacion",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ubicacion"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Almacén Principal\",\n  \"descripcion\": \"Zona A\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Ubicacion",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/ubicacion/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ubicacion",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Ubicacion",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/ubicacion/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ubicacion",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Almacén Actualizado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete Ubicacion",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/ubicacion/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ubicacion",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Restore Ubicacion",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/ubicacion/:id/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ubicacion",
+                ":id",
+                "restore"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "08. Inventario & Alertas",
+      "item": [
+        {
+          "name": "List Inventario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/inventario",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inventario"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Inventario Item",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/inventario",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inventario"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productoProveedorId\": \"uuid-producto-proveedor\",\n  \"cantidadActual\": 10,\n  \"cantidadMinima\": 2,\n  \"ubicacionId\": \"uuid-ubicacion\",\n  \"fechaCaducidad\": \"2026-12-31\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Inventario Item",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/inventario/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inventario",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Inventario Item",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/inventario/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inventario",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cantidadActual\": 15\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete Inventario Item",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/inventario/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inventario",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Alertas Caducidad",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/Alertas/caducidad"
+          }
+        },
+        {
+          "name": "Alertas Stock",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/Alertas/stock"
+          }
+        }
+      ]
+    },
+    {
+      "name": "09. Recetas",
+      "item": [
+        {
+          "name": "List Recipes",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/recetas"
+          }
+        },
+        {
+          "name": "Create Recipe",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Tortilla de Patatas\",\n  \"instrucciones\": \"1. Cortar patatas...\",\n  \"tiempo\": \"30 min\",\n  \"dificultad\": \"Fácil\",\n  \"ingredientes\": [\n    {\n      \"productoId\": \"uuid-producto\",\n      \"cantidad\": 500,\n      \"unidad\": \"g\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{base_url}}/recetas"
+          }
+        },
+        {
+          "name": "Get Recipe Detail",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/recetas/:id",
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Recipe",
+          "request": {
+            "method": "PATCH",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Tortilla con Cebolla\",\n  \"dificultad\": \"Media\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/recetas/:id",
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Recipe",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/recetas/:id",
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Movimientos",
+      "item": [
+        {
+          "name": "List All Movements",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/movimientos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "movimientos"
+              ]
+            },
+            "description": "Listar todos los movimientos de stock (ADMINISTRADOR, PROFESOR, ALUMNO)"
+          }
+        },
+        {
+          "name": "Get Movement History - By Product",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/movimientos/historial?entityId=019c9b4f-74f8-7a6e-8b5b-96191c30c1e5&type=entrada&startDate=2026-01-01&endDate=2026-02-28&sortBy=createdAt&sortOrder=DESC",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "movimientos",
+                "historial"
+              ],
+              "query": [
+                {
+                  "key": "entityId",
+                  "value": "019c9b4f-74f8-7a6e-8b5b-96191c30c1e5",
+                  "description": "UUID del ProductoProveedor"
+                },
+                {
+                  "key": "type",
+                  "value": "entrada",
+                  "description": "Tipo de movimiento (entrada, salida, ajuste, pedido, entrada_compra)",
+                  "disabled": true
+                },
+                {
+                  "key": "startDate",
+                  "value": "2026-01-01",
+                  "description": "Fecha de inicio (ISO 8601)",
+                  "disabled": true
+                },
+                {
+                  "key": "endDate",
+                  "value": "2026-02-28",
+                  "description": "Fecha de fin (ISO 8601)",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt",
+                  "description": "Campo para ordenar (createdAt, cantidad)",
+                  "disabled": true
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "DESC",
+                  "description": "Orden (ASC, DESC)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Obtener historial de movimientos de un producto. Soporta filtros por tipo, rango de fechas y ordenamiento. Ordena cronológicamente inverso por defecto. (ADMINISTRADOR, PROFESOR)"
+          }
+        },
+        {
+          "name": "Get Movement History - By User",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/movimientos/historial?userId=019c9b4f-74f8-7a6e-8b5b-96191c30c1e5",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "movimientos",
+                "historial"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "019c9b4f-74f8-7a6e-8b5b-96191c30c1e5",
+                  "description": "UUID del Usuario"
+                },
+                {
+                  "key": "type",
+                  "value": "salida",
+                  "description": "Tipo de movimiento",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Obtener historial de movimientos realizados por un usuario específico. (ADMINISTRADOR, PROFESOR)"
+          }
+        },
+        {
+          "name": "Create Movement",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": \"uuid-del-usuario\",\n  \"inventario\": \"uuid-del-inventario\",\n  \"cantidad\": 10,\n  \"tipo\": \"entrada\",\n  \"descripcion\": \"Movimiento manual de prueba\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/movimientos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "movimientos"
+              ]
+            },
+            "description": "Crear un nuevo movimiento de stock. (ADMINISTRADOR, PROFESOR)"
+          }
+        },
+        {
+          "name": "Get Movement Detail",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/movimientos/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "movimientos",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "019c9b4f-74f8-7a6e-8b5b-96191c30c1e5",
+                  "description": "UUID del movimiento"
+                }
+              ]
+            },
+            "description": "Obtener detalles completos de un movimiento específico. (ADMINISTRADOR, PROFESOR, ALUMNO)"
+          }
+        },
+        {
+          "name": "Update Movement",
+          "request": {
+            "method": "PATCH",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cantidad\": 15,\n  \"tipo\": \"ajuste\",\n  \"descripcion\": \"Movimiento actualizado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/movimientos/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "movimientos",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "019c9b4f-74f8-7a6e-8b5b-96191c30c1e5",
+                  "description": "UUID del movimiento"
+                }
+              ]
+            },
+            "description": "Actualizar un movimiento existente. Solo campos parciales. (ADMINISTRADOR)"
+          }
+        },
+        {
+          "name": "Delete Movement",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/movimientos/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "movimientos",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "019c9b4f-74f8-7a6e-8b5b-96191c30c1e5",
+                  "description": "UUID del movimiento"
+                }
+              ]
+            },
+            "description": "Eliminar (soft delete) un movimiento. Retorna 204 No Content. (ADMINISTRADOR)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Pedidos",
+      "item": [
+        {
+          "name": "List Pedidos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/pedidos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "pedidos"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Pedido",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/pedidos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "pedidos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proveedorId\": \"uuid-proveedor\",\n  \"productos\": [\n    {\n      \"productoProveedorId\": \"uuid-pp\",\n      \"cantidad\": 5\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Pedido",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/pedidos/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "pedidos",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Pedido",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/pedidos/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "pedidos",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"enviado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete Pedido",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/pedidos/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "pedidos",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Fecha Entrega",
+          "request": {
+            "method": "PATCH",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fechaEntrega\": \"2026-03-01T10:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/pedidos/:id/fecha-entrega",
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancelar Pedido",
+          "request": {
+            "method": "PATCH",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"Error en pedido\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/pedidos/:id/cancelar",
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "12. Recepcion",
+      "item": [
+        {
+          "name": "Scanning Flow (Procesar Stock)",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pedidoId\": \"uuid\",\n  \"nAlbaran\": \"ALB-2026-01\",\n  \"usuarioId\": \"uuid\",\n  \"lineas\": [\n    {\n      \"pedidoProductoId\": \"uuid\",\n      \"cantidadRecibida\": 12\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{base_url}}/recepcion"
+          }
+        },
+        {
+          "name": "List Recepciones",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/recepcion"
+          }
+        },
+        {
+          "name": "Get Recepcion Detail",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/recepcion/:id",
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Recepcion (Direct)",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nAlbaran\": \"ALB-2026-99\",\n  \"fechaRecepcion\": \"2026-03-01T12:00:00Z\",\n  \"observaciones\": \"Recepción manual directa\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{base_url}}/recepcion"
+          }
+        },
+        {
+          "name": "Update Recepcion",
+          "request": {
+            "method": "PATCH",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"observaciones\": \"Observaciones actualizadas\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/recepcion/:id",
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Recepcion",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/recepcion/:id",
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "13. Health Check",
+      "item": [
+        {
+          "name": "Root Health Check",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3000/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "14. Albaranes",
+      "item": [
+        {
+          "name": "List Albaranes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/albaranes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "albaranes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Albaran",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/albaranes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "albaranes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nAlbaran\": \"ALB-2026-001\",\n  \"concordancia\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Albaran",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/albaranes/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "albaranes",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Albaran",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/albaranes/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "albaranes",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"concordancia\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete Albaran",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/albaranes/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "albaranes",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

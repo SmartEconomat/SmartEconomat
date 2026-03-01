@@ -9,6 +9,8 @@ import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.
 import { UpdatePrecioProductoDto } from '../dto/update-precio-producto.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { SearchProductoProveedorDto } from '../dto/search-producto-proveedor.dto';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @Injectable()
 export class ProductoProveedorService {
@@ -51,10 +53,8 @@ export class ProductoProveedorService {
 
   async getHistorial(
     idProductoProveedor: string,
-    query: import('../../../common/dto/pagination-query.dto').PaginationQueryDto
-  ): Promise<
-    import('../../../common/dto/paginated-response.dto').PaginatedResponseDto<HistorialPrecio>
-  > {
+    query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<HistorialPrecio>> {
     const repo = this.dataSource.getRepository(HistorialPrecio);
 
     const ppExists = await this.dataSource.manager.findOne(ProductoProveedor, {

@@ -9,6 +9,8 @@ import { ProveedorRepository } from '../repository/proveedor.repository';
 import { CreateProveedorDto } from '../dto/create-proveedor.dto';
 import { UpdateProveedorDto } from '../dto/update-proveedor.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @Injectable()
 export class ProveedorService {
@@ -20,10 +22,8 @@ export class ProveedorService {
   }
 
   async findAll(
-    query: import('../../../common/dto/pagination-query.dto').PaginationQueryDto
-  ): Promise<
-    import('../../../common/dto/paginated-response.dto').PaginatedResponseDto<Proveedor>
-  > {
+    query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<Proveedor>> {
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 100);
 
