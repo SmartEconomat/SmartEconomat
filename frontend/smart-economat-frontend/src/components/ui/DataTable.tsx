@@ -1,3 +1,10 @@
+/**
+ * @fileoverview Componente genérico DataTable para la visualización de listas tabulares o mosaicos de datos.
+ * Esta tabla es altamente personalizable, con soporte para paginación integrada, 
+ * acciones por fila, cambio de vista dinámica (Grid/List) y ordenamiento de columnas.
+ * Sirve como base para listados como Productos, Usuarios, o Proveedores en la aplicación.
+ */
+
 import React, { ReactNode, useState } from 'react';
 import {
     Table,
@@ -28,12 +35,21 @@ import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import Spinner from './Spinner';
 
+/**
+ * Representa la configuración de una columna en la tabla.
+ */
 export interface Column<T> {
+    /** Identificador único o key del objeto de la fila */
     id: keyof T | string;
+    /** Etiqueta visual que va en el encabezado de la columna */
     label: string;
+    /** Renderizado personalizado opcional para la celda. Si no se pasa, inyecta `row[id]` directamente */
     render?: (row: T) => ReactNode;
+    /** Alineación del texto en la columna */
     align?: 'inherit' | 'left' | 'center' | 'right' | 'justify';
+    /** Si es true, esta columna no se renderiza en pantallas pequeñas (xs) */
     hideOnMobile?: boolean;
+    /** Si es true, la columna permite ordenar de manera ascendente/descendente */
     sortable?: boolean;
 }
 
@@ -72,6 +88,8 @@ export interface DataTableProps<T> {
     };
     /** Función disparada al clickear la cabecera de una columna ordenable */
     onSort?: (key: keyof T | string) => void;
+    /** Componente opcional que se pintará a la izquierda en la cabecera (ej: botón Nuevo) */
+    leftHeaderAction?: ReactNode;
 }
 
 /**
@@ -91,11 +109,12 @@ export function DataTable<T extends Record<string, any>>({
     defaultViewMode = 'list',
     sortConfig,
     onSort,
+    leftHeaderAction,
 }: DataTableProps<T>) {
     const colSpanCount = columns.length + (renderActions ? 1 : 0);
     const [viewMode, setViewMode] = useState<'list' | 'grid'>(defaultViewMode);
 
-    const hasTopBarControls = (pagination?.onPageSizeChange && pagination?.pageSizeOptions) || renderGridItem;
+    const hasTopBarControls = (pagination?.onPageSizeChange && pagination?.pageSizeOptions) || renderGridItem || leftHeaderAction;
 
     const handleViewModeChange = (
         event: React.MouseEvent<HTMLElement>,
@@ -104,84 +123,117 @@ export function DataTable<T extends Record<string, any>>({
         if (newMode !== null) {
             setViewMode(newMode);
         }
-    };
+    }
 
     return (
         <Box sx={{ width: '100%', mb: 2 }}>
-            <Paper elevation={0} sx={{ p: 2, mb: 0 }}>
-                {hasTopBarControls && (
-                    <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2} mb={2}>
-                        <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
-                            {renderGridItem && (
-                                <ToggleButtonGroup
-                                    value={viewMode}
-                                    exclusive
-                                    onChange={handleViewModeChange}
-                                    aria-label="modo de vista"
-                                    size="small"
-                                >
-                                    <ToggleButton value="list" aria-label="vista de lista">
-                                        <ViewListIcon />
-                                    </ToggleButton>
-                                    <ToggleButton value="grid" aria-label="vista de mosaico">
-                                        <ViewModuleIcon />
-                                    </ToggleButton>
-                                </ToggleButtonGroup>
-                            )}
-
-                            {viewMode === 'grid' && onSort && columns.some(c => c.sortable) && (
-                                <Box display="flex" alignItems="center" gap={1}>
-                                    <FormControl size="small" variant="outlined">
-                                        <Select
-                                            value={sortConfig?.key || ""}
-                                            onChange={(e) => {
-                                                if (e.target.value !== sortConfig?.key) onSort(e.target.value as string);
-                                            }}
-                                            displayEmpty
-                                            sx={{ minWidth: 140 }}
-                                        >
-                                            <MenuItem value="" disabled>Ordenar por...</MenuItem>
-                                            {columns.filter(c => c.sortable).map(c => (
-                                                <MenuItem key={String(c.id)} value={String(c.id)}>{c.label}</MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-                                    <IconButton
-                                        size="small"
-                                        onClick={() => {
-                                            if (sortConfig?.key) onSort(sortConfig.key);
-                                        }}
-                                        disabled={!sortConfig?.key}
-                                        title={sortConfig?.direction === 'desc' ? 'Descendente (Z-A)' : 'Ascendente (A-Z)'}
-                                        color="primary"
-                                        sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1 }}
-                                    >
-                                        {sortConfig?.direction === 'desc' ? <ArrowDownwardIcon fontSize="small" /> : <ArrowUpwardIcon fontSize="small" />}
-                                    </IconButton>
-                                </Box>
-                            )}
+            {hasTopBarControls && (
+                <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    flexWrap="wrap"
+                    gap={2}
+                    mb={3}
+                >
+                    {leftHeaderAction && (
+                        <Box display="flex" alignItems="center">
+                            {leftHeaderAction}
                         </Box>
-                        {pagination?.onPageSizeChange && pagination?.pageSizeOptions && (
-                            <Box display="flex" alignItems="center" gap={1}>
-                                <Typography variant="body2" color="text.secondary">Mostrar:</Typography>
+                    )}
+
+                    <Box
+                        display="flex"
+                        alignItems="center"
+                        flexWrap="wrap"
+                        gap={2}
+                        sx={{ ml: leftHeaderAction ? 'auto' : 0 }}
+                    >
+                        {renderGridItem && (
+                            <ToggleButtonGroup
+                                value={viewMode}
+                                exclusive
+                                onChange={handleViewModeChange}
+                                aria-label="modo de vista"
+                                size="small"
+                            >
+                                <ToggleButton value="list" aria-label="vista de lista">
+                                    <ViewListIcon />
+                                </ToggleButton>
+                                <ToggleButton value="grid" aria-label="vista de mosaico">
+                                    <ViewModuleIcon />
+                                </ToggleButton>
+                            </ToggleButtonGroup>
+                        )}
+
+                        {viewMode === 'grid' && onSort && columns.some(c => c.sortable) && (
+                            <Box display="flex" alignItems="center" gap={1} sx={{ display: { xs: 'none', sm: 'flex' } }}>
                                 <FormControl size="small" variant="outlined">
                                     <Select
-                                        value={pagination.pageSize || 10}
+                                        value={sortConfig?.key || ""}
+                                        onChange={(e) => {
+                                            if (e.target.value !== sortConfig?.key) onSort(e.target.value as string);
+                                        }}
+                                        displayEmpty
+                                        sx={{ minWidth: 140 }}
+                                    >
+                                        <MenuItem value="" disabled>Ordenar por...</MenuItem>
+                                        {columns.filter(c => c.sortable).map(c => (
+                                            <MenuItem key={String(c.id)} value={String(c.id)}>{c.label}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                                <IconButton
+                                    size="small"
+                                    onClick={() => {
+                                        if (sortConfig?.key) onSort(sortConfig.key);
+                                    }}
+                                    disabled={!sortConfig?.key}
+                                    title={sortConfig?.direction === 'desc' ? 'Descendente (Z-A)' : 'Ascendente (A-Z)'}
+                                    color="primary"
+                                    sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1 }}
+                                >
+                                    {sortConfig?.direction === 'desc' ? <ArrowDownwardIcon fontSize="small" /> : <ArrowUpwardIcon fontSize="small" />}
+                                </IconButton>
+                            </Box>
+                        )}
+
+                        {pagination?.onPageSizeChange && pagination?.pageSizeOptions && (
+                            <Box display="flex" alignItems="center" gap={1}>
+                                <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                    sx={{ display: { xs: 'none', sm: 'block' } }}
+                                >
+                                    Ver
+                                </Typography>
+                                <FormControl size="small" variant="outlined">
+                                    <Select
+                                        value={pagination.pageSize || pagination.pageSizeOptions[0] || 10}
                                         onChange={pagination.onPageSizeChange}
+                                        sx={{ minWidth: 64 }}
+                                        MenuProps={{ disableScrollLock: true }}
                                     >
                                         {pagination.pageSizeOptions.map(option => (
                                             <MenuItem key={option} value={option}>{option}</MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>
+                                <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                    sx={{ display: { xs: 'none', md: 'block' } }}
+                                >
+                                    por página
+                                </Typography>
                             </Box>
                         )}
                     </Box>
-                )}
-            </Paper>
+                </Box>
+            )}
 
             {viewMode === 'list' || !renderGridItem ? (
-                <TableContainer component={Paper} elevation={0} sx={{ mt: hasTopBarControls ? -2 : 0 }}>
+                <TableContainer component={Paper} elevation={0}>
                     <Table sx={{ minWidth: { xs: '100%', md: 650 } }} aria-label="data table">
                         <TableHead>
                             <TableRow>

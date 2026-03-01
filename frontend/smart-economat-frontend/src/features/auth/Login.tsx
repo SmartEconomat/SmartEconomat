@@ -246,6 +246,7 @@ export default function Login() {
                         left: { xs: 'unset', md: formLeft },
                         width: { xs: '100%', md: `${FORM_W}%` },
                         height: { xs: 'auto', md: '100%' },
+                        flexGrow: { xs: 1, md: 0 },
                         display: 'flex',
                         flexDirection: 'column',
                         // En móvil: alineamos desde arriba para que el scroll sea natural.

@@ -1,3 +1,12 @@
+/**
+ * @fileoverview Página principal para la gestión del catálogo de Productos.
+ * 
+ * Implementa las operaciones CRUD completas y conectadas al backend para manejar
+ * el inventario de artículos disponibles. Utiliza DataTable para la visualización 
+ * y delegación de estado, ProductFilters para las búsquedas complejas, 
+ * y ventanas flotantes/modales (DetailModal, DynamicFormModal) para creación y detalles.
+ */
+
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     Box,
@@ -97,7 +106,7 @@ const initialFilters: ProductFiltersState = {
 
 const Productos: React.FC = () => {
     const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
+    const [pageSize, setPageSize] = useState(12);
     const [totalPages, setTotalPages] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
     const [filters, setFilters] = useState<ProductFiltersState>(initialFilters);
@@ -282,7 +291,7 @@ const Productos: React.FC = () => {
     const renderActions = (row: Producto) => (
         <>
             <Tooltip title="Ver detalle">
-                <IconButton color="info" onClick={() => handleViewClick(row)} size="small" aria-label="Ver detalle">
+                <IconButton onClick={() => handleViewClick(row)} size="small" aria-label="Ver detalle" sx={{ color: 'text.secondary' }}>
                     <VisibilityIcon fontSize="small" />
                 </IconButton>
             </Tooltip>
@@ -308,36 +317,9 @@ const Productos: React.FC = () => {
         <Box>
             <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 } }}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
-                    <Typography variant="h6">
+                    <Typography variant="h4">
                         Gestión de Productos
                     </Typography>
-
-                    <Box display="flex" alignItems="center" gap={1}>
-                        <Button
-                            variant="contained"
-                            startIcon={<AddIcon />}
-                            onClick={() => setProductToEdit({})}
-                            sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
-                        >
-                            Nuevo Producto
-                        </Button>
-
-                        <Tooltip title="Nuevo Producto">
-                            <IconButton
-                                color="primary"
-                                aria-label="Nuevo Producto"
-                                onClick={() => setProductToEdit({})}
-                                sx={{
-                                    display: { xs: 'inline-flex', sm: 'none' },
-                                    bgcolor: 'primary.main',
-                                    color: 'white',
-                                    '&:hover': { bgcolor: 'primary.dark' },
-                                }}
-                            >
-                                <AddIcon />
-                            </IconButton>
-                        </Tooltip>
-                    </Box>
                 </Box>
 
                 {error && (
@@ -387,7 +369,35 @@ const Productos: React.FC = () => {
                     columns={columns}
                     data={filteredData}
                     isLoading={isLoading}
-                    defaultViewMode="grid"
+                    defaultViewMode="list"
+                    leftHeaderAction={
+                        <Box display="flex" alignItems="center" gap={1}>
+                            <Button
+                                variant="contained"
+                                startIcon={<AddIcon />}
+                                onClick={() => setProductToEdit({})}
+                                sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+                            >
+                                Nuevo Producto
+                            </Button>
+
+                            <Tooltip title="Nuevo Producto">
+                                <IconButton
+                                    color="primary"
+                                    aria-label="Nuevo Producto"
+                                    onClick={() => setProductToEdit({})}
+                                    sx={{
+                                        display: { xs: 'inline-flex', sm: 'none' },
+                                        bgcolor: 'primary.main',
+                                        color: 'white',
+                                        '&:hover': { bgcolor: 'primary.dark' },
+                                    }}
+                                >
+                                    <AddIcon />
+                                </IconButton>
+                            </Tooltip>
+                        </Box>
+                    }
                     emptyStateMessage={
                         <Box sx={{ py: 4, textAlign: 'center' }}>
                             <ShoppingBasketOutlinedIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
@@ -493,6 +503,7 @@ const Productos: React.FC = () => {
                             sections={[
                                 {
                                     title: 'Información general',
+                                    columns: 3,
                                     fields: [
                                         {
                                             label: 'Tipo',
@@ -517,14 +528,33 @@ const Productos: React.FC = () => {
                                 },
                                 ...(alergenosActivos.length > 0 ? [{
                                     title: 'Alérgenos',
-                                    fields: alergenosActivos.map((a) => ({
-                                        label: a.label,
-                                        value: (
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary', '& svg': { fontSize: 20 } }}>
-                                                {a.icon}
-                                            </Box>
-                                        ),
-                                    })),
+                                    content: (
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+                                            {alergenosActivos.map((a) => (
+                                                <Box
+                                                    key={a.id}
+                                                    sx={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: 1,
+                                                        bgcolor: 'action.hover',
+                                                        px: 1.5,
+                                                        py: 0.75,
+                                                        borderRadius: 2,
+                                                        border: '1px solid',
+                                                        borderColor: 'divider',
+                                                        color: 'text.secondary',
+                                                        '& svg': { fontSize: 20 }
+                                                    }}
+                                                >
+                                                    {a.icon}
+                                                    <Typography variant="body2" sx={{ fontWeight: 500, color: 'text.primary' }}>
+                                                        {a.label}
+                                                    </Typography>
+                                                </Box>
+                                            ))}
+                                        </Box>
+                                    ),
                                 }] : []),
                                 ...(p.proveedores && p.proveedores.length > 0 ? [{
                                     title: 'Proveedores asociados',
