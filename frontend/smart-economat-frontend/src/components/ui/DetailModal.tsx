@@ -17,20 +17,17 @@ import DynamicFormModal, { DynamicField, DynamicFormModalProps } from './Dynamic
 import { ModalSize } from './Modal';
 
 // ─────────────────────────────────────────────────────────
-//  Tipos
+//  Tipos públicos
 // ─────────────────────────────────────────────────────────
 
-/** Una fila de datos para mostrar en el modal de detalle. */
 export interface DetailField {
-    /** Etiqueta que se muestra al usuario. */
     label: string;
-    /** Valor a renderizar. Puede ser texto, número, un ReactNode (chip, icono…). */
+    /** Texto, número o cualquier ReactNode (chip, icono…). */
     value: React.ReactNode;
-    /** Si true, ocupa todo el ancho disponible (por defecto false → mitad de columna). */
+    /** Si true, ocupa todo el ancho de la fila. */
     fullWidth?: boolean;
 }
 
-/** Sección para agrupar campos bajo un título. */
 export interface DetailSection {
     title?: string;
     fields: DetailField[];
@@ -44,6 +41,8 @@ export interface DetailModalProps {
     headerMedia?: React.ReactNode;
     sections: DetailSection[];
     size?: ModalSize;
+    /** Callback para abrir el modal de edición desde el padre. */
+    onEdit?: () => void;
     editConfig?: {
         title?: string;
         fields: DynamicField[];
@@ -61,7 +60,7 @@ export interface DetailModalProps {
 //  Helpers
 // ─────────────────────────────────────────────────────────
 
-const sizeToPaperMaxWidth: Record<ModalSize, string> = {
+const SIZE_MAP: Record<ModalSize, string> = {
     sm: '400px',
     md: '600px',
     lg: '900px',
@@ -81,13 +80,20 @@ const DetailModal: React.FC<DetailModalProps> = ({
     headerMedia,
     sections,
     size = 'md',
+    onEdit,
     editConfig,
 }) => {
     const [editOpen, setEditOpen] = useState(false);
 
     const handleOpenEdit = () => {
-        onClose();
-        setEditOpen(true);
+        if (onEdit) {
+            // El padre gestiona la apertura del editor
+            onEdit();
+        } else {
+            // Gestión interna: cierra detalle y abre editor
+            onClose();
+            setEditOpen(true);
+        }
     };
 
     const handleCloseEdit = () => {
@@ -96,7 +102,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
 
     return (
         <>
-            {/* ── Modal de DETALLE ── */}
+            {/* ─── FICHA DE DETALLE ─── */}
             <Dialog
                 open={isOpen}
                 onClose={onClose}
@@ -105,16 +111,15 @@ const DetailModal: React.FC<DetailModalProps> = ({
                 PaperProps={{
                     sx: {
                         width: '100%',
-                        maxWidth: sizeToPaperMaxWidth[size],
+                        maxWidth: SIZE_MAP[size],
                         maxHeight: size === 'full' ? '100vh' : '90vh',
                         m: size === 'full' ? 0 : 2,
                         bgcolor: 'background.paper',
                         backgroundImage: 'none',
                     },
                 }}
-                transitionDuration={225}
             >
-                {/* ── Header ── */}
+                {/* Header */}
                 <DialogTitle
                     component="div"
                     sx={{
@@ -155,7 +160,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
                     </Tooltip>
                 </DialogTitle>
 
-                {/* ── Media de cabecera ── */}
+                {/* Media */}
                 {headerMedia && (
                     <Box
                         sx={{
@@ -173,7 +178,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
                     </Box>
                 )}
 
-                {/* ── Secciones de datos ── */}
+                {/* Secciones */}
                 <DialogContent sx={{ p: 0, overflowY: 'auto' }}>
                     {sections.map((section, sIdx) => (
                         <Box
@@ -197,19 +202,9 @@ const DetailModal: React.FC<DetailModalProps> = ({
                                 </>
                             )}
 
-                            {/* Grid 2 col */}
-                            <Box
-                                sx={{
-                                    display: 'grid',
-                                    gridTemplateColumns: 'repeat(2, 1fr)',
-                                    gap: 2,
-                                }}
-                            >
+                            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
                                 {section.fields.map((field, fIdx) => (
-                                    <Box
-                                        key={fIdx}
-                                        sx={{ gridColumn: field.fullWidth ? 'span 2' : 'span 1' }}
-                                    >
+                                    <Box key={fIdx} sx={{ gridColumn: field.fullWidth ? 'span 2' : 'span 1' }}>
                                         <Typography
                                             variant="caption"
                                             color="text.secondary"
@@ -223,21 +218,11 @@ const DetailModal: React.FC<DetailModalProps> = ({
                                         >
                                             {field.label}
                                         </Typography>
-                                        <Box
-                                            sx={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                flexWrap: 'wrap',
-                                                gap: 0.5,
-                                                minHeight: 28,
-                                            }}
-                                        >
+                                        <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5, minHeight: 28 }}>
                                             {field.value != null && field.value !== '' ? (
-                                                typeof field.value === 'string' || typeof field.value === 'number' ? (
-                                                    <Typography variant="body2">{field.value}</Typography>
-                                                ) : (
-                                                    field.value
-                                                )
+                                                typeof field.value === 'string' || typeof field.value === 'number'
+                                                    ? <Typography variant="body2">{field.value}</Typography>
+                                                    : field.value
                                             ) : (
                                                 <Typography variant="body2" color="text.disabled">—</Typography>
                                             )}
@@ -251,8 +236,8 @@ const DetailModal: React.FC<DetailModalProps> = ({
                     ))}
                 </DialogContent>
 
-                {/* ── Footer con botón Editar ── */}
-                {editConfig && (
+                {/* Footer */}
+                {(editConfig || onEdit) && (
                     <DialogActions
                         sx={{
                             px: 3,
@@ -275,13 +260,13 @@ const DetailModal: React.FC<DetailModalProps> = ({
                 )}
             </Dialog>
 
-            {/* ── Modal de EDICIÓN ── */}
+            {/* ─── MODAL DE EDICIÓN ─── */}
             {editConfig && (
                 <DynamicFormModal
                     isOpen={editOpen}
                     onClose={handleCloseEdit}
                     title={editConfig.title ?? `Editar ${title}`}
-                    size={editConfig.size ?? size}
+                    size={editConfig.size ?? 'lg'}
                     fields={editConfig.fields}
                     initialData={editConfig.initialData}
                     onSubmit={async (data) => {

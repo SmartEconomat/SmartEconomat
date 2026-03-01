@@ -417,7 +417,7 @@ const Productos: React.FC = () => {
                         totalPages: totalPages,
                         onPageChange: (_, newPage) => setPage(newPage),
                         pageSize: pageSize,
-                        pageSizeOptions: [5, 10, 25, 50],
+                        pageSizeOptions: [4, 8, 12, 24],
                         onPageSizeChange: (e) => {
                             setPageSize(Number(e.target.value));
                             setPage(1);
@@ -481,6 +481,10 @@ const Productos: React.FC = () => {
                             title={p.nombre}
                             subtitle={p.marca || undefined}
                             size="md"
+                            onEdit={() => {
+                                setProductToEdit(buildEditData(p));
+                                setProductToView(null);
+                            }}
                             headerMedia={
                                 p.pathImg
                                     ? <img src={p.pathImg} alt={p.nombre} style={{ height: 160, objectFit: 'cover', width: '100%' }} />
@@ -536,15 +540,6 @@ const Productos: React.FC = () => {
                                     })),
                                 }] : []),
                             ]}
-                            editConfig={{
-                                title: `Editar: ${p.nombre}`,
-                                fields: dynamicSchema,
-                                initialData: buildEditData(p),
-                                onSubmit: handleSaveProduct,
-                                isSubmitting: isSaving,
-                                requireConfirmation: true,
-                                size: 'lg',
-                            }}
                         />
                     );
                 })()}
