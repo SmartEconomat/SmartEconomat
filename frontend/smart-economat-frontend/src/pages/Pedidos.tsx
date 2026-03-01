@@ -91,7 +91,7 @@ const Pedidos: React.FC = () => {
         fetchProveedores(),
       ]);
       setData(dataLoad);
-      setProveedores(provLoad);
+      setProveedores(provLoad.data);
     } catch (err: unknown) {
       const message =
         err instanceof Error
@@ -154,8 +154,12 @@ const Pedidos: React.FC = () => {
         costeTotal: calculatedTotal,
         estado: formData.estado,
         proveedorId: formData.proveedorId,
-        ...(formData.fechaEntrega ? { fechaEntrega: formData.fechaEntrega } : {}),
-        ...(formData.motivoCancelacion ? { motivoCancelacion: formData.motivoCancelacion } : {}),
+        ...(formData.fechaEntrega
+          ? { fechaEntrega: formData.fechaEntrega }
+          : {}),
+        ...(formData.motivoCancelacion
+          ? { motivoCancelacion: formData.motivoCancelacion }
+          : {}),
         pedidoProductos: lines.map((l: any) => ({
           productoProveedorId: l.productoProveedorId || l.id_producto_proveedor,
           cantidad: Number(l.cantidad),
