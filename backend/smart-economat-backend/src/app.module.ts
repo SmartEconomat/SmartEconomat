@@ -16,6 +16,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { InventarioModule } from './modules/inventario/inventario.module';
 import { AlbaranModule } from './modules/albaran/albaran.module';
 import { UbicacionModule } from './modules/ubicacion/ubicacion.module';
+import { IncidenciaModule } from './modules/incidencia/incidencia.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { UbicacionModule } from './modules/ubicacion/ubicacion.module';
     InventarioModule,
     AlbaranModule,
     UbicacionModule,
+    IncidenciaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
