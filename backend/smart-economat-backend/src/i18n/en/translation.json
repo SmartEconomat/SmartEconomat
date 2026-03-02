@@ -50,7 +50,9 @@
     "INCIDENCIA_RESUELTA_NOT_FOUND": "Incident resolution not found",
     "INCIDENCIA_YA_RESUELTA": "The incident already has a registered resolution",
     "PRODUCTO_ALERGENO_NOT_FOUND": "Product-allergen association not found",
-    "PRODUCTO_ALERGENO_ALREADY_EXISTS": "This allergen is already associated with that product"
+    "PRODUCTO_ALERGENO_ALREADY_EXISTS": "This allergen is already associated with that product",
+    "HISTORIAL_PRECIO_NOT_FOUND": "Price history record not found",
+    "PRECIO_NO_NEGATIVO": "Price cannot be negative"
   },
   "success": {
     "CREATED": "Successfully created",
