@@ -3,8 +3,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Recepcion } from './recepcion.entity/recepcion.entity';
 import { Usuario } from '../usuario/usuario.entity/usuario.entity';
 import { RecepcionController } from './controller/recepcion.controller';
+import { RecepcionProductoController } from './controller/recepcion-producto.controller';
 import { RecepcionService } from './service/recepcion.service';
 import { RecepcionStockService } from './service/recepcion-stock.service';
+import { RecepcionProductoService } from './service/recepcion-producto.service';
 import { RecepcionPedido } from './recepcion-pedido.entity/recepcion-pedido.entity';
 import { RecepcionProducto } from './recepcion-productos.entity/recepcion-producto.entity';
 import { Albaran } from '../albaran/albaran.entity/albaran.entity';
@@ -32,8 +34,13 @@ import { MovimientoHelper } from '../../common/helpers/movimiento.helper';
     ]),
     MovimientoModule,
   ],
-  controllers: [RecepcionController],
-  providers: [RecepcionService, RecepcionStockService, MovimientoHelper],
+  controllers: [RecepcionController, RecepcionProductoController],
+  providers: [
+    RecepcionService,
+    RecepcionStockService,
+    RecepcionProductoService,
+    MovimientoHelper,
+  ],
   exports: [RecepcionService, RecepcionStockService],
 })
 export class RecepcionModule {}
