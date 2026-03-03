@@ -31,6 +31,13 @@ import { rolUsuario } from '../../usuario/enums/usuario.enums';
 export class ProductoController {
   constructor(private readonly productoService: ProductoService) {}
 
+  @Get('generar-ean13')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  async generarEan13(): Promise<{ codigo_barras: string }> {
+    const codigo_barras = await this.productoService.generateUniqueEan13();
+    return { codigo_barras };
+  }
+
   @Post()
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.CREATED)
@@ -38,7 +45,7 @@ export class ProductoController {
     @Body() createProductoDto: CreateProductoDto,
     @Request() req: any
   ): Promise<Producto> {
-    const userId = req.user.sub;
+    const userId = req.user?.sub || null;
     return this.productoService.create(createProductoDto, userId);
   }
 
@@ -94,7 +101,7 @@ export class ProductoController {
     @Body() updateProductoDto: UpdateProductoDto,
     @Request() req: any
   ): Promise<Producto> {
-    const userId = req.user.sub;
+    const userId = req.user?.sub || null;
     return this.productoService.update(id, updateProductoDto, userId);
   }
 
@@ -105,7 +112,7 @@ export class ProductoController {
     @Param('id', ParseUUIDPipe) id: string,
     @Request() req: any
   ): Promise<void> {
-    const userId = req.user.sub;
+    const userId = req.user?.sub || null;
     return this.productoService.remove(id, userId);
   }
 }
