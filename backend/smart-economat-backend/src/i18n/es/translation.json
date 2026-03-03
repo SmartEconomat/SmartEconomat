@@ -53,7 +53,8 @@
     "PRODUCTO_ALERGENO_NOT_FOUND": "Asociación producto-alérgeno no encontrada",
     "PRODUCTO_ALERGENO_ALREADY_EXISTS": "Este alérgeno ya está asociado a ese producto",
     "HISTORIAL_PRECIO_NOT_FOUND": "Historial de precio no encontrado",
-    "PRECIO_NO_NEGATIVO": "El precio no puede ser negativo"
+    "PRECIO_NO_NEGATIVO": "El precio no puede ser negativo",
+    "DUPLICATE_INGREDIENT": "No se pueden añadir ingredientes duplicados en la misma receta"
   },
   "success": {
     "CREATED": "Creado exitosamente",

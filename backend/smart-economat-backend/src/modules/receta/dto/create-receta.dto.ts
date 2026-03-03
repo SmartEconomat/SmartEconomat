@@ -3,33 +3,18 @@ import {
   IsEnum,
   IsNotEmpty,
   IsArray,
+  ArrayMinSize,
   ValidateNested,
-  IsUUID,
-  IsNumber,
-  Min,
+  MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import {
-  DificultadReceta,
-  TiempoReceta,
-  UnidadIngrediente,
-} from '../enums/receta.enums';
-
-class CreateRecetaIngredienteDto {
-  @IsUUID()
-  productoId!: string;
-
-  @IsNumber()
-  @Min(0.01)
-  cantidad!: number;
-
-  @IsEnum(UnidadIngrediente)
-  unidad!: UnidadIngrediente;
-}
+import { DificultadReceta, TiempoReceta } from '../enums/receta.enums';
+import { AddIngredienteDto } from './add-ingrediente.dto';
 
 export class CreateRecetaDto {
   @IsString()
   @IsNotEmpty()
+  @MaxLength(150)
   nombre!: string;
 
   @IsString()
@@ -44,10 +29,12 @@ export class CreateRecetaDto {
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(50)
   tiempoPreparacion!: string;
 
   @IsArray()
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
-  @Type(() => CreateRecetaIngredienteDto)
-  ingredientes!: CreateRecetaIngredienteDto[];
+  @Type(() => AddIngredienteDto)
+  ingredientes!: AddIngredienteDto[];
 }

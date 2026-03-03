@@ -12,6 +12,7 @@ import {
   ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { RecetaService } from '../service/receta.service';
 import { CreateRecetaDto } from '../dto/create-receta.dto';
 import { UpdateRecetaDto } from '../dto/update-receta.dto';
@@ -24,6 +25,7 @@ import { rolUsuario } from '../../usuario/enums/usuario.enums';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
+@ApiTags('Recetas')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('recetas')
 export class RecetaController {
