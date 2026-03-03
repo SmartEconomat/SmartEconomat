@@ -3,6 +3,8 @@ import { ProductoService } from './service/producto.service';
 import { ProductoController } from './controller/producto.controller';
 import { ProductoProveedorService } from './service/producto-proveedor.service';
 import { ProductoProveedorController } from './controller/producto-proveedor.controller';
+import { ProductoAlergenoService } from './service/producto-alergeno.service';
+import { ProductoAlergenoController } from './controller/producto-alergeno.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Producto } from './producto.entity/producto.entity';
 import { ProductoAlergeno } from './producto-alergeno.entity/producto-alergeno.entity';
@@ -22,11 +24,16 @@ import { MovimientoHelper } from '../../common/helpers/movimiento.helper';
     ]),
     MovimientoModule,
   ],
-  controllers: [ProductoController, ProductoProveedorController],
+  controllers: [
+    ProductoController,
+    ProductoProveedorController,
+    ProductoAlergenoController,
+  ],
   providers: [
     ProductoService,
     ProductoRepository,
     ProductoProveedorService,
+    ProductoAlergenoService,
     MovimientoHelper,
   ],
   exports: [ProductoService, ProductoRepository, ProductoProveedorService],
