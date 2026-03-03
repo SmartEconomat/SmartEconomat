@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, ILike } from 'typeorm';
+import { DataSource, ILike, In, Repository } from 'typeorm';
 import { Receta } from '../receta.entity/receta.entity';
 import { RecetaIngrediente } from '../receta-ingrediente.entity/receta-ingrediente.entity';
 import { Producto } from '../../producto/producto.entity/producto.entity';
@@ -14,23 +14,42 @@ import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
+const INGREDIENTES_RELATIONS = [
+  'ingredientes',
+  'ingredientes.producto',
+  'ingredientes.producto.alergenos',
+] as const;
+
 @Injectable()
 export class RecetaRepository {
   constructor(
     @InjectRepository(Receta)
     private readonly recetaRepo: Repository<Receta>,
 
-    @InjectRepository(RecetaIngrediente)
-    private readonly recetaIngredienteRepo: Repository<RecetaIngrediente>,
-
-    @InjectRepository(Producto)
-    private readonly productoRepo: Repository<Producto>,
-
     private readonly dataSource: DataSource
   ) {}
 
   async create(dto: CreateRecetaDto): Promise<Receta> {
     return this.dataSource.transaction(async (manager) => {
+      const productoIds = dto.ingredientes.map((ing) => ing.productoId);
+
+      if (new Set(productoIds).size !== productoIds.length) {
+        throw new BadRequestException(
+          I18nHelper.getError('DUPLICATE_INGREDIENT')
+        );
+      }
+
+      // Un solo query para todos los productos (evita N+1)
+      const productos = await manager.find(Producto, {
+        where: { id: In(productoIds) },
+      });
+      const productosMap = new Map(productos.map((p) => [p.id, p]));
+
+      const missingId = productoIds.find((id) => !productosMap.has(id));
+      if (missingId) {
+        throw new BadRequestException(I18nHelper.getError('PRODUCT_NOT_FOUND'));
+      }
+
       const receta = manager.create(Receta, {
         nombre: dto.nombre,
         instrucciones: dto.instrucciones,
@@ -41,45 +60,27 @@ export class RecetaRepository {
 
       await manager.save(receta);
 
-      for (const ing of dto.ingredientes) {
-        const producto = await manager.findOne(Producto, {
-          where: { id: ing.productoId },
-        });
-
-        if (!producto) {
-          throw new BadRequestException(
-            I18nHelper.getError('PRODUCT_NOT_FOUND')
-          );
-        }
-
-        const recetaIngrediente = manager.create(RecetaIngrediente, {
+      // Batch save de todos los ingredientes en una sola operación
+      const ingredientes = dto.ingredientes.map((ing) =>
+        manager.create(RecetaIngrediente, {
           cantidad: ing.cantidad,
           unidad: ing.unidad,
           receta,
-          producto,
-        });
+          producto: productosMap.get(ing.productoId),
+        })
+      );
+      await manager.save(ingredientes);
 
-        await manager.save(recetaIngrediente);
+      const saved = await manager.findOne(Receta, {
+        where: { id: receta.id },
+        relations: [...INGREDIENTES_RELATIONS],
+      });
+
+      if (!saved) {
+        throw new NotFoundException(I18nHelper.getError('RECIPE_NOT_FOUND'));
       }
 
-      return manager.findOneOrFail(Receta, {
-        where: { id: receta.id },
-        relations: [
-          'ingredientes',
-          'ingredientes.producto',
-          'ingredientes.producto.alergenos',
-        ],
-      });
-    });
-  }
-
-  async findAll(): Promise<Receta[]> {
-    return this.recetaRepo.find({
-      relations: [
-        'ingredientes',
-        'ingredientes.producto',
-        'ingredientes.producto.alergenos',
-      ],
+      return saved;
     });
   }
 
@@ -87,7 +88,7 @@ export class RecetaRepository {
     query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Receta>> {
     const page = query.page ?? 1;
-    const limit = Math.min(query.limit ?? 100, 100);
+    const limit = Math.min(query.limit ?? 20, 100);
 
     const whereCondition = query.searchTerm
       ? [
@@ -98,11 +99,7 @@ export class RecetaRepository {
 
     const [data, total] = await this.recetaRepo.findAndCount({
       where: whereCondition,
-      relations: [
-        'ingredientes',
-        'ingredientes.producto',
-        'ingredientes.producto.alergenos',
-      ],
+      relations: [...INGREDIENTES_RELATIONS],
       order: { nombre: 'ASC' },
       skip: (page - 1) * limit,
       take: limit,
@@ -120,22 +117,49 @@ export class RecetaRepository {
   async findById(id: string): Promise<Receta | null> {
     return this.recetaRepo.findOne({
       where: { id },
-      relations: [
-        'ingredientes',
-        'ingredientes.producto',
-        'ingredientes.producto.alergenos',
-      ],
+      relations: [...INGREDIENTES_RELATIONS],
     });
   }
 
   async update(id: string, dto: UpdateRecetaDto): Promise<Receta> {
-    const receta = await this.findById(id);
-
-    if (!receta) {
-      throw new NotFoundException(I18nHelper.getError('RECIPE_NOT_FOUND'));
-    }
-
+    // El servicio ya verificó existencia con findOne — no se repite aquí
     return this.dataSource.transaction(async (manager) => {
+      if (dto.ingredientes) {
+        const productoIds = dto.ingredientes.map((ing) => ing.productoId);
+
+        if (new Set(productoIds).size !== productoIds.length) {
+          throw new BadRequestException(
+            I18nHelper.getError('DUPLICATE_INGREDIENT')
+          );
+        }
+
+        // Un solo query para todos los productos (evita N+1)
+        const productos = await manager.find(Producto, {
+          where: { id: In(productoIds) },
+        });
+        const productosMap = new Map(productos.map((p) => [p.id, p]));
+
+        const missingId = productoIds.find((pid) => !productosMap.has(pid));
+        if (missingId) {
+          throw new BadRequestException(
+            I18nHelper.getError('PRODUCT_NOT_FOUND')
+          );
+        }
+
+        await manager.delete(RecetaIngrediente, { receta: { id } });
+
+        // Batch save de todos los ingredientes en una sola operación
+        const ingredientes = dto.ingredientes.map((ing) =>
+          manager.create(RecetaIngrediente, {
+            cantidad: ing.cantidad,
+            unidad: ing.unidad,
+            receta: { id } as Receta,
+            producto: productosMap.get(ing.productoId),
+          })
+        );
+        await manager.save(ingredientes);
+      }
+
       const updateData: Partial<Receta> = {
         ...(dto.nombre !== undefined && { nombre: dto.nombre }),
         ...(dto.instrucciones !== undefined && {
@@ -148,41 +172,21 @@ export class RecetaRepository {
         }),
       };
 
-      await manager.update(Receta, id, updateData);
-
-      if (dto.ingredientes) {
-        await manager.delete(RecetaIngrediente, { receta: { id } });
-
-        for (const ing of dto.ingredientes) {
-          const producto = await manager.findOne(Producto, {
-            where: { id: ing.productoId },
-          });
-
-          if (!producto) {
-            throw new BadRequestException(
-              I18nHelper.getError('PRODUCT_NOT_FOUND')
-            );
-          }
-
-          const recetaIngrediente = manager.create(RecetaIngrediente, {
-            cantidad: ing.cantidad,
-            unidad: ing.unidad,
-            receta: { id } as Receta,
-            producto,
-          });
-
-          await manager.save(recetaIngrediente);
-        }
+      // Solo ejecuta el UPDATE si hay campos escalares que actualizar
+      if (Object.keys(updateData).length > 0) {
+        await manager.update(Receta, id, updateData);
       }
 
-      return manager.findOneOrFail(Receta, {
+      const updated = await manager.findOne(Receta, {
         where: { id },
-        relations: [
-          'ingredientes',
-          'ingredientes.producto',
-          'ingredientes.producto.alergenos',
-        ],
+        relations: [...INGREDIENTES_RELATIONS],
       });
+
+      if (!updated) {
+        throw new NotFoundException(I18nHelper.getError('RECIPE_NOT_FOUND'));
+      }
+
+      return updated;
     });
   }
 
@@ -211,27 +215,29 @@ export class RecetaRepository {
 
       await manager.save(newReceta);
 
-      if (sourceReceta.ingredientes) {
-        for (const ing of sourceReceta.ingredientes) {
-          const newIngrediente = manager.create(RecetaIngrediente, {
+      if (sourceReceta.ingredientes?.length) {
+        // Batch save de todos los ingredientes en una sola operación
+        const ingredientes = sourceReceta.ingredientes.map((ing) =>
+          manager.create(RecetaIngrediente, {
             cantidad: ing.cantidad,
             unidad: ing.unidad,
             receta: newReceta,
             producto: ing.producto,
-          });
-
-          await manager.save(newIngrediente);
-        }
+          })
+        );
+        await manager.save(ingredientes);
       }
 
-      return manager.findOneOrFail(Receta, {
+      const saved = await manager.findOne(Receta, {
         where: { id: newReceta.id },
-        relations: [
-          'ingredientes',
-          'ingredientes.producto',
-          'ingredientes.producto.alergenos',
-        ],
+        relations: [...INGREDIENTES_RELATIONS],
       });
+
+      if (!saved) {
+        throw new NotFoundException(I18nHelper.getError('RECIPE_NOT_FOUND'));
+      }
+
+      return saved;
     });
   }
 }
