@@ -47,7 +47,9 @@
     "ORDER_NOT_RECEPTABLE": "El pedido no se encuentra en un estado válido para ser recepcionado (debe estar EN_PROCESO o PENDIENTE)",
     "INCIDENCIA_NOT_FOUND": "Incidencia no encontrada",
     "INCIDENCIA_RESUELTA_NOT_FOUND": "Resolución de incidencia no encontrada",
-    "INCIDENCIA_YA_RESUELTA": "La incidencia ya tiene una resolución registrada"
+    "INCIDENCIA_YA_RESUELTA": "La incidencia ya tiene una resolución registrada",
+    "PRODUCTO_ALERGENO_NOT_FOUND": "Asociación producto-alérgeno no encontrada",
+    "PRODUCTO_ALERGENO_ALREADY_EXISTS": "Este alérgeno ya está asociado a ese producto"
   },
   "success": {
     "CREATED": "Creado exitosamente",
