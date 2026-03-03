@@ -46,7 +46,9 @@
     "ORDER_NOT_RECEPTABLE": "The order is not in a valid state to be received (must be EN_PROCESO or PENDIENTE)",
     "INCIDENCIA_NOT_FOUND": "Incident not found",
     "INCIDENCIA_RESUELTA_NOT_FOUND": "Incident resolution not found",
-    "INCIDENCIA_YA_RESUELTA": "The incident already has a registered resolution"
+    "INCIDENCIA_YA_RESUELTA": "The incident already has a registered resolution",
+    "PRODUCTO_ALERGENO_NOT_FOUND": "Product-allergen association not found",
+    "PRODUCTO_ALERGENO_ALREADY_EXISTS": "This allergen is already associated with that product"
   },
   "success": {
     "CREATED": "Successfully created",
