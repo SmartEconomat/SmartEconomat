@@ -45,7 +45,7 @@
     "INVALID_OLD_PASSWORD": "Current password is incorrect",
     "ORDER_NOT_RECEPTABLE": "The order is not in a valid state to be received (must be EN_PROCESO or PENDIENTE)",
     "PEDIDO_PRODUCT_NOT_FOUND": "Order product not found",
-    "RECEPTION_PRODUCT_NOT_FOUND": "Reception product not found"
+    "RECEPTION_PRODUCT_NOT_FOUND": "Reception product not found",
     "INCIDENCIA_NOT_FOUND": "Incident not found",
     "INCIDENCIA_RESUELTA_NOT_FOUND": "Incident resolution not found",
     "INCIDENCIA_YA_RESUELTA": "The incident already has a registered resolution",
