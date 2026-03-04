@@ -38,7 +38,7 @@
  Definir en `.env` (a nivel raíz):
  ```env
  POSTGRES_HOST=localhost
- POSTGRES_PORT=5432
+ DB_PORT=5432
  POSTGRES_USER=usuario
  POSTGRES_PASSWORD=secreto
  POSTGRES_DB=nombre_bd
@@ -62,7 +62,7 @@
        useFactory: (cs: ConfigService) => ({
          type: 'postgres',
          host: cs.get('POSTGRES_HOST'),
-         port: +cs.get<number>('POSTGRES_PORT'),
+         port: +cs.get<number>('DB_PORT'),
          username: cs.get('POSTGRES_USER'),
          password: cs.get('POSTGRES_PASSWORD'),
          database: cs.get('POSTGRES_DB'),
@@ -79,15 +79,15 @@
  ### 3.2 En seeders (`src/seeders/seed.ts`)
  ```ts
  export const dataSource = new DataSource({
-   type: 'postgres',
-   host: cs.get('POSTGRES_HOST'),
-   port: +cs.get<number>('POSTGRES_PORT'),
-   username: cs.get('POSTGRES_USER'),
-   password: cs.get('POSTGRES_PASSWORD'),
-   database: cs.get('POSTGRES_DB'),
-   entities: [join(__dirname, '../**/*.entity.{ts,js}')],
-   synchronize: cs.get('DB_SYNC') === 'true',
- });
+  type: 'postgres',
+  host: cs.get('POSTGRES_HOST'),
+  port: +cs.get<number>('DB_PORT'),
+  username: cs.get('POSTGRES_USER'),
+  password: cs.get('POSTGRES_PASSWORD'),
+  database: cs.get('POSTGRES_DB'),
+  entities: [join(__dirname, '../**/*.entity.{ts,js}')],
+  synchronize: cs.get('DB_SYNC') === 'true',
+});
  ```
 
  ## 4. Generación de módulos, controladores y servicios
