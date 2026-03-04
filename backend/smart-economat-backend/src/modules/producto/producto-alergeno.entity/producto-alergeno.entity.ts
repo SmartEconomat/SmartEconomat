@@ -10,7 +10,7 @@ import {
   type Relation,
 } from 'typeorm';
 import type { Producto } from '../producto.entity/producto.entity';
-import { AlergenoProducto } from '../enums/producto.enums';
+import { Alergeno } from '../enums/producto.enums';
 
 /**
  * ProductoAlergeno Entity
@@ -23,8 +23,8 @@ export class ProductoAlergeno {
   @PrimaryColumn('uuid', { name: 'id_producto' })
   idProducto!: string;
 
-  @PrimaryColumn({ type: 'enum', enum: AlergenoProducto, name: 'alergeno' })
-  alergeno!: AlergenoProducto;
+  @PrimaryColumn({ type: 'enum', enum: Alergeno, name: 'alergeno' })
+  alergeno!: Alergeno;
 
   @ManyToOne('Producto', {
     onDelete: 'CASCADE',

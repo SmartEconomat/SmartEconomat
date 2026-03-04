@@ -17,7 +17,7 @@ import { Proveedor } from '../../src/modules/proveedor/proveedor.entity/proveedo
 import { Producto } from '../../src/modules/producto/producto.entity/producto.entity';
 import { ProductoProveedor } from '../../src/modules/producto/producto-proveedor.entity/producto-proveedor.entity';
 import {
-  UnidadProducto,
+  UnidadMedida,
   TipoProducto,
 } from '../../src/modules/producto/enums/producto.enums';
 
@@ -66,7 +66,7 @@ async function generateLargePedidos() {
           faker.commerce.productName() + ' ' + faker.string.alphanumeric(4),
         marca: faker.company.name(),
         descripcion: faker.commerce.productDescription(),
-        unidad: faker.helpers.arrayElement(Object.values(UnidadProducto)),
+        unidad: faker.helpers.arrayElement(Object.values(UnidadMedida)),
         tipo: faker.helpers.arrayElement(Object.values(TipoProducto)),
         pathImg: faker.image.url({ width: 640, height: 480 }),
         contenido: faker.number.int({ min: 1, max: 1000 }),

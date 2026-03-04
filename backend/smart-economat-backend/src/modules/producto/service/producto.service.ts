@@ -10,12 +10,12 @@ import { CreateProductoDto } from '../dto/create-producto.dto';
 import { UpdateProductoDto } from '../dto/update-producto.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
+import { Repository, DataSource, EntityManager } from 'typeorm';
 import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
 import { ProductFilterDto } from '../dto/product-filter.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
-import { ProductoProveedorDto } from '../dto/producto-proveedor.dto/producto-proveedor.dto';
+import { AddProveedorToProductoDto } from '../dto/producto-proveedor.dto/add-proveedor-to-producto.dto';
 import { ProductoAlergeno } from '../producto-alergeno.entity/producto-alergeno.entity';
 import { generateEan13, validateEan13 } from '../../../common/utils/ean13.util';
 
@@ -27,7 +27,9 @@ export class ProductoService {
     private readonly productoProveedorRepository: Repository<ProductoProveedor>,
     @InjectRepository(ProductoAlergeno)
     private readonly productoAlergenoRepository: Repository<ProductoAlergeno>,
-    private readonly movimientoHelper: MovimientoHelper
+    private readonly movimientoHelper: MovimientoHelper,
+    @InjectDataSource()
+    private readonly dataSource: DataSource
   ) {}
 
   async create(
@@ -52,32 +54,38 @@ export class ProductoService {
       rest.codigoBarras = await this.generateUniqueEan13();
     }
 
-    const producto = this.productoRepository.create(rest);
+    return await this.dataSource.transaction(async (manager) => {
+      const producto = manager.create(Producto, rest);
 
-    if (alergenos && alergenos.length > 0) {
-      producto.alergenos = alergenos.map((a) => ({
-        alergeno: a,
-      })) as any;
-    }
+      if (alergenos && alergenos.length > 0) {
+        producto.alergenos = alergenos.map((a) =>
+          manager.create(ProductoAlergeno, {
+            alergeno: a,
+          })
+        );
+      }
 
-    const savedProduct = await this.productoRepository.save(producto);
+      const savedProduct = await manager.save(producto);
 
-    const processedProduct = {
-      ...savedProduct,
-      alergenos: savedProduct.alergenos || [],
-    };
+      if (proveedores !== undefined) {
+        await this.syncProveedoresWithManager(
+          manager,
+          savedProduct.id,
+          proveedores
+        );
+      }
 
-    if (proveedores !== undefined) {
-      await this.syncProveedores(processedProduct.id, proveedores);
-    }
+      await this.movimientoHelper.trackProductoCreation(
+        userId,
+        savedProduct.id,
+        `Creación de producto: ${savedProduct.nombre}`
+      );
 
-    await this.movimientoHelper.trackProductoCreation(
-      userId,
-      processedProduct.id,
-      `Creación de producto: ${processedProduct.nombre}`
-    );
-
-    return this.findOne(processedProduct.id);
+      return manager.findOne(Producto, {
+        where: { id: savedProduct.id },
+        relations: ['proveedores', 'proveedores.proveedor', 'alergenos'],
+      }) as Promise<Producto>;
+    });
   }
 
   async findAll(
@@ -234,11 +242,12 @@ export class ProductoService {
     );
   }
 
-  private async syncProveedores(
+  private async syncProveedoresWithManager(
+    manager: EntityManager,
     productoId: string,
-    proveedores: ProductoProveedorDto[]
+    proveedores: AddProveedorToProductoDto[]
   ) {
-    const existing = await this.productoProveedorRepository.find({
+    const existing = await manager.find(ProductoProveedor, {
       where: { producto: { id: productoId } },
       relations: ['proveedor'],
     });
@@ -253,15 +262,15 @@ export class ProductoService {
 
     if (newProveedores.length > 0) {
       const newRelations = newProveedores.map((p) =>
-        this.productoProveedorRepository.create({
+        manager.create(ProductoProveedor, {
           producto: { id: productoId } as any,
           proveedor: { id: p.proveedorId } as any,
           precioUnitario: p.precioUnitario ?? 0,
-          marca: p.marca,
+          marca: p.marcaEspecifica,
           codigoBarras: p.codigoBarras,
         })
       );
-      await this.productoProveedorRepository.save(newRelations);
+      await manager.save(newRelations);
     }
 
     if (proveedoresToUpdate.length > 0) {
@@ -269,9 +278,9 @@ export class ProductoService {
         const toUpdate = existing.find((e) => e.proveedor.id === p.proveedorId);
         if (toUpdate) {
           toUpdate.precioUnitario = p.precioUnitario ?? toUpdate.precioUnitario;
-          toUpdate.marca = p.marca ?? toUpdate.marca;
+          toUpdate.marca = p.marcaEspecifica ?? toUpdate.marca;
           toUpdate.codigoBarras = p.codigoBarras ?? toUpdate.codigoBarras;
-          await this.productoProveedorRepository.save(toUpdate);
+          await manager.save(toUpdate);
         }
       }
     }
@@ -285,9 +294,20 @@ export class ProductoService {
       for (const id of idsToRemove) {
         const toDelete = existing.find((e) => e.proveedor.id === id);
         if (toDelete) {
-          await this.productoProveedorRepository.softDelete(toDelete.id);
+          await manager.softDelete(ProductoProveedor, toDelete.id);
         }
       }
     }
+  }
+
+  private async syncProveedores(
+    productoId: string,
+    proveedores: AddProveedorToProductoDto[]
+  ) {
+    return this.syncProveedoresWithManager(
+      this.dataSource.manager,
+      productoId,
+      proveedores
+    );
   }
 }
