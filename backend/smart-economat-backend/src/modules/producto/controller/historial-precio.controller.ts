@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { HistorialPrecioService } from '../service/historial-precio.service';
@@ -19,6 +20,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/role.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { ApiQuery } from '@nestjs/swagger';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('historial-precio')
@@ -37,8 +39,16 @@ export class HistorialPrecioController {
   @Get()
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.OK)
-  findAll(): Promise<HistorialPrecio[]> {
-    return this.historialPrecioService.findAll();
+  @ApiQuery({
+    name: 'order',
+    required: false,
+    enum: ['ASC', 'DESC'],
+    description: 'Dirección de ordenamiento por fecha',
+  })
+  findAll(
+    @Query('order') order: 'ASC' | 'DESC' = 'DESC'
+  ): Promise<HistorialPrecio[]> {
+    return this.historialPrecioService.findAll(order);
   }
 
   @Get(':id')

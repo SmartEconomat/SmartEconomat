@@ -37,14 +37,14 @@ export class HistorialPrecioService {
     const historial = this.historialPrecioRepository.create({
       productoProveedor,
       precio: dto.precio,
-      ...(dto.fecha ? { fecha: new Date(dto.fecha) } : {}),
+      ...(dto.fecha ? { fecha: dto.fecha } : {}),
     });
 
     return this.historialPrecioRepository.save(historial);
   }
 
-  async findAll(): Promise<HistorialPrecio[]> {
-    return this.historialPrecioRepository.findAllWithRelations();
+  async findAll(order: 'ASC' | 'DESC' = 'DESC'): Promise<HistorialPrecio[]> {
+    return this.historialPrecioRepository.findAllWithRelations(order);
   }
 
   async findOne(id: string): Promise<HistorialPrecio> {
@@ -90,7 +90,7 @@ export class HistorialPrecioService {
     }
 
     if (dto.fecha !== undefined) {
-      historial.fecha = new Date(dto.fecha);
+      historial.fecha = dto.fecha;
     }
 
     return this.historialPrecioRepository.save(historial);
@@ -98,6 +98,6 @@ export class HistorialPrecioService {
 
   async remove(id: string): Promise<void> {
     const historial = await this.findOne(id);
-    await this.historialPrecioRepository.remove(historial);
+    await this.historialPrecioRepository.softRemove(historial);
   }
 }
