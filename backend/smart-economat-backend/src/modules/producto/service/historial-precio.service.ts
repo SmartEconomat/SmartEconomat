@@ -66,10 +66,6 @@ export class HistorialPrecioService {
   ): Promise<HistorialPrecio> {
     const historial = await this.findOne(id);
 
-    if (dto.precio !== undefined && dto.precio < 0) {
-      throw new BadRequestException(I18nHelper.getError('PRECIO_NO_NEGATIVO'));
-    }
-
     if (dto.productoProveedorId) {
       const productoProveedor = await this.dataSource.manager.findOne(
         ProductoProveedor,
@@ -86,6 +82,14 @@ export class HistorialPrecioService {
     }
 
     if (dto.precio !== undefined) {
+      if ((dto.precio as any) === null) {
+        throw new BadRequestException(I18nHelper.getError('INVALID_DATA'));
+      }
+      if (dto.precio < 0) {
+        throw new BadRequestException(
+          I18nHelper.getError('PRECIO_NO_NEGATIVO')
+        );
+      }
       historial.precio = dto.precio;
     }
 
