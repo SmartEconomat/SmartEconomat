@@ -7,7 +7,7 @@ services:
     image: smarteconomat-db:dev
     env_file: .env.dev
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - "${DB_PORT}:5432"
     volumes:
       - database_dev:/var/lib/postgresql/data
     healthcheck:

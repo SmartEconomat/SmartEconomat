@@ -9,6 +9,7 @@ import {
   IsDate,
   IsArray,
   ValidateNested,
+  Matches,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ProductoProveedorDto } from './producto-proveedor.dto/producto-proveedor.dto';
@@ -56,8 +57,11 @@ export class CreateProductoDto {
 
   @IsOptional()
   @IsString({ message: 'El código de barras debe ser una cadena de texto' })
-  @MaxLength(50, {
-    message: 'El código de barras no puede exceder los 50 caracteres',
+  @MaxLength(13, {
+    message: 'El código de barras no puede exceder los 13 caracteres',
+  })
+  @Matches(/^\d{13}$/, {
+    message: 'El código de barras debe ser un EAN-13 de 13 dígitos',
   })
   codigoBarras?: string;
 
