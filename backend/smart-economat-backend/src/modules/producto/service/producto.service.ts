@@ -168,12 +168,7 @@ export class ProductoService {
       id,
       `Actualización de producto: ${producto.nombre}`
     );
-
-    return {
-      ...producto,
-      alergenos: producto.alergenos || [],
-      proveedores: producto.proveedores || [],
-    };
+    return this.findOne(id);
   }
 
   async remove(id: string, userId: string): Promise<void> {
