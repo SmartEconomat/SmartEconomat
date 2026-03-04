@@ -17,6 +17,8 @@ import { RecetaService } from '../service/receta.service';
 import { CreateRecetaDto } from '../dto/create-receta.dto';
 import { UpdateRecetaDto } from '../dto/update-receta.dto';
 import { DuplicateRecetaDto } from '../dto/duplicate-receta.dto';
+import { DetalleRecetaDto } from '../dto/detalle-receta.dto';
+import { CocinarRecetaDto } from '../dto/cocinar-receta.dto';
 import { Receta } from '../receta.entity/receta.entity';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/role.guard';
@@ -57,6 +59,24 @@ export class RecetaController {
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
   findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Receta> {
     return this.recetaService.findOne(id);
+  }
+
+  @Get(':id/detalle')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
+  getDetalle(
+    @Param('id', ParseUUIDPipe) id: string
+  ): Promise<DetalleRecetaDto> {
+    return this.recetaService.getDetalle(id);
+  }
+
+  @Post(':id/cocinar')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @HttpCode(HttpStatus.OK)
+  cocinar(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() cocinarRecetaDto: CocinarRecetaDto
+  ): Promise<void> {
+    return this.recetaService.cocinar(id, cocinarRecetaDto);
   }
 
   @Patch(':id')
