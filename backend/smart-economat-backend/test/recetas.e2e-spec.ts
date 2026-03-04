@@ -19,6 +19,7 @@ describe('RecetaController (e2e)', () => {
   let app: INestApplication;
   let adminToken: string;
   let recetaId: string;
+  let productoId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -44,6 +45,11 @@ describe('RecetaController (e2e)', () => {
         password: '123456',
       });
     adminToken = response.body.data.access_token;
+
+    const productosRes = await request(app.getHttpServer())
+      .get('/api/v1/productos')
+      .set('Authorization', `Bearer ${adminToken}`);
+    productoId = productosRes.body.data.data[0].id;
   });
 
   afterAll(async () => {
@@ -63,8 +69,14 @@ describe('RecetaController (e2e)', () => {
           instrucciones: 'Mezclar y cocinar.',
           tiempo: '20 min',
           dificultad: 'Media',
-          tiempoPreparacion: '15 min',
-          ingredientes: [],
+          tiempoPreparacion: '15 minutos',
+          ingredientes: [
+            {
+              productoId,
+              cantidad: 1,
+              unidad: 'kg',
+            },
+          ],
         })
         .expect(201);
 
@@ -115,8 +127,14 @@ describe('RecetaController (e2e)', () => {
           instrucciones: 'Instrucciones originales',
           tiempo: '10 min',
           dificultad: 'Fácil',
-          tiempoPreparacion: '5 min',
-          ingredientes: [],
+          tiempoPreparacion: '5 minutos',
+          ingredientes: [
+            {
+              productoId,
+              cantidad: 0.5,
+              unidad: 'l',
+            },
+          ],
         })
         .expect(201);
 

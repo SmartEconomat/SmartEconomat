@@ -1,23 +1,12 @@
-import {
-  Entity,
-  PrimaryColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  type Relation,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, type Relation } from 'typeorm';
 import type { Receta } from '../receta.entity/receta.entity';
 import type { Producto } from '../../producto/producto.entity/producto.entity';
 import { UnidadIngrediente } from '../enums/receta.enums';
 
-@Entity('receta_ingrediente')
-export class RecetaIngrediente {
-  @PrimaryColumn('uuid', {
-    name: 'id_receta_ingrediente',
-    default: () => 'uuid_generate_v7()',
-  })
-  id!: string;
+import { BaseEntity } from '../../../common/entities/base.entity';
 
+@Entity('receta_ingrediente')
+export class RecetaIngrediente extends BaseEntity {
   @Column('double precision')
   cantidad!: number;
 

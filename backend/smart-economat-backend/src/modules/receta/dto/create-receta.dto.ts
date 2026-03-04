@@ -6,6 +6,7 @@ import {
   ArrayMinSize,
   ValidateNested,
   MaxLength,
+  Matches,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { DificultadReceta, TiempoReceta } from '../enums/receta.enums';
@@ -30,6 +31,10 @@ export class CreateRecetaDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(50)
+  @Matches(/^\d+ (minutos|horas|segundos)$/, {
+    message:
+      'El tiempo de preparación debe seguir el formato: "10 minutos", "1 hora", etc.',
+  })
   tiempoPreparacion!: string;
 
   @IsArray()
