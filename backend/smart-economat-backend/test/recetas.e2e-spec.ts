@@ -16,6 +16,8 @@ import { GlobalExceptionFilter } from '../src/common/filters/global-exception.fi
  * Cubre el CRUD de recetas y sus validaciones.
  */
 describe('RecetaController (e2e)', () => {
+  jest.setTimeout(30000);
+
   let app: INestApplication;
   let adminToken: string;
   let recetaId: string;

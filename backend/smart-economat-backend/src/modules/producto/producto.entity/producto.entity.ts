@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
-import { TipoProducto, UnidadProducto } from '../enums/producto.enums';
+import { TipoProducto, UnidadMedida } from '../enums/producto.enums';
 import type { ProductoAlergeno } from '../producto-alergeno.entity/producto-alergeno.entity';
 import type { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
 
@@ -53,10 +53,10 @@ export class Producto extends BaseEntity {
   /**
    * Unidad de medida base del producto (KILOGRAMO, LITRO, UNIDAD).
    * Define cómo se interpreta el campo 'cantidad'.
-   * @type {UnidadProducto | undefined}
+   * @type {UnidadMedida | undefined}
    */
-  @Column({ type: 'enum', enum: UnidadProducto, nullable: true })
-  unidad?: UnidadProducto;
+  @Column({ type: 'enum', enum: UnidadMedida, nullable: true })
+  unidad?: UnidadMedida;
 
   /**
    * Fecha de caducidad del lote actual o referencia general.

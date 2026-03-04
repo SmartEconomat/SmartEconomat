@@ -87,7 +87,7 @@ export class ProductoProveedorService {
       productoNombre: string;
       proveedorId: string;
       proveedorNombre: string;
-      marca?: string;
+      marcaEspecifica?: string;
       codigoBarras?: string;
       precioUnitario?: number;
     }>
@@ -125,7 +125,7 @@ export class ProductoProveedorService {
 
     const rows = await qb.getMany();
 
-    return rows.map((pp: any) => ({
+    return rows.map((pp) => ({
       id: pp.id,
       productoId: pp.producto?.id,
       productoNombre: pp.producto?.nombre,

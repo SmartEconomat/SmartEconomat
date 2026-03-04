@@ -11,7 +11,7 @@ import { Producto } from '../producto.entity/producto.entity';
 import { CreateProductoAlergenoDto } from '../dto/producto-alergeno.dto/create-producto-alergeno.dto';
 import { UpdateProductoAlergenoDto } from '../dto/producto-alergeno.dto/update-producto-alergeno.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
-import { AlergenoProducto } from '../enums/producto.enums';
+import { Alergeno } from '../enums/producto.enums';
 
 @Injectable()
 export class ProductoAlergenoService {
@@ -129,16 +129,14 @@ export class ProductoAlergenoService {
    * Lanza NotFoundException si la asociación no existe.
    */
   async remove(idProducto: string, alergeno: string): Promise<void> {
-    if (
-      !Object.values(AlergenoProducto).includes(alergeno as AlergenoProducto)
-    ) {
+    if (!Object.values(Alergeno).includes(alergeno as Alergeno)) {
       throw new BadRequestException(
         `El alérgeno "${alergeno}" no es un valor válido`
       );
     }
 
     const productoAlergeno = await this.productoAlergenoRepository.findOne({
-      where: { idProducto, alergeno: alergeno as AlergenoProducto },
+      where: { idProducto, alergeno: alergeno as Alergeno },
     });
     if (!productoAlergeno) {
       throw new NotFoundException(

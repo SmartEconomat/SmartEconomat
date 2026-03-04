@@ -7,7 +7,7 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
-import { AlergenoProducto, TipoProducto } from '../enums/producto.enums';
+import { Alergeno, TipoProducto } from '../enums/producto.enums';
 
 export class ProductFilterDto extends PaginationQueryDto {
   @IsOptional()
@@ -21,7 +21,7 @@ export class ProductFilterDto extends PaginationQueryDto {
 
   @IsOptional()
   @IsArray()
-  @IsEnum(AlergenoProducto, { each: true })
+  @IsEnum(Alergeno, { each: true })
   @Transform(({ value }) =>
     Array.isArray(value)
       ? (value as string[])
@@ -29,7 +29,7 @@ export class ProductFilterDto extends PaginationQueryDto {
         ? value.split(',')
         : []
   )
-  alergenos?: AlergenoProducto[];
+  alergenos?: Alergeno[];
 
   @IsOptional()
   @IsArray()
