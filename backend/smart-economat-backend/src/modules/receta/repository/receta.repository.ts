@@ -39,13 +39,16 @@ export class RecetaRepository {
         );
       }
 
-      // Un solo query para todos los productos (evita N+1)
       const productos = await manager.find(Producto, {
         where: { id: In(productoIds) },
       });
-      const productosMap = new Map(productos.map((p) => [p.id, p]));
+      const productosMap = new Map(
+        productos.map((p) => [p.id.toLowerCase(), p])
+      );
 
-      const missingId = productoIds.find((id) => !productosMap.has(id));
+      const missingId = productoIds.find(
+        (id) => !productosMap.has(id.toLowerCase())
+      );
       if (missingId) {
         throw new BadRequestException(I18nHelper.getError('PRODUCT_NOT_FOUND'));
       }
@@ -60,13 +63,12 @@ export class RecetaRepository {
 
       await manager.save(receta);
 
-      // Batch save de todos los ingredientes en una sola operación
       const ingredientes = dto.ingredientes.map((ing) =>
         manager.create(RecetaIngrediente, {
           cantidad: ing.cantidad,
           unidad: ing.unidad,
           receta,
-          producto: productosMap.get(ing.productoId),
+          producto: productosMap.get(ing.productoId.toLowerCase()),
         })
       );
       await manager.save(ingredientes);
@@ -122,7 +124,6 @@ export class RecetaRepository {
   }
 
   async update(id: string, dto: UpdateRecetaDto): Promise<Receta> {
-    // El servicio ya verificó existencia con findOne — no se repite aquí
     return this.dataSource.transaction(async (manager) => {
       if (dto.ingredientes) {
         const productoIds = dto.ingredientes.map((ing) => ing.productoId);
@@ -133,13 +134,16 @@ export class RecetaRepository {
           );
         }
 
-        // Un solo query para todos los productos (evita N+1)
         const productos = await manager.find(Producto, {
           where: { id: In(productoIds) },
         });
-        const productosMap = new Map(productos.map((p) => [p.id, p]));
+        const productosMap = new Map(
+          productos.map((p) => [p.id.toLowerCase(), p])
+        );
 
-        const missingId = productoIds.find((pid) => !productosMap.has(pid));
+        const missingId = productoIds.find(
+          (pid) => !productosMap.has(pid.toLowerCase())
+        );
         if (missingId) {
           throw new BadRequestException(
             I18nHelper.getError('PRODUCT_NOT_FOUND')
@@ -148,13 +152,12 @@ export class RecetaRepository {
 
         await manager.delete(RecetaIngrediente, { receta: { id } });
 
-        // Batch save de todos los ingredientes en una sola operación
         const ingredientes = dto.ingredientes.map((ing) =>
           manager.create(RecetaIngrediente, {
             cantidad: ing.cantidad,
             unidad: ing.unidad,
             receta: { id } as Receta,
-            producto: productosMap.get(ing.productoId),
+            producto: productosMap.get(ing.productoId.toLowerCase()),
           })
         );
         await manager.save(ingredientes);
@@ -172,7 +175,6 @@ export class RecetaRepository {
         }),
       };
 
-      // Solo ejecuta el UPDATE si hay campos escalares que actualizar
       if (Object.keys(updateData).length > 0) {
         await manager.update(Receta, id, updateData);
       }
@@ -191,7 +193,7 @@ export class RecetaRepository {
   }
 
   async remove(id: string): Promise<void> {
-    const result = await this.recetaRepo.delete(id);
+    const result = await this.recetaRepo.softDelete(id);
     if (result.affected === 0) {
       throw new NotFoundException(I18nHelper.getError('RECIPE_NOT_FOUND'));
     }
@@ -216,7 +218,6 @@ export class RecetaRepository {
       await manager.save(newReceta);
 
       if (sourceReceta.ingredientes?.length) {
-        // Batch save de todos los ingredientes en una sola operación
         const ingredientes = sourceReceta.ingredientes.map((ing) =>
           manager.create(RecetaIngrediente, {
             cantidad: ing.cantidad,

@@ -61,10 +61,9 @@ export class CreateProductoDto {
   })
   codigoBarras?: string;
 
-  @IsOptional()
   @IsNumber({}, { message: 'El contenido debe ser un número' })
   @Min(0, { message: 'El contenido no puede ser negativo' })
-  contenido?: number;
+  contenido!: number;
 
   @IsOptional()
   @IsString({ each: true })
