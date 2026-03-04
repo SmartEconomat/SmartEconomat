@@ -1,10 +1,5 @@
-import {
-  IsUUID,
-  IsNumber,
-  Min,
-  IsOptional,
-  IsDateString,
-} from 'class-validator';
+import { IsUUID, IsNumber, Min, IsOptional, IsDate } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateHistorialPrecioDto {
   @IsUUID('all', {
@@ -17,6 +12,7 @@ export class CreateHistorialPrecioDto {
   precio!: number;
 
   @IsOptional()
-  @IsDateString({}, { message: 'La fecha debe ser una fecha válida' })
-  fecha?: string;
+  @IsDate({ message: 'La fecha debe ser una fecha válida' })
+  @Type(() => Date)
+  fecha?: Date;
 }

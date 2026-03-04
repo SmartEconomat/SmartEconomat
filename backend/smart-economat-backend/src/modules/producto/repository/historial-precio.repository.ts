@@ -15,10 +15,12 @@ export class HistorialPrecioRepository extends Repository<HistorialPrecio> {
     });
   }
 
-  findAllWithRelations(): Promise<HistorialPrecio[]> {
+  findAllWithRelations(
+    order: 'ASC' | 'DESC' = 'DESC'
+  ): Promise<HistorialPrecio[]> {
     return this.find({
       relations: ['productoProveedor'],
-      order: { fecha: 'DESC' },
+      order: { fecha: order },
     });
   }
 }
