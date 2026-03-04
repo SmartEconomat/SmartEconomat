@@ -38,6 +38,7 @@
     "PROVIDER_HAS_PRODUCTS": "Cannot delete the provider because it has associated products",
     "ENTITY_HAS_RELATIONS": "This record cannot be deleted because it is being used in other parts of the system.",
     "DUPLICATE_ENTRY": "A record with that value already exists. Please use a different one.",
+    "ALBARAN_NOT_FOUND": "Delivery note not found",
     "RECIPE_NOT_FOUND": "Recipe not found",
     "INVENTARIO_NOT_FOUND": "Inventory record not found",
     "INVENTARIO_CONSTRAINT_VIOLATION": "Constraint violation: ensure cantidad_maxima >= cantidad_minima and all quantities are non-negative",
@@ -52,7 +53,8 @@
     "PRODUCTO_ALERGENO_NOT_FOUND": "Product-allergen association not found",
     "PRODUCTO_ALERGENO_ALREADY_EXISTS": "This allergen is already associated with that product",
     "HISTORIAL_PRECIO_NOT_FOUND": "Price history record not found",
-    "PRECIO_NO_NEGATIVO": "Price cannot be negative"
+    "PRECIO_NO_NEGATIVO": "Price cannot be negative",
+    "DUPLICATE_INGREDIENT": "Duplicate ingredients are not allowed within the same recipe"
   },
   "success": {
     "CREATED": "Successfully created",
