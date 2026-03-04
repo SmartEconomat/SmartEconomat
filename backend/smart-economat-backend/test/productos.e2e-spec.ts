@@ -63,8 +63,15 @@ describe('ProductoController (e2e)', () => {
           tipo: 'lacteo',
           unidad: 'l',
           contenido: 1,
-        })
-        .expect(201);
+        });
+
+      if (res.status !== 201) {
+        console.error(
+          'SERVER ERROR DURING TEST:',
+          JSON.stringify(res.body, null, 2)
+        );
+      }
+      expect(res.status).toBe(201);
 
       expect(res.body.success).toBe(true);
       productoId = res.body.data.id;

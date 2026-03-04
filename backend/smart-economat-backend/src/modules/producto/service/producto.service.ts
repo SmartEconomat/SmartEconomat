@@ -1,9 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { Producto } from '../producto.entity/producto.entity';
 import { ProductoRepository } from '../repository/producto.repository';
 import { CreateProductoDto } from '../dto/create-producto.dto';
 import { UpdateProductoDto } from '../dto/update-producto.dto';
-import { ProductoListQueryDto } from '../dto/producto-list-query.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,7 +17,7 @@ import { ProductFilterDto } from '../dto/product-filter.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { ProductoProveedorDto } from '../dto/producto-proveedor.dto/producto-proveedor.dto';
 import { ProductoAlergeno } from '../producto-alergeno.entity/producto-alergeno.entity';
-import { AlergenoProducto } from '../enums/producto.enums';
+import { generateEan13, validateEan13 } from '../../../common/utils/ean13.util';
 
 @Injectable()
 export class ProductoService {
@@ -31,6 +35,23 @@ export class ProductoService {
     userId: string
   ): Promise<Producto> {
     const { alergenos, proveedores, ...rest } = createProductoDto;
+
+    if (rest.codigoBarras) {
+      if (!validateEan13(rest.codigoBarras)) {
+        throw new BadRequestException(
+          'El código de barras proporcionado no es un EAN-13 válido'
+        );
+      }
+      const exists = await this.productoRepository.existsByCodigoBarras(
+        rest.codigoBarras
+      );
+      if (exists) {
+        throw new BadRequestException('El código de barras ya está registrado');
+      }
+    } else {
+      rest.codigoBarras = await this.generateUniqueEan13();
+    }
+
     const producto = this.productoRepository.create(rest);
 
     if (alergenos && alergenos.length > 0) {
@@ -148,6 +169,20 @@ export class ProductoService {
     const { alergenos, proveedores, ...rest } = updateProductoDto;
     const producto = await this.findOne(id);
 
+    if (rest.codigoBarras && rest.codigoBarras !== producto.codigoBarras) {
+      if (!validateEan13(rest.codigoBarras)) {
+        throw new BadRequestException(
+          'El código de barras proporcionado no es un EAN-13 válido'
+        );
+      }
+      const exists = await this.productoRepository.existsByCodigoBarras(
+        rest.codigoBarras
+      );
+      if (exists) {
+        throw new BadRequestException('El código de barras ya está registrado');
+      }
+    }
+
     this.productoRepository.merge(producto, rest);
 
     if (alergenos) {
@@ -182,6 +217,20 @@ export class ProductoService {
       userId,
       id,
       `Eliminación de producto: ${producto.nombre}`
+    );
+  }
+
+  async generateUniqueEan13(): Promise<string> {
+    const MAX_RETRIES = 5;
+    for (let i = 0; i < MAX_RETRIES; i++) {
+      const code = generateEan13();
+      const exists = await this.productoRepository.existsByCodigoBarras(code);
+      if (!exists) {
+        return code;
+      }
+    }
+    throw new InternalServerErrorException(
+      'No se pudo generar un código EAN-13 único después de varios intentos'
     );
   }
 

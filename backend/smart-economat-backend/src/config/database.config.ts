@@ -26,10 +26,7 @@ const finalHost = !isDocker && dbHost === 'db' ? 'localhost' : dbHost;
 export const dbConfig: DataSourceOptions = {
   type: 'postgres',
   host: finalHost,
-  port: parseInt(
-    process.env.DB_PORT || process.env.POSTGRES_PORT || '5433',
-    10
-  ),
+  port: parseInt(process.env.DB_PORT || '5432', 10),
   username: process.env.DB_USERNAME || process.env.POSTGRES_USER || 'postgres',
   password:
     process.env.DB_PASSWORD || process.env.POSTGRES_PASSWORD || 'postgres',
