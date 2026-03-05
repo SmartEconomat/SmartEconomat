@@ -13,7 +13,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EstadoVisualProducto } from '../enums/estado-visual.enum';
 import {
   TipoProducto,
-  UnidadProducto,
+  UnidadMedida,
 } from '../../producto/enums/producto.enums';
 
 export class ProductoNuevoDto {
@@ -43,9 +43,9 @@ export class ProductoNuevoDto {
   @IsString()
   marca?: string;
 
-  @ApiProperty({ description: 'Unidad de medida', enum: UnidadProducto })
-  @IsEnum(UnidadProducto)
-  unidad: UnidadProducto;
+  @ApiProperty({ description: 'Unidad de medida', enum: UnidadMedida })
+  @IsEnum(UnidadMedida)
+  unidad: UnidadMedida;
 
   @ApiProperty({ description: 'Tipo de producto', enum: TipoProducto })
   @IsEnum(TipoProducto)

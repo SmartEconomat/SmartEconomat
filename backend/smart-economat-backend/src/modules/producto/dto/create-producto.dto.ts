@@ -12,8 +12,8 @@ import {
   Matches,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ProductoProveedorDto } from './producto-proveedor.dto/producto-proveedor.dto';
-import { TipoProducto, UnidadProducto } from '../enums/producto.enums';
+import { AddProveedorToProductoDto } from './producto-proveedor.dto/add-proveedor-to-producto.dto';
+import { TipoProducto, UnidadMedida, Alergeno } from '../enums/producto.enums';
 
 export class CreateProductoDto {
   @IsString({ message: 'El nombre debe ser una cadena de texto' })
@@ -34,8 +34,8 @@ export class CreateProductoDto {
   descripcion?: string;
 
   @IsOptional()
-  @IsEnum(UnidadProducto, { message: 'La unidad del producto no es válida' })
-  unidad?: UnidadProducto;
+  @IsEnum(UnidadMedida, { message: 'La unidad del producto no es válida' })
+  unidad?: UnidadMedida;
 
   @IsOptional()
   @Type(() => Date)
@@ -70,12 +70,13 @@ export class CreateProductoDto {
   contenido!: number;
 
   @IsOptional()
-  @IsString({ each: true })
-  alergenos?: string[];
+  @IsArray({ message: 'Los alérgenos deben ser un array' })
+  @IsEnum(Alergeno, { each: true, message: 'Alérgeno no válido' })
+  alergenos?: Alergeno[];
 
   @IsOptional()
   @IsArray({ message: 'Los proveedores deben ser un array' })
   @ValidateNested({ each: true })
-  @Type(() => ProductoProveedorDto)
-  proveedores?: ProductoProveedorDto[];
+  @Type(() => AddProveedorToProductoDto)
+  proveedores?: AddProveedorToProductoDto[];
 }

@@ -118,8 +118,8 @@ Este endpoint soporta búsqueda avanzada y paginación mediante **Query Paramete
 | `limit` | `number` | No | Elementos por página (Max: 100, Default: 20) |
 | `searchTerm` | `string` | No | Búsqueda parcial por nombre del producto |
 | `codigoBarras` | `string` | No | Búsqueda exacta por código de barras |
-| `tipo` | `string` | No | Filtro de categorías (ej: `verdura,bebida,fruta`) |
-| `alergenos` | `string` | No | Lista de alérgenos (ej: `gluten,soja,lacteos`) |
+| `tipo` | `string` | No | Filtro de categorías (ej: `VERDURA,BEBIDA,FRUTA`) |
+| `alergenos` | `string` | No | Lista de alérgenos (ej: `GLUTEN,SOJA,LACTEOS`) |
 | `marcas` | `string` | No | Filtrar por marcas específicas (ej: `Nestle,Bio`) |
 | `minStock` | `boolean`| No | Si es `true`, solo devuelve productos con stock disponible |
 
@@ -135,7 +135,11 @@ Este endpoint soporta búsqueda avanzada y paginación mediante **Query Paramete
 ```
 
 > [!TIP]
-> Al crear o editar un producto mediante `POST` o `PATCH`, puedes enviar un array de `proveedores` en el cuerpo de la petición. Esto creará automáticamente las entidades `ProductoProveedor` vinculadas, permitiendo definir precios pactados y marcas de proveedor en un solo paso.
+> **Alta Compleja de Producto**: Al crear un producto mediante `POST /productos`, el sistema permite una operación transaccional que incluye:
+> 1. **Ficha Base**: Nombre, marca, unidad (`UnidadMedida`).
+> 2. **Alérgenos**: Array de `Alergeno` (Enum: `GLUTEN, LACTEOS, etc`).
+> 3. **Proveedores**: Array de `AddProveedorToProductoDto` (Incluye `proveedorId`, `precioUnitario`, `marcaEspecifica`).
+> Todo el proceso se ejecuta bajo una transacción de base de datos para garantizar la integridad de los datos.
 
 ---
 

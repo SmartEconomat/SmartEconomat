@@ -4,9 +4,9 @@ import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity
 import { ProductoAlergeno } from '../modules/producto/producto-alergeno.entity/producto-alergeno.entity';
 import { Proveedor } from '../modules/proveedor/proveedor.entity/proveedor.entity';
 import {
-  UnidadProducto,
+  UnidadMedida,
   TipoProducto,
-  AlergenoProducto,
+  Alergeno,
 } from '../modules/producto/enums/producto.enums';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
@@ -24,22 +24,22 @@ interface OffProduct {
   allergens_tags?: string[];
 }
 
-function mapAlergeno(offTag: string): AlergenoProducto | null {
-  const map: Record<string, AlergenoProducto> = {
-    'en:gluten': AlergenoProducto.GLUTEN,
-    'en:crustaceans': AlergenoProducto.CRUSTACEOS,
-    'en:eggs': AlergenoProducto.HUEVOS,
-    'en:fish': AlergenoProducto.PESCADO,
-    'en:peanuts': AlergenoProducto.CACAHUETES,
-    'en:soybeans': AlergenoProducto.SOJA,
-    'en:milk': AlergenoProducto.LACTEOS,
-    'en:nuts': AlergenoProducto.FRUTOS_CON_CASCARA,
-    'en:celery': AlergenoProducto.APIO,
-    'en:mustard': AlergenoProducto.MOSTAZA,
-    'en:sesame-seeds': AlergenoProducto.SESAMO,
-    'en:sulphur-dioxide-and-sulphites': AlergenoProducto.SULFITO,
-    'en:lupin': AlergenoProducto.ALTRAMUCES,
-    'en:molluscs': AlergenoProducto.MOLUSCOS,
+function mapAlergeno(offTag: string): Alergeno | null {
+  const map: Record<string, Alergeno> = {
+    'en:gluten': Alergeno.GLUTEN,
+    'en:crustaceans': Alergeno.CRUSTACEOS,
+    'en:eggs': Alergeno.HUEVOS,
+    'en:fish': Alergeno.PESCADO,
+    'en:peanuts': Alergeno.CACAHUETES,
+    'en:soybeans': Alergeno.SOJA,
+    'en:milk': Alergeno.LACTEOS,
+    'en:nuts': Alergeno.FRUTOS_CON_CASCARA,
+    'en:celery': Alergeno.APIO,
+    'en:mustard': Alergeno.MOSTAZA,
+    'en:sesame-seeds': Alergeno.SESAMO,
+    'en:sulphur-dioxide-and-sulphites': Alergeno.SULFITO,
+    'en:lupin': Alergeno.ALTRAMUCES,
+    'en:molluscs': Alergeno.MOLUSCOS,
   };
   return map[offTag] || null;
 }
@@ -75,21 +75,21 @@ function mapTipoCategoria(tags: string[] = []): TipoProducto {
 
 function parseQuantity(q: string | undefined): {
   contenido: number;
-  unidad: UnidadProducto;
+  unidad: UnidadMedida;
 } {
-  if (!q) return { contenido: 1, unidad: UnidadProducto.UNIDAD };
+  if (!q) return { contenido: 1, unidad: UnidadMedida.UNIDAD };
   const match = q.toLowerCase().match(/([0-9.,]+)\s*(kg|g|l|ml|cl)/);
-  if (!match) return { contenido: 1, unidad: UnidadProducto.UNIDAD };
+  if (!match) return { contenido: 1, unidad: UnidadMedida.UNIDAD };
 
   let val = parseFloat(match[1].replace(',', '.'));
-  let unidad = UnidadProducto.UNIDAD;
+  let unidad = UnidadMedida.UNIDAD;
 
-  if (match[2] === 'kg') unidad = UnidadProducto.KG;
-  else if (match[2] === 'g') unidad = UnidadProducto.G;
-  else if (match[2] === 'l') unidad = UnidadProducto.L;
-  else if (match[2] === 'ml') unidad = UnidadProducto.ML;
+  if (match[2] === 'kg') unidad = UnidadMedida.KG;
+  else if (match[2] === 'g') unidad = UnidadMedida.G;
+  else if (match[2] === 'l') unidad = UnidadMedida.L;
+  else if (match[2] === 'ml') unidad = UnidadMedida.ML;
   else if (match[2] === 'cl') {
-    unidad = UnidadProducto.ML;
+    unidad = UnidadMedida.ML;
     val *= 10;
   }
 
@@ -109,13 +109,23 @@ export const runSeeder = async (dataSource: DataSource) => {
   }
 
   console.log('Obteniendo productos de OpenFoodFacts...');
-  const offResponse = await fetch(
-    'https://es.openfoodfacts.org/cgi/search.pl?action=process&sort_by=unique_scans_n&json=1&page_size=20'
-  );
+  let offProducts: OffProduct[] = [];
+  try {
+    const offResponse = await fetch(
+      'https://es.openfoodfacts.org/cgi/search.pl?action=process&sort_by=unique_scans_n&json=1&page_size=20',
+      { signal: AbortSignal.timeout(5000) }
+    );
 
-  const offData = await offResponse.json();
-
-  const offProducts: OffProduct[] = offData.products || [];
+    if (offResponse.ok) {
+      const offData = await offResponse.json();
+      offProducts = offData.products || [];
+    }
+  } catch (error) {
+    console.warn(
+      'No se pudieron obtener productos de OpenFoodFacts, usando datos aleatorios:',
+      error.message
+    );
+  }
 
   const productos: Producto[] = [];
   for (const offProduct of offProducts) {
@@ -161,7 +171,7 @@ export const runSeeder = async (dataSource: DataSource) => {
       nombre: faker.commerce.productName(),
       marca: faker.company.name(),
       descripcion: faker.commerce.productDescription(),
-      unidad: faker.helpers.arrayElement(Object.values(UnidadProducto)),
+      unidad: faker.helpers.arrayElement(Object.values(UnidadMedida)),
       fechaCaducidad: faker.datatype.boolean(0.3)
         ? faker.date.soon({ days: 60 })
         : undefined,
@@ -204,7 +214,7 @@ export const runSeeder = async (dataSource: DataSource) => {
   const alergenos: ProductoAlergeno[] = [];
   for (const producto of productosGuardados) {
     const baseAlergenosTags: string[] = (producto as any)._alergenosTags || [];
-    const alergenosMapeados = new Set<AlergenoProducto>();
+    const alergenosMapeados = new Set<Alergeno>();
 
     for (const tag of baseAlergenosTags) {
       const mapeado = mapAlergeno(tag);
@@ -214,7 +224,7 @@ export const runSeeder = async (dataSource: DataSource) => {
     if (alergenosMapeados.size === 0 && !baseAlergenosTags.length) {
       const numAlergenos = faker.number.int({ min: 0, max: 2 });
       const seleccionados = faker.helpers.arrayElements(
-        Object.values(AlergenoProducto),
+        Object.values(Alergeno),
         numAlergenos
       );
       for (const al of seleccionados) alergenosMapeados.add(al);
