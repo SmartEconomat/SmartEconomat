@@ -14,7 +14,13 @@ import {
   Request,
 } from '@nestjs/common';
 import { ProductoService } from '../service/producto.service';
-import { ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+  ApiParam,
+} from '@nestjs/swagger';
 import { ProductFilterDto } from '../dto/product-filter.dto';
 import { CreateProductoDto } from '../dto/create-producto.dto';
 import { UpdateProductoDto } from '../dto/update-producto.dto';
@@ -26,6 +32,7 @@ import { RolesGuard } from '../../auth/guards/role.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
 
+@ApiTags('Productos')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('productos')
 export class ProductoController {
@@ -33,6 +40,8 @@ export class ProductoController {
 
   @Get('generar-ean13')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @ApiOperation({ summary: 'Generar un código EAN-13 único' })
+  @ApiResponse({ status: 200, description: 'Código generado correctamente' })
   async generarEan13(): Promise<{ codigo_barras: string }> {
     const codigo_barras = await this.productoService.generateUniqueEan13();
     return { codigo_barras };
@@ -41,6 +50,19 @@ export class ProductoController {
   @Post()
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary:
+      'Crear un nuevo producto con opcionalmente alérgenos y proveedores',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Producto creado correctamente',
+    type: Producto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Datos inválidos o código de barras duplicado',
+  })
   create(
     @Body() createProductoDto: CreateProductoDto,
     @Request() req: any
@@ -51,37 +73,11 @@ export class ProductoController {
 
   @Get()
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
+  @ApiOperation({ summary: 'Listar productos con filtros y paginación' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'searchTerm', required: false, type: String })
   @ApiQuery({ name: 'codigoBarras', required: false, type: String })
-  @ApiQuery({
-    name: 'tipo',
-    required: false,
-    enum: [
-      'verdura',
-      'fruta',
-      'carne',
-      'pescado',
-      'marisco',
-      'lacteo',
-      'huevo',
-      'cereal',
-      'legumbre',
-      'fruto_seco',
-      'condimento',
-      'aceite',
-      'azucar',
-      'bebida',
-      'otro',
-    ],
-  })
-  @ApiQuery({
-    name: 'alergenos',
-    required: false,
-    type: String,
-    description: 'Lista de alérgenos separados por comas',
-  })
   findAll(
     @Query() query: ProductFilterDto
   ): Promise<PaginatedResponseDto<Producto>> {
@@ -90,12 +86,18 @@ export class ProductoController {
 
   @Get(':id')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
+  @ApiOperation({ summary: 'Obtener un producto por ID' })
+  @ApiParam({ name: 'id', description: 'UUID del producto' })
+  @ApiResponse({ status: 200, type: Producto })
+  @ApiResponse({ status: 404, description: 'Producto no encontrado' })
   findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Producto> {
     return this.productoService.findOne(id);
   }
 
   @Patch(':id')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @ApiOperation({ summary: 'Actualizar un producto' })
+  @ApiResponse({ status: 200, type: Producto })
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateProductoDto: UpdateProductoDto,
@@ -108,6 +110,8 @@ export class ProductoController {
   @Delete(':id')
   @Roles(rolUsuario.ADMINISTRADOR)
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Eliminar un producto' })
+  @ApiResponse({ status: 204, description: 'Producto eliminado' })
   remove(
     @Param('id', ParseUUIDPipe) id: string,
     @Request() req: any

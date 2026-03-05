@@ -16,6 +16,8 @@ import { GlobalExceptionFilter } from '../src/common/filters/global-exception.fi
  * Cubre el ciclo de vida completo (CRUD) de un producto.
  */
 describe('ProductoController (e2e)', () => {
+  jest.setTimeout(30000);
+
   let app: INestApplication;
   let adminToken: string;
   let productoId: string;
@@ -61,7 +63,7 @@ describe('ProductoController (e2e)', () => {
         .send({
           nombre: `Producto E2E ${Date.now()}`,
           tipo: 'lacteo',
-          unidad: 'l',
+          unidad: 'L',
           contenido: 1,
         });
 

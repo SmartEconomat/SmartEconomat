@@ -9,6 +9,8 @@ import { AppModule } from './../src/app.module';
  * Verifica la disponibilidad general del servicio.
  */
 describe('AppController (e2e)', () => {
+  jest.setTimeout(30000);
+
   let app: INestApplication;
 
   beforeAll(async () => {

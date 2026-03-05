@@ -12,10 +12,9 @@ import { ApiResponse } from '../interfaces/api-response.interface';
 import { APP_VERSION } from '../helpers/app-version.helper';
 
 @Injectable()
-export class TransformInterceptor<T> implements NestInterceptor<
-  T,
-  ApiResponse<T>
-> {
+export class TransformInterceptor<T>
+  implements NestInterceptor<T, ApiResponse<T>>
+{
   intercept(
     context: ExecutionContext,
     next: CallHandler
