@@ -14,13 +14,18 @@ import {
   IngredienteDetalleDto,
 } from '../dto/detalle-receta.dto';
 import { CocinarRecetaDto } from '../dto/cocinar-receta.dto';
+import {
+  IngredienteCostoDto,
+  RecetaCostResponseDto,
+} from '../dto/receta-cost-response.dto';
 import { Inventario } from '../../inventario/inventario.entity/inventario.entity';
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
 import { TipoMovimiento } from '../../movimiento/enums/movimiento.enums';
-import { AlergenoProducto } from '../../producto/enums/producto.enums';
+import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { Alergeno } from 'src/modules/producto/enums/producto.enums';
 
 @Injectable()
 export class RecetaService {
@@ -92,7 +97,7 @@ export class RecetaService {
       stocks.map((s) => [s.productoId, Number(s.totalStock)])
     );
 
-    const alergenosSet = new Set<AlergenoProducto>();
+    const alergenosSet = new Set<Alergeno>();
     const detalleIngredientes: IngredienteDetalleDto[] = [];
 
     if (receta.ingredientes) {
@@ -125,6 +130,84 @@ export class RecetaService {
       alergenosConsolidados: Array.from(alergenosSet).filter(
         (a) => a !== null && a !== undefined
       ),
+    };
+  }
+
+  async calcularEscandallo(id: string): Promise<RecetaCostResponseDto> {
+    const receta = await this.recetaRepository.findById(id);
+
+    if (!receta) {
+      throw new NotFoundException(I18nHelper.getError('RECIPE_NOT_FOUND'));
+    }
+
+    if (!receta.ingredientes || receta.ingredientes.length === 0) {
+      return {
+        recetaId: receta.id,
+        recetaNombre: receta.nombre,
+        costoTotal: 0,
+        desglosePorIngrediente: [],
+      };
+    }
+
+    const productoIds = receta.ingredientes.map((i) => i.producto.id);
+
+    const productosProveedores = await this.dataSource
+      .getRepository(ProductoProveedor)
+      .createQueryBuilder('pp')
+      .innerJoinAndSelect('pp.producto', 'producto')
+      .leftJoinAndSelect('pp.historialPrecios', 'historial')
+      .where('producto.id IN (:...productoIds)', { productoIds })
+      .getMany();
+
+    const ppMap = new Map<string, ProductoProveedor[]>();
+    for (const pp of productosProveedores) {
+      const pid = pp.producto.id;
+      if (!ppMap.has(pid)) ppMap.set(pid, []);
+      ppMap.get(pid)!.push(pp);
+    }
+
+    let costoTotal = 0;
+    const desglosePorIngrediente: IngredienteCostoDto[] = [];
+
+    for (const ing of receta.ingredientes) {
+      const pps = ppMap.get(ing.producto.id) ?? [];
+
+      const precios = pps
+        .map((pp) => pp.precioUnitario)
+        .filter((p): p is number => p !== null && p !== undefined && p > 0);
+
+      let precioUnitario: number;
+
+      if (precios.length > 0) {
+        precioUnitario =
+          precios.reduce((sum, p) => sum + p, 0) / precios.length;
+      } else {
+        const allHistorial = pps
+          .flatMap((pp) => pp.historialPrecios ?? [])
+          .sort(
+            (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+          );
+        precioUnitario = allHistorial.length > 0 ? allHistorial[0].precio : 0;
+      }
+
+      const costoIngrediente = precioUnitario * ing.cantidad;
+      costoTotal += costoIngrediente;
+
+      desglosePorIngrediente.push({
+        productoId: ing.producto.id,
+        productoNombre: ing.producto.nombre,
+        cantidad: ing.cantidad,
+        unidad: ing.unidad,
+        precioUnitario,
+        costoIngrediente,
+      });
+    }
+
+    return {
+      recetaId: receta.id,
+      recetaNombre: receta.nombre,
+      costoTotal,
+      desglosePorIngrediente,
     };
   }
 

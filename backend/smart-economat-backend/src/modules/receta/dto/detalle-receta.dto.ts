@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Receta } from '../receta.entity/receta.entity';
-import { AlergenoProducto } from '../../producto/enums/producto.enums';
+import { Alergeno } from '../../producto/enums/producto.enums';
 
 export class IngredienteDetalleDto {
   @ApiProperty()
@@ -30,5 +30,5 @@ export class DetalleRecetaDto {
   detalleIngredientes!: IngredienteDetalleDto[];
 
   @ApiProperty({ type: [String] })
-  alergenosConsolidados!: AlergenoProducto[];
+  alergenosConsolidados!: Alergeno[];
 }
