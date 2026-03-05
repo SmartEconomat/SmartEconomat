@@ -17,7 +17,7 @@ import { dbConfig } from '../config/database.config';
 
 export const dataSource = new DataSource({
   ...dbConfig,
-  synchronize: false,
+  synchronize: process.env.NODE_ENV === 'test',
   dropSchema: process.argv.includes('reset'),
 });
 
@@ -73,21 +73,25 @@ async function runSeederByName(name: string) {
   await seeder.runSeeder(dataSource);
 }
 
-void (async () => {
-  try {
-    await dataSource.initialize();
-    const [, , arg] = process.argv;
+export { runAllSeeders, runSeederByName };
 
-    if (!arg || arg === 'all' || arg === 'reset') {
-      await runAllSeeders();
-    } else {
-      await runSeederByName(arg);
+if (require.main === module) {
+  void (async () => {
+    try {
+      await dataSource.initialize();
+      const [, , arg] = process.argv;
+
+      if (!arg || arg === 'all' || arg === 'reset') {
+        await runAllSeeders();
+      } else {
+        await runSeederByName(arg);
+      }
+
+      await dataSource.destroy();
+      console.log(SeederI18nHelper.getSeederMessage('completed'));
+    } catch (err) {
+      console.error(SeederI18nHelper.getSeederMessage('error_running'), err);
+      process.exit(1);
     }
-
-    await dataSource.destroy();
-    console.log(SeederI18nHelper.getSeederMessage('completed'));
-  } catch (err) {
-    console.error(SeederI18nHelper.getSeederMessage('error_running'), err);
-    process.exit(1);
-  }
-})();
+  })();
+}
