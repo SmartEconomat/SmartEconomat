@@ -6,28 +6,29 @@ export default defineConfig(() => {
   return {
     build: {
       outDir: 'build',
+      sourcemap: false, // Disable source maps in production to prevent browser errors
     },
     plugins: [react()],
     server: {
-        port: Number(process.env.FRONTEND_PORT) || 5173,
-        host: true, // Needed for Docker
-        open: false, // Prevent opening browser in Docker (xdg-open error)
-        proxy: {
-            '/api': {
-                target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:3000',
-                changeOrigin: true,
-            },
+      port: Number(process.env.FRONTEND_PORT) || 5173,
+      host: true, // Needed for Docker
+      open: false, // Prevent opening browser in Docker (xdg-open error)
+      proxy: {
+        '/api': {
+          target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:3000',
+          changeOrigin: true,
         },
-        watch: {
-            usePolling: true, // Required for Docker volume mounts to detect file changes (HMR)
-            interval: 300,
-        },
+      },
+      watch: {
+        usePolling: true, // Required for Docker volume mounts to detect file changes (HMR)
+        interval: 300,
+      },
     },
     resolve: {
-        alias: {
-            // Add any aliases here if needed, for example:
-            // '@': path.resolve(__dirname, './src'),
-        },
+      alias: {
+        // Add any aliases here if needed, for example:
+        // '@': path.resolve(__dirname, './src'),
+      },
     },
   };
 });

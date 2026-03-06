@@ -16,6 +16,12 @@ WORKDIR /app
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
+COPY --from=builder /app/tsconfig.json ./
+COPY --from=builder /app/src/seeders ./src/seeders
+COPY --from=builder /app/src/config ./src/config
+COPY --from=builder /app/src/common ./src/common
+COPY --from=builder /app/src/modules ./src/modules
+COPY --from=builder /app/src/i18n ./src/i18n
 
 # Create user for security
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup

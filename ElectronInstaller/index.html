@@ -1,0 +1,409 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>SmartEconomat Installer</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="app" class="container">
+      <div class="header">
+        <img
+          src="assets/logo-smat-economato.svg"
+          onerror="this.style.display='none'"
+          alt="Logo"
+          class="logo"
+          id="logo-img"
+        />
+        <h1>SmartEconomat</h1>
+        <p class="subtitle">Asistente de Instalación</p>
+      </div>
+
+      <!-- Step 1: Loading & Dependency Check -->
+      <div id="step-loading" class="step active">
+        <div class="loader"></div>
+        <p id="loading-msg">Comprobando requisitos del sistema...</p>
+      </div>
+
+      <!-- Step 2: Main Action Selection -->
+      <div id="step-action" class="step">
+        <h2>¿Qué deseas hacer?</h2>
+        <button id="btn-install" class="btn primary">
+          🚀 Instalar y Configurar
+        </button>
+        <button id="btn-uninstall" class="btn danger">
+          🗑️ Desinstalar (Borrar todo)
+        </button>
+      </div>
+
+      <!-- Step 3: Environment Variables Form -->
+      <div id="step-env" class="step">
+        <h2>Configuración del Sistema</h2>
+        <p class="desc">
+          Introduce la configuración necesaria para levantar SmartEconomat. Si
+          no estás seguro, mantén los valores por defecto.
+        </p>
+
+        <form id="env-form">
+          <h3>Aplicación</h3>
+          <p class="desc">
+            Puertos donde se publican el backend y el frontend. Si el puerto
+            está ocupado, el navegador no podrá acceder.
+          </p>
+
+          <div class="input-group">
+            <label for="env-BACKEND_PORT"
+              >BACKEND_PORT
+              <span
+                class="tooltip"
+                title="Puerto del backend (NestJS). Ej: 3000"
+                >?</span
+              ></label
+            >
+            <input
+              type="number"
+              id="env-BACKEND_PORT"
+              name="BACKEND_PORT"
+              required
+              min="1"
+              max="65535"
+              value="3000"
+            />
+          </div>
+
+          <div class="input-group">
+            <label for="env-FRONTEND_PORT"
+              >FRONTEND_PORT
+              <span
+                class="tooltip"
+                title="Puerto donde se accede desde el navegador. Ej: 80 o 8080"
+                >?</span
+              ></label
+            >
+            <input
+              type="number"
+              id="env-FRONTEND_PORT"
+              name="FRONTEND_PORT"
+              required
+              min="1"
+              max="65535"
+              value="80"
+            />
+          </div>
+
+          <h3>Base de datos (PostgreSQL)</h3>
+          <p class="desc">
+            Credenciales internas del contenedor de PostgreSQL. Se usan para
+            inicializar la base de datos.
+          </p>
+
+          <div class="input-group">
+            <label for="env-POSTGRES_USER"
+              >POSTGRES_USER
+              <span
+                class="tooltip"
+                title="Usuario de PostgreSQL (dentro del contenedor)"
+                >?</span
+              ></label
+            >
+            <input
+              type="text"
+              id="env-POSTGRES_USER"
+              name="POSTGRES_USER"
+              required
+              value="smarteconomat-prod-user"
+            />
+          </div>
+
+          <div class="input-group">
+            <label for="env-POSTGRES_PASSWORD"
+              >POSTGRES_PASSWORD
+              <span
+                class="tooltip"
+                title="Contraseña de PostgreSQL. Debe ser segura en producción."
+                >?</span
+              ></label
+            >
+            <input
+              type="password"
+              id="env-POSTGRES_PASSWORD"
+              name="POSTGRES_PASSWORD"
+              required
+              value=""
+            />
+          </div>
+
+          <div class="input-group">
+            <label for="env-POSTGRES_DB"
+              >POSTGRES_DB
+              <span class="tooltip" title="Nombre de la base de datos a crear"
+                >?</span
+              ></label
+            >
+            <input
+              type="text"
+              id="env-POSTGRES_DB"
+              name="POSTGRES_DB"
+              required
+              value="smarteconomat_prod"
+            />
+          </div>
+
+          <div class="input-group">
+            <label for="env-POSTGRES_PORT"
+              >POSTGRES_PORT
+              <span
+                class="tooltip"
+                title="Puerto interno de PostgreSQL (normalmente 5432)"
+                >?</span
+              ></label
+            >
+            <input
+              type="number"
+              id="env-POSTGRES_PORT"
+              name="POSTGRES_PORT"
+              required
+              min="1"
+              max="65535"
+              value="5432"
+            />
+          </div>
+
+          <h3>Backend (conexión a DB)</h3>
+          <p class="desc">
+            Estos valores los usa el backend para conectarse a la base de datos.
+            En Docker normalmente el host es <b>db</b>.
+          </p>
+
+          <div class="input-group">
+            <label for="env-DB_HOST"
+              >DB_HOST
+              <span
+                class="tooltip"
+                title="Host de la base de datos. En Docker Compose: db"
+                >?</span
+              ></label
+            >
+            <input
+              type="text"
+              id="env-DB_HOST"
+              name="DB_HOST"
+              required
+              value="db"
+            />
+          </div>
+
+          <div class="input-group">
+            <label for="env-DB_PORT"
+              >DB_PORT
+              <span
+                class="tooltip"
+                title="Puerto de PostgreSQL. Normalmente 5432"
+                >?</span
+              ></label
+            >
+            <input
+              type="number"
+              id="env-DB_PORT"
+              name="DB_PORT"
+              required
+              min="1"
+              max="65535"
+              value="5432"
+            />
+          </div>
+
+          <div class="input-group">
+            <label for="env-DB_USERNAME"
+              >DB_USERNAME
+              <span
+                class="tooltip"
+                title="Usuario para conectar desde el backend (debe coincidir con POSTGRES_USER)"
+                >?</span
+              ></label
+            >
+            <input
+              type="text"
+              id="env-DB_USERNAME"
+              name="DB_USERNAME"
+              required
+              value="smarteconomat-prod-user"
+            />
+          </div>
+
+          <div class="input-group">
+            <label for="env-DB_PASSWORD"
+              >DB_PASSWORD
+              <span
+                class="tooltip"
+                title="Contraseña para conectar desde el backend (debe coincidir con POSTGRES_PASSWORD)"
+                >?</span
+              ></label
+            >
+            <input
+              type="password"
+              id="env-DB_PASSWORD"
+              name="DB_PASSWORD"
+              required
+              value=""
+            />
+          </div>
+
+          <div class="input-group">
+            <label for="env-DB_DATABASE"
+              >DB_DATABASE
+              <span
+                class="tooltip"
+                title="Nombre de la DB (debe coincidir con POSTGRES_DB)"
+                >?</span
+              ></label
+            >
+            <input
+              type="text"
+              id="env-DB_DATABASE"
+              name="DB_DATABASE"
+              required
+              value="smarteconomat_prod"
+            />
+          </div>
+
+          <h3>Autenticación</h3>
+          <p class="desc">
+            Clave secreta para firmar tokens JWT. No la compartas. Si se filtra,
+            se compromete la seguridad.
+          </p>
+
+          <div class="input-group">
+            <label for="env-JWT_SECRET"
+              >JWT_SECRET
+              <span
+                class="tooltip"
+                title="Secreto para JWT. Debe ser largo y aleatorio"
+                >?</span
+              ></label
+            >
+            <input
+              type="password"
+              id="env-JWT_SECRET"
+              name="JWT_SECRET"
+              required
+              value=""
+            />
+          </div>
+
+          <div class="input-group">
+            <label for="env-JWT_EXPIRATION"
+              >JWT_EXPIRATION
+              <span class="tooltip" title="Duración del token. Ej: 1h, 30m, 7d"
+                >?</span
+              ></label
+            >
+            <input
+              type="text"
+              id="env-JWT_EXPIRATION"
+              name="JWT_EXPIRATION"
+              required
+              value="1h"
+            />
+          </div>
+
+          <hr />
+          <h3>Cuenta de Administrador</h3>
+          <p class="desc">
+            Credenciales iniciales para acceder al sistema completo.
+          </p>
+
+          <div class="input-group">
+            <label for="admin-email"
+              >ADMIN_EMAIL
+              <span class="tooltip" title="Tu correo principal">?</span></label
+            >
+            <input
+              type="email"
+              id="admin-email"
+              required
+              placeholder="admin@ejemplo.com"
+            />
+          </div>
+
+          <div class="input-group">
+            <label for="admin-pass"
+              >ADMIN_PASSWORD
+              <span class="tooltip" title="Una contraseña segura"
+                >?</span
+              ></label
+            >
+            <input
+              type="password"
+              id="admin-pass"
+              required
+              placeholder="*********"
+            />
+          </div>
+
+          <div class="input-group">
+            <label for="admin-pass-confirm"
+              >ADMIN_PASSWORD_CONFIRM
+              <span
+                class="tooltip"
+                title="Repite la contraseña para evitar errores"
+                >?</span
+              ></label
+            >
+            <input
+              type="password"
+              id="admin-pass-confirm"
+              required
+              placeholder="*********"
+            />
+          </div>
+
+          <div class="actions">
+            <button type="button" id="btn-back" class="btn secondary">
+              Volver
+            </button>
+            <button type="submit" class="btn primary">Instalar</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Step 4: Progress -->
+      <div id="step-progress" class="step">
+        <h2>Instalando</h2>
+        <br />
+        <div class="loader"></div>
+        <p id="progress-msg">Copiando archivos...</p>
+        <p class="desc warning">
+          Esto puede tardar varios minutos dependiendo de tu conexión a
+          internet.
+        </p>
+      </div>
+
+      <!-- Step 5: Success -->
+      <div id="step-success" class="step">
+        <h2>¡Instalación Completada! 🚀</h2>
+        <div class="success-box">
+          <p>Tu aplicación SmartEconomat ya está corriendo.</p>
+          <p>Accede desde tu navegador en:</p>
+          <a href="#" id="app-link" target="_blank" class="bold-link"
+            >http://localhost:3000</a
+          >
+        </div>
+        <p class="desc">
+          Guarda tus credenciales de administrador en un lugar seguro.
+        </p>
+        <button id="btn-finish" class="btn primary">Finalizar</button>
+      </div>
+
+      <div class="footer">
+        <img
+          src="assets/logo-cifp-virgen-candelaria.png"
+          alt="CIFP Virgen de Candelaria"
+          class="footer-logo"
+        />
+      </div>
+    </div>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>

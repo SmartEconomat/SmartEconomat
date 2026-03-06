@@ -19,6 +19,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "NODE_OPTIONS=--experimental-vm-modules jest --config ./test/jest-e2e.json",
     "seed": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.ts",
+    "seed:admin": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed-admin.ts",
     "schema:drop": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js schema:drop -d src/config/typeorm.config.ts",
     "schema:sync": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js schema:sync -d src/config/typeorm.config.ts",
     "db:reset": "npm run schema:drop && npm run schema:sync && npm run seed",
@@ -47,6 +48,8 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.1",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "typeorm": "^0.3.27",
     "uuid": "^13.0.0"
   },
@@ -81,8 +84,6 @@
     "supertest": "^7.0.0",
     "ts-jest": "^29.2.5",
     "ts-loader": "^9.5.2",
-    "ts-node": "^10.9.2",
-    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.20.0"
   },
