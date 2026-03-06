@@ -1,0 +1,91 @@
+{
+  "name": "smarteconomat-installer",
+  "version": "1.0.0",
+  "description": "Instalador de SmartEconomat vía Docker",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron . --no-sandbox",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "pack": "electron-builder --dir",
+    "build": "electron-builder"
+  },
+  "author": "SmartEconomat",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^40.7.0",
+    "electron-builder": "^26.8.1"
+  },
+  "build": {
+    "appId": "com.smarteconomat.installer",
+    "productName": "SmartEconomat",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "signAndEditExecutable": false
+    },
+    "mac": {
+      "target": [
+        "zip"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Utility"
+    },
+    "extraResources": [
+      {
+        "from": "assets",
+        "to": "assets",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "../frontend/smart-economat-frontend/src/assets/images/PNG/logo-cifp-virgen-candelaria.png",
+        "to": "assets/logo-cifp-virgen-candelaria.png"
+      },
+      {
+        "from": "../backend",
+        "to": "project/backend",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "../frontend",
+        "to": "project/frontend",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "../database",
+        "to": "project/database",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "../docker-compose.prod.yml",
+        "to": "project/docker-compose.prod.yml"
+      },
+      {
+        "from": "../backend/Dockerfile.prod",
+        "to": "project/backend/Dockerfile.prod"
+      },
+      {
+        "from": "../frontend/Dockerfile.prod",
+        "to": "project/frontend/Dockerfile.prod"
+      }
+    ]
+  }
+}

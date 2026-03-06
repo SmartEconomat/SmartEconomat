@@ -33,7 +33,7 @@ const i18nPath = isProduction
       fallbackLanguage: 'es',
       loaderOptions: {
         path: i18nPath,
-        watch: !isProduction,
+        watch: !isProduction && process.env.NODE_ENV !== 'test',
       },
       resolvers: [
         { use: QueryResolver, options: ['lang'] },
