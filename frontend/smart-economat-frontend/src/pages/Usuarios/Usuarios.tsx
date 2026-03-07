@@ -19,12 +19,12 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 
 import DataTable, { Column } from '../../components/ui/DataTable';
-import PageToolbar from '../../components/ui/PageToolbar';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import RoleBadge from '../../components/ui/RoleBadge';
 import StatusChip from '../../components/ui/StatusChip';
 import UserModal from './UserModal';
 import SelectField from '../../components/ui/SelectField';
+import InputField from '../../components/ui/InputField';
 
 import { usuarioService } from '../../services/usuarioService';
 import {
@@ -36,9 +36,9 @@ import { useToast } from '../../store/ToastContext';
 import { useAuth } from '../../store/AuthContext';
 
 const Usuarios: React.FC = () => {
-  // Estados principales
-  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+    // Estados principales
+    const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
 
     // Filtros y Paginación
     const [page, setPage] = useState(1);
@@ -453,10 +453,17 @@ const Usuarios: React.FC = () => {
         if (!userToDelete) return;
 
         // Prevent deleting the last administrator
-        if (userToDelete.rol === 'Administrador' && userToDelete.estado === 'Activo') {
-            const adminCount = usuarios.filter(u => u.rol === 'Administrador' && u.estado === 'Activo').length;
+        if (
+            userToDelete.rol === 'Administrador' &&
+            userToDelete.estado === 'Activo'
+        ) {
+            const adminCount = usuarios.filter(
+                (u) => u.rol === 'Administrador' && u.estado === 'Activo'
+            ).length;
             if (adminCount <= 1) {
-                toast.error('Operación denegada. No puedes eliminar al último Administrador activo.');
+                toast.error(
+                    'Operación denegada. No puedes eliminar al último Administrador activo.'
+                );
                 setIsDeleting(false);
                 setUserToDelete(null);
                 return;
@@ -469,7 +476,7 @@ const Usuarios: React.FC = () => {
             toast.success('Usuario eliminado exitosamente');
             // Verificar si debe ir a pág anterior por borrar registro único de pág actual
             if (usuarios.length === 1 && page > 1) {
-                setPage(p => p - 1);
+                setPage((p) => p - 1);
             } else {
                 fetchUsuarios();
             }
@@ -604,31 +611,41 @@ const Usuarios: React.FC = () => {
                             Nuevo Usuario
                         </Button>
                     </Stack>
->>>>>>> 807b737 (update: se han actulizado los componentes y arreglado algunos bugs y ventanas)
                 </Box>
-                <Box sx={{ mt: 'auto', pt: 2 }}>
-                  <StatusChip
-                    status={usuario.estado === 'Activo' ? 'success' : 'default'}
-                    label={usuario.estado}
-                    size="small"
-                  />
+            </Paper>
+
+            <Paper elevation={0} sx={{ p: 4 }}>
+                {/* Filtros */}
+                <Box display="flex" flexWrap="wrap" gap={2} sx={{ mb: 3 }}>
+                    <Box flex={1} minWidth="250px">
+                        <InputField
+                            id="search-usuarios"
+                            fullWidth
+                            label="Buscar por usuario o correo..."
+                            variant="outlined"
+                            size="small"
+                            value={search}
+                            onChange={handleSearchChange}
+                        />
+                    </Box>
+                    <Box minWidth="200px">
+                        <SelectField
+                            id="filter-rol-select"
+                            fullWidth
+                            label="Filtrar por Rol"
+                            variant="outlined"
+                            size="small"
+                            value={filterRol}
+                            onChange={handleRolFilterChange as any}
+                            options={[
+                                { value: 'Todos', label: 'Todos' },
+                                { value: 'Administrador', label: 'Administrador' },
+                                { value: 'Profesor', label: 'Profesor' },
+                                { value: 'Alumno', label: 'Alumno' }
+                            ]}
+                        />
+                    </Box>
                 </Box>
-              </CardContent>
-              <Divider />
-              <CardActions
-                sx={{
-                  justifyContent: 'center',
-                  p: 1.5,
-                  bgcolor: 'action.hover',
-                }}
-              >
-                {renderActions(usuario)}
-              </CardActions>
-            </Card>
-          )}
-          renderActions={renderActions}
-        />
-      </Paper>
 
             <Paper elevation={0} sx={{ p: 4 }}>
                 {/* Filtros */}

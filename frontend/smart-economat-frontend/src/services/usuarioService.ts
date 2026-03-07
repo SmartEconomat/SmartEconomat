@@ -1,29 +1,26 @@
 import {
-  Usuario,
-  CrearUsuarioDTO,
-  ActualizarUsuarioDTO,
-  PaginatedResponse,
-  ApiResponse,
+    Usuario,
+    CrearUsuarioDTO,
+    ActualizarUsuarioDTO,
+    PaginatedResponse,
+    ApiResponse,
 } from '../types/usuario';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
 const getHeaders = () => {
-  const token = localStorage.getItem('token');
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
+    const token = localStorage.getItem('token');
+    return {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
 };
 
 const DEFAULT_TEMP_PASSWORD = 'Temp1234!';
 
 // Mapeo temporal para adaptar el formato del frontend al backend
-const mapFrontendToBackend = (
-  data: Partial<CrearUsuarioDTO>,
-  isUpdate = false
-) => {
-  const mapped: any = { ...data };
+const mapFrontendToBackend = (data: Partial<CrearUsuarioDTO>, isUpdate = false) => {
+    const mapped: any = { ...data };
 
   // Map Rol
   if (mapped.rol) {
@@ -32,16 +29,16 @@ const mapFrontendToBackend = (
     mapped.rol = r;
   }
 
-  // Map Status
-  if (mapped.estado) {
-    mapped.status = mapped.estado === 'Activo' ? 'ACTIVE' : 'INACTIVE';
-    delete mapped.estado;
-  }
+    // Map Status
+    if (mapped.estado) {
+        mapped.status = (mapped.estado === 'Activo') ? 'ACTIVE' : 'INACTIVE';
+        delete mapped.estado;
+    }
 
-  // Handle empty email
-  if (mapped.email === '') {
-    mapped.email = null;
-  }
+    // Handle empty email
+    if (mapped.email === '') {
+        mapped.email = null;
+    }
 
   if (isUpdate) {
     delete mapped.password;
@@ -49,12 +46,12 @@ const mapFrontendToBackend = (
     mapped.password = DEFAULT_TEMP_PASSWORD;
   }
 
-  // Remove extra fields that are not in backend DTOs
-  delete mapped.activo;
-  delete mapped.id;
-  delete mapped.fecha_registro;
+    // Remove extra fields that are not in backend DTOs
+    delete mapped.activo;
+    delete mapped.id;
+    delete mapped.fecha_registro;
 
-  return mapped;
+    return mapped;
 };
 
 const mapBackendToFrontend = (user: any): Usuario => {
