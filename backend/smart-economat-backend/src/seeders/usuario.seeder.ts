@@ -59,10 +59,7 @@ export const runSeeder = async (dataSource: DataSource) => {
           password: defaultPassword,
           email: profData.email,
           rol: rolUsuario.PROFESOR,
-          status:
-            profData.username === 'profesor1'
-              ? UserStatus.ACTIVE
-              : UserStatus.INACTIVE,
+          status: UserStatus.ACTIVE,
         });
         await manager.save(profUser);
 
@@ -108,11 +105,17 @@ export const runSeeder = async (dataSource: DataSource) => {
           const username =
             faker.internet.username({ firstName, lastName }).toLowerCase() +
             faker.number.int(999);
+
+          const studentEmail = faker.internet
+            .email({ firstName, lastName })
+            .toLowerCase();
+
           const studentUser = manager.create(Usuario, {
             username,
             password: defaultPassword,
+            email: studentEmail,
             rol: rolUsuario.ALUMNO,
-            status: UserStatus.INACTIVE,
+            status: UserStatus.ACTIVE,
           });
           await manager.save(studentUser);
 

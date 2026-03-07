@@ -6,8 +6,8 @@ import {
   OneToOne,
   BeforeInsert,
   BeforeUpdate,
+  type Relation,
 } from 'typeorm';
-import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import * as bcrypt from 'bcrypt';
 import { rolUsuario, UserStatus } from '../enums/usuario.enums';
@@ -40,7 +40,7 @@ export class Usuario extends BaseEntity {
   @Column({ type: 'enum', enum: rolUsuario, default: rolUsuario.ALUMNO })
   rol!: rolUsuario;
 
-  @Index(['status'])
+  @Index('idx_usuario_status', ['status'])
   @Column({ type: 'enum', enum: UserStatus, default: UserStatus.INACTIVE })
   status!: UserStatus;
 

@@ -55,6 +55,9 @@ export class AlumnoService {
       }
 
       const whereConditions: any[] = [{ username: dto.username }];
+      if (dto.email) {
+        whereConditions.push({ email: dto.email });
+      }
 
       const isExistingUser = await manager.findOne(Usuario, {
         where: whereConditions,
@@ -66,6 +69,7 @@ export class AlumnoService {
       const passwordHash = await bcrypt.hash(dto.password, 10);
       const user = manager.create(Usuario, {
         username: dto.username,
+        email: dto.email,
         password: passwordHash,
         rol: rolUsuario.ALUMNO,
         status: UserStatus.INACTIVE,

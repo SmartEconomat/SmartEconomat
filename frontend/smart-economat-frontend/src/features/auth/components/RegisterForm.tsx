@@ -46,18 +46,20 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm, onRegisterSuc
 
         try {
             const isAlumno = role === 'ALUMNO';
-
             const payload: any = {
                 username: formData.username,
                 password: formData.password
             };
+
+            if (formData.email && formData.email.trim() !== '') {
+                payload.email = formData.email.trim();
+            }
 
             if (isAlumno) {
                 payload.aula = formData.aula;
                 payload.numeroClase = Number(formData.numeroClase);
                 payload.cialProfesor = formData.cialProfesor;
             } else {
-                payload.email = formData.email?.trim();
                 payload.cial = formData.cial;
             }
 
@@ -114,9 +116,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm, onRegisterSuc
 
             <Box component="form" noValidate onSubmit={handleSubmit} sx={{ width: '100%', maxWidth: 400 }}>
                 <Input label="Nombre de Usuario" name="username" autoComplete="username" value={formData.username} onChange={handleChange} required />
-                {role === 'PROFESOR' && (
-                    <Input label="Correo Electrónico" name="email" type="email" value={formData.email} onChange={handleChange} required />
-                )}
+                <Input label="Correo Electrónico (Opcional)" name="email" type="email" value={formData.email} onChange={handleChange} />
 
                 {role === 'ALUMNO' ? (
                     <>

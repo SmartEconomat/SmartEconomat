@@ -17,7 +17,10 @@ import { InventarioModule } from './modules/inventario/inventario.module';
 import { AlbaranModule } from './modules/albaran/albaran.module';
 import { UbicacionModule } from './modules/ubicacion/ubicacion.module';
 import { IncidenciaModule } from './modules/incidencia/incidencia.module';
+<<<<<<< HEAD
 import { ArchivoModule } from './modules/archivo/archivo.module';
+=======
+>>>>>>> 9a12607 (feat: Sistema educacional de gestión de usuarios v1)
 import { ProfesorModule } from './modules/profesor/profesor.module';
 import { AlumnoModule } from './modules/alumno/alumno.module';
 import { AdminModule } from './modules/admin/admin.module';
@@ -40,7 +43,10 @@ import { AdminModule } from './modules/admin/admin.module';
     AlbaranModule,
     UbicacionModule,
     IncidenciaModule,
+<<<<<<< HEAD
     ArchivoModule,
+=======
+>>>>>>> 9a12607 (feat: Sistema educacional de gestión de usuarios v1)
     ProfesorModule,
     AlumnoModule,
     AdminModule,
