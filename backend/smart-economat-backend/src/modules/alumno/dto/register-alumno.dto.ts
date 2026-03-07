@@ -1,9 +1,7 @@
 import { i18nValidationMessage } from 'nestjs-i18n';
 import {
-  IsEmail,
   IsInt,
   IsNotEmpty,
-  IsOptional,
   IsString,
   IsStrongPassword,
   Min,
