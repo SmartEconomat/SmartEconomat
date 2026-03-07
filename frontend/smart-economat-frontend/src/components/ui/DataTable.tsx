@@ -49,6 +49,8 @@ export interface Column<T> {
     align?: 'inherit' | 'left' | 'center' | 'right' | 'justify';
     /** Si es true, esta columna no se renderiza en pantallas pequeñas (xs) */
     hideOnMobile?: boolean;
+    /** Control granular de visualización por breakpoint (MUI System object, ej: { xs: 'none', md: 'table-cell' }) */
+    responsiveDisplay?: Record<string, string>;
     /** Si es true, la columna permite ordenar de manera ascendente/descendente */
     sortable?: boolean;
 }
@@ -81,6 +83,10 @@ export interface DataTableProps<T> {
     renderGridItem?: (row: T) => ReactNode;
     /** Modo de vista por defecto (list o grid). Si renderGridItem existe, se puede cambiar */
     defaultViewMode?: 'list' | 'grid';
+    /** Modo de vista actual (controlado externamente) */
+    viewMode?: 'list' | 'grid';
+    /** Callback para cambiar modo de vista (controlado externamente) */
+    onViewModeChange?: (mode: 'list' | 'grid') => void;
     /** Configuración actual de ordenamiento */
     sortConfig?: {
         key: keyof T | string;
@@ -92,6 +98,8 @@ export interface DataTableProps<T> {
     leftHeaderAction?: ReactNode;
     /** Componente opcional que se pintará a la derecha en la cabecera (ej: botón Nuevo) */
     rightHeaderAction?: ReactNode;
+    /** Si es true, oculta la barra superior interna de la tabla (usado con PageToolbar externo) */
+    hideTopBar?: boolean;
 }
 
 /**
@@ -113,17 +121,27 @@ export function DataTable<T extends Record<string, any>>({
     onSort,
     leftHeaderAction,
     rightHeaderAction,
+    hideTopBar = false,
+    viewMode: controlledViewMode,
+    onViewModeChange: onControlledViewModeChange,
 }: DataTableProps<T>) {
     const colSpanCount = columns.length + (renderActions ? 1 : 0);
-    const [viewMode, setViewMode] = useState<'list' | 'grid'>(defaultViewMode);
+    const [internalViewMode, setInternalViewMode] = useState<'list' | 'grid'>(defaultViewMode);
 
-    const hasTopBarControls = (pagination?.onPageSizeChange && pagination?.pageSizeOptions) || renderGridItem || leftHeaderAction || rightHeaderAction;
+    // Determinar qué modo usar (el prop controlado tiene prioridad)
+    const viewMode = controlledViewMode || internalViewMode;
+
+    const hasTopBarControls = !hideTopBar && ((pagination?.onPageSizeChange && pagination?.pageSizeOptions) || renderGridItem || leftHeaderAction || rightHeaderAction);
     const handleViewModeChange = (
         event: React.MouseEvent<HTMLElement>,
         newMode: 'list' | 'grid',
     ) => {
         if (newMode !== null) {
-            setViewMode(newMode);
+            if (onControlledViewModeChange) {
+                onControlledViewModeChange(newMode);
+            } else {
+                setInternalViewMode(newMode);
+            }
         }
     }
 
@@ -203,7 +221,7 @@ export function DataTable<T extends Record<string, any>>({
                                         align={column.align || 'left'}
                                         sx={{
                                             fontWeight: 'bold',
-                                            display: column.hideOnMobile ? { xs: 'none', md: 'table-cell' } : undefined
+                                            display: column.responsiveDisplay || (column.hideOnMobile ? { xs: 'none', md: 'table-cell' } : undefined)
                                         }}
                                         sortDirection={sortConfig?.key === column.id ? sortConfig.direction : false}
                                     >
@@ -212,6 +230,13 @@ export function DataTable<T extends Record<string, any>>({
                                                 active={sortConfig?.key === column.id}
                                                 direction={sortConfig?.key === column.id ? sortConfig.direction : 'asc'}
                                                 onClick={() => onSort && onSort(column.id)}
+                                                sx={{
+                                                    width: '100%',
+                                                    justifyContent: 'space-between',
+                                                    '& .MuiTableSortLabel-icon': {
+                                                        ml: 0, // Remove default margin as we're using space-between
+                                                    }
+                                                }}
                                             >
                                                 {column.label}
                                             </TableSortLabel>
@@ -257,7 +282,7 @@ export function DataTable<T extends Record<string, any>>({
                                         <TableCell
                                             key={String(column.id)}
                                             align={column.align || 'left'}
-                                            sx={{ display: column.hideOnMobile ? { xs: 'none', md: 'table-cell' } : undefined }}
+                                            sx={{ display: column.responsiveDisplay || (column.hideOnMobile ? { xs: 'none', md: 'table-cell' } : undefined) }}
                                         >
                                             {column.render ? column.render(row) : (row[column.id as keyof T] as ReactNode)}
                                         </TableCell>

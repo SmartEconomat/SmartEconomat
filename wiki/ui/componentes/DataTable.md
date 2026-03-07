@@ -10,12 +10,14 @@ Ofrecer una solución unificada en toda la aplicación para mostrar listas, evit
 - Gestión integrada de estados de \`loading\` (empleando el componente \`<Spinner />\`).
 - Personalización de vistas de estados vacíos (\`empty states\`).
 - *Slots* dedicados opcionales para botones de acciones en cada fila (por ejemplo: "Ver Detalles", "Editar", "Eliminar").
+- **UI de Ordenamiento Mejorada**: Flechas de ordenamiento con `space-between` para una mejor legibilidad.
+- **Modo de Vista Controlado**: Soporte para sincronización externa del modo de vista (Lista/Cuadrícula).
 
 ## Props Principales (\`DataTableProps<T>\`)
 
 | Propiedad | Tipo | Descripción |
 | :--- | :--- | :--- |
-| \`columns\` | \`Column<T>[]\` | Array de configuración de las columnas. Cada objeto \`Column\` debe especificar \`id\`, \`label\`, (opc) \`align\`, (opc) función \`render(row: T)\`, y (opc) \`sortable\` para hacer la columna ordenable. |
+| `columns` | `Column<T>[]` | Array de configuración de las columnas. Cada objeto `Column` debe especificar `id`, `label`, (opc) `align`, (opc) función `render(row: T)`, (opc) `hideOnMobile`, (opc) `responsiveDisplay` y (opc) `sortable`. |
 | \`data\` | \`T[]\` | Los datos crudos que alimentarán el cuerpo de la tabla. |
 | \`isLoading\` | \`boolean\` | (Opcional) Indica a la tabla que debe mostrar el \`Spinner\` en lugar de los datos. |
 | `emptyStateMessage`| `ReactNode` | (Opcional) Contenido a renderizar cuando el array `data` esté vacío. |
@@ -27,8 +29,11 @@ Ofrecer una solución unificada en toda la aplicación para mostrar listas, evit
 | `defaultViewMode` | `'list' \| 'grid'` | (Opcional) Modo de visualización inicial. Se requiere `renderGridItem` para usar la opción de cuadrícula. Por defecto `"list"`. |
 | `sortConfig` | `Object` | (Opcional) Configuración actual de ordenamiento en la tabla, conteniendo el `key` de columna y el sentido de ordenado (`direction` de tipo `'asc' | 'desc'`). |
 | `onSort` | `(key: string) => void` | (Opcional) Callback ejecutado cuando un usuario hace clic en el título de una columna designada como `sortable: true`. |
-| `leftHeaderAction` | `ReactNode` | (Opcional) Componente personalizado renderizado a la **izquierda** de la zona superior de controles (ej: selector adicional o acción secundaria). |
-| `rightHeaderAction` | `ReactNode` | (Opcional) Componente personalizado renderizado a la **derecha** de la zona superior de controles (ej: botón principal "Nuevo Producto"). |
+| `leftHeaderAction` | `ReactNode` | (Opcional) Componente personalizado renderizado a la **izquierda** de la zona superior de controles. |
+| `rightHeaderAction` | `ReactNode` | (Opcional) Componente personalizado renderizado a la **derecha** de la zona superior de controles. |
+| `hideTopBar` | `boolean` | (Opcional) Si es `true`, oculta la barra de controles interna. Útil cuando se usa `PageToolbar` externamente. Por defecto: `false`. |
+| `viewMode` | `'list' \| 'grid'` | (Opcional) Modo de vista actual controlado externamente. |
+| `onViewModeChange` | `(mode: 'list' \| 'grid') => void` | (Opcional) Callback para cambiar el modo de vista controlado externamente. |
 
 ## Ejemplo Recomendado de Uso
 

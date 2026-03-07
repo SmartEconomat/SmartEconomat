@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Box, Paper, IconButton, Typography, Alert, Button, Tooltip, Chip, Card, CardContent, CardActions, Divider, TextField, InputAdornment } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Paper, IconButton, Typography, Alert, Button, Tooltip, Chip, Card, CardContent, CardActions, Divider } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DataTable, { Column } from '../components/ui/DataTable';
@@ -11,13 +11,11 @@ import { deleteResource } from '../services/api.service';
 import { useToast } from '../store/ToastContext';
 import StatusChip from '../components/ui/StatusChip';
 import RecipeCarousel from '../components/ui/RecipeCarousel';
+import PageToolbar from '../components/ui/PageToolbar';
 
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
-import SearchIcon from '@mui/icons-material/SearchOutlined';
-
-
 
 const recetaSchema: DynamicField[] = [
     { name: 'nombre', label: 'Nombre de la Receta', required: true, width: 8 },
@@ -67,6 +65,8 @@ const Recetas: React.FC = () => {
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
     const [searchTerm, setSearchTerm] = useState('');
     const [data, setData] = useState<Receta[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -84,6 +84,7 @@ const Recetas: React.FC = () => {
             const recetasData = await fetchRecetas(page, pageSize, searchTerm);
             setData(recetasData.data);
             setTotalPages(recetasData.totalPages);
+            setTotalItems(recetasData.total || recetasData.data.length);
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Error desconocido al cargar recetas.';
             setError(message);
@@ -149,8 +150,6 @@ const Recetas: React.FC = () => {
         setItemToEdit({ ...row });
     };
 
-    const filteredData = data;
-
     const columns: Column<Receta>[] = [
         { id: 'nombre', label: 'Nombre' },
         {
@@ -206,67 +205,43 @@ const Recetas: React.FC = () => {
     return (
         <Box>
             <RecipeCarousel />
-            <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 } }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                    <Typography variant="h6">
-                        Gestión de Recetas
-                    </Typography>
 
-                    {/* Desktop Button */}
-                    <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={() => setItemToEdit({})}
-                        sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
-                    >
-                        Nueva Receta
-                    </Button>
+            <PageToolbar
+                title="Gestión de Recetas"
+                searchValue={searchTerm}
+                onSearchChange={(v) => { setSearchTerm(v); setPage(1); }}
+                searchPlaceholder="Buscar por nombre, instrucciones, ingredientes..."
+                searchId="search-recetas"
+                totalItems={totalItems}
+                totalItemsLabel="recetas"
+                primaryAction={{
+                    label: 'Nueva Receta',
+                    onClick: () => setItemToEdit({}),
+                    id: 'btn-nueva-receta',
+                }}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                pageSize={pageSize}
+                onPageSizeChange={(e: any) => {
+                    setPageSize(Number(e.target.value));
+                    setPage(1);
+                }}
+            />
 
-                    {/* Mobile Button */}
-                    <Tooltip title="Nueva Receta">
-                        <IconButton
-                            color="primary"
-                            onClick={() => setItemToEdit({})}
-                            sx={{
-                                display: { xs: 'inline-flex', sm: 'none' },
-                                bgcolor: 'primary.main',
-                                color: 'white',
-                                '&:hover': { bgcolor: 'primary.dark' }
-                            }}
-                        >
-                            <AddIcon />
-                        </IconButton>
-                    </Tooltip>
-                </Box>
-
+            <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
                 {error && (
                     <Alert severity="error" sx={{ mb: 2 }}>
                         {error}
                     </Alert>
                 )}
 
-                <TextField
-                    placeholder="Buscar por nombre, instrucciones, ingredientes..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                        setSearchTerm(e.target.value);
-                        setPage(1);
-                    }}
-                    size="small"
-                    sx={{ mb: 2, width: '100%', maxWidth: 400 }}
-                    InputProps={{
-                        startAdornment: (
-                            <InputAdornment position="start">
-                                <SearchIcon color="action" />
-                            </InputAdornment>
-                        ),
-                    }}
-                />
-
                 <DataTable
                     columns={columns}
-                    data={filteredData}
+                    data={data}
                     isLoading={isLoading}
+                    hideTopBar
+                    viewMode={viewMode}
+                    defaultViewMode={viewMode}
                     emptyStateMessage={
                         <Box sx={{ py: 4, textAlign: 'center' }}>
                             <MenuBookOutlinedIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
@@ -297,15 +272,15 @@ const Recetas: React.FC = () => {
                         onPageChange: (_, newPage) => setPage(newPage),
                         pageSize: pageSize,
                         pageSizeOptions: [5, 10, 25, 50],
-                        onPageSizeChange: (e) => {
+                        onPageSizeChange: (e: any) => {
                             setPageSize(Number(e.target.value));
                             setPage(1);
                         },
                     }}
                     renderGridItem={(receta) => (
-                        <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                        <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 2 }}>
                             <CardContent sx={{ flexGrow: 1 }}>
-                                <Typography gutterBottom variant="h6" component="div">
+                                <Typography gutterBottom variant="h6" component="div" sx={{ fontWeight: 600 }}>
                                     {receta.nombre}
                                 </Typography>
                                 <Box display="flex" gap={1} flexWrap="wrap" mb={2} mt={1}>
@@ -331,7 +306,7 @@ const Recetas: React.FC = () => {
                                 </Typography>
                             </CardContent>
                             <Divider />
-                            <CardActions sx={{ justifyContent: 'space-between', px: 2 }}>
+                            <CardActions sx={{ justifyContent: 'space-between', px: 2, bgcolor: 'action.hover' }}>
                                 <Typography variant="caption" color="text.secondary">
                                     {receta.ingredientes?.length || 0} ingredientes
                                 </Typography>

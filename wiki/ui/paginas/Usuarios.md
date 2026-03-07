@@ -8,9 +8,10 @@ Página maestra (`Usuarios.tsx`) que ensambla múltiples atómicos, componentes 
 
 ## Composición
 
-1. **Tabla Inteligente (`DataTable`)**: Instancia la grilla dinámica, mapeando el modelo de datos.
-2. **Sistema de Feedback (`ToastContext`)**: Dispara alertas de éxito en operaciones CRUD (Verde) y excepciones al intentar cruzar validaciones de red o negocio (Rojo).
-3. **Indicadores Semánticos**: Usa `StatusChip` para el estado (Activo/Inactivo) y `RoleBadge` para la entidad de poder (Admin/Profesor/Alumno).
+1. **Barra Unificada (`PageToolbar`)**: Gestiona el título ("Gestión de Usuarios"), la búsqueda global por Nombre o Correo y los parámetros de paginación.
+2. **Tabla Inteligente (`DataTable`)**: Instancia la grilla dinámica, mapeando el modelo de datos.
+3. **Sistema de Feedback (`ToastContext`)**: Dispara alertas de éxito en operaciones CRUD (Verde) y excepciones al intentar cruzar validaciones de red o negocio (Rojo).
+4. **Indicadores Semánticos**: Usa `StatusChip` para el estado (Activo/Inactivo) y `RoleBadge` para la entidad de poder (Admin/Profesor/Alumno).
 
 ## Reglas de Negocio Embebidas (Security Front-End)
 Para evitar bloqueos catastróficos en el backend o en el uso diario:

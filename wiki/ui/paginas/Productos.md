@@ -21,10 +21,11 @@ Página principal del catálogo de productos de SmartEconomat. Ensambla el ciclo
 
 ```
 Productos.tsx
-├── TextField (búsqueda)                    Busca por nombre, marca, código de barras
-├── ProductFilters                          Autocomplete multi-select por categoría
-├── DataTable <Producto>                    Tabla/mosaico con paginación integrada
-│   ├── rightHeaderAction → Button          "Nuevo Producto" (escritorio) / IconButton (móvil)
+├── PageToolbar                             Encabezado unificado (Sticky)
+│   ├── TextField (búsqueda)                Busca por nombre, marca, código de barras
+│   ├── ProductFilters                      Autocomplete multi-select por categoría
+│   └── ToggleButtonGroup (Vista)           Cambio entre Lista y Cuadrícula (Grid)
+├── DataTable <Producto>                    Tabla/mosaico con paginación coordinada
 │   ├── renderGridItem → ProductCard        Vista en tarjeta para el modo mosaico
 │   └── renderActions                       Ver / Editar / Eliminar por fila
 ├── ConfirmDialog                           Confirmación de borrado
@@ -53,14 +54,16 @@ Productos.tsx
 
 ---
 
-## Barra de búsqueda y filtros
+## Barra de búsqueda y filtros (PageToolbar)
 
-La barra se compone de dos controles en línea (`flexWrap`):
+La gestión de controles se centraliza en el componente `PageToolbar`, que aloja:
 
-1. **`TextField` de búsqueda** — `minWidth: 360px`, `flex: 1 1 360px`. Dispara recarga al backend en cada keystroke (resetea a página 1).
-2. **`ProductFilters`** — Autocomplete de categorías. Crece dinámicamente. Las categorías seleccionadas aparecen como chips con icono dentro del control.
+1. **Buscador unificado**: Input de búsqueda con soporte para términos debounced.
+2. **ProductFilters**: Integración de filtros por categoría con crecimiento dinámico de ancho.
+3. **Selector de Vista**: Sincronización del modo Lista/Grid entre la cabecera y la `DataTable`.
+4. **Paginación**: Control de tamaño de página (registros por página) y contador total.
 
-> No hay una fila secundaria de chips externos. Los chips de selección viven **dentro** del Autocomplete.
+> El modo Grid es el preferido para visualización rápida de productos con imágenes, mientras que el modo List ofrece mayor detalle técnico.
 
 ---
 

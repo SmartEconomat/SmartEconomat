@@ -13,7 +13,8 @@ Implementa un **Autocomplete de MUI con selección múltiple** que combina:
 - Búsqueda en tiempo real al escribir
 - Dropdown desplegable para seleccionar categorías
 - Opciones seleccionadas como **chips con icono oficial de categoría** dentro del propio control
-- **Crecimiento dinámico del ancho** conforme se añaden selecciones (mínimo 220 px, máximo 660 px)
+- **Crecimiento dinámico del ancho**: El componente crece hacia la izquierda conforme se añaden categorías, permitiendo que el buscador se reduzca hasta un mínimo responsivo.
+- **Responsividad Inteligente**: Si el buscador y los filtros no caben en la misma fila, los filtros pasan a ocupar el 100% del ancho debajo del buscador.
 - Mismo alto que el campo de búsqueda (`size="small"` → 40 px)
 
 Los iconos de cada categoría son los mismos que utiliza `StatusChip` — provienen de `getCategoryIconFilled`.
@@ -114,6 +115,7 @@ const [filters, setFilters] = useState<ProductFiltersState>({ categorias: [], al
 
 ## Relación con otros componentes
 
-- **`Productos.tsx`** — usa `ProductFilters` en la barra de búsqueda, gestiona el estado `filters` y lo pasa como prop.
+- **`PageToolbar.tsx`** — el contenedor principal que aloja a `ProductFilters` y gestiona la disposición responsiva.
+- **`Productos.tsx`** — utiliza `ProductFilters` a través de `PageToolbar`, gestiona el estado `filters` y lo pasa como prop.
 - **`StatusChip`** — utiliza los mismos iconos via `getCategoryIconFilled` para mostrar el tipo de producto en las filas de la tabla.
 - **`DataTable`** — se renderiza debajo de la barra de búsqueda + filtros.
