@@ -9,7 +9,7 @@ export interface DashboardMovimiento {
   createdAt: string;
   descripcion?: string;
   productoNombre?: string;
-  usuario?: { id: string; nombre: string; email: string };
+  usuario?: { id: string; nombre?: string; username: string; email: string };
 }
 
 export interface DashboardStats {

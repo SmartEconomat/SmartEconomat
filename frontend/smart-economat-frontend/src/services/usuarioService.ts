@@ -93,8 +93,8 @@ export const usuarioService = {
         if (search) {
             const lowerSearch = search.toLowerCase();
             filteredData = filteredData.filter((u: Usuario) =>
-                u.username.toLowerCase().includes(lowerSearch) ||
-                u.email.toLowerCase().includes(lowerSearch)
+                (u.username?.toLowerCase() || '').includes(lowerSearch) ||
+                (u.email?.toLowerCase() || '').includes(lowerSearch)
             );
         }
 
@@ -206,6 +206,48 @@ export const usuarioService = {
             };
         } catch (error: any) {
             console.error('Error al eliminar usuario', error);
+            throw error;
+        }
+    },
+
+    async resetPassword(id: string | number): Promise<ApiResponse<string>> {
+        const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+        const generateRandomPassword = () => {
+            let pass = '';
+            // Asegurar al menos uno de cada tipo para validación del backend
+            pass += 'abcdefghijklmnopqrstuvwxyz'[Math.floor(Math.random() * 26)];
+            pass += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[Math.floor(Math.random() * 26)];
+            pass += '0123456789'[Math.floor(Math.random() * 10)];
+            pass += '!@#$%^&*'[Math.floor(Math.random() * 8)];
+            
+            for (let i = 0; i < 6; i++) {
+                pass += characters[Math.floor(Math.random() * characters.length)];
+            }
+            // Barajar
+            return pass.split('').sort(() => 0.5 - Math.random()).join('');
+        };
+
+        const randomPassword = generateRandomPassword();
+
+        try {
+            const response = await fetch(`${API_URL}/usuarios/${id}/password`, {
+                method: 'PATCH',
+                headers: getHeaders(),
+                body: JSON.stringify({ password: randomPassword })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Error al restablecer contraseña');
+            }
+            const result = await response.json();
+            return {
+                data: randomPassword,
+                status: response.status,
+                message: result.message || 'Contraseña restablecida exitosamente'
+            };
+        } catch (error: any) {
+            console.error('Error al restablecer contraseña', error);
             throw error;
         }
     }

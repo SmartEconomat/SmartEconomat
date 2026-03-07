@@ -526,13 +526,42 @@ const Home: React.FC = () => {
                       {getActividadIcon(mov.tipo)}
                     </Box>
                     <Box>
-                      <Typography variant="body2" fontWeight={500}>
+                      <Typography variant="body2" fontWeight={500} sx={{ mb: 0.5 }}>
                         {tipoActividadLabel(mov)}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {tiempoRelativoCorto(mov.createdAt)}
-                        {mov.usuario ? ` ${mov.usuario.nombre}` : ''}
-                      </Typography>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: 'text.secondary',
+                            fontWeight: 600,
+                            bgcolor: 'action.hover',
+                            px: 1,
+                            py: 0.2,
+                            borderRadius: 1,
+                          }}
+                        >
+                          {tiempoRelativoCorto(mov.createdAt)}
+                        </Typography>
+                        {mov.usuario && (
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}
+                          >
+                            <Box
+                              component="span"
+                              sx={{
+                                width: 3,
+                                height: 3,
+                                borderRadius: '50%',
+                                bgcolor: 'text.disabled',
+                              }}
+                            />
+                            {mov.usuario.nombre || mov.usuario.username}
+                          </Typography>
+                        )}
+                      </Stack>
                     </Box>
                   </Box>
                 ))}

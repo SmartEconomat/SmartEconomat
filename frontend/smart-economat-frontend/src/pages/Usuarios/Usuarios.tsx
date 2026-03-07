@@ -4,6 +4,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
 
 import DataTable, { Column } from '../../components/ui/DataTable';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
@@ -16,6 +17,7 @@ import InputField from '../../components/ui/InputField';
 import { usuarioService } from '../../services/usuarioService';
 import { Usuario, CrearUsuarioDTO, ActualizarUsuarioDTO } from '../../types/usuario';
 import { useToast } from '../../store/ToastContext';
+import { useAuth } from '../../store/AuthContext';
 
 const Usuarios: React.FC = () => {
     // Estados principales
@@ -35,10 +37,14 @@ const Usuarios: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [userToEdit, setUserToEdit] = useState<Usuario | null>(null);
     const [userToDelete, setUserToDelete] = useState<Usuario | null>(null);
+    const [userToReset, setUserToReset] = useState<Usuario | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isResetting, setIsResetting] = useState(false);
+
 
     const toast = useToast();
+    const { user: currentUser } = useAuth();
 
     // Cargar datos
     const fetchUsuarios = useCallback(async () => {
@@ -140,11 +146,61 @@ const Usuarios: React.FC = () => {
         }
     };
 
+    const handlePasswordReset = async () => {
+        if (!userToReset) return;
+        setIsResetting(true);
+        try {
+            const res = await usuarioService.resetPassword(userToReset.id);
+            const randomPass = res.data;
+            toast.success(`Se ha activado la contraseña temporal para ${userToReset.username}. La nueva contraseña es: ${randomPass}`);
+        } catch (error: any) {
+            toast.error(error.message || 'Error al restablecer contraseña');
+        } finally {
+            setIsResetting(false);
+            setUserToReset(null);
+        }
+    };
+
+    /**
+     * Lógica de permisos para activar contraseña temporal:
+     * - Administrador: Puede a todos (Profesor o Alumno).
+     * - Profesor: Puede solo a Alumnos.
+     */
+    const canResetTemporaryPassword = (targetUser: Usuario): boolean => {
+        if (!currentUser) return false;
+        
+        // El rol del usuario actual viene del JWT (ADMIN, PROFESOR, ALUMNO)
+        const currentRol = currentUser.rol.toUpperCase(); 
+        // El rol del usuario objetivo viene mapeado por el servicio (Administrador, Profesor, Alumno)
+        const targetRol = targetUser.rol;
+
+        // No puedes resetearte a ti mismo
+        if (targetUser.id.toString() === currentUser.id.toString()) return false;
+
+        if (currentRol === 'ADMIN' || currentRol === 'ADMINISTRADOR') {
+            // Administrador: puede a todos
+            return true;
+        }
+
+        if (currentRol === 'PROFESOR') {
+            // Profesor: solo a alumnos
+            return targetRol === 'Alumno';
+        }
+
+        return false;
+    };
+
     // Configuración de tabla
     const columns: Column<Usuario>[] = [
         { id: 'id', label: 'ID', hideOnMobile: true, sortable: true },
         { id: 'username', label: 'Usuario', sortable: true },
-        { id: 'email', label: 'Correo', hideOnMobile: true, sortable: true },
+        { 
+            id: 'email', 
+            label: 'Correo', 
+            hideOnMobile: true, 
+            sortable: true,
+            render: (row) => row.email || <Typography variant="caption" color="text.disabled">No disponible</Typography>
+        },
         {
             id: 'rol',
             label: 'Rol',
@@ -162,6 +218,17 @@ const Usuarios: React.FC = () => {
 
     const renderActions = (row: Usuario) => (
         <>
+            {canResetTemporaryPassword(row) && (
+                <IconButton 
+                    color="primary" 
+                    onClick={() => setUserToReset(row)} 
+                    size="small" 
+                    aria-label="Restablecer Contraseña Temporal"
+                    title="Activar Contraseña Temporal"
+                >
+                    <VpnKeyIcon fontSize="small" />
+                </IconButton>
+            )}
             <IconButton color="secondary" onClick={() => handleEditUsuarioClick(row)} size="small" aria-label="Editar">
                 <EditIcon fontSize="small" />
             </IconButton>
@@ -265,8 +332,8 @@ const Usuarios: React.FC = () => {
                                 <Typography gutterBottom variant="h6" component="div" align="center">
                                     {usuario.username}
                                 </Typography>
-                                <Typography variant="body2" color="text.secondary" gutterBottom align="center">
-                                    {usuario.email}
+                                <Typography variant="body2" color="text.secondary" gutterBottom align="center" sx={{ height: '1.5em' }}>
+                                    {usuario.email || ''}
                                 </Typography>
                                 <Box sx={{ mt: 2, mb: 1 }}>
                                     <RoleBadge rol={usuario.rol} />
@@ -308,6 +375,22 @@ const Usuarios: React.FC = () => {
                     </>
                 }
                 confirmText={isDeleting ? 'Eliminando...' : 'Eliminar Usuario'}
+                cancelText="Cancelar"
+            />
+
+            {/* Diálogo de Confirmación Restablecer Contraseña */}
+            <ConfirmDialog
+                isOpen={!!userToReset}
+                onClose={() => { if (!isResetting) setUserToReset(null) }}
+                onConfirm={handlePasswordReset}
+                title="Activar contraseña temporal"
+                message={
+                    <>
+                        ¿Deseas activar una contraseña temporal para <strong>{userToReset?.username}</strong>?<br /><br />
+                        Se generará una nueva clave aleatoria y el sistema solicitará al usuario cambiarla en su próximo acceso.
+                    </>
+                }
+                confirmText={isResetting ? 'Activando...' : 'Confirmar'}
                 cancelText="Cancelar"
             />
         </Box>

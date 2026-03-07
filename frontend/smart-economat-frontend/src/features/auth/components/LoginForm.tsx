@@ -43,6 +43,8 @@ function parseJwt(token: string): Record<string, any> | null {
  * Delega la navegación al padre mediante `onLoginSuccess` para permitir la
  * animación de salida antes de llamar a AuthContext.login().
  */
+import { authService } from '../../../services/auth.service';
+
 const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onLoginSuccess }) => {
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [isLoading, setIsLoading] = useState(false);
@@ -50,37 +52,44 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onLoginSuccess }) =
     const [errorMsg, setErrorMsg] = useState('');
     const [isForgotPassword, setIsForgotPassword] = useState(false);
     const [forgotSuccess, setForgotSuccess] = useState('');
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
+    const [changePassData, setChangePassData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    const [pendingLogin, setPendingLogin] = useState<{ user: User, token: string } | null>(null);
+
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setErrorMsg('');
         setIsLoading(true);
         try {
-            const res = await fetch('/api/v1/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: formData.email, password: formData.password }),
+            const res = await authService.login({ 
+                email: formData.email, 
+                password: formData.password 
             });
-            if (res.ok) {
-                const json = await res.json();
-                const token = json.data?.access_token || json.access_token;
+
+            if (res.success) {
+                const token = res.data?.access_token;
                 const dec = token ? parseJwt(token) : null;
-                // Delegamos al padre la animación y la navegación
-                onLoginSuccess({
+                const user = {
                     id: dec?.sub || '',
-                    name: dec?.nombre || formData.email,
-                    email: formData.email,
+                    name: dec?.username || formData.email,
+                    email: dec?.email || (formData.email.includes('@') ? formData.email : ''),
                     rol: dec?.role || '',
                     username: dec?.username,
-                }, token);
+                };
+
+                if (res.data?.requirePasswordChange) {
+                    setPendingLogin({ user, token });
+                    setIsChangingPassword(true);
+                    setChangePassData(prev => ({ ...prev, currentPassword: formData.password }));
+                } else {
+                    onLoginSuccess(user, token);
+                }
             } else {
-                const err = await res.json();
-                console.error('Login error:', res.status, err);
-                setErrorMsg('Credenciales inválidas, intenta de nuevo.');
+                setErrorMsg(res.message || 'Credenciales inválidas, intenta de nuevo.');
             }
-        } catch (err) {
-            console.error('Network error:', err);
-            setErrorMsg('Error de conexión al servidor.');
+        } catch (err: any) {
+            setErrorMsg(err.message || 'Error de conexión al servidor.');
         } finally {
             setIsLoading(false);
         }
@@ -91,27 +100,67 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onLoginSuccess }) =
         setErrorMsg('');
         setForgotSuccess('');
 
-        if (!formData.email.trim()) {
-            setErrorMsg('Por favor ingresa tu correo electrónico.');
+        const emailOrUser = formData.email.trim();
+        if (!emailOrUser) {
+            setErrorMsg('Por favor ingresa tu usuario o correo electrónico.');
+            return;
+        }
+
+        // Si no contiene @, asumimos que es un nombre de usuario (probablemente alumno)
+        if (!emailOrUser.includes('@')) {
+            setErrorMsg('Los alumnos deben solicitar el restablecimiento de contraseña a su profesor asignado directamente.');
             return;
         }
 
         setIsLoading(true);
         try {
-            const res = await fetch('/api/v1/auth/forgot-password', {
+            const res = await authService.forgotPassword(emailOrUser);
+            if (res.success) {
+                setForgotSuccess(res.message || 'Si el correo electrónico figura en nuestro sistema, recibirás instrucciones próximamente.');
+            } else {
+                setErrorMsg(res.message || 'Error al procesar la solicitud.');
+            }
+        } catch (err: any) {
+            setErrorMsg(err.message || 'Error de conexión al servidor.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handlePasswordChangeSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setErrorMsg('');
+
+        if (changePassData.newPassword !== changePassData.confirmPassword) {
+            setErrorMsg('Las contraseñas nuevas no coinciden.');
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            // Usamos un fetch directo o el servicio para cambiar password
+            // En este punto tenemos el token en pendingLogin
+            const res = await fetch('/api/v1/auth/change-password', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: formData.email }),
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${pendingLogin?.token}`
+                },
+                body: JSON.stringify({
+                    currentPassword: changePassData.currentPassword,
+                    newPassword: changePassData.newPassword
+                }),
             });
+
             if (res.ok) {
-                setForgotSuccess('Si el correo electrónico figura en nuestro sistema, recibirás instrucciones para restablecer tu contraseña en breve.');
+                if (pendingLogin) {
+                    onLoginSuccess(pendingLogin.user, pendingLogin.token);
+                }
             } else {
                 const err = await res.json();
-                console.error('Forgot password error:', res.status, err);
-                setErrorMsg(err.message || 'Error al procesar la solicitud.');
+                setErrorMsg(err.message || 'Error al cambiar la contraseña.');
             }
-        } catch (err) {
-            console.error('Network error:', err);
+        } catch (err: any) {
             setErrorMsg('Error de conexión al servidor.');
         } finally {
             setIsLoading(false);
@@ -121,7 +170,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onLoginSuccess }) =
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
+    const handleChangePass = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+        setChangePassData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+
     const togglePasswordVisibility = () => setShowPassword(v => !v);
+
 
     return (
         <Box sx={{ my: { xs: 4, md: 8 }, mx: 4, pt: { xs: 2, md: 0 }, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -148,8 +201,46 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onLoginSuccess }) =
                 </Alert>
             )}
 
-            {isForgotPassword ? (
+            {isChangingPassword ? (
+                <Box component="form" noValidate onSubmit={handlePasswordChangeSubmit} sx={{ mt: 1, width: '100%', maxWidth: 400 }}>
+                    <Typography variant="h6" sx={{ textAlign: 'center', mb: 1, color: 'primary.main', fontWeight: 'bold' }}>
+                        Cambio de contraseña obligatorio
+                    </Typography>
+                    <Typography variant="body2" sx={{ textAlign: 'center', mb: 3, color: 'text.secondary' }}>
+                        Su administrador ha restablecido su contraseña. Por seguridad, debe elegir una nueva antes de continuar.
+                    </Typography>
+                    
+                    <Input
+                        label="Nueva Contraseña"
+                        name="newPassword"
+                        type={showPassword ? 'text' : 'password'}
+                        value={changePassData.newPassword}
+                        onChange={handleChangePass}
+                        required
+                    />
+                    <Input
+                        label="Confirmar Nueva Contraseña"
+                        name="confirmPassword"
+                        type={showPassword ? 'text' : 'password'}
+                        value={changePassData.confirmPassword}
+                        onChange={handleChangePass}
+                        required
+                    />
+                    
+                    <Button type="submit" isLoading={isLoading} sx={{ mt: 3, mb: 0 }}>Actualizar y Acceder</Button>
+                    
+                    <Button
+                        variant="text"
+                        fullWidth
+                        onClick={() => { setIsChangingPassword(false); setPendingLogin(null); setErrorMsg(''); }}
+                        sx={{ mt: 1 }}
+                    >
+                        Cancelar
+                    </Button>
+                </Box>
+            ) : isForgotPassword ? (
                 <Box component="form" noValidate onSubmit={handleForgotSubmit} sx={{ mt: 1, width: '100%', maxWidth: 400 }}>
+
                     <Typography variant="body1" sx={{ textAlign: 'center', mb: 2, color: 'text.secondary' }}>
                         Introduce la dirección de correo electrónico vinculada a tu cuenta para recibir un enlace temporal de reestablecimiento.
                     </Typography>

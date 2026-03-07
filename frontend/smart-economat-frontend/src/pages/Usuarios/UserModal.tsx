@@ -36,7 +36,7 @@ const UserModal: React.FC<UserModalProps> = ({
         username: '',
         email: '',
         rol: 'Alumno',
-        estado: 'Activo'
+        estado: 'Inactivo'
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -56,7 +56,7 @@ const UserModal: React.FC<UserModalProps> = ({
                     username: '',
                     email: '',
                     rol: 'Alumno',
-                    estado: 'Activo'
+                    estado: 'Inactivo'
                 });
             }
             setErrors({});
@@ -87,10 +87,12 @@ const UserModal: React.FC<UserModalProps> = ({
         if (!formData.username.trim()) newErrors.username = 'El usuario es obligatorio';
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!formData.email.trim()) {
-            newErrors.email = 'El correo es obligatorio';
-        } else if (!emailRegex.test(formData.email)) {
-            newErrors.email = 'Formato de correo inválido';
+        if (formData.rol !== 'Alumno') {
+            if (!formData.email.trim()) {
+                newErrors.email = 'El correo es obligatorio';
+            } else if (!emailRegex.test(formData.email)) {
+                newErrors.email = 'Formato de correo inválido';
+            }
         }
 
         if (isLastAdmin()) {
@@ -134,18 +136,20 @@ const UserModal: React.FC<UserModalProps> = ({
                         disabled={isSaving}
                         required
                     />
-                    <InputField
-                        id="user-email"
-                        fullWidth
-                        label="Correo Electrónico"
-                        type="email"
-                        value={formData.email}
-                        onChange={handleChange('email')}
-                        error={!!errors.email}
-                        helperText={errors.email}
-                        disabled={isSaving}
-                        required
-                    />
+                    {formData.rol !== 'Alumno' && (
+                        <InputField
+                            id="user-email"
+                            fullWidth
+                            label="Correo Electrónico"
+                            type="email"
+                            value={formData.email}
+                            onChange={handleChange('email')}
+                            error={!!errors.email}
+                            helperText={errors.email}
+                            disabled={isSaving}
+                            required
+                        />
+                    )}
                     <Box display="flex" gap={2} flexWrap="wrap">
                         <Box flex={1} minWidth="200px">
                             <SelectField
