@@ -2,6 +2,7 @@ import { i18nValidationMessage } from 'nestjs-i18n';
 import {
   IsEmail,
   IsNotEmpty,
+  IsOptional,
   IsString,
   IsStrongPassword,
 } from 'class-validator';
@@ -29,8 +30,8 @@ export class CreateProfesorDto {
   password!: string;
 
   @IsEmail()
-  @IsNotEmpty()
-  email!: string;
+  @IsOptional()
+  email?: string;
 
   @IsString()
   @IsNotEmpty()
