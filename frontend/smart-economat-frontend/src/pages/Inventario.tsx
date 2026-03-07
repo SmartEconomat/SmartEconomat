@@ -546,7 +546,7 @@ const Inventario: React.FC = () => {
                     }
                     helperText={
                       !productoProveedorValue &&
-                      productoProveedorInput.length > 0
+                        productoProveedorInput.length > 0
                         ? 'Debes seleccionar una opción válida'
                         : undefined
                     }
@@ -579,7 +579,7 @@ const Inventario: React.FC = () => {
                   }
                   helperText={
                     cantidadActual !== '' &&
-                    (Number.isNaN(cantActualNum) || cantActualNum < 0)
+                      (Number.isNaN(cantActualNum) || cantActualNum < 0)
                       ? 'Debe ser un número ≥ 0'
                       : undefined
                   }
@@ -598,7 +598,7 @@ const Inventario: React.FC = () => {
                   }
                   helperText={
                     cantidadMinima !== '' &&
-                    (Number.isNaN(cantMinNum) || cantMinNum < 0)
+                      (Number.isNaN(cantMinNum) || cantMinNum < 0)
                       ? 'Debe ser un número ≥ 0'
                       : undefined
                   }
