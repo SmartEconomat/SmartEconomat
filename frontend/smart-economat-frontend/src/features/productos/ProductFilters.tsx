@@ -78,12 +78,12 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ filters, onChange }) =>
         filters.categorias.includes(opt.value)
     );
 
-    // En móvil/tablet ocupa el 100%; en desktop crece conforme a los chips seleccionados
-    const dynamicMinWidth = isMobileOrTablet
-        ? 'unset'
+    // En móvil/tablet ocupa el 100%; en desktop crece con los chips (mín 220, máx 660)
+    const dynamicWidth = isMobileOrTablet
+        ? '100%'
         : selected.length === 0
-            ? 300
-            : Math.min(300 + selected.length * 100, 800);
+            ? 220
+            : Math.min(220 + selected.length * 110, 660);
 
     return (
         <Autocomplete
