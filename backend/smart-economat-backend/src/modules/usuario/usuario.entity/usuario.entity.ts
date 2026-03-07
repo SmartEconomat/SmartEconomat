@@ -114,6 +114,12 @@ export class Usuario extends BaseEntity {
   @Column({ type: 'boolean', default: true })
   activo: boolean;
 
+  @OneToOne('Profesor', 'user')
+  profesor?: Relation<Profesor>;
+
+  @OneToOne('Alumno', 'user')
+  alumno?: Relation<Alumno>;
+
   @BeforeInsert()
   @BeforeUpdate()
   async hashPassword(): Promise<void> {
