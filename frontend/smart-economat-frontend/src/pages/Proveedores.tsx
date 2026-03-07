@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Box, Paper, IconButton, Typography, Alert, Button, Tooltip, TextField, InputAdornment } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Paper, IconButton, Typography, Alert, Button, Tooltip } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import DataTable, { Column } from '../components/ui/DataTable';
+import PageToolbar from '../components/ui/PageToolbar';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import DynamicFormModal, { DynamicField } from '../components/ui/DynamicFormModal';
+import DetailModal from '../components/ui/DetailModal';
 import { Proveedor } from '../services/proveedor.types';
 import { fetchProveedores, createProveedor, updateProveedor } from '../services/proveedor.service';
 import { deleteResource } from '../services/api.service';
@@ -12,7 +15,6 @@ import { useToast } from '../store/ToastContext';
 
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import AddIcon from '@mui/icons-material/Add';
-import SearchIcon from '@mui/icons-material/SearchOutlined';
 
 const proveedorSchema: DynamicField[] = [
     { name: 'nif', label: 'NIF / CUIT', required: true, width: 4 },
@@ -27,12 +29,16 @@ const Proveedores: React.FC = () => {
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
+    const [sortBy, setSortBy] = useState<string | undefined>('nombre');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
     const [data, setData] = useState<Proveedor[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [itemToDelete, setItemToDelete] = useState<Proveedor | null>(null);
     const [itemToEdit, setItemToEdit] = useState<Record<string, any> | null>(null);
+    const [itemToView, setItemToView] = useState<Proveedor | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const toast = useToast();
@@ -41,9 +47,10 @@ const Proveedores: React.FC = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const proveedoresData = await fetchProveedores(page, pageSize, searchTerm);
+            const proveedoresData = await fetchProveedores(page, pageSize, searchTerm, sortBy, sortOrder);
             setData(proveedoresData.data);
             setTotalPages(proveedoresData.totalPages);
+            setTotalItems(proveedoresData.total || proveedoresData.data.length);
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Error desconocido al cargar proveedores.';
             setError(message);
@@ -54,7 +61,7 @@ const Proveedores: React.FC = () => {
 
     useEffect(() => {
         loadData();
-    }, [page, pageSize, searchTerm]);
+    }, [page, pageSize, searchTerm, sortBy, sortOrder]);
 
     const handleDeleteConfirm = async () => {
         if (!itemToDelete) return;
@@ -75,7 +82,6 @@ const Proveedores: React.FC = () => {
     const handleSave = async (formData: Record<string, any>) => {
         setIsSaving(true);
         try {
-            // Limpiar datos para el backend
             const payload = {
                 nombre: formData.nombre,
                 contacto: formData.contacto,
@@ -106,108 +112,105 @@ const Proveedores: React.FC = () => {
         setItemToEdit({ ...row });
     };
 
-    // filteredData local ya no es necesario
-    const filteredData = data;
+    const handleViewClick = (row: Proveedor) => {
+        setItemToView(row);
+    };
+
+    const handleSort = (key: string | keyof Proveedor) => {
+        const isAsc = sortBy === key && sortOrder === 'asc';
+        setSortOrder(isAsc ? 'desc' : 'asc');
+        setSortBy(key as string);
+    };
 
     const columns: Column<Proveedor>[] = [
-        { id: 'nombre', label: 'Nombre' },
+        { id: 'nombre', label: 'Nombre', sortable: true },
         {
             id: 'nif',
             label: 'NIF',
             render: (row) => row.nif ?? '—',
+            sortable: true,
+            responsiveDisplay: { xs: 'none', md: 'table-cell' }
         },
         {
             id: 'contacto',
             label: 'Contacto',
             render: (row) => row.contacto ?? '—',
-            hideOnMobile: true,
+            responsiveDisplay: { xs: 'none', md: 'table-cell' },
+            sortable: true,
         },
         {
             id: 'telefono',
             label: 'Teléfono',
             render: (row) => row.telefono ?? '—',
-            hideOnMobile: true,
+            sortable: true,
+            responsiveDisplay: { xs: 'none', sm: 'table-cell' }
         },
         {
             id: 'email',
             label: 'Email',
             render: (row) => row.email ?? '—',
-            hideOnMobile: true,
+            sortable: true,
+            responsiveDisplay: { xs: 'none', lg: 'table-cell' }
         },
     ];
 
     const renderActions = (row: Proveedor) => (
         <>
-            <IconButton color="secondary" onClick={() => handleEditClick(row)} size="small" aria-label="Editar">
-                <EditIcon fontSize="small" />
-            </IconButton>
-            <IconButton color="error" onClick={() => setItemToDelete(row)} size="small" aria-label="Borrar">
-                <DeleteIcon fontSize="small" />
-            </IconButton>
+            <Tooltip title="Ver detalle">
+                <IconButton onClick={() => handleViewClick(row)} size="small" aria-label="Ver detalle" sx={{ color: 'text.secondary' }}>
+                    <VisibilityIcon fontSize="small" />
+                </IconButton>
+            </Tooltip>
+            <Tooltip title="Editar">
+                <IconButton color="secondary" onClick={() => handleEditClick(row)} size="small" aria-label="Editar">
+                    <EditIcon fontSize="small" />
+                </IconButton>
+            </Tooltip>
+            <Tooltip title="Eliminar">
+                <IconButton color="error" onClick={() => setItemToDelete(row)} size="small" aria-label="Borrar">
+                    <DeleteIcon fontSize="small" />
+                </IconButton>
+            </Tooltip>
         </>
     );
 
     return (
         <Box>
-            <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 } }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                    <Typography variant="h6">
-                        Gestión de Proveedores
-                    </Typography>
+            <PageToolbar
+                title="Gestión de Proveedores"
+                searchValue={searchTerm}
+                onSearchChange={(v) => { setSearchTerm(v); setPage(1); }}
+                searchPlaceholder="Buscar por nombre, NIF, contacto, email..."
+                searchId="search-proveedores"
+                totalItems={totalItems}
+                totalItemsLabel="proveedores"
+                primaryAction={{
+                    label: 'Nuevo Proveedor',
+                    onClick: () => setItemToEdit({}),
+                    id: 'btn-nuevo-proveedor',
+                }}
+                pageSize={pageSize}
+                onPageSizeChange={(e: any) => {
+                    setPageSize(Number(e.target.value));
+                    setPage(1);
+                }}
+            />
 
-                    <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={() => setItemToEdit({})}
-                        sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
-                    >
-                        Nuevo Proveedor
-                    </Button>
-
-                    <Tooltip title="Nuevo Proveedor">
-                        <IconButton
-                            color="primary"
-                            onClick={() => setItemToEdit({})}
-                            sx={{
-                                display: { xs: 'inline-flex', sm: 'none' },
-                                bgcolor: 'primary.main',
-                                color: 'white',
-                                '&:hover': { bgcolor: 'primary.dark' }
-                            }}
-                        >
-                            <AddIcon />
-                        </IconButton>
-                    </Tooltip>
-                </Box>
-
+            <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
                 {error && (
                     <Alert severity="error" sx={{ mb: 2 }}>
                         {error}
                     </Alert>
                 )}
 
-                <TextField
-                    placeholder="Buscar por nombre, NIF, contacto, email..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                        setSearchTerm(e.target.value);
-                        setPage(1);
-                    }}
-                    size="small"
-                    sx={{ mb: 2, width: '100%', maxWidth: 400 }}
-                    InputProps={{
-                        startAdornment: (
-                            <InputAdornment position="start">
-                                <SearchIcon color="action" />
-                            </InputAdornment>
-                        ),
-                    }}
-                />
-
                 <DataTable
                     columns={columns}
-                    data={filteredData}
+                    data={data}
                     isLoading={isLoading}
+                    hideTopBar
+                    onSort={handleSort}
+                    sortConfig={{ key: sortBy || '', direction: sortOrder }}
+                    defaultViewMode="list"
                     emptyStateMessage={
                         <Box sx={{ py: 4, textAlign: 'center' }}>
                             <StorefrontOutlinedIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
@@ -238,7 +241,7 @@ const Proveedores: React.FC = () => {
                         onPageChange: (_, newPage) => setPage(newPage),
                         pageSize: pageSize,
                         pageSizeOptions: [5, 10, 25, 50],
-                        onPageSizeChange: (e) => {
+                        onPageSizeChange: (e: any) => {
                             setPageSize(Number(e.target.value));
                             setPage(1);
                         },
@@ -278,6 +281,43 @@ const Proveedores: React.FC = () => {
                             ? "¿Estás seguro de que deseas guardar los cambios realizados en este proveedor?"
                             : "¿Estás seguro de que deseas añadir este nuevo proveedor al sistema?"
                     }
+                />
+
+                <DetailModal
+                    isOpen={!!itemToView}
+                    onClose={() => setItemToView(null)}
+                    title={itemToView?.nombre || ''}
+                    subtitle={itemToView?.nif || undefined}
+                    size="md"
+                    onEdit={() => {
+                        if (itemToView) {
+                            handleEditClick(itemToView);
+                            setItemToView(null);
+                        }
+                    }}
+                    sections={[
+                        {
+                            title: 'Información Fiscal',
+                            fields: [
+                                { label: 'Razón Social', value: itemToView?.nombre },
+                                { label: 'NIF / CUIT', value: itemToView?.nif },
+                            ]
+                        },
+                        {
+                            title: 'Contacto',
+                            fields: [
+                                { label: 'Persona de Contacto', value: itemToView?.contacto },
+                                { label: 'Teléfono', value: itemToView?.telefono },
+                                { label: 'Email', value: itemToView?.email, fullWidth: true },
+                            ]
+                        },
+                        {
+                            title: 'Ubicación',
+                            fields: [
+                                { label: 'Dirección', value: itemToView?.direccion, fullWidth: true },
+                            ]
+                        }
+                    ]}
                 />
             </Paper>
         </Box>

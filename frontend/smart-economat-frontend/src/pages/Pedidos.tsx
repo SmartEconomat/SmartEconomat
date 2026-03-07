@@ -6,7 +6,6 @@ import {
   Typography,
   Alert,
   Button,
-  Tooltip,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -25,6 +24,7 @@ import { deleteResource } from '../services/api.service';
 import { fetchProveedores } from '../services/proveedor.service';
 import { useToast } from '../store/ToastContext';
 import StatusChip from '../components/ui/StatusChip';
+import PageToolbar from '../components/ui/PageToolbar';
 
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import AddIcon from '@mui/icons-material/Add';
@@ -70,6 +70,11 @@ const pedidoSchema: DynamicField[] = [
 
 const Pedidos: React.FC = () => {
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [searchTerm, setSearchTerm] = useState('');
   const [data, setData] = useState<Pedido[]>([]);
   const [proveedores, setProveedores] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -87,10 +92,12 @@ const Pedidos: React.FC = () => {
     setError(null);
     try {
       const [dataLoad, provLoad] = await Promise.all([
-        fetchPedidos(),
-        fetchProveedores(),
+        fetchPedidos(page, pageSize, searchTerm),
+        fetchProveedores(1, 100).catch(() => ({ data: [] })),
       ]);
-      setData(dataLoad);
+      setData(dataLoad.data);
+      setTotalItems(dataLoad.total);
+      setTotalPages(dataLoad.totalPages);
       setProveedores(provLoad.data);
     } catch (err: unknown) {
       const message =
@@ -105,7 +112,8 @@ const Pedidos: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pageSize, searchTerm]);
 
   const handleDeleteConfirm = async () => {
     if (!itemToDelete) return;
@@ -127,7 +135,6 @@ const Pedidos: React.FC = () => {
   const handleSave = async (formData: Record<string, any>) => {
     setIsSaving(true);
     try {
-      // Validar que proveedorId esté presente y sea un UUID v4 antes de enviar
       const proveedorId = formData.proveedorId;
       if (!proveedorId) {
         toast.error('Selecciona un proveedor válido antes de continuar.');
@@ -141,7 +148,6 @@ const Pedidos: React.FC = () => {
         setIsSaving(false);
         return;
       }
-      // Calcular coste total basado en las líneas
       const lines = formData.pedidoProductos || [];
       const calculatedTotal = lines.reduce(
         (sum: number, line: any) =>
@@ -149,7 +155,6 @@ const Pedidos: React.FC = () => {
         0
       );
 
-      // Limpiar datos para el backend
       const payload = {
         costeTotal: calculatedTotal,
         estado: formData.estado,
@@ -181,7 +186,6 @@ const Pedidos: React.FC = () => {
       const message =
         err instanceof Error ? err.message : 'Error al guardar el pedido.';
       toast.error(message);
-      // Los datos permanecen en el modal; el usuario puede cerrar manualmente o reintentar
     } finally {
       setIsSaving(false);
     }
@@ -195,8 +199,6 @@ const Pedidos: React.FC = () => {
         row.pedidoProductos?.map((pp) => ({
           id: pp.id,
           productoProveedorId: pp.productoProveedor?.id,
-          // Incluir el objeto productoProveedor completo para permitir
-          // mostrar nombreProducto / nombreProveedor en el selector al editar
           productoProveedor: pp.productoProveedor,
           cantidad: pp.cantidad,
           precioUnitario: pp.precioUnitario,
@@ -270,40 +272,29 @@ const Pedidos: React.FC = () => {
 
   return (
     <Box>
-      <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 } }}>
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={3}
-        >
-          <Typography variant="h6">Gestión de Pedidos</Typography>
+      <PageToolbar
+        title="Gestión de Pedidos"
+        searchValue={searchTerm}
+        onSearchChange={(v) => { setSearchTerm(v); setPage(1); }}
+        searchPlaceholder="Buscar por proveedor, estado, usuario..."
+        searchId="search-pedidos"
+        totalItems={totalItems}
+        totalItemsLabel="pedidos"
+        primaryAction={{
+          label: 'Nuevo Pedido',
+          onClick: () => setItemToEdit({}),
+          id: 'btn-nuevo-pedido',
+        }}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        pageSize={pageSize}
+        onPageSizeChange={(e: any) => {
+          setPageSize(Number(e.target.value));
+          setPage(1);
+        }}
+      />
 
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setItemToEdit({})}
-            sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
-          >
-            Nuevo Pedido
-          </Button>
-
-          <Tooltip title="Nuevo Pedido">
-            <IconButton
-              color="primary"
-              onClick={() => setItemToEdit({})}
-              sx={{
-                display: { xs: 'inline-flex', sm: 'none' },
-                bgcolor: 'primary.main',
-                color: 'white',
-                '&:hover': { bgcolor: 'primary.dark' },
-              }}
-            >
-              <AddIcon />
-            </IconButton>
-          </Tooltip>
-        </Box>
-
+      <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
@@ -314,6 +305,9 @@ const Pedidos: React.FC = () => {
           columns={columns}
           data={data}
           isLoading={isLoading}
+          hideTopBar
+          viewMode={viewMode}
+          defaultViewMode={viewMode}
           emptyStateMessage={
             <Box sx={{ py: 4, textAlign: 'center' }}>
               <LocalShippingOutlinedIcon
@@ -336,8 +330,14 @@ const Pedidos: React.FC = () => {
           }
           pagination={{
             currentPage: page,
-            totalPages: 1,
+            totalPages: totalPages,
             onPageChange: (_, newPage) => setPage(newPage),
+            pageSize: pageSize,
+            pageSizeOptions: [5, 10, 25, 50],
+            onPageSizeChange: (e: any) => {
+              setPageSize(Number(e.target.value));
+              setPage(1);
+            },
           }}
           renderActions={renderActions}
         />

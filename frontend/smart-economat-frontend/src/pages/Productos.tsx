@@ -16,13 +16,12 @@ import {
     Alert,
     Button,
     Tooltip,
-    TextField,
-    InputAdornment,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import DataTable, { Column } from '../components/ui/DataTable';
+import PageToolbar from '../components/ui/PageToolbar';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import DynamicFormModal, { DynamicField } from '../components/ui/DynamicFormModal';
 import DetailModal from '../components/ui/DetailModal';
@@ -39,7 +38,6 @@ import { getCategoryIcon } from '../features/productos/utils/getCategoryIcon';
 import { EU_ALLERGENS } from '../components/ui/AllergenSelector';
 import ShoppingBasketOutlinedIcon from '@mui/icons-material/ShoppingBasketOutlined';
 import AddIcon from '@mui/icons-material/Add';
-import SearchIcon from '@mui/icons-material/SearchOutlined';
 import { useBreakpoints } from '../utils/useBreakpoints';
 
 const productoSchema: DynamicField[] = [
@@ -106,10 +104,12 @@ const initialFilters: ProductFiltersState = {
 };
 
 const Productos: React.FC = () => {
-    const { isMobile, isMobileOrTablet } = useBreakpoints();
+    const { isMobile } = useBreakpoints();
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(12);
     const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
     const [searchTerm, setSearchTerm] = useState('');
     const [filters, setFilters] = useState<ProductFiltersState>(initialFilters);
     const [data, setData] = useState<Producto[]>([]);
@@ -134,6 +134,7 @@ const Productos: React.FC = () => {
             .then(([productosData, proveedoresData]) => {
                 setData(productosData.data);
                 setTotalPages(productosData.totalPages);
+                setTotalItems(productosData.total);
                 setProveedores(proveedoresData.data);
             })
             .catch((err: unknown) => {
@@ -274,8 +275,6 @@ const Productos: React.FC = () => {
         setProductToView(row);
     };
 
-    const filteredData = data;
-
     const dynamicSchema = React.useMemo(() => {
         const schema = [...productoSchema];
         schema.push({
@@ -316,50 +315,28 @@ const Productos: React.FC = () => {
 
     return (
         <Box>
-            <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 } }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
-                    <Typography variant="h4">
-                        Gestión de Productos
-                    </Typography>
-                </Box>
-
-                {error && (
-                    <Alert severity="error" sx={{ mb: 2 }}>
-                        {error}
-                    </Alert>
-                )}
-
-                {/* ── Barra de búsqueda y filtros ── */}
-                <Box sx={{
-                    display: 'flex',
-                    alignItems: isMobileOrTablet ? 'stretch' : 'center',
-                    flexDirection: isMobileOrTablet ? 'column' : 'row',
-                    gap: 1.5,
-                    mb: 2,
-                }}>
-                    <TextField
-                        placeholder="Buscar por nombre, marca, código de barras..."
-                        value={searchTerm}
-                        onChange={(e) => {
-                            setSearchTerm(e.target.value);
-                            setPage(1);
-                        }}
-                        size="small"
-                        sx={{
-                            // Móvil: ancho completo. Desktop: mínimo 360px y flex-grow
-                            minWidth: isMobileOrTablet ? 'unset' : 360,
-                            width: isMobileOrTablet ? '100%' : 'auto',
-                            flex: isMobileOrTablet ? 'unset' : '1 1 360px',
-                        }}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">
-                                    <SearchIcon color="action" />
-                                </InputAdornment>
-                            ),
-                        }}
-                    />
-                    {/* Filtro de categorías: Autocomplete con chips dentro del control */}
+            <PageToolbar
+                title="Gestión de Productos"
+                searchValue={searchTerm}
+                onSearchChange={(v) => { setSearchTerm(v); setPage(1); }}
+                searchPlaceholder="Buscar por nombre, marca, código de barras..."
+                searchId="search-productos"
+                totalItems={totalItems}
+                totalItemsLabel="productos"
+                primaryAction={{
+                    label: 'Nuevo Producto',
+                    onClick: () => setProductToEdit({}),
+                    id: 'btn-nuevo-producto',
+                }}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                pageSize={pageSize}
+                pageSizeOptions={[4, 8, 12, 24]}
+                onPageSizeChange={(e: any) => {
+                    setPageSize(Number(e.target.value));
+                    setPage(1);
+                }}
+                filters={
                     <ProductFilters
                         filters={filters}
                         onChange={(newFilters) => {
@@ -372,42 +349,23 @@ const Productos: React.FC = () => {
                         }}
                         inline
                     />
-                </Box>
+                }
+            />
+
+            <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
+                {error && (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                        {error}
+                    </Alert>
+                )}
 
                 <DataTable
                     columns={columns}
-                    data={filteredData}
+                    data={data}
                     isLoading={isLoading}
-                    defaultViewMode="list"
-                    rightHeaderAction={
-                        <Box display="flex" alignItems="center" gap={1}>
-                            {/* Botón texto en tablet/desktop, icono en móvil */}
-                            {isMobile ? (
-                                <Tooltip title="Nuevo Producto">
-                                    <IconButton
-                                        color="primary"
-                                        aria-label="Nuevo Producto"
-                                        onClick={() => setProductToEdit({})}
-                                        sx={{
-                                            bgcolor: 'primary.main',
-                                            color: 'white',
-                                            '&:hover': { bgcolor: 'primary.dark' },
-                                        }}
-                                    >
-                                        <AddIcon />
-                                    </IconButton>
-                                </Tooltip>
-                            ) : (
-                                <Button
-                                    variant="contained"
-                                    startIcon={<AddIcon />}
-                                    onClick={() => setProductToEdit({})}
-                                >
-                                    Nuevo Producto
-                                </Button>
-                            )}
-                        </Box>
-                    }
+                    hideTopBar
+                    viewMode={viewMode}
+                    defaultViewMode={viewMode}
                     emptyStateMessage={
                         <Box sx={{ py: 4, textAlign: 'center' }}>
                             <ShoppingBasketOutlinedIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
@@ -438,7 +396,7 @@ const Productos: React.FC = () => {
                         onPageChange: (_, newPage) => setPage(newPage),
                         pageSize: pageSize,
                         pageSizeOptions: [4, 8, 12, 24],
-                        onPageSizeChange: (e) => {
+                        onPageSizeChange: (e: any) => {
                             setPageSize(Number(e.target.value));
                             setPage(1);
                         },
