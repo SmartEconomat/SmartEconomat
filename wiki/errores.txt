@@ -1,0 +1,1 @@
+No puedo ejecutar el comando npm run test:e2e
