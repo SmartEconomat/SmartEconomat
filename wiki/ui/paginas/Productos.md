@@ -58,13 +58,13 @@ Productos.tsx
 
 La gestión de controles se centraliza en el componente `PageToolbar`, que aloja:
 
-1. **Buscador unificado**: Input de búsqueda con soporte para términos debounced.
-2. **ProductFilters**: Integración de filtros por categoría con crecimiento dinámico de ancho.
+1. **Buscador unificado**: Input de búsqueda con soporte para términos debounced. Dispara recarga al backend en cada keystroke (resetea a página 1).
+2. **ProductFilters**: Integración de filtros por categoría con crecimiento dinámico de ancho. Las categorías seleccionadas aparecen como chips con icono dentro del control.
 3. **Selector de Vista**: Sincronización del modo Lista/Grid entre la cabecera y la `DataTable`.
 4. **Resumen de Inventario**: Conteo total reubicado como un Chip de estado al lado del título ("X productos registrados").
 5. **Paginación**: Control de tamaño de página (registros por página) en la barra inferior.
 
-> El modo Grid es el preferido para visualización rápida de productos con imágenes, mientras que el modo List ofrece mayor detalle técnico.
+> El modo Grid es el preferido para visualización rápida de productos con imágenes, mientras que el modo List ofrece mayor detalle técnico. No hay una fila secundaria de chips externos; viven dentro del Autocomplete.
 
 ---
 

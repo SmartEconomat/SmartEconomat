@@ -30,8 +30,8 @@ Ofrecer una solución unificada en toda la aplicación para mostrar listas, evit
 | `defaultViewMode` | `'list' \| 'grid'` | (Opcional) Modo de visualización inicial. Se requiere `renderGridItem` para usar la opción de cuadrícula. Por defecto `"list"`. |
 | `sortConfig` | `Object` | (Opcional) Configuración actual de ordenamiento en la tabla, conteniendo el `key` de columna y el sentido de ordenado (`direction` de tipo `'asc' | 'desc'`). |
 | `onSort` | `(key: string) => void` | (Opcional) Callback ejecutado cuando un usuario hace clic en el título de una columna designada como `sortable: true`. |
-| `leftHeaderAction` | `ReactNode` | (Opcional) Componente personalizado renderizado a la **izquierda** de la zona superior de controles. |
-| `rightHeaderAction` | `ReactNode` | (Opcional) Componente personalizado renderizado a la **derecha** de la zona superior de controles. |
+| `leftHeaderAction` | `ReactNode` | (Opcional) Componente personalizado renderizado a la **izquierda** de la zona superior de controles (ej: selector adicional o acción secundaria). |
+| `rightHeaderAction` | `ReactNode` | (Opcional) Componente personalizado renderizado a la **derecha** de la zona superior de controles (ej: botón principal "Nuevo Producto"). |
 | `hideTopBar` | `boolean` | (Opcional) Si es `true`, oculta la barra de controles interna. Útil cuando se usa `PageToolbar` externamente. Por defecto: `false`. |
 | `viewMode` | `'list' \| 'grid'` | (Opcional) Modo de vista actual controlado externamente. |
 | `onViewModeChange` | `(mode: 'list' \| 'grid') => void` | (Opcional) Callback para cambiar el modo de vista controlado externamente. |
