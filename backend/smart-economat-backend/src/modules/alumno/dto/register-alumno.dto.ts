@@ -1,6 +1,8 @@
 import {
+  IsEmail,
   IsInt,
   IsNotEmpty,
+  IsOptional,
   IsString,
   IsStrongPassword,
   Min,
@@ -26,6 +28,10 @@ export class RegisterAlumnoDto {
     }
   )
   password!: string;
+
+  @IsEmail()
+  @IsOptional()
+  email?: string;
 
   @IsString()
   @IsNotEmpty()

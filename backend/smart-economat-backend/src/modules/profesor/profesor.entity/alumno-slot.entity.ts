@@ -5,20 +5,17 @@ import {
   JoinColumn,
   ManyToOne,
   OneToOne,
+  type Relation,
 } from 'typeorm';
-import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { Profesor } from './profesor.entity';
 import { Alumno } from '../../alumno/alumno.entity/alumno.entity';
 
 @Entity('alumno_slot')
-@Index(['profesorId', 'aula', 'numeroClase'], {
+@Index('idx_slot_profesor_aula_clase', ['profesor', 'aula', 'numeroClase'], {
   unique: true,
 })
 export class AlumnoSlot extends BaseEntity {
-  @Column({ name: 'profesor_id' })
-  profesorId!: string;
-
   @ManyToOne(() => Profesor, (profesor) => profesor.slots)
   @JoinColumn({ name: 'profesor_id' })
   profesor!: Relation<Profesor>;
