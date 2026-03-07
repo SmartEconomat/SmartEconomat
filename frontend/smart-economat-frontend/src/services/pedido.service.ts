@@ -1,11 +1,12 @@
 import { Pedido } from './pedido.types';
 import { baseFetch, PaginatedData } from './api.service';
 
-interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
+export async function fetchPedidos(page: number = 1, limit: number = 10, search: string = ''): Promise<PaginatedData<Pedido>> {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+  if (search) params.append('searchTerm', search);
 
 export interface PedidoRequestPayload {
   proveedorId: string;

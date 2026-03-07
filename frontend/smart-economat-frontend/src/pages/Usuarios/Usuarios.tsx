@@ -19,12 +19,12 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 
 import DataTable, { Column } from '../../components/ui/DataTable';
+import PageToolbar from '../../components/ui/PageToolbar';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import RoleBadge from '../../components/ui/RoleBadge';
 import StatusChip from '../../components/ui/StatusChip';
 import UserModal from './UserModal';
 import SelectField from '../../components/ui/SelectField';
-import InputField from '../../components/ui/InputField';
 
 import { usuarioService } from '../../services/usuarioService';
 import {
@@ -43,6 +43,7 @@ const Usuarios: React.FC = () => {
     // Filtros y Paginación
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
     const [limit, setLimit] = useState(8);
     const [viewMode] = useState<'list' | 'grid'>('list');
     const [search, setSearch] = useState('');
@@ -77,6 +78,7 @@ const Usuarios: React.FC = () => {
             );
             setUsuarios(response.data);
             setTotalPages(response.totalPages);
+            setTotalItems(response.total);
             setPage(response.page);
         } catch (error: any) {
             toast.error(error.message || 'Error al obtener usuarios');
@@ -91,8 +93,8 @@ const Usuarios: React.FC = () => {
     }, [fetchUsuarios]);
 
     // Resets paginación al cambiar filtros
-    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearch(e.target.value);
+    const handleSearchChange = (value: string) => {
+        setSearch(value);
         setPage(1);
     };
 
@@ -277,37 +279,46 @@ const Usuarios: React.FC = () => {
 
     return (
         <Box>
-            <Paper elevation={0} sx={{ p: 4, mb: 3 }}>
-                <Box display="flex" flexWrap="wrap" alignItems="center" justifyContent="space-between" gap={2}>
-                    <Box>
-                        <Typography variant="h5" component="h1" fontWeight="bold">
-                            Gestión de Usuarios
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                            Mostrando página {page} de {totalPages}
-                        </Typography>
-                    </Box>
-                    <Stack direction="row" spacing={2} flexWrap="wrap">
-                        <Button
-                            variant="outlined"
-                            color="secondary"
-                            startIcon={<RefreshIcon />}
-                            onClick={fetchUsuarios}
-                            aria-label="Refrescar datos"
-                        >
-                            Refrescar
-                        </Button>
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            startIcon={<AddIcon />}
-                            onClick={handleAddUsuarioClick}
-                        >
-                            Nuevo Usuario
-                        </Button>
-                    </Stack>
-                </Box>
-            </Paper>
+            <PageToolbar
+                title="Gestión de Usuarios"
+                searchValue={search}
+                onSearchChange={handleSearchChange}
+                searchPlaceholder="Buscar por nombre o correo..."
+                searchId="search-usuarios"
+                totalItems={totalItems}
+                totalItemsLabel="usuarios"
+                primaryAction={{
+                    label: 'Nuevo Usuario',
+                    onClick: handleAddUsuarioClick,
+                    id: 'btn-nuevo-usuario',
+                }}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                pageSize={limit}
+                pageSizeOptions={[8, 16, 32]}
+                onPageSizeChange={(e: any) => {
+                    setLimit(Number(e.target.value));
+                    setPage(1);
+                }}
+                filters={
+                    <SelectField
+                        id="filter-rol-select"
+                        fullWidth
+                        label="Filtrar por Rol"
+                        variant="outlined"
+                        size="small"
+                        value={filterRol}
+                        onChange={handleRolFilterChange as any}
+                        options={[
+                            { value: 'Todos', label: 'Todos' },
+                            { value: 'Administrador', label: 'Administrador' },
+                            { value: 'Profesor', label: 'Profesor' },
+                            { value: 'Alumno', label: 'Alumno' }
+                        ]}
+                        sx={{ minWidth: 200 }}
+                    />
+                }
+            />
 
             <Paper elevation={0} sx={{ p: 4 }}>
                 {/* Filtros */}
@@ -347,6 +358,9 @@ const Usuarios: React.FC = () => {
                     columns={columns}
                     data={usuarios}
                     isLoading={isLoading}
+                    hideTopBar
+                    viewMode={viewMode}
+                    defaultViewMode={viewMode}
                     sortConfig={sortBy ? { key: sortBy, direction: sortOrder } : undefined}
                     onSort={handleSort}
                     pagination={{
@@ -380,7 +394,7 @@ const Usuarios: React.FC = () => {
                                 </Box>
                             </CardContent>
                             <Divider />
-                            <CardActions sx={{ justifyContent: 'center', p: 1.5 }}>
+                            <CardActions sx={{ justifyContent: 'center', p: 1.5, bgcolor: 'action.hover' }}>
                                 {renderActions(usuario)}
                             </CardActions>
                         </Card>
