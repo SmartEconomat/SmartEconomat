@@ -93,7 +93,7 @@ const Usuarios: React.FC = () => {
         setIsSaving(true);
         try {
             if (userToEdit) {
-                await usuarioService.actualizarUsuario(Number(userToEdit.id), data as ActualizarUsuarioDTO);
+                await usuarioService.actualizarUsuario(userToEdit.id, data as ActualizarUsuarioDTO);
                 toast.success('Usuario actualizado exitosamente');
             } else {
                 await usuarioService.crearUsuario(data as CrearUsuarioDTO);
@@ -124,7 +124,7 @@ const Usuarios: React.FC = () => {
 
         setIsDeleting(true);
         try {
-            await usuarioService.eliminarUsuario(Number(userToDelete.id));
+            await usuarioService.eliminarUsuario(userToDelete.id);
             toast.success('Usuario eliminado exitosamente');
             // Verificar si debe ir a pág anterior por borrar registro único de pág actual
             if (usuarios.length === 1 && page > 1) {
@@ -143,7 +143,7 @@ const Usuarios: React.FC = () => {
     // Configuración de tabla
     const columns: Column<Usuario>[] = [
         { id: 'id', label: 'ID', hideOnMobile: true, sortable: true },
-        { id: 'nombre', label: 'Nombre', sortable: true },
+        { id: 'username', label: 'Usuario', sortable: true },
         { id: 'email', label: 'Correo', hideOnMobile: true, sortable: true },
         {
             id: 'rol',
@@ -212,7 +212,7 @@ const Usuarios: React.FC = () => {
                         <InputField
                             id="search-usuarios"
                             fullWidth
-                            label="Buscar por nombre o correo..."
+                            label="Buscar por usuario o correo..."
                             variant="outlined"
                             size="small"
                             value={search}
@@ -260,10 +260,10 @@ const Usuarios: React.FC = () => {
                         <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                             <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                 <Avatar sx={{ width: 64, height: 64, mb: 2, bgcolor: 'primary.main' }}>
-                                    {usuario.nombre.substring(0, 2).toUpperCase()}
+                                    {usuario.username.substring(0, 2).toUpperCase()}
                                 </Avatar>
                                 <Typography gutterBottom variant="h6" component="div" align="center">
-                                    {usuario.nombre}
+                                    {usuario.username}
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary" gutterBottom align="center">
                                     {usuario.email}
@@ -303,7 +303,7 @@ const Usuarios: React.FC = () => {
                 title="Eliminar usuario"
                 message={
                     <>
-                        ¿Estás seguro de que deseas eliminar a <strong>{userToDelete?.nombre}</strong> del sistema?<br /><br />
+                        ¿Estás seguro de que deseas eliminar a <strong>{userToDelete?.username}</strong> del sistema?<br /><br />
                         Esta acción no se puede deshacer de forma sencilla.
                     </>
                 }

@@ -23,7 +23,7 @@ export class UsuarioRepository {
     return this.repo
       .findAndCount({
         relations: ['movimientos', 'pedidos', 'recepciones'],
-        order: { nombre: 'ASC' },
+        order: { username: 'ASC' },
         skip: (page - 1) * limit,
         take: limit,
       })

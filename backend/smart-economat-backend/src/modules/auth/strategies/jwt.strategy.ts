@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
+import { UserStatus } from '../../usuario/enums/usuario.enums';
 import type { Request } from 'express';
 
 const cookieExtractor = (req: Request): string | null => {
@@ -35,14 +36,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: JwtPayload) {
     const user = await this.usuarioRepo.findOne({
-      where: { id: payload.sub, activo: true },
+      where: { id: payload.sub, status: UserStatus.ACTIVE },
     });
 
     if (!user) throw new UnauthorizedException();
 
     return {
       id: user.id,
-      nombre: user.nombre,
+      username: user.username,
       rol: user.rol,
     };
   }

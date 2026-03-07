@@ -1,11 +1,13 @@
-import { IsEmail, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
+import { rolUsuario, UserStatus } from '../enums/usuario.enums';
 
 export class UpdateUsuarioDto {
-  @IsOptional()
-  @IsString({ message: 'El nombre debe ser una cadena de texto' })
-  @MaxLength(100, { message: 'El nombre no puede exceder los 100 caracteres' })
-  nombre?: string;
-
   @IsOptional()
   @IsString({ message: 'El nombre de usuario debe ser una cadena de texto' })
   @MaxLength(100, {
@@ -19,6 +21,14 @@ export class UpdateUsuarioDto {
     message: 'El correo electrónico no puede exceder los 255 caracteres',
   })
   email?: string;
+
+  @IsOptional()
+  @IsEnum(rolUsuario)
+  rol?: rolUsuario;
+
+  @IsOptional()
+  @IsEnum(UserStatus)
+  status?: UserStatus;
 
   @IsOptional()
   @IsString({ message: 'El CIAL debe ser una cadena de texto' })

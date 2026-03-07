@@ -44,7 +44,7 @@ describe('RecetaController (e2e)', () => {
       .post('/api/v1/auth/login')
       .send({
         email: 'admin@smarteconomat.com',
-        password: '123456',
+        password: 'SmartEconomat2026!',
       });
     adminToken = response.body.data.access_token;
 

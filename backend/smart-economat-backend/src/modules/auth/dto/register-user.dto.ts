@@ -11,10 +11,6 @@ import { rolUsuario } from '../../usuario/enums/usuario.enums';
 export class RegisterUserDto {
   @IsString()
   @IsNotEmpty()
-  nombre: string;
-
-  @IsString()
-  @IsNotEmpty()
   username: string;
 
   @IsString()
@@ -39,4 +35,10 @@ export class RegisterUserDto {
   @IsOptional()
   @IsEnum(rolUsuario)
   rol?: rolUsuario;
+}
+
+export interface JwtPayload {
+  sub: string;
+  username: string;
+  role: rolUsuario;
 }

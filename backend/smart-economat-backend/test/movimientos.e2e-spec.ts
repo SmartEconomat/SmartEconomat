@@ -50,7 +50,7 @@ describe('MovimientoController (e2e)', () => {
       .post('/api/v1/auth/login')
       .send({
         email: 'admin@smarteconomat.com',
-        password: '123456',
+        password: 'SmartEconomat2026!',
       });
     adminToken = adminResponse.body.data?.access_token;
 
@@ -58,7 +58,7 @@ describe('MovimientoController (e2e)', () => {
       .post('/api/v1/auth/login')
       .send({
         email: 'profesor@smarteconomat.com',
-        password: '123456',
+        password: 'SmartEconomat2026!',
       });
     profesorToken = profesorResponse.body.data?.access_token || adminToken;
   });
