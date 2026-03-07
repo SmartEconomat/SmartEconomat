@@ -161,10 +161,7 @@ export default function MainLayout() {
         navigate('/login');
     };
 
-    const getPageTitle = (path: string) => {
-        const item = menuItems.find(item => item.path === path);
-        return item ? item.title : 'Smart Economat';
-    };
+
 
     const drawerContent = (
         <>
@@ -268,9 +265,7 @@ export default function MainLayout() {
                         </IconButton>
                     </Tooltip>
 
-                    <Typography variant="h2" noWrap component="h2" sx={{ flexGrow: 1, fontSize: '1.5rem', fontWeight: 600 }}>
-                        {getPageTitle(location.pathname)}
-                    </Typography>
+                    <Box sx={{ flexGrow: 1 }} />
 
                     <Box sx={{ flexGrow: 0, display: 'flex', alignItems: 'center', gap: 2 }}>
                         <Typography variant="subtitle1" sx={{ display: { xs: 'none', sm: 'block' } }}>

@@ -289,6 +289,7 @@ const Proveedores: React.FC = () => {
                     title={itemToView?.nombre || ''}
                     subtitle={itemToView?.nif || undefined}
                     size="md"
+                    editLabel="Editar proveedor"
                     onEdit={() => {
                         if (itemToView) {
                             handleEditClick(itemToView);

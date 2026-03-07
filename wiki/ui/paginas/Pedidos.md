@@ -8,7 +8,7 @@ La página de Pedidos gestiona las órdenes de compra realizadas a los proveedor
 
 ## Componentes Utilizados
 
-- **[PageToolbar](../componentes/PageToolbar.md)**: Gestiona el título, búsqueda por proveedor/estado y la creación de nuevos pedidos. Incluye el selector de modo de vista (Lista/Grid).
+- **[PageToolbar](../componentes/PageToolbar.md)**: Encabezado con búsqueda de pedidos, Chip de conteo ("X pedidos registrados") y filtros rápidos. Incluye el selector de modo de vista (Lista/Grid).
 - **[DataTable](../componentes/DataTable.md)**: Muestra los pedidos de forma tabular con soporte para visualización responsiva.
 - **[StatusChip](../componentes/StatusChip.md)**: Indica el estado actual del pedido (Pendiente, Recibido, Cancelado, etc.).
 - **[DynamicFormModal](../componentes/DynamicFormModal.md)**: Formulario avanzado para la gestión de líneas de pedido y selección de proveedores.

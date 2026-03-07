@@ -61,7 +61,8 @@ La gestión de controles se centraliza en el componente `PageToolbar`, que aloja
 1. **Buscador unificado**: Input de búsqueda con soporte para términos debounced.
 2. **ProductFilters**: Integración de filtros por categoría con crecimiento dinámico de ancho.
 3. **Selector de Vista**: Sincronización del modo Lista/Grid entre la cabecera y la `DataTable`.
-4. **Paginación**: Control de tamaño de página (registros por página) y contador total.
+4. **Resumen de Inventario**: Conteo total reubicado como un Chip de estado al lado del título ("X productos registrados").
+5. **Paginación**: Control de tamaño de página (registros por página) en la barra inferior.
 
 > El modo Grid es el preferido para visualización rápida de productos con imágenes, mientras que el modo List ofrece mayor detalle técnico.
 
@@ -83,13 +84,13 @@ Los filtros de categoría (`filters.categorias`) se aplican **localmente** sobre
 
 ## Columnas de la tabla
 
-| ID | Etiqueta | Render personalizado | Oculto en móvil |
+| ID | Etiqueta | Render personalizado | Visibilidad Responsive |
 | :--- | :--- | :--- | :---: |
-| `nombre` | Nombre | — | — |
-| `marca` | Marca | `row.marca ?? '—'` | ✅ |
-| `tipo` | Tipo | `<StatusChip status={row.tipo} />` | ✅ |
-| `contenido` | Contenido | `${contenido} ${unidad}` | — |
-| `codigoBarras` | Cód. Barras | `row.codigoBarras ?? '—'` | ✅ |
+| `nombre` | Nombre | — | Siempre visible |
+| `marca` | Marca | `row.marca ?? '—'` | Desktop (`lg`) |
+| `tipo` | Tipo | `<StatusChip status={row.tipo} />` | Tablet y Desktop (`sm`+) |
+| `contenido` | Contenido | `${contenido} ${unidad}` | Siempre visible |
+| `codigoBarras` | Cód. Barras | `row.codigoBarras ?? '—'` | Desktop (`lg`) |
 
 ---
 

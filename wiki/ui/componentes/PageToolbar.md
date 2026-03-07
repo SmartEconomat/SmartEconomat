@@ -8,7 +8,7 @@ El componente `PageToolbar` es el encabezado unificado para las páginas de gest
 - **Sticky**: Se mantiene fijo en la parte superior al hacer scroll para facilitar el acceso a los controles.
 - **Responsivo**: Adaptación automática para dispositivos móviles, tabletas y escritorio.
 - **Integración de Filtros**: Espacio dedicado para componentes de filtrado complejos (como `ProductFilters`).
-- **Controles de Tabla**: Integración de cambio de vista (Lista/Cuadrícula), selector de tamaño de página y contador total de elementos.
+- **Configuración de Tabla**: Integración de cambio de vista (Lista/Cuadrícula), selector de tamaño de página y un **Chip de Conteo Total** reubicado en la fila del título para mayor visibilidad.
 
 ## Propiedades (Props)
 
@@ -21,8 +21,8 @@ El componente `PageToolbar` es el encabezado unificado para las páginas de gest
 | `searchId` | `string` | Identificador único para el input de búsqueda. |
 | `primaryAction` | `{ label: string, onClick: () => void, icon?: ReactNode, id?: string, disabled?: boolean }` | Configuración del botón principal (ej: "Nuevo Producto"). |
 | `filters` | `ReactNode` | Nodo con los componentes de filtrado adicionales. |
-| `totalItems` | `number` | Conteo total de elementos en la lista/tabla. |
-| `totalItemsLabel` | `string` | Etiqueta para el conteo (ej: "productos"). |
+| `totalItems` | `number` | Conteo total de elementos. Se muestra como un Chip de color `success` en la fila del título. |
+| `totalItemsLabel` | `string` | Sufijo para el chip de conteo (ej: "registrados"). El chip mostrará "[X] [sufijo]". |
 | `viewMode` | `'list' \| 'grid'` | Modo de vista activo. |
 | `onViewModeChange` | `(mode: 'list' \| 'grid') => void` | Callback para cambiar el modo de vista. |
 | `pageSize` | `number` | Registros por página actuales. |
@@ -32,9 +32,9 @@ El componente `PageToolbar` es el encabezado unificado para las páginas de gest
 
 ## Implementación Responsiva
 
-- **Escritorio**: Diseño en varias filas con elementos alineados horizontalmente. Los filtros crecen dinámicamente hacia la izquierda.
-- **Móvil/Tablet**: Los elementos se apilan verticalmente. El botón de acción principal se convierte en un botón circular flotante (FAB) para ahorrar espacio si es necesario o mantiene su posición según el layout.
-- **Wrapping**: Si los filtros no caben al lado del buscador, pasan a ocupar el 100% del ancho debajo del mismo.
+- **Escritorio**: Diseño en tres niveles. El título y el **Chip de Conteo** comparten la primera fila. Los filtros crecen dinámicamente hacia la izquierda en la segunda fila.
+- **Móvil/Tablet**: El Chip de conteo se compacta (solo número) en móviles para ahorrar espacio. Los elementos de búsqueda y filtros se apilan verticalmente ocupando el 100% del ancho.
+- **Alineación**: El botón de acción principal y el conteo total están optimizados para mantenerse en la misma línea siempre que sea posible en el layout inferior.
 
 ## Ejemplo de Uso
 
@@ -44,7 +44,7 @@ El componente `PageToolbar` es el encabezado unificado para las páginas de gest
     searchValue={searchTerm}
     onSearchChange={setSearchTerm}
     totalItems={totalItems}
-    totalItemsLabel="productos"
+    totalItemsLabel="productos registrados"
     primaryAction={{
         label: 'Nuevo Producto',
         onClick: () => setIsModalOpen(true),
