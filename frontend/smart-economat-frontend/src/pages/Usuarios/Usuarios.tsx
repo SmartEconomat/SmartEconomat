@@ -227,8 +227,6 @@ const Usuarios: React.FC = () => {
       >
         <DeleteIcon fontSize="small" />
       </IconButton>
-    </>
-  );
 
     const handleSort = (key: keyof Usuario | string) => {
         const isAsc = sortBy === key && sortOrder === 'asc';
@@ -450,6 +448,163 @@ const Usuarios: React.FC = () => {
                 </Typography>
                 <Box sx={{ mt: 2, mb: 1 }}>
                   <RoleBadge rol={usuario.rol} />
+=======
+    const handleDeleteConfirm = async () => {
+        if (!userToDelete) return;
+
+        // Prevent deleting the last administrator
+        if (userToDelete.rol === 'Administrador' && userToDelete.estado === 'Activo') {
+            const adminCount = usuarios.filter(u => u.rol === 'Administrador' && u.estado === 'Activo').length;
+            if (adminCount <= 1) {
+                toast.error('Operación denegada. No puedes eliminar al último Administrador activo.');
+                setIsDeleting(false);
+                setUserToDelete(null);
+                return;
+            }
+        }
+
+        setIsDeleting(true);
+        try {
+            await usuarioService.eliminarUsuario(userToDelete.id);
+            toast.success('Usuario eliminado exitosamente');
+            // Verificar si debe ir a pág anterior por borrar registro único de pág actual
+            if (usuarios.length === 1 && page > 1) {
+                setPage(p => p - 1);
+            } else {
+                fetchUsuarios();
+            }
+        } catch (error: any) {
+            toast.error(error.message || 'Error al eliminar el usuario');
+        } finally {
+            setIsDeleting(false);
+            setUserToDelete(null);
+        }
+    };
+
+    const handlePasswordReset = async () => {
+        if (!userToReset) return;
+        setIsResetting(true);
+        try {
+            const res = await usuarioService.resetPassword(userToReset.id);
+            const randomPass = res.data;
+            toast.success(`Se ha activado la contraseña temporal para ${userToReset.username}. La nueva contraseña es: ${randomPass}`);
+        } catch (error: any) {
+            toast.error(error.message || 'Error al restablecer contraseña');
+        } finally {
+            setIsResetting(false);
+            setUserToReset(null);
+        }
+    };
+
+    /**
+     * Lógica de permisos para activar contraseña temporal:
+     * - Administrador: Puede a todos (Profesor o Alumno).
+     * - Profesor: Puede solo a Alumnos.
+     */
+    const canResetTemporaryPassword = (targetUser: Usuario): boolean => {
+        if (!currentUser) return false;
+        
+        // El rol del usuario actual viene del JWT (ADMIN, PROFESOR, ALUMNO)
+        const currentRol = currentUser.rol.toUpperCase(); 
+        // El rol del usuario objetivo viene mapeado por el servicio (Administrador, Profesor, Alumno)
+        const targetRol = targetUser.rol;
+
+        // No puedes resetearte a ti mismo
+        if (targetUser.id.toString() === currentUser.id.toString()) return false;
+
+        if (currentRol === 'ADMIN' || currentRol === 'ADMINISTRADOR') {
+            // Administrador: puede a todos
+            return true;
+        }
+
+        if (currentRol === 'PROFESOR') {
+            // Profesor: solo a alumnos
+            return targetRol === 'Alumno';
+        }
+
+        return false;
+    };
+
+    // Configuración de tabla
+    const columns: Column<Usuario>[] = [
+        { id: 'id', label: 'ID', hideOnMobile: true, sortable: true },
+        { id: 'username', label: 'Usuario', sortable: true },
+        { 
+            id: 'email', 
+            label: 'Correo', 
+            hideOnMobile: true, 
+            sortable: true,
+            render: (row) => row.email || <Typography variant="caption" color="text.disabled">No disponible</Typography>
+        },
+        {
+            id: 'rol',
+            label: 'Rol',
+            align: 'center',
+            sortable: true,
+            render: (row) => <RoleBadge rol={row.rol} />
+        },
+        {
+            id: 'estado',
+            label: 'Estado',
+            sortable: true,
+            render: (row) => <StatusChip status={row.estado === 'Activo' ? 'success' : 'default'} label={row.estado} />
+        }
+    ];
+
+    const renderActions = (row: Usuario) => (
+        <>
+            {canResetTemporaryPassword(row) && (
+                <IconButton 
+                    color="primary" 
+                    onClick={() => setUserToReset(row)} 
+                    size="small" 
+                    aria-label="Restablecer Contraseña Temporal"
+                    title="Activar Contraseña Temporal"
+                >
+                    <VpnKeyIcon fontSize="small" />
+                </IconButton>
+            )}
+            <IconButton color="secondary" onClick={() => handleEditUsuarioClick(row)} size="small" aria-label="Editar">
+                <EditIcon fontSize="small" />
+            </IconButton>
+            <IconButton color="error" onClick={() => setUserToDelete(row)} size="small" aria-label="Borrar">
+                <DeleteIcon fontSize="small" />
+            </IconButton>
+        </>
+    );
+
+    return (
+        <Box>
+            <Paper elevation={0} sx={{ p: 4, mb: 3 }}>
+                <Box display="flex" flexWrap="wrap" alignItems="center" justifyContent="space-between" gap={2}>
+                    <Box>
+                        <Typography variant="h5" component="h1" fontWeight="bold">
+                            Gestión de Usuarios
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            Mostrando página {page} de {totalPages}
+                        </Typography>
+                    </Box>
+                    <Stack direction="row" spacing={2} flexWrap="wrap">
+                        <Button
+                            variant="outlined"
+                            color="secondary"
+                            startIcon={<RefreshIcon />}
+                            onClick={fetchUsuarios}
+                            aria-label="Refrescar datos"
+                        >
+                            Refrescar
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            startIcon={<AddIcon />}
+                            onClick={handleAddUsuarioClick}
+                        >
+                            Nuevo Usuario
+                        </Button>
+                    </Stack>
+>>>>>>> 807b737 (update: se han actulizado los componentes y arreglado algunos bugs y ventanas)
                 </Box>
                 <Box sx={{ mt: 'auto', pt: 2 }}>
                   <StatusChip

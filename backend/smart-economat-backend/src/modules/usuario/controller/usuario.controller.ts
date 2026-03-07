@@ -5,6 +5,7 @@ import {
   Body,
   Param,
   Patch,
+  Post,
   Delete,
   UseGuards,
   ParseUUIDPipe,
