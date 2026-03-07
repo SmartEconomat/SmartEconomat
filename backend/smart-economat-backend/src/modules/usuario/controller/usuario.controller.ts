@@ -4,6 +4,7 @@ import {
   Body,
   Param,
   Patch,
+  Post,
   Delete,
   UseGuards,
   ParseUUIDPipe,
@@ -11,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { UsuarioService } from '../service/usuario.service';
+import { CreateUsuarioDto } from '../dto/create-usuario.dto';
 import { UpdateUsuarioDto } from '../dto/update-usuario.dto';
 import { ApiQuery } from '@nestjs/swagger';
 import { UpdateUsuarioStatusDto } from '../dto/update-status.dto';
@@ -28,6 +30,12 @@ import { rolUsuario } from '../enums/usuario.enums';
 export class UsuarioController {
   constructor(private readonly usuarioService: UsuarioService) {}
 
+  @Post()
+  @Roles(rolUsuario.ADMINISTRADOR)
+  create(@Body() dto: CreateUsuarioDto) {
+    return this.usuarioService.create(dto);
+  }
+
   @Get('perfil')
   getPerfil(@GetUser('id') id: string) {
     return this.usuarioService.findOne(id);
@@ -44,7 +52,7 @@ export class UsuarioController {
   }
 
   @Get()
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   findAll(@Query() query: PaginationQueryDto) {
@@ -52,7 +60,7 @@ export class UsuarioController {
   }
 
   @Get(':id')
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.usuarioService.findOne(id);
   }

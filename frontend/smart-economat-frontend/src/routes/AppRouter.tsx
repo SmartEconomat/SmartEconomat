@@ -8,6 +8,7 @@ import PublicRoute from './PublicRoute';
 import { menuItems } from '../utils/config/menuConfig';
 
 const Login = React.lazy(() => import('../features/auth/Login'));
+const ResetPassword = React.lazy(() => import('../features/auth/ResetPassword'));
 import Spinner from '../components/ui/Spinner';
 
 const LoadingFallback = () => (
@@ -19,10 +20,11 @@ const AppRouter: React.FC = () => {
         <BrowserRouter>
             <Suspense fallback={<LoadingFallback />}>
                 <Routes>
-                    {/* Public Routes (Login/Register) */}
+                    {/* Public Routes (Login/Register/Reset) */}
                     <Route element={<PublicRoute />}>
                         <Route element={<AuthLayout />}>
                             <Route path="/login" element={<Login />} />
+                            <Route path="/reset-password/:token" element={<ResetPassword />} />
                         </Route>
                     </Route>
 

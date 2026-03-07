@@ -2,6 +2,7 @@ import {
   IsEmail,
   IsEnum,
   IsNotEmpty,
+  IsOptional,
   IsString,
   IsStrongPassword,
   MaxLength,
@@ -32,11 +33,12 @@ export class CreateUsuarioDto {
   )
   password!: string;
 
+  @IsOptional()
   @IsEmail({}, { message: 'El correo electrónico no es válido' })
   @MaxLength(255, {
     message: 'El correo electrónico no puede exceder los 255 caracteres',
   })
-  email!: string;
+  email?: string;
 
   @IsEnum(rolUsuario, { message: 'El rol de usuario no es válido' })
   rol!: rolUsuario;

@@ -29,8 +29,9 @@ export class RegisterUserDto {
   )
   password: string;
 
+  @IsOptional()
   @IsEmail()
-  email: string;
+  email?: string;
 
   @IsOptional()
   @IsEnum(rolUsuario)

@@ -60,12 +60,19 @@ export class AuthService {
       .where('(usuario.email = :email OR usuario.username = :email)', {
         email: dto.email,
       })
-      .andWhere('usuario.status = :status', { status: UserStatus.ACTIVE })
       .addSelect('usuario.password')
       .getOne();
 
     if (!usuario || !(await bcrypt.compare(dto.password, usuario.password))) {
       throw new BadRequestException(I18nHelper.getError('INVALID_CREDENTIALS'));
+    }
+
+    if (usuario.status === UserStatus.INACTIVE) {
+      throw new BadRequestException(I18nHelper.getError('ACCOUNT_INACTIVE'));
+    }
+
+    if (usuario.status === UserStatus.BLOCKED) {
+      throw new BadRequestException(I18nHelper.getError('ACCOUNT_BLOCKED'));
     }
 
     const tokenData = this.generateToken(usuario);
