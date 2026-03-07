@@ -54,13 +54,19 @@
     "PRODUCTO_ALERGENO_ALREADY_EXISTS": "Este alérgeno ya está asociado a ese producto",
     "HISTORIAL_PRECIO_NOT_FOUND": "Historial de precio no encontrado",
     "PRECIO_NO_NEGATIVO": "El precio no puede ser negativo",
-    "DUPLICATE_INGREDIENT": "No se pueden añadir ingredientes duplicados en la misma receta"
+    "DUPLICATE_INGREDIENT": "No se pueden añadir ingredientes duplicados en la misma receta",
+    "FILE_NOT_FOUND": "Archivo no encontrado",
+    "FILE_REQUIRED": "No se proporcionó ningún archivo",
+    "FILE_NOT_FOUND_PHYSICAL": "Archivo físico no encontrado en el disco",
+    "STORAGE_TYPE_LOCAL_ONLY": "Solo aplicable para almacenamiento local",
+    "FILE_DELETE_FORBIDDEN": "No tienes permiso para eliminar este archivo"
   },
   "success": {
     "CREATED": "Creado exitosamente",
     "UPDATED": "Actualizado exitosamente",
     "DELETED": "Eliminado exitosamente",
-    "OPERATION_SUCCESSFUL": "Operación completada exitosamente"
+    "OPERATION_SUCCESSFUL": "Operación completada exitosamente",
+    "FILE_UPLOADED": "Archivo subido exitosamente"
   },
   "validation": {
     "INVALID_EMAIL": "El correo electrónico no es válido",

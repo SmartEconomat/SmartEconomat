@@ -17,6 +17,7 @@ import { InventarioModule } from './modules/inventario/inventario.module';
 import { AlbaranModule } from './modules/albaran/albaran.module';
 import { UbicacionModule } from './modules/ubicacion/ubicacion.module';
 import { IncidenciaModule } from './modules/incidencia/incidencia.module';
+import { ArchivoModule } from './modules/archivo/archivo.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { IncidenciaModule } from './modules/incidencia/incidencia.module';
     AlbaranModule,
     UbicacionModule,
     IncidenciaModule,
+    ArchivoModule,
   ],
   controllers: [AppController],
   providers: [AppService],
