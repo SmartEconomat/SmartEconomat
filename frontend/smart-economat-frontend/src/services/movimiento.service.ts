@@ -1,13 +1,25 @@
-import { Movimiento } from './movimiento.types';
+import { Movimiento, MovimientosQueryParams } from './movimiento.types';
 import { baseFetch, ApiResponse, PaginatedData } from './api.service';
 
-export async function fetchMovimientos(page: number = 1, limit: number = 10): Promise<PaginatedData<Movimiento>> {
-    const params = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-    });
+export async function fetchMovimientos(params: MovimientosQueryParams = {}): Promise<PaginatedData<Movimiento>> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params.searchTerm) queryParams.append('searchTerm', params.searchTerm);
+    if (params.type) {
+        if (Array.isArray(params.type)) {
+            params.type.forEach(t => queryParams.append('type', t));
+        } else {
+            queryParams.append('type', params.type);
+        }
+    }
+    if (params.startDate) queryParams.append('startDate', params.startDate);
+    if (params.endDate) queryParams.append('endDate', params.endDate);
+    if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+    if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
 
-    const response = await baseFetch(`/movimientos?${params.toString()}`);
+    const response = await baseFetch(`/movimientos?${queryParams.toString()}`);
     if (!response.ok) {
         throw new Error(`Error al obtener movimientos: ${response.status} ${response.statusText}`);
     }

@@ -50,7 +50,14 @@ export interface Column<T> {
     /** Si es true, esta columna no se renderiza en pantallas pequeñas (xs) */
     hideOnMobile?: boolean;
     /** Control granular de visualización por breakpoint (MUI System object, ej: { xs: 'none', md: 'table-cell' }) */
-    responsiveDisplay?: Record<string, string>;
+    responsiveDisplay?: {
+        xs?: string;
+        sm?: string;
+        md?: string;
+        lg?: string;
+        xl?: string;
+        [key: string]: string | undefined;
+    };
     /** Si es true, la columna permite ordenar de manera ascendente/descendente */
     sortable?: boolean;
 }

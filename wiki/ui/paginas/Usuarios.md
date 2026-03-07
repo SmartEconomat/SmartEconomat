@@ -8,7 +8,10 @@ Página maestra (`Usuarios.tsx`) que ensambla múltiples atómicos, componentes 
 
 ## Composición
 
-1. **Barra Unificada (`PageToolbar`)**: Gestiona el título ("Gestión de Usuarios"), la búsqueda global por Nombre o Correo y los parámetros de paginación.
+1.- **[DataTable](../componentes/DataTable.md)**: Muestra la lista de usuarios con su rol y estado (Activo/Inactivo).
+- **[StatusChip](../componentes/StatusChip.md)**: Visualización semántica del estado del usuario.
+- **[DetailModal](../componentes/DetailModal.md)**: Vista de detalle del perfil de usuario con sus permisos asociados.
+- **[DynamicFormModal](../componentes/DynamicFormModal.md)**: Formulario de creación y edición (incluyendo roles y contraseñas).
 2. **Tabla Inteligente (`DataTable`)**: Instancia la grilla dinámica, mapeando el modelo de datos.
 3. **Sistema de Feedback (`ToastContext`)**: Dispara alertas de éxito en operaciones CRUD (Verde) y excepciones al intentar cruzar validaciones de red o negocio (Rojo).
 4. **Indicadores Semánticos**: Usa `StatusChip` para el estado (Activo/Inactivo) y `RoleBadge` para la entidad de poder (Admin/Profesor/Alumno).

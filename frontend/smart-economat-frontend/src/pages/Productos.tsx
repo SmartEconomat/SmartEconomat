@@ -459,6 +459,7 @@ const Productos: React.FC = () => {
                             title={p.nombre}
                             subtitle={p.marca || undefined}
                             size="md"
+                            editLabel="Editar producto"
                             onEdit={() => {
                                 setProductToEdit(buildEditData(p));
                                 setProductToView(null);

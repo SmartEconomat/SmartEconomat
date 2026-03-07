@@ -8,7 +8,7 @@ La página de Recetas es el núcleo de la gestión de producción. Permite defin
 
 ## Componentes Utilizados
 
-- **[PageToolbar](../componentes/PageToolbar.md)**: Gestiona el título, búsqueda por nombre de receta y categorías. Incluye el selector de modo de vista (Lista/Grid).
+- **[PageToolbar](../componentes/PageToolbar.md)**: Incluye el buscador de recetas, el Chip de total de recetas y el botón para crear nuevas preparaciones. Incluye el selector de modo de vista (Lista/Grid).
 - **[DataTable](../componentes/DataTable.md)**: Muestra las recetas de forma tabular o en cuadrícula según la selección del usuario.
 - **[DynamicFormModal](../componentes/DynamicFormModal.md)**: Formulario especializado para la creación y edición de escandallos de recetas.
 - **[ConfirmDialog](../componentes/ConfirmDialog.md)**: Confirmación para la eliminación de recetas.

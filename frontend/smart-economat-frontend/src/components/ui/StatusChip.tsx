@@ -37,22 +37,28 @@ const getStatusColor = (
         case 'delivered':
         case 'approved':
         case 'fácil':
+        case 'entrada':
+        case 'entrada_compra':
             return 'success';
         case 'error':
         case 'failed':
         case 'cancelled':
         case 'rejected':
         case 'difícil':
+        case 'salida':
+        case 'salida_elaboracion':
             return 'error';
         case 'warning':
         case 'pending':
         case 'in_progress':
         case 'review':
         case 'media':
+        case 'ajuste':
             return 'warning';
         case 'info':
         case 'active':
         case 'archived':
+        case 'pedido':
             return 'info';
         default:
             return 'default';
@@ -80,6 +86,12 @@ const statusTranslations: Record<string, string> = {
     difícil: 'Difícil',
     unknown: 'Desconocido',
     default: 'Por defecto',
+    entrada: 'Entrada',
+    salida: 'Salida',
+    ajuste: 'Ajuste',
+    pedido: 'Pedido',
+    entrada_compra: 'Entrada compra',
+    salida_elaboracion: 'Salida elaboración',
 };
 
 const categoriaTranslations: Record<CategoriaProducto, string> = {
@@ -102,7 +114,7 @@ const categoriaTranslations: Record<CategoriaProducto, string> = {
 
 const capitalize = (text: string) => {
     if (!text) return '';
-    const spacedText = text.replace(/[_|-]/g, ' ');
+    const spacedText = text.replace(/[_]/g, ' ');
     return spacedText.charAt(0).toUpperCase() + spacedText.slice(1);
 };
 
@@ -132,9 +144,9 @@ export const StatusChip: React.FC<StatusChipProps> = ({
             : getTranslatedStatus(statusStr)
     );
 
-    const categoryIcon = isCategoria
+    const resolvedIcon = rest.icon || (isCategoria
         ? getCategoryIconFilled(statusStr.toLowerCase() as CategoriaProducto, { sx: { fontSize: 14 } })
-        : undefined;
+        : undefined);
 
     return (
         <Chip
@@ -143,7 +155,7 @@ export const StatusChip: React.FC<StatusChipProps> = ({
             color={resolvedColor}
             size={size}
             variant={variant}
-            icon={categoryIcon}
+            icon={resolvedIcon}
             sx={{
                 fontWeight: 500,
                 ...(isCategoria && {

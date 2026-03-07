@@ -13,6 +13,7 @@ import {
   DialogContent,
   DialogActions,
   MenuItem,
+  Tooltip,
 } from '@mui/material';
 import { Autocomplete, CircularProgress } from '@mui/material';
 import DataTable, { Column } from '../components/ui/DataTable';
@@ -35,12 +36,24 @@ import {
 import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined';
 import SearchIcon from '@mui/icons-material/SearchOutlined';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
+import AddIcon from '@mui/icons-material/Add';
+import SettingsIcon from '@mui/icons-material/Settings';
+
+import PageToolbar from '../components/ui/PageToolbar';
+import InventarioFilters, { InventarioFiltersState } from '../features/inventario/InventarioFilters';
+
+const initialFilters: InventarioFiltersState = {
+  categorias: [],
+  ubicaciones: [],
+};
 
 const Inventario: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState<InventarioFiltersState>(initialFilters);
   const [data, setData] = useState<InventarioPorProducto[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,7 +73,7 @@ const Inventario: React.FC = () => {
   const [cantidadMaxima, setCantidadMaxima] = useState('');
   const [ubicacionId, setUbicacionId] = useState<string>('');
   const [fechaCaducidad, setFechaCaducidad] = useState('');
-  
+
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
   const [isUbicacionesModalOpen, setIsUbicacionesModalOpen] = useState(false);
 
@@ -89,6 +102,7 @@ const Inventario: React.FC = () => {
       .then((items) => {
         const agregado = agregarInventarioPorProducto(items);
         setData(agregado);
+        setTotalItems(agregado.length);
       })
       .catch((err: unknown) => {
         const message =
@@ -149,6 +163,7 @@ const Inventario: React.FC = () => {
       const items = await fetchInventario();
       const agregado = agregarInventarioPorProducto(items);
       setData(agregado);
+      setTotalItems(agregado.length);
     } catch (err: unknown) {
       const message =
         err instanceof Error
@@ -245,21 +260,43 @@ const Inventario: React.FC = () => {
       .toLowerCase();
 
   const filteredData = useMemo(() => {
-    if (!searchTerm.trim()) return data;
-    const term = normalize(searchTerm.trim());
-    return data.filter((p) => {
-      const nombre = normalize(p.nombre ?? '');
-      const tipo = normalize(p.tipo ?? '');
-      const provs = (p.proveedores ?? []).map(normalize).join(' ');
-      const ubicaciones = (p.ubicaciones ?? []).map(normalize).join(' ');
-      return (
-        nombre.includes(term) ||
-        tipo.includes(term) ||
-        provs.includes(term) ||
-        ubicaciones.includes(term)
+    let result = data;
+
+    // Search filter
+    if (searchTerm.trim()) {
+      const term = normalize(searchTerm.trim());
+      result = result.filter((p) => {
+        const nombre = normalize(p.nombre ?? '');
+        const tipo = normalize(p.tipo ?? '');
+        const provs = (p.proveedores ?? []).map(normalize).join(' ');
+        const ubicaciones = (p.ubicaciones ?? []).map(normalize).join(' ');
+        return (
+          nombre.includes(term) ||
+          tipo.includes(term) ||
+          provs.includes(term) ||
+          ubicaciones.includes(term)
+        );
+      });
+    }
+
+    // Category filter
+    if (filters.categorias.length > 0) {
+      result = result.filter(p => p.tipo && filters.categorias.includes(p.tipo as any));
+    }
+
+    // Location filter
+    if (filters.ubicaciones.length > 0) {
+      result = result.filter(p =>
+        p.ubicaciones?.some(loc => filters.ubicaciones.includes(loc))
       );
-    });
-  }, [data, searchTerm]);
+    }
+
+    return result;
+  }, [data, searchTerm, filters]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, filters]);
 
   const columns: Column<InventarioPorProducto>[] = [
     { id: 'nombre', label: 'Producto' },
@@ -326,94 +363,70 @@ const Inventario: React.FC = () => {
 
   return (
     <Box>
-      <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 } }}>
-        <Box
-          mb={3}
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          flexWrap="wrap"
-          gap={2}
-        >
-          <Box>
-            <Typography variant="h6">Inventario por Producto</Typography>
-            <Typography variant="body2" color="text.secondary">
-              Stock agregado por producto (suma de todos los lotes y
-              proveedores).
-            </Typography>
-          </Box>
-          <Box>
-            <Button
-              variant="contained"
-              onClick={handleOpenCreate}
-              sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
-            >
-              Añadir al inventario
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => setIsUbicacionesModalOpen(true)}
-              sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
-            >
-              Gestionar Ubicaciones
-            </Button>
-            <IconButton
-              color="primary"
-              onClick={handleOpenCreate}
-              sx={{
-                display: { xs: 'inline-flex', sm: 'none' },
-                bgcolor: 'primary.main',
-                color: 'white',
-                '&:hover': { bgcolor: 'primary.dark' },
+      <PageToolbar
+        title="Inventario por Producto"
+        searchValue={searchTerm}
+        onSearchChange={(v) => { setSearchTerm(v); setPage(1); }}
+        searchPlaceholder="Buscar por producto, tipo, proveedor o ubicación..."
+        searchId="search-inventario"
+        totalItems={totalItems}
+        totalItemsLabel="productos"
+        primaryAction={{
+          label: 'Añadir al inventario',
+          onClick: handleOpenCreate,
+          icon: <AddIcon />,
+          id: 'btn-add-inventario',
+        }}
+        secondaryAction={{
+          label: 'Gestionar Ubicaciones',
+          onClick: () => setIsUbicacionesModalOpen(true),
+          icon: <SettingsIcon />,
+          id: 'btn-manage-locations',
+        }}
+        pageSize={pageSize}
+        onPageSizeChange={(e: any) => {
+          setPageSize(Number(e.target.value));
+          setPage(1);
+        }}
+        filters={
+          <Box width="100%">
+            <InventarioFilters
+              filters={filters}
+              onChange={(newFilters) => {
+                setFilters(newFilters);
+                setPage(1);
               }}
-              aria-label="Añadir al inventario"
-            >
-              <InventoryOutlinedIcon />
-            </IconButton>
+              ubicacionesDisponibles={ubicaciones}
+            />
           </Box>
-        </Box>
+        }
+      />
 
+      <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
 
-        <TextField
-          placeholder="Buscar por producto, tipo, proveedor o ubicación..."
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setPage(1);
-          }}
-          size="small"
-          sx={{ mb: 2, width: '100%', maxWidth: 400 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon color="action" />
-              </InputAdornment>
-            ),
-          }}
-        />
-
         <DataTable
           columns={columns}
           data={filteredData.slice((page - 1) * pageSize, page * pageSize)}
           isLoading={isLoading}
+          hideTopBar
           emptyStateMessage={
             <Box sx={{ py: 4, textAlign: 'center' }}>
               <InventoryOutlinedIcon
                 sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
               />
               <Typography variant="h6" color="text.secondary" gutterBottom>
-                {searchTerm.trim()
-                  ? 'No hay productos que coincidan con tu búsqueda'
+                {searchTerm.trim() || filters.categorias.length > 0 || filters.ubicaciones.length > 0
+                  ? 'No hay productos que coincidan con tu búsqueda o filtros'
                   : 'No hay stock en inventario'}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                {searchTerm.trim()
-                  ? 'Prueba con otros términos o limpia el filtro.'
+                {searchTerm.trim() || filters.categorias.length > 0 || filters.ubicaciones.length > 0
+                  ? 'Prueba con otros términos o limpia los filtros.'
                   : 'Registra recepciones o crea entradas de inventario para ver el stock.'}
               </Typography>
             </Box>
@@ -469,7 +482,7 @@ const Inventario: React.FC = () => {
                     }
                     helperText={
                       !productoProveedorValue &&
-                      productoProveedorInput.length > 0
+                        productoProveedorInput.length > 0
                         ? 'Debes seleccionar una opción válida'
                         : undefined
                     }
@@ -502,7 +515,7 @@ const Inventario: React.FC = () => {
                   }
                   helperText={
                     cantidadActual !== '' &&
-                    (Number.isNaN(cantActualNum) || cantActualNum < 0)
+                      (Number.isNaN(cantActualNum) || cantActualNum < 0)
                       ? 'Debe ser un número ≥ 0'
                       : undefined
                   }
@@ -521,7 +534,7 @@ const Inventario: React.FC = () => {
                   }
                   helperText={
                     cantidadMinima !== '' &&
-                    (Number.isNaN(cantMinNum) || cantMinNum < 0)
+                      (Number.isNaN(cantMinNum) || cantMinNum < 0)
                       ? 'Debe ser un número ≥ 0'
                       : undefined
                   }
@@ -594,9 +607,9 @@ const Inventario: React.FC = () => {
           </DialogActions>
         </Dialog>
       </Paper>
-      <UbicacionesModal 
-        open={isUbicacionesModalOpen} 
-        onClose={() => setIsUbicacionesModalOpen(false)} 
+      <UbicacionesModal
+        open={isUbicacionesModalOpen}
+        onClose={() => setIsUbicacionesModalOpen(false)}
         onChanged={loadUbicaciones}
       />
     </Box>
