@@ -42,7 +42,7 @@ describe('UsuarioController (e2e)', () => {
       .post('/api/v1/auth/login')
       .send({
         email: 'admin@smarteconomat.com',
-        password: '123456',
+        password: 'SmartEconomat2026!',
       });
     adminToken = response.body.data.access_token;
   });
@@ -69,14 +69,14 @@ describe('UsuarioController (e2e)', () => {
     /**
      * @test Debe actualizar los datos básicos del perfil.
      */
-    it('PATCH /usuarios/perfil - Debe actualizar mi nombre (200)', async () => {
+    it('PATCH /usuarios/perfil - Debe actualizar mi nombre de usuario (200)', async () => {
       await request(app.getHttpServer() as Server)
         .patch('/api/v1/usuarios/perfil')
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ nombre: 'Admin Master' })
+        .send({ username: 'admin_master' })
         .expect(200)
         .expect((res) => {
-          expect(res.body.data.nombre).toBe('Admin Master');
+          expect(res.body.data.username).toBe('admin_master');
         });
     });
 
@@ -93,13 +93,19 @@ describe('UsuarioController (e2e)', () => {
       await request(app.getHttpServer() as Server)
         .patch('/api/v1/usuarios/perfil/password')
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ oldPassword: '123456', newPassword: 'NewPassword123!' })
+        .send({
+          oldPassword: 'SmartEconomat2026!',
+          newPassword: 'NewPassword123!',
+        })
         .expect(200);
 
       await request(app.getHttpServer() as Server)
         .patch('/api/v1/usuarios/perfil/password')
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ oldPassword: 'NewPassword123!', newPassword: '123456' })
+        .send({
+          oldPassword: 'NewPassword123!',
+          newPassword: 'SmartEconomat2026!',
+        })
         .expect(200);
     });
   });
@@ -146,7 +152,7 @@ describe('UsuarioController (e2e)', () => {
       await request(app.getHttpServer() as Server)
         .patch(`/api/v1/usuarios/${testUserId}/activar`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ activo: true })
+        .send({ status: 'ACTIVE' })
         .expect(200);
     });
 
@@ -158,7 +164,7 @@ describe('UsuarioController (e2e)', () => {
       await request(app.getHttpServer() as Server)
         .patch(`/api/v1/usuarios/${testUserId}/rol`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ rol: 'profesor' })
+        .send({ rol: 'PROFESOR' })
         .expect(200);
     });
 

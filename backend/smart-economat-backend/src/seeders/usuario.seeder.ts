@@ -1,59 +1,136 @@
 import { DataSource } from 'typeorm';
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
-import { rolUsuario } from '../modules/usuario/enums/usuario.enums';
+import { Profesor } from '../modules/profesor/profesor.entity/profesor.entity';
+import { Alumno } from '../modules/alumno/alumno.entity/alumno.entity';
+import { AlumnoSlot } from '../modules/profesor/profesor.entity/alumno-slot.entity';
+import { rolUsuario, UserStatus } from '../modules/usuario/enums/usuario.enums';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
-
-const NUM_USUARIOS_A_CREAR = 50;
+import * as bcrypt from 'bcrypt';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
-  const usuarioRepo = dataSource.getRepository(Usuario);
 
-  const usuarios: Usuario[] = [];
+  await dataSource.transaction(async (manager) => {
+    const defaultPassword = await bcrypt.hash('SmartEconomat2026!', 10);
 
-  const adminExists = await usuarioRepo.findOne({
-    where: { username: 'admin' },
-  });
-
-  if (!adminExists) {
-    const adminDefault = usuarioRepo.create({
-      nombre: 'Z-Administrador del Sistema',
-      username: 'admin',
-      password: '123456',
-      email: 'admin@smarteconomat.com',
-      rol: rolUsuario.ADMINISTRADOR,
-      activo: true,
+    let adminUser = await manager.findOne(Usuario, {
+      where: { username: 'admin' },
     });
-    usuarios.push(adminDefault);
-  }
+    if (!adminUser) {
+      adminUser = manager.create(Usuario, {
+        username: 'admin',
+        password: defaultPassword,
+        email: 'admin@smarteconomat.com',
+        rol: rolUsuario.ADMINISTRADOR,
+        status: UserStatus.ACTIVE,
+      });
+      await manager.save(adminUser);
+    }
 
-  for (let i = 0; i < NUM_USUARIOS_A_CREAR - 1; i++) {
-    const randomUsername =
-      faker.internet.username() + faker.string.alphanumeric(4);
-    const usuario = usuarioRepo.create({
-      nombre: faker.person.fullName(),
-      username: randomUsername,
-      password: faker.internet.password(),
-      email: faker.internet.email(),
-      rol: faker.helpers.arrayElement(Object.values(rolUsuario)) as rolUsuario,
-      activo: faker.datatype.boolean(0.8),
-      cialProfesor: `CIAL_${i}${faker.string.numeric(4)}`,
-      numeroClase: faker.string.numeric(2),
-      aula:
-        faker.string.fromCharacters(['A', 'B', 'C']) + faker.string.numeric(1),
-    });
-    usuarios.push(usuario);
-  }
+    const professorsToCreate = [
+      {
+        username: 'profesor1',
+        email: 'profesor1@smarteconomat.com',
+        cial: 'CIAL-11111',
+      },
+      {
+        username: 'profesor2',
+        email: 'profesor2@smarteconomat.com',
+        cial: 'CIAL-22222',
+      },
+      {
+        username: 'profesor3',
+        email: 'profesor3@smarteconomat.com',
+        cial: 'CIAL-33333',
+      },
+    ];
 
-  for (const user of usuarios) {
-    try {
-      await usuarioRepo.save(user);
-    } catch (e: any) {
-      if (e.code !== '23505') {
-        throw e;
+    const aulas = ['Aula A', 'Aula B', 'Aula C'];
+
+    for (const profData of professorsToCreate) {
+      let profUser = await manager.findOne(Usuario, {
+        where: { username: profData.username },
+      });
+      let profEntity;
+
+      if (!profUser) {
+        profUser = manager.create(Usuario, {
+          username: profData.username,
+          password: defaultPassword,
+          email: profData.email,
+          rol: rolUsuario.PROFESOR,
+          status: UserStatus.ACTIVE,
+        });
+        await manager.save(profUser);
+
+        profEntity = manager.create(Profesor, {
+          user: profUser,
+          cial: profData.cial,
+        });
+        await manager.save(profEntity);
+      } else {
+        profEntity = await manager.findOne(Profesor, {
+          where: { user: { id: profUser.id } },
+        });
+      }
+
+      if (!profEntity) continue;
+
+      for (const aulaName of aulas) {
+        for (let i = 1; i <= 5; i++) {
+          const numeroClase = i;
+
+          let slot = await manager.findOne(AlumnoSlot, {
+            where: {
+              profesor: { id: profEntity.id },
+              aula: aulaName,
+              numeroClase,
+            },
+            relations: ['alumno'],
+          });
+
+          if (!slot) {
+            slot = manager.create(AlumnoSlot, {
+              profesor: profEntity,
+              aula: aulaName,
+              numeroClase,
+            });
+            await manager.save(slot);
+          }
+
+          if (slot.alumno) continue;
+
+          const firstName = faker.person.firstName();
+          const lastName = faker.person.lastName();
+          const username =
+            faker.internet.username({ firstName, lastName }).toLowerCase() +
+            faker.number.int(999);
+          const email = faker.internet
+            .email({ firstName, lastName })
+            .toLowerCase();
+
+          const studentUser = manager.create(Usuario, {
+            username,
+            password: defaultPassword,
+            email,
+            rol: rolUsuario.ALUMNO,
+            status: UserStatus.ACTIVE,
+          });
+          await manager.save(studentUser);
+
+          const alumnoEntity = manager.create(Alumno, {
+            user: studentUser,
+            slot: slot,
+          });
+          await manager.save(alumnoEntity);
+        }
       }
     }
-  }
 
-  console.log(SeederI18nHelper.getSeederSuccess('usuarios'));
+    console.log(
+      SeederI18nHelper.getSeederSuccess(
+        'usuarios, profesores, aulas y alumnos detallados'
+      )
+    );
+  });
 };

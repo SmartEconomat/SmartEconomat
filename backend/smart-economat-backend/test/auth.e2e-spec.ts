@@ -87,14 +87,14 @@ describe('AuthController (e2e)', () => {
     /**
      * @test Debe permitir el acceso con credenciales correctas.
      */
-    it('Debe loguear correctamente (201)', async () => {
+    it('Debe loguear correctamente (200)', async () => {
       await request(app.getHttpServer())
         .post('/api/v1/auth/login')
         .send({
           email: 'admin@smarteconomat.com',
-          password: '123456',
+          password: 'SmartEconomat2026!',
         })
-        .expect(201)
+        .expect(200)
         .expect((res) => {
           expect(res.body.success).toBe(true);
           expect(res.body.data).toHaveProperty('access_token');

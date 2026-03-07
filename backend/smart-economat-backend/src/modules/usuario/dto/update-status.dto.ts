@@ -1,6 +1,7 @@
-import { IsBoolean } from 'class-validator';
+import { IsEnum } from 'class-validator';
+import { UserStatus } from '../enums/usuario.enums';
 
 export class UpdateUsuarioStatusDto {
-  @IsBoolean({ message: 'El campo activo debe ser un valor booleano' })
-  activo!: boolean;
+  @IsEnum(UserStatus, { message: 'El estado no es válido' })
+  status!: UserStatus;
 }

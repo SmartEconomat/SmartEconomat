@@ -9,13 +9,13 @@ type InputProps = TextFieldProps & {
     onChange?: React.ChangeEventHandler<HTMLTextAreaElement | HTMLInputElement>;
 };
 
-const Input: React.FC<InputProps> = ({ label, name, type = 'text', value, onChange, ...props }) => {
+const Input: React.FC<InputProps> = ({ label, name, type = 'text', value, onChange, required = false, ...props }) => {
     const theme = useTheme();
 
     return (
         <TextField
             margin="normal"
-            required
+            required={required}
             fullWidth
             id={name}
             label={label}
