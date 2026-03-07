@@ -285,4 +285,26 @@ export class RecetaService {
       await manager.save(Movimiento, movimientos);
     });
   }
+
+  async recalcularCostes(id: string): Promise<Receta> {
+    const receta = await this.recetaRepository.findById(id);
+
+    if (!receta) {
+      throw new NotFoundException(I18nHelper.getError('RECIPE_NOT_FOUND'));
+    }
+
+    const { costoTotal } = await this.calcularEscandallo(id);
+
+    const costeUnitarioEstimado =
+      receta.rendimiento && receta.rendimiento > 0
+        ? costoTotal / receta.rendimiento
+        : costoTotal;
+
+    await this.dataSource
+      .getRepository(Receta)
+      .update(id, { costeUnitarioEstimado });
+
+    const updated = await this.recetaRepository.findById(id);
+    return updated!;
+  }
 }

@@ -7,9 +7,19 @@ import {
   ValidateNested,
   MaxLength,
   Matches,
+  IsOptional,
+  IsUUID,
+  IsNumber,
+  Min,
+  IsInt,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { DificultadReceta, TiempoReceta } from '../enums/receta.enums';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  DificultadReceta,
+  TiempoReceta,
+  UnidadIngrediente,
+} from '../enums/receta.enums';
 import { AddIngredienteDto } from './add-ingrediente.dto';
 
 export class CreateRecetaDto {
@@ -36,6 +46,37 @@ export class CreateRecetaDto {
       'El tiempo de preparación debe seguir el formato: "10 minutos", "1 hora", etc.',
   })
   tiempoPreparacion!: string;
+
+  @ApiPropertyOptional({
+    description: 'ID del producto que resulta de la elaboración',
+  })
+  @IsOptional()
+  @IsUUID()
+  productoResultadoId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Cantidad producida por defecto (rendimiento de la receta)',
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0.001)
+  rendimiento?: number;
+
+  @ApiPropertyOptional({
+    enum: UnidadIngrediente,
+    description: 'Unidad del producto resultante',
+  })
+  @IsOptional()
+  @IsEnum(UnidadIngrediente)
+  unidadResultado?: UnidadIngrediente;
+
+  @ApiPropertyOptional({
+    description: 'Días de caducidad del producto elaborado',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  diasCaducidad?: number;
 
   @IsArray()
   @ArrayMinSize(1)

@@ -4,6 +4,7 @@ import type { Producto } from '../../producto/producto.entity/producto.entity';
 import { UnidadIngrediente } from '../enums/receta.enums';
 
 import { BaseEntity } from '../../../common/entities/base.entity';
+import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 
 @Entity('receta_ingrediente')
 export class RecetaIngrediente extends BaseEntity {
@@ -12,6 +13,16 @@ export class RecetaIngrediente extends BaseEntity {
 
   @Column({ type: 'enum', enum: UnidadIngrediente })
   unidad!: UnidadIngrediente;
+
+  @Column({
+    type: 'numeric',
+    precision: 5,
+    scale: 2,
+    default: 0,
+    name: 'merma_aplicada',
+    transformer: new ColumnNumericTransformer(),
+  })
+  mermaAplicada!: number;
 
   @ManyToOne('Receta', (receta: Receta) => receta.ingredientes, {
     onDelete: 'CASCADE',
