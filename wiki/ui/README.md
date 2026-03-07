@@ -4,6 +4,10 @@ Esta carpeta contiene la documentación técnica y de diseño (UX/UI) del fronte
 
 ## Estructura
 
+### Hooks Responsive
+
+- [useBreakpoints](./useBreakpoints.md): Hook centralizado de breakpoints. Expone `isMobile`, `isTablet`, `isDesktop` y rangos compuestos. **Todos los componentes deben usarlo en lugar de llamar a `useMediaQuery` directamente.**
+
 ### Arquitectura
 
 - [Arquitectura General](./arquitectura.md): Visión global del proyecto, estructura de carpetas y principios de diseño.
@@ -29,7 +33,7 @@ Documentación detallada de los componentes clave, desglosando su construcción 
 - [Tutorial Onboarding](./componentes/TutorialHelper.md): Guía contextual paso a paso.
 - [Main Layout](./componentes/MainLayout.md): Estructura principal (Sidebar, Header).
 - [Settings Menu](./componentes/SettingsMenu.md): Menú de configuración (Tema, Fuentes).
-- [ProductFilters](./componentes/ProductFilters.md): Bloque funcional de selectores condicionales y colapsables para búsquedas filtradas.
+- [ProductFilters](./componentes/ProductFilters.md): Autocomplete multi-select de categorías con búsqueda en tiempo real, chips con icono oficial por categoría dentro del control y crecimiento dinámico de ancho.
 
 #### Autenticación
 - [Login](./componentes/Login.md): Orquestador de la pantalla de auth — fases, animaciones y flujos de login/registro.
@@ -45,6 +49,7 @@ Documentación de las vistas completas (componentes raíz de cada ruta).
 
 - [Auth (Login / Registro)](./paginas/Auth.md): Sistema completo de autenticación — diseño, animaciones, seguridad y flujos.
 - [Usuarios](./paginas/Usuarios.md): Gestión de usuarios con tabla y operaciones CRUD.
+- [Productos](./paginas/Productos.md): Catálogo de productos — búsqueda, filtrado por categoría, CRUD completo con vistas lista/mosaico.
 
 ---
 

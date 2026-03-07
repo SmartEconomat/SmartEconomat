@@ -9,13 +9,24 @@ function buildProductosQueryString(params?: ProductosQueryParams): string {
     if (params.searchTerm?.trim()) search.set('searchTerm', params.searchTerm.trim());
     if (params.codigoBarras?.trim()) search.set('codigoBarras', params.codigoBarras.trim());
     if (params.tipo) search.set('tipo', params.tipo);
+    if (params.categorias?.length) search.set('categorias', params.categorias.join(','));
     if (params.alergenos?.length) search.set('alergenos', params.alergenos.join(','));
     const qs = search.toString();
     return qs ? `?${qs}` : '?limit=500';
 }
 
-export async function fetchProductos(page: number = 1, limit: number = 10, search: string = ''): Promise<PaginatedData<Producto>> {
-    const query = buildProductosQueryString({ page, limit, searchTerm: search });
+export async function fetchProductos(
+    page: number = 1,
+    limit: number = 10,
+    search: string = '',
+    categorias: string[] = [],
+): Promise<PaginatedData<Producto>> {
+    const query = buildProductosQueryString({
+        page,
+        limit,
+        searchTerm: search,
+        categorias: categorias.length > 0 ? categorias : undefined,
+    });
     const response = await baseFetch(`/productos${query}`);
     if (!response.ok) {
         throw new Error(`Error al obtener productos: ${response.status} ${response.statusText}`);

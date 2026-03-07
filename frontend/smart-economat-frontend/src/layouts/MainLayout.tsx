@@ -21,8 +21,8 @@ import {
     Theme,
     CSSObject,
     styled,
-    useMediaQuery
 } from '@mui/material';
+import { useBreakpoints } from '../utils/useBreakpoints';
 import { Tooltip } from '../components/ui/Tooltip';
 import { getTooltipContent } from '../utils/tooltipUtils';
 import MenuIcon from '@mui/icons-material/MenuOutlined';
@@ -123,7 +123,7 @@ const DesktopDrawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 
 
 export default function MainLayout() {
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const { isMobile } = useBreakpoints();
     const { currentThemeName, isLearningMode } = useThemeContext();
     const [open, setOpen] = useState(!isMobile);
     const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);

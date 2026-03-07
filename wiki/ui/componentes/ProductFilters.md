@@ -1,50 +1,119 @@
-# Componente visual funcional: ProductFilters
+# Componente funcional: ProductFilters
 
-El componente `ProductFilters` abstrae la interfaz de selección de filtros de búsqueda específicos de entidad, agrupando menús desplegables (`Select`), y botones de limpieza de estado. Está estrechamente acoplado al módulo de productos de la aplicación.
+> **Ubicación:** `src/features/productos/ProductFilters.tsx`  
+> **Última actualización:** 2026-03-07
+
+---
 
 ## Propósito
 
-Encapsular los controles condicionales que filtran las listas de productos (como Categoría, Alérgenos y otras opciones) del resto del Layout.
-- Facilita un diseño flexbox *inline* o en pila (`stack`), colapsando y expandiendo condicionalmente su ancho en pantallas móviles a través del enfoque (focus / expanded).
-- Maneja un estado local y emite las actualizaciones al componente padre sólo cuando el usuario interactúa activamente con las opciones de selección.
+`ProductFilters` encapsula el control de filtrado por **categorías de producto** dentro de la página de Productos.  
+Implementa un **Autocomplete de MUI con selección múltiple** que combina:
+
+- Búsqueda en tiempo real al escribir
+- Dropdown desplegable para seleccionar categorías
+- Opciones seleccionadas como **chips con icono oficial de categoría** dentro del propio control
+- **Crecimiento dinámico del ancho** conforme se añaden selecciones (mínimo 220 px, máximo 660 px)
+- Mismo alto que el campo de búsqueda (`size="small"` → 40 px)
+
+Los iconos de cada categoría son los mismos que utiliza `StatusChip` — provienen de `getCategoryIconFilled`.
+
+> **Sin filtro de alérgenos:** el campo `alergenos` de `ProductFiltersState` se mantiene por compatibilidad pero no genera ningún control visual en este componente.
+
+---
 
 ## Estado de Filtros (`ProductFiltersState`)
 
-El componente opera sobre un objeto de estado exportado como interfaz:
+```ts
+export interface ProductFiltersState {
+    categorias: CategoriaProducto[];  // filtro activo
+    alergenos:  string[];             // mantenido por compatibilidad, sin UI
+}
+```
 
-| Propiedad | Tipo | Descripción |
-| :--- | :--- | :--- |
-| `categorias` | `string[]` | Un array de los identificadores (`values`) de las categorías que el usuario desea ver en la tabla (comúnmente ligado a `CategoriaProducto`). |
-| `alergenos` | `string[]` | Un array de string enumerando los alérgenos presentes para filtrar la selección de productos (actualmente deshabilitado visualmente para refinar UX). |
+---
 
-## Props Principales (`ProductFiltersProps`)
+## Props (`ProductFiltersProps`)
 
-| Propiedad | Tipo | Descripción |
-| :--- | :--- | :--- |
-| `filters` | `ProductFiltersState` | Recibe el estado actual (proveniente del padre) con los arrays de las opciones marcadas. |
-| `onChange` | `(filters: ProductFiltersState) => void` | Evento que propaga una nueva versión de `filters` cada vez que el usuario marca o desmarca checks de los `Selector` incrustados. |
-| `onClear` | `() => void` | Callback dedicado para vaciar masivamente *todos* los filtros activos y volver a un listado neutro (`filters.categorias` vacío, etc). Disparado por el botón "Limpiar". |
-| `inline` | `boolean` | (Opcional) Directriz de _layout_. Si es `true`, dispondrá sus selectores lado a lado (Row) de manera adaptable usando una anchura calculada y min-widths elásticos en lugar de una pila block. |
+| Propiedad | Tipo | Obligatorio | Descripción |
+| :--- | :--- | :---: | :--- |
+| `filters` | `ProductFiltersState` | ✅ | Estado actual de filtros procedente del padre. |
+| `onChange` | `(filters: ProductFiltersState) => void` | ✅ | Callback que recibe el estado actualizado al marcar/desmarcar una categoría. |
+| `onClear` | `() => void` | — | Callback para limpiar todos los filtros (no genera botón interno; la limpieza la gestiona el padre). |
+| `inline` | `boolean` | — | Mantenida por compatibilidad. No tiene efecto visual en la versión actual. |
 
-## Ejemplo de uso e Integración
+---
 
-Comúnmente se renderiza en conjunto con un campo `Search` de Material UI antes de instanciar la `DataTable` que dibuja el cuerpo final.
+## Comportamiento del Autocomplete
+
+| Interacción | Resultado |
+| :--- | :--- |
+| Escribir en el input | Filtra la lista de categorías en tiempo real |
+| Hacer clic en una opción del dropdown | La añade como chip al input; el dropdown permanece abierto (`disableCloseOnSelect`) |
+| Hacer clic en la ✕ de un chip | Elimina esa categoría del filtro |
+| Hacer clic en el botón ✕ general del Autocomplete | Limpia todas las categorías |
+| Número de categorías seleccionadas | El ancho crece: `min(220 + n×110, 660) px` con transición CSS |
+
+---
+
+## Iconos de categoría
+
+Cada categoría tiene un icono único asignado en `getCategoryIconFilled` (mismo helper que usa `StatusChip`):
+
+| Categoría | Icono MUI |
+| :--- | :--- |
+| Verdura | `GrassIcon` |
+| Fruta | `AppleIcon` |
+| Carne | `LunchDiningIcon` |
+| Pescado | `SetMealIcon` |
+| Marisco | `RiceBowlIcon` |
+| Lácteo | `LocalDrinkIcon` |
+| Huevo | `EggIcon` |
+| Cereal | `GrainIcon` |
+| Legumbre | `SpaIcon` |
+| Fruto Seco | `EnergySavingsLeafIcon` |
+| Condimento | `KitchenIcon` |
+| Aceite | `OpacityIcon` |
+| Azúcar | `IcecreamIcon` |
+| Bebida | `LocalBarIcon` |
+| Otro | `CategoryIcon` |
+
+---
+
+## Ejemplo de uso
 
 ```tsx
-import { ProductFilters, ProductFiltersState } from '@/features/productos/ProductFilters';
+import ProductFilters, { ProductFiltersState } from '@/features/productos/ProductFilters';
 
-// ...
 const [filters, setFilters] = useState<ProductFiltersState>({ categorias: [], alergenos: [] });
-
-// Limpia todo
-const handleClearFilters = () => {
-    setFilters({ categorias: [], alergenos: [] });
-};
 
 <ProductFilters
     filters={filters}
-    onChange={setFilters}
-    onClear={handleClearFilters}
-    inline={true} // Se comportará de forma elástica, colapsando y expandiéndose en focus (UX Móvil).
+    onChange={(newFilters) => {
+        setFilters(newFilters);
+        setPage(1);
+    }}
+    onClear={() => {
+        setFilters({ categorias: [], alergenos: [] });
+        setPage(1);
+    }}
 />
 ```
+
+---
+
+## Dependencias internas
+
+| Módulo | Uso |
+| :--- | :--- |
+| `./utils/getCategoryIconFilled` | Iconos filled por categoría en chips y opciones del dropdown |
+| `../../services/producto.types` | Enum `CategoriaProducto` |
+| `@mui/material/Autocomplete` | Control base con selección múltiple y búsqueda |
+
+---
+
+## Relación con otros componentes
+
+- **`Productos.tsx`** — usa `ProductFilters` en la barra de búsqueda, gestiona el estado `filters` y lo pasa como prop.
+- **`StatusChip`** — utiliza los mismos iconos via `getCategoryIconFilled` para mostrar el tipo de producto en las filas de la tabla.
+- **`DataTable`** — se renderiza debajo de la barra de búsqueda + filtros.
