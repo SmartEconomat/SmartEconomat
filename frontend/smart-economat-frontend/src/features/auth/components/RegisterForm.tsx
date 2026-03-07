@@ -12,6 +12,8 @@ interface RegisterFormProps {
     onRegisterSuccess: () => void;
 }
 
+import { authService } from '../../../services/auth.service';
+
 const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm, onRegisterSuccess }) => {
     const [role, setRole] = useState<'ALUMNO' | 'PROFESOR'>('ALUMNO');
     const [formData, setFormData] = useState({
@@ -44,40 +46,32 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm, onRegisterSuc
 
         try {
             const isAlumno = role === 'ALUMNO';
-            const endpoint = isAlumno ? '/api/v1/alumnos/register' : '/api/v1/profesores/register';
 
             const payload: any = {
                 username: formData.username,
                 password: formData.password
             };
 
-            if (formData.email && formData.email.trim() !== '') {
-                payload.email = formData.email.trim();
-            }
-
             if (isAlumno) {
                 payload.aula = formData.aula;
                 payload.numeroClase = Number(formData.numeroClase);
                 payload.cialProfesor = formData.cialProfesor;
             } else {
+                payload.email = formData.email?.trim();
                 payload.cial = formData.cial;
             }
 
-            const res = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
+            const res = isAlumno 
+                ? await authService.registerAlumno(payload)
+                : await authService.registerProfesor(payload);
 
-            if (res.ok) {
+            if (res.success) {
                 onRegisterSuccess();
             } else {
-                const err = await res.json();
-                setErrorMsg(Array.isArray(err.message) ? err.message.join(', ') : err.message || 'Error en el registro');
+                setErrorMsg(res.message || 'Error en el registro');
             }
-        } catch (err) {
-            console.error('Registration error:', err);
-            setErrorMsg('Error de conexión con el servidor.');
+        } catch (err: any) {
+            setErrorMsg(err.message || 'Error de conexión con el servidor.');
         } finally {
             setIsLoading(false);
         }
@@ -120,7 +114,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm, onRegisterSuc
 
             <Box component="form" noValidate onSubmit={handleSubmit} sx={{ width: '100%', maxWidth: 400 }}>
                 <Input label="Nombre de Usuario" name="username" autoComplete="username" value={formData.username} onChange={handleChange} required />
-                <Input label="Correo Electrónico (Opcional)" name="email" type="email" value={formData.email} onChange={handleChange} />
+                {role === 'PROFESOR' && (
+                    <Input label="Correo Electrónico" name="email" type="email" value={formData.email} onChange={handleChange} required />
+                )}
 
                 {role === 'ALUMNO' ? (
                     <>

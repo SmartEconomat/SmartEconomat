@@ -20,6 +20,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
 
 import DataTable, { Column } from '../../components/ui/DataTable';
 import PageToolbar from '../../components/ui/PageToolbar';
@@ -36,6 +37,7 @@ import {
   ActualizarUsuarioDTO,
 } from '../../types/usuario';
 import { useToast } from '../../store/ToastContext';
+import { useAuth } from '../../store/AuthContext';
 
 const Usuarios: React.FC = () => {
   // Estados principales
@@ -53,6 +55,7 @@ const Usuarios: React.FC = () => {
   const [sortBy, setSortBy] = useState<string | undefined>(undefined);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
+<<<<<<< HEAD
   // Modales y acciones
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userToEdit, setUserToEdit] = useState<Usuario | null>(null);
@@ -60,7 +63,25 @@ const Usuarios: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const [userToReset, setUserToReset] = useState<Usuario | null>(null);
+
+  const [isResetting, setIsResetting] = useState(false);
+
   const toast = useToast();
+=======
+    // Modales y acciones
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [userToEdit, setUserToEdit] = useState<Usuario | null>(null);
+    const [userToDelete, setUserToDelete] = useState<Usuario | null>(null);
+    const [userToReset, setUserToReset] = useState<Usuario | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isResetting, setIsResetting] = useState(false);
+
+
+    const toast = useToast();
+    const { user: currentUser } = useAuth();
+>>>>>>> 807b737 (update: se han actulizado los componentes y arreglado algunos bugs y ventanas)
 
   // Cargar datos
   const fetchUsuarios = useCallback(async () => {
@@ -225,57 +246,120 @@ const Usuarios: React.FC = () => {
       >
         <DeleteIcon fontSize="small" />
       </IconButton>
-    </>
-  );
 
-  return (
-    <Box>
-      <PageToolbar
-        title="Gestión de Usuarios"
-        searchValue={search}
-        onSearchChange={handleSearchChange}
-        searchPlaceholder="Buscar por nombre o correo..."
-        searchId="search-usuarios"
-        totalItems={totalItems}
-        totalItemsLabel="usuarios"
-        primaryAction={{
-          label: 'Nuevo Usuario',
-          onClick: handleAddUsuarioClick,
-          id: 'btn-nuevo-usuario',
-        }}
+/**
+ * Lógica de permisos para activar contraseña temporal:
+ * - Administrador: Puede a todos (Profesor o Alumno).
+ * - Profesor: Puede solo a Alumnos.
+ */
+const canResetTemporaryPassword = (targetUser: Usuario): boolean => {
+  if (!currentUser) return false;
+  
+  // El rol del usuario actual viene del JWT (ADMIN, PROFESOR, ALUMNO)
+  const currentRol = currentUser.rol.toUpperCase(); 
+  // El rol del usuario objetivo viene mapeado por el servicio (Administrador, Profesor, Alumno)
+  const targetRol = targetUser.rol;
+
+  // No puedes resetearte a ti mismo
+  if (targetUser.id.toString() === currentUser.id.toString()) return false;
+
+  if (currentRol === 'ADMIN' || currentRol === 'ADMINISTRADOR') {
+    // Administrador: puede a todos
+    return true;
+  }
+
+  if (currentRol === 'PROFESOR') {
+    // Profesor: solo a alumnos
+    return targetRol === 'Alumno';
+  }
+
+  return false;
+};
+
+// Configuración de tabla
+const columns: Column<Usuario>[] = [
+  { id: 'id', label: 'ID', hideOnMobile: true, sortable: true },
+  { id: 'username', label: 'Usuario', sortable: true },
+  { 
+    id: 'email', 
+    label: 'Correo', 
+    hideOnMobile: true, 
+    sortable: true,
+    render: (row) => row.email || <Typography variant="caption" color="text.disabled">No disponible</Typography>
+  },
+  {
+    id: 'rol',
+    label: 'Rol',
+    align: 'center',
+    sortable: true,
+    render: (row) => <RoleBadge rol={row.rol} />
+  },
+  {
+    id: 'estado',
+    label: 'Estado',
+    sortable: true,
+    render: (row) => <StatusChip status={row.estado === 'Activo' ? 'success' : 'default'} label={row.estado} />
+  }
+];
+
+const renderActions = (row: Usuario) => (
+  <>
+    {canResetTemporaryPassword(row) && (
+      <IconButton 
+        color="primary" 
+        onClick={() => setUserToReset(row)} 
+        size="small" 
+        aria-label="Restablecer Contraseña Temporal"
+        title="Activar Contraseña Temporal"
+      >
+        <VpnKeyIcon fontSize="small" />
+      </IconButton>
+    )}
+    <IconButton color="secondary" onClick={() => handleEditUsuarioClick(row)} size="small" aria-label="Editar">
+      <EditIcon fontSize="small" />
+    </IconButton>
+    <IconButton color="error" onClick={() => setUserToDelete(row)} size="small" aria-label="Borrar">
+      <DeleteIcon fontSize="small" />
+    </IconButton>
+  </>
+);
+
+return (
+  <Box>
+    <Paper elevation={0} sx={{ p: 4, mb: 3 }}>
+      <DataTable
+        columns={columns}
+        data={usuarios}
+        isLoading={isLoading}
+        hideTopBar
         viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        pageSize={limit}
-        pageSizeOptions={[8, 16, 32]}
-        onPageSizeChange={(e: any) => {
-          setLimit(Number(e.target.value));
-          setPage(1);
-        }}
-        filters={
-          <SelectField
-            id="filter-rol-select"
-            fullWidth
-            label="Filtrar por Rol"
-            variant="outlined"
-            size="small"
-            value={filterRol}
-            onChange={handleRolFilterChange as any}
-            options={[
-              { value: 'Todos', label: 'Todos' },
-              { value: 'Administrador', label: 'Administrador' },
-              { value: 'Profesor', label: 'Profesor' },
-              { value: 'Alumno', label: 'Alumno' },
-            ]}
-            sx={{ minWidth: 200 }}
-          />
+        defaultViewMode={viewMode}
+        sortConfig={
+          sortBy ? { key: sortBy, direction: sortOrder } : undefined
         }
-      />
-
-      <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
-        <DataTable
-          columns={columns}
-          data={usuarios}
-          isLoading={isLoading}
+        onSort={handleSort}
+        pagination={{
+          currentPage: page,
+          totalPages: totalPages,
+          onPageChange: (_, newPage) => setPage(newPage),
+          pageSize: limit,
+          pageSizeOptions: [8, 16, 32],
+          onPageSizeChange: (e: any) => {
+            setLimit(Number(e.target.value));
+            setPage(1);
+          },
+        }}
+        renderGridItem={(usuario) => (
+          <Card
+            variant="outlined"
+            sx={{
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: 2,
+            }}
+          >
+            <CardContent
           hideTopBar
           viewMode={viewMode}
           defaultViewMode={viewMode}
@@ -343,6 +427,163 @@ const Usuarios: React.FC = () => {
                 </Typography>
                 <Box sx={{ mt: 2, mb: 1 }}>
                   <RoleBadge rol={usuario.rol} />
+=======
+    const handleDeleteConfirm = async () => {
+        if (!userToDelete) return;
+
+        // Prevent deleting the last administrator
+        if (userToDelete.rol === 'Administrador' && userToDelete.estado === 'Activo') {
+            const adminCount = usuarios.filter(u => u.rol === 'Administrador' && u.estado === 'Activo').length;
+            if (adminCount <= 1) {
+                toast.error('Operación denegada. No puedes eliminar al último Administrador activo.');
+                setIsDeleting(false);
+                setUserToDelete(null);
+                return;
+            }
+        }
+
+        setIsDeleting(true);
+        try {
+            await usuarioService.eliminarUsuario(userToDelete.id);
+            toast.success('Usuario eliminado exitosamente');
+            // Verificar si debe ir a pág anterior por borrar registro único de pág actual
+            if (usuarios.length === 1 && page > 1) {
+                setPage(p => p - 1);
+            } else {
+                fetchUsuarios();
+            }
+        } catch (error: any) {
+            toast.error(error.message || 'Error al eliminar el usuario');
+        } finally {
+            setIsDeleting(false);
+            setUserToDelete(null);
+        }
+    };
+
+    const handlePasswordReset = async () => {
+        if (!userToReset) return;
+        setIsResetting(true);
+        try {
+            const res = await usuarioService.resetPassword(userToReset.id);
+            const randomPass = res.data;
+            toast.success(`Se ha activado la contraseña temporal para ${userToReset.username}. La nueva contraseña es: ${randomPass}`);
+        } catch (error: any) {
+            toast.error(error.message || 'Error al restablecer contraseña');
+        } finally {
+            setIsResetting(false);
+            setUserToReset(null);
+        }
+    };
+
+    /**
+     * Lógica de permisos para activar contraseña temporal:
+     * - Administrador: Puede a todos (Profesor o Alumno).
+     * - Profesor: Puede solo a Alumnos.
+     */
+    const canResetTemporaryPassword = (targetUser: Usuario): boolean => {
+        if (!currentUser) return false;
+        
+        // El rol del usuario actual viene del JWT (ADMIN, PROFESOR, ALUMNO)
+        const currentRol = currentUser.rol.toUpperCase(); 
+        // El rol del usuario objetivo viene mapeado por el servicio (Administrador, Profesor, Alumno)
+        const targetRol = targetUser.rol;
+
+        // No puedes resetearte a ti mismo
+        if (targetUser.id.toString() === currentUser.id.toString()) return false;
+
+        if (currentRol === 'ADMIN' || currentRol === 'ADMINISTRADOR') {
+            // Administrador: puede a todos
+            return true;
+        }
+
+        if (currentRol === 'PROFESOR') {
+            // Profesor: solo a alumnos
+            return targetRol === 'Alumno';
+        }
+
+        return false;
+    };
+
+    // Configuración de tabla
+    const columns: Column<Usuario>[] = [
+        { id: 'id', label: 'ID', hideOnMobile: true, sortable: true },
+        { id: 'username', label: 'Usuario', sortable: true },
+        { 
+            id: 'email', 
+            label: 'Correo', 
+            hideOnMobile: true, 
+            sortable: true,
+            render: (row) => row.email || <Typography variant="caption" color="text.disabled">No disponible</Typography>
+        },
+        {
+            id: 'rol',
+            label: 'Rol',
+            align: 'center',
+            sortable: true,
+            render: (row) => <RoleBadge rol={row.rol} />
+        },
+        {
+            id: 'estado',
+            label: 'Estado',
+            sortable: true,
+            render: (row) => <StatusChip status={row.estado === 'Activo' ? 'success' : 'default'} label={row.estado} />
+        }
+    ];
+
+    const renderActions = (row: Usuario) => (
+        <>
+            {canResetTemporaryPassword(row) && (
+                <IconButton 
+                    color="primary" 
+                    onClick={() => setUserToReset(row)} 
+                    size="small" 
+                    aria-label="Restablecer Contraseña Temporal"
+                    title="Activar Contraseña Temporal"
+                >
+                    <VpnKeyIcon fontSize="small" />
+                </IconButton>
+            )}
+            <IconButton color="secondary" onClick={() => handleEditUsuarioClick(row)} size="small" aria-label="Editar">
+                <EditIcon fontSize="small" />
+            </IconButton>
+            <IconButton color="error" onClick={() => setUserToDelete(row)} size="small" aria-label="Borrar">
+                <DeleteIcon fontSize="small" />
+            </IconButton>
+        </>
+    );
+
+    return (
+        <Box>
+            <Paper elevation={0} sx={{ p: 4, mb: 3 }}>
+                <Box display="flex" flexWrap="wrap" alignItems="center" justifyContent="space-between" gap={2}>
+                    <Box>
+                        <Typography variant="h5" component="h1" fontWeight="bold">
+                            Gestión de Usuarios
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            Mostrando página {page} de {totalPages}
+                        </Typography>
+                    </Box>
+                    <Stack direction="row" spacing={2} flexWrap="wrap">
+                        <Button
+                            variant="outlined"
+                            color="secondary"
+                            startIcon={<RefreshIcon />}
+                            onClick={fetchUsuarios}
+                            aria-label="Refrescar datos"
+                        >
+                            Refrescar
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            startIcon={<AddIcon />}
+                            onClick={handleAddUsuarioClick}
+                        >
+                            Nuevo Usuario
+                        </Button>
+                    </Stack>
+>>>>>>> 807b737 (update: se han actulizado los componentes y arreglado algunos bugs y ventanas)
                 </Box>
                 <Box sx={{ mt: 'auto', pt: 2 }}>
                   <StatusChip
@@ -368,6 +609,7 @@ const Usuarios: React.FC = () => {
         />
       </Paper>
 
+<<<<<<< HEAD
       {/* Modal para Crear/Establecer Usuario */}
       <UserModal
         open={isModalOpen}
@@ -400,6 +642,98 @@ const Usuarios: React.FC = () => {
       />
     </Box>
   );
+=======
+                {/* Tabla */}
+                <DataTable
+                    columns={columns}
+                    data={usuarios}
+                    isLoading={isLoading}
+                    sortConfig={sortBy ? { key: sortBy, direction: sortOrder } : undefined}
+                    onSort={handleSort}
+                    pagination={{
+                        currentPage: page,
+                        totalPages: totalPages,
+                        onPageChange: (_, newPage) => setPage(newPage),
+                        pageSize: limit,
+                        pageSizeOptions: [8, 16, 32],
+                        onPageSizeChange: (e) => {
+                            setLimit(Number(e.target.value));
+                            setPage(1);
+                        }
+                    }}
+                    renderGridItem={(usuario) => (
+                        <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                            <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <Avatar sx={{ width: 64, height: 64, mb: 2, bgcolor: 'primary.main' }}>
+                                    {usuario.username.substring(0, 2).toUpperCase()}
+                                </Avatar>
+                                <Typography gutterBottom variant="h6" component="div" align="center">
+                                    {usuario.username}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary" gutterBottom align="center" sx={{ height: '1.5em' }}>
+                                    {usuario.email || ''}
+                                </Typography>
+                                <Box sx={{ mt: 2, mb: 1 }}>
+                                    <RoleBadge rol={usuario.rol} />
+                                </Box>
+                                <Box sx={{ mt: 'auto', pt: 2 }}>
+                                    <StatusChip status={usuario.estado === 'Activo' ? 'success' : 'default'} label={usuario.estado} size="small" />
+                                </Box>
+                            </CardContent>
+                            <Divider />
+                            <CardActions sx={{ justifyContent: 'center', p: 1.5 }}>
+                                {renderActions(usuario)}
+                            </CardActions>
+                        </Card>
+                    )}
+                    renderActions={renderActions}
+                />
+            </Paper>
+
+            {/* Modal para Crear/Establecer Usuario */}
+            <UserModal
+                open={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                userToEdit={userToEdit}
+                onSave={handleSaveUsuario}
+                isSaving={isSaving}
+                usuariosList={usuarios}
+            />
+
+            {/* Diálogo de Confirmación Borrado */}
+            <ConfirmDialog
+                isOpen={!!userToDelete}
+                onClose={() => { if (!isDeleting) setUserToDelete(null) }}
+                onConfirm={handleDeleteConfirm}
+                title="Eliminar usuario"
+                message={
+                    <>
+                        ¿Estás seguro de que deseas eliminar a <strong>{userToDelete?.username}</strong> del sistema?<br /><br />
+                        Esta acción no se puede deshacer de forma sencilla.
+                    </>
+                }
+                confirmText={isDeleting ? 'Eliminando...' : 'Eliminar Usuario'}
+                cancelText="Cancelar"
+            />
+
+            {/* Diálogo de Confirmación Restablecer Contraseña */}
+            <ConfirmDialog
+                isOpen={!!userToReset}
+                onClose={() => { if (!isResetting) setUserToReset(null) }}
+                onConfirm={handlePasswordReset}
+                title="Activar contraseña temporal"
+                message={
+                    <>
+                        ¿Deseas activar una contraseña temporal para <strong>{userToReset?.username}</strong>?<br /><br />
+                        Se generará una nueva clave aleatoria y el sistema solicitará al usuario cambiarla en su próximo acceso.
+                    </>
+                }
+                confirmText={isResetting ? 'Activando...' : 'Confirmar'}
+                cancelText="Cancelar"
+            />
+        </Box>
+    );
+>>>>>>> 807b737 (update: se han actulizado los componentes y arreglado algunos bugs y ventanas)
 };
 
 export default Usuarios;

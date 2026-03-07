@@ -64,7 +64,10 @@ export class UsuarioService {
       );
     }
 
-    return this.usuarioRepo.updateUsuario(id, { password: dto.password });
+    return this.usuarioRepo.updateUsuario(id, {
+      password: dto.password,
+      mustChangePassword: true,
+    });
   }
 
   remove(id: string) {
