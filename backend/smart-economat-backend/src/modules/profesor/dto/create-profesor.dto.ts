@@ -1,7 +1,6 @@
 import {
   IsEmail,
   IsNotEmpty,
-  IsOptional,
   IsString,
   IsStrongPassword,
 } from 'class-validator';
@@ -28,8 +27,8 @@ export class CreateProfesorDto {
   password!: string;
 
   @IsEmail()
-  @IsOptional()
-  email?: string;
+  @IsNotEmpty()
+  email!: string;
 
   @IsString()
   @IsNotEmpty()

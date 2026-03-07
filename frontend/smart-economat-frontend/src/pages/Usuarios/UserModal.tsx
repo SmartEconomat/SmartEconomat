@@ -136,18 +136,20 @@ const UserModal: React.FC<UserModalProps> = ({
                         disabled={isSaving}
                         required
                     />
-                    <InputField
-                        id="user-email"
-                        fullWidth
-                        label="Correo Electrónico"
-                        type="email"
-                        value={formData.email}
-                        onChange={handleChange('email')}
-                        error={!!errors.email}
-                        helperText={errors.email}
-                        disabled={isSaving}
-                        required
-                    />
+                    {formData.rol !== 'Alumno' && (
+                        <InputField
+                            id="user-email"
+                            fullWidth
+                            label="Correo Electrónico"
+                            type="email"
+                            value={formData.email}
+                            onChange={handleChange('email')}
+                            error={!!errors.email}
+                            helperText={errors.email}
+                            disabled={isSaving}
+                            required
+                        />
+                    )}
                     <Box display="flex" gap={2} flexWrap="wrap">
                         <Box flex={1} minWidth="200px">
                             <SelectField
