@@ -40,6 +40,7 @@ import { EU_ALLERGENS } from '../components/ui/AllergenSelector';
 import ShoppingBasketOutlinedIcon from '@mui/icons-material/ShoppingBasketOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/SearchOutlined';
+import { useBreakpoints } from '../utils/useBreakpoints';
 
 const productoSchema: DynamicField[] = [
     { name: 'nombre', label: 'Nombre Comercial', required: true },
@@ -105,6 +106,7 @@ const initialFilters: ProductFiltersState = {
 };
 
 const Productos: React.FC = () => {
+    const { isMobile, isMobileOrTablet } = useBreakpoints();
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(12);
     const [totalPages, setTotalPages] = useState(1);
@@ -126,7 +128,7 @@ const Productos: React.FC = () => {
         setError(null);
 
         Promise.all([
-            fetchProductos(page, pageSize, searchTerm),
+            fetchProductos(page, pageSize, searchTerm, filters.categorias),
             fetchProveedores(1, 100).catch(() => ({ data: [], totalItems: 0, itemsPerPage: 100, totalPages: 1, page: 1 } as any))
         ])
             .then(([productosData, proveedoresData]) => {
@@ -143,11 +145,11 @@ const Productos: React.FC = () => {
 
     useEffect(() => {
         loadData();
-    }, [page, pageSize, searchTerm]);
+    }, [page, pageSize, searchTerm, filters.categorias]);
 
     useEffect(() => {
         setPage(1);
-    }, [filters.categorias, filters.alergenos]);
+    }, [searchTerm, filters.categorias, filters.alergenos]);
 
     const handleDeleteConfirm = async () => {
         if (!productToDelete) return;
@@ -272,7 +274,6 @@ const Productos: React.FC = () => {
         setProductToView(row);
     };
 
-    // filteredData local ya no es necesario ya que se hace filtering en el backend.
     const filteredData = data;
 
     const dynamicSchema = React.useMemo(() => {
@@ -328,15 +329,14 @@ const Productos: React.FC = () => {
                     </Alert>
                 )}
 
-                <Box
-                    sx={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        alignItems: 'center',
-                        gap: 2,
-                        mb: 2,
-                    }}
-                >
+                {/* ── Barra de búsqueda y filtros ── */}
+                <Box sx={{
+                    display: 'flex',
+                    alignItems: isMobileOrTablet ? 'stretch' : 'center',
+                    flexDirection: isMobileOrTablet ? 'column' : 'row',
+                    gap: 1.5,
+                    mb: 2,
+                }}>
                     <TextField
                         placeholder="Buscar por nombre, marca, código de barras..."
                         value={searchTerm}
@@ -345,7 +345,12 @@ const Productos: React.FC = () => {
                             setPage(1);
                         }}
                         size="small"
-                        sx={{ minWidth: 200, flex: '1 1 200px' }}
+                        sx={{
+                            // Móvil: ancho completo. Desktop: mínimo 360px y flex-grow
+                            minWidth: isMobileOrTablet ? 'unset' : 360,
+                            width: isMobileOrTablet ? '100%' : 'auto',
+                            flex: isMobileOrTablet ? 'unset' : '1 1 360px',
+                        }}
                         InputProps={{
                             startAdornment: (
                                 <InputAdornment position="start">
@@ -354,9 +359,13 @@ const Productos: React.FC = () => {
                             ),
                         }}
                     />
+                    {/* Filtro de categorías: Autocomplete con chips dentro del control */}
                     <ProductFilters
                         filters={filters}
-                        onChange={setFilters}
+                        onChange={(newFilters) => {
+                            setFilters(newFilters);
+                            setPage(1);
+                        }}
                         onClear={() => {
                             setFilters(initialFilters);
                             setPage(1);
@@ -370,32 +379,33 @@ const Productos: React.FC = () => {
                     data={filteredData}
                     isLoading={isLoading}
                     defaultViewMode="list"
-                    leftHeaderAction={
+                    rightHeaderAction={
                         <Box display="flex" alignItems="center" gap={1}>
-                            <Button
-                                variant="contained"
-                                startIcon={<AddIcon />}
-                                onClick={() => setProductToEdit({})}
-                                sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
-                            >
-                                Nuevo Producto
-                            </Button>
-
-                            <Tooltip title="Nuevo Producto">
-                                <IconButton
-                                    color="primary"
-                                    aria-label="Nuevo Producto"
+                            {/* Botón texto en tablet/desktop, icono en móvil */}
+                            {isMobile ? (
+                                <Tooltip title="Nuevo Producto">
+                                    <IconButton
+                                        color="primary"
+                                        aria-label="Nuevo Producto"
+                                        onClick={() => setProductToEdit({})}
+                                        sx={{
+                                            bgcolor: 'primary.main',
+                                            color: 'white',
+                                            '&:hover': { bgcolor: 'primary.dark' },
+                                        }}
+                                    >
+                                        <AddIcon />
+                                    </IconButton>
+                                </Tooltip>
+                            ) : (
+                                <Button
+                                    variant="contained"
+                                    startIcon={<AddIcon />}
                                     onClick={() => setProductToEdit({})}
-                                    sx={{
-                                        display: { xs: 'inline-flex', sm: 'none' },
-                                        bgcolor: 'primary.main',
-                                        color: 'white',
-                                        '&:hover': { bgcolor: 'primary.dark' },
-                                    }}
                                 >
-                                    <AddIcon />
-                                </IconButton>
-                            </Tooltip>
+                                    Nuevo Producto
+                                </Button>
+                            )}
                         </Box>
                     }
                     emptyStateMessage={

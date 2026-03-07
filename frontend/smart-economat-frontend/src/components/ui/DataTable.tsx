@@ -90,6 +90,8 @@ export interface DataTableProps<T> {
     onSort?: (key: keyof T | string) => void;
     /** Componente opcional que se pintará a la izquierda en la cabecera (ej: botón Nuevo) */
     leftHeaderAction?: ReactNode;
+    /** Componente opcional que se pintará a la derecha en la cabecera (ej: botón Nuevo) */
+    rightHeaderAction?: ReactNode;
 }
 
 /**
@@ -110,12 +112,12 @@ export function DataTable<T extends Record<string, any>>({
     sortConfig,
     onSort,
     leftHeaderAction,
+    rightHeaderAction,
 }: DataTableProps<T>) {
     const colSpanCount = columns.length + (renderActions ? 1 : 0);
     const [viewMode, setViewMode] = useState<'list' | 'grid'>(defaultViewMode);
 
-    const hasTopBarControls = (pagination?.onPageSizeChange && pagination?.pageSizeOptions) || renderGridItem || leftHeaderAction;
-
+    const hasTopBarControls = (pagination?.onPageSizeChange && pagination?.pageSizeOptions) || renderGridItem || leftHeaderAction || rightHeaderAction;
     const handleViewModeChange = (
         event: React.MouseEvent<HTMLElement>,
         newMode: 'list' | 'grid',
@@ -136,75 +138,25 @@ export function DataTable<T extends Record<string, any>>({
                     gap={2}
                     mb={3}
                 >
-                    {leftHeaderAction && (
-                        <Box display="flex" alignItems="center">
-                            {leftHeaderAction}
-                        </Box>
-                    )}
-
-                    <Box
-                        display="flex"
-                        alignItems="center"
-                        flexWrap="wrap"
-                        gap={2}
-                        sx={{ ml: leftHeaderAction ? 'auto' : 0 }}
-                    >
+                    {/* SECCIÓN IZQUIERDA: Botones vista + Paginación */}
+                    <Box display="flex" alignItems="center" gap={2}>
+                        {/* 1. Botones de lista/grid */}
                         {renderGridItem && (
                             <ToggleButtonGroup
                                 value={viewMode}
                                 exclusive
                                 onChange={handleViewModeChange}
-                                aria-label="modo de vista"
                                 size="small"
                             >
-                                <ToggleButton value="list" aria-label="vista de lista">
-                                    <ViewListIcon />
-                                </ToggleButton>
-                                <ToggleButton value="grid" aria-label="vista de mosaico">
-                                    <ViewModuleIcon />
-                                </ToggleButton>
+                                <ToggleButton value="list"><ViewListIcon /></ToggleButton>
+                                <ToggleButton value="grid"><ViewModuleIcon /></ToggleButton>
                             </ToggleButtonGroup>
                         )}
 
-                        {viewMode === 'grid' && onSort && columns.some(c => c.sortable) && (
-                            <Box display="flex" alignItems="center" gap={1} sx={{ display: { xs: 'none', sm: 'flex' } }}>
-                                <FormControl size="small" variant="outlined">
-                                    <Select
-                                        value={sortConfig?.key || ""}
-                                        onChange={(e) => {
-                                            if (e.target.value !== sortConfig?.key) onSort(e.target.value as string);
-                                        }}
-                                        displayEmpty
-                                        sx={{ minWidth: 140 }}
-                                    >
-                                        <MenuItem value="" disabled>Ordenar por...</MenuItem>
-                                        {columns.filter(c => c.sortable).map(c => (
-                                            <MenuItem key={String(c.id)} value={String(c.id)}>{c.label}</MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                                <IconButton
-                                    size="small"
-                                    onClick={() => {
-                                        if (sortConfig?.key) onSort(sortConfig.key);
-                                    }}
-                                    disabled={!sortConfig?.key}
-                                    title={sortConfig?.direction === 'desc' ? 'Descendente (Z-A)' : 'Ascendente (A-Z)'}
-                                    color="primary"
-                                    sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1 }}
-                                >
-                                    {sortConfig?.direction === 'desc' ? <ArrowDownwardIcon fontSize="small" /> : <ArrowUpwardIcon fontSize="small" />}
-                                </IconButton>
-                            </Box>
-                        )}
-
+                        {/* 2. Paginación (Selector de registros) */}
                         {pagination?.onPageSizeChange && pagination?.pageSizeOptions && (
                             <Box display="flex" alignItems="center" gap={1}>
-                                <Typography
-                                    variant="body2"
-                                    color="text.secondary"
-                                    sx={{ display: { xs: 'none', sm: 'block' } }}
-                                >
+                                <Typography variant="body2" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
                                     Ver
                                 </Typography>
                                 <FormControl size="small" variant="outlined">
@@ -212,25 +164,33 @@ export function DataTable<T extends Record<string, any>>({
                                         value={pagination.pageSize || pagination.pageSizeOptions[0] || 10}
                                         onChange={pagination.onPageSizeChange}
                                         sx={{ minWidth: 64 }}
-                                        MenuProps={{ disableScrollLock: true }}
                                     >
                                         {pagination.pageSizeOptions.map(option => (
                                             <MenuItem key={option} value={option}>{option}</MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>
-                                <Typography
-                                    variant="body2"
-                                    color="text.secondary"
-                                    sx={{ display: { xs: 'none', md: 'block' } }}
-                                >
+                                <Typography variant="body2" color="text.secondary" sx={{ display: { xs: 'none', md: 'block' } }}>
                                     por página
                                 </Typography>
+                            </Box>
+                        )}
+
+                        {/* Espacio para leftHeaderAction si lo usaras */}
+                        {leftHeaderAction && <Box>{leftHeaderAction}</Box>}
+                    </Box>
+
+                    {/* SECCIÓN DERECHA: Botón Nuevo */}
+                    <Box display="flex" alignItems="center">
+                        {rightHeaderAction && (
+                            <Box display="flex" alignItems="center">
+                                {rightHeaderAction}
                             </Box>
                         )}
                     </Box>
                 </Box>
             )}
+
 
             {viewMode === 'list' || !renderGridItem ? (
                 <TableContainer component={Paper} elevation={0}>
