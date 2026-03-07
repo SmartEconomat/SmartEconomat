@@ -18,7 +18,9 @@ import { AlbaranModule } from './modules/albaran/albaran.module';
 import { UbicacionModule } from './modules/ubicacion/ubicacion.module';
 import { IncidenciaModule } from './modules/incidencia/incidencia.module';
 import { ArchivoModule } from './modules/archivo/archivo.module';
-
+import { ProfesorModule } from './modules/profesor/profesor.module';
+import { AlumnoModule } from './modules/alumno/alumno.module';
+import { AdminModule } from './modules/admin/admin.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -39,6 +41,9 @@ import { ArchivoModule } from './modules/archivo/archivo.module';
     UbicacionModule,
     IncidenciaModule,
     ArchivoModule,
+    ProfesorModule,
+    AlumnoModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

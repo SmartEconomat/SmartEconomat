@@ -1,6 +1,6 @@
 export interface Usuario {
     id: string | number;
-    nombre: string;
+    username: string;
     email: string;
     rol: 'Administrador' | 'Profesor' | 'Alumno';
     estado: 'Activo' | 'Inactivo';

@@ -40,5 +40,4 @@ beforeAll(async () => {
     await dataSource.initialize();
   }
   await runAllSeeders();
-  await dataSource.destroy();
 });

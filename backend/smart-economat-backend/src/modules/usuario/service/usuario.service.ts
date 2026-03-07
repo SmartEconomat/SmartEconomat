@@ -13,6 +13,7 @@ import { ResetPasswordDto } from '../dto/reset-password.dto';
 
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import * as bcrypt from 'bcrypt';
+import { UserStatus } from '../enums/usuario.enums';
 
 @Injectable()
 export class UsuarioService {
@@ -57,7 +58,7 @@ export class UsuarioService {
   async resetPassword(id: string, dto: ResetPasswordDto) {
     const usuario = await this.findOne(id);
 
-    if (!usuario.activo) {
+    if (usuario.status !== UserStatus.ACTIVE) {
       throw new BadRequestException(
         I18nHelper.getError('USER_INACTIVE_CANNOT_RESET_PASSWORD')
       );

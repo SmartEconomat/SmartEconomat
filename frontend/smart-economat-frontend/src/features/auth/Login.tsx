@@ -254,7 +254,7 @@ export default function Login() {
                         justifyContent: { xs: 'flex-start', md: 'center' },
                         // En móvil habilitamos scroll para formularios largos (registro).
                         // En desktop ocultamos overflow para que la animación de peel no se vea fuera.
-                        overflow: { xs: 'auto', md: 'hidden' },
+                        overflow: 'auto',
                         zIndex: 2,
                         animation: { xs: 'none', md: peelCss(formAnim) },
                     }}
@@ -307,10 +307,7 @@ export default function Login() {
                                     ¡Registro exitoso!
                                 </Typography>
                                 <Typography variant="h6" color="text.secondary">
-                                    Usuario pendiente de confirmación.
-                                </Typography>
-                                <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-                                    En breve recibirás un correo de activación.
+                                    debes esperar a que tu usuario esté activo.
                                 </Typography>
                             </>
                         ) : (

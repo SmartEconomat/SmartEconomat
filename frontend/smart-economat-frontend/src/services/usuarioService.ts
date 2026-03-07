@@ -11,52 +11,63 @@ const getHeaders = () => {
 };
 
 // Mapeo temporal para adaptar el formato del frontend al backend
-const mapFrontendToBackend = (data: Partial<CrearUsuarioDTO>) => {
+const mapFrontendToBackend = (data: Partial<CrearUsuarioDTO>, isUpdate = false) => {
     const mapped: any = { ...data };
-    if (mapped.estado === 'Activo') mapped.activo = true;
-    if (mapped.estado === 'Inactivo') mapped.activo = false;
-    if (mapped.rol) mapped.rol = mapped.rol.toLowerCase();
-    
-    // Asignar credenciales por defecto si faltan para BD
-    if (!mapped.username && mapped.nombre) {
-        mapped.username = mapped.nombre.replace(/\s+/g, '').toLowerCase() + Math.floor(Math.random() * 1000);
+
+    // Map Rol
+    if (mapped.rol) {
+        let r = mapped.rol.toUpperCase();
+        if (r === 'ADMINISTRADOR') r = 'ADMIN';
+        mapped.rol = r;
     }
-    if (!mapped.password) {
+
+    // Map Status
+    if (mapped.estado) {
+        mapped.status = (mapped.estado === 'Activo') ? 'ACTIVE' : 'INACTIVE';
+        delete mapped.estado;
+    }
+
+    if (isUpdate) {
+        delete mapped.password;
+    } else if (!mapped.password) {
         mapped.password = '123456';
     }
-    
-    // Adaptar rol a los enums del backend
-    if (mapped.rol === 'administrador') mapped.rol = 'admin';
+
+    // Remove extra fields that are not in backend DTOs
+    delete mapped.activo;
+    delete mapped.id;
+    delete mapped.fecha_registro;
 
     return mapped;
 };
 
 const mapBackendToFrontend = (user: any): Usuario => {
     let rolUpper = 'Alumno';
-    if (user.rol === 'admin' || user.rol === 'Administrador' || user.rol === 'administrador') rolUpper = 'Administrador';
-    if (user.rol === 'profesor' || user.rol === 'Profesor') rolUpper = 'Profesor';
+    const backendRol = user.rol?.toUpperCase();
+    if (backendRol === 'ADMIN' || backendRol === 'ADMINISTRADOR') rolUpper = 'Administrador';
+    if (backendRol === 'PROFESOR') rolUpper = 'Profesor';
 
     return {
         id: user.id || 0,
-        nombre: user.nombre,
+        username: user.username,
         email: user.email,
         rol: rolUpper as any,
-        estado: user.activo ? 'Activo' : 'Inactivo',
+        estado: (user.status === 'ACTIVE' || user.estado === 'Activo' || user.activo) ? 'Activo' : 'Inactivo',
         fecha_registro: user.createdAt || new Date().toISOString()
     };
 };
 
 // Variables para MOCK en caso de error de red o auth (Backend inalcanzable)
 let mockUsuarios: Usuario[] = [
-    { id: 1, nombre: 'Admin Demo', email: 'admin@smarteconomat.com', rol: 'Administrador', estado: 'Activo', fecha_registro: new Date().toISOString() },
-    { id: 2, nombre: 'Profesor Prueba', email: 'profesor@test.com', rol: 'Profesor', estado: 'Activo', fecha_registro: new Date().toISOString() },
-    { id: 3, nombre: 'Alumno Invitado', email: 'alumno@demo.com', rol: 'Alumno', estado: 'Activo', fecha_registro: new Date().toISOString() }
+    { id: 1, username: 'admin', email: 'admin@smarteconomat.com', rol: 'Administrador', estado: 'Activo', fecha_registro: new Date().toISOString() },
+    { id: 2, username: 'profesor-demo', email: 'profesor@test.com', rol: 'Profesor', estado: 'Activo', fecha_registro: new Date().toISOString() },
+    { id: 3, username: 'alumno-demo', email: 'alumno@demo.com', rol: 'Alumno', estado: 'Activo', fecha_registro: new Date().toISOString() }
 ];
 
 export const usuarioService = {
     async getUsuarios(page: number = 1, limit: number = 10, search?: string, filterRol?: string, sortBy?: string, sortOrder?: 'asc' | 'desc'): Promise<PaginatedResponse<Usuario>> {
         let mappedData: Usuario[] = [];
-        
+
         try {
             const response = await fetch(`${API_URL}/usuarios`, {
                 headers: getHeaders()
@@ -81,8 +92,8 @@ export const usuarioService = {
 
         if (search) {
             const lowerSearch = search.toLowerCase();
-            filteredData = filteredData.filter((u: Usuario) => 
-                u.nombre.toLowerCase().includes(lowerSearch) || 
+            filteredData = filteredData.filter((u: Usuario) =>
+                u.username.toLowerCase().includes(lowerSearch) ||
                 u.email.toLowerCase().includes(lowerSearch)
             );
         }
@@ -95,12 +106,12 @@ export const usuarioService = {
             filteredData.sort((a: any, b: any) => {
                 let aValue = a[sortBy];
                 let bValue = b[sortBy];
-                
+
                 if (aValue === null || aValue === undefined) aValue = '';
                 if (bValue === null || bValue === undefined) bValue = '';
-                
+
                 if (typeof aValue === 'string' && typeof bValue === 'string') {
-                    return sortOrder === 'desc' 
+                    return sortOrder === 'desc'
                         ? bValue.localeCompare(aValue, undefined, { numeric: true, sensitivity: 'base' })
                         : aValue.localeCompare(bValue, undefined, { numeric: true, sensitivity: 'base' });
                 }
@@ -152,7 +163,7 @@ export const usuarioService = {
     },
 
     async actualizarUsuario(id: string | number, data: ActualizarUsuarioDTO): Promise<ApiResponse<Usuario>> {
-        const payload = mapFrontendToBackend(data);
+        const payload = mapFrontendToBackend(data, true);
         try {
             const response = await fetch(`${API_URL}/usuarios/${id}`, {
                 method: 'PATCH',
@@ -161,8 +172,8 @@ export const usuarioService = {
             });
 
             if (!response.ok) {
-                 const errorData = await response.json().catch(() => ({}));
-                 throw new Error(errorData.message || 'Error al actualizar usuario');
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Error al actualizar usuario');
             }
             const result = await response.json();
             return {
@@ -184,14 +195,14 @@ export const usuarioService = {
             });
 
             if (!response.ok) {
-                 const errorData = await response.json().catch(() => ({}));
-                 throw new Error(errorData.message || 'Error al eliminar usuario');
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Error al eliminar usuario');
             }
             const result = await response.json();
-            return { 
-                data: null, 
-                status: response.status, 
-                message: result.message || 'Usuario eliminado exitosamente' 
+            return {
+                data: null,
+                status: response.status,
+                message: result.message || 'Usuario eliminado exitosamente'
             };
         } catch (error: any) {
             console.error('Error al eliminar usuario', error);

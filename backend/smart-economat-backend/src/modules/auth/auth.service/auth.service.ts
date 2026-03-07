@@ -12,7 +12,9 @@ import { LoginUserDto } from '../dto/login-user.dto';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
-import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { rolUsuario, UserStatus } from '../../usuario/enums/usuario.enums';
+import { MailService } from '../mail.service';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -20,13 +22,19 @@ export class AuthService {
     @InjectRepository(Usuario)
     private readonly usuarioRepo: Repository<Usuario>,
     private readonly jwtService: JwtService,
-    private readonly dataSource: DataSource
+    private readonly dataSource: DataSource,
+    private readonly mailService: MailService
   ) {}
 
   async register(dto: RegisterUserDto) {
     return await this.dataSource.transaction(async (manager) => {
+      const whereConditions: any[] = [{ username: dto.username }];
+      if (dto.email) {
+        whereConditions.push({ email: dto.email });
+      }
+
       const existing = await manager.findOne(Usuario, {
-        where: [{ username: dto.username }, { email: dto.email }],
+        where: whereConditions,
       });
 
       if (existing) {
@@ -37,12 +45,11 @@ export class AuthService {
 
       const usuario = manager.create(Usuario, {
         ...dto,
-        activo: false,
-        rol: rolUsuario.INVITADO,
+        status: UserStatus.INACTIVE,
+        rol: rolUsuario.ALUMNO,
       });
 
       await manager.save(usuario);
-
       return this.generateToken(usuario);
     });
   }
@@ -53,7 +60,7 @@ export class AuthService {
       .where('(usuario.email = :email OR usuario.username = :email)', {
         email: dto.email,
       })
-      .andWhere('usuario.activo = :activo', { activo: true })
+      .andWhere('usuario.status = :status', { status: UserStatus.ACTIVE })
       .addSelect('usuario.password')
       .getOne();
 
@@ -61,13 +68,86 @@ export class AuthService {
       throw new BadRequestException(I18nHelper.getError('INVALID_CREDENTIALS'));
     }
 
-    return this.generateToken(usuario);
+    const tokenData = this.generateToken(usuario);
+    return {
+      ...tokenData,
+      requirePasswordChange: usuario.mustChangePassword,
+    };
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    if (!email) {
+      return;
+    }
+    const usuario = await this.usuarioRepo.findOne({ where: { email } });
+    if (!usuario) {
+      return;
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    usuario.passwordResetToken = hashedToken;
+    usuario.passwordResetExpires = new Date(Date.now() + 15 * 60 * 1000);
+    await this.usuarioRepo.save(usuario);
+
+    if (usuario.email) {
+      await this.mailService.sendPasswordResetEmail(usuario.email, token);
+    }
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const usuario = await this.usuarioRepo.findOne({
+      where: { passwordResetToken: hashedToken },
+      select: ['id', 'passwordResetToken', 'passwordResetExpires'],
+    });
+
+    if (
+      !usuario ||
+      !usuario.passwordResetExpires ||
+      usuario.passwordResetExpires < new Date()
+    ) {
+      throw new BadRequestException('El token es inválido o ha expirado');
+    }
+
+    usuario.password = newPassword;
+    usuario.passwordResetToken = null;
+    usuario.passwordResetExpires = null;
+    usuario.mustChangePassword = false;
+
+    await this.usuarioRepo.save(usuario);
+  }
+
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string
+  ): Promise<void> {
+    const usuario = await this.usuarioRepo
+      .createQueryBuilder('usuario')
+      .where('usuario.id = :id', { id: userId })
+      .addSelect('usuario.password')
+      .getOne();
+
+    if (!usuario) {
+      throw new BadRequestException('Usuario no encontrado');
+    }
+
+    if (!(await bcrypt.compare(currentPassword, usuario.password))) {
+      throw new BadRequestException('La contraseña actual es incorrecta');
+    }
+
+    usuario.password = newPassword;
+    usuario.mustChangePassword = false;
+    await this.usuarioRepo.save(usuario);
   }
 
   private generateToken(usuario: Usuario) {
     const payload: JwtPayload = {
       sub: usuario.id,
-      nombre: usuario.nombre,
+      username: usuario.username,
       role: usuario.rol,
     };
 

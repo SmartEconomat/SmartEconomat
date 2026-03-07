@@ -33,7 +33,7 @@ const UserModal: React.FC<UserModalProps> = ({
     usuariosList
 }) => {
     const [formData, setFormData] = useState({
-        nombre: '',
+        username: '',
         email: '',
         rol: 'Alumno',
         estado: 'Activo'
@@ -46,14 +46,14 @@ const UserModal: React.FC<UserModalProps> = ({
         if (open) {
             if (userToEdit) {
                 setFormData({
-                    nombre: userToEdit.nombre,
+                    username: userToEdit.username,
                     email: userToEdit.email,
                     rol: userToEdit.rol,
                     estado: userToEdit.estado
                 });
             } else {
                 setFormData({
-                    nombre: '',
+                    username: '',
                     email: '',
                     rol: 'Alumno',
                     estado: 'Activo'
@@ -84,7 +84,7 @@ const UserModal: React.FC<UserModalProps> = ({
 
     const validate = () => {
         const newErrors: Record<string, string> = {};
-        if (!formData.nombre.trim()) newErrors.nombre = 'El nombre es obligatorio';
+        if (!formData.username.trim()) newErrors.username = 'El usuario es obligatorio';
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!formData.email.trim()) {
@@ -124,13 +124,13 @@ const UserModal: React.FC<UserModalProps> = ({
             <DialogContent dividers>
                 <Box display="flex" flexDirection="column" gap={2} sx={{ mt: 1 }}>
                     <InputField
-                        id="user-nombre"
+                        id="user-username"
                         fullWidth
-                        label="Nombre Completo"
-                        value={formData.nombre}
-                        onChange={handleChange('nombre')}
-                        error={!!errors.nombre}
-                        helperText={errors.nombre}
+                        label="Nombre de Usuario"
+                        value={formData.username}
+                        onChange={handleChange('username')}
+                        error={!!errors.username}
+                        helperText={errors.username}
                         disabled={isSaving}
                         required
                     />
