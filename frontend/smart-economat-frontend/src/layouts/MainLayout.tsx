@@ -302,7 +302,7 @@ export default function MainLayout() {
                         >
                             <MenuItem onClick={() => {
                                 handleUserMenuClose();
-                                navigate('/usuario');
+                                navigate('/perfil');
                             }}>
                                 <ListItemIcon>
                                     <PersonIcon fontSize="small" />
@@ -343,7 +343,7 @@ export default function MainLayout() {
                 </DesktopDrawer>
             )}
 
-            <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+            <Box component="main" sx={{ flexGrow: 1, p: { xs: 1, sm: 3 } }}>
                 <DrawerHeader />
                 <Outlet />
             </Box>

@@ -1,0 +1,63 @@
+import { baseFetch, ApiResponse } from './api.service';
+import { User } from '../store/AuthContext';
+
+/**
+ * Servicio de autenticación para gestionar el perfil del usuario.
+ */
+export const authService = {
+    /**
+     * Obtiene los datos del usuario actual.
+     * @returns {Promise<User>}
+     */
+    async getCurrentUser(): Promise<User> {
+        const response = await baseFetch('/usuarios/perfil');
+        if (!response.ok) {
+            throw new Error('No se pudo obtener la información del usuario');
+        }
+        const result: ApiResponse<any> = await response.json();
+        
+        // Adaptar al formato esperado por el frontend
+        return {
+            id: result.data.id,
+            name: result.data.nombre || result.data.name,
+            email: result.data.email,
+            rol: result.data.rol || result.data.role,
+            username: result.data.username
+        };
+    },
+
+    /**
+     * Actualiza los datos básicos del perfil.
+     * @param {Partial<User>} data - Datos a actualizar (nombre, etc).
+     */
+    async updateProfile(data: { nombre: string; email?: string }): Promise<void> {
+        const response = await baseFetch('/usuarios/perfil', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Error al actualizar el perfil');
+        }
+    },
+
+    /**
+     * Cambia la contraseña del usuario.
+     * @param {string} currentPassword - Contraseña actual.
+     * @param {string} newPassword - Nueva contraseña.
+     */
+    async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+        const response = await baseFetch('/usuarios/perfil/password', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ oldPassword: currentPassword, newPassword })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Error al cambiar la contraseña');
+        }
+    }
+};
