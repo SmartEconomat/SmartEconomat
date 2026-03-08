@@ -265,15 +265,17 @@ export class RecetaRepository {
         ...(sourceReceta.productoResultado && {
           productoResultado: sourceReceta.productoResultado,
         }),
-        ...(sourceReceta.rendimiento != null && {
-          rendimiento: sourceReceta.rendimiento,
-        }),
+        ...(sourceReceta.rendimiento != null &&
+          !isNaN(sourceReceta.rendimiento) && {
+            rendimiento: sourceReceta.rendimiento,
+          }),
         ...(sourceReceta.unidadResultado != null && {
           unidadResultado: sourceReceta.unidadResultado,
         }),
-        ...(sourceReceta.diasCaducidad != null && {
-          diasCaducidad: sourceReceta.diasCaducidad,
-        }),
+        ...(sourceReceta.diasCaducidad != null &&
+          !isNaN(sourceReceta.diasCaducidad) && {
+            diasCaducidad: sourceReceta.diasCaducidad,
+          }),
       });
 
       await manager.save(newReceta);
