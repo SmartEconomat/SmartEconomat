@@ -13,6 +13,7 @@ Este guerrero del código lidera la carga con:
 - 🔀 **83** PRs Fusionados
 
 Demostrando que:
+
 - ✨ El teclado es su arma favorita
 - 💪 La productividad es su segundo nombre
 - 🚀 Git commit es su mantra matutino
@@ -53,9 +54,10 @@ Con **27 commits** y **6 PRs**, tenemos aquí a alguien que:
 - 🎯 Está "esperando el momento perfecto" para contribuir
 
 **Tu misión (si decides aceptarla):**
+
 - [ ] Hacer al menos 1 commit esta semana
 - [ ] Lograr que te aprueben una rama
-- [ ] Intentar alcanzar al siguiente en la lista
+- [ ] Intentar alcanzar el siguiente en la lista
 
 ---
 
