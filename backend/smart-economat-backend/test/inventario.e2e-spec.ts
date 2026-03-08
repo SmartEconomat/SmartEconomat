@@ -36,7 +36,7 @@ describe('InventarioController - Alertas (e2e)', () => {
     app.useGlobalFilters(new GlobalExceptionFilter());
     await app.init();
 
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as string)
       .post('/api/v1/auth/login')
       .send({
         email: 'admin@smarteconomat.com',
@@ -54,7 +54,7 @@ describe('InventarioController - Alertas (e2e)', () => {
      * @test Debe obtener las alertas de caducidad próximas.
      */
     it('GET /alertas/caducidad - Debe listar alertas de caducidad (200)', () => {
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as string)
         .get('/api/v1/alertas/caducidad')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200)
@@ -68,7 +68,7 @@ describe('InventarioController - Alertas (e2e)', () => {
      * @test Debe obtener las alertas de productos con bajo stock.
      */
     it('GET /alertas/stock - Debe listar alertas de stock (200)', () => {
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as string)
         .get('/api/v1/alertas/stock')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200)

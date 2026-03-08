@@ -9,8 +9,8 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
-  ParseUUIDPipe,
 } from '@nestjs/common';
+import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { CreateAlbaranDto } from '../dto/create-albaran.dto';
 import { UpdateAlbaranDto } from '../dto/update-albaran.dto';
 import { Albaran } from '../albaran.entity/albaran.entity';
@@ -40,14 +40,14 @@ export class AlbaranController {
 
   @Get(':id')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Albaran> {
+  findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Albaran> {
     return this.albaranService.findOne(id);
   }
 
   @Patch(':id')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: UpdateAlbaranDto
   ): Promise<Albaran> {
     return this.albaranService.update(id, dto);
@@ -56,7 +56,7 @@ export class AlbaranController {
   @Delete(':id')
   @Roles(rolUsuario.ADMINISTRADOR)
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+  remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.albaranService.remove(id);
   }
 }

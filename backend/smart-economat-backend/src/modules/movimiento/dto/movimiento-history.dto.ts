@@ -15,11 +15,11 @@ import { TipoMovimiento } from '../enums/movimiento.enums';
  * - Filtrado por tipo de movimiento y rango de fechas
  */
 export class MovimientoHistoryDto {
-  @IsUUID('4', { message: 'El ID de la entidad debe ser un UUID válido' })
+  @IsUUID('7', { message: 'El ID de la entidad debe ser un UUID válido' })
   @IsOptional()
   entityId?: string;
 
-  @IsUUID('4', { message: 'El ID del usuario debe ser un UUID válido' })
+  @IsUUID('7', { message: 'El ID del usuario debe ser un UUID válido' })
   @IsOptional()
   userId?: string;
 

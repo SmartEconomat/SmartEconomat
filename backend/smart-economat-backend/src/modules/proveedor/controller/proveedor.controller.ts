@@ -9,9 +9,9 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
-  ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
+import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { CreateProveedorDto } from '../dto/create-proveedor.dto';
 import { ApiQuery } from '@nestjs/swagger';
 import { UpdateProveedorDto } from '../dto/update-proveedor.dto';
@@ -49,14 +49,14 @@ export class ProveedorController {
 
   @Get(':id')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Proveedor> {
+  findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Proveedor> {
     return this.proveedorService.findOne(id);
   }
 
   @Patch(':id')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: UpdateProveedorDto
   ): Promise<Proveedor> {
     return this.proveedorService.update(id, dto);
@@ -65,7 +65,7 @@ export class ProveedorController {
   @Delete(':id')
   @Roles(rolUsuario.ADMINISTRADOR)
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+  remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.proveedorService.remove(id);
   }
 }

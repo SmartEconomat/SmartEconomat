@@ -1,7 +1,7 @@
 import { IsUUID, IsNumber, Min, IsOptional, IsString } from 'class-validator';
 
 export class CreatePedidoProductoDto {
-  @IsUUID('4', {
+  @IsUUID('7', {
     message: 'El ID del productoProveedor debe ser un UUID válido',
   })
   idProductoProveedor!: string;

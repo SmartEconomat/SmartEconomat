@@ -6,11 +6,11 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseUUIDPipe,
   Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { IncidenciaResuelaService } from '../service/incidencia-resuelta.service';
 import { CreateIncidenciaResuelaDto } from '../dto/create-incidencia.dto';
 import { UpdateIncidenciaResuelaDto } from '../dto/update-incidencia.dto';
@@ -42,14 +42,16 @@ export class IncidenciaResuelaController {
 
   @Get(':id')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<IncidenciaResuelta> {
+  findOne(
+    @Param('id', ParseUUIDv7Pipe) id: string
+  ): Promise<IncidenciaResuelta> {
     return this.incidenciaResuelaService.findOne(id);
   }
 
   @Patch(':id')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: UpdateIncidenciaResuelaDto
   ): Promise<IncidenciaResuelta> {
     return this.incidenciaResuelaService.update(id, dto);
@@ -58,7 +60,7 @@ export class IncidenciaResuelaController {
   @Delete(':id')
   @Roles(rolUsuario.ADMINISTRADOR)
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+  remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.incidenciaResuelaService.remove(id);
   }
 }

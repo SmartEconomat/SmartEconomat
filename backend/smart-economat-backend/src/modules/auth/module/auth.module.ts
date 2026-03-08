@@ -1,5 +1,5 @@
 import type { StringValue } from 'ms';
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -11,6 +11,7 @@ import { AuthController } from '../controller/auth.controller';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/role.guard';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
+import { AuthorizationModule } from '../../authorization/authorization.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
         },
       }),
     }),
+    forwardRef(() => AuthorizationModule),
   ],
   controllers: [AuthController],
   providers: [AuthService, MailService, JwtStrategy, JwtAuthGuard, RolesGuard],

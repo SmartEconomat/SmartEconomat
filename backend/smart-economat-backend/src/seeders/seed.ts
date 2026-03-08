@@ -23,6 +23,7 @@ export const dataSource = new DataSource({
 
 async function runAllSeeders() {
   const seedersInOrder = [
+    'roles-permisos.seeder.ts',
     'usuario.seeder.ts',
     'proveedor.seeder.ts',
     'producto.seeder.ts',
