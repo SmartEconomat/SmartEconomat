@@ -2,7 +2,7 @@ import { IsUUID, IsNumber, Min, IsOptional, IsDate } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateHistorialPrecioDto {
-  @IsUUID('all', {
+  @IsUUID('7', {
     message: 'El ID del producto proveedor debe ser un UUID válido',
   })
   productoProveedorId!: string;

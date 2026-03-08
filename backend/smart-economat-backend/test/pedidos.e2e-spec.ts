@@ -36,7 +36,7 @@ describe('PedidoController (e2e)', () => {
     app.useGlobalFilters(new GlobalExceptionFilter());
     await app.init();
 
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as string)
       .post('/api/v1/auth/login')
       .send({
         email: 'admin@smarteconomat.com',
@@ -54,8 +54,8 @@ describe('PedidoController (e2e)', () => {
      * @test Debe fallar al intentar cancelar un pedido inexistente.
      */
     it('PATCH /api/v1/pedidos/:id/cancelar - Debe dar error (404) para ID ficticio', async () => {
-      await request(app.getHttpServer())
-        .patch('/api/v1/pedidos/00000000-0000-0000-0000-000000000000/cancelar')
+      await request(app.getHttpServer() as string)
+        .patch('/api/v1/pedidos/0191c30c-1e55-7000-8000-000000000000/cancelar')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ motivoCancelacion: 'Test E2E' })
         .expect(404);
@@ -65,9 +65,9 @@ describe('PedidoController (e2e)', () => {
      * @test Debe fallar al actualizar la fecha de entrega de un pedido inexistente.
      */
     it('PATCH /api/v1/pedidos/:id/fecha-entrega - Debe dar error (404) para ID ficticio', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .patch(
-          '/api/v1/pedidos/00000000-0000-0000-0000-000000000000/fecha-entrega'
+          '/api/v1/pedidos/0191c30c-1e55-7000-8000-000000000000/fecha-entrega'
         )
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ fechaEntrega: new Date().toISOString() })

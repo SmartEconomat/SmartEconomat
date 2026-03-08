@@ -37,7 +37,7 @@ describe('ProveedorController (e2e)', () => {
     app.useGlobalFilters(new GlobalExceptionFilter());
     await app.init();
 
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as string)
       .post('/api/v1/auth/login')
       .send({
         email: 'admin@smarteconomat.com',
@@ -55,7 +55,7 @@ describe('ProveedorController (e2e)', () => {
      * @test Debe crear un nuevo proveedor.
      */
     it('POST /proveedor - Debe crear un proveedor (201)', async () => {
-      const res = await request(app.getHttpServer())
+      const res = await request(app.getHttpServer() as string)
         .post('/api/v1/proveedor')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
@@ -73,7 +73,7 @@ describe('ProveedorController (e2e)', () => {
      * @test Debe listar proveedores.
      */
     it('GET /proveedor - Debe listar proveedores (200)', () => {
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as string)
         .get('/api/v1/proveedor')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200)
@@ -86,7 +86,7 @@ describe('ProveedorController (e2e)', () => {
      * @test Debe actualizar un proveedor.
      */
     it('PATCH /proveedor/:id - Debe actualizar proveedor (200)', () => {
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as string)
         .patch(`/api/v1/proveedor/${proveedorId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ nombre: 'Proveedor Modificado' })
@@ -97,7 +97,7 @@ describe('ProveedorController (e2e)', () => {
      * @test Debe eliminar un proveedor (admin).
      */
     it('DELETE /proveedor/:id - Debe eliminar proveedor (204)', () => {
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as string)
         .delete(`/api/v1/proveedor/${proveedorId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(204);

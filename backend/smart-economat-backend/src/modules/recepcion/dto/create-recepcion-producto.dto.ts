@@ -10,11 +10,11 @@ import {
 
 export class CreateRecepcionProductoDto {
   @IsNotEmpty()
-  @IsUUID()
+  @IsUUID('7')
   idRecepcion!: string;
 
   @IsNotEmpty()
-  @IsUUID()
+  @IsUUID('7')
   idPedidoProducto!: string;
 
   @IsNumber()

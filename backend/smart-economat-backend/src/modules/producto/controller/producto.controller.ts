@@ -9,10 +9,10 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
-  ParseUUIDPipe,
   Query,
   Request,
 } from '@nestjs/common';
+import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { ProductoService } from '../service/producto.service';
 import {
   ApiTags,
@@ -65,10 +65,10 @@ export class ProductoController {
   })
   create(
     @Body() createProductoDto: CreateProductoDto,
-    @Request() req: any
+    @Request() req: { user?: { sub: string } }
   ): Promise<Producto> {
     const userId = req.user?.sub || null;
-    return this.productoService.create(createProductoDto, userId);
+    return this.productoService.create(createProductoDto, userId as string);
   }
 
   @Get()
@@ -90,7 +90,7 @@ export class ProductoController {
   @ApiParam({ name: 'id', description: 'UUID del producto' })
   @ApiResponse({ status: 200, type: Producto })
   @ApiResponse({ status: 404, description: 'Producto no encontrado' })
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Producto> {
+  findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Producto> {
     return this.productoService.findOne(id);
   }
 
@@ -99,12 +99,12 @@ export class ProductoController {
   @ApiOperation({ summary: 'Actualizar un producto' })
   @ApiResponse({ status: 200, type: Producto })
   update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() updateProductoDto: UpdateProductoDto,
-    @Request() req: any
+    @Request() req: { user?: { sub: string } }
   ): Promise<Producto> {
     const userId = req.user?.sub || null;
-    return this.productoService.update(id, updateProductoDto, userId);
+    return this.productoService.update(id, updateProductoDto, userId as string);
   }
 
   @Delete(':id')
@@ -113,10 +113,10 @@ export class ProductoController {
   @ApiOperation({ summary: 'Eliminar un producto' })
   @ApiResponse({ status: 204, description: 'Producto eliminado' })
   remove(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Request() req: any
+    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Request() req: { user?: { sub: string } }
   ): Promise<void> {
     const userId = req.user?.sub || null;
-    return this.productoService.remove(id, userId);
+    return this.productoService.remove(id, userId as string);
   }
 }

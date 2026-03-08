@@ -115,13 +115,13 @@ describe('UsuarioController (e2e)', () => {
      * @test Debe listar todos los usuarios del sistema.
      */
     it('GET /usuarios - Debe listar usuarios (200)', async () => {
-      const res = await request(app.getHttpServer())
+      const res = await request(app.getHttpServer() as string)
         .get('/api/v1/usuarios')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
       expect(Array.isArray(res.body.data.data)).toBe(true);
-      const profileRes = await request(app.getHttpServer())
+      const profileRes = await request(app.getHttpServer() as string)
         .get('/api/v1/usuarios/perfil')
         .set('Authorization', `Bearer ${adminToken}`);
       const adminId = (profileRes.body as { data: { id: string } }).data.id;
@@ -172,7 +172,7 @@ describe('UsuarioController (e2e)', () => {
      * @test Debe rechazar IDs que no sean UUID válidos.
      */
     it('GET /usuarios/:id - Debe fallar con UUID inválido (400)', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .get('/api/v1/usuarios/invalid-uuid')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(400);

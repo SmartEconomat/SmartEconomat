@@ -9,10 +9,10 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
-  ParseUUIDPipe,
   Query,
   Request,
 } from '@nestjs/common';
+import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { CreateRecepcionDto } from '../dto/create-recepcion.dto';
 import { ApiQuery } from '@nestjs/swagger';
 import { UpdateRecepcionDto } from '../dto/update-recepcion.dto';
@@ -59,14 +59,14 @@ export class RecepcionController {
 
   @Get(':id')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Recepcion> {
+  findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Recepcion> {
     return this.recepcionService.findOne(id);
   }
 
   @Patch(':id')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: UpdateRecepcionDto
   ): Promise<Recepcion> {
     return this.recepcionService.update(id, dto);
@@ -75,7 +75,7 @@ export class RecepcionController {
   @Delete(':id')
   @Roles(rolUsuario.ADMINISTRADOR)
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+  remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.recepcionService.remove(id);
   }
 }

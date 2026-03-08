@@ -20,6 +20,9 @@ import { IncidenciaModule } from './modules/incidencia/incidencia.module';
 import { ProfesorModule } from './modules/profesor/profesor.module';
 import { AlumnoModule } from './modules/alumno/alumno.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { ArchivoModule } from './modules/archivo/archivo.module';
+import { PermisosModule } from './modules/permisos/permisos.module';
+import { AuthorizationModule } from './modules/authorization/authorization.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -42,6 +45,9 @@ import { AdminModule } from './modules/admin/admin.module';
     ProfesorModule,
     AlumnoModule,
     AdminModule,
+    ArchivoModule,
+    PermisosModule,
+    AuthorizationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

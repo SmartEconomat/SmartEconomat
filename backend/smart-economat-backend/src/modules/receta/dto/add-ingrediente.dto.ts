@@ -2,7 +2,7 @@ import { IsUUID, IsNumber, Min, IsEnum } from 'class-validator';
 import { UnidadIngrediente } from '../enums/receta.enums';
 
 export class AddIngredienteDto {
-  @IsUUID()
+  @IsUUID('7')
   productoId!: string;
 
   @IsNumber()

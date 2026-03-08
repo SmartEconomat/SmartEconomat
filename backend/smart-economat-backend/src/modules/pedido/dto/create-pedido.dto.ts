@@ -16,11 +16,11 @@ import { CreatePedidoProductoDto } from './create-PedidoProducto.dto';
 
 export class CreatePedidoDto {
   @IsOptional()
-  @IsUUID('all', { message: 'El ID del usuario debe ser un UUID válido' })
+  @IsUUID('7', { message: 'El ID del usuario debe ser un UUID válido' })
   idUsuario?: string;
 
   @IsNotEmpty()
-  @IsUUID('all', { message: 'El ID del proveedor debe ser un UUID válido' })
+  @IsUUID('7', { message: 'El ID del proveedor debe ser un UUID válido' })
   proveedorId!: string;
 
   @IsOptional()

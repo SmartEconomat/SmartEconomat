@@ -52,7 +52,7 @@ describe('AuthController (e2e)', () => {
      * @test Debe registrar un nuevo usuario correctamente (camino feliz).
      */
     it('Debe registrar un nuevo usuario (201)', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .post('/api/v1/auth/register')
         .send(newUser)
         .expect(201)
@@ -66,7 +66,7 @@ describe('AuthController (e2e)', () => {
      * @test No debe permitir registrar un usuario con el mismo email/username (conflicto).
      */
     it('No debe permitir duplicados (409)', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .post('/api/v1/auth/register')
         .send(newUser)
         .expect(409);
@@ -76,7 +76,7 @@ describe('AuthController (e2e)', () => {
      * @test Debe validar que el password cumpla con los requisitos mínimos.
      */
     it('Debe fallar si el password es débil (400)', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .post('/api/v1/auth/register')
         .send({ ...newUser, password: '123', username: 'fail' })
         .expect(400);
@@ -88,7 +88,7 @@ describe('AuthController (e2e)', () => {
      * @test Debe permitir el acceso con credenciales correctas.
      */
     it('Debe loguear correctamente (200)', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
         .send({
           email: 'admin@smarteconomat.com',
@@ -105,7 +105,7 @@ describe('AuthController (e2e)', () => {
      * @test Debe denegar el acceso con contraseña incorrecta.
      */
     it('Debe fallar con password erróneo (400)', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
         .send({
           email: 'admin@smarteconomat.com',
@@ -118,7 +118,7 @@ describe('AuthController (e2e)', () => {
      * @test Debe fallar con un email no registrado.
      */
     it('Debe fallar con email inexistente (400)', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
         .send({
           email: 'nonexistent@test.com',

@@ -2,7 +2,7 @@ import { IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
 import { Alergeno } from '../../enums/producto.enums';
 
 export class CreateProductoAlergenoDto {
-  @IsUUID('4', { message: 'El id del producto debe ser un UUID v4 válido' })
+  @IsUUID('7', { message: 'El id del producto debe ser un UUID válido' })
   @IsNotEmpty({ message: 'El id del producto es obligatorio' })
   idProducto: string;
 

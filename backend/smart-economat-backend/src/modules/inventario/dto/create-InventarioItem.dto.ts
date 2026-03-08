@@ -7,7 +7,7 @@ import {
   IsDateString,
 } from 'class-validator';
 export class CreateInventarioItemDto {
-  @IsUUID('all', {
+  @IsUUID('7', {
     message: 'El id del producto-proveedor debe ser un UUID válido',
   })
   @IsNotEmpty({ message: 'El id del producto-proveedor es obligatorio' })
@@ -26,7 +26,7 @@ export class CreateInventarioItemDto {
   @Min(0, { message: 'La cantidad máxima no puede ser negativa' })
   cantidadMaxima?: number;
 
-  @IsUUID('all', { message: 'El id de la ubicación debe ser un UUID válido' })
+  @IsUUID('7', { message: 'El id de la ubicación debe ser un UUID válido' })
   @IsNotEmpty({ message: 'El id de la ubicación es obligatorio' })
   ubicacionId: string;
 

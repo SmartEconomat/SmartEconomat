@@ -23,6 +23,7 @@ import * as path from 'path';
  */
 
 const isProduction = process.env.NODE_ENV === 'production';
+const isTest = process.env.NODE_ENV === 'test';
 const i18nPath = isProduction
   ? path.join(__dirname, '../i18n/')
   : path.join(process.cwd(), 'src/i18n/');
@@ -33,7 +34,7 @@ const i18nPath = isProduction
       fallbackLanguage: 'es',
       loaderOptions: {
         path: i18nPath,
-        watch: !isProduction,
+        watch: !isProduction && !isTest,
       },
       resolvers: [
         { use: QueryResolver, options: ['lang'] },

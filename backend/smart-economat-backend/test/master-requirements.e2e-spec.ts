@@ -42,13 +42,13 @@ describe('SmartEconomat Master E2E Suite', () => {
 
     dataSource = app.get(DataSource);
 
-    const adminRes = await request(app.getHttpServer())
+    const adminRes = await request(app.getHttpServer() as string)
       .post('/api/v1/auth/login')
       .send({ email: 'admin@smarteconomat.com', password: SEED_PASS })
       .expect(200);
     adminToken = adminRes.body.data.access_token;
 
-    const profRes = await request(app.getHttpServer())
+    const profRes = await request(app.getHttpServer() as string)
       .post('/api/v1/auth/login')
       .send({ email: 'profesor1@smarteconomat.com', password: SEED_PASS })
       .expect(200);
@@ -61,22 +61,22 @@ describe('SmartEconomat Master E2E Suite', () => {
 
   describe('AUTH - Autenticación', () => {
     it('[AUTH-01/02] Login Admin & Profesor correctos', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
         .send({ email: 'admin', password: SEED_PASS })
         .expect(200);
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
         .send({ email: 'profesor1', password: SEED_PASS })
         .expect(200);
     });
 
     it('[AUTH-04/05] Login falla con datos incorrectos', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
         .send({ email: 'admin', password: 'wrong' })
         .expect(400);
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
         .send({ email: 'nonexistent', password: SEED_PASS })
         .expect(400);
@@ -94,7 +94,7 @@ describe('SmartEconomat Master E2E Suite', () => {
     };
 
     it('[REG-01] Registro exitoso', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .post('/api/v1/alumnos/register')
         .send(regData)
         .expect(201);
@@ -109,12 +109,12 @@ describe('SmartEconomat Master E2E Suite', () => {
         .findOne({ where: { user: { id: user?.id } } });
       alumnoId = alu!.id;
 
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .patch(`/api/v1/profesores/alumnos/${alumnoId}/activate`)
         .set('Authorization', `Bearer ${profToken}`)
         .expect(200);
 
-      const res = await request(app.getHttpServer())
+      const res = await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
         .send({ email: studentUsername, password: 'Password123!' });
       alumnoToken = res.body.data.access_token;
@@ -123,13 +123,13 @@ describe('SmartEconomat Master E2E Suite', () => {
 
   describe('TP - Contraseñas Provisionales', () => {
     it('[TP-03] Generar provisional y obligar cambio', async () => {
-      const res = await request(app.getHttpServer())
+      const res = await request(app.getHttpServer() as string)
         .post(`/api/v1/profesores/alumnos/${alumnoId}/force-reset`)
         .set('Authorization', `Bearer ${profToken}`)
         .expect(201);
 
       const prov = res.body.data.provisionalPassword;
-      const login = await request(app.getHttpServer())
+      const login = await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
         .send({ email: studentUsername, password: prov })
         .expect(200);
@@ -139,14 +139,14 @@ describe('SmartEconomat Master E2E Suite', () => {
 
   describe('AUTHZ & SEC - Seguridad y Administración', () => {
     it('[AUTHZ-01] Alumno rechazado en endpoint admin', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .post('/api/v1/admin/profesores')
         .set('Authorization', `Bearer ${alumnoToken}`)
         .expect(403);
     });
 
     it('[SEC-02] No leaking de password hash', async () => {
-      const res = await request(app.getHttpServer())
+      const res = await request(app.getHttpServer() as string)
         .get('/api/v1/usuarios/perfil')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
@@ -156,7 +156,7 @@ describe('SmartEconomat Master E2E Suite', () => {
 
   describe('EDGE - Casos Límites', () => {
     it('[EDGE-04] Numero clase negativo rechazado', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .post('/api/v1/alumnos/register')
         .send({
           username: 'edge_neg',

@@ -16,6 +16,8 @@ import {
   UserStatus,
 } from '../src/modules/usuario/enums/usuario.enums';
 import * as bcrypt from 'bcrypt';
+import { Alumno } from '../src/modules/alumno/alumno.entity/alumno.entity';
+import { Profesor } from '../src/modules/profesor/profesor.entity/profesor.entity';
 
 describe('User Lifecycle & Password Recovery (e2e)', () => {
   let app: INestApplication;
@@ -41,7 +43,7 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
 
     dataSource = app.get(DataSource);
 
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as string)
       .post('/api/v1/auth/login')
       .send({
         email: 'admin@smarteconomat.com',
@@ -65,7 +67,7 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
     let alumnoId: string;
 
     it('Debe permitir el registro de un Alumno (sin email)', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .post('/api/v1/alumnos/register')
         .send(alumnoData)
         .expect(201);
@@ -78,14 +80,14 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
     });
 
     it('No debe permitir login de Alumno inactivo', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
         .send({ email: alumnoData.username, password: alumnoData.password })
         .expect(400);
     });
 
     it('Profesor debe poder activar a su Alumno', async () => {
-      const profLogin = await request(app.getHttpServer())
+      const profLogin = await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
         .send({
           email: 'profesor1@smarteconomat.com',
@@ -93,18 +95,16 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
         });
       const profToken = profLogin.body.data.access_token;
 
-      const AlumnoRepo = dataSource.getRepository(
-        require('../src/modules/alumno/alumno.entity/alumno.entity').Alumno
-      );
+      const AlumnoRepo = dataSource.getRepository(Alumno);
       const user = await dataSource
         .getRepository(Usuario)
         .findOne({ where: { username: alumnoData.username } });
       const alumno = await AlumnoRepo.findOne({
         where: { user: { id: user?.id } },
       });
-      alumnoId = alumno?.id;
+      alumnoId = alumno?.id || '';
 
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .patch(`/api/v1/profesores/alumnos/${alumnoId}/activate`)
         .set('Authorization', `Bearer ${profToken}`)
         .expect(200);
@@ -118,7 +118,7 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
 
   describe('Flow: Password Recovery (Email)', () => {
     it('Admin (con email) debe recibir token de recuperación', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .post('/api/v1/auth/forgot-password')
         .send({ email: 'admin@smarteconomat.com' })
         .expect(200);
@@ -131,7 +131,7 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
     });
 
     it('Profesor (con email) debe recibir token de recuperación', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .post('/api/v1/auth/forgot-password')
         .send({ email: 'profesor1@smarteconomat.com' })
         .expect(200);
@@ -149,7 +149,7 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
     let alumnoUserId: string;
 
     it('Profesor debe poder resetear password de Alumno (sin email)', async () => {
-      const profLogin = await request(app.getHttpServer())
+      const profLogin = await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
         .send({
           email: 'profesor1@smarteconomat.com',
@@ -157,16 +157,14 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
         });
       const profToken = profLogin.body.data.access_token;
 
-      const AlumnoRepo = dataSource.getRepository(
-        require('../src/modules/alumno/alumno.entity/alumno.entity').Alumno
-      );
+      const AlumnoRepo = dataSource.getRepository(Alumno);
       const alu = await AlumnoRepo.findOne({
         where: { slot: { aula: 'Aula E2E' } },
         relations: ['user'],
       });
-      alumnoUserId = alu?.user?.id;
+      alumnoUserId = alu?.user?.id || '';
 
-      const res = await request(app.getHttpServer())
+      const res = await request(app.getHttpServer() as string)
         .post(`/api/v1/profesores/alumnos/${alu?.id}/force-reset`)
         .set('Authorization', `Bearer ${profToken}`)
         .expect(201);
@@ -180,7 +178,7 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
         .getRepository(Usuario)
         .findOne({ where: { username: 'profesor2' } });
 
-      const res = await request(app.getHttpServer())
+      const res = await request(app.getHttpServer() as string)
         .post(`/api/v1/admin/users/${profUser?.id}/force-reset`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(201);
@@ -189,11 +187,11 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
     });
 
     it('Alumno debe cambiar contraseña provisional al loguearse', async () => {
-      const aluUser = await dataSource
-        .getRepository(Usuario)
-        .findOne({ where: { id: alumnoUserId } });
+      const aluUser = await dataSource.getRepository(Usuario).findOne({
+        where: { id: alumnoUserId || '00000000-0000-0000-0000-000000000000' },
+      });
 
-      const loginRes = await request(app.getHttpServer())
+      const loginRes = await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
         .send({ email: aluUser?.username, password: provisionalPass })
         .expect(200);
@@ -201,7 +199,7 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
       expect(loginRes.body.data.requirePasswordChange).toBe(true);
       const tempToken = loginRes.body.data.access_token;
 
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .post('/api/v1/auth/change-password')
         .set('Authorization', `Bearer ${tempToken}`)
         .send({
@@ -210,7 +208,7 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
         })
         .expect(200);
 
-      const finalLogin = await request(app.getHttpServer())
+      const finalLogin = await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
         .send({ email: aluUser?.username, password: 'FinalSecurePass123!' })
         .expect(200);
@@ -236,10 +234,7 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
         })
       );
 
-      const ProfRepo = dataSource.getRepository(
-        require('../src/modules/profesor/profesor.entity/profesor.entity')
-          .Profesor
-      );
+      const ProfRepo = dataSource.getRepository(Profesor);
       await ProfRepo.save(
         ProfRepo.create({
           user: prof2User,
@@ -247,14 +242,12 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
         })
       );
 
-      const prof2Login = await request(app.getHttpServer())
+      const prof2Login = await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
         .send({ email: prof2User.username, password: 'SmartEconomat2026!' });
       prof2Token = prof2Login.body.data.access_token;
 
-      const AlumnoRepo = dataSource.getRepository(
-        require('../src/modules/alumno/alumno.entity/alumno.entity').Alumno
-      );
+      const AlumnoRepo = dataSource.getRepository(Alumno);
       const alu = await AlumnoRepo.findOne({
         where: { slot: { aula: 'Aula E2E' } },
       });
@@ -262,14 +255,14 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
     });
 
     it('Profesor NO puede activar un alumno de otro profesor', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .patch(`/api/v1/profesores/alumnos/${foreignAlumnoId}/activate`)
         .set('Authorization', `Bearer ${prof2Token}`)
         .expect(404);
     });
 
     it('Profesor NO puede resetear password de un alumno ajeno', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .post(`/api/v1/profesores/alumnos/${foreignAlumnoId}/force-reset`)
         .set('Authorization', `Bearer ${prof2Token}`)
         .expect(404);
@@ -283,7 +276,7 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
         numeroClase: 202,
         cialProfesor: 'CIAL-11111',
       };
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .post('/api/v1/alumnos/register')
         .send(aluData);
 
@@ -293,12 +286,12 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
       user!.status = UserStatus.ACTIVE;
       await dataSource.getRepository(Usuario).save(user!);
 
-      const aluLogin = await request(app.getHttpServer())
+      const aluLogin = await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
         .send({ email: aluData.username, password: aluData.password });
       const aluToken = aluLogin.body.data.access_token;
 
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .post(`/api/v1/admin/users/${user?.id}/force-reset`)
         .set('Authorization', `Bearer ${aluToken}`)
         .expect(403);

@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { newDb } from 'pg-mem';
 import type { DataSource } from 'typeorm';
 
@@ -11,15 +12,38 @@ db.public.registerFunction({
   implementation: () => 'PostgreSQL 14.0',
 });
 
-const crypto = require('crypto') as typeof import('crypto');
+/**
+ * Genera un UUID v7 básico para propósitos de test.
+ */
+const uuidv7 = () => {
+  const timestamp = Date.now();
+  const hex = timestamp.toString(16).padStart(12, '0');
+  const p1 = hex.substring(0, 8);
+  const p2 = hex.substring(8, 12);
+  const p3 =
+    '7' +
+    Math.floor(Math.random() * 0x1000)
+      .toString(16)
+      .padStart(3, '0');
+  const p4 =
+    (8 + Math.floor(Math.random() * 4)).toString(16) +
+    Math.floor(Math.random() * 0x1000)
+      .toString(16)
+      .padStart(3, '0');
+  const p5 = Array.from({ length: 12 }, () =>
+    Math.floor(Math.random() * 16).toString(16)
+  ).join('');
+  return `${p1}-${p2}-${p3}-${p4}-${p5}`;
+};
+
 db.public.registerFunction({
   name: 'uuid_generate_v7',
-  implementation: () => crypto.randomUUID(),
+  implementation: () => uuidv7(),
   impure: true,
 });
 db.public.registerFunction({
   name: 'uuid_generate_v4',
-  implementation: () => crypto.randomUUID(),
+  implementation: () => randomUUID() as string,
   impure: true,
 });
 
