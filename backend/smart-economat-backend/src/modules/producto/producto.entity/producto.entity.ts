@@ -1,20 +1,11 @@
-import {
-  Entity,
-  Column,
-  OneToMany,
-  Index,
-  Check,
-  type Relation,
-} from 'typeorm';
+import { Entity, Column, OneToMany, Index, Check } from 'typeorm';
+import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 import { TipoProducto, UnidadMedida } from '../enums/producto.enums';
-import type { ProductoAlergeno } from '../producto-alergeno.entity/producto-alergeno.entity';
-import type { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
+import { ProductoAlergeno } from '../producto-alergeno.entity/producto-alergeno.entity';
+import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
 
-/**
- * Producto Entity
- */
 /**
  * Entidad Producto
  *
@@ -25,8 +16,8 @@ import type { ProductoProveedor } from '../producto-proveedor.entity/producto-pr
  * @extends {BaseEntity}
  */
 @Entity({ name: 'producto' })
-@Index('idx_producto_nombre', ['nombre'])
-@Index('idx_producto_codigo_barras', ['codigoBarras'])
+@Index(['nombre'])
+@Index(['codigoBarras'])
 @Check(`"fecha_caducidad" IS NULL OR "fecha_caducidad" > "created_at"`)
 export class Producto extends BaseEntity {
   /**
@@ -59,7 +50,7 @@ export class Producto extends BaseEntity {
   unidad?: UnidadMedida;
 
   /**
-   * Fecha de caducidad del lote actual o referencia general.
+   * Fecha de caducidad del lote actual or referencia general.
    * Constraint: Debe ser mayor a la fecha de creación.
    * @type {Date | undefined}
    */
@@ -113,7 +104,7 @@ export class Producto extends BaseEntity {
   /**
    * Relación con los alérgenos que contiene el producto.
    */
-  @OneToMany('ProductoAlergeno', (pa: ProductoAlergeno) => pa.producto, {
+  @OneToMany(() => ProductoAlergeno, (pa) => pa.producto, {
     cascade: true,
   })
   alergenos?: Relation<ProductoAlergeno[]>;
@@ -121,6 +112,6 @@ export class Producto extends BaseEntity {
   /**
    * Relación con los proveedores que suministran este producto.
    */
-  @OneToMany('ProductoProveedor', (pp: ProductoProveedor) => pp.producto)
+  @OneToMany(() => ProductoProveedor, (pp) => pp.producto)
   proveedores!: Relation<ProductoProveedor[]>;
 }

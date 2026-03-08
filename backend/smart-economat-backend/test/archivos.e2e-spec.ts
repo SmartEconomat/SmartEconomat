@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   INestApplication,
@@ -18,7 +19,9 @@ describe('ArchivoController (e2e)', () => {
   let app: INestApplication;
   let adminToken: string;
   let archivoId: string;
-  const testUploadsDir = path.join(__dirname, '..', 'uploads');
+  const testUploadsDir = path.resolve(
+    process.env.LOCAL_STORAGE_PATH || './uploads_test'
+  );
 
   beforeAll(async () => {
     if (!fs.existsSync(testUploadsDir)) {
@@ -45,7 +48,7 @@ describe('ArchivoController (e2e)', () => {
       .post('/api/v1/auth/login')
       .send({
         email: 'admin@smarteconomat.com',
-        password: '123456',
+        password: 'SmartEconomat2026!',
       });
     adminToken = response.body.data.access_token;
   });

@@ -6,15 +6,15 @@ import {
   OneToMany,
   Index,
   Check,
-  type Relation,
 } from 'typeorm';
+import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 import { EstadoPedido } from '../enums/estado-pedido.enum';
-import type { Usuario } from '../../usuario/usuario.entity/usuario.entity';
-import type { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
-import type { PedidoProducto } from '../pedido-producto.entity/pedido-producto.entity';
-import type { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
+import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
+import { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
+import { PedidoProducto } from '../pedido-producto.entity/pedido-producto.entity';
+import { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
 
 /**
  * Entidad Pedido
@@ -32,35 +32,41 @@ import type { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entit
  * @extends {BaseEntity}
  */
 @Entity({ name: 'pedido' })
-@Index('idx_pedido_estado', ['estado'])
-@Index('idx_pedido_fecha', ['fechaPedido'])
-@Index('idx_pedido_usuario', ['usuario'])
-@Index('idx_pedido_proveedor', ['proveedor'])
-@Index('idx_pedido_estado_created', ['estado', 'createdAt'])
+@Index(['estado'])
+@Index(['fechaPedido'])
+@Index(['usuarioId'])
+@Index(['proveedorId'])
+@Index(['estado', 'createdAt'])
 @Check(`"coste_total" >= 0`)
 export class Pedido extends BaseEntity {
+  @Column({ name: 'usuario_id', nullable: true })
+  usuarioId?: string;
+
+  @Column({ name: 'proveedor_id', nullable: true })
+  proveedorId?: string;
+
   /**
    * Usuario que creó el pedido.
    * La relación es SET NULL para mantener histórico si el usuario se borra.
    * @type {Usuario | null}
    */
-  @ManyToOne('Usuario', (usuario: Usuario) => usuario.pedidos, {
+  @ManyToOne(() => Usuario, (usuario) => usuario.pedidos, {
     nullable: true,
     onDelete: 'SET NULL',
   })
-  @JoinColumn({ name: 'id_usuario', referencedColumnName: 'id' })
-  usuario?: Relation<Usuario> | null;
+  @JoinColumn({ name: 'usuario_id' })
+  usuario?: Relation<Usuario>;
 
   /**
    * Proveedor al que se realiza el pedido.
    * Obligatorio para trazar reclamaciones y facturación.
    */
-  @ManyToOne('Proveedor', (proveedor: Proveedor) => proveedor.pedidos, {
+  @ManyToOne(() => Proveedor, (proveedor) => proveedor.pedidos, {
     nullable: true,
     onDelete: 'RESTRICT',
   })
-  @JoinColumn({ name: 'id_proveedor', referencedColumnName: 'id' })
-  proveedor?: Relation<Proveedor> | null;
+  @JoinColumn({ name: 'proveedor_id' })
+  proveedor?: Relation<Proveedor>;
 
   /**
    * Fecha de creación del pedido.
@@ -110,7 +116,7 @@ export class Pedido extends BaseEntity {
   /**
    * Líneas de detalle del pedido (productos, cantidades, precios).
    */
-  @OneToMany('PedidoProducto', (pp: PedidoProducto) => pp.pedido, {
+  @OneToMany(() => PedidoProducto, (pp) => pp.pedido, {
     cascade: true,
   })
   pedidoProductos!: Relation<PedidoProducto[]>;
@@ -119,7 +125,7 @@ export class Pedido extends BaseEntity {
    * Relación con las recepciones que se han hecho de este pedido.
    * Puede haber múltiples recepciones para un solo pedido (entregas parciales).
    */
-  @OneToMany('RecepcionPedido', (rp: RecepcionPedido) => rp.pedido)
+  @OneToMany(() => RecepcionPedido, (rp) => rp.pedido)
   recepcionesPedido!: Relation<RecepcionPedido[]>;
 
   /**

@@ -1,4 +1,5 @@
 import { Entity, Column, OneToMany, Index } from 'typeorm';
+import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { AlbaranPedidoRecepcion } from '../albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
 
@@ -16,5 +17,5 @@ export class Albaran extends BaseEntity {
   fecha?: Date;
 
   @OneToMany(() => AlbaranPedidoRecepcion, (apr) => apr.albaran)
-  albaranPedidoRecepcion!: AlbaranPedidoRecepcion[];
+  albaranPedidoRecepcion!: Relation<AlbaranPedidoRecepcion[]>;
 }

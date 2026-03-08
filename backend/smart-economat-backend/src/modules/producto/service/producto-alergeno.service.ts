@@ -37,7 +37,7 @@ export class ProductoAlergenoService {
     }
 
     const existing = await this.productoAlergenoRepository.findOne({
-      where: { idProducto, alergeno },
+      where: { productoId: idProducto, alergeno },
     });
     if (existing) {
       throw new ConflictException(
@@ -46,7 +46,7 @@ export class ProductoAlergenoService {
     }
 
     const productoAlergeno = this.productoAlergenoRepository.create({
-      idProducto,
+      productoId: idProducto,
       alergeno,
       producto,
     });
@@ -64,7 +64,7 @@ export class ProductoAlergenoService {
       .leftJoinAndSelect('pa.producto', 'producto');
 
     if (idProducto) {
-      qb.where('pa.idProducto = :idProducto', { idProducto });
+      qb.where('pa.productoId = :idProducto', { idProducto });
     }
 
     return qb.getMany();
@@ -83,7 +83,7 @@ export class ProductoAlergenoService {
     }
 
     return this.productoAlergenoRepository.find({
-      where: { idProducto },
+      where: { productoId: idProducto },
       relations: ['producto'],
     });
   }
@@ -108,13 +108,13 @@ export class ProductoAlergenoService {
       .createQueryBuilder()
       .delete()
       .from(ProductoAlergeno)
-      .where('id_producto = :idProducto', { idProducto })
+      .where('producto_id = :idProducto', { idProducto })
       .execute();
 
     const uniqueAlergenos = [...new Set(dto.alergenos)];
     const newRelations = uniqueAlergenos.map((alergeno) =>
       this.productoAlergenoRepository.create({
-        idProducto,
+        productoId: idProducto,
         alergeno,
         producto,
       })
@@ -136,7 +136,7 @@ export class ProductoAlergenoService {
     }
 
     const productoAlergeno = await this.productoAlergenoRepository.findOne({
-      where: { idProducto, alergeno: alergeno as Alergeno },
+      where: { productoId: idProducto, alergeno: alergeno as Alergeno },
     });
     if (!productoAlergeno) {
       throw new NotFoundException(
@@ -148,7 +148,7 @@ export class ProductoAlergenoService {
       .createQueryBuilder()
       .delete()
       .from(ProductoAlergeno)
-      .where('id_producto = :idProducto AND alergeno = :alergeno', {
+      .where('producto_id = :idProducto AND alergeno = :alergeno', {
         idProducto,
         alergeno,
       })

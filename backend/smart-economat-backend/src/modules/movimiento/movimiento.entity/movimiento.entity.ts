@@ -1,4 +1,5 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index, Check } from 'typeorm';
+import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 import { TipoMovimiento } from '../enums/movimiento.enums';
@@ -17,15 +18,24 @@ import { ProductoProveedor } from '../../producto/producto-proveedor.entity/prod
  * @extends {BaseEntity}
  */
 @Entity({ name: 'movimiento' })
-@Index('idx_movimiento_tipo', ['tipo'])
-@Index('idx_movimiento_usuario', ['usuario'])
-@Index('idx_movimiento_entidad_tipo', ['entidad', 'tipo'])
-@Index('idx_movimiento_entidad_id', ['entidadId'])
-@Index('idx_movimiento_polimorfico', ['entidadId', 'entidad'])
-@Index('idx_movimiento_inventario', ['inventario'])
-@Index('idx_movimiento_producto_proveedor', ['productoProveedor'])
+@Index(['tipo'])
+@Index(['usuarioId'])
+@Index(['entidad', 'tipo'])
+@Index(['entidadId'])
+@Index(['entidadId', 'entidad'])
+@Index(['inventarioId'])
+@Index(['productoProveedorId'])
 @Check(`"cantidad" >= 0`)
 export class Movimiento extends BaseEntity {
+  @Column({ name: 'usuario_id', nullable: true })
+  usuarioId?: string;
+
+  @Column({ name: 'inventario_id', nullable: true })
+  inventarioId?: string;
+
+  @Column({ name: 'producto_proveedor_id', nullable: true })
+  productoProveedorId?: string;
+
   /**
    * Tipo de movimiento (ENTRADA, SALIDA, DEVOLUCION, etc.).
    * Determina si suma o resta al inventario.
@@ -55,25 +65,31 @@ export class Movimiento extends BaseEntity {
     nullable: true,
     onDelete: 'SET NULL',
   })
-  @JoinColumn({ name: 'id_usuario', referencedColumnName: 'id' })
-  usuario?: Usuario | null;
+  @JoinColumn({ name: 'usuario_id' })
+  usuario?: Relation<Usuario>;
 
   /**
    * Inventario afectado por el movimiento.
    * Permite conocer el lote exacto y ubicación.
    * ON DELETE SET NULL permite mantener el historial aunque se borre el inventario físico.
    */
-  @ManyToOne(() => Inventario, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'id_inventario' })
-  inventario?: Inventario | null;
+  @ManyToOne(() => Inventario, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'inventario_id' })
+  inventario?: Relation<Inventario>;
 
   /**
    * ProductoProveedor asociado.
    * Facilita consultar "todos los movimientos de Coca-Cola" sin joins complejos.
    */
-  @ManyToOne(() => ProductoProveedor, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'id_producto_proveedor' })
-  productoProveedor?: ProductoProveedor | null;
+  @ManyToOne(() => ProductoProveedor, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'producto_proveedor_id' })
+  productoProveedor?: Relation<ProductoProveedor>;
 
   /**
    * Tipo de entidad origen que causó el movimiento ('Recepcion', 'Pedido', 'AjusteManual').

@@ -1,28 +1,28 @@
-import {
-  Column,
-  Entity,
-  Index,
-  JoinColumn,
-  ManyToOne,
-  type Relation,
-} from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
-import type { Receta } from '../receta.entity/receta.entity';
-import type { Usuario } from '../../usuario/usuario.entity/usuario.entity';
+import { Receta } from '../receta.entity/receta.entity';
+import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 
-@Index('idx_produccion_lote_receta', ['receta'])
-@Index('idx_produccion_lote_usuario', ['usuario'])
-@Index('idx_produccion_lote_fecha', ['fechaProduccion'])
 @Entity('produccion_lote')
+@Index(['recetaId'])
+@Index(['usuarioId'])
+@Index(['fechaProduccion'])
 export class ProduccionLote extends BaseEntity {
-  @ManyToOne('Receta', { nullable: false, onDelete: 'RESTRICT' })
+  @Column({ name: 'receta_id' })
+  recetaId!: string;
+
+  @Column({ name: 'usuario_id', nullable: true })
+  usuarioId?: string;
+
+  @ManyToOne(() => Receta, { nullable: false, onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'receta_id' })
   receta!: Relation<Receta>;
 
-  @ManyToOne('Usuario', { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => Usuario, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'usuario_id' })
-  usuario?: Relation<Usuario> | null;
+  usuario?: Relation<Usuario>;
 
   @Column({
     type: 'numeric',

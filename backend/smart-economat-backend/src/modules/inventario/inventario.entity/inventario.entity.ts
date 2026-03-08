@@ -1,16 +1,9 @@
-import {
-  Entity,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  Index,
-  Check,
-  type Relation,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, Index, Check } from 'typeorm';
+import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
-import type { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
-import type { Ubicacion } from '../../ubicacion/ubicacion.entity/ubicacion.entity';
+import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
+import { Ubicacion } from '../../ubicacion/ubicacion.entity/ubicacion.entity';
 
 /**
  * Entidad Inventario
@@ -26,24 +19,30 @@ import type { Ubicacion } from '../../ubicacion/ubicacion.entity/ubicacion.entit
  * @extends {BaseEntity}
  */
 @Entity({ name: 'inventario' })
-@Index('idx_inventario_producto_proveedor', ['productoProveedor'])
-@Index('idx_inventario_ubicacion', ['ubicacion'])
-@Index('idx_inventario_fecha_caducidad', ['fechaCaducidad'])
-@Index('idx_inventario_ubicacion_caducidad', ['ubicacion', 'fechaCaducidad'])
+@Index(['productoProveedorId'])
+@Index(['ubicacionId'])
+@Index(['fechaCaducidad'])
+@Index(['ubicacionId', 'fechaCaducidad'])
 @Check(`"cantidad_actual" >= 0`)
 @Check(`"cantidad_minima" >= 0`)
 @Check(`"cantidad_maxima" IS NULL OR "cantidad_maxima" >= "cantidad_minima"`)
 export class Inventario extends BaseEntity {
+  @Column({ name: 'producto_proveedor_id' })
+  productoProveedorId!: string;
+
+  @Column({ name: 'ubicacion_id' })
+  ubicacionId!: string;
+
   /**
    * ProductoProveedor asociado al inventario.
    * Representa qué producto concreto (de qué proveedor) está almacenado.
    * Constraint: RESTRICT evita orphan records si se intenta borrar el proveedor.
    */
-  @ManyToOne('ProductoProveedor', (pp: ProductoProveedor) => pp.inventarios, {
+  @ManyToOne(() => ProductoProveedor, (pp) => pp.inventarios, {
     onDelete: 'RESTRICT',
     nullable: false,
   })
-  @JoinColumn({ name: 'id_producto_proveedor' })
+  @JoinColumn({ name: 'producto_proveedor_id' })
   productoProveedor!: Relation<ProductoProveedor>;
 
   /**
@@ -94,11 +93,11 @@ export class Inventario extends BaseEntity {
    * Ubicación física dentro del almacén.
    * Modificado para ser dinámico gestionado en BDD en lugar de enum.
    */
-  @ManyToOne('Ubicacion', (ubicacion: Ubicacion) => ubicacion.inventarios, {
+  @ManyToOne(() => Ubicacion, (ubicacion) => ubicacion.inventarios, {
     onDelete: 'RESTRICT',
     nullable: false,
   })
-  @JoinColumn({ name: 'id_ubicacion' })
+  @JoinColumn({ name: 'ubicacion_id' })
   ubicacion!: Relation<Ubicacion>;
 
   /**

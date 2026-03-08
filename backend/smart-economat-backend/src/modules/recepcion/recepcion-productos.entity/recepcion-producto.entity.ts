@@ -1,16 +1,9 @@
-import {
-  Entity,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  Index,
-  Check,
-  type Relation,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, Index, Check } from 'typeorm';
+import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
-import type { Recepcion } from '../recepcion.entity/recepcion.entity';
-import type { PedidoProducto } from '../../pedido/pedido-producto.entity/pedido-producto.entity';
+import { Recepcion } from '../recepcion.entity/recepcion.entity';
+import { PedidoProducto } from '../../pedido/pedido-producto.entity/pedido-producto.entity';
 
 /**
  * Entidad RecepcionProducto
@@ -22,34 +15,36 @@ import type { PedidoProducto } from '../../pedido/pedido-producto.entity/pedido-
  * @extends {BaseEntity}
  */
 @Entity({ name: 'recepcion_producto' })
-@Index('idx_recepcion_producto_recepcion', ['recepcion'])
-@Index('idx_recepcion_producto_pedido_producto', ['pedidoProducto'])
+@Index(['recepcionId'])
+@Index(['pedidoProductoId'])
 @Check(`"cantidad_recibida" >= 0`)
 export class RecepcionProducto extends BaseEntity {
+  @Column({ name: 'recepcion_id' })
+  recepcionId!: string;
+
+  @Column({ name: 'pedido_producto_id' })
+  pedidoProductoId!: string;
+
   /**
    * Recepción a la que pertenece este detalle.
    * CASCADE onDelete para borrar los detalles si se borra la cabecera.
    */
-  @ManyToOne(
-    'Recepcion',
-    (recepcion: Recepcion) => recepcion.recepcionProductos,
-    {
-      onDelete: 'CASCADE',
-      nullable: false,
-    }
-  )
-  @JoinColumn({ name: 'id_recepcion', referencedColumnName: 'id' })
+  @ManyToOne(() => Recepcion, (recepcion) => recepcion.recepcionProductos, {
+    onDelete: 'CASCADE',
+    nullable: false,
+  })
+  @JoinColumn({ name: 'recepcion_id' })
   recepcion!: Relation<Recepcion>;
 
   /**
    * Línea de pedido original que se está recibiendo.
    * Permite calcular diferencias (pedido - recibido).
    */
-  @ManyToOne('PedidoProducto', {
+  @ManyToOne(() => PedidoProducto, {
     onDelete: 'RESTRICT',
     nullable: false,
   })
-  @JoinColumn({ name: 'id_pedido_producto' })
+  @JoinColumn({ name: 'pedido_producto_id' })
   pedidoProducto!: Relation<PedidoProducto>;
 
   /**

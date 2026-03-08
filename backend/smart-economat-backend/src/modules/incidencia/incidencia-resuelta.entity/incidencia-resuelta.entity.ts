@@ -1,4 +1,5 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
+import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { Incidencia } from '../incidencia.entity/incidencia.entity';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
@@ -15,9 +16,15 @@ import { TipoResolucion } from '../enums/incidencia.enums';
  * @extends {BaseEntity}
  */
 @Entity({ name: 'incidencia_resuelta' })
-@Index('idx_incidencia_resuelta_incidencia', ['incidencia'])
-@Index('idx_incidencia_resuelta_usuario', ['usuarioResolutor'])
+@Index(['incidenciaId'])
+@Index(['usuarioResolutorId'])
 export class IncidenciaResuelta extends BaseEntity {
+  @Column({ name: 'incidencia_id' })
+  incidenciaId!: string;
+
+  @Column({ name: 'usuario_resolutor_id', nullable: true })
+  usuarioResolutorId?: string;
+
   /**
    * Incidencia a la que pertenece esta resolución.
    * CASCADE onDelete: si se borra la incidencia, se elimina su resolución.
@@ -26,8 +33,8 @@ export class IncidenciaResuelta extends BaseEntity {
     onDelete: 'CASCADE',
     nullable: false,
   })
-  @JoinColumn({ name: 'id_incidencia' })
-  incidencia!: Incidencia;
+  @JoinColumn({ name: 'incidencia_id' })
+  incidencia!: Relation<Incidencia>;
 
   /**
    * Usuario que realizó la resolución.
@@ -37,8 +44,8 @@ export class IncidenciaResuelta extends BaseEntity {
     onDelete: 'SET NULL',
     nullable: true,
   })
-  @JoinColumn({ name: 'id_usuario_resolutor' })
-  usuarioResolutor?: Usuario | null;
+  @JoinColumn({ name: 'usuario_resolutor_id' })
+  usuarioResolutor?: Relation<Usuario>;
 
   /**
    * Tipo de resolución aplicada (aceptada, rechazada, parcial, devolución).

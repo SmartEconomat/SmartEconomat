@@ -5,17 +5,20 @@ import {
   JoinColumn,
   ManyToOne,
   OneToOne,
-  type Relation,
 } from 'typeorm';
+import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { Profesor } from './profesor.entity';
-import type { Alumno } from '../../alumno/alumno.entity/alumno.entity';
+import { Alumno } from '../../alumno/alumno.entity/alumno.entity';
 
 @Entity('alumno_slot')
-@Index('idx_slot_profesor_aula_clase', ['profesor', 'aula', 'numeroClase'], {
+@Index(['profesorId', 'aula', 'numeroClase'], {
   unique: true,
 })
 export class AlumnoSlot extends BaseEntity {
+  @Column({ name: 'profesor_id' })
+  profesorId!: string;
+
   @ManyToOne(() => Profesor, (profesor) => profesor.slots)
   @JoinColumn({ name: 'profesor_id' })
   profesor!: Relation<Profesor>;
@@ -26,6 +29,6 @@ export class AlumnoSlot extends BaseEntity {
   @Column({ name: 'numero_clase' })
   numeroClase!: number;
 
-  @OneToOne('Alumno', 'slot', { nullable: true })
+  @OneToOne(() => Alumno, (alumno) => alumno.slot, { nullable: true })
   alumno?: Relation<Alumno>;
 }
