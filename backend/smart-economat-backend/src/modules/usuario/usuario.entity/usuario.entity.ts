@@ -12,6 +12,7 @@ import { Pedido } from '../../pedido/pedido.entity/pedido.entity';
 import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
 import { Incidencia } from '../../incidencia/incidencia.entity/incidencia.entity';
+import { Archivo } from '../../archivo/archivo.entity/archivo.entity';
 import { rolUsuario } from '../enums/usuario.enums';
 
 @Entity({ name: 'usuario' })
@@ -73,6 +74,9 @@ export class Usuario extends BaseEntity {
 
   @OneToMany(() => Incidencia, (incidencia) => incidencia.usuarioResolutor)
   incidenciasResueltas!: Incidencia[];
+
+  @OneToMany(() => Archivo, (archivo) => archivo.usuario)
+  archivos!: Archivo[];
 
   @BeforeInsert()
   @BeforeUpdate()

@@ -54,13 +54,19 @@
     "PRODUCTO_ALERGENO_ALREADY_EXISTS": "This allergen is already associated with that product",
     "HISTORIAL_PRECIO_NOT_FOUND": "Price history record not found",
     "PRECIO_NO_NEGATIVO": "Price cannot be negative",
-    "DUPLICATE_INGREDIENT": "Duplicate ingredients are not allowed within the same recipe"
+    "DUPLICATE_INGREDIENT": "Duplicate ingredients are not allowed within the same recipe",
+    "FILE_NOT_FOUND": "File not found",
+    "FILE_REQUIRED": "No file was provided",
+    "FILE_NOT_FOUND_PHYSICAL": "Physical file not found on disk",
+    "STORAGE_TYPE_LOCAL_ONLY": "Only applicable for local storage",
+    "FILE_DELETE_FORBIDDEN": "You do not have permission to delete this file"
   },
   "success": {
     "CREATED": "Successfully created",
     "UPDATED": "Successfully updated",
     "DELETED": "Successfully deleted",
-    "OPERATION_SUCCESSFUL": "Operation completed successfully"
+    "OPERATION_SUCCESSFUL": "Operation completed successfully",
+    "FILE_UPLOADED": "File uploaded successfully"
   },
   "validation": {
     "INVALID_EMAIL": "Email is not valid",
