@@ -9,10 +9,10 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
-  ParseUUIDPipe,
   Request,
   Query,
 } from '@nestjs/common';
+import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { CreatePedidoDto } from '../dto/create-pedido.dto';
 import { CancelPedidoDto } from '../dto/cancelPedido.dto';
 import { UpdatePedidoDto } from '../dto/updatePedido.dto';
@@ -48,14 +48,14 @@ export class PedidoController {
 
   @Get(':id')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Pedido> {
+  findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Pedido> {
     return this.pedidoService.findOne(id);
   }
 
   @Patch(':id')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: UpdatePedidoDto
   ): Promise<Pedido> {
     return this.pedidoService.update(id, dto);
@@ -64,14 +64,14 @@ export class PedidoController {
   @Delete(':id')
   @Roles(rolUsuario.ADMINISTRADOR)
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+  remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.pedidoService.remove(id);
   }
 
   @Patch(':id/fecha-entrega')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   updateFechaEntrega(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: UpdatePedidoDto
   ): Promise<Pedido> {
     return this.pedidoService.updateFechaEntrega(id, dto);
@@ -80,7 +80,7 @@ export class PedidoController {
   @Patch(':id/cancelar')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   cancelarPedido(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: CancelPedidoDto
   ): Promise<Pedido> {
     return this.pedidoService.cancelarPedido(id, dto);

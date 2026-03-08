@@ -10,7 +10,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { UnidadIngrediente } from '../enums/receta.enums';
 
 export class AddIngredienteDto {
-  @IsUUID()
+  @IsUUID('7')
   productoId!: string;
 
   @IsNumber()

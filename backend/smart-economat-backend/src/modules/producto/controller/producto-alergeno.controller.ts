@@ -9,9 +9,9 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
-  ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
+import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { ProductoAlergenoService } from '../service/producto-alergeno.service';
 import { CreateProductoAlergenoDto } from '../dto/producto-alergeno.dto/create-producto-alergeno.dto';
 import { UpdateProductoAlergenoDto } from '../dto/producto-alergeno.dto/update-producto-alergeno.dto';
@@ -48,7 +48,7 @@ export class ProductoAlergenoController {
   @Get(':id')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
   findOne(
-    @Param('id', ParseUUIDPipe) idProducto: string
+    @Param('id', ParseUUIDv7Pipe) idProducto: string
   ): Promise<ProductoAlergeno[]> {
     return this.productoAlergenoService.findOne(idProducto);
   }
@@ -56,7 +56,7 @@ export class ProductoAlergenoController {
   @Patch(':id')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   update(
-    @Param('id', ParseUUIDPipe) idProducto: string,
+    @Param('id', ParseUUIDv7Pipe) idProducto: string,
     @Body() updateDto: UpdateProductoAlergenoDto
   ): Promise<ProductoAlergeno[]> {
     return this.productoAlergenoService.update(idProducto, updateDto);
@@ -66,7 +66,7 @@ export class ProductoAlergenoController {
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
-    @Param('idProducto', ParseUUIDPipe) idProducto: string,
+    @Param('idProducto', ParseUUIDv7Pipe) idProducto: string,
     @Param('alergeno') alergeno: string
   ): Promise<void> {
     return this.productoAlergenoService.remove(idProducto, alergeno);

@@ -36,7 +36,7 @@ describe('RecepcionController (e2e)', () => {
     app.useGlobalFilters(new GlobalExceptionFilter());
     await app.init();
 
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as string)
       .post('/api/v1/auth/login')
       .send({
         email: 'admin@smarteconomat.com',
@@ -44,7 +44,7 @@ describe('RecepcionController (e2e)', () => {
       });
     adminToken = response.body.data.access_token;
 
-    const profileResponse = await request(app.getHttpServer())
+    const profileResponse = await request(app.getHttpServer() as string)
       .get('/api/v1/usuarios/perfil')
       .set('Authorization', `Bearer ${adminToken}`);
     adminUserId = profileResponse.body.data.id;
@@ -56,7 +56,7 @@ describe('RecepcionController (e2e)', () => {
 
   describe('Procesar Recepción (Batch ACID)', () => {
     it('POST /recepcion - Debe fallar con body vacío (400) por DTO multipedido', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .post('/api/v1/recepcion')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({})
@@ -64,11 +64,11 @@ describe('RecepcionController (e2e)', () => {
     });
 
     it('POST /recepcion - Debe fallar si el pedidoId no existe (404)', async () => {
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .post('/api/v1/recepcion')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          pedidoIds: ['00000000-0000-0000-0000-000000000000'],
+          pedidoIds: ['0191c30c-1e55-7000-8000-000000000000'],
           usuarioId: adminUserId,
           productos: [],
         })

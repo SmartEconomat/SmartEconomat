@@ -6,12 +6,12 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseUUIDPipe,
   Patch,
   Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { HistorialPrecioService } from '../service/historial-precio.service';
 import { CreateHistorialPrecioDto } from '../dto/historial-precio.dto/create-historial-precio.dto';
 import { UpdateHistorialPrecioDto } from '../dto/historial-precio.dto/update-historial-precio.dto';
@@ -54,7 +54,7 @@ export class HistorialPrecioController {
   @Get(':id')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.OK)
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<HistorialPrecio> {
+  findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<HistorialPrecio> {
     return this.historialPrecioService.findOne(id);
   }
 
@@ -62,7 +62,7 @@ export class HistorialPrecioController {
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.OK)
   update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: UpdateHistorialPrecioDto
   ): Promise<HistorialPrecio> {
     return this.historialPrecioService.update(id, dto);
@@ -71,7 +71,7 @@ export class HistorialPrecioController {
   @Delete(':id')
   @Roles(rolUsuario.ADMINISTRADOR)
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+  remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.historialPrecioService.remove(id);
   }
 }

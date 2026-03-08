@@ -30,7 +30,7 @@ describe('AppController (e2e)', () => {
    * @test Debe responder correctamente al endpoint raíz (Hello World).
    */
   it('/ (GET)', () => {
-    return request(app.getHttpServer())
+    return request(app.getHttpServer() as string)
       .get('/')
       .expect(200)
       .expect('Hello World!');

@@ -1,10 +1,17 @@
 {
   "moduleFileExtensions": ["js", "json", "ts"],
-  "rootDir": ".",
+  "rootDir": "..",
   "testEnvironment": "node",
-  "testRegex": ".e2e-spec.ts$",
+  "testRegex": "test/.*\\.e2e-spec\\.ts$",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
-  "setupFilesAfterEnv": ["<rootDir>/setup-env.ts"]
+  "setupFilesAfterEnv": ["<rootDir>/test/setup-env.ts"],
+  "collectCoverageFrom": [
+    "src/**/*.ts",
+    "!src/migrations/*.ts",
+    "!src/**/*.seeder.ts",
+    "!src/main.ts"
+  ],
+  "coverageDirectory": "coverage-e2e"
 }

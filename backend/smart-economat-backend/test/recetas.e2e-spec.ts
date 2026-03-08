@@ -40,7 +40,7 @@ describe('RecetaController (e2e)', () => {
     app.useGlobalFilters(new GlobalExceptionFilter());
     await app.init();
 
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as string)
       .post('/api/v1/auth/login')
       .send({
         email: 'admin@smarteconomat.com',
@@ -48,7 +48,7 @@ describe('RecetaController (e2e)', () => {
       });
     adminToken = response.body.data.access_token;
 
-    const productosRes = await request(app.getHttpServer())
+    const productosRes = await request(app.getHttpServer() as string)
       .get('/api/v1/productos')
       .set('Authorization', `Bearer ${adminToken}`);
     productoId = productosRes.body.data.data[0].id;
@@ -63,7 +63,7 @@ describe('RecetaController (e2e)', () => {
      * @test Debe crear una receta con todos los campos obligatorios.
      */
     it('POST /recetas - Debe crear una receta (201)', async () => {
-      const res = await request(app.getHttpServer())
+      const res = await request(app.getHttpServer() as string)
         .post('/api/v1/recetas')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
@@ -90,7 +90,7 @@ describe('RecetaController (e2e)', () => {
      * @test Debe listar las recetas registradas.
      */
     it('GET /recetas - Debe listar recetas (200)', () => {
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as string)
         .get('/api/v1/recetas')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
@@ -100,7 +100,7 @@ describe('RecetaController (e2e)', () => {
      * @test Debe actualizar los datos de una receta.
      */
     it('PATCH /recetas/:id - Debe actualizar receta (200)', () => {
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as string)
         .patch(`/api/v1/recetas/${recetaId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ nombre: 'Receta Modificada' })
@@ -111,7 +111,7 @@ describe('RecetaController (e2e)', () => {
      * @test Debe eliminar una receta (solo admin).
      */
     it('DELETE /recetas/:id - Debe eliminar receta (204)', () => {
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as string)
         .delete(`/api/v1/recetas/${recetaId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(204);
@@ -121,7 +121,7 @@ describe('RecetaController (e2e)', () => {
      * @test Debe duplicar una receta.
      */
     it('POST /recetas/duplicate - Debe duplicar una receta (201)', async () => {
-      const createRes = await request(app.getHttpServer())
+      const createRes = await request(app.getHttpServer() as string)
         .post('/api/v1/recetas')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
@@ -142,7 +142,7 @@ describe('RecetaController (e2e)', () => {
 
       const originalId = createRes.body.data.id;
 
-      const duplicateRes = await request(app.getHttpServer())
+      const duplicateRes = await request(app.getHttpServer() as string)
         .post('/api/v1/recetas/duplicate')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
@@ -155,12 +155,12 @@ describe('RecetaController (e2e)', () => {
       expect(duplicateRes.body.data.nombre).toBe('Receta Duplicada');
       const duplicatedId = duplicateRes.body.data.id;
 
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .delete(`/api/v1/recetas/${originalId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(204);
 
-      await request(app.getHttpServer())
+      await request(app.getHttpServer() as string)
         .delete(`/api/v1/recetas/${duplicatedId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(204);

@@ -18,6 +18,8 @@ import { Archivo } from '../../archivo/archivo.entity/archivo.entity';
 import { Profesor } from '../../profesor/profesor.entity/profesor.entity';
 import { Alumno } from '../../alumno/alumno.entity/alumno.entity';
 import { Pedido } from '../../pedido/pedido.entity/pedido.entity';
+import { Rol } from '../../roles/entities/rol.entity';
+import { JoinTable, ManyToMany } from 'typeorm';
 
 @Entity({ name: 'usuario' })
 @Index(['username'])
@@ -73,6 +75,17 @@ export class Usuario extends BaseEntity {
 
   @OneToOne(() => Alumno, (alumno) => alumno.user)
   alumno?: Relation<Alumno>;
+
+  @ManyToMany(() => Rol, (rol) => rol.usuarios)
+  @JoinTable({
+    name: 'usuario_rol',
+    joinColumn: { name: 'usuario_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'rol_id', referencedColumnName: 'id' },
+  })
+  roles: Rol[];
+
+  @Column({ type: 'boolean', default: true })
+  activo: boolean;
 
   @BeforeInsert()
   @BeforeUpdate()

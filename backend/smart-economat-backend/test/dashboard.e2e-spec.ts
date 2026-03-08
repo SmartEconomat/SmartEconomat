@@ -36,7 +36,7 @@ describe('DashboardController (e2e)', () => {
     app.useGlobalFilters(new GlobalExceptionFilter());
     await app.init();
 
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as string)
       .post('/api/v1/auth/login')
       .send({
         email: 'admin@smarteconomat.com',
@@ -54,7 +54,7 @@ describe('DashboardController (e2e)', () => {
      * @test Debe obtener las estadísticas generales del dashboard.
      */
     it('GET /api/v1/dashboard/stats - Debe retornar estadísticas (200)', () => {
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as string)
         .get('/api/v1/dashboard/stats')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200)
@@ -70,7 +70,7 @@ describe('DashboardController (e2e)', () => {
      * @test Debe denegar el acceso a las estadísticas si no hay token.
      */
     it('GET /api/v1/dashboard/stats - Debe fallar sin token (401)', () => {
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as string)
         .get('/api/v1/dashboard/stats')
         .expect(401);
     });

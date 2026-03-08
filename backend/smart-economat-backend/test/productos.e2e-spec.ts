@@ -39,7 +39,7 @@ describe('ProductoController (e2e)', () => {
     app.useGlobalFilters(new GlobalExceptionFilter());
     await app.init();
 
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as string)
       .post('/api/v1/auth/login')
       .send({
         email: 'admin@smarteconomat.com',
@@ -57,7 +57,7 @@ describe('ProductoController (e2e)', () => {
      * @test Debe crear un nuevo producto con datos válidos.
      */
     it('POST /productos - Debe crear un producto (201)', async () => {
-      const res = await request(app.getHttpServer())
+      const res = await request(app.getHttpServer() as string)
         .post('/api/v1/productos')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
@@ -83,7 +83,7 @@ describe('ProductoController (e2e)', () => {
      * @test Debe listar todos los productos registrados.
      */
     it('GET /productos - Debe listar productos (200)', () => {
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as string)
         .get('/api/v1/productos')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200)
@@ -96,7 +96,7 @@ describe('ProductoController (e2e)', () => {
      * @test Debe obtener los detalles de un producto por su ID.
      */
     it('GET /productos/:id - Debe obtener un producto (200)', () => {
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as string)
         .get(`/api/v1/productos/${productoId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
@@ -106,7 +106,7 @@ describe('ProductoController (e2e)', () => {
      * @test Debe actualizar el nombre u otros campos de un producto.
      */
     it('PATCH /productos/:id - Debe actualizar producto (200)', () => {
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as string)
         .patch(`/api/v1/productos/${productoId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ nombre: 'Producto Modificado' })
@@ -120,7 +120,7 @@ describe('ProductoController (e2e)', () => {
      * @test Debe eliminar un producto del sistema.
      */
     it('DELETE /productos/:id - Debe eliminar producto (204)', () => {
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as string)
         .delete(`/api/v1/productos/${productoId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(204);
@@ -130,7 +130,7 @@ describe('ProductoController (e2e)', () => {
      * @test No debe encontrar un producto que ha sido eliminado.
      */
     it('GET /productos/:id - Debe dar 404 para producto eliminado', () => {
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as string)
         .get(`/api/v1/productos/${productoId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(404);

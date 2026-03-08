@@ -8,8 +8,8 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
-  ParseUUIDPipe,
 } from '@nestjs/common';
+import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import {
   ApiTags,
   ApiOperation,
@@ -59,7 +59,7 @@ export class ProductoProveedorController {
     description: 'El precio es igual al actual',
   })
   async updatePrecio(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() updatePrecioProductoDto: UpdatePrecioProductoDto
   ): Promise<ProductoProveedor> {
     return this.productoProveedorService.updatePrecio(
@@ -96,7 +96,7 @@ export class ProductoProveedorController {
     description: 'Producto proveedor no encontrado',
   })
   async getHistorial(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDv7Pipe) id: string,
     @Query() query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<HistorialPrecio>> {
     return this.productoProveedorService.getHistorial(id, query);
