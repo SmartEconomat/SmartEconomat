@@ -25,14 +25,18 @@ export type PasoWizard =
 export interface RecepcionLineDto {
     pedidoProductoId: string; 
     cantidadRecibida: number;  
+    cantidadAlbaran?: number;
     estadoVisual: EstadoVisualProducto;
     fechaCaducidad?: Date;
     observaciones?: string;    
+    isWeighedWithScale?: boolean;
 }
 
 export interface ProductoNuevoRecepcionDto extends ProductoNuevoDto {
     cantidadRecibida: number;
+    cantidadAlbaran?: number;
     observaciones?: string;
+    isWeighedWithScale?: boolean;
 }
 
 export interface PedidoRecepcionDto {
@@ -75,16 +79,19 @@ export interface LineaDraft {
     contenido: number;
     cantidadRecibida: number;
     observaciones?: string;
+    isWeighedWithScale?: boolean;
   };
 
   // ── Campos editables ───────────────────────────────
+  cantidadAlbaran: number | '';
   cantidadRecibida: number | '';
+  isWeighedWithScale: boolean;
   estadoVisual: EstadoVisualProducto;
   fechaCaducidad?: string; // Formato YYYY-MM-DD
   observaciones: string;
 
   // ── Estado visual ──────────────────────────────────
-  estado: 'escaneado' | 'sin_rellenar' | 'valida' | 'error' | 'parcial' | 'rechazada' | 'exceso' | '✅ OK' | '⚠️ Parcial' | '🔵 Exceso' | '❌ No entregado' | '🆕 Nuevo';
+  estado: 'escaneado' | 'sin_rellenar' | 'valida' | 'error' | 'parcial' | 'rechazada' | 'exceso' | 'OK' | 'Parcial' | 'Exceso' | 'No entregado' | 'Nuevo';
 }
 
 export interface PedidoDraft {

@@ -23,10 +23,11 @@ import {
   agregarInventarioPorProducto,
   createInventarioItem,
 } from '../services/inventario.service';
-import type { InventarioPorProducto } from '../services/inventario.types';
+import type { InventarioItem, InventarioPorProducto } from '../services/inventario.types';
 import { UbicacionService } from '../services/ubicacion.service';
 import type { Ubicacion } from '../services/ubicacion.types';
 import UbicacionesModal from '../components/inventario/UbicacionesModal';
+import InventoryDetailModal from '../components/inventario/InventoryDetailModal';
 import { useToast } from '../store/ToastContext';
 import {
   searchProductoProveedor,
@@ -38,6 +39,8 @@ import SearchIcon from '@mui/icons-material/SearchOutlined';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import SettingsIcon from '@mui/icons-material/Settings';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import SyncAltIcon from '@mui/icons-material/SyncAlt';
 
 import PageToolbar from '../components/ui/PageToolbar';
 import InventarioFilters, { InventarioFiltersState } from '../features/inventario/InventarioFilters';
@@ -53,9 +56,15 @@ const Inventario: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<InventarioFiltersState>(initialFilters);
   const [data, setData] = useState<InventarioPorProducto[]>([]);
+  const [rawItems, setRawItems] = useState<InventarioItem[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Estado para el modal de detalle/auditoría
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [detailMode, setDetailMode] = useState<'view' | 'audit'>('view');
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
   // Estado para crear nuevas entradas de inventario
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -100,6 +109,7 @@ const Inventario: React.FC = () => {
     setError(null);
     fetchInventario()
       .then((items) => {
+        setRawItems(items);
         const agregado = agregarInventarioPorProducto(items);
         setData(agregado);
         setTotalItems(agregado.length);
@@ -161,6 +171,7 @@ const Inventario: React.FC = () => {
     setError(null);
     try {
       const items = await fetchInventario();
+      setRawItems(items);
       const agregado = agregarInventarioPorProducto(items);
       setData(agregado);
       setTotalItems(agregado.length);
@@ -358,6 +369,33 @@ const Inventario: React.FC = () => {
       label: 'Ubicaciones',
       render: (row) => row.ubicaciones?.join(', ') ?? '—',
       hideOnMobile: true,
+    },
+    {
+      id: 'acciones',
+      label: 'Acciones',
+      align: 'right',
+      render: (row) => (
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+          <Tooltip title="Ver Detalles y Lotes">
+            <IconButton size="small" color="primary" onClick={() => {
+              setSelectedProductId(row.productoId);
+              setDetailMode('view');
+              setDetailModalOpen(true);
+            }}>
+              <VisibilityIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Auditar / Conciliar Stock">
+            <IconButton size="small" color="secondary" onClick={() => {
+              setSelectedProductId(row.productoId);
+              setDetailMode('audit');
+              setDetailModalOpen(true);
+            }}>
+              <SyncAltIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      ),
     },
   ];
 
@@ -611,6 +649,15 @@ const Inventario: React.FC = () => {
         open={isUbicacionesModalOpen}
         onClose={() => setIsUbicacionesModalOpen(false)}
         onChanged={loadUbicaciones}
+      />
+
+      <InventoryDetailModal
+        open={detailModalOpen}
+        mode={detailMode}
+        productoId={selectedProductId}
+        items={rawItems}
+        onClose={() => setDetailModalOpen(false)}
+        onRefreshItem={reloadInventario}
       />
     </Box>
   );

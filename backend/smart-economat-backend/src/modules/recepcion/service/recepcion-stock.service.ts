@@ -187,9 +187,11 @@ export class RecepcionStockService {
         batchRecepcionProductos.push(
           queryRunner.manager.create(RecepcionProducto, {
             recepcion: savedRecepcion,
+            cantidadAlbaran: linea.cantidadAlbaran || null,
             cantidadRecibida: linea.cantidadRecibida,
             observaciones: linea.observaciones,
             pedidoProducto: { id: ppRef.id },
+            isWeighedWithScale: (linea as any).isWeighedWithScale || false,
           })
         );
 
@@ -573,9 +575,11 @@ export class RecepcionStockService {
           RecepcionProducto,
           {
             recepcion: savedRecepcion,
+            cantidadAlbaran: linea.cantidadAlbaran || null,
             cantidadRecibida: linea.cantidadRecibida,
             observaciones: linea.observaciones,
             pedidoProducto: { id: ppRef.id },
+            isWeighedWithScale: linea.isWeighedWithScale || false,
           }
         );
 
