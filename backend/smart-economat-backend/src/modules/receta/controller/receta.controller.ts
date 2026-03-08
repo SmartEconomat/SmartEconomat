@@ -91,6 +91,19 @@ export class RecetaController {
   ): Promise<void> {
     return this.recetaService.cocinar(id, cocinarRecetaDto);
   }
+
+  @Post(':id/recalcular-costes')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Recalcular y guardar el coste unitario estimado de la receta',
+  })
+  @ApiParam({ name: 'id', description: 'UUID de la receta' })
+  @ApiResponse({ status: 200, type: Receta })
+  recalcularCostes(@Param('id', ParseUUIDPipe) id: string): Promise<Receta> {
+    return this.recetaService.recalcularCostes(id);
+  }
+
   @Patch(':id')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   update(

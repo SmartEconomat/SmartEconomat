@@ -18,6 +18,7 @@ const INGREDIENTES_RELATIONS = [
   'ingredientes',
   'ingredientes.producto',
   'ingredientes.producto.alergenos',
+  'productoResultado',
 ] as const;
 
 @Injectable()
@@ -53,12 +54,33 @@ export class RecetaRepository {
         throw new BadRequestException(I18nHelper.getError('PRODUCT_NOT_FOUND'));
       }
 
+      let productoResultado: Producto | undefined;
+      if (dto.productoResultadoId) {
+        const found = await manager.findOne(Producto, {
+          where: { id: dto.productoResultadoId },
+        });
+        if (!found) {
+          throw new BadRequestException(
+            I18nHelper.getError('PRODUCT_NOT_FOUND')
+          );
+        }
+        productoResultado = found;
+      }
+
       const receta = manager.create(Receta, {
         nombre: dto.nombre,
         instrucciones: dto.instrucciones,
         tiempo: dto.tiempo,
         dificultad: dto.dificultad,
         tiempoPreparacion: dto.tiempoPreparacion,
+        ...(productoResultado && { productoResultado }),
+        ...(dto.rendimiento !== undefined && { rendimiento: dto.rendimiento }),
+        ...(dto.unidadResultado !== undefined && {
+          unidadResultado: dto.unidadResultado,
+        }),
+        ...(dto.diasCaducidad !== undefined && {
+          diasCaducidad: dto.diasCaducidad,
+        }),
       });
 
       await manager.save(receta);
@@ -67,6 +89,7 @@ export class RecetaRepository {
         manager.create(RecetaIngrediente, {
           cantidad: ing.cantidad,
           unidad: ing.unidad,
+          mermaAplicada: ing.mermaAplicada ?? 0,
           receta,
           producto: productosMap.get(ing.productoId.toLowerCase()),
         })
@@ -156,11 +179,29 @@ export class RecetaRepository {
           manager.create(RecetaIngrediente, {
             cantidad: ing.cantidad,
             unidad: ing.unidad,
+            mermaAplicada: ing.mermaAplicada ?? 0,
             receta: { id } as Receta,
             producto: productosMap.get(ing.productoId.toLowerCase()),
           })
         );
         await manager.save(ingredientes);
+      }
+
+      let productoResultado: Producto | null | undefined;
+      if (dto.productoResultadoId !== undefined) {
+        if (dto.productoResultadoId === null) {
+          productoResultado = null;
+        } else {
+          const found = await manager.findOne(Producto, {
+            where: { id: dto.productoResultadoId },
+          });
+          if (!found) {
+            throw new BadRequestException(
+              I18nHelper.getError('PRODUCT_NOT_FOUND')
+            );
+          }
+          productoResultado = found;
+        }
       }
 
       const updateData: Partial<Receta> = {
@@ -172,6 +213,14 @@ export class RecetaRepository {
         ...(dto.dificultad !== undefined && { dificultad: dto.dificultad }),
         ...(dto.tiempoPreparacion !== undefined && {
           tiempoPreparacion: dto.tiempoPreparacion,
+        }),
+        ...(productoResultado !== undefined && { productoResultado }),
+        ...(dto.rendimiento !== undefined && { rendimiento: dto.rendimiento }),
+        ...(dto.unidadResultado !== undefined && {
+          unidadResultado: dto.unidadResultado,
+        }),
+        ...(dto.diasCaducidad !== undefined && {
+          diasCaducidad: dto.diasCaducidad,
         }),
       };
 
@@ -213,6 +262,18 @@ export class RecetaRepository {
         tiempo: sourceReceta.tiempo,
         dificultad: sourceReceta.dificultad,
         tiempoPreparacion: sourceReceta.tiempoPreparacion,
+        ...(sourceReceta.productoResultado && {
+          productoResultado: sourceReceta.productoResultado,
+        }),
+        ...(sourceReceta.rendimiento != null && {
+          rendimiento: sourceReceta.rendimiento,
+        }),
+        ...(sourceReceta.unidadResultado != null && {
+          unidadResultado: sourceReceta.unidadResultado,
+        }),
+        ...(sourceReceta.diasCaducidad != null && {
+          diasCaducidad: sourceReceta.diasCaducidad,
+        }),
       });
 
       await manager.save(newReceta);
@@ -222,6 +283,7 @@ export class RecetaRepository {
           manager.create(RecetaIngrediente, {
             cantidad: ing.cantidad,
             unidad: ing.unidad,
+            mermaAplicada: ing.mermaAplicada ?? 0,
             receta: newReceta,
             producto: ing.producto,
           })
