@@ -6,8 +6,15 @@ import { UsuarioService } from './service/usuario.service';
 import { UsuarioRepository } from './repository/usuario.repository';
 import { AuthModule } from '../auth/module/auth.module';
 
+import { Permiso } from '../permisos/entities/permiso.entity';
+import { AuthorizationModule } from '../authorization/authorization.module';
+
 @Module({
-  imports: [TypeOrmModule.forFeature([Usuario]), AuthModule],
+  imports: [
+    TypeOrmModule.forFeature([Usuario, Permiso]),
+    AuthModule,
+    AuthorizationModule,
+  ],
   controllers: [UsuarioController],
   providers: [UsuarioService, UsuarioRepository],
   exports: [UsuarioService, TypeOrmModule],

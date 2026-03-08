@@ -8,19 +8,18 @@ import {
 import { DashboardStatsDto } from '../dto/dashboard-stats.dto';
 import { DashboardService } from '../service/dashboard.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/role.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
-import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { PermisosGuard } from '../../authorization/guards/permisos.guard';
 
 @ApiTags('Dashboard')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('dashboard')
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
   @Get('stats')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
+  @RequirePermissions('dashboard:ver_estadisticas')
   @ApiOperation({ summary: 'Get dashboard statistics (KPIs)' })
   @ApiResponse({
     status: 200,

@@ -16,17 +16,16 @@ import { CreateInventarioItemDto } from '../dto/create-InventarioItem.dto';
 import { UpdateInventarioDto } from '../dto/update-inventario.dto';
 import { Inventario } from '../inventario.entity/inventario.entity';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/role.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
-import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { PermisosGuard } from '../../authorization/guards/permisos.guard';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('inventario')
 export class InventarioController {
   constructor(private readonly inventarioService: InventarioService) {}
 
   @Post()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('inventario:crear')
   @HttpCode(HttpStatus.CREATED)
   create(
     @Body() createInventarioDto: CreateInventarioItemDto,
@@ -37,19 +36,19 @@ export class InventarioController {
   }
 
   @Get()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('inventario:listar')
   findAll(): Promise<Inventario[]> {
     return this.inventarioService.findAll();
   }
 
   @Get(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('inventario:ver')
   findOne(@Param('id') id: string): Promise<Inventario> {
     return this.inventarioService.findOne(id);
   }
 
   @Patch(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('inventario:editar')
   update(
     @Param('id') id: string,
     @Body() updateInventarioDto: UpdateInventarioDto,
@@ -60,7 +59,7 @@ export class InventarioController {
   }
 
   @Delete(':id')
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @RequirePermissions('inventario:eliminar')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string, @Request() req: any): Promise<void> {
     const userId = req.user.sub;

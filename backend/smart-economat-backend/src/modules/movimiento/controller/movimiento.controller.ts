@@ -19,22 +19,21 @@ import { CreateMovimientoDto } from '../dto/create-movimiento.dto';
 import { UpdateMovimientoDto } from '../dto/update-movimiento.dto';
 import { MovimientoHistoryDto } from '../dto/movimiento-history.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/role.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
-import { rolUsuario } from '../../usuario/enums/usuario.enums';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { PermisosGuard } from '../../authorization/guards/permisos.guard';
 
 @ApiTags('movimientos')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('movimientos')
 export class MovimientoController {
   constructor(private readonly movimientoService: MovimientoService) {}
 
   @Post()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('movimientos:crear')
   @ApiOperation({
     summary: 'Crear un nuevo movimiento',
-    description: 'Solo administradores y profesores pueden crear movimientos',
+    description: 'Solo usuarios con permiso pueden crear movimientos',
   })
   @ApiResponse({
     status: 201,
@@ -44,16 +43,12 @@ export class MovimientoController {
     status: 400,
     description: 'Datos inválidos',
   })
-  @ApiResponse({
-    status: 403,
-    description: 'Acceso denegado - Rol insuficiente',
-  })
   create(@Body() dto: CreateMovimientoDto) {
     return this.movimientoService.create(dto);
   }
 
   @Get()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
+  @RequirePermissions('movimientos:listar')
   @ApiOperation({
     summary: 'Listar todos los movimientos',
     description:
@@ -72,7 +67,7 @@ export class MovimientoController {
   }
 
   @Get('historial')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('movimientos:historial')
   @ApiOperation({
     summary: 'Obtener historial de movimientos (Trazabilidad)',
     description:
@@ -131,10 +126,6 @@ export class MovimientoController {
     description: 'Parámetros inválidos o no proporciona entityId ni userId',
   })
   @ApiResponse({
-    status: 403,
-    description: 'Acceso denegado - Rol insuficiente',
-  })
-  @ApiResponse({
     status: 404,
     description:
       'No se encontraron movimientos que coincidan con los criterios',
@@ -144,7 +135,7 @@ export class MovimientoController {
   }
 
   @Get(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
+  @RequirePermissions('movimientos:ver')
   @ApiOperation({
     summary: 'Obtener un movimiento por ID',
     description: 'Retorna los detalles completos de un movimiento específico',
@@ -162,10 +153,10 @@ export class MovimientoController {
   }
 
   @Patch(':id')
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @RequirePermissions('movimientos:editar')
   @ApiOperation({
     summary: 'Actualizar un movimiento',
-    description: 'Solo administradores pueden actualizar movimientos',
+    description: 'Solo usuarios con permiso pueden actualizar movimientos',
   })
   @ApiResponse({
     status: 200,
@@ -174,10 +165,6 @@ export class MovimientoController {
   @ApiResponse({
     status: 400,
     description: 'Datos inválidos',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Acceso denegado - Solo administradores',
   })
   @ApiResponse({
     status: 404,
@@ -192,18 +179,14 @@ export class MovimientoController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @RequirePermissions('movimientos:eliminar')
   @ApiOperation({
     summary: 'Eliminar un movimiento (soft delete)',
-    description: 'Solo administradores pueden eliminar movimientos',
+    description: 'Solo usuarios con permiso pueden eliminar movimientos',
   })
   @ApiResponse({
     status: 204,
     description: 'Movimiento eliminado exitosamente',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Acceso denegado - Solo administradores',
   })
   @ApiResponse({
     status: 404,
