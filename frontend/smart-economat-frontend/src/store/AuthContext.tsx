@@ -24,17 +24,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return storedUser ? JSON.parse(storedUser) : null;
     });
 
-    const login = (userData: User, token: string) => {
+    const login = React.useCallback((userData: User, token: string) => {
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('token', token);
-    };
+    }, []);
 
-    const logout = () => {
+    const logout = React.useCallback(() => {
         setUser(null);
         localStorage.removeItem('user');
         localStorage.removeItem('token');
-    };
+    }, []);
 
     useEffect(() => {
         const handleUnauthorized = () => {
