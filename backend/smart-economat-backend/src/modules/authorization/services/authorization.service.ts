@@ -67,32 +67,86 @@ export class AuthorizationService {
   }
 
   /**
-   * Carga los permisos del usuario desde la base de datos usando QueryBuilder optimizado.
-   * Query con índices en todas las columnas de JOIN.
+   * Carga los permisos del usuario desde la base de datos considerando:
+   * (Permisos de Roles Activos) + (Permisos Adicionales) - (Permisos Excluidos)
    *
    * @param userId - ID del usuario
    * @returns Array de códigos de permisos únicos
    */
   private async loadUserPermissionsFromDB(userId: string): Promise<string[]> {
-    const permisos = await this.permisoRepo
+    const usuario = await this.usuarioRepo.findOne({
+      where: { id: userId, activo: true },
+      select: ['id', 'rol', 'activo'],
+    });
+
+    if (!usuario) return [];
+
+    const permisosRoles = await this.permisoRepo
       .createQueryBuilder('permiso')
       .innerJoin('permiso.roles', 'rol')
-      .innerJoin('rol.usuarios', 'usuario')
       .innerJoin(
         'usuario_rol',
         'ur',
-        'ur.usuarioId = usuario.id AND ur.rolId = rol.id'
+        'ur.rol_id = rol.id AND ur.usuario_id = :userId',
+        { userId }
       )
-      .where('usuario.id = :userId', { userId })
-      .andWhere('usuario.activo = :activo', { activo: true })
       .andWhere('rol.activo = :rolActivo', { rolActivo: true })
       .andWhere('permiso.activo = :permisoActivo', { permisoActivo: true })
-      .andWhere('ur.activo = :urActivo', { urActivo: true })
       .select(['permiso.codigo'])
-      .distinct(true)
       .getMany();
 
-    return permisos.map((p) => p.codigo);
+    const permisosPlantilla = await this.permisoRepo
+      .createQueryBuilder('permiso')
+      .innerJoin('plantilla_rol_permiso', 'prp', 'prp.permiso_id = permiso.id')
+      .innerJoin(
+        'plantilla_rol',
+        'plantilla',
+        'plantilla.id = prp.plantilla_rol_id'
+      )
+      .where('plantilla.nombre = :rolNombre', { rolNombre: usuario.rol })
+      .andWhere('plantilla.activo = :plantillaActivo', {
+        plantillaActivo: true,
+      })
+      .andWhere('permiso.activo = :permisoActivo', { permisoActivo: true })
+      .select(['permiso.codigo'])
+      .getMany();
+
+    const codigosBase = [
+      ...permisosRoles.map((p) => p.codigo),
+      ...permisosPlantilla.map((p) => p.codigo),
+    ];
+
+    const adicionales = await this.permisoRepo
+      .createQueryBuilder('permiso')
+      .innerJoin(
+        'usuario_permiso_adicional',
+        'upa',
+        'upa.permiso_id = permiso.id'
+      )
+      .where('upa.usuario_id = :userId', { userId })
+      .andWhere('permiso.activo = :permisoActivo', { permisoActivo: true })
+      .select(['permiso.codigo'])
+      .getMany();
+
+    const codigosAdicionales = adicionales.map((p) => p.codigo);
+
+    const excluidos = await this.permisoRepo
+      .createQueryBuilder('permiso')
+      .innerJoin(
+        'usuario_permiso_excluido',
+        'upe',
+        'upe.permiso_id = permiso.id'
+      )
+      .where('upe.usuario_id = :userId', { userId })
+      .select(['permiso.codigo'])
+      .getMany();
+
+    const codigosExcluidos = excluidos.map((p) => p.codigo);
+
+    const setFinal = new Set([...codigosBase, ...codigosAdicionales]);
+    codigosExcluidos.forEach((c) => setFinal.delete(c));
+
+    return Array.from(setFinal);
   }
 
   /**
