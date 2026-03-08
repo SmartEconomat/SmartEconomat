@@ -15,9 +15,8 @@ Existen dos flujos principales de registro:
 Los alumnos se registran de forma autónoma a través del `AlumnoController`. Para completar el registro, el sistema requiere:
 - **Datos de cuenta**: Username, Email y Password.
 - **Datos de vinculación**:
-    - **CIAL del Profesor**: Código único del profesor al que se vinculará.
-    - **Aula**: Identificador del aula física o virtual.
-    - **Número de Clase**: Posición o slot asignado dentro del aula.
+    - **Código de Slot**: Un código alfanumérico único (ej: `ABC-123`) generado por el profesor.
+- **Validación**: El sistema verifica que el slot tenga cupo disponible y vincula automáticamente al alumno con el profesor dueño del slot.
 
 *Nota: Al registrarse, el estado inicial del alumno es `INACTIVE` hasta que su profesor lo active.*
 
@@ -49,9 +48,10 @@ El sistema define tres roles principales en el enum `rolUsuario`:
 
 | Rol | Descripción | Capacidades Clave |
 | :--- | :--- | :--- |
-| **ADMIN** | Administrador del sistema. | Gestión total de usuarios, activación de profesores, configuración global. |
-| **PROFESOR** | Gestor de un grupo de alumnos. | Creación de slots, activación/gestión de sus alumnos, control de inventario/pedidos. |
-| **ALUMNO** | Usuario final (estudiante). | Realización de pedidos, gestión de su "economato" personal bajo supervisión. |
+| **SUPER_ADMIN** | Administrador Maestro. | Acceso absoluto, gestión de plantillas de roles y permisos raíz. |
+| **ADMINISTRADOR** | Administrador de Centro. | Gestión de usuarios, activación de profesores, configuración local. |
+| **PROFESOR** | Gestor de Aula. | Creación de slots, activación/gestión de sus alumnos, recetas y stock. |
+| **ALUMNO** | Estudiante. | Consulta de catálogo, stock y realización de pedidos supervisados. |
 
 ---
 
@@ -59,24 +59,17 @@ El sistema define tres roles principales en el enum `rolUsuario`:
 
 El núcleo del sistema educativo se basa en la relación entre el Profesor, el Alumno y el espacio físico/temporal (el Slot).
 
-### 4.1. Entidad `AlumnoSlot`
-Define un espacio único en el sistema. Está indexado de forma única por la combinación de:
-- `profesorId`
-- `aula`
-- `numeroClase`
+### 4.1. Entidad `Slot`
+Define un cupo de registro creado por el profesor. Cada slot tiene un código único y una capacidad máxima definida.
 
-Esto garantiza que un profesor no pueda tener dos alumnos en el mismo sitio/clase simultáneamente.
-
-### 4.2. Entidad `Alumno`
-El alumno es la entidad que ocupa un `AlumnoSlot`. Contiene una relación `1:1` con el usuario (cuenta) y el slot (espacio).
-
-### 4.3. Flujo de Vinculación
-1.  El **Profesor** crea los slots disponibles en su perfil (o se crean automáticamente durante el registro del alumno).
-2.  El **Alumno** se registra proporcionando el CIAL del profesor y los datos del slot.
-3.  El sistema busca el slot:
-    - Si el slot existe y está libre, se le asigna al alumno.
-    - Si el slot no existe, se crea uno nuevo y se vincula.
-    - Si el slot está ocupado, el registro falla.
+### 4.2. Flujo de Vinculación
+1.  El **Profesor** genera un lote de "Slots" desde su panel.
+2.  El sistema genera códigos únicos (ej: `SMA-PR-01`).
+3.  El **Alumno** introduce este código durante su registro.
+4.  El sistema valida:
+    - Que el código exista.
+    - Que el slot no haya superado su capacidad de alumnos.
+5.  Se crea la vinculación `Alumno -> Profesor` automáticamente.
 
 ---
 
