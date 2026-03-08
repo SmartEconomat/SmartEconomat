@@ -16,13 +16,12 @@ import {
     Alert,
     Button,
     Tooltip,
-    TextField,
-    InputAdornment,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import DataTable, { Column } from '../components/ui/DataTable';
+import PageToolbar from '../components/ui/PageToolbar';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import DynamicFormModal, { DynamicField } from '../components/ui/DynamicFormModal';
 import DetailModal from '../components/ui/DetailModal';
@@ -39,7 +38,7 @@ import { getCategoryIcon } from '../features/productos/utils/getCategoryIcon';
 import { EU_ALLERGENS } from '../components/ui/AllergenSelector';
 import ShoppingBasketOutlinedIcon from '@mui/icons-material/ShoppingBasketOutlined';
 import AddIcon from '@mui/icons-material/Add';
-import SearchIcon from '@mui/icons-material/SearchOutlined';
+import { useBreakpoints } from '../utils/useBreakpoints';
 
 const productoSchema: DynamicField[] = [
     { name: 'nombre', label: 'Nombre Comercial', required: true },
@@ -105,9 +104,12 @@ const initialFilters: ProductFiltersState = {
 };
 
 const Productos: React.FC = () => {
+    const { isMobile } = useBreakpoints();
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(12);
     const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
     const [searchTerm, setSearchTerm] = useState('');
     const [filters, setFilters] = useState<ProductFiltersState>(initialFilters);
     const [data, setData] = useState<Producto[]>([]);
@@ -126,12 +128,13 @@ const Productos: React.FC = () => {
         setError(null);
 
         Promise.all([
-            fetchProductos(page, pageSize, searchTerm),
+            fetchProductos(page, pageSize, searchTerm, filters.categorias),
             fetchProveedores(1, 100).catch(() => ({ data: [], totalItems: 0, itemsPerPage: 100, totalPages: 1, page: 1 } as any))
         ])
             .then(([productosData, proveedoresData]) => {
                 setData(productosData.data);
                 setTotalPages(productosData.totalPages);
+                setTotalItems(productosData.total);
                 setProveedores(proveedoresData.data);
             })
             .catch((err: unknown) => {
@@ -143,11 +146,11 @@ const Productos: React.FC = () => {
 
     useEffect(() => {
         loadData();
-    }, [page, pageSize, searchTerm]);
+    }, [page, pageSize, searchTerm, filters.categorias]);
 
     useEffect(() => {
         setPage(1);
-    }, [filters.categorias, filters.alergenos]);
+    }, [searchTerm, filters.categorias, filters.alergenos]);
 
     const handleDeleteConfirm = async () => {
         if (!productToDelete) return;
@@ -272,9 +275,6 @@ const Productos: React.FC = () => {
         setProductToView(row);
     };
 
-    // filteredData local ya no es necesario ya que se hace filtering en el backend.
-    const filteredData = data;
-
     const dynamicSchema = React.useMemo(() => {
         const schema = [...productoSchema];
         schema.push({
@@ -315,89 +315,57 @@ const Productos: React.FC = () => {
 
     return (
         <Box>
-            <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 } }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
-                    <Typography variant="h4">
-                        Gestión de Productos
-                    </Typography>
-                </Box>
-
-                {error && (
-                    <Alert severity="error" sx={{ mb: 2 }}>
-                        {error}
-                    </Alert>
-                )}
-
-                <Box
-                    sx={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        alignItems: 'center',
-                        gap: 2,
-                        mb: 2,
-                    }}
-                >
-                    <TextField
-                        placeholder="Buscar por nombre, marca, código de barras..."
-                        value={searchTerm}
-                        onChange={(e) => {
-                            setSearchTerm(e.target.value);
-                            setPage(1);
-                        }}
-                        size="small"
-                        sx={{ minWidth: 200, flex: '1 1 200px' }}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">
-                                    <SearchIcon color="action" />
-                                </InputAdornment>
-                            ),
-                        }}
-                    />
+            <PageToolbar
+                title="Gestión de Productos"
+                searchValue={searchTerm}
+                onSearchChange={(v) => { setSearchTerm(v); setPage(1); }}
+                searchPlaceholder="Buscar por nombre, marca, código de barras..."
+                searchId="search-productos"
+                totalItems={totalItems}
+                totalItemsLabel="productos"
+                primaryAction={{
+                    label: 'Nuevo Producto',
+                    onClick: () => setProductToEdit({}),
+                    id: 'btn-nuevo-producto',
+                }}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                pageSize={pageSize}
+                pageSizeOptions={[4, 8, 12, 24]}
+                onPageSizeChange={(e: any) => {
+                    setPageSize(Number(e.target.value));
+                    setPage(1);
+                }}
+                filters={
                     <ProductFilters
                         filters={filters}
-                        onChange={setFilters}
+                        onChange={(newFilters) => {
+                            setFilters(newFilters);
+                            setPage(1);
+                        }}
                         onClear={() => {
                             setFilters(initialFilters);
                             setPage(1);
                         }}
                         inline
                     />
-                </Box>
+                }
+            />
+
+            <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
+                {error && (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                        {error}
+                    </Alert>
+                )}
 
                 <DataTable
                     columns={columns}
-                    data={filteredData}
+                    data={data}
                     isLoading={isLoading}
-                    defaultViewMode="list"
-                    leftHeaderAction={
-                        <Box display="flex" alignItems="center" gap={1}>
-                            <Button
-                                variant="contained"
-                                startIcon={<AddIcon />}
-                                onClick={() => setProductToEdit({})}
-                                sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
-                            >
-                                Nuevo Producto
-                            </Button>
-
-                            <Tooltip title="Nuevo Producto">
-                                <IconButton
-                                    color="primary"
-                                    aria-label="Nuevo Producto"
-                                    onClick={() => setProductToEdit({})}
-                                    sx={{
-                                        display: { xs: 'inline-flex', sm: 'none' },
-                                        bgcolor: 'primary.main',
-                                        color: 'white',
-                                        '&:hover': { bgcolor: 'primary.dark' },
-                                    }}
-                                >
-                                    <AddIcon />
-                                </IconButton>
-                            </Tooltip>
-                        </Box>
-                    }
+                    hideTopBar
+                    viewMode={viewMode}
+                    defaultViewMode={viewMode}
                     emptyStateMessage={
                         <Box sx={{ py: 4, textAlign: 'center' }}>
                             <ShoppingBasketOutlinedIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
@@ -428,7 +396,7 @@ const Productos: React.FC = () => {
                         onPageChange: (_, newPage) => setPage(newPage),
                         pageSize: pageSize,
                         pageSizeOptions: [4, 8, 12, 24],
-                        onPageSizeChange: (e) => {
+                        onPageSizeChange: (e: any) => {
                             setPageSize(Number(e.target.value));
                             setPage(1);
                         },
@@ -491,6 +459,7 @@ const Productos: React.FC = () => {
                             title={p.nombre}
                             subtitle={p.marca || undefined}
                             size="md"
+                            editLabel="Editar producto"
                             onEdit={() => {
                                 setProductToEdit(buildEditData(p));
                                 setProductToView(null);

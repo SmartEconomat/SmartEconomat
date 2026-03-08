@@ -8,9 +8,13 @@ Página maestra (`Usuarios.tsx`) que ensambla múltiples atómicos, componentes 
 
 ## Composición
 
-1. **Tabla Inteligente (`DataTable`)**: Instancia la grilla dinámica, mapeando el modelo de datos.
-2. **Sistema de Feedback (`ToastContext`)**: Dispara alertas de éxito en operaciones CRUD (Verde) y excepciones al intentar cruzar validaciones de red o negocio (Rojo).
-3. **Indicadores Semánticos**: Usa `StatusChip` para el estado (Activo/Inactivo) y `RoleBadge` para la entidad de poder (Admin/Profesor/Alumno).
+1.- **[DataTable](../componentes/DataTable.md)**: Muestra la lista de usuarios con su rol y estado (Activo/Inactivo).
+- **[StatusChip](../componentes/StatusChip.md)**: Visualización semántica del estado del usuario.
+- **[DetailModal](../componentes/DetailModal.md)**: Vista de detalle del perfil de usuario con sus permisos asociados.
+- **[DynamicFormModal](../componentes/DynamicFormModal.md)**: Formulario de creación y edición (incluyendo roles y contraseñas).
+2. **Tabla Inteligente (`DataTable`)**: Instancia la grilla dinámica, mapeando el modelo de datos.
+3. **Sistema de Feedback (`ToastContext`)**: Dispara alertas de éxito en operaciones CRUD (Verde) y excepciones al intentar cruzar validaciones de red o negocio (Rojo).
+4. **Indicadores Semánticos**: Usa `StatusChip` para el estado (Activo/Inactivo) y `RoleBadge` para la entidad de poder (Admin/Profesor/Alumno).
 
 ## Reglas de Negocio Embebidas (Security Front-End)
 Para evitar bloqueos catastróficos en el backend o en el uso diario:

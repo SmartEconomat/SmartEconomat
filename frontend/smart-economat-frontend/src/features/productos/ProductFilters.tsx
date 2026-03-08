@@ -1,38 +1,52 @@
 /**
- * @fileoverview Componente de filtros para la lista de productos.
- * Permite filtrar por categorías (múltiples) y alérgenos (múltiples).
- * Soporta modo normal (en bloque) y modo 'inline' (horizontal y adaptable a móvil).
+ * @fileoverview Componente de filtro de categorías de productos.
+ *
+ * Implementa un Autocomplete de MUI con selección múltiple:
+ *  - Input de texto para búsqueda en tiempo real
+ *  - Dropdown para seleccionar categorías
+ *  - Las opciones seleccionadas se muestran como Chips CON su icono oficial DENTRO del control
+ *  - El ancho del control crece conforme se añaden selecciones (hasta un máximo)
+ *  - Icono de cada categoría usa getCategoryIconFilled (los mismos que StatusChip)
+ *  - Sin filtro de alérgenos (retirado según requisitos)
  */
 
 import React from 'react';
-import { Box, Button, FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from '@mui/material/TextField';
+import Chip from '@mui/material/Chip';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { CategoriaProducto } from '../../services/producto.types';
-import { EU_ALLERGENS } from '../../components/ui/AllergenSelector';
+import { getCategoryIconFilled } from './utils/getCategoryIconFilled';
+import { useBreakpoints } from '../../utils/useBreakpoints';
 
-/**
- * Estado que representa los filtros seleccionados actualmente.
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// Tipos públicos
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Estado que representa los filtros seleccionados actualmente. */
 export interface ProductFiltersState {
     /** Lista de categorías seleccionadas. Vacío significa "Todas". */
     categorias: CategoriaProducto[];
-    /** Lista de IDs de alérgenos seleccionados. Vacío significa "Ninguno". */
+    /**
+     * Lista de IDs de alérgenos.
+     * Mantenida por compatibilidad con Productos.tsx pero no se usa en este filtro.
+     */
     alergenos: string[];
 }
 
-/**
- * Props para el componente ProductFilters.
- */
 export interface ProductFiltersProps {
-    /** Estado actual de los filtros */
     filters: ProductFiltersState;
-    /** Callback ejecutado al cambiar cualquier filtro */
     onChange: (filters: ProductFiltersState) => void;
-    /** Callback ejecutado para reiniciar todos los filtros (muestra botón de limpiar) */
     onClear?: () => void;
-    /** Si true, muestra Categoría y Alérgenos en fila (alineados horizontalmente y adaptables en móvil). */
+    /** Mantenida por compatibilidad. No tiene efecto visual en esta versión. */
     inline?: boolean;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Opciones de categoría
+// ─────────────────────────────────────────────────────────────────────────────
 
 const CATEGORIA_OPTIONS: { value: CategoriaProducto; label: string }[] = [
     { value: CategoriaProducto.VERDURA, label: 'Verdura' },
@@ -52,126 +66,163 @@ const CATEGORIA_OPTIONS: { value: CategoriaProducto; label: string }[] = [
     { value: CategoriaProducto.OTRO, label: 'Otro' },
 ];
 
-const ProductFilters: React.FC<ProductFiltersProps> = ({ filters, onChange, onClear, inline = false }) => {
-    const handleCategoriasChange = (value: CategoriaProducto[]) => {
-        onChange({ ...filters, categorias: value });
-    };
+// ─────────────────────────────────────────────────────────────────────────────
+// Componente
+// ─────────────────────────────────────────────────────────────────────────────
 
-    const handleAlergenosChange = (value: string[]) => {
-        onChange({ ...filters, alergenos: value });
-    };
+const ProductFilters: React.FC<ProductFiltersProps> = ({ filters, onChange }) => {
+    const { isMobileOrTablet } = useBreakpoints();
 
-    const categoriaActive = filters.categorias && filters.categorias.length > 0;
-    const alergenosActive = filters.alergenos && filters.alergenos.length > 0;
-    const hasActiveFilters = categoriaActive || alergenosActive;
-
-    const getSelectSx = (isActive: boolean) => {
-        if (!inline) return {};
-        // En móvil: si está activo toma todo el espacio posible flex: 3, si no flex: 1. sm en adelante mantienen tamaño fijo.
-        return {
-            minWidth: { xs: isActive ? 140 : 90, sm: 160 },
-            maxWidth: { xs: '100%', sm: 220 },
-            transition: 'all 0.3s ease',
-        };
-    };
-
-    const getFormControlSx = (isActive: boolean) => {
-        if (!inline) return { width: '100%', mb: 2 };
-        return {
-            flex: { xs: isActive ? '3 1 auto' : '1 1 auto', sm: '0 0 auto' },
-            transition: 'all 0.3s ease',
-        };
-    };
-
-    const content = (
-        <>
-            <FormControl size="small" sx={getFormControlSx(categoriaActive)}>
-                <InputLabel id="filter-categoria-label" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-                    Categoría
-                </InputLabel>
-                <Select
-                    labelId="filter-categoria-label"
-                    label="Categoría"
-                    multiple
-                    value={filters.categorias ?? []}
-                    onChange={(e) => handleCategoriasChange(e.target.value as CategoriaProducto[])}
-                    renderValue={(selected) =>
-                        selected.length === 0 ? 'Todas' : selected.map((v) => CATEGORIA_OPTIONS.find((o) => o.value === v)?.label ?? v).join(', ')
-                    }
-                    sx={getSelectSx(categoriaActive)}
-                >
-                    {CATEGORIA_OPTIONS.map((opt) => (
-                        <MenuItem key={opt.value} value={opt.value}>
-                            {opt.label}
-                        </MenuItem>
-                    ))}
-                </Select>
-            </FormControl>
-
-            {/* <FormControl size="small" sx={getFormControlSx(alergenosActive)}>
-                <InputLabel id="filter-alergenos-label" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-                    Alérgenos
-                </InputLabel>
-                <Select
-                    labelId="filter-alergenos-label"
-                    label="Alérgenos"
-                    multiple
-                    value={filters.alergenos ?? []}
-                    onChange={(e) => handleAlergenosChange(e.target.value as string[])}
-                    renderValue={(selected) =>
-                        selected.length === 0 ? 'Ninguno' : selected.map((id) => EU_ALLERGENS.find((a) => a.id === id)?.label ?? id).join(', ')
-                    }
-                    sx={getSelectSx(alergenosActive)}
-                >
-                    {EU_ALLERGENS.map((a) => (
-                        <MenuItem key={a.id} value={a.id}>
-                            {a.label}
-                        </MenuItem>
-                    ))}
-                </Select>
-            </FormControl> */}
-
-            {hasActiveFilters && onClear && (
-                <Button
-                    size="small"
-                    variant="outlined"
-                    onClick={onClear}
-                    sx={inline ? { flexShrink: 0, height: 40, minWidth: { xs: 80, sm: 'auto' }, px: { xs: 1, sm: 2 } } : { width: '100%' }}
-                >
-                    Limpiar
-                </Button>
-            )}
-        </>
+    // Sincronizar las opciones seleccionadas con el estado externo
+    const selected = CATEGORIA_OPTIONS.filter((opt) =>
+        filters.categorias.includes(opt.value)
     );
 
-    if (inline) {
-        return (
-            <Box
-                sx={{
-                    display: 'flex',
-                    flexWrap: { xs: 'nowrap', sm: 'wrap' },
-                    alignItems: 'center',
-                    gap: { xs: 1, sm: 2 },
-                    width: { xs: '100%', sm: 'auto' }, // En móvil ocupa la fila completa debajo del buscador
-                    flex: { xs: '1 1 100%', sm: '0 1 auto' },
-                    overflowX: { xs: 'auto', sm: 'visible' },
-                    pb: { xs: 0.5, sm: 0 }, // Espacio para el scroll si lo hubiera
-                    pt: { xs: 1, sm: 0 }, // Evita que se recorten los labels 'outlined' que flotan arriba del borde (Categoría)
-                }}
-            >
-                {content}
-            </Box>
-        );
-    }
+    // En móvil/tablet ocupa el 100%; en desktop crece conforme a los chips seleccionados
+    const dynamicMinWidth = isMobileOrTablet
+        ? 'unset'
+        : selected.length === 0
+            ? 300
+            : Math.min(300 + selected.length * 100, 800);
 
     return (
-        <Box sx={{ width: '100%' }}>
-            <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <FilterListIcon fontSize="small" />
-                Filtros
-            </Typography>
-            {content}
-        </Box>
+        <Autocomplete
+            multiple
+            disableCloseOnSelect
+            options={CATEGORIA_OPTIONS}
+            value={selected}
+            getOptionLabel={(opt) => opt.label}
+            isOptionEqualToValue={(opt, val) => opt.value === val.value}
+            onChange={(_, newValue) => {
+                onChange({
+                    ...filters,
+                    categorias: newValue.map((v) => v.value),
+                });
+            }}
+
+            /* ── Chips dentro del input ── */
+            renderTags={(tagValue, getTagProps) =>
+                tagValue.map((option, index) => {
+                    const { key, ...tagProps } = getTagProps({ index });
+                    return (
+                        <Chip
+                            key={key}
+                            {...tagProps}
+                            size="small"
+                            icon={
+                                <Box
+                                    component="span"
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        // Ajuste para que el icono quede junto al label
+                                        ml: '4px !important',
+                                        mr: '-2px',
+                                        '& svg': { fontSize: '13px !important' },
+                                    }}
+                                >
+                                    {getCategoryIconFilled(option.value, { sx: { fontSize: 13 } })}
+                                </Box>
+                            }
+                            label={
+                                <Typography
+                                    component="span"
+                                    variant="caption"
+                                    sx={{ fontWeight: 500, lineHeight: 1, fontSize: '0.7rem' }}
+                                >
+                                    {option.label}
+                                </Typography>
+                            }
+                            sx={{
+                                height: 22,
+                                borderRadius: '4px',
+                                // Elimina padding extra del MuiChip-icon para que quede compacto
+                                '& .MuiChip-icon': { ml: 0, mr: 0 },
+                            }}
+                        />
+                    );
+                })
+            }
+
+            /* ── Opciones del dropdown con icono ── */
+            renderOption={(props, option) => {
+                // Separamos key del resto para evitar el warning de React
+                const { key, ...listItemProps } = props as React.HTMLAttributes<HTMLLIElement> & { key: React.Key };
+                return (
+                    <Box
+                        component="li"
+                        key={key}
+                        {...listItemProps}
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1.5,
+                            py: '6px !important',
+                        }}
+                    >
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                color: 'text.secondary',
+                                '& svg': { fontSize: 18 },
+                            }}
+                        >
+                            {getCategoryIconFilled(option.value, { sx: { fontSize: 18 } })}
+                        </Box>
+                        <Typography variant="body2">{option.label}</Typography>
+                    </Box>
+                );
+            }}
+
+            /* ── TextField del Autocomplete ── */
+            renderInput={(params) => (
+                <TextField
+                    {...params}
+                    size="small"
+                    placeholder={selected.length === 0 ? 'Filtrar categoría...' : ''}
+                    InputProps={{
+                        ...params.InputProps,
+                        startAdornment: (
+                            <>
+                                {/* Icono de filtro siempre visible a la izquierda */}
+                                <Box
+                                    component="span"
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        color: selected.length > 0 ? 'primary.main' : 'action.active',
+                                        ml: 0.5,
+                                        mr: 0.25,
+                                        flexShrink: 0,
+                                    }}
+                                >
+                                    <FilterListIcon sx={{ fontSize: 18 }} />
+                                </Box>
+                                {/* Chips generados por renderTags */}
+                                {params.InputProps.startAdornment}
+                            </>
+                        ),
+                    }}
+                />
+            )}
+
+            sx={{
+                width: '100%',
+                minWidth: dynamicMinWidth,
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                '& .MuiOutlinedInput-root': {
+                    bgcolor: 'background.paper',
+                    borderRadius: 2,
+                }
+            }}
+
+            ListboxProps={{ style: { maxHeight: 300 } }}
+            noOptionsText="Sin resultados"
+            clearText="Limpiar filtros"
+            openText="Ver categorías"
+            closeText="Cerrar"
+        />
     );
 };
 

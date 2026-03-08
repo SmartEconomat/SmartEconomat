@@ -8,7 +8,7 @@ Ofrecer un layout consistente para ventanas modales de "Vista de Detalles" a lo 
 - Permite renderizar cabecera con avatar o imagen destacada, con título y subtítulo automáticos y botón condicional de adición / edición.
 - Permite construir una lista de "secciones" lógicas (`DetailSection`), donde cada sección funciona como una tarjeta que envuelve piezas de información agrupadas por área de interés.
 - Permite layouts de cuadrícula flexibles, configurando un número de `columns` a nivel de sección y el número de columnas a ocupar (`colSpan`) en cada par lógico clave/valor (`DetailField`).
-- Soporta el volcado libre de ReactNodes (`content`) dentro de las secciones para datos no convencionales, alérgenos encapsulados en chips flexibles, listas ricas, etc.
+- Soporta el volcado libre de ReactNodes (`content`) dentro de las secciones para datos no convencionales, alérgenos, bloques de resolución de incidencias con bordes verdes, etc.
 
 ## Estructuras y Tipos
 
@@ -37,9 +37,11 @@ Representa una tarjeta blanca de la sección dentro del modal:
 | `title` | `string` | Título grande encajado en lo más alto del modal. |
 | `subtitle` | `string` | (Opcional) Subtítulo atado y más discreto por debajo del título. Puede reflejar una categoría o subestado. |
 | `size` | `'sm' \| 'md' \| 'lg' \| 'xl'` | (Opcional) Define el ancho vertical máximo permitido para el modal. Predeterminado: `'md'`. |
-| `onEdit` | `() => void` | (Opcional) Si se define, aparecerá un botón flotante de lápiz (Editar) en el extremo derecho del DialogTitle vinculado a esta acción. |
+| `onEdit` | `() => void` | (Opcional) Si se define, aparecerá un botón de acción (Editar) en el footer (o cabecera según layout) vinculado a esta acción. |
+| `editLabel` | `string` | (Opcional) Texto personalizado para el botón de edición. Por defecto "Editar". |
 | `headerMedia` | `ReactNode` | (Opcional) Imagen / Avatar. Si existe, el DialogTitle reestructurará su flexbox para darle un lugar predominante al lado de sus textos correspondientes. |
-| `sections` | `DetailSection[]` | (Obligatorio) Array en el que cada objeto instanciará una tarjeta (`Paper` sombreado) subdividiendo el espacio visual vertical. |
+| `sections` | `DetailSection[]` | (Obligatorio) Array en el que cada objeto instanciará una tarjeta subdividiendo el espacio visual vertical. |
+| `actions` | `ReactNode` | (Opcional) Slot para botones de acción adicionales en el footer (ej. "Marcar como Resuelta"). |
 
 ## Ejemplo de Uso (Simplificado)
 
@@ -56,6 +58,7 @@ import { DetailModal } from '@/components/ui/DetailModal';
         <Avatar src={productToView.pathImg} variant="rounded" sx={{ width: 80, height: 80 }} />
     }
     onEdit={() => handleEditClick(productToView)}
+    editLabel="Editar producto"
     sections={[
         {
             title: 'Información General',
