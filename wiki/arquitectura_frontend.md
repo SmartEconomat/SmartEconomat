@@ -1,6 +1,4 @@
-# Documentación de Arquitectura SmartEconomat
-
-Este documento describe la arquitectura del proyecto `SmartEconomat` (Frontend), basada en principios de escalabilidad, mantenibilidad y separación de responsabilidades. Se actualizará a medida que se agreguen nuevas funcionalidades.
+Este documento describe la arquitectura del proyecto `SmartEconomat` (Frontend), basada en **React 19**, **Vite** y **Material UI (MUI)**. Diseñada siguiendo principios de escalabilidad, mantenibilidad y separación de responsabilidades.
 
 ## Estructura del Proyecto
 
@@ -45,10 +43,14 @@ Seguimos tres pilares fundamentales para mantener el código limpio:
 ### 3. Colocación (Co-location)
 - Recursos específicos (estilos locales, tipos específicos) viven en la misma carpeta o archivo que el componente o servicio que los usa.
 
-## Funcionalidades (Features)
+### Módulos Principales (Features)
 
-### Autenticación (`src/features/auth`)
-Módulo encargado del inicio de sesión y gestión de la sesión del usuario.
+1. **Autenticación (`src/features/auth`)**: Gestión de login, registros vinculados y persistencia de sesión.
+2. **Productos y Catálogo**: Gestión de fichas técnicas y códigos de barras.
+3. **Pedidos y Recepciones**: Flujos de compra y entrada de stock masiva/multi-pedido.
+4. **Inventario y Ubicaciones**: Control físico de stock FEFO y trazabilidad.
+5. **Recetas y Producción**: Escandallos, cocinado y gestión de lotes producidos.
+6. **Módulo Educativo**: Panel de profesores y slots para alumnos.
 
 ## Gestión de Estado (`src/store`)
 Utilizamos Context API para el estado global:
@@ -57,10 +59,10 @@ Utilizamos Context API para el estado global:
 -   **ToastContext:** Gestiona las notificaciones globales del sistema.
 
 
-## Rutas (`src/routes`)
--   **AppRouter:** Define el mapa de navegación principal.
--   **ProtectedRoute:** Guard que protege rutas privadas verificando `isAuthenticated`.
--   **PublicRoute:** Guard que redirige a usuarios autenticados fuera de páginas públicas (como Login).
+## Navegación y Estilo
+- **React Router v7**: Para el enrutamiento y guards de seguridad.
+- **Material UI (MUI) v7**: Sistema de diseño basado en componentes modernos.
+- **Vite**: Herramienta de construcción ultra rápida que sustituye a CRA.
 
 ---
 *Este documento es un artefacto vivo y debe actualizarse con cada nueva característica implementada.*

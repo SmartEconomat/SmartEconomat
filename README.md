@@ -150,6 +150,14 @@ El proyecto está configurado para usar **SWC** en desarrollo para una compilaci
 
 ---
 
+## 📚 Documentación Adicional
+- [Wiki del Proyecto](./wiki/)
+- [Roles y Permisos](./wiki/roles_y_permisos.md)
+- [Paquetes y Dependencias](./wiki/paquetes_y_dependencias.md)
+- [Arquitectura Backend](./wiki/arquitectura_backend.md)
+
+---
+
 ## Licencia
 
 **SmartEconomat - Todos los derechos reservados**  

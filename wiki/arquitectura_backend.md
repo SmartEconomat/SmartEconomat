@@ -1,6 +1,6 @@
 # Documentación de Arquitectura Backend (SmartEconomat)
 
-Este documento detalla la arquitectura del servidor de `SmartEconomat`, construido con **NestJS**, siguiendo un enfoque modular y orientado a capas.
+Este documento detalla la arquitectura del servidor de `SmartEconomat`, construido con **NestJS**, siguiendo un enfoque modular, orientado a capas y optimizado para alto rendimiento con **SWC** y **UUID v7**.
 
 ## Estructura del Proyecto
 
@@ -61,6 +61,22 @@ Utilizamos los DTOs `PaginationQueryDto` y `PaginatedResponseDto` de forma estan
 
 ### Internacionalización (i18n)
 La mayoría de los mensajes de error y respuestas están centralizados en `i18n`, facilitando el cambio de idioma (actualmente configurado en Español como principal).
+
+### Identificadores UUID v7
+Todas las entidades del sistema utilizan **UUID v7** como llave primaria. A diferencia de v4, v7 es ordenable temporalmente, lo que optimiza drásticamente los índices de base de datos y permite una ordenación cronológica natural sin depender solo de `created_at`.
+
+### Sistema de Permisos Dinámico (RBAC+)
+Además de los roles estáticos (`ADMINISTRADOR`, `PROFESOR`, `ALUMNO`), el sistema permite:
+- **Permisos Adicionales**: Conceder permisos específicos a un usuario concreto.
+- **Permisos Excluidos**: Revocar permisos específicos a un usuario aunque su rol los incluya.
+Esto se gestiona a través de las tablas `usuario_permiso_adicional` y `usuario_permiso_excluido`.
+
+### Borrado Lógico (Soft Delete)
+Implementado en la `BaseEntity`. Los registros no se borran físicamente (`DELETE`), sino que se marca la columna `deleted_at` y se registra el `deleted_by` para auditoría.
+
+### Caché y Rendimiento
+- **SWC**: Utilizado en desarrollo para una compilación ultra rápida.
+- **Cache-Manager**: Integrado con Redis para cachear respuestas pesadas o datos de configuración frecuentes.
 
 ## Seguridad
 
