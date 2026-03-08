@@ -7,9 +7,9 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   VersionColumn,
-  type Relation,
 } from 'typeorm';
-import type { Producto } from '../producto.entity/producto.entity';
+import type { Relation } from 'typeorm';
+import { Producto } from '../producto.entity/producto.entity';
 import { Alergeno } from '../enums/producto.enums';
 
 /**
@@ -20,16 +20,16 @@ import { Alergeno } from '../enums/producto.enums';
  */
 @Entity({ name: 'producto_alergeno' })
 export class ProductoAlergeno {
-  @PrimaryColumn('uuid', { name: 'id_producto' })
-  idProducto!: string;
+  @PrimaryColumn('uuid', { name: 'producto_id' })
+  productoId!: string;
 
   @PrimaryColumn({ type: 'enum', enum: Alergeno, name: 'alergeno' })
   alergeno!: Alergeno;
 
-  @ManyToOne('Producto', {
+  @ManyToOne(() => Producto, (producto) => producto.alergenos, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'id_producto', referencedColumnName: 'id' })
+  @JoinColumn({ name: 'producto_id' })
   producto!: Relation<Producto>;
 
   @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
@@ -38,9 +38,9 @@ export class ProductoAlergeno {
   @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
   readonly updatedAt!: Date;
 
-  @DeleteDateColumn({ type: 'timestamptz', name: 'deleted_at' })
-  deletedAt?: Date;
+  @DeleteDateColumn({ type: 'timestamptz', name: 'deleted_at', nullable: true })
+  deletedAt?: Date | null;
 
-  @VersionColumn({ name: 'version' })
+  @VersionColumn({ name: 'version', default: 1 })
   version!: number;
 }

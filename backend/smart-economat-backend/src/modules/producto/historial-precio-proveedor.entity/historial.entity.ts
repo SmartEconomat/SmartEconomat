@@ -1,4 +1,5 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index, Check } from 'typeorm';
+import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
@@ -14,10 +15,13 @@ import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveed
  * @extends {BaseEntity}
  */
 @Entity({ name: 'historial_precio' })
-@Index('idx_historial_precio_producto_proveedor', ['productoProveedor'])
-@Index('idx_historial_precio_fecha', ['fecha'])
+@Index(['productoProveedorId'])
+@Index(['fecha'])
 @Check(`"precio" >= 0`)
 export class HistorialPrecio extends BaseEntity {
+  @Column({ name: 'producto_proveedor_id' })
+  productoProveedorId!: string;
+
   /**
    * ProductoProveedor al que pertenece este histórico.
    * La relación es CASCADE deletion porque es un dato dependiente fuerte.
@@ -26,8 +30,8 @@ export class HistorialPrecio extends BaseEntity {
     onDelete: 'CASCADE',
     nullable: false,
   })
-  @JoinColumn({ name: 'id_producto_proveedor' })
-  productoProveedor!: ProductoProveedor;
+  @JoinColumn({ name: 'producto_proveedor_id' })
+  productoProveedor!: Relation<ProductoProveedor>;
 
   /**
    * Precio registrado en ese momento histórico.

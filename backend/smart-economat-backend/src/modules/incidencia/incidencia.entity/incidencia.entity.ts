@@ -1,9 +1,16 @@
-import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  Index,
+  OneToMany,
+} from 'typeorm';
+import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
 import { Pedido } from '../../pedido/pedido.entity/pedido.entity';
-import { OneToMany, type Relation } from 'typeorm';
 import { IncidenciaLinea } from '../incidencia-linea.entity/incidencia-linea.entity';
 
 /**
@@ -19,10 +26,19 @@ import { IncidenciaLinea } from '../incidencia-linea.entity/incidencia-linea.ent
  * @extends {BaseEntity}
  */
 @Entity({ name: 'incidencia' })
-@Index('idx_incidencia_recepcion', ['recepcion'])
-@Index('idx_incidencia_pedido', ['pedido'])
-@Index('idx_incidencia_usuario_resolutor', ['usuarioResolutor'])
+@Index(['recepcionId'])
+@Index(['pedidoId'])
+@Index(['usuarioResolutorId'])
 export class Incidencia extends BaseEntity {
+  @Column({ name: 'recepcion_id' })
+  recepcionId!: string;
+
+  @Column({ name: 'pedido_id', nullable: true })
+  pedidoId?: string;
+
+  @Column({ name: 'usuario_resolutor_id', nullable: true })
+  usuarioResolutorId?: string;
+
   /**
    * Recepción donde se generó la incidencia.
    * CASCADE onDelete: Si se borra la recepción, es lógico eliminar sus incidencias.
@@ -31,8 +47,8 @@ export class Incidencia extends BaseEntity {
     onDelete: 'CASCADE',
     nullable: false,
   })
-  @JoinColumn({ name: 'id_recepcion' })
-  recepcion!: Recepcion;
+  @JoinColumn({ name: 'recepcion_id' })
+  recepcion!: Relation<Recepcion>;
 
   /**
    * Pedido en el que se detectó la discrepancia.
@@ -42,8 +58,8 @@ export class Incidencia extends BaseEntity {
     onDelete: 'RESTRICT',
     nullable: true,
   })
-  @JoinColumn({ name: 'id_pedido' })
-  pedido?: Pedido | null;
+  @JoinColumn({ name: 'pedido_id' })
+  pedido?: Relation<Pedido>;
 
   /**
    * Usuario que resolvió la incidencia.
@@ -54,19 +70,15 @@ export class Incidencia extends BaseEntity {
     onDelete: 'SET NULL',
     nullable: true,
   })
-  @JoinColumn({ name: 'id_usuario_resolutor' })
-  usuarioResolutor?: Usuario | null;
+  @JoinColumn({ name: 'usuario_resolutor_id' })
+  usuarioResolutor?: Relation<Usuario>;
 
   /**
    * Líneas de discrepancia detectadas. Relación con IncidenciaLinea.
    */
-  @OneToMany(
-    () => IncidenciaLinea,
-    (linea: IncidenciaLinea) => linea.incidencia,
-    {
-      cascade: true,
-    }
-  )
+  @OneToMany(() => IncidenciaLinea, (linea) => linea.incidencia, {
+    cascade: true,
+  })
   lineas!: Relation<IncidenciaLinea[]>;
 
   /**
@@ -104,7 +116,7 @@ export class Incidencia extends BaseEntity {
    */
   resolver(usuarioId: string, observaciones?: string): void {
     this.fechaResolucion = new Date();
-    this.usuarioResolutor = { id: usuarioId } as Usuario;
+    this.usuarioResolutorId = usuarioId;
     if (observaciones) {
       this.observacionesResolucion = observaciones;
     }

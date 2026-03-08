@@ -5,13 +5,13 @@ import {
   JoinColumn,
   OneToMany,
   Index,
-  type Relation,
 } from 'typeorm';
+import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { EstadoRecepcion } from '../enums/estado-recepcion.enum';
-import type { Usuario } from '../../usuario/usuario.entity/usuario.entity';
-import type { RecepcionPedido } from '../recepcion-pedido.entity/recepcion-pedido.entity';
-import type { RecepcionProducto } from '../recepcion-productos.entity/recepcion-producto.entity';
+import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
+import { RecepcionPedido } from '../recepcion-pedido.entity/recepcion-pedido.entity';
+import { RecepcionProducto } from '../recepcion-productos.entity/recepcion-producto.entity';
 
 /**
  * Entidad Recepcion
@@ -24,21 +24,24 @@ import type { RecepcionProducto } from '../recepcion-productos.entity/recepcion-
  * @extends {BaseEntity}
  */
 @Entity({ name: 'recepcion' })
-@Index('idx_recepcion_usuario', ['usuario'])
-@Index('idx_recepcion_fecha', ['fechaRecepcion'])
-@Index('idx_recepcion_estado', ['estado'])
+@Index(['usuarioId'])
+@Index(['fechaRecepcion'])
+@Index(['estado'])
 export class Recepcion extends BaseEntity {
+  @Column({ name: 'usuario_id', nullable: true })
+  usuarioId?: string;
+
   /**
    * Usuario que realiza la recepción.
    * La relación es SET NULL para mantener el histórico.
    * @type {Usuario | null}
    */
-  @ManyToOne('Usuario', (usuario: Usuario) => usuario.recepciones, {
+  @ManyToOne(() => Usuario, (usuario) => usuario.recepciones, {
     nullable: true,
     onDelete: 'SET NULL',
   })
-  @JoinColumn({ name: 'id_usuario', referencedColumnName: 'id' })
-  usuario?: Relation<Usuario> | null;
+  @JoinColumn({ name: 'usuario_id' })
+  usuario?: Relation<Usuario>;
 
   /**
    * Fecha y hora en que se recibió la mercancía.
@@ -79,7 +82,7 @@ export class Recepcion extends BaseEntity {
   /**
    * Relación con los pedidos que se están recepcionando.
    */
-  @OneToMany('RecepcionPedido', (rp: RecepcionPedido) => rp.recepcion, {
+  @OneToMany(() => RecepcionPedido, (rp) => rp.recepcion, {
     cascade: true,
   })
   recepcionesPedidos!: Relation<RecepcionPedido[]>;
@@ -87,7 +90,7 @@ export class Recepcion extends BaseEntity {
   /**
    * Detalle de los productos recibidos.
    */
-  @OneToMany('RecepcionProducto', (rp: RecepcionProducto) => rp.recepcion, {
+  @OneToMany(() => RecepcionProducto, (rp) => rp.recepcion, {
     cascade: true,
   })
   recepcionProductos!: Relation<RecepcionProducto[]>;

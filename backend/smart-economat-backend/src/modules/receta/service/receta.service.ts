@@ -86,10 +86,10 @@ export class RecetaService {
         .getRepository(Inventario)
         .createQueryBuilder('inv')
         .innerJoin('inv.productoProveedor', 'pp')
-        .where('pp.id_producto IN (:...productoIds)', { productoIds })
-        .select('pp.id_producto', 'productoId')
+        .where('pp.producto_id IN (:...productoIds)', { productoIds })
+        .select('pp.producto_id', 'productoId')
         .addSelect('SUM(inv.cantidad_actual)', 'totalStock')
-        .groupBy('pp.id_producto')
+        .groupBy('pp.producto_id')
         .getRawMany();
     }
 
@@ -230,7 +230,7 @@ export class RecetaService {
         .createQueryBuilder(Inventario, 'inv')
         .innerJoinAndSelect('inv.productoProveedor', 'pp')
         .innerJoinAndSelect('pp.producto', 'prod')
-        .where('pp.id_producto IN (:...productoIds)', { productoIds })
+        .where('pp.producto_id IN (:...productoIds)', { productoIds })
         .andWhere('inv.cantidad_actual > 0')
         .orderBy('inv.fecha_caducidad', 'ASC', 'NULLS LAST')
         .addOrderBy('inv.fecha_entrada', 'ASC')

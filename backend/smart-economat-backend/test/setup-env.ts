@@ -1,5 +1,7 @@
 import { newDb } from 'pg-mem';
 import type { DataSource } from 'typeorm';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const db = newDb();
 db.public.registerFunction({
@@ -25,6 +27,7 @@ db.public.registerFunction({
 
 process.env.DB_SYNC = 'false';
 process.env.NODE_ENV = 'test';
+process.env.LOCAL_STORAGE_PATH = './uploads_test';
 
 const pg = db.adapters.createPg();
 jest.mock('pg', () => pg);
@@ -40,4 +43,13 @@ beforeAll(async () => {
     await dataSource.initialize();
   }
   await runAllSeeders();
+});
+
+afterAll(() => {
+  const uploadDir = path.resolve(
+    process.env.LOCAL_STORAGE_PATH || './uploads_test'
+  );
+  if (fs.existsSync(uploadDir)) {
+    fs.rmSync(uploadDir, { recursive: true, force: true });
+  }
 });

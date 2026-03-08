@@ -5,15 +5,15 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
-  type Relation,
 } from 'typeorm';
+import type { Relation } from 'typeorm';
 import {
   DificultadReceta,
   TiempoReceta,
   UnidadIngrediente,
 } from '../enums/receta.enums';
-import type { RecetaIngrediente } from '../receta-ingrediente.entity/receta-ingrediente.entity';
-import type { Producto } from '../../producto/producto.entity/producto.entity';
+import { RecetaIngrediente } from '../receta-ingrediente.entity/receta-ingrediente.entity';
+import { Producto } from '../../producto/producto.entity/producto.entity';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 
@@ -41,16 +41,19 @@ export class Receta extends BaseEntity {
   dificultad!: DificultadReceta;
 
   @Column({
-    name: 'tiempoPreparacion',
+    name: 'tiempo_preparacion',
     type: 'varchar',
     length: 50,
     nullable: false,
   })
   tiempoPreparacion!: string;
 
-  @ManyToOne('Producto', { nullable: true, onDelete: 'SET NULL' })
+  @Column({ name: 'producto_resultado_id', nullable: true })
+  productoResultadoId?: string;
+
+  @ManyToOne(() => Producto, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'producto_resultado_id' })
-  productoResultado?: Relation<Producto> | null;
+  productoResultado?: Relation<Producto>;
 
   @Column({
     type: 'numeric',
@@ -87,6 +90,6 @@ export class Receta extends BaseEntity {
   })
   costeUnitarioEstimado?: number | null;
 
-  @OneToMany('RecetaIngrediente', (ri: RecetaIngrediente) => ri.receta)
+  @OneToMany(() => RecetaIngrediente, (ri) => ri.receta)
   ingredientes!: Relation<RecetaIngrediente[]>;
 }

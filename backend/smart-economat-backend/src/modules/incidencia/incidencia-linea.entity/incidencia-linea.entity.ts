@@ -19,22 +19,28 @@ export enum EstadoReclamacion {
 }
 
 @Entity({ name: 'incidencia_linea' })
-@Index('idx_incidencia_linea_incidencia', ['incidencia'])
-@Index('idx_incidencia_linea_pedido_producto', ['pedidoProducto'])
+@Index(['incidenciaId'])
+@Index(['pedidoProductoId'])
 export class IncidenciaLinea extends BaseEntity {
-  @ManyToOne(() => Incidencia, (incidencia: Incidencia) => incidencia.lineas, {
+  @Column({ name: 'incidencia_id' })
+  incidenciaId!: string;
+
+  @Column({ name: 'pedido_producto_id' })
+  pedidoProductoId!: string;
+
+  @ManyToOne(() => Incidencia, (incidencia) => incidencia.lineas, {
     onDelete: 'CASCADE',
     nullable: false,
   })
-  @JoinColumn({ name: 'id_incidencia' })
+  @JoinColumn({ name: 'incidencia_id' })
   incidencia!: Relation<Incidencia>;
 
   @ManyToOne(() => PedidoProducto, {
     onDelete: 'RESTRICT',
     nullable: false,
   })
-  @JoinColumn({ name: 'id_pedido_producto' })
-  pedidoProducto!: PedidoProducto;
+  @JoinColumn({ name: 'pedido_producto_id' })
+  pedidoProducto!: Relation<PedidoProducto>;
 
   @Column({
     type: 'numeric',

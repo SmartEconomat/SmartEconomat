@@ -1,14 +1,25 @@
-import { Entity, Column, ManyToOne, JoinColumn, type Relation } from 'typeorm';
-import type { Receta } from '../receta.entity/receta.entity';
-import type { Producto } from '../../producto/producto.entity/producto.entity';
+import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
+import type { Relation } from 'typeorm';
+import { Receta } from '../receta.entity/receta.entity';
+import { Producto } from '../../producto/producto.entity/producto.entity';
 import { UnidadIngrediente } from '../enums/receta.enums';
-
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 
 @Entity('receta_ingrediente')
 export class RecetaIngrediente extends BaseEntity {
-  @Column('double precision')
+  @Column({ name: 'receta_id' })
+  recetaId!: string;
+
+  @Column({ name: 'producto_id' })
+  productoId!: string;
+
+  @Column({
+    type: 'numeric',
+    precision: 12,
+    scale: 4,
+    transformer: new ColumnNumericTransformer(),
+  })
   cantidad!: number;
 
   @Column({ type: 'enum', enum: UnidadIngrediente })
@@ -24,13 +35,13 @@ export class RecetaIngrediente extends BaseEntity {
   })
   mermaAplicada!: number;
 
-  @ManyToOne('Receta', (receta: Receta) => receta.ingredientes, {
+  @ManyToOne(() => Receta, (receta) => receta.ingredientes, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'receta_id' })
   receta!: Relation<Receta>;
 
-  @ManyToOne('Producto', { nullable: false })
+  @ManyToOne(() => Producto, { nullable: false })
   @JoinColumn({ name: 'producto_id' })
   producto!: Relation<Producto>;
 }

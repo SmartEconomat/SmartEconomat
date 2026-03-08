@@ -1,16 +1,9 @@
-import {
-  Entity,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  Index,
-  Check,
-  type Relation,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, Index, Check } from 'typeorm';
+import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
-import type { Pedido } from '../pedido.entity/pedido.entity';
-import type { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
+import { Pedido } from '../pedido.entity/pedido.entity';
+import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
 
 /**
  * Entidad PedidoProducto
@@ -23,35 +16,37 @@ import type { ProductoProveedor } from '../../producto/producto-proveedor.entity
  * @extends {BaseEntity}
  */
 @Entity({ name: 'pedido_producto' })
-@Index('idx_pedido_producto_pedido', ['pedido'])
-@Index('idx_pedido_producto_producto_proveedor', ['productoProveedor'])
+@Index(['pedidoId'])
+@Index(['productoProveedorId'])
 @Check(`"cantidad" > 0`)
 @Check(`"precio_unitario" >= 0`)
 export class PedidoProducto extends BaseEntity {
+  @Column({ name: 'pedido_id' })
+  pedidoId!: string;
+
+  @Column({ name: 'producto_proveedor_id' })
+  productoProveedorId!: string;
+
   /**
    * Pedido al que pertenece esta línea.
    * Constraint: RESTRICT para mantener el histórico de compras.
    */
-  @ManyToOne('Pedido', (pedido: Pedido) => pedido.pedidoProductos, {
+  @ManyToOne(() => Pedido, (pedido) => pedido.pedidoProductos, {
     onDelete: 'RESTRICT',
     nullable: false,
   })
-  @JoinColumn({ name: 'id_pedido', referencedColumnName: 'id' })
+  @JoinColumn({ name: 'pedido_id' })
   pedido!: Relation<Pedido>;
 
   /**
    * ProductoProveedor solicitado.
    * Identifica unívocamente producto + proveedor.
    */
-  @ManyToOne(
-    'ProductoProveedor',
-    (pp: ProductoProveedor) => pp.pedidoProductos,
-    {
-      onDelete: 'RESTRICT',
-      nullable: false,
-    }
-  )
-  @JoinColumn({ name: 'id_producto_proveedor' })
+  @ManyToOne(() => ProductoProveedor, (pp) => pp.pedidoProductos, {
+    onDelete: 'RESTRICT',
+    nullable: false,
+  })
+  @JoinColumn({ name: 'producto_proveedor_id' })
   productoProveedor!: Relation<ProductoProveedor>;
 
   /**

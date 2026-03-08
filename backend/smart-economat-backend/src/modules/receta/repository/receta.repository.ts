@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, ILike, In, Repository } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { Receta } from '../receta.entity/receta.entity';
 import { RecetaIngrediente } from '../receta-ingrediente.entity/receta-ingrediente.entity';
 import { Producto } from '../../producto/producto.entity/producto.entity';
@@ -204,7 +205,7 @@ export class RecetaRepository {
         }
       }
 
-      const updateData: Partial<Receta> = {
+      const updateData: QueryDeepPartialEntity<Receta> = {
         ...(dto.nombre !== undefined && { nombre: dto.nombre }),
         ...(dto.instrucciones !== undefined && {
           instrucciones: dto.instrucciones,
@@ -214,7 +215,9 @@ export class RecetaRepository {
         ...(dto.tiempoPreparacion !== undefined && {
           tiempoPreparacion: dto.tiempoPreparacion,
         }),
-        ...(productoResultado !== undefined && { productoResultado }),
+        ...(productoResultado !== undefined && {
+          productoResultado: productoResultado as Producto,
+        }),
         ...(dto.rendimiento !== undefined && { rendimiento: dto.rendimiento }),
         ...(dto.unidadResultado !== undefined && {
           unidadResultado: dto.unidadResultado,

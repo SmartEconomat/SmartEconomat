@@ -97,7 +97,7 @@ export class IncidenciaResuelaService {
 
     const incidencia = resolucion.incidencia;
     incidencia.fechaResolucion = null;
-    incidencia.usuarioResolutor = null;
+    incidencia.usuarioResolutor = undefined;
     incidencia.observacionesResolucion = undefined;
     await this.incidenciaRepository.save(incidencia);
 
