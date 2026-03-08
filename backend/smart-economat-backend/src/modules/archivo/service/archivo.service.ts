@@ -110,7 +110,13 @@ export class ArchivoService {
 
   getFileContent(filename: string): string {
     if (this.storageType === 'local') {
+      const uploadDirResolved = path.resolve(this.uploadDir);
       const filePath = path.resolve(this.uploadDir, filename);
+
+      if (!filePath.startsWith(uploadDirResolved + path.sep)) {
+        throw new BadRequestException(I18nHelper.getError('INVALID_FILE_PATH'));
+      }
+
       if (!fs.existsSync(filePath)) {
         throw new NotFoundException(
           I18nHelper.getError('FILE_NOT_FOUND_PHYSICAL')

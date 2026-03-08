@@ -11,6 +11,7 @@ import {
   Req,
   Res,
   HttpStatus,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -82,7 +83,9 @@ export class ArchivoController {
   @Get(':id')
   @ApiOperation({ summary: 'Obtener metadata de un archivo por ID' })
   @ApiResponse({ status: 200, description: 'Detalles del archivo' })
-  async findOne(@Param('id') id: string): Promise<FileResponseDto> {
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string
+  ): Promise<FileResponseDto> {
     const result = await this.archivoService.findOne(id);
     return this.mapToResponseDto(result);
   }
@@ -98,7 +101,7 @@ export class ArchivoController {
   @ApiOperation({ summary: 'Eliminar un archivo (soft-delete)' })
   @ApiResponse({ status: 204, description: 'Archivo eliminado correctamente' })
   async remove(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Req() req: { user: Usuario },
     @Res() res: Response
   ) {
