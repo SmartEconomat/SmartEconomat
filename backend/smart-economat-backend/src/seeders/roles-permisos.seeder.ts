@@ -1,6 +1,7 @@
 import { DataSource } from 'typeorm';
 import { Permiso } from '../modules/permisos/entities/permiso.entity';
 import { PlantillaRol } from '../modules/plantillas-roles/entities/plantilla-rol.entity';
+import { rolUsuario } from '../modules/usuario/enums/usuario.enums';
 
 /**
  * Definición completa de 60+ permisos base del sistema
@@ -356,6 +357,13 @@ const PERMISOS_BASE = [
     accion: 'eliminar',
     descripcion: 'Eliminar incidencias',
   },
+  {
+    codigo: 'incidencias:editar',
+    nombre: 'Editar incidencia',
+    modulo: 'incidencias',
+    accion: 'editar',
+    descripcion: 'Modificar datos de una incidencia',
+  },
 
   {
     codigo: 'recetas:listar',
@@ -427,6 +435,13 @@ const PERMISOS_BASE = [
     modulo: 'albaranes',
     accion: 'eliminar',
     descripcion: 'Eliminar albaranes',
+  },
+  {
+    codigo: 'albaranes:editar',
+    nombre: 'Editar albarán',
+    modulo: 'albaranes',
+    accion: 'editar',
+    descripcion: 'Modificar datos de albaranes',
   },
 
   {
@@ -536,6 +551,125 @@ const PERMISOS_BASE = [
     accion: 'gestionar',
     descripcion: 'Crear/editar permisos del sistema',
   },
+  {
+    codigo: 'profesor:gestionar_slots',
+    nombre: 'Gestionar slots',
+    modulo: 'profesor',
+    accion: 'gestionar_slots',
+    descripcion: 'Crear y gestionar slots de alumnos',
+  },
+  {
+    codigo: 'profesor:gestionar_alumnos',
+    nombre: 'Gestionar alumnos',
+    modulo: 'profesor',
+    accion: 'gestionar_alumnos',
+    descripcion: 'Activar alumnos y resetear contraseñas',
+  },
+  {
+    codigo: 'profesor:ver_alumnos',
+    nombre: 'Ver alumnos',
+    modulo: 'profesor',
+    accion: 'ver_alumnos',
+    descripcion: 'Ver listado de alumnos asignados',
+  },
+  {
+    codigo: 'recetas:duplicar',
+    nombre: 'Duplicar receta',
+    modulo: 'recetas',
+    accion: 'duplicar',
+    descripcion: 'Duplicar una receta existente',
+  },
+  {
+    codigo: 'recetas:cocinar',
+    nombre: 'Cocinar receta',
+    modulo: 'recetas',
+    accion: 'cocinar',
+    descripcion: 'Registrar la producción/cocinado de una receta',
+  },
+  {
+    codigo: 'incidencias:resolver',
+    nombre: 'Resolver incidencia',
+    modulo: 'incidencias',
+    accion: 'resolver',
+    descripcion: 'Marcar una incidencia como resuelta',
+  },
+  {
+    codigo: 'movimientos:historial',
+    nombre: 'Ver historial de movimientos',
+    modulo: 'movimientos',
+    accion: 'historial',
+    descripcion: 'Ver trazabilidad detallada de movimientos',
+  },
+  {
+    codigo: 'archivos:subir',
+    nombre: 'Subir archivo',
+    modulo: 'archivos',
+    accion: 'subir',
+    descripcion: 'Subir nuevos archivos al sistema',
+  },
+  {
+    codigo: 'archivos:listar',
+    nombre: 'Listar archivos',
+    modulo: 'archivos',
+    accion: 'listar',
+    descripcion: 'Ver listado de archivos subidos',
+  },
+  {
+    codigo: 'archivos:ver',
+    nombre: 'Ver archivo',
+    modulo: 'archivos',
+    accion: 'ver',
+    descripcion: 'Ver detalle o descargar contenido de un archivo',
+  },
+  {
+    codigo: 'archivos:eliminar',
+    nombre: 'Eliminar archivo',
+    modulo: 'archivos',
+    accion: 'eliminar',
+    descripcion: 'Eliminar archivos del sistema',
+  },
+  {
+    codigo: 'ubicaciones:listar',
+    nombre: 'Listar ubicaciones',
+    modulo: 'ubicaciones',
+    accion: 'listar',
+    descripcion: 'Ver listado de ubicaciones',
+  },
+  {
+    codigo: 'ubicaciones:ver',
+    nombre: 'Ver ubicación',
+    modulo: 'ubicaciones',
+    accion: 'ver',
+    descripcion: 'Ver detalles de una ubicación',
+  },
+  {
+    codigo: 'ubicaciones:crear',
+    nombre: 'Crear ubicación',
+    modulo: 'ubicaciones',
+    accion: 'crear',
+    descripcion: 'Añadir nuevas ubicaciones',
+  },
+  {
+    codigo: 'ubicaciones:editar',
+    nombre: 'Editar ubicación',
+    modulo: 'ubicaciones',
+    accion: 'editar',
+    descripcion: 'Modificar ubicaciones existentes',
+  },
+  {
+    codigo: 'ubicaciones:eliminar',
+    nombre: 'Eliminar ubicación',
+    modulo: 'ubicaciones',
+    accion: 'eliminar',
+    descripcion: 'Eliminar ubicaciones (soft delete)',
+  },
+  {
+    codigo: 'ubicaciones:restaurar',
+    nombre: 'Restaurar ubicación',
+    modulo: 'ubicaciones',
+    accion: 'restaurar',
+    descripcion: 'Restaurar ubicaciones eliminadas',
+  },
 ];
 
 /**
@@ -547,7 +681,7 @@ export async function seedRolesPermisos(dataSource: DataSource): Promise<void> {
 
   console.log('🚀 Iniciando seeder de permisos y plantillas...');
 
-  console.log('📝 Creando 69 permisos base...');
+  console.log('📝 Creando permisos base...');
   const permisosCreados: Permiso[] = [];
 
   for (const permisoData of PERMISOS_BASE) {
@@ -589,16 +723,18 @@ export async function seedRolesPermisos(dataSource: DataSource): Promise<void> {
   }
 
   let administrador = await plantillaRepo.findOne({
-    where: { nombre: 'ADMINISTRADOR' },
+    where: { nombre: rolUsuario.ADMINISTRADOR },
   });
   if (!administrador) {
     const permisosAdmin = todosPermisos.filter(
-      (p) => !p.codigo.startsWith('roles:') && !p.codigo.startsWith('permisos:')
+      (p) =>
+        (!p.codigo.startsWith('roles:') && !p.codigo.startsWith('permisos:')) ||
+        p.codigo === 'permisos:gestionar'
     );
     administrador = plantillaRepo.create({
-      nombre: 'ADMINISTRADOR',
+      nombre: rolUsuario.ADMINISTRADOR,
       descripcion:
-        'Administrador completo del economato (sin gestión de permisos)',
+        'Administrador completo del economato (incluye gestión de permisos de usuario)',
       esEditable: true,
       activo: true,
     });
@@ -606,11 +742,13 @@ export async function seedRolesPermisos(dataSource: DataSource): Promise<void> {
     administrador.permisos = permisosAdmin;
     await plantillaRepo.save(administrador);
     console.log(
-      `✅ Plantilla ADMINISTRADOR creada (${permisosAdmin.length} permisos)`
+      `✅ Plantilla ADMINISTRADOR ('${rolUsuario.ADMINISTRADOR}') creada (${permisosAdmin.length} permisos)`
     );
   }
 
-  let gestor = await plantillaRepo.findOne({ where: { nombre: 'GESTOR' } });
+  let gestor = await plantillaRepo.findOne({
+    where: { nombre: rolUsuario.PROFESOR },
+  });
   if (!gestor) {
     const permisosGestor = todosPermisos.filter(
       (p) =>
@@ -623,10 +761,13 @@ export async function seedRolesPermisos(dataSource: DataSource): Promise<void> {
           'incidencias',
           'recetas',
           'dashboard',
+          'profesor',
+          'albaranes',
+          'ubicaciones',
         ].includes(p.modulo) && !p.accion.includes('eliminar')
     );
     gestor = plantillaRepo.create({
-      nombre: 'GESTOR',
+      nombre: rolUsuario.PROFESOR,
       descripcion: 'Gestión operativa del economato (perfil profesor)',
       esEditable: true,
       activo: true,
@@ -635,21 +776,28 @@ export async function seedRolesPermisos(dataSource: DataSource): Promise<void> {
     gestor.permisos = permisosGestor;
     await plantillaRepo.save(gestor);
     console.log(
-      `✅ Plantilla GESTOR creada (${permisosGestor.length} permisos)`
+      `✅ Plantilla PROFESOR creada (${permisosGestor.length} permisos)`
     );
   }
 
   let usuarioBasico = await plantillaRepo.findOne({
-    where: { nombre: 'USUARIO_BASICO' },
+    where: { nombre: rolUsuario.ALUMNO },
   });
   if (!usuarioBasico) {
     const permisosBasico = todosPermisos.filter(
       (p) =>
-        ['productos', 'inventario', 'dashboard'].includes(p.modulo) &&
-        ['listar', 'ver', 'ver_estadisticas'].includes(p.accion)
+        ([
+          'productos',
+          'inventario',
+          'dashboard',
+          'albaranes',
+          'ubicaciones',
+        ].includes(p.modulo) &&
+          ['listar', 'ver', 'ver_estadisticas'].includes(p.accion)) ||
+        p.modulo === 'alumno'
     );
     usuarioBasico = plantillaRepo.create({
-      nombre: 'USUARIO_BASICO',
+      nombre: rolUsuario.ALUMNO,
       descripcion: 'Usuario con permisos de solo lectura (perfil alumno)',
       esEditable: true,
       activo: true,
@@ -658,7 +806,7 @@ export async function seedRolesPermisos(dataSource: DataSource): Promise<void> {
     usuarioBasico.permisos = permisosBasico;
     await plantillaRepo.save(usuarioBasico);
     console.log(
-      `✅ Plantilla USUARIO_BASICO creada (${permisosBasico.length} permisos)`
+      `✅ Plantilla ALUMNO creada (${permisosBasico.length} permisos)`
     );
   }
 

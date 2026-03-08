@@ -17,12 +17,11 @@ import { CreateHistorialPrecioDto } from '../dto/historial-precio.dto/create-his
 import { UpdateHistorialPrecioDto } from '../dto/historial-precio.dto/update-historial-precio.dto';
 import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.entity';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/role.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
-import { rolUsuario } from '../../usuario/enums/usuario.enums';
 import { ApiQuery } from '@nestjs/swagger';
+import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { PermisosGuard } from '../../authorization/guards/permisos.guard';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('historial-precio')
 export class HistorialPrecioController {
   constructor(
@@ -30,14 +29,14 @@ export class HistorialPrecioController {
   ) {}
 
   @Post()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('productos:editar')
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateHistorialPrecioDto): Promise<HistorialPrecio> {
     return this.historialPrecioService.create(dto);
   }
 
   @Get()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('productos:ver')
   @HttpCode(HttpStatus.OK)
   @ApiQuery({
     name: 'order',
@@ -52,14 +51,14 @@ export class HistorialPrecioController {
   }
 
   @Get(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('productos:ver')
   @HttpCode(HttpStatus.OK)
   findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<HistorialPrecio> {
     return this.historialPrecioService.findOne(id);
   }
 
   @Patch(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('productos:editar')
   @HttpCode(HttpStatus.OK)
   update(
     @Param('id', ParseUUIDv7Pipe) id: string,
@@ -69,7 +68,7 @@ export class HistorialPrecioController {
   }
 
   @Delete(':id')
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @RequirePermissions('productos:eliminar')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.historialPrecioService.remove(id);

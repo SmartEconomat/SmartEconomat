@@ -26,19 +26,21 @@ import { FileResponseDto } from '../dto/file-response.dto';
 import { ArchivoService } from '../service/archivo.service';
 import { FileListFilterDto } from '../dto/file-list-filter.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/role.guard';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import type { Response } from 'express';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
+import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { PermisosGuard } from '../../authorization/guards/permisos.guard';
 
 @ApiTags('Archivos')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('archivos')
 export class ArchivoController {
   constructor(private readonly archivoService: ArchivoService) {}
 
   @Post('upload')
+  @RequirePermissions('archivos:subir')
   @ApiOperation({ summary: 'Subir un nuevo archivo' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -67,6 +69,7 @@ export class ArchivoController {
   }
 
   @Get()
+  @RequirePermissions('archivos:listar')
   @ApiOperation({ summary: 'Listar archivos' })
   @ApiResponse({ status: 200, description: 'Lista de archivos paginada' })
   async findAll(@Query() filterDto: FileListFilterDto) {
@@ -81,6 +84,7 @@ export class ArchivoController {
   }
 
   @Get(':id')
+  @RequirePermissions('archivos:ver')
   @ApiOperation({ summary: 'Obtener metadata de un archivo por ID' })
   @ApiResponse({ status: 200, description: 'Detalles del archivo' })
   async findOne(
@@ -91,6 +95,7 @@ export class ArchivoController {
   }
 
   @Get('content/:filename')
+  @RequirePermissions('archivos:ver')
   @ApiOperation({ summary: 'Servir el contenido de un archivo subido' })
   getFileContent(@Param('filename') filename: string, @Res() res: Response) {
     const filePath = this.archivoService.getFileContent(filename);
@@ -98,6 +103,7 @@ export class ArchivoController {
   }
 
   @Delete(':id')
+  @RequirePermissions('archivos:eliminar')
   @ApiOperation({ summary: 'Eliminar un archivo (soft-delete)' })
   @ApiResponse({ status: 204, description: 'Archivo eliminado correctamente' })
   async remove(

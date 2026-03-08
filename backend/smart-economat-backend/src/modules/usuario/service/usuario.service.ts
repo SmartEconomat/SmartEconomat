@@ -14,10 +14,19 @@ import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import * as bcrypt from 'bcrypt';
 import { UserStatus } from '../enums/usuario.enums';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Permiso } from '../../permisos/entities/permiso.entity';
+import { Repository } from 'typeorm';
+import { AuthorizationService } from '../../authorization/services/authorization.service';
 
 @Injectable()
 export class UsuarioService {
-  constructor(private readonly usuarioRepo: UsuarioRepository) {}
+  constructor(
+    private readonly usuarioRepo: UsuarioRepository,
+    @InjectRepository(Permiso)
+    private readonly permisoRepo: Repository<Permiso>,
+    private readonly authorizationService: AuthorizationService
+  ) {}
 
   create(dto: CreateUsuarioDto) {
     return this.usuarioRepo.createUsuario(dto);
@@ -72,5 +81,75 @@ export class UsuarioService {
 
   remove(id: string) {
     return this.usuarioRepo.deleteUsuario(id);
+  }
+
+  async addAdditionalPermission(userId: string, permisoId: string) {
+    const usuario = await this.usuarioRepo.findById(userId);
+    if (!usuario) throw new NotFoundException();
+
+    const permiso = await this.permisoRepo.findOneBy({ id: permisoId });
+    if (!permiso) throw new NotFoundException('Permiso no encontrado');
+
+    const basicUser = await this.usuarioRepo.repo.findOne({
+      where: { id: userId },
+      relations: ['permisosAdicionales'],
+    });
+
+    if (!basicUser!.permisosAdicionales.find((p) => p.id === permisoId)) {
+      basicUser!.permisosAdicionales.push(permiso);
+      await this.usuarioRepo.repo.save(basicUser!);
+      await this.authorizationService.invalidateUserCache(userId);
+    }
+    return this.findOne(userId);
+  }
+
+  async removeAdditionalPermission(userId: string, permisoId: string) {
+    const basicUser = await this.usuarioRepo.repo.findOne({
+      where: { id: userId },
+      relations: ['permisosAdicionales'],
+    });
+    if (!basicUser) throw new NotFoundException();
+
+    basicUser.permisosAdicionales = basicUser.permisosAdicionales.filter(
+      (p) => p.id !== permisoId
+    );
+    await this.usuarioRepo.repo.save(basicUser);
+    await this.authorizationService.invalidateUserCache(userId);
+    return this.findOne(userId);
+  }
+
+  async addExcludedPermission(userId: string, permisoId: string) {
+    const usuario = await this.usuarioRepo.findById(userId);
+    if (!usuario) throw new NotFoundException();
+
+    const permiso = await this.permisoRepo.findOneBy({ id: permisoId });
+    if (!permiso) throw new NotFoundException('Permiso no encontrado');
+
+    const basicUser = await this.usuarioRepo.repo.findOne({
+      where: { id: userId },
+      relations: ['permisosExcluidos'],
+    });
+
+    if (!basicUser!.permisosExcluidos.find((p) => p.id === permisoId)) {
+      basicUser!.permisosExcluidos.push(permiso);
+      await this.usuarioRepo.repo.save(basicUser!);
+      await this.authorizationService.invalidateUserCache(userId);
+    }
+    return this.findOne(userId);
+  }
+
+  async removeExcludedPermission(userId: string, permisoId: string) {
+    const basicUser = await this.usuarioRepo.repo.findOne({
+      where: { id: userId },
+      relations: ['permisosExcluidos'],
+    });
+    if (!basicUser) throw new NotFoundException();
+
+    basicUser.permisosExcluidos = (basicUser.permisosExcluidos || []).filter(
+      (p) => p.id !== permisoId
+    );
+    await this.usuarioRepo.repo.save(basicUser);
+    await this.authorizationService.invalidateUserCache(userId);
+    return { success: true };
   }
 }

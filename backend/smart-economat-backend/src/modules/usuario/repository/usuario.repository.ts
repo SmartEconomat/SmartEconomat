@@ -9,7 +9,7 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 export class UsuarioRepository {
   constructor(
     @InjectRepository(Usuario)
-    private readonly repo: Repository<Usuario>
+    public readonly repo: Repository<Usuario>
   ) {}
 
   createUsuario(data: Partial<Usuario>) {

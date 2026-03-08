@@ -19,19 +19,18 @@ import { UpdatePedidoDto } from '../dto/updatePedido.dto';
 import { Pedido } from '../pedido.entity/pedido.entity';
 import { PedidoService } from '../service/pedido.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/role.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
-import { rolUsuario } from '../../usuario/enums/usuario.enums';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { PermisosGuard } from '../../authorization/guards/permisos.guard';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('pedidos')
 export class PedidoController {
   constructor(private readonly pedidoService: PedidoService) {}
 
   @Post()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('pedidos:crear')
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreatePedidoDto, @Request() req: any): Promise<Pedido> {
     const userId = req.user.sub as string;
@@ -39,7 +38,7 @@ export class PedidoController {
   }
 
   @Get()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('pedidos:listar')
   findAll(
     @Query() query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Pedido>> {
@@ -47,13 +46,13 @@ export class PedidoController {
   }
 
   @Get(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('pedidos:ver')
   findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Pedido> {
     return this.pedidoService.findOne(id);
   }
 
   @Patch(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('pedidos:editar')
   update(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: UpdatePedidoDto
@@ -62,14 +61,14 @@ export class PedidoController {
   }
 
   @Delete(':id')
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @RequirePermissions('pedidos:eliminar')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.pedidoService.remove(id);
   }
 
   @Patch(':id/fecha-entrega')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('pedidos:editar')
   updateFechaEntrega(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: UpdatePedidoDto
@@ -78,7 +77,7 @@ export class PedidoController {
   }
 
   @Patch(':id/cancelar')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('pedidos:cancelar')
   cancelarPedido(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: CancelPedidoDto

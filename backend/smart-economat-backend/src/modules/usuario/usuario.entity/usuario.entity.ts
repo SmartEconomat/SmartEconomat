@@ -7,6 +7,8 @@ import {
   BeforeInsert,
   BeforeUpdate,
   type Relation,
+  JoinTable,
+  ManyToMany,
 } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import * as bcrypt from 'bcrypt';
@@ -19,7 +21,7 @@ import { Profesor } from '../../profesor/profesor.entity/profesor.entity';
 import { Alumno } from '../../alumno/alumno.entity/alumno.entity';
 import { Pedido } from '../../pedido/pedido.entity/pedido.entity';
 import { Rol } from '../../roles/entities/rol.entity';
-import { JoinTable, ManyToMany } from 'typeorm';
+import { Permiso } from '../../permisos/entities/permiso.entity';
 
 @Entity({ name: 'usuario' })
 @Index(['username'])
@@ -83,6 +85,28 @@ export class Usuario extends BaseEntity {
     inverseJoinColumn: { name: 'rol_id', referencedColumnName: 'id' },
   })
   roles: Rol[];
+
+  /**
+   * Permisos asignados directamente al usuario (además de los de sus roles)
+   */
+  @ManyToMany(() => Permiso)
+  @JoinTable({
+    name: 'usuario_permiso_adicional',
+    joinColumn: { name: 'usuario_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'permiso_id', referencedColumnName: 'id' },
+  })
+  permisosAdicionales: Permiso[];
+
+  /**
+   * Permisos explícitamente revocados para este usuario (aunque sus roles los tengan)
+   */
+  @ManyToMany(() => Permiso)
+  @JoinTable({
+    name: 'usuario_permiso_excluido',
+    joinColumn: { name: 'usuario_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'permiso_id', referencedColumnName: 'id' },
+  })
+  permisosExcluidos: Permiso[];
 
   @Column({ type: 'boolean', default: true })
   activo: boolean;

@@ -17,36 +17,35 @@ import { UpdateIncidenciaDto } from '../dto/update-incidencia.dto';
 import { ResolverIncidenciaDto } from '../dto/resolver-incidencia.dto';
 import { Incidencia } from '../incidencia.entity/incidencia.entity';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/role.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
-import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { PermisosGuard } from '../../authorization/guards/permisos.guard';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('incidencias')
 export class IncidenciaController {
   constructor(private readonly incidenciaService: IncidenciaService) {}
 
   @Post()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('incidencias:crear')
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateIncidenciaDto): Promise<Incidencia> {
     return this.incidenciaService.create(dto);
   }
 
   @Get()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('incidencias:listar')
   findAll(): Promise<Incidencia[]> {
     return this.incidenciaService.findAll();
   }
 
   @Get(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('incidencias:ver')
   findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Incidencia> {
     return this.incidenciaService.findOne(id);
   }
 
   @Patch(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('incidencias:editar')
   update(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: UpdateIncidenciaDto
@@ -55,14 +54,14 @@ export class IncidenciaController {
   }
 
   @Delete(':id')
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @RequirePermissions('incidencias:eliminar')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.incidenciaService.remove(id);
   }
 
   @Patch(':id/resolver')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('incidencias:resolver')
   resolver(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: ResolverIncidenciaDto
