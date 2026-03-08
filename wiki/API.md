@@ -54,6 +54,9 @@ El flujo de entrada al sistema. Todas las respuestas de éxito establecen una **
 | :--- | :--- | :--- | :--- |
 | `POST` | `/auth/register` | Registro de nuevo usuario (Nivel: INVITADO) | `RegisterUserDto` |
 | `POST` | `/auth/login` | Login y obtención de Bearer Token | `LoginUserDto` |
+| `POST` | `/auth/forgot-password` | Solicitar recuperación de contraseña | `{ "email": "string" }` |
+| `POST` | `/auth/reset-password` | Cambiar contraseña con token de recuperación | `ResetPasswordDto` |
+| `POST` | `/auth/change-password` | Cambiar contraseña estando logueado | `ChangePasswordDto` |
 
 > [!IMPORTANT]
 > - Al registrarse, el usuario queda en estado `activo: false` y con el rol `INVITADO` por defecto. Un administrador debe activarlo manualmente.
@@ -89,6 +92,10 @@ Gestión de cuentas, perfiles y permisos. *Requiere `JwtAuthGuard` y `RolesGuard
 | `PATCH` | `/usuarios/:id/activar` | Alternar estado `activo` (Boolean) | `ADMINISTRADOR` |
 | `PATCH` | `/usuarios/:id/rol` | Cambiar nivel de acceso (`INVITADO`, etc.) | `ADMINISTRADOR` |
 | `PATCH` | `/usuarios/:id/password` | Reset forzoso de contraseña | `ADMINISTRADOR` |
+| `POST` | `/usuarios/:id/permisos-adicionales/:permisoId` | Añadir permiso extra a un usuario | `ADMINISTRADOR` |
+| `DELETE` | `/usuarios/:id/permisos-adicionales/:permisoId` | Quitar permiso extra | `ADMINISTRADOR` |
+| `POST` | `/usuarios/:id/permisos-excluidos/:permisoId` | Vetar un permiso específico a un usuario | `ADMINISTRADOR` |
+| `DELETE` | `/usuarios/:id/permisos-excluidos/:permisoId` | Quitar veto de permiso | `ADMINISTRADOR` |
 | `DELETE` | `/usuarios/:id` | Borrado físico del registro | `ADMINISTRADOR` |
 
 > [!IMPORTANT]
@@ -102,6 +109,7 @@ Relación técnica de los productos base. *Requiere `JwtAuthGuard` y `RolesGuard
 
 | Método | Endpoint | Descripción | Roles Permitidos |
 | :--- | :--- | :--- | :--- |
+| `GET` | `/productos/generar-ean13` | Generar un código EAN-13 único | `ADMINISTRADOR`, `PROFESOR` |
 | `POST` | `/productos` | Crear nuevo producto | `ADMINISTRADOR`, `PROFESOR` |
 | `GET` | `/productos` | Listar todos los productos | `ADMIN`, `PROFESOR`, `ALUMNO` |
 | `GET` | `/productos/:id` | Ficha técnica y proveedores | `ADMIN`, `PROFESOR`, `ALUMNO` |
@@ -333,8 +341,23 @@ Gestión integrada de fórmulas culinarias y sus ingredientes. *Requiere `JwtAut
 | `POST` | `/recetas/duplicate` | **Duplicar una receta existente** | `ADMINISTRADOR`, `PROFESOR` |
 | `GET` | `/recetas` | Listar recetas (paginado + búsqueda) | `ADMIN`, `PROFESOR`, `ALUMNO` |
 | `GET` | `/recetas/:id` | Ficha completa (incluye alérgenos) | `ADMIN`, `PROFESOR`, `ALUMNO` |
+| `GET` | `/recetas/:id/detalle` | Ver estructura de ingredientes detallada | `ADMIN`, `PROFESOR`, `ALUMNO` |
+| `GET` | `/recetas/:id/escandallo` | Calcular coste total e ingredientes | `ADMIN`, `PROFESOR`, `ALUMNO` |
+| `POST` | `/recetas/:id/cocinar` | Registrar consumo de stock por cocinado | `ADMINISTRADOR`, `PROFESOR` |
+| `POST` | `/recetas/:id/recalcular-costes` | Forzar actualización de costes en BD | `ADMINISTRADOR`, `PROFESOR` |
 | `PATCH` | `/recetas/:id` | Actualizar datos o ingredientes | `ADMINISTRADOR`, `PROFESOR` |
 | `DELETE` | `/recetas/:id` | Eliminar receta del sistema | `ADMINISTRADOR` |
+
+---
+
+## 🏭 14. Producción y Lotes (`/produccion`)
+Gestión de resultados de cocinado y trazabilidad por lotes.
+
+| Método | Endpoint | Descripción | Roles Permitidos |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/produccion/ejecutar` | Ejecutar receta y generar lote de stock | `ADMINISTRADOR`, `PROFESOR` |
+| `GET` | `/produccion` | Listar histórico de producciones | `ADMINISTRADOR`, `PROFESOR` |
+| `GET` | `/produccion/:id` | Detalle técnico de un lote producido | `ADMINISTRADOR`, `PROFESOR` |
 
 ### 🔍 Búsqueda de Recetas (`GET /recetas`)
 Soporta los parámetros estándar de paginación (`page`, `limit`).
@@ -397,6 +420,49 @@ Gestión directa de ítems en stock. *Requiere `JwtAuthGuard` y `RolesGuard`.*
 | `GET` | `/inventario/:id` | Detalle de ítem en inventario | `ADMINISTRADOR`, `PROFESOR` |
 | `PATCH` | `/inventario/:id` | Actualizar ítem en inventario | `ADMINISTRADOR`, `PROFESOR` |
 | `DELETE` | `/inventario/:id` | Eliminar ítem del inventario | `ADMINISTRADOR` |
+
+---
+
+## 🎓 17. Sistema Educativo (`/admin`, `/alumnos`, `/profesores`)
+Módulos específicos para la gestión del flujo educativo (Profesores -> Alumnos).
+
+### Gestión de Profesores (Admin)
+| Método | Endpoint | Descripción | Roles Permitidos |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/admin/profesores` | Alta de nuevo profesor | `ADMINISTRADOR` |
+| `PATCH` | `/admin/users/:id/activate` | Activar cuenta de usuario | `ADMINISTRADOR` |
+| `POST` | `/admin/users/:id/force-reset` | Reset de contraseña forzado | `ADMINISTRADOR` |
+
+### Panel del Profesor (`/profesores`)
+| Método | Endpoint | Descripción | Roles Permitidos |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/profesores/register` | Registro público de profesor | Público |
+| `POST` | `/profesores/slots` | Crear slots para invitar alumnos | `PROFESOR` |
+| `GET` | `/profesores/alumnos` | Listar alumnos vinculados | `PROFESOR` |
+| `PATCH` | `/profesores/alumnos/:id/activate` | Activar cuenta de alumno | `PROFESOR` |
+| `POST` | `/profesores/alumnos/:id/force-reset`| Reset password de alumno | `PROFESOR` |
+
+### Panel del Alumno (`/alumnos`)
+| Método | Endpoint | Descripción | Roles Permitidos |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/alumnos/register` | Registro de alumno mediante código slot | Público |
+| `PATCH` | `/alumnos/change-profesor` | Cambiar de tutor/profesor | `ALUMNO` |
+
+---
+
+## 🛠️ 18. Módulos Internos / CRUDs Específicos
+
+### Alérgenos de Producto (`/producto-alergenos`)
+Permite gestionar la matriz de alérgenos de forma independiente.
+- `GET`, `POST`, `PATCH`, `DELETE` sobre `/producto-alergenos`.
+
+### Incidencias Resueltas (`/incidencias-resueltas`)
+Histórico de incidencias que ya han sido procesadas.
+- `GET`, `POST`, `PATCH`, `DELETE` sobre `/incidencias-resueltas`.
+
+### Gestión Técnica de Recepciones (`/recepcion-productos`)
+Control de líneas individuales de recepción.
+- `GET`, `POST`, `PATCH`, `DELETE` sobre `/recepcion-productos`.
 
 ---
 

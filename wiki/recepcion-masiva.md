@@ -15,9 +15,11 @@ La lógica reside en el `RecepcionStockService` y utiliza un patrón de transacc
      - `batchInventarios`
      - `batchMovimientos`
    - Al finalizar el procesamiento lógico, se ejecutan operaciones `save()` sobre los arrays completos. Esto reduce el overhead de red y tiempo de CPU drásticamente.
-4. **Cálculo de Incidencias**: Se comparan las cantidades recibidas totales vs. las pedidas para generar automáticamente mermas o avisos.
-5. **Commit**: Si todas las operaciones tienen éxito, se hace persistente el cambio.
-6. **Rollback**: Si ocurre CUALQUIER error (fallo de red, dato corrupto, error de base de datos) durante el procesamiento de los miles de productos, la transacción se revierte al punto inicial como si nada hubiera pasado.
+4. **Multi-Pedido**: El sistema puede vincular una sola recepción a múltiples pedidos de compra (`pedidoId` en el array de pedidos).
+5. **Alta Directa**: Si se detecta un producto no catalogado mediante su código de barras durante la recepción, el sistema permite crearlo on-the-fly (`productosNuevos`).
+6. **Cálculo de Incidencias**: Se comparan las cantidades recibidas totales vs. las pedidas para generar automáticamente mermas o avisos.
+7. **Commit**: Si todas las operaciones tienen éxito, se hace persistente el cambio.
+8. **Rollback**: Si ocurre CUALQUIER error (fallo de red, dato corrupto, error de base de datos) durante el procesamiento de los miles de productos, la transacción se revierte al punto inicial como si nada hubiera pasado.
 
 ## 2. Front-end: Resiliencia y Experiencia de Usuario
 
@@ -34,10 +36,11 @@ El wizard de recepción en React ha sido blindado para evitar la pérdida de tra
 ## 3. Guía de Operación para Desarrolladores
 
 ### Endpoint
-- **URL**: `POST /api/v1/recepcion/masiva`
-- **Payload**: `RecepcionMasivaLoteDto`
-  - `pedidoId`: ID del pedido base.
-  - `productosRecibidos`: Array de objetos con `pedidoProductoId`, `cantidadRecibida`, `estadoVisual` y `fechaCaducidad`.
+- **URL**: `POST /api/v1/recepcion`
+- **Payload**: `CreateRecepcionMaestraDto`
+  - `pedidos`: Array de `{ pedidoId, nAlbaran, observaciones }`.
+  - `productos`: Array de `{ pedidoProductoId, cantidadRecibida, estadoVisual, fechaCaducidad }`.
+  - `productosNuevos`: Array de productos técnicos para creación directa.
 
 ### Enums Disponibles
 - **EstadoVisualProducto**: 

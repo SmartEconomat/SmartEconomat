@@ -102,23 +102,25 @@
  nest g service modules/usuarios/services/usuarios --no-spec
  ```
 
- ## 5. Creación de entidades
+ 5. Creación de entidades
 
- 1. Crear carpeta de entidad: `src/modules/<feature>/<entity>.entity/`
+ 1. Crear carpeta de entidad: `src/modules/<feature>/entity/`
  2. Archivo `<entity>.entity.ts` con formato:
     ```ts
-    import { Entity, PrimaryGeneratedColumn, Column, /* relaciones */ } from 'typeorm';
+    import { Entity, Column, /* relaciones */ } from 'typeorm';
+    import { BaseEntity } from '../../../common/entities/base.entity';
 
     @Entity('<nombre_tabla>')
-    export class <EntityName>Entity {
-      @PrimaryGeneratedColumn('uuid', { name: 'id_<feature>' })
-      id: string;
-
+    export class <EntityName> extends BaseEntity {
       @Column({ type: 'varchar', length: 100, nullable: false })
       campo: string;
-      // ... más columnas y decoradores
+      // ... más columnas y relaciones
     }
     ```
+ 3. **IMPORTANTE**: No usar `@PrimaryGeneratedColumn()`. Extender de `BaseEntity` para heredar automáticamente:
+    - `id`: UUID v7 ordenable.
+    - `createdAt`, `updatedAt`, `deletedAt`, `deletedBy`.
+    - `version`: Versionado optimista.
  3. Convención de nombres:
     - Clases: `PascalCase` con sufijo `Entity`.
     - Tablas y columnas: `snake_case`.

@@ -44,13 +44,49 @@
             "method": "POST",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@smarteconomat.com\",\n  \"password\": \"123456\"\n}",
+              "raw": "{\n  \"email\": \"admin@smarteconomat.com\",\n  \"password\": \"SmartEconomat2026!\"\n}",
               "options": {
                 "raw": { "language": "json" }
               }
             },
             "url": "{{base_url}}/auth/login",
             "description": "Inicia sesión. El token se guarda automáticamente en la variable {{jwt_token}}."
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@example.com\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/auth/forgot-password"
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"uuid-token-recuperacion\",\n  \"newPassword\": \"NuevaSegura123!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/auth/reset-password"
+          }
+        },
+        {
+          "name": "Change Password (Authenticated)",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"SmartEconomat2026!\",\n  \"newPassword\": \"NuevaSegura!123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/auth/change-password"
           }
         }
       ]
@@ -156,6 +192,33 @@
                 "url": "{{base_url}}/usuarios/:id/password",
                 "variable": [{ "key": "id", "value": "" }]
               }
+            },
+            {
+              "name": "Permissions Management",
+              "item": [
+                {
+                  "name": "Add Additional Permission",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{base_url}}/usuarios/:id/permisos-adicionales/:permisoId",
+                    "variable": [
+                      { "key": "id", "value": "" },
+                      { "key": "permisoId", "value": "" }
+                    ]
+                  }
+                },
+                {
+                  "name": "Add Excluded Permission",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{base_url}}/usuarios/:id/permisos-excluidos/:permisoId",
+                    "variable": [
+                      { "key": "id", "value": "" },
+                      { "key": "permisoId", "value": "" }
+                    ]
+                  }
+                }
+              ]
             }
           ]
         }
@@ -164,6 +227,13 @@
     {
       "name": "03. Productos",
       "item": [
+        {
+          "name": "Generate EAN-13",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/productos/generar-ean13"
+          }
+        },
         {
           "name": "List Products (Search & Filter)",
           "request": {
@@ -413,8 +483,36 @@
               "raw": "{\n  \"sourceId\": \"uuid-receta-original\",\n  \"newName\": \"Tortilla de Patatas Vegana\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": "{{base_url}}/recetas/duplicate",
-            "description": "Crea una copia exacta de una receta (incluyendo ingredientes) con un nuevo nombre."
+            "url": "{{base_url}}/recetas/duplicate"
+          }
+        },
+        {
+          "name": "Get Escandallo (Cost Calculation)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/recetas/:id/escandallo",
+            "variable": [{ "key": "id", "value": "" }]
+          }
+        },
+        {
+          "name": "Recalculate Costs",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/recetas/:id/recalcular-costes",
+            "variable": [{ "key": "id", "value": "" }]
+          }
+        },
+        {
+          "name": "Cook Recipe (Manual Stock Consumption)",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cantidadProduccion\": 1,\n  \"unidadResultante\": \"racion\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/recetas/:id/cocinar",
+            "variable": [{ "key": "id", "value": "" }]
           }
         }
       ]
@@ -460,17 +558,120 @@
             "method": "GET",
             "url": "{{base_url}}/inventario"
           }
-        },
+        }
+      ]
+    },
+    {
+      "name": "15. Producción",
+      "item": [
         {
-          "name": "Create Stock Record",
+          "name": "Ejecutar Producción (Generar Lote)",
           "request": {
             "method": "POST",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"productoProveedorId\": \"uuid-pp\",\n  \"cantidadActual\": 100,\n  \"cantidadMinima\": 10,\n  \"ubicacionId\": \"uuid-ubicacion\",\n  \"fechaCaducidad\": \"2027-01-01\"\n}",
+              "raw": "{\n  \"recetaId\": \"uuid-receta\",\n  \"cantidadResultante\": 10,\n  \"unidadResultante\": \"ud\",\n  \"ubicacionId\": \"uuid-ubicacion\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": "{{base_url}}/inventario"
+            "url": "{{base_url}}/produccion/ejecutar"
+          }
+        },
+        {
+          "name": "List Batch History",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/produccion"
+          }
+        }
+      ]
+    },
+    {
+      "name": "16. Sistema Educativo - Admin",
+      "item": [
+        {
+          "name": "Create Profesor",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Profesor X\",\n  \"email\": \"profe@example.com\",\n  \"username\": \"profex\",\n  \"password\": \"Password123!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/admin/profesores"
+          }
+        },
+        {
+          "name": "Activate User",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/admin/users/:id/activate",
+            "variable": [{ "key": "id", "value": "" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "17. Sistema Educativo - Profesores",
+      "item": [
+        {
+          "name": "Create Slots",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cantidad\": 5\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/profesores/slots"
+          }
+        },
+        {
+          "name": "List My Alumnos",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/profesores/alumnos"
+          }
+        }
+      ]
+    },
+    {
+      "name": "18. Sistema Educativo - Alumnos",
+      "item": [
+        {
+          "name": "Register Alumno (via Code)",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Alumno Demo\",\n  \"username\": \"alumnodemo\",\n  \"password\": \"Password123!\",\n  \"email\": \"alumno@example.com\",\n  \"codigoSlot\": \"ABC-123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/alumnos/register"
+          }
+        }
+      ]
+    },
+    {
+      "name": "19. Incidencias",
+      "item": [
+        {
+          "name": "List Pending",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/incidencias"
+          }
+        },
+        {
+          "name": "Resolve Incidencia",
+          "request": {
+            "method": "PATCH",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comentarioResolucion\": \"Abono realizado por el proveedor\",\n  \"cantidadAcepada\": 9\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/incidencias/:id/resolver",
+            "variable": [{ "key": "id", "value": "" }]
           }
         }
       ]
