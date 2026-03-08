@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsString,
   MaxLength,
+  ValidateIf,
 } from 'class-validator';
 import { rolUsuario, UserStatus } from '../enums/usuario.enums';
 
@@ -16,11 +17,12 @@ export class UpdateUsuarioDto {
   username?: string;
 
   @IsOptional()
+  @ValidateIf((o) => o.email != null)
   @IsEmail({}, { message: 'El correo electrónico no es válido' })
   @MaxLength(255, {
     message: 'El correo electrónico no puede exceder los 255 caracteres',
   })
-  email?: string;
+  email?: string | null;
 
   @IsOptional()
   @IsEnum(rolUsuario)

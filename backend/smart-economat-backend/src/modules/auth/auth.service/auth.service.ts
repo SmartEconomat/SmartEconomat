@@ -98,8 +98,12 @@ export class AuthService {
     usuario.passwordResetExpires = new Date(Date.now() + 15 * 60 * 1000);
     await this.usuarioRepo.save(usuario);
 
-    if (usuario.email) {
-      await this.mailService.sendPasswordResetEmail(usuario.email, token);
+    try {
+      if (usuario.email) {
+        await this.mailService.sendPasswordResetEmail(usuario.email, token);
+      }
+    } catch (error) {
+      console.error('Error sending password reset email:', error);
     }
   }
 
