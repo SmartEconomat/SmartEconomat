@@ -1,13 +1,12 @@
 import { Body, Controller, Post, Patch, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/role.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
-import { rolUsuario } from '../../usuario/enums/usuario.enums';
 import { AlumnoService } from '../service/alumno.service';
 import { RegisterAlumnoDto } from '../dto/register-alumno.dto';
 import { ChangeProfesorDto } from '../dto/change-profesor.dto';
+import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { PermisosGuard } from '../../authorization/guards/permisos.guard';
 @Controller('alumnos')
 export class AlumnoController {
   constructor(private readonly alumnoService: AlumnoService) {}
@@ -18,8 +17,8 @@ export class AlumnoController {
   }
 
   @Patch('change-profesor')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(rolUsuario.ALUMNO)
+  @UseGuards(JwtAuthGuard, PermisosGuard)
+  @RequirePermissions('alumno:cambiar_profesor')
   async changeProfesor(
     @GetUser() user: Usuario,
     @Body() dto: ChangeProfesorDto

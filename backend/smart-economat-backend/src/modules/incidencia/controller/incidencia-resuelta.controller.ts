@@ -16,11 +16,10 @@ import { CreateIncidenciaResuelaDto } from '../dto/create-incidencia.dto';
 import { UpdateIncidenciaResuelaDto } from '../dto/update-incidencia.dto';
 import { IncidenciaResuelta } from '../incidencia-resuelta.entity/incidencia-resuelta.entity';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/role.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
-import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { PermisosGuard } from '../../authorization/guards/permisos.guard';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('incidencias-resueltas')
 export class IncidenciaResuelaController {
   constructor(
@@ -28,20 +27,20 @@ export class IncidenciaResuelaController {
   ) {}
 
   @Post()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('incidencias:crear')
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateIncidenciaResuelaDto): Promise<IncidenciaResuelta> {
     return this.incidenciaResuelaService.create(dto);
   }
 
   @Get()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('incidencias:listar')
   findAll(): Promise<IncidenciaResuelta[]> {
     return this.incidenciaResuelaService.findAll();
   }
 
   @Get(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('incidencias:ver')
   findOne(
     @Param('id', ParseUUIDv7Pipe) id: string
   ): Promise<IncidenciaResuelta> {
@@ -49,7 +48,7 @@ export class IncidenciaResuelaController {
   }
 
   @Patch(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('incidencias:editar')
   update(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: UpdateIncidenciaResuelaDto
@@ -58,7 +57,7 @@ export class IncidenciaResuelaController {
   }
 
   @Delete(':id')
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @RequirePermissions('incidencias:eliminar')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.incidenciaResuelaService.remove(id);

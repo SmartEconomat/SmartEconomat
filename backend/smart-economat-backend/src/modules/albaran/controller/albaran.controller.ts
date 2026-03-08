@@ -16,36 +16,35 @@ import { UpdateAlbaranDto } from '../dto/update-albaran.dto';
 import { Albaran } from '../albaran.entity/albaran.entity';
 import { AlbaranService } from '../service/albaran.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/role.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
-import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { PermisosGuard } from '../../authorization/guards/permisos.guard';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('albaranes')
 export class AlbaranController {
   constructor(private readonly albaranService: AlbaranService) {}
 
   @Post()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('albaranes:crear')
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateAlbaranDto): Promise<Albaran> {
     return this.albaranService.create(dto);
   }
 
   @Get()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('albaranes:listar')
   findAll(): Promise<Albaran[]> {
     return this.albaranService.findAll();
   }
 
   @Get(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('albaranes:ver')
   findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Albaran> {
     return this.albaranService.findOne(id);
   }
 
   @Patch(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('albaranes:editar')
   update(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: UpdateAlbaranDto
@@ -54,7 +53,7 @@ export class AlbaranController {
   }
 
   @Delete(':id')
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @RequirePermissions('albaranes:eliminar')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.albaranService.remove(id);

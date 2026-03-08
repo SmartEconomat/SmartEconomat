@@ -14,19 +14,18 @@ import { ProduccionService } from '../service/produccion.service';
 import { EjecutarProduccionDto } from '../dto/ejecutar-produccion.dto';
 import { ProduccionLote } from '../produccion-lote.entity/produccion-lote.entity';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/role.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
-import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { PermisosGuard } from '../../authorization/guards/permisos.guard';
 
 @ApiTags('Producción')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('produccion')
 export class ProduccionController {
   constructor(private readonly produccionService: ProduccionService) {}
 
   @Post('ejecutar')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('recetas:cocinar')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Ejecutar la producción de una receta y registrar el lote',
@@ -34,7 +33,7 @@ export class ProduccionController {
   @ApiResponse({ status: 201, type: ProduccionLote })
   @ApiResponse({
     status: 400,
-    description: 'Stock insuficiente o receta inválida',
+    description: 'Stock insuficiente or receta inválida',
   })
   @ApiResponse({ status: 404, description: 'Receta no encontrada' })
   ejecutarProduccion(
@@ -45,7 +44,7 @@ export class ProduccionController {
   }
 
   @Get()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
+  @RequirePermissions('recetas:listar')
   @ApiOperation({ summary: 'Listar todos los lotes de producción' })
   @ApiResponse({ status: 200, type: [ProduccionLote] })
   findAll(): Promise<ProduccionLote[]> {
@@ -53,7 +52,7 @@ export class ProduccionController {
   }
 
   @Get(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
+  @RequirePermissions('recetas:ver')
   @ApiOperation({ summary: 'Obtener un lote de producción por ID' })
   @ApiParam({ name: 'id', description: 'UUID del lote de producción' })
   @ApiResponse({ status: 200, type: ProduccionLote })

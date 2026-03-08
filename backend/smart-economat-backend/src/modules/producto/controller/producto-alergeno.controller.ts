@@ -17,11 +17,10 @@ import { CreateProductoAlergenoDto } from '../dto/producto-alergeno.dto/create-p
 import { UpdateProductoAlergenoDto } from '../dto/producto-alergeno.dto/update-producto-alergeno.dto';
 import { ProductoAlergeno } from '../producto-alergeno.entity/producto-alergeno.entity';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/role.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
-import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { PermisosGuard } from '../../authorization/guards/permisos.guard';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('producto-alergenos')
 export class ProductoAlergenoController {
   constructor(
@@ -29,7 +28,7 @@ export class ProductoAlergenoController {
   ) {}
 
   @Post()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('productos:editar')
   @HttpCode(HttpStatus.CREATED)
   create(
     @Body() createDto: CreateProductoAlergenoDto
@@ -38,7 +37,7 @@ export class ProductoAlergenoController {
   }
 
   @Get()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
+  @RequirePermissions('productos:ver')
   findAll(
     @Query('idProducto') idProducto?: string
   ): Promise<ProductoAlergeno[]> {
@@ -46,7 +45,7 @@ export class ProductoAlergenoController {
   }
 
   @Get(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
+  @RequirePermissions('productos:ver')
   findOne(
     @Param('id', ParseUUIDv7Pipe) idProducto: string
   ): Promise<ProductoAlergeno[]> {
@@ -54,7 +53,7 @@ export class ProductoAlergenoController {
   }
 
   @Patch(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('productos:editar')
   update(
     @Param('id', ParseUUIDv7Pipe) idProducto: string,
     @Body() updateDto: UpdateProductoAlergenoDto
@@ -63,7 +62,7 @@ export class ProductoAlergenoController {
   }
 
   @Delete(':idProducto/:alergeno')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('productos:editar')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @Param('idProducto', ParseUUIDv7Pipe) idProducto: string,
