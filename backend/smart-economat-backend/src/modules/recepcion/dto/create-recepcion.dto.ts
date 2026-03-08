@@ -76,6 +76,15 @@ export class RecepcionLineDto {
   cantidadRecibida: number;
 
   @ApiPropertyOptional({
+    description: 'Cantidad contada o reportada en el Albarán',
+    example: 10,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  cantidadAlbaran?: number;
+
+  @ApiPropertyOptional({
     description: 'Estado exterior / visual con el que llega la mercancía',
     enum: EstadoVisualProducto,
     example: EstadoVisualProducto.OPTIMO,
@@ -99,6 +108,13 @@ export class RecepcionLineDto {
   @IsOptional()
   @IsString()
   observaciones?: string;
+
+  @ApiPropertyOptional({
+    description: 'Indica si el peso se obtuvo desde la báscula conectada',
+  })
+  @IsOptional()
+  @IsBoolean()
+  isWeighedWithScale?: boolean;
 }
 
 export class ProductoNuevoRecepcionDto extends ProductoNuevoDto {
@@ -118,6 +134,13 @@ export class ProductoNuevoRecepcionDto extends ProductoNuevoDto {
   @IsOptional()
   @IsString()
   observaciones?: string;
+
+  @ApiPropertyOptional({
+    description: 'Indica si el peso se obtuvo desde la báscula conectada',
+  })
+  @IsOptional()
+  @IsBoolean()
+  isWeighedWithScale?: boolean;
 }
 
 export class PedidoRecepcionDto {
