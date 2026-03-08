@@ -126,6 +126,30 @@ El archivo generado se guardará en `tools/erd/erd.svg`.
   docker compose --env-file .env.prod --file docker-compose.prod.yml logs -f
   ```
 
+## Solución de problemas comunes
+
+### Errores de dependencias o "Module not found" en Docker
+Si tras realizar un `pull`, un `rebase` o instalar nuevas dependencias recibes errores de "Module not found" dentro del contenedor, se debe probablemente a que Docker está utilizando volúmenes de `node_modules` antiguos.
+
+**Solución:** Forzar la limpieza de volúmenes y recrear los contenedores.
+```bash
+# Detener contenedores y eliminar volúmenes anónimos (limpia node_modules persistentes)
+docker compose --file docker-compose.dev.yml down -v
+
+# Levantar de nuevo reconstruyendo
+docker compose --env-file .env.dev --file docker-compose.dev.yml up --build --force-recreate
+```
+
+### Problemas con la estructura de compilación o caché
+Si el servidor no arranca por errores estructurales o restos de builds anteriores:
+1. Elimina la carpeta `dist` local (si existe) para evitar interferencias con el volumen montado.
+2. Asegúrate de no tener archivos `.ts` en la raíz del proyecto backend que no pertenezcan a la carpeta `src` (ej: archivos de configuración en formato TS que no estén excluidos en `tsconfig.build.json`), ya que pueden alterar la estructura de salida del compilador.
+
+### Herramientas de desarrollo
+El proyecto está configurado para usar **SWC** en desarrollo para una compilación ultra rápida. Asegúrate de que el script `start:dev` en el `package.json` mantenga el flag `-b swc` para un rendimiento óptimo.
+
+---
+
 ## Licencia
 
 **SmartEconomat - Todos los derechos reservados**  

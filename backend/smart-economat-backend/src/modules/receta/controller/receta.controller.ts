@@ -26,6 +26,8 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { rolUsuario } from '../../usuario/enums/usuario.enums';
 
 @ApiTags('Recetas')
 @UseGuards(JwtAuthGuard, PermisosGuard)
