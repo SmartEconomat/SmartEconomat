@@ -61,5 +61,6 @@ export interface ProductosQueryParams {
     searchTerm?: string;
     codigoBarras?: string;
     tipo?: CategoriaProducto;
+    categorias?: string[];
     alergenos?: string[];
 }

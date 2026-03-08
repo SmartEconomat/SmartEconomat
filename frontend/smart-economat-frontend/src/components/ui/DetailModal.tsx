@@ -67,6 +67,9 @@ export interface DetailModalProps {
         confirmationMessage?: React.ReactNode;
         size?: ModalSize;
     };
+    editLabel?: string;
+    /** Botones de acción adicionales para el footer. */
+    actions?: React.ReactNode;
 }
 
 // ─────────────────────────────────────────────────────────
@@ -95,6 +98,8 @@ const DetailModal: React.FC<DetailModalProps> = ({
     size = 'md',
     onEdit,
     editConfig,
+    editLabel = 'Editar',
+    actions,
 }) => {
     const [editOpen, setEditOpen] = useState(false);
 
@@ -262,7 +267,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
                 </DialogContent>
 
                 {/* Footer */}
-                {(editConfig || onEdit) && (
+                {(editConfig || onEdit || actions) && (
                     <DialogActions
                         sx={{
                             px: 3,
@@ -270,17 +275,21 @@ const DetailModal: React.FC<DetailModalProps> = ({
                             borderTop: 1,
                             borderColor: 'divider',
                             justifyContent: 'flex-end',
+                            gap: 1.5,
                         }}
                     >
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            startIcon={<EditIcon />}
-                            onClick={handleOpenEdit}
-                            disableElevation
-                        >
-                            Editar producto
-                        </Button>
+                        {actions}
+                        {(editConfig || onEdit) && (
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                startIcon={<EditIcon />}
+                                onClick={handleOpenEdit}
+                                disableElevation
+                            >
+                                {editLabel}
+                            </Button>
+                        )}
                     </DialogActions>
                 )}
             </Dialog>

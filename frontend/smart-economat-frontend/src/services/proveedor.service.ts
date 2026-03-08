@@ -1,7 +1,13 @@
 import { Proveedor } from './proveedor.types';
 import { baseFetch, ApiResponse, PaginatedData } from './api.service';
 
-export async function fetchProveedores(page: number = 1, limit: number = 10, search: string = ''): Promise<PaginatedData<Proveedor>> {
+export async function fetchProveedores(
+    page: number = 1, 
+    limit: number = 10, 
+    search: string = '',
+    sortBy?: string,
+    sortOrder?: 'asc' | 'desc'
+): Promise<PaginatedData<Proveedor>> {
     const params = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
@@ -13,7 +19,32 @@ export async function fetchProveedores(page: number = 1, limit: number = 10, sea
         throw new Error(`Error al obtener proveedores: ${response.status} ${response.statusText}`);
     }
     const body = await response.json() as ApiResponse<PaginatedData<Proveedor>>;
-    return body.data;
+    let data = body.data.data;
+
+    if (sortBy) {
+        data.sort((a: any, b: any) => {
+            let aValue = a[sortBy];
+            let bValue = b[sortBy];
+
+            if (aValue === null || aValue === undefined) aValue = '';
+            if (bValue === null || bValue === undefined) bValue = '';
+
+            if (typeof aValue === 'string' && typeof bValue === 'string') {
+                return sortOrder === 'desc'
+                    ? bValue.localeCompare(aValue, undefined, { numeric: true, sensitivity: 'base' })
+                    : aValue.localeCompare(bValue, undefined, { numeric: true, sensitivity: 'base' });
+            }
+
+            if (aValue < bValue) return sortOrder === 'desc' ? 1 : -1;
+            if (aValue > bValue) return sortOrder === 'desc' ? -1 : 1;
+            return 0;
+        });
+    }
+
+    return {
+        ...body.data,
+        data: data
+    };
 }
 
 export async function createProveedor(proveedor: Partial<Proveedor>): Promise<Proveedor> {
