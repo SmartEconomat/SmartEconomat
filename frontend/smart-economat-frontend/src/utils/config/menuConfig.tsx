@@ -22,6 +22,7 @@ const Proveedores = React.lazy(() => import('../../pages/Proveedores'));
 const Recetas = React.lazy(() => import('../../pages/Recetas'));
 const Usuario = React.lazy(() => import('../../pages/Usuario'));
 const Usuarios = React.lazy(() => import('../../pages/Usuarios/Usuarios'));
+const Perfil = React.lazy(() => import('../../pages/Perfil'));
 
 
 export interface MenuItem {
@@ -115,11 +116,11 @@ export const menuItems: MenuItem[] = [
         showInMenu: true
     },
     {
-        path: '/usuario',
-        title: 'Perfil de Usuario',
-        description: 'Configurar datos personales y preferencias',
+        path: '/perfil',
+        title: 'Mi Perfil',
+        description: 'Configurar datos personales y seguridad',
         icon: <PersonIconOption />,
-        component: Usuario,
+        component: Perfil,
         showInMenu: false
     }
 ];
