@@ -10,14 +10,19 @@ import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { Usuario } from '../usuario.entity/usuario.entity';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
+import { AdminCreateUsuarioDto } from '../dto/admin-create-usuario.dto';
+import { AdminUpdateUsuarioDto } from '../dto/admin-update-usuario.dto';
 
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import * as bcrypt from 'bcrypt';
-import { UserStatus } from '../enums/usuario.enums';
+import { UserStatus, rolUsuario } from '../enums/usuario.enums';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Permiso } from '../../permisos/entities/permiso.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { AuthorizationService } from '../../authorization/services/authorization.service';
+import { Profesor } from '../../profesor/profesor.entity/profesor.entity';
+import { Alumno } from '../../alumno/alumno.entity/alumno.entity';
+import { AlumnoSlot } from '../../profesor/profesor.entity/alumno-slot.entity';
 
 @Injectable()
 export class UsuarioService {
@@ -25,11 +30,53 @@ export class UsuarioService {
     private readonly usuarioRepo: UsuarioRepository,
     @InjectRepository(Permiso)
     private readonly permisoRepo: Repository<Permiso>,
-    private readonly authorizationService: AuthorizationService
+    private readonly authorizationService: AuthorizationService,
+    private readonly dataSource: DataSource
   ) {}
 
   create(dto: CreateUsuarioDto) {
-    return this.usuarioRepo.createUsuario(dto);
+    return this.usuarioRepo.createUsuario({
+      ...dto,
+      activo: true,
+    });
+  }
+
+  async createAdmin(dto: AdminCreateUsuarioDto) {
+    return await this.dataSource.transaction(async (manager) => {
+      const { aula, cial, ...userData } = dto;
+
+      const usuario = manager.create(Usuario, {
+        ...userData,
+        status: UserStatus.ACTIVE,
+        activo: true,
+      });
+
+      const savedUser = await manager.save(usuario);
+
+      if (dto.rol === rolUsuario.PROFESOR) {
+        const profesor = manager.create(Profesor, {
+          user: savedUser,
+          cial: cial || `CIAL-${Date.now()}`,
+        });
+        await manager.save(profesor);
+      } else if (dto.rol === rolUsuario.ALUMNO) {
+        const alumno = manager.create(Alumno, {
+          user: savedUser,
+        });
+
+        if (aula) {
+          const slot = await manager.findOne(AlumnoSlot, {
+            where: { aula },
+          });
+          if (slot) {
+            alumno.slot = slot;
+          }
+        }
+        await manager.save(alumno);
+      }
+
+      return this.findOne(savedUser.id);
+    });
   }
 
   findAll(query: PaginationQueryDto) {
@@ -45,6 +92,15 @@ export class UsuarioService {
   }
 
   update(id: string, dto: Partial<Usuario>) {
+    return this.usuarioRepo.updateUsuario(id, dto);
+  }
+
+  async updateAdmin(id: string, dto: AdminUpdateUsuarioDto) {
+    const usuario = await this.findOne(id);
+    if (!usuario) {
+      throw new NotFoundException(I18nHelper.getError('USER_NOT_FOUND'));
+    }
+
     return this.usuarioRepo.updateUsuario(id, dto);
   }
 

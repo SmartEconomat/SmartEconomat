@@ -27,6 +27,9 @@ import { Permiso } from '../../permisos/entities/permiso.entity';
 @Index(['username'])
 @Index(['email'])
 export class Usuario extends BaseEntity {
+  @Column({ type: 'varchar', length: 150, nullable: true })
+  nombre?: string | null;
+
   @Column({ type: 'varchar', length: 100, unique: true })
   username!: string;
 
