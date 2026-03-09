@@ -14,6 +14,8 @@ import { rolUsuario } from '../../usuario/enums/usuario.enums';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import * as fs from 'fs';
 import * as path from 'path';
+import sharp from 'sharp';
+import { ImageProcessOptionsDto } from '../dto/image-process-options.dto';
 
 export interface PaginatedFiles {
   data: Archivo[];
@@ -40,14 +42,36 @@ export class ArchivoService {
     );
   }
 
-  async uploadFile(file: Express.Multer.File, user: Usuario): Promise<Archivo> {
+  async uploadFile(
+    file: Express.Multer.File,
+    user: Usuario,
+    processOptions?: ImageProcessOptionsDto,
+    shouldProcess: boolean = true
+  ): Promise<Archivo> {
     if (!file) {
       throw new BadRequestException(I18nHelper.getError('FILE_REQUIRED'));
     }
 
     let fileUrl = '';
+    let optimizedUrl = '';
+    let optimizedSize = 0;
+    let optimizedMimeType = '';
+
     if (this.storageType === 'local') {
       fileUrl = `/api/v1/archivos/content/${file.filename}`;
+
+      if (shouldProcess && file.mimetype.startsWith('image/')) {
+        try {
+          const options = processOptions || new ImageProcessOptionsDto();
+          const processed = await this.processImage(file.path, options);
+
+          optimizedUrl = `/api/v1/archivos/content/${path.basename(processed.path)}`;
+          optimizedSize = processed.size;
+          optimizedMimeType = processed.mimeType;
+        } catch (error) {
+          console.error('Error processing image:', error);
+        }
+      }
     } else {
       fileUrl = file.path;
     }
@@ -58,9 +82,56 @@ export class ArchivoService {
       tamano: file.size,
       mimeType: file.mimetype,
       usuario: user,
+      urlOptimized: optimizedUrl || undefined,
+      tamanoOptimized: optimizedSize || undefined,
+      mimeTypeOptimized: optimizedMimeType || undefined,
     });
 
     return await this.archivoRepository.save(newArchivo);
+  }
+
+  private async processImage(
+    inputPath: string,
+    options: ImageProcessOptionsDto
+  ): Promise<{ path: string; size: number; mimeType: string }> {
+    const ext = path.extname(inputPath);
+    const dir = path.dirname(inputPath);
+    const name = path.basename(inputPath, ext);
+    const timestamp = Date.now();
+
+    const outputFormat = options.formatoSalida || 'webp';
+    const outputFileName = `${name}_optimized_${timestamp}.${outputFormat}`;
+    const outputPath = path.join(dir, outputFileName);
+
+    let transformer = sharp(inputPath);
+
+    if (options.ancho || options.alto) {
+      transformer = transformer.resize({
+        width: options.ancho,
+        height: options.alto,
+        fit: options.mantenerAspectRatio ? 'inside' : 'fill',
+        withoutEnlargement: true,
+      });
+    }
+
+    if (outputFormat === 'webp') {
+      transformer = transformer.webp({ quality: options.calidad });
+    } else if (outputFormat === 'jpeg' || outputFormat === 'jpg') {
+      transformer = transformer.jpeg({ quality: options.calidad });
+    } else if (outputFormat === 'png') {
+      transformer = transformer.png({ quality: options.calidad });
+    }
+
+    await transformer.toFile(outputPath);
+
+    const stats = fs.statSync(outputPath);
+    const mimeType = `image/${outputFormat}`;
+
+    return {
+      path: outputPath,
+      size: stats.size,
+      mimeType,
+    };
   }
 
   async findAll(filterDto: FileListFilterDto): Promise<PaginatedFiles> {
