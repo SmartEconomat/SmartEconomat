@@ -23,6 +23,7 @@ import { AlumnoModule } from './modules/alumno/alumno.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { PermisosModule } from './modules/permisos/permisos.module';
 import { AuthorizationModule } from './modules/authorization/authorization.module';
+import { ExportModule } from './modules/export/export.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -48,6 +49,7 @@ import { AuthorizationModule } from './modules/authorization/authorization.modul
     AdminModule,
     PermisosModule,
     AuthorizationModule,
+    ExportModule,
   ],
   controllers: [AppController],
   providers: [AppService],
