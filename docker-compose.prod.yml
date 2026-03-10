@@ -29,11 +29,20 @@ services:
     ports:
       - "${BACKEND_PORT}:${BACKEND_PORT}"
     env_file: .env.prod
+    environment:
+      - HOST_USER=${USER:-}
+      - HOST_USERNAME=${USERNAME:-}
+      - HOST_PWD=${PWD:-}
+    command: sh -c "npx ts-node scripts/log-user-info.ts && npm run start:prod"
     depends_on:
       db:
         condition: service_healthy
     networks:
       - smarteconomat-prod-network
+    volumes:
+      - /home/psych/.gitconfig:/root/.gitconfig:ro
+      - /etc/hostname:/etc/host_hostname:ro
+      - ./:/project_root
 
   frontend:
     build:
