@@ -113,7 +113,7 @@ export const runSeeder = async (dataSource: DataSource) => {
   try {
     const offResponse = await fetch(
       'https://es.openfoodfacts.org/cgi/search.pl?action=process&sort_by=unique_scans_n&json=1&page_size=20',
-      { signal: AbortSignal.timeout(5000) }
+      { signal: AbortSignal.timeout(30000) }
     );
 
     if (offResponse.ok) {
@@ -127,7 +127,13 @@ export const runSeeder = async (dataSource: DataSource) => {
     );
   }
 
+  const productosDB = await productoRepo.find({ select: ['codigoBarras'] });
+  const codigosVistos = new Set<string>(
+    productosDB.filter((p) => p.codigoBarras).map((p) => p.codigoBarras!)
+  );
+
   const productos: Producto[] = [];
+
   for (const offProduct of offProducts) {
     const defaultName =
       offProduct.product_name_es ||
@@ -159,6 +165,13 @@ export const runSeeder = async (dataSource: DataSource) => {
         offProduct.code?.substring(0, 50) ||
         faker.string.alphanumeric(13).toUpperCase(),
     });
+
+    if (producto.codigoBarras && codigosVistos.has(producto.codigoBarras)) {
+      continue;
+    }
+    if (producto.codigoBarras) {
+      codigosVistos.add(producto.codigoBarras);
+    }
 
     (producto as any)._alergenosTags = offProduct.allergens_tags || [];
     productos.push(producto);

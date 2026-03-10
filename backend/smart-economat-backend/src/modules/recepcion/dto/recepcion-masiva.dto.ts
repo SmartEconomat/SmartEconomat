@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsBoolean,
   IsEnum,
   IsNumber,
   IsOptional,
@@ -27,6 +28,22 @@ export class RecepcionMasivaProductoDto {
   @IsNumber()
   @Min(0)
   cantidadRecibida: number;
+
+  @ApiPropertyOptional({
+    description: 'Cantidad reflejada en el albarán físico.',
+    example: 10,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  cantidadAlbaran?: number;
+
+  @ApiPropertyOptional({
+    description: 'Indica si el peso fue capturado por báscula.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  isWeighedWithScale?: boolean;
 
   @ApiProperty({
     description: 'Estado exterior / visual con el que llega la mercancía',
