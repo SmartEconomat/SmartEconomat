@@ -13,7 +13,7 @@ Implementa un **Autocomplete de MUI con selección múltiple** que combina:
 - Búsqueda en tiempo real al escribir
 - Dropdown desplegable para seleccionar categorías
 - Opciones seleccionadas como **chips con icono oficial de categoría** dentro del propio control
-- **Crecimiento dinámico del ancho**: El componente crece hacia la izquierda conforme se añaden categorías, permitiendo que el buscador se reduzca hasta un mínimo responsivo.
+- **Crecimiento dinámico del ancho**: El componente crece conforme se añaden categorías (mínimo 220 px, máximo 660 px), permitiendo que el buscador se reduzca hasta un mínimo responsivo.
 - **Responsividad Inteligente**: Si el buscador y los filtros no caben en la misma fila, los filtros pasan a ocupar el 100% del ancho debajo del buscador.
 - Mismo alto que el campo de búsqueda (`size="small"` → 40 px)
 

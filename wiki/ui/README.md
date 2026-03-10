@@ -34,7 +34,7 @@ Documentación detallada de los componentes clave, desglosando su construcción 
 - [Main Layout](./componentes/MainLayout.md): Estructura principal (Sidebar, Header).
 - [PageToolbar](./componentes/PageToolbar.md): Encabezado unificado sticky con búsqueda, filtros, paginación y acciones.
 - [Settings Menu](./componentes/SettingsMenu.md): Menú de configuración (Tema, Fuentes).
-- [ProductFilters](./componentes/ProductFilters.md): Autocomplete multi-select de categorías con búsqueda en tiempo real e integración en `PageToolbar`.
+- [ProductFilters](./componentes/ProductFilters.md): Autocomplete multi-select de categorías con búsqueda en tiempo real, chips con icono oficial dentro del control e integración en `PageToolbar`.
 
 #### Autenticación
 - [Login](./componentes/Login.md): Orquestador de la pantalla de auth — fases, animaciones y flujos de login/registro.
@@ -50,7 +50,7 @@ Documentación de las vistas completas (componentes raíz de cada ruta).
 
 - [Auth (Login / Registro)](./paginas/Auth.md): Sistema completo de autenticación — diseño, animaciones, seguridad y flujos.
 - [Usuarios](./paginas/Usuarios.md): Gestión de usuarios con tabla y operaciones CRUD.
-- [Productos](./paginas/Productos.md): Catálogo de productos con filtros avanzados y vistas lista/mosaico.
+- [Productos](./paginas/Productos.md): Catálogo de productos — búsqueda, filtrado por categoría, CRUD completo con vistas lista/mosaico e integración de `PageToolbar`.
 - [Proveedores](./paginas/Proveedores.md): Listado de proveedores con detalle expandido y gestión de contactos.
 - [Recetas](./paginas/Recetas.md): Gestión de escandallos y elaboración de platos.
 - [Pedidos](./paginas/Pedidos.md): Órdenes de compra a proveedores con seguimiento de estados.

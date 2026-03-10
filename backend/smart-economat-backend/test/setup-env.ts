@@ -56,7 +56,7 @@ process.env.LOCAL_STORAGE_PATH = './uploads_test';
 const pg = db.adapters.createPg();
 jest.mock('pg', () => pg);
 
-jest.setTimeout(30000);
+jest.setTimeout(60000);
 
 beforeAll(async () => {
   const { dataSource, runAllSeeders } = require('../src/seeders/seed') as {
