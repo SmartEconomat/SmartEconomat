@@ -1,39 +1,19 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { getTestApp } from './test-app.helper';
 import {
   INestApplication,
-  ValidationPipe,
-  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
-import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
-import { GlobalExceptionFilter } from '../src/common/filters/global-exception.filter';
 
 describe('AlumnoController (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api/v1');
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, transform: true })
-    );
-    app.useGlobalInterceptors(
-      new ClassSerializerInterceptor(app.get(Reflector)),
-      new TransformInterceptor()
-    );
-    app.useGlobalFilters(new GlobalExceptionFilter());
-    await app.init();
+    app = await getTestApp();
   });
 
-  afterAll(async () => {
-    await app.close();
-  });
+  afterAll(() => { /* app compartida, no cerrar */ });
 
   describe('Registro de Alumnos', () => {
     it('POST /alumnos/register - Debe fallar sin datos (400)', async () => {
