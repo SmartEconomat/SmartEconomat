@@ -1,14 +1,10 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { getTestApp } from './test-app.helper';
 import {
   INestApplication,
-  ValidationPipe,
-  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
-import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
-import { GlobalExceptionFilter } from '../src/common/filters/global-exception.filter';
 import { DataSource } from 'typeorm';
 import { Usuario } from '../src/modules/usuario/usuario.entity/usuario.entity';
 import { Alumno } from '../src/modules/alumno/alumno.entity/alumno.entity';
@@ -24,21 +20,7 @@ describe('SmartEconomat Master E2E Suite', () => {
   const SEED_PASS = 'SmartEconomat2026!';
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api/v1');
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, transform: true })
-    );
-    app.useGlobalInterceptors(
-      new ClassSerializerInterceptor(app.get(Reflector)),
-      new TransformInterceptor()
-    );
-    app.useGlobalFilters(new GlobalExceptionFilter());
-    await app.init();
+    app = await getTestApp();
 
     dataSource = app.get(DataSource);
 
@@ -55,9 +37,7 @@ describe('SmartEconomat Master E2E Suite', () => {
     profToken = profRes.body.data.access_token;
   });
 
-  afterAll(async () => {
-    await app.close();
-  });
+  afterAll(() => { /* app compartida, no cerrar */ });
 
   describe('AUTH - Autenticación', () => {
     it('[AUTH-01/02] Login Admin & Profesor correctos', async () => {
