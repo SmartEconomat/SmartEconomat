@@ -1,14 +1,10 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { getTestApp } from './test-app.helper';
 import {
   INestApplication,
-  ValidationPipe,
-  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
-import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
-import { GlobalExceptionFilter } from '../src/common/filters/global-exception.filter';
 
 /**
  * @file recetas.e2e-spec.ts
@@ -24,21 +20,7 @@ describe('RecetaController (e2e)', () => {
   let productoId: string;
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api/v1');
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, transform: true })
-    );
-    app.useGlobalInterceptors(
-      new ClassSerializerInterceptor(app.get(Reflector)),
-      new TransformInterceptor()
-    );
-    app.useGlobalFilters(new GlobalExceptionFilter());
-    await app.init();
+    app = await getTestApp();
 
     const response = await request(app.getHttpServer() as string)
       .post('/api/v1/auth/login')
@@ -48,15 +30,20 @@ describe('RecetaController (e2e)', () => {
       });
     adminToken = response.body.data.access_token;
 
-    const productosRes = await request(app.getHttpServer() as string)
-      .get('/api/v1/productos')
-      .set('Authorization', `Bearer ${adminToken}`);
-    productoId = productosRes.body.data.data[0].id;
+    // Crear un producto propio para este test (no depender de seeders)
+    const productoRes = await request(app.getHttpServer() as string)
+      .post('/api/v1/productos')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        nombre: `Producto Receta E2E ${Date.now()}`,
+        unidad: 'KG',
+        tipo: 'verdura',
+        contenido: 500,
+      });
+    productoId = productoRes.body.data.id;
   });
 
-  afterAll(async () => {
-    await app.close();
-  });
+  afterAll(() => { /* app compartida, no cerrar */ });
 
   describe('CRUD de Recetas', () => {
     /**

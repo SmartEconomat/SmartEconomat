@@ -1,14 +1,10 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { getTestApp } from './test-app.helper';
 import {
   INestApplication,
-  ValidationPipe,
-  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
-import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
-import { GlobalExceptionFilter } from '../src/common/filters/global-exception.filter';
 
 describe('UbicacionController (e2e)', () => {
   let app: INestApplication;
@@ -16,21 +12,7 @@ describe('UbicacionController (e2e)', () => {
   let testUbicacionId: string;
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api/v1');
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, transform: true })
-    );
-    app.useGlobalInterceptors(
-      new ClassSerializerInterceptor(app.get(Reflector)),
-      new TransformInterceptor()
-    );
-    app.useGlobalFilters(new GlobalExceptionFilter());
-    await app.init();
+    app = await getTestApp();
 
     const adminResponse = await request(app.getHttpServer() as string)
       .post('/api/v1/auth/login')
@@ -41,9 +23,7 @@ describe('UbicacionController (e2e)', () => {
     adminToken = adminResponse.body.data.access_token;
   });
 
-  afterAll(async () => {
-    await app.close();
-  });
+  afterAll(() => { /* app compartida, no cerrar */ });
 
   describe('CRUD de Ubicaciones', () => {
     it('POST /ubicacion - Debe crear una ubicación (201)', async () => {

