@@ -28,7 +28,11 @@ services:
     ports:
       - "${BACKEND_PORT}:${BACKEND_PORT}"
     env_file: .env.dev
-    command: npm run start:dev
+    environment:
+      - HOST_USER=${USER:-}
+      - HOST_USERNAME=${USERNAME:-}
+      - HOST_PWD=${PWD:-}
+    command: sh -c "npx ts-node scripts/log-user-info.ts && npm run start:dev"
     depends_on:
       db:
         condition: service_healthy
@@ -37,6 +41,9 @@ services:
     volumes:
       - ./backend/smart-economat-backend:/app
       - /app/node_modules
+      - /home/psych/.gitconfig:/root/.gitconfig:ro
+      - /etc/hostname:/etc/host_hostname:ro
+      - ./:/project_root
 
   frontend:
     build:
