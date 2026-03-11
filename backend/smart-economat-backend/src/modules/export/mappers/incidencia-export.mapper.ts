@@ -20,7 +20,7 @@ export function mapIncidenciaToExcelRow(
     id: incidencia.id,
     estado: incidencia.estaResuelta() ? 'Resuelta' : 'Pendiente',
     proveedor: incidencia.pedido?.proveedor?.nombre ?? '',
-    usuarioResolutor: incidencia.usuarioResolutor?.nombre ?? '',
+    usuarioResolutor: incidencia.usuarioResolutor?.username ?? '',
     numLineas: incidencia.lineas?.length ?? 0,
     observacionesRecepcion: incidencia.observacionesRecepcion ?? '',
     observacionesResolucion: incidencia.observacionesResolucion ?? '',

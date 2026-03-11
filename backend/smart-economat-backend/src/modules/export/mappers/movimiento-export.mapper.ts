@@ -20,7 +20,7 @@ export function mapMovimientoToExcelRow(
     id: movimiento.id,
     tipo: movimiento.tipo,
     cantidad: Number(movimiento.cantidad),
-    usuario: movimiento.usuario?.nombre ?? '',
+    usuario: movimiento.usuario?.username ?? '',
     producto: movimiento.productoProveedor?.producto?.nombre ?? '',
     entidad: movimiento.entidad,
     entidadId: movimiento.entidadId,

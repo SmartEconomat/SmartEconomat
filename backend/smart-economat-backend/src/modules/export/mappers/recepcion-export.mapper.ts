@@ -18,7 +18,7 @@ export function mapRecepcionToExcelRow(
     id: recepcion.id,
     fechaRecepcion: recepcion.fechaRecepcion?.toISOString().split('T')[0] ?? '',
     estado: recepcion.estado,
-    usuario: recepcion.usuario?.nombre ?? '',
+    usuario: recepcion.usuario?.username ?? '',
     numPedidos: recepcion.recepcionesPedidos?.length ?? 0,
     observaciones: recepcion.observaciones ?? '',
     createdAt: recepcion.createdAt?.toISOString().split('T')[0] ?? '',
