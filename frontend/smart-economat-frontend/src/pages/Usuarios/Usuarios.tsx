@@ -493,13 +493,14 @@ const Usuarios: React.FC = () => {
         setIsResetting(true);
         try {
             const res = await usuarioService.resetPassword(userToReset.id);
-            const randomPass = res.data;
-            toast.success(`Se ha activado la contraseña temporal para ${userToReset.username}. La nueva contraseña es: ${randomPass}`);
+            setGeneratedPassword(res.data);
+            // No cerramos el modal, el usuario debe verlo
         } catch (error: any) {
             toast.error(error.message || 'Error al restablecer contraseña');
+            setUserToReset(null);
+            setGeneratedPassword(null);
         } finally {
             setIsResetting(false);
-            setUserToReset(null);
         }
     };
 
