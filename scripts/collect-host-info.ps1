@@ -31,5 +31,9 @@ try {
     $env:HOST_MAC = "Desconocida"
 }
 
+# ── Git ──
+try { $env:HOST_GIT_USER = $(git config user.name) } catch { $env:HOST_GIT_USER = "" }
+try { $env:HOST_GIT_EMAIL = $(git config user.email) } catch { $env:HOST_GIT_EMAIL = "" }
+
 Write-Host "`n✅ Variables HOST_* del anfitrion exportadas correctamente." -ForegroundColor Green
 Write-Host "   HOST_USER=$env:HOST_USER  HOST_HOSTNAME=$env:HOST_HOSTNAME" -ForegroundColor Cyan
