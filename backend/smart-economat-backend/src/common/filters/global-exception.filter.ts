@@ -1,12 +1,13 @@
 import {
   ExceptionFilter,
   Catch,
-  ArgumentsHost,
   HttpException,
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
+import type { ArgumentsHost } from '@nestjs/common';
+import { SentryExceptionCaptured } from '@sentry/nestjs';
+import type { Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { QueryFailedError } from 'typeorm';
 import { ApiResponse } from '../interfaces/api-response.interface';
@@ -30,6 +31,7 @@ const PG_ERROR_MESSAGES: Record<string, string> = {
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
 
+  @SentryExceptionCaptured()
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();

@@ -70,6 +70,7 @@ describe('IncidenciaController (e2e)', () => {
         email: 'profesor1@smarteconomat.com',
         password: 'SmartEconomat2026!',
       });
+
     profesorToken = (
       profesorResponse.body as TestApiResponse<{ access_token: string }>
     ).data.access_token;
