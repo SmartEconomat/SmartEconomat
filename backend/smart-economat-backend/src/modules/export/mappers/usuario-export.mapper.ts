@@ -18,13 +18,13 @@ export function mapUsuarioToExcelRow(
 ): Record<string, unknown> {
   return {
     id: usuario.id,
-    nombre: usuario.nombre,
+    nombre: usuario.username,
     username: usuario.username,
     email: usuario.email,
     rol: usuario.rol,
     activo: usuario.activo ? 'Sí' : 'No',
-    aula: usuario.aula ?? '',
-    cialProfesor: usuario.cialProfesor ?? '',
+    aula: '',
+    cialProfesor: usuario.profesor?.cial ?? '',
     createdAt: usuario.createdAt?.toISOString().split('T')[0] ?? '',
   };
 }

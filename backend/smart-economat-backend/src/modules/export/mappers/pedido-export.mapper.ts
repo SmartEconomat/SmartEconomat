@@ -31,7 +31,7 @@ export function mapPedidoToExcelRow(pedido: Pedido): Record<string, unknown> {
     id: pedido.id,
     estado: pedido.estado,
     proveedor: pedido.proveedor?.nombre ?? '',
-    usuario: pedido.usuario?.nombre ?? '',
+    usuario: pedido.usuario?.username ?? '',
     fechaPedido: pedido.fechaPedido?.toISOString().split('T')[0] ?? '',
     fechaEntrega: pedido.fechaEntrega?.toISOString().split('T')[0] ?? '',
     numLineas: pedido.pedidoProductos?.length ?? 0,
