@@ -23,6 +23,7 @@
     "schema:sync": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js schema:sync -d src/config/typeorm.config.ts",
     "db:reset": "npm run schema:drop && npm run schema:sync && npm run seed",
     "generate:erd": "ts-node tools/scripts/generate-erd.ts",
+    "log-user-info": "ts-node scripts/log-user-info.ts",
     "prepare": "cd ../.. && husky backend/smart-economat-backend/.husky"
   },
   "dependencies": {

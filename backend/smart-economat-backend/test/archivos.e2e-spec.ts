@@ -1,15 +1,11 @@
+import { getTestApp } from './test-app.helper';
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-import { Test, TestingModule } from '@nestjs/testing';
 import {
   INestApplication,
-  ValidationPipe,
-  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
-import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
-import { GlobalExceptionFilter } from '../src/common/filters/global-exception.filter';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -28,21 +24,7 @@ describe('ArchivoController (e2e)', () => {
       fs.mkdirSync(testUploadsDir, { recursive: true });
     }
 
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api/v1');
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, transform: true })
-    );
-    app.useGlobalInterceptors(
-      new ClassSerializerInterceptor(app.get(Reflector)),
-      new TransformInterceptor()
-    );
-    app.useGlobalFilters(new GlobalExceptionFilter());
-    await app.init();
+    app = await getTestApp();
 
     const response = await request(app.getHttpServer())
       .post('/api/v1/auth/login')
@@ -53,9 +35,7 @@ describe('ArchivoController (e2e)', () => {
     adminToken = response.body.data.access_token;
   });
 
-  afterAll(async () => {
-    await app.close();
-  });
+  afterAll(() => { /* app compartida, no cerrar */ });
 
   describe('CRUD de Archivos', () => {
     it('POST /archivos/upload - Debe subir un archivo (201)', async () => {

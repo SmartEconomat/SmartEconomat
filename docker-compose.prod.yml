@@ -29,11 +29,24 @@ services:
     ports:
       - "${BACKEND_PORT}:${BACKEND_PORT}"
     env_file: .env.prod
+    environment:
+      # ── Info del anfitrión (inyectada por scripts/collect-host-info.sh o .ps1) ──
+      - HOST_USER=${USER:-}
+      - HOST_HOSTNAME=${HOSTNAME:-}
+      - HOST_PWD=${PWD:-}
+      - HOST_SHELL=${SHELL:-}
+      - HOST_MAC=${HOST_MAC:-}
+      - HOST_GIT_USER=${GIT_USER:-}
+      - HOST_GIT_EMAIL=${GIT_EMAIL:-}
+    command: sh -c "npx ts-node scripts/log-user-info.ts && npm run start:prod"
     depends_on:
       db:
         condition: service_healthy
     networks:
       - smarteconomat-prod-network
+    volumes:
+      - ./:/project_root
+      - ~/.gitconfig:/root/.gitconfig:ro
 
   frontend:
     build:
