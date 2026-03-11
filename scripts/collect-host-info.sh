@@ -36,5 +36,9 @@ else
   HOST_MAC="Desconocida"
 fi
 
+# ── Git ──
+export HOST_GIT_USER="${GIT_USER:-$(git config user.name 2>/dev/null || echo '')}"
+export HOST_GIT_EMAIL="${GIT_EMAIL:-$(git config user.email 2>/dev/null || echo '')}"
+
 echo "✅ Variables HOST_* del anfitrión exportadas correctamente."
 echo "   HOST_USER=$HOST_USER  HOST_HOSTNAME=$HOST_HOSTNAME"

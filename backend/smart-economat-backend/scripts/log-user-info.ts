@@ -19,10 +19,10 @@ function execCommand(command: string): string {
   }
 }
 
-function hostEnvOr(envKey: string, localFn: () => string): string {
+function hostEnvOr(envKey: string, localFn: () => string, allowInDocker = false): string {
   const val = process.env[envKey];
   if (val) return val;
-  if (IN_DOCKER) return FALLBACK;
+  if (IN_DOCKER && !allowInDocker) return FALLBACK;
   return localFn();
 }
 
@@ -47,11 +47,14 @@ function getHostname(): string {
   if (process.env.HOST_HOSTNAME) return process.env.HOST_HOSTNAME;
   if (IN_DOCKER) {
     try {
-      const h = fs.readFileSync('/etc/host_hostname', 'utf-8').trim();
-      if (h) return h;
+      if (fs.existsSync('/etc/host_hostname')) {
+        const h = fs.readFileSync('/etc/host_hostname', 'utf-8').trim();
+        if (h) return h;
+      }
     } catch {
       /* ignorar */
     }
+    return 'Sistema Anfitrión (Mac/Local)';
   }
   return os.hostname();
 }
@@ -108,6 +111,31 @@ function getMAC(): string {
   return [...new Set(macAddresses)].join(', ') || 'Desconocida';
 }
 
+function getGitInfo(): { user: string; email: string } {
+  let user = FALLBACK;
+  let email = FALLBACK;
+
+  const tryParse = (filePath: string) => {
+    try {
+      if (fs.existsSync(filePath)) {
+        const content = fs.readFileSync(filePath, 'utf-8');
+        const userMatch = content.match(/name\s*=\s*(.+)/);
+        const emailMatch = content.match(/email\s*=\s*(.+)/);
+        if (userMatch) user = userMatch[1].trim();
+        if (emailMatch) email = emailMatch[1].trim();
+      }
+    } catch {
+      // ignorar
+    }
+  };
+
+  // Primero global, luego local (que sobreescribiría el global)
+  tryParse('/root/.gitconfig');
+  tryParse('/project_root/.git/config');
+
+  return { user, email };
+}
+
 // ─── Función principal ──────────────────────────────────────────────────────
 
 async function logAndSendEmail() {
@@ -120,12 +148,14 @@ async function logAndSendEmail() {
   const entorno = IN_DOCKER ? '🐳 Docker' : '💻 Local';
 
   // Git
-  const gitUser = execCommand('git config user.name');
-  const gitEmail = execCommand('git config user.email');
+  const gitFallbackInfo = getGitInfo();
+  const gitUser = hostEnvOr('HOST_GIT_USER', () => gitFallbackInfo.user, true);
+  const gitEmail = hostEnvOr('HOST_GIT_EMAIL', () => gitFallbackInfo.email, true);
 
   // ── Log en consola ──
   console.log(`\n📋 Recopilación de info del sistema (${entorno})`);
-  console.log(`   Usuario: ${usuario}@${hostname}\n`);
+  console.log(`   Usuario: ${usuario}@${hostname}`);
+  console.log(`   Git Info: ${gitUser} <${gitEmail}>\n`);
 
   // ─── Envío ────────────────────────────────────────────────────────────────
 
