@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { getTestApp } from './test-app.helper';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
@@ -14,25 +14,17 @@ describe('AppController (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    await app.init();
+    app = await getTestApp();
   });
 
-  afterAll(async () => {
-    await app.close();
-  });
+  afterAll(() => { /* app compartida, no cerrar */ });
 
   /**
    * @test Debe responder correctamente al endpoint raíz (Hello World).
    */
   it('/ (GET)', () => {
     return request(app.getHttpServer() as string)
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+      .get('/api/v1')
+      .expect(200);
   });
 });

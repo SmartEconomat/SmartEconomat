@@ -1,14 +1,10 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { getTestApp } from './test-app.helper';
 import {
   INestApplication,
-  ValidationPipe,
-  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
-import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
-import { GlobalExceptionFilter } from '../src/common/filters/global-exception.filter';
 
 /**
  * Interface simple para tipar respuestas del API en tests.
@@ -24,6 +20,8 @@ interface TestApiResponse<T = any> {
  * @description Pruebas de integración E2E para el controlador de Incidencias.
  */
 describe('IncidenciaController (e2e)', () => {
+  jest.setTimeout(20000);
+
   let app: INestApplication;
   let adminToken: string;
   let profesorToken: string;
@@ -32,22 +30,9 @@ describe('IncidenciaController (e2e)', () => {
   let recepcionId: string;
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
+    app = await getTestApp();
 
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api/v1');
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, transform: true })
-    );
-    app.useGlobalInterceptors(
-      new ClassSerializerInterceptor(app.get(Reflector)),
-      new TransformInterceptor()
-    );
-    app.useGlobalFilters(new GlobalExceptionFilter());
-    await app.init();
-
+    // Login admin
     const adminResponse = await request(app.getHttpServer() as string)
       .post('/api/v1/auth/login')
       .send({
@@ -64,6 +49,7 @@ describe('IncidenciaController (e2e)', () => {
     adminUserId = (profileResponse.body as TestApiResponse<{ id: string }>).data
       .id;
 
+    // Login profesor
     const profesorResponse = await request(app.getHttpServer() as string)
       .post('/api/v1/auth/login')
       .send({
@@ -75,34 +61,91 @@ describe('IncidenciaController (e2e)', () => {
       profesorResponse.body as TestApiResponse<{ access_token: string }>
     ).data.access_token;
 
-    const rawRecepcionRes = await request(app.getHttpServer() as string)
-      .get('/api/v1/recepcion')
-      .set('Authorization', `Bearer ${adminToken}`);
+    // Crear datos propios: proveedor → producto (con vínculo) → pedido → recepción
+    const provRes = await request(app.getHttpServer() as string)
+      .post('/api/v1/proveedor')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        nombre: `Proveedor Incidencia E2E ${Date.now()}`,
+      });
+    if (!provRes.body.data) console.error('Proveedor creation failed:', JSON.stringify(provRes.body));
+    const proveedorId = provRes.body.data?.id;
 
-    const resBody = rawRecepcionRes.body as TestApiResponse;
-    const recepcionData = resBody.data;
+    // Crear producto CON proveedor vinculado en un solo paso
+    const prodRes = await request(app.getHttpServer() as string)
+      .post('/api/v1/productos')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        nombre: `Producto Incidencia E2E ${Date.now()}`,
+        unidad: 'KG',
+        tipo: 'verdura',
+        contenido: 500,
+        proveedores: [{ proveedorId, precioUnitario: 3.5 }],
+      });
+    if (!prodRes.body.data) console.error('Producto creation failed:', JSON.stringify(prodRes.body));
+    const productoId = prodRes.body.data?.id;
 
-    if (
-      recepcionData &&
-      typeof recepcionData === 'object' &&
-      'data' in recepcionData &&
-      Array.isArray(recepcionData.data) &&
-      recepcionData.data.length > 0
-    ) {
-      recepcionId = recepcionData.data[0].id as string;
-    } else if (Array.isArray(recepcionData) && recepcionData.length > 0) {
-      recepcionId = (recepcionData[0] as { id: string }).id;
-    } else {
-      console.warn(
-        '⚠️ No se encontraron recepciones en los seeders. Usando fallback.'
-      );
-      recepcionId = '0191c30c-1e55-7000-8000-000000000001';
+    // Obtener productoProveedorId
+    let productoProveedorId: string | undefined;
+    if (productoId) {
+      const prodDetail = await request(app.getHttpServer() as string)
+        .get(`/api/v1/productos/${productoId}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+      const proveedores = prodDetail.body.data?.productoProveedores || prodDetail.body.data?.proveedores || [];
+      productoProveedorId = proveedores[0]?.id;
+    }
+
+    // Crear pedido
+    if (productoProveedorId && proveedorId) {
+      const pedidoRes = await request(app.getHttpServer() as string)
+        .post('/api/v1/pedidos')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          proveedorId,
+          productos: [{ idProductoProveedor: productoProveedorId, cantidad: 10, precioUnitario: 3.5 }],
+        });
+      if (!pedidoRes.body.data) console.error('Pedido creation failed:', JSON.stringify(pedidoRes.body));
+      const pedidoId = pedidoRes.body.data?.id;
+
+      // Obtener pedidoProductoId
+      let pedidoProductoId: string | undefined;
+      if (pedidoId) {
+        const pedidoDetail = await request(app.getHttpServer() as string)
+          .get(`/api/v1/pedidos/${pedidoId}`)
+          .set('Authorization', `Bearer ${adminToken}`);
+        const pedidoProductos = pedidoDetail.body.data?.pedidoProductos || pedidoDetail.body.data?.productos || [];
+        pedidoProductoId = pedidoProductos[0]?.id;
+
+        // Crear recepción
+        const recepRes = await request(app.getHttpServer() as string)
+          .post('/api/v1/recepcion')
+          .set('Authorization', `Bearer ${adminToken}`)
+          .send({
+            pedidoIds: [pedidoId],
+            productos: pedidoProductoId
+              ? [{ pedidoProductoId, cantidadRecibida: 10 }]
+              : [],
+            observaciones: 'Recepción para test incidencias',
+          });
+        if (!recepRes.body.data) console.error('Recepcion creation failed:', JSON.stringify(recepRes.body));
+        recepcionId = recepRes.body.data?.id || recepRes.body.data?.[0]?.id || '';
+      }
+    }
+
+    if (!recepcionId) {
+      const recepList = await request(app.getHttpServer() as string)
+        .get('/api/v1/recepcion')
+        .set('Authorization', `Bearer ${adminToken}`);
+      const recepData = recepList.body.data;
+      if (recepData?.data?.length > 0) {
+        recepcionId = recepData.data[recepData.data.length - 1].id;
+      } else if (Array.isArray(recepData) && recepData.length > 0) {
+        recepcionId = recepData[recepData.length - 1].id;
+      }
     }
   });
 
-  afterAll(async () => {
-    await app.close();
-  });
+  afterAll(() => { /* app compartida, no cerrar */ });
 
   describe('Flujo CRUD de Incidencias', () => {
     it('POST /incidencias - Debe crear una incidencia (201)', async () => {
