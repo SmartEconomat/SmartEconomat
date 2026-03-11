@@ -67,9 +67,9 @@ export class UsuarioService {
   async resetPassword(id: string, dto: ResetPasswordDto) {
     const usuario = await this.findOne(id);
 
-    if (usuario.status !== UserStatus.ACTIVE) {
+    if (usuario.status === UserStatus.BLOCKED) {
       throw new BadRequestException(
-        I18nHelper.getError('USER_INACTIVE_CANNOT_RESET_PASSWORD')
+        I18nHelper.getError('USER_BLOCKED_CANNOT_RESET_PASSWORD')
       );
     }
 

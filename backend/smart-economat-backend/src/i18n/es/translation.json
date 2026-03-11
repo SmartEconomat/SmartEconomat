@@ -40,6 +40,7 @@
     "DUPLICATE_ENTRY": "Ya existe un registro con ese valor. Por favor, usa uno diferente.",
     "RECIPE_NOT_FOUND": "Receta no encontrada",
     "USER_INACTIVE_CANNOT_RESET_PASSWORD": "No se puede cambiar la contraseña de un usuario inactivo",
+    "USER_BLOCKED_CANNOT_RESET_PASSWORD": "No se puede cambiar la contraseña de un usuario bloqueado",
     "INVALID_OLD_PASSWORD": "La contraseña actual no es correcta",
     "ACCOUNT_INACTIVE": "Tu cuenta está inactiva. Por favor, espera a que un administrador la active.",
     "ACCOUNT_BLOCKED": "Tu cuenta ha sido bloqueada. Contacta con el soporte.",
