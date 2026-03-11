@@ -37,9 +37,10 @@ services:
 
   frontend:
     build:
-
       context: ./frontend/smart-economat-frontend
       dockerfile: ../Dockerfile.prod
+      args:
+        - VITE_SENTRY_DSN=${VITE_SENTRY_DSN}
     image: smarteconomat-frontend:prod
 
     restart: always
