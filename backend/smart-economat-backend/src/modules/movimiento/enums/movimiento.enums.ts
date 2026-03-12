@@ -7,6 +7,7 @@ export enum TipoMovimiento {
   SALIDA_ELABORACION = 'salida_elaboracion',
   PRODUCCION_CONSUMO = 'produccion_consumo',
   PRODUCCION_RESULTADO = 'produccion_resultado',
+  SALIDA_AJUSTE = 'salida_ajuste',
 }
 
 export const TIPOS_DISPONIBLES: string[] = Object.values(TipoMovimiento);

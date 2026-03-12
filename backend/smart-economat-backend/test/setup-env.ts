@@ -58,29 +58,30 @@ process.env.NODE_ENV = 'test';
 process.env.LOCAL_STORAGE_PATH = './uploads_test';
 
 // Mock de fetch para evitar llamadas a la red reales (ej. OpenFoodFacts en seeders)
-g.fetch = jest.fn(() => 
+g.fetch = jest.fn(() =>
   Promise.resolve({
     ok: true,
-    json: () => Promise.resolve({
-      products: [
-        {
-          product_name: 'Producto Test 1',
-          brands: 'Marca Test',
-          quantity: '1 kg',
-          ingredients_text: 'Ingrediente 1',
-          categories_tags: ['en:dairy'],
-          code: '1234567890123'
-        },
-        {
-          product_name: 'Producto Test 2',
-          brands: 'Marca Test 2',
-          quantity: '500 g',
-          ingredients_text: 'Ingrediente 2',
-          categories_tags: ['en:meat'],
-          code: '1234567890124'
-        }
-      ]
-    })
+    json: () =>
+      Promise.resolve({
+        products: [
+          {
+            product_name: 'Producto Test 1',
+            brands: 'Marca Test',
+            quantity: '1 kg',
+            ingredients_text: 'Ingrediente 1',
+            categories_tags: ['en:dairy'],
+            code: '1234567890123',
+          },
+          {
+            product_name: 'Producto Test 2',
+            brands: 'Marca Test 2',
+            quantity: '500 g',
+            ingredients_text: 'Ingrediente 2',
+            categories_tags: ['en:meat'],
+            code: '1234567890124',
+          },
+        ],
+      }),
   })
 );
 

@@ -8,6 +8,7 @@ import {
   UseGuards,
   ParseUUIDPipe,
   Query,
+  Post,
 } from '@nestjs/common';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { UsuarioService } from '../service/usuario.service';
@@ -18,12 +19,13 @@ import { UpdateUsuarioRolDto } from '../dto/update-rol.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/role.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { PermisosGuard } from '../../authorization/guards/permisos.guard';
 import { rolUsuario } from '../enums/usuario.enums';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('usuarios')
 export class UsuarioController {
   constructor(private readonly usuarioService: UsuarioService) {}
@@ -44,7 +46,7 @@ export class UsuarioController {
   }
 
   @Get()
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @RequirePermissions('usuarios:listar')
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   findAll(@Query() query: PaginationQueryDto) {
@@ -52,13 +54,13 @@ export class UsuarioController {
   }
 
   @Get(':id')
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @RequirePermissions('usuarios:ver')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.usuarioService.findOne(id);
   }
 
   @Patch(':id')
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @RequirePermissions('usuarios:editar')
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUsuarioDto
@@ -67,7 +69,7 @@ export class UsuarioController {
   }
 
   @Patch(':id/activar')
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @RequirePermissions('usuarios:editar')
   updateStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUsuarioStatusDto
@@ -76,7 +78,7 @@ export class UsuarioController {
   }
 
   @Patch(':id/rol')
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @RequirePermissions('usuarios:editar')
   updateRol(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUsuarioRolDto
@@ -85,7 +87,7 @@ export class UsuarioController {
   }
 
   @Patch(':id/password')
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @RequirePermissions('usuarios:editar')
   updatePassword(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ResetPasswordDto
@@ -94,8 +96,44 @@ export class UsuarioController {
   }
 
   @Delete(':id')
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @RequirePermissions('usuarios:eliminar')
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.usuarioService.remove(id);
+  }
+
+  @Post(':id/permisos-adicionales/:permisoId')
+  @RequirePermissions('usuarios:editar')
+  addAdditionalPermission(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('permisoId', ParseUUIDPipe) permisoId: string
+  ) {
+    return this.usuarioService.addAdditionalPermission(id, permisoId);
+  }
+
+  @Delete(':id/permisos-adicionales/:permisoId')
+  @RequirePermissions('usuarios:editar')
+  removeAdditionalPermission(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('permisoId', ParseUUIDPipe) permisoId: string
+  ) {
+    return this.usuarioService.removeAdditionalPermission(id, permisoId);
+  }
+
+  @Post(':id/permisos-excluidos/:permisoId')
+  @RequirePermissions('usuarios:editar')
+  addExcludedPermission(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('permisoId', ParseUUIDPipe) permisoId: string
+  ) {
+    return this.usuarioService.addExcludedPermission(id, permisoId);
+  }
+
+  @Delete(':id/permisos-excluidos/:permisoId')
+  @RequirePermissions('usuarios:editar')
+  removeExcludedPermission(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('permisoId', ParseUUIDPipe) permisoId: string
+  ) {
+    return this.usuarioService.removeExcludedPermission(id, permisoId);
   }
 }
