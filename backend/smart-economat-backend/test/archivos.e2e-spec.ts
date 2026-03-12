@@ -1,9 +1,8 @@
 import { getTestApp } from './test-app.helper';
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { INestApplication } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+
 import request from 'supertest';
-import { AppModule } from './../src/app.module';
 import * as path from 'path';
 import * as fs from 'fs';
 
