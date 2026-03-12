@@ -24,7 +24,7 @@ describe('MovimientoController (e2e)', () => {
   beforeAll(async () => {
     app = await getTestApp();
 
-    const adminResponse = await request(app.getHttpServer() as string as string)
+    const adminResponse = await request(app.getHttpServer() as string)
       .post('/api/v1/auth/login')
       .send({
         email: 'admin@smarteconomat.com',
@@ -32,7 +32,7 @@ describe('MovimientoController (e2e)', () => {
       });
     adminToken = adminResponse.body.data?.access_token;
 
-    const profesorResponse = await request(app.getHttpServer() as string as string)
+    const profesorResponse = await request(app.getHttpServer() as string)
       .post('/api/v1/auth/login')
       .send({
         email: 'profesor1@smarteconomat.com',
