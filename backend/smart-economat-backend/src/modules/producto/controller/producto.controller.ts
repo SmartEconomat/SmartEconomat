@@ -28,18 +28,18 @@ import { Producto } from '../producto.entity/producto.entity';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/role.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
+import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { PermisosGuard } from '../../authorization/guards/permisos.guard';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
 
 @ApiTags('Productos')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('productos')
 export class ProductoController {
   constructor(private readonly productoService: ProductoService) {}
 
   @Get('generar-ean13')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('productos:crear')
   @ApiOperation({ summary: 'Generar un código EAN-13 único' })
   @ApiResponse({
     status: 200,
@@ -51,7 +51,7 @@ export class ProductoController {
   }
 
   @Post()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('productos:crear')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary:
@@ -75,7 +75,7 @@ export class ProductoController {
   }
 
   @Get()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
+  @RequirePermissions('productos:listar')
   @ApiOperation({ summary: 'Listar productos con filtros y paginación' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
@@ -88,7 +88,7 @@ export class ProductoController {
   }
 
   @Get(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
+  @RequirePermissions('productos:ver')
   @ApiOperation({ summary: 'Obtener un producto por ID' })
   @ApiParam({ name: 'id', description: 'docs.UUID_DEL_PRODUCTO' })
   @ApiResponse({ status: 200, type: Producto })
@@ -98,7 +98,7 @@ export class ProductoController {
   }
 
   @Patch(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('productos:editar')
   @ApiOperation({ summary: 'Actualizar un producto' })
   @ApiResponse({ status: 200, type: Producto })
   update(
@@ -111,7 +111,7 @@ export class ProductoController {
   }
 
   @Delete(':id')
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @RequirePermissions('productos:eliminar')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Eliminar un producto' })
   @ApiResponse({ status: 204, description: 'docs.PRODUCTO_ELIMINADO' })
