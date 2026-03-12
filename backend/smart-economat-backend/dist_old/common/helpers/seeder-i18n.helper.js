@@ -1,61 +1,58 @@
-'use strict';
-Object.defineProperty(exports, '__esModule', {
-  value: true,
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+    value: true
 });
-Object.defineProperty(exports, 'SeederI18nHelper', {
-  enumerable: true,
-  get: function () {
-    return SeederI18nHelper;
-  },
+Object.defineProperty(exports, "SeederI18nHelper", {
+    enumerable: true,
+    get: function() {
+        return SeederI18nHelper;
+    }
 });
-const _fs = /*#__PURE__*/ _interop_require_wildcard(require('fs'));
-const _path = /*#__PURE__*/ _interop_require_wildcard(require('path'));
+const _fs = /*#__PURE__*/ _interop_require_wildcard(require("fs"));
+const _path = /*#__PURE__*/ _interop_require_wildcard(require("path"));
 function _getRequireWildcardCache(nodeInterop) {
-  if (typeof WeakMap !== 'function') return null;
-  var cacheBabelInterop = new WeakMap();
-  var cacheNodeInterop = new WeakMap();
-  return (_getRequireWildcardCache = function (nodeInterop) {
-    return nodeInterop ? cacheNodeInterop : cacheBabelInterop;
-  })(nodeInterop);
+    if (typeof WeakMap !== "function") return null;
+    var cacheBabelInterop = new WeakMap();
+    var cacheNodeInterop = new WeakMap();
+    return (_getRequireWildcardCache = function(nodeInterop) {
+        return nodeInterop ? cacheNodeInterop : cacheBabelInterop;
+    })(nodeInterop);
 }
 function _interop_require_wildcard(obj, nodeInterop) {
-  if (!nodeInterop && obj && obj.__esModule) {
-    return obj;
-  }
-  if (obj === null || (typeof obj !== 'object' && typeof obj !== 'function')) {
-    return {
-      default: obj,
-    };
-  }
-  var cache = _getRequireWildcardCache(nodeInterop);
-  if (cache && cache.has(obj)) {
-    return cache.get(obj);
-  }
-  var newObj = {
-    __proto__: null,
-  };
-  var hasPropertyDescriptor =
-    Object.defineProperty && Object.getOwnPropertyDescriptor;
-  for (var key in obj) {
-    if (key !== 'default' && Object.prototype.hasOwnProperty.call(obj, key)) {
-      var desc = hasPropertyDescriptor
-        ? Object.getOwnPropertyDescriptor(obj, key)
-        : null;
-      if (desc && (desc.get || desc.set)) {
-        Object.defineProperty(newObj, key, desc);
-      } else {
-        newObj[key] = obj[key];
-      }
+    if (!nodeInterop && obj && obj.__esModule) {
+        return obj;
     }
-  }
-  newObj.default = obj;
-  if (cache) {
-    cache.set(obj, newObj);
-  }
-  return newObj;
+    if (obj === null || typeof obj !== "object" && typeof obj !== "function") {
+        return {
+            default: obj
+        };
+    }
+    var cache = _getRequireWildcardCache(nodeInterop);
+    if (cache && cache.has(obj)) {
+        return cache.get(obj);
+    }
+    var newObj = {
+        __proto__: null
+    };
+    var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor;
+    for(var key in obj){
+        if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) {
+            var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null;
+            if (desc && (desc.get || desc.set)) {
+                Object.defineProperty(newObj, key, desc);
+            } else {
+                newObj[key] = obj[key];
+            }
+        }
+    }
+    newObj.default = obj;
+    if (cache) {
+        cache.set(obj, newObj);
+    }
+    return newObj;
 }
 let SeederI18nHelper = class SeederI18nHelper {
-  /**
+    /**
    * Carga las traducciones desde los archivos JSON de forma lazy (solo una vez).
    *
    * Los archivos se leen desde `src/i18n/{lang}/translation.json` para cada idioma soportado.
@@ -65,22 +62,20 @@ let SeederI18nHelper = class SeederI18nHelper {
    * @throws {Error} Si los archivos de traducción no se pueden leer o parsear
    * @returns {void}
    */ static loadTranslations() {
-    if (this.translations) return;
-    const i18nPath = _path.join(__dirname, '../../i18n');
-    const esPath = _path.join(i18nPath, 'es/translation.json');
-    const enPath = _path.join(i18nPath, 'en/translation.json');
-    try {
-      this.translations = {
-        es: JSON.parse(_fs.readFileSync(esPath, 'utf-8')),
-        en: JSON.parse(_fs.readFileSync(enPath, 'utf-8')),
-      };
-    } catch (error) {
-      throw new Error(
-        `Error loading translation files: ${error instanceof Error ? error.message : String(error)}`
-      );
+        if (this.translations) return;
+        const i18nPath = _path.join(__dirname, '../../i18n');
+        const esPath = _path.join(i18nPath, 'es/translation.json');
+        const enPath = _path.join(i18nPath, 'en/translation.json');
+        try {
+            this.translations = {
+                es: JSON.parse(_fs.readFileSync(esPath, 'utf-8')),
+                en: JSON.parse(_fs.readFileSync(enPath, 'utf-8'))
+            };
+        } catch (error) {
+            throw new Error(`Error loading translation files: ${error instanceof Error ? error.message : String(error)}`);
+        }
     }
-  }
-  /**
+    /**
    * Obtiene el idioma configurado para seeders desde la variable de entorno `SEEDER_LANG`
    * o devuelve el idioma predeterminado ('es').
    *
@@ -94,10 +89,10 @@ let SeederI18nHelper = class SeederI18nHelper {
    * const lang = SeederI18nHelper.getLang(); // 'en'
    * ```
    */ static getLang() {
-    const lang = process.env.SEEDER_LANG || this.defaultLang;
-    return lang === 'en' ? 'en' : 'es';
-  }
-  /**
+        const lang = process.env.SEEDER_LANG || this.defaultLang;
+        return lang === 'en' ? 'en' : 'es';
+    }
+    /**
    * Obtiene un mensaje traducido desde una ruta específica usando notación de punto (dot notation).
    *
    * Soporta interpolación de argumentos mediante placeholders `{key}` en los mensajes.
@@ -114,26 +109,26 @@ let SeederI18nHelper = class SeederI18nHelper {
    * // Output: "Ejecutando seeder users.seeder.ts..."
    * ```
    */ static getMessage(path, args) {
-    this.loadTranslations();
-    const lang = this.getLang();
-    const keys = path.split('.');
-    let value = this.translations[lang];
-    for (const key of keys) {
-      value = value?.[key];
-      if (value === undefined) {
-        return path;
-      }
+        this.loadTranslations();
+        const lang = this.getLang();
+        const keys = path.split('.');
+        let value = this.translations[lang];
+        for (const key of keys){
+            value = value?.[key];
+            if (value === undefined) {
+                return path; // Retorna la clave si no se encuentra la traducción
+            }
+        }
+        let message = String(value);
+        // Interpolación de argumentos: reemplaza placeholders {key} con valores
+        if (args) {
+            Object.entries(args).forEach(([key, val])=>{
+                message = message.replace(`{${key}}`, String(val));
+            });
+        }
+        return message;
     }
-    let message = String(value);
-
-    if (args) {
-      Object.entries(args).forEach(([key, val]) => {
-        message = message.replace(`{${key}}`, String(val));
-      });
-    }
-    return message;
-  }
-  /**
+    /**
    * Obtiene un mensaje de error traducido desde la sección "errors" del archivo de traducción.
    *
    * @static
@@ -153,9 +148,9 @@ let SeederI18nHelper = class SeederI18nHelper {
    * // Error: "Usuario 123 no encontrado"
    * ```
    */ static getError(key, args) {
-    return this.getMessage(`errors.${key}`, args);
-  }
-  /**
+        return this.getMessage(`errors.${key}`, args);
+    }
+    /**
    * Obtiene un mensaje de éxito de seeder traducido desde la sección "seeders.success" del archivo de traducción.
    *
    * @static
@@ -175,9 +170,9 @@ let SeederI18nHelper = class SeederI18nHelper {
    * // Output: "Seeder: 5 incidencias creadas"
    * ```
    */ static getSeederSuccess(key, args) {
-    return this.getMessage(`seeders.success.${key}`, args);
-  }
-  /**
+        return this.getMessage(`seeders.success.${key}`, args);
+    }
+    /**
    * Obtiene un mensaje general de seeders traducido desde la sección "seeders" del archivo de traducción.
    *
    * @static
@@ -196,10 +191,10 @@ let SeederI18nHelper = class SeederI18nHelper {
    * // Output: "Seeders ejecutados correctamente"
    * ```
    */ static getSeederMessage(key, args) {
-    return this.getMessage(`seeders.${key}`, args);
-  }
-  /**
-   * Obtiene el nombre traducido de una entidad desde la sección "permiso.entity" del archivo de traducción.
+        return this.getMessage(`seeders.${key}`, args);
+    }
+    /**
+   * Obtiene el nombre traducido de una entidad desde la sección "entities" del archivo de traducción.
    *
    * Útil para generar mensajes dinámicos que incluyan nombres de entidades específicas.
    *
@@ -209,8 +204,8 @@ let SeederI18nHelper = class SeederI18nHelper {
    *
    * @example
    * ```typescript
-   * // En translation.json (es): { "permiso.entity": { "usuario": "Usuario" } }
-   * // En translation.json (en): { "permiso.entity": { "usuario": "User" } }
+   * // En translation.json (es): { "entities": { "usuario": "Usuario" } }
+   * // En translation.json (en): { "entities": { "usuario": "User" } }
    *
    * const entityName = SeederI18nHelper.getEntity('usuario');
    * console.log(`${entityName} creado`);
@@ -218,16 +213,18 @@ let SeederI18nHelper = class SeederI18nHelper {
    * // Output (en): "User created"
    * ```
    */ static getEntity(key) {
-    return this.getMessage(`entities.${key}`);
-  }
+        return this.getMessage(`entities.${key}`);
+    }
 };
 /**
- * Almacena las traducciones cargadas desde los archivos JSON.
- * Se carga de forma lazy (solo cuando se necesita).
- * @private
- */ SeederI18nHelper.translations = null;
+   * Almacena las traducciones cargadas desde los archivos JSON.
+   * Se carga de forma lazy (solo cuando se necesita).
+   * @private
+   */ SeederI18nHelper.translations = null;
 /**
- * Idioma predeterminado cuando no se especifica `SEEDER_LANG`.
- * @private
- * @readonly
- */ SeederI18nHelper.defaultLang = 'es';
+   * Idioma predeterminado cuando no se especifica `SEEDER_LANG`.
+   * @private
+   * @readonly
+   */ SeederI18nHelper.defaultLang = 'es';
+
+//# sourceMappingURL=seeder-i18n.helper.js.map

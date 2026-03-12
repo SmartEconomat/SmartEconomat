@@ -85,9 +85,7 @@ export class CreateInventarioItemDto {
   ubicacionId: string;
 
   @IsOptional()
-  @Transform(function (this: void, params) {
-    return StringToDateTransformer.transform(params);
-  })
+  @Transform(StringToDateTransformer.transform)
   @Type(() => Date)
   @IsDateString(
     {},

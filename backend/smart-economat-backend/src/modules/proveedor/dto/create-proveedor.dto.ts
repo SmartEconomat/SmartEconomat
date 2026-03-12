@@ -4,49 +4,37 @@ import { TrimStringTransformer } from '../../../common/transformers/trim-string.
 import { LowercaseStringTransformer } from '../../../common/transformers/lowercase-string.transformer';
 
 export class CreateProveedorDto {
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
   nombre: string;
 
   @IsOptional()
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   @MaxLength(100)
   contacto?: string;
 
   @IsOptional()
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   @MaxLength(50)
   telefono?: string;
 
   @IsOptional()
-  @Transform(function (this: void, params) {
-    return LowercaseStringTransformer.transform(params);
-  })
+  @Transform(LowercaseStringTransformer.transform)
   @IsString()
   @MaxLength(255)
   email?: string;
 
   @IsOptional()
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   direccion?: string;
 
   @IsOptional()
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   @MaxLength(20)
   nif?: string;

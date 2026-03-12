@@ -20,6 +20,9 @@ export function initPgMem(): { db: IMemoryDb; pg: any } {
 
   console.log('Iniciando tests con pg-mem optimizado...');
 
+  // Forzar la carga de 'pg' real en la cache de módulos de Jest
+  // Esto previene que TypeORM intente cargar 'pg' dinámicamente
+  // DESPUÉS de que Jest haya destruido el entorno del worker.
   require('pg');
 
   const db = newDb();
@@ -56,7 +59,7 @@ export function initPgMem(): { db: IMemoryDb; pg: any } {
   db.public.registerFunction({
     name: 'uuid_generate_v7',
     implementation: () => uuidv7(),
-    impure: true,
+    impure: true, // Importante para funciones que retornan valores diferentes
   });
   db.public.registerFunction({
     name: 'uuid_generate_v4',
@@ -70,17 +73,16 @@ export function initPgMem(): { db: IMemoryDb; pg: any } {
   return { db: g.__PG_MEM_DB__, pg: g.__PG_MEM_PG__ };
 }
 
+
 /**
  * Crea un snapshot (backup) del estado actual de la base de datos en memoria.
  * Debe llamarse DESPUÉS de sincronizar el esquema y ejecutar los seeders.
  */
 export function takeSnapshot(): void {
   if (!g.__PG_MEM_DB__) {
-    throw new Error(
-      'pg-mem no ha sido inicializado. Llama a initPgMem() primero.'
-    );
+    throw new Error('pg-mem no ha sido inicializado. Llama a initPgMem() primero.');
   }
-  g.__PG_MEM_SNAPSHOT__ = (g.__PG_MEM_DB__ as IMemoryDb).backup();
+  g.__PG_MEM_SNAPSHOT__ = g.__PG_MEM_DB__.backup();
 }
 
 /**
@@ -88,11 +90,9 @@ export function takeSnapshot(): void {
  * Debe llamarse en el `beforeEach` de las suites de prueba.
  */
 export function restoreSnapshot(): void {
-  const snapshot = g.__PG_MEM_SNAPSHOT__ as IBackup | undefined;
+  const snapshot = g.__PG_MEM_SNAPSHOT__ as IBackup;
   if (!snapshot) {
-    throw new Error(
-      'No hay un snapshot disponible. Llama a takeSnapshot() primero.'
-    );
+    throw new Error('No hay un snapshot disponible. Llama a takeSnapshot() primero.');
   }
   snapshot.restore();
 }

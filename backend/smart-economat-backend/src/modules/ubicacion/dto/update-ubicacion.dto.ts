@@ -4,13 +4,9 @@ import { TrimStringTransformer } from '../../../common/transformers/trim-string.
 import { CreateUbicacionDto } from './create-ubicacion.dto';
 
 export class UpdateUbicacionDto extends PartialType(CreateUbicacionDto) {
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   nombre?: string;
 
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   descripcion?: string;
 }

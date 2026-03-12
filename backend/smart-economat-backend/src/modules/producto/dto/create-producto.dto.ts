@@ -20,9 +20,7 @@ import { UppercaseStringTransformer } from '../../../common/transformers/upperca
 import { StringToDateTransformer } from '../../../common/transformers/string-to-date.transformer';
 
 export class CreateProductoDto {
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString({
     message: i18nValidationMessage(
       'validation.EL_NOMBRE_DEBE_SER_UNA_CADENA_DE_TEXTO'
@@ -39,9 +37,7 @@ export class CreateProductoDto {
   nombre: string;
 
   @IsOptional()
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString({
     message: i18nValidationMessage(
       'validation.LA_MARCA_DEBE_SER_UNA_CADENA_DE_TEXTO'
@@ -55,9 +51,7 @@ export class CreateProductoDto {
   marca?: string;
 
   @IsOptional()
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString({
     message: i18nValidationMessage(
       'validation.LA_DESCRIPCI_N_DEBE_SER_UNA_CADENA_DE_TE'
@@ -79,9 +73,7 @@ export class CreateProductoDto {
   unidad?: UnidadMedida;
 
   @IsOptional()
-  @Transform(function (this: void, params) {
-    return StringToDateTransformer.transform(params);
-  })
+  @Transform(StringToDateTransformer.transform)
   @Type(() => Date)
   @IsDate({
     message: i18nValidationMessage(
@@ -91,9 +83,7 @@ export class CreateProductoDto {
   fechaCaducidad?: Date;
 
   @IsOptional()
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString({
     message: i18nValidationMessage(
       'validation.LA_RUTA_DE_LA_IMAGEN_DEBE_SER_UNA_CADENA'
@@ -115,9 +105,7 @@ export class CreateProductoDto {
   tipo?: TipoProducto;
 
   @IsOptional()
-  @Transform(function (this: void, params) {
-    return UppercaseStringTransformer.transform(params);
-  })
+  @Transform(UppercaseStringTransformer.transform)
   @IsString({
     message: i18nValidationMessage(
       'validation.EL_C_DIGO_DE_BARRAS_DEBE_SER_UNA_CADENA'

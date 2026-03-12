@@ -27,6 +27,7 @@ describe('RecetaController (e2e)', () => {
       });
     adminToken = response.body.data.access_token;
 
+    // Crear un producto propio para este test
     const productoRes = await request(app.getHttpServer() as string)
       .post('/api/v1/productos')
       .set('Authorization', `Bearer ${adminToken}`)
@@ -36,14 +37,13 @@ describe('RecetaController (e2e)', () => {
         tipo: 'verdura',
         contenido: 500,
       });
-
+    
     if (productoRes.status !== 201) {
-      throw new Error(
-        `Failed to create product in beforeEach: ${JSON.stringify(productoRes.body)}`
-      );
+      throw new Error(`Failed to create product in beforeEach: ${JSON.stringify(productoRes.body)}`);
     }
     productoId = productoRes.body.data.id;
 
+    // Crear una receta base para los tests que la necesiten (PATCH, DELETE, etc)
     const recetaRes = await request(app.getHttpServer() as string)
       .post('/api/v1/recetas')
       .set('Authorization', `Bearer ${adminToken}`)
@@ -55,11 +55,9 @@ describe('RecetaController (e2e)', () => {
         tiempoPreparacion: '10 minutos',
         ingredientes: [{ productoId, cantidad: 1, unidad: 'kg' }],
       });
-
+    
     if (recetaRes.status !== 201) {
-      throw new Error(
-        `Failed to create recipe in beforeEach: ${JSON.stringify(recetaRes.body)}`
-      );
+      throw new Error(`Failed to create recipe in beforeEach: ${JSON.stringify(recetaRes.body)}`);
     }
     recetaId = recetaRes.body.data.id;
   });

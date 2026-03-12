@@ -9,9 +9,7 @@ export class CreateUbicacionDto {
     description: 'docs.NOMBRE_DE_LA_UBICACI_N',
     example: 'Almacen A',
   })
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString({
     message: i18nValidationMessage(
       'validation.EL_NOMBRE_DEBE_SER_UNA_CADENA_DE_TEXTO'
@@ -32,9 +30,7 @@ export class CreateUbicacionDto {
     example: 'A la vuelta de la esquina',
   })
   @IsOptional()
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString({
     message: i18nValidationMessage(
       'validation.LA_DESCRIPCI_N_DEBE_SER_UNA_CADENA_DE_TE'

@@ -13,10 +13,12 @@ import { TransformFnParams } from 'class-transformer/types/interfaces';
  * cantidad: number;
  */
 export class StringToNumberTransformer {
-  static transform(params: TransformFnParams): number | null | undefined {
-    const value = params.value;
-    if (value === null) return null;
-    if (value === undefined) return undefined;
+  static transform(
+    this: void,
+    params: TransformFnParams
+  ): number | string | undefined {
+    const value = params.value as unknown;
+    if (value == null) return value as undefined;
 
     if (typeof value === 'number') return value;
 
@@ -31,6 +33,6 @@ export class StringToNumberTransformer {
       return num;
     }
 
-    return value as number;
+    throw new Error(`Tipo de valor no soportado: ${typeof value}`);
   }
 }

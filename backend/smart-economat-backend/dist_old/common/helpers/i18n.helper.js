@@ -1,16 +1,16 @@
-'use strict';
-Object.defineProperty(exports, '__esModule', {
-  value: true,
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+    value: true
 });
-Object.defineProperty(exports, 'I18nHelper', {
-  enumerable: true,
-  get: function () {
-    return I18nHelper;
-  },
+Object.defineProperty(exports, "I18nHelper", {
+    enumerable: true,
+    get: function() {
+        return I18nHelper;
+    }
 });
-const _nestjsi18n = require('nestjs-i18n');
+const _nestjsi18n = require("nestjs-i18n");
 let I18nHelper = class I18nHelper {
-  /**
+    /**
    * Obtiene un mensaje de error traducido desde el archivo de traducción (sección "errors").
    *
    * @static
@@ -19,14 +19,12 @@ let I18nHelper = class I18nHelper {
    * @returns {string} El mensaje de error traducido o la clave si no se encuentra.
    * @memberof I18nHelper
    */ static getError(key, args) {
-    const i18n = _nestjsi18n.I18nContext.current();
-    return (
-      i18n?.translate(`translation.errors.${key}`, {
-        args,
-      }) || `translation.errors.${key}`
-    );
-  }
-  /**
+        const i18n = _nestjsi18n.I18nContext.current();
+        return i18n?.translate(`translation.errors.${key}`, {
+            args
+        }) || `translation.errors.${key}`;
+    }
+    /**
    * Obtiene un mensaje de éxito traducido desde el archivo de traducción (sección "success").
    *
    * @static
@@ -35,14 +33,12 @@ let I18nHelper = class I18nHelper {
    * @returns {string} El mensaje de éxito traducido.
    * @memberof I18nHelper
    */ static getSuccess(key, args) {
-    const i18n = _nestjsi18n.I18nContext.current();
-    return (
-      i18n?.translate(`translation.success.${key}`, {
-        args,
-      }) || `translation.success.${key}`
-    );
-  }
-  /**
+        const i18n = _nestjsi18n.I18nContext.current();
+        return i18n?.translate(`translation.success.${key}`, {
+            args
+        }) || `translation.success.${key}`;
+    }
+    /**
    * Obtiene un mensaje de validación traducido desde el archivo de traducción (sección "validation").
    *
    * @static
@@ -51,15 +47,13 @@ let I18nHelper = class I18nHelper {
    * @returns {string} El mensaje de validación traducido.
    * @memberof I18nHelper
    */ static getValidation(key, args) {
-    const i18n = _nestjsi18n.I18nContext.current();
-    return (
-      i18n?.translate(`translation.validation.${key}`, {
-        args,
-      }) || `translation.validation.${key}`
-    );
-  }
-  /**
-   * Obtiene el nombre localizable de una entidad (sección "permiso.entity").
+        const i18n = _nestjsi18n.I18nContext.current();
+        return i18n?.translate(`translation.validation.${key}`, {
+            args
+        }) || `translation.validation.${key}`;
+    }
+    /**
+   * Obtiene el nombre localizable de una entidad (sección "entities").
    * Útil para generar mensajes dinámicos como "Usuario no encontrado".
    *
    * @static
@@ -67,13 +61,10 @@ let I18nHelper = class I18nHelper {
    * @returns {string} El nombre de la entidad traducido.
    * @memberof I18nHelper
    */ static getEntity(key) {
-    const i18n = _nestjsi18n.I18nContext.current();
-    return (
-      i18n?.translate(`translation.entities.${key}`) ||
-      `translation.entities.${key}`
-    );
-  }
-  /**
+        const i18n = _nestjsi18n.I18nContext.current();
+        return i18n?.translate(`translation.entities.${key}`) || `translation.entities.${key}`;
+    }
+    /**
    * Método genérico para obtener cualquier traducción dada su ruta completa (dot notation).
    *
    * @static
@@ -82,11 +73,11 @@ let I18nHelper = class I18nHelper {
    * @returns {string} El texto traducido.
    * @memberof I18nHelper
    */ static translate(key, args) {
-    const i18n = _nestjsi18n.I18nContext.current();
-    return (
-      i18n?.translate(key, {
-        args,
-      }) || key
-    );
-  }
+        const i18n = _nestjsi18n.I18nContext.current();
+        return i18n?.translate(key, {
+            args
+        }) || key;
+    }
 };
+
+//# sourceMappingURL=i18n.helper.js.map

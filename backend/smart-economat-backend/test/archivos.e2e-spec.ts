@@ -31,6 +31,7 @@ describe('ArchivoController (e2e)', () => {
       });
     adminToken = response.body.data.access_token;
 
+    // Subir un archivo base para los tests de GET, DELETE
     const buffer = Buffer.from('fake image content');
     const res = await request(app.getHttpServer())
       .post('/api/v1/archivos/upload')

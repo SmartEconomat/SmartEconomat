@@ -13,9 +13,12 @@ import { TransformFnParams } from 'class-transformer/types/interfaces';
  * fechaCaducidad: Date;
  */
 export class StringToDateTransformer {
-  static transform(params: TransformFnParams): Date | undefined {
-    const value = params.value;
-    if (value == null) return value;
+  static transform(
+    this: void,
+    params: TransformFnParams
+  ): Date | number | string | undefined {
+    const value = params.value as unknown;
+    if (value == null) return value as undefined;
 
     if (value instanceof Date) {
       return isNaN(value.getTime()) ? undefined : value;
@@ -40,6 +43,6 @@ export class StringToDateTransformer {
       return date;
     }
 
-    return undefined;
+    throw new Error(`Tipo de valor no soportado: ${typeof value}`);
   }
 }

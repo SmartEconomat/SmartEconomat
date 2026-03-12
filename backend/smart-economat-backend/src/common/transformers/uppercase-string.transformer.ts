@@ -2,12 +2,12 @@ import { TransformFnParams } from 'class-transformer/types/interfaces';
 
 /**
  * UppercaseStringTransformer
- *
+ * 
  * Transformador para convertir strings a mayúsculas después de hacer trim.
  * Maneja valores null/undefined de forma segura.
- *
+ * 
  * @example
- *
+ * 
  * @Transform(UppercaseStringTransformer.transform)
  * codigo: string;
  */

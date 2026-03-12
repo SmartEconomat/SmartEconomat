@@ -130,15 +130,16 @@ describe('IncidenciaController (e2e)', () => {
       }
     }
 
+    // Crear una incidencia base para los tests que la necesiten (GET single, PATCH, RESOLVE)
     if (recepcionId) {
-      const incRes = await request(app.getHttpServer() as string)
+        const incRes = await request(app.getHttpServer() as string)
         .post('/api/v1/incidencias')
         .set('Authorization', `Bearer ${profesorToken}`)
         .send({
           recepcionId: recepcionId,
           observacionesRecepcion: 'Incidencia Base E2E',
         });
-      testIncidenciaId = incRes.body.data?.id;
+        testIncidenciaId = incRes.body.data?.id;
     }
   });
 
@@ -163,9 +164,7 @@ describe('IncidenciaController (e2e)', () => {
         );
       }
       if (response.status !== 201) {
-        throw new Error(
-          `Failed to create Incidencia. Status: ${response.status}. Body: ${JSON.stringify(response.body, null, 2)}`
-        );
+        throw new Error(`Failed to create Incidencia. Status: ${response.status}. Body: ${JSON.stringify(response.body, null, 2)}`);
       }
       expect(response.status).toBe(201);
       const resBody = response.body as TestApiResponse<{ id: string }>;

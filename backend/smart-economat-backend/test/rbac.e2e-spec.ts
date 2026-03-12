@@ -73,7 +73,9 @@ describe('RBAC System (e2e)', () => {
       .send({ rol: 'ALUMNO' });
   });
 
-  afterAll(() => {});
+  afterAll(() => {
+    // app compartida
+  });
 
   describe('Acceso Base (ALUMNO)', () => {
     it('Debe permitir a un ALUMNO ver productos (Permiso por defecto)', async () => {
