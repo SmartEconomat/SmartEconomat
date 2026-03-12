@@ -9,13 +9,12 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
-  Query,
   Request,
 } from '@nestjs/common';
 import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { CreateRecepcionDto } from '../dto/create-recepcion.dto';
-import { ApiQuery } from '@nestjs/swagger';
 import { UpdateRecepcionDto } from '../dto/update-recepcion.dto';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { Recepcion } from '../recepcion.entity/recepcion.entity';
 import { RecepcionService } from '../service/recepcion.service';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
@@ -48,10 +47,9 @@ export class RecepcionController {
 
   @Get()
   @RequirePermissions('recepciones:listar')
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
   findAll(
-    @Query() query: PaginationQueryDto
+    @SortableFields(['fechaRecepcion', 'estado', 'createdAt', 'updatedAt'])
+    query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Recepcion>> {
     return this.recepcionService.findAll(query);
   }

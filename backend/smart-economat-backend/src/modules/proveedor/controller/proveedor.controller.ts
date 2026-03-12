@@ -9,12 +9,11 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
-  Query,
 } from '@nestjs/common';
 import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { CreateProveedorDto } from '../dto/create-proveedor.dto';
-import { ApiQuery } from '@nestjs/swagger';
 import { UpdateProveedorDto } from '../dto/update-proveedor.dto';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { Proveedor } from '../proveedor.entity/proveedor.entity';
 import { ProveedorService } from '../service/proveedor.service';
@@ -37,10 +36,18 @@ export class ProveedorController {
 
   @Get()
   @RequirePermissions('proveedores:listar')
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
   findAll(
-    @Query() query: PaginationQueryDto
+    @SortableFields([
+      'nombre',
+      'contacto',
+      'telefono',
+      'email',
+      'direccion',
+      'nif',
+      'createdAt',
+      'updatedAt',
+    ])
+    query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Proveedor>> {
     return this.proveedorService.findAll(query);
   }

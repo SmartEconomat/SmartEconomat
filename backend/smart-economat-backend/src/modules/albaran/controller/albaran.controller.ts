@@ -18,6 +18,9 @@ import { AlbaranService } from '../service/albaran.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('albaranes')
@@ -33,8 +36,17 @@ export class AlbaranController {
 
   @Get()
   @RequirePermissions('albaranes:listar')
-  findAll(): Promise<Albaran[]> {
-    return this.albaranService.findAll();
+  findAll(
+    @SortableFields([
+      'nAlbaran',
+      'concordancia',
+      'fecha',
+      'createdAt',
+      'updatedAt',
+    ])
+    query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<Albaran>> {
+    return this.albaranService.findAll(query);
   }
 
   @Get(':id')

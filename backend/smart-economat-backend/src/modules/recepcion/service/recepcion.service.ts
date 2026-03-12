@@ -58,11 +58,13 @@ export class RecepcionService {
     query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Recepcion>> {
     const page = query.page ?? 1;
-    const limit = Math.min(query.limit ?? 20, 100);
+    const limit = Math.min(query.limit ?? 20, 50);
+    const sortBy = query.sortBy ?? 'fechaRecepcion';
+    const order = query.order ?? 'DESC';
     const [data, total] = await this.recepcionRepository.findAndCount({
       relations: ['usuario'],
       withDeleted: false,
-      order: { fechaRecepcion: 'DESC' },
+      order: { [sortBy]: order },
       skip: (page - 1) * limit,
       take: limit,
     });

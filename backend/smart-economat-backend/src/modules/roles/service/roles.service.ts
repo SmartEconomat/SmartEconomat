@@ -71,11 +71,14 @@ export class RolesService {
    * Listar todos los roles con paginación
    */
   async findAll(query: PaginationQueryDto): Promise<PaginatedResponseDto<Rol>> {
-    const { page = 1, limit = 10 } = query;
+    const page = query.page ?? 1;
+    const limit = Math.min(query.limit ?? 10, 50);
+    const sortBy = query.sortBy ?? 'nombre';
+    const order = query.order ?? 'ASC';
 
     const [data, total] = await this.rolRepo.findAndCount({
       relations: ['permisos'],
-      order: { nombre: 'ASC' },
+      order: { [sortBy]: order },
       skip: (page - 1) * limit,
       take: limit,
     });

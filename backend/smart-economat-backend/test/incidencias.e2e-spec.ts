@@ -131,9 +131,9 @@ describe('IncidenciaController (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
-      const resBody = response.body as TestApiResponse<any[]>;
-      expect(Array.isArray(resBody.data)).toBe(true);
-      expect(resBody.data.length).toBeGreaterThan(0);
+      const resBody = response.body as TestApiResponse<{ data: any[] }>;
+      expect(Array.isArray(resBody.data.data)).toBe(true);
+      expect(resBody.data.data.length).toBeGreaterThan(0);
     });
 
     it('GET /incidencias/:id - Debe obtener una incidencia por ID (200)', async () => {
