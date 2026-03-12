@@ -1,6 +1,11 @@
 import { Between, DataSource, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { Inventario } from '../inventario.entity/inventario.entity';
+import { InventoryQueryDto } from '../dto/inventory-query.dto';
+import {
+  StockConsolidadoDto,
+  StockPorUbicacionDto,
+} from '../dto/stock-result.dto';
 
 @Injectable()
 export class InventarioRepository extends Repository<Inventario> {
@@ -37,5 +42,70 @@ export class InventarioRepository extends Repository<Inventario> {
     return this.find({
       where: { fechaCaducidad: Between(hoy, limite) },
     });
+  }
+
+  async queryStock(
+    dto: InventoryQueryDto
+  ): Promise<StockPorUbicacionDto[] | StockConsolidadoDto[]> {
+    const qb = this.createQueryBuilder('inv')
+      .innerJoin('inv.productoProveedor', 'pp')
+      .innerJoin('pp.producto', 'producto')
+      .innerJoin('inv.ubicacion', 'ubicacion')
+      .select('producto.id', 'productoId')
+      .addSelect('producto.nombre', 'productoNombre')
+      .addSelect('SUM(inv.cantidadActual)', 'stock');
+
+    if (dto.productoId) {
+      qb.andWhere('producto.id = :productoId', { productoId: dto.productoId });
+    }
+
+    if (dto.ubicacionId) {
+      qb.andWhere('ubicacion.id = :ubicacionId', {
+        ubicacionId: dto.ubicacionId,
+      });
+    }
+
+    if (dto.onlyLowStock) {
+      qb.andWhere('inv.cantidadActual < inv.cantidadMinima');
+    }
+
+    if (dto.consolidado) {
+      qb.groupBy('producto.id').addGroupBy('producto.nombre');
+
+      const rows = await qb.getRawMany<{
+        productoId: string;
+        productoNombre: string;
+        stock: string;
+      }>();
+
+      return rows.map((r) => ({
+        productoId: r.productoId,
+        productoNombre: r.productoNombre,
+        stockTotal: Number(r.stock),
+      }));
+    }
+
+    qb.addSelect('ubicacion.id', 'ubicacionId')
+      .addSelect('ubicacion.nombre', 'ubicacionNombre')
+      .groupBy('producto.id')
+      .addGroupBy('producto.nombre')
+      .addGroupBy('ubicacion.id')
+      .addGroupBy('ubicacion.nombre');
+
+    const rows = await qb.getRawMany<{
+      productoId: string;
+      productoNombre: string;
+      ubicacionId: string;
+      ubicacionNombre: string;
+      stock: string;
+    }>();
+
+    return rows.map((r) => ({
+      productoId: r.productoId,
+      productoNombre: r.productoNombre,
+      ubicacionId: r.ubicacionId,
+      ubicacionNombre: r.ubicacionNombre,
+      stock: Number(r.stock),
+    }));
   }
 }

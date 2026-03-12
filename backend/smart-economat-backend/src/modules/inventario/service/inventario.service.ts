@@ -12,6 +12,11 @@ import { CreateInventarioItemDto } from '../dto/create-InventarioItem.dto';
 import { UpdateInventarioDto } from '../dto/update-inventario.dto';
 import { AlertaStockDTO } from '../dto/alertaStock.dto';
 import { AlertaCaducidadDTO } from '../dto/alertaCaducidad.dto';
+import { InventoryQueryDto } from '../dto/inventory-query.dto';
+import {
+  StockConsolidadoDto,
+  StockPorUbicacionDto,
+} from '../dto/stock-result.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
 import { TipoMovimiento } from '../../movimiento/enums/movimiento.enums';
@@ -204,5 +209,11 @@ export class InventarioService {
       cantidadActual: p.cantidadActual,
       cantidadMinima: p.cantidadMinima,
     }));
+  }
+
+  async queryStock(
+    dto: InventoryQueryDto
+  ): Promise<StockPorUbicacionDto[] | StockConsolidadoDto[]> {
+    return this.inventarioRepository.queryStock(dto);
   }
 }
