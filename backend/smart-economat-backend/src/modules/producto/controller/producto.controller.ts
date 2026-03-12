@@ -12,7 +12,6 @@ import {
   ParseUUIDPipe,
   Request,
 } from '@nestjs/common';
-import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { ProductoService } from '../service/producto.service';
 import {
   ApiTags,
@@ -32,7 +31,7 @@ import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 
 @ApiTags('Productos')
-@UseGuards(JwtAuthGuard, PermisosGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('productos')
 export class ProductoController {
   constructor(private readonly productoService: ProductoService) {}
@@ -50,7 +49,7 @@ export class ProductoController {
   }
 
   @Post()
-  @RequirePermissions('productos:crear')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary:
@@ -80,14 +79,14 @@ export class ProductoController {
   })
   create(
     @Body() createProductoDto: CreateProductoDto,
-    @Request() req: { user?: { sub: string } }
+    @Request() req: any
   ): Promise<Producto> {
     const userId = req.user?.sub as string;
     return this.productoService.create(createProductoDto, userId);
   }
 
   @Get()
-  @RequirePermissions('productos:listar')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
   @ApiOperation({ summary: 'Listar productos con filtros y paginación' })
   findAll(
     @SortableFields(
@@ -100,7 +99,7 @@ export class ProductoController {
   }
 
   @Get(':id')
-  @RequirePermissions('productos:ver')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
   @ApiOperation({ summary: 'Obtener un producto por ID' })
   @ApiParam({ name: 'id', description: 'docs.UUID_DEL_PRODUCTO' })
   @ApiResponse({ status: 200, type: Producto })
@@ -110,26 +109,26 @@ export class ProductoController {
   }
 
   @Patch(':id')
-  @RequirePermissions('productos:editar')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @ApiOperation({ summary: 'Actualizar un producto' })
   @ApiResponse({ status: 200, type: Producto })
   update(
-    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateProductoDto: UpdateProductoDto,
-    @Request() req: { user?: { sub: string } }
+    @Request() req: any
   ): Promise<Producto> {
     const userId = req.user?.sub as string;
     return this.productoService.update(id, updateProductoDto, userId);
   }
 
   @Delete(':id')
-  @RequirePermissions('productos:eliminar')
+  @Roles(rolUsuario.ADMINISTRADOR)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Eliminar un producto' })
   @ApiResponse({ status: 204, description: 'docs.PRODUCTO_ELIMINADO' })
   remove(
-    @Param('id', ParseUUIDv7Pipe) id: string,
-    @Request() req: { user?: { sub: string } }
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: any
   ): Promise<void> {
     const userId = req.user?.sub as string;
     return this.productoService.remove(id, userId);

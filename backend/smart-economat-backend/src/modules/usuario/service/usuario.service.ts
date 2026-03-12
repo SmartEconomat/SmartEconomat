@@ -223,7 +223,8 @@ export class UsuarioService {
     if (!usuario) throw new NotFoundException();
 
     const permiso = await this.permisoRepo.findOneBy({ id: permisoId });
-    if (!permiso) throw new NotFoundException('Permiso no encontrado');
+    if (!permiso)
+      throw new NotFoundException(I18nHelper.getError('PERMISO_NO_ENCONTRADO'));
 
     const basicUser = await this.usuarioRepo.repo.findOne({
       where: { id: userId },
@@ -258,7 +259,8 @@ export class UsuarioService {
     if (!usuario) throw new NotFoundException();
 
     const permiso = await this.permisoRepo.findOneBy({ id: permisoId });
-    if (!permiso) throw new NotFoundException('Permiso no encontrado');
+    if (!permiso)
+      throw new NotFoundException(I18nHelper.getError('PERMISO_NO_ENCONTRADO'));
 
     const basicUser = await this.usuarioRepo.repo.findOne({
       where: { id: userId },

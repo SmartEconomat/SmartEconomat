@@ -1,3 +1,4 @@
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import {
   Injectable,
   CanActivate,
@@ -70,7 +71,9 @@ export class PermisosGuard implements CanActivate {
       this.logger.warn(
         'Usuario no autenticado intentando acceder a ruta protegida'
       );
-      throw new ForbiddenException('Usuario no autenticado');
+      throw new ForbiddenException(
+        I18nHelper.getError('USUARIO_NO_AUTENTICADO')
+      );
     }
 
     const hasPermission =
