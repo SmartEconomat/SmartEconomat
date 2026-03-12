@@ -10,11 +10,17 @@ import {
   HttpStatus,
   UseGuards,
   Request,
+  Query,
 } from '@nestjs/common';
 import { InventarioService } from '../service/inventario.service';
 import { CreateInventarioItemDto } from '../dto/create-InventarioItem.dto';
 import { UpdateInventarioDto } from '../dto/update-inventario.dto';
+import { InventoryQueryDto } from '../dto/inventory-query.dto';
 import { Inventario } from '../inventario.entity/inventario.entity';
+import {
+  StockConsolidadoDto,
+  StockPorUbicacionDto,
+} from '../dto/stock-result.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PermisosGuard } from '../../authorization/guards/permisos.guard';
@@ -39,6 +45,14 @@ export class InventarioController {
   @RequirePermissions('inventario:listar')
   findAll(): Promise<Inventario[]> {
     return this.inventarioService.findAll();
+  }
+
+  @Get('stock')
+  @RequirePermissions('inventario:listar')
+  queryStock(
+    @Query() dto: InventoryQueryDto
+  ): Promise<StockPorUbicacionDto[] | StockConsolidadoDto[]> {
+    return this.inventarioService.queryStock(dto);
   }
 
   @Get(':id')
