@@ -3,6 +3,22 @@ import { newDb } from 'pg-mem';
 import type { DataSource } from 'typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as dotenv from 'dotenv';
+
+const envPaths = [
+  path.join(process.cwd(), '.env'),
+  path.join(process.cwd(), '.env.test'),
+  path.join(process.cwd(), '../../.env'),
+  path.join(process.cwd(), '../../.env.dev'),
+];
+
+for (const envPath of envPaths) {
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+    console.log(`Loaded environment from ${envPath}`);
+    break;
+  }
+}
 
 const g = global as any;
 
@@ -53,41 +69,21 @@ if (!g.__PG_MEM_DB__) {
   g.__PG_MEM_PG__ = db.adapters.createPg();
 }
 
-process.env.DB_SYNC = 'false';
+process.env.DB_SYNC = process.env.DB_SYNC || 'false';
 process.env.NODE_ENV = 'test';
-process.env.LOCAL_STORAGE_PATH = './uploads_test';
+process.env.LOCAL_STORAGE_PATH = process.env.LOCAL_STORAGE_PATH || './uploads_test';
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-key-mock';
+process.env.JWT_EXPIRATION = process.env.JWT_EXPIRATION || '1h';
 
-// Mock de fetch para evitar llamadas a la red reales (ej. OpenFoodFacts en seeders)
-g.fetch = jest.fn(() =>
-  Promise.resolve({
-    ok: true,
-    json: () =>
-      Promise.resolve({
-        products: [
-          {
-            product_name: 'Producto Test 1',
-            brands: 'Marca Test',
-            quantity: '1 kg',
-            ingredients_text: 'Ingrediente 1',
-            categories_tags: ['en:dairy'],
-            code: '1234567890123',
-          },
-          {
-            product_name: 'Producto Test 2',
-            brands: 'Marca Test 2',
-            quantity: '500 g',
-            ingredients_text: 'Ingrediente 2',
-            categories_tags: ['en:meat'],
-            code: '1234567890124',
-          },
-        ],
-      }),
-  })
-);
-
-// Mock pg con la misma instancia compartida
-
-jest.mock('pg', () => g.__PG_MEM_PG__ as unknown);
+// Forzar TypeORM a usar el mock in-memory
+const { PlatformTools } = require('typeorm/platform/PlatformTools');
+const originalLoad = PlatformTools.load.bind(PlatformTools);
+PlatformTools.load = function (name: string) {
+  if (name === 'pg') {
+    return g.__PG_MEM_PG__;
+  }
+  return originalLoad(name);
+};
 
 jest.setTimeout(60000);
 
@@ -104,14 +100,32 @@ beforeAll(async () => {
   if (!g.__SEEDED__) {
     await runAllSeeders();
     g.__SEEDED__ = true;
+    // Capturar snapshot inicial tras seeders
+    g.__BACKUP__ = g.__PG_MEM_DB__.backup();
   }
 }, 30000);
 
-afterAll(() => {
+beforeEach(() => {
+  if (g.__BACKUP__) {
+    g.__BACKUP__.restore();
+  }
+});
+
+afterAll(async () => {
   const uploadDir = path.resolve(
     process.env.LOCAL_STORAGE_PATH || './uploads_test'
   );
   if (fs.existsSync(uploadDir)) {
     fs.rmSync(uploadDir, { recursive: true, force: true });
   }
+
+  const { dataSource } = require('../src/seeders/seed') as {
+    dataSource: DataSource;
+  };
+  if (dataSource.isInitialized) {
+    await dataSource.destroy();
+  }
+
+  const { closeTestApp } = require('./test-app.helper');
+  await closeTestApp();
 });

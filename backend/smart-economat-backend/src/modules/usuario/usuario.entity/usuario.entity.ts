@@ -89,7 +89,7 @@ export class Usuario extends BaseEntity {
   /**
    * Permisos asignados directamente al usuario (además de los de sus roles)
    */
-  @ManyToMany(() => Permiso)
+  @ManyToMany(() => Permiso, (permiso) => permiso.usuariosAdicionales)
   @JoinTable({
     name: 'usuario_permiso_adicional',
     joinColumn: { name: 'usuario_id', referencedColumnName: 'id' },
@@ -100,7 +100,7 @@ export class Usuario extends BaseEntity {
   /**
    * Permisos explícitamente revocados para este usuario (aunque sus roles los tengan)
    */
-  @ManyToMany(() => Permiso)
+  @ManyToMany(() => Permiso, (permiso) => permiso.usuariosExcluidos)
   @JoinTable({
     name: 'usuario_permiso_excluido',
     joinColumn: { name: 'usuario_id', referencedColumnName: 'id' },
