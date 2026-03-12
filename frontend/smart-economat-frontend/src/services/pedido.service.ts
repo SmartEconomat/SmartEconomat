@@ -1,12 +1,11 @@
 import { Pedido } from './pedido.types';
 import { baseFetch, PaginatedData } from './api.service';
 
-export async function fetchPedidos(page: number = 1, limit: number = 10, search: string = ''): Promise<PaginatedData<Pedido>> {
-  const params = new URLSearchParams({
-    page: page.toString(),
-    limit: limit.toString(),
-  });
-  if (search) params.append('searchTerm', search);
+interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
 
 export interface PedidoRequestPayload {
   proveedorId: string;
@@ -38,7 +37,7 @@ export async function fetchPedidos(
       `Error al obtener pedidos: ${response.status} ${response.statusText}`
     );
   }
-  const body = (await response.json()) as ApiResponse<PaginatedData<Pedido>>;
+  const body = (await response.json()) as ApiResponse<Pedido[]>;
   return body.data;
 }
 
