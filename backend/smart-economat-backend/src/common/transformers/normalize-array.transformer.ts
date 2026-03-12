@@ -15,7 +15,9 @@ import { TransformFnParams } from 'class-transformer/types/interfaces';
  * tags: string[];
  */
 export class NormalizeArrayTransformer {
-  static transform(params: TransformFnParams): unknown[] | null | undefined {
+  static transform(params: {
+    value: (string | null | undefined)[];
+  }): unknown[] | null | undefined {
     const value = params.value;
     if (value === null) return null;
     if (value === undefined) return undefined;

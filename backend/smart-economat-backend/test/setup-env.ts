@@ -89,12 +89,11 @@ PlatformTools.load = function (name: string) {
 jest.setTimeout(60000);
 
 beforeAll(async () => {
-  const { dataSource, runAllSeeders } = (await import(
-    '../src/seeders/seed'
-  )) as {
-    dataSource: DataSource;
-    runAllSeeders: () => Promise<void>;
-  };
+  const { dataSource, runAllSeeders } =
+    (await import('../src/seeders/seed')) as {
+      dataSource: DataSource;
+      runAllSeeders: () => Promise<void>;
+    };
   if (!dataSource.isInitialized) {
     await dataSource.initialize();
   }

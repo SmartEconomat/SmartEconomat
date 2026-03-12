@@ -108,22 +108,23 @@ export const runSeeder = async (dataSource: DataSource) => {
   }
 
   let offProducts: OffProduct[] = [];
+
+  // Siempre intentar obtener datos de OpenFoodFacts (en test y producción)
+  console.log('Obteniendo productos de OpenFoodFacts...');
   try {
-    if (process.env.NODE_ENV === 'test') {
+    const offResponse = await fetch(
+      'https://es.openfoodfacts.org/cgi/search.pl?action=process&sort_by=unique_scans_n&json=1&page_size=20',
+      { signal: AbortSignal.timeout(60000) }
+    );
+
+    if (offResponse.ok) {
+      const offData = await offResponse.json();
+      offProducts = offData.products || [];
       console.log(
-        'Ambiente de test detectado, saltando OpenFoodFacts para ahorrar tiempo.'
+        `✅ ${offProducts.length} productos obtenidos de OpenFoodFacts.`
       );
     } else {
-      console.log('Obteniendo productos de OpenFoodFacts...');
-      const offResponse = await fetch(
-        'https://es.openfoodfacts.org/cgi/search.pl?action=process&sort_by=unique_scans_n&json=1&page_size=20',
-        { signal: AbortSignal.timeout(30000) }
-      );
-
-      if (offResponse.ok) {
-        const offData = await offResponse.json();
-        offProducts = offData.products || [];
-      }
+      console.warn(`OpenFoodFacts respondió con estado ${offResponse.status}`);
     }
   } catch (error: any) {
     console.warn(
@@ -185,6 +186,41 @@ export const runSeeder = async (dataSource: DataSource) => {
     productos.push(producto);
 
     if (productos.length >= 25) break;
+  }
+
+  // Fallback: crear productos ficticios solo si OpenFoodFacts falló o no devolvió productos
+  if (productos.length === 0) {
+    console.warn(
+      'Usando datos ficticios como fallback (OpenFoodFacts no disponible).'
+    );
+    const { faker } = await import('@faker-js/faker');
+    const numProductos = 10;
+
+    for (let i = 0; i < numProductos; i++) {
+      // Generar código de barras EAN-13 manualmente (12 dígitos + dígito de control)
+      const codigoBarras = faker.helpers.fromRegExp('[0-9]{13}');
+
+      if (codigosVistos.has(codigoBarras)) {
+        continue;
+      }
+      codigosVistos.add(codigoBarras);
+
+      const producto = productoRepo.create({
+        nombre: faker.commerce.productName().substring(0, 150),
+        marca: faker.commerce.productAdjective().substring(0, 100),
+        descripcion: faker.commerce.productDescription().substring(0, 500),
+        unidad: faker.helpers.enumValue(UnidadMedida),
+        fechaCaducidad: Math.random() > 0.7 ? faker.date.future() : undefined,
+        tipo: faker.helpers.enumValue(TipoProducto),
+        pathImg: `https://via.placeholder.com/640x480.png?text=${encodeURIComponent(faker.commerce.productName().slice(0, 20))}`,
+        contenido: parseFloat(
+          faker.commerce.price({ min: 1, max: 100, dec: 2 })
+        ),
+        codigoBarras,
+      });
+
+      productos.push(producto);
+    }
   }
 
   if (productos.length === 0) {
