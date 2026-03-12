@@ -1,8 +1,7 @@
 import { getTestApp } from './test-app.helper';
 import { INestApplication } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+
 import request from 'supertest';
-import { AppModule } from './../src/app.module';
 
 /**
  * @file recetas.e2e-spec.ts

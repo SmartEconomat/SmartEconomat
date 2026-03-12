@@ -1,8 +1,7 @@
 import { getTestApp } from './test-app.helper';
 import { INestApplication } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+
 import request from 'supertest';
-import { AppModule } from './../src/app.module';
 import { DataSource } from 'typeorm';
 import { Usuario } from '../src/modules/usuario/usuario.entity/usuario.entity';
 import {

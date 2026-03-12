@@ -1,7 +1,6 @@
 import { getTestApp } from './test-app.helper';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from './../src/app.module';
 
 /**
  * @file app.e2e-spec.ts
