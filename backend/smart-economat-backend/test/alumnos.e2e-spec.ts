@@ -1,7 +1,5 @@
 import { getTestApp } from './test-app.helper';
-import {
-  INestApplication,
-} from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
@@ -13,7 +11,9 @@ describe('AlumnoController (e2e)', () => {
     app = await getTestApp();
   });
 
-  afterAll(() => { /* app compartida, no cerrar */ });
+  afterAll(() => {
+    /* app compartida, no cerrar */
+  });
 
   describe('Registro de Alumnos', () => {
     it('POST /alumnos/register - Debe fallar sin datos (400)', async () => {

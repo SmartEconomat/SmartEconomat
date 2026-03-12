@@ -8,10 +8,10 @@ import {
   Delete,
   Query,
   UseGuards,
+  ParseUUIDPipe,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { MovimientoService } from '../service/movimiento.service';
@@ -156,7 +156,7 @@ export class MovimientoController {
     status: 404,
     description: 'docs.MOVIMIENTO_NO_ENCONTRADO',
   })
-  findOne(@Param('id', ParseUUIDv7Pipe) id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.movimientoService.findOne(id);
   }
 
@@ -183,7 +183,7 @@ export class MovimientoController {
     description: 'docs.MOVIMIENTO_NO_ENCONTRADO',
   })
   update(
-    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateMovimientoDto
   ) {
     return this.movimientoService.update(id, dto);
@@ -208,7 +208,7 @@ export class MovimientoController {
     status: 404,
     description: 'docs.MOVIMIENTO_NO_ENCONTRADO',
   })
-  remove(@Param('id', ParseUUIDv7Pipe) id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.movimientoService.remove(id);
   }
 }
