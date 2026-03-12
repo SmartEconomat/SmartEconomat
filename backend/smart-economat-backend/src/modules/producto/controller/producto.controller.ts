@@ -70,7 +70,7 @@ export class ProductoController {
     @Body() createProductoDto: CreateProductoDto,
     @Request() req: any
   ): Promise<Producto> {
-    const userId = req.user?.sub || null;
+    const userId = req.user?.sub as string;
     return this.productoService.create(createProductoDto, userId);
   }
 
@@ -106,7 +106,7 @@ export class ProductoController {
     @Body() updateProductoDto: UpdateProductoDto,
     @Request() req: any
   ): Promise<Producto> {
-    const userId = req.user?.sub || null;
+    const userId = req.user?.sub as string;
     return this.productoService.update(id, updateProductoDto, userId);
   }
 
@@ -119,7 +119,7 @@ export class ProductoController {
     @Param('id', ParseUUIDPipe) id: string,
     @Request() req: any
   ): Promise<void> {
-    const userId = req.user?.sub || null;
+    const userId = req.user?.sub as string;
     return this.productoService.remove(id, userId);
   }
 }

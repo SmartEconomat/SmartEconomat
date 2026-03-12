@@ -31,7 +31,7 @@ export class InventarioController {
     @Body() createInventarioDto: CreateInventarioItemDto,
     @Request() req: any
   ): Promise<Inventario> {
-    const userId = req.user.sub;
+    const userId = req.user.sub as string;
     return this.inventarioService.create(createInventarioDto, userId);
   }
 
@@ -54,7 +54,7 @@ export class InventarioController {
     @Body() updateInventarioDto: UpdateInventarioDto,
     @Request() req: any
   ): Promise<Inventario> {
-    const userId = req.user.sub;
+    const userId = req.user.sub as string;
     return this.inventarioService.update(id, updateInventarioDto, userId);
   }
 
@@ -62,7 +62,7 @@ export class InventarioController {
   @RequirePermissions('inventario:eliminar')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string, @Request() req: any): Promise<void> {
-    const userId = req.user.sub;
+    const userId = req.user.sub as string;
     return this.inventarioService.remove(id, userId);
   }
 }

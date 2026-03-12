@@ -12,7 +12,6 @@ import { randomUUID } from 'node:crypto';
 import { QueryFailedError } from 'typeorm';
 import { ApiResponse } from '../interfaces/api-response.interface';
 import { APP_VERSION } from '../helpers/app-version.helper';
-import { I18nHelper } from '../helpers/i18n.helper';
 import { I18nContext } from 'nestjs-i18n';
 
 /**

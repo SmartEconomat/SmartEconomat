@@ -18,7 +18,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config ./test/jest-e2e.json --runInBand",
-    "seed": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.ts",
+    "seed": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.ts",
     "schema:drop": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js schema:drop -d src/config/typeorm.config.ts",
     "schema:sync": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js schema:sync -d src/config/typeorm.config.ts",
     "db:reset": "npm run schema:drop && npm run schema:sync && npm run seed",
