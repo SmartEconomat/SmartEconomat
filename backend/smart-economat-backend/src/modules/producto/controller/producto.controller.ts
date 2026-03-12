@@ -28,7 +28,7 @@ import { Producto } from '../producto.entity/producto.entity';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { PermisosGuard } from '../../auth/guards/permisos.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 
 @ApiTags('Productos')
