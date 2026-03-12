@@ -8,10 +8,10 @@ import {
   Delete,
   Query,
   UseGuards,
+  ParseUUIDPipe,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { MovimientoService } from '../service/movimiento.service';
@@ -20,18 +20,19 @@ import { UpdateMovimientoDto } from '../dto/update-movimiento.dto';
 import { MovimientoHistoryDto } from '../dto/movimiento-history.dto';
 import { MovimientoListQueryDto } from '../dto/movimiento-list-query.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/role.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { rolUsuario } from '../../usuario/enums/usuario.enums';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
-import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
 
 @ApiTags('movimientos')
-@UseGuards(JwtAuthGuard, PermisosGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('movimientos')
 export class MovimientoController {
   constructor(private readonly movimientoService: MovimientoService) {}
 
   @Post()
-  @RequirePermissions('movimientos:crear')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @ApiOperation({
     summary: 'Crear un nuevo movimiento',
     description: 'docs.SOLO_ADMINISTRADORES_Y_PROFESORES_PUEDEN',
@@ -53,7 +54,7 @@ export class MovimientoController {
   }
 
   @Get()
-  @RequirePermissions('movimientos:listar')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
   @ApiOperation({
     summary: 'Listar todos los movimientos',
     description: 'docs.RETORNA_TODOS_LOS_MOVIMIENTOS_ORDENADOS',
@@ -73,7 +74,7 @@ export class MovimientoController {
   }
 
   @Get('historial')
-  @RequirePermissions('movimientos:historial')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @ApiOperation({
     summary: 'Obtener historial de movimientos (Trazabilidad)',
     description: 'docs.BUSCA_EL_HISTORIAL_DE_MOVIMIENTOS_DE_UN',
@@ -142,7 +143,7 @@ export class MovimientoController {
   }
 
   @Get(':id')
-  @RequirePermissions('movimientos:ver')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
   @ApiOperation({
     summary: 'Obtener un movimiento por ID',
     description: 'docs.RETORNA_LOS_DETALLES_COMPLETOS_DE_UN_MOV',
@@ -155,12 +156,12 @@ export class MovimientoController {
     status: 404,
     description: 'docs.MOVIMIENTO_NO_ENCONTRADO',
   })
-  findOne(@Param('id', ParseUUIDv7Pipe) id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.movimientoService.findOne(id);
   }
 
   @Patch(':id')
-  @RequirePermissions('movimientos:editar')
+  @Roles(rolUsuario.ADMINISTRADOR)
   @ApiOperation({
     summary: 'Actualizar un movimiento',
     description: 'docs.SOLO_ADMINISTRADORES_PUEDEN_ACTUALIZAR_M',
@@ -182,7 +183,7 @@ export class MovimientoController {
     description: 'docs.MOVIMIENTO_NO_ENCONTRADO',
   })
   update(
-    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateMovimientoDto
   ) {
     return this.movimientoService.update(id, dto);
@@ -190,7 +191,7 @@ export class MovimientoController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequirePermissions('movimientos:eliminar')
+  @Roles(rolUsuario.ADMINISTRADOR)
   @ApiOperation({
     summary: 'Eliminar un movimiento (soft delete)',
     description: 'docs.SOLO_ADMINISTRADORES_PUEDEN_ELIMINAR_MOV',
@@ -207,7 +208,7 @@ export class MovimientoController {
     status: 404,
     description: 'docs.MOVIMIENTO_NO_ENCONTRADO',
   })
-  remove(@Param('id', ParseUUIDv7Pipe) id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.movimientoService.remove(id);
   }
 }

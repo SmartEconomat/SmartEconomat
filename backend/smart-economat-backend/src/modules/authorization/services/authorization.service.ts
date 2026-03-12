@@ -1,3 +1,4 @@
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -223,7 +224,10 @@ export class AuthorizationService {
       );
       this.logger.log(`Cache invalidado para ${userIds.length} usuarios`);
     } catch (error) {
-      this.logger.error('Error al invalidar cache de usuarios:', error);
+      this.logger.error(
+        I18nHelper.translate('logs.ERROR_AL_INVALIDAR_CACHE_DE_USUARIOS'),
+        error
+      );
     }
   }
 
@@ -237,9 +241,14 @@ export class AuthorizationService {
         clear: () => Promise<void>;
       };
       await cache.clear();
-      this.logger.warn('TODO el cache de permisos ha sido invalidado');
+      this.logger.warn(
+        I18nHelper.translate('logs.TODO_EL_CACHE_DE_PERMISOS_HA_SIDO_INVALI')
+      );
     } catch (error) {
-      this.logger.error('Error al invalidar todo el cache:', error);
+      this.logger.error(
+        I18nHelper.translate('logs.ERROR_AL_INVALIDAR_TODO_EL_CACHE'),
+        error
+      );
     }
   }
 
