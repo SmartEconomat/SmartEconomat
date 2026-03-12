@@ -8,25 +8,24 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class EjecutarProduccionDto {
-  @ApiProperty({ description: 'UUID de la receta a producir' })
+  @ApiProperty({ description: 'docs.UUID_DE_LA_RECETA_A_PRODUCIR' })
   @IsUUID()
   recetaId!: string;
 
-  @ApiProperty({ description: 'Cantidad total a producir' })
+  @ApiProperty({ description: 'docs.CANTIDAD_TOTAL_A_PRODUCIR' })
   @IsNumber()
   @Min(0.001)
   cantidadProducida!: number;
 
   @ApiPropertyOptional({
-    description: 'Fecha de caducidad manual del lote producido (ISO 8601)',
+    description: 'docs.FECHA_DE_CADUCIDAD_MANUAL_DEL_LOTE_PRODU',
   })
   @IsOptional()
   @IsDateString()
   fechaCaducidadManual?: string;
 
   @ApiProperty({
-    description:
-      'UUID de la ubicación de almacén destino para el lote producido',
+    description: 'docs.UUID_DE_LA_UBICACI_N_DE_ALMAC_N_DESTINO',
   })
   @IsUUID()
   ubicacionDestinoId!: string;

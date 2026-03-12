@@ -120,7 +120,9 @@ export class AuthService {
       !usuario.passwordResetExpires ||
       usuario.passwordResetExpires < new Date()
     ) {
-      throw new BadRequestException('El token es inválido o ha expirado');
+      throw new BadRequestException(
+        I18nHelper.getError('EL_TOKEN_ES_INV_LIDO_O_HA_EXPIRADO')
+      );
     }
 
     usuario.password = newPassword;
@@ -143,11 +145,13 @@ export class AuthService {
       .getOne();
 
     if (!usuario) {
-      throw new BadRequestException('Usuario no encontrado');
+      throw new BadRequestException(I18nHelper.getError('USER_NOT_FOUND'));
     }
 
     if (!(await bcrypt.compare(currentPassword, usuario.password))) {
-      throw new BadRequestException('La contraseña actual es incorrecta');
+      throw new BadRequestException(
+        I18nHelper.getError('LA_CONTRASE_A_ACTUAL_ES_INCORRECTA')
+      );
     }
 
     usuario.password = newPassword;

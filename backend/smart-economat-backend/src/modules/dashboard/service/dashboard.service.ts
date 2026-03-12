@@ -1,3 +1,4 @@
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan, Between, In } from 'typeorm';
@@ -26,7 +27,7 @@ export class DashboardService {
   ) {}
 
   async getStats(): Promise<DashboardStatsDto> {
-    this.logger.log('Fetching dashboard statistics...');
+    this.logger.log(I18nHelper.translate('logs.FETCHING_DASHBOARD_STATISTICS'));
 
     const now = new Date();
 

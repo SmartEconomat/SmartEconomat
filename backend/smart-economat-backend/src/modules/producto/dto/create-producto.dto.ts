@@ -1,3 +1,4 @@
+import { i18nValidationMessage } from 'nestjs-i18n';
 import {
   IsString,
   IsOptional,
@@ -16,66 +17,136 @@ import { AddProveedorToProductoDto } from './producto-proveedor.dto/add-proveedo
 import { TipoProducto, UnidadMedida, Alergeno } from '../enums/producto.enums';
 
 export class CreateProductoDto {
-  @IsString({ message: 'El nombre debe ser una cadena de texto' })
-  @IsNotEmpty({ message: 'El nombre es obligatorio' })
-  @MaxLength(100, { message: 'El nombre no puede exceder los 100 caracteres' })
+  @IsString({
+    message: i18nValidationMessage(
+      'validation.EL_NOMBRE_DEBE_SER_UNA_CADENA_DE_TEXTO'
+    ),
+  })
+  @IsNotEmpty({
+    message: i18nValidationMessage('validation.EL_NOMBRE_ES_OBLIGATORIO'),
+  })
+  @MaxLength(100, {
+    message: i18nValidationMessage(
+      'validation.EL_NOMBRE_NO_PUEDE_EXCEDER_LOS_100_CARAC'
+    ),
+  })
   nombre: string;
 
   @IsOptional()
-  @IsString({ message: 'La marca debe ser una cadena de texto' })
-  @MaxLength(100, { message: 'La marca no puede exceder los 100 caracteres' })
+  @IsString({
+    message: i18nValidationMessage(
+      'validation.LA_MARCA_DEBE_SER_UNA_CADENA_DE_TEXTO'
+    ),
+  })
+  @MaxLength(100, {
+    message: i18nValidationMessage(
+      'validation.LA_MARCA_NO_PUEDE_EXCEDER_LOS_100_CARACT'
+    ),
+  })
   marca?: string;
 
   @IsOptional()
-  @IsString({ message: 'La descripción debe ser una cadena de texto' })
+  @IsString({
+    message: i18nValidationMessage(
+      'validation.LA_DESCRIPCI_N_DEBE_SER_UNA_CADENA_DE_TE'
+    ),
+  })
   @MaxLength(1000, {
-    message: 'La descripción no puede exceder los 1000 caracteres',
+    message: i18nValidationMessage(
+      'validation.LA_DESCRIPCI_N_NO_PUEDE_EXCEDER_LOS_1000'
+    ),
   })
   descripcion?: string;
 
   @IsOptional()
-  @IsEnum(UnidadMedida, { message: 'La unidad del producto no es válida' })
+  @IsEnum(UnidadMedida, {
+    message: i18nValidationMessage(
+      'validation.LA_UNIDAD_DEL_PRODUCTO_NO_ES_V_LIDA'
+    ),
+  })
   unidad?: UnidadMedida;
 
   @IsOptional()
   @Type(() => Date)
   @IsDate({
-    message: 'La fecha de caducidad debe ser una fecha válida (ISO 8601)',
+    message: i18nValidationMessage(
+      'validation.LA_FECHA_DE_CADUCIDAD_DEBE_SER_UNA_FECHA'
+    ),
   })
   fechaCaducidad?: Date;
 
   @IsOptional()
-  @IsString({ message: 'La ruta de la imagen debe ser una cadena de texto' })
+  @IsString({
+    message: i18nValidationMessage(
+      'validation.LA_RUTA_DE_LA_IMAGEN_DEBE_SER_UNA_CADENA'
+    ),
+  })
   @MaxLength(200, {
-    message: 'La ruta de la imagen no puede exceder los 200 caracteres',
+    message: i18nValidationMessage(
+      'validation.LA_RUTA_DE_LA_IMAGEN_NO_PUEDE_EXCEDER_LO'
+    ),
   })
   pathImg?: string;
 
   @IsOptional()
-  @IsEnum(TipoProducto, { message: 'El tipo de producto no es válido' })
+  @IsEnum(TipoProducto, {
+    message: i18nValidationMessage(
+      'validation.EL_TIPO_DE_PRODUCTO_NO_ES_V_LIDO'
+    ),
+  })
   tipo?: TipoProducto;
 
   @IsOptional()
-  @IsString({ message: 'El código de barras debe ser una cadena de texto' })
+  @IsString({
+    message: i18nValidationMessage(
+      'validation.EL_C_DIGO_DE_BARRAS_DEBE_SER_UNA_CADENA'
+    ),
+  })
   @MaxLength(13, {
-    message: 'El código de barras no puede exceder los 13 caracteres',
+    message: i18nValidationMessage(
+      'validation.EL_C_DIGO_DE_BARRAS_NO_PUEDE_EXCEDER_LOS'
+    ),
   })
   @Matches(/^\d{13}$/, {
-    message: 'El código de barras debe ser un EAN-13 de 13 dígitos',
+    message: i18nValidationMessage(
+      'validation.EL_C_DIGO_DE_BARRAS_DEBE_SER_UN_EAN_13_D'
+    ),
   })
   codigoBarras?: string;
 
-  @IsNumber({}, { message: 'El contenido debe ser un número' })
-  @Min(0, { message: 'El contenido no puede ser negativo' })
+  @IsNumber(
+    {},
+    {
+      message: i18nValidationMessage(
+        'validation.EL_CONTENIDO_DEBE_SER_UN_N_MERO'
+      ),
+    }
+  )
+  @Min(0, {
+    message: i18nValidationMessage(
+      'validation.EL_CONTENIDO_NO_PUEDE_SER_NEGATIVO'
+    ),
+  })
   contenido!: number;
 
   @IsOptional()
-  @IsArray({ message: 'Los alérgenos deben ser un array' })
-  @IsEnum(Alergeno, { each: true, message: 'Alérgeno no válido' })
+  @IsArray({
+    message: i18nValidationMessage(
+      'validation.LOS_AL_RGENOS_DEBEN_SER_UN_ARRAY'
+    ),
+  })
+  @IsEnum(Alergeno, {
+    each: true,
+    message: i18nValidationMessage('validation.AL_RGENO_NO_V_LIDO'),
+  })
   alergenos?: Alergeno[];
 
   @IsOptional()
-  @IsArray({ message: 'Los proveedores deben ser un array' })
+  @IsArray({
+    message: i18nValidationMessage(
+      'validation.LOS_PROVEEDORES_DEBEN_SER_UN_ARRAY'
+    ),
+  })
   @ValidateNested({ each: true })
   @Type(() => AddProveedorToProductoDto)
   proveedores?: AddProveedorToProductoDto[];

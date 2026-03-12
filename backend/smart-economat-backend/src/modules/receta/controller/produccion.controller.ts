@@ -33,9 +33,9 @@ export class ProduccionController {
   @ApiResponse({ status: 201, type: ProduccionLote })
   @ApiResponse({
     status: 400,
-    description: 'Stock insuficiente or receta inválida',
+    description: 'docs.STOCK_INSUFICIENTE_OR_RECETA_INV_LIDA',
   })
-  @ApiResponse({ status: 404, description: 'Receta no encontrada' })
+  @ApiResponse({ status: 404, description: 'docs.RECETA_NO_ENCONTRADA' })
   ejecutarProduccion(
     @Body() dto: EjecutarProduccionDto,
     @GetUser('id') userId: string
@@ -54,9 +54,9 @@ export class ProduccionController {
   @Get(':id')
   @RequirePermissions('recetas:ver')
   @ApiOperation({ summary: 'Obtener un lote de producción por ID' })
-  @ApiParam({ name: 'id', description: 'UUID del lote de producción' })
+  @ApiParam({ name: 'id', description: 'docs.UUID_DEL_LOTE_DE_PRODUCCI_N' })
   @ApiResponse({ status: 200, type: ProduccionLote })
-  @ApiResponse({ status: 404, description: 'Lote no encontrado' })
+  @ApiResponse({ status: 404, description: 'docs.LOTE_NO_ENCONTRADO' })
   findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ProduccionLote> {
     return this.produccionService.findOne(id);
   }

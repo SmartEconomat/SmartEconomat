@@ -8,8 +8,8 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  ParseUUIDPipe,
 } from '@nestjs/common';
-import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import {
   ApiTags,
   ApiOperation,
@@ -24,12 +24,14 @@ import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveed
 import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.entity';
 import { SearchProductoProveedorDto } from '../dto/search-producto-proveedor.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { RolesGuard } from '../../auth/guards/role.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { rolUsuario } from '../../usuario/enums/usuario.enums';
 
 @ApiTags('Producto Proveedor')
-@UseGuards(JwtAuthGuard, PermisosGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('producto-proveedor')
 export class ProductoProveedorController {
   constructor(
@@ -37,27 +39,27 @@ export class ProductoProveedorController {
   ) {}
 
   @Patch(':id/precio')
-  @RequirePermissions('productos:editar')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
       'Actualizar el precio de un producto de un proveedor y registrar histórico',
   })
-  @ApiParam({ name: 'id', description: 'ID del ProductoProveedor' })
+  @ApiParam({ name: 'id', description: 'docs.ID_DEL_PRODUCTOPROVEEDOR' })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Precio actualizado correctamente',
+    description: 'docs.PRECIO_ACTUALIZADO_CORRECTAMENTE',
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: 'Producto proveedor no encontrado',
+    description: 'docs.PRODUCTO_PROVEEDOR_NO_ENCONTRADO',
   })
   @ApiResponse({
     status: HttpStatus.CONFLICT,
-    description: 'El precio es igual al actual',
+    description: 'docs.EL_PRECIO_ES_IGUAL_AL_ACTUAL',
   })
   async updatePrecio(
-    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updatePrecioProductoDto: UpdatePrecioProductoDto
   ): Promise<ProductoProveedor> {
     return this.productoProveedorService.updatePrecio(
@@ -67,7 +69,7 @@ export class ProductoProveedorController {
   }
 
   @Get('search')
-  @RequirePermissions('productos:listar')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Buscar relaciones producto-proveedor (autocomplete)',
@@ -77,24 +79,24 @@ export class ProductoProveedorController {
   }
 
   @Get(':id/historial')
-  @RequirePermissions('productos:ver')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @ApiOperation({
     summary: 'Obtener el historial de precios de un producto proveedor',
   })
-  @ApiParam({ name: 'id', description: 'ID del ProductoProveedor' })
+  @ApiParam({ name: 'id', description: 'docs.ID_DEL_PRODUCTOPROVEEDOR' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Historial de precios recuperado correctamente',
+    description: 'docs.HISTORIAL_DE_PRECIOS_RECUPERADO_CORRECTA',
     type: [HistorialPrecio],
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: 'Producto proveedor no encontrado',
+    description: 'docs.PRODUCTO_PROVEEDOR_NO_ENCONTRADO',
   })
   async getHistorial(
-    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Query() query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<HistorialPrecio>> {
     return this.productoProveedorService.getHistorial(id, query);

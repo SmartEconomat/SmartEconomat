@@ -1,7 +1,5 @@
 import { getTestApp } from './test-app.helper';
-import {
-  INestApplication,
-} from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
@@ -34,7 +32,9 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
     adminToken = response.body.data.access_token;
   });
 
-  afterAll(() => { /* app compartida, no cerrar */ });
+  afterAll(() => {
+    /* app compartida, no cerrar */
+  });
 
   describe('Flow: Alumno Registration & Activation', () => {
     const alumnoData = {

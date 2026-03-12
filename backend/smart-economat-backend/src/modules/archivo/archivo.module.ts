@@ -10,6 +10,7 @@ import { Archivo } from './archivo.entity/archivo.entity';
 import { BadRequestException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import * as fs from 'fs';
+import { I18nHelper } from '../../common/helpers/i18n.helper';
 
 @Module({
   imports: [
@@ -43,7 +44,7 @@ import * as fs from 'fs';
               cb(null, true);
             } else {
               cb(
-                new BadRequestException('Tipo de archivo no soportado'),
+                new BadRequestException(I18nHelper.getError('TIPO_DE_ARCHIVO_NO_SOPORTADO')),
                 false
               );
             }

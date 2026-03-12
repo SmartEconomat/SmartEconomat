@@ -74,9 +74,9 @@ export class RecetaController {
   @Get(':id/escandallo')
   @RequirePermissions('recetas:ver')
   @ApiOperation({ summary: 'Calcular el escandallo (coste) de una receta' })
-  @ApiParam({ name: 'id', description: 'UUID de la receta' })
+  @ApiParam({ name: 'id', description: 'docs.UUID_DE_LA_RECETA' })
   @ApiResponse({ status: 200, type: RecetaCostResponseDto })
-  @ApiResponse({ status: 404, description: 'Receta no encontrada' })
+  @ApiResponse({ status: 404, description: 'docs.RECETA_NO_ENCONTRADA' })
   calcularEscandallo(
     @Param('id', ParseUUIDPipe) id: string
   ): Promise<RecetaCostResponseDto> {
@@ -99,7 +99,7 @@ export class RecetaController {
   @ApiOperation({
     summary: 'Recalcular y guardar el coste unitario estimado de la receta',
   })
-  @ApiParam({ name: 'id', description: 'UUID de la receta' })
+  @ApiParam({ name: 'id', description: 'docs.UUID_DE_LA_RECETA' })
   @ApiResponse({ status: 200, type: Receta })
   recalcularCostes(@Param('id', ParseUUIDPipe) id: string): Promise<Receta> {
     return this.recetaService.recalcularCostes(id);

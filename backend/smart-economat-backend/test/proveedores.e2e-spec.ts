@@ -1,7 +1,5 @@
 import { getTestApp } from './test-app.helper';
-import {
-  INestApplication,
-} from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
@@ -29,7 +27,9 @@ describe('ProveedorController (e2e)', () => {
       .access_token;
   });
 
-  afterAll(() => { /* app compartida, no cerrar */ });
+  afterAll(() => {
+    /* app compartida, no cerrar */
+  });
 
   describe('CRUD de Proveedores', () => {
     /**

@@ -23,7 +23,7 @@ export class DashboardController {
   @ApiOperation({ summary: 'Get dashboard statistics (KPIs)' })
   @ApiResponse({
     status: 200,
-    description: 'Dashboard statistics retrieved successfully.',
+    description: 'docs.DASHBOARD_STATISTICS_RETRIEVED_SUCCESSFU',
     type: DashboardStatsDto,
   })
   async getStats(): Promise<DashboardStatsDto> {

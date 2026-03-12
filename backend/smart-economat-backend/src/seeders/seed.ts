@@ -10,10 +10,7 @@ dotenv.config({ path: join(__dirname, '../../../../.env.prod') });
 dotenv.config({ path: join(__dirname, '../../../../.env.dev') });
 dotenv.config({ path: join(__dirname, '../../../../.env') });
 
-if (
-  process.env.NODE_ENV === 'production' &&
-  process.env.DB_SYNC !== 'true'
-) {
+if (process.env.NODE_ENV === 'production' && process.env.DB_SYNC !== 'true') {
   console.error(SeederI18nHelper.getSeederMessage('production_error'));
   console.log('To bypass this, set DB_SYNC=true');
   process.exit(1);

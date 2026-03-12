@@ -42,7 +42,7 @@ export class HistorialPrecioController {
     name: 'order',
     required: false,
     enum: ['ASC', 'DESC'],
-    description: 'Dirección de ordenamiento por fecha',
+    description: 'docs.DIRECCI_N_DE_ORDENAMIENTO_POR_FECHA',
   })
   findAll(
     @Query('order') order: 'ASC' | 'DESC' = 'DESC'

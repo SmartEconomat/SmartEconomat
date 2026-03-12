@@ -1,3 +1,4 @@
+import { i18nValidationMessage } from 'nestjs-i18n';
 import {
   IsNotEmpty,
   IsNumber,
@@ -8,32 +9,83 @@ import {
 } from 'class-validator';
 export class CreateInventarioItemDto {
   @IsUUID('7', {
-    message: 'El id del producto-proveedor debe ser un UUID válido',
+    message: i18nValidationMessage(
+      'validation.EL_ID_DEL_PRODUCTO_PROVEEDOR_DEBE_SER_UN'
+    ),
   })
-  @IsNotEmpty({ message: 'El id del producto-proveedor es obligatorio' })
+  @IsNotEmpty({
+    message: i18nValidationMessage(
+      'validation.EL_ID_DEL_PRODUCTO_PROVEEDOR_ES_OBLIGATO'
+    ),
+  })
   productoProveedorId: string;
 
-  @IsNumber({}, { message: 'La cantidad actual debe ser un número' })
-  @Min(0, { message: 'La cantidad actual no puede ser negativa' })
+  @IsNumber(
+    {},
+    {
+      message: i18nValidationMessage(
+        'validation.LA_CANTIDAD_ACTUAL_DEBE_SER_UN_N_MERO'
+      ),
+    }
+  )
+  @Min(0, {
+    message: i18nValidationMessage(
+      'validation.LA_CANTIDAD_ACTUAL_NO_PUEDE_SER_NEGATIVA'
+    ),
+  })
   cantidadActual: number;
 
-  @IsNumber({}, { message: 'La cantidad mínima debe ser un número' })
-  @Min(0, { message: 'La cantidad mínima no puede ser negativa' })
+  @IsNumber(
+    {},
+    {
+      message: i18nValidationMessage(
+        'validation.LA_CANTIDAD_M_NIMA_DEBE_SER_UN_N_MERO'
+      ),
+    }
+  )
+  @Min(0, {
+    message: i18nValidationMessage(
+      'validation.LA_CANTIDAD_M_NIMA_NO_PUEDE_SER_NEGATIVA'
+    ),
+  })
   cantidadMinima: number;
 
   @IsOptional()
-  @IsNumber({}, { message: 'La cantidad máxima debe ser un número' })
-  @Min(0, { message: 'La cantidad máxima no puede ser negativa' })
+  @IsNumber(
+    {},
+    {
+      message: i18nValidationMessage(
+        'validation.LA_CANTIDAD_M_XIMA_DEBE_SER_UN_N_MERO'
+      ),
+    }
+  )
+  @Min(0, {
+    message: i18nValidationMessage(
+      'validation.LA_CANTIDAD_M_XIMA_NO_PUEDE_SER_NEGATIVA'
+    ),
+  })
   cantidadMaxima?: number;
 
-  @IsUUID('7', { message: 'El id de la ubicación debe ser un UUID válido' })
-  @IsNotEmpty({ message: 'El id de la ubicación es obligatorio' })
+  @IsUUID('7', {
+    message: i18nValidationMessage(
+      'validation.EL_ID_DE_LA_UBICACI_N_DEBE_SER_UN_UUID_V'
+    ),
+  })
+  @IsNotEmpty({
+    message: i18nValidationMessage(
+      'validation.EL_ID_DE_LA_UBICACI_N_ES_OBLIGATORIO'
+    ),
+  })
   ubicacionId: string;
 
   @IsOptional()
   @IsDateString(
     {},
-    { message: 'La fecha de caducidad debe ser una fecha válida (ISO 8601)' }
+    {
+      message: i18nValidationMessage(
+        'validation.LA_FECHA_DE_CADUCIDAD_DEBE_SER_UNA_FECHA'
+      ),
+    }
   )
   fechaCaducidad?: string;
 }

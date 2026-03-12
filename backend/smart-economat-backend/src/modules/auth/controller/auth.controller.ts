@@ -1,3 +1,4 @@
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import {
   Controller,
   Post,
@@ -59,8 +60,9 @@ export class AuthController {
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     await this.authService.forgotPassword(dto.email);
     return {
-      message:
-        'Si el correo está registrado, recibirás un enlace de recuperación.',
+      message: I18nHelper.translate(
+        'messages.SI_EL_CORREO_EST_REGISTRADO_RECIBIR_S_UN'
+      ),
     };
   }
 
@@ -68,7 +70,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async resetPassword(@Body() dto: ResetPasswordDto) {
     await this.authService.resetPassword(dto.token, dto.newPassword);
-    return { message: 'Contraseña restablecida correctamente.' };
+    return {
+      message: I18nHelper.translate(
+        'messages.CONTRASE_A_RESTABLECIDA_CORRECTAMENTE'
+      ),
+    };
   }
 
   @UseGuards(JwtAuthGuard)
@@ -81,6 +87,10 @@ export class AuthController {
       dto.currentPassword,
       dto.newPassword
     );
-    return { message: 'Contraseña cambiada correctamente.' };
+    return {
+      message: I18nHelper.translate(
+        'messages.CONTRASE_A_CAMBIADA_CORRECTAMENTE'
+      ),
+    };
   }
 }

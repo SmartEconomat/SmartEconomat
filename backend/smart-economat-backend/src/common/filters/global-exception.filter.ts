@@ -13,18 +13,17 @@ import { QueryFailedError } from 'typeorm';
 import { ApiResponse } from '../interfaces/api-response.interface';
 import { APP_VERSION } from '../helpers/app-version.helper';
 import { I18nHelper } from '../helpers/i18n.helper';
+import { I18nContext } from 'nestjs-i18n';
 
 /**
- * Mensajes legibles para errores de base de datos.
- * No se pueden usar I18nHelper aquí porque `I18nContext.current()` es null
- * dentro del catch de un filtro de excepciones.
+ * Keys used to fetch readable messages for database errors.
+ * Instead of static mapping, we use dynamic i18n translations.
  */
-const PG_ERROR_MESSAGES: Record<string, string> = {
+const PG_ERROR_KEYS: Record<string, string> = {
   /** Foreign key violation: el registro está referenciado en otra tabla. */
-  '23503':
-    'No se puede eliminar este registro porque está siendo utilizado en otras partes del sistema.',
+  '23503': 'errors.ENTITY_HAS_RELATIONS',
   /** Unique constraint violation: el valor ya existe. */
-  '23505': 'Ya existe un registro con ese valor. Por favor, usa uno diferente.',
+  '23505': 'errors.DUPLICATE_ENTRY',
 };
 
 @Catch()
@@ -41,28 +40,37 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       (request.headers['x-request-id'] as string) || randomUUID();
     response.setHeader('x-request-id', requestId);
 
+    const i18n = I18nContext.current(host);
+
     if (exception instanceof QueryFailedError) {
       const pgCode = (exception as QueryFailedError & { code?: string }).code;
-      const friendlyMessage = pgCode ? PG_ERROR_MESSAGES[pgCode] : undefined;
+      const errorKey = pgCode ? PG_ERROR_KEYS[pgCode] : undefined;
 
-      if (friendlyMessage) {
+      if (errorKey) {
         this.logger.warn(
           `DB constraint violation [${pgCode}]: ${exception.message}`
         );
+        const translatedMessage = i18n
+          ? i18n.translate(`translation.${errorKey}`)
+          : errorKey;
+
         return this.sendResponse(
           response,
           HttpStatus.CONFLICT,
-          friendlyMessage,
+          translatedMessage,
           null,
           requestId
         );
       }
 
       this.logger.error(exception);
+      const translatedInternalError = i18n
+        ? i18n.translate('translation.errors.INTERNAL_SERVER_ERROR')
+        : 'translation.errors.INTERNAL_SERVER_ERROR';
       return this.sendResponse(
         response,
         HttpStatus.INTERNAL_SERVER_ERROR,
-        I18nHelper.getError('INTERNAL_SERVER_ERROR'),
+        translatedInternalError,
         null,
         requestId
       );
@@ -76,7 +84,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const exceptionResponse =
       exception instanceof HttpException ? exception.getResponse() : null;
 
-    let message = I18nHelper.getError('INTERNAL_SERVER_ERROR');
+    let message = i18n
+      ? i18n.translate('translation.errors.INTERNAL_SERVER_ERROR')
+      : 'translation.errors.INTERNAL_SERVER_ERROR';
     let errorDetails: unknown = null;
 
     if (exception instanceof HttpException) {

@@ -9,9 +9,9 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
-import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { CreateProveedorDto } from '../dto/create-proveedor.dto';
 import { ApiQuery } from '@nestjs/swagger';
 import { UpdateProveedorDto } from '../dto/update-proveedor.dto';
@@ -19,24 +19,26 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { Proveedor } from '../proveedor.entity/proveedor.entity';
 import { ProveedorService } from '../service/proveedor.service';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
 
-@UseGuards(JwtAuthGuard, PermisosGuard)
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/role.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { rolUsuario } from '../../usuario/enums/usuario.enums';
+
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('proveedor')
 export class ProveedorController {
   constructor(private readonly proveedorService: ProveedorService) {}
 
   @Post()
-  @RequirePermissions('proveedores:crear')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateProveedorDto): Promise<Proveedor> {
     return this.proveedorService.create(dto);
   }
 
   @Get()
-  @RequirePermissions('proveedores:listar')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   findAll(
@@ -46,24 +48,24 @@ export class ProveedorController {
   }
 
   @Get(':id')
-  @RequirePermissions('proveedores:ver')
-  findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Proveedor> {
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Proveedor> {
     return this.proveedorService.findOne(id);
   }
 
   @Patch(':id')
-  @RequirePermissions('proveedores:editar')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   update(
-    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateProveedorDto
   ): Promise<Proveedor> {
     return this.proveedorService.update(id, dto);
   }
 
   @Delete(':id')
-  @RequirePermissions('proveedores:eliminar')
+  @Roles(rolUsuario.ADMINISTRADOR)
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
+  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.proveedorService.remove(id);
   }
 }
