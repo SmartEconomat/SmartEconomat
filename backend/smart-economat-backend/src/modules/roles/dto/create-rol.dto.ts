@@ -11,7 +11,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateRolDto {
   @ApiProperty({
-    description: 'Nombre único del rol',
+    description: 'docs.NOMBRE_NICO_DEL_ROL',
     example: 'Administrador de Economato',
   })
   @IsString()
@@ -20,7 +20,7 @@ export class CreateRolDto {
   nombre!: string;
 
   @ApiPropertyOptional({
-    description: 'Descripción detallada del rol',
+    description: 'docs.DESCRIPCI_N_DETALLADA_DEL_ROL',
     example: 'Rol con acceso completo a la gestión del economato',
   })
   @IsString()
@@ -28,7 +28,7 @@ export class CreateRolDto {
   descripcion?: string;
 
   @ApiPropertyOptional({
-    description: 'Indica si es un rol de sistema (no editable/eliminable)',
+    description: 'docs.INDICA_SI_ES_UN_ROL_DE_SISTEMA_NO_EDITAB',
     default: false,
   })
   @IsBoolean()
@@ -36,7 +36,7 @@ export class CreateRolDto {
   esSistema?: boolean;
 
   @ApiPropertyOptional({
-    description: 'Estado del rol',
+    description: 'docs.ESTADO_DEL_ROL',
     default: true,
   })
   @IsBoolean()
@@ -44,7 +44,7 @@ export class CreateRolDto {
   activo?: boolean;
 
   @ApiPropertyOptional({
-    description: 'IDs de permisos a asignar al rol',
+    description: 'docs.IDS_DE_PERMISOS_A_ASIGNAR_AL_ROL',
     example: ['uuid-1', 'uuid-2'],
   })
   @IsArray()

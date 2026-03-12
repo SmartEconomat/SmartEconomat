@@ -1,3 +1,4 @@
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import {
   Injectable,
   NotFoundException,
@@ -162,7 +163,9 @@ export class RolesService {
     const rol = await this.findOne(id);
 
     if (rol.esSistema) {
-      throw new BadRequestException('No se puede eliminar un rol de sistema');
+      throw new BadRequestException(
+        I18nHelper.getError('NO_SE_PUEDE_ELIMINAR_UN_ROL_DE_SISTEMA')
+      );
     }
 
     const usuariosCount = await this.usuarioRolRepo.count({
@@ -197,7 +200,9 @@ export class RolesService {
     });
 
     if (permisos.length !== dto.permisoIds.length) {
-      throw new BadRequestException('Algunos permisos no existen');
+      throw new BadRequestException(
+        I18nHelper.getError('ALGUNOS_PERMISOS_NO_EXISTEN')
+      );
     }
 
     rol.permisos = permisos;
@@ -258,7 +263,9 @@ export class RolesService {
     });
 
     if (!usuarioRol) {
-      throw new NotFoundException('Asignación de rol no encontrada');
+      throw new NotFoundException(
+        I18nHelper.getError('ASIGNACI_N_DE_ROL_NO_ENCONTRADA')
+      );
     }
 
     await this.usuarioRolRepo.remove(usuarioRol);

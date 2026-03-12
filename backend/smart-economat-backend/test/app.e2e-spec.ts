@@ -17,7 +17,9 @@ describe('AppController (e2e)', () => {
     app = await getTestApp();
   });
 
-  afterAll(() => { /* app compartida, no cerrar */ });
+  afterAll(() => {
+    /* app compartida, no cerrar */
+  });
 
   /**
    * @test Debe responder correctamente al endpoint raíz (Hello World).

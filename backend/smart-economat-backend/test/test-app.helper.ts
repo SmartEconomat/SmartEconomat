@@ -24,9 +24,7 @@ export async function getTestApp(): Promise<INestApplication> {
 
   const app = moduleFixture.createNestApplication();
   app.setGlobalPrefix('api/v1');
-  app.useGlobalPipes(
-    new ValidationPipe({ whitelist: true, transform: true })
-  );
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useGlobalInterceptors(
     new ClassSerializerInterceptor(app.get(Reflector)),
     new TransformInterceptor()

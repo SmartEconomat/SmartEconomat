@@ -1,3 +1,4 @@
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import {
   Injectable,
   NotFoundException,
@@ -42,7 +43,9 @@ export class PlantillasRolesService {
         where: { id: dto.plantillaPadreId },
       });
       if (!padre) {
-        throw new NotFoundException('Plantilla padre no encontrada');
+        throw new NotFoundException(
+          I18nHelper.getError('PLANTILLA_PADRE_NO_ENCONTRADA')
+        );
       }
     }
 
@@ -91,7 +94,9 @@ export class PlantillasRolesService {
     const plantilla = await this.findOne(id);
 
     if (!plantilla.esEditable) {
-      throw new BadRequestException('Esta plantilla no es editable');
+      throw new BadRequestException(
+        I18nHelper.getError('ESTA_PLANTILLA_NO_ES_EDITABLE')
+      );
     }
 
     if (dto.nombre && dto.nombre !== plantilla.nombre) {

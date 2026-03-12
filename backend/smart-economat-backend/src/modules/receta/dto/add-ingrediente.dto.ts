@@ -21,8 +21,7 @@ export class AddIngredienteDto {
   unidad!: UnidadIngrediente;
 
   @ApiPropertyOptional({
-    description:
-      'Porcentaje de merma (0-99). Ej: 20 = 20% de pérdida en limpieza.',
+    description: 'docs.PORCENTAJE_DE_MERMA_0_99_EJ_20_20_DE_P_R',
     default: 0,
   })
   @IsOptional()

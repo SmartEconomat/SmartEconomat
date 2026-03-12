@@ -1,8 +1,13 @@
+import { i18nValidationMessage } from 'nestjs-i18n';
 import { IsUUID, IsOptional, IsString, IsEnum } from 'class-validator';
 import { TipoResolucion } from '../enums/incidencia.enums';
 
 export class CreateIncidenciaDto {
-  @IsUUID('7', { message: 'El ID de la recepción debe ser un UUID válido' })
+  @IsUUID('7', {
+    message: i18nValidationMessage(
+      'validation.EL_ID_DE_LA_RECEPCI_N_DEBE_SER_UN_UUID_V'
+    ),
+  })
   recepcionId: string;
 
   @IsOptional()
@@ -15,7 +20,11 @@ export class CreateIncidenciaDto {
 }
 
 export class CreateIncidenciaResuelaDto {
-  @IsUUID('7', { message: 'El ID de la incidencia debe ser un UUID válido' })
+  @IsUUID('7', {
+    message: i18nValidationMessage(
+      'validation.EL_ID_DE_LA_INCIDENCIA_DEBE_SER_UN_UUID'
+    ),
+  })
   idIncidencia!: string;
 
   @IsOptional()

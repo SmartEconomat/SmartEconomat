@@ -1,3 +1,4 @@
+import { i18nValidationMessage } from 'nestjs-i18n';
 import {
   IsString,
   IsNotEmpty,
@@ -23,8 +24,9 @@ export class RegisterUserDto {
       minSymbols: 1,
     },
     {
-      message:
-        'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo',
+      message: i18nValidationMessage(
+        'validation.LA_CONTRASE_A_DEBE_TENER_AL_MENOS_8_CARA'
+      ),
     }
   )
   password: string;

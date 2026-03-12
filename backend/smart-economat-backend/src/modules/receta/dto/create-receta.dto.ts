@@ -48,14 +48,14 @@ export class CreateRecetaDto {
   tiempoPreparacion!: string;
 
   @ApiPropertyOptional({
-    description: 'ID del producto que resulta de la elaboración',
+    description: 'docs.ID_DEL_PRODUCTO_QUE_RESULTA_DE_LA_ELABOR',
   })
   @IsOptional()
   @IsUUID()
   productoResultadoId?: string;
 
   @ApiPropertyOptional({
-    description: 'Cantidad producida por defecto (rendimiento de la receta)',
+    description: 'docs.CANTIDAD_PRODUCIDA_POR_DEFECTO_RENDIMIEN',
   })
   @IsOptional()
   @IsNumber()
@@ -64,14 +64,14 @@ export class CreateRecetaDto {
 
   @ApiPropertyOptional({
     enum: UnidadIngrediente,
-    description: 'Unidad del producto resultante',
+    description: 'docs.UNIDAD_DEL_PRODUCTO_RESULTANTE',
   })
   @IsOptional()
   @IsEnum(UnidadIngrediente)
   unidadResultado?: UnidadIngrediente;
 
   @ApiPropertyOptional({
-    description: 'Días de caducidad del producto elaborado',
+    description: 'docs.D_AS_DE_CADUCIDAD_DEL_PRODUCTO_ELABORADO',
   })
   @IsOptional()
   @IsInt()

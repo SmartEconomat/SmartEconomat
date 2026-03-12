@@ -1,3 +1,4 @@
+import { i18nValidationMessage } from 'nestjs-i18n';
 import {
   IsNumber,
   IsOptional,
@@ -16,11 +17,19 @@ import { CreatePedidoProductoDto } from './create-PedidoProducto.dto';
 
 export class CreatePedidoDto {
   @IsOptional()
-  @IsUUID('7', { message: 'El ID del usuario debe ser un UUID válido' })
+  @IsUUID('7', {
+    message: i18nValidationMessage(
+      'validation.EL_ID_DEL_USUARIO_DEBE_SER_UN_UUID_V_LID'
+    ),
+  })
   idUsuario?: string;
 
   @IsNotEmpty()
-  @IsUUID('7', { message: 'El ID del proveedor debe ser un UUID válido' })
+  @IsUUID('7', {
+    message: i18nValidationMessage(
+      'validation.EL_ID_DEL_PROVEEDOR_DEBE_SER_UN_UUID_V_L'
+    ),
+  })
   proveedorId!: string;
 
   @IsOptional()
@@ -34,7 +43,11 @@ export class CreatePedidoDto {
   @IsOptional()
   @IsDateString(
     {},
-    { message: 'La fecha de entrega debe ser una fecha válida (ISO 8601)' }
+    {
+      message: i18nValidationMessage(
+        'validation.LA_FECHA_DE_ENTREGA_DEBE_SER_UNA_FECHA_V'
+      ),
+    }
   )
   fechaEntrega?: string;
 

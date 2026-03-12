@@ -1,7 +1,5 @@
 import { getTestApp } from './test-app.helper';
-import {
-  INestApplication,
-} from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
@@ -37,7 +35,9 @@ describe('SmartEconomat Master E2E Suite', () => {
     profToken = profRes.body.data.access_token;
   });
 
-  afterAll(() => { /* app compartida, no cerrar */ });
+  afterAll(() => {
+    /* app compartida, no cerrar */
+  });
 
   describe('AUTH - Autenticación', () => {
     it('[AUTH-01/02] Login Admin & Profesor correctos', async () => {

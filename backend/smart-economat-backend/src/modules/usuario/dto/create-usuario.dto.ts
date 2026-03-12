@@ -1,3 +1,4 @@
+import { i18nValidationMessage } from 'nestjs-i18n';
 import {
   IsEmail,
   IsEnum,
@@ -11,14 +12,28 @@ import {
 import { rolUsuario, UserStatus } from '../enums/usuario.enums';
 
 export class CreateUsuarioDto {
-  @IsString({ message: 'El nombre de usuario debe ser una cadena de texto' })
-  @IsNotEmpty({ message: 'El nombre de usuario es obligatorio' })
+  @IsString({
+    message: i18nValidationMessage(
+      'validation.EL_NOMBRE_DE_USUARIO_DEBE_SER_UNA_CADENA'
+    ),
+  })
+  @IsNotEmpty({
+    message: i18nValidationMessage(
+      'validation.EL_NOMBRE_DE_USUARIO_ES_OBLIGATORIO'
+    ),
+  })
   @MaxLength(100, {
-    message: 'El nombre de usuario no puede exceder los 100 caracteres',
+    message: i18nValidationMessage(
+      'validation.EL_NOMBRE_DE_USUARIO_NO_PUEDE_EXCEDER_LO'
+    ),
   })
   username!: string;
 
-  @IsString({ message: 'La contraseña debe ser una cadena de texto' })
+  @IsString({
+    message: i18nValidationMessage(
+      'validation.LA_CONTRASE_A_DEBE_SER_UNA_CADENA_DE_TEX'
+    ),
+  })
   @IsStrongPassword(
     {
       minLength: 8,
@@ -28,23 +43,30 @@ export class CreateUsuarioDto {
       minSymbols: 1,
     },
     {
-      message:
-        'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo',
+      message: i18nValidationMessage(
+        'validation.LA_CONTRASE_A_DEBE_TENER_AL_MENOS_8_CARA'
+      ),
     }
   )
   password!: string;
 
   @IsOptional()
   @ValidateIf((o) => o.email != null)
-  @IsEmail({}, { message: 'El correo electrónico no es válido' })
+  @IsEmail({}, { message: i18nValidationMessage('validation.INVALID_EMAIL') })
   @MaxLength(255, {
-    message: 'El correo electrónico no puede exceder los 255 caracteres',
+    message: i18nValidationMessage(
+      'validation.EL_CORREO_ELECTR_NICO_NO_PUEDE_EXCEDER_L'
+    ),
   })
   email?: string | null;
 
-  @IsEnum(rolUsuario, { message: 'El rol de usuario no es válido' })
+  @IsEnum(rolUsuario, {
+    message: i18nValidationMessage('validation.EL_ROL_DE_USUARIO_NO_ES_V_LIDO'),
+  })
   rol!: rolUsuario;
 
-  @IsEnum(UserStatus, { message: 'El estado no es válido' })
+  @IsEnum(UserStatus, {
+    message: i18nValidationMessage('validation.EL_ESTADO_NO_ES_V_LIDO'),
+  })
   status!: UserStatus;
 }
