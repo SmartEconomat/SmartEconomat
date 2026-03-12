@@ -115,6 +115,9 @@
     "PROFESSOR_REGISTERED_WAITING_ACTIVATION": "Profesor registrado con éxito. Esperando activación por un administrador.",
     "STUDENT_ACTIVATED": "Alumno activado correctamente",
     "PASSWORD_RESET_PROVISIONAL": "Contraseña restablecida exitosamente. Entregue esta clave provisional al alumno.",
+    "PASSWORD_RESET_EMAIL_SENT": "Si el correo está registrado, recibirás un enlace de recuperación.",
+    "PASSWORD_RESET_SUCCESS": "Contraseña restablecida correctamente.",
+    "PASSWORD_CHANGED_SUCCESS": "Contraseña cambiada correctamente.",
     "USER_ACTIVATED": "Usuario activado correctamente",
     "OPERATION_SUCCESSFUL": "Operación completada exitosamente",
     "FILE_UPLOADED": "Archivo subido exitosamente"
@@ -122,6 +125,8 @@
   "validation": {
     "INVALID_EMAIL": "El correo electrónico no es válido",
     "INVALID_PASSWORD": "La contraseña no es válida",
+    "MISSING_EMAIL": "El correo electrónico es obligatorio",
+    "MISSING_PASSWORD": "La contraseña es obligatoria",
     "PASSWORD_TOO_SHORT": "La contraseña es demasiado corta",
     "PASSWORD_TOO_LONG": "La contraseña es demasiado larga",
     "INVALID_UUID": "El UUID no es válido"

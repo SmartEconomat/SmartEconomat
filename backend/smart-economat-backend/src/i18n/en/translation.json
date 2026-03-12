@@ -66,12 +66,17 @@
     "CREATED": "Successfully created",
     "UPDATED": "Successfully updated",
     "DELETED": "Successfully deleted",
+    "PASSWORD_RESET_EMAIL_SENT": "If the email is registered, you will receive a recovery link.",
+    "PASSWORD_RESET_SUCCESS": "Password reset successfully.",
+    "PASSWORD_CHANGED_SUCCESS": "Password changed successfully.",
     "OPERATION_SUCCESSFUL": "Operation completed successfully",
     "FILE_UPLOADED": "File uploaded successfully"
   },
   "validation": {
     "INVALID_EMAIL": "Email is not valid",
     "INVALID_PASSWORD": "Password is not valid",
+    "MISSING_EMAIL": "Email is required",
+    "MISSING_PASSWORD": "Password is required",
     "PASSWORD_TOO_SHORT": "Password is too short",
     "PASSWORD_TOO_LONG": "Password is too long",
     "INVALID_UUID": "UUID is not valid"

@@ -9,6 +9,7 @@ import {
 import { Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { QueryFailedError } from 'typeorm';
+import { ValidationError } from 'class-validator';
 import { I18nService } from 'nestjs-i18n';
 import { ApiResponse } from '../interfaces/api-response.interface';
 import { APP_VERSION } from '../helpers/app-version.helper';
@@ -29,7 +30,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
   constructor(private readonly i18n: I18nService) {}
 
-  async catch(exception: unknown, host: ArgumentsHost) {
+  catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
@@ -50,7 +51,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           `DB constraint violation [${pgCode}]: ${exception.message}`
         );
 
-        const translatedMessage = await this.i18n.translate(
+        const translatedMessage = this.i18n.translate(
           `translation.errors.${errorKey}`,
           { lang }
         );
@@ -65,7 +66,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       }
 
       this.logger.error(exception);
-      const internalErrorMessage = await this.i18n.translate(
+      const internalErrorMessage = this.i18n.translate(
         'translation.errors.INTERNAL_SERVER_ERROR',
         { lang }
       );
@@ -87,13 +88,22 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const exceptionResponse =
       exception instanceof HttpException ? exception.getResponse() : null;
 
-    let message = await this.i18n.translate(
-      'translation.errors.INTERNAL_SERVER_ERROR',
-      { lang }
-    );
+    let message = this.i18n.translate('translation.errors.INTERNAL_SERVER_ERROR', {
+      lang,
+    });
     let errorDetails: unknown = null;
 
-    if (exception instanceof HttpException) {
+    const validationErrors = this.extractValidationErrors(exception);
+    if (validationErrors) {
+      const translatedMessages = this.translateValidationErrors(
+        validationErrors,
+        lang
+      );
+      if (translatedMessages.length) {
+        message = translatedMessages.join(', ');
+      }
+      errorDetails = validationErrors;
+    } else if (exception instanceof HttpException) {
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
       } else if (
@@ -152,5 +162,63 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       },
     };
     response.status(status).json(body);
+  }
+
+  private extractValidationErrors(exception: unknown): ValidationError[] | null {
+    if (
+      exception instanceof HttpException &&
+      exception.constructor?.name === 'I18nValidationException'
+    ) {
+      const maybe = exception as HttpException & { errors?: unknown };
+      if (Array.isArray(maybe.errors)) {
+        return maybe.errors as ValidationError[];
+      }
+    }
+    return null;
+  }
+
+  private translateValidationErrors(
+    errors: ValidationError[],
+    lang: string
+  ): string[] {
+    const messages: string[] = [];
+    for (const error of errors) {
+      this.collectValidationMessages(error, lang, messages);
+    }
+    return messages;
+  }
+
+  private collectValidationMessages(
+    error: ValidationError,
+    lang: string,
+    accumulator: string[]
+  ) {
+    if (error.constraints) {
+      for (const constraint of Object.values(error.constraints)) {
+        accumulator.push(this.translateConstraint(constraint, lang));
+      }
+    }
+    if (error.children && error.children.length) {
+      for (const child of error.children) {
+        this.collectValidationMessages(child, lang, accumulator);
+      }
+    }
+  }
+
+  private translateConstraint(constraint: string, lang: string): string {
+    const [translationKey, argsPayload] = constraint.split('|', 2);
+    const args = argsPayload ? this.safeParseArgs(argsPayload) : undefined;
+    return this.i18n.translate(translationKey, {
+      lang,
+      args: args ?? {},
+    });
+  }
+
+  private safeParseArgs(payload: string): Record<string, unknown> {
+    try {
+      return JSON.parse(payload) as Record<string, unknown>;
+    } catch {
+      return {};
+    }
   }
 }

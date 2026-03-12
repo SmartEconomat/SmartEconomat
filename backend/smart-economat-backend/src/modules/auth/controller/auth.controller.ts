@@ -16,6 +16,9 @@ import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
+
+type AuthenticatedRequest = Request & { user: { id: string } };
 
 @Controller('auth')
 export class AuthController {
@@ -59,8 +62,7 @@ export class AuthController {
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     await this.authService.forgotPassword(dto.email);
     return {
-      message:
-        'Si el correo está registrado, recibirás un enlace de recuperación.',
+      message: I18nHelper.getSuccess('PASSWORD_RESET_EMAIL_SENT'),
     };
   }
 
@@ -68,19 +70,26 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async resetPassword(@Body() dto: ResetPasswordDto) {
     await this.authService.resetPassword(dto.token, dto.newPassword);
-    return { message: 'Contraseña restablecida correctamente.' };
+    return {
+      message: I18nHelper.getSuccess('PASSWORD_RESET_SUCCESS'),
+    };
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('change-password')
   @HttpCode(HttpStatus.OK)
-  async changePassword(@Req() req: Request, @Body() dto: ChangePasswordDto) {
-    const user = req.user as any;
+  async changePassword(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: ChangePasswordDto
+  ) {
+    const user = req.user;
     await this.authService.changePassword(
       user.id,
       dto.currentPassword,
       dto.newPassword
     );
-    return { message: 'Contraseña cambiada correctamente.' };
+    return {
+      message: I18nHelper.getSuccess('PASSWORD_CHANGED_SUCCESS'),
+    };
   }
 }
