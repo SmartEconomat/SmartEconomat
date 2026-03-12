@@ -32,7 +32,10 @@ export const dbConfig: DataSourceOptions = {
     process.env.DB_PASSWORD || process.env.POSTGRES_PASSWORD || 'postgres',
   database:
     process.env.DB_DATABASE || process.env.POSTGRES_DB || 'smart_economat',
-  synchronize: process.env.DB_SYNC === 'true',
+  synchronize:
+    process.env.DB_SYNC === 'true' ||
+    (process.env.NODE_ENV !== 'production' &&
+      process.env.NODE_ENV !== 'test'),
   logging:
     process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test',
   entities: [join(__dirname, '../**/*.entity.{ts,js}')],
