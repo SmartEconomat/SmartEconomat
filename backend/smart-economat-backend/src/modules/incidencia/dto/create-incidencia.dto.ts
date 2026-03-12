@@ -1,5 +1,7 @@
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { IsUUID, IsOptional, IsString, IsEnum } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
 import { TipoResolucion } from '../enums/incidencia.enums';
 
 export class CreateIncidenciaDto {
@@ -15,6 +17,7 @@ export class CreateIncidenciaDto {
   pedidoId?: string;
 
   @IsOptional()
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   observacionesRecepcion?: string;
 }
@@ -36,6 +39,7 @@ export class CreateIncidenciaResuelaDto {
   tipoResolucion?: TipoResolucion;
 
   @IsOptional()
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   observaciones?: string;
 }

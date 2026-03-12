@@ -7,6 +7,9 @@ import {
   Min,
   IsDateString,
 } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
+import { StringToDateTransformer } from '../../../common/transformers/string-to-date.transformer';
+
 export class CreateInventarioItemDto {
   @IsUUID('7', {
     message: i18nValidationMessage(
@@ -20,6 +23,7 @@ export class CreateInventarioItemDto {
   })
   productoProveedorId: string;
 
+  @Type(() => Number)
   @IsNumber(
     {},
     {
@@ -35,6 +39,7 @@ export class CreateInventarioItemDto {
   })
   cantidadActual: number;
 
+  @Type(() => Number)
   @IsNumber(
     {},
     {
@@ -51,6 +56,7 @@ export class CreateInventarioItemDto {
   cantidadMinima: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber(
     {},
     {
@@ -79,6 +85,8 @@ export class CreateInventarioItemDto {
   ubicacionId: string;
 
   @IsOptional()
+  @Transform(StringToDateTransformer.transform)
+  @Type(() => Date)
   @IsDateString(
     {},
     {
