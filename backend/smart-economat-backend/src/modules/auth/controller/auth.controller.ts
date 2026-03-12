@@ -81,7 +81,7 @@ export class AuthController {
   @Post('change-password')
   @HttpCode(HttpStatus.OK)
   async changePassword(@Req() req: Request, @Body() dto: ChangePasswordDto) {
-    const user = req.user as any;
+    const user = req.user as { id: string };
     await this.authService.changePassword(
       user.id,
       dto.currentPassword,

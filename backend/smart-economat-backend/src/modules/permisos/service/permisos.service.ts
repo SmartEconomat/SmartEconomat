@@ -170,7 +170,7 @@ export class PermisosService {
       .select('COUNT(DISTINCT rol.id)', 'count')
       .getRawOne();
 
-    const count = parseInt(rolesCount?.count || '0', 10);
+    const count = parseInt((rolesCount?.count as string) || '0', 10);
 
     if (count > 0) {
       throw new BadRequestException(

@@ -44,7 +44,9 @@ import { I18nHelper } from '../../common/helpers/i18n.helper';
               cb(null, true);
             } else {
               cb(
-                new BadRequestException(I18nHelper.getError('TIPO_DE_ARCHIVO_NO_SOPORTADO')),
+                new BadRequestException(
+                  I18nHelper.getError('TIPO_DE_ARCHIVO_NO_SOPORTADO')
+                ),
                 false
               );
             }
