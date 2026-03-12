@@ -1,7 +1,5 @@
 import { getTestApp } from './test-app.helper';
-import {
-  INestApplication,
-} from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
@@ -23,7 +21,9 @@ describe('ProfesorController (e2e)', () => {
       .data.access_token;
   });
 
-  afterAll(() => { /* app compartida, no cerrar */ });
+  afterAll(() => {
+    /* app compartida, no cerrar */
+  });
 
   describe('Registro de Profesores', () => {
     it('POST /profesores/register - Debe registrar un nuevo profesor (201)', async () => {

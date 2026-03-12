@@ -1,8 +1,6 @@
 import { getTestApp } from './test-app.helper';
 import { Server } from 'http';
-import {
-  INestApplication,
-} from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
@@ -76,7 +74,9 @@ describe('RBAC System (e2e)', () => {
       .send({ rol: 'ALUMNO' });
   });
 
-  afterAll(() => { /* app compartida, no cerrar */ });
+  afterAll(() => {
+    /* app compartida, no cerrar */
+  });
 
   describe('Acceso Base (ALUMNO)', () => {
     it('Debe permitir a un ALUMNO ver productos (Permiso por defecto)', async () => {

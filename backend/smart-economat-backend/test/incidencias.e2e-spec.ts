@@ -1,7 +1,5 @@
 import { getTestApp } from './test-app.helper';
-import {
-  INestApplication,
-} from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
@@ -68,7 +66,8 @@ describe('IncidenciaController (e2e)', () => {
       .send({
         nombre: `Proveedor Incidencia E2E ${Date.now()}`,
       });
-    if (!provRes.body.data) console.error('Proveedor creation failed:', JSON.stringify(provRes.body));
+    if (!provRes.body.data)
+      console.error('Proveedor creation failed:', JSON.stringify(provRes.body));
     const proveedorId = provRes.body.data?.id;
 
     // Crear producto CON proveedor vinculado en un solo paso
@@ -82,7 +81,8 @@ describe('IncidenciaController (e2e)', () => {
         contenido: 500,
         proveedores: [{ proveedorId, precioUnitario: 3.5 }],
       });
-    if (!prodRes.body.data) console.error('Producto creation failed:', JSON.stringify(prodRes.body));
+    if (!prodRes.body.data)
+      console.error('Producto creation failed:', JSON.stringify(prodRes.body));
     const productoId = prodRes.body.data?.id;
 
     // Obtener productoProveedorId
@@ -91,7 +91,10 @@ describe('IncidenciaController (e2e)', () => {
       const prodDetail = await request(app.getHttpServer() as string)
         .get(`/api/v1/productos/${productoId}`)
         .set('Authorization', `Bearer ${adminToken}`);
-      const proveedores = prodDetail.body.data?.productoProveedores || prodDetail.body.data?.proveedores || [];
+      const proveedores =
+        prodDetail.body.data?.productoProveedores ||
+        prodDetail.body.data?.proveedores ||
+        [];
       productoProveedorId = proveedores[0]?.id;
     }
 
@@ -102,9 +105,19 @@ describe('IncidenciaController (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           proveedorId,
-          productos: [{ idProductoProveedor: productoProveedorId, cantidad: 10, precioUnitario: 3.5 }],
+          productos: [
+            {
+              idProductoProveedor: productoProveedorId,
+              cantidad: 10,
+              precioUnitario: 3.5,
+            },
+          ],
         });
-      if (!pedidoRes.body.data) console.error('Pedido creation failed:', JSON.stringify(pedidoRes.body));
+      if (!pedidoRes.body.data)
+        console.error(
+          'Pedido creation failed:',
+          JSON.stringify(pedidoRes.body)
+        );
       const pedidoId = pedidoRes.body.data?.id;
 
       // Obtener pedidoProductoId
@@ -113,7 +126,10 @@ describe('IncidenciaController (e2e)', () => {
         const pedidoDetail = await request(app.getHttpServer() as string)
           .get(`/api/v1/pedidos/${pedidoId}`)
           .set('Authorization', `Bearer ${adminToken}`);
-        const pedidoProductos = pedidoDetail.body.data?.pedidoProductos || pedidoDetail.body.data?.productos || [];
+        const pedidoProductos =
+          pedidoDetail.body.data?.pedidoProductos ||
+          pedidoDetail.body.data?.productos ||
+          [];
         pedidoProductoId = pedidoProductos[0]?.id;
 
         // Crear recepción
@@ -127,8 +143,13 @@ describe('IncidenciaController (e2e)', () => {
               : [],
             observaciones: 'Recepción para test incidencias',
           });
-        if (!recepRes.body.data) console.error('Recepcion creation failed:', JSON.stringify(recepRes.body));
-        recepcionId = recepRes.body.data?.id || recepRes.body.data?.[0]?.id || '';
+        if (!recepRes.body.data)
+          console.error(
+            'Recepcion creation failed:',
+            JSON.stringify(recepRes.body)
+          );
+        recepcionId =
+          recepRes.body.data?.id || recepRes.body.data?.[0]?.id || '';
       }
     }
 
@@ -145,7 +166,9 @@ describe('IncidenciaController (e2e)', () => {
     }
   });
 
-  afterAll(() => { /* app compartida, no cerrar */ });
+  afterAll(() => {
+    /* app compartida, no cerrar */
+  });
 
   describe('Flujo CRUD de Incidencias', () => {
     it('POST /incidencias - Debe crear una incidencia (201)', async () => {
