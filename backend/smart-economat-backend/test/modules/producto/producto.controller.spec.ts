@@ -9,7 +9,7 @@ import { DataSource } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Reflector } from '@nestjs/core';
 import { AuthorizationService } from '../../../src/modules/auth/service/authorization.service';
-import { PermisosGuard } from '../../../src/modules/auth/guards/permisos.guard';
+import { PermisosGuard } from '../../../src/modules/auth/guards/auth-permissions.guard';
 
 describe('ProductoController', () => {
   let controller: ProductoController;

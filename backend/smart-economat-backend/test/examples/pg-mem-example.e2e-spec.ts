@@ -48,7 +48,7 @@ describe('Ejemplo pg-mem (e2e)', () => {
     });
     expect(userInDb).toBeDefined();
     expect(userInDb?.username).toBe('temporal');
-    
+
     console.log('Test 1 completado. Usuario insertado en memoria.');
   });
 
@@ -65,6 +65,8 @@ describe('Ejemplo pg-mem (e2e)', () => {
     });
 
     expect(userInDb).toBeNull();
-    console.log('Test 2 completado. El snapshot fue restaurado correctamente (usuario temporal no existe).');
+    console.log(
+      'Test 2 completado. El snapshot fue restaurado correctamente (usuario temporal no existe).'
+    );
   });
 });

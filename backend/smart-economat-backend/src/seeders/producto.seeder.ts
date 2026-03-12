@@ -110,7 +110,9 @@ export const runSeeder = async (dataSource: DataSource) => {
   let offProducts: OffProduct[] = [];
   try {
     if (process.env.NODE_ENV === 'test') {
-      console.log('Ambiente de test detectado, saltando OpenFoodFacts para ahorrar tiempo.');
+      console.log(
+        'Ambiente de test detectado, saltando OpenFoodFacts para ahorrar tiempo.'
+      );
     } else {
       console.log('Obteniendo productos de OpenFoodFacts...');
       const offResponse = await fetch(

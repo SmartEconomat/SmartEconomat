@@ -30,7 +30,8 @@ export class PedidoService {
     createPedidoDto: CreatePedidoDto,
     userId: string
   ): Promise<Pedido> {
-    const { lineas, fechaEntrega, proveedorId, ...pedidoFields } = createPedidoDto;
+    const { lineas, fechaEntrega, proveedorId, ...pedidoFields } =
+      createPedidoDto;
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -42,21 +43,30 @@ export class PedidoService {
 
       for (const linea of lineas) {
         // Validar que el ProductoProveedor existe y obtener el precio vigente
-        const productoProveedor = await queryRunner.manager.findOne(ProductoProveedor, {
-          where: { id: linea.productoProveedorId },
-        });
+        const productoProveedor = await queryRunner.manager.findOne(
+          ProductoProveedor,
+          {
+            where: { id: linea.productoProveedorId },
+          }
+        );
 
         if (!productoProveedor) {
-          throw new NotFoundException(`El producto proveedor con ID ${linea.productoProveedorId} no existe.`);
+          throw new NotFoundException(
+            `El producto proveedor con ID ${linea.productoProveedorId} no existe.`
+          );
         }
 
         if (productoProveedor.proveedorId !== proveedorId) {
-          throw new BadRequestException(`El producto proveedor con ID ${linea.productoProveedorId} no pertenece al proveedor del pedido.`);
+          throw new BadRequestException(
+            `El producto proveedor con ID ${linea.productoProveedorId} no pertenece al proveedor del pedido.`
+          );
         }
 
         const precioVigente = productoProveedor.precioUnitario;
         if (precioVigente === null || precioVigente === undefined) {
-          throw new ConflictException(`El producto proveedor con ID ${linea.productoProveedorId} no tiene un precio vigente (precio pactado) configurado.`);
+          throw new ConflictException(
+            `El producto proveedor con ID ${linea.productoProveedorId} no tiene un precio vigente (precio pactado) configurado.`
+          );
         }
 
         const costeLinea = Number(precioVigente) * Number(linea.cantidad);
@@ -147,7 +157,9 @@ export class PedidoService {
     try {
       if (updatePedidoDto.lineas !== undefined) {
         if (updatePedidoDto.lineas.length === 0) {
-          throw new BadRequestException('El pedido debe contener al menos un producto.');
+          throw new BadRequestException(
+            'El pedido debe contener al menos un producto.'
+          );
         }
 
         await queryRunner.manager.delete(PedidoProducto, {
@@ -158,17 +170,24 @@ export class PedidoService {
         let nuevoCosteTotal = 0;
 
         for (const linea of updatePedidoDto.lineas) {
-          const productoProveedor = await queryRunner.manager.findOne(ProductoProveedor, {
-            where: { id: linea.productoProveedorId },
-          });
+          const productoProveedor = await queryRunner.manager.findOne(
+            ProductoProveedor,
+            {
+              where: { id: linea.productoProveedorId },
+            }
+          );
 
           if (!productoProveedor) {
-            throw new NotFoundException(`El producto proveedor con ID ${linea.productoProveedorId} no existe.`);
+            throw new NotFoundException(
+              `El producto proveedor con ID ${linea.productoProveedorId} no existe.`
+            );
           }
 
           const precioVigente = productoProveedor.precioUnitario;
           if (precioVigente === null || precioVigente === undefined) {
-            throw new ConflictException(`El producto proveedor con ID ${linea.productoProveedorId} no tiene un precio vigente.`);
+            throw new ConflictException(
+              `El producto proveedor con ID ${linea.productoProveedorId} no tiene un precio vigente.`
+            );
           }
 
           const costeLinea = Number(precioVigente) * Number(linea.cantidad);
@@ -202,7 +221,9 @@ export class PedidoService {
       ) {
         throw error;
       }
-      throw new ConflictException(`Error al actualizar el pedido: ${error.message}`);
+      throw new ConflictException(
+        `Error al actualizar el pedido: ${error.message}`
+      );
     } finally {
       await queryRunner.release();
     }

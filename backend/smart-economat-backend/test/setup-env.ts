@@ -71,7 +71,8 @@ if (!g.__PG_MEM_DB__) {
 
 process.env.DB_SYNC = process.env.DB_SYNC || 'false';
 process.env.NODE_ENV = 'test';
-process.env.LOCAL_STORAGE_PATH = process.env.LOCAL_STORAGE_PATH || './uploads_test';
+process.env.LOCAL_STORAGE_PATH =
+  process.env.LOCAL_STORAGE_PATH || './uploads_test';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-key-mock';
 process.env.JWT_EXPIRATION = process.env.JWT_EXPIRATION || '1h';
 

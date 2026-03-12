@@ -12,7 +12,7 @@ import {
   PERMISSIONS_MODE_KEY,
 } from '../../../common/decorators/require-permissions.decorator';
 import { IS_PUBLIC_KEY } from '../../../common/decorators/public.decorator';
-import { AuthService } from '../service/auth.service';
+import { AuthorizationService } from '../service/authorization.service';
 
 /**
  * Guard principal de autorización basado en permisos dinámicos.
@@ -32,7 +32,7 @@ export class AuthPermissionsGuard implements CanActivate {
 
   constructor(
     private readonly reflector: Reflector,
-    private readonly authService: AuthService
+    private readonly authorizationService: AuthorizationService
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -59,10 +59,11 @@ export class AuthPermissionsGuard implements CanActivate {
       return true;
     }
 
-    const permissionsMode = this.reflector.getAllAndOverride<'all' | 'any'>(
-      PERMISSIONS_MODE_KEY,
-      [context.getHandler(), context.getClass()]
-    );
+    const permissionsMode =
+      this.reflector.getAllAndOverride<'all' | 'any'>(PERMISSIONS_MODE_KEY, [
+        context.getHandler(),
+        context.getClass(),
+      ]) ?? 'all';
 
     const request = context.switchToHttp().getRequest();
     const user = request.user;
@@ -76,13 +77,13 @@ export class AuthPermissionsGuard implements CanActivate {
       );
     }
 
-    const hasPermission =
+    const hasPermission: boolean =
       permissionsMode === 'any'
-        ? await this.authService.userHasAnyPermission(
+        ? await this.authorizationService.userHasAnyPermission(
             String(user.id),
             requiredPermissions
           )
-        : await this.authService.userHasAllPermissions(
+        : await this.authorizationService.userHasAllPermissions(
             String(user.id),
             requiredPermissions
           );

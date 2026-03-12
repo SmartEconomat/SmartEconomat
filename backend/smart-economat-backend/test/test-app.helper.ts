@@ -48,13 +48,13 @@ export async function closeTestApp(): Promise<void> {
       if (dataSource && dataSource.isInitialized) {
         await dataSource.destroy();
       }
-    } catch (err) {
+    } catch {
       // Ignorar si DataSource no está o ya se destruyó
     }
 
     await g.__TEST_APP__.close();
     g.__TEST_APP__ = undefined;
-    
+
     // Delay to let TypeORM Postgres pooling resolve promises before Jest node env destroy
     await new Promise((resolve) => setTimeout(resolve, 500));
   }

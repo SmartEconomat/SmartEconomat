@@ -1,24 +1,24 @@
 import { Transform } from 'class-transformer';
-import { TrimStringTransformer } from '../transformers/trim-string.transformer';
+import { TrimStringTransformer } from '../transformers';
 
 /**
  * BaseDto
- * 
+ *
  * Clase base para todos los DTOs que requieren normalización básica.
  * Aplica trim automático a todos los campos string de la clase.
- * 
+ *
  * @example
- * 
+ *
  * export class CreateUsuarioDto extends BaseDto {
  *   username: string; // Se aplicará trim automáticamente
  * }
  */
 export abstract class BaseDto {
   /**
-   * Aplica trim a todos los campos string de la instancia
+   * Applies trim to all string fields of the instance
    */
-  @Transform(TrimStringTransformer.transform)
+  @Transform((params) => TrimStringTransformer.transform(params))
   protected normalizeStrings(): void {
-    // Este método se usa internamente para asegurar consistencia
+    // This method is used internally to ensure consistency
   }
 }

@@ -9,30 +9,30 @@ import { NormalizeArrayTransformer } from '../transformers/normalize-array.trans
 
 /**
  * Decoradores de Normalización
- * 
+ *
  * Facilitan la aplicación de transformaciones comunes en DTOs.
- * 
+ *
  * @example
- * 
+ *
  * export class CreateProductoDto {
  *   @NormalizeString()
  *   nombre: string;
- * 
+ *
  *   @NormalizeString({ uppercase: true })
  *   codigo: string;
- * 
+ *
  *   @NormalizeString({ lowercase: true })
  *   email: string;
- * 
+ *
  *   @NormalizeNumber()
  *   precio: number;
- * 
+ *
  *   @NormalizeBoolean()
  *   activo: boolean;
- * 
+ *
  *   @NormalizeDate()
  *   fechaCaducidad: Date;
- * 
+ *
  *   @NormalizeArray()
  *   tags: string[];
  * }
@@ -50,22 +50,22 @@ export function NormalizeString(options?: {
   return Transform((params) => {
     const { trim = true, uppercase = false, lowercase = false } = options || {};
     let value = params.value as string;
-    
+
     if (value == null) return value;
     if (typeof value !== 'string') return value;
-    
+
     if (trim) {
       value = value.trim();
     }
-    
+
     if (uppercase) {
       value = value.toUpperCase();
     }
-    
+
     if (lowercase) {
       value = value.toLowerCase();
     }
-    
+
     return value;
   });
 }
@@ -75,21 +75,21 @@ export function NormalizeString(options?: {
  * Alias para NormalizeString({ trim: true }).
  */
 export function Trim(): PropertyDecorator {
-  return Transform(TrimStringTransformer.transform);
+  return Transform((params) => TrimStringTransformer.transform(params));
 }
 
 /**
  * Normaliza un string a mayúsculas con trim.
  */
 export function ToUppercase(): PropertyDecorator {
-  return Transform(UppercaseStringTransformer.transform);
+  return Transform((params) => UppercaseStringTransformer.transform(params));
 }
 
 /**
  * Normaliza un string a minúsculas con trim.
  */
 export function ToLowercase(): PropertyDecorator {
-  return Transform(LowercaseStringTransformer.transform);
+  return Transform((params) => LowercaseStringTransformer.transform(params));
 }
 
 /**
@@ -97,7 +97,7 @@ export function ToLowercase(): PropertyDecorator {
  * Convierte strings numéricos a números.
  */
 export function NormalizeNumber(): PropertyDecorator {
-  return Transform(StringToNumberTransformer.transform);
+  return Transform((params) => StringToNumberTransformer.transform(params));
 }
 
 /**
@@ -105,7 +105,7 @@ export function NormalizeNumber(): PropertyDecorator {
  * Soporta múltiples formatos: 'true', 'false', '1', '0', 'yes', 'no'.
  */
 export function NormalizeBoolean(): PropertyDecorator {
-  return Transform(StringToBooleanTransformer.transform);
+  return Transform((params) => StringToBooleanTransformer.transform(params));
 }
 
 /**
@@ -113,7 +113,7 @@ export function NormalizeBoolean(): PropertyDecorator {
  * Soporta ISO 8601, timestamps, y strings de fecha.
  */
 export function NormalizeDate(): PropertyDecorator {
-  return Transform(StringToDateTransformer.transform);
+  return Transform((params) => StringToDateTransformer.transform(params));
 }
 
 /**
@@ -121,5 +121,5 @@ export function NormalizeDate(): PropertyDecorator {
  * Convierte strings separados por comas a arrays, aplica trim a elementos.
  */
 export function NormalizeArray(): PropertyDecorator {
-  return Transform(NormalizeArrayTransformer.transform);
+  return Transform((params) => NormalizeArrayTransformer.transform(params));
 }

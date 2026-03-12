@@ -52,7 +52,7 @@ export class CreatePedidoDto {
   })
   @IsOptional()
   @Type(() => Number)
-  @Transform(StringToNumberTransformer.transform)
+  @Transform((params) => StringToNumberTransformer.transform(params))
   @IsNumber()
   costeTotal?: number;
 
@@ -70,7 +70,7 @@ export class CreatePedidoDto {
     required: true,
   })
   @IsNotEmpty({ message: 'La fecha de entrega es requerida' })
-  @Transform(StringToDateTransformer.transform)
+  @Transform((params) => StringToDateTransformer.transform(params))
   @IsDateString(
     {},
     {
@@ -86,7 +86,7 @@ export class CreatePedidoDto {
     required: false,
   })
   @IsOptional()
-  @Transform(TrimStringTransformer.transform)
+  @Transform((params) => TrimStringTransformer.transform(params))
   @IsString()
   motivoCancelacion?: string;
 
