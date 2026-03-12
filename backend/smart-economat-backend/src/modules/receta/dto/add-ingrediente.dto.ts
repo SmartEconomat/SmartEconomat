@@ -6,6 +6,7 @@ import {
   IsOptional,
   Max,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { UnidadIngrediente } from '../enums/receta.enums';
 
@@ -13,6 +14,7 @@ export class AddIngredienteDto {
   @IsUUID('7')
   productoId!: string;
 
+  @Type(() => Number)
   @IsNumber()
   @Min(0.01)
   cantidad!: number;
@@ -25,6 +27,7 @@ export class AddIngredienteDto {
     default: 0,
   })
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   @Max(99)
