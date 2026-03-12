@@ -147,7 +147,7 @@ export class AppModule {}
 import { Controller, Post, Body, Res } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
-import { AuthService } from '../auth.service/auth.service';
+import { AuthService } from '../service/service';
 import { RegisterUserDto } from '../dto/register-user.dto';
 import { LoginUserDto } from '../dto/login-user.dto';
 

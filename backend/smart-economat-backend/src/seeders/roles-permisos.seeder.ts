@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
-import { Permiso } from '../modules/permisos/entities/permiso.entity';
-import { PlantillaRol } from '../modules/plantillas-roles/entities/plantilla-rol.entity';
+import { Permiso } from '../modules/permisos/permiso.entity/permiso.entity';
+import { PlantillaRol } from '../modules/plantillas-roles/plantilla-rol.entity/plantilla-rol.entity';
 import { rolUsuario } from '../modules/usuario/enums/usuario.enums';
 
 /**

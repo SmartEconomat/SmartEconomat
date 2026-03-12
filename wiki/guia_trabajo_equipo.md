@@ -36,13 +36,13 @@ src/
 │   │   ├── dto/
 │   │   │   ├── create-user.dto.ts
 │   │   │   └── update-user.dto.ts
-│   │   ├── entities/
+│   │   ├── permiso.entity/
 │   │   │   └── user.entity.ts
 │   │   └── interfaces/
 │   │       └── user.interface.ts
 │   └── auth/
 │       ├── auth.controller.ts
-│       ├── auth.service.ts
+│       ├── service.ts
 │       ├── auth.repository.ts
 │       ├── auth.module.ts
 │       └── dto/

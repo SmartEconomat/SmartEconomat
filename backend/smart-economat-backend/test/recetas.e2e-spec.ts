@@ -16,7 +16,7 @@ describe('RecetaController (e2e)', () => {
   let recetaId: string;
   let productoId: string;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     app = await getTestApp();
 
     const response = await request(app.getHttpServer() as string)
@@ -27,21 +27,41 @@ describe('RecetaController (e2e)', () => {
       });
     adminToken = response.body.data.access_token;
 
-    // Crear un producto propio para este test (no depender de seeders)
     const productoRes = await request(app.getHttpServer() as string)
       .post('/api/v1/productos')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
-        nombre: `Producto Receta E2E ${Date.now()}`,
+        nombre: `Producto Receta E2E ${Date.now()}_${Math.random()}`,
         unidad: 'KG',
         tipo: 'verdura',
         contenido: 500,
       });
-    productoId = productoRes.body.data.id;
-  });
 
-  afterAll(() => {
-    /* app compartida, no cerrar */
+    if (productoRes.status !== 201) {
+      throw new Error(
+        `Failed to create product in beforeEach: ${JSON.stringify(productoRes.body)}`
+      );
+    }
+    productoId = productoRes.body.data.id;
+
+    const recetaRes = await request(app.getHttpServer() as string)
+      .post('/api/v1/recetas')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        nombre: `Receta Base E2E ${Date.now()}_${Math.random()}`,
+        instrucciones: 'Instrucciones base',
+        tiempo: '10 min',
+        dificultad: 'Fácil',
+        tiempoPreparacion: '10 minutos',
+        ingredientes: [{ productoId, cantidad: 1, unidad: 'kg' }],
+      });
+
+    if (recetaRes.status !== 201) {
+      throw new Error(
+        `Failed to create recipe in beforeEach: ${JSON.stringify(recetaRes.body)}`
+      );
+    }
+    recetaId = recetaRes.body.data.id;
   });
 
   describe('CRUD de Recetas', () => {
@@ -66,7 +86,13 @@ describe('RecetaController (e2e)', () => {
             },
           ],
         })
-        .expect(201);
+        .expect((res) => {
+          if (res.status !== 201) {
+            throw new Error(
+              `Expected 201, got ${res.status}. Body: ${JSON.stringify(res.body)}`
+            );
+          }
+        });
 
       expect(res.body.success).toBe(true);
       recetaId = res.body.data.id;
@@ -90,7 +116,13 @@ describe('RecetaController (e2e)', () => {
         .patch(`/api/v1/recetas/${recetaId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ nombre: 'Receta Modificada' })
-        .expect(200);
+        .expect((res) => {
+          if (res.status !== 200) {
+            throw new Error(
+              `Expected 200, got ${res.status}. Body: ${JSON.stringify(res.body)}`
+            );
+          }
+        });
     });
 
     /**
@@ -100,7 +132,13 @@ describe('RecetaController (e2e)', () => {
       return request(app.getHttpServer() as string)
         .delete(`/api/v1/recetas/${recetaId}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .expect(204);
+        .expect((res) => {
+          if (res.status !== 204) {
+            throw new Error(
+              `Expected 204, got ${res.status}. Body: ${JSON.stringify(res.body)}`
+            );
+          }
+        });
     });
 
     /**
@@ -124,7 +162,13 @@ describe('RecetaController (e2e)', () => {
             },
           ],
         })
-        .expect(201);
+        .expect((res) => {
+          if (res.status !== 201) {
+            throw new Error(
+              `Expected 201, got ${res.status}. Body: ${JSON.stringify(res.body)}`
+            );
+          }
+        });
 
       const originalId = createRes.body.data.id;
 
@@ -135,7 +179,13 @@ describe('RecetaController (e2e)', () => {
           sourceId: originalId,
           newName: 'Receta Duplicada',
         })
-        .expect(201);
+        .expect((res) => {
+          if (res.status !== 201) {
+            throw new Error(
+              `Expected 201, got ${res.status}. Body: ${JSON.stringify(res.body)}`
+            );
+          }
+        });
 
       expect(duplicateRes.body.success).toBe(true);
       expect(duplicateRes.body.data.nombre).toBe('Receta Duplicada');

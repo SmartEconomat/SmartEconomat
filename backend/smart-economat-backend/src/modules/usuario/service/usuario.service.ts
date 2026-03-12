@@ -15,9 +15,9 @@ import { ChangePasswordDto } from '../dto/change-password.dto';
 import * as bcrypt from 'bcrypt';
 import { UserStatus } from '../enums/usuario.enums';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Permiso } from '../../permisos/entities/permiso.entity';
+import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
 import { Repository } from 'typeorm';
-import { AuthorizationService } from '../../authorization/services/authorization.service';
+import { AuthorizationService } from '../../auth/service/authorization.service';
 
 @Injectable()
 export class UsuarioService {

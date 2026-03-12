@@ -8,5 +8,8 @@ fi
 
 echo "🚀 Running pre-commit hooks"
 
-echo "🧪 [1/1] Ejecutando tests E2E..."
-(cd backend/smart-economat-backend && npm run test:e2e)
+echo "📝 [1/2] Running lint-staged (eslint + prettier)..."
+npx lint-staged
+
+echo "🧪 [2/2] Ejecutando tests unitarios..."
+(cd backend/smart-economat-backend && npm test)

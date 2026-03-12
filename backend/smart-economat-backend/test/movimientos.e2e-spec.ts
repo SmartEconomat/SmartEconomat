@@ -1,6 +1,6 @@
-import { getTestApp } from './test-app.helper';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
+import { getTestApp } from './test-app.helper';
 
 /**
  * @file movimientos.e2e-spec.ts
@@ -21,10 +21,10 @@ describe('MovimientoController (e2e)', () => {
   let profesorToken: string;
   let testMovimientoId: string;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     app = await getTestApp();
 
-    const adminResponse = await request(app.getHttpServer() as string)
+    const adminResponse = await request(app.getHttpServer())
       .post('/api/v1/auth/login')
       .send({
         email: 'admin@smarteconomat.com',
@@ -32,7 +32,7 @@ describe('MovimientoController (e2e)', () => {
       });
     adminToken = adminResponse.body.data?.access_token;
 
-    const profesorResponse = await request(app.getHttpServer() as string)
+    const profesorResponse = await request(app.getHttpServer())
       .post('/api/v1/auth/login')
       .send({
         email: 'profesor1@smarteconomat.com',
@@ -51,7 +51,7 @@ describe('MovimientoController (e2e)', () => {
      * @roles ADMINISTRADOR, PROFESOR, ALUMNO
      */
     it('GET /movimientos - Debe listar movimientos (200)', async () => {
-      const response = await request(app.getHttpServer() as string)
+      const response = await request(app.getHttpServer())
         .get('/api/v1/movimientos')
         .set('Authorization', `Bearer ${adminToken}`);
 
@@ -67,7 +67,7 @@ describe('MovimientoController (e2e)', () => {
     });
 
     it('GET /movimientos?page=1&limit=1 should respect pagination parameters', async () => {
-      const res2 = await request(app.getHttpServer() as string)
+      const res2 = await request(app.getHttpServer())
         .get('/api/v1/movimientos')
         .query({ page: 1, limit: 1 })
         .set('Authorization', `Bearer ${adminToken}`);
@@ -85,7 +85,7 @@ describe('MovimientoController (e2e)', () => {
      * - Validación: entityId o userId son obligatorios
      */
     it('GET /movimientos/historial - Sin parámetros debe fallar (400)', async () => {
-      const response = await request(app.getHttpServer() as string)
+      const response = await request(app.getHttpServer())
         .get('/api/v1/movimientos/historial')
         .set('Authorization', `Bearer ${adminToken}`);
 
@@ -99,7 +99,7 @@ describe('MovimientoController (e2e)', () => {
      * - Resultado esperado: Ve Compra, Uso en receta, Merma, Ajuste
      */
     it('GET /movimientos/historial?entityId=<uuid> - Debe retornar historial por producto (200 o 404)', async () => {
-      const response = await request(app.getHttpServer() as string)
+      const response = await request(app.getHttpServer())
         .get('/api/v1/movimientos/historial')
         .query({ entityId: '019c9b4f-74f8-7a6e-8b5b-96191c30c1e5' })
         .set('Authorization', `Bearer ${adminToken}`);
@@ -120,7 +120,7 @@ describe('MovimientoController (e2e)', () => {
      * - Validación: Solo administradores y profesores
      */
     it('GET /movimientos/historial?userId=<uuid> - Debe retornar historial por usuario (200 o 404)', async () => {
-      const response = await request(app.getHttpServer() as string)
+      const response = await request(app.getHttpServer())
         .get('/api/v1/movimientos/historial')
         .query({ userId: '019c9b4f-74f8-7a6e-8b5b-96191c30c1e5' })
         .set('Authorization', `Bearer ${profesorToken}`);
@@ -132,7 +132,7 @@ describe('MovimientoController (e2e)', () => {
      * @test Debe filtrar por tipo de movimiento
      */
     it('GET /movimientos/historial?entityId=<uuid>&type=entrada - Debe filtrar por tipo (200 o 404)', async () => {
-      const response = await request(app.getHttpServer() as string)
+      const response = await request(app.getHttpServer())
         .get('/api/v1/movimientos/historial')
         .query({
           entityId: '019c9b4f-74f8-7a6e-8b5b-96191c30c1e5',
@@ -154,7 +154,7 @@ describe('MovimientoController (e2e)', () => {
      * @test Debe filtrar por rango de fechas válido
      */
     it('GET /movimientos/historial?entityId=<uuid>&startDate=2026-01-01&endDate=2026-02-28 - Debe filtrar por rango (200 o 404)', async () => {
-      const response = await request(app.getHttpServer() as string)
+      const response = await request(app.getHttpServer())
         .get('/api/v1/movimientos/historial')
         .query({
           entityId: '019c9b4f-74f8-7a6e-8b5b-96191c30c1e5',
@@ -170,7 +170,7 @@ describe('MovimientoController (e2e)', () => {
      * @test Debe validar que startDate no sea mayor que endDate
      */
     it('GET /movimientos/historial - Fechas inválidas deben fallar (400)', async () => {
-      const response = await request(app.getHttpServer() as string)
+      const response = await request(app.getHttpServer())
         .get('/api/v1/movimientos/historial')
         .query({
           entityId: '019c9b4f-74f8-7a6e-8b5b-96191c30c1e5',
@@ -186,7 +186,7 @@ describe('MovimientoController (e2e)', () => {
      * @test Debe validar UUID válido en entityId
      */
     it('GET /movimientos/historial?entityId=invalid - UUID inválido debe fallar (400)', async () => {
-      const response = await request(app.getHttpServer() as string)
+      const response = await request(app.getHttpServer())
         .get('/api/v1/movimientos/historial')
         .query({ entityId: 'not-a-uuid' })
         .set('Authorization', `Bearer ${adminToken}`);
@@ -198,7 +198,7 @@ describe('MovimientoController (e2e)', () => {
      * @test Solo ADMINISTRADOR y PROFESOR pueden acceder
      */
     it('GET /movimientos/historial - Sin autorización debe fallar (403)', async () => {
-      const response = await request(app.getHttpServer() as string)
+      const response = await request(app.getHttpServer())
         .get('/api/v1/movimientos/historial')
         .query({ entityId: '019c9b4f-74f8-7a6e-8b5b-96191c30c1e5' });
 
@@ -209,7 +209,7 @@ describe('MovimientoController (e2e)', () => {
      * @test Debe soportar ordenamiento personalizado
      */
     it('GET /movimientos/historial?sortBy=cantidad&sortOrder=ASC - Debe ordenar personalizadamente', async () => {
-      const response = await request(app.getHttpServer() as string)
+      const response = await request(app.getHttpServer())
         .get('/api/v1/movimientos/historial')
         .query({
           entityId: '019c9b4f-74f8-7a6e-8b5b-96191c30c1e5',
@@ -227,7 +227,7 @@ describe('MovimientoController (e2e)', () => {
      * @test Debe obtener un movimiento por ID
      */
     it('GET /movimientos/:id - Debe retornar detalles del movimiento (200 o 404)', async () => {
-      const listResponse = await request(app.getHttpServer() as string)
+      const listResponse = await request(app.getHttpServer())
         .get('/api/v1/movimientos')
         .set('Authorization', `Bearer ${adminToken}`);
 
@@ -238,7 +238,7 @@ describe('MovimientoController (e2e)', () => {
         const movId = listResponse.body.data.data[0].id;
         testMovimientoId = movId;
 
-        const detailResponse = await request(app.getHttpServer() as string)
+        const detailResponse = await request(app.getHttpServer())
           .get(`/api/v1/movimientos/${movId}`)
           .set('Authorization', `Bearer ${adminToken}`);
 
@@ -250,7 +250,7 @@ describe('MovimientoController (e2e)', () => {
      * @test Debe fallar con UUID inexistente
      */
     it('GET /movimientos/:id - UUID inexistente debe fallar (404)', async () => {
-      const response = await request(app.getHttpServer() as string)
+      const response = await request(app.getHttpServer())
         .get('/api/v1/movimientos/00000000-0000-0000-0000-000000000000')
         .set('Authorization', `Bearer ${adminToken}`);
 
@@ -262,7 +262,7 @@ describe('MovimientoController (e2e)', () => {
      */
     it('DELETE /movimientos/:id - Solo administrador puede eliminar (403 para profesor)', async () => {
       if (testMovimientoId) {
-        const response = await request(app.getHttpServer() as string)
+        const response = await request(app.getHttpServer())
           .delete(`/api/v1/movimientos/${testMovimientoId}`)
           .set('Authorization', `Bearer ${profesorToken}`);
 
@@ -274,7 +274,7 @@ describe('MovimientoController (e2e)', () => {
      * @test Debe fallar al eliminar con ID inexistente
      */
     it('DELETE /movimientos/:id - ID inexistente debe fallar (404)', async () => {
-      const response = await request(app.getHttpServer() as string)
+      const response = await request(app.getHttpServer())
         .delete('/api/v1/movimientos/00000000-0000-0000-0000-000000000000')
         .set('Authorization', `Bearer ${adminToken}`);
 
@@ -287,7 +287,7 @@ describe('MovimientoController (e2e)', () => {
      * @test Debe rechazar entityId inválido en MovimientoHistoryDto
      */
     it('POST /movimientos - DTO inválido debe fallar (400)', async () => {
-      const response = await request(app.getHttpServer() as string)
+      const response = await request(app.getHttpServer())
         .post('/api/v1/movimientos')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({

@@ -30,7 +30,7 @@ import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import type { Response } from 'express';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { PermisosGuard } from '../../auth/guards/permisos.guard';
 
 @ApiTags('Archivos')
 @ApiBearerAuth()

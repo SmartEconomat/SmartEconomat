@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
+import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
 import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
 import { GlobalExceptionFilter } from '../src/common/filters/global-exception.filter';
@@ -23,6 +24,7 @@ export async function getTestApp(): Promise<INestApplication> {
   }).compile();
 
   const app = moduleFixture.createNestApplication();
+  app.useLogger(['log', 'error', 'warn', 'debug', 'verbose']);
   app.setGlobalPrefix('api/v1');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useGlobalInterceptors(
@@ -34,4 +36,25 @@ export async function getTestApp(): Promise<INestApplication> {
 
   g.__TEST_APP__ = app;
   return app;
+}
+
+/**
+ * Cierra la instancia compartida y limpia TypeORM globalmente.
+ */
+export async function closeTestApp(): Promise<void> {
+  if (g.__TEST_APP__) {
+    try {
+      const dataSource = (g.__TEST_APP__ as INestApplication).get(DataSource);
+      if (dataSource && dataSource.isInitialized) {
+        await dataSource.destroy();
+      }
+    } catch {
+      void 0;
+    }
+
+    await (g.__TEST_APP__ as INestApplication).close();
+    g.__TEST_APP__ = undefined;
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
 }

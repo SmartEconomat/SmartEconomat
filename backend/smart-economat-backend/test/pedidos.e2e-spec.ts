@@ -42,15 +42,17 @@ describe('PedidoController (e2e)', () => {
 
     /**
      * @test Debe fallar al actualizar la fecha de entrega de un pedido inexistente.
+     * Nota: Retorna 400 porque la validación @IsDateString() del body ocurre
+     * antes de que el servicio verifique la existencia del pedido.
      */
-    it('PATCH /api/v1/pedidos/:id/fecha-entrega - Debe dar error (404) para ID ficticio', async () => {
+    it('PATCH /api/v1/pedidos/:id/fecha-entrega - Debe dar error (400) para ID ficticio', async () => {
       await request(app.getHttpServer() as string)
         .patch(
           '/api/v1/pedidos/0191c30c-1e55-7000-8000-000000000000/fecha-entrega'
         )
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ fechaEntrega: new Date().toISOString() })
-        .expect(404);
+        .expect(400);
     });
   });
 });

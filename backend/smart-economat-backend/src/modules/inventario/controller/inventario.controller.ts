@@ -17,7 +17,7 @@ import { UpdateInventarioDto } from '../dto/update-inventario.dto';
 import { Inventario } from '../inventario.entity/inventario.entity';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { PermisosGuard } from '../../auth/guards/permisos.guard';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('inventario')

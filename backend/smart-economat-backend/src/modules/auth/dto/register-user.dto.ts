@@ -7,9 +7,15 @@ import {
   IsStrongPassword,
   IsOptional,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
+import { LowercaseStringTransformer } from '../../../common/transformers/lowercase-string.transformer';
 
 export class RegisterUserDto {
+  @Transform(function (this: void, params) {
+    return TrimStringTransformer.transform(params);
+  })
   @IsString()
   @IsNotEmpty()
   username: string;
@@ -32,6 +38,9 @@ export class RegisterUserDto {
   password: string;
 
   @IsOptional()
+  @Transform(function (this: void, params) {
+    return LowercaseStringTransformer.transform(params);
+  })
   @IsEmail()
   email?: string;
 

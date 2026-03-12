@@ -6,8 +6,14 @@ import {
   IsStrongPassword,
   Min,
 } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
+import { StringToNumberTransformer } from '../../../common/transformers/string-to-number.transformer';
 
 export class RegisterAlumnoDto {
+  @Transform(function (this: void, params) {
+    return TrimStringTransformer.transform(params);
+  })
   @IsString()
   @IsNotEmpty()
   username!: string;
@@ -29,14 +35,24 @@ export class RegisterAlumnoDto {
   )
   password!: string;
 
+  @Transform(function (this: void, params) {
+    return TrimStringTransformer.transform(params);
+  })
   @IsString()
   @IsNotEmpty()
   aula!: string;
 
+  @Type(() => Number)
+  @Transform(function (this: void, params) {
+    return StringToNumberTransformer.transform(params);
+  })
   @IsInt()
   @Min(1)
   numeroClase!: number;
 
+  @Transform(function (this: void, params) {
+    return TrimStringTransformer.transform(params);
+  })
   @IsString()
   @IsNotEmpty()
   cialProfesor!: string;

@@ -203,7 +203,13 @@
     "LOS_PROVEEDORES_DEBEN_SER_UN_ARRAY": "Los proveedores deben ser un array",
     "PASSWORD_TOO_LONG": "La contraseña es demasiado larga",
     "PASSWORD_TOO_SHORT": "La contraseña es demasiado corta",
-    "UNO_O_M_S_AL_RGENOS_INDICADOS_NO_SON_V_L": "Uno o más alérgenos indicados no son válidos"
+    "UNO_O_M_S_AL_RGENOS_INDICADOS_NO_SON_V_L": "Uno o más alérgenos indicados no son válidos",
+    "VALIDACION_FALLIDA": "Validación fallida",
+    "VALOR_NO_PUEDE_SER_CONVERTIDO_A_NUMERO": "El valor no puede ser convertido a número",
+    "VALOR_NO_PUEDE_SER_CONVERTIDO_A_BOOLEANO": "El valor no puede ser convertido a booleano",
+    "VALOR_NO_PUEDE_SER_CONVERTIDO_A_FECHA": "El valor no puede ser convertido a fecha",
+    "STRING_DEBE_TENER_TRIM": "El string debe estar sin espacios en blanco al inicio/final",
+    "ARRAY_NO_PUEDE_ESTAR_VAC_O": "El array no puede estar vacío"
   },
   "entities": {
     "albaran": "Albarán",

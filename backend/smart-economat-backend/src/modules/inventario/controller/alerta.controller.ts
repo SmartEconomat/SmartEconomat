@@ -4,7 +4,7 @@ import { AlertaCaducidadDTO } from '../dto/alertaCaducidad.dto';
 import { AlertaStockDTO } from '../dto/alertaStock.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { PermisosGuard } from '../../auth/guards/permisos.guard';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('alertas')

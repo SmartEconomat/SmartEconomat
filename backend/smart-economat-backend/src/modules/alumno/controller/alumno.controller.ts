@@ -6,7 +6,7 @@ import { AlumnoService } from '../service/alumno.service';
 import { RegisterAlumnoDto } from '../dto/register-alumno.dto';
 import { ChangeProfesorDto } from '../dto/change-profesor.dto';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { PermisosGuard } from '../../auth/guards/permisos.guard';
 @Controller('alumnos')
 export class AlumnoController {
   constructor(private readonly alumnoService: AlumnoService) {}

@@ -107,17 +107,61 @@ export const runSeeder = async (dataSource: DataSource) => {
     throw new Error(SeederI18nHelper.getError('NO_PROVEEDORES'));
   }
 
-  console.log('Obteniendo productos de OpenFoodFacts...');
   let offProducts: OffProduct[] = [];
   try {
-    const offResponse = await fetch(
-      'https://es.openfoodfacts.org/cgi/search.pl?action=process&sort_by=unique_scans_n&json=1&page_size=50',
-      { signal: AbortSignal.timeout(30000) }
-    );
+    if (process.env.NODE_ENV === 'test') {
+      console.log(
+        'Ambiente de test detectado, saltando OpenFoodFacts para ahorrar tiempo.'
+      );
 
-    if (offResponse.ok) {
-      const offData = await offResponse.json();
-      offProducts = offData.products || [];
+      offProducts = [
+        {
+          code: '2001234567890',
+          product_name_es: 'Producto Test 1',
+          brands: 'Test Brand',
+          ingredients_text: 'Ingrediente 1',
+          quantity: '500g',
+        },
+        {
+          code: '2001234567891',
+          product_name_es: 'Producto Test 2',
+          brands: 'Test Brand',
+          ingredients_text: 'Ingrediente 2',
+          quantity: '1kg',
+        },
+        {
+          code: '2001234567892',
+          product_name_es: 'Producto Test 3',
+          brands: 'Test Brand',
+          ingredients_text: 'Ingrediente 3',
+          quantity: '250ml',
+        },
+        {
+          code: '2001234567893',
+          product_name_es: 'Producto Test 4',
+          brands: 'Test Brand',
+          ingredients_text: 'Ingrediente 4',
+          quantity: '750g',
+        },
+        {
+          code: '2001234567894',
+          product_name_es: 'Producto Test 5',
+          brands: 'Test Brand',
+          ingredients_text: 'Ingrediente 5',
+          quantity: '500ml',
+        },
+      ] as any;
+    } else {
+      console.log('Obteniendo productos de OpenFoodFacts...');
+      const offResponse = await fetch(
+        'https://es.openfoodfacts.org/cgi/search.pl?action=process&sort_by=unique_scans_n&json=1&page_size=20',
+        { signal: AbortSignal.timeout(30000) }
+      );
+
+      if (offResponse.ok) {
+        const offData = await offResponse.json();
+        offProducts = offData.products || [];
+      }
     }
   } catch (error: any) {
     console.warn(

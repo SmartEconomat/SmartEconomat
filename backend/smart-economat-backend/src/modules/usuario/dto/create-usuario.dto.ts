@@ -9,9 +9,15 @@ import {
   MaxLength,
   ValidateIf,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { rolUsuario, UserStatus } from '../enums/usuario.enums';
+import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
+import { LowercaseStringTransformer } from '../../../common/transformers/lowercase-string.transformer';
 
 export class CreateUsuarioDto {
+  @Transform(function (this: void, params) {
+    return TrimStringTransformer.transform(params);
+  })
   @IsString({
     message: i18nValidationMessage(
       'validation.EL_NOMBRE_DE_USUARIO_DEBE_SER_UNA_CADENA'
@@ -52,6 +58,9 @@ export class CreateUsuarioDto {
 
   @IsOptional()
   @ValidateIf((o) => o.email != null)
+  @Transform(function (this: void, params) {
+    return LowercaseStringTransformer.transform(params);
+  })
   @IsEmail({}, { message: i18nValidationMessage('validation.INVALID_EMAIL') })
   @MaxLength(255, {
     message: i18nValidationMessage(

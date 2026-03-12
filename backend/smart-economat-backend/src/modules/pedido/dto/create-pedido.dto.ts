@@ -10,10 +10,13 @@ import {
   IsUUID,
   IsNotEmpty,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { EstadoPedido } from '../enums/estado-pedido.enum';
 import { PedidoProductoDto } from './pedido-producto.dto';
 import { CreatePedidoProductoDto } from './create-PedidoProducto.dto';
+import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
+import { StringToDateTransformer } from '../../../common/transformers/string-to-date.transformer';
+import { StringToNumberTransformer } from '../../../common/transformers/string-to-number.transformer';
 
 export class CreatePedidoDto {
   @IsOptional()
@@ -33,6 +36,10 @@ export class CreatePedidoDto {
   proveedorId!: string;
 
   @IsOptional()
+  @Type(() => Number)
+  @Transform(function (this: void, params) {
+    return StringToNumberTransformer.transform(params);
+  })
   @IsNumber()
   costeTotal?: number;
 
@@ -41,6 +48,9 @@ export class CreatePedidoDto {
   estado?: EstadoPedido;
 
   @IsOptional()
+  @Transform(function (this: void, params) {
+    return StringToDateTransformer.transform(params);
+  })
   @IsDateString(
     {},
     {
@@ -52,6 +62,9 @@ export class CreatePedidoDto {
   fechaEntrega?: string;
 
   @IsOptional()
+  @Transform(function (this: void, params) {
+    return TrimStringTransformer.transform(params);
+  })
   @IsString()
   motivoCancelacion?: string;
 

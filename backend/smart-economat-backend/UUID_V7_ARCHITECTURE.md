@@ -45,7 +45,7 @@ SELECT uuid_generate_v7();
 **Configuración en TypeORM:**
 
 ```typescript
-// common/entities/base.entity.ts
+// common/permiso.entity/base.entity.ts
 import { PrimaryColumn } from 'typeorm';
 
 export abstract class BaseEntity {

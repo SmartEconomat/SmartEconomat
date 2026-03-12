@@ -4,7 +4,7 @@ import { INestApplication } from '@nestjs/common';
 
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import { Permiso } from '../src/modules/permisos/entities/permiso.entity';
+import { Permiso } from '../src/modules/permisos/permiso.entity/permiso.entity';
 import { Usuario } from '../src/modules/usuario/usuario.entity/usuario.entity';
 import { UserStatus } from '../src/modules/usuario/enums/usuario.enums';
 
@@ -17,7 +17,7 @@ describe('RBAC System (e2e)', () => {
   let permisoListarUsuariosId: string;
   let permisoListarProductosId: string;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     app = await getTestApp();
 
     dataSource = app.get(DataSource);
@@ -47,7 +47,7 @@ describe('RBAC System (e2e)', () => {
       });
     adminToken = loginRes.body.data.access_token;
 
-    const username = `alumno_rbac_${Date.now()}`;
+    const username = `alumno_rbac_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     const email = `${username}@test.com`;
     const registerRes = await request(app.getHttpServer() as Server)
       .post('/api/v1/auth/register')
@@ -73,9 +73,7 @@ describe('RBAC System (e2e)', () => {
       .send({ rol: 'ALUMNO' });
   });
 
-  afterAll(() => {
-    /* app compartida, no cerrar */
-  });
+  afterAll(() => {});
 
   describe('Acceso Base (ALUMNO)', () => {
     it('Debe permitir a un ALUMNO ver productos (Permiso por defecto)', async () => {

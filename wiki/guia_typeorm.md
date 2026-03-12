@@ -108,7 +108,7 @@
  2. Archivo `<entity>.entity.ts` con formato:
     ```ts
     import { Entity, Column, /* relaciones */ } from 'typeorm';
-    import { BaseEntity } from '../../../common/entities/base.entity';
+    import { BaseEntity } from '../../../common/permiso.entity/base.entity';
 
     @Entity('<nombre_tabla>')
     export class <EntityName> extends BaseEntity {

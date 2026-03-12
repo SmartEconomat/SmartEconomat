@@ -7,17 +7,17 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import { Rol } from '../entities/rol.entity';
+import { Rol } from '../rol.entity/rol.entity';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
-import { Permiso } from '../../permisos/entities/permiso.entity';
-import { UsuarioRol } from '../entities/usuario-rol.entity';
+import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
+import { UsuarioRol } from '../usuario-rol.entity/usuario-rol.entity';
 import { CreateRolDto } from '../dto/create-rol.dto';
 import { UpdateRolDto } from '../dto/update-rol.dto';
 import { AssignPermissionsDto } from '../dto/assign-permissions.dto';
 import { AssignRoleToUserDto } from '../dto/assign-role-to-user.dto';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
-import { AuthorizationService } from '../../authorization/services/authorization.service';
+import { AuthorizationService } from '../../auth/service/authorization.service';
 
 /**
  * Servicio para la gestión de roles y asignaciones.

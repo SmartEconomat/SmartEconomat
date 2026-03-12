@@ -15,7 +15,7 @@ import { UpdateUbicacionDto } from '../dto/update-ubicacion.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { PermisosGuard } from '../../auth/guards/permisos.guard';
 
 @ApiTags('Ubicaciones')
 @ApiBearerAuth()

@@ -13,21 +13,28 @@ import {
   Min,
   IsInt,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   DificultadReceta,
   TiempoReceta,
   UnidadIngrediente,
 } from '../enums/receta.enums';
+import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
 import { AddIngredienteDto } from './add-ingrediente.dto';
 
 export class CreateRecetaDto {
+  @Transform(function (this: void, params) {
+    return TrimStringTransformer.transform(params);
+  })
   @IsString()
   @IsNotEmpty()
   @MaxLength(150)
   nombre!: string;
 
+  @Transform(function (this: void, params) {
+    return TrimStringTransformer.transform(params);
+  })
   @IsString()
   @IsNotEmpty()
   instrucciones!: string;
@@ -38,6 +45,9 @@ export class CreateRecetaDto {
   @IsEnum(DificultadReceta)
   dificultad!: DificultadReceta;
 
+  @Transform(function (this: void, params) {
+    return TrimStringTransformer.transform(params);
+  })
   @IsString()
   @IsNotEmpty()
   @MaxLength(50)
