@@ -26,11 +26,10 @@ import { CreateProductoDto } from '../dto/create-producto.dto';
 import { UpdateProductoDto } from '../dto/update-producto.dto';
 import { Producto } from '../producto.entity/producto.entity';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
-
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 
 @ApiTags('Productos')
 @UseGuards(JwtAuthGuard, PermisosGuard)
@@ -39,7 +38,7 @@ export class ProductoController {
   constructor(private readonly productoService: ProductoService) {}
 
   @Get('generar-ean13')
-  @RequirePermissions('productos:crear')
+  @RequirePermissions('productos:generar_ean13')
   @ApiOperation({ summary: 'Generar un código EAN-13 único' })
   @ApiResponse({
     status: 200,

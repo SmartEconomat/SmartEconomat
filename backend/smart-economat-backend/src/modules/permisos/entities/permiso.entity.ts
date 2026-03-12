@@ -1,7 +1,8 @@
 import { Entity, Column, Index, ManyToMany, type Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { Rol } from '../../roles/entities/rol.entity';
-import type { Usuario } from '../../usuario/usuario.entity/usuario.entity';
+import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
+import { PlantillaRol } from '../../plantillas-roles/entities/plantilla-rol.entity';
 
 @Entity({ name: 'permiso' })
 @Index('idx_permiso_codigo', ['codigo'])
@@ -57,12 +58,15 @@ export class Permiso extends BaseEntity {
   /**
    * Usuarios que tienen este permiso asignado de forma individual
    */
-  @ManyToMany('Usuario', 'permisosAdicionales')
+  @ManyToMany(() => Usuario, (usuario) => usuario.permisosAdicionales)
   usuariosAdicionales: Relation<Usuario>[];
 
   /**
    * Usuarios que tienen este permiso explícitamente revocado
    */
-  @ManyToMany('Usuario', 'permisosExcluidos')
+  @ManyToMany(() => Usuario, (usuario) => usuario.permisosExcluidos)
   usuariosExcluidos: Relation<Usuario>[];
+
+  @ManyToMany(() => PlantillaRol, (plantilla) => plantilla.permisos)
+  plantillasRoles: Relation<PlantillaRol>[];
 }

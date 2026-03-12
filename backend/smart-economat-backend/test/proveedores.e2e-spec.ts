@@ -13,7 +13,7 @@ describe('ProveedorController (e2e)', () => {
   let adminToken: string;
   let proveedorId: string;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     app = await getTestApp();
 
     const response = await request(app.getHttpServer() as string)
@@ -24,10 +24,17 @@ describe('ProveedorController (e2e)', () => {
       });
     adminToken = (response.body as { data: { access_token: string } }).data
       .access_token;
-  });
 
-  afterAll(() => {
-    /* app compartida, no cerrar */
+    // Crear un proveedor base para los tests de GET, PATCH, DELETE
+    const res = await request(app.getHttpServer() as string)
+      .post('/api/v1/proveedor')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        nombre: `Proveedor Base E2E ${Date.now()}_${Math.random()}`,
+        nif: `B${Math.floor(Math.random() * 100000000)}`,
+        email: `base_${Date.now()}@proveedor.com`,
+      });
+    proveedorId = res.body.data.id;
   });
 
   describe('CRUD de Proveedores', () => {
@@ -39,14 +46,13 @@ describe('ProveedorController (e2e)', () => {
         .post('/api/v1/proveedor')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          nombre: `Proveedor E2E ${Date.now()}`,
-          nif: 'B99999999',
-          email: 'e2e@proveedor.com',
+          nombre: `Nuevo Proveedor ${Date.now()}`,
+          nif: `A${Math.floor(Math.random() * 100000000)}`,
+          email: 'new@proveedor.com',
         })
         .expect(201);
 
       expect(res.body.success).toBe(true);
-      proveedorId = res.body.data.id;
     });
 
     /**
