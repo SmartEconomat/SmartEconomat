@@ -15,7 +15,7 @@ describe('ProductoController (e2e)', () => {
   let adminToken: string;
   let productoId: string;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     app = await getTestApp();
 
     const response = await request(app.getHttpServer() as string)
@@ -25,10 +25,18 @@ describe('ProductoController (e2e)', () => {
         password: 'SmartEconomat2026!',
       });
     adminToken = response.body.data.access_token;
-  });
 
-  afterAll(() => {
-    /* app compartida, no cerrar */
+    // Crear un producto base para los tests de GET, PATCH, DELETE
+    const res = await request(app.getHttpServer() as string)
+      .post('/api/v1/productos')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        nombre: `Producto Base E2E ${Date.now()}`,
+        tipo: 'lacteo',
+        unidad: 'L',
+        contenido: 1,
+      });
+    productoId = res.body.data.id;
   });
 
   describe('CRUD de Productos', () => {
@@ -40,22 +48,14 @@ describe('ProductoController (e2e)', () => {
         .post('/api/v1/productos')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          nombre: `Producto E2E ${Date.now()}`,
+          nombre: `Nuevo Producto ${Date.now()}`,
           tipo: 'lacteo',
           unidad: 'L',
           contenido: 1,
         });
 
-      if (res.status !== 201) {
-        console.error(
-          'SERVER ERROR DURING TEST:',
-          JSON.stringify(res.body, null, 2)
-        );
-      }
       expect(res.status).toBe(201);
-
       expect(res.body.success).toBe(true);
-      productoId = res.body.data.id;
     });
 
     /**
@@ -96,20 +96,15 @@ describe('ProductoController (e2e)', () => {
     });
 
     /**
-     * @test Debe eliminar un producto del sistema.
+     * @test Debe eliminar un producto del sistema y no encontrarlo después.
      */
-    it('DELETE /productos/:id - Debe eliminar producto (204)', () => {
-      return request(app.getHttpServer() as string)
+    it('DELETE /productos/:id - Debe eliminar producto (204) y dar 404 después', async () => {
+      await request(app.getHttpServer() as string)
         .delete(`/api/v1/productos/${productoId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(204);
-    });
 
-    /**
-     * @test No debe encontrar un producto que ha sido eliminado.
-     */
-    it('GET /productos/:id - Debe dar 404 para producto eliminado', () => {
-      return request(app.getHttpServer() as string)
+      await request(app.getHttpServer() as string)
         .get(`/api/v1/productos/${productoId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(404);

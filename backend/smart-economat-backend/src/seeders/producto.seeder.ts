@@ -107,17 +107,21 @@ export const runSeeder = async (dataSource: DataSource) => {
     throw new Error(SeederI18nHelper.getError('NO_PROVEEDORES'));
   }
 
-  console.log('Obteniendo productos de OpenFoodFacts...');
   let offProducts: OffProduct[] = [];
   try {
-    const offResponse = await fetch(
-      'https://es.openfoodfacts.org/cgi/search.pl?action=process&sort_by=unique_scans_n&json=1&page_size=50',
-      { signal: AbortSignal.timeout(30000) }
-    );
+    if (process.env.NODE_ENV === 'test') {
+      console.log('Ambiente de test detectado, saltando OpenFoodFacts para ahorrar tiempo.');
+    } else {
+      console.log('Obteniendo productos de OpenFoodFacts...');
+      const offResponse = await fetch(
+        'https://es.openfoodfacts.org/cgi/search.pl?action=process&sort_by=unique_scans_n&json=1&page_size=20',
+        { signal: AbortSignal.timeout(30000) }
+      );
 
-    if (offResponse.ok) {
-      const offData = await offResponse.json();
-      offProducts = offData.products || [];
+      if (offResponse.ok) {
+        const offData = await offResponse.json();
+        offProducts = offData.products || [];
+      }
     }
   } catch (error: any) {
     console.warn(

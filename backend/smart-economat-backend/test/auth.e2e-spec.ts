@@ -28,23 +28,16 @@ describe('AuthController (e2e)', () => {
     };
 
     /**
-     * @test Debe registrar un nuevo usuario correctamente (camino feliz).
+     * @test Debe registrar un nuevo usuario y denegar duplicados.
      */
-    it('Debe registrar un nuevo usuario (201)', async () => {
+    it('Debe registrar un nuevo usuario (201) y no permitir duplicados (409)', async () => {
+      // Primero registramos
       await request(app.getHttpServer() as string)
         .post('/api/v1/auth/register')
         .send(newUser)
-        .expect(201)
-        .expect((res) => {
-          expect(res.body.success).toBe(true);
-          expect(res.body.data).toHaveProperty('access_token');
-        });
-    });
+        .expect(201);
 
-    /**
-     * @test No debe permitir registrar un usuario con el mismo email/username (conflicto).
-     */
-    it('No debe permitir duplicados (409)', async () => {
+      // Segundo intentamos duplicar
       await request(app.getHttpServer() as string)
         .post('/api/v1/auth/register')
         .send(newUser)

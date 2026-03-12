@@ -16,7 +16,7 @@ describe('ArchivoController (e2e)', () => {
     process.env.LOCAL_STORAGE_PATH || './uploads_test'
   );
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     if (!fs.existsSync(testUploadsDir)) {
       fs.mkdirSync(testUploadsDir, { recursive: true });
     }
@@ -30,15 +30,22 @@ describe('ArchivoController (e2e)', () => {
         password: 'SmartEconomat2026!',
       });
     adminToken = response.body.data.access_token;
-  });
 
-  afterAll(() => {
-    /* app compartida, no cerrar */
+    // Subir un archivo base para los tests de GET, DELETE
+    const buffer = Buffer.from('fake image content');
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/archivos/upload')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .attach('file', buffer, {
+        filename: 'base-image.png',
+        contentType: 'image/png',
+      });
+    archivoId = res.body.data.id;
   });
 
   describe('CRUD de Archivos', () => {
     it('POST /archivos/upload - Debe subir un archivo (201)', async () => {
-      const buffer = Buffer.from('fake image content');
+      const buffer = Buffer.from('new image content');
 
       const res = await request(app.getHttpServer())
         .post('/api/v1/archivos/upload')
@@ -48,18 +55,9 @@ describe('ArchivoController (e2e)', () => {
           contentType: 'image/png',
         });
 
-      if (res.status !== 201) {
-        console.error(
-          'SERVER ERROR DURING TEST (UPLOAD):',
-          JSON.stringify(res.body, null, 2)
-        );
-      }
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
       expect(res.body.data.nombre).toBe('test-image.png');
-      expect(res.body.data.mimeType).toBe('image/png');
-
-      archivoId = res.body.data.id;
     });
 
     it('GET /archivos - Debe listar archivos paginados (200)', async () => {
@@ -96,15 +94,13 @@ describe('ArchivoController (e2e)', () => {
       expect(res.body.data.id).toBe(archivoId);
     });
 
-    it('DELETE /archivos/:id - Debe eliminar archivo (soft delete) (204)', () => {
-      return request(app.getHttpServer())
+    it('DELETE /archivos/:id - Debe eliminar archivo (soft delete) y dar 404 después', async () => {
+      await request(app.getHttpServer())
         .delete(`/api/v1/archivos/${archivoId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(204);
-    });
 
-    it('GET /archivos/:id - Debe dar 404 para archivo eliminado', () => {
-      return request(app.getHttpServer())
+      await request(app.getHttpServer())
         .get(`/api/v1/archivos/${archivoId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(404);

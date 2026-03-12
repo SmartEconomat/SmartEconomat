@@ -16,9 +16,8 @@ describe('SmartEconomat Master E2E Suite', () => {
   let studentUsername: string;
   const SEED_PASS = 'SmartEconomat2026!';
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     app = await getTestApp();
-
     dataSource = app.get(DataSource);
 
     const adminRes = await request(app.getHttpServer() as string)
@@ -34,12 +33,9 @@ describe('SmartEconomat Master E2E Suite', () => {
     profToken = profRes.body.data.access_token;
   });
 
-  afterAll(() => {
-    /* app compartida, no cerrar */
-  });
-
   describe('AUTH - Autenticación', () => {
-    it('[AUTH-01/02] Login Admin & Profesor correctos', async () => {
+    it('[AUTH-01/02/04/05] Flujo de login: credenciales correctas e incorrectas', async () => {
+      // Correctos
       await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
         .send({ email: 'admin', password: SEED_PASS })
@@ -48,9 +44,8 @@ describe('SmartEconomat Master E2E Suite', () => {
         .post('/api/v1/auth/login')
         .send({ email: 'profesor1', password: SEED_PASS })
         .expect(200);
-    });
 
-    it('[AUTH-04/05] Login falla con datos incorrectos', async () => {
+      // Incorrectos
       await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
         .send({ email: 'admin', password: 'wrong' })
@@ -62,24 +57,24 @@ describe('SmartEconomat Master E2E Suite', () => {
     });
   });
 
-  describe('REG & ACT - Ciclo de Alumno', () => {
-    studentUsername = `alu_master_${Date.now()}`;
-    const regData = {
-      username: studentUsername,
-      password: 'Password123!',
-      aula: 'Master A',
-      numeroClase: 222,
-      cialProfesor: 'CIAL-11111',
-    };
+  describe('REG & ACT & TP - Ciclo Completo de Alumno', () => {
+    it('[REG-ACT-TP] Registro, Activación, Login y Reseteo Forzado', async () => {
+      studentUsername = `alu_master_${Date.now()}`;
+      const regData = {
+        username: studentUsername,
+        password: 'Password123!',
+        aula: 'Master A',
+        numeroClase: 222,
+        cialProfesor: 'CIAL-11111',
+      };
 
-    it('[REG-01] Registro exitoso', async () => {
+      // 1. Registro
       await request(app.getHttpServer() as string)
         .post('/api/v1/alumnos/register')
         .send(regData)
         .expect(201);
-    });
 
-    it('[ACT-02] Activación por profesor', async () => {
+      // 2. Activación
       const user = await dataSource
         .getRepository(Usuario)
         .findOne({ where: { username: studentUsername } });
@@ -93,37 +88,33 @@ describe('SmartEconomat Master E2E Suite', () => {
         .set('Authorization', `Bearer ${profToken}`)
         .expect(200);
 
-      const res = await request(app.getHttpServer() as string)
+      const loginRes = await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
         .send({ email: studentUsername, password: 'Password123!' });
-      alumnoToken = res.body.data.access_token;
-    });
-  });
+      alumnoToken = loginRes.body.data.access_token;
 
-  describe('TP - Contraseñas Provisionales', () => {
-    it('[TP-03] Generar provisional y obligar cambio', async () => {
-      const res = await request(app.getHttpServer() as string)
+      // 3. Reseteo Forzado
+      const forceRes = await request(app.getHttpServer() as string)
         .post(`/api/v1/profesores/alumnos/${alumnoId}/force-reset`)
         .set('Authorization', `Bearer ${profToken}`)
         .expect(201);
 
-      const prov = res.body.data.provisionalPassword;
-      const login = await request(app.getHttpServer() as string)
+      const prov = forceRes.body.data.provisionalPassword;
+      const loginProv = await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
         .send({ email: studentUsername, password: prov })
         .expect(200);
-      expect(login.body.data.requirePasswordChange).toBe(true);
-    });
-  });
+      expect(loginProv.body.data.requirePasswordChange).toBe(true);
 
-  describe('AUTHZ & SEC - Seguridad y Administración', () => {
-    it('[AUTHZ-01] Alumno rechazado en endpoint admin', async () => {
+      // 4. Verificación de Seguridad (RBAC)
       await request(app.getHttpServer() as string)
         .post('/api/v1/admin/profesores')
         .set('Authorization', `Bearer ${alumnoToken}`)
         .expect(403);
     });
+  });
 
+  describe('AUTHZ & SEC - Seguridad y Administración', () => {
     it('[SEC-02] No leaking de password hash', async () => {
       const res = await request(app.getHttpServer() as string)
         .get('/api/v1/usuarios/perfil')

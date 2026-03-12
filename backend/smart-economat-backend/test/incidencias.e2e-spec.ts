@@ -26,7 +26,7 @@ describe('IncidenciaController (e2e)', () => {
   let testIncidenciaId: string;
   let recepcionId: string;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     app = await getTestApp();
 
     // Login admin
@@ -65,8 +65,6 @@ describe('IncidenciaController (e2e)', () => {
       .send({
         nombre: `Proveedor Incidencia E2E ${Date.now()}`,
       });
-    if (!provRes.body.data)
-      console.error('Proveedor creation failed:', JSON.stringify(provRes.body));
     const proveedorId = provRes.body.data?.id;
 
     // Crear producto CON proveedor vinculado en un solo paso
@@ -80,8 +78,6 @@ describe('IncidenciaController (e2e)', () => {
         contenido: 500,
         proveedores: [{ proveedorId, precioUnitario: 3.5 }],
       });
-    if (!prodRes.body.data)
-      console.error('Producto creation failed:', JSON.stringify(prodRes.body));
     const productoId = prodRes.body.data?.id;
 
     // Obtener productoProveedorId
@@ -112,11 +108,6 @@ describe('IncidenciaController (e2e)', () => {
             },
           ],
         });
-      if (!pedidoRes.body.data)
-        console.error(
-          'Pedido creation failed:',
-          JSON.stringify(pedidoRes.body)
-        );
       const pedidoId = pedidoRes.body.data?.id;
 
       // Obtener pedidoProductoId
@@ -142,26 +133,21 @@ describe('IncidenciaController (e2e)', () => {
               : [],
             observaciones: 'Recepción para test incidencias',
           });
-        if (!recepRes.body.data)
-          console.error(
-            'Recepcion creation failed:',
-            JSON.stringify(recepRes.body)
-          );
         recepcionId =
           recepRes.body.data?.id || recepRes.body.data?.[0]?.id || '';
       }
     }
 
-    if (!recepcionId) {
-      const recepList = await request(app.getHttpServer() as string)
-        .get('/api/v1/recepcion')
-        .set('Authorization', `Bearer ${adminToken}`);
-      const recepData = recepList.body.data;
-      if (recepData?.data?.length > 0) {
-        recepcionId = recepData.data[recepData.data.length - 1].id;
-      } else if (Array.isArray(recepData) && recepData.length > 0) {
-        recepcionId = recepData[recepData.length - 1].id;
-      }
+    // Crear una incidencia base para los tests que la necesiten (GET single, PATCH, RESOLVE)
+    if (recepcionId) {
+        const incRes = await request(app.getHttpServer() as string)
+        .post('/api/v1/incidencias')
+        .set('Authorization', `Bearer ${profesorToken}`)
+        .send({
+          recepcionId: recepcionId,
+          observacionesRecepcion: 'Incidencia Base E2E',
+        });
+        testIncidenciaId = incRes.body.data?.id;
     }
   });
 
@@ -184,6 +170,9 @@ describe('IncidenciaController (e2e)', () => {
           'create Response Body:',
           JSON.stringify(response.body, null, 2)
         );
+      }
+      if (response.status !== 201) {
+        throw new Error(`Failed to create Incidencia. Status: ${response.status}. Body: ${JSON.stringify(response.body, null, 2)}`);
       }
       expect(response.status).toBe(201);
       const resBody = response.body as TestApiResponse<{ id: string }>;
