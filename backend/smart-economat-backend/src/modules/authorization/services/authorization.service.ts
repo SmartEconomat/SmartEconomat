@@ -62,6 +62,7 @@ export class AuthorizationService {
         `Error al obtener permisos del usuario ${userId}:`,
         error
       );
+      console.error('AuthorizationService Error:', error);
 
       return this.loadUserPermissionsFromDB(userId);
     }
@@ -82,28 +83,21 @@ export class AuthorizationService {
 
     if (!usuario) return [];
 
+    // 1. Permisos desde Roles directos asignados al usuario
     const permisosRoles = await this.permisoRepo
       .createQueryBuilder('permiso')
       .innerJoin('permiso.roles', 'rol')
-      .innerJoin(
-        'usuario_rol',
-        'ur',
-        'ur.rol_id = rol.id AND ur.usuario_id = :userId',
-        { userId }
-      )
+      .innerJoin('rol.usuarios', 'userJoin')
+      .where('userJoin.id = :userId', { userId })
       .andWhere('rol.activo = :rolActivo', { rolActivo: true })
       .andWhere('permiso.activo = :permisoActivo', { permisoActivo: true })
       .select(['permiso.codigo'])
       .getMany();
 
+    // 2. Permisos desde la Plantilla del Rol principal del usuario
     const permisosPlantilla = await this.permisoRepo
       .createQueryBuilder('permiso')
-      .innerJoin('plantilla_rol_permiso', 'prp', 'prp.permiso_id = permiso.id')
-      .innerJoin(
-        'plantilla_rol',
-        'plantilla',
-        'plantilla.id = prp.plantilla_rol_id'
-      )
+      .innerJoin('permiso.plantillasRoles', 'plantilla')
       .where('plantilla.nombre = :rolNombre', { rolNombre: usuario.rol })
       .andWhere('plantilla.activo = :plantillaActivo', {
         plantillaActivo: true,
@@ -117,28 +111,22 @@ export class AuthorizationService {
       ...permisosPlantilla.map((p) => p.codigo),
     ];
 
+    // 3. Permisos Adicionales (Directos al usuario)
     const adicionales = await this.permisoRepo
       .createQueryBuilder('permiso')
-      .innerJoin(
-        'usuario_permiso_adicional',
-        'upa',
-        'upa.permiso_id = permiso.id'
-      )
-      .where('upa.usuario_id = :userId', { userId })
+      .innerJoin('permiso.usuariosAdicionales', 'usuarioJoin')
+      .where('usuarioJoin.id = :userId', { userId })
       .andWhere('permiso.activo = :permisoActivo', { permisoActivo: true })
       .select(['permiso.codigo'])
       .getMany();
 
     const codigosAdicionales = adicionales.map((p) => p.codigo);
 
+    // 4. Permisos Excluidos (Revocados al usuario)
     const excluidos = await this.permisoRepo
       .createQueryBuilder('permiso')
-      .innerJoin(
-        'usuario_permiso_excluido',
-        'upe',
-        'upe.permiso_id = permiso.id'
-      )
-      .where('upe.usuario_id = :userId', { userId })
+      .innerJoin('permiso.usuariosExcluidos', 'usuarioExclJoin')
+      .where('usuarioExclJoin.id = :userId', { userId })
       .select(['permiso.codigo'])
       .getMany();
 
@@ -147,7 +135,12 @@ export class AuthorizationService {
     const setFinal = new Set([...codigosBase, ...codigosAdicionales]);
     codigosExcluidos.forEach((c) => setFinal.delete(c));
 
-    return Array.from(setFinal);
+    const result = Array.from(setFinal);
+    this.logger.debug(
+      `Permisos finales para usuario ${userId}: ${JSON.stringify(result)}. (Base: ${codigosBase.length}, Adicionales: ${codigosAdicionales.length}, Excluidos: ${codigosExcluidos.length})`
+    );
+
+    return result;
   }
 
   /**

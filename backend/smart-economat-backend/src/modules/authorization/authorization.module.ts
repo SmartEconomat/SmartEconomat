@@ -5,6 +5,8 @@ import { AuthorizationService } from './services/authorization.service';
 import { PermisosGuard } from './guards/permisos.guard';
 import { Usuario } from '../usuario/usuario.entity/usuario.entity';
 import { Permiso } from '../permisos/entities/permiso.entity';
+import { Rol } from '../roles/entities/rol.entity';
+import { PlantillaRol } from '../plantillas-roles/entities/plantilla-rol.entity';
 import { PermisosModule } from '../permisos/permisos.module';
 
 /**
@@ -14,7 +16,7 @@ import { PermisosModule } from '../permisos/permisos.module';
 @Global()
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Usuario, Permiso]),
+    TypeOrmModule.forFeature([Usuario, Permiso, Rol, PlantillaRol]),
     CacheModule.register({
       ttl: 300,
       max: 1000,

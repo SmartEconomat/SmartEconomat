@@ -8,7 +8,7 @@ describe('UbicacionController (e2e)', () => {
   let adminToken: string;
   let testUbicacionId: string;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     app = await getTestApp();
 
     const adminResponse = await request(app.getHttpServer() as string)
@@ -18,10 +18,16 @@ describe('UbicacionController (e2e)', () => {
         password: 'SmartEconomat2026!',
       });
     adminToken = adminResponse.body.data.access_token;
-  });
 
-  afterAll(() => {
-    /* app compartida, no cerrar */
+    // Crear una ubicación base para los tests que la necesiten
+    const response = await request(app.getHttpServer() as string)
+      .post('/api/v1/ubicacion')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        nombre: `Ubicacion E2E ${Date.now()}`,
+        descripcion: 'Descripción de test',
+      });
+    testUbicacionId = response.body.data.id;
   });
 
   describe('CRUD de Ubicaciones', () => {
@@ -30,13 +36,12 @@ describe('UbicacionController (e2e)', () => {
         .post('/api/v1/ubicacion')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          nombre: 'Almacén de Test',
+          nombre: `Almacén de Test ${Date.now()}`,
           descripcion: 'Descripción de test para ubicación',
         });
 
       expect(response.status).toBe(201);
       expect(response.body.data).toHaveProperty('id');
-      testUbicacionId = response.body.data.id;
     });
 
     it('GET /ubicacion - Debe listar ubicaciones (200)', async () => {

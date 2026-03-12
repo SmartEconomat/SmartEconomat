@@ -17,7 +17,7 @@ describe('RBAC System (e2e)', () => {
   let permisoListarUsuariosId: string;
   let permisoListarProductosId: string;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     app = await getTestApp();
 
     dataSource = app.get(DataSource);
@@ -47,7 +47,7 @@ describe('RBAC System (e2e)', () => {
       });
     adminToken = loginRes.body.data.access_token;
 
-    const username = `alumno_rbac_${Date.now()}`;
+    const username = `alumno_rbac_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     const email = `${username}@test.com`;
     const registerRes = await request(app.getHttpServer() as Server)
       .post('/api/v1/auth/register')
@@ -74,7 +74,7 @@ describe('RBAC System (e2e)', () => {
   });
 
   afterAll(() => {
-    /* app compartida, no cerrar */
+    // app compartida
   });
 
   describe('Acceso Base (ALUMNO)', () => {
