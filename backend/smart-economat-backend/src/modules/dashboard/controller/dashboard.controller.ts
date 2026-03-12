@@ -9,7 +9,7 @@ import { DashboardStatsDto } from '../dto/dashboard-stats.dto';
 import { DashboardService } from '../service/dashboard.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../auth/guards/permisos.guard';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
 @ApiTags('Dashboard')
 @ApiBearerAuth()

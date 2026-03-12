@@ -12,7 +12,7 @@ import { ProfesorService } from '../service/profesor.service';
 import { CreateSlotDto } from '../dto/create-slot.dto';
 import { CreateProfesorDto } from '../dto/create-profesor.dto';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../auth/guards/permisos.guard';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
 import { Public } from '../../../common/decorators/public.decorator';
 

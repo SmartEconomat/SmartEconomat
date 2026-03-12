@@ -12,7 +12,7 @@ import {
   PERMISSIONS_MODE_KEY,
 } from '../../../common/decorators/require-permissions.decorator';
 import { IS_PUBLIC_KEY } from '../../../common/decorators/public.decorator';
-import { AuthorizationService } from '../service/authorization.service';
+import { AuthService } from '../service/auth.service';
 
 /**
  * Guard principal de autorización basado en permisos dinámicos.
@@ -27,12 +27,12 @@ import { AuthorizationService } from '../service/authorization.service';
  * - Respeta rutas públicas (@Public())
  */
 @Injectable()
-export class PermisosGuard implements CanActivate {
-  private readonly logger = new Logger(PermisosGuard.name);
+export class AuthPermissionsGuard implements CanActivate {
+  private readonly logger = new Logger(AuthPermissionsGuard.name);
 
   constructor(
     private readonly reflector: Reflector,
-    private readonly authorizationService: AuthorizationService
+    private readonly authService: AuthService
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -78,11 +78,11 @@ export class PermisosGuard implements CanActivate {
 
     const hasPermission =
       permissionsMode === 'any'
-        ? await this.authorizationService.userHasAnyPermission(
+        ? await this.authService.userHasAnyPermission(
             String(user.id),
             requiredPermissions
           )
-        : await this.authorizationService.userHasAllPermissions(
+        : await this.authService.userHasAllPermissions(
             String(user.id),
             requiredPermissions
           );
@@ -109,3 +109,5 @@ export class PermisosGuard implements CanActivate {
     return true;
   }
 }
+
+export { AuthPermissionsGuard as PermisosGuard };

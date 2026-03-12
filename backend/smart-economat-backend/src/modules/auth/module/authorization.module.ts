@@ -2,7 +2,7 @@ import { Module, Global } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
 import { AuthorizationService } from '../service/authorization.service';
-import { PermisosGuard } from '../guards/permisos.guard';
+import { PermisosGuard } from '../guards/auth-permissions.guard';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
 import { Rol } from '../../roles/rol.entity/rol.entity';

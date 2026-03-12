@@ -19,7 +19,7 @@ import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ApiQuery } from '@nestjs/swagger';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../auth/guards/permisos.guard';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('historial-precio')

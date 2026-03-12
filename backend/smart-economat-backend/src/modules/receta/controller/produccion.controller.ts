@@ -16,7 +16,7 @@ import { ProduccionLote } from '../produccion-lote.entity/produccion-lote.entity
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../auth/guards/permisos.guard';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
 @ApiTags('Producción')
 @UseGuards(JwtAuthGuard, PermisosGuard)
