@@ -23,7 +23,7 @@ import { ProfesorModule } from './modules/profesor/profesor.module';
 import { AlumnoModule } from './modules/alumno/alumno.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { PermisosModule } from './modules/permisos/permisos.module';
-import { AuthModule } from './modules/auth/module/auth.module';
+import { AuthorizationModule } from './modules/authorization/authorization.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { PlantillasRolesModule } from './modules/plantillas-roles/plantillas-roles.module';
 @Module({
@@ -51,7 +51,7 @@ import { PlantillasRolesModule } from './modules/plantillas-roles/plantillas-rol
     AlumnoModule,
     AdminModule,
     PermisosModule,
-    AuthModule,
+    AuthorizationModule,
     RolesModule,
     PlantillasRolesModule,
   ],

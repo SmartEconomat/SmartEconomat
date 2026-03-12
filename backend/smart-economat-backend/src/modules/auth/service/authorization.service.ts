@@ -83,6 +83,7 @@ export class AuthorizationService {
 
     if (!usuario) return [];
 
+    // 1. Permisos desde Roles directos asignados al usuario
     const permisosRoles = await this.permisoRepo
       .createQueryBuilder('permiso')
       .innerJoin('permiso.roles', 'rol')
@@ -93,6 +94,7 @@ export class AuthorizationService {
       .select(['permiso.codigo'])
       .getMany();
 
+    // 2. Permisos desde la Plantilla del Rol principal del usuario
     const permisosPlantilla = await this.permisoRepo
       .createQueryBuilder('permiso')
       .innerJoin('permiso.plantillasRoles', 'plantilla')
@@ -109,6 +111,7 @@ export class AuthorizationService {
       ...permisosPlantilla.map((p) => p.codigo),
     ];
 
+    // 3. Permisos Adicionales (Directos al usuario)
     const adicionales = await this.permisoRepo
       .createQueryBuilder('permiso')
       .innerJoin('permiso.usuariosAdicionales', 'usuarioJoin')
@@ -119,6 +122,7 @@ export class AuthorizationService {
 
     const codigosAdicionales = adicionales.map((p) => p.codigo);
 
+    // 4. Permisos Excluidos (Revocados al usuario)
     const excluidos = await this.permisoRepo
       .createQueryBuilder('permiso')
       .innerJoin('permiso.usuariosExcluidos', 'usuarioExclJoin')

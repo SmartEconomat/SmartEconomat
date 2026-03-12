@@ -11,9 +11,7 @@ import { TrimStringTransformer } from '../../../common/transformers/trim-string.
 import { StringToNumberTransformer } from '../../../common/transformers/string-to-number.transformer';
 
 export class RegisterAlumnoDto {
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   @IsNotEmpty()
   username!: string;
@@ -35,24 +33,18 @@ export class RegisterAlumnoDto {
   )
   password!: string;
 
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   @IsNotEmpty()
   aula!: string;
 
   @Type(() => Number)
-  @Transform(function (this: void, params) {
-    return StringToNumberTransformer.transform(params);
-  })
+  @Transform(StringToNumberTransformer.transform)
   @IsInt()
   @Min(1)
   numeroClase!: number;
 
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   @IsNotEmpty()
   cialProfesor!: string;

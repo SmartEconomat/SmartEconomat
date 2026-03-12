@@ -17,9 +17,7 @@ export class CreateIncidenciaDto {
   pedidoId?: string;
 
   @IsOptional()
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   observacionesRecepcion?: string;
 }
@@ -41,9 +39,7 @@ export class CreateIncidenciaResuelaDto {
   tipoResolucion?: TipoResolucion;
 
   @IsOptional()
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   observaciones?: string;
 }
