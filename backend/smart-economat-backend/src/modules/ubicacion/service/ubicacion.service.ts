@@ -8,6 +8,8 @@ import { Repository } from 'typeorm';
 import { Ubicacion } from '../ubicacion.entity/ubicacion.entity';
 import { CreateUbicacionDto } from '../dto/create-ubicacion.dto';
 import { UpdateUbicacionDto } from '../dto/update-ubicacion.dto';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @Injectable()
 export class UbicacionService {
@@ -28,10 +30,27 @@ export class UbicacionService {
     return await this.ubicacionRepository.save(nuevaUbicacion);
   }
 
-  async findAll(): Promise<Ubicacion[]> {
-    return this.ubicacionRepository.find({
-      order: { nombre: 'ASC' },
+  async findAll(
+    query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<Ubicacion>> {
+    const page = query.page ?? 1;
+    const limit = Math.min(query.limit ?? 20, 50);
+    const sortBy = query.sortBy ?? 'nombre';
+    const order = query.order ?? 'ASC';
+
+    const [data, total] = await this.ubicacionRepository.findAndCount({
+      order: { [sortBy]: order },
+      skip: (page - 1) * limit,
+      take: limit,
     });
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
+    };
   }
 
   async findOne(id: string): Promise<Ubicacion> {

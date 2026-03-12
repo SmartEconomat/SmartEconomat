@@ -29,12 +29,14 @@ export class MovimientoRepository {
   }
 
   findAll(query: PaginationQueryDto) {
-    const page = query.page ?? 1;
-    const limit = Math.min(query.limit ?? 20, 100);
+    const page = Number(query.page ?? 1);
+    const limit = Math.min(Number(query.limit ?? 20), 50);
+    const sortBy = query.sortBy ?? 'createdAt';
+    const order = query.order ?? 'DESC';
     return this.repo
       .findAndCount({
         relations: ['usuario', 'productoProveedor', 'inventario'],
-        order: { createdAt: 'DESC' },
+        order: { [sortBy]: order },
         skip: (page - 1) * limit,
         take: limit,
       })

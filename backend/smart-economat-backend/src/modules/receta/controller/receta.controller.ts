@@ -10,8 +10,8 @@ import {
   HttpStatus,
   UseGuards,
   ParseUUIDPipe,
-  Query,
 } from '@nestjs/common';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { RecetaService } from '../service/receta.service';
 import { CreateRecetaDto } from '../dto/create-receta.dto';
@@ -52,7 +52,16 @@ export class RecetaController {
   @Get()
   @RequirePermissions('recetas:listar')
   findAll(
-    @Query() query: PaginationQueryDto
+    @SortableFields([
+      'nombre',
+      'tiempo',
+      'dificultad',
+      'tiempoPreparacion',
+      'costeUnitarioEstimado',
+      'createdAt',
+      'updatedAt',
+    ])
+    query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Receta>> {
     return this.recetaService.findAll(query);
   }

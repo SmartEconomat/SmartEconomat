@@ -34,7 +34,9 @@ export class PedidoRepository extends Repository<Pedido> {
     loadRelations = false
   ): Promise<PaginatedResponseDto<Pedido>> {
     const page = query.page ?? 1;
-    const limit = Math.min(query.limit ?? 100, 100);
+    const limit = Math.min(query.limit ?? 50, 50);
+    const sortBy = query.sortBy ?? 'createdAt';
+    const order = query.order ?? 'DESC';
 
     const [data, total] = await this.findAndCount({
       relations: loadRelations
@@ -48,7 +50,7 @@ export class PedidoRepository extends Repository<Pedido> {
             'recepcionesPedido',
           ]
         : [],
-      order: { createdAt: 'DESC' },
+      order: { [sortBy]: order },
       skip: (page - 1) * limit,
       take: limit,
     });

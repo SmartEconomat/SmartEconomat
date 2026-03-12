@@ -66,7 +66,7 @@ describe('UbicacionController (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
-      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(Array.isArray(response.body.data.data)).toBe(true);
     });
 
     it('GET /ubicacion/:id - Debe obtener una ubicación (200)', async () => {

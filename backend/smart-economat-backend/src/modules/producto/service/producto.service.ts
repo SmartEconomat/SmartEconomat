@@ -92,7 +92,9 @@ export class ProductoService {
     query: ProductFilterDto
   ): Promise<PaginatedResponseDto<Producto>> {
     const page = query.page ?? 1;
-    const limit = Math.min(query.limit ?? 20, 100);
+    const limit = Math.min(query.limit ?? 20, 50);
+    const sortBy = query.sortBy ?? 'nombre';
+    const order = query.order ?? 'ASC';
 
     const queryBuilder = this.productoRepository
       .createQueryBuilder('producto')
@@ -139,7 +141,7 @@ export class ProductoService {
       );
     }
 
-    queryBuilder.orderBy('producto.nombre', 'ASC');
+    queryBuilder.orderBy(`producto.${sortBy}`, order);
 
     queryBuilder.skip((page - 1) * limit).take(limit);
 

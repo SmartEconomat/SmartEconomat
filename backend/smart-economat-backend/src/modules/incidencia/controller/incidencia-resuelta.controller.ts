@@ -18,6 +18,9 @@ import { IncidenciaResuelta } from '../incidencia-resuelta.entity/incidencia-res
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('incidencias-resueltas')
@@ -35,8 +38,16 @@ export class IncidenciaResuelaController {
 
   @Get()
   @RequirePermissions('incidencias:listar')
-  findAll(): Promise<IncidenciaResuelta[]> {
-    return this.incidenciaResuelaService.findAll();
+  findAll(
+    @SortableFields([
+      'fechaResolucion',
+      'tipoResolucion',
+      'createdAt',
+      'updatedAt',
+    ])
+    query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<IncidenciaResuelta>> {
+    return this.incidenciaResuelaService.findAll(query);
   }
 
   @Get(':id')

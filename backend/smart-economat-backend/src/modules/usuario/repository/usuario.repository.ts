@@ -18,12 +18,13 @@ export class UsuarioRepository {
 
   findAll(query: PaginationQueryDto) {
     const page = query.page ?? 1;
-
-    const limit = Math.min(query.limit ?? 20, 100);
+    const limit = Math.min(query.limit ?? 20, 50);
+    const sortBy = query.sortBy ?? 'username';
+    const order = query.order ?? 'ASC';
     return this.repo
       .findAndCount({
         relations: ['movimientos', 'pedidos', 'recepciones'],
-        order: { username: 'ASC' },
+        order: { [sortBy]: order },
         skip: (page - 1) * limit,
         take: limit,
       })

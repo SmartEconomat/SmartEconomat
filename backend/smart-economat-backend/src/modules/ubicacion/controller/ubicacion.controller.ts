@@ -16,6 +16,10 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { Ubicacion } from '../ubicacion.entity/ubicacion.entity';
 
 @ApiTags('Ubicaciones')
 @ApiBearerAuth()
@@ -34,8 +38,11 @@ export class UbicacionController {
   @Get()
   @RequirePermissions('ubicaciones:listar')
   @ApiOperation({ summary: 'Obtener todas las ubicaciones' })
-  findAll() {
-    return this.ubicacionService.findAll();
+  findAll(
+    @SortableFields(['nombre', 'descripcion', 'createdAt', 'updatedAt'])
+    query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<Ubicacion>> {
+    return this.ubicacionService.findAll(query);
   }
 
   @Get(':id')

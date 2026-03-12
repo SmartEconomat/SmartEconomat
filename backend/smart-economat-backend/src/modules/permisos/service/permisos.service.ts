@@ -55,10 +55,13 @@ export class PermisosService {
   async findAll(
     query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Permiso>> {
-    const { page = 1, limit = 10 } = query;
+    const page = query.page ?? 1;
+    const limit = Math.min(query.limit ?? 10, 50);
+    const sortBy = query.sortBy ?? 'modulo';
+    const order = query.order ?? 'ASC';
 
     const [data, total] = await this.permisoRepo.findAndCount({
-      order: { modulo: 'ASC', accion: 'ASC' },
+      order: { [sortBy]: order },
       skip: (page - 1) * limit,
       take: limit,
     });
@@ -168,9 +171,9 @@ export class PermisosService {
       .leftJoin('permiso.roles', 'rol')
       .where('permiso.id = :id', { id })
       .select('COUNT(DISTINCT rol.id)', 'count')
-      .getRawOne();
+      .getRawOne<{ count: string }>();
 
-    const count = parseInt(rolesCount?.count || '0', 10);
+    const count = parseInt(rolesCount?.count ?? '0', 10);
 
     if (count > 0) {
       throw new BadRequestException(

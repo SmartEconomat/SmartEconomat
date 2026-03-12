@@ -8,13 +8,13 @@ import {
   Delete,
   UseGuards,
   ParseUUIDPipe,
-  Query,
 } from '@nestjs/common';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { UsuarioService } from '../service/usuario.service';
 import { CreateUsuarioDto } from '../dto/create-usuario.dto';
 import { UpdateUsuarioDto } from '../dto/update-usuario.dto';
-import { ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { UpdateUsuarioStatusDto } from '../dto/update-status.dto';
 import { UpdateUsuarioRolDto } from '../dto/update-rol.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
@@ -53,9 +53,18 @@ export class UsuarioController {
 
   @Get()
   @RequirePermissions('usuarios:listar')
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  findAll(@Query() query: PaginationQueryDto) {
+  findAll(
+    @SortableFields([
+      'username',
+      'email',
+      'rol',
+      'status',
+      'activo',
+      'createdAt',
+      'updatedAt',
+    ])
+    query: PaginationQueryDto
+  ) {
     return this.usuarioService.findAll(query);
   }
 

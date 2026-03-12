@@ -5,6 +5,8 @@ import { Albaran } from '../albaran.entity/albaran.entity';
 import { CreateAlbaranDto } from '../dto/create-albaran.dto';
 import { UpdateAlbaranDto } from '../dto/update-albaran.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @Injectable()
 export class AlbaranService {
@@ -18,11 +20,28 @@ export class AlbaranService {
     return await this.albaranRepository.save(albaran);
   }
 
-  async findAll(): Promise<Albaran[]> {
-    return this.albaranRepository.find({
+  async findAll(
+    query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<Albaran>> {
+    const page = query.page ?? 1;
+    const limit = Math.min(query.limit ?? 20, 50);
+    const sortBy = query.sortBy ?? 'fecha';
+    const order = query.order ?? 'DESC';
+
+    const [data, total] = await this.albaranRepository.findAndCount({
       relations: ['albaranPedidoRecepcion'],
-      order: { fecha: 'DESC' },
+      order: { [sortBy]: order },
+      skip: (page - 1) * limit,
+      take: limit,
     });
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
+    };
   }
 
   async findOne(id: string): Promise<Albaran> {
