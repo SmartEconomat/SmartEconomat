@@ -8,7 +8,9 @@ import {
   Min,
   MaxLength,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { TipoMovimiento } from '../enums/movimiento.enums';
+import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
 
 export class CreateMovimientoDto {
   @IsEnum(TipoMovimiento, {
@@ -30,6 +32,7 @@ export class CreateMovimientoDto {
   })
   cantidad!: number;
 
+  @Transform(TrimStringTransformer.transform)
   @IsString({
     message: i18nValidationMessage(
       'validation.EL_TIPO_DE_ENTIDAD_DEBE_SER_UNA_CADENA_D'
@@ -37,6 +40,7 @@ export class CreateMovimientoDto {
   })
   entidadTipo!: string;
 
+  @Transform(TrimStringTransformer.transform)
   @IsString({
     message: i18nValidationMessage(
       'validation.EL_ID_DE_ENTIDAD_DEBE_SER_UNA_CADENA_DE'
@@ -44,12 +48,13 @@ export class CreateMovimientoDto {
   })
   entidadId!: string;
 
+  @IsOptional()
+  @Transform(TrimStringTransformer.transform)
   @IsString({
     message: i18nValidationMessage(
       'validation.LA_DESCRIPCI_N_DEBE_SER_UNA_CADENA_DE_TE'
     ),
   })
-  @IsOptional()
   @MaxLength(1000, {
     message: i18nValidationMessage(
       'validation.LA_DESCRIPCI_N_NO_PUEDE_EXCEDER_LOS_1000'

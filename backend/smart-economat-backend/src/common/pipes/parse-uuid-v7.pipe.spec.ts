@@ -63,13 +63,13 @@ describe('ParseUUIDv7Pipe', () => {
 
     it('debe rechazar string vacío', () => {
       expect(() => pipe.transform('')).toThrow(BadRequestException);
-      expect(() => pipe.transform('')).toThrow('El UUID no puede estar vacío');
+      expect(() => pipe.transform('')).toThrow('EL_UUID_NO_PUEDE_ESTAR_VAC_O');
     });
 
     it('debe rechazar undefined', () => {
       expect(() => pipe.transform(undefined)).toThrow(BadRequestException);
       expect(() => pipe.transform(undefined)).toThrow(
-        'El UUID no puede estar vacío'
+        'EL_UUID_NO_PUEDE_ESTAR_VAC_O'
       );
     });
 

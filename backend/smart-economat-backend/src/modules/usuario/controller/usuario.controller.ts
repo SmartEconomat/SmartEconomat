@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Body,
   Param,
   Patch,
@@ -8,7 +9,6 @@ import {
   UseGuards,
   ParseUUIDPipe,
   Query,
-  Post,
 } from '@nestjs/common';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { UsuarioService } from '../service/usuario.service';
@@ -69,7 +69,7 @@ export class UsuarioController {
   }
 
   @Patch(':id/activar')
-  @RequirePermissions('usuarios:editar')
+  @RequirePermissions('usuarios:activar_desactivar')
   updateStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUsuarioStatusDto
@@ -78,7 +78,7 @@ export class UsuarioController {
   }
 
   @Patch(':id/rol')
-  @RequirePermissions('usuarios:editar')
+  @RequirePermissions('usuarios:cambiar_rol')
   updateRol(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUsuarioRolDto
@@ -87,7 +87,7 @@ export class UsuarioController {
   }
 
   @Patch(':id/password')
-  @RequirePermissions('usuarios:editar')
+  @RequirePermissions('usuarios:resetear_password')
   updatePassword(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ResetPasswordDto
@@ -102,7 +102,7 @@ export class UsuarioController {
   }
 
   @Post(':id/permisos-adicionales/:permisoId')
-  @RequirePermissions('usuarios:editar')
+  @RequirePermissions('permisos:gestionar')
   addAdditionalPermission(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('permisoId', ParseUUIDPipe) permisoId: string
@@ -111,7 +111,7 @@ export class UsuarioController {
   }
 
   @Delete(':id/permisos-adicionales/:permisoId')
-  @RequirePermissions('usuarios:editar')
+  @RequirePermissions('permisos:gestionar')
   removeAdditionalPermission(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('permisoId', ParseUUIDPipe) permisoId: string
@@ -120,8 +120,7 @@ export class UsuarioController {
   }
 
   @Post(':id/permisos-excluidos/:permisoId')
-  @RequirePermissions('usuarios:editar')
-  addExcludedPermission(
+  @RequirePermissions('permisos:gestionar')
     @Param('id', ParseUUIDPipe) id: string,
     @Param('permisoId', ParseUUIDPipe) permisoId: string
   ) {
@@ -129,7 +128,7 @@ export class UsuarioController {
   }
 
   @Delete(':id/permisos-excluidos/:permisoId')
-  @RequirePermissions('usuarios:editar')
+  @RequirePermissions('permisos:gestionar')
   removeExcludedPermission(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('permisoId', ParseUUIDPipe) permisoId: string

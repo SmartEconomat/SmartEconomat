@@ -201,7 +201,13 @@
     "LOS_PROVEEDORES_DEBEN_SER_UN_ARRAY": "Los proveedores deben ser un array",
     "PASSWORD_TOO_LONG": "Password is too long",
     "PASSWORD_TOO_SHORT": "Password is too short",
-    "UNO_O_M_S_AL_RGENOS_INDICADOS_NO_SON_V_L": "Uno o más alérgenos indicados no son válidos"
+    "UNO_O_M_S_AL_RGENOS_INDICADOS_NO_SON_V_L": "Uno o más alérgenos indicados no son válidos",
+    "VALIDACION_FALLIDA": "Validation failed",
+    "VALOR_NO_PUEDE_SER_CONVERTIDO_A_NUMERO": "Value cannot be converted to number",
+    "VALOR_NO_PUEDE_SER_CONVERTIDO_A_BOOLEANO": "Value cannot be converted to boolean",
+    "VALOR_NO_PUEDE_SER_CONVERTIDO_A_FECHA": "Value cannot be converted to date",
+    "STRING_DEBE_TENER_TRIM": "String must be trimmed (no leading/trailing spaces)",
+    "ARRAY_NO_PUEDE_ESTAR_VAC_O": "Array cannot be empty"
   },
   "entities": {
     "albaran": "Delivery Note",

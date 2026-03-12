@@ -68,7 +68,9 @@ export class PlantillaRol extends BaseEntity {
    * Relación ManyToMany con Permiso
    * Una plantilla contiene un conjunto base de permisos
    */
-  @ManyToMany(() => Permiso, { cascade: false })
+  @ManyToMany(() => Permiso, (permiso) => permiso.plantillasRoles, {
+    cascade: false,
+  })
   @JoinTable({
     name: 'plantilla_rol_permiso',
     joinColumn: { name: 'plantilla_rol_id', referencedColumnName: 'id' },

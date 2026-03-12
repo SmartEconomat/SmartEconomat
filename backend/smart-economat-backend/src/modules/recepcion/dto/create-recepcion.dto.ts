@@ -8,13 +8,16 @@ import {
   IsEnum,
   IsNumber,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EstadoVisualProducto } from '../enums/estado-visual.enum';
 import {
   TipoProducto,
   UnidadMedida,
 } from '../../producto/enums/producto.enums';
+import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
+import { StringToDateTransformer } from '../../../common/transformers/string-to-date.transformer';
+import { StringToBooleanTransformer } from '../../../common/transformers/string-to-boolean.transformer';
 
 export class ProductoNuevoDto {
   @ApiProperty({
@@ -35,6 +38,7 @@ export class ProductoNuevoDto {
     description: 'docs.NOMBRE_INTRODUCIDO_POR_EL_OPERARIO',
     example: 'Tomate frito',
   })
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   nombre: string;
 
@@ -43,6 +47,7 @@ export class ProductoNuevoDto {
     example: 'Orlando',
   })
   @IsOptional()
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   marca?: string;
 
@@ -105,6 +110,7 @@ export class RecepcionLineDto {
   })
   @IsOptional()
   @Type(() => Date)
+  @Transform(StringToDateTransformer.transform)
   fechaCaducidad?: Date;
 
   @ApiPropertyOptional({
@@ -112,6 +118,7 @@ export class RecepcionLineDto {
     example: 'Sin daños',
   })
   @IsOptional()
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   observaciones?: string;
 
@@ -119,6 +126,7 @@ export class RecepcionLineDto {
     description: 'docs.INDICA_SI_EL_PESO_SE_OBTUVO_DESDE_LA_B_S',
   })
   @IsOptional()
+  @Transform(StringToBooleanTransformer.transform)
   @IsBoolean()
   isWeighedWithScale?: boolean;
 }
@@ -138,6 +146,7 @@ export class ProductoNuevoRecepcionDto extends ProductoNuevoDto {
     example: 'Caja abollada',
   })
   @IsOptional()
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   observaciones?: string;
 
@@ -145,6 +154,7 @@ export class ProductoNuevoRecepcionDto extends ProductoNuevoDto {
     description: 'docs.INDICA_SI_EL_PESO_SE_OBTUVO_DESDE_LA_B_S',
   })
   @IsOptional()
+  @Transform(StringToBooleanTransformer.transform)
   @IsBoolean()
   isWeighedWithScale?: boolean;
 }
@@ -158,6 +168,7 @@ export class PedidoRecepcionDto {
     description: 'docs.N_DE_ALBAR_N_REFERENCIADO_EN_EL_PEDIDO',
   })
   @IsOptional()
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   nAlbaran?: string;
 
@@ -165,6 +176,7 @@ export class PedidoRecepcionDto {
     description: 'docs.FIRMA_OBSERVACIONES_GENERALES_PARA_EL_PE',
   })
   @IsOptional()
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   observaciones?: string;
 }
@@ -194,6 +206,7 @@ export class CreateRecepcionDto {
     example: 'ALB-2023-001',
   })
   @IsOptional()
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   nAlbaran?: string;
 
@@ -201,12 +214,15 @@ export class CreateRecepcionDto {
     description: 'docs.FECHA_DE_RECEPCI_N_POR_DEFECTO_CURRENT_T',
   })
   @IsOptional()
+  @Type(() => Date)
+  @Transform(StringToDateTransformer.transform)
   fechaRecepcion?: Date;
 
   @ApiPropertyOptional({
     description: 'docs.OBSERVACIONES_GENERALES_O_FIRMA_DE_RECEP',
   })
   @IsOptional()
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   observaciones?: string;
 
