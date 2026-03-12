@@ -9,6 +9,7 @@ import request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
 import { GlobalExceptionFilter } from '../src/common/filters/global-exception.filter';
+import { I18nService } from 'nestjs-i18n';
 
 describe('ProfesorController (e2e)', () => {
   let app: INestApplication;
@@ -28,7 +29,7 @@ describe('ProfesorController (e2e)', () => {
       new ClassSerializerInterceptor(app.get(Reflector)),
       new TransformInterceptor()
     );
-    app.useGlobalFilters(new GlobalExceptionFilter());
+    app.useGlobalFilters(new GlobalExceptionFilter(app.get(I18nService)));
     await app.init();
 
     const profResponse = await request(app.getHttpServer() as string)

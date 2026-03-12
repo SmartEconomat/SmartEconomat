@@ -10,6 +10,7 @@ import request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
 import { GlobalExceptionFilter } from '../src/common/filters/global-exception.filter';
+import { I18nService } from 'nestjs-i18n';
 import { DataSource } from 'typeorm';
 import { Permiso } from '../src/modules/permisos/entities/permiso.entity';
 import { Usuario } from '../src/modules/usuario/usuario.entity/usuario.entity';
@@ -38,7 +39,7 @@ describe('RBAC System (e2e)', () => {
       new ClassSerializerInterceptor(app.get(Reflector)),
       new TransformInterceptor()
     );
-    app.useGlobalFilters(new GlobalExceptionFilter());
+    app.useGlobalFilters(new GlobalExceptionFilter(app.get(I18nService)));
     await app.init();
 
     dataSource = app.get(DataSource);

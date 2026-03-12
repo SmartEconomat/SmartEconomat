@@ -9,6 +9,7 @@ import request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
 import { GlobalExceptionFilter } from '../src/common/filters/global-exception.filter';
+import { I18nService } from 'nestjs-i18n';
 
 /**
  * @file movimientos.e2e-spec.ts
@@ -43,7 +44,7 @@ describe('MovimientoController (e2e)', () => {
       new ClassSerializerInterceptor(app.get(Reflector)),
       new TransformInterceptor()
     );
-    app.useGlobalFilters(new GlobalExceptionFilter());
+    app.useGlobalFilters(new GlobalExceptionFilter(app.get(I18nService)));
     await app.init();
 
     const adminResponse = await request(app.getHttpServer() as string)

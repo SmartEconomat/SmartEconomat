@@ -9,6 +9,7 @@ import request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
 import { GlobalExceptionFilter } from '../src/common/filters/global-exception.filter';
+import { I18nService } from 'nestjs-i18n';
 import { DataSource } from 'typeorm';
 import { Usuario } from '../src/modules/usuario/usuario.entity/usuario.entity';
 import { Alumno } from '../src/modules/alumno/alumno.entity/alumno.entity';
@@ -37,7 +38,7 @@ describe('SmartEconomat Master E2E Suite', () => {
       new ClassSerializerInterceptor(app.get(Reflector)),
       new TransformInterceptor()
     );
-    app.useGlobalFilters(new GlobalExceptionFilter());
+    app.useGlobalFilters(new GlobalExceptionFilter(app.get(I18nService)));
     await app.init();
 
     dataSource = app.get(DataSource);

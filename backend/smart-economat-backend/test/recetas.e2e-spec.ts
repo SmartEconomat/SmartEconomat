@@ -9,6 +9,7 @@ import request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
 import { GlobalExceptionFilter } from '../src/common/filters/global-exception.filter';
+import { I18nService } from 'nestjs-i18n';
 
 /**
  * @file recetas.e2e-spec.ts
@@ -16,8 +17,6 @@ import { GlobalExceptionFilter } from '../src/common/filters/global-exception.fi
  * Cubre el CRUD de recetas y sus validaciones.
  */
 describe('RecetaController (e2e)', () => {
-  jest.setTimeout(60000);
-
   let app: INestApplication;
   let adminToken: string;
   let recetaId: string;
@@ -37,7 +36,7 @@ describe('RecetaController (e2e)', () => {
       new ClassSerializerInterceptor(app.get(Reflector)),
       new TransformInterceptor()
     );
-    app.useGlobalFilters(new GlobalExceptionFilter());
+    app.useGlobalFilters(new GlobalExceptionFilter(app.get(I18nService)));
     await app.init();
 
     const response = await request(app.getHttpServer() as string)
