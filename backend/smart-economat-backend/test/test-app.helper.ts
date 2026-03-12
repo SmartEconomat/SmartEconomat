@@ -9,6 +9,7 @@ import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
 import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
 import { GlobalExceptionFilter } from '../src/common/filters/global-exception.filter';
+import { useContainer } from 'class-validator';
 
 const g = global as any;
 
@@ -34,6 +35,8 @@ export async function getTestApp(): Promise<INestApplication> {
   app.useGlobalFilters(new GlobalExceptionFilter());
   await app.init();
 
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
+
   g.__TEST_APP__ = app;
   return app;
 }
@@ -48,14 +51,13 @@ export async function closeTestApp(): Promise<void> {
       if (dataSource && dataSource.isInitialized) {
         await dataSource.destroy();
       }
-    } catch {
-      // Ignorar si DataSource no está o ya se destruyó
+    } catch (error) {
+      void error;
     }
 
     await g.__TEST_APP__.close();
     g.__TEST_APP__ = undefined;
 
-    // Delay to let TypeORM Postgres pooling resolve promises before Jest node env destroy
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
 }

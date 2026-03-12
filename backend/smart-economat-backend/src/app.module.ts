@@ -26,6 +26,7 @@ import { PermisosModule } from './modules/permisos/permisos.module';
 import { AuthModule } from './modules/auth/module/auth.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { PlantillasRolesModule } from './modules/plantillas-roles/plantillas-roles.module';
+import { IsUniqueConstraint } from './common/decorators/is-unique.decorator';
 
 @Module({
   imports: [
@@ -57,6 +58,6 @@ import { PlantillasRolesModule } from './modules/plantillas-roles/plantillas-rol
     PlantillasRolesModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, IsUniqueConstraint],
 })
 export class AppModule {}

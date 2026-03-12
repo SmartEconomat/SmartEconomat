@@ -1,26 +1,19 @@
 import { i18nValidationMessage } from 'nestjs-i18n';
-import { IsString, IsNotEmpty, IsOptional, MaxLength } from 'class-validator';
+import { IsString, IsOptional, MaxLength } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsUnique } from '../../../common/decorators/is-unique.decorator';
+import { Ubicacion } from '../ubicacion.entity/ubicacion.entity';
 
 export class CreateUbicacionDto {
   @ApiProperty({
     description: 'docs.NOMBRE_DE_LA_UBICACI_N',
     example: 'Almacen A',
   })
-  @Transform((params) => TrimStringTransformer.transform(params))
-  @IsString({
+  @IsUnique(Ubicacion, 'nombre', {
     message: i18nValidationMessage(
-      'validation.EL_NOMBRE_DEBE_SER_UNA_CADENA_DE_TEXTO'
-    ),
-  })
-  @IsNotEmpty({
-    message: i18nValidationMessage('validation.EL_NOMBRE_ES_OBLIGATORIO'),
-  })
-  @MaxLength(150, {
-    message: i18nValidationMessage(
-      'validation.EL_NOMBRE_NO_PUEDE_SUPERAR_LOS_150_CARAC'
+      'validation.YA_EXISTE_UNA_UBICACI_N_CON_ESTE_NOMBRE'
     ),
   })
   nombre: string;

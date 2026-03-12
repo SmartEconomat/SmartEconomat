@@ -4,15 +4,6 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
 /**
- * Interface simple para tipar respuestas del API en tests.
- */
-interface TestApiResponse<T = any> {
-  success: boolean;
-  message: string;
-  data: T;
-}
-
-/**
  * @file incidencias.e2e-spec.ts
  * @description Pruebas de integración E2E para el controlador de Incidencias.
  */
@@ -35,15 +26,13 @@ describe('IncidenciaController (e2e)', () => {
         email: 'admin@smarteconomat.com',
         password: 'SmartEconomat2026!',
       });
-    adminToken = (
-      adminResponse.body as TestApiResponse<{ access_token: string }>
-    ).data.access_token;
+    adminToken = (adminResponse.body as { data: { access_token: string } }).data
+      .access_token;
 
     const profileResponse = await request(app.getHttpServer() as string)
       .get('/api/v1/usuarios/perfil')
       .set('Authorization', `Bearer ${adminToken}`);
-    adminUserId = (profileResponse.body as TestApiResponse<{ id: string }>).data
-      .id;
+    adminUserId = (profileResponse.body as { data: { id: string } }).data.id;
 
     const profesorResponse = await request(app.getHttpServer() as string)
       .post('/api/v1/auth/login')
@@ -53,7 +42,7 @@ describe('IncidenciaController (e2e)', () => {
       });
 
     profesorToken = (
-      profesorResponse.body as TestApiResponse<{ access_token: string }>
+      profesorResponse.body as { data: { access_token: string } }
     ).data.access_token;
 
     const provRes = await request(app.getHttpServer() as string)
@@ -130,7 +119,6 @@ describe('IncidenciaController (e2e)', () => {
       }
     }
 
-    // Crear una incidencia base para los tests que la necesiten (GET single, PATCH, RESOLVE)
     if (recepcionId) {
       const incRes = await request(app.getHttpServer() as string)
         .post('/api/v1/incidencias')
@@ -169,9 +157,9 @@ describe('IncidenciaController (e2e)', () => {
         );
       }
       expect(response.status).toBe(201);
-      const resBody = response.body as TestApiResponse<{ id: string }>;
-      expect(resBody.data).toHaveProperty('id');
-      testIncidenciaId = resBody.data.id;
+      const resBody = response.body as { id: string };
+      expect(resBody).toHaveProperty('id');
+      testIncidenciaId = resBody.id;
     });
 
     it('GET /incidencias - Debe listar las incidencias (200)', async () => {
@@ -180,9 +168,9 @@ describe('IncidenciaController (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
-      const resBody = response.body as TestApiResponse<any[]>;
-      expect(Array.isArray(resBody.data)).toBe(true);
-      expect(resBody.data.length).toBeGreaterThan(0);
+      const resBody = response.body as any[];
+      expect(Array.isArray(resBody)).toBe(true);
+      expect(resBody.length).toBeGreaterThan(0);
     });
 
     it('GET /incidencias/:id - Debe obtener una incidencia por ID (200)', async () => {
@@ -191,8 +179,8 @@ describe('IncidenciaController (e2e)', () => {
         .set('Authorization', `Bearer ${profesorToken}`);
 
       expect(response.status).toBe(200);
-      const resBody = response.body as TestApiResponse<{ id: string }>;
-      expect(resBody.data.id).toBe(testIncidenciaId);
+      const resBody = response.body as { id: string };
+      expect(resBody.id).toBe(testIncidenciaId);
     });
 
     it('PATCH /incidencias/:id - Debe actualizar una incidencia (200)', async () => {
@@ -205,10 +193,10 @@ describe('IncidenciaController (e2e)', () => {
         });
 
       expect(response.status).toBe(200);
-      const resBody = response.body as TestApiResponse<{
+      const resBody = response.body as {
         observacionesRecepcion: string;
-      }>;
-      expect(resBody.data.observacionesRecepcion).toContain('caja 2 y 3');
+      };
+      expect(resBody.observacionesRecepcion).toContain('caja 2 y 3');
     });
 
     it('PATCH /incidencias/:id/resolver - Debe resolver una incidencia (200)', async () => {
@@ -239,8 +227,8 @@ describe('IncidenciaController (e2e)', () => {
           observacionesRecepcion: 'Incidencia para borrar',
         });
 
-      const resBody = createRes.body as TestApiResponse<{ id: string }>;
-      const idToDelete = resBody.data.id;
+      const resBody = createRes.body as { id: string };
+      const idToDelete = resBody.id;
 
       const response = await request(app.getHttpServer() as string)
         .delete(`/api/v1/incidencias/${idToDelete}`)

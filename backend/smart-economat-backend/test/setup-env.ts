@@ -4,6 +4,7 @@ import type { DataSource } from 'typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
+import { useContainer } from 'class-validator';
 
 const envPaths = [
   path.join(process.cwd(), '.env'),
@@ -76,7 +77,6 @@ process.env.LOCAL_STORAGE_PATH =
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-key-mock';
 process.env.JWT_EXPIRATION = process.env.JWT_EXPIRATION || '1h';
 
-// Forzar TypeORM a usar el mock in-memory
 const { PlatformTools } = require('typeorm/platform/PlatformTools');
 const originalLoad = PlatformTools.load.bind(PlatformTools);
 PlatformTools.load = function (name: string) {
@@ -101,10 +101,15 @@ beforeAll(async () => {
   if (!g.__SEEDED__) {
     await runAllSeeders();
     g.__SEEDED__ = true;
-    // Capturar snapshot inicial tras seeders
+
     g.__BACKUP__ = g.__PG_MEM_DB__.backup();
   }
-}, 30000);
+
+  const { AppModule } = require('../src/app.module');
+  const { getTestApp } = require('./test-app.helper');
+  const app = await getTestApp();
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
+}, 120000);
 
 beforeEach(() => {
   if (g.__BACKUP__) {

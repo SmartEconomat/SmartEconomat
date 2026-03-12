@@ -19,7 +19,6 @@ describe('UbicacionController (e2e)', () => {
       });
     adminToken = adminResponse.body.data.access_token;
 
-    // Crear una ubicación base para los tests que la necesiten
     const response = await request(app.getHttpServer() as string)
       .post('/api/v1/ubicacion')
       .set('Authorization', `Bearer ${adminToken}`)
@@ -50,7 +49,7 @@ describe('UbicacionController (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
-      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(Array.isArray(response.body.data.data)).toBe(true);
     });
 
     it('GET /ubicacion/:id - Debe obtener una ubicación (200)', async () => {
