@@ -13,9 +13,7 @@ import { TrimStringTransformer } from '../../../common/transformers/trim-string.
 import { LowercaseStringTransformer } from '../../../common/transformers/lowercase-string.transformer';
 
 export class RegisterUserDto {
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   @IsNotEmpty()
   username: string;
@@ -38,9 +36,7 @@ export class RegisterUserDto {
   password: string;
 
   @IsOptional()
-  @Transform(function (this: void, params) {
-    return LowercaseStringTransformer.transform(params);
-  })
+  @Transform(LowercaseStringTransformer.transform)
   @IsEmail()
   email?: string;
 

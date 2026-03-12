@@ -71,11 +71,11 @@ if (!g.__PG_MEM_DB__) {
 
 process.env.DB_SYNC = process.env.DB_SYNC || 'false';
 process.env.NODE_ENV = 'test';
-process.env.LOCAL_STORAGE_PATH =
-  process.env.LOCAL_STORAGE_PATH || './uploads_test';
+process.env.LOCAL_STORAGE_PATH = process.env.LOCAL_STORAGE_PATH || './uploads_test';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-key-mock';
 process.env.JWT_EXPIRATION = process.env.JWT_EXPIRATION || '1h';
 
+// Forzar TypeORM a usar el mock in-memory
 const { PlatformTools } = require('typeorm/platform/PlatformTools');
 const originalLoad = PlatformTools.load.bind(PlatformTools);
 PlatformTools.load = function (name: string) {
@@ -101,15 +101,14 @@ beforeAll(async () => {
   if (!g.__SEEDED__) {
     await runAllSeeders();
     g.__SEEDED__ = true;
-
-    g.__BACKUP__ = (g.__PG_MEM_DB__ as IMemoryDb).backup();
+    // Capturar snapshot inicial tras seeders
+    g.__BACKUP__ = g.__PG_MEM_DB__.backup();
   }
 }, 30000);
 
 beforeEach(() => {
-  const backup = g.__BACKUP__ as IBackup;
-  if (backup) {
-    backup.restore();
+  if (g.__BACKUP__) {
+    g.__BACKUP__.restore();
   }
 });
 
@@ -121,13 +120,13 @@ afterAll(async () => {
     fs.rmSync(uploadDir, { recursive: true, force: true });
   }
 
-  const { dataSource } = (await import('../src/seeders/seed')) as {
+  const { dataSource } = require('../src/seeders/seed') as {
     dataSource: DataSource;
   };
   if (dataSource.isInitialized) {
     await dataSource.destroy();
   }
 
-  const { closeTestApp } = await import('./test-app.helper');
+  const { closeTestApp } = require('./test-app.helper');
   await closeTestApp();
 });

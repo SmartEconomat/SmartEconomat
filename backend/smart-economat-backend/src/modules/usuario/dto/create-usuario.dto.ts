@@ -15,9 +15,7 @@ import { TrimStringTransformer } from '../../../common/transformers/trim-string.
 import { LowercaseStringTransformer } from '../../../common/transformers/lowercase-string.transformer';
 
 export class CreateUsuarioDto {
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString({
     message: i18nValidationMessage(
       'validation.EL_NOMBRE_DE_USUARIO_DEBE_SER_UNA_CADENA'
@@ -58,9 +56,7 @@ export class CreateUsuarioDto {
 
   @IsOptional()
   @ValidateIf((o) => o.email != null)
-  @Transform(function (this: void, params) {
-    return LowercaseStringTransformer.transform(params);
-  })
+  @Transform(LowercaseStringTransformer.transform)
   @IsEmail({}, { message: i18nValidationMessage('validation.INVALID_EMAIL') })
   @MaxLength(255, {
     message: i18nValidationMessage(

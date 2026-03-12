@@ -36,7 +36,7 @@ describe('Ejemplo pg-mem (e2e)', () => {
       username: 'temporal',
       rol: rolUsuario.ALUMNO,
       status: 'ACTIVE',
-    });
+    } as any);
 
     await usuarioRepo.save(nuevoUsuario);
 
@@ -48,7 +48,7 @@ describe('Ejemplo pg-mem (e2e)', () => {
     });
     expect(userInDb).toBeDefined();
     expect(userInDb?.username).toBe('temporal');
-
+    
     console.log('Test 1 completado. Usuario insertado en memoria.');
   });
 
@@ -59,13 +59,12 @@ describe('Ejemplo pg-mem (e2e)', () => {
   it('Test 2 - Debe verificar que el estado se reseteó automáticamente (snapshot restore)', async () => {
     const usuarioRepo = dataSource.getRepository(Usuario);
 
+    // El usuario temporal no debe existir porque beforeEach() en setup-env.ts restauró la BD al estado limpio.
     const userInDb = await usuarioRepo.findOne({
       where: { email: 'test_temporal_1@example.com' },
     });
 
     expect(userInDb).toBeNull();
-    console.log(
-      'Test 2 completado. El snapshot fue restaurado correctamente (usuario temporal no existe).'
-    );
+    console.log('Test 2 completado. El snapshot fue restaurado correctamente (usuario temporal no existe).');
   });
 });

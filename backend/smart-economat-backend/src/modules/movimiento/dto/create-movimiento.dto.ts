@@ -32,9 +32,7 @@ export class CreateMovimientoDto {
   })
   cantidad!: number;
 
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString({
     message: i18nValidationMessage(
       'validation.EL_TIPO_DE_ENTIDAD_DEBE_SER_UNA_CADENA_D'
@@ -42,9 +40,7 @@ export class CreateMovimientoDto {
   })
   entidadTipo!: string;
 
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString({
     message: i18nValidationMessage(
       'validation.EL_ID_DE_ENTIDAD_DEBE_SER_UNA_CADENA_DE'
@@ -53,9 +49,7 @@ export class CreateMovimientoDto {
   entidadId!: string;
 
   @IsOptional()
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString({
     message: i18nValidationMessage(
       'validation.LA_DESCRIPCI_N_DEBE_SER_UNA_CADENA_DE_TE'

@@ -119,7 +119,6 @@ export class UsuarioController {
 
   @Post(':id/permisos-excluidos/:permisoId')
   @RequirePermissions('permisos:gestionar')
-  addExcludedPermission(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('permisoId', ParseUUIDPipe) permisoId: string
   ) {

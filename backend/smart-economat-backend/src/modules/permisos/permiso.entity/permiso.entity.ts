@@ -1,8 +1,8 @@
 import { Entity, Column, Index, ManyToMany, type Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
-import { Rol } from '../../roles/rol.entity/rol.entity';
+import { Rol } from '../../roles/entities/rol.entity';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
-import { PlantillaRol } from '../../plantillas-roles/plantilla-rol.entity/plantilla-rol.entity';
+import { PlantillaRol } from '../../plantillas-roles/entities/plantilla-rol.entity';
 
 @Entity({ name: 'permiso' })
 @Index('idx_permiso_codigo', ['codigo'])

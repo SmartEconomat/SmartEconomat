@@ -4,18 +4,12 @@ import { TrimStringTransformer } from '../../../common/transformers/trim-string.
 import { CreateRecetaDto } from './create-receta.dto';
 
 export class UpdateRecetaDto extends PartialType(CreateRecetaDto) {
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   nombre?: string;
 
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   instrucciones?: string;
 
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   tiempoPreparacion?: string;
 }

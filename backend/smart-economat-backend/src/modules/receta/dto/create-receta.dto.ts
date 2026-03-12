@@ -24,17 +24,13 @@ import { TrimStringTransformer } from '../../../common/transformers/trim-string.
 import { AddIngredienteDto } from './add-ingrediente.dto';
 
 export class CreateRecetaDto {
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   @IsNotEmpty()
   @MaxLength(150)
   nombre!: string;
 
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   @IsNotEmpty()
   instrucciones!: string;
@@ -45,9 +41,7 @@ export class CreateRecetaDto {
   @IsEnum(DificultadReceta)
   dificultad!: DificultadReceta;
 
-  @Transform(function (this: void, params) {
-    return TrimStringTransformer.transform(params);
-  })
+  @Transform(TrimStringTransformer.transform)
   @IsString()
   @IsNotEmpty()
   @MaxLength(50)
