@@ -40,6 +40,11 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({ mode = 'icon', isOpen =
         setActiveStep(0); // Reset to first step on open
     };
 
+    // Reset step when navigating to a different page
+    useEffect(() => {
+        setActiveStep(0);
+    }, [location.pathname]);
+
     const handleClose = () => {
         setAnchorEl(null);
     };
@@ -61,7 +66,9 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({ mode = 'icon', isOpen =
     if (!config || !config.steps || config.steps.length === 0) return null;
 
     const maxSteps = config.steps.length;
-    const currentStep = config.steps[activeStep];
+    const currentStep = config.steps[activeStep] || config.steps[0];
+
+    if (!currentStep) return null;
 
     // Shared content logic
     const tutorialContent = (

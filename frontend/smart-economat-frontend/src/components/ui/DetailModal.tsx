@@ -21,6 +21,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
 import DynamicFormModal, { DynamicField, DynamicFormModalProps } from './DynamicFormModal';
 import { ModalSize } from './Modal';
+import { decodeUUIDv7 } from '../../utils/uuid';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 // ─────────────────────────────────────────────────────────
 //  Tipos públicos
@@ -68,6 +70,8 @@ export interface DetailModalProps {
         size?: ModalSize;
     };
     editLabel?: string;
+    /** Si true, el medio del encabezado no tendrá rellenos (útil para fotos) */
+    headerMediaNoPadding?: boolean;
     /** Botones de acción adicionales para el footer. */
     actions?: React.ReactNode;
 }
@@ -99,9 +103,11 @@ const DetailModal: React.FC<DetailModalProps> = ({
     onEdit,
     editConfig,
     editLabel = 'Editar',
+    headerMediaNoPadding = false,
     actions,
 }) => {
     const [editOpen, setEditOpen] = useState(false);
+    const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
 
     const handleOpenEdit = () => {
         if (onEdit) {
@@ -157,9 +163,28 @@ const DetailModal: React.FC<DetailModalProps> = ({
                             {title}
                         </Typography>
                         {subtitle && (
-                            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-                                {subtitle}
-                            </Typography>
+                            <Box sx={{ mt: 0.5 }}>
+                                <Typography variant="body2" color="text.secondary">
+                                    {subtitle}
+                                </Typography>
+                                {typeof subtitle === 'string' && subtitle.includes(':') && (
+                                    (() => {
+                                        const idMatch = subtitle.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+                                        const decoded = idMatch ? decodeUUIDv7(idMatch[0]) : null;
+                                        if (decoded) {
+                                            return (
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5, color: 'primary.main', opacity: 0.8 }}>
+                                                    <InfoOutlinedIcon sx={{ fontSize: 14 }} />
+                                                    <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                                                        Creado el {decoded.date.toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' })}
+                                                    </Typography>
+                                                </Box>
+                                            );
+                                        }
+                                        return null;
+                                    })()
+                                )}
+                            </Box>
                         )}
                     </Box>
 
@@ -181,15 +206,23 @@ const DetailModal: React.FC<DetailModalProps> = ({
                 {/* Media */}
                 {headerMedia && (
                     <Box
+                        onClick={() => {
+                            // Si el media es una imagen directa, intentamos extraer el src para el fullscreen
+                            if (React.isValidElement(headerMedia) && headerMedia.type === 'img') {
+                                setFullScreenImage((headerMedia.props as any).src);
+                            }
+                        }}
                         sx={{
                             width: '100%',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            bgcolor: 'action.hover',
-                            py: 4,
+                            bgcolor: headerMediaNoPadding ? 'transparent' : 'action.hover',
+                            py: headerMediaNoPadding ? 0 : 4,
                             borderBottom: 1,
                             borderColor: 'divider',
+                            cursor: (React.isValidElement(headerMedia) && headerMedia.type === 'img') ? 'zoom-in' : 'default',
+                            overflow: 'hidden',
                         }}
                     >
                         {headerMedia}
@@ -314,6 +347,48 @@ const DetailModal: React.FC<DetailModalProps> = ({
                     confirmationMessage={editConfig.confirmationMessage}
                 />
             )}
+
+            {/* ─── VISOR DE IMAGEN FULLSCREEN ─── */}
+            <Dialog
+                open={!!fullScreenImage}
+                onClose={() => setFullScreenImage(null)}
+                maxWidth="xl"
+                PaperProps={{
+                    sx: {
+                        bgcolor: 'black',
+                        backgroundImage: 'none',
+                        boxShadow: 'none',
+                        position: 'relative',
+                        overflow: 'visible'
+                    }
+                }}
+            >
+                <IconButton
+                    onClick={() => setFullScreenImage(null)}
+                    sx={{
+                        position: 'absolute',
+                        right: -40,
+                        top: -40,
+                        color: 'white',
+                        display: { xs: 'none', sm: 'flex' }
+                    }}
+                >
+                    <CloseIcon />
+                </IconButton>
+                <Box
+                    component="img"
+                    src={fullScreenImage || ''}
+                    alt="Vista ampliada"
+                    onClick={() => setFullScreenImage(null)}
+                    sx={{
+                        width: '100%',
+                        height: 'auto',
+                        maxHeight: '90vh',
+                        objectFit: 'contain',
+                        cursor: 'zoom-out'
+                    }}
+                />
+            </Dialog>
         </>
     );
 };

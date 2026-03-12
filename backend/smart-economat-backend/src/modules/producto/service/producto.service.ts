@@ -41,14 +41,14 @@ export class ProductoService {
     if (rest.codigoBarras) {
       if (!validateEan13(rest.codigoBarras)) {
         throw new BadRequestException(
-          'El código de barras proporcionado no es un EAN-13 válido'
+          I18nHelper.getError('INVALID_BARCODE')
         );
       }
       const exists = await this.productoRepository.existsByCodigoBarras(
         rest.codigoBarras
       );
       if (exists) {
-        throw new BadRequestException('El código de barras ya está registrado');
+        throw new BadRequestException(I18nHelper.getError('BARCODE_ALREADY_EXISTS'));
       }
     } else {
       rest.codigoBarras = await this.generateUniqueEan13();
@@ -180,14 +180,14 @@ export class ProductoService {
     if (rest.codigoBarras && rest.codigoBarras !== producto.codigoBarras) {
       if (!validateEan13(rest.codigoBarras)) {
         throw new BadRequestException(
-          'El código de barras proporcionado no es un EAN-13 válido'
+          I18nHelper.getError('INVALID_BARCODE')
         );
       }
       const exists = await this.productoRepository.existsByCodigoBarras(
         rest.codigoBarras
       );
       if (exists) {
-        throw new BadRequestException('El código de barras ya está registrado');
+        throw new BadRequestException(I18nHelper.getError('BARCODE_ALREADY_EXISTS'));
       }
     }
 
@@ -238,7 +238,7 @@ export class ProductoService {
       }
     }
     throw new InternalServerErrorException(
-      'No se pudo generar un código EAN-13 único después de varios intentos'
+      I18nHelper.getError('GENERATE_BARCODE_FAILED')
     );
   }
 

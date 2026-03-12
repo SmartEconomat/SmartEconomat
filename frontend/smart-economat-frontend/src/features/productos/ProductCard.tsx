@@ -22,7 +22,21 @@ const ProductCard: React.FC<ProductCardProps> = ({ producto, onEdit, onDelete, o
     const alergenosActivos = EU_ALLERGENS.filter((a) => alergenoIds.includes(a.id));
 
     return (
-        <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <Card
+            variant="outlined"
+            sx={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                cursor: onView ? 'pointer' : 'default',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                '&:hover': {
+                    transform: onView ? 'translateY(-4px)' : 'none',
+                    boxShadow: onView ? 4 : 'none',
+                }
+            }}
+            onClick={() => onView && onView(producto)}
+        >
             {producto.pathImg ? (
                 <CardMedia
                     component="img"
@@ -70,7 +84,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ producto, onEdit, onDelete, o
                 {/* Chip de tipo — centrado, espacio siempre reservado */}
                 <Box sx={{ mt: 1, mb: 1, minHeight: 28, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                     {producto.tipo && (
-                        <StatusChip status={producto.tipo} size="small" variant="outlined" />
+                        <StatusChip status={producto.tipo as any} size="small" variant="outlined" />
                     )}
                 </Box>
 
@@ -101,26 +115,20 @@ const ProductCard: React.FC<ProductCardProps> = ({ producto, onEdit, onDelete, o
                 </Box>
             </CardContent>
 
-            <CardActions sx={{ justifyContent: 'space-between', borderTop: '1px solid', borderColor: 'divider' }}>
+            <CardActions
+                sx={{ justifyContent: 'flex-end', borderTop: '1px solid', borderColor: 'divider' }}
+                onClick={(e) => e.stopPropagation()} // Evitar que el click en acciones abra el detalle
+            >
                 {actions ?? (
                     <>
-                        {onView && (
-                            <Tooltip title="Ver detalle">
-                                <IconButton
-                                    color="info"
-                                    onClick={() => onView(producto)}
-                                    size="small"
-                                    aria-label="Ver detalle"
-                                >
-                                    <VisibilityIcon fontSize="small" />
-                                </IconButton>
-                            </Tooltip>
-                        )}
                         {onEdit && (
                             <Tooltip title="Editar">
                                 <IconButton
                                     color="secondary"
-                                    onClick={() => onEdit(producto)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onEdit(producto);
+                                    }}
                                     size="small"
                                     aria-label="Editar"
                                 >
@@ -132,7 +140,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ producto, onEdit, onDelete, o
                             <Tooltip title="Eliminar">
                                 <IconButton
                                     color="error"
-                                    onClick={() => onDelete(producto)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDelete(producto);
+                                    }}
                                     size="small"
                                     aria-label="Borrar"
                                 >

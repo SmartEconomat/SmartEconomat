@@ -12,6 +12,7 @@ import {
 } from '../../../common/decorators/require-permissions.decorator';
 import { IS_PUBLIC_KEY } from '../../../common/decorators/public.decorator';
 import { AuthorizationService } from '../services/authorization.service';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 
 /**
  * Guard principal de autorización basado en permisos dinámicos.
@@ -70,7 +71,7 @@ export class PermisosGuard implements CanActivate {
       this.logger.warn(
         'Usuario no autenticado intentando acceder a ruta protegida'
       );
-      throw new ForbiddenException('Usuario no autenticado');
+      throw new ForbiddenException(I18nHelper.getError('USER_NOT_AUTHENTICATED'));
     }
 
     const hasPermission =
@@ -86,7 +87,10 @@ export class PermisosGuard implements CanActivate {
 
     if (!hasPermission) {
       const mode = permissionsMode === 'any' ? 'al menos uno de' : 'todos';
-      const message = `No tienes los permisos necesarios. Requiere ${mode}: ${requiredPermissions.join(', ')}`;
+      const message = I18nHelper.getError('INSUFFICIENT_PERMISSIONS', {
+        mode,
+        permissions: requiredPermissions.join(', '),
+      });
 
       this.logger.warn(
         `Usuario ${user.id} (${user.nombre || 'sin nombre'}) denegado. ${message}`

@@ -17,12 +17,12 @@ export enum CategoriaProducto {
 }
 
 export enum UnidadMedida {
-    KG = 'kg',
-    G = 'g',
-    L = 'l',
-    ML = 'ml',
-    UNIDAD = 'unidad',
-    PAQ = 'paq',
+    KG = 'KG',
+    G = 'G',
+    L = 'L',
+    ML = 'ML',
+    UNIDAD = 'UNIDAD',
+    PAQ = 'PAQ',
 }
 
 export interface ProductoAlergeno {

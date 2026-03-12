@@ -14,6 +14,7 @@ import { Profesor } from '../../profesor/profesor.entity/profesor.entity';
 import { AlumnoSlot } from '../../profesor/profesor.entity/alumno-slot.entity';
 import { RegisterAlumnoDto } from '../dto/register-alumno.dto';
 import { ChangeProfesorDto } from '../dto/change-profesor.dto';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 
 @Injectable()
 export class AlumnoService {
@@ -29,7 +30,7 @@ export class AlumnoService {
       });
       if (!profesor)
         throw new NotFoundException(
-          'Profesor no encontrado con el cial proporcionado'
+          I18nHelper.getError('PROFESSOR_NOT_FOUND_BY_CIAL')
         );
 
       let slot = await manager.findOne(AlumnoSlot, {
@@ -50,7 +51,7 @@ export class AlumnoService {
         await manager.save(slot);
       } else if (slot.alumno) {
         throw new BadRequestException(
-          'El Slot ya está ocupado por otro alumno'
+          I18nHelper.getError('SLOT_OCCUPIED_BY_STUDENT')
         );
       }
 
@@ -61,7 +62,7 @@ export class AlumnoService {
       });
 
       if (isExistingUser)
-        throw new ConflictException('Username or email is already taken');
+        throw new ConflictException(I18nHelper.getError('USERNAME_OR_EMAIL_TAKEN'));
 
       const passwordHash = await bcrypt.hash(dto.password, 10);
       const user = manager.create(Usuario, {
@@ -79,8 +80,7 @@ export class AlumnoService {
       await manager.save(alumno);
 
       return {
-        message:
-          'Alumno registrado con éxito. Esperando activación por el profesor.',
+        message: I18nHelper.getSuccess('STUDENT_REGISTERED_WAITING_ACTIVATION'),
       };
     });
   }
@@ -97,7 +97,7 @@ export class AlumnoService {
         relations: ['slot', 'slot.profesor'],
       });
 
-      if (!alumno) throw new NotFoundException('Alumno no encontrado');
+      if (!alumno) throw new NotFoundException(I18nHelper.getError('STUDENT_NOT_FOUND'));
 
       if (reqUserRole !== rolUsuario.ADMINISTRADOR) {
         const profesorActual = await manager.findOne(Profesor, {
@@ -106,7 +106,7 @@ export class AlumnoService {
 
         if (!profesorActual || alumno.slot.profesor.id !== profesorActual.id) {
           throw new BadRequestException(
-            'No tienes permisos para cambiar a este alumno'
+            I18nHelper.getError('CHANGE_STUDENT_FORBIDDEN')
           );
         }
       }
@@ -116,7 +116,7 @@ export class AlumnoService {
       });
 
       if (!nuevoProfesor)
-        throw new NotFoundException('Nuevo profesor no encontrado');
+        throw new NotFoundException(I18nHelper.getError('NEW_TEACHER_NOT_FOUND'));
 
       const nuevoSlot = await manager.findOne(AlumnoSlot, {
         where: {
@@ -128,14 +128,14 @@ export class AlumnoService {
       });
 
       if (!nuevoSlot)
-        throw new NotFoundException('El nuevo slot especificado no existe');
+        throw new NotFoundException(I18nHelper.getError('NEW_SLOT_NOT_FOUND'));
       if (nuevoSlot.alumno)
-        throw new BadRequestException('El nuevo slot ya está ocupado');
+        throw new BadRequestException(I18nHelper.getError('NEW_SLOT_OCCUPIED'));
 
       alumno.slot = nuevoSlot;
       await manager.save(alumno);
 
-      return { message: 'Profesor y slot cambiados con éxito' };
+      return { message: I18nHelper.getSuccess('PROFESSOR_SLOT_CHANGED') };
     });
   }
 }

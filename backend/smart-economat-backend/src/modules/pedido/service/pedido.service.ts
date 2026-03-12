@@ -52,7 +52,7 @@ export class PedidoService {
 
     if (lineas.length === 0) {
       throw new BadRequestException(
-        'El pedido debe contener al menos un producto.'
+        I18nHelper.getError('ORDER_MIN_ONE_PRODUCT')
       );
     }
 
@@ -127,7 +127,7 @@ export class PedidoService {
         updatePedidoDto.productos !== undefined)
     ) {
       throw new BadRequestException(
-        'El pedido debe contener al menos un producto.'
+        I18nHelper.getError('ORDER_MIN_ONE_PRODUCT')
       );
     }
 

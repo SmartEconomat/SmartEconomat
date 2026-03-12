@@ -1,9 +1,9 @@
 import { NestFactory, Reflector } from '@nestjs/core';
 import { ValidationPipe, ClassSerializerInterceptor } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { i18nValidationErrorFactory } from 'nestjs-i18n';
 import { AppModule } from './app.module';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
-import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
@@ -29,10 +29,9 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
       transform: true,
       transformOptions: { enableImplicitConversion: true },
+      exceptionFactory: i18nValidationErrorFactory,
     })
   );
-
-  app.useGlobalFilters(new GlobalExceptionFilter());
 
   app.useGlobalInterceptors(
     new ClassSerializerInterceptor(app.get(Reflector)),

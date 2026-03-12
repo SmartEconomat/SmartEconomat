@@ -9,6 +9,7 @@ import {
   Patch,
   Post,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { IncidenciaService } from '../service/incidencia.service';
@@ -64,8 +65,13 @@ export class IncidenciaController {
   @RequirePermissions('incidencias:resolver')
   resolver(
     @Param('id', ParseUUIDv7Pipe) id: string,
-    @Body() dto: ResolverIncidenciaDto
+    @Body() dto: ResolverIncidenciaDto,
+    @Request() req: any
   ): Promise<Incidencia> {
+    const userId = req.user?.sub;
+    if (userId) {
+      dto.usuarioId = userId;
+    }
     return this.incidenciaService.resolverIncidencia(id, dto);
   }
 }

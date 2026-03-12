@@ -57,11 +57,11 @@ export class CreateProductoDto {
 
   @IsOptional()
   @IsString({ message: 'El código de barras debe ser una cadena de texto' })
-  @MaxLength(13, {
-    message: 'El código de barras no puede exceder los 13 caracteres',
+  @MaxLength(14, {
+    message: 'El código de barras no puede exceder los 14 caracteres',
   })
-  @Matches(/^\d{13}$/, {
-    message: 'El código de barras debe ser un EAN-13 de 13 dígitos',
+  @Matches(/^\d{8,14}$/, {
+    message: 'El código de barras debe tener entre 8 y 14 dígitos',
   })
   codigoBarras?: string;
 

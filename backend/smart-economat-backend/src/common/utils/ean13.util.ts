@@ -50,22 +50,32 @@ export function generateEan13(prefix = '200'): string {
 }
 
 /**
- * Validates if a string is a structurally correct EAN-13 barcode.
+ * Validates if a string is a structurally correct barcode (EAN-13, EAN-8, UPC-A, etc.)
+ * Currently supports 8, 12, and 13 digits.
+ * For 13 digits, it performs full EAN-13 checksum validation.
  * @param code The string to validate.
  * @returns true if valid, false otherwise.
  */
 export function validateEan13(code: string): boolean {
-  if (!code || typeof code !== 'string' || !/^\d{13}$/.test(code)) {
+  if (!code || typeof code !== 'string') {
     return false;
   }
 
-  const base12Digits = code.substring(0, 12);
-  const providedCheckDigit = parseInt(code[12], 10);
-
-  try {
-    const expectedCheckDigit = calculateCheckDigit(base12Digits);
-    return providedCheckDigit === expectedCheckDigit;
-  } catch {
+  if (!/^\d{8}$|^\d{12}$|^\d{13}$/.test(code)) {
     return false;
   }
+
+  if (code.length === 13) {
+    const base12Digits = code.substring(0, 12);
+    const providedCheckDigit = parseInt(code[12], 10);
+
+    try {
+      const expectedCheckDigit = calculateCheckDigit(base12Digits);
+      return providedCheckDigit === expectedCheckDigit;
+    } catch {
+      return false;
+    }
+  }
+
+  return true;
 }

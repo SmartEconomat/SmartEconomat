@@ -14,6 +14,7 @@ import SyncAltIcon from '@mui/icons-material/SyncAlt';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import ConstructionIcon from '@mui/icons-material/Construction';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import { generateFriendlyId } from '../utils/friendlyId';
 
 const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1).replace(/_/g, ' ');
 
@@ -248,6 +249,11 @@ const Movimientos: React.FC = () => {
                         }}
                     />
                 }
+                pageSize={pageSize}
+                onPageSizeChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setPage(1);
+                }}
             />
 
             {error && (
@@ -261,6 +267,7 @@ const Movimientos: React.FC = () => {
                 data={data}
                 isLoading={isLoading}
                 renderActions={renderActions}
+                hideTopBar
                 emptyStateMessage={
                     <Box sx={{ py: 8, textAlign: 'center' }}>
                         <HistoryIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
@@ -289,7 +296,7 @@ const Movimientos: React.FC = () => {
                 isOpen={!!itemToView}
                 onClose={() => setItemToView(null)}
                 title="Detalle del Movimiento"
-                subtitle={`ID: ${itemToView?.id || ''}`}
+                subtitle={`ID: ${itemToView ? generateFriendlyId('movimiento', itemToView.id) : ''}`}
                 size="md"
                 sections={detailSections}
             />

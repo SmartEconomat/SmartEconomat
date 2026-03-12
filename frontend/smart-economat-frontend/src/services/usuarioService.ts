@@ -63,7 +63,7 @@ const mapBackendToFrontend = (user: any): Usuario => {
         username: user.username,
         email: user.email,
         rol: rolUpper as any,
-        estado: (user.status === 'ACTIVE' || user.estado === 'Activo' || user.activo) ? 'Activo' : 'Inactivo',
+        estado: (user.status === 'ACTIVE') ? 'Activo' : 'Inactivo',
         fecha_registro: user.createdAt || new Date().toISOString()
     };
 };
@@ -74,6 +74,7 @@ export const usuarioService = {
         limit: number = 10,
         search?: string,
         filterRol?: string,
+        filterEstado?: string,
         sortBy?: string,
         sortOrder?: 'asc' | 'desc'
     ): Promise<PaginatedResponse<Usuario>> {
@@ -115,6 +116,10 @@ export const usuarioService = {
 
         if (filterRol && filterRol !== 'Todos') {
             filteredData = filteredData.filter((u: Usuario) => u.rol === filterRol);
+        }
+
+        if (filterEstado && filterEstado !== 'Todos') {
+            filteredData = filteredData.filter((u: Usuario) => u.estado === filterEstado);
         }
 
         if (sortBy) {

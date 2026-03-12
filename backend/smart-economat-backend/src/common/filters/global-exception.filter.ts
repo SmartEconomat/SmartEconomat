@@ -9,28 +9,27 @@ import {
 import { Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { QueryFailedError } from 'typeorm';
+import { I18nService } from 'nestjs-i18n';
 import { ApiResponse } from '../interfaces/api-response.interface';
 import { APP_VERSION } from '../helpers/app-version.helper';
-import { I18nHelper } from '../helpers/i18n.helper';
 
 /**
- * Mensajes legibles para errores de base de datos.
- * No se pueden usar I18nHelper aquí porque `I18nContext.current()` es null
- * dentro del catch de un filtro de excepciones.
+ * Mapeo de códigos de error de Base de Datos a claves de traducción.
  */
-const PG_ERROR_MESSAGES: Record<string, string> = {
+const PG_ERROR_KEY_MAP: Record<string, string> = {
   /** Foreign key violation: el registro está referenciado en otra tabla. */
-  '23503':
-    'No se puede eliminar este registro porque está siendo utilizado en otras partes del sistema.',
+  '23503': 'ENTITY_HAS_RELATIONS',
   /** Unique constraint violation: el valor ya existe. */
-  '23505': 'Ya existe un registro con ese valor. Por favor, usa uno diferente.',
+  '23505': 'DUPLICATE_ENTRY',
 };
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
 
-  catch(exception: unknown, host: ArgumentsHost) {
+  constructor(private readonly i18n: I18nService) {}
+
+  async catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
@@ -39,28 +38,42 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       (request.headers['x-request-id'] as string) || randomUUID();
     response.setHeader('x-request-id', requestId);
 
+    // Obtener el idioma desde el request (detectado por nestjs-i18n)
+    const lang = request.headers['accept-language']?.split(',')[0] || 'es';
+
     if (exception instanceof QueryFailedError) {
       const pgCode = (exception as QueryFailedError & { code?: string }).code;
-      const friendlyMessage = pgCode ? PG_ERROR_MESSAGES[pgCode] : undefined;
+      const errorKey = pgCode ? PG_ERROR_KEY_MAP[pgCode] : null;
 
-      if (friendlyMessage) {
+      if (errorKey) {
         this.logger.warn(
           `DB constraint violation [${pgCode}]: ${exception.message}`
         );
+
+        const translatedMessage = await this.i18n.translate(
+          `translation.errors.${errorKey}`,
+          { lang }
+        );
+
         return this.sendResponse(
           response,
           HttpStatus.CONFLICT,
-          friendlyMessage,
+          translatedMessage,
           null,
           requestId
         );
       }
 
       this.logger.error(exception);
+      const internalErrorMessage = await this.i18n.translate(
+        'translation.errors.INTERNAL_SERVER_ERROR',
+        { lang }
+      );
+
       return this.sendResponse(
         response,
         HttpStatus.INTERNAL_SERVER_ERROR,
-        I18nHelper.getError('INTERNAL_SERVER_ERROR'),
+        internalErrorMessage,
         null,
         requestId
       );
@@ -74,7 +87,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const exceptionResponse =
       exception instanceof HttpException ? exception.getResponse() : null;
 
-    let message = I18nHelper.getError('INTERNAL_SERVER_ERROR');
+    let message = await this.i18n.translate(
+      'translation.errors.INTERNAL_SERVER_ERROR',
+      { lang }
+    );
     let errorDetails: unknown = null;
 
     if (exception instanceof HttpException) {

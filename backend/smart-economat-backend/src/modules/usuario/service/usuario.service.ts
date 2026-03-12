@@ -50,7 +50,7 @@ export class UsuarioService {
 
   async changePassword(userId: string, dto: ChangePasswordDto) {
     const usuario = await this.usuarioRepo.findByIdWithPassword(userId);
-    if (!usuario) throw new NotFoundException();
+    if (!usuario) throw new NotFoundException(I18nHelper.getError('USER_NOT_FOUND'));
 
     const isMatch = await bcrypt.compare(dto.oldPassword, usuario.password);
     if (!isMatch) {
@@ -85,10 +85,10 @@ export class UsuarioService {
 
   async addAdditionalPermission(userId: string, permisoId: string) {
     const usuario = await this.usuarioRepo.findById(userId);
-    if (!usuario) throw new NotFoundException();
+    if (!usuario) throw new NotFoundException(I18nHelper.getError('USER_NOT_FOUND'));
 
     const permiso = await this.permisoRepo.findOneBy({ id: permisoId });
-    if (!permiso) throw new NotFoundException('Permiso no encontrado');
+    if (!permiso) throw new NotFoundException(I18nHelper.getError('PERMISSION_NOT_FOUND'));
 
     const basicUser = await this.usuarioRepo.repo.findOne({
       where: { id: userId },
@@ -108,7 +108,7 @@ export class UsuarioService {
       where: { id: userId },
       relations: ['permisosAdicionales'],
     });
-    if (!basicUser) throw new NotFoundException();
+    if (!basicUser) throw new NotFoundException(I18nHelper.getError('USER_NOT_FOUND'));
 
     basicUser.permisosAdicionales = basicUser.permisosAdicionales.filter(
       (p) => p.id !== permisoId
@@ -120,10 +120,10 @@ export class UsuarioService {
 
   async addExcludedPermission(userId: string, permisoId: string) {
     const usuario = await this.usuarioRepo.findById(userId);
-    if (!usuario) throw new NotFoundException();
+    if (!usuario) throw new NotFoundException(I18nHelper.getError('USER_NOT_FOUND'));
 
     const permiso = await this.permisoRepo.findOneBy({ id: permisoId });
-    if (!permiso) throw new NotFoundException('Permiso no encontrado');
+    if (!permiso) throw new NotFoundException(I18nHelper.getError('PERMISSION_NOT_FOUND'));
 
     const basicUser = await this.usuarioRepo.repo.findOne({
       where: { id: userId },
@@ -143,7 +143,7 @@ export class UsuarioService {
       where: { id: userId },
       relations: ['permisosExcluidos'],
     });
-    if (!basicUser) throw new NotFoundException();
+    if (!basicUser) throw new NotFoundException(I18nHelper.getError('USER_NOT_FOUND'));
 
     basicUser.permisosExcluidos = (basicUser.permisosExcluidos || []).filter(
       (p) => p.id !== permisoId

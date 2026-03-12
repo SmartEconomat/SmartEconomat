@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_FILTER } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { PedidoModule } from './modules/pedido/pedido.module';
 import { ProductoModule } from './modules/producto/producto.module';
 import { ProveedorModule } from './modules/proveedor/proveedor.module';
@@ -50,6 +52,12 @@ import { AuthorizationModule } from './modules/authorization/authorization.modul
     AuthorizationModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionFilter,
+    },
+  ],
 })
 export class AppModule {}

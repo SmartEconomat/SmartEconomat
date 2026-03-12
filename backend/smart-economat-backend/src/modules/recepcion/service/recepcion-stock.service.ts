@@ -377,7 +377,7 @@ export class RecepcionStockService {
     const pedidoIdsList = listaPedidos.map((p) => p.pedidoId);
 
     if (pedidoIdsList.length === 0) {
-      throw new BadRequestException('No se han especificado pedidos.');
+      throw new BadRequestException(I18nHelper.getError('NO_ORDERS_SPECIFIED'));
     }
 
     const uniquePedidoIds = [...new Set(pedidoIdsList)];

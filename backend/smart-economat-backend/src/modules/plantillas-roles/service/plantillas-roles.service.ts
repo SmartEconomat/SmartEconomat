@@ -11,6 +11,7 @@ import { Permiso } from '../../permisos/entities/permiso.entity';
 import { Rol } from '../../roles/entities/rol.entity';
 import { CreatePlantillaDto } from '../dto/create-plantilla.dto';
 import { UpdatePlantillaDto } from '../dto/update-plantilla.dto';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 
 /**
  * Servicio para gestión de plantillas de roles.
@@ -33,7 +34,7 @@ export class PlantillasRolesService {
     });
     if (existente) {
       throw new ConflictException(
-        `Ya existe una plantilla con el nombre "${dto.nombre}"`
+        I18nHelper.getError('TEMPLATE_NAME_DUPLICATED', { nombre: dto.nombre })
       );
     }
 
@@ -42,7 +43,7 @@ export class PlantillasRolesService {
         where: { id: dto.plantillaPadreId },
       });
       if (!padre) {
-        throw new NotFoundException('Plantilla padre no encontrada');
+        throw new NotFoundException(I18nHelper.getError('PARENT_TEMPLATE_NOT_FOUND'));
       }
     }
 
@@ -81,7 +82,9 @@ export class PlantillasRolesService {
     });
 
     if (!plantilla) {
-      throw new NotFoundException(`Plantilla con ID "${id}" no encontrada`);
+      throw new NotFoundException(
+        I18nHelper.getError('TEMPLATE_NOT_FOUND', { id })
+      );
     }
 
     return plantilla;
@@ -91,7 +94,7 @@ export class PlantillasRolesService {
     const plantilla = await this.findOne(id);
 
     if (!plantilla.esEditable) {
-      throw new BadRequestException('Esta plantilla no es editable');
+      throw new BadRequestException(I18nHelper.getError('TEMPLATE_NOT_EDITABLE'));
     }
 
     if (dto.nombre && dto.nombre !== plantilla.nombre) {
@@ -100,7 +103,7 @@ export class PlantillasRolesService {
       });
       if (existente) {
         throw new ConflictException(
-          `Ya existe una plantilla con el nombre "${dto.nombre}"`
+          I18nHelper.getError('TEMPLATE_NAME_DUPLICATED', { nombre: dto.nombre })
         );
       }
     }
@@ -126,7 +129,7 @@ export class PlantillasRolesService {
 
     if (!plantilla.esEditable) {
       throw new BadRequestException(
-        'Esta plantilla de sistema no se puede eliminar'
+        I18nHelper.getError('SYSTEM_TEMPLATE_CANNOT_DELETE')
       );
     }
 

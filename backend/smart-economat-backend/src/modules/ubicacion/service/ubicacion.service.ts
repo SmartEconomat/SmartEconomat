@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { Ubicacion } from '../ubicacion.entity/ubicacion.entity';
 import { CreateUbicacionDto } from '../dto/create-ubicacion.dto';
 import { UpdateUbicacionDto } from '../dto/update-ubicacion.dto';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 
 @Injectable()
 export class UbicacionService {
@@ -21,7 +22,7 @@ export class UbicacionService {
       where: { nombre: createUbicacionDto.nombre },
     });
     if (existing) {
-      throw new BadRequestException('Ya existe una ubicación con este nombre');
+      throw new BadRequestException(I18nHelper.getError('DUPLICATE_LOCATION'));
     }
 
     const nuevaUbicacion = this.ubicacionRepository.create(createUbicacionDto);
@@ -39,7 +40,7 @@ export class UbicacionService {
       where: { id },
     });
     if (!ubicacion) {
-      throw new NotFoundException('Ubicación no encontrada');
+      throw new NotFoundException(I18nHelper.getError('LOCATION_NOT_FOUND'));
     }
     return ubicacion;
   }
@@ -64,7 +65,7 @@ export class UbicacionService {
       withDeleted: true,
     });
     if (!ubicacion) {
-      throw new NotFoundException('Ubicación no encontrada');
+      throw new NotFoundException(I18nHelper.getError('LOCATION_NOT_FOUND'));
     }
     return await this.ubicacionRepository.recover(ubicacion);
   }

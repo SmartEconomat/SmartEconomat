@@ -47,6 +47,7 @@ const Usuarios: React.FC = () => {
     const [viewMode] = useState<'list' | 'grid'>('list');
     const [search, setSearch] = useState('');
     const [filterRol, setFilterRol] = useState('Todos');
+    const [filterEstado, setFilterEstado] = useState('Todos');
     const [sortBy, setSortBy] = useState<string | undefined>(undefined);
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
@@ -72,6 +73,7 @@ const Usuarios: React.FC = () => {
                 limit,
                 search,
                 filterRol,
+                filterEstado,
                 sortBy,
                 sortOrder
             );
@@ -84,7 +86,7 @@ const Usuarios: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [page, limit, search, filterRol, sortBy, sortOrder, toast]);
+    }, [page, limit, search, filterRol, filterEstado, sortBy, sortOrder, toast]);
 
     useEffect(() => {
         fetchUsuarios();
@@ -98,6 +100,11 @@ const Usuarios: React.FC = () => {
 
     const handleRolFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFilterRol(e.target.value);
+        setPage(1);
+    };
+
+    const handleEstadoFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFilterEstado(e.target.value);
         setPage(1);
     };
 
@@ -205,9 +212,9 @@ const Usuarios: React.FC = () => {
      */
     const canResetTemporaryPassword = (targetUser: Usuario): boolean => {
         if (!currentUser) return false;
-        
+
         // El rol del usuario actual viene del JWT (ADMIN, PROFESOR, ALUMNO)
-        const currentRol = currentUser.rol.toUpperCase(); 
+        const currentRol = currentUser.rol.toUpperCase();
         // El rol del usuario objetivo viene mapeado por el servicio (Administrador, Profesor, Alumno)
         const targetRol = targetUser.rol;
 
@@ -231,10 +238,10 @@ const Usuarios: React.FC = () => {
     const columns: Column<Usuario>[] = [
         { id: 'id', label: 'ID', hideOnMobile: true, sortable: true },
         { id: 'username', label: 'Usuario', sortable: true },
-        { 
-            id: 'email', 
-            label: 'Correo', 
-            hideOnMobile: true, 
+        {
+            id: 'email',
+            label: 'Correo',
+            hideOnMobile: true,
             sortable: true,
             render: (row) => row.email || <Typography variant="caption" color="text.disabled">No disponible</Typography>
         },
@@ -256,10 +263,10 @@ const Usuarios: React.FC = () => {
     const renderActions = (row: Usuario) => (
         <>
             {canResetTemporaryPassword(row) && (
-                <IconButton 
-                    color="primary" 
-                    onClick={() => setUserToReset(row)} 
-                    size="small" 
+                <IconButton
+                    color="primary"
+                    onClick={() => setUserToReset(row)}
+                    size="small"
                     aria-label="Restablecer Contraseña Temporal"
                     title="Activar Contraseña Temporal"
                 >
@@ -340,6 +347,22 @@ const Usuarios: React.FC = () => {
                             ]}
                         />
                     </Box>
+                    <Box minWidth="200px">
+                        <SelectField
+                            id="filter-estado-select"
+                            fullWidth
+                            label="Filtrar por Estado"
+                            variant="outlined"
+                            size="small"
+                            value={filterEstado}
+                            onChange={handleEstadoFilterChange as any}
+                            options={[
+                                { value: 'Todos', label: 'Todos' },
+                                { value: 'Activo', label: 'Activo' },
+                                { value: 'Inactivo', label: 'Inactivo' }
+                            ]}
+                        />
+                    </Box>
                 </Box>
 
                 {/* Tabla */}
@@ -417,7 +440,7 @@ const Usuarios: React.FC = () => {
 
             <ConfirmDialog
                 isOpen={!!userToReset}
-                onClose={() => { 
+                onClose={() => {
                     if (!isResetting) {
                         setUserToReset(null);
                         setGeneratedPassword(null);

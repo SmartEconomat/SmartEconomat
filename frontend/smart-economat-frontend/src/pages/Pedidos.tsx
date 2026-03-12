@@ -285,8 +285,8 @@ const Pedidos: React.FC = () => {
           onClick: () => setItemToEdit({}),
           id: 'btn-nuevo-pedido',
         }}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
+        /* viewMode={viewMode}
+        onViewModeChange={setViewMode} */
         pageSize={pageSize}
         onPageSizeChange={(e: any) => {
           setPageSize(Number(e.target.value));

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Paper, IconButton, Typography, Alert, Button, Tooltip, Chip, Card, CardContent, CardActions, Divider } from '@mui/material';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DataTable, { Column } from '../components/ui/DataTable';
@@ -12,54 +13,13 @@ import { useToast } from '../store/ToastContext';
 import StatusChip from '../components/ui/StatusChip';
 import RecipeCarousel from '../components/ui/RecipeCarousel';
 import PageToolbar from '../components/ui/PageToolbar';
+import RecipeCard from '../features/recetas/RecipeCard';
+import DetailModal from '../components/ui/DetailModal';
 
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
-
-const recetaSchema: DynamicField[] = [
-    { name: 'nombre', label: 'Nombre de la Receta', required: true, width: 8 },
-    { name: 'tiempoPreparacion', label: 'Tiempo (ej: 30 min)', required: true, width: 4 },
-    {
-        name: 'tiempo',
-        label: 'Franja de tiempo',
-        type: 'select',
-        required: true,
-        width: 6,
-        options: [
-            { value: TiempoReceta.MIN_10, label: '10 min' },
-            { value: TiempoReceta.MIN_20, label: '20 min' },
-            { value: TiempoReceta.MIN_30, label: '30 min' },
-            { value: TiempoReceta.MIN_45, label: '45 min' },
-            { value: TiempoReceta.MIN_60, label: '60 min' },
-        ],
-    },
-    {
-        name: 'dificultad',
-        label: 'Dificultad',
-        type: 'select',
-        required: true,
-        width: 6,
-        options: [
-            { value: DificultadReceta.FACIL, label: 'Fácil' },
-            { value: DificultadReceta.MEDIA, label: 'Media' },
-            { value: DificultadReceta.DIFICIL, label: 'Difícil' },
-        ],
-    },
-    {
-        name: 'instrucciones',
-        label: 'Instrucciones de elaboración',
-        type: 'textarea',
-        required: true,
-        width: 12,
-    },
-    {
-        name: 'ingredientes',
-        label: 'Ingredientes de la receta',
-        type: 'recipeIngredients',
-        position: 'bottom',
-    },
-];
+import { recetaSchema } from '../utils/schemas';
 
 const Recetas: React.FC = () => {
     const [page, setPage] = useState(1);
@@ -73,6 +33,7 @@ const Recetas: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [itemToDelete, setItemToDelete] = useState<Receta | null>(null);
     const [itemToEdit, setItemToEdit] = useState<Record<string, any> | null>(null);
+    const [itemToView, setItemToView] = useState<Receta | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const toast = useToast();
@@ -193,12 +154,21 @@ const Recetas: React.FC = () => {
 
     const renderActions = (row: Receta) => (
         <>
-            <IconButton color="secondary" onClick={() => handleEditClick(row)} size="small" aria-label="Editar">
-                <EditIcon fontSize="small" />
-            </IconButton>
-            <IconButton color="error" onClick={() => setItemToDelete(row)} size="small" aria-label="Borrar">
-                <DeleteIcon fontSize="small" />
-            </IconButton>
+            <Tooltip title="Ver detalle">
+                <IconButton color="primary" onClick={() => setItemToView(row)} size="small" aria-label="Ver">
+                    <VisibilityIcon fontSize="small" />
+                </IconButton>
+            </Tooltip>
+            <Tooltip title="Editar">
+                <IconButton color="secondary" onClick={() => handleEditClick(row)} size="small" aria-label="Editar">
+                    <EditIcon fontSize="small" />
+                </IconButton>
+            </Tooltip>
+            <Tooltip title="Eliminar">
+                <IconButton color="error" onClick={() => setItemToDelete(row)} size="small" aria-label="Borrar">
+                    <DeleteIcon fontSize="small" />
+                </IconButton>
+            </Tooltip>
         </>
     );
 
@@ -278,43 +248,12 @@ const Recetas: React.FC = () => {
                         },
                     }}
                     renderGridItem={(receta) => (
-                        <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 2 }}>
-                            <CardContent sx={{ flexGrow: 1 }}>
-                                <Typography gutterBottom variant="h6" component="div" sx={{ fontWeight: 600 }}>
-                                    {receta.nombre}
-                                </Typography>
-                                <Box display="flex" gap={1} flexWrap="wrap" mb={2} mt={1}>
-                                    {receta.dificultad && (
-                                        <StatusChip status={receta.dificultad} size="small" variant="outlined" />
-                                    )}
-                                    {receta.tiempoPreparacion && (
-                                        <Chip
-                                            icon={<AccessTimeOutlinedIcon />}
-                                            label={receta.tiempoPreparacion}
-                                            size="small"
-                                            variant="outlined"
-                                        />
-                                    )}
-                                </Box>
-                                <Typography variant="body2" color="text.secondary" sx={{
-                                    display: '-webkit-box',
-                                    WebkitLineClamp: 3,
-                                    WebkitBoxOrient: 'vertical',
-                                    overflow: 'hidden'
-                                }}>
-                                    {receta.instrucciones}
-                                </Typography>
-                            </CardContent>
-                            <Divider />
-                            <CardActions sx={{ justifyContent: 'space-between', px: 2, bgcolor: 'action.hover' }}>
-                                <Typography variant="caption" color="text.secondary">
-                                    {receta.ingredientes?.length || 0} ingredientes
-                                </Typography>
-                                <Box>
-                                    {renderActions(receta)}
-                                </Box>
-                            </CardActions>
-                        </Card>
+                        <RecipeCard
+                            receta={receta}
+                            onEdit={handleEditClick}
+                            onDelete={setItemToDelete}
+                            onView={setItemToView}
+                        />
                     )}
                     renderActions={renderActions}
                 />
@@ -351,6 +290,80 @@ const Recetas: React.FC = () => {
                             ? "¿Estás seguro de que deseas guardar los cambios realizados en esta receta?"
                             : "¿Estás seguro de que deseas añadir esta nueva receta al sistema?"
                     }
+                />
+
+                <DetailModal
+                    isOpen={!!itemToView}
+                    onClose={() => setItemToView(null)}
+                    title={itemToView?.nombre || ''}
+                    size="md"
+                    editLabel="Editar receta"
+                    onEdit={() => {
+                        if (itemToView) {
+                            handleEditClick(itemToView);
+                            setItemToView(null);
+                        }
+                    }}
+                    headerMedia={
+                        <Box sx={{ p: 4, display: 'flex', justifyContent: 'center', bgcolor: 'action.hover' }}>
+                            <MenuBookOutlinedIcon sx={{ fontSize: 80, color: 'text.secondary', opacity: 0.6 }} />
+                        </Box>
+                    }
+                    sections={[
+                        {
+                            title: 'Información general',
+                            columns: 2,
+                            fields: [
+                                {
+                                    label: 'Dificultad',
+                                    value: itemToView?.dificultad ? (
+                                        <StatusChip status={itemToView.dificultad as any} size="small" variant="outlined" />
+                                    ) : '—',
+                                },
+                                {
+                                    label: 'Preparación',
+                                    value: itemToView?.tiempoPreparacion || '—',
+                                },
+                                {
+                                    label: 'Franja Horaria',
+                                    value: itemToView?.tiempo || '—',
+                                },
+                            ],
+                        },
+                        {
+                            title: 'Ingredientes',
+                            content: (
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                    {itemToView?.ingredientes && itemToView.ingredientes.length > 0 ? (
+                                        itemToView.ingredientes.map((ing, idx) => (
+                                            <Paper
+                                                key={ing.id || idx}
+                                                variant="outlined"
+                                                sx={{ p: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: 1 }}
+                                            >
+                                                <Typography variant="body2" fontWeight={600}>
+                                                    {ing.producto?.nombre || 'Producto desconocido'}
+                                                </Typography>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    {ing.cantidad} {ing.unidad}
+                                                </Typography>
+                                            </Paper>
+                                        ))
+                                    ) : (
+                                        <Typography variant="body2" color="text.secondary">No hay ingredientes registrados.</Typography>
+                                    )}
+                                </Box>
+                            ),
+                        },
+                        {
+                            title: 'Instrucciones',
+                            content: (
+                                <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
+                                    {itemToView?.instrucciones || 'Sin instrucciones detalladas.'}
+                                </Typography>
+                            ),
+                        },
+                    ]}
                 />
             </Paper>
         </Box>

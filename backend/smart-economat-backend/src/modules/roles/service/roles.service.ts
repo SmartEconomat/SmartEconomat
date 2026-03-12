@@ -17,6 +17,7 @@ import { AssignRoleToUserDto } from '../dto/assign-role-to-user.dto';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { AuthorizationService } from '../../authorization/services/authorization.service';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 
 /**
  * Servicio para la gestión de roles y asignaciones.
@@ -45,7 +46,7 @@ export class RolesService {
     });
     if (existente) {
       throw new ConflictException(
-        `Ya existe un rol con el nombre "${dto.nombre}"`
+        I18nHelper.getError('ROLE_NAME_DUPLICATED', { nombre: dto.nombre })
       );
     }
 
@@ -109,7 +110,7 @@ export class RolesService {
     });
 
     if (!rol) {
-      throw new NotFoundException(`Rol con ID "${id}" no encontrado`);
+      throw new NotFoundException(I18nHelper.getError('ROLE_NOT_FOUND'));
     }
 
     return rol;
@@ -123,7 +124,7 @@ export class RolesService {
 
     if (rol.esSistema && dto.esSistema === false) {
       throw new BadRequestException(
-        'No se puede modificar el atributo "esSistema" de un rol de sistema'
+        I18nHelper.getError('ROLE_SYSTEM_CANNOT_MODIFY_SYSTEM_FLAG')
       );
     }
 
@@ -133,7 +134,7 @@ export class RolesService {
       });
       if (existente) {
         throw new ConflictException(
-          `Ya existe un rol con el nombre "${dto.nombre}"`
+          I18nHelper.getError('ROLE_NAME_DUPLICATED', { nombre: dto.nombre })
         );
       }
     }
@@ -162,7 +163,7 @@ export class RolesService {
     const rol = await this.findOne(id);
 
     if (rol.esSistema) {
-      throw new BadRequestException('No se puede eliminar un rol de sistema');
+      throw new BadRequestException(I18nHelper.getError('ROLE_SYSTEM_CANNOT_DELETE'));
     }
 
     const usuariosCount = await this.usuarioRolRepo.count({
@@ -170,7 +171,7 @@ export class RolesService {
     });
     if (usuariosCount > 0) {
       throw new BadRequestException(
-        `No se puede eliminar el rol. Está asignado a ${usuariosCount} usuario(s)`
+        I18nHelper.getError('ROLE_CANNOT_DELETE_HAS_USERS', { count: usuariosCount })
       );
     }
 
@@ -188,7 +189,7 @@ export class RolesService {
 
     if (rol.esSistema) {
       throw new BadRequestException(
-        'No se pueden modificar los permisos de un rol de sistema'
+        I18nHelper.getError('ROLE_SYSTEM_CANNOT_MODIFY_PERMISSIONS')
       );
     }
 
@@ -197,7 +198,7 @@ export class RolesService {
     });
 
     if (permisos.length !== dto.permisoIds.length) {
-      throw new BadRequestException('Algunos permisos no existen');
+      throw new BadRequestException(I18nHelper.getError('PERMISSIONS_NOT_FOUND'));
     }
 
     rol.permisos = permisos;
@@ -219,9 +220,7 @@ export class RolesService {
       where: { id: dto.usuarioId },
     });
     if (!usuario) {
-      throw new NotFoundException(
-        `Usuario con ID "${dto.usuarioId}" no encontrado`
-      );
+      throw new NotFoundException(I18nHelper.getError('USER_NOT_FOUND'));
     }
 
     const existente = await this.usuarioRolRepo.findOne({
@@ -258,7 +257,7 @@ export class RolesService {
     });
 
     if (!usuarioRol) {
-      throw new NotFoundException('Asignación de rol no encontrada');
+      throw new NotFoundException(I18nHelper.getError('USER_ROLE_ASSIGNMENT_NOT_FOUND'));
     }
 
     await this.usuarioRolRepo.remove(usuarioRol);
@@ -276,9 +275,7 @@ export class RolesService {
     });
 
     if (!usuario) {
-      throw new NotFoundException(
-        `Usuario con ID "${usuarioId}" no encontrado`
-      );
+      throw new NotFoundException(I18nHelper.getError('USER_NOT_FOUND'));
     }
 
     return usuario.roles || [];

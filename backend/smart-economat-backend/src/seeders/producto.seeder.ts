@@ -112,17 +112,22 @@ export const runSeeder = async (dataSource: DataSource) => {
   let offProducts: OffProduct[] = [];
   try {
     const offResponse = await fetch(
-      'https://es.openfoodfacts.org/cgi/search.pl?action=process&sort_by=unique_scans_n&json=1&page_size=20',
+      'https://es.openfoodfacts.org/cgi/search.pl?action=process&sort_by=unique_scans_n&json=1&page_size=100',
       { signal: AbortSignal.timeout(30000) }
     );
 
     if (offResponse.ok) {
       const offData = await offResponse.json();
       offProducts = offData.products || [];
+    } else {
+      console.error(
+        'Error al contactar con OpenFoodFacts:',
+        offResponse.statusText
+      );
     }
   } catch (error) {
-    console.warn(
-      'No se pudieron obtener productos de OpenFoodFacts, usando datos aleatorios:',
+    console.error(
+      'No se pudieron obtener productos de OpenFoodFacts:',
       error.message
     );
   }
@@ -134,66 +139,74 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   const productos: Producto[] = [];
 
-  for (const offProduct of offProducts) {
-    const defaultName =
-      offProduct.product_name_es ||
-      offProduct.product_name ||
-      offProduct.generic_name;
-    if (!defaultName) continue;
+  if (offProducts.length === 0) {
+    console.warn(
+      'No se pudieron obtener productos de OpenFoodFacts o la lista está vacía. Usando datos de respaldo...'
+    );
+    // Generar productos de respaldo con Faker
+    for (let i = 0; i < 20; i++) {
+      const productName = faker.commerce.productName().substring(0, 100);
+      const code = faker.commerce.isbn({ variant: 13 }).replace(/-/g, '').substring(0, 13);
+      
+      const { contenido, unidad } = parseQuantity(faker.helpers.arrayElement(['1kg', '500g', '1l', '250ml', '1 unidad']));
 
-    const { contenido, unidad } = parseQuantity(offProduct.quantity);
+      const producto = productoRepo.create({
+        nombre: productName,
+        marca: faker.company.name().substring(0, 100),
+        descripcion: faker.commerce.productDescription().substring(0, 1000), // Text field, can be long
+        unidad,
+        tipo: faker.helpers.arrayElement(Object.values(TipoProducto)),
+        contenido,
+        codigoBarras: code,
+      });
 
-    const producto = productoRepo.create({
-      nombre: defaultName.substring(0, 150),
-      marca: (
-        offProduct.brands ||
-        offProduct.brands_tags?.[0] ||
-        faker.company.name()
-      ).substring(0, 100),
-      descripcion: (
-        offProduct.ingredients_text || faker.commerce.productDescription()
-      ).substring(0, 500),
-      unidad,
-      fechaCaducidad: faker.datatype.boolean(0.3)
-        ? faker.date.soon({ days: 60 })
-        : undefined,
-      tipo: mapTipoCategoria(offProduct.categories_tags),
-      pathImg:
-        offProduct.image_url || faker.image.url({ width: 640, height: 480 }),
-      contenido,
-      codigoBarras:
-        offProduct.code?.substring(0, 50) ||
-        faker.string.alphanumeric(13).toUpperCase(),
-    });
-
-    if (producto.codigoBarras && codigosVistos.has(producto.codigoBarras)) {
-      continue;
+      if (!codigosVistos.has(producto.codigoBarras!)) {
+        codigosVistos.add(producto.codigoBarras!);
+        (producto as any)._alergenosTags = [];
+        productos.push(producto);
+      }
     }
-    if (producto.codigoBarras) {
+  } else {
+    for (const offProduct of offProducts) {
+      const defaultName =
+        offProduct.product_name_es ||
+        offProduct.product_name ||
+        offProduct.generic_name;
+
+      if (!defaultName || !offProduct.code) continue;
+
+      const { contenido, unidad } = parseQuantity(offProduct.quantity);
+
+      const producto = productoRepo.create({
+        nombre: defaultName.substring(0, 100),
+        marca: (offProduct.brands || offProduct.brands_tags?.[0] || '').substring(
+          0,
+          100
+        ),
+        descripcion: (offProduct.ingredients_text || '').substring(0, 1000),
+        unidad,
+        fechaCaducidad: faker.datatype.boolean(0.3)
+          ? faker.date.soon({ days: 60 })
+          : undefined,
+        tipo: mapTipoCategoria(offProduct.categories_tags),
+        pathImg: offProduct.image_url?.substring(0, 200),
+        contenido,
+        codigoBarras: offProduct.code.replace(/[^0-9]/g, '').substring(0, 13),
+      });
+
+      if (!producto.codigoBarras || codigosVistos.has(producto.codigoBarras)) {
+        continue;
+      }
       codigosVistos.add(producto.codigoBarras);
+
+      (producto as any)._alergenosTags = offProduct.allergens_tags || [];
+      productos.push(producto);
     }
-
-    (producto as any)._alergenosTags = offProduct.allergens_tags || [];
-    productos.push(producto);
-
-    if (productos.length >= 15) break;
   }
 
-  while (productos.length < 15) {
-    const producto = productoRepo.create({
-      nombre: faker.commerce.productName(),
-      marca: faker.company.name(),
-      descripcion: faker.commerce.productDescription(),
-      unidad: faker.helpers.arrayElement(Object.values(UnidadMedida)),
-      fechaCaducidad: faker.datatype.boolean(0.3)
-        ? faker.date.soon({ days: 60 })
-        : undefined,
-      tipo: faker.helpers.arrayElement(Object.values(TipoProducto)),
-      pathImg: faker.image.url({ width: 640, height: 480 }),
-      contenido: faker.number.int({ min: 1, max: 1000 }),
-      codigoBarras: faker.string.alphanumeric(10).toUpperCase(),
-    });
-    productos.push(producto);
+  if (productos.length === 0) {
+    console.warn('No se pudieron crear productos.');
+    return;
   }
 
   const productosGuardados = await productoRepo.save(productos);
@@ -216,8 +229,7 @@ export const runSeeder = async (dataSource: DataSource) => {
         proveedor,
         precioUnitario: parseFloat(faker.commerce.price({ min: 5, max: 200 })),
         marca: producto.marca,
-        codigoBarras:
-          producto.codigoBarras || faker.string.numeric({ length: 13 }),
+        codigoBarras: producto.codigoBarras!,
       });
       productoProveedores.push(pp);
     }
@@ -232,15 +244,6 @@ export const runSeeder = async (dataSource: DataSource) => {
     for (const tag of baseAlergenosTags) {
       const mapeado = mapAlergeno(tag);
       if (mapeado) alergenosMapeados.add(mapeado);
-    }
-
-    if (alergenosMapeados.size === 0 && !baseAlergenosTags.length) {
-      const numAlergenos = faker.number.int({ min: 0, max: 2 });
-      const seleccionados = faker.helpers.arrayElements(
-        Object.values(Alergeno),
-        numAlergenos
-      );
-      for (const al of seleccionados) alergenosMapeados.add(al);
     }
 
     for (const alergeno of alergenosMapeados) {

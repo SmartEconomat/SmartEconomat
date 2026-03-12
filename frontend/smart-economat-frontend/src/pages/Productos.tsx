@@ -40,63 +40,7 @@ import ShoppingBasketOutlinedIcon from '@mui/icons-material/ShoppingBasketOutlin
 import AddIcon from '@mui/icons-material/Add';
 import { useBreakpoints } from '../utils/useBreakpoints';
 
-const productoSchema: DynamicField[] = [
-    { name: 'nombre', label: 'Nombre Comercial', required: true },
-    { name: 'marca', label: 'Marca' },
-    { name: 'descripcion', label: 'Descripción' },
-    { name: 'contenido', label: 'Contenido Numérico', type: 'number', required: true },
-    {
-        name: 'unidad',
-        label: 'Unidad de Medida',
-        type: 'select',
-        options: [
-            { value: UnidadMedida.KG, label: 'Kg' },
-            { value: UnidadMedida.G, label: 'Gramo' },
-            { value: UnidadMedida.L, label: 'Litro' },
-            { value: UnidadMedida.ML, label: 'Mililitro' },
-            { value: UnidadMedida.UNIDAD, label: 'Unidad' },
-            { value: UnidadMedida.PAQ, label: 'Paquete' }
-        ],
-        required: true,
-        width: 4
-    },
-    {
-        name: 'tipo', label: 'Categoría', type: 'select', width: 4, options: [
-            { value: CategoriaProducto.VERDURA, label: 'Verdura' },
-            { value: CategoriaProducto.FRUTA, label: 'Fruta' },
-            { value: CategoriaProducto.CARNE, label: 'Carne' },
-            { value: CategoriaProducto.PESCADO, label: 'Pescado' },
-            { value: CategoriaProducto.MARISCO, label: 'Marisco' },
-            { value: CategoriaProducto.LACTEO, label: 'Lácteo' },
-            { value: CategoriaProducto.HUEVO, label: 'Huevo' },
-            { value: CategoriaProducto.CEREAL, label: 'Cereal' },
-            { value: CategoriaProducto.LEGUMBRE, label: 'Legumbre' },
-            { value: CategoriaProducto.FRUTO_SECO, label: 'Fruto Seco' },
-            { value: CategoriaProducto.CONDIMENTO, label: 'Condimento' },
-            { value: CategoriaProducto.ACEITE, label: 'Aceite' },
-            { value: CategoriaProducto.AZUCAR, label: 'Azúcar' },
-            { value: CategoriaProducto.BEBIDA, label: 'Bebida' },
-            { value: CategoriaProducto.OTRO, label: 'Otro' }
-        ]
-    },
-
-    { name: 'codigoBarras', label: 'Código de Barras' },
-    {
-        name: 'imagen',
-        label: 'Cargar Imagen',
-        type: 'image',
-        getFallbackIcon: (formData) =>
-            getCategoryIcon(formData.tipo as CategoriaProducto, {
-                sx: { fontSize: 80, color: 'text.secondary', opacity: 0.5 },
-            }),
-    },
-    {
-        name: 'alergenos',
-        label: 'Alérgenos Presentes',
-        type: 'allergens',
-        position: 'bottom'
-    }
-];
+import { productoSchema } from '../utils/schemas';
 
 const initialFilters: ProductFiltersState = {
     categorias: [],
@@ -109,7 +53,7 @@ const Productos: React.FC = () => {
     const [pageSize, setPageSize] = useState(12);
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
-    const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+    const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
     const [searchTerm, setSearchTerm] = useState('');
     const [filters, setFilters] = useState<ProductFiltersState>(initialFilters);
     const [data, setData] = useState<Producto[]>([]);
@@ -184,12 +128,12 @@ const Productos: React.FC = () => {
                 contenido: formData.contenido,
                 codigoBarras: orUndefined(formData.codigoBarras),
                 alergenos: Array.isArray(formData.alergenos)
-                    ? formData.alergenos.map((a: any) => typeof a === 'string' ? a : a.alergeno)
+                    ? formData.alergenos.map((a: any) => (typeof a === 'string' ? a : a.alergeno))
                     : undefined,
                 proveedores: Array.isArray(formData.proveedores)
                     ? formData.proveedores.map((p: any) => ({
                         proveedorId: p.proveedorId,
-                        marca: orUndefined(p.marca),
+                        marcaEspecifica: orUndefined(p.marca),
                         codigoBarras: orUndefined(p.codigoBarras),
                         precioUnitario: p.precioUnitario ? Number(p.precioUnitario) : undefined
                     }))
@@ -259,7 +203,7 @@ const Productos: React.FC = () => {
             editData.proveedores = row.proveedores.map((p: any) => ({
                 proveedorId: p.proveedor?.id || p.id,
                 nombre: p.proveedor?.nombre || '',
-                marca: p.marca || '',
+                marca: p.marcaEspecifica || p.marca || '',
                 codigoBarras: p.codigoBarras || '',
                 precioUnitario: p.precioUnitario || ''
             }));
@@ -466,9 +410,10 @@ const Productos: React.FC = () => {
                             }}
                             headerMedia={
                                 p.pathImg
-                                    ? <img src={p.pathImg} alt={p.nombre} style={{ height: 160, objectFit: 'cover', width: '100%' }} />
+                                    ? <img src={p.pathImg} alt={p.nombre} style={{ height: 200, objectFit: 'contain', width: '100%', display: 'block' }} />
                                     : getCategoryIcon(p.tipo, { sx: { fontSize: 80, color: 'text.secondary', opacity: 0.6 } })
                             }
+                            headerMediaNoPadding={!!p.pathImg}
                             sections={[
                                 {
                                     title: 'Información general',
