@@ -48,7 +48,9 @@ export class ProductoService {
         rest.codigoBarras
       );
       if (exists) {
-        throw new BadRequestException('El código de barras ya está registrado');
+        throw new BadRequestException(
+          I18nHelper.getError('EL_C_DIGO_DE_BARRAS_YA_EST_REGISTRADO')
+        );
       }
     } else {
       rest.codigoBarras = await this.generateUniqueEan13();
@@ -189,7 +191,9 @@ export class ProductoService {
         rest.codigoBarras
       );
       if (exists) {
-        throw new BadRequestException('El código de barras ya está registrado');
+        throw new BadRequestException(
+          I18nHelper.getError('EL_C_DIGO_DE_BARRAS_YA_EST_REGISTRADO')
+        );
       }
     }
 

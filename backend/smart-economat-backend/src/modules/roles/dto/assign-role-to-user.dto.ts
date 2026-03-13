@@ -3,7 +3,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class AssignRoleToUserDto {
   @ApiProperty({
-    description: 'ID del usuario al que se asignará el rol',
+    description: 'docs.ID_DEL_USUARIO_AL_QUE_SE_ASIGNAR_EL_ROL',
     example: 'uuid-usuario',
   })
   @IsUUID('7')
@@ -11,7 +11,7 @@ export class AssignRoleToUserDto {
   usuarioId!: string;
 
   @ApiProperty({
-    description: 'ID del rol a asignar',
+    description: 'docs.ID_DEL_ROL_A_ASIGNAR',
     example: 'uuid-rol',
   })
   @IsUUID('7')
@@ -19,7 +19,7 @@ export class AssignRoleToUserDto {
   rolId!: string;
 
   @ApiPropertyOptional({
-    description: 'Estado de la asignación',
+    description: 'docs.ESTADO_DE_LA_ASIGNACI_N',
     default: true,
   })
   @IsBoolean()

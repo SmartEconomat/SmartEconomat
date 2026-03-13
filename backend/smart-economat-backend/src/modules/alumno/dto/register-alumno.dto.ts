@@ -1,3 +1,4 @@
+import { i18nValidationMessage } from 'nestjs-i18n';
 import {
   IsInt,
   IsNotEmpty,
@@ -5,8 +6,12 @@ import {
   IsStrongPassword,
   Min,
 } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
+import { StringToNumberTransformer } from '../../../common/transformers/string-to-number.transformer';
 
 export class RegisterAlumnoDto {
+  @Transform((params) => TrimStringTransformer.transform(params))
   @IsString()
   @IsNotEmpty()
   username!: string;
@@ -21,20 +26,25 @@ export class RegisterAlumnoDto {
       minSymbols: 1,
     },
     {
-      message:
-        'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo',
+      message: i18nValidationMessage(
+        'validation.LA_CONTRASE_A_DEBE_TENER_AL_MENOS_8_CARA'
+      ),
     }
   )
   password!: string;
 
+  @Transform((params) => TrimStringTransformer.transform(params))
   @IsString()
   @IsNotEmpty()
   aula!: string;
 
+  @Type(() => Number)
+  @Transform((params) => StringToNumberTransformer.transform(params))
   @IsInt()
   @Min(1)
   numeroClase!: number;
 
+  @Transform((params) => TrimStringTransformer.transform(params))
   @IsString()
   @IsNotEmpty()
   cialProfesor!: string;

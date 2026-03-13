@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { SentryModule } from '@sentry/nestjs/setup';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -22,9 +23,15 @@ import { ProfesorModule } from './modules/profesor/profesor.module';
 import { AlumnoModule } from './modules/alumno/alumno.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { PermisosModule } from './modules/permisos/permisos.module';
-import { AuthorizationModule } from './modules/authorization/authorization.module';
+import { AuthModule } from './modules/auth/module/auth.module';
+import { RolesModule } from './modules/roles/roles.module';
+import { PlantillasRolesModule } from './modules/plantillas-roles/plantillas-roles.module';
+import { IsUniqueConstraint } from './common/decorators/is-unique.decorator';
+import { ExportModule } from './modules/export/export.module';
+
 @Module({
   imports: [
+    SentryModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -47,9 +54,12 @@ import { AuthorizationModule } from './modules/authorization/authorization.modul
     AlumnoModule,
     AdminModule,
     PermisosModule,
-    AuthorizationModule,
+    AuthModule,
+    RolesModule,
+    PlantillasRolesModule,
+    ExportModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, IsUniqueConstraint],
 })
 export class AppModule {}

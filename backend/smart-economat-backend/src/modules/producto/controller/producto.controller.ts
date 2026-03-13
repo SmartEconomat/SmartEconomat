@@ -9,9 +9,10 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  ParseUUIDPipe,
+  Query,
   Request,
 } from '@nestjs/common';
-import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { ProductoService } from '../service/producto.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
@@ -20,10 +21,9 @@ import { CreateProductoDto } from '../dto/create-producto.dto';
 import { UpdateProductoDto } from '../dto/update-producto.dto';
 import { Producto } from '../producto.entity/producto.entity';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
-
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
 
 @ApiTags('Productos')
 @UseGuards(JwtAuthGuard, PermisosGuard)
@@ -32,9 +32,12 @@ export class ProductoController {
   constructor(private readonly productoService: ProductoService) {}
 
   @Get('generar-ean13')
-  @RequirePermissions('productos:crear')
+  @RequirePermissions('productos:generar_ean13')
   @ApiOperation({ summary: 'Generar un código EAN-13 único' })
-  @ApiResponse({ status: 200, description: 'Código generado correctamente' })
+  @ApiResponse({
+    status: 200,
+    description: 'docs.C_DIGO_GENERADO_CORRECTAMENTE',
+  })
   async generarEan13(): Promise<{ codigo_barras: string }> {
     const codigo_barras = await this.productoService.generateUniqueEan13();
     return { codigo_barras };
@@ -49,19 +52,19 @@ export class ProductoController {
   })
   @ApiResponse({
     status: 201,
-    description: 'Producto creado correctamente',
+    description: 'docs.PRODUCTO_CREADO_CORRECTAMENTE',
     type: Producto,
   })
   @ApiResponse({
     status: 400,
-    description: 'Datos inválidos o código de barras duplicado',
+    description: 'docs.DATOS_INV_LIDOS_O_C_DIGO_DE_BARRAS_DUPLI',
   })
   create(
     @Body() createProductoDto: CreateProductoDto,
-    @Request() req: { user?: { sub: string } }
+    @Request() req: any
   ): Promise<Producto> {
-    const userId = req.user?.sub || null;
-    return this.productoService.create(createProductoDto, userId as string);
+    const userId = req.user?.sub as string;
+    return this.productoService.create(createProductoDto, userId);
   }
 
   @Get()
@@ -84,10 +87,10 @@ export class ProductoController {
   @Get(':id')
   @RequirePermissions('productos:ver')
   @ApiOperation({ summary: 'Obtener un producto por ID' })
-  @ApiParam({ name: 'id', description: 'UUID del producto' })
+  @ApiParam({ name: 'id', description: 'docs.UUID_DEL_PRODUCTO' })
   @ApiResponse({ status: 200, type: Producto })
-  @ApiResponse({ status: 404, description: 'Producto no encontrado' })
-  findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Producto> {
+  @ApiResponse({ status: 404, description: 'docs.PRODUCTO_NO_ENCONTRADO' })
+  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Producto> {
     return this.productoService.findOne(id);
   }
 
@@ -96,24 +99,24 @@ export class ProductoController {
   @ApiOperation({ summary: 'Actualizar un producto' })
   @ApiResponse({ status: 200, type: Producto })
   update(
-    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateProductoDto: UpdateProductoDto,
-    @Request() req: { user?: { sub: string } }
+    @Request() req: any
   ): Promise<Producto> {
-    const userId = req.user?.sub || null;
-    return this.productoService.update(id, updateProductoDto, userId as string);
+    const userId = req.user?.sub as string;
+    return this.productoService.update(id, updateProductoDto, userId);
   }
 
   @Delete(':id')
   @RequirePermissions('productos:eliminar')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Eliminar un producto' })
-  @ApiResponse({ status: 204, description: 'Producto eliminado' })
+  @ApiResponse({ status: 204, description: 'docs.PRODUCTO_ELIMINADO' })
   remove(
-    @Param('id', ParseUUIDv7Pipe) id: string,
-    @Request() req: { user?: { sub: string } }
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: any
   ): Promise<void> {
-    const userId = req.user?.sub || null;
-    return this.productoService.remove(id, userId as string);
+    const userId = req.user?.sub as string;
+    return this.productoService.remove(id, userId);
   }
 }
