@@ -9,10 +9,10 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
-  ParseUUIDPipe,
   Query,
   Request,
 } from '@nestjs/common';
+import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { CreateRecepcionDto } from '../dto/create-recepcion.dto';
 import { ApiQuery } from '@nestjs/swagger';
 import { UpdateRecepcionDto } from '../dto/update-recepcion.dto';
@@ -20,14 +20,13 @@ import { Recepcion } from '../recepcion.entity/recepcion.entity';
 import { RecepcionService } from '../service/recepcion.service';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/role.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
-import { rolUsuario } from '../../usuario/enums/usuario.enums';
 import { RecepcionStockService } from '../service/recepcion-stock.service';
 import { RecepcionResultadoDto } from '../dto/recepcion-resultado.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('recepcion')
 export class RecepcionController {
   constructor(
@@ -36,7 +35,7 @@ export class RecepcionController {
   ) {}
 
   @Post()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('recepciones:crear')
   @HttpCode(HttpStatus.CREATED)
   create(
     @Body() dto: CreateRecepcionDto,
@@ -48,7 +47,7 @@ export class RecepcionController {
   }
 
   @Get()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('recepciones:listar')
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   findAll(
@@ -58,24 +57,24 @@ export class RecepcionController {
   }
 
   @Get(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Recepcion> {
+  @RequirePermissions('recepciones:ver')
+  findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Recepcion> {
     return this.recepcionService.findOne(id);
   }
 
   @Patch(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('recepciones:editar')
   update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: UpdateRecepcionDto
   ): Promise<Recepcion> {
     return this.recepcionService.update(id, dto);
   }
 
   @Delete(':id')
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @RequirePermissions('recepciones:eliminar')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+  remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.recepcionService.remove(id);
   }
 }

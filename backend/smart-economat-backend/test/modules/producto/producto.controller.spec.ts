@@ -8,7 +8,7 @@ import { MovimientoHelper } from '../../../src/common/helpers/movimiento.helper'
 import { DataSource } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Reflector } from '@nestjs/core';
-import { AuthorizationService } from '../../../src/modules/auth/service/authorization.service';
+import { AuthPermissionsService } from '../../../src/modules/auth/service/auth-permissions.service';
 import { PermisosGuard } from '../../../src/modules/auth/guards/auth-permissions.guard';
 
 describe('ProductoController', () => {
@@ -65,7 +65,7 @@ describe('ProductoController', () => {
     removeExcludedPermission: jest.fn(),
   };
 
-  const mockAuthorizationService = {
+  const mockAuthPermissionsService = {
     checkPermission: jest.fn(),
   };
 
@@ -104,8 +104,8 @@ describe('ProductoController', () => {
           useValue: mockDataSource,
         },
         {
-          provide: AuthorizationService,
-          useValue: mockAuthorizationService,
+          provide: AuthPermissionsService,
+          useValue: mockAuthPermissionsService,
         },
         {
           provide: Reflector,

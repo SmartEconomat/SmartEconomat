@@ -32,7 +32,6 @@ export function getRecepcionMessage<Key extends keyof typeof RecepcionMessages>(
   const message = RecepcionMessages[key];
 
   if (typeof message === 'function') {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return (message as (...args: any[]) => string)(...args);
   }
 

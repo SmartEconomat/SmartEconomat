@@ -18,13 +18,10 @@ export class StringToBooleanTransformer {
     if (value === null) return null;
     if (value === undefined) return undefined;
 
-    // If already boolean, return it
     if (typeof value === 'boolean') return value;
 
-    // If number, convert (1 = true, 0 = false)
     if (typeof value === 'number') return value !== 0;
 
-    // If string, normalize and convert
     if (typeof value === 'string') {
       const trimmed = value.trim().toLowerCase();
 

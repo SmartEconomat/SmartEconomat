@@ -18,10 +18,8 @@ export class StringToNumberTransformer {
     if (value === null) return null;
     if (value === undefined) return undefined;
 
-    // If already a number, return it
     if (typeof value === 'number') return value;
 
-    // If string, try converting
     if (typeof value === 'string') {
       const trimmed = value.trim();
       if (trimmed === '') return undefined;
