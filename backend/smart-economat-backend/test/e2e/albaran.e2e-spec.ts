@@ -55,8 +55,11 @@ describe('AlbaranController (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
-      expect(Array.isArray(response.body.data)).toBe(true);
-      expect(response.body.data.length).toBeGreaterThan(0);
+      expect(Array.isArray(response.body.data.data)).toBe(true);
+      expect(response.body.data.data.length).toBeGreaterThan(0);
+      expect(typeof response.body.data.total).toBe('number');
+      expect(typeof response.body.data.page).toBe('number');
+      expect(typeof response.body.data.limit).toBe('number');
     });
 
     it('E2E-ALB-10-GET-ID: Obtener el detalle de un albarán', async () => {

@@ -18,6 +18,7 @@ import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto
 import { AddProveedorToProductoDto } from '../dto/producto-proveedor.dto/add-proveedor-to-producto.dto';
 import { ProductoAlergeno } from '../producto-alergeno.entity/producto-alergeno.entity';
 import { generateEan13, validateEan13 } from '../../../common/utils/ean13.util';
+import { buildFindManyOptions } from '../../../common/utils/typeorm-query.helper';
 
 @Injectable()
 export class ProductoService {
@@ -94,7 +95,15 @@ export class ProductoService {
     query: ProductFilterDto
   ): Promise<PaginatedResponseDto<Producto>> {
     const page = query.page ?? 1;
-    const limit = Math.min(query.limit ?? 20, 100);
+    const {
+      skip,
+      take,
+      order: orderOptions,
+    } = buildFindManyOptions<Producto>(query, 'nombre');
+    const [sortBy, order] = Object.entries(orderOptions ?? {})[0] ?? [
+      'nombre',
+      'ASC',
+    ];
 
     const queryBuilder = this.productoRepository
       .createQueryBuilder('producto')
@@ -141,9 +150,9 @@ export class ProductoService {
       );
     }
 
-    queryBuilder.orderBy('producto.nombre', 'ASC');
+    queryBuilder.orderBy(`producto.${sortBy}`, order as 'ASC' | 'DESC');
 
-    queryBuilder.skip((page - 1) * limit).take(limit);
+    queryBuilder.skip(skip ?? 0).take(take ?? 20);
 
     const [data, total] = await queryBuilder.getManyAndCount();
 
@@ -152,6 +161,7 @@ export class ProductoService {
       proveedores: producto.proveedores || [],
     }));
 
+    const limit = take ?? 20;
     const totalPages = Math.ceil(total / limit) || 1;
     return { data: processedData, total, page, limit, totalPages };
   }

@@ -57,7 +57,9 @@ export class RecepcionProductoService {
     query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<RecepcionProducto>> {
     const page = query.page ?? 1;
-    const limit = Math.min(query.limit ?? 20, 100);
+    const limit = Math.min(query.limit ?? 20, 50);
+    const sortBy = query.sortBy ?? 'fechaRecepcion';
+    const order = query.order ?? 'DESC';
 
     const [data, total] = await this.recepcionProductoRepository.findAndCount({
       relations: [
@@ -67,7 +69,7 @@ export class RecepcionProductoService {
         'pedidoProducto.productoProveedor.producto',
         'pedidoProducto.productoProveedor.proveedor',
       ],
-      order: { fechaRecepcion: 'DESC' },
+      order: { [sortBy]: order },
       skip: (page - 1) * limit,
       take: limit,
     });

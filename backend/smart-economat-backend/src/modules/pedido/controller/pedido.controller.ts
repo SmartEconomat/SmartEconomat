@@ -10,8 +10,8 @@ import {
   HttpStatus,
   UseGuards,
   Request,
-  Query,
 } from '@nestjs/common';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { CreatePedidoDto } from '../dto/create-pedido.dto';
 import { CancelPedidoDto } from '../dto/cancelPedido.dto';
@@ -40,7 +40,16 @@ export class PedidoController {
   @Get()
   @RequirePermissions('pedidos:listar')
   findAll(
-    @Query() query: PaginationQueryDto
+    @SortableFields({
+      fechaPedido: 'fechaPedido',
+      fechaEntrega: 'fechaEntrega',
+      costeTotal: 'costeTotal',
+      estado: 'estado',
+      fechaCreacion: 'createdAt',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+    })
+    query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Pedido>> {
     return this.pedidoService.findAll(query);
   }
