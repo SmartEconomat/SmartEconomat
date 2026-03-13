@@ -34,7 +34,7 @@ import * as path from 'path';
  *     "running": "Mensaje con {interpolación}",
  *     "success": { "KEY": "Mensaje de éxito de seeder" }
  *   },
- *   "entities": { "usuario": "Usuario" }
+ *   "permiso.entity": { "usuario": "Usuario" }
  * }
  * ```
  *
@@ -59,7 +59,7 @@ import * as path from 'path';
  *
  * @class SeederI18nHelper
  * @static
- * @see {@link https://github.com/toonvanstrijp/nestjs-i18n nestjs-i18n} para contextos NestJS
+ * @see {@link https:
  */
 export class SeederI18nHelper {
   /**
@@ -151,13 +151,12 @@ export class SeederI18nHelper {
     for (const key of keys) {
       value = value?.[key];
       if (value === undefined) {
-        return path; // Retorna la clave si no se encuentra la traducción
+        return path;
       }
     }
 
     let message = String(value);
 
-    // Interpolación de argumentos: reemplaza placeholders {key} con valores
     if (args) {
       Object.entries(args).forEach(([key, val]) => {
         message = message.replace(`{${key}}`, String(val));
@@ -239,7 +238,7 @@ export class SeederI18nHelper {
   }
 
   /**
-   * Obtiene el nombre traducido de una entidad desde la sección "entities" del archivo de traducción.
+   * Obtiene el nombre traducido de una entidad desde la sección "permiso.entity" del archivo de traducción.
    *
    * Útil para generar mensajes dinámicos que incluyan nombres de entidades específicas.
    *
@@ -249,8 +248,8 @@ export class SeederI18nHelper {
    *
    * @example
    * ```typescript
-   * // En translation.json (es): { "entities": { "usuario": "Usuario" } }
-   * // En translation.json (en): { "entities": { "usuario": "User" } }
+   * // En translation.json (es): { "permiso.entity": { "usuario": "Usuario" } }
+   * // En translation.json (en): { "permiso.entity": { "usuario": "User" } }
    *
    * const entityName = SeederI18nHelper.getEntity('usuario');
    * console.log(`${entityName} creado`);

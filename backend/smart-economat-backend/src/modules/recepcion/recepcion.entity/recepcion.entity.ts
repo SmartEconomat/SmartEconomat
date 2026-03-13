@@ -78,6 +78,8 @@ export class Recepcion extends BaseEntity {
    */
   @Column({ type: 'text', nullable: true })
   observaciones?: string;
+  @Column({ default: false })
+  incidencia: boolean;
 
   /**
    * Relación con los pedidos que se están recepcionando.

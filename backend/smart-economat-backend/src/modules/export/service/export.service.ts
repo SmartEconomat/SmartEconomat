@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, SelectQueryBuilder } from 'typeorm';
 import { PassThrough } from 'stream';
@@ -100,17 +100,12 @@ export class ExportService {
     query: ExportProductoFilterDto,
     res: Response
   ): Promise<void> {
-    await this.streamToExcel(
+    await this.streamQueryToExcel(
       res,
       'Productos',
       PRODUCTO_COLUMNS,
-      (o, l) =>
-        this.fetchBatch(
-          this.buildProductoQueryBuilder(query),
-          o,
-          l,
-          mapProductoToExcelRow
-        ),
+      this.buildProductoQueryBuilder(query),
+      mapProductoToExcelRow,
       query.maxRows ?? DEFAULT_MAX_ROWS
     );
   }
@@ -119,17 +114,12 @@ export class ExportService {
     query: ExportPedidoFilterDto,
     res: Response
   ): Promise<void> {
-    await this.streamToExcel(
+    await this.streamQueryToExcel(
       res,
       'Pedidos',
       PEDIDO_COLUMNS,
-      (o, l) =>
-        this.fetchBatch(
-          this.buildPedidoQueryBuilder(query),
-          o,
-          l,
-          mapPedidoToExcelRow
-        ),
+      this.buildPedidoQueryBuilder(query),
+      mapPedidoToExcelRow,
       query.maxRows ?? DEFAULT_MAX_ROWS
     );
   }
@@ -138,17 +128,12 @@ export class ExportService {
     query: ExportProveedorFilterDto,
     res: Response
   ): Promise<void> {
-    await this.streamToExcel(
+    await this.streamQueryToExcel(
       res,
       'Proveedores',
       PROVEEDOR_COLUMNS,
-      (o, l) =>
-        this.fetchBatch(
-          this.buildProveedorQueryBuilder(query),
-          o,
-          l,
-          mapProveedorToExcelRow
-        ),
+      this.buildProveedorQueryBuilder(query),
+      mapProveedorToExcelRow,
       query.maxRows ?? DEFAULT_MAX_ROWS
     );
   }
@@ -157,17 +142,12 @@ export class ExportService {
     query: ExportAlbaranFilterDto,
     res: Response
   ): Promise<void> {
-    await this.streamToExcel(
+    await this.streamQueryToExcel(
       res,
       'Albaranes',
       ALBARAN_COLUMNS,
-      (o, l) =>
-        this.fetchBatch(
-          this.buildAlbaranQueryBuilder(query),
-          o,
-          l,
-          mapAlbaranToExcelRow
-        ),
+      this.buildAlbaranQueryBuilder(query),
+      mapAlbaranToExcelRow,
       query.maxRows ?? DEFAULT_MAX_ROWS
     );
   }
@@ -176,17 +156,12 @@ export class ExportService {
     query: ExportIncidenciaFilterDto,
     res: Response
   ): Promise<void> {
-    await this.streamToExcel(
+    await this.streamQueryToExcel(
       res,
       'Incidencias',
       INCIDENCIA_COLUMNS,
-      (o, l) =>
-        this.fetchBatch(
-          this.buildIncidenciaQueryBuilder(query),
-          o,
-          l,
-          mapIncidenciaToExcelRow
-        ),
+      this.buildIncidenciaQueryBuilder(query),
+      mapIncidenciaToExcelRow,
       query.maxRows ?? DEFAULT_MAX_ROWS
     );
   }
@@ -195,17 +170,12 @@ export class ExportService {
     query: ExportInventarioFilterDto,
     res: Response
   ): Promise<void> {
-    await this.streamToExcel(
+    await this.streamQueryToExcel(
       res,
       'Inventario',
       INVENTARIO_COLUMNS,
-      (o, l) =>
-        this.fetchBatch(
-          this.buildInventarioQueryBuilder(query),
-          o,
-          l,
-          mapInventarioToExcelRow
-        ),
+      this.buildInventarioQueryBuilder(query),
+      mapInventarioToExcelRow,
       query.maxRows ?? DEFAULT_MAX_ROWS
     );
   }
@@ -214,17 +184,12 @@ export class ExportService {
     query: ExportMovimientoFilterDto,
     res: Response
   ): Promise<void> {
-    await this.streamToExcel(
+    await this.streamQueryToExcel(
       res,
       'Movimientos',
       MOVIMIENTO_COLUMNS,
-      (o, l) =>
-        this.fetchBatch(
-          this.buildMovimientoQueryBuilder(query),
-          o,
-          l,
-          mapMovimientoToExcelRow
-        ),
+      this.buildMovimientoQueryBuilder(query),
+      mapMovimientoToExcelRow,
       query.maxRows ?? DEFAULT_MAX_ROWS
     );
   }
@@ -233,17 +198,12 @@ export class ExportService {
     query: ExportRecepcionFilterDto,
     res: Response
   ): Promise<void> {
-    await this.streamToExcel(
+    await this.streamQueryToExcel(
       res,
       'Recepciones',
       RECEPCION_COLUMNS,
-      (o, l) =>
-        this.fetchBatch(
-          this.buildRecepcionQueryBuilder(query),
-          o,
-          l,
-          mapRecepcionToExcelRow
-        ),
+      this.buildRecepcionQueryBuilder(query),
+      mapRecepcionToExcelRow,
       query.maxRows ?? DEFAULT_MAX_ROWS
     );
   }
@@ -252,17 +212,12 @@ export class ExportService {
     query: ExportRecetaFilterDto,
     res: Response
   ): Promise<void> {
-    await this.streamToExcel(
+    await this.streamQueryToExcel(
       res,
       'Recetas',
       RECETA_COLUMNS,
-      (o, l) =>
-        this.fetchBatch(
-          this.buildRecetaQueryBuilder(query),
-          o,
-          l,
-          mapRecetaToExcelRow
-        ),
+      this.buildRecetaQueryBuilder(query),
+      mapRecetaToExcelRow,
       query.maxRows ?? DEFAULT_MAX_ROWS
     );
   }
@@ -271,17 +226,12 @@ export class ExportService {
     query: ExportUbicacionFilterDto,
     res: Response
   ): Promise<void> {
-    await this.streamToExcel(
+    await this.streamQueryToExcel(
       res,
       'Ubicaciones',
       UBICACION_COLUMNS,
-      (o, l) =>
-        this.fetchBatch(
-          this.buildUbicacionQueryBuilder(query),
-          o,
-          l,
-          mapUbicacionToExcelRow
-        ),
+      this.buildUbicacionQueryBuilder(query),
+      mapUbicacionToExcelRow,
       query.maxRows ?? DEFAULT_MAX_ROWS
     );
   }
@@ -290,17 +240,12 @@ export class ExportService {
     query: ExportUsuarioFilterDto,
     res: Response
   ): Promise<void> {
-    await this.streamToExcel(
+    await this.streamQueryToExcel(
       res,
       'Usuarios',
       USUARIO_COLUMNS,
-      (o, l) =>
-        this.fetchBatch(
-          this.buildUsuarioQueryBuilder(query),
-          o,
-          l,
-          mapUsuarioToExcelRow
-        ),
+      this.buildUsuarioQueryBuilder(query),
+      mapUsuarioToExcelRow,
       query.maxRows ?? DEFAULT_MAX_ROWS
     );
   }
@@ -309,17 +254,12 @@ export class ExportService {
     query: ExportProductoFilterDto,
     res: Response
   ): Promise<void> {
-    await this.streamToPdf(
+    await this.streamQueryToPdf(
       res,
       'Productos',
       PRODUCTO_COLUMNS,
-      (o, l) =>
-        this.fetchBatch(
-          this.buildProductoQueryBuilder(query),
-          o,
-          l,
-          mapProductoToExcelRow
-        ),
+      this.buildProductoQueryBuilder(query),
+      mapProductoToExcelRow,
       query.maxRows ?? DEFAULT_MAX_ROWS
     );
   }
@@ -328,17 +268,12 @@ export class ExportService {
     query: ExportProveedorFilterDto,
     res: Response
   ): Promise<void> {
-    await this.streamToPdf(
+    await this.streamQueryToPdf(
       res,
       'Proveedores',
       PROVEEDOR_COLUMNS,
-      (o, l) =>
-        this.fetchBatch(
-          this.buildProveedorQueryBuilder(query),
-          o,
-          l,
-          mapProveedorToExcelRow
-        ),
+      this.buildProveedorQueryBuilder(query),
+      mapProveedorToExcelRow,
       query.maxRows ?? DEFAULT_MAX_ROWS
     );
   }
@@ -347,17 +282,12 @@ export class ExportService {
     query: ExportInventarioFilterDto,
     res: Response
   ): Promise<void> {
-    await this.streamToPdf(
+    await this.streamQueryToPdf(
       res,
       'Inventario',
       INVENTARIO_COLUMNS,
-      (o, l) =>
-        this.fetchBatch(
-          this.buildInventarioQueryBuilder(query),
-          o,
-          l,
-          mapInventarioToExcelRow
-        ),
+      this.buildInventarioQueryBuilder(query),
+      mapInventarioToExcelRow,
       query.maxRows ?? DEFAULT_MAX_ROWS
     );
   }
@@ -366,17 +296,12 @@ export class ExportService {
     query: ExportPedidoFilterDto,
     res: Response
   ): Promise<void> {
-    await this.streamToPdf(
+    await this.streamQueryToPdf(
       res,
       'Pedidos',
       PEDIDO_COLUMNS,
-      (o, l) =>
-        this.fetchBatch(
-          this.buildPedidoQueryBuilder(query),
-          o,
-          l,
-          mapPedidoToExcelRow
-        ),
+      this.buildPedidoQueryBuilder(query),
+      mapPedidoToExcelRow,
       query.maxRows ?? DEFAULT_MAX_ROWS
     );
   }
@@ -385,17 +310,12 @@ export class ExportService {
     query: ExportAlbaranFilterDto,
     res: Response
   ): Promise<void> {
-    await this.streamToPdf(
+    await this.streamQueryToPdf(
       res,
       'Albaranes',
       ALBARAN_COLUMNS,
-      (o, l) =>
-        this.fetchBatch(
-          this.buildAlbaranQueryBuilder(query),
-          o,
-          l,
-          mapAlbaranToExcelRow
-        ),
+      this.buildAlbaranQueryBuilder(query),
+      mapAlbaranToExcelRow,
       query.maxRows ?? DEFAULT_MAX_ROWS
     );
   }
@@ -404,19 +324,63 @@ export class ExportService {
     query: ExportRecetaFilterDto,
     res: Response
   ): Promise<void> {
-    await this.streamToPdf(
+    await this.streamQueryToPdf(
       res,
       'Recetas',
       RECETA_COLUMNS,
-      (o, l) =>
-        this.fetchBatch(
-          this.buildRecetaQueryBuilder(query),
-          o,
-          l,
-          mapRecetaToExcelRow
-        ),
+      this.buildRecetaQueryBuilder(query),
+      mapRecetaToExcelRow,
       query.maxRows ?? DEFAULT_MAX_ROWS
     );
+  }
+
+  private async streamQueryToPdf<T extends object>(
+    res: Response,
+    title: string,
+    columns: ExportColumn[],
+    qb: SelectQueryBuilder<T>,
+    mapper: (entity: T) => Record<string, unknown>,
+    maxRows: number
+  ): Promise<void> {
+    await this.ensureWithinLimit(qb, maxRows);
+    await this.streamToPdf(
+      res,
+      title,
+      columns,
+      (offset, limit) => this.fetchBatch(qb.clone(), offset, limit, mapper),
+      maxRows
+    );
+  }
+
+  private async streamQueryToExcel<T extends object>(
+    res: Response,
+    sheetName: string,
+    columns: ExportColumn[],
+    qb: SelectQueryBuilder<T>,
+    mapper: (entity: T) => Record<string, unknown>,
+    maxRows: number
+  ): Promise<void> {
+    await this.ensureWithinLimit(qb, maxRows);
+    await this.streamToExcel(
+      res,
+      sheetName,
+      columns,
+      (offset, limit) => this.fetchBatch(qb.clone(), offset, limit, mapper),
+      maxRows
+    );
+  }
+
+  private async ensureWithinLimit<T extends object>(
+    qb: SelectQueryBuilder<T>,
+    maxRows: number
+  ): Promise<void> {
+    const totalRows = await qb.clone().getCount();
+
+    if (totalRows > maxRows) {
+      throw new BadRequestException(
+        `La exportacion excede el limite permitido de ${maxRows} filas.`
+      );
+    }
   }
 
   private async streamToPdf(

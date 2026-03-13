@@ -99,14 +99,14 @@ export class MovimientoRepository {
       .leftJoinAndSelect('movimiento.inventario', 'inventario');
 
     if (entityId) {
-      query.where('movimiento.producto_proveedor_id = :entityId', { entityId });
+      query.where('productoProveedor.id = :entityId', { entityId });
     }
 
     if (userId) {
       if (entityId) {
-        query.orWhere('movimiento.usuario_id = :userId', { userId });
+        query.orWhere('usuario.id = :userId', { userId });
       } else {
-        query.where('movimiento.usuario_id = :userId', { userId });
+        query.where('usuario.id = :userId', { userId });
       }
     }
 

@@ -8,50 +8,61 @@ import {
   IsEnum,
   IsNumber,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EstadoVisualProducto } from '../enums/estado-visual.enum';
 import {
   TipoProducto,
   UnidadMedida,
 } from '../../producto/enums/producto.enums';
+import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
+import { StringToDateTransformer } from '../../../common/transformers/string-to-date.transformer';
+import { StringToBooleanTransformer } from '../../../common/transformers/string-to-boolean.transformer';
 
 export class ProductoNuevoDto {
   @ApiProperty({
-    description: 'Indica si este producto debe crearse en BD',
+    description: 'docs.INDICA_SI_ESTE_PRODUCTO_DEBE_CREARSE_EN',
     example: true,
   })
   @IsBoolean()
   pendienteCreacion: boolean;
 
   @ApiProperty({
-    description: 'Código de barras escaneado',
+    description: 'docs.C_DIGO_DE_BARRAS_ESCANEADO',
     example: '8410188003028',
   })
   @IsString()
   codigoBarras: string;
 
   @ApiProperty({
-    description: 'Nombre introducido por el operario',
+    description: 'docs.NOMBRE_INTRODUCIDO_POR_EL_OPERARIO',
     example: 'Tomate frito',
   })
+  @Transform((params) => TrimStringTransformer.transform(params))
   @IsString()
   nombre: string;
 
-  @ApiPropertyOptional({ description: 'Marca opcional', example: 'Orlando' })
+  @ApiPropertyOptional({
+    description: 'docs.MARCA_OPCIONAL',
+    example: 'Orlando',
+  })
   @IsOptional()
+  @Transform((params) => TrimStringTransformer.transform(params))
   @IsString()
   marca?: string;
 
-  @ApiProperty({ description: 'Unidad de medida', enum: UnidadMedida })
+  @ApiProperty({ description: 'docs.UNIDAD_DE_MEDIDA', enum: UnidadMedida })
   @IsEnum(UnidadMedida)
   unidad: UnidadMedida;
 
-  @ApiProperty({ description: 'Tipo de producto', enum: TipoProducto })
+  @ApiProperty({ description: 'docs.TIPO_DE_PRODUCTO', enum: TipoProducto })
   @IsEnum(TipoProducto)
   tipo: TipoProducto;
 
-  @ApiProperty({ description: 'Contenido neto (peso/volumen)', example: 400 })
+  @ApiProperty({
+    description: 'docs.CONTENIDO_NETO_PESO_VOLUMEN',
+    example: 400,
+  })
   @IsNumber()
   @Min(0)
   contenido: number;
@@ -59,7 +70,7 @@ export class ProductoNuevoDto {
 
 export class RecepcionLineDto {
   @ApiProperty({
-    description: 'ID de la línea original del pedido.',
+    description: 'docs.ID_DE_LA_L_NEA_ORIGINAL_DEL_PEDIDO',
     example: 'uuid-string',
   })
   @IsString()
@@ -67,7 +78,7 @@ export class RecepcionLineDto {
   pedidoProductoId: string;
 
   @ApiProperty({
-    description: 'Cantidad realmente recibida',
+    description: 'docs.CANTIDAD_REALMENTE_RECIBIDA',
     example: 10,
     minimum: 0,
   })
@@ -76,7 +87,7 @@ export class RecepcionLineDto {
   cantidadRecibida: number;
 
   @ApiPropertyOptional({
-    description: 'Cantidad contada o reportada en el Albarán',
+    description: 'docs.CANTIDAD_CONTADA_O_REPORTADA_EN_EL_ALBAR',
     example: 10,
   })
   @IsOptional()
@@ -85,7 +96,7 @@ export class RecepcionLineDto {
   cantidadAlbaran?: number;
 
   @ApiPropertyOptional({
-    description: 'Estado exterior / visual con el que llega la mercancía',
+    description: 'docs.ESTADO_EXTERIOR_VISUAL_CON_EL_QUE_LLEGA',
     enum: EstadoVisualProducto,
     example: EstadoVisualProducto.OPTIMO,
   })
@@ -94,11 +105,12 @@ export class RecepcionLineDto {
   estadoVisual?: EstadoVisualProducto;
 
   @ApiPropertyOptional({
-    description: 'Fecha de caducidad del lote físico recibido',
+    description: 'docs.FECHA_DE_CADUCIDAD_DEL_LOTE_F_SICO_RECIB',
     example: '2026-10-15T00:00:00.000Z',
   })
   @IsOptional()
   @Type(() => Date)
+  @Transform((params) => StringToDateTransformer.transform(params))
   fechaCaducidad?: Date;
 
   @ApiPropertyOptional({
@@ -106,20 +118,22 @@ export class RecepcionLineDto {
     example: 'Sin daños',
   })
   @IsOptional()
+  @Transform((params) => TrimStringTransformer.transform(params))
   @IsString()
   observaciones?: string;
 
   @ApiPropertyOptional({
-    description: 'Indica si el peso se obtuvo desde la báscula conectada',
+    description: 'docs.INDICA_SI_EL_PESO_SE_OBTUVO_DESDE_LA_B_S',
   })
   @IsOptional()
+  @Transform((params) => StringToBooleanTransformer.transform(params))
   @IsBoolean()
   isWeighedWithScale?: boolean;
 }
 
 export class ProductoNuevoRecepcionDto extends ProductoNuevoDto {
   @ApiProperty({
-    description: 'Cantidad realmente recibida del nuevo producto',
+    description: 'docs.CANTIDAD_REALMENTE_RECIBIDA_DEL_NUEVO_PR',
     example: 10,
     minimum: 0,
   })
@@ -128,45 +142,48 @@ export class ProductoNuevoRecepcionDto extends ProductoNuevoDto {
   cantidadRecibida: number;
 
   @ApiPropertyOptional({
-    description: 'Observaciones del nuevo producto',
+    description: 'docs.OBSERVACIONES_DEL_NUEVO_PRODUCTO',
     example: 'Caja abollada',
   })
   @IsOptional()
+  @Transform((params) => TrimStringTransformer.transform(params))
   @IsString()
   observaciones?: string;
 
   @ApiPropertyOptional({
-    description: 'Indica si el peso se obtuvo desde la báscula conectada',
+    description: 'docs.INDICA_SI_EL_PESO_SE_OBTUVO_DESDE_LA_B_S',
   })
   @IsOptional()
+  @Transform((params) => StringToBooleanTransformer.transform(params))
   @IsBoolean()
   isWeighedWithScale?: boolean;
 }
 
 export class PedidoRecepcionDto {
-  @ApiProperty({ description: 'ID del pedido al que pertenece la recepción' })
+  @ApiProperty({ description: 'docs.ID_DEL_PEDIDO_AL_QUE_PERTENECE_LA_RECEPC' })
   @IsString()
   pedidoId: string;
 
   @ApiPropertyOptional({
-    description: 'Nº de albarán referenciado en el pedido',
+    description: 'docs.N_DE_ALBAR_N_REFERENCIADO_EN_EL_PEDIDO',
   })
   @IsOptional()
+  @Transform((params) => TrimStringTransformer.transform(params))
   @IsString()
   nAlbaran?: string;
 
   @ApiPropertyOptional({
-    description: 'Firma / Observaciones generales para el pedido',
+    description: 'docs.FIRMA_OBSERVACIONES_GENERALES_PARA_EL_PE',
   })
   @IsOptional()
+  @Transform((params) => TrimStringTransformer.transform(params))
   @IsString()
   observaciones?: string;
 }
 
 export class CreateRecepcionDto {
   @ApiPropertyOptional({
-    description:
-      'IDs de pedidos vinculados a esta recepción (opcional por retrocompatibilidad)',
+    description: 'docs.IDS_DE_PEDIDOS_VINCULADOS_A_ESTA_RECEPCI',
     type: [String],
   })
   @IsOptional()
@@ -175,7 +192,7 @@ export class CreateRecepcionDto {
   pedidoIds?: string[];
 
   @ApiPropertyOptional({
-    description: 'Pedidos con su albarán individual',
+    description: 'docs.PEDIDOS_CON_SU_ALBAR_N_INDIVIDUAL',
     type: [PedidoRecepcionDto],
   })
   @IsOptional()
@@ -185,28 +202,32 @@ export class CreateRecepcionDto {
   pedidos?: PedidoRecepcionDto[];
 
   @ApiPropertyOptional({
-    description: 'Número de albarán general de entrega',
+    description: 'docs.N_MERO_DE_ALBAR_N_GENERAL_DE_ENTREGA',
     example: 'ALB-2023-001',
   })
   @IsOptional()
+  @Transform((params) => TrimStringTransformer.transform(params))
   @IsString()
   nAlbaran?: string;
 
   @ApiPropertyOptional({
-    description: 'Fecha de recepción. Por defecto current_timestamp',
+    description: 'docs.FECHA_DE_RECEPCI_N_POR_DEFECTO_CURRENT_T',
   })
   @IsOptional()
+  @Type(() => Date)
+  @Transform((params) => StringToDateTransformer.transform(params))
   fechaRecepcion?: Date;
 
   @ApiPropertyOptional({
-    description: 'Observaciones generales o firma de recepción',
+    description: 'docs.OBSERVACIONES_GENERALES_O_FIRMA_DE_RECEP',
   })
   @IsOptional()
+  @Transform((params) => TrimStringTransformer.transform(params))
   @IsString()
   observaciones?: string;
 
   @ApiProperty({
-    description: 'Líneas vinculadas a pedidos',
+    description: 'docs.L_NEAS_VINCULADAS_A_PEDIDOS',
     type: [RecepcionLineDto],
   })
   @IsArray()
@@ -215,7 +236,7 @@ export class CreateRecepcionDto {
   productos: RecepcionLineDto[];
 
   @ApiPropertyOptional({
-    description: 'Productos nuevos a crear en la misma transacción',
+    description: 'docs.PRODUCTOS_NUEVOS_A_CREAR_EN_LA_MISMA_TRA',
     type: [ProductoNuevoRecepcionDto],
   })
   @IsOptional()
@@ -225,7 +246,7 @@ export class CreateRecepcionDto {
   productosNuevos?: ProductoNuevoRecepcionDto[];
 
   @ApiProperty({
-    description: 'ID del usuario operario (usualmente sacado del token JWT)',
+    description: 'docs.ID_DEL_USUARIO_OPERARIO_USUALMENTE_SACAD',
     example: 'uuid-string',
   })
   @IsOptional()

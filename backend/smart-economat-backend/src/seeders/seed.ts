@@ -6,10 +6,17 @@ import * as dotenv from 'dotenv';
 import { Seeder } from './interfaces/seeder.interface';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
+/* 
+  dotenv.config({ path: join(__dirname, '../../../../.env.prod') }); 
+  ⚠️ ADVERTENCIA: Esto solo debe usarse si entiendes perfectamente las implicaciones. 
+  Nunca usar en producción real. 
+  Solo habilitar en entornos de desarrollo controlados para pruebas específicas.
+*/
+
 dotenv.config({ path: join(__dirname, '../../../../.env') });
 
 if (process.env.NODE_ENV === 'production') {
-  console.error(SeederI18nHelper.getSeederMessage('production_error'));
+  console.error('No se permite ejecutar seeders en producción');
   process.exit(1);
 }
 
@@ -17,31 +24,50 @@ import { dbConfig } from '../config/database.config';
 
 export const dataSource = new DataSource({
   ...dbConfig,
-  synchronize: process.env.NODE_ENV === 'test',
+  entities: [join(__dirname, '../**/*.entity.{ts,js}')],
+  migrations: [join(__dirname, '../migrations/*.{ts,js}')],
+  synchronize:
+    process.env.NODE_ENV === 'test' || process.argv.includes('reset'),
   dropSchema: process.argv.includes('reset'),
 });
 
 async function runAllSeeders() {
   const seedersInOrder = [
-    'roles-permisos.seeder.ts',
-    'usuario.seeder.ts',
-    'proveedor.seeder.ts',
-    'producto.seeder.ts',
-    'inventario.seeder.ts',
-    'pedido.seeder.ts',
-    'recepcion.seeder.ts',
-    'albaran.seeder.ts',
-    'historial-precio.seeder.ts',
-    'incidencia.seeder.ts',
-    'movimiento.seeder.ts',
-    'receta.seeder.ts',
+    'roles-permisos.seeder',
+    'usuario.seeder',
+    'proveedor.seeder',
+    'producto.seeder',
+    'inventario.seeder',
+    'pedido.seeder',
+    'recepcion.seeder',
+    'albaran.seeder',
+    'historial-precio.seeder',
+    'incidencia.seeder',
+    'movimiento.seeder',
+    'receta.seeder',
   ];
 
-  for (const file of seedersInOrder) {
-    const seederPath = join(__dirname, file);
+  for (const name of seedersInOrder) {
+    const fileTs = `${name}.ts`;
+    const fileJs = `${name}.js`;
+    const dirFiles = readdirSync(__dirname);
+    const filePath = dirFiles.includes(fileTs)
+      ? fileTs
+      : dirFiles.includes(fileJs)
+        ? fileJs
+        : null;
+
+    if (!filePath) {
+      console.warn(`Seeder file not found for: ${name}`);
+      continue;
+    }
+
+    const seederPath = join(__dirname, filePath);
     const seeder: Seeder = require(seederPath);
     if (typeof seeder.runSeeder === 'function') {
-      console.log(SeederI18nHelper.getSeederMessage('running', { file }));
+      console.log(
+        SeederI18nHelper.getSeederMessage('running', { file: filePath })
+      );
       await seeder.runSeeder(dataSource);
     }
   }
@@ -79,6 +105,7 @@ export { runAllSeeders, runSeederByName };
 if (require.main === module) {
   void (async () => {
     try {
+      console.log('Iniciando seeders en entorno de desarrollo...');
       await dataSource.initialize();
       const [, , arg] = process.argv;
 
@@ -89,9 +116,12 @@ if (require.main === module) {
       }
 
       await dataSource.destroy();
-      console.log(SeederI18nHelper.getSeederMessage('completed'));
+      console.log('Seeder ejecutado correctamente en desarrollo.');
     } catch (err) {
-      console.error(SeederI18nHelper.getSeederMessage('error_running'), err);
+      console.error(
+        'Error al ejecutar seeders: revisar usuario, password y base de datos de desarrollo',
+        err
+      );
       process.exit(1);
     }
   })();
