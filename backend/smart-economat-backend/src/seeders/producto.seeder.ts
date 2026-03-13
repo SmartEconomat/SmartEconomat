@@ -109,28 +109,31 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   let offProducts: OffProduct[] = [];
 
-  // Siempre intentar obtener datos de OpenFoodFacts (en test y producción)
-  console.log('Obteniendo productos de OpenFoodFacts...');
-  try {
-    const offResponse = await fetch(
-      'https://es.openfoodfacts.org/cgi/search.pl?action=process&sort_by=unique_scans_n&json=1&page_size=20',
-      { signal: AbortSignal.timeout(60000) }
-    );
-
-    if (offResponse.ok) {
-      const offData = await offResponse.json();
-      offProducts = offData.products || [];
-      console.log(
-        `✅ ${offProducts.length} productos obtenidos de OpenFoodFacts.`
+  if (process.env.NODE_ENV !== 'test') {
+    console.log('Obteniendo productos de OpenFoodFacts...');
+    try {
+      const offResponse = await fetch(
+        'https://es.openfoodfacts.org/cgi/search.pl?action=process&sort_by=unique_scans_n&json=1&page_size=20',
+        { signal: AbortSignal.timeout(60000) }
       );
-    } else {
-      console.warn(`OpenFoodFacts respondió con estado ${offResponse.status}`);
+
+      if (offResponse.ok) {
+        const offData = await offResponse.json();
+        offProducts = offData.products || [];
+        console.log(
+          `✅ ${offProducts.length} productos obtenidos de OpenFoodFacts.`
+        );
+      } else {
+        console.warn(
+          `OpenFoodFacts respondió con estado ${offResponse.status}`
+        );
+      }
+    } catch (error: any) {
+      console.warn(
+        'No se pudieron obtener productos de OpenFoodFacts:',
+        error.message
+      );
     }
-  } catch (error: any) {
-    console.warn(
-      'No se pudieron obtener productos de OpenFoodFacts:',
-      error.message
-    );
   }
 
   const productosDB = await productoRepo.find({ select: ['codigoBarras'] });
@@ -188,7 +191,6 @@ export const runSeeder = async (dataSource: DataSource) => {
     if (productos.length >= 25) break;
   }
 
-  // Fallback: crear productos ficticios solo si OpenFoodFacts falló o no devolvió productos
   if (productos.length === 0) {
     console.warn(
       'Usando datos ficticios como fallback (OpenFoodFacts no disponible).'
@@ -197,7 +199,6 @@ export const runSeeder = async (dataSource: DataSource) => {
     const numProductos = 10;
 
     for (let i = 0; i < numProductos; i++) {
-      // Generar código de barras EAN-13 manualmente (12 dígitos + dígito de control)
       const codigoBarras = faker.helpers.fromRegExp('[0-9]{13}');
 
       if (codigosVistos.has(codigoBarras)) {

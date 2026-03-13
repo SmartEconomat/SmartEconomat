@@ -9,10 +9,11 @@ import { Producto } from '../modules/producto/producto.entity/producto.entity';
 import { Pedido } from '../modules/pedido/pedido.entity/pedido.entity';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
-const NUM_MOVIMIENTOS = 50;
+const NUM_MOVIMIENTOS = process.env.NODE_ENV === 'test' ? 5 : 50;
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
+  const { v7: uuidv7 } = await import('uuid');
 
   const movimientoRepo = dataSource.getRepository(Movimiento);
   const usuarioRepo = dataSource.getRepository(Usuario);
@@ -29,7 +30,7 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   for (let i = 0; i < NUM_MOVIMIENTOS; i++) {
     const entidadSeleccionada = faker.helpers.arrayElement(entidades);
-    let entidadId = faker.string.uuid();
+    let entidadId = uuidv7();
 
     if (entidadSeleccionada === 'PRODUCTO' && productos.length > 0) {
       entidadId = faker.helpers.arrayElement(productos).id;

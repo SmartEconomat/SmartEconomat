@@ -60,7 +60,7 @@ export class AdminService {
       await manager.save(user);
 
       const profesor = manager.create(Profesor, {
-        userId: user.id,
+        user: { id: user.id },
         cial: dto.cial,
       });
       await manager.save(profesor);

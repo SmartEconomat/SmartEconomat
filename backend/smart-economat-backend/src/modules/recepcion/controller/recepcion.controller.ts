@@ -42,7 +42,7 @@ export class RecepcionController {
     @Body() dto: CreateRecepcionDto,
     @Request() req: any
   ): Promise<RecepcionResultadoDto> {
-    const userId = req.user.sub;
+    const userId = req.user.id;
     dto.usuarioId = dto.usuarioId || userId;
     return this.recepcionStockService.procesarRecepcion(dto);
   }

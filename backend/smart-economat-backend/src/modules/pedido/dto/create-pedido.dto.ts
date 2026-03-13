@@ -4,9 +4,9 @@ import {
   IsOptional,
   IsEnum,
   IsString,
-  IsDateString,
   IsArray,
   ValidateNested,
+  IsDate,
   IsUUID,
   IsNotEmpty,
   ArrayNotEmpty,
@@ -71,14 +71,11 @@ export class CreatePedidoDto {
   })
   @IsNotEmpty({ message: 'La fecha de entrega es requerida' })
   @Transform((params) => StringToDateTransformer.transform(params))
-  @IsDateString(
-    {},
-    {
-      message: i18nValidationMessage(
-        'validation.LA_FECHA_DE_ENTREGA_DEBE_SER_UNA_FECHA_V'
-      ),
-    }
-  )
+  @IsDate({
+    message: i18nValidationMessage(
+      'validation.LA_FECHA_DE_ENTREGA_DEBE_SER_UNA_FECHA_V'
+    ),
+  })
   fechaEntrega!: Date;
 
   @ApiProperty({

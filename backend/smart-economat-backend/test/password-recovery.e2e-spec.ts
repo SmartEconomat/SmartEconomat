@@ -46,7 +46,6 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
     let alumnoId: string;
 
     it('Debe completar el flujo de registro y activación de un Alumno', async () => {
-      // 1. Registro
       await request(app.getHttpServer() as string)
         .post('/api/v1/alumnos/register')
         .send(alumnoData)
@@ -57,13 +56,11 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
         .findOne({ where: { username: alumnoData.username } });
       expect(userRes?.status).toBe(UserStatus.INACTIVE);
 
-      // 2. Login denegado
       await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
         .send({ email: alumnoData.username, password: alumnoData.password })
         .expect(400);
 
-      // 3. Activación por profesor
       const profLogin = await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
         .send({
@@ -87,7 +84,6 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
         .set('Authorization', `Bearer ${profToken}`)
         .expect(200);
 
-      // 4. Verificación
       const updatedUser = await dataSource
         .getRepository(Usuario)
         .findOne({ where: { id: user?.id } });
@@ -127,7 +123,6 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
     let provisionalPass: string;
 
     it('Debe completar el flujo de reseteo forzado y cambio de contraseña', async () => {
-      // 1. Reset forzado por profesor
       const profLogin = await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
         .send({
@@ -136,7 +131,6 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
         });
       const profToken = profLogin.body.data.access_token;
 
-      // Buscar un alumno real (de los seeders) que pertenezca a profesor1 y esté activo
       const AlumnoRepo = dataSource.getRepository(Alumno);
       const alu = await AlumnoRepo.findOne({
         where: {
@@ -156,7 +150,6 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
       expect(res.body.data).toHaveProperty('provisionalPassword');
       provisionalPass = res.body.data.provisionalPassword;
 
-      // 2. Cambio obligatorio al loguearse
       const aluUser = alu?.user;
       const loginRes = await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
@@ -228,13 +221,12 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
       prof2Token = prof2Login.body.data.access_token;
       const AlumnoRepo = dataSource.getRepository(Alumno);
 
-      // Registrar un alumno "ajeno" que pertenecerá al profesor1 (puesto por defecto en el registro)
       const foreignAlumnoData = {
         username: `foreign_alu_${Date.now()}_${Math.random()}`,
         password: 'Password123!',
-        aula: 'Aula Foreign',
-        numeroClase: 200,
-        cialProfesor: 'CIAL-11111', // CIAL de profesor1
+        aula: `Aula_${Date.now()}`,
+        numeroClase: Math.floor(Math.random() * 10000),
+        cialProfesor: 'CIAL-11111',
       };
 
       await request(app.getHttpServer() as string)

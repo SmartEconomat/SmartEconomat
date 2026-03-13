@@ -1,5 +1,3 @@
-import { TransformFnParams } from 'class-transformer/types/interfaces';
-
 /**
  * NormalizeArrayTransformer
  *
@@ -15,23 +13,17 @@ import { TransformFnParams } from 'class-transformer/types/interfaces';
  * tags: string[];
  */
 export class NormalizeArrayTransformer {
-  static transform(params: {
-    value: (string | null | undefined)[];
-  }): unknown[] | null | undefined {
+  static transform(params: { value: any }): any {
     const value = params.value;
     if (value === null) return null;
     if (value === undefined) return undefined;
 
-    // If already array, process elements
     if (Array.isArray(value)) {
       return value
-        .filter((item): item is unknown => item != null)
-        .map((item: unknown) =>
-          typeof item === 'string' ? item.trim() : item
-        );
+        .filter((item: any) => item != null)
+        .map((item: any) => (typeof item === 'string' ? item.trim() : item));
     }
 
-    // If string, try splitting by commas
     if (typeof value === 'string') {
       const trimmed = value.trim();
       if (trimmed === '') return undefined;
@@ -41,7 +33,6 @@ export class NormalizeArrayTransformer {
         .filter((item): item is string => item !== '');
     }
 
-    // Convert single element to array
     return [value] as unknown[];
   }
 }

@@ -55,7 +55,7 @@ export class CreateRecetaDto {
     description: 'docs.ID_DEL_PRODUCTO_QUE_RESULTA_DE_LA_ELABOR',
   })
   @IsOptional()
-  @IsUUID()
+  @IsUUID('7')
   productoResultadoId?: string;
 
   @ApiPropertyOptional({

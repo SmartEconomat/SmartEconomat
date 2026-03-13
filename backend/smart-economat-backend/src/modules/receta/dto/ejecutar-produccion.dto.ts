@@ -9,7 +9,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class EjecutarProduccionDto {
   @ApiProperty({ description: 'docs.UUID_DE_LA_RECETA_A_PRODUCIR' })
-  @IsUUID()
+  @IsUUID('7')
   recetaId!: string;
 
   @ApiProperty({ description: 'docs.CANTIDAD_TOTAL_A_PRODUCIR' })
@@ -27,6 +27,6 @@ export class EjecutarProduccionDto {
   @ApiProperty({
     description: 'docs.UUID_DE_LA_UBICACI_N_DE_ALMAC_N_DESTINO',
   })
-  @IsUUID()
+  @IsUUID('7')
   ubicacionDestinoId!: string;
 }

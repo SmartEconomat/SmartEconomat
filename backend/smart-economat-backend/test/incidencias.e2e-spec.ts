@@ -51,6 +51,7 @@ describe('IncidenciaController (e2e)', () => {
       .send({
         nombre: `Proveedor Incidencia E2E ${Date.now()}`,
       });
+    expect(provRes.status).toBe(201);
     const proveedorId = provRes.body.data?.id;
 
     const prodRes = await request(app.getHttpServer() as string)
@@ -63,6 +64,7 @@ describe('IncidenciaController (e2e)', () => {
         contenido: 500,
         proveedores: [{ proveedorId, precioUnitario: 3.5 }],
       });
+    expect(prodRes.status).toBe(201);
     const productoId = prodRes.body.data?.id;
 
     let productoProveedorId: string | undefined;
@@ -70,6 +72,7 @@ describe('IncidenciaController (e2e)', () => {
       const prodDetail = await request(app.getHttpServer() as string)
         .get(`/api/v1/productos/${productoId}`)
         .set('Authorization', `Bearer ${adminToken}`);
+      expect(prodDetail.status).toBe(200);
       const proveedores =
         prodDetail.body.data?.productoProveedores ||
         prodDetail.body.data?.proveedores ||
@@ -83,14 +86,15 @@ describe('IncidenciaController (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           proveedorId,
-          productos: [
+          fechaEntrega: new Date().toISOString(),
+          lineas: [
             {
-              idProductoProveedor: productoProveedorId,
+              productoProveedorId,
               cantidad: 10,
-              precioUnitario: 3.5,
             },
           ],
         });
+      expect(pedidoRes.status).toBe(201);
       const pedidoId = pedidoRes.body.data?.id;
 
       let pedidoProductoId: string | undefined;
@@ -98,6 +102,7 @@ describe('IncidenciaController (e2e)', () => {
         const pedidoDetail = await request(app.getHttpServer() as string)
           .get(`/api/v1/pedidos/${pedidoId}`)
           .set('Authorization', `Bearer ${adminToken}`);
+        expect(pedidoDetail.status).toBe(200);
         const pedidoProductos =
           pedidoDetail.body.data?.pedidoProductos ||
           pedidoDetail.body.data?.productos ||
@@ -114,6 +119,7 @@ describe('IncidenciaController (e2e)', () => {
               : [],
             observaciones: 'Recepción para test incidencias',
           });
+        expect(recepRes.status).toBe(201);
         recepcionId =
           recepRes.body.data?.id || recepRes.body.data?.[0]?.id || '';
       }
@@ -127,6 +133,7 @@ describe('IncidenciaController (e2e)', () => {
           recepcionId: recepcionId,
           observacionesRecepcion: 'Incidencia Base E2E',
         });
+      expect(incRes.status).toBe(201);
       testIncidenciaId = incRes.body.data?.id;
     }
   });
@@ -157,7 +164,7 @@ describe('IncidenciaController (e2e)', () => {
         );
       }
       expect(response.status).toBe(201);
-      const resBody = response.body as { id: string };
+      const resBody = response.body.data;
       expect(resBody).toHaveProperty('id');
       testIncidenciaId = resBody.id;
     });
@@ -168,7 +175,7 @@ describe('IncidenciaController (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
-      const resBody = response.body as any[];
+      const resBody = response.body.data;
       expect(Array.isArray(resBody)).toBe(true);
       expect(resBody.length).toBeGreaterThan(0);
     });
@@ -179,7 +186,7 @@ describe('IncidenciaController (e2e)', () => {
         .set('Authorization', `Bearer ${profesorToken}`);
 
       expect(response.status).toBe(200);
-      const resBody = response.body as { id: string };
+      const resBody = response.body.data;
       expect(resBody.id).toBe(testIncidenciaId);
     });
 
@@ -193,9 +200,7 @@ describe('IncidenciaController (e2e)', () => {
         });
 
       expect(response.status).toBe(200);
-      const resBody = response.body as {
-        observacionesRecepcion: string;
-      };
+      const resBody = response.body.data;
       expect(resBody.observacionesRecepcion).toContain('caja 2 y 3');
     });
 
@@ -227,7 +232,7 @@ describe('IncidenciaController (e2e)', () => {
           observacionesRecepcion: 'Incidencia para borrar',
         });
 
-      const resBody = createRes.body as { id: string };
+      const resBody = createRes.body.data;
       const idToDelete = resBody.id;
 
       const response = await request(app.getHttpServer() as string)

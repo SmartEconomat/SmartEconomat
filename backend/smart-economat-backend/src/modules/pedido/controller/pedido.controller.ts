@@ -33,7 +33,7 @@ export class PedidoController {
   @RequirePermissions('pedidos:crear')
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreatePedidoDto, @Request() req: any): Promise<Pedido> {
-    const userId = req.user.sub as string;
+    const userId = req.user.id as string;
     return this.pedidoService.create(dto, userId);
   }
 

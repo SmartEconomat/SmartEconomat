@@ -90,7 +90,7 @@ jest.setTimeout(60000);
 
 beforeAll(async () => {
   const { dataSource, runAllSeeders } =
-    (await import('../src/seeders/seed')) as {
+    (await import('../src/seeders/seed.js')) as {
       dataSource: DataSource;
       runAllSeeders: () => Promise<void>;
     };
@@ -105,8 +105,8 @@ beforeAll(async () => {
     g.__BACKUP__ = g.__PG_MEM_DB__.backup();
   }
 
-  const { AppModule } = require('../src/app.module');
-  const { getTestApp } = require('./test-app.helper');
+  const { AppModule } = (await import('../src/app.module.js')) as any;
+  const { getTestApp } = await import('./test-app.helper.js');
   const app = await getTestApp();
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 }, 120000);
@@ -125,13 +125,13 @@ afterAll(async () => {
     fs.rmSync(uploadDir, { recursive: true, force: true });
   }
 
-  const { dataSource } = require('../src/seeders/seed') as {
+  const { dataSource } = (await import('../src/seeders/seed.js')) as {
     dataSource: DataSource;
   };
   if (dataSource.isInitialized) {
     await dataSource.destroy();
   }
 
-  const { closeTestApp } = require('./test-app.helper');
+  const { closeTestApp } = await import('./test-app.helper.js');
   await closeTestApp();
 });
