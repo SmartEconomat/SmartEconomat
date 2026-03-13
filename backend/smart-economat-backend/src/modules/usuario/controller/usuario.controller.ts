@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { UsuarioService } from '../service/usuario.service';
+import { CreateUsuarioDto } from '../dto/create-usuario.dto';
 import { UpdateUsuarioDto } from '../dto/update-usuario.dto';
 import { ApiQuery } from '@nestjs/swagger';
 import { UpdateUsuarioStatusDto } from '../dto/update-status.dto';
@@ -24,11 +25,27 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { RolesGuard } from '../../auth/guards/role.guard';
+import { rolUsuario } from '../enums/usuario.enums';
 
-@UseGuards(JwtAuthGuard, PermisosGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PermisosGuard)
 @Controller('usuarios')
 export class UsuarioController {
   constructor(private readonly usuarioService: UsuarioService) {}
+
+  @Post()
+  @RequirePermissions('usuarios:crear')
+  create(@Body() dto: CreateUsuarioDto) {
+    return this.usuarioService.create(dto);
+  }
+
+  @Post('admin')
+  @Roles(rolUsuario.ADMINISTRADOR)
+  @RequirePermissions('usuarios:crear')
+  createAdmin(@Body() dto: AdminCreateUsuarioDto) {
+    return this.usuarioService.createAdmin(dto);
+  }
 
   @Get('perfil')
   getPerfil(@GetUser('id') id: string) {
