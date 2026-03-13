@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class AssignPermissionsDto {
   @ApiProperty({
-    description: 'IDs de los permisos a asignar al rol',
+    description: 'docs.IDS_DE_LOS_PERMISOS_A_ASIGNAR_AL_ROL',
     example: ['uuid-1', 'uuid-2', 'uuid-3'],
   })
   @IsArray()

@@ -1,8 +1,15 @@
+import { i18nValidationMessage } from 'nestjs-i18n';
 import { IsNotEmpty, IsString, IsStrongPassword } from 'class-validator';
 
 export class ResetPasswordDto {
-  @IsString({ message: 'La contraseña debe ser una cadena de texto' })
-  @IsNotEmpty({ message: 'La contraseña es obligatoria' })
+  @IsString({
+    message: i18nValidationMessage(
+      'validation.LA_CONTRASE_A_DEBE_SER_UNA_CADENA_DE_TEX'
+    ),
+  })
+  @IsNotEmpty({
+    message: i18nValidationMessage('validation.LA_CONTRASE_A_ES_OBLIGATORIA'),
+  })
   @IsStrongPassword(
     {
       minLength: 8,
@@ -12,8 +19,9 @@ export class ResetPasswordDto {
       minSymbols: 1,
     },
     {
-      message:
-        'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo',
+      message: i18nValidationMessage(
+        'validation.LA_CONTRASE_A_DEBE_TENER_AL_MENOS_8_CARA'
+      ),
     }
   )
   password!: string;

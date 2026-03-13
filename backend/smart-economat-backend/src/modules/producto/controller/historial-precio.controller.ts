@@ -19,7 +19,7 @@ import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ApiQuery } from '@nestjs/swagger';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('historial-precio')
@@ -42,7 +42,7 @@ export class HistorialPrecioController {
     name: 'order',
     required: false,
     enum: ['ASC', 'DESC'],
-    description: 'Dirección de ordenamiento por fecha',
+    description: 'docs.DIRECCI_N_DE_ORDENAMIENTO_POR_FECHA',
   })
   findAll(
     @Query('order') order: 'ASC' | 'DESC' = 'DESC'

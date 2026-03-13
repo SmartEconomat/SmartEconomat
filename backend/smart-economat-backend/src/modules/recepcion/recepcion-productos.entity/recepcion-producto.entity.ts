@@ -70,4 +70,7 @@ export class RecepcionProducto extends BaseEntity {
     default: () => 'CURRENT_TIMESTAMP',
   })
   fechaRecepcion!: Date;
+
+  @Column({ name: 'is_weighed_with_scale', type: 'boolean', default: false })
+  isWeighedWithScale!: boolean;
 }

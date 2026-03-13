@@ -1,3 +1,4 @@
+import { i18nValidationMessage } from 'nestjs-i18n';
 import {
   IsString,
   IsNotEmpty,
@@ -6,9 +7,13 @@ import {
   IsStrongPassword,
   IsOptional,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
+import { LowercaseStringTransformer } from '../../../common/transformers/lowercase-string.transformer';
 
 export class RegisterUserDto {
+  @Transform((params) => TrimStringTransformer.transform(params))
   @IsString()
   @IsNotEmpty()
   username: string;
@@ -23,13 +28,15 @@ export class RegisterUserDto {
       minSymbols: 1,
     },
     {
-      message:
-        'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo',
+      message: i18nValidationMessage(
+        'validation.LA_CONTRASE_A_DEBE_TENER_AL_MENOS_8_CARA'
+      ),
     }
   )
   password: string;
 
   @IsOptional()
+  @Transform((params) => LowercaseStringTransformer.transform(params))
   @IsEmail()
   email?: string;
 

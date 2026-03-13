@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsBoolean,
   IsEnum,
   IsNumber,
   IsOptional,
@@ -13,14 +14,14 @@ import { EstadoVisualProducto } from '../enums/estado-visual.enum';
 
 export class RecepcionMasivaProductoDto {
   @ApiProperty({
-    description: 'ID de la línea original de PedidoProducto.',
+    description: 'docs.ID_DE_LA_L_NEA_ORIGINAL_DE_PEDIDOPRODUCT',
     example: 'uuid-string',
   })
   @IsString()
   pedidoProductoId: string;
 
   @ApiProperty({
-    description: 'Cantidad contada y recibida por el operario.',
+    description: 'docs.CANTIDAD_CONTADA_Y_RECIBIDA_POR_EL_OPERA',
     example: 10,
     minimum: 0,
   })
@@ -28,8 +29,24 @@ export class RecepcionMasivaProductoDto {
   @Min(0)
   cantidadRecibida: number;
 
+  @ApiPropertyOptional({
+    description: 'docs.CANTIDAD_REFLEJADA_EN_EL_ALBAR_N_F_SICO',
+    example: 10,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  cantidadAlbaran?: number;
+
+  @ApiPropertyOptional({
+    description: 'docs.INDICA_SI_EL_PESO_FUE_CAPTURADO_POR_B_SC',
+  })
+  @IsOptional()
+  @IsBoolean()
+  isWeighedWithScale?: boolean;
+
   @ApiProperty({
-    description: 'Estado exterior / visual con el que llega la mercancía',
+    description: 'docs.ESTADO_EXTERIOR_VISUAL_CON_EL_QUE_LLEGA',
     enum: EstadoVisualProducto,
     example: EstadoVisualProducto.OPTIMO,
   })
@@ -37,7 +54,7 @@ export class RecepcionMasivaProductoDto {
   estadoVisual: EstadoVisualProducto;
 
   @ApiPropertyOptional({
-    description: 'Fecha de caducidad del lote físico recibido',
+    description: 'docs.FECHA_DE_CADUCIDAD_DEL_LOTE_F_SICO_RECIB',
     example: '2026-10-15T00:00:00.000Z',
   })
   @IsOptional()
@@ -45,7 +62,7 @@ export class RecepcionMasivaProductoDto {
   fechaCaducidad?: Date;
 
   @ApiPropertyOptional({
-    description: 'Observaciones extra para esta línea en concreto',
+    description: 'docs.OBSERVACIONES_EXTRA_PARA_ESTA_L_NEA_EN_C',
   })
   @IsOptional()
   @IsString()
@@ -54,27 +71,27 @@ export class RecepcionMasivaProductoDto {
 
 export class RecepcionMasivaLoteDto {
   @ApiProperty({
-    description: 'UUID del pedido que se está recepcionando íntegramente',
+    description: 'docs.UUID_DEL_PEDIDO_QUE_SE_EST_RECEPCIONANDO',
   })
   @IsString()
   pedidoId: string;
 
   @ApiPropertyOptional({
-    description: 'Firma u observaciones generales del Lote / Albarán',
+    description: 'docs.FIRMA_U_OBSERVACIONES_GENERALES_DEL_LOTE',
   })
   @IsOptional()
   @IsString()
   observaciones?: string;
 
   @ApiPropertyOptional({
-    description: 'Número de albarán entregado por el transportista',
+    description: 'docs.N_MERO_DE_ALBAR_N_ENTREGADO_POR_EL_TRANS',
   })
   @IsOptional()
   @IsString()
   nAlbaran?: string;
 
   @ApiProperty({
-    description: 'Listado de todos los productos y cantidades contabilizadas',
+    description: 'docs.LISTADO_DE_TODOS_LOS_PRODUCTOS_Y_CANTIDA',
     type: [RecepcionMasivaProductoDto],
   })
   @IsArray()

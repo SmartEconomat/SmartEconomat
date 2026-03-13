@@ -15,57 +15,66 @@ import { UpdateUbicacionDto } from '../dto/update-ubicacion.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { BaseController } from '../../../common/base/base.controller';
+import { Ubicacion } from '../ubicacion.entity/ubicacion.entity';
 
 @ApiTags('Ubicaciones')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('ubicacion')
-export class UbicacionController {
-  constructor(private readonly ubicacionService: UbicacionService) {}
+export class UbicacionController extends BaseController<
+  Ubicacion,
+  CreateUbicacionDto,
+  UpdateUbicacionDto,
+  UbicacionService
+> {
+  constructor(service: UbicacionService) {
+    super(service);
+  }
 
   @Post()
   @RequirePermissions('ubicaciones:crear')
   @ApiOperation({ summary: 'Crear nueva ubicación' })
-  create(@Body() createUbicacionDto: CreateUbicacionDto) {
-    return this.ubicacionService.create(createUbicacionDto);
+  override create(@Body() createUbicacionDto: CreateUbicacionDto) {
+    return super.create(createUbicacionDto);
   }
 
   @Get()
   @RequirePermissions('ubicaciones:listar')
   @ApiOperation({ summary: 'Obtener todas las ubicaciones' })
-  findAll() {
-    return this.ubicacionService.findAll();
+  override findAll() {
+    return super.findAll({ page: 1, limit: 100 });
   }
 
   @Get(':id')
   @RequirePermissions('ubicaciones:ver')
   @ApiOperation({ summary: 'Obtener ubicación por ID' })
-  findOne(@Param('id', ParseUUIDv7Pipe) id: string) {
-    return this.ubicacionService.findOne(id);
+  override findOne(@Param('id', ParseUUIDv7Pipe) id: string) {
+    return super.findOne(id);
   }
 
   @Patch(':id')
   @RequirePermissions('ubicaciones:editar')
   @ApiOperation({ summary: 'Actualizar una ubicación' })
-  update(
+  override update(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() updateUbicacionDto: UpdateUbicacionDto
   ) {
-    return this.ubicacionService.update(id, updateUbicacionDto);
+    return super.update(id, updateUbicacionDto);
   }
 
   @Delete(':id')
   @RequirePermissions('ubicaciones:eliminar')
   @ApiOperation({ summary: 'Eliminar una ubicación lógica' })
-  remove(@Param('id', ParseUUIDv7Pipe) id: string) {
-    return this.ubicacionService.remove(id);
+  override remove(@Param('id', ParseUUIDv7Pipe) id: string) {
+    return super.remove(id);
   }
 
   @Post(':id/restore')
   @RequirePermissions('ubicaciones:restaurar')
   @ApiOperation({ summary: 'Restaurar una ubicación eliminada' })
   restore(@Param('id', ParseUUIDv7Pipe) id: string) {
-    return this.ubicacionService.restore(id);
+    return this.service.restore(id);
   }
 }

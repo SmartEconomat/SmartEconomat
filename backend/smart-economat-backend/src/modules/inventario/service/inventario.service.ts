@@ -31,6 +31,7 @@ export class InventarioService {
   ): Promise<Inventario> {
     const productoProveedor = await this.productoProveedorRepository.findOne({
       where: { id: dto.productoProveedorId },
+      relations: ['producto'],
     });
     if (!productoProveedor) {
       throw new NotFoundException(

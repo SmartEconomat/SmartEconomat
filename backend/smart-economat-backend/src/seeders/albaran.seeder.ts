@@ -24,7 +24,8 @@ export const runSeeder = async (dataSource: DataSource) => {
   }
 
   const albaranes: Albaran[] = [];
-  for (let i = 0; i < 5; i++) {
+  const numAlbaranes = process.env.NODE_ENV === 'test' ? 1 : 5;
+  for (let i = 0; i < numAlbaranes; i++) {
     const nAlbaran = `ALB-${faker.date.future().getFullYear()}-${faker.string.numeric(4).padStart(4, '0')}`;
     const albaran = albaranRepo.create({
       nAlbaran,

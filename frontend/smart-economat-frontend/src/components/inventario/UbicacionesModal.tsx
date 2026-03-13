@@ -109,7 +109,7 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
                     <DeleteIcon />
                   </IconButton>
                 }
-                sx={{ border: '1px solid #eee', mb: 1, borderRadius: 1 }}
+                sx={{ border: 1, borderColor: 'divider', mb: 1, borderRadius: 1 }}
               >
                 <ListItemText primary={u.nombre} secondary={u.descripcion} />
               </ListItem>
