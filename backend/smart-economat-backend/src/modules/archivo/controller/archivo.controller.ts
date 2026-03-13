@@ -30,7 +30,7 @@ import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import type { Response } from 'express';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
 @ApiTags('Archivos')
 @ApiBearerAuth()
@@ -54,7 +54,10 @@ export class ArchivoController {
       },
     },
   })
-  @ApiResponse({ status: 201, description: 'Archivo subido correctamente' })
+  @ApiResponse({
+    status: 201,
+    description: 'docs.ARCHIVO_SUBIDO_CORRECTAMENTE',
+  })
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
     @UploadedFile() file: Express.Multer.File,
@@ -71,7 +74,7 @@ export class ArchivoController {
   @Get()
   @RequirePermissions('archivos:listar')
   @ApiOperation({ summary: 'Listar archivos' })
-  @ApiResponse({ status: 200, description: 'Lista de archivos paginada' })
+  @ApiResponse({ status: 200, description: 'docs.LISTA_DE_ARCHIVOS_PAGINADA' })
   async findAll(@Query() filterDto: FileListFilterDto) {
     const result = await this.archivoService.findAll(filterDto);
     return {
@@ -86,7 +89,7 @@ export class ArchivoController {
   @Get(':id')
   @RequirePermissions('archivos:ver')
   @ApiOperation({ summary: 'Obtener metadata de un archivo por ID' })
-  @ApiResponse({ status: 200, description: 'Detalles del archivo' })
+  @ApiResponse({ status: 200, description: 'docs.DETALLES_DEL_ARCHIVO' })
   async findOne(
     @Param('id', ParseUUIDPipe) id: string
   ): Promise<FileResponseDto> {
@@ -105,7 +108,10 @@ export class ArchivoController {
   @Delete(':id')
   @RequirePermissions('archivos:eliminar')
   @ApiOperation({ summary: 'Eliminar un archivo (soft-delete)' })
-  @ApiResponse({ status: 204, description: 'Archivo eliminado correctamente' })
+  @ApiResponse({
+    status: 204,
+    description: 'docs.ARCHIVO_ELIMINADO_CORRECTAMENTE',
+  })
   async remove(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() req: { user: Usuario },

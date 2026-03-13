@@ -58,6 +58,7 @@ const Usuarios: React.FC = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isResetting, setIsResetting] = useState(false);
+    const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
 
     const toast = useToast();
     const { user: currentUser } = useAuth();
@@ -186,13 +187,14 @@ const Usuarios: React.FC = () => {
         setIsResetting(true);
         try {
             const res = await usuarioService.resetPassword(userToReset.id);
-            const randomPass = res.data;
-            toast.success(`Se ha activado la contraseña temporal para ${userToReset.username}. La nueva contraseña es: ${randomPass}`);
+            setGeneratedPassword(res.data);
+            // No cerramos el modal, el usuario debe verlo
         } catch (error: any) {
             toast.error(error.message || 'Error al restablecer contraseña');
+            setUserToReset(null);
+            setGeneratedPassword(null);
         } finally {
             setIsResetting(false);
-            setUserToReset(null);
         }
     };
 
@@ -413,20 +415,38 @@ const Usuarios: React.FC = () => {
                 cancelText="Cancelar"
             />
 
-            {/* Diálogo de Confirmación Restablecer Contraseña */}
             <ConfirmDialog
                 isOpen={!!userToReset}
-                onClose={() => { if (!isResetting) setUserToReset(null) }}
-                onConfirm={handlePasswordReset}
-                title="Activar contraseña temporal"
+                onClose={() => { 
+                    if (!isResetting) {
+                        setUserToReset(null);
+                        setGeneratedPassword(null);
+                    }
+                }}
+                onConfirm={generatedPassword ? () => { setUserToReset(null); setGeneratedPassword(null); } : handlePasswordReset}
+                title={generatedPassword ? "Contraseña Generada" : "Activar contraseña temporal"}
                 message={
-                    <>
-                        ¿Deseas activar una contraseña temporal para <strong>{userToReset?.username}</strong>?<br /><br />
-                        Se generará una nueva clave aleatoria y el sistema solicitará al usuario cambiarla en su próximo acceso.
-                    </>
+                    generatedPassword ? (
+                        <Box sx={{ mt: 2, p: 2, bgcolor: 'action.hover', borderRadius: 1, textAlign: 'center' }}>
+                            <Typography variant="body1">La nueva contraseña para <strong>{userToReset?.username}</strong> es:</Typography>
+                            <Typography variant="h5" sx={{ mt: 1, letterSpacing: 2, fontWeight: 'bold', color: 'primary.main', fontFamily: 'monospace' }}>
+                                {generatedPassword}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
+                                Por favor, cópiala ahora. Se ha configurado para que el sistema solicite cambio de contraseña en el próximo acceso.
+                            </Typography>
+                        </Box>
+                    ) : (
+                        <>
+                            ¿Deseas activar una contraseña temporal para <strong>{userToReset?.username}</strong>?<br /><br />
+                            Se generará una nueva clave aleatoria y el sistema solicitará al usuario cambiarla en su próximo acceso.
+                        </>
+                    )
                 }
-                confirmText={isResetting ? 'Activando...' : 'Confirmar'}
-                cancelText="Cancelar"
+                confirmText={isResetting ? 'Activando...' : (generatedPassword ? 'Cerrar' : 'Confirmar')}
+                confirmColor="primary"
+                cancelText={generatedPassword ? "" : "Cancelar"}
+                isLoading={isResetting}
             />
         </Box>
     );

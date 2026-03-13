@@ -32,7 +32,7 @@ export class PedidoProducto extends BaseEntity {
    * Constraint: RESTRICT para mantener el histórico de compras.
    */
   @ManyToOne(() => Pedido, (pedido) => pedido.pedidoProductos, {
-    onDelete: 'RESTRICT',
+    onDelete: 'CASCADE',
     nullable: false,
   })
   @JoinColumn({ name: 'pedido_id' })

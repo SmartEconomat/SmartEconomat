@@ -78,12 +78,12 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ filters, onChange }) =>
         filters.categorias.includes(opt.value)
     );
 
-    // En móvil/tablet ocupa el 100%; en desktop crece conforme a los chips seleccionados
-    const dynamicMinWidth = isMobileOrTablet
-        ? 'unset'
+    // En móvil/tablet ocupa el 100%; en desktop crece con los chips (mín 220, máx 660)
+    const dynamicWidth = isMobileOrTablet
+        ? '100%'
         : selected.length === 0
-            ? 300
-            : Math.min(300 + selected.length * 100, 800);
+            ? 220
+            : Math.min(220 + selected.length * 110, 660);
 
     return (
         <Autocomplete
@@ -208,9 +208,10 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ filters, onChange }) =>
             )}
 
             sx={{
-                width: '100%',
-                minWidth: dynamicMinWidth,
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                minWidth: isMobileOrTablet ? 'unset' : 220,
+                width: dynamicWidth,
+                transition: 'width 0.25s ease, all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                flex: isMobileOrTablet ? '1 1 auto' : '0 0 auto',
                 '& .MuiOutlinedInput-root': {
                     bgcolor: 'background.paper',
                     borderRadius: 2,

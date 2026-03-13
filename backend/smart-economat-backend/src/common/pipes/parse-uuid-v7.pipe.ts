@@ -1,3 +1,4 @@
+import { I18nHelper } from '../helpers/i18n.helper';
 import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
 import { isUUID } from 'class-validator';
 
@@ -52,7 +53,9 @@ export class ParseUUIDv7Pipe implements PipeTransform<string | undefined> {
    */
   transform(value: string | undefined): string {
     if (!value) {
-      throw new BadRequestException('El UUID no puede estar vacío');
+      throw new BadRequestException(
+        I18nHelper.getError('EL_UUID_NO_PUEDE_ESTAR_VAC_O')
+      );
     }
 
     if (!isUUID(value, '7')) {

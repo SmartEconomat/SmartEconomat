@@ -63,3 +63,6 @@ build/
 
 AGENTS.md
 .aider*
+
+#tests 
+**/uploads_test/

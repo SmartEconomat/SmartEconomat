@@ -62,7 +62,7 @@ export class I18nHelper {
   }
 
   /**
-   * Obtiene el nombre localizable de una entidad (sección "entities").
+   * Obtiene el nombre localizable de una entidad (sección "permiso.entity").
    * Útil para generar mensajes dinámicos como "Usuario no encontrado".
    *
    * @static

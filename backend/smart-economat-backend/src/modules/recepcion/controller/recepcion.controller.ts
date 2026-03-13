@@ -24,7 +24,7 @@ import { RecepcionStockService } from '../service/recepcion-stock.service';
 import { RecepcionResultadoDto } from '../dto/recepcion-resultado.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('recepcion')
@@ -41,7 +41,7 @@ export class RecepcionController {
     @Body() dto: CreateRecepcionDto,
     @Request() req: any
   ): Promise<RecepcionResultadoDto> {
-    const userId = req.user.sub;
+    const userId = req.user.id;
     dto.usuarioId = dto.usuarioId || userId;
     return this.recepcionStockService.procesarRecepcion(dto);
   }
