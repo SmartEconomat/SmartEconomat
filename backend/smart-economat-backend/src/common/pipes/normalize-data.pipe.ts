@@ -24,10 +24,10 @@ import { I18nHelper } from '../helpers/i18n.helper';
  *
  * @example
  *
- * // En un controller:
+ *
  * @Post()
  * create(@Body(NormalizeDataPipe) dto: CreateUsuarioDto) {
- *   // Los datos ya están normalizados y validados
+ *
  *   return this.service.create(dto);
  * }
  */
@@ -41,7 +41,6 @@ export class NormalizeDataPipe implements PipeTransform<unknown> {
       return value;
     }
 
-    // If there's a metatype in metadata, use class-transformer to transform
     if (metadata.metatype) {
       const transformed = plainToInstance(
         metadata.metatype,
@@ -52,7 +51,6 @@ export class NormalizeDataPipe implements PipeTransform<unknown> {
         }
       );
 
-      // Validate after transforming
       const errors = await validate(transformed as object);
 
       if (errors.length > 0) {
@@ -68,7 +66,6 @@ export class NormalizeDataPipe implements PipeTransform<unknown> {
       return transformed;
     }
 
-    // If no metatype, apply manual normalization
     return this.normalizeObject(value);
   }
 
@@ -87,10 +84,8 @@ export class NormalizeDataPipe implements PipeTransform<unknown> {
     const normalized: Record<string, unknown> = {};
 
     for (const [key, value] of Object.entries(obj)) {
-      // Trim on keys
       const normalizedKey = typeof key === 'string' ? key.trim() : key;
 
-      // Normalize value recursively
       if (typeof value === 'string') {
         normalized[normalizedKey] = value.trim();
       } else if (value != null && typeof value === 'object') {

@@ -6,7 +6,7 @@ import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { AuthService } from '../service/auth.service';
-import { AuthorizationService } from '../service/authorization.service';
+import { AuthPermissionsService } from '../service/auth-permissions.service';
 import { MailService } from '../mail.service';
 import { JwtStrategy } from '../strategies/jwt.strategy';
 import { AuthController } from '../controller/auth.controller';
@@ -42,7 +42,7 @@ import { PermisosModule } from '../../permisos/permisos.module';
   controllers: [AuthController],
   providers: [
     AuthService,
-    AuthorizationService,
+    AuthPermissionsService,
     MailService,
     JwtStrategy,
     JwtAuthGuard,
@@ -54,7 +54,7 @@ import { PermisosModule } from '../../permisos/permisos.module';
     JwtModule,
     JwtAuthGuard,
     RolesGuard,
-    AuthorizationService,
+    AuthPermissionsService,
     PermisosGuard,
   ],
 })

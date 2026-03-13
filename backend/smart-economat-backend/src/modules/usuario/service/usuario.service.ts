@@ -17,7 +17,7 @@ import { UserStatus } from '../enums/usuario.enums';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
 import { Repository } from 'typeorm';
-import { AuthorizationService } from '../../auth/service/authorization.service';
+import { AuthPermissionsService } from '../../auth/service/auth-permissions.service';
 
 @Injectable()
 export class UsuarioService {
@@ -25,7 +25,7 @@ export class UsuarioService {
     private readonly usuarioRepo: UsuarioRepository,
     @InjectRepository(Permiso)
     private readonly permisoRepo: Repository<Permiso>,
-    private readonly authorizationService: AuthorizationService
+    private readonly authPermissionsService: AuthPermissionsService
   ) {}
 
   create(dto: CreateUsuarioDto) {
@@ -99,7 +99,7 @@ export class UsuarioService {
     if (!basicUser!.permisosAdicionales.find((p) => p.id === permisoId)) {
       basicUser!.permisosAdicionales.push(permiso);
       await this.usuarioRepo.repo.save(basicUser!);
-      await this.authorizationService.invalidateUserCache(userId);
+      await this.authPermissionsService.invalidateUserCache(userId);
     }
     return this.findOne(userId);
   }
@@ -115,7 +115,7 @@ export class UsuarioService {
       (p) => p.id !== permisoId
     );
     await this.usuarioRepo.repo.save(basicUser);
-    await this.authorizationService.invalidateUserCache(userId);
+    await this.authPermissionsService.invalidateUserCache(userId);
     return this.findOne(userId);
   }
 
@@ -135,7 +135,7 @@ export class UsuarioService {
     if (!basicUser!.permisosExcluidos.find((p) => p.id === permisoId)) {
       basicUser!.permisosExcluidos.push(permiso);
       await this.usuarioRepo.repo.save(basicUser!);
-      await this.authorizationService.invalidateUserCache(userId);
+      await this.authPermissionsService.invalidateUserCache(userId);
     }
     return this.findOne(userId);
   }
@@ -151,7 +151,7 @@ export class UsuarioService {
       (p) => p.id !== permisoId
     );
     await this.usuarioRepo.repo.save(basicUser);
-    await this.authorizationService.invalidateUserCache(userId);
+    await this.authPermissionsService.invalidateUserCache(userId);
     return { success: true };
   }
 }

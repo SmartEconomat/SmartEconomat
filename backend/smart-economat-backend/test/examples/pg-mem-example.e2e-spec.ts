@@ -1,5 +1,5 @@
 import { INestApplication } from '@nestjs/common';
-import { getTestApp } from '../test-app.helper';
+import { getTestApp } from '../setup/test-app';
 import { DataSource } from 'typeorm';
 import { Usuario } from '../../src/modules/usuario/usuario.entity/usuario.entity';
 import { rolUsuario } from '../../src/modules/usuario/enums/usuario.enums';
@@ -18,8 +18,11 @@ describe('Ejemplo pg-mem (e2e)', () => {
     dataSource = app.get(DataSource);
   });
 
+  // El beforeEach global en jest.setup.ts restaura el snapshot post-seed
+  // automáticamente antes de cada test (rollback), garantizando aislamiento.
+
   afterAll(() => {
-    /* app compartida globalmente, se limpia al final de todo el proceso en setup-env.ts */
+    /* app compartida globalmente, se limpia al final de todo el proceso en globalTeardown.ts */
   });
 
   /**
@@ -54,12 +57,11 @@ describe('Ejemplo pg-mem (e2e)', () => {
 
   /**
    * En este test, verificamos que el dato insertado en el test anterior NO EXISTE.
-   * Esto prueba que `setup-env.ts` restauró el snapshot de pg-mem en el `beforeEach` global.
+   * Esto prueba que `jest.setup.ts` restauró el snapshot de pg-mem en el `beforeEach` global.
    */
   it('Test 2 - Debe verificar que el estado se reseteó automáticamente (snapshot restore)', async () => {
     const usuarioRepo = dataSource.getRepository(Usuario);
 
-    // El usuario temporal no debe existir porque beforeEach() en setup-env.ts restauró la BD al estado limpio.
     const userInDb = await usuarioRepo.findOne({
       where: { email: 'test_temporal_1@example.com' },
     });

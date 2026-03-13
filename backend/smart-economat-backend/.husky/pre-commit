@@ -1,18 +1,17 @@
 #!/bin/sh
 
-# Check if we are in the middle of a merge or rebase
-if [ -d ".git/rebase-merge" ] || [ -d ".git/rebase-apply" ] || [ -f ".git/MERGE_HEAD" ]; then
-    echo "⚠️ Skipping Husky hooks (merge/rebase in progress)"
-    exit 0
-fi
-
 echo "🚀 Running pre-commit hooks"
 
-echo "📝 [1/2] Running lint-staged (eslint + prettier)..."
-npx lint-staged
+echo "📊 [1/4] Actualizando lista de contribuidores..."
+npm --prefix backend/smart-economat-backend run count-commits
 
-echo "🧪 [2/3] Ejecutando tests unitarios..."
+echo "📝 [2/4] Running staged quality checks (eslint + prettier)..."
+node backend/smart-economat-backend/scripts/git-hooks/run-staged-quality.js
+
+echo "🧪 [3/4] Ejecutando tests unitarios..."
 (cd backend/smart-economat-backend && npm test)
 
-echo "🚦 [3/3] Ejecutando tests E2E..."
+echo "🚦 [4/4] Ejecutando tests E2E..."
 (cd backend/smart-economat-backend && npm run test:e2e)
+
+

@@ -10,7 +10,7 @@ import { TrimStringTransformer } from '../transformers';
  * @example
  *
  * export class CreateUsuarioDto extends BaseDto {
- *   username: string; // Se aplicará trim automáticamente
+ *   username: string;
  * }
  */
 export abstract class BaseDto {
@@ -18,7 +18,5 @@ export abstract class BaseDto {
    * Applies trim to all string fields of the instance
    */
   @Transform((params) => TrimStringTransformer.transform(params))
-  protected normalizeStrings(): void {
-    // This method is used internally to ensure consistency
-  }
+  protected normalizeStrings(): void {}
 }

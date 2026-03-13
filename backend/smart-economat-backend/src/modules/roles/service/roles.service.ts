@@ -17,7 +17,7 @@ import { AssignPermissionsDto } from '../dto/assign-permissions.dto';
 import { AssignRoleToUserDto } from '../dto/assign-role-to-user.dto';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
-import { AuthorizationService } from '../../auth/service/authorization.service';
+import { AuthPermissionsService } from '../../auth/service/auth-permissions.service';
 
 /**
  * Servicio para la gestión de roles y asignaciones.
@@ -34,7 +34,7 @@ export class RolesService {
     private readonly permisoRepo: Repository<Permiso>,
     @InjectRepository(UsuarioRol)
     private readonly usuarioRolRepo: Repository<UsuarioRol>,
-    private readonly authorizationService: AuthorizationService
+    private readonly authPermissionsService: AuthPermissionsService
   ) {}
 
   /**
@@ -236,7 +236,7 @@ export class RolesService {
     if (existente) {
       existente.activo = dto.activo !== undefined ? dto.activo : true;
       const updated = await this.usuarioRolRepo.save(existente);
-      await this.authorizationService.invalidateUserCache(dto.usuarioId);
+      await this.authPermissionsService.invalidateUserCache(dto.usuarioId);
       return updated;
     }
 
@@ -249,7 +249,7 @@ export class RolesService {
 
     const saved = await this.usuarioRolRepo.save(usuarioRol);
 
-    await this.authorizationService.invalidateUserCache(dto.usuarioId);
+    await this.authPermissionsService.invalidateUserCache(dto.usuarioId);
 
     return saved;
   }
@@ -270,7 +270,7 @@ export class RolesService {
 
     await this.usuarioRolRepo.remove(usuarioRol);
 
-    await this.authorizationService.invalidateUserCache(usuarioId);
+    await this.authPermissionsService.invalidateUserCache(usuarioId);
   }
 
   /**
@@ -303,7 +303,7 @@ export class RolesService {
     const userIds = usuarioRoles.map((ur) => ur.usuarioId);
 
     if (userIds.length > 0) {
-      await this.authorizationService.invalidateUsersCache(userIds);
+      await this.authPermissionsService.invalidateUsersCache(userIds);
     }
   }
 }

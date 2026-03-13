@@ -42,7 +42,6 @@ export class PedidoService {
       const pedidoProductosEntities: any[] = [];
 
       for (const linea of lineas) {
-        // Validar que el ProductoProveedor existe y obtener el precio vigente
         const productoProveedor = await queryRunner.manager.findOne(
           ProductoProveedor,
           {
@@ -75,7 +74,7 @@ export class PedidoService {
         pedidoProductosEntities.push({
           productoProveedor: { id: productoProveedor.id },
           cantidad: linea.cantidad,
-          precioUnitario: precioVigente, // snapshot del precio vigente (precio_pactado)
+          precioUnitario: precioVigente,
         });
       }
 

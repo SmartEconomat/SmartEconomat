@@ -109,7 +109,11 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   let offProducts: OffProduct[] = [];
 
-  if (process.env.NODE_ENV !== 'test') {
+  // OPTIMIZATION: Skip API in test environment, respect OFF_API_ENABLED in other envs
+  const isTestEnv = process.env.NODE_ENV === 'test';
+  const enableOffApi = !isTestEnv && process.env.OFF_API_ENABLED !== 'false';
+
+  if (enableOffApi) {
     console.log('Obteniendo productos de OpenFoodFacts...');
     try {
       const offResponse = await fetch(
@@ -134,6 +138,10 @@ export const runSeeder = async (dataSource: DataSource) => {
         error.message
       );
     }
+  } else if (isTestEnv) {
+    console.log(
+      '✔️ Modo test: usando productos ficticios (OpenFoodFacts deshabilitado)'
+    );
   }
 
   const productosDB = await productoRepo.find({ select: ['codigoBarras'] });

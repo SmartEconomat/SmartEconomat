@@ -5,6 +5,7 @@ import {
   ExecutionContext,
   ForbiddenException,
   Logger,
+  Inject,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import {
@@ -12,10 +13,10 @@ import {
   PERMISSIONS_MODE_KEY,
 } from '../../../common/decorators/require-permissions.decorator';
 import { IS_PUBLIC_KEY } from '../../../common/decorators/public.decorator';
-import { AuthorizationService } from '../service/authorization.service';
+import { AuthPermissionsService } from '../service/auth-permissions.service';
 
 /**
- * Guard principal de autorización basado en permisos dinámicos.
+ * Guard principal de permisos basado en lógica dinámica.
  *
  * Valida que el usuario autenticado posea los permisos necesarios
  * para acceder a la ruta solicitada.
@@ -32,7 +33,8 @@ export class AuthPermissionsGuard implements CanActivate {
 
   constructor(
     private readonly reflector: Reflector,
-    private readonly authorizationService: AuthorizationService
+    @Inject(AuthPermissionsService)
+    private readonly authPermissionsService: AuthPermissionsService
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -79,11 +81,11 @@ export class AuthPermissionsGuard implements CanActivate {
 
     const hasPermission: boolean =
       permissionsMode === 'any'
-        ? await this.authorizationService.userHasAnyPermission(
+        ? await this.authPermissionsService.userHasAnyPermission(
             String(user.id),
             requiredPermissions
           )
-        : await this.authorizationService.userHasAllPermissions(
+        : await this.authPermissionsService.userHasAllPermissions(
             String(user.id),
             requiredPermissions
           );

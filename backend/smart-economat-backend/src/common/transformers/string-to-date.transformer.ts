@@ -18,12 +18,10 @@ export class StringToDateTransformer {
     if (value === null) return null;
     if (value === undefined) return undefined;
 
-    // If already Date, return it
     if (value instanceof Date) {
       return isNaN(value.getTime()) ? undefined : value;
     }
 
-    // If number (timestamp), convert
     if (typeof value === 'number') {
       const date = new Date(value);
       if (isNaN(date.getTime())) {
@@ -32,7 +30,6 @@ export class StringToDateTransformer {
       return date;
     }
 
-    // If string, try converting
     if (typeof value === 'string') {
       const trimmed = value.trim();
       if (trimmed === '') return undefined;
