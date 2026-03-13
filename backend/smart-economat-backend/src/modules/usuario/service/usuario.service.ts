@@ -4,6 +4,8 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { UsuarioRepository } from '../repository/usuario.repository';
 import { CreateUsuarioDto } from '../dto/create-usuario.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
@@ -16,15 +18,18 @@ import { AdminUpdateUsuarioDto } from '../dto/admin-update-usuario.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import * as bcrypt from 'bcrypt';
 import { UserStatus, rolUsuario } from '../enums/usuario.enums';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
-import { Repository } from 'typeorm';
 import { AuthPermissionsService } from '../../auth/service/auth-permissions.service';
+import { Profesor } from '../../profesor/profesor.entity/profesor.entity';
+import { AlumnoSlot } from '../../profesor/profesor.entity/alumno-slot.entity';
+import { Alumno } from '../../alumno/alumno.entity/alumno.entity';
 
 @Injectable()
 export class UsuarioService {
   constructor(
     private readonly usuarioRepo: UsuarioRepository,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
     @InjectRepository(Permiso)
     private readonly permisoRepo: Repository<Permiso>,
     private readonly authPermissionsService: AuthPermissionsService
@@ -131,8 +136,14 @@ export class UsuarioService {
     });
   }
 
-  remove(id: string) {
-    return this.usuarioRepo.deleteUsuario(id);
+  async remove(id: string) {
+    const usuario = await this.usuarioRepo.findById(id);
+    if (!usuario) return null;
+
+    usuario.activo = false;
+    await this.usuarioRepo.repo.save(usuario);
+
+    return this.usuarioRepo.findById(id);
   }
 
   async addAdditionalPermission(userId: string, permisoId: string) {
