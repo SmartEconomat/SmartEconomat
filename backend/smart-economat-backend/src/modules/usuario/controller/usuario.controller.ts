@@ -1,10 +1,10 @@
 import {
   Controller,
   Get,
+  Post,
   Body,
   Param,
   Patch,
-  Post,
   Delete,
   UseGuards,
   ParseUUIDPipe,
@@ -12,9 +12,8 @@ import {
 } from '@nestjs/common';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { UsuarioService } from '../service/usuario.service';
-import { CreateUsuarioDto } from '../dto/create-usuario.dto';
 import { UpdateUsuarioDto } from '../dto/update-usuario.dto';
-import { ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiQuery } from '@nestjs/swagger';
 import { UpdateUsuarioStatusDto } from '../dto/update-status.dto';
 import { UpdateUsuarioRolDto } from '../dto/update-rol.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
@@ -24,29 +23,12 @@ import { AdminUpdateUsuarioDto } from '../dto/admin-update-usuario.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
-import { rolUsuario } from '../enums/usuario.enums';
-import { RolesGuard } from '../../auth/guards/role.guard';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
-@ApiTags('Usuarios')
-@UseGuards(JwtAuthGuard, RolesGuard, PermisosGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('usuarios')
 export class UsuarioController {
   constructor(private readonly usuarioService: UsuarioService) {}
-
-  @Post()
-  @RequirePermissions('usuarios:crear')
-  create(@Body() dto: CreateUsuarioDto) {
-    return this.usuarioService.create(dto);
-  }
-
-  @Post('admin')
-  @Roles(rolUsuario.ADMINISTRADOR)
-  @RequirePermissions('usuarios:crear')
-  createAdmin(@Body() dto: AdminCreateUsuarioDto) {
-    return this.usuarioService.createAdmin(dto);
-  }
 
   @Get('perfil')
   getPerfil(@GetUser('id') id: string) {

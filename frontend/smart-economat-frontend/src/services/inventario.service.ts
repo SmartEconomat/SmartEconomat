@@ -95,3 +95,24 @@ export async function createInventarioItem(
   const body = (await response.json()) as ApiResponse<InventarioItem>;
   return body.data;
 }
+
+export async function updateInventarioItem(
+  id: string,
+  payload: Partial<CreateInventarioPayload>
+): Promise<InventarioItem> {
+  const response = await baseFetch(`/inventario/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    throw new Error(
+      errorBody.message || `Error al actualizar el inventario: ${response.status}`
+    );
+  }
+
+  const body = (await response.json()) as ApiResponse<InventarioItem>;
+  return body.data;
+}

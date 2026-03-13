@@ -3,7 +3,7 @@ import { IsInt, IsOptional, Min } from 'class-validator';
 
 export class CocinarRecetaDto {
   @ApiPropertyOptional({
-    description: 'Cantidad de porciones/veces a elaborar de esta receta',
+    description: 'docs.CANTIDAD_DE_PORCIONES_VECES_A_ELABORAR_D',
     default: 1,
   })
   @IsOptional()

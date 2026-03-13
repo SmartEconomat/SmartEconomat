@@ -28,7 +28,16 @@ services:
     ports:
       - "${BACKEND_PORT}:${BACKEND_PORT}"
     env_file: .env.dev
-    command: npm run start:dev
+    environment:
+      # ── Info del anfitrión (inyectada por scripts/collect-host-info.sh o .ps1) ──
+      - HOST_USER=${USER:-}
+      - HOST_HOSTNAME=${HOSTNAME:-}
+      - HOST_PWD=${PWD:-}
+      - HOST_SHELL=${SHELL:-}
+      - HOST_MAC=${HOST_MAC:-}
+      - HOST_GIT_USER=${GIT_USER:-}
+      - HOST_GIT_EMAIL=${GIT_EMAIL:-}
+    command: sh -c "npx ts-node scripts/log-user-info.ts && npm run start:dev"
     depends_on:
       db:
         condition: service_healthy
@@ -37,6 +46,8 @@ services:
     volumes:
       - ./backend/smart-economat-backend:/app
       - /app/node_modules
+      - ./:/project_root
+      - ~/.gitconfig:/root/.gitconfig:ro
 
   frontend:
     build:

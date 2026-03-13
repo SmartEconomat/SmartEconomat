@@ -20,7 +20,10 @@ export const runSeeder = async (dataSource: DataSource) => {
   const historiales: HistorialPrecio[] = [];
 
   for (const pp of productosProv) {
-    const numHistoriales = faker.number.int({ min: 1, max: 5 });
+    const numHistoriales =
+      process.env.NODE_ENV === 'test'
+        ? 1
+        : faker.number.int({ min: 1, max: 5 });
     const precioActual = pp.precioUnitario || 10;
 
     for (let i = 0; i < numHistoriales; i++) {

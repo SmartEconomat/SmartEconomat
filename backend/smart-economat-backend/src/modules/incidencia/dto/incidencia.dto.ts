@@ -2,42 +2,45 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IncidenciaLineaDto } from './incidencia-linea.dto';
 
 export class IncidenciaDto {
-  @ApiProperty({ description: 'ID de la incidencia' })
+  @ApiProperty({ description: 'docs.ID_DE_LA_INCIDENCIA' })
   id!: string;
 
-  @ApiProperty({ description: 'ID de la recepción donde se detectó' })
+  @ApiProperty({ description: 'docs.ID_DE_LA_RECEPCI_N_DONDE_SE_DETECT' })
   recepcionId!: string;
 
-  @ApiProperty({ description: 'ID del pedido (proveedor) al que pertenece' })
+  @ApiProperty({ description: 'docs.ID_DEL_PEDIDO_PROVEEDOR_AL_QUE_PERTENECE' })
   pedidoId!: string;
 
   @ApiProperty({
-    description: 'Nombre o identificador del proveedor',
+    description: 'docs.NOMBRE_O_IDENTIFICADOR_DEL_PROVEEDOR',
     required: false,
   })
   proveedorNombre?: string;
 
   @ApiProperty({
-    description: 'Observaciones generales al momento de la recepción',
+    description: 'docs.OBSERVACIONES_GENERALES_AL_MOMENTO_DE_LA',
     required: false,
   })
   observacionesRecepcion?: string;
 
   @ApiProperty({
-    description: 'Observaciones añadidas a la hora de resolver',
+    description: 'docs.OBSERVACIONES_A_ADIDAS_A_LA_HORA_DE_RESO',
     required: false,
   })
   observacionesResolucion?: string;
 
-  @ApiProperty({ description: 'Si la incidencia está resuelta o no' })
+  @ApiProperty({ description: 'docs.SI_LA_INCIDENCIA_EST_RESUELTA_O_NO' })
   resuelta!: boolean;
 
-  @ApiProperty({ description: 'Fecha en la que fue resuelta', required: false })
+  @ApiProperty({
+    description: 'docs.FECHA_EN_LA_QUE_FUE_RESUELTA',
+    required: false,
+  })
   fechaResolucion?: Date;
 
   @ApiProperty({
     type: [IncidenciaLineaDto],
-    description: 'Líneas con discrepancias',
+    description: 'docs.L_NEAS_CON_DISCREPANCIAS',
   })
   lineas!: IncidenciaLineaDto[];
 }

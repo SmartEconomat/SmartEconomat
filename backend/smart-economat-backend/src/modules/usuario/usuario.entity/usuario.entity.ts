@@ -20,8 +20,8 @@ import { Archivo } from '../../archivo/archivo.entity/archivo.entity';
 import { Profesor } from '../../profesor/profesor.entity/profesor.entity';
 import { Alumno } from '../../alumno/alumno.entity/alumno.entity';
 import { Pedido } from '../../pedido/pedido.entity/pedido.entity';
-import { Rol } from '../../roles/entities/rol.entity';
-import { Permiso } from '../../permisos/entities/permiso.entity';
+import { Rol } from '../../roles/rol.entity/rol.entity';
+import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
 
 @Entity({ name: 'usuario' })
 @Index(['username'])
@@ -92,7 +92,7 @@ export class Usuario extends BaseEntity {
   /**
    * Permisos asignados directamente al usuario (además de los de sus roles)
    */
-  @ManyToMany(() => Permiso)
+  @ManyToMany(() => Permiso, (permiso) => permiso.usuariosAdicionales)
   @JoinTable({
     name: 'usuario_permiso_adicional',
     joinColumn: { name: 'usuario_id', referencedColumnName: 'id' },
@@ -103,7 +103,7 @@ export class Usuario extends BaseEntity {
   /**
    * Permisos explícitamente revocados para este usuario (aunque sus roles los tengan)
    */
-  @ManyToMany(() => Permiso)
+  @ManyToMany(() => Permiso, (permiso) => permiso.usuariosExcluidos)
   @JoinTable({
     name: 'usuario_permiso_excluido',
     joinColumn: { name: 'usuario_id', referencedColumnName: 'id' },

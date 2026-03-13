@@ -1,11 +1,20 @@
+import { i18nValidationMessage } from 'nestjs-i18n';
 import { IsNotEmpty, IsString, IsStrongPassword } from 'class-validator';
 
 export class ResetPasswordDto {
-  @IsNotEmpty({ message: 'El token de recuperación es requerido' })
+  @IsNotEmpty({
+    message: i18nValidationMessage(
+      'validation.EL_TOKEN_DE_RECUPERACI_N_ES_REQUERIDO'
+    ),
+  })
   @IsString()
   token!: string;
 
-  @IsNotEmpty({ message: 'La nueva contraseña es requerida' })
+  @IsNotEmpty({
+    message: i18nValidationMessage(
+      'validation.LA_NUEVA_CONTRASE_A_ES_REQUERIDA'
+    ),
+  })
   @IsString()
   @IsStrongPassword(
     {
@@ -16,8 +25,9 @@ export class ResetPasswordDto {
       minSymbols: 1,
     },
     {
-      message:
-        'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo',
+      message: i18nValidationMessage(
+        'validation.LA_CONTRASE_A_DEBE_TENER_AL_MENOS_8_CARA'
+      ),
     }
   )
   newPassword!: string;

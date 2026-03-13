@@ -1,7 +1,13 @@
+import { i18nValidationMessage } from 'nestjs-i18n';
 import { IsEmail, IsNotEmpty } from 'class-validator';
 
 export class ForgotPasswordDto {
-  @IsNotEmpty({ message: 'El email es requerido' })
-  @IsEmail({}, { message: 'Debe ser un email válido' })
+  @IsNotEmpty({
+    message: i18nValidationMessage('validation.EL_EMAIL_ES_REQUERIDO'),
+  })
+  @IsEmail(
+    {},
+    { message: i18nValidationMessage('validation.DEBE_SER_UN_EMAIL_V_LIDO') }
+  )
   email!: string;
 }

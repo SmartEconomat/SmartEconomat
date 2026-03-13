@@ -1,3 +1,4 @@
+import { i18nValidationMessage } from 'nestjs-i18n';
 import {
   IsOptional,
   IsEnum,
@@ -15,41 +16,63 @@ import { TipoMovimiento } from '../enums/movimiento.enums';
  * - Filtrado por tipo de movimiento y rango de fechas
  */
 export class MovimientoHistoryDto {
-  @IsUUID('7', { message: 'El ID de la entidad debe ser un UUID válido' })
+  @IsUUID('7', {
+    message: i18nValidationMessage(
+      'validation.EL_ID_DE_LA_ENTIDAD_DEBE_SER_UN_UUID_V_L'
+    ),
+  })
   @IsOptional()
   entityId?: string;
 
-  @IsUUID('7', { message: 'El ID del usuario debe ser un UUID válido' })
+  @IsUUID('7', {
+    message: i18nValidationMessage(
+      'validation.EL_ID_DEL_USUARIO_DEBE_SER_UN_UUID_V_LID'
+    ),
+  })
   @IsOptional()
   userId?: string;
 
   @IsOptional()
   @IsEnum(TipoMovimiento, {
-    message: 'El tipo de movimiento no es válido',
+    message: i18nValidationMessage(
+      'validation.EL_TIPO_DE_MOVIMIENTO_NO_ES_V_LIDO'
+    ),
   })
   type?: TipoMovimiento;
 
   @IsOptional()
   @IsDateString(
     {},
-    { message: 'La fecha de inicio debe ser una fecha válida (ISO 8601)' }
+    {
+      message: i18nValidationMessage(
+        'validation.LA_FECHA_DE_INICIO_DEBE_SER_UNA_FECHA_V'
+      ),
+    }
   )
   startDate?: string;
 
   @IsOptional()
   @IsDateString(
     {},
-    { message: 'La fecha de fin debe ser una fecha válida (ISO 8601)' }
+    {
+      message: i18nValidationMessage(
+        'validation.LA_FECHA_DE_FIN_DEBE_SER_UNA_FECHA_V_LID'
+      ),
+    }
   )
   endDate?: string;
 
   @IsOptional()
-  @IsString({ message: 'El sorteo debe ser una cadena válida' })
+  @IsString({
+    message: i18nValidationMessage(
+      'validation.EL_SORTEO_DEBE_SER_UNA_CADENA_V_LIDA'
+    ),
+  })
   sortBy?: 'createdAt' | 'cantidad';
 
   @IsOptional()
   @IsEnum(['ASC', 'DESC'], {
-    message: 'El orden debe ser ASC o DESC',
+    message: i18nValidationMessage('validation.EL_ORDEN_DEBE_SER_ASC_O_DESC'),
   })
   sortOrder?: 'ASC' | 'DESC';
 }

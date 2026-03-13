@@ -11,7 +11,8 @@ export const runSeeder = async (dataSource: DataSource) => {
   );
 
   const proveedores: Proveedor[] = [];
-  for (let i = 0; i < 10; i++) {
+  const numProveedores = process.env.NODE_ENV === 'test' ? 2 : 10;
+  for (let i = 0; i < numProveedores; i++) {
     const proveedor = new Proveedor();
     proveedor.nombre = faker.company.name();
     proveedor.email = faker.internet.email();

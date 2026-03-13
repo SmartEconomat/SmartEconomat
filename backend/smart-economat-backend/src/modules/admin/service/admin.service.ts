@@ -1,3 +1,4 @@
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import {
   BadRequestException,
   ConflictException,
@@ -37,12 +38,15 @@ export class AdminService {
       });
 
       if (isExisting)
-        throw new ConflictException('User or email already exists');
+        throw new ConflictException(
+          I18nHelper.getError('USER_OR_EMAIL_ALREADY_EXISTS')
+        );
 
       const isCialExisting = await manager.findOne(Profesor, {
         where: { cial: dto.cial },
       });
-      if (isCialExisting) throw new ConflictException('Cial already exists');
+      if (isCialExisting)
+        throw new ConflictException(I18nHelper.getError('CIAL_ALREADY_EXISTS'));
 
       const passwordHash = await bcrypt.hash(dto.password, 10);
 
@@ -56,7 +60,7 @@ export class AdminService {
       await manager.save(user);
 
       const profesor = manager.create(Profesor, {
-        userId: user.id,
+        user: { id: user.id },
         cial: dto.cial,
       });
       await manager.save(profesor);
@@ -73,17 +77,20 @@ export class AdminService {
 
   async activateUser(userId: string) {
     const user = await this.usuarioRepo.findOne({ where: { id: userId } });
-    if (!user) throw new NotFoundException('User not found');
+    if (!user)
+      throw new NotFoundException(I18nHelper.getError('USER_NOT_FOUND_1'));
 
     if (user.status === UserStatus.ACTIVE) {
-      throw new BadRequestException('User is already active');
+      throw new BadRequestException(
+        I18nHelper.getError('USER_IS_ALREADY_ACTIVE')
+      );
     }
 
     user.status = UserStatus.ACTIVE;
     await this.usuarioRepo.save(user);
 
     return {
-      message: 'User activated successfully',
+      message: I18nHelper.translate('messages.USER_ACTIVATED_SUCCESSFULLY'),
       id: user.id,
       status: user.status,
     };
@@ -91,7 +98,8 @@ export class AdminService {
 
   async forcePasswordReset(userId: string) {
     const user = await this.usuarioRepo.findOne({ where: { id: userId } });
-    if (!user) throw new NotFoundException('Usuario no encontrado');
+    if (!user)
+      throw new NotFoundException(I18nHelper.getError('USER_NOT_FOUND'));
 
     const chars =
       'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -109,8 +117,9 @@ export class AdminService {
     await this.usuarioRepo.save(user);
 
     return {
-      message:
-        'Contraseña restablecida exitosamente. Entregue esta clave provisional al usuario.',
+      message: I18nHelper.translate(
+        'messages.CONTRASE_A_RESTABLECIDA_EXITOSAMENTE_ENT'
+      ),
       provisionalPassword,
       mustChangePassword: true,
     };

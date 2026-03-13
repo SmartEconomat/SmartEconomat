@@ -10,7 +10,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreatePermisoDto {
   @ApiProperty({
-    description: 'Código único del permiso (formato: modulo:accion)',
+    description: 'docs.C_DIGO_NICO_DEL_PERMISO_FORMATO_MODULO_A',
     example: 'usuarios:listar',
   })
   @IsString()
@@ -23,7 +23,7 @@ export class CreatePermisoDto {
   codigo!: string;
 
   @ApiProperty({
-    description: 'Nombre legible del permiso',
+    description: 'docs.NOMBRE_LEGIBLE_DEL_PERMISO',
     example: 'Listar usuarios',
   })
   @IsString()
@@ -32,7 +32,7 @@ export class CreatePermisoDto {
   nombre!: string;
 
   @ApiPropertyOptional({
-    description: 'Descripción detallada del permiso',
+    description: 'docs.DESCRIPCI_N_DETALLADA_DEL_PERMISO',
     example: 'Permite ver el listado completo de usuarios del sistema',
   })
   @IsString()
@@ -40,7 +40,7 @@ export class CreatePermisoDto {
   descripcion?: string;
 
   @ApiProperty({
-    description: 'Módulo o recurso al que pertenece',
+    description: 'docs.M_DULO_O_RECURSO_AL_QUE_PERTENECE',
     example: 'usuarios',
   })
   @IsString()
@@ -49,7 +49,7 @@ export class CreatePermisoDto {
   modulo!: string;
 
   @ApiProperty({
-    description: 'Acción que representa el permiso',
+    description: 'docs.ACCI_N_QUE_REPRESENTA_EL_PERMISO',
     example: 'listar',
   })
   @IsString()
@@ -58,7 +58,7 @@ export class CreatePermisoDto {
   accion!: string;
 
   @ApiPropertyOptional({
-    description: 'Estado del permiso',
+    description: 'docs.ESTADO_DEL_PERMISO',
     default: true,
   })
   @IsBoolean()
