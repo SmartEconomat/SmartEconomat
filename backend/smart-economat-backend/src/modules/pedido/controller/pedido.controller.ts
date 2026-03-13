@@ -40,14 +40,15 @@ export class PedidoController {
   @Get()
   @RequirePermissions('pedidos:listar')
   findAll(
-    @SortableFields([
-      'fechaPedido',
-      'fechaEntrega',
-      'costeTotal',
-      'estado',
-      'createdAt',
-      'updatedAt',
-    ])
+    @SortableFields({
+      fechaPedido: 'fechaPedido',
+      fechaEntrega: 'fechaEntrega',
+      costeTotal: 'costeTotal',
+      estado: 'estado',
+      fechaCreacion: 'createdAt',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+    })
     query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Pedido>> {
     return this.pedidoService.findAll(query);

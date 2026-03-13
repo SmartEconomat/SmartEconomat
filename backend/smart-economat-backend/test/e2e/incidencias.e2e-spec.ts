@@ -178,8 +178,11 @@ describe('IncidenciaController (e2e)', () => {
 
       expect(response.status).toBe(200);
       const resBody = response.body.data;
-      expect(Array.isArray(resBody)).toBe(true);
-      expect(resBody.length).toBeGreaterThan(0);
+      expect(Array.isArray(resBody.data)).toBe(true);
+      expect(resBody.data.length).toBeGreaterThan(0);
+      expect(typeof resBody.total).toBe('number');
+      expect(typeof resBody.page).toBe('number');
+      expect(typeof resBody.limit).toBe('number');
     });
 
     it('GET /incidencias/:id - Debe obtener una incidencia por ID (200)', async () => {

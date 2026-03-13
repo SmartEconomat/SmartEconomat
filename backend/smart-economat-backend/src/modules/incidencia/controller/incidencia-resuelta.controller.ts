@@ -10,6 +10,8 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { IncidenciaResuelaService } from '../service/incidencia-resuelta.service';
 import { CreateIncidenciaResuelaDto } from '../dto/create-incidencia.dto';
@@ -17,6 +19,7 @@ import { UpdateIncidenciaResuelaDto } from '../dto/update-incidencia.dto';
 import { IncidenciaResuelta } from '../incidencia-resuelta.entity/incidencia-resuelta.entity';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)

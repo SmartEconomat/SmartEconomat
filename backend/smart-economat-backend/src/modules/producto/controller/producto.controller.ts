@@ -10,7 +10,6 @@ import {
   HttpStatus,
   UseGuards,
   ParseUUIDPipe,
-  Query,
   Request,
 } from '@nestjs/common';
 import { ProductoService } from '../service/producto.service';
@@ -71,14 +70,10 @@ export class ProductoController {
   @RequirePermissions('productos:listar')
   @ApiOperation({ summary: 'Listar productos con filtros y paginación' })
   findAll(
-    @SortableFields([
-      'nombre',
-      'codigoBarras',
-      'tipo',
-      'marca',
-      'createdAt',
-      'updatedAt',
-    ])
+    @SortableFields(
+      ['nombre', 'codigoBarras', 'tipo', 'marca', 'createdAt', 'updatedAt'],
+      ProductFilterDto
+    )
     query: ProductFilterDto
   ): Promise<PaginatedResponseDto<Producto>> {
     return this.productoService.findAll(query);

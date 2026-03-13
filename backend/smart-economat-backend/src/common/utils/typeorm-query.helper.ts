@@ -3,11 +3,13 @@ import { PaginationQueryDto } from '../dto/pagination-query.dto';
 
 export function buildFindManyOptions<T>(
   query: PaginationQueryDto,
-  defaultSortField = 'createdAt'
+  defaultSortField = 'createdAt',
+  sortableFieldMap?: Record<string, string>
 ): Pick<FindManyOptions<T>, 'skip' | 'take' | 'order'> {
   const page = query.page ?? 1;
   const limit = Math.min(query.limit ?? 20, 50);
-  const sortBy = query.sortBy ?? defaultSortField;
+  const requestedSortField = query.sortBy ?? defaultSortField;
+  const sortBy = sortableFieldMap?.[requestedSortField] ?? requestedSortField;
   const order = query.order ?? 'ASC';
 
   return {
