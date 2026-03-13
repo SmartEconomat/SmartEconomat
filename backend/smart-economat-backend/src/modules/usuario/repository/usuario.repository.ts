@@ -70,7 +70,13 @@ export class UsuarioRepository {
     return this.findById(id);
   }
 
-  deleteUsuario(id: string) {
-    return this.repo.delete(id);
+  async deleteUsuario(id: string) {
+    const usuario = await this.findById(id);
+    if (!usuario) return null;
+
+    usuario.activo = false;
+    await this.repo.save(usuario);
+
+    return this.findById(id);
   }
 }
