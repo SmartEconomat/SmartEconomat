@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Permiso } from '../entities/permiso.entity';
+import { Permiso } from '../permiso.entity/permiso.entity';
 import { CreatePermisoDto } from '../dto/create-permiso.dto';
 import { UpdatePermisoDto } from '../dto/update-permiso.dto';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
@@ -170,7 +170,7 @@ export class PermisosService {
       .select('COUNT(DISTINCT rol.id)', 'count')
       .getRawOne();
 
-    const count = parseInt(rolesCount?.count || '0', 10);
+    const count = parseInt((rolesCount?.count as string) || '0', 10);
 
     if (count > 0) {
       throw new BadRequestException(

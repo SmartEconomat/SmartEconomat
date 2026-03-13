@@ -1,11 +1,20 @@
+import { i18nValidationMessage } from 'nestjs-i18n';
 import { IsNotEmpty, IsString, IsStrongPassword } from 'class-validator';
 
 export class ChangePasswordDto {
-  @IsNotEmpty({ message: 'La contraseña actual es requerida' })
+  @IsNotEmpty({
+    message: i18nValidationMessage(
+      'validation.LA_CONTRASE_A_ACTUAL_ES_REQUERIDA'
+    ),
+  })
   @IsString()
   currentPassword!: string;
 
-  @IsNotEmpty({ message: 'La nueva contraseña es requerida' })
+  @IsNotEmpty({
+    message: i18nValidationMessage(
+      'validation.LA_NUEVA_CONTRASE_A_ES_REQUERIDA'
+    ),
+  })
   @IsString()
   @IsStrongPassword(
     {
@@ -16,8 +25,9 @@ export class ChangePasswordDto {
       minSymbols: 1,
     },
     {
-      message:
-        'La nueva contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo',
+      message: i18nValidationMessage(
+        'validation.LA_NUEVA_CONTRASE_A_DEBE_TENER_AL_MENOS'
+      ),
     }
   )
   newPassword!: string;

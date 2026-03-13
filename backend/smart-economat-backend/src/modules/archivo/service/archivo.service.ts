@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -27,6 +28,7 @@ export interface PaginatedFiles {
 
 @Injectable()
 export class ArchivoService {
+  private readonly logger = new Logger(ArchivoService.name);
   private readonly storageType: string;
   private readonly uploadDir: string;
 
@@ -69,7 +71,11 @@ export class ArchivoService {
           optimizedSize = processed.size;
           optimizedMimeType = processed.mimeType;
         } catch (error) {
-          console.error('Error processing image:', error);
+          if (process.env.NODE_ENV !== 'test') {
+            this.logger.warn(
+              `Image optimization skipped for ${file.originalname}: ${error instanceof Error ? error.message : 'unknown error'}`
+            );
+          }
         }
       }
     } else {

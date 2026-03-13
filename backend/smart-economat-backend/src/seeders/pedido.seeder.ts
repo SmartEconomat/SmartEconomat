@@ -29,7 +29,7 @@ export const runSeeder = async (dataSource: DataSource) => {
     throw new Error(SeederI18nHelper.getError('NO_PRODUCTOS_PROVEEDOR'));
   }
 
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < (process.env.NODE_ENV === 'test' ? 2 : 8); i++) {
     const randomProveedor = faker.helpers.arrayElement(proveedoresValidos);
     const pedido = pedidoRepo.create({
       usuario: faker.helpers.arrayElement(usuarios),

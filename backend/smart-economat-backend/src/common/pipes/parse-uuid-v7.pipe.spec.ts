@@ -1,11 +1,25 @@
 import { ParseUUIDv7Pipe } from './parse-uuid-v7.pipe';
 import { BadRequestException } from '@nestjs/common';
+import { I18nHelper } from '../helpers/i18n.helper';
 
 /**
  * Tests Unitarios de ParseUUIDv7Pipe
  */
 describe('ParseUUIDv7Pipe', () => {
   const pipe = new ParseUUIDv7Pipe();
+
+  beforeAll(() => {
+    jest.spyOn(I18nHelper, 'getError').mockImplementation((key: string) => {
+      const messages: Record<string, string> = {
+        EL_UUID_NO_PUEDE_ESTAR_VAC_O: 'El UUID no puede estar vacío',
+      };
+      return messages[key] || key;
+    });
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
+  });
 
   describe('transform()', () => {
     it('debe aceptar UUID v7 válido (minúsculas)', () => {
