@@ -15,14 +15,16 @@ import { IncidenciaService } from '../service/incidencia.service';
 import { CreateIncidenciaDto } from '../dto/create-incidencia.dto';
 import { UpdateIncidenciaDto } from '../dto/update-incidencia.dto';
 import { ResolverIncidenciaDto } from '../dto/resolver-incidencia.dto';
+import { ReportIncidenciaDto } from '../dto/report-incidencia.dto';
+import { ResolveIncidenciaDto } from '../dto/resolve-incidencia.dto';
 import { Incidencia } from '../incidencia.entity/incidencia.entity';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { GetUser } from '../../auth/decorators/get-user.decorator';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
-import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
-import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
-import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('incidencias')
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('incidencias')
 export class IncidenciaController {
@@ -79,5 +81,37 @@ export class IncidenciaController {
     @Body() dto: ResolverIncidenciaDto
   ): Promise<Incidencia> {
     return this.incidenciaService.resolverIncidencia(id, dto);
+  }
+
+  @Post('reportar')
+  @RequirePermissions('incidencias:crear')
+  @ApiOperation({
+    summary: 'Reporta una nueva incidencia vinculada a una recepción',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Incidencia reportada correctamente',
+  })
+  reportar(@Body() dto: ReportIncidenciaDto): Promise<Incidencia> {
+    return this.incidenciaService.reportarIncidencia(dto);
+  }
+
+  @Post(':id/resolver')
+  @RequirePermissions('incidencias:resolver')
+  @ApiOperation({ summary: 'Resuelve una incidencia de forma transaccional' })
+  @ApiResponse({
+    status: 201,
+    description: 'Incidencia resuelta correctamente',
+  })
+  resolverTransaccional(
+    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Body() dto: ResolveIncidenciaDto,
+    @GetUser('id') usuarioId: string
+  ): Promise<Incidencia> {
+    return this.incidenciaService.resolverIncidenciaTransaccional(
+      id,
+      dto,
+      usuarioId
+    );
   }
 }

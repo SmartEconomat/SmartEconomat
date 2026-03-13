@@ -1,3 +1,4 @@
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import {
   BadRequestException,
   Injectable,
@@ -61,7 +62,9 @@ export class AlumnoService {
       });
 
       if (isExistingUser)
-        throw new ConflictException('Username or email is already taken');
+        throw new ConflictException(
+          I18nHelper.getError('USERNAME_OR_EMAIL_IS_ALREADY_TAKEN')
+        );
 
       const passwordHash = await bcrypt.hash(dto.password, 10);
       const user = manager.create(Usuario, {
@@ -79,8 +82,12 @@ export class AlumnoService {
       await manager.save(alumno);
 
       return {
-        message:
-          'Alumno registrado con éxito. Esperando activación por el profesor.',
+        id: alumno.id,
+        username: user.username,
+        status: user.status,
+        message: I18nHelper.translate(
+          'messages.ALUMNO_REGISTRADO_CON_XITO_ESPERANDO_ACT'
+        ),
       };
     });
   }
@@ -97,7 +104,10 @@ export class AlumnoService {
         relations: ['slot', 'slot.profesor'],
       });
 
-      if (!alumno) throw new NotFoundException('Alumno no encontrado');
+      if (!alumno)
+        throw new NotFoundException(
+          I18nHelper.getError('ALUMNO_NO_ENCONTRADO')
+        );
 
       if (reqUserRole !== rolUsuario.ADMINISTRADOR) {
         const profesorActual = await manager.findOne(Profesor, {
@@ -116,7 +126,9 @@ export class AlumnoService {
       });
 
       if (!nuevoProfesor)
-        throw new NotFoundException('Nuevo profesor no encontrado');
+        throw new NotFoundException(
+          I18nHelper.getError('NUEVO_PROFESOR_NO_ENCONTRADO')
+        );
 
       const nuevoSlot = await manager.findOne(AlumnoSlot, {
         where: {
@@ -128,14 +140,22 @@ export class AlumnoService {
       });
 
       if (!nuevoSlot)
-        throw new NotFoundException('El nuevo slot especificado no existe');
+        throw new NotFoundException(
+          I18nHelper.getError('EL_NUEVO_SLOT_ESPECIFICADO_NO_EXISTE')
+        );
       if (nuevoSlot.alumno)
-        throw new BadRequestException('El nuevo slot ya está ocupado');
+        throw new BadRequestException(
+          I18nHelper.getError('EL_NUEVO_SLOT_YA_EST_OCUPADO')
+        );
 
       alumno.slot = nuevoSlot;
       await manager.save(alumno);
 
-      return { message: 'Profesor y slot cambiados con éxito' };
+      return {
+        message: I18nHelper.translate(
+          'messages.PROFESOR_Y_SLOT_CAMBIADOS_CON_XITO'
+        ),
+      };
     });
   }
 }

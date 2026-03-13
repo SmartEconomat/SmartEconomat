@@ -1,3 +1,4 @@
+import { I18nHelper } from '../helpers/i18n.helper';
 /**
  * Utility functions for generating and validating EAN-13 barcodes.
  */
@@ -9,7 +10,7 @@
  */
 export function calculateCheckDigit(digits: string): number {
   if (!/^\d{12}$/.test(digits)) {
-    throw new Error('Input must be exactly 12 digits');
+    throw new Error(I18nHelper.getError('INPUT_MUST_BE_EXACTLY_12_DIGITS'));
   }
 
   let sum = 0;

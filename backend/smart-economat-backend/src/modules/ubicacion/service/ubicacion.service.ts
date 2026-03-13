@@ -1,90 +1,38 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { Ubicacion } from '../ubicacion.entity/ubicacion.entity';
 import { CreateUbicacionDto } from '../dto/create-ubicacion.dto';
 import { UpdateUbicacionDto } from '../dto/update-ubicacion.dto';
-import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
-import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { BaseService } from '../../../common/base/base.service';
 
 @Injectable()
-export class UbicacionService {
+export class UbicacionService extends BaseService<
+  Ubicacion,
+  CreateUbicacionDto,
+  UpdateUbicacionDto
+> {
   constructor(
     @InjectRepository(Ubicacion)
-    private readonly ubicacionRepository: Repository<Ubicacion>
-  ) {}
-
-  async create(createUbicacionDto: CreateUbicacionDto): Promise<Ubicacion> {
-    const existing = await this.ubicacionRepository.findOne({
-      where: { nombre: createUbicacionDto.nombre },
-    });
-    if (existing) {
-      throw new BadRequestException('Ya existe una ubicación con este nombre');
-    }
-
-    const nuevaUbicacion = this.ubicacionRepository.create(createUbicacionDto);
-    return await this.ubicacionRepository.save(nuevaUbicacion);
+    repository: Repository<Ubicacion>,
+    dataSource: DataSource
+  ) {
+    super(repository, dataSource);
   }
 
-  async findAll(
-    query: PaginationQueryDto
-  ): Promise<PaginatedResponseDto<Ubicacion>> {
-    const page = query.page ?? 1;
-    const limit = Math.min(query.limit ?? 20, 50);
-    const sortBy = query.sortBy ?? 'nombre';
-    const order = query.order ?? 'ASC';
-
-    const [data, total] = await this.ubicacionRepository.findAndCount({
-      order: { [sortBy]: order },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
-
-    return {
-      data,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit) || 1,
-    };
-  }
-
-  async findOne(id: string): Promise<Ubicacion> {
-    const ubicacion = await this.ubicacionRepository.findOne({
-      where: { id },
-    });
-    if (!ubicacion) {
-      throw new NotFoundException('Ubicación no encontrada');
-    }
-    return ubicacion;
-  }
-
-  async update(
-    id: string,
-    updateUbicacionDto: UpdateUbicacionDto
-  ): Promise<Ubicacion> {
-    const ubicacion = await this.findOne(id);
-    this.ubicacionRepository.merge(ubicacion, updateUbicacionDto);
-    return await this.ubicacionRepository.save(ubicacion);
-  }
-
-  async remove(id: string): Promise<void> {
-    const ubicacion = await this.findOne(id);
-    await this.ubicacionRepository.softRemove(ubicacion);
+  protected getNotFoundMessage(): string {
+    return I18nHelper.getError('UBICACI_N_NO_ENCONTRADA');
   }
 
   async restore(id: string): Promise<Ubicacion> {
-    const ubicacion = await this.ubicacionRepository.findOne({
-      where: { id },
+    const ubicacion = await this.repository.findOne({
+      where: { id } as any,
       withDeleted: true,
     });
     if (!ubicacion) {
-      throw new NotFoundException('Ubicación no encontrada');
+      throw new NotFoundException(this.getNotFoundMessage());
     }
-    return await this.ubicacionRepository.recover(ubicacion);
+    return await this.repository.recover(ubicacion);
   }
 }

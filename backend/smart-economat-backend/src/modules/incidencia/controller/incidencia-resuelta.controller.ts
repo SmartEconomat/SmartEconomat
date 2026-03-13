@@ -17,10 +17,7 @@ import { UpdateIncidenciaResuelaDto } from '../dto/update-incidencia.dto';
 import { IncidenciaResuelta } from '../incidencia-resuelta.entity/incidencia-resuelta.entity';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
-import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
-import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
-import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('incidencias-resueltas')

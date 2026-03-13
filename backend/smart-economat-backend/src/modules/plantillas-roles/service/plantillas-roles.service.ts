@@ -1,3 +1,4 @@
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import {
   Injectable,
   NotFoundException,
@@ -6,9 +7,9 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import { PlantillaRol } from '../entities/plantilla-rol.entity';
-import { Permiso } from '../../permisos/entities/permiso.entity';
-import { Rol } from '../../roles/entities/rol.entity';
+import { PlantillaRol } from '../plantilla-rol.entity/plantilla-rol.entity';
+import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
+import { Rol } from '../../roles/rol.entity/rol.entity';
 import { CreatePlantillaDto } from '../dto/create-plantilla.dto';
 import { UpdatePlantillaDto } from '../dto/update-plantilla.dto';
 
@@ -42,7 +43,9 @@ export class PlantillasRolesService {
         where: { id: dto.plantillaPadreId },
       });
       if (!padre) {
-        throw new NotFoundException('Plantilla padre no encontrada');
+        throw new NotFoundException(
+          I18nHelper.getError('PLANTILLA_PADRE_NO_ENCONTRADA')
+        );
       }
     }
 
@@ -91,7 +94,9 @@ export class PlantillasRolesService {
     const plantilla = await this.findOne(id);
 
     if (!plantilla.esEditable) {
-      throw new BadRequestException('Esta plantilla no es editable');
+      throw new BadRequestException(
+        I18nHelper.getError('ESTA_PLANTILLA_NO_ES_EDITABLE')
+      );
     }
 
     if (dto.nombre && dto.nombre !== plantilla.nombre) {

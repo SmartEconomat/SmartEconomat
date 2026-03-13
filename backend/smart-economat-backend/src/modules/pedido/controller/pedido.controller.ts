@@ -22,7 +22,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('pedidos')
@@ -33,7 +33,7 @@ export class PedidoController {
   @RequirePermissions('pedidos:crear')
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreatePedidoDto, @Request() req: any): Promise<Pedido> {
-    const userId = req.user.sub as string;
+    const userId = req.user.id as string;
     return this.pedidoService.create(dto, userId);
   }
 

@@ -9,7 +9,7 @@ import { DashboardStatsDto } from '../dto/dashboard-stats.dto';
 import { DashboardService } from '../service/dashboard.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
 @ApiTags('Dashboard')
 @ApiBearerAuth()
@@ -23,7 +23,7 @@ export class DashboardController {
   @ApiOperation({ summary: 'Get dashboard statistics (KPIs)' })
   @ApiResponse({
     status: 200,
-    description: 'Dashboard statistics retrieved successfully.',
+    description: 'docs.DASHBOARD_STATISTICS_RETRIEVED_SUCCESSFU',
     type: DashboardStatsDto,
   })
   async getStats(): Promise<DashboardStatsDto> {

@@ -97,7 +97,6 @@ function parseQuantity(q: string | undefined): {
 }
 
 export const runSeeder = async (dataSource: DataSource) => {
-  const { faker } = await import('@faker-js/faker');
   const productoRepo = dataSource.getRepository(Producto);
   const proveedorRepo = dataSource.getRepository(Proveedor);
   const productoProveedorRepo = dataSource.getRepository(ProductoProveedor);
@@ -108,22 +107,40 @@ export const runSeeder = async (dataSource: DataSource) => {
     throw new Error(SeederI18nHelper.getError('NO_PROVEEDORES'));
   }
 
-  console.log('Obteniendo productos de OpenFoodFacts...');
   let offProducts: OffProduct[] = [];
-  try {
-    const offResponse = await fetch(
-      'https://es.openfoodfacts.org/cgi/search.pl?action=process&sort_by=unique_scans_n&json=1&page_size=20',
-      { signal: AbortSignal.timeout(30000) }
-    );
 
-    if (offResponse.ok) {
-      const offData = await offResponse.json();
-      offProducts = offData.products || [];
+  // OPTIMIZATION: Skip API in test environment, respect OFF_API_ENABLED in other envs
+  const isTestEnv = process.env.NODE_ENV === 'test';
+  const enableOffApi = !isTestEnv && process.env.OFF_API_ENABLED !== 'false';
+
+  if (enableOffApi) {
+    console.log('Obteniendo productos de OpenFoodFacts...');
+    try {
+      const offResponse = await fetch(
+        'https://es.openfoodfacts.org/cgi/search.pl?action=process&sort_by=unique_scans_n&json=1&page_size=20',
+        { signal: AbortSignal.timeout(60000) }
+      );
+
+      if (offResponse.ok) {
+        const offData = await offResponse.json();
+        offProducts = offData.products || [];
+        console.log(
+          `✅ ${offProducts.length} productos obtenidos de OpenFoodFacts.`
+        );
+      } else {
+        console.warn(
+          `OpenFoodFacts respondió con estado ${offResponse.status}`
+        );
+      }
+    } catch (error: any) {
+      console.warn(
+        'No se pudieron obtener productos de OpenFoodFacts:',
+        error.message
+      );
     }
-  } catch (error) {
-    console.warn(
-      'No se pudieron obtener productos de OpenFoodFacts, usando datos aleatorios:',
-      error.message
+  } else if (isTestEnv) {
+    console.log(
+      '✔️ Modo test: usando productos ficticios (OpenFoodFacts deshabilitado)'
     );
   }
 
@@ -143,27 +160,37 @@ export const runSeeder = async (dataSource: DataSource) => {
 
     const { contenido, unidad } = parseQuantity(offProduct.quantity);
 
+    const getRandomDate = () =>
+      new Date(Date.now() + Math.random() * 60 * 24 * 60 * 60 * 1000);
+    const getRandomBarcode = () =>
+      Math.random().toString().slice(2, 15).padEnd(13, '0');
+
+    let codigoBarras = offProduct.code?.substring(0, 50);
+    if (!codigoBarras) codigoBarras = getRandomBarcode();
+
+    if (codigosVistos.has(codigoBarras)) {
+      continue;
+    }
+    codigosVistos.add(codigoBarras);
+
     const producto = productoRepo.create({
       nombre: defaultName.substring(0, 150),
       marca: (
         offProduct.brands ||
         offProduct.brands_tags?.[0] ||
-        faker.company.name()
+        'Marca Genérica'
       ).substring(0, 100),
       descripcion: (
-        offProduct.ingredients_text || faker.commerce.productDescription()
+        offProduct.ingredients_text || 'Sin descripción disponible.'
       ).substring(0, 500),
       unidad,
-      fechaCaducidad: faker.datatype.boolean(0.3)
-        ? faker.date.soon({ days: 60 })
-        : undefined,
+      fechaCaducidad: Math.random() > 0.7 ? getRandomDate() : undefined,
       tipo: mapTipoCategoria(offProduct.categories_tags),
       pathImg:
-        offProduct.image_url || faker.image.url({ width: 640, height: 480 }),
+        offProduct.image_url ||
+        'https://via.placeholder.com/640x480.png?text=Sin+Imagen',
       contenido,
-      codigoBarras:
-        offProduct.code?.substring(0, 50) ||
-        faker.string.alphanumeric(13).toUpperCase(),
+      codigoBarras,
     });
 
     if (producto.codigoBarras && codigosVistos.has(producto.codigoBarras)) {
@@ -176,48 +203,68 @@ export const runSeeder = async (dataSource: DataSource) => {
     (producto as any)._alergenosTags = offProduct.allergens_tags || [];
     productos.push(producto);
 
-    if (productos.length >= 15) break;
+    if (productos.length >= 25) break;
   }
 
-  while (productos.length < 15) {
-    const producto = productoRepo.create({
-      nombre: faker.commerce.productName(),
-      marca: faker.company.name(),
-      descripcion: faker.commerce.productDescription(),
-      unidad: faker.helpers.arrayElement(Object.values(UnidadMedida)),
-      fechaCaducidad: faker.datatype.boolean(0.3)
-        ? faker.date.soon({ days: 60 })
-        : undefined,
-      tipo: faker.helpers.arrayElement(Object.values(TipoProducto)),
-      pathImg: faker.image.url({ width: 640, height: 480 }),
-      contenido: faker.number.int({ min: 1, max: 1000 }),
-      codigoBarras: faker.string.alphanumeric(10).toUpperCase(),
-    });
-    productos.push(producto);
+  if (productos.length === 0) {
+    console.warn(
+      'Usando datos ficticios como fallback (OpenFoodFacts no disponible).'
+    );
+    const { faker } = await import('@faker-js/faker');
+    const numProductos = 10;
+
+    for (let i = 0; i < numProductos; i++) {
+      const codigoBarras = faker.helpers.fromRegExp('[0-9]{13}');
+
+      if (codigosVistos.has(codigoBarras)) {
+        continue;
+      }
+      codigosVistos.add(codigoBarras);
+
+      const producto = productoRepo.create({
+        nombre: faker.commerce.productName().substring(0, 150),
+        marca: faker.commerce.productAdjective().substring(0, 100),
+        descripcion: faker.commerce.productDescription().substring(0, 500),
+        unidad: faker.helpers.enumValue(UnidadMedida),
+        fechaCaducidad: Math.random() > 0.7 ? faker.date.future() : undefined,
+        tipo: faker.helpers.enumValue(TipoProducto),
+        pathImg: `https://via.placeholder.com/640x480.png?text=${encodeURIComponent(faker.commerce.productName().slice(0, 20))}`,
+        contenido: parseFloat(
+          faker.commerce.price({ min: 1, max: 100, dec: 2 })
+        ),
+        codigoBarras,
+      });
+
+      productos.push(producto);
+    }
+  }
+
+  if (productos.length === 0) {
+    console.warn('No hay productos válidos para insertar.');
+    return;
   }
 
   const productosGuardados = await productoRepo.save(productos);
 
   const productoProveedores: ProductoProveedor[] = [];
   for (const producto of productosGuardados) {
-    const numProveedores = faker.number.int({
-      min: 1,
-      max: Math.min(3, proveedores.length),
-    });
+    const maxProv = Math.min(3, proveedores.length);
+    const numProveedores = Math.floor(Math.random() * maxProv) + 1;
 
-    const proveedoresAleatorios = faker.helpers.arrayElements(
-      proveedores,
-      numProveedores
-    );
+    const proveedoresAleatorios = [...proveedores]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, numProveedores);
 
     for (const proveedor of proveedoresAleatorios) {
+      const precioRandom = (Math.random() * (200 - 5) + 5).toFixed(2);
       const pp = productoProveedorRepo.create({
         producto,
         proveedor,
-        precioUnitario: parseFloat(faker.commerce.price({ min: 5, max: 200 })),
+        precioUnitario: parseFloat(precioRandom),
         marca: producto.marca,
         codigoBarras:
-          producto.codigoBarras || faker.string.numeric({ length: 13 }),
+          producto.codigoBarras ||
+          Math.random().toString().slice(2, 15).padEnd(13, '0'),
       });
       productoProveedores.push(pp);
     }
@@ -232,15 +279,6 @@ export const runSeeder = async (dataSource: DataSource) => {
     for (const tag of baseAlergenosTags) {
       const mapeado = mapAlergeno(tag);
       if (mapeado) alergenosMapeados.add(mapeado);
-    }
-
-    if (alergenosMapeados.size === 0 && !baseAlergenosTags.length) {
-      const numAlergenos = faker.number.int({ min: 0, max: 2 });
-      const seleccionados = faker.helpers.arrayElements(
-        Object.values(Alergeno),
-        numAlergenos
-      );
-      for (const al of seleccionados) alergenosMapeados.add(al);
     }
 
     for (const alergeno of alergenosMapeados) {

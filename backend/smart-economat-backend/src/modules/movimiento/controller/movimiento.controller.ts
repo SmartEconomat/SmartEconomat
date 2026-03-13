@@ -8,10 +8,10 @@ import {
   Delete,
   Query,
   UseGuards,
+  ParseUUIDPipe,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { MovimientoService } from '../service/movimiento.service';
@@ -20,44 +20,48 @@ import { CreateMovimientoDto } from '../dto/create-movimiento.dto';
 import { UpdateMovimientoDto } from '../dto/update-movimiento.dto';
 import { MovimientoHistoryDto } from '../dto/movimiento-history.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/role.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { rolUsuario } from '../../usuario/enums/usuario.enums';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
-import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
 
 @ApiTags('movimientos')
-@UseGuards(JwtAuthGuard, PermisosGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('movimientos')
 export class MovimientoController {
   constructor(private readonly movimientoService: MovimientoService) {}
 
   @Post()
-  @RequirePermissions('movimientos:crear')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @ApiOperation({
     summary: 'Crear un nuevo movimiento',
-    description: 'Solo usuarios con permiso pueden crear movimientos',
+    description: 'docs.SOLO_ADMINISTRADORES_Y_PROFESORES_PUEDEN',
   })
   @ApiResponse({
     status: 201,
-    description: 'Movimiento creado exitosamente',
+    description: 'docs.MOVIMIENTO_CREADO_EXITOSAMENTE',
   })
   @ApiResponse({
     status: 400,
-    description: 'Datos inválidos',
+    description: 'docs.DATOS_INV_LIDOS',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'docs.ACCESO_DENEGADO_ROL_INSUFICIENTE',
   })
   create(@Body() dto: CreateMovimientoDto) {
     return this.movimientoService.create(dto);
   }
 
   @Get()
-  @RequirePermissions('movimientos:listar')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
   @ApiOperation({
     summary: 'Listar todos los movimientos',
-    description:
-      'Retorna todos los movimientos ordenados por fecha descendente',
+    description: 'docs.RETORNA_TODOS_LOS_MOVIMIENTOS_ORDENADOS',
   })
   @ApiResponse({
     status: 200,
-    description: 'Lista de movimientos paginada',
+    description: 'docs.LISTA_DE_MOVIMIENTOS_PAGINADA',
   })
   findAll(
     @SortableFields(['tipo', 'cantidad', 'entidad', 'createdAt'])
@@ -67,111 +71,116 @@ export class MovimientoController {
   }
 
   @Get('historial')
-  @RequirePermissions('movimientos:historial')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @ApiOperation({
     summary: 'Obtener historial de movimientos (Trazabilidad)',
-    description:
-      'Busca el historial de movimientos de un producto o usuario. Soporta filtros por tipo, rango de fechas y ordenamiento.',
+    description: 'docs.BUSCA_EL_HISTORIAL_DE_MOVIMIENTOS_DE_UN',
   })
   @ApiQuery({
     name: 'entityId',
     required: false,
     type: 'string',
-    description: 'UUID del ProductoProveedor para filtrar movimientos',
+    description: 'docs.UUID_DEL_PRODUCTOPROVEEDOR_PARA_FILTRAR',
   })
   @ApiQuery({
     name: 'userId',
     required: false,
     type: 'string',
-    description: 'UUID del Usuario para filtrar movimientos',
+    description: 'docs.UUID_DEL_USUARIO_PARA_FILTRAR_MOVIMIENTO',
   })
   @ApiQuery({
     name: 'type',
     required: false,
     type: 'string',
     enum: ['entrada', 'salida', 'ajuste', 'pedido', 'entrada_compra'],
-    description: 'Tipo de movimiento a filtrar',
+    description: 'docs.TIPO_DE_MOVIMIENTO_A_FILTRAR',
   })
   @ApiQuery({
     name: 'startDate',
     required: false,
     type: 'string',
-    description: 'Fecha de inicio (ISO 8601) - ej: 2026-01-01',
+    description: 'docs.FECHA_DE_INICIO_ISO_8601_EJ_2026_01_01',
   })
   @ApiQuery({
     name: 'endDate',
     required: false,
     type: 'string',
-    description: 'Fecha de fin (ISO 8601) - ej: 2026-02-28',
+    description: 'docs.FECHA_DE_FIN_ISO_8601_EJ_2026_02_28',
   })
   @ApiQuery({
     name: 'sortBy',
     required: false,
     enum: ['createdAt', 'cantidad'],
-    description: 'Campo por el que ordenar',
+    description: 'docs.CAMPO_POR_EL_QUE_ORDENAR',
   })
   @ApiQuery({
     name: 'sortOrder',
     required: false,
     enum: ['ASC', 'DESC'],
-    description: 'Orden de clasificación (Ascendente o Descendente)',
+    description: 'docs.ORDEN_DE_CLASIFICACI_N_ASCENDENTE_O_DESC',
   })
   @ApiResponse({
     status: 200,
-    description:
-      'Historial de movimientos encontrado (ordenado cronológicamente inverso)',
+    description: 'docs.HISTORIAL_DE_MOVIMIENTOS_ENCONTRADO_ORDE',
   })
   @ApiResponse({
     status: 400,
-    description: 'Parámetros inválidos o no proporciona entityId ni userId',
+    description: 'docs.PAR_METROS_INV_LIDOS_O_NO_PROPORCIONA_EN',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'docs.ACCESO_DENEGADO_ROL_INSUFICIENTE',
   })
   @ApiResponse({
     status: 404,
-    description:
-      'No se encontraron movimientos que coincidan con los criterios',
+    description: 'docs.NO_SE_ENCONTRARON_MOVIMIENTOS_QUE_COINCI',
   })
   getMovimientoHistory(@Query() dto: MovimientoHistoryDto) {
     return this.movimientoService.getMovimientoHistory(dto);
   }
 
   @Get(':id')
-  @RequirePermissions('movimientos:ver')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
   @ApiOperation({
     summary: 'Obtener un movimiento por ID',
-    description: 'Retorna los detalles completos de un movimiento específico',
+    description: 'docs.RETORNA_LOS_DETALLES_COMPLETOS_DE_UN_MOV',
   })
   @ApiResponse({
     status: 200,
-    description: 'Movimiento encontrado',
+    description: 'docs.MOVIMIENTO_ENCONTRADO',
   })
   @ApiResponse({
     status: 404,
-    description: 'Movimiento no encontrado',
+    description: 'docs.MOVIMIENTO_NO_ENCONTRADO',
   })
-  findOne(@Param('id', ParseUUIDv7Pipe) id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.movimientoService.findOne(id);
   }
 
   @Patch(':id')
-  @RequirePermissions('movimientos:editar')
+  @Roles(rolUsuario.ADMINISTRADOR)
   @ApiOperation({
     summary: 'Actualizar un movimiento',
-    description: 'Solo usuarios con permiso pueden actualizar movimientos',
+    description: 'docs.SOLO_ADMINISTRADORES_PUEDEN_ACTUALIZAR_M',
   })
   @ApiResponse({
     status: 200,
-    description: 'Movimiento actualizado exitosamente',
+    description: 'docs.MOVIMIENTO_ACTUALIZADO_EXITOSAMENTE',
   })
   @ApiResponse({
     status: 400,
-    description: 'Datos inválidos',
+    description: 'docs.DATOS_INV_LIDOS',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'docs.ACCESO_DENEGADO_SOLO_ADMINISTRADORES',
   })
   @ApiResponse({
     status: 404,
-    description: 'Movimiento no encontrado',
+    description: 'docs.MOVIMIENTO_NO_ENCONTRADO',
   })
   update(
-    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateMovimientoDto
   ) {
     return this.movimientoService.update(id, dto);
@@ -179,20 +188,24 @@ export class MovimientoController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequirePermissions('movimientos:eliminar')
+  @Roles(rolUsuario.ADMINISTRADOR)
   @ApiOperation({
     summary: 'Eliminar un movimiento (soft delete)',
-    description: 'Solo usuarios con permiso pueden eliminar movimientos',
+    description: 'docs.SOLO_ADMINISTRADORES_PUEDEN_ELIMINAR_MOV',
   })
   @ApiResponse({
     status: 204,
-    description: 'Movimiento eliminado exitosamente',
+    description: 'docs.MOVIMIENTO_ELIMINADO_EXITOSAMENTE',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'docs.ACCESO_DENEGADO_SOLO_ADMINISTRADORES',
   })
   @ApiResponse({
     status: 404,
-    description: 'Movimiento no encontrado',
+    description: 'docs.MOVIMIENTO_NO_ENCONTRADO',
   })
-  remove(@Param('id', ParseUUIDv7Pipe) id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.movimientoService.remove(id);
   }
 }

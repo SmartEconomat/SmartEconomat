@@ -1,14 +1,27 @@
+import { i18nValidationMessage } from 'nestjs-i18n';
 import { IsUUID, IsDateString, IsNotEmpty } from 'class-validator';
 
 export class AlertaCaducidadDTO {
-  @IsUUID('7', { message: 'El ID debe ser un UUID válido' })
-  @IsNotEmpty({ message: 'El ID es obligatorio' })
+  @IsUUID('7', {
+    message: i18nValidationMessage('validation.EL_ID_DEBE_SER_UN_UUID_V_LIDO'),
+  })
+  @IsNotEmpty({
+    message: i18nValidationMessage('validation.EL_ID_ES_OBLIGATORIO'),
+  })
   id: string;
 
   @IsDateString(
     {},
-    { message: 'La fecha de caducidad debe ser una fecha válida (ISO 8601)' }
+    {
+      message: i18nValidationMessage(
+        'validation.LA_FECHA_DE_CADUCIDAD_DEBE_SER_UNA_FECHA'
+      ),
+    }
   )
-  @IsNotEmpty({ message: 'La fecha de caducidad es obligatoria' })
+  @IsNotEmpty({
+    message: i18nValidationMessage(
+      'validation.LA_FECHA_DE_CADUCIDAD_ES_OBLIGATORIA'
+    ),
+  })
   fechaCaducidad: string;
 }

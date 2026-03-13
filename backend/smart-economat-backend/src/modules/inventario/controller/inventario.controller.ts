@@ -16,11 +16,7 @@ import { UpdateInventarioDto } from '../dto/update-inventario.dto';
 import { Inventario } from '../inventario.entity/inventario.entity';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
-import { GetUser } from '../../auth/decorators/get-user.decorator';
-import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
-import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
-import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('inventario')
@@ -34,6 +30,7 @@ export class InventarioController {
     @Body() createInventarioDto: CreateInventarioItemDto,
     @GetUser('id') userId: string
   ): Promise<Inventario> {
+    const userId = req.user.id as string;
     return this.inventarioService.create(createInventarioDto, userId);
   }
 
@@ -67,16 +64,15 @@ export class InventarioController {
     @Body() updateInventarioDto: UpdateInventarioDto,
     @GetUser('id') userId: string
   ): Promise<Inventario> {
+    const userId = req.user.id as string;
     return this.inventarioService.update(id, updateInventarioDto, userId);
   }
 
   @Delete(':id')
   @RequirePermissions('inventario:eliminar')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(
-    @Param('id') id: string,
-    @GetUser('id') userId: string
-  ): Promise<void> {
+  remove(@Param('id') id: string, @Request() req: any): Promise<void> {
+    const userId = req.user.id as string;
     return this.inventarioService.remove(id, userId);
   }
 }
