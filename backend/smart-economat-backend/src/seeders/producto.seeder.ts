@@ -193,6 +193,13 @@ export const runSeeder = async (dataSource: DataSource) => {
       codigoBarras,
     });
 
+    if (producto.codigoBarras && codigosVistos.has(producto.codigoBarras)) {
+      continue;
+    }
+    if (producto.codigoBarras) {
+      codigosVistos.add(producto.codigoBarras);
+    }
+
     (producto as any)._alergenosTags = offProduct.allergens_tags || [];
     productos.push(producto);
 

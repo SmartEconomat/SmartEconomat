@@ -27,6 +27,7 @@ import { AuthModule } from './modules/auth/module/auth.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { PlantillasRolesModule } from './modules/plantillas-roles/plantillas-roles.module';
 import { IsUniqueConstraint } from './common/decorators/is-unique.decorator';
+import { ExportModule } from './modules/export/export.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { IsUniqueConstraint } from './common/decorators/is-unique.decorator';
     AuthModule,
     RolesModule,
     PlantillasRolesModule,
+    ExportModule,
   ],
   controllers: [AppController],
   providers: [AppService, IsUniqueConstraint],
