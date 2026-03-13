@@ -1,12 +1,17 @@
 #!/bin/sh
+
 echo "🚀 Running pre-commit hooks"
 
-echo "🧹 [1/3] Limpiando comentarios y verificando código (Backend)..."
-# Usamos paréntesis para ejecutar en subshell y no afectar el directorio actual
-(cd backend/smart-economat-backend && npx lint-staged && npx tsc --noEmit)
+echo "📊 [1/4] Actualizando lista de contribuidores..."
+npm --prefix backend/smart-economat-backend run count-commits
 
-echo "📊 [2/3] Actualizando estadísticas de contribuidores..."
-./scripts/contributors/count-commits.sh
+echo "📝 [2/4] Running staged quality checks (eslint + prettier)..."
+node backend/smart-economat-backend/scripts/git-hooks/run-staged-quality.js
 
-echo "🧪 [3/3] Ejecutando tests E2E..."
+echo "🧪 [3/4] Ejecutando tests unitarios..."
+(cd backend/smart-economat-backend && npm test)
+
+echo "🚦 [4/4] Ejecutando tests E2E..."
 (cd backend/smart-economat-backend && npm run test:e2e)
+
+

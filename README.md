@@ -129,11 +129,12 @@ El archivo generado se guardará en `tools/erd/erd.svg`.
 ## Solución de problemas comunes
 
 ### Errores de dependencias o "Module not found" en Docker
-Si tras realizar un `pull`, un `rebase` o instalar nuevas dependencias recibes errores de "Module not found" dentro del contenedor, se debe probablemente a que Docker está utilizando volúmenes de `node_modules` antiguos.
+Si tras realizar un `pull`, instalar nuevas dependencias (por ejemplo, al añadir Sentry) o un `rebase` recibes errores de "Module not found" dentro del contenedor, se debe probablemente a que Docker está utilizando el volumen anónimo de `node_modules` de una compilación anterior.
 
-**Solución:** Al levantar de nuevo el entorno con Docker Compose, utiliza el flag `-V` (o `--renew-anon-volumes`). Esto le indica a Docker que recree los volúmenes anónimos (como el que se usa para `node_modules`) e ignore los de instancias anteriores, instalando así las nuevas dependencias sin borrar tu base de datos (como ocurriría con un `down -v`).
-
+**Solución:** Forzar a Docker a que renueve los volúmenes anónimos en el siguiente arranque para que recoja el nuevo `package.json`.
 ```bash
+# Levantar de nuevo reconstruyendo e indicando que renueve los volúmenes anónimos (-V)
+# Esto es totalmente seguro y NO borrará tu base de datos (volumen nombrado).
 docker compose --env-file .env.dev --file docker-compose.dev.yml up --build -V
 ```
 

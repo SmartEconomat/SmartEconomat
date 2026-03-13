@@ -1,3 +1,4 @@
+import { i18nValidationMessage } from 'nestjs-i18n';
 import {
   IsEnum,
   IsInt,
@@ -7,34 +8,73 @@ import {
   Min,
   MaxLength,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { TipoMovimiento } from '../enums/movimiento.enums';
+import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
 
 export class CreateMovimientoDto {
-  @IsEnum(TipoMovimiento, { message: 'El tipo de movimiento no es válido' })
+  @IsEnum(TipoMovimiento, {
+    message: i18nValidationMessage(
+      'validation.EL_TIPO_DE_MOVIMIENTO_NO_ES_V_LIDO'
+    ),
+  })
   tipo!: TipoMovimiento;
 
-  @IsInt({ message: 'La cantidad debe ser un número entero' })
-  @Min(0, { message: 'La cantidad no puede ser negativa' })
+  @IsInt({
+    message: i18nValidationMessage(
+      'validation.LA_CANTIDAD_DEBE_SER_UN_N_MERO_ENTERO'
+    ),
+  })
+  @Min(0, {
+    message: i18nValidationMessage(
+      'validation.LA_CANTIDAD_NO_PUEDE_SER_NEGATIVA'
+    ),
+  })
   cantidad!: number;
 
-  @IsString({ message: 'El tipo de entidad debe ser una cadena de texto' })
+  @Transform((params) => TrimStringTransformer.transform(params))
+  @IsString({
+    message: i18nValidationMessage(
+      'validation.EL_TIPO_DE_ENTIDAD_DEBE_SER_UNA_CADENA_D'
+    ),
+  })
   entidadTipo!: string;
 
-  @IsString({ message: 'El ID de entidad debe ser una cadena de texto' })
+  @Transform((params) => TrimStringTransformer.transform(params))
+  @IsString({
+    message: i18nValidationMessage(
+      'validation.EL_ID_DE_ENTIDAD_DEBE_SER_UNA_CADENA_DE'
+    ),
+  })
   entidadId!: string;
 
-  @IsString({ message: 'La descripción debe ser una cadena de texto' })
   @IsOptional()
+  @Transform((params) => TrimStringTransformer.transform(params))
+  @IsString({
+    message: i18nValidationMessage(
+      'validation.LA_DESCRIPCI_N_DEBE_SER_UNA_CADENA_DE_TE'
+    ),
+  })
   @MaxLength(1000, {
-    message: 'La descripción no puede exceder los 1000 caracteres',
+    message: i18nValidationMessage(
+      'validation.LA_DESCRIPCI_N_NO_PUEDE_EXCEDER_LOS_1000'
+    ),
   })
   descripcion?: string;
 
-  @IsUUID('7', { message: 'El ID del inventario debe ser un UUID válido' })
+  @IsUUID('7', {
+    message: i18nValidationMessage(
+      'validation.EL_ID_DEL_INVENTARIO_DEBE_SER_UN_UUID_V'
+    ),
+  })
   @IsOptional()
   inventario?: string;
 
-  @IsUUID('7', { message: 'El ID del usuario debe ser un UUID válido' })
+  @IsUUID('7', {
+    message: i18nValidationMessage(
+      'validation.EL_ID_DEL_USUARIO_DEBE_SER_UN_UUID_V_LID'
+    ),
+  })
   @IsOptional()
   usuario?: string;
 }

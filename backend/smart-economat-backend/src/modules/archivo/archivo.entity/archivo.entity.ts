@@ -24,6 +24,25 @@ export class Archivo extends BaseEntity {
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
 
+  @Column({
+    type: 'varchar',
+    length: 500,
+    nullable: true,
+    name: 'url_optimized',
+  })
+  urlOptimized?: string;
+
+  @Column({ type: 'int', nullable: true, name: 'tamano_optimized' })
+  tamanoOptimized?: number;
+
+  @Column({
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+    name: 'mime_type_optimized',
+  })
+  mimeTypeOptimized?: string;
+
   @ManyToOne(() => Usuario, (usuario) => usuario.archivos, {
     nullable: true,
   })

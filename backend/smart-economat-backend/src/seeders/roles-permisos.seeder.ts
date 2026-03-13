@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
-import { Permiso } from '../modules/permisos/entities/permiso.entity';
-import { PlantillaRol } from '../modules/plantillas-roles/entities/plantilla-rol.entity';
+import { Permiso } from '../modules/permisos/permiso.entity/permiso.entity';
+import { PlantillaRol } from '../modules/plantillas-roles/plantilla-rol.entity/plantilla-rol.entity';
 import { rolUsuario } from '../modules/usuario/enums/usuario.enums';
 
 /**
@@ -205,6 +205,27 @@ const PERMISOS_BASE = [
     modulo: 'inventario',
     accion: 'gestionar_ubicaciones',
     descripcion: 'Gestionar ubicaciones de almacén',
+  },
+  {
+    codigo: 'inventario:crear',
+    nombre: 'Crear item inventario',
+    modulo: 'inventario',
+    accion: 'crear',
+    descripcion: 'Añadir items al inventario',
+  },
+  {
+    codigo: 'inventario:editar',
+    nombre: 'Editar item inventario',
+    modulo: 'inventario',
+    accion: 'editar',
+    descripcion: 'Modificar items del inventario',
+  },
+  {
+    codigo: 'inventario:eliminar',
+    nombre: 'Eliminar item inventario',
+    modulo: 'inventario',
+    accion: 'eliminar',
+    descripcion: 'Eliminar items del inventario',
   },
 
   {
@@ -670,6 +691,13 @@ const PERMISOS_BASE = [
     accion: 'restaurar',
     descripcion: 'Restaurar ubicaciones eliminadas',
   },
+  {
+    codigo: 'alumno:cambiar_profesor',
+    nombre: 'Cambiar profesor',
+    modulo: 'alumno',
+    accion: 'cambiar_profesor',
+    descripcion: 'Cambiar el profesor asignado al alumno',
+  },
 ];
 
 /**
@@ -786,15 +814,17 @@ export async function seedRolesPermisos(dataSource: DataSource): Promise<void> {
   if (!usuarioBasico) {
     const permisosBasico = todosPermisos.filter(
       (p) =>
-        ([
+        [
           'productos',
           'inventario',
           'dashboard',
           'albaranes',
           'ubicaciones',
+          'alumno',
         ].includes(p.modulo) &&
-          ['listar', 'ver', 'ver_estadisticas'].includes(p.accion)) ||
-        p.modulo === 'alumno'
+        ['listar', 'ver', 'ver_estadisticas', 'cambiar_profesor'].includes(
+          p.accion
+        )
     );
     usuarioBasico = plantillaRepo.create({
       nombre: rolUsuario.ALUMNO,

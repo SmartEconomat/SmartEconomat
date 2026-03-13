@@ -10,7 +10,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { AdminService } from '../service/admin.service';
 import { CreateProfesorDto } from '../../profesor/dto/create-profesor.dto';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, PermisosGuard)

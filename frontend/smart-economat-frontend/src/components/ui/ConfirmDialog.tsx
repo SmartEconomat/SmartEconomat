@@ -51,9 +51,11 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
             {/* Acciones */}
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                <Button onClick={onClose} color="inherit" variant="text">
-                    {cancelText}
-                </Button>
+                {cancelText && (
+                    <Button onClick={onClose} color="inherit" variant="text">
+                        {cancelText}
+                    </Button>
+                )}
                 <Button
                     onClick={onConfirm}
                     color={confirmColor}
