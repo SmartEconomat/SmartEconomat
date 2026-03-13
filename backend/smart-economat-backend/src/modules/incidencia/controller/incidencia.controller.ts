@@ -21,6 +21,7 @@ import { Incidencia } from '../incidencia.entity/incidencia.entity';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 

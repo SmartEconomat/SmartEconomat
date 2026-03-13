@@ -8,3 +8,4 @@ export * from './public.decorator';
 export * from './controller-permissions.decorator';
 export * from './resource.decorator';
 export * from './normalize.decorator';
+export * from './sortable-fields.decorator';

@@ -3,6 +3,7 @@ import { DataSource, Repository } from 'typeorm';
 import { Pedido } from '../pedido.entity/pedido.entity';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { buildFindManyOptions } from '../../../common/utils/typeorm-query.helper';
 
 @Injectable()
 export class PedidoRepository extends Repository<Pedido> {
@@ -34,9 +35,9 @@ export class PedidoRepository extends Repository<Pedido> {
     loadRelations = false
   ): Promise<PaginatedResponseDto<Pedido>> {
     const page = query.page ?? 1;
-    const limit = Math.min(query.limit ?? 50, 50);
-    const sortBy = query.sortBy ?? 'createdAt';
-    const order = query.order ?? 'DESC';
+    const paginationOptions = buildFindManyOptions<Pedido>(query, 'createdAt', {
+      fechaCreacion: 'createdAt',
+    });
 
     const [data, total] = await this.findAndCount({
       relations: loadRelations
@@ -50,10 +51,10 @@ export class PedidoRepository extends Repository<Pedido> {
             'recepcionesPedido',
           ]
         : [],
-      order: { [sortBy]: order },
-      skip: (page - 1) * limit,
-      take: limit,
+      ...paginationOptions,
     });
+
+    const limit = paginationOptions.take ?? query.limit ?? 20;
 
     return {
       data,

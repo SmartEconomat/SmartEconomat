@@ -74,6 +74,12 @@ describe('PedidoController (e2e)', () => {
       return res.body.data;
     }
 
+    async function createPedidoWithDelay(delayMs = 25) {
+      const pedido = await createPedido();
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      return pedido;
+    }
+
     it('E2E-PED-01-CRE: Crear pedido exitoso', async () => {
       const response = await request(app.getHttpServer() as string)
         .post('/api/v1/pedidos')
@@ -103,6 +109,45 @@ describe('PedidoController (e2e)', () => {
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body.data.data)).toBe(true);
       expect(response.body.data.data.length).toBeGreaterThan(0);
+    });
+
+    it('E2E-PED-10-GET-SORT: Ordena por fechaCreacion DESC y mantiene PaginatedResponseDto', async () => {
+      const primerPedido = await createPedidoWithDelay();
+      const segundoPedido = await createPedidoWithDelay();
+
+      const response = await request(app.getHttpServer() as string)
+        .get('/api/v1/pedidos')
+        .query({ sortBy: 'fechaCreacion', order: 'DESC', page: 1, limit: 10 })
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(response.status).toBe(200);
+      expect(Array.isArray(response.body.data.data)).toBe(true);
+      expect(response.body.data.page).toBe(1);
+      expect(response.body.data.limit).toBe(10);
+      expect(typeof response.body.data.total).toBe('number');
+      expect(typeof response.body.data.totalPages).toBe('number');
+
+      const ids = response.body.data.data.map(
+        (pedido: { id: string }) => pedido.id
+      );
+      const primerIndice = ids.indexOf(primerPedido.id);
+      const segundoIndice = ids.indexOf(segundoPedido.id);
+
+      expect(primerIndice).toBeGreaterThanOrEqual(0);
+      expect(segundoIndice).toBeGreaterThanOrEqual(0);
+      expect(segundoIndice).toBeLessThan(primerIndice);
+    });
+
+    it('E2E-PED-11-GET-SORT-INVALID: Rechaza campos de ordenación no permitidos', async () => {
+      const response = await request(app.getHttpServer() as string)
+        .get('/api/v1/pedidos')
+        .query({ sortBy: 'password', order: 'DESC', page: 1, limit: 10 })
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Campo de ordenación inválido');
+      expect(response.body.data).toBeNull();
     });
 
     it('E2E-PED-13-UPD-FENT: Actualizar fecha de entrega', async () => {
