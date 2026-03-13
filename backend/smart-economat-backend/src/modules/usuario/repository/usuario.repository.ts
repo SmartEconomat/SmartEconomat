@@ -4,6 +4,7 @@ import { Usuario } from '../usuario.entity/usuario.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { buildFindManyOptions } from '../../../common/utils/typeorm-query.helper';
 
 @Injectable()
 export class UsuarioRepository {
@@ -18,14 +19,13 @@ export class UsuarioRepository {
 
   findAll(query: PaginationQueryDto) {
     const page = query.page ?? 1;
+    const paginationOptions = buildFindManyOptions<Usuario>(query, 'username');
+    const limit = paginationOptions.take ?? query.limit ?? 20;
 
-    const limit = Math.min(query.limit ?? 20, 100);
     return this.repo
       .findAndCount({
         relations: ['movimientos', 'pedidos', 'recepciones'],
-        order: { username: 'ASC' },
-        skip: (page - 1) * limit,
-        take: limit,
+        ...paginationOptions,
       })
       .then(([data, total]) => {
         const processedData = data.map((usuario) => ({

@@ -10,6 +10,8 @@ import {
   HttpStatus,
   UseGuards,
 } from '@nestjs/common';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { CreateAlbaranDto } from '../dto/create-albaran.dto';
 import { UpdateAlbaranDto } from '../dto/update-albaran.dto';
@@ -17,6 +19,7 @@ import { Albaran } from '../albaran.entity/albaran.entity';
 import { AlbaranService } from '../service/albaran.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
@@ -33,8 +36,17 @@ export class AlbaranController {
 
   @Get()
   @RequirePermissions('albaranes:listar')
-  findAll(): Promise<Albaran[]> {
-    return this.albaranService.findAll();
+  findAll(
+    @SortableFields([
+      'nAlbaran',
+      'concordancia',
+      'fecha',
+      'createdAt',
+      'updatedAt',
+    ])
+    query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<Albaran>> {
+    return this.albaranService.findAll(query);
   }
 
   @Get(':id')

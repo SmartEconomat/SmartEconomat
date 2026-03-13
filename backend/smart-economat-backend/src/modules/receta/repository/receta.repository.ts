@@ -114,7 +114,9 @@ export class RecetaRepository {
     query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Receta>> {
     const page = query.page ?? 1;
-    const limit = Math.min(query.limit ?? 20, 100);
+    const limit = Math.min(query.limit ?? 20, 50);
+    const sortBy = query.sortBy ?? 'nombre';
+    const order = query.order ?? 'ASC';
 
     const whereCondition = query.searchTerm
       ? [
@@ -126,7 +128,7 @@ export class RecetaRepository {
     const [data, total] = await this.recetaRepo.findAndCount({
       where: whereCondition,
       relations: [...INGREDIENTES_RELATIONS],
-      order: { nombre: 'ASC' },
+      order: { [sortBy]: order },
       skip: (page - 1) * limit,
       take: limit,
     });

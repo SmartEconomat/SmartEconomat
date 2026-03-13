@@ -12,6 +12,8 @@ import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity
 import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
 import { TipoMovimiento } from '../../movimiento/enums/movimiento.enums';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @Injectable()
 export class ProduccionService {
@@ -206,11 +208,30 @@ export class ProduccionService {
     });
   }
 
-  async findAll(): Promise<ProduccionLote[]> {
-    return this.dataSource.getRepository(ProduccionLote).find({
-      relations: ['receta', 'usuario'],
-      order: { fechaProduccion: 'DESC' },
-    });
+  async findAll(
+    query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<ProduccionLote>> {
+    const page = query.page ?? 1;
+    const limit = Math.min(query.limit ?? 20, 50);
+    const sortBy = query.sortBy ?? 'fechaProduccion';
+    const order = query.order ?? 'DESC';
+
+    const [data, total] = await this.dataSource
+      .getRepository(ProduccionLote)
+      .findAndCount({
+        relations: ['receta', 'usuario'],
+        order: { [sortBy]: order },
+        skip: (page - 1) * limit,
+        take: limit,
+      });
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
+    };
   }
 
   async findOne(id: string): Promise<ProduccionLote> {

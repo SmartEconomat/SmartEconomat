@@ -41,8 +41,10 @@ export class IncidenciaService {
     return this.incidenciaRepository.save(incidencia);
   }
 
-  async findAll(): Promise<Incidencia[]> {
-    return this.incidenciaRepository.findAllWithRelations();
+  async findAll(
+    query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<Incidencia>> {
+    return this.incidenciaRepository.findAllPaginated(query);
   }
 
   async findOne(id: string): Promise<Incidencia> {
