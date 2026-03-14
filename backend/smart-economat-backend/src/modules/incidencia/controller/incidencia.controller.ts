@@ -24,6 +24,7 @@ import { GetUser } from '../../auth/decorators/get-user.decorator';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('incidencias')

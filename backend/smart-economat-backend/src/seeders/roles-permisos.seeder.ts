@@ -387,6 +387,35 @@ const PERMISOS_BASE = [
   },
 
   {
+    codigo: 'merma:listar',
+    nombre: 'Listar mermas',
+    modulo: 'merma',
+    accion: 'listar',
+    descripcion: 'Ver listado de mermas registradas',
+  },
+  {
+    codigo: 'merma:ver',
+    nombre: 'Ver merma',
+    modulo: 'merma',
+    accion: 'ver',
+    descripcion: 'Ver detalles de una merma',
+  },
+  {
+    codigo: 'merma:crear',
+    nombre: 'Crear merma',
+    modulo: 'merma',
+    accion: 'crear',
+    descripcion: 'Registrar una merma y descontar stock',
+  },
+  {
+    codigo: 'merma:stats',
+    nombre: 'Ver estadísticas de merma',
+    modulo: 'merma',
+    accion: 'stats',
+    descripcion: 'Consultar estadísticas agregadas de mermas',
+  },
+
+  {
     codigo: 'recetas:listar',
     nombre: 'Listar recetas',
     modulo: 'recetas',
@@ -786,6 +815,7 @@ export async function seedRolesPermisos(dataSource: DataSource): Promise<void> {
           'recepciones',
           'inventario',
           'movimientos',
+          'merma',
           'incidencias',
           'recetas',
           'dashboard',

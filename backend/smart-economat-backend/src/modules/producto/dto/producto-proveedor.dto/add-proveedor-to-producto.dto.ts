@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsNumber,
   IsNotEmpty,
+  IsDefined,
   IsUUID,
   Min,
   MaxLength,
@@ -43,6 +44,9 @@ export class AddProveedorToProductoDto {
   })
   @IsOptional()
   @Transform((params) => TrimStringTransformer.transform(params))
+  @IsNotEmpty({
+    message: 'La marca específica no puede estar vacía.',
+  })
   @IsString({
     message: i18nValidationMessage(
       'validation.LA_MARCA_DEBE_SER_UNA_CADENA_DE_TEXTO'
@@ -61,6 +65,9 @@ export class AddProveedorToProductoDto {
   })
   @IsOptional()
   @Transform((params) => UppercaseStringTransformer.transform(params))
+  @IsNotEmpty({
+    message: 'El código de barras no puede estar vacío.',
+  })
   @IsString({
     message: i18nValidationMessage(
       'validation.EL_C_DIGO_DE_BARRAS_DEBE_SER_UNA_CADENA'
@@ -73,12 +80,14 @@ export class AddProveedorToProductoDto {
   })
   codigoBarras?: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: 'Precio unitario pactado con el proveedor.',
     example: 1.35,
     minimum: 0,
   })
-  @IsOptional()
+  @IsDefined({
+    message: 'El precio unitario es obligatorio.',
+  })
   @IsNumber(
     {},
     {

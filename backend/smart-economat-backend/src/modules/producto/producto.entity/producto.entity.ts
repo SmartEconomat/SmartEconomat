@@ -5,6 +5,7 @@ import { ColumnNumericTransformer } from '../../../common/transformers/column-nu
 import { TipoProducto, UnidadMedida } from '../enums/producto.enums';
 import { ProductoAlergeno } from '../producto-alergeno.entity/producto-alergeno.entity';
 import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
+import { Merma } from '../../merma/merma.entity/merma.entity';
 
 /**
  * Entidad Producto
@@ -114,4 +115,10 @@ export class Producto extends BaseEntity {
    */
   @OneToMany(() => ProductoProveedor, (pp) => pp.producto)
   proveedores!: Relation<ProductoProveedor[]>;
+
+  /**
+   * Historial de mermas registradas para el producto.
+   */
+  @OneToMany(() => Merma, (merma) => merma.producto)
+  mermas?: Relation<Merma[]>;
 }
