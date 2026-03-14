@@ -8,14 +8,22 @@ import { PedidoProducto } from './pedido-producto.entity/pedido-producto.entity'
 import { ProductoProveedor } from '../producto/producto-proveedor.entity/producto-proveedor.entity';
 import { MovimientoModule } from '../movimiento/movimiento.module';
 import { MovimientoHelper } from '../../common/helpers/movimiento.helper';
+import { RecetaModule } from '../receta/receta.module';
+import { RecetaToPedidoService } from './service/receta-to-pedido.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Pedido, PedidoProducto, ProductoProveedor]),
     MovimientoModule,
+    RecetaModule,
   ],
   controllers: [PedidoController],
-  providers: [PedidoService, PedidoRepository, MovimientoHelper],
+  providers: [
+    PedidoService,
+    PedidoRepository,
+    MovimientoHelper,
+    RecetaToPedidoService,
+  ],
   exports: [PedidoService],
 })
 export class PedidoModule {}

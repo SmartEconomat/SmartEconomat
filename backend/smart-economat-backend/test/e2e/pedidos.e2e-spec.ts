@@ -2,6 +2,7 @@ import { getTestApp } from '../setup/test-app';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { EstadoPedido } from '../../src/modules/pedido/enums/estado-pedido.enum';
+import { generateUniqueName } from '../utils/test-helpers';
 
 describe('PedidoController (e2e)', () => {
   jest.setTimeout(30000);
@@ -181,6 +182,148 @@ describe('PedidoController (e2e)', () => {
         .delete(`/api/v1/pedidos/${pedido.id}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(204);
+    });
+
+    async function createProductoConProveedor(
+      proveedorIdParam: string,
+      nombre: string,
+      precioUnitario: number
+    ) {
+      const prodRes = await request(app.getHttpServer() as string)
+        .post('/api/v1/productos')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          nombre,
+          tipo: 'cereal',
+          unidad: 'KG',
+          contenido: 1,
+          proveedores: [{ proveedorId: proveedorIdParam, precioUnitario }],
+        });
+
+      expect(prodRes.status).toBe(201);
+      return prodRes.body.data.id as string;
+    }
+
+    async function createReceta(
+      nombre: string,
+      ingredientes: Array<{
+        productoId: string;
+        cantidad: number;
+        unidad: string;
+        mermaAplicada?: number;
+      }>
+    ) {
+      const recetaRes = await request(app.getHttpServer() as string)
+        .post('/api/v1/recetas')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          nombre,
+          instrucciones: 'Preparación de prueba',
+          tiempo: '10 min',
+          dificultad: 'Fácil',
+          tiempoPreparacion: '10 minutos',
+          ingredientes,
+        });
+
+      expect(recetaRes.status).toBe(201);
+      return recetaRes.body.data.id as string;
+    }
+
+    it('E2E-PED-18-FROM-RECIPES-OK: Consolida varias recetas en un único pedido', async () => {
+      const productoId = await createProductoConProveedor(
+        proveedorId,
+        generateUniqueName('Harina receta pedido'),
+        4
+      );
+
+      const recetaAId = await createReceta(generateUniqueName('Receta A'), [
+        { productoId, cantidad: 2, unidad: 'kg' },
+      ]);
+      const recetaBId = await createReceta(generateUniqueName('Receta B'), [
+        { productoId, cantidad: 1, unidad: 'kg' },
+      ]);
+
+      const response = await request(app.getHttpServer() as string)
+        .post('/api/v1/pedidos/from-recipes')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          recetaIds: [recetaAId, recetaBId],
+          observaciones: 'Pedido consolidado desde E2E',
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.data.estado).toBe(EstadoPedido.PENDIENTE);
+      expect(response.body.data.proveedor?.id).toBe(proveedorId);
+      expect(response.body.data.pedidoProductos).toHaveLength(1);
+      expect(Number(response.body.data.pedidoProductos[0].cantidad)).toBe(3);
+      expect(Number(response.body.data.costeTotal)).toBe(12);
+    });
+
+    it('E2E-PED-19-FROM-RECIPES-404: Devuelve 404 si alguna receta no existe', async () => {
+      const productoId = await createProductoConProveedor(
+        proveedorId,
+        generateUniqueName('Producto receta 404'),
+        3
+      );
+      const recetaId = await createReceta(generateUniqueName('Receta válida'), [
+        { productoId, cantidad: 1, unidad: 'kg' },
+      ]);
+
+      const response = await request(app.getHttpServer() as string)
+        .post('/api/v1/pedidos/from-recipes')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          recetaIds: [recetaId, '0191c30c-1e55-7000-8000-000000000000'],
+        });
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+    });
+
+    it('E2E-PED-20-FROM-RECIPES-400: Falla si no existe proveedor común', async () => {
+      const proveedorAltRes = await request(app.getHttpServer() as string)
+        .post('/api/v1/proveedor')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          nombre: generateUniqueName('Proveedor alternativo pedido'),
+          nif: `B${Math.floor(Math.random() * 100000000)}`,
+          email: `prov_alt_${Date.now()}@example.com`,
+        });
+      expect(proveedorAltRes.status).toBe(201);
+      const proveedorAltId = proveedorAltRes.body.data.id as string;
+
+      const productoAId = await createProductoConProveedor(
+        proveedorId,
+        generateUniqueName('Producto receta A'),
+        2
+      );
+      const productoBId = await createProductoConProveedor(
+        proveedorAltId,
+        generateUniqueName('Producto receta B'),
+        5
+      );
+
+      const recetaAId = await createReceta(
+        generateUniqueName('Receta común A'),
+        [{ productoId: productoAId, cantidad: 1, unidad: 'kg' }]
+      );
+      const recetaBId = await createReceta(
+        generateUniqueName('Receta común B'),
+        [{ productoId: productoBId, cantidad: 1, unidad: 'kg' }]
+      );
+
+      const response = await request(app.getHttpServer() as string)
+        .post('/api/v1/pedidos/from-recipes')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          recetaIds: [recetaAId, recetaBId],
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain(
+        'No existe un proveedor común activo'
+      );
     });
   });
 });
