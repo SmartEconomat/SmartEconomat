@@ -1,1 +1,0 @@
-{"version":3,"sources":["../../src/config/typeorm.config.ts"],"sourcesContent":["import { DataSource } from 'typeorm';\nimport { dbConfig } from './database.config';\n\nexport const AppDataSource = new DataSource(dbConfig);\n"],"names":["AppDataSource","DataSource","dbConfig"],"mappings":";;;;+BAGaA;;;eAAAA;;;yBAHc;gCACF;AAElB,MAAMA,gBAAgB,IAAIC,mBAAU,CAACC,wBAAQ"}

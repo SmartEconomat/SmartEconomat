@@ -27,7 +27,7 @@
     "generate:erd": "ts-node tools/scripts/generate-erd.ts",
     "log-user-info": "ts-node scripts/log-user-info.ts",
     "count-commits": "node ../../scripts/contributors/count-commits.js",
-    "prepare": "cd ../.. && husky backend/smart-economat-backend/.husky"
+    "prepare": "cd ../.. && husky .husky"
   },
   "dependencies": {
     "@faker-js/faker": "^10.1.0",
@@ -103,6 +103,10 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.56.1"
+  },
+  "optionalDependencies": {
+    "@img/sharp-linuxmusl-x64": "^0.34.5",
+    "@img/sharp-linuxmusl-arm64": "^0.34.5"
   },
   "overrides": {
     "file-type": "^21.3.2",

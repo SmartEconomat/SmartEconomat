@@ -279,6 +279,7 @@ Gestión de órdenes y seguimiento de suministros. _Requiere `JwtAuthGuard` y `R
 | Método   | Endpoint                     | Descripción                                     | Roles Permitidos            |
 | :------- | :--------------------------- | :---------------------------------------------- | :-------------------------- |
 | `POST`   | `/pedidos`                   | Crear un nuevo pedido                           | `ADMINISTRADOR`, `PROFESOR` |
+| `POST`   | `/pedidos/from-recipes`      | Generar un pedido único desde múltiples recetas | `ADMINISTRADOR`, `PROFESOR` |
 | `GET`    | `/pedidos`                   | Listar todos los pedidos (paginado)             | `ADMINISTRADOR`, `PROFESOR` |
 | `GET`    | `/pedidos/:id`               | Detalle completo (incluye líneas y recepciones) | `ADMINISTRADOR`, `PROFESOR` |
 | `PATCH`  | `/pedidos/:id`               | Actualizar datos o productos del pedido         | `ADMINISTRADOR`, `PROFESOR` |
@@ -299,6 +300,131 @@ El flujo de una orden se rige por los siguientes estados:
 
 > [!TIP]
 > Al crear un pedido (`POST /pedidos`), el backend espera la colección `lineas`. Cada línea incluye `productoProveedorId` y `cantidad`. El precio no forma parte del DTO de creación actual.
+
+### 🧾 Generación desde recetas (`POST /pedidos/from-recipes`)
+
+Este endpoint permite seleccionar $N$ recetas y generar un único pedido consolidado.
+
+#### Payload
+
+| Campo | Tipo | Obligatorio | Descripción |
+| :---- | :--- | :---------: | :---------- |
+| `recetaIds` | `UUID v7[]` | Sí | Lista de recetas a consolidar |
+| `observaciones` | `string` | No | Texto libre para trazabilidad del origen |
+
+**Ejemplo de request:**
+
+```json
+{
+  "recetaIds": [
+    "01959e4b-0d6d-7f25-a2f0-1e4b6c8e0101",
+    "01959e4b-0d6d-7f25-a2f0-1e4b6c8e0102"
+  ],
+  "observaciones": "Pedido generado para producción semanal"
+}
+```
+
+#### Reglas funcionales
+
+1. Se cargan todas las recetas solicitadas.
+2. Se recorren sus ingredientes y se consolidan por `productoId` usando un `Map`.
+3. Si el mismo producto aparece varias veces, sus cantidades se suman.
+4. Si existe `mermaAplicada`, se incorpora al cálculo de la cantidad efectiva.
+5. Todos los productos deben estar disponibles y tener proveedor asignado con precio vigente.
+6. Debe existir un proveedor común para todos los ingredientes consolidados.
+7. Si hay varios proveedores comunes, se selecciona el de menor coste total estimado.
+8. El pedido creado queda vinculado al usuario autenticado vía JWT.
+
+#### Respuestas esperadas
+
+| Código | Caso |
+| :----- | :--- |
+| `201` | Pedido creado correctamente |
+| `400` | Productos inactivos, unidades incompatibles o sin proveedor común |
+| `404` | Alguna receta no existe |
+
+#### Ejemplo de respuesta `201 Created`
+
+```json
+{
+  "success": true,
+  "message": "Operación exitosa",
+  "data": {
+    "id": "01959e4b-5f9a-7db1-94d6-6f3d0d3f0001",
+    "proveedorId": "01959e4b-5f9a-7db1-94d6-6f3d0d3f0100",
+    "usuarioId": "01959e4b-5f9a-7db1-94d6-6f3d0d3f0200",
+    "estado": "PENDIENTE",
+    "costeTotal": 12,
+    "fechaPedido": "2026-03-14T18:00:00.000Z",
+    "fechaEntrega": "2026-03-14T18:00:00.000Z",
+    "pedidoProductos": [
+      {
+        "id": "01959e4b-5f9a-7db1-94d6-6f3d0d3f0300",
+        "cantidad": 3,
+        "precioUnitario": 4,
+        "productoProveedor": {
+          "id": "01959e4b-5f9a-7db1-94d6-6f3d0d3f0400",
+          "productoId": "01959e4b-5f9a-7db1-94d6-6f3d0d3f0500",
+          "proveedorId": "01959e4b-5f9a-7db1-94d6-6f3d0d3f0100"
+        }
+      }
+    ]
+  },
+  "meta": {
+    "app": "SmartEconomat",
+    "version": "1.0.0",
+    "timestamp": "2026-03-14T18:00:00.000Z",
+    "environment": "development",
+    "requestId": "01959e4b-5f9a-7db1-94d6-6f3d0d3f9999"
+  }
+}
+```
+
+#### Ejemplo de respuesta `400 Bad Request`
+
+```json
+{
+  "success": false,
+  "message": "No existe un proveedor común activo para todos los ingredientes de las recetas seleccionadas.",
+  "data": null,
+  "meta": {
+    "app": "SmartEconomat",
+    "version": "1.0.0",
+    "timestamp": "2026-03-14T18:01:00.000Z",
+    "environment": "development",
+    "requestId": "01959e4b-5f9a-7db1-94d6-6f3d0d3f9998"
+  }
+}
+```
+
+#### Ejemplo de respuesta `404 Not Found`
+
+```json
+{
+  "success": false,
+  "message": "No se encontraron las recetas: 0191c30c-1e55-7000-8000-000000000000",
+  "data": null,
+  "meta": {
+    "app": "SmartEconomat",
+    "version": "1.0.0",
+    "timestamp": "2026-03-14T18:02:00.000Z",
+    "environment": "development",
+    "requestId": "01959e4b-5f9a-7db1-94d6-6f3d0d3f9997"
+  }
+}
+```
+
+#### Ejemplo funcional de consolidación
+
+- Receta A: `Harina = 2kg`
+- Receta B: `Harina = 1kg`
+- Pedido resultante: una línea con `Harina = 3kg`
+
+> [!NOTE]
+> El origen del pedido se registra en logs del backend con `pedido.id`, `recetaIds`, `userId`, `proveedorId` y `observaciones` si existen.
+
+> [!TIP]
+> Referencia ampliada en [Pedidos desde recetas](../modules/pedido/pedidos-desde-recetas.md).
 
 ---
 

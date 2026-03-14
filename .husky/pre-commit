@@ -1,0 +1,37 @@
+#!/bin/sh
+
+set -e
+
+echo "🚀 Running repository pre-commit hooks"
+
+has_staged_changes_in() {
+  git diff --cached --name-only --diff-filter=ACMR -- "$1" | grep -q .
+}
+
+if has_staged_changes_in "backend/smart-economat-backend"; then
+  echo "📦 Backend pre-commit"
+  echo "📊 [1/4] Actualizando lista de contribuidores..."
+  npm --prefix backend/smart-economat-backend run count-commits
+
+  echo "📝 [2/4] Running staged quality checks (eslint + prettier)..."
+  node backend/smart-economat-backend/scripts/git-hooks/run-staged-quality.js
+
+  echo "🧪 [3/4] Ejecutando tests unitarios..."
+  npm --prefix backend/smart-economat-backend test
+
+  echo "🚦 [4/4] Ejecutando tests E2E..."
+  npm --prefix backend/smart-economat-backend run test:e2e
+else
+  echo "📦 Backend pre-commit skipped (no staged backend changes)"
+fi
+
+if has_staged_changes_in "frontend/smart-economat-frontend"; then
+  echo "🖥️ Frontend pre-commit"
+  echo "📝 [1/2] Running staged quality checks (eslint + prettier)..."
+  node frontend/smart-economat-frontend/scripts/git-hooks/run-staged-quality.mjs
+
+  echo "🧪 [2/2] Ejecutando tests del frontend..."
+  node frontend/smart-economat-frontend/scripts/git-hooks/run-all-tests.mjs
+else
+  echo "🖥️ Frontend pre-commit skipped (no staged frontend changes)"
+fi

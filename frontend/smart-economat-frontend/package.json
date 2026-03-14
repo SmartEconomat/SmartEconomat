@@ -32,7 +32,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "prepare": "cd ../.. && husky frontend/smart-economat-frontend/.husky"
+    "prepare": "cd ../.. && husky .husky"
   },
   "browserslist": {
     "production": [
