@@ -23,11 +23,16 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { GeneratePedidoFromRecetasDto } from '../dto/generate-pedido-from-recetas.dto';
+import { RecetaToPedidoService } from '../service/receta-to-pedido.service';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('pedidos')
 export class PedidoController {
-  constructor(private readonly pedidoService: PedidoService) {}
+  constructor(
+    private readonly pedidoService: PedidoService,
+    private readonly recetaToPedidoService: RecetaToPedidoService
+  ) {}
 
   @Post()
   @RequirePermissions('pedidos:crear')
@@ -52,6 +57,17 @@ export class PedidoController {
     query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Pedido>> {
     return this.pedidoService.findAll(query);
+  }
+
+  @Post('from-recipes')
+  @RequirePermissions('pedidos:crear')
+  @HttpCode(HttpStatus.CREATED)
+  createFromRecipes(
+    @Body() dto: GeneratePedidoFromRecetasDto,
+    @Request() req: any
+  ): Promise<Pedido> {
+    const userId = req.user.id as string;
+    return this.recetaToPedidoService.generateFromRecetas(dto, userId);
   }
 
   @Get(':id')

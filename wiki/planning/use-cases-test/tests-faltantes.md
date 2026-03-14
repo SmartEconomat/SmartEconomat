@@ -266,15 +266,23 @@
 
 | # | Caso de uso | Servicio/Método | Motivo | Existe similar |
 |---|-------------|-----------------|--------|----------------|
-| U-PED-01 | Crear pedido calcula costeTotal correctamente | `PedidoService.create()` | Verificar sum(cantidad * precioUnitario) | No |
-| U-PED-02 | Crear pedido con ProductoProveedor de otro proveedor | `PedidoService.create()` | Debe rechazar líneas que no pertenecen al proveedor del pedido | No |
-| U-PED-03 | Crear pedido con ProductoProveedor sin precioUnitario | `PedidoService.create()` | Debe lanzar ConflictException | No |
-| U-PED-04 | Cancelar pedido en estado EN_PROCESO | `PedidoService.cancelarPedido()` | Debe lanzar BadRequestException (solo PENDIENTE/CANCELADO) | No |
-| U-PED-05 | Cancelar pedido en estado RECIBIDO | `PedidoService.cancelarPedido()` | Debe lanzar BadRequestException | No |
-| U-PED-06 | Eliminar pedido en estado RECIBIDO | `PedidoService.remove()` | Debe lanzar BadRequestException (solo PENDIENTE/CANCELADO) | No |
-| U-PED-07 | Update con líneas vacías | `PedidoService.update()` | Debe lanzar BadRequestException (mínimo 1 línea) | No |
-| U-PED-08 | Update recalcula costeTotal | `PedidoService.update()` | Verificar recálculo tras modificar líneas | No |
+| U-PED-01 | Crear pedido calcula costeTotal correctamente | `PedidoService.create()` | Verificar sum(cantidad * precioUnitario) | Sí |
+| U-PED-02 | Crear pedido con ProductoProveedor de otro proveedor | `PedidoService.create()` | Debe rechazar líneas que no pertenecen al proveedor del pedido | Sí |
+| U-PED-03 | Crear pedido con ProductoProveedor sin precioUnitario | `PedidoService.create()` | Debe lanzar ConflictException | Sí |
+| U-PED-04 | Cancelar pedido en estado EN_PROCESO | `PedidoService.cancelarPedido()` | Debe lanzar BadRequestException (solo PENDIENTE/CANCELADO) | Sí |
+| U-PED-05 | Cancelar pedido en estado RECIBIDO | `PedidoService.cancelarPedido()` | Debe lanzar BadRequestException | Sí |
+| U-PED-06 | Eliminar pedido en estado RECIBIDO | `PedidoService.remove()` | Debe lanzar BadRequestException (solo PENDIENTE/CANCELADO) | Sí |
+| U-PED-07 | Update con líneas vacías | `PedidoService.update()` | Debe lanzar BadRequestException (mínimo 1 línea) | Sí |
+| U-PED-08 | Update recalcula costeTotal | `PedidoService.update()` | Verificar recálculo tras modificar líneas | Sí |
 | U-PED-09 | Transacción atómica en create | `PedidoService.create()` | Verificar rollback si falla una línea | No |
+| U-PED-10 | Generar pedido desde múltiples recetas consolida cantidades | `RecetaToPedidoService.generateFromRecetas()` | Verificar aplanado de ingredientes repetidos | Sí |
+| U-PED-11 | Generar pedido desde recetas con receta inexistente | `RecetaToPedidoService.generateFromRecetas()` | Debe lanzar NotFoundException | Sí |
+| U-PED-12 | Generar pedido desde recetas sin proveedor asignado | `RecetaToPedidoService.generateFromRecetas()` | Debe rechazar productos sin proveedor vigente | Sí |
+| U-PED-13 | Generar pedido desde recetas sin proveedor común | `RecetaToPedidoService.generateFromRecetas()` | Debe rechazar consolidación sin proveedor compartido | Sí |
+| U-PED-14 | Generar pedido desde recetas con producto inactivo | `RecetaToPedidoService.generateFromRecetas()` | Debe rechazar ingredientes no disponibles | Sí |
+| U-PED-15 | Generar pedido desde recetas con unidades incompatibles | `RecetaToPedidoService.generateFromRecetas()` | Debe rechazar agregación inconsistente | Sí |
+| U-PED-16 | Generar pedido desde recetas aplica merma y elige proveedor óptimo | `RecetaToPedidoService.generateFromRecetas()` | Verificar cantidad efectiva y menor coste total | Sí |
+| U-PED-17 | Generar pedido desde recetas registra el origen en logs | `RecetaToPedidoService.generateFromRecetas()` | Debe dejar trazabilidad del origen | Sí |
 
 ### 15. Módulo: `recepcion`
 
