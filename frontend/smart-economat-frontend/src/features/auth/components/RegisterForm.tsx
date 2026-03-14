@@ -1,31 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
-  Link,
   InputAdornment,
   IconButton,
   Alert,
   ToggleButton,
   ToggleButtonGroup,
 } from '@mui/material';
-import PersonAddOutlinedIcon from '@mui/icons-material/PersonAddOutlined';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Input from '../../../components/ui/Input';
+import Select from '../../../components/ui/Select';
 import Button from '../../../components/ui/Button';
 import Logo from '../../../assets/images/SVG/logo-smat-economato.svg';
 import {
   isStrongPassword,
   STRONG_PASSWORD_MESSAGE,
 } from '../../../utils/passwordValidation';
+import { authService } from '../../../services/auth.service';
 
 interface RegisterFormProps {
   onToggleForm: () => void;
   onRegisterSuccess: () => void;
 }
-
-import { authService } from '../../../services/auth.service';
 
 const RegisterForm: React.FC<RegisterFormProps> = ({
   onToggleForm,
@@ -37,13 +35,88 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     email: '',
     password: '',
     aula: '',
-    numeroClase: 1,
+    numeroClase: '',
     cialProfesor: '',
     cial: '',
   });
+
+  const [aulas, setAulas] = useState<string[]>([]);
+  const [clases, setClases] = useState<number[]>([]);
+  const [profesores, setProfesores] = useState<{ cial: string; nombre: string }[]>([]);
+
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Fetch aulas on mount for ALUMNO
+  useEffect(() => {
+    if (role === 'ALUMNO') {
+      loadAulas();
+    }
+  }, [role]);
+
+  // Fetch clases when aula changes
+  useEffect(() => {
+    if (role === 'ALUMNO' && formData.aula) {
+      loadClases(formData.aula);
+    } else {
+      setClases([]);
+      setFormData(prev => ({ ...prev, numeroClase: '', cialProfesor: '' }));
+    }
+  }, [formData.aula, role]);
+
+  // Fetch profesores when clase changes
+  useEffect(() => {
+    if (role === 'ALUMNO' && formData.aula && formData.numeroClase) {
+      loadProfesores(formData.aula, Number(formData.numeroClase));
+    } else {
+      setProfesores([]);
+      setFormData(prev => ({ ...prev, cialProfesor: '' }));
+    }
+  }, [formData.numeroClase, role, formData.aula]);
+
+  const loadAulas = async () => {
+    try {
+      setIsLoadingData(true);
+      const res = await authService.getAulas();
+      if (res.success) {
+        setAulas(res.data);
+      }
+    } catch (err) {
+      console.error('Error fetching aulas:', err);
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  const loadClases = async (aula: string) => {
+    try {
+      setIsLoadingData(true);
+      const res = await authService.getClases(aula);
+      if (res.success) {
+        setClases(res.data);
+      }
+    } catch (err) {
+      console.error('Error fetching clases:', err);
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  const loadProfesores = async (aula: string, clase: number) => {
+    try {
+      setIsLoadingData(true);
+      const res = await authService.getProfesores(aula, clase);
+      if (res.success) {
+        setProfesores(res.data);
+      }
+    } catch (err) {
+      console.error('Error fetching profesores:', err);
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
 
   const handleRoleChange = (
     _event: React.MouseEvent<HTMLElement>,
@@ -52,6 +125,15 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     if (newRole) {
       setRole(newRole);
       setErrorMsg('');
+      setFormData({
+        username: '',
+        email: '',
+        password: '',
+        aula: '',
+        numeroClase: '',
+        cialProfesor: '',
+        cial: '',
+      });
     }
   };
 
@@ -69,17 +151,21 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       }
 
       const payload: any = {
-        username: formData.username,
+        username: formData.username?.trim(),
         password: formData.password,
       };
 
       if (isAlumno) {
+        if (!formData.aula || !formData.numeroClase || !formData.cialProfesor) {
+          setErrorMsg('Por favor completa todos los campos de ubicación (Aula, Clase y Profesor).');
+          return;
+        }
         payload.aula = formData.aula;
         payload.numeroClase = Number(formData.numeroClase);
         payload.cialProfesor = formData.cialProfesor;
       } else {
         payload.email = formData.email?.trim();
-        payload.cial = formData.cial;
+        payload.cial = formData.cial?.trim()?.toUpperCase();
       }
 
       const res = isAlumno
@@ -99,8 +185,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    e: any
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const togglePasswordVisibility = () => setShowPassword((v) => !v);
 
@@ -180,27 +269,33 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
         {role === 'ALUMNO' ? (
           <>
-            <Input
+            <Select
               label="Aula"
               name="aula"
               value={formData.aula}
               onChange={handleChange}
+              options={aulas.map(a => ({ value: a, label: a }))}
               required
+              disabled={isLoadingData && aulas.length === 0}
             />
-            <Input
+            <Select
               label="Número de Clase"
               name="numeroClase"
-              type="number"
               value={formData.numeroClase}
               onChange={handleChange}
+              options={clases.map(c => ({ value: String(c), label: `Clase ${c}` }))}
               required
+              disabled={!formData.aula || (isLoadingData && clases.length === 0)}
             />
-            <Input
-              label="CIAL del Profesor"
+            <Select
+              label="Profesor"
               name="cialProfesor"
               value={formData.cialProfesor}
               onChange={handleChange}
+              options={profesores.map(p => ({ value: p.cial, label: p.nombre }))}
               required
+              disabled={!formData.numeroClase || (isLoadingData && profesores.length === 0)}
+              helperText="Selecciona el profesor encargado de evaluarte"
             />
           </>
         ) : (

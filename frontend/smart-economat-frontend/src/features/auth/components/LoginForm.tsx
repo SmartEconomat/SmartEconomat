@@ -107,7 +107,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
     setIsLoading(true);
     try {
       const res = await authService.login({
-        email: formData.email,
+        email: formData.email?.trim(),
         password: formData.password,
       });
 

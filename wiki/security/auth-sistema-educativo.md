@@ -87,7 +87,9 @@ graph TD
 ```
 
 1.  **Activación de Profesores**: Realizada por un `ADMIN`. Valida que el profesor pertenece a la institución.
-2.  **Activación de Alumnos**: Realizada por el `PROFESOR` vinculado. Valida que el alumno está físicamente en clase o pertenece a su grupo.
+291. **Activación de Alumnos**: Realizada por el `PROFESOR` vinculado. El sistema permite gestionar a los alumnos de forma jerárquica:
+    - Agrupados por **Aula** y **Clase** mediante acordeones desplegables.
+    - Acciones rápidas de activación, reseteo de clave y gestión de permisos por cada grupo.
 
 ---
 
