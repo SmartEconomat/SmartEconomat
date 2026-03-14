@@ -30,6 +30,16 @@ function sortScripts(a, b) {
   );
 }
 
+function filterRedundantScripts(scripts) {
+  const uniqueScripts = new Set(scripts);
+
+  if (uniqueScripts.has('test') && uniqueScripts.has('test:coverage')) {
+    uniqueScripts.delete('test:coverage');
+  }
+
+  return Array.from(uniqueScripts).sort(sortScripts);
+}
+
 function runScript(scriptName, index, total) {
   console.log(`  - [${index}/${total}] npm run ${scriptName}`);
 
@@ -46,9 +56,9 @@ function runScript(scriptName, index, total) {
 
 function main() {
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-  const scripts = Object.keys(packageJson.scripts ?? {})
-    .filter(isRunnableTestScript)
-    .sort(sortScripts);
+  const scripts = filterRedundantScripts(
+    Object.keys(packageJson.scripts ?? {}).filter(isRunnableTestScript)
+  );
 
   if (scripts.length === 0) {
     console.log('  - No runnable frontend test scripts found');

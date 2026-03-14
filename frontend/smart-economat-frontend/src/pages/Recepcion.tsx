@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Stepper,
@@ -79,6 +79,8 @@ import PasoRevision from '../components/recepcion/PasoRevision';
 import PasoResultado from '../components/recepcion/PasoResultado';
 import NewProductModal from '../components/recepcion/NewProductModal';
 import WeightScaleModal from '../components/recepcion/WeightScaleModal';
+import RecepcionDraftConflictDialog from '../components/recepcion/RecepcionDraftConflictDialog';
+import { useRecepcionDraft } from '../hooks/useRecepcionDraft';
 
 const steps = [
   'Selección de Pedidos',
@@ -87,12 +89,12 @@ const steps = [
   'Resultado',
 ];
 
-const LOCAL_STORAGE_KEY = 'recepcion_draft_v2';
-
 const defaultDraft = (): RecepcionDraft => ({
   version: 2,
   creadoEn: new Date().toISOString(),
   modificadoEn: new Date().toISOString(),
+  serverVersion: null,
+  serverUpdatedAt: null,
   observaciones: '',
   nAlbaran: '',
   pedidosSeleccionados: [],
@@ -104,7 +106,6 @@ const defaultDraft = (): RecepcionDraft => ({
 
 const Recepcion: React.FC = () => {
   const [activeStep, setActiveStep] = useState(0);
-  const [draft, setDraft] = useState<RecepcionDraft>(defaultDraft());
   const [resultado, setResultado] = useState<RecepcionResultado | null>(null);
 
   // UI State
@@ -113,9 +114,6 @@ const Recepcion: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const [openModal, setOpenModal] = useState(false);
-  const [autoSaveStatus, setAutoSaveStatus] = useState<
-    'saved' | 'saving' | 'error' | null
-  >(null);
   const [expandedPanel, setExpandedPanel] = useState<string | false>(false);
 
   // Báscula Modal State
@@ -130,6 +128,21 @@ const Recepcion: React.FC = () => {
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  const {
+    clearDraft: clearRemoteDraft,
+    conflict,
+    draft,
+    keepLocalDraft,
+    setDraft,
+    syncError,
+    syncStatus,
+    useRemoteDraft,
+  } = useRecepcionDraft({
+    activeStep,
+    defaultDraft,
+    setActiveStep,
+  });
+
   useEffect(() => {
     if (activeStep === 1 && searchInputRef.current) {
       searchInputRef.current.focus();
@@ -141,75 +154,9 @@ const Recepcion: React.FC = () => {
   const [loadingPedidos, setLoadingPedidos] = useState(false);
   const { user } = useAuth();
 
-  // Ref for persistence logic
-  const draftRef = useRef(draft);
   useEffect(() => {
-    draftRef.current = draft;
-  }, [draft]);
-
-  // --- 1. Persistencia Robusta ---
-
-  // Restaurar al inicio
-  useEffect(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        // Validar antigüedad (ej. > 24h descartar)
-        const diff = Date.now() - new Date(parsed.modificadoEn).getTime();
-        if (diff < 24 * 60 * 60 * 1000) {
-          setDraft(parsed);
-          const stepIdx = [
-            'SELECCION_PEDIDOS',
-            'ESCANEO_LOTE',
-            'REVISION_FINAL',
-            'RESULTADO',
-          ].indexOf(parsed.paso);
-          if (stepIdx >= 0) setActiveStep(stepIdx);
-        }
-      } catch (e) {
-        console.error('Error al cargar draft', e);
-      }
-    }
-
-    // Cargar pedidos
-    loadPedidos();
+    void loadPedidos();
   }, []);
-
-  // Guardar con Throttle (simplificado con setTimeout para el ejercicio)
-  useEffect(() => {
-    if (activeStep === 3) return; // No guardar el paso de resultado
-
-    setAutoSaveStatus('saving');
-    const timer = setTimeout(() => {
-      localStorage.setItem(
-        LOCAL_STORAGE_KEY,
-        JSON.stringify({
-          ...draft,
-          modificadoEn: new Date().toISOString(),
-        })
-      );
-      setAutoSaveStatus('saved');
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [draft, activeStep]);
-
-  // Listener beforeunload
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (activeStep > 0 && activeStep < 3) {
-        localStorage.setItem(
-          LOCAL_STORAGE_KEY,
-          JSON.stringify(draftRef.current)
-        );
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [activeStep]);
 
   // --- 2. Acciones del Backend ---
 
@@ -688,24 +635,21 @@ const Recepcion: React.FC = () => {
       const res = await createRecepcion(payload);
       setResultado(res);
       setActiveStep(3);
-      // Solo eliminamos el borrador si la operación fue exitosa
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
-      setDraft(defaultDraft());
+      await clearRemoteDraft();
     } catch (err: any) {
       const errorMessage = err.message || '';
       if (
         errorMessage.includes('Pedido no encontrado') ||
         errorMessage.includes('ORDER_NOT_FOUND')
       ) {
-        localStorage.removeItem(LOCAL_STORAGE_KEY);
-        setDraft(defaultDraft());
+        await clearRemoteDraft();
         setActiveStep(0);
         setError(
-          `Error crítico: El pedido que intentabas recepcionar ya no existe o fue procesado. El borrador local obsoleto ha sido eliminado por seguridad. Por favor, selecciona nuevamente los pedidos a recepcionar.`
+          `Error crítico: El pedido que intentabas recepcionar ya no existe o fue procesado. El borrador remoto obsoleto ha sido eliminado por seguridad. Por favor, selecciona nuevamente los pedidos a recepcionar.`
         );
       } else {
         setError(
-          `Error crítico en la transacción: ${errorMessage}. Los datos siguen guardados localmente; puedes intentar enviarlos de nuevo.`
+          `Error crítico en la transacción: ${errorMessage}. Los datos siguen sincronizados en el servidor; puedes intentar enviarlos de nuevo.`
         );
       }
     } finally {
@@ -780,13 +724,12 @@ const Recepcion: React.FC = () => {
     <PasoResultado resultado={resultado} onResetWizard={resetWizard} />
   );
 
-  const resetWizard = () => {
-    localStorage.removeItem(LOCAL_STORAGE_KEY);
-    setDraft(defaultDraft());
+  const resetWizard = async () => {
+    await clearRemoteDraft();
     setActiveStep(0);
     setResultado(null);
     setError(null);
-    loadPedidos();
+    await loadPedidos();
   };
 
   const handleNext = () => {
@@ -894,13 +837,46 @@ const Recepcion: React.FC = () => {
           <Typography variant="h4" component="h1">
             Gestión de Recepción
           </Typography>
-          {autoSaveStatus === 'saved' && (
-            <Tooltip title="Borrador guardado localmente">
+          {syncStatus === 'saving' && (
+            <Tooltip title="Sincronizando borrador con el servidor">
+              <Chip
+                icon={<SaveIcon />}
+                label="Guardando..."
+                size="small"
+                color="warning"
+                variant="outlined"
+              />
+            </Tooltip>
+          )}
+          {syncStatus === 'synced' && (
+            <Tooltip title="Borrador sincronizado de forma segura">
               <Chip
                 icon={<CheckCircleIcon />}
-                label="Auto-guardado"
+                label="Sincronizado"
                 size="small"
                 color="success"
+                variant="outlined"
+              />
+            </Tooltip>
+          )}
+          {syncStatus === 'error' && (
+            <Tooltip title={syncError || 'Error al sincronizar el borrador'}>
+              <Chip
+                icon={<ErrorOutlineIcon />}
+                label="Error de sync"
+                size="small"
+                color="error"
+                variant="outlined"
+              />
+            </Tooltip>
+          )}
+          {syncStatus === 'conflict' && (
+            <Tooltip title="El borrador cambió en otro dispositivo">
+              <Chip
+                icon={<WarningAmberIcon />}
+                label="Conflicto"
+                size="small"
+                color="warning"
                 variant="outlined"
               />
             </Tooltip>
@@ -918,6 +894,12 @@ const Recepcion: React.FC = () => {
         {error && (
           <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
             {error}
+          </Alert>
+        )}
+
+        {!error && syncError && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            {syncError}
           </Alert>
         )}
 
@@ -942,8 +924,9 @@ const Recepcion: React.FC = () => {
                   window.confirm(
                     '¿Seguro que quieres borrar el borrador actual?'
                   )
-                )
-                  resetWizard();
+                ) {
+                  void resetWizard();
+                }
               }}
               color="secondary"
             >
@@ -1000,6 +983,13 @@ const Recepcion: React.FC = () => {
         onClose={closeWeightScale}
         onStartWeighing={startWeighing}
         onConfirmWeight={confirmWeight}
+      />
+
+      <RecepcionDraftConflictDialog
+        open={!!conflict}
+        remoteDraft={conflict?.remoteDraft}
+        onUseRemote={useRemoteDraft}
+        onKeepLocal={keepLocalDraft}
       />
 
       <Snackbar

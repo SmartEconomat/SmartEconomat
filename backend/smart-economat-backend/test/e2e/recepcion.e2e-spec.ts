@@ -2,10 +2,7 @@ import { getTestApp } from '../setup/test-app';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import {
-  generateUniqueName,
-  loginAndGetToken,
-} from '../utils/test-helpers';
+import { generateUniqueName, loginAndGetToken } from '../utils/test-helpers';
 import { Pedido } from '../../src/modules/pedido/pedido.entity/pedido.entity';
 import { Producto } from '../../src/modules/producto/producto.entity/producto.entity';
 import { EstadoPedido } from '../../src/modules/pedido/enums/estado-pedido.enum';
@@ -26,6 +23,18 @@ describe('RecepcionController (e2e)', () => {
 
   const barcode = () =>
     `${Date.now()}${Math.floor(Math.random() * 1000)}`.slice(0, 13);
+
+  function binaryParser(
+    res: any,
+    callback: (error: Error | null, body: Buffer) => void
+  ) {
+    const data: Buffer[] = [];
+    res.on('data', (chunk: Buffer | string) => {
+      data.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    });
+    res.on('end', () => callback(null, Buffer.concat(data)));
+    res.on('error', (error: Error) => callback(error, Buffer.alloc(0)));
+  }
 
   async function createProveedor() {
     const response = await request(app.getHttpServer())
@@ -254,12 +263,13 @@ describe('RecepcionController (e2e)', () => {
       const relatedAlbaranLinks = albaranLinks.filter((link) =>
         recepcionPedidoIds.includes(link.recepcionPedidoId)
       );
-      const recepcionMovimientos = (movimientosResponse.body.data.data as any[])
-        .filter(
-          (movimiento) =>
-            movimiento.entidadId === recepcionId &&
-            movimiento.tipo === TipoMovimiento.ENTRADA_COMPRA
-        );
+      const recepcionMovimientos = (
+        movimientosResponse.body.data.data as any[]
+      ).filter(
+        (movimiento) =>
+          movimiento.entidadId === recepcionId &&
+          movimiento.tipo === TipoMovimiento.ENTRADA_COMPRA
+      );
 
       expect(recepcion?.estado).toBe(EstadoRecepcion.COMPLETADA);
       expect(recepcionPedidos).toHaveLength(2);
@@ -316,12 +326,16 @@ describe('RecepcionController (e2e)', () => {
         .get(`/api/v1/incidencias/${incidenciaId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
-      const pedidoActualizado = await dataSource.getRepository(Pedido).findOneBy({
-        id: pedido.pedidoId,
-      });
+      const pedidoActualizado = await dataSource
+        .getRepository(Pedido)
+        .findOneBy({
+          id: pedido.pedidoId,
+        });
 
       expect(response.body.data.incidencias).toHaveLength(1);
-      expect(response.body.data.incidencias[0].datosOriginales.productos).toEqual(
+      expect(
+        response.body.data.incidencias[0].datosOriginales.productos
+      ).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ tipo: 'FALTA', diferencia: -3 }),
           expect.objectContaining({
@@ -342,7 +356,10 @@ describe('RecepcionController (e2e)', () => {
         nombre: generateUniqueName('Producto base recepción'),
       });
       const pedido = await createPedido(proveedor.id, [
-        { productoProveedorId: productoExistente.productoProveedorId, cantidad: 1 },
+        {
+          productoProveedorId: productoExistente.productoProveedorId,
+          cantidad: 1,
+        },
       ]);
 
       const nombreNuevo = generateUniqueName('Producto alta directa');
@@ -378,7 +395,8 @@ describe('RecepcionController (e2e)', () => {
         })
         .expect(201);
 
-      const productoCreadoId = response.body.data.productosCreados[0].id as string;
+      const productoCreadoId = response.body.data.productosCreados[0]
+        .id as string;
       const productoCreadoResponse = await request(app.getHttpServer())
         .get(`/api/v1/productos/${productoCreadoId}`)
         .set('Authorization', `Bearer ${adminToken}`)
@@ -388,9 +406,11 @@ describe('RecepcionController (e2e)', () => {
         .query({ productoId: productoCreadoId, consolidado: true })
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
-      const pedidoActualizado = await dataSource.getRepository(Pedido).findOneBy({
-        id: pedido.pedidoId,
-      });
+      const pedidoActualizado = await dataSource
+        .getRepository(Pedido)
+        .findOneBy({
+          id: pedido.pedidoId,
+        });
 
       expect(response.body.data.incidencias).toEqual([]);
       expect(response.body.data.productosCreados).toEqual([
@@ -421,7 +441,10 @@ describe('RecepcionController (e2e)', () => {
         nombre: generateUniqueName('Producto rollback ajeno'),
       });
       const pedidoValido = await createPedido(proveedor.id, [
-        { productoProveedorId: productoValido.productoProveedorId, cantidad: 1 },
+        {
+          productoProveedorId: productoValido.productoProveedorId,
+          cantidad: 1,
+        },
       ]);
       const pedidoAjeno = await createPedido(proveedor.id, [
         { productoProveedorId: productoAjeno.productoProveedorId, cantidad: 1 },
@@ -461,6 +484,76 @@ describe('RecepcionController (e2e)', () => {
 
       expect(response.body.success).toBe(false);
       expect(pedidoValidoActualizado?.estado).toBe(EstadoPedido.PENDIENTE);
+    });
+
+    it('genera un PDF de pedidos agrupados por proveedor', async () => {
+      const proveedor = await createProveedor();
+      const producto = await createProductoConProveedor(proveedor.id, {
+        nombre: generateUniqueName('Producto PDF pedido'),
+      });
+      const pedido = await createPedido(proveedor.id, [
+        { productoProveedorId: producto.productoProveedorId, cantidad: 6 },
+      ]);
+
+      const response = await request(app.getHttpServer())
+        .get('/api/v1/recepcion/reporte-pdf')
+        .query({ tipo: 'pedido', pedidoId: pedido.pedidoId })
+        .set('Authorization', `Bearer ${adminToken}`)
+        .buffer(true)
+        .parse(binaryParser)
+        .expect(200);
+
+      expect(response.headers['content-type']).toContain('application/pdf');
+      expect(response.headers['content-disposition']).toContain(
+        'attachment; filename="reporte-recepcion.pdf"'
+      );
+      expect(Buffer.isBuffer(response.body)).toBe(true);
+      expect(response.body.length).toBeGreaterThan(500);
+    });
+
+    it('genera un PDF de incidencias filtrando por proveedor y no resueltas', async () => {
+      const proveedor = await createProveedor();
+      const producto = await createProductoConProveedor(proveedor.id, {
+        nombre: generateUniqueName('Producto PDF incidencia'),
+      });
+      const pedido = await createPedido(proveedor.id, [
+        { productoProveedorId: producto.productoProveedorId, cantidad: 4 },
+      ]);
+
+      await request(app.getHttpServer())
+        .post('/api/v1/recepcion')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          usuarioId: adminUserId,
+          pedidos: [{ pedidoId: pedido.pedidoId }],
+          observaciones: generateUniqueName('Recepción para PDF incidencias'),
+          productos: [
+            {
+              pedidoProductoId: pedido.pedidoProductoIds[0],
+              cantidadRecibida: 1,
+              cantidadAlbaran: 1,
+              estadoVisual: EstadoVisualProducto.ROTO,
+              observaciones: 'Golpe en transporte',
+            },
+          ],
+        })
+        .expect(201);
+
+      const response = await request(app.getHttpServer())
+        .get('/api/v1/recepcion/reporte-pdf')
+        .query({
+          tipo: 'incidencias',
+          proveedorId: proveedor.id,
+          soloNoResueltas: 'true',
+        })
+        .set('Authorization', `Bearer ${adminToken}`)
+        .buffer(true)
+        .parse(binaryParser)
+        .expect(200);
+
+      expect(response.headers['content-type']).toContain('application/pdf');
+      expect(Buffer.isBuffer(response.body)).toBe(true);
+      expect(response.body.length).toBeGreaterThan(500);
     });
   });
 });

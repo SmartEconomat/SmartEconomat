@@ -1,5 +1,7 @@
 import { TransformFnParams } from 'class-transformer/types/interfaces';
 
+type TransformValueParams = Pick<TransformFnParams, 'value'>;
+
 /**
  * StringToBooleanTransformer
  *
@@ -13,7 +15,7 @@ import { TransformFnParams } from 'class-transformer/types/interfaces';
  * activo: boolean;
  */
 export class StringToBooleanTransformer {
-  static transform(params: TransformFnParams): boolean | null | undefined {
+  static transform(params: TransformValueParams): boolean | null | undefined {
     const value = params.value;
     if (value === null) return null;
     if (value === undefined) return undefined;

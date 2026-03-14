@@ -1,6 +1,25 @@
 import { Producto, ProductosQueryParams } from './producto.types';
 import { baseFetch, ApiResponse, PaginatedData } from './api.service';
 
+export interface ProductoProveedorPayload {
+  proveedorId: string;
+  marcaEspecifica?: string;
+  codigoBarras?: string;
+  precioUnitario?: number;
+}
+
+export interface ProductoMutationPayload {
+  nombre?: string;
+  marca?: string;
+  descripcion?: string;
+  unidad?: string;
+  tipo?: string;
+  contenido?: number;
+  codigoBarras?: string;
+  alergenos?: string[];
+  proveedores?: ProductoProveedorPayload[];
+}
+
 function buildProductosQueryString(params?: ProductosQueryParams): string {
   if (!params) return '?limit=500';
   const search = new URLSearchParams();
@@ -74,7 +93,7 @@ export async function fetchProductosPaginated(
 }
 
 export async function createProducto(
-  producto: Partial<Producto>
+  producto: ProductoMutationPayload
 ): Promise<Producto> {
   const response = await baseFetch('/productos', {
     method: 'POST',
@@ -93,7 +112,7 @@ export async function createProducto(
 
 export async function updateProducto(
   id: string,
-  producto: Partial<Producto>
+  producto: ProductoMutationPayload
 ): Promise<Producto> {
   const response = await baseFetch(`/productos/${id}`, {
     method: 'PATCH',

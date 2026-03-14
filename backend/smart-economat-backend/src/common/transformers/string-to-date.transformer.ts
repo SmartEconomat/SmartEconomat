@@ -1,5 +1,7 @@
 import { TransformFnParams } from 'class-transformer/types/interfaces';
 
+type TransformValueParams = Pick<TransformFnParams, 'value'>;
+
 /**
  * StringToDateTransformer
  *
@@ -13,7 +15,7 @@ import { TransformFnParams } from 'class-transformer/types/interfaces';
  * fechaCaducidad: Date;
  */
 export class StringToDateTransformer {
-  static transform(params: TransformFnParams): Date | null | undefined {
+  static transform(params: TransformValueParams): Date | null | undefined {
     const value = params.value;
     if (value === null) return null;
     if (value === undefined) return undefined;

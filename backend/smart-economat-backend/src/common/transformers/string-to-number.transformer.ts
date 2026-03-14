@@ -1,5 +1,7 @@
 import { TransformFnParams } from 'class-transformer/types/interfaces';
 
+type TransformValueParams = Pick<TransformFnParams, 'value'>;
+
 /**
  * StringToNumberTransformer
  *
@@ -13,7 +15,7 @@ import { TransformFnParams } from 'class-transformer/types/interfaces';
  * cantidad: number;
  */
 export class StringToNumberTransformer {
-  static transform(params: TransformFnParams): number | null | undefined {
+  static transform(params: TransformValueParams): number | null | undefined {
     const value = params.value;
     if (value === null) return null;
     if (value === undefined) return undefined;
