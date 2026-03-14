@@ -51,16 +51,16 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
       </Box>
       <Divider sx={{ mb: { xs: 3, md: 4 } }} />
 
-      {/* Formulario para añadir nuevo slot (SOLO EN MODO EDICION) */}
+      {/* Formulario para añadir nueva clase (SOLO EN MODO EDICION) */}
       {isEditing && (
         <Box component="form" onSubmit={onCreateSlot} sx={{ mb: 4, p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
           <Typography variant="subtitle2" gutterBottom color="text.secondary">
-            Crear nueva ubicación disponible:
+            Configurar nueva clase:
           </Typography>
-          <Box display="flex" gap={2} alignItems="flex-start" flexDirection={{ xs: 'column', md: 'row' }}>
+          <Box display="flex" gap={2} alignItems="center" flexDirection={{ xs: 'column', md: 'row' }}>
             <Box flex={1} width="100%">
               <Input
-                label="Aula (ej: A01)"
+                label="Curso/Grupo (ej: A01)"
                 name="aula"
                 value={newSlot.aula}
                 onChange={onNewSlotChange}
@@ -94,7 +94,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
               type="submit"
               variant="contained"
               isLoading={isSaving}
-              sx={{ py: 1.5, mt: { md: 0.5 }, minWidth: 120, width: { xs: '100%', md: 'auto' } }}
+              sx={{ py: 1.5, minWidth: 120, width: { xs: '100%', md: 'auto' } }}
               startIcon={<AddCircleOutlineIcon />}
             >
               Añadir
@@ -140,15 +140,14 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                       cursor: 'pointer',
                       '&:hover': { bgcolor: 'primary.main' }
                     }}
-                    title="Haga clic para copiar el código"
+                    title="Haga clic para copiar el código de clase"
                     onClick={() => {
                         if (slot.codigoSlot) {
                             navigator.clipboard.writeText(slot.codigoSlot);
-                            // Aquí se podría disparar un toast pequeño si fuera necesario
                         }
                     }}
                   >
-                    CÓDIGO: {slot.codigoSlot || 'PENDIENTE'}
+                    CÓDIGO DE CLASE: {slot.codigoSlot || 'PENDIENTE'}
                   </Box>
 
                   {isEditing && (
@@ -161,7 +160,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
               sx={{ px: { xs: 1, sm: 2 }, py: 1.5 }}
             >
               <ListItemText
-                primary={`Aula: ${slot.aula} — Clase ${slot.numeroClase}`}
+                primary={`Curso: ${slot.aula} — Clase ${slot.numeroClase}`}
                 secondary={`Capacidad máx: ${slot.capacidad} alumnos`}
                 primaryTypographyProps={{ 
                   fontWeight: 600,

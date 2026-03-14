@@ -1,7 +1,7 @@
 # Documentación Técnica: Sistema Educativo, Autenticación y Roles
 
 ## 1. Introducción
-Este documento detalla el funcionamiento técnico del sistema de gestión de usuarios, roles y la estructura educativa (slots y sesiones) del proyecto Smart Economat. El sistema está diseñado para gestionar de forma jerárquica a administradores, profesores y alumnos, asegurando que cada nivel tenga los permisos adecuados y una vinculación clara.
+Este documento detalla el funcionamiento técnico del sistema de gestión de usuarios, roles y la estructura educativa (clases y grupos) del proyecto Smart Economat. El sistema está diseñado para gestionar de forma jerárquica a administradores, profesores y alumnos, asegurando que cada nivel tenga los permisos adecuados y una vinculación clara.
 
 ---
 
@@ -15,8 +15,8 @@ Existen dos flujos principales de registro:
 Los alumnos se registran de forma autónoma a través del `AlumnoController`. Para completar el registro, el sistema requiere:
 - **Datos de cuenta**: Username, Email y Password.
 - **Datos de vinculación**:
-    - **Código de Slot**: Un código alfanumérico único (ej: `ABC-123`) generado por el profesor.
-- **Validación**: El sistema verifica que el slot tenga cupo disponible y vincula automáticamente al alumno con el profesor dueño del slot.
+    - **Código de Clase**: Un código alfanumérico único (ej: `ABC-123`) generado por el profesor.
+- **Validación**: El sistema verifica que la clase tenga cupo disponible y vincula automáticamente al alumno con el profesor dueño de la misma.
 
 *Nota: Al registrarse, el estado inicial del alumno es `INACTIVE` hasta que su profesor lo active.*
 
@@ -55,15 +55,15 @@ El sistema define tres roles principales en el enum `rolUsuario`:
 
 ---
 
-## 4. Estructura Educativa: Slots y Sesiones
+## 4. Estructura Educativa: Clases y Sesiones
 
-El núcleo del sistema educativo se basa en la relación entre el Profesor, el Alumno y el espacio físico/temporal (el Slot).
+El núcleo del sistema educativo se basa en la relación entre el Profesor, el Alumno y el espacio físico/temporal (la Clase).
 
-### 4.1. Entidad `Slot`
-Define un cupo de registro creado por el profesor. Cada slot tiene un código único y una capacidad máxima definida.
+### 4.1. Entidad `Slot` (Clase)
+Define un cupo de registro creado por el profesor. Cada clase tiene un código único y una capacidad máxima definida.
 
 ### 4.2. Flujo de Vinculación
-1.  El **Profesor** genera un lote de "Slots" desde su panel.
+1.  El **Profesor** genera un lote de "Clases" desde su panel.
 2.  El sistema genera códigos únicos (ej: `SMA-PR-01`).
 3.  El **Alumno** introduce este código durante su registro.
 4.  El sistema valida:

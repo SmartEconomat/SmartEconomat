@@ -157,7 +157,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
       if (isAlumno) {
         if (!formData.aula || !formData.numeroClase || !formData.cialProfesor) {
-          setErrorMsg('Por favor completa todos los campos de ubicación (Aula, Clase y Profesor).');
+          setErrorMsg('Por favor completa todos los campos de ubicación (Curso, Clase y Profesor).');
           return;
         }
         payload.aula = formData.aula;
@@ -270,7 +270,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         {role === 'ALUMNO' ? (
           <>
             <Select
-              label="Aula"
+              label="Curso/Grupo"
               name="aula"
               value={formData.aula}
               onChange={handleChange}

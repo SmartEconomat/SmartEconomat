@@ -63,7 +63,16 @@ El contenido no está "hardcodeado" en el componente, sino que se inyecta desde 
 }
 ```
 
-## Funcionalidad UX
-1.  **Contextualidad:** El usuario no necesita buscar ayuda; la ayuda relevante "vive" en la página actual.
-2.  **No Intrusivo:** Es un tutorial bajo demanda (clic en `?`), no un modal bloqueante que salta automáticamente.
-3.  **Progresividad:** La información se dosifica paso a paso (Carousel) para no abrumar (Cognitive Load management).
+## Configuraciones Específicas de Página
+
+### Página de Perfil (`/perfil`)
+Se ha configurado un tour de 4 pasos para guiar al usuario a través de la nueva arquitectura modular:
+1. **Perfil de Usuario**: Explicación de datos básicos y edición.
+2. **Seguridad**: Importancia del cambio de contraseña.
+3. **Gestión Académica**: Configuración de clases y generación de códigos (Solo Profesores).
+4. **Control de Alumnos**: Gestión de activación y passwords de estudiantes (Solo Profesores).
+
+---
+
+## Mantenimiento
+Para añadir nuevos tutoriales, simplemente añada una nueva entrada en `src/utils/config/tutorialConfig.tsx` con la ruta correspondiente y el array de pasos. Los iconos deben ser componentes de MUI para mantener la consistencia visual.
