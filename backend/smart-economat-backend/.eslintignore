@@ -1,7 +1,0 @@
-node_modules
-dist
-coverage
-coverage-e2e
-test/coverage
-**/*.js
-**/*.json
