@@ -7,11 +7,11 @@ services:
     image: smarteconomat-db:dev
     env_file: .env.dev
     ports:
-      - "${DB_PORT}:5432"
+      - '${DB_PORT}:5432'
     volumes:
       - database_dev:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
       interval: 5s
       timeout: 3s
       retries: 5
@@ -20,15 +20,27 @@ services:
     networks:
       - smarteconomat-dev-network
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_dev:/data
+    networks:
+      - smarteconomat-dev-network
+
   backend:
     build:
       context: ./backend/smart-economat-backend
       dockerfile: ../Dockerfile.dev
     image: smarteconomat-backend:dev
+    user: '${UID:-1000}:${GID:-1000}'
     ports:
-      - "${BACKEND_PORT}:${BACKEND_PORT}"
+      - '${BACKEND_PORT}:${BACKEND_PORT}'
     env_file: .env.dev
     environment:
+      - HOME=/tmp
       # ── Info del anfitrión (inyectada por scripts/collect-host-info.sh o .ps1) ──
       - HOST_USER=${USER:-}
       - HOST_HOSTNAME=${HOSTNAME:-}
@@ -37,26 +49,33 @@ services:
       - HOST_MAC=${HOST_MAC:-}
       - HOST_GIT_USER=${GIT_USER:-}
       - HOST_GIT_EMAIL=${GIT_EMAIL:-}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     command: sh -c "npx ts-node scripts/log-user-info.ts && npm run start:dev"
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     networks:
       - smarteconomat-dev-network
     volumes:
       - ./backend/smart-economat-backend:/app
       - /app/node_modules
       - ./:/project_root
-      - ~/.gitconfig:/root/.gitconfig:ro
+      - ~/.gitconfig:/tmp/.gitconfig:ro
 
   frontend:
     build:
       context: ./frontend/smart-economat-frontend
       dockerfile: ../Dockerfile.dev
     image: smarteconomat-frontend:dev
+    user: '${UID:-1000}:${GID:-1000}'
     ports:
-      - "${FRONTEND_PORT}:5173"
+      - '${FRONTEND_PORT}:5173'
     env_file: .env.dev
+    environment:
+      - HOME=/tmp
     networks:
       - smarteconomat-dev-network
     volumes:
@@ -65,6 +84,7 @@ services:
 
 volumes:
   database_dev:
+  redis_dev:
 
 networks:
   smarteconomat-dev-network:

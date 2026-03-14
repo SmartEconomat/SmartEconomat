@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -142,7 +138,7 @@ describe('ProductoService - Alta compleja', () => {
           },
         },
       ],
-    } as Producto;
+    } as unknown as Producto;
 
     const deleteQueryBuilder = createDeleteQueryBuilderMock();
     const manager = {
@@ -214,13 +210,13 @@ describe('ProductoService - Alta compleja', () => {
       codigoBarras: '8410123456789',
       alergenos: [],
       proveedores: [],
-    } as Producto;
+    } as unknown as Producto;
 
     const manager = createManagerMock({
       findOne: jest.fn().mockResolvedValue(finalProduct),
     });
 
-    jest
+    const generateUniqueEan13Spy = jest
       .spyOn(service, 'generateUniqueEan13')
       .mockResolvedValue('8410123456789');
 
@@ -238,7 +234,7 @@ describe('ProductoService - Alta compleja', () => {
     );
 
     expect(result).toEqual(finalProduct);
-    expect(service.generateUniqueEan13).toHaveBeenCalled();
+    expect(generateUniqueEan13Spy).toHaveBeenCalled();
     expect(manager.create).toHaveBeenCalledWith(
       Producto,
       expect.objectContaining({ codigoBarras: '8410123456789' })
@@ -256,7 +252,7 @@ describe('ProductoService - Alta compleja', () => {
       codigoBarras: 'QAPNEBB8UX',
       proveedores: [],
       alergenos: [],
-    } as Producto;
+    } as unknown as Producto;
 
     const manager = createManagerMock({
       create: jest.fn((_: unknown, payload: unknown) => payload),
@@ -476,7 +472,7 @@ describe('ProductoService - Alta compleja', () => {
       codigoBarras: '4006381333931',
       proveedores: [],
       alergenos: [],
-    } as Producto;
+    } as unknown as Producto;
 
     const existingRelations = [
       {
@@ -525,7 +521,7 @@ describe('ProductoService - Alta compleja', () => {
           marca: 'Asturiana',
         },
       ],
-    } as Producto;
+    } as unknown as Producto;
 
     const deleteQueryBuilder = createDeleteQueryBuilderMock();
     const manager = {
@@ -601,7 +597,7 @@ describe('ProductoService - Alta compleja', () => {
       codigoBarras: '4006381333931',
       proveedores: [],
       alergenos: [],
-    } as Producto;
+    } as unknown as Producto;
 
     const updatedProduct = {
       ...existingProduct,

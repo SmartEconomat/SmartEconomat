@@ -51,6 +51,7 @@
     "cookie-parser": "^1.4.7",
     "dotenv": "^16.3.0",
     "exceljs": "^4.4.0",
+    "ioredis": "^5.7.0",
     "nestjs-i18n": "^10.6.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
@@ -105,7 +106,6 @@
     "typescript-eslint": "^8.56.1"
   },
   "overrides": {
-    "ajv": "^8.18.0",
     "file-type": "^21.3.2",
     "yauzl": "^3.2.1"
   },
