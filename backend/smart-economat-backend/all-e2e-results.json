@@ -1,0 +1,2177 @@
+{
+  "numFailedTestSuites": 1,
+  "numFailedTests": 3,
+  "numPassedTestSuites": 0,
+  "numPassedTests": 119,
+  "numPendingTestSuites": 0,
+  "numPendingTests": 0,
+  "numRuntimeErrorTestSuites": 0,
+  "numTodoTests": 0,
+  "numTotalTestSuites": 1,
+  "numTotalTests": 122,
+  "openHandles": [],
+  "snapshot": {
+    "added": 0,
+    "didUpdate": false,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0
+  },
+  "startTime": 1773427714233,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["AppController (e2e)"],
+          "duration": 214,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "AppController (e2e) / (GET)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427753838,
+          "status": "passed",
+          "title": "/ (GET)"
+        },
+        {
+          "ancestorTitles": ["AuthController (e2e)", "POST /auth/register"],
+          "duration": 252,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "AuthController (e2e) POST /auth/register Debe registrar un nuevo usuario (201) y no permitir duplicados (409)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427754055,
+          "status": "passed",
+          "title": "Debe registrar un nuevo usuario (201) y no permitir duplicados (409)"
+        },
+        {
+          "ancestorTitles": ["AuthController (e2e)", "POST /auth/register"],
+          "duration": 20,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "AuthController (e2e) POST /auth/register Debe fallar si el password es débil (400)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427754308,
+          "status": "passed",
+          "title": "Debe fallar si el password es débil (400)"
+        },
+        {
+          "ancestorTitles": ["AuthController (e2e)", "POST /auth/login"],
+          "duration": 52,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "AuthController (e2e) POST /auth/login Debe loguear correctamente (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1773427754329,
+          "status": "passed",
+          "title": "Debe loguear correctamente (200)"
+        },
+        {
+          "ancestorTitles": ["AuthController (e2e)", "POST /auth/login"],
+          "duration": 24,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "AuthController (e2e) POST /auth/login Debe fallar con password erróneo (400)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427754383,
+          "status": "passed",
+          "title": "Debe fallar con password erróneo (400)"
+        },
+        {
+          "ancestorTitles": ["AuthController (e2e)", "POST /auth/login"],
+          "duration": 38,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "AuthController (e2e) POST /auth/login Debe fallar con email inexistente (400)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427754408,
+          "status": "passed",
+          "title": "Debe fallar con email inexistente (400)"
+        },
+        {
+          "ancestorTitles": [
+            "AdminController (e2e)",
+            "Gestión de Profesores (POST /admin/profesores)"
+          ],
+          "duration": 151,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "AdminController (e2e) Gestión de Profesores (POST /admin/profesores) E2E-ADM-01-CRE-PROF: Registro exitoso de un profesor",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1773427754508,
+          "status": "passed",
+          "title": "E2E-ADM-01-CRE-PROF: Registro exitoso de un profesor"
+        },
+        {
+          "ancestorTitles": [
+            "AdminController (e2e)",
+            "Gestión de Profesores (POST /admin/profesores)"
+          ],
+          "duration": 39,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "AdminController (e2e) Gestión de Profesores (POST /admin/profesores) E2E-ADM-02-CRE-ERR-UNI: Error 409 por duplicado",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427754660,
+          "status": "passed",
+          "title": "E2E-ADM-02-CRE-ERR-UNI: Error 409 por duplicado"
+        },
+        {
+          "ancestorTitles": [
+            "AdminController (e2e)",
+            "Mantenimiento de Cuentas (PATCH /admin/users/:id/activate)"
+          ],
+          "duration": 123,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "AdminController (e2e) Mantenimiento de Cuentas (PATCH /admin/users/:id/activate) E2E-ADM-05-ACT: Activar un usuario inactivo",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1773427754701,
+          "status": "passed",
+          "title": "E2E-ADM-05-ACT: Activar un usuario inactivo"
+        },
+        {
+          "ancestorTitles": [
+            "AdminController (e2e)",
+            "Mantenimiento de Cuentas (PATCH /admin/users/:id/activate)"
+          ],
+          "duration": 146,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "AdminController (e2e) Mantenimiento de Cuentas (PATCH /admin/users/:id/activate) E2E-ADM-06-ACT-ERR: Error 400 ya activo",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427754825,
+          "status": "passed",
+          "title": "E2E-ADM-06-ACT-ERR: Error 400 ya activo"
+        },
+        {
+          "ancestorTitles": [
+            "AdminController (e2e)",
+            "Recuperación y Seguridad (POST /admin/users/:id/force-reset)"
+          ],
+          "duration": 116,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "AdminController (e2e) Recuperación y Seguridad (POST /admin/users/:id/force-reset) E2E-ADM-08-FRS: Forzar reseteo de contraseña",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1773427754972,
+          "status": "passed",
+          "title": "E2E-ADM-08-FRS: Forzar reseteo de contraseña"
+        },
+        {
+          "ancestorTitles": ["AdminController (e2e)", "Seguridad y RBAC"],
+          "duration": 81,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "AdminController (e2e) Seguridad y RBAC E2E-ADM-11-SEC-FORB: Profesor no puede acceder a admin",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427755089,
+          "status": "passed",
+          "title": "E2E-ADM-11-SEC-FORB: Profesor no puede acceder a admin"
+        },
+        {
+          "ancestorTitles": [
+            "AlbaranController (e2e)",
+            "CRUD de Albaranes (api/v1/albaranes)"
+          ],
+          "duration": 36,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "AlbaranController (e2e) CRUD de Albaranes (api/v1/albaranes) E2E-ALB-08-CRE: Crear un albarán",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1773427755193,
+          "status": "passed",
+          "title": "E2E-ALB-08-CRE: Crear un albarán"
+        },
+        {
+          "ancestorTitles": [
+            "AlbaranController (e2e)",
+            "CRUD de Albaranes (api/v1/albaranes)"
+          ],
+          "duration": 103,
+          "failing": false,
+          "failureDetails": [
+            {
+              "matcherResult": {
+                "actual": false,
+                "expected": true,
+                "message": "\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                "name": "toBe",
+                "pass": false
+              }
+            }
+          ],
+          "failureMessages": [
+            "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at Object.<anonymous> (C:\\Users\\p51149087\\projects\\SmartEconomat\\backend\\smart-economat-backend\\test\\e2e\\albaran.e2e-spec.ts:58:49)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"
+          ],
+          "fullName": "AlbaranController (e2e) CRUD de Albaranes (api/v1/albaranes) E2E-ALB-09-LST: Listado de albaranes",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427755229,
+          "status": "failed",
+          "title": "E2E-ALB-09-LST: Listado de albaranes"
+        },
+        {
+          "ancestorTitles": [
+            "AlbaranController (e2e)",
+            "CRUD de Albaranes (api/v1/albaranes)"
+          ],
+          "duration": 83,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "AlbaranController (e2e) CRUD de Albaranes (api/v1/albaranes) E2E-ALB-10-GET-ID: Obtener el detalle de un albarán",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1773427755335,
+          "status": "passed",
+          "title": "E2E-ALB-10-GET-ID: Obtener el detalle de un albarán"
+        },
+        {
+          "ancestorTitles": [
+            "AlbaranController (e2e)",
+            "CRUD de Albaranes (api/v1/albaranes)"
+          ],
+          "duration": 101,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "AlbaranController (e2e) CRUD de Albaranes (api/v1/albaranes) E2E-ALB-11-UPD: Actualizar el número de documento",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1773427755419,
+          "status": "passed",
+          "title": "E2E-ALB-11-UPD: Actualizar el número de documento"
+        },
+        {
+          "ancestorTitles": [
+            "AlbaranController (e2e)",
+            "CRUD de Albaranes (api/v1/albaranes)"
+          ],
+          "duration": 110,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "AlbaranController (e2e) CRUD de Albaranes (api/v1/albaranes) E2E-ALB-12-DEL: Eliminar un albarán",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1773427755521,
+          "status": "passed",
+          "title": "E2E-ALB-12-DEL: Eliminar un albarán"
+        },
+        {
+          "ancestorTitles": [
+            "AlumnoController (e2e)",
+            "Registro de Alumnos (POST /alumnos/register)"
+          ],
+          "duration": 194,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "AlumnoController (e2e) Registro de Alumnos (POST /alumnos/register) Debe registrar un nuevo alumno vinculado al profesor",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 6,
+          "retryReasons": [],
+          "startAt": 1773427755656,
+          "status": "passed",
+          "title": "Debe registrar un nuevo alumno vinculado al profesor"
+        },
+        {
+          "ancestorTitles": [
+            "AlumnoController (e2e)",
+            "Registro de Alumnos (POST /alumnos/register)"
+          ],
+          "duration": 165,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "AlumnoController (e2e) Registro de Alumnos (POST /alumnos/register) Debe fallar si el CIAL del profesor no existe",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1773427755851,
+          "status": "passed",
+          "title": "Debe fallar si el CIAL del profesor no existe"
+        },
+        {
+          "ancestorTitles": [
+            "AlumnoController (e2e)",
+            "Gestión de Alumnos por Profesor"
+          ],
+          "duration": 307,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "AlumnoController (e2e) Gestión de Alumnos por Profesor GET /profesores/alumnos - El profesor debe ver sus alumnos",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 6,
+          "retryReasons": [],
+          "startAt": 1773427756017,
+          "status": "passed",
+          "title": "GET /profesores/alumnos - El profesor debe ver sus alumnos"
+        },
+        {
+          "ancestorTitles": [
+            "AlumnoController (e2e)",
+            "Gestión de Alumnos por Profesor"
+          ],
+          "duration": 356,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "AlumnoController (e2e) Gestión de Alumnos por Profesor PATCH /profesores/alumnos/:id/activate - El profesor activa a su alumno",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 5,
+          "retryReasons": [],
+          "startAt": 1773427756325,
+          "status": "passed",
+          "title": "PATCH /profesores/alumnos/:id/activate - El profesor activa a su alumno"
+        },
+        {
+          "ancestorTitles": [
+            "AlumnoController (e2e)",
+            "Gestión de Alumnos por Profesor"
+          ],
+          "duration": 324,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "AlumnoController (e2e) Gestión de Alumnos por Profesor POST /profesores/alumnos/:id/force-reset - El profesor resetea el pass de su alumno",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 5,
+          "retryReasons": [],
+          "startAt": 1773427756683,
+          "status": "passed",
+          "title": "POST /profesores/alumnos/:id/force-reset - El profesor resetea el pass de su alumno"
+        },
+        {
+          "ancestorTitles": ["ArchivoController (e2e)", "CRUD de Archivos"],
+          "duration": 137,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "ArchivoController (e2e) CRUD de Archivos POST /archivos/upload - Debe subir un archivo (201)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1773427757041,
+          "status": "passed",
+          "title": "POST /archivos/upload - Debe subir un archivo (201)"
+        },
+        {
+          "ancestorTitles": ["ArchivoController (e2e)", "CRUD de Archivos"],
+          "duration": 106,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "ArchivoController (e2e) CRUD de Archivos GET /archivos - Debe listar archivos paginados (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 4,
+          "retryReasons": [],
+          "startAt": 1773427757180,
+          "status": "passed",
+          "title": "GET /archivos - Debe listar archivos paginados (200)"
+        },
+        {
+          "ancestorTitles": ["ArchivoController (e2e)", "CRUD de Archivos"],
+          "duration": 106,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "ArchivoController (e2e) CRUD de Archivos GET /archivos/:id - Debe obtener detalles del archivo (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1773427757287,
+          "status": "passed",
+          "title": "GET /archivos/:id - Debe obtener detalles del archivo (200)"
+        },
+        {
+          "ancestorTitles": ["ArchivoController (e2e)", "CRUD de Archivos"],
+          "duration": 180,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "ArchivoController (e2e) CRUD de Archivos DELETE /archivos/:id - Debe eliminar archivo (soft delete) y dar 404 después",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427757394,
+          "status": "passed",
+          "title": "DELETE /archivos/:id - Debe eliminar archivo (soft delete) y dar 404 después"
+        },
+        {
+          "ancestorTitles": ["DashboardController (e2e)", "Estadísticas"],
+          "duration": 153,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "DashboardController (e2e) Estadísticas GET /api/v1/dashboard/stats - Debe retornar estadísticas (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 4,
+          "retryReasons": [],
+          "startAt": 1773427757599,
+          "status": "passed",
+          "title": "GET /api/v1/dashboard/stats - Debe retornar estadísticas (200)"
+        },
+        {
+          "ancestorTitles": ["DashboardController (e2e)", "Estadísticas"],
+          "duration": 10,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "DashboardController (e2e) Estadísticas GET /api/v1/dashboard/stats - Debe fallar sin token (401)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427757753,
+          "status": "passed",
+          "title": "GET /api/v1/dashboard/stats - Debe fallar sin token (401)"
+        },
+        {
+          "ancestorTitles": ["Incidencias en Recepción (e2e)"],
+          "duration": 381,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "Incidencias en Recepción (e2e) Flujo completo: Reportar -> Verificar Flag -> Resolver con Movimiento",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 6,
+          "retryReasons": [],
+          "startAt": 1773427757856,
+          "status": "passed",
+          "title": "Flujo completo: Reportar -> Verificar Flag -> Resolver con Movimiento"
+        },
+        {
+          "ancestorTitles": [
+            "IncidenciaController (e2e)",
+            "Flujo CRUD de Incidencias"
+          ],
+          "duration": 936,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "IncidenciaController (e2e) Flujo CRUD de Incidencias POST /incidencias - Debe crear una incidencia (201)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 9,
+          "retryReasons": [],
+          "startAt": 1773427758364,
+          "status": "passed",
+          "title": "POST /incidencias - Debe crear una incidencia (201)"
+        },
+        {
+          "ancestorTitles": [
+            "IncidenciaController (e2e)",
+            "Flujo CRUD de Incidencias"
+          ],
+          "duration": 987,
+          "failing": false,
+          "failureDetails": [
+            {
+              "matcherResult": {
+                "actual": false,
+                "expected": true,
+                "message": "\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                "name": "toBe",
+                "pass": false
+              }
+            }
+          ],
+          "failureMessages": [
+            "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at Object.<anonymous> (C:\\Users\\p51149087\\projects\\SmartEconomat\\backend\\smart-economat-backend\\test\\e2e\\incidencias.e2e-spec.ts:181:38)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"
+          ],
+          "fullName": "IncidenciaController (e2e) Flujo CRUD de Incidencias GET /incidencias - Debe listar las incidencias (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 8,
+          "retryReasons": [],
+          "startAt": 1773427759301,
+          "status": "failed",
+          "title": "GET /incidencias - Debe listar las incidencias (200)"
+        },
+        {
+          "ancestorTitles": [
+            "IncidenciaController (e2e)",
+            "Flujo CRUD de Incidencias"
+          ],
+          "duration": 913,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "IncidenciaController (e2e) Flujo CRUD de Incidencias GET /incidencias/:id - Debe obtener una incidencia por ID (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 9,
+          "retryReasons": [],
+          "startAt": 1773427760294,
+          "status": "passed",
+          "title": "GET /incidencias/:id - Debe obtener una incidencia por ID (200)"
+        },
+        {
+          "ancestorTitles": [
+            "IncidenciaController (e2e)",
+            "Flujo CRUD de Incidencias"
+          ],
+          "duration": 883,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "IncidenciaController (e2e) Flujo CRUD de Incidencias PATCH /incidencias/:id - Debe actualizar una incidencia (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 9,
+          "retryReasons": [],
+          "startAt": 1773427761208,
+          "status": "passed",
+          "title": "PATCH /incidencias/:id - Debe actualizar una incidencia (200)"
+        },
+        {
+          "ancestorTitles": [
+            "IncidenciaController (e2e)",
+            "Flujo CRUD de Incidencias"
+          ],
+          "duration": 758,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "IncidenciaController (e2e) Flujo CRUD de Incidencias PATCH /incidencias/:id/resolver - Debe resolver una incidencia (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 8,
+          "retryReasons": [],
+          "startAt": 1773427762092,
+          "status": "passed",
+          "title": "PATCH /incidencias/:id/resolver - Debe resolver una incidencia (200)"
+        },
+        {
+          "ancestorTitles": [
+            "IncidenciaController (e2e)",
+            "Flujo CRUD de Incidencias"
+          ],
+          "duration": 850,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "IncidenciaController (e2e) Flujo CRUD de Incidencias DELETE /incidencias/:id - Solo administrador puede eliminar (204)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 9,
+          "retryReasons": [],
+          "startAt": 1773427762851,
+          "status": "passed",
+          "title": "DELETE /incidencias/:id - Solo administrador puede eliminar (204)"
+        },
+        {
+          "ancestorTitles": [
+            "IncidenciaController (e2e)",
+            "Validaciones y Errores"
+          ],
+          "duration": 799,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "IncidenciaController (e2e) Validaciones y Errores POST /incidencias - Debe fallar sin recepcionId (400)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 8,
+          "retryReasons": [],
+          "startAt": 1773427763702,
+          "status": "passed",
+          "title": "POST /incidencias - Debe fallar sin recepcionId (400)"
+        },
+        {
+          "ancestorTitles": [
+            "IncidenciaController (e2e)",
+            "Validaciones y Errores"
+          ],
+          "duration": 712,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "IncidenciaController (e2e) Validaciones y Errores GET /incidencias/:id - Debe fallar con UUID v7 inválido (400)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 8,
+          "retryReasons": [],
+          "startAt": 1773427764502,
+          "status": "passed",
+          "title": "GET /incidencias/:id - Debe fallar con UUID v7 inválido (400)"
+        },
+        {
+          "ancestorTitles": [
+            "InventarioController (e2e)",
+            "CRUD de Inventario"
+          ],
+          "duration": 340,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "InventarioController (e2e) CRUD de Inventario E2E-INV-01-CRE: Crear item de inventario",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1773427765243,
+          "status": "passed",
+          "title": "E2E-INV-01-CRE: Crear item de inventario"
+        },
+        {
+          "ancestorTitles": [
+            "InventarioController (e2e)",
+            "CRUD de Inventario"
+          ],
+          "duration": 473,
+          "failing": false,
+          "failureDetails": [
+            {
+              "matcherResult": {
+                "actual": false,
+                "expected": true,
+                "message": "\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                "name": "toBe",
+                "pass": false
+              }
+            }
+          ],
+          "failureMessages": [
+            "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at Object.<anonymous> (C:\\Users\\p51149087\\projects\\SmartEconomat\\backend\\smart-economat-backend\\test\\e2e\\inventario.e2e-spec.ts:102:49)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"
+          ],
+          "fullName": "InventarioController (e2e) CRUD de Inventario E2E-INV-06-GET: Listar inventario",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427765584,
+          "status": "failed",
+          "title": "E2E-INV-06-GET: Listar inventario"
+        },
+        {
+          "ancestorTitles": [
+            "InventarioController (e2e)",
+            "CRUD de Inventario"
+          ],
+          "duration": 410,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "InventarioController (e2e) CRUD de Inventario E2E-INV-10-UPD-ADJ: Ajustar cantidad",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1773427766060,
+          "status": "passed",
+          "title": "E2E-INV-10-UPD-ADJ: Ajustar cantidad"
+        },
+        {
+          "ancestorTitles": [
+            "InventarioController (e2e)",
+            "CRUD de Inventario"
+          ],
+          "duration": 437,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "InventarioController (e2e) CRUD de Inventario E2E-INV-15-DEL-OK: Eliminar item de inventario",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427766472,
+          "status": "passed",
+          "title": "E2E-INV-15-DEL-OK: Eliminar item de inventario"
+        },
+        {
+          "ancestorTitles": ["InventarioController (e2e)", "Alertas"],
+          "duration": 354,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "InventarioController (e2e) Alertas GET /api/v1/alertas/caducidad - Debe listar alertas de caducidad",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427766910,
+          "status": "passed",
+          "title": "GET /api/v1/alertas/caducidad - Debe listar alertas de caducidad"
+        },
+        {
+          "ancestorTitles": ["InventarioController (e2e)", "Alertas"],
+          "duration": 438,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "InventarioController (e2e) Alertas GET /api/v1/alertas/stock - Debe listar alertas de stock",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427767265,
+          "status": "passed",
+          "title": "GET /api/v1/alertas/stock - Debe listar alertas de stock"
+        },
+        {
+          "ancestorTitles": [
+            "SmartEconomat Master E2E Suite",
+            "AUTH - Autenticación"
+          ],
+          "duration": 123,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "SmartEconomat Master E2E Suite AUTH - Autenticación [AUTH-01/02/04/05] Flujo de login: credenciales correctas e incorrectas",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427767764,
+          "status": "passed",
+          "title": "[AUTH-01/02/04/05] Flujo de login: credenciales correctas e incorrectas"
+        },
+        {
+          "ancestorTitles": [
+            "SmartEconomat Master E2E Suite",
+            "REG & ACT & TP - Ciclo Completo de Alumno"
+          ],
+          "duration": 422,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "SmartEconomat Master E2E Suite REG & ACT & TP - Ciclo Completo de Alumno [REG-ACT-TP] Registro, Activación, Login y Reseteo Forzado",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427767888,
+          "status": "passed",
+          "title": "[REG-ACT-TP] Registro, Activación, Login y Reseteo Forzado"
+        },
+        {
+          "ancestorTitles": [
+            "SmartEconomat Master E2E Suite",
+            "AUTHZ & SEC - Seguridad y Administración"
+          ],
+          "duration": 41,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "SmartEconomat Master E2E Suite AUTHZ & SEC - Seguridad y Administración [SEC-02] No leaking de password hash",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427768311,
+          "status": "passed",
+          "title": "[SEC-02] No leaking de password hash"
+        },
+        {
+          "ancestorTitles": [
+            "SmartEconomat Master E2E Suite",
+            "EDGE - Casos Límites"
+          ],
+          "duration": 31,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "SmartEconomat Master E2E Suite EDGE - Casos Límites [EDGE-04] Numero clase negativo rechazado",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427768353,
+          "status": "passed",
+          "title": "[EDGE-04] Numero clase negativo rechazado"
+        },
+        {
+          "ancestorTitles": ["MovimientoController (e2e)", "Listado General"],
+          "duration": 72,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "MovimientoController (e2e) Listado General GET /movimientos - Debe listar movimientos (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 8,
+          "retryReasons": [],
+          "startAt": 1773427768448,
+          "status": "passed",
+          "title": "GET /movimientos - Debe listar movimientos (200)"
+        },
+        {
+          "ancestorTitles": ["MovimientoController (e2e)", "Listado General"],
+          "duration": 117,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "MovimientoController (e2e) Listado General GET /movimientos?page=1&limit=1 should respect pagination parameters",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 5,
+          "retryReasons": [],
+          "startAt": 1773427768521,
+          "status": "passed",
+          "title": "GET /movimientos?page=1&limit=1 should respect pagination parameters"
+        },
+        {
+          "ancestorTitles": [
+            "MovimientoController (e2e)",
+            "Trazabilidad de Movimientos (Caso de Uso Principal)"
+          ],
+          "duration": 21,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "MovimientoController (e2e) Trazabilidad de Movimientos (Caso de Uso Principal) GET /movimientos/historial - Sin parámetros debe fallar (400)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1773427768639,
+          "status": "passed",
+          "title": "GET /movimientos/historial - Sin parámetros debe fallar (400)"
+        },
+        {
+          "ancestorTitles": [
+            "MovimientoController (e2e)",
+            "Trazabilidad de Movimientos (Caso de Uso Principal)"
+          ],
+          "duration": 66,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "MovimientoController (e2e) Trazabilidad de Movimientos (Caso de Uso Principal) GET /movimientos/historial?entityId=<uuid> - Debe retornar historial por producto (200 o 404)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427768661,
+          "status": "passed",
+          "title": "GET /movimientos/historial?entityId=<uuid> - Debe retornar historial por producto (200 o 404)"
+        },
+        {
+          "ancestorTitles": [
+            "MovimientoController (e2e)",
+            "Trazabilidad de Movimientos (Caso de Uso Principal)"
+          ],
+          "duration": 59,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "MovimientoController (e2e) Trazabilidad de Movimientos (Caso de Uso Principal) GET /movimientos/historial?userId=<uuid> - Debe retornar historial por usuario (200 o 404)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427768728,
+          "status": "passed",
+          "title": "GET /movimientos/historial?userId=<uuid> - Debe retornar historial por usuario (200 o 404)"
+        },
+        {
+          "ancestorTitles": [
+            "MovimientoController (e2e)",
+            "Trazabilidad de Movimientos (Caso de Uso Principal)"
+          ],
+          "duration": 72,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "MovimientoController (e2e) Trazabilidad de Movimientos (Caso de Uso Principal) GET /movimientos/historial?entityId=<uuid>&type=entrada - Debe filtrar por tipo (200 o 404)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427768788,
+          "status": "passed",
+          "title": "GET /movimientos/historial?entityId=<uuid>&type=entrada - Debe filtrar por tipo (200 o 404)"
+        },
+        {
+          "ancestorTitles": [
+            "MovimientoController (e2e)",
+            "Trazabilidad de Movimientos (Caso de Uso Principal)"
+          ],
+          "duration": 74,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "MovimientoController (e2e) Trazabilidad de Movimientos (Caso de Uso Principal) GET /movimientos/historial?entityId=<uuid>&startDate=2026-01-01&endDate=2026-02-28 - Debe filtrar por rango (200 o 404)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427768861,
+          "status": "passed",
+          "title": "GET /movimientos/historial?entityId=<uuid>&startDate=2026-01-01&endDate=2026-02-28 - Debe filtrar por rango (200 o 404)"
+        },
+        {
+          "ancestorTitles": [
+            "MovimientoController (e2e)",
+            "Trazabilidad de Movimientos (Caso de Uso Principal)"
+          ],
+          "duration": 30,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "MovimientoController (e2e) Trazabilidad de Movimientos (Caso de Uso Principal) GET /movimientos/historial - Fechas inválidas deben fallar (400)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427768936,
+          "status": "passed",
+          "title": "GET /movimientos/historial - Fechas inválidas deben fallar (400)"
+        },
+        {
+          "ancestorTitles": [
+            "MovimientoController (e2e)",
+            "Trazabilidad de Movimientos (Caso de Uso Principal)"
+          ],
+          "duration": 27,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "MovimientoController (e2e) Trazabilidad de Movimientos (Caso de Uso Principal) GET /movimientos/historial?entityId=invalid - UUID inválido debe fallar (400)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427768969,
+          "status": "passed",
+          "title": "GET /movimientos/historial?entityId=invalid - UUID inválido debe fallar (400)"
+        },
+        {
+          "ancestorTitles": [
+            "MovimientoController (e2e)",
+            "Trazabilidad de Movimientos (Caso de Uso Principal)"
+          ],
+          "duration": 19,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "MovimientoController (e2e) Trazabilidad de Movimientos (Caso de Uso Principal) GET /movimientos/historial - Sin autorización debe fallar (403)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427768997,
+          "status": "passed",
+          "title": "GET /movimientos/historial - Sin autorización debe fallar (403)"
+        },
+        {
+          "ancestorTitles": [
+            "MovimientoController (e2e)",
+            "Trazabilidad de Movimientos (Caso de Uso Principal)"
+          ],
+          "duration": 77,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "MovimientoController (e2e) Trazabilidad de Movimientos (Caso de Uso Principal) GET /movimientos/historial?sortBy=cantidad&sortOrder=ASC - Debe ordenar personalizadamente",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427769017,
+          "status": "passed",
+          "title": "GET /movimientos/historial?sortBy=cantidad&sortOrder=ASC - Debe ordenar personalizadamente"
+        },
+        {
+          "ancestorTitles": [
+            "MovimientoController (e2e)",
+            "Detalle y Operaciones CRUD"
+          ],
+          "duration": 142,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "MovimientoController (e2e) Detalle y Operaciones CRUD GET /movimientos/:id - Debe retornar detalles del movimiento (200 o 404)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427769095,
+          "status": "passed",
+          "title": "GET /movimientos/:id - Debe retornar detalles del movimiento (200 o 404)"
+        },
+        {
+          "ancestorTitles": [
+            "MovimientoController (e2e)",
+            "Detalle y Operaciones CRUD"
+          ],
+          "duration": 71,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "MovimientoController (e2e) Detalle y Operaciones CRUD GET /movimientos/:id - UUID inexistente debe fallar (404)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427769238,
+          "status": "passed",
+          "title": "GET /movimientos/:id - UUID inexistente debe fallar (404)"
+        },
+        {
+          "ancestorTitles": [
+            "MovimientoController (e2e)",
+            "Detalle y Operaciones CRUD"
+          ],
+          "duration": 23,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "MovimientoController (e2e) Detalle y Operaciones CRUD DELETE /movimientos/:id - Solo administrador puede eliminar (403 para profesor)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427769311,
+          "status": "passed",
+          "title": "DELETE /movimientos/:id - Solo administrador puede eliminar (403 para profesor)"
+        },
+        {
+          "ancestorTitles": [
+            "MovimientoController (e2e)",
+            "Detalle y Operaciones CRUD"
+          ],
+          "duration": 33,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "MovimientoController (e2e) Detalle y Operaciones CRUD DELETE /movimientos/:id - ID inexistente debe fallar (404)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427769335,
+          "status": "passed",
+          "title": "DELETE /movimientos/:id - ID inexistente debe fallar (404)"
+        },
+        {
+          "ancestorTitles": [
+            "MovimientoController (e2e)",
+            "Validación de DTOs"
+          ],
+          "duration": 34,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "MovimientoController (e2e) Validación de DTOs POST /movimientos - DTO inválido debe fallar (400)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427769369,
+          "status": "passed",
+          "title": "POST /movimientos - DTO inválido debe fallar (400)"
+        },
+        {
+          "ancestorTitles": [
+            "User Lifecycle & Password Recovery (e2e)",
+            "Flow: Alumno Registration & Activation"
+          ],
+          "duration": 276,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "User Lifecycle & Password Recovery (e2e) Flow: Alumno Registration & Activation Debe completar el flujo de registro y activación de un Alumno",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1773427769443,
+          "status": "passed",
+          "title": "Debe completar el flujo de registro y activación de un Alumno"
+        },
+        {
+          "ancestorTitles": [
+            "User Lifecycle & Password Recovery (e2e)",
+            "Flow: Password Recovery (Email)"
+          ],
+          "duration": 56,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "User Lifecycle & Password Recovery (e2e) Flow: Password Recovery (Email) Admin (con email) debe recibir token de recuperación",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427769720,
+          "status": "passed",
+          "title": "Admin (con email) debe recibir token de recuperación"
+        },
+        {
+          "ancestorTitles": [
+            "User Lifecycle & Password Recovery (e2e)",
+            "Flow: Password Recovery (Email)"
+          ],
+          "duration": 68,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "User Lifecycle & Password Recovery (e2e) Flow: Password Recovery (Email) Profesor (con email) debe recibir token de recuperación",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427769776,
+          "status": "passed",
+          "title": "Profesor (con email) debe recibir token de recuperación"
+        },
+        {
+          "ancestorTitles": [
+            "User Lifecycle & Password Recovery (e2e)",
+            "Flow: Force Password Reset (Temporal Password)"
+          ],
+          "duration": 376,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "User Lifecycle & Password Recovery (e2e) Flow: Force Password Reset (Temporal Password) Debe completar el flujo de reseteo forzado y cambio de contraseña",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1773427769845,
+          "status": "passed",
+          "title": "Debe completar el flujo de reseteo forzado y cambio de contraseña"
+        },
+        {
+          "ancestorTitles": [
+            "User Lifecycle & Password Recovery (e2e)",
+            "Flow: Force Password Reset (Temporal Password)"
+          ],
+          "duration": 75,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "User Lifecycle & Password Recovery (e2e) Flow: Force Password Reset (Temporal Password) Admin debe poder resetear password de Profesor (con email opcional)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427770222,
+          "status": "passed",
+          "title": "Admin debe poder resetear password de Profesor (con email opcional)"
+        },
+        {
+          "ancestorTitles": [
+            "User Lifecycle & Password Recovery (e2e)",
+            "Security Boundaries (Isolation Tests)"
+          ],
+          "duration": 275,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "User Lifecycle & Password Recovery (e2e) Security Boundaries (Isolation Tests) Profesor NO puede activar un alumno de otro profesor",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427770298,
+          "status": "passed",
+          "title": "Profesor NO puede activar un alumno de otro profesor"
+        },
+        {
+          "ancestorTitles": [
+            "User Lifecycle & Password Recovery (e2e)",
+            "Security Boundaries (Isolation Tests)"
+          ],
+          "duration": 269,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "User Lifecycle & Password Recovery (e2e) Security Boundaries (Isolation Tests) Profesor NO puede resetear password de un alumno ajeno",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427770574,
+          "status": "passed",
+          "title": "Profesor NO puede resetear password de un alumno ajeno"
+        },
+        {
+          "ancestorTitles": [
+            "User Lifecycle & Password Recovery (e2e)",
+            "Security Boundaries (Isolation Tests)"
+          ],
+          "duration": 304,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "User Lifecycle & Password Recovery (e2e) Security Boundaries (Isolation Tests) Alumno NO puede acceder a endpoints de Admin",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427770844,
+          "status": "passed",
+          "title": "Alumno NO puede acceder a endpoints de Admin"
+        },
+        {
+          "ancestorTitles": [
+            "PedidoController (e2e)",
+            "Ciclo de Vida del Pedido"
+          ],
+          "duration": 373,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "PedidoController (e2e) Ciclo de Vida del Pedido E2E-PED-01-CRE: Crear pedido exitoso",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1773427771173,
+          "status": "passed",
+          "title": "E2E-PED-01-CRE: Crear pedido exitoso"
+        },
+        {
+          "ancestorTitles": [
+            "PedidoController (e2e)",
+            "Ciclo de Vida del Pedido"
+          ],
+          "duration": 489,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "PedidoController (e2e) Ciclo de Vida del Pedido E2E-PED-09-GET: Listar pedidos",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1773427771547,
+          "status": "passed",
+          "title": "E2E-PED-09-GET: Listar pedidos"
+        },
+        {
+          "ancestorTitles": [
+            "PedidoController (e2e)",
+            "Ciclo de Vida del Pedido"
+          ],
+          "duration": 707,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "PedidoController (e2e) Ciclo de Vida del Pedido E2E-PED-10-GET-SORT: Ordena por fechaCreacion DESC y mantiene PaginatedResponseDto",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 9,
+          "retryReasons": [],
+          "startAt": 1773427772038,
+          "status": "passed",
+          "title": "E2E-PED-10-GET-SORT: Ordena por fechaCreacion DESC y mantiene PaginatedResponseDto"
+        },
+        {
+          "ancestorTitles": [
+            "PedidoController (e2e)",
+            "Ciclo de Vida del Pedido"
+          ],
+          "duration": 226,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "PedidoController (e2e) Ciclo de Vida del Pedido E2E-PED-11-GET-SORT-INVALID: Rechaza campos de ordenación no permitidos",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 4,
+          "retryReasons": [],
+          "startAt": 1773427772746,
+          "status": "passed",
+          "title": "E2E-PED-11-GET-SORT-INVALID: Rechaza campos de ordenación no permitidos"
+        },
+        {
+          "ancestorTitles": [
+            "PedidoController (e2e)",
+            "Ciclo de Vida del Pedido"
+          ],
+          "duration": 403,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "PedidoController (e2e) Ciclo de Vida del Pedido E2E-PED-13-UPD-FENT: Actualizar fecha de entrega",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1773427772973,
+          "status": "passed",
+          "title": "E2E-PED-13-UPD-FENT: Actualizar fecha de entrega"
+        },
+        {
+          "ancestorTitles": [
+            "PedidoController (e2e)",
+            "Ciclo de Vida del Pedido"
+          ],
+          "duration": 591,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "PedidoController (e2e) Ciclo de Vida del Pedido E2E-PED-14-CAN-OK: Cancelar pedido",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1773427773377,
+          "status": "passed",
+          "title": "E2E-PED-14-CAN-OK: Cancelar pedido"
+        },
+        {
+          "ancestorTitles": [
+            "PedidoController (e2e)",
+            "Ciclo de Vida del Pedido"
+          ],
+          "duration": 549,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "PedidoController (e2e) Ciclo de Vida del Pedido E2E-PED-17-DEL-OK: Eliminar pedido",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427773969,
+          "status": "passed",
+          "title": "E2E-PED-17-DEL-OK: Eliminar pedido"
+        },
+        {
+          "ancestorTitles": [
+            "ProductoProveedorController (e2e)",
+            "Precios e Historial"
+          ],
+          "duration": 40,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "ProductoProveedorController (e2e) Precios e Historial PATCH /api/v1/producto-proveedor/:id/precio - Debe devolver 404 para ID inexistente",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427774555,
+          "status": "passed",
+          "title": "PATCH /api/v1/producto-proveedor/:id/precio - Debe devolver 404 para ID inexistente"
+        },
+        {
+          "ancestorTitles": [
+            "ProductoProveedorController (e2e)",
+            "Precios e Historial"
+          ],
+          "duration": 32,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "ProductoProveedorController (e2e) Precios e Historial GET /api/v1/producto-proveedor/:id/historial - Debe devolver 404 para ID inexistente",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427774596,
+          "status": "passed",
+          "title": "GET /api/v1/producto-proveedor/:id/historial - Debe devolver 404 para ID inexistente"
+        },
+        {
+          "ancestorTitles": ["ProductoController (e2e)", "EAN-13 y Creación"],
+          "duration": 33,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "ProductoController (e2e) EAN-13 y Creación E2E-PRO-26-EAN-GEN: Generar un código EAN-13 único",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 4,
+          "retryReasons": [],
+          "startAt": 1773427774664,
+          "status": "passed",
+          "title": "E2E-PRO-26-EAN-GEN: Generar un código EAN-13 único"
+        },
+        {
+          "ancestorTitles": ["ProductoController (e2e)", "EAN-13 y Creación"],
+          "duration": 112,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "ProductoController (e2e) EAN-13 y Creación E2E-PRO-01-CRE: Crear producto con generación automática de EAN-13",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 4,
+          "retryReasons": [],
+          "startAt": 1773427774698,
+          "status": "passed",
+          "title": "E2E-PRO-01-CRE: Crear producto con generación automática de EAN-13"
+        },
+        {
+          "ancestorTitles": ["ProductoController (e2e)", "EAN-13 y Creación"],
+          "duration": 76,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "ProductoController (e2e) EAN-13 y Creación E2E-PRO-05-CRE-ERR: Error 400 por código de barras duplicado",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427774811,
+          "status": "passed",
+          "title": "E2E-PRO-05-CRE-ERR: Error 400 por código de barras duplicado"
+        },
+        {
+          "ancestorTitles": ["ProductoController (e2e)", "Listado y Filtros"],
+          "duration": 186,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "ProductoController (e2e) Listado y Filtros E2E-PRO-10-GET-SRCH: Búsqueda por searchTerm",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 4,
+          "retryReasons": [],
+          "startAt": 1773427774888,
+          "status": "passed",
+          "title": "E2E-PRO-10-GET-SRCH: Búsqueda por searchTerm"
+        },
+        {
+          "ancestorTitles": [
+            "ProductoController (e2e)",
+            "Edición y Eliminación"
+          ],
+          "duration": 186,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "ProductoController (e2e) Edición y Eliminación E2E-PRO-17-UPD-BAS: Actualizar campos básicos",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 4,
+          "retryReasons": [],
+          "startAt": 1773427775075,
+          "status": "passed",
+          "title": "E2E-PRO-17-UPD-BAS: Actualizar campos básicos"
+        },
+        {
+          "ancestorTitles": [
+            "ProductoController (e2e)",
+            "Edición y Eliminación"
+          ],
+          "duration": 186,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "ProductoController (e2e) Edición y Eliminación E2E-PRO-22-DEL: Eliminar producto",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427775261,
+          "status": "passed",
+          "title": "E2E-PRO-22-DEL: Eliminar producto"
+        },
+        {
+          "ancestorTitles": [
+            "ProfesorController (e2e)",
+            "Registro de Profesores"
+          ],
+          "duration": 69,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "ProfesorController (e2e) Registro de Profesores POST /profesores/register - Debe registrar un nuevo profesor (201)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1773427775482,
+          "status": "passed",
+          "title": "POST /profesores/register - Debe registrar un nuevo profesor (201)"
+        },
+        {
+          "ancestorTitles": [
+            "ProfesorController (e2e)",
+            "Gestión de Slots (Admin/Profesor)"
+          ],
+          "duration": 71,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "ProfesorController (e2e) Gestión de Slots (Admin/Profesor) POST /profesores/slots - Debe crear un slot para el profesor (201)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427775552,
+          "status": "passed",
+          "title": "POST /profesores/slots - Debe crear un slot para el profesor (201)"
+        },
+        {
+          "ancestorTitles": ["ProfesorController (e2e)", "Gestión de Alumnos"],
+          "duration": 66,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "ProfesorController (e2e) Gestión de Alumnos GET /profesores/alumnos - Debe listar los alumnos del profesor (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1773427775624,
+          "status": "passed",
+          "title": "GET /profesores/alumnos - Debe listar los alumnos del profesor (200)"
+        },
+        {
+          "ancestorTitles": [
+            "ProveedorController (e2e)",
+            "CRUD de Proveedores"
+          ],
+          "duration": 138,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "ProveedorController (e2e) CRUD de Proveedores POST /proveedor - Debe crear un proveedor (201)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427775717,
+          "status": "passed",
+          "title": "POST /proveedor - Debe crear un proveedor (201)"
+        },
+        {
+          "ancestorTitles": [
+            "ProveedorController (e2e)",
+            "CRUD de Proveedores"
+          ],
+          "duration": 181,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "ProveedorController (e2e) CRUD de Proveedores POST /proveedor - Debe fallar si el nombre ya existe (400)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427775856,
+          "status": "passed",
+          "title": "POST /proveedor - Debe fallar si el nombre ya existe (400)"
+        },
+        {
+          "ancestorTitles": [
+            "ProveedorController (e2e)",
+            "CRUD de Proveedores"
+          ],
+          "duration": 133,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "ProveedorController (e2e) CRUD de Proveedores POST /proveedor - Debe fallar si el NIF ya existe (400)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427776038,
+          "status": "passed",
+          "title": "POST /proveedor - Debe fallar si el NIF ya existe (400)"
+        },
+        {
+          "ancestorTitles": [
+            "ProveedorController (e2e)",
+            "CRUD de Proveedores"
+          ],
+          "duration": 111,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "ProveedorController (e2e) CRUD de Proveedores GET /proveedor - Debe listar proveedores (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427776172,
+          "status": "passed",
+          "title": "GET /proveedor - Debe listar proveedores (200)"
+        },
+        {
+          "ancestorTitles": [
+            "ProveedorController (e2e)",
+            "CRUD de Proveedores"
+          ],
+          "duration": 122,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "ProveedorController (e2e) CRUD de Proveedores PATCH /proveedor/:id - Debe actualizar proveedor (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427776284,
+          "status": "passed",
+          "title": "PATCH /proveedor/:id - Debe actualizar proveedor (200)"
+        },
+        {
+          "ancestorTitles": [
+            "ProveedorController (e2e)",
+            "CRUD de Proveedores"
+          ],
+          "duration": 143,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "ProveedorController (e2e) CRUD de Proveedores DELETE /proveedor/:id - Debe eliminar proveedor (204)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427776407,
+          "status": "passed",
+          "title": "DELETE /proveedor/:id - Debe eliminar proveedor (204)"
+        },
+        {
+          "ancestorTitles": [
+            "ProveedorController (e2e)",
+            "CRUD de Proveedores"
+          ],
+          "duration": 96,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "ProveedorController (e2e) CRUD de Proveedores DELETE /proveedor/:id - Debe fallar si tiene pedidos (400)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427776551,
+          "status": "passed",
+          "title": "DELETE /proveedor/:id - Debe fallar si tiene pedidos (400)"
+        },
+        {
+          "ancestorTitles": ["RBAC System (e2e)", "Acceso Base (ALUMNO)"],
+          "duration": 419,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "RBAC System (e2e) Acceso Base (ALUMNO) Debe permitir a un ALUMNO ver productos (Permiso por defecto)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427776708,
+          "status": "passed",
+          "title": "Debe permitir a un ALUMNO ver productos (Permiso por defecto)"
+        },
+        {
+          "ancestorTitles": ["RBAC System (e2e)", "Acceso Base (ALUMNO)"],
+          "duration": 394,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "RBAC System (e2e) Acceso Base (ALUMNO) Debe denegar a un ALUMNO listar usuarios (Sin permiso)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427777128,
+          "status": "passed",
+          "title": "Debe denegar a un ALUMNO listar usuarios (Sin permiso)"
+        },
+        {
+          "ancestorTitles": ["RBAC System (e2e)", "Overrides de Permisos"],
+          "duration": 497,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "RBAC System (e2e) Overrides de Permisos Debe permitir listar usuarios tras añadir el permiso adicional",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427777523,
+          "status": "passed",
+          "title": "Debe permitir listar usuarios tras añadir el permiso adicional"
+        },
+        {
+          "ancestorTitles": ["RBAC System (e2e)", "Overrides de Permisos"],
+          "duration": 572,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "RBAC System (e2e) Overrides de Permisos Debe denegar listar productos tras excluir el permiso",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427778021,
+          "status": "passed",
+          "title": "Debe denegar listar productos tras excluir el permiso"
+        },
+        {
+          "ancestorTitles": ["RBAC System (e2e)", "Overrides de Permisos"],
+          "duration": 458,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "RBAC System (e2e) Overrides de Permisos Debe restaurar el acceso tras quitar la exclusión de productos",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427778594,
+          "status": "passed",
+          "title": "Debe restaurar el acceso tras quitar la exclusión de productos"
+        },
+        {
+          "ancestorTitles": [
+            "RecepcionController (e2e)",
+            "Procesar Recepción (Batch ACID)"
+          ],
+          "duration": 48,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "RecepcionController (e2e) Procesar Recepción (Batch ACID) POST /recepcion - Debe fallar con body vacío (400) por DTO multipedido",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427779126,
+          "status": "passed",
+          "title": "POST /recepcion - Debe fallar con body vacío (400) por DTO multipedido"
+        },
+        {
+          "ancestorTitles": [
+            "RecepcionController (e2e)",
+            "Procesar Recepción (Batch ACID)"
+          ],
+          "duration": 91,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "RecepcionController (e2e) Procesar Recepción (Batch ACID) POST /recepcion - Debe fallar si el pedidoId no existe (404)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427779175,
+          "status": "passed",
+          "title": "POST /recepcion - Debe fallar si el pedidoId no existe (404)"
+        },
+        {
+          "ancestorTitles": ["RecetaController (e2e)", "CRUD de Recetas"],
+          "duration": 555,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "RecetaController (e2e) CRUD de Recetas POST /recetas - Debe crear una receta (201)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427779301,
+          "status": "passed",
+          "title": "POST /recetas - Debe crear una receta (201)"
+        },
+        {
+          "ancestorTitles": ["RecetaController (e2e)", "CRUD de Recetas"],
+          "duration": 589,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "RecetaController (e2e) CRUD de Recetas GET /recetas - Debe listar recetas (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427779858,
+          "status": "passed",
+          "title": "GET /recetas - Debe listar recetas (200)"
+        },
+        {
+          "ancestorTitles": ["RecetaController (e2e)", "CRUD de Recetas"],
+          "duration": 335,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "RecetaController (e2e) CRUD de Recetas PATCH /recetas/:id - Debe actualizar receta (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427780448,
+          "status": "passed",
+          "title": "PATCH /recetas/:id - Debe actualizar receta (200)"
+        },
+        {
+          "ancestorTitles": ["RecetaController (e2e)", "CRUD de Recetas"],
+          "duration": 563,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "RecetaController (e2e) CRUD de Recetas DELETE /recetas/:id - Debe eliminar receta (204)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427780784,
+          "status": "passed",
+          "title": "DELETE /recetas/:id - Debe eliminar receta (204)"
+        },
+        {
+          "ancestorTitles": ["RecetaController (e2e)", "CRUD de Recetas"],
+          "duration": 648,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "RecetaController (e2e) CRUD de Recetas POST /recetas/duplicate - Debe duplicar una receta (201)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1773427781348,
+          "status": "passed",
+          "title": "POST /recetas/duplicate - Debe duplicar una receta (201)"
+        },
+        {
+          "ancestorTitles": [
+            "UbicacionController (e2e)",
+            "CRUD de Ubicaciones"
+          ],
+          "duration": 91,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "UbicacionController (e2e) CRUD de Ubicaciones POST /ubicacion - Debe crear una ubicación (201)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1773427782027,
+          "status": "passed",
+          "title": "POST /ubicacion - Debe crear una ubicación (201)"
+        },
+        {
+          "ancestorTitles": [
+            "UbicacionController (e2e)",
+            "CRUD de Ubicaciones"
+          ],
+          "duration": 74,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "UbicacionController (e2e) CRUD de Ubicaciones GET /ubicacion - Debe listar ubicaciones (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1773427782119,
+          "status": "passed",
+          "title": "GET /ubicacion - Debe listar ubicaciones (200)"
+        },
+        {
+          "ancestorTitles": [
+            "UbicacionController (e2e)",
+            "CRUD de Ubicaciones"
+          ],
+          "duration": 99,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "UbicacionController (e2e) CRUD de Ubicaciones GET /ubicacion/:id - Debe obtener una ubicación (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1773427782194,
+          "status": "passed",
+          "title": "GET /ubicacion/:id - Debe obtener una ubicación (200)"
+        },
+        {
+          "ancestorTitles": [
+            "UbicacionController (e2e)",
+            "CRUD de Ubicaciones"
+          ],
+          "duration": 102,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "UbicacionController (e2e) CRUD de Ubicaciones PATCH /ubicacion/:id - Debe actualizar una ubicación (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1773427782294,
+          "status": "passed",
+          "title": "PATCH /ubicacion/:id - Debe actualizar una ubicación (200)"
+        },
+        {
+          "ancestorTitles": [
+            "UbicacionController (e2e)",
+            "CRUD de Ubicaciones"
+          ],
+          "duration": 91,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "UbicacionController (e2e) CRUD de Ubicaciones DELETE /ubicacion/:id - Debe eliminar una ubicación (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427782397,
+          "status": "passed",
+          "title": "DELETE /ubicacion/:id - Debe eliminar una ubicación (200)"
+        },
+        {
+          "ancestorTitles": [
+            "UbicacionController (e2e)",
+            "CRUD de Ubicaciones"
+          ],
+          "duration": 99,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "UbicacionController (e2e) CRUD de Ubicaciones POST /ubicacion/:id/restore - Debe restaurar una ubicación (201)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427782489,
+          "status": "passed",
+          "title": "POST /ubicacion/:id/restore - Debe restaurar una ubicación (201)"
+        },
+        {
+          "ancestorTitles": [
+            "UsuarioController (e2e)",
+            "Perfil (Auto-servicio)"
+          ],
+          "duration": 49,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "UsuarioController (e2e) Perfil (Auto-servicio) GET /usuarios/perfil - Debe obtener mi perfil (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1773427782618,
+          "status": "passed",
+          "title": "GET /usuarios/perfil - Debe obtener mi perfil (200)"
+        },
+        {
+          "ancestorTitles": [
+            "UsuarioController (e2e)",
+            "Perfil (Auto-servicio)"
+          ],
+          "duration": 87,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "UsuarioController (e2e) Perfil (Auto-servicio) PATCH /usuarios/perfil - Debe actualizar mi nombre de usuario (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427782668,
+          "status": "passed",
+          "title": "PATCH /usuarios/perfil - Debe actualizar mi nombre de usuario (200)"
+        },
+        {
+          "ancestorTitles": [
+            "UsuarioController (e2e)",
+            "Perfil (Auto-servicio)"
+          ],
+          "duration": 180,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "UsuarioController (e2e) Perfil (Auto-servicio) PATCH /usuarios/perfil/password - Debe cambiar contraseña validando la anterior (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427782756,
+          "status": "passed",
+          "title": "PATCH /usuarios/perfil/password - Debe cambiar contraseña validando la anterior (200)"
+        },
+        {
+          "ancestorTitles": [
+            "UsuarioController (e2e)",
+            "Administración (Solo Admin)"
+          ],
+          "duration": 144,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "UsuarioController (e2e) Administración (Solo Admin) GET /usuarios - Debe listar usuarios (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1773427782937,
+          "status": "passed",
+          "title": "GET /usuarios - Debe listar usuarios (200)"
+        },
+        {
+          "ancestorTitles": [
+            "UsuarioController (e2e)",
+            "Administración (Solo Admin)"
+          ],
+          "duration": 96,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "UsuarioController (e2e) Administración (Solo Admin) GET /usuarios/:id - Debe obtener un usuario (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427783082,
+          "status": "passed",
+          "title": "GET /usuarios/:id - Debe obtener un usuario (200)"
+        },
+        {
+          "ancestorTitles": [
+            "UsuarioController (e2e)",
+            "Administración (Solo Admin)"
+          ],
+          "duration": 81,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "UsuarioController (e2e) Administración (Solo Admin) PATCH /usuarios/:id/activar - Debe cambiar estado activo (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427783179,
+          "status": "passed",
+          "title": "PATCH /usuarios/:id/activar - Debe cambiar estado activo (200)"
+        },
+        {
+          "ancestorTitles": [
+            "UsuarioController (e2e)",
+            "Administración (Solo Admin)"
+          ],
+          "duration": 81,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "UsuarioController (e2e) Administración (Solo Admin) PATCH /usuarios/:id/rol - Debe cambiar el rol (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427783261,
+          "status": "passed",
+          "title": "PATCH /usuarios/:id/rol - Debe cambiar el rol (200)"
+        },
+        {
+          "ancestorTitles": [
+            "UsuarioController (e2e)",
+            "Administración (Solo Admin)"
+          ],
+          "duration": 45,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "UsuarioController (e2e) Administración (Solo Admin) GET /usuarios/:id - Debe fallar con UUID inválido (400)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 0,
+          "retryReasons": [],
+          "startAt": 1773427783342,
+          "status": "passed",
+          "title": "GET /usuarios/:id - Debe fallar con UUID inválido (400)"
+        }
+      ],
+      "endTime": 1773427783414,
+      "message": "\u001b[1m\u001b[31m  \u001b[1m● \u001b[22m\u001b[1mAlbaranController (e2e) › CRUD de Albaranes (api/v1/albaranes) › E2E-ALB-09-LST: Listado de albaranes\u001b[39m\u001b[22m\n\n    \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\n    Expected: \u001b[32mtrue\u001b[39m\n    Received: \u001b[31mfalse\u001b[39m\n\u001b[2m\u001b[22m\n\u001b[2m    \u001b[0m \u001b[90m 56 |\u001b[39m\u001b[22m\n\u001b[2m     \u001b[90m 57 |\u001b[39m       expect(response\u001b[33m.\u001b[39mstatus)\u001b[33m.\u001b[39mtoBe(\u001b[35m200\u001b[39m)\u001b[33m;\u001b[39m\u001b[22m\n\u001b[2m    \u001b[31m\u001b[1m>\u001b[22m\u001b[2m\u001b[39m\u001b[90m 58 |\u001b[39m       expect(\u001b[33mArray\u001b[39m\u001b[33m.\u001b[39misArray(response\u001b[33m.\u001b[39mbody\u001b[33m.\u001b[39mdata))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\u001b[22m\n\u001b[2m     \u001b[90m    |\u001b[39m                                                 \u001b[31m\u001b[1m^\u001b[22m\u001b[2m\u001b[39m\u001b[22m\n\u001b[2m     \u001b[90m 59 |\u001b[39m       expect(response\u001b[33m.\u001b[39mbody\u001b[33m.\u001b[39mdata\u001b[33m.\u001b[39mlength)\u001b[33m.\u001b[39mtoBeGreaterThan(\u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\u001b[22m\n\u001b[2m     \u001b[90m 60 |\u001b[39m     })\u001b[33m;\u001b[39m\u001b[22m\n\u001b[2m     \u001b[90m 61 |\u001b[39m\u001b[0m\u001b[22m\n\u001b[2m\u001b[22m\n\u001b[2m      \u001b[2mat Object.<anonymous> (\u001b[22m\u001b[2mtest/e2e/albaran.e2e-spec.ts\u001b[2m:58:49)\u001b[22m\u001b[2m\u001b[22m\n\n\u001b[1m\u001b[31m  \u001b[1m● \u001b[22m\u001b[1mIncidenciaController (e2e) › Flujo CRUD de Incidencias › GET /incidencias - Debe listar las incidencias (200)\u001b[39m\u001b[22m\n\n    \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\n    Expected: \u001b[32mtrue\u001b[39m\n    Received: \u001b[31mfalse\u001b[39m\n\u001b[2m\u001b[22m\n\u001b[2m    \u001b[0m \u001b[90m 179 |\u001b[39m       expect(response\u001b[33m.\u001b[39mstatus)\u001b[33m.\u001b[39mtoBe(\u001b[35m200\u001b[39m)\u001b[33m;\u001b[39m\u001b[22m\n\u001b[2m     \u001b[90m 180 |\u001b[39m       \u001b[36mconst\u001b[39m resBody \u001b[33m=\u001b[39m response\u001b[33m.\u001b[39mbody\u001b[33m.\u001b[39mdata\u001b[33m;\u001b[39m\u001b[22m\n\u001b[2m    \u001b[31m\u001b[1m>\u001b[22m\u001b[2m\u001b[39m\u001b[90m 181 |\u001b[39m       expect(\u001b[33mArray\u001b[39m\u001b[33m.\u001b[39misArray(resBody))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\u001b[22m\n\u001b[2m     \u001b[90m     |\u001b[39m                                      \u001b[31m\u001b[1m^\u001b[22m\u001b[2m\u001b[39m\u001b[22m\n\u001b[2m     \u001b[90m 182 |\u001b[39m       expect(resBody\u001b[33m.\u001b[39mlength)\u001b[33m.\u001b[39mtoBeGreaterThan(\u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\u001b[22m\n\u001b[2m     \u001b[90m 183 |\u001b[39m     })\u001b[33m;\u001b[39m\u001b[22m\n\u001b[2m     \u001b[90m 184 |\u001b[39m\u001b[0m\u001b[22m\n\u001b[2m\u001b[22m\n\u001b[2m      \u001b[2mat Object.<anonymous> (\u001b[22m\u001b[2mtest/e2e/incidencias.e2e-spec.ts\u001b[2m:181:38)\u001b[22m\u001b[2m\u001b[22m\n\n\u001b[1m\u001b[31m  \u001b[1m● \u001b[22m\u001b[1mInventarioController (e2e) › CRUD de Inventario › E2E-INV-06-GET: Listar inventario\u001b[39m\u001b[22m\n\n    \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\n    Expected: \u001b[32mtrue\u001b[39m\n    Received: \u001b[31mfalse\u001b[39m\n\u001b[2m\u001b[22m\n\u001b[2m    \u001b[0m \u001b[90m 100 |\u001b[39m\u001b[22m\n\u001b[2m     \u001b[90m 101 |\u001b[39m       expect(response\u001b[33m.\u001b[39mstatus)\u001b[33m.\u001b[39mtoBe(\u001b[35m200\u001b[39m)\u001b[33m;\u001b[39m\u001b[22m\n\u001b[2m    \u001b[31m\u001b[1m>\u001b[22m\u001b[2m\u001b[39m\u001b[90m 102 |\u001b[39m       expect(\u001b[33mArray\u001b[39m\u001b[33m.\u001b[39misArray(response\u001b[33m.\u001b[39mbody\u001b[33m.\u001b[39mdata))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\u001b[22m\n\u001b[2m     \u001b[90m     |\u001b[39m                                                 \u001b[31m\u001b[1m^\u001b[22m\u001b[2m\u001b[39m\u001b[22m\n\u001b[2m     \u001b[90m 103 |\u001b[39m       expect(response\u001b[33m.\u001b[39mbody\u001b[33m.\u001b[39mdata\u001b[33m.\u001b[39mlength)\u001b[33m.\u001b[39mtoBeGreaterThan(\u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\u001b[22m\n\u001b[2m     \u001b[90m 104 |\u001b[39m     })\u001b[33m;\u001b[39m\u001b[22m\n\u001b[2m     \u001b[90m 105 |\u001b[39m\u001b[0m\u001b[22m\n\u001b[2m\u001b[22m\n\u001b[2m      \u001b[2mat Object.<anonymous> (\u001b[22m\u001b[2mtest/e2e/inventario.e2e-spec.ts\u001b[2m:102:49)\u001b[22m\u001b[2m\u001b[22m\n",
+      "name": "C:\\Users\\p51149087\\projects\\SmartEconomat\\backend\\smart-economat-backend\\test\\e2e\\all.e2e-spec.ts",
+      "startTime": 1773427714587,
+      "status": "failed",
+      "summary": ""
+    }
+  ],
+  "wasInterrupted": false
+}

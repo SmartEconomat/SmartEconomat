@@ -8,8 +8,8 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
-  ParseUUIDPipe,
 } from '@nestjs/common';
+import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import {
   ApiTags,
   ApiOperation,
@@ -24,14 +24,12 @@ import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveed
 import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.entity';
 import { SearchProductoProveedorDto } from '../dto/search-producto-proveedor.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
-
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/role.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
-import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
 @ApiTags('Producto Proveedor')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('producto-proveedor')
 export class ProductoProveedorController {
   constructor(
@@ -39,7 +37,7 @@ export class ProductoProveedorController {
   ) {}
 
   @Patch(':id/precio')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('productos:editar')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
@@ -59,7 +57,7 @@ export class ProductoProveedorController {
     description: 'docs.EL_PRECIO_ES_IGUAL_AL_ACTUAL',
   })
   async updatePrecio(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() updatePrecioProductoDto: UpdatePrecioProductoDto
   ): Promise<ProductoProveedor> {
     return this.productoProveedorService.updatePrecio(
@@ -69,7 +67,7 @@ export class ProductoProveedorController {
   }
 
   @Get('search')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('productos:listar')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Buscar relaciones producto-proveedor (autocomplete)',
@@ -79,7 +77,7 @@ export class ProductoProveedorController {
   }
 
   @Get(':id/historial')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions('productos:ver')
   @ApiOperation({
     summary: 'Obtener el historial de precios de un producto proveedor',
   })
@@ -96,7 +94,7 @@ export class ProductoProveedorController {
     description: 'docs.PRODUCTO_PROVEEDOR_NO_ENCONTRADO',
   })
   async getHistorial(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDv7Pipe) id: string,
     @Query() query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<HistorialPrecio>> {
     return this.productoProveedorService.getHistorial(id, query);

@@ -20,7 +20,7 @@ import { UppercaseStringTransformer } from '../../../common/transformers/upperca
 import { StringToDateTransformer } from '../../../common/transformers/string-to-date.transformer';
 
 export class CreateProductoDto {
-  @Transform(TrimStringTransformer.transform)
+  @Transform((params) => TrimStringTransformer.transform(params))
   @IsString({
     message: i18nValidationMessage(
       'validation.EL_NOMBRE_DEBE_SER_UNA_CADENA_DE_TEXTO'
@@ -37,7 +37,7 @@ export class CreateProductoDto {
   nombre: string;
 
   @IsOptional()
-  @Transform(TrimStringTransformer.transform)
+  @Transform((params) => TrimStringTransformer.transform(params))
   @IsString({
     message: i18nValidationMessage(
       'validation.LA_MARCA_DEBE_SER_UNA_CADENA_DE_TEXTO'
@@ -51,7 +51,7 @@ export class CreateProductoDto {
   marca?: string;
 
   @IsOptional()
-  @Transform(TrimStringTransformer.transform)
+  @Transform((params) => TrimStringTransformer.transform(params))
   @IsString({
     message: i18nValidationMessage(
       'validation.LA_DESCRIPCI_N_DEBE_SER_UNA_CADENA_DE_TE'
@@ -73,7 +73,7 @@ export class CreateProductoDto {
   unidad?: UnidadMedida;
 
   @IsOptional()
-  @Transform(StringToDateTransformer.transform)
+  @Transform((params) => StringToDateTransformer.transform(params))
   @Type(() => Date)
   @IsDate({
     message: i18nValidationMessage(
@@ -83,7 +83,7 @@ export class CreateProductoDto {
   fechaCaducidad?: Date;
 
   @IsOptional()
-  @Transform(TrimStringTransformer.transform)
+  @Transform((params) => TrimStringTransformer.transform(params))
   @IsString({
     message: i18nValidationMessage(
       'validation.LA_RUTA_DE_LA_IMAGEN_DEBE_SER_UNA_CADENA'
@@ -105,7 +105,7 @@ export class CreateProductoDto {
   tipo?: TipoProducto;
 
   @IsOptional()
-  @Transform(UppercaseStringTransformer.transform)
+  @Transform((params) => UppercaseStringTransformer.transform(params))
   @IsString({
     message: i18nValidationMessage(
       'validation.EL_C_DIGO_DE_BARRAS_DEBE_SER_UNA_CADENA'

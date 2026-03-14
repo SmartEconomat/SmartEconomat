@@ -132,6 +132,7 @@ export class ProfesorService {
       await manager.save(alumno.user);
 
       return {
+        status: alumno.user.status,
         message: I18nHelper.translate('messages.ALUMNO_ACTIVADO_CORRECTAMENTE'),
       };
     });

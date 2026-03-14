@@ -4,12 +4,12 @@ import { TrimStringTransformer } from '../../../common/transformers/trim-string.
 import { CreateRecetaDto } from './create-receta.dto';
 
 export class UpdateRecetaDto extends PartialType(CreateRecetaDto) {
-  @Transform(TrimStringTransformer.transform)
+  @Transform((params) => TrimStringTransformer.transform(params))
   nombre?: string;
 
-  @Transform(TrimStringTransformer.transform)
+  @Transform((params) => TrimStringTransformer.transform(params))
   instrucciones?: string;
 
-  @Transform(TrimStringTransformer.transform)
+  @Transform((params) => TrimStringTransformer.transform(params))
   tiempoPreparacion?: string;
 }

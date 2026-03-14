@@ -10,27 +10,19 @@ import {
   HttpStatus,
   UseGuards,
   ParseUUIDPipe,
-  Query,
   Request,
 } from '@nestjs/common';
 import { ProductoService } from '../service/producto.service';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiQuery,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { ProductFilterDto } from '../dto/product-filter.dto';
 import { CreateProductoDto } from '../dto/create-producto.dto';
 import { UpdateProductoDto } from '../dto/update-producto.dto';
 import { Producto } from '../producto.entity/producto.entity';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
-
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
-import { rolUsuario } from '../../usuario/enums/usuario.enums';
 
 @ApiTags('Productos')
 @UseGuards(JwtAuthGuard, PermisosGuard)
@@ -39,7 +31,7 @@ export class ProductoController {
   constructor(private readonly productoService: ProductoService) {}
 
   @Get('generar-ean13')
-  @RequirePermissions('productos:crear')
+  @RequirePermissions('productos:generar_ean13')
   @ApiOperation({ summary: 'Generar un código EAN-13 único' })
   @ApiResponse({
     status: 200,
@@ -77,12 +69,12 @@ export class ProductoController {
   @Get()
   @RequirePermissions('productos:listar')
   @ApiOperation({ summary: 'Listar productos con filtros y paginación' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'searchTerm', required: false, type: String })
-  @ApiQuery({ name: 'codigoBarras', required: false, type: String })
   findAll(
-    @Query() query: ProductFilterDto
+    @SortableFields(
+      ['nombre', 'codigoBarras', 'tipo', 'marca', 'createdAt', 'updatedAt'],
+      ProductFilterDto
+    )
+    query: ProductFilterDto
   ): Promise<PaginatedResponseDto<Producto>> {
     return this.productoService.findAll(query);
   }

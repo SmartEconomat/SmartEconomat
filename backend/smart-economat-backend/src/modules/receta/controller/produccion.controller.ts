@@ -10,13 +10,16 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { ProduccionService } from '../service/produccion.service';
 import { EjecutarProduccionDto } from '../dto/ejecutar-produccion.dto';
 import { ProduccionLote } from '../produccion-lote.entity/produccion-lote.entity';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
 @ApiTags('Producción')
 @UseGuards(JwtAuthGuard, PermisosGuard)
@@ -47,8 +50,17 @@ export class ProduccionController {
   @RequirePermissions('recetas:listar')
   @ApiOperation({ summary: 'Listar todos los lotes de producción' })
   @ApiResponse({ status: 200, type: [ProduccionLote] })
-  findAll(): Promise<ProduccionLote[]> {
-    return this.produccionService.findAll();
+  findAll(
+    @SortableFields([
+      'fechaProduccion',
+      'fechaCaducidad',
+      'cantidadProducida',
+      'costeTotalReal',
+      'createdAt',
+    ])
+    query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<ProduccionLote>> {
+    return this.produccionService.findAll(query);
   }
 
   @Get(':id')

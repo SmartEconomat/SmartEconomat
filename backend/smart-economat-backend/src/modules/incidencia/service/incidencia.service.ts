@@ -41,8 +41,10 @@ export class IncidenciaService {
     return this.incidenciaRepository.save(incidencia);
   }
 
-  async findAll(): Promise<Incidencia[]> {
-    return this.incidenciaRepository.findAllWithRelations();
+  async findAll(
+    query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<Incidencia>> {
+    return this.incidenciaRepository.findAllPaginated(query);
   }
 
   async findOne(id: string): Promise<Incidencia> {
@@ -111,7 +113,6 @@ export class IncidenciaService {
       throw new NotFoundException(I18nHelper.getError('RECEPTION_NOT_FOUND'));
     }
 
-    // Marcar recepción con incidencia
     recepcion.incidencia = true;
     await this.recepcionRepository.save(recepcion);
 
@@ -137,7 +138,6 @@ export class IncidenciaService {
     }
 
     return await this.dataSource.transaction(async (manager) => {
-      // 1. Crear registro en IncidenciaResuelta
       const resolucion = manager.create(IncidenciaResuelta, {
         incidenciaId: incidencia.id,
         usuarioResolutorId: usuarioId,
@@ -148,24 +148,19 @@ export class IncidenciaService {
 
       await manager.save(resolucion);
 
-      // 2. Si la resolución implica devolver stock, generar Movimiento de ajuste
       if (dto.accion === TipoResolucion.DEVOLUCION) {
-        // En un flujo real, necesitaríamos saber qué productos y cantidades ajustar.
-        // Para este requerimiento de "cambios mínimos", generamos un movimiento general
-        // asociado a la recepción o dejamos la puerta abierta para extenderlo.
         await this.movimientoHelper.createMovimiento(
           usuarioId,
           TipoMovimiento.SALIDA_AJUSTE,
           'Incidencia',
           incidencia.id,
-          0, // Cantidad debería venir de las líneas de incidencia en una implementación completa
+          0,
           undefined,
           undefined,
           `Ajuste por resolución de incidencia (${dto.accion}): ${dto.observaciones || ''}`
         );
       }
 
-      // 3. Actualizar Incidencia original
       incidencia.resolver(usuarioId, dto.observaciones);
       return await manager.save(incidencia);
     });

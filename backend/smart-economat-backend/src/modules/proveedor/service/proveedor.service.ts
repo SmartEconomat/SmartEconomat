@@ -43,7 +43,9 @@ export class ProveedorService {
     query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Proveedor>> {
     const page = query.page ?? 1;
-    const limit = Math.min(query.limit ?? 20, 100);
+    const limit = Math.min(query.limit ?? 20, 50);
+    const sortBy = query.sortBy ?? 'nombre';
+    const order = query.order ?? 'ASC';
 
     const whereCondition = query.searchTerm
       ? [
@@ -57,7 +59,7 @@ export class ProveedorService {
     const [data, total] = await this.proveedorRepository.findAndCount({
       where: whereCondition,
       relations: ['productos'],
-      order: { nombre: 'ASC' },
+      order: { [sortBy]: order },
       skip: (page - 1) * limit,
       take: limit,
     });

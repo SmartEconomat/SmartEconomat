@@ -86,6 +86,25 @@ export async function baseFetch(path: string, options: RequestInit = {}): Promis
  * await deleteResource(`/productos/${id}`);
  * await deleteResource(`/proveedores/${id}`);
  */
+export async function downloadFile(path: string, filename: string): Promise<void> {
+    const token = localStorage.getItem('token');
+    const response = await baseFetch(path, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+
+    if (!response.ok) {
+        throw new Error(`Error al descargar el archivo: ${response.status} ${response.statusText}`);
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    URL.revokeObjectURL(url);
+}
+
 export async function deleteResource(resourcePath: string): Promise<void> {
     const response = await baseFetch(resourcePath, {
         method: 'DELETE',

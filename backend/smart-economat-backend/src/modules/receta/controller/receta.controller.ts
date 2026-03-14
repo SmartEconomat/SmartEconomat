@@ -10,8 +10,8 @@ import {
   HttpStatus,
   UseGuards,
   ParseUUIDPipe,
-  Query,
 } from '@nestjs/common';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { RecetaService } from '../service/receta.service';
 import { CreateRecetaDto } from '../dto/create-receta.dto';
@@ -25,7 +25,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
 
@@ -52,7 +52,16 @@ export class RecetaController {
   @Get()
   @RequirePermissions('recetas:listar')
   findAll(
-    @Query() query: PaginationQueryDto
+    @SortableFields([
+      'nombre',
+      'tiempo',
+      'dificultad',
+      'tiempoPreparacion',
+      'costeUnitarioEstimado',
+      'createdAt',
+      'updatedAt',
+    ])
+    query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Receta>> {
     return this.recetaService.findAll(query);
   }

@@ -107,22 +107,40 @@ export const runSeeder = async (dataSource: DataSource) => {
     throw new Error(SeederI18nHelper.getError('NO_PROVEEDORES'));
   }
 
-  console.log('Obteniendo productos de OpenFoodFacts...');
   let offProducts: OffProduct[] = [];
-  try {
-    const offResponse = await fetch(
-      'https://es.openfoodfacts.org/cgi/search.pl?action=process&sort_by=unique_scans_n&json=1&page_size=50',
-      { signal: AbortSignal.timeout(30000) }
-    );
 
-    if (offResponse.ok) {
-      const offData = await offResponse.json();
-      offProducts = offData.products || [];
+  // OPTIMIZATION: Skip API in test environment, respect OFF_API_ENABLED in other envs
+  const isTestEnv = process.env.NODE_ENV === 'test';
+  const enableOffApi = !isTestEnv && process.env.OFF_API_ENABLED !== 'false';
+
+  if (enableOffApi) {
+    console.log('Obteniendo productos de OpenFoodFacts...');
+    try {
+      const offResponse = await fetch(
+        'https://es.openfoodfacts.org/cgi/search.pl?action=process&sort_by=unique_scans_n&json=1&page_size=20',
+        { signal: AbortSignal.timeout(60000) }
+      );
+
+      if (offResponse.ok) {
+        const offData = await offResponse.json();
+        offProducts = offData.products || [];
+        console.log(
+          `✅ ${offProducts.length} productos obtenidos de OpenFoodFacts.`
+        );
+      } else {
+        console.warn(
+          `OpenFoodFacts respondió con estado ${offResponse.status}`
+        );
+      }
+    } catch (error: any) {
+      console.warn(
+        'No se pudieron obtener productos de OpenFoodFacts:',
+        error.message
+      );
     }
-  } catch (error: any) {
-    console.warn(
-      'No se pudieron obtener productos de OpenFoodFacts:',
-      error.message
+  } else if (isTestEnv) {
+    console.log(
+      '✔️ Modo test: usando productos ficticios (OpenFoodFacts deshabilitado)'
     );
   }
 
@@ -175,10 +193,50 @@ export const runSeeder = async (dataSource: DataSource) => {
       codigoBarras,
     });
 
+    if (producto.codigoBarras && codigosVistos.has(producto.codigoBarras)) {
+      continue;
+    }
+    if (producto.codigoBarras) {
+      codigosVistos.add(producto.codigoBarras);
+    }
+
     (producto as any)._alergenosTags = offProduct.allergens_tags || [];
     productos.push(producto);
 
     if (productos.length >= 25) break;
+  }
+
+  if (productos.length === 0) {
+    console.warn(
+      'Usando datos ficticios como fallback (OpenFoodFacts no disponible).'
+    );
+    const { faker } = await import('@faker-js/faker');
+    const numProductos = 10;
+
+    for (let i = 0; i < numProductos; i++) {
+      const codigoBarras = faker.helpers.fromRegExp('[0-9]{13}');
+
+      if (codigosVistos.has(codigoBarras)) {
+        continue;
+      }
+      codigosVistos.add(codigoBarras);
+
+      const producto = productoRepo.create({
+        nombre: faker.commerce.productName().substring(0, 150),
+        marca: faker.commerce.productAdjective().substring(0, 100),
+        descripcion: faker.commerce.productDescription().substring(0, 500),
+        unidad: faker.helpers.enumValue(UnidadMedida),
+        fechaCaducidad: Math.random() > 0.7 ? faker.date.future() : undefined,
+        tipo: faker.helpers.enumValue(TipoProducto),
+        pathImg: `https://via.placeholder.com/640x480.png?text=${encodeURIComponent(faker.commerce.productName().slice(0, 20))}`,
+        contenido: parseFloat(
+          faker.commerce.price({ min: 1, max: 100, dec: 2 })
+        ),
+        codigoBarras,
+      });
+
+      productos.push(producto);
+    }
   }
 
   if (productos.length === 0) {

@@ -9,7 +9,7 @@ import {
 } from '../modules/receta/enums/receta.enums';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
-const NUM_RECETAS = 10;
+const NUM_RECETAS = process.env.NODE_ENV === 'test' ? 2 : 10;
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
