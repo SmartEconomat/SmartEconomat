@@ -291,6 +291,7 @@ export class PdfReportService {
         pageNum++;
         const w = doc.page.width;
         const h = doc.page.height;
+        const footerY = h - MARGIN - 10;
         doc
           .font('Helvetica')
           .fontSize(7)
@@ -298,8 +299,12 @@ export class PdfReportService {
           .text(
             `SmartEconomat — Informe de Pedidos | Pág. ${pageNum} | ${new Date().toLocaleDateString('es-ES')}`,
             MARGIN,
-            h - MARGIN + 8,
-            { width: w - MARGIN * 2, align: 'center' }
+            footerY,
+            {
+              width: w - MARGIN * 2,
+              align: 'center',
+              lineBreak: false,
+            }
           );
       });
 
@@ -501,6 +506,7 @@ export class PdfReportService {
         pageNum++;
         const w = doc.page.width;
         const h = doc.page.height;
+        const footerY = h - MARGIN - 10;
         doc
           .font('Helvetica')
           .fontSize(7)
@@ -508,8 +514,12 @@ export class PdfReportService {
           .text(
             `SmartEconomat — Informe de Incidencias | Pág. ${pageNum} | ${new Date().toLocaleDateString('es-ES')}`,
             MARGIN,
-            h - MARGIN + 8,
-            { width: w - MARGIN * 2, align: 'center' }
+            footerY,
+            {
+              width: w - MARGIN * 2,
+              align: 'center',
+              lineBreak: false,
+            }
           );
       });
 

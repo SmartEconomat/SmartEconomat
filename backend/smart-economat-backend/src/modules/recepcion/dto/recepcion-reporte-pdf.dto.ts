@@ -5,7 +5,8 @@ import {
   IsBoolean,
   IsDateString,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
+import { StringToBooleanTransformer } from '../../../common/transformers/string-to-boolean.transformer';
 import { TipoDiferencia } from '../../incidencia/incidencia-linea.entity/incidencia-linea.entity';
 
 export enum TipoReportePdf {
@@ -35,7 +36,7 @@ export class RecepcionReportePdfDto {
 
   @IsOptional()
   @IsBoolean()
-  @Type(() => Boolean)
+  @Transform((params) => StringToBooleanTransformer.transform(params))
   soloNoResueltas?: boolean;
 
   @IsOptional()

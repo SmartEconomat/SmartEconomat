@@ -9,6 +9,10 @@ import { Proveedor } from '../../../src/modules/proveedor/proveedor.entity/prove
 import { ProductoProveedor } from '../../../src/modules/producto/producto-proveedor.entity/producto-proveedor.entity';
 import { Producto } from '../../../src/modules/producto/producto.entity/producto.entity';
 import { DataSource } from 'typeorm';
+import {
+  EstadoReclamacion,
+  TipoDiferencia,
+} from '../../../src/modules/incidencia/incidencia-linea.entity/incidencia-linea.entity';
 
 function makeProveedor(id: string, nombre: string, nif?: string): Proveedor {
   const p = new Proveedor();
@@ -179,5 +183,88 @@ describe('PdfReportService - groupPedidosByProveedor', () => {
     expect(g1.total).toBeCloseTo((10 * 5 + 20 * 3) * (1 + IVA_RATE));
     expect(g2.subtotal).toBeCloseTo(100 * 1);
     expect(g2.total).toBeCloseTo(100 * 1 * (1 + IVA_RATE));
+  });
+
+  it('debe agrupar incidencias por proveedor y conservar los datos de línea', () => {
+    const incidencias = [
+      {
+        id: 'inc-1',
+        pedidoId: 'ped-1',
+        createdAt: new Date('2026-03-02T00:00:00Z'),
+        pedido: {
+          proveedorId: 'prov-1',
+          proveedor: { nombre: 'Proveedor Uno', nif: 'B12345678' },
+        },
+        lineas: [
+          {
+            cantidadEsperada: 10,
+            cantidadRecibida: 8,
+            diferencia: -2,
+            tipoDiferencia: TipoDiferencia.FALTANTE,
+            estadoReclamacion: EstadoReclamacion.PENDIENTE,
+            pedidoProducto: {
+              productoProveedor: {
+                producto: { nombre: 'Aceite' },
+              },
+            },
+          },
+        ],
+        estaResuelta: () => false,
+      },
+    ] as any;
+
+    const groups = (service as any).groupIncidenciasByProveedor(incidencias);
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0]).toEqual(
+      expect.objectContaining({
+        nombre: 'Proveedor Uno',
+        nif: 'B12345678',
+      })
+    );
+    expect(groups[0].lineas).toEqual([
+      expect.objectContaining({
+        incidenciaId: 'inc-1',
+        pedidoId: 'ped-1',
+        producto: 'Aceite',
+        tipoDiferencia: TipoDiferencia.FALTANTE,
+        estadoReclamacion: EstadoReclamacion.PENDIENTE,
+        resuelta: false,
+      }),
+    ]);
+  });
+
+  it('debe agrupar incidencias sin proveedor bajo el grupo por defecto', () => {
+    const incidencias = [
+      {
+        id: 'inc-2',
+        pedidoId: undefined,
+        createdAt: new Date('2026-03-03T00:00:00Z'),
+        pedido: undefined,
+        lineas: [
+          {
+            cantidadEsperada: 4,
+            cantidadRecibida: 0,
+            diferencia: -4,
+            tipoDiferencia: TipoDiferencia.DEFECTUOSO,
+            estadoReclamacion: EstadoReclamacion.RECLAMADO,
+            pedidoProducto: undefined,
+          },
+        ],
+        estaResuelta: () => true,
+      },
+    ] as any;
+
+    const groups = (service as any).groupIncidenciasByProveedor(incidencias);
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0].nombre).toBe('Sin proveedor');
+    expect(groups[0].lineas[0]).toEqual(
+      expect.objectContaining({
+        producto: '-',
+        resuelta: true,
+        tipoDiferencia: TipoDiferencia.DEFECTUOSO,
+      })
+    );
   });
 });
