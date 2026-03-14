@@ -8,6 +8,7 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
@@ -15,6 +16,11 @@ import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto
 import { GetUser } from '../../auth/decorators/get-user.decorator';
 import { InventarioService } from '../service/inventario.service';
 import { CreateInventarioItemDto } from '../dto/create-InventarioItem.dto';
+import { InventoryQueryDto } from '../dto/inventory-query.dto';
+import {
+  StockConsolidadoDto,
+  StockPorUbicacionDto,
+} from '../dto/stock-result.dto';
 import { UpdateInventarioDto } from '../dto/update-inventario.dto';
 import { Inventario } from '../inventario.entity/inventario.entity';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -52,6 +58,14 @@ export class InventarioController {
     query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Inventario>> {
     return this.inventarioService.findAll(query);
+  }
+
+  @Get('stock')
+  @RequirePermissions('inventario:listar')
+  queryStock(
+    @Query() dto: InventoryQueryDto
+  ): Promise<StockPorUbicacionDto[] | StockConsolidadoDto[]> {
+    return this.inventarioService.queryStock(dto);
   }
 
   @Get(':id')
