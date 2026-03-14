@@ -76,7 +76,7 @@ Con **29 commits** y **7 PRs**, tenemos aquí a alguien que:
 | #2       | Alexis       | **154** | 🔀 **24**      | 24.06%   | 💪 Activo        |
 | #3       | Sergio       | **95**  | 🔀 **16**      | 14.84%   | 💪 Activo        |
 | #4       | Maurizio     | **64**  | 🔀 **8**       | 10.00%   | 💪 Activo        |
-| #5       | Guillermo    | **29**  | 🔀 **7**       | 4.53%    | 🐌 Necesita café |
+| #5       | Guillermo    | **29**  | 🔀 **7**       | 4.53%    |  Necesita café |
 
 ---
 

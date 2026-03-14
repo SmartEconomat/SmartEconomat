@@ -27,7 +27,7 @@
     "generate:erd": "ts-node tools/scripts/generate-erd.ts",
     "log-user-info": "ts-node scripts/log-user-info.ts",
     "count-commits": "node ../../scripts/contributors/count-commits.js",
-    "prepare": "cd ../.. && husky backend/smart-economat-backend/.husky"
+    "prepare": "cd ../.. && husky .husky"
   },
   "dependencies": {
     "@faker-js/faker": "^10.1.0",

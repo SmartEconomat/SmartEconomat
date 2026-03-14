@@ -1,0 +1,13 @@
+#!/bin/sh
+
+echo "🚀 Running repository pre-commit hooks"
+
+if [ -f "backend/smart-economat-backend/.husky/pre-commit" ]; then
+  echo "📦 Backend pre-commit"
+  sh backend/smart-economat-backend/.husky/pre-commit || exit $?
+fi
+
+if [ -f "frontend/smart-economat-frontend/.husky/pre-commit" ]; then
+  echo "🖥️ Frontend pre-commit"
+  sh frontend/smart-economat-frontend/.husky/pre-commit || exit $?
+fi
