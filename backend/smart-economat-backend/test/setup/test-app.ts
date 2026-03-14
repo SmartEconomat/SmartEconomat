@@ -1,10 +1,7 @@
-import {
-  INestApplication,
-  ValidationPipe,
-  ClassSerializerInterceptor,
-} from '@nestjs/common';
+import { INestApplication, ClassSerializerInterceptor } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
+import { I18nValidationPipe } from 'nestjs-i18n';
 import { AppModule } from '../../src/app.module';
 import { TransformInterceptor } from '../../src/common/interceptors/transform.interceptor';
 import { GlobalExceptionFilter } from '../../src/common/filters/global-exception.filter';
@@ -43,59 +40,47 @@ const g = global as any;
 export async function getTestApp(
   options: { silent?: boolean } = {}
 ): Promise<INestApplication> {
-  // Si ya existe, retornar la instancia existente
   if (g.__TEST_APP__) {
     return g.__TEST_APP__ as INestApplication;
   }
 
-  // Crear módulo de testing
   const moduleFixture = await Test.createTestingModule({
     imports: [AppModule],
   }).compile();
 
-  // Crear aplicación
   const app = moduleFixture.createNestApplication();
 
-  // Configurar logger
   if (options.silent) {
     app.useLogger(false);
   } else {
-    // En tests, solo mostramos errores y warnings por defecto
     app.useLogger(['error', 'warn']);
   }
 
-  // Configurar prefijo global de API
   app.setGlobalPrefix('api/v1');
 
-  // Configurar pipes globales
   app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true, // Elimina propiedades no definidas en el DTO
-      transform: true, // Transforma payloads al tipo esperado
-      forbidNonWhitelisted: false, // No lanza error por propiedades extra
+    new I18nValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
       transformOptions: {
-        enableImplicitConversion: false, // Deshabilitado para mayor control
+        enableImplicitConversion: true,
       },
     })
   );
 
-  // Configurar interceptores globales
   const reflector = app.get(Reflector);
   app.useGlobalInterceptors(
     new ClassSerializerInterceptor(reflector),
     new TransformInterceptor()
   );
 
-  // Configurar filtros globales
   app.useGlobalFilters(new GlobalExceptionFilter());
 
-  // Inicializar aplicación
   await app.init();
 
-  // Configurar class-validator para usar el contenedor DI de NestJS
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
-  // Guardar en global para reutilización
   g.__TEST_APP__ = app;
 
   return app;
@@ -115,19 +100,15 @@ export async function closeTestApp(): Promise<void> {
   try {
     const app = g.__TEST_APP__ as INestApplication;
 
-    // Cerrar la aplicación
     await app.close();
 
-    // Limpiar referencia global
     g.__TEST_APP__ = null;
 
-    // Pequeño delay para asegurar limpieza completa
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     console.log('✅ Aplicación NestJS cerrada');
   } catch (error) {
     console.error('❌ Error al cerrar aplicación NestJS:', error);
-    // No lanzar el error, solo loggearlo
   }
 }
 

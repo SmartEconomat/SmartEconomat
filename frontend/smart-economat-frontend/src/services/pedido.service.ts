@@ -1,5 +1,5 @@
 import { Pedido } from './pedido.types';
-import { baseFetch } from './api.service';
+import { baseFetch, PaginatedData } from './api.service';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -7,18 +7,43 @@ interface ApiResponse<T> {
   data: T;
 }
 
-export async function fetchPedidos(): Promise<Pedido[]> {
-  const response = await baseFetch('/pedidos');
+export interface PedidoRequestPayload {
+  proveedorId: string;
+  fechaEntrega: string;
+  costeTotal?: number;
+  estado?: string;
+  motivoCancelacion?: string;
+  lineas: Array<{
+    productoProveedorId: string;
+    cantidad: number;
+  }>;
+}
+
+export async function fetchPedidos(
+  page: number = 1,
+  limit: number = 10,
+  searchTerm: string = ''
+): Promise<PaginatedData<Pedido>> {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  });
+
+  if (searchTerm.trim()) params.set('searchTerm', searchTerm.trim());
+
+  const response = await baseFetch(`/pedidos?${params.toString()}`);
   if (!response.ok) {
     throw new Error(
       `Error al obtener pedidos: ${response.status} ${response.statusText}`
     );
   }
-  const body = (await response.json()) as ApiResponse<Pedido[]>;
+  const body = (await response.json()) as ApiResponse<PaginatedData<Pedido>>;
   return body.data;
 }
 
-export async function createPedido(pedido: Partial<Pedido>): Promise<Pedido> {
+export async function createPedido(
+  pedido: PedidoRequestPayload
+): Promise<Pedido> {
   const response = await baseFetch('/pedidos', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -43,7 +68,7 @@ export async function createPedido(pedido: Partial<Pedido>): Promise<Pedido> {
 
 export async function updatePedido(
   id: string,
-  pedido: Partial<Pedido>
+  pedido: Partial<PedidoRequestPayload>
 ): Promise<Pedido> {
   const response = await baseFetch(`/pedidos/${id}`, {
     method: 'PATCH',
