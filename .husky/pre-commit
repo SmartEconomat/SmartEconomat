@@ -1,0 +1,59 @@
+#!/bin/sh
+set -e
+
+echo "🚀 Running unified pre-commit hooks"
+
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR)
+
+if [ -z "$STAGED_FILES" ]; then
+  echo "No staged files detected. Skipping hooks."
+  exit 0
+fi
+
+HAS_BACKEND=0
+HAS_FRONTEND=0
+
+if printf '%s\n' "$STAGED_FILES" | grep -q '^backend/smart-economat-backend/'; then
+  HAS_BACKEND=1
+fi
+
+if printf '%s\n' "$STAGED_FILES" | grep -q '^frontend/smart-economat-frontend/'; then
+  HAS_FRONTEND=1
+fi
+
+if [ "$HAS_BACKEND" -eq 1 ]; then
+  if [ ! -d "backend/smart-economat-backend/node_modules" ]; then
+    echo "❌ Faltan dependencias del backend. Ejecuta npm install en backend/smart-economat-backend."
+    exit 1
+  fi
+
+  echo "📊 [backend 1/4] Actualizando lista de contribuidores..."
+  node scripts/contributors/count-commits.js
+  git add -- CONTRIBUTORS.md
+
+  echo "📝 [backend 2/4] Running staged quality checks (eslint + prettier)..."
+  node backend/smart-economat-backend/scripts/git-hooks/run-staged-quality.js
+
+  echo "🧪 [backend 3/4] Ejecutando tests unitarios..."
+  (cd backend/smart-economat-backend && npm test)
+
+  echo "🚦 [backend 4/4] Ejecutando tests E2E..."
+  (cd backend/smart-economat-backend && npm run test:e2e)
+else
+  echo "ℹ️ No hay cambios staged en backend."
+fi
+
+if [ "$HAS_FRONTEND" -eq 1 ]; then
+  if [ ! -d "frontend/smart-economat-frontend/node_modules" ]; then
+    echo "❌ Faltan dependencias del frontend. Ejecuta npm install en frontend/smart-economat-frontend."
+    exit 1
+  fi
+
+  echo "📝 [frontend 1/2] Running staged quality checks (eslint + prettier)..."
+  node frontend/smart-economat-frontend/scripts/git-hooks/run-staged-quality.mjs
+
+  echo "🧪 [frontend 2/2] Ejecutando tests del frontend..."
+  node frontend/smart-economat-frontend/scripts/git-hooks/run-all-tests.mjs
+else
+  echo "ℹ️ No hay cambios staged en frontend."
+fi

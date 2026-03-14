@@ -388,10 +388,138 @@
           }
         },
         {
+          "name": "Create Pedido From Recipes",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"recetaIds\": [\n    \"uuid-receta-1\",\n    \"uuid-receta-2\"\n  ],\n  \"observaciones\": \"Pedido generado desde recetas para producción semanal\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/pedidos/from-recipes",
+            "description": "Genera un pedido único consolidando ingredientes de múltiples recetas. Requiere que exista un proveedor común con precio vigente para todos los productos consolidados."
+          },
+          "response": [
+            {
+              "name": "201 Created - Pedido consolidado",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"recetaIds\": [\n    \"uuid-receta-1\",\n    \"uuid-receta-2\"\n  ],\n  \"observaciones\": \"Pedido generado desde recetas para producción semanal\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": "{{base_url}}/pedidos/from-recipes"
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"message\": \"Operación exitosa\",\n  \"data\": {\n    \"id\": \"01959e4b-5f9a-7db1-94d6-6f3d0d3f0001\",\n    \"proveedorId\": \"01959e4b-5f9a-7db1-94d6-6f3d0d3f0100\",\n    \"usuarioId\": \"01959e4b-5f9a-7db1-94d6-6f3d0d3f0200\",\n    \"estado\": \"PENDIENTE\",\n    \"costeTotal\": 12,\n    \"pedidoProductos\": [\n      {\n        \"cantidad\": 3,\n        \"precioUnitario\": 4\n      }\n    ]\n  }\n}"
+            },
+            {
+              "name": "400 Bad Request - Sin proveedor común",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"recetaIds\": [\n    \"uuid-receta-1\",\n    \"uuid-receta-2\"\n  ]\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": "{{base_url}}/pedidos/from-recipes"
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": false,\n  \"message\": \"No existe un proveedor común activo para todos los ingredientes de las recetas seleccionadas.\",\n  \"data\": null\n}"
+            },
+            {
+              "name": "404 Not Found - Receta inexistente",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"recetaIds\": [\n    \"uuid-receta-valida\",\n    \"0191c30c-1e55-7000-8000-000000000000\"\n  ]\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": "{{base_url}}/pedidos/from-recipes"
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": false,\n  \"message\": \"No se encontraron las recetas: 0191c30c-1e55-7000-8000-000000000000\",\n  \"data\": null\n}"
+            }
+          ]
+        },
+        {
           "name": "List All",
           "request": {
             "method": "GET",
             "url": "{{base_url}}/pedidos?page=1"
+          }
+        },
+        {
+          "name": "Get Pedido Detail",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/pedidos/:id",
+            "description": "Obtiene el detalle completo del pedido, incluyendo líneas consolidadas y proveedor.",
+            "variable": [{ "key": "id", "value": "" }]
+          }
+        },
+        {
+          "name": "Update Fecha Entrega",
+          "request": {
+            "method": "PATCH",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fechaEntrega\": \"2026-04-08T10:00:00.000Z\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/pedidos/:id/fecha-entrega",
+            "variable": [{ "key": "id", "value": "" }]
+          }
+        },
+        {
+          "name": "Cancelar Pedido",
+          "request": {
+            "method": "PATCH",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivoCancelacion\": \"Cambio de planificación de cocina\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/pedidos/:id/cancelar",
+            "variable": [{ "key": "id", "value": "" }]
           }
         }
       ]

@@ -11,4 +11,12 @@ export enum TipoMovimiento {
   MERMA = 'merma',
 }
 
+export enum TipoMovimientoManual {
+  ENTRADA = TipoMovimiento.ENTRADA,
+  AJUSTE = TipoMovimiento.AJUSTE,
+  SALIDA_AJUSTE = TipoMovimiento.SALIDA_AJUSTE,
+}
+
 export const TIPOS_DISPONIBLES: string[] = Object.values(TipoMovimiento);
+export const TIPOS_MOVIMIENTO_MANUAL: string[] =
+  Object.values(TipoMovimientoManual);

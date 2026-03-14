@@ -1,6 +1,13 @@
-import { NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InventarioService } from '../../../src/modules/inventario/service/inventario.service';
-import { TipoMovimiento } from '../../../src/modules/movimiento/enums/movimiento.enums';
+import {
+  TipoMovimiento,
+  TipoMovimientoManual,
+} from '../../../src/modules/movimiento/enums/movimiento.enums';
 
 describe('InventarioService', () => {
   const mockInventarioRepo = {
@@ -19,6 +26,9 @@ describe('InventarioService', () => {
   const mockMovimientoHelper = {
     trackInventarioMovimiento: jest.fn(),
   };
+  const mockDataSource = {
+    transaction: jest.fn(),
+  };
 
   let service: InventarioService;
 
@@ -27,7 +37,8 @@ describe('InventarioService', () => {
     service = new InventarioService(
       mockInventarioRepo as any,
       mockProductoProveedorRepo as any,
-      mockMovimientoHelper as any
+      mockMovimientoHelper as any,
+      mockDataSource as any
     );
   });
 
@@ -137,5 +148,193 @@ describe('InventarioService', () => {
     await expect(service.obtenerAlertasStock()).resolves.toEqual([
       { id: 'inv-6', cantidadActual: 1, cantidadMinima: 3 },
     ]);
+  });
+
+  it('ajustarManual actualiza stock y registra movimiento en transacción', async () => {
+    const inventario = {
+      id: 'inv-7',
+      cantidadActual: 10,
+      productoProveedor: {
+        id: 'pp-7',
+        producto: { nombre: 'Harina' },
+      },
+      ajustarCantidad(delta: number) {
+        this.cantidadActual = Number(this.cantidadActual) + delta;
+        if (this.cantidadActual < 0) {
+          throw new Error('stock negativo');
+        }
+      },
+    };
+
+    const queryBuilder = {
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      setLock: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(inventario),
+    };
+    const manager = {
+      createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
+      save: jest
+        .fn()
+        .mockImplementation((_entity: unknown, payload: unknown) => payload),
+      create: jest
+        .fn()
+        .mockImplementation((_entity: unknown, payload: unknown) => payload),
+    };
+
+    mockDataSource.transaction.mockImplementation((callback: any) =>
+      callback(manager)
+    );
+
+    const result = await service.ajustarManual(
+      {
+        inventarioId: 'inv-7',
+        tipo: TipoMovimiento.SALIDA_AJUSTE as any,
+        ajuste: -4,
+        motivo: 'Rotura interna',
+        observaciones: 'Botella dañada',
+      },
+      'user-7'
+    );
+
+    expect(Number(result.cantidadActual)).toBe(6);
+    expect(manager.save).toHaveBeenNthCalledWith(
+      1,
+      expect.anything(),
+      inventario
+    );
+    expect(manager.save).toHaveBeenNthCalledWith(
+      2,
+      expect.anything(),
+      expect.objectContaining({
+        tipo: TipoMovimiento.SALIDA_AJUSTE,
+        cantidad: 4,
+        entidad: 'AjusteManualInventario',
+        usuario: { id: 'user-7' },
+        descripcion: expect.stringContaining('Rotura interna'),
+      })
+    );
+  });
+
+  it('ajustarManual rechaza signos inconsistentes para entrada manual', async () => {
+    await expect(
+      service.ajustarManual(
+        {
+          inventarioId: 'inv-9',
+          tipo: TipoMovimientoManual.ENTRADA,
+          ajuste: -1,
+          motivo: 'Corrección inválida',
+        },
+        'user-9'
+      )
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(mockDataSource.transaction).not.toHaveBeenCalled();
+  });
+
+  it('ajustarManual rechaza ajuste 0 antes de abrir la transacción', async () => {
+    await expect(
+      service.ajustarManual(
+        {
+          inventarioId: 'inv-11',
+          tipo: TipoMovimientoManual.AJUSTE,
+          ajuste: 0,
+          motivo: 'Regularización nula',
+        },
+        'user-11'
+      )
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(mockDataSource.transaction).not.toHaveBeenCalled();
+  });
+
+  it('ajustarManual rechaza salidas con ajuste positivo', async () => {
+    await expect(
+      service.ajustarManual(
+        {
+          inventarioId: 'inv-12',
+          tipo: TipoMovimientoManual.SALIDA_AJUSTE,
+          ajuste: 2,
+          motivo: 'Salida inconsistente',
+        },
+        'user-12'
+      )
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(mockDataSource.transaction).not.toHaveBeenCalled();
+  });
+
+  it('ajustarManual lanza NotFoundException si no existe el inventario', async () => {
+    const queryBuilder = {
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      setLock: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(null),
+    };
+    const manager = {
+      createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
+      save: jest.fn(),
+      create: jest.fn(),
+    };
+
+    mockDataSource.transaction.mockImplementation((callback: any) =>
+      callback(manager)
+    );
+
+    await expect(
+      service.ajustarManual(
+        {
+          inventarioId: 'inv-missing',
+          tipo: TipoMovimientoManual.AJUSTE,
+          ajuste: 3,
+          motivo: 'Regularización de inventario',
+        },
+        'user-10'
+      )
+    ).rejects.toBeInstanceOf(NotFoundException);
+
+    expect(manager.save).not.toHaveBeenCalled();
+  });
+
+  it('ajustarManual rechaza stock negativo', async () => {
+    const inventario = {
+      id: 'inv-8',
+      cantidadActual: 2,
+      productoProveedor: {
+        id: 'pp-8',
+        producto: { nombre: 'Levadura' },
+      },
+      ajustarCantidad() {
+        throw new Error('stock negativo');
+      },
+    };
+
+    const queryBuilder = {
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      setLock: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(inventario),
+    };
+    const manager = {
+      createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
+      save: jest.fn(),
+      create: jest.fn(),
+    };
+
+    mockDataSource.transaction.mockImplementation((callback: any) =>
+      callback(manager)
+    );
+
+    await expect(
+      service.ajustarManual(
+        {
+          inventarioId: 'inv-8',
+          tipo: TipoMovimiento.SALIDA_AJUSTE as any,
+          ajuste: -5,
+          motivo: 'Merma',
+        },
+        'user-8'
+      )
+    ).rejects.toBeInstanceOf(ConflictException);
   });
 });
