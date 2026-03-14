@@ -9,6 +9,7 @@ import {
   Min,
   IsDate,
   IsArray,
+  ArrayUnique,
   ValidateNested,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
@@ -186,6 +187,9 @@ export class CreateProductoDto {
       'validation.LOS_AL_RGENOS_DEBEN_SER_UN_ARRAY'
     ),
   })
+  @ArrayUnique({
+    message: 'No se pueden repetir alérgenos en la misma solicitud.',
+  })
   @IsEnum(Alergeno, {
     each: true,
     message: i18nValidationMessage('validation.AL_RGENO_NO_V_LIDO'),
@@ -201,6 +205,10 @@ export class CreateProductoDto {
     message: i18nValidationMessage(
       'validation.LOS_PROVEEDORES_DEBEN_SER_UN_ARRAY'
     ),
+  })
+  @ArrayUnique((proveedor: AddProveedorToProductoDto) => proveedor.proveedorId, {
+    message:
+      'No se puede vincular el mismo proveedor más de una vez al producto.',
   })
   @ValidateNested({ each: true })
   @Type(() => AddProveedorToProductoDto)

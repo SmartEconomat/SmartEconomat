@@ -20,6 +20,7 @@ import { IncidenciaResuelta } from '../incidencia-resuelta.entity/incidencia-res
 import { TipoResolucion } from '../enums/incidencia.enums';
 import { TipoMovimiento } from '../../movimiento/enums/movimiento.enums';
 import { IncidenciaResuelaRepository } from '../repository/incidencia-resuelta.repository';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @Injectable()
 export class IncidenciaService {
