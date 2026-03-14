@@ -1,31 +1,34 @@
 import {
   Controller,
   Get,
+  Post,
   Body,
   Param,
   Patch,
-  Post,
   Delete,
   UseGuards,
   ParseUUIDPipe,
-  Query,
 } from '@nestjs/common';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { UsuarioService } from '../service/usuario.service';
 import { CreateUsuarioDto } from '../dto/create-usuario.dto';
 import { UpdateUsuarioDto } from '../dto/update-usuario.dto';
-import { ApiQuery, ApiTags } from '@nestjs/swagger';
 import { UpdateUsuarioStatusDto } from '../dto/update-status.dto';
 import { UpdateUsuarioRolDto } from '../dto/update-rol.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
+import { AdminCreateUsuarioDto } from '../dto/admin-create-usuario.dto';
+import { AdminUpdateUsuarioDto } from '../dto/admin-update-usuario.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { RolesGuard } from '../../auth/guards/role.guard';
+import { rolUsuario } from '../enums/usuario.enums';
 
-@ApiTags('Usuarios')
-@UseGuards(JwtAuthGuard, PermisosGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PermisosGuard)
 @Controller('usuarios')
 export class UsuarioController {
   constructor(private readonly usuarioService: UsuarioService) {}
@@ -34,6 +37,13 @@ export class UsuarioController {
   @RequirePermissions('usuarios:crear')
   create(@Body() dto: CreateUsuarioDto) {
     return this.usuarioService.create(dto);
+  }
+
+  @Post('admin')
+  @Roles(rolUsuario.ADMINISTRADOR)
+  @RequirePermissions('usuarios:crear')
+  createAdmin(@Body() dto: AdminCreateUsuarioDto) {
+    return this.usuarioService.createAdmin(dto);
   }
 
   @Get('perfil')
@@ -53,9 +63,18 @@ export class UsuarioController {
 
   @Get()
   @RequirePermissions('usuarios:listar')
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  findAll(@Query() query: PaginationQueryDto) {
+  findAll(
+    @SortableFields([
+      'username',
+      'email',
+      'rol',
+      'status',
+      'activo',
+      'createdAt',
+      'updatedAt',
+    ])
+    query: PaginationQueryDto
+  ) {
     return this.usuarioService.findAll(query);
   }
 
@@ -72,6 +91,16 @@ export class UsuarioController {
     @Body() dto: UpdateUsuarioDto
   ) {
     return this.usuarioService.update(id, dto);
+  }
+
+  @Patch(':id/admin')
+  @Roles(rolUsuario.ADMINISTRADOR)
+  @RequirePermissions('usuarios:editar')
+  updateAdmin(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: AdminUpdateUsuarioDto
+  ) {
+    return this.usuarioService.updateAdmin(id, dto);
   }
 
   @Patch(':id/activar')

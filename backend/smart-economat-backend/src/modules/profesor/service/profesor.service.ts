@@ -1,3 +1,4 @@
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import {
   ConflictException,
   Injectable,
@@ -39,12 +40,15 @@ export class ProfesorService {
       });
 
       if (isExisting)
-        throw new ConflictException('User or email already exists');
+        throw new ConflictException(
+          I18nHelper.getError('USER_OR_EMAIL_ALREADY_EXISTS')
+        );
 
       const isCialExisting = await manager.findOne(Profesor, {
         where: { cial: dto.cial },
       });
-      if (isCialExisting) throw new ConflictException('Cial already exists');
+      if (isCialExisting)
+        throw new ConflictException(I18nHelper.getError('CIAL_ALREADY_EXISTS'));
 
       const passwordHash = await bcrypt.hash(dto.password, 10);
 
@@ -64,8 +68,9 @@ export class ProfesorService {
       await manager.save(profesor);
 
       return {
-        message:
-          'Profesor registrado con éxito. Esperando activación por un administrador.',
+        message: I18nHelper.translate(
+          'messages.PROFESOR_REGISTRADO_CON_XITO_ESPERANDO_A'
+        ),
         id: profesor.id,
         username: user.username,
       };
@@ -77,7 +82,9 @@ export class ProfesorService {
       where: { user: { id: userId } },
     });
     if (!profesor) {
-      throw new NotFoundException('Professor profile not found');
+      throw new NotFoundException(
+        I18nHelper.getError('PROFESSOR_PROFILE_NOT_FOUND')
+      );
     }
 
     const existingSlot = await this.slotRepo.findOne({
@@ -108,7 +115,8 @@ export class ProfesorService {
       const profesor = await manager.findOne(Profesor, {
         where: { user: { id: profesorUserId } },
       });
-      if (!profesor) throw new NotFoundException('Profesor not found');
+      if (!profesor)
+        throw new NotFoundException(I18nHelper.getError('PROFESOR_NOT_FOUND'));
 
       const alumno = await manager.findOne(Alumno, {
         where: { id: alumnoId, slot: { profesor: { id: profesor.id } } },
@@ -123,7 +131,10 @@ export class ProfesorService {
       alumno.user.status = UserStatus.ACTIVE;
       await manager.save(alumno.user);
 
-      return { message: 'Alumno activado correctamente' };
+      return {
+        status: alumno.user.status,
+        message: I18nHelper.translate('messages.ALUMNO_ACTIVADO_CORRECTAMENTE'),
+      };
     });
   }
 
@@ -132,7 +143,8 @@ export class ProfesorService {
       where: { user: { id: profesorUserId } },
     });
 
-    if (!profesor) throw new NotFoundException('Profesor not found');
+    if (!profesor)
+      throw new NotFoundException(I18nHelper.getError('PROFESOR_NOT_FOUND'));
 
     const result = await this.dataSource.getRepository(Alumno).find({
       where: { slot: { profesor: { id: profesor.id } } },
@@ -152,7 +164,8 @@ export class ProfesorService {
     const profesor = await this.profesorRepo.findOne({
       where: { user: { id: profesorUserId } },
     });
-    if (!profesor) throw new NotFoundException('Profesor not found');
+    if (!profesor)
+      throw new NotFoundException(I18nHelper.getError('PROFESOR_NOT_FOUND'));
 
     const alumno = await this.dataSource.getRepository(Alumno).findOne({
       where: { id: alumnoId, slot: { profesor: { id: profesor.id } } },
@@ -181,8 +194,9 @@ export class ProfesorService {
     await this.dataSource.getRepository(Usuario).save(alumno.user);
 
     return {
-      message:
-        'Contraseña restablecida exitosamente. Entregue esta clave provisional al alumno.',
+      message: I18nHelper.translate(
+        'messages.CONTRASE_A_RESTABLECIDA_EXITOSAMENTE_ENT_1'
+      ),
       provisionalPassword,
       mustChangePassword: true,
     };

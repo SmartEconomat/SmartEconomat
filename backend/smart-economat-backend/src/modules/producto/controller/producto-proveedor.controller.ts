@@ -26,7 +26,7 @@ import { SearchProductoProveedorDto } from '../dto/search-producto-proveedor.dto
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
 @ApiTags('Producto Proveedor')
 @UseGuards(JwtAuthGuard, PermisosGuard)
@@ -43,18 +43,18 @@ export class ProductoProveedorController {
     summary:
       'Actualizar el precio de un producto de un proveedor y registrar histórico',
   })
-  @ApiParam({ name: 'id', description: 'ID del ProductoProveedor' })
+  @ApiParam({ name: 'id', description: 'docs.ID_DEL_PRODUCTOPROVEEDOR' })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Precio actualizado correctamente',
+    description: 'docs.PRECIO_ACTUALIZADO_CORRECTAMENTE',
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: 'Producto proveedor no encontrado',
+    description: 'docs.PRODUCTO_PROVEEDOR_NO_ENCONTRADO',
   })
   @ApiResponse({
     status: HttpStatus.CONFLICT,
-    description: 'El precio es igual al actual',
+    description: 'docs.EL_PRECIO_ES_IGUAL_AL_ACTUAL',
   })
   async updatePrecio(
     @Param('id', ParseUUIDv7Pipe) id: string,
@@ -81,17 +81,17 @@ export class ProductoProveedorController {
   @ApiOperation({
     summary: 'Obtener el historial de precios de un producto proveedor',
   })
-  @ApiParam({ name: 'id', description: 'ID del ProductoProveedor' })
+  @ApiParam({ name: 'id', description: 'docs.ID_DEL_PRODUCTOPROVEEDOR' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Historial de precios recuperado correctamente',
+    description: 'docs.HISTORIAL_DE_PRECIOS_RECUPERADO_CORRECTA',
     type: [HistorialPrecio],
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
-    description: 'Producto proveedor no encontrado',
+    description: 'docs.PRODUCTO_PROVEEDOR_NO_ENCONTRADO',
   })
   async getHistorial(
     @Param('id', ParseUUIDv7Pipe) id: string,

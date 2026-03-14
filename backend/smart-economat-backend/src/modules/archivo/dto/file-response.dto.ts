@@ -1,26 +1,26 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class FileResponseDto {
-  @ApiProperty({ description: 'ID único del archivo', format: 'uuid' })
+  @ApiProperty({ description: 'docs.ID_NICO_DEL_ARCHIVO', format: 'uuid' })
   id: string;
 
-  @ApiProperty({ description: 'Nombre original del archivo' })
+  @ApiProperty({ description: 'docs.NOMBRE_ORIGINAL_DEL_ARCHIVO' })
   nombre: string;
 
-  @ApiProperty({ description: 'URL para acceder al archivo' })
+  @ApiProperty({ description: 'docs.URL_PARA_ACCEDER_AL_ARCHIVO' })
   url: string;
 
-  @ApiProperty({ description: 'Tamaño del archivo en bytes' })
+  @ApiProperty({ description: 'docs.TAMA_O_DEL_ARCHIVO_EN_BYTES' })
   tamano: number;
 
-  @ApiProperty({ description: 'Tipo MIME del archivo' })
+  @ApiProperty({ description: 'docs.TIPO_MIME_DEL_ARCHIVO' })
   mimeType: string;
 
-  @ApiProperty({ description: 'Fecha de subida del archivo' })
+  @ApiProperty({ description: 'docs.FECHA_DE_SUBIDA_DEL_ARCHIVO' })
   fechaSubida: Date;
 
   @ApiProperty({
-    description: 'Información básica del usuario que subió el archivo',
+    description: 'docs.INFORMACI_N_B_SICA_DEL_USUARIO_QUE_SUBI',
     required: false,
   })
   subidoPor?: {

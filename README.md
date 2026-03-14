@@ -129,15 +129,13 @@ El archivo generado se guardará en `tools/erd/erd.svg`.
 ## Solución de problemas comunes
 
 ### Errores de dependencias o "Module not found" en Docker
-Si tras realizar un `pull`, un `rebase` o instalar nuevas dependencias recibes errores de "Module not found" dentro del contenedor, se debe probablemente a que Docker está utilizando volúmenes de `node_modules` antiguos.
+Si tras realizar un `pull`, instalar nuevas dependencias (por ejemplo, al añadir Sentry) o un `rebase` recibes errores de "Module not found" dentro del contenedor, se debe probablemente a que Docker está utilizando el volumen anónimo de `node_modules` de una compilación anterior.
 
-**Solución:** Forzar la limpieza de volúmenes y recrear los contenedores.
+**Solución:** Forzar a Docker a que renueve los volúmenes anónimos en el siguiente arranque para que recoja el nuevo `package.json`.
 ```bash
-# Detener contenedores y eliminar volúmenes anónimos (limpia node_modules persistentes)
-docker compose --file docker-compose.dev.yml down -v
-
-# Levantar de nuevo reconstruyendo
-docker compose --env-file .env.dev --file docker-compose.dev.yml up --build --force-recreate
+# Levantar de nuevo reconstruyendo e indicando que renueve los volúmenes anónimos (-V)
+# Esto es totalmente seguro y NO borrará tu base de datos (volumen nombrado).
+docker compose --env-file .env.dev --file docker-compose.dev.yml up --build -V
 ```
 
 ### Problemas con la estructura de compilación o caché
@@ -147,6 +145,14 @@ Si el servidor no arranca por errores estructurales o restos de builds anteriore
 
 ### Herramientas de desarrollo
 El proyecto está configurado para usar **SWC** en desarrollo para una compilación ultra rápida. Asegúrate de que el script `start:dev` en el `package.json` mantenga el flag `-b swc` para un rendimiento óptimo.
+
+---
+
+## 📚 Documentación Adicional
+- [Wiki del Proyecto](./wiki/)
+- [Roles y Permisos](./wiki/roles_y_permisos.md)
+- [Paquetes y Dependencias](./wiki/paquetes_y_dependencias.md)
+- [Arquitectura Backend](./wiki/arquitectura_backend.md)
 
 ---
 

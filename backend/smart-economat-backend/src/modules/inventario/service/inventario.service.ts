@@ -12,9 +12,16 @@ import { CreateInventarioItemDto } from '../dto/create-InventarioItem.dto';
 import { UpdateInventarioDto } from '../dto/update-inventario.dto';
 import { AlertaStockDTO } from '../dto/alertaStock.dto';
 import { AlertaCaducidadDTO } from '../dto/alertaCaducidad.dto';
+import { InventoryQueryDto } from '../dto/inventory-query.dto';
+import {
+  StockConsolidadoDto,
+  StockPorUbicacionDto,
+} from '../dto/stock-result.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
 import { TipoMovimiento } from '../../movimiento/enums/movimiento.enums';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @Injectable()
 export class InventarioService {
@@ -31,6 +38,7 @@ export class InventarioService {
   ): Promise<Inventario> {
     const productoProveedor = await this.productoProveedorRepository.findOne({
       where: { id: dto.productoProveedorId },
+      relations: ['producto'],
     });
     if (!productoProveedor) {
       throw new NotFoundException(
@@ -72,15 +80,33 @@ export class InventarioService {
     }
   }
 
-  async findAll(): Promise<Inventario[]> {
-    return this.inventarioRepository.find({
+  async findAll(
+    query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<Inventario>> {
+    const page = query.page ?? 1;
+    const limit = Math.min(query.limit ?? 20, 50);
+    const sortBy = query.sortBy ?? 'createdAt';
+    const order = query.order ?? 'ASC';
+
+    const [data, total] = await this.inventarioRepository.findAndCount({
       relations: [
         'productoProveedor',
         'productoProveedor.producto',
         'productoProveedor.proveedor',
         'ubicacion',
       ],
+      order: { [sortBy]: order },
+      skip: (page - 1) * limit,
+      take: limit,
     });
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
+    };
   }
 
   async findOne(id: string): Promise<Inventario> {
@@ -204,5 +230,11 @@ export class InventarioService {
       cantidadActual: p.cantidadActual,
       cantidadMinima: p.cantidadMinima,
     }));
+  }
+
+  async queryStock(
+    dto: InventoryQueryDto
+  ): Promise<StockPorUbicacionDto[] | StockConsolidadoDto[]> {
+    return this.inventarioRepository.queryStock(dto);
   }
 }

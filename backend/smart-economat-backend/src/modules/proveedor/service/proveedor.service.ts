@@ -17,6 +17,24 @@ export class ProveedorService {
   constructor(private readonly proveedorRepository: ProveedorRepository) {}
 
   async create(createProveedorDto: CreateProveedorDto): Promise<Proveedor> {
+    const { nombre, nif } = createProveedorDto;
+
+    const existingNombre = await this.proveedorRepository.findOne({
+      where: { nombre },
+    });
+    if (existingNombre) {
+      throw new BadRequestException(I18nHelper.getError('DUPLICATE_ENTRY'));
+    }
+
+    if (nif) {
+      const existingNif = await this.proveedorRepository.findOne({
+        where: { nif },
+      });
+      if (existingNif) {
+        throw new BadRequestException(I18nHelper.getError('DUPLICATE_ENTRY'));
+      }
+    }
+
     const proveedor = this.proveedorRepository.create(createProveedorDto);
     return await this.proveedorRepository.save(proveedor);
   }
@@ -25,7 +43,9 @@ export class ProveedorService {
     query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Proveedor>> {
     const page = query.page ?? 1;
-    const limit = Math.min(query.limit ?? 20, 100);
+    const limit = Math.min(query.limit ?? 20, 50);
+    const sortBy = query.sortBy ?? 'nombre';
+    const order = query.order ?? 'ASC';
 
     const whereCondition = query.searchTerm
       ? [
@@ -39,7 +59,7 @@ export class ProveedorService {
     const [data, total] = await this.proveedorRepository.findAndCount({
       where: whereCondition,
       relations: ['productos'],
-      order: { nombre: 'ASC' },
+      order: { [sortBy]: order },
       skip: (page - 1) * limit,
       take: limit,
     });
@@ -74,17 +94,46 @@ export class ProveedorService {
     updateProveedorDto: UpdateProveedorDto
   ): Promise<Proveedor> {
     const proveedor = await this.findOne(id);
+    const { nombre, nif } = updateProveedorDto;
+
+    if (nombre && nombre !== proveedor.nombre) {
+      const existingNombre = await this.proveedorRepository.findOne({
+        where: { nombre },
+      });
+      if (existingNombre) {
+        throw new BadRequestException(I18nHelper.getError('DUPLICATE_ENTRY'));
+      }
+    }
+
+    if (nif && nif !== proveedor.nif) {
+      const existingNif = await this.proveedorRepository.findOne({
+        where: { nif },
+      });
+      if (existingNif) {
+        throw new BadRequestException(I18nHelper.getError('DUPLICATE_ENTRY'));
+      }
+    }
 
     this.proveedorRepository.merge(proveedor, updateProveedorDto);
     return await this.proveedorRepository.save(proveedor);
   }
 
   async remove(id: string): Promise<void> {
-    const proveedor = await this.findOne(id);
+    const proveedor = await this.proveedorRepository.findOne({
+      where: { id },
+      relations: ['productos', 'pedidos'],
+    });
 
-    if (proveedor.productos && proveedor.productos.length > 0) {
+    if (!proveedor) {
+      throw new NotFoundException(I18nHelper.getError('PROVIDER_NOT_FOUND'));
+    }
+
+    if (
+      (proveedor.productos && proveedor.productos.length > 0) ||
+      (proveedor.pedidos && proveedor.pedidos.length > 0)
+    ) {
       throw new BadRequestException(
-        I18nHelper.getError('PROVIDER_HAS_PRODUCTS')
+        I18nHelper.getError('ENTITY_HAS_RELATIONS')
       );
     }
 

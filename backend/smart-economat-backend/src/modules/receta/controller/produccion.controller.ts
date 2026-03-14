@@ -10,13 +10,16 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { ProduccionService } from '../service/produccion.service';
 import { EjecutarProduccionDto } from '../dto/ejecutar-produccion.dto';
 import { ProduccionLote } from '../produccion-lote.entity/produccion-lote.entity';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
 @ApiTags('Producción')
 @UseGuards(JwtAuthGuard, PermisosGuard)
@@ -33,9 +36,9 @@ export class ProduccionController {
   @ApiResponse({ status: 201, type: ProduccionLote })
   @ApiResponse({
     status: 400,
-    description: 'Stock insuficiente or receta inválida',
+    description: 'docs.STOCK_INSUFICIENTE_OR_RECETA_INV_LIDA',
   })
-  @ApiResponse({ status: 404, description: 'Receta no encontrada' })
+  @ApiResponse({ status: 404, description: 'docs.RECETA_NO_ENCONTRADA' })
   ejecutarProduccion(
     @Body() dto: EjecutarProduccionDto,
     @GetUser('id') userId: string
@@ -47,16 +50,25 @@ export class ProduccionController {
   @RequirePermissions('recetas:listar')
   @ApiOperation({ summary: 'Listar todos los lotes de producción' })
   @ApiResponse({ status: 200, type: [ProduccionLote] })
-  findAll(): Promise<ProduccionLote[]> {
-    return this.produccionService.findAll();
+  findAll(
+    @SortableFields([
+      'fechaProduccion',
+      'fechaCaducidad',
+      'cantidadProducida',
+      'costeTotalReal',
+      'createdAt',
+    ])
+    query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<ProduccionLote>> {
+    return this.produccionService.findAll(query);
   }
 
   @Get(':id')
   @RequirePermissions('recetas:ver')
   @ApiOperation({ summary: 'Obtener un lote de producción por ID' })
-  @ApiParam({ name: 'id', description: 'UUID del lote de producción' })
+  @ApiParam({ name: 'id', description: 'docs.UUID_DEL_LOTE_DE_PRODUCCI_N' })
   @ApiResponse({ status: 200, type: ProduccionLote })
-  @ApiResponse({ status: 404, description: 'Lote no encontrado' })
+  @ApiResponse({ status: 404, description: 'docs.LOTE_NO_ENCONTRADO' })
   findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ProduccionLote> {
     return this.produccionService.findOne(id);
   }

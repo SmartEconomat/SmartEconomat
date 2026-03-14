@@ -5,16 +5,16 @@ import {
 } from '../incidencia-linea.entity/incidencia-linea.entity';
 
 export class IncidenciaLineaDto {
-  @ApiProperty({ description: 'ID de la línea de incidencia' })
+  @ApiProperty({ description: 'docs.ID_DE_LA_L_NEA_DE_INCIDENCIA' })
   id!: string;
 
-  @ApiProperty({ description: 'Cantidad pedida originalmente al proveedor' })
+  @ApiProperty({ description: 'docs.CANTIDAD_PEDIDA_ORIGINALMENTE_AL_PROVEED' })
   cantidadEsperada!: number;
 
-  @ApiProperty({ description: 'Cantidad escaneada/recibida realmente' })
+  @ApiProperty({ description: 'docs.CANTIDAD_ESCANEADA_RECIBIDA_REALMENTE' })
   cantidadRecibida!: number;
 
-  @ApiProperty({ description: 'Diferencia de cantidades' })
+  @ApiProperty({ description: 'docs.DIFERENCIA_DE_CANTIDADES' })
   diferencia!: number;
 
   @ApiProperty({ enum: TipoDiferencia })
@@ -24,14 +24,14 @@ export class IncidenciaLineaDto {
   estadoReclamacion!: EstadoReclamacion;
 
   @ApiProperty({
-    description: 'Observaciones para esta línea en particular',
+    description: 'docs.OBSERVACIONES_PARA_ESTA_L_NEA_EN_PARTICU',
     required: false,
   })
   observaciones?: string;
 
-  @ApiProperty({ description: 'ID del producto pedido', required: false })
+  @ApiProperty({ description: 'docs.ID_DEL_PRODUCTO_PEDIDO', required: false })
   pedidoProductoId?: string;
 
-  @ApiProperty({ description: 'Nombre del producto', required: false })
+  @ApiProperty({ description: 'docs.NOMBRE_DEL_PRODUCTO', required: false })
   nombreProducto?: string;
 }

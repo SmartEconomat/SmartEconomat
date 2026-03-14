@@ -1,3 +1,4 @@
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import {
   Injectable,
   NotFoundException,
@@ -6,17 +7,17 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import { Rol } from '../entities/rol.entity';
+import { Rol } from '../rol.entity/rol.entity';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
-import { Permiso } from '../../permisos/entities/permiso.entity';
-import { UsuarioRol } from '../entities/usuario-rol.entity';
+import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
+import { UsuarioRol } from '../usuario-rol.entity/usuario-rol.entity';
 import { CreateRolDto } from '../dto/create-rol.dto';
 import { UpdateRolDto } from '../dto/update-rol.dto';
 import { AssignPermissionsDto } from '../dto/assign-permissions.dto';
 import { AssignRoleToUserDto } from '../dto/assign-role-to-user.dto';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
-import { AuthorizationService } from '../../authorization/services/authorization.service';
+import { AuthPermissionsService } from '../../auth/service/auth-permissions.service';
 
 /**
  * Servicio para la gestión de roles y asignaciones.
@@ -33,7 +34,7 @@ export class RolesService {
     private readonly permisoRepo: Repository<Permiso>,
     @InjectRepository(UsuarioRol)
     private readonly usuarioRolRepo: Repository<UsuarioRol>,
-    private readonly authorizationService: AuthorizationService
+    private readonly authPermissionsService: AuthPermissionsService
   ) {}
 
   /**
@@ -71,11 +72,14 @@ export class RolesService {
    * Listar todos los roles con paginación
    */
   async findAll(query: PaginationQueryDto): Promise<PaginatedResponseDto<Rol>> {
-    const { page = 1, limit = 10 } = query;
+    const page = query.page ?? 1;
+    const limit = Math.min(query.limit ?? 10, 50);
+    const sortBy = query.sortBy ?? 'nombre';
+    const order = query.order ?? 'ASC';
 
     const [data, total] = await this.rolRepo.findAndCount({
       relations: ['permisos'],
-      order: { nombre: 'ASC' },
+      order: { [sortBy]: order },
       skip: (page - 1) * limit,
       take: limit,
     });
@@ -162,7 +166,9 @@ export class RolesService {
     const rol = await this.findOne(id);
 
     if (rol.esSistema) {
-      throw new BadRequestException('No se puede eliminar un rol de sistema');
+      throw new BadRequestException(
+        I18nHelper.getError('NO_SE_PUEDE_ELIMINAR_UN_ROL_DE_SISTEMA')
+      );
     }
 
     const usuariosCount = await this.usuarioRolRepo.count({
@@ -197,7 +203,9 @@ export class RolesService {
     });
 
     if (permisos.length !== dto.permisoIds.length) {
-      throw new BadRequestException('Algunos permisos no existen');
+      throw new BadRequestException(
+        I18nHelper.getError('ALGUNOS_PERMISOS_NO_EXISTEN')
+      );
     }
 
     rol.permisos = permisos;
@@ -231,7 +239,7 @@ export class RolesService {
     if (existente) {
       existente.activo = dto.activo !== undefined ? dto.activo : true;
       const updated = await this.usuarioRolRepo.save(existente);
-      await this.authorizationService.invalidateUserCache(dto.usuarioId);
+      await this.authPermissionsService.invalidateUserCache(dto.usuarioId);
       return updated;
     }
 
@@ -244,7 +252,7 @@ export class RolesService {
 
     const saved = await this.usuarioRolRepo.save(usuarioRol);
 
-    await this.authorizationService.invalidateUserCache(dto.usuarioId);
+    await this.authPermissionsService.invalidateUserCache(dto.usuarioId);
 
     return saved;
   }
@@ -258,12 +266,14 @@ export class RolesService {
     });
 
     if (!usuarioRol) {
-      throw new NotFoundException('Asignación de rol no encontrada');
+      throw new NotFoundException(
+        I18nHelper.getError('ASIGNACI_N_DE_ROL_NO_ENCONTRADA')
+      );
     }
 
     await this.usuarioRolRepo.remove(usuarioRol);
 
-    await this.authorizationService.invalidateUserCache(usuarioId);
+    await this.authPermissionsService.invalidateUserCache(usuarioId);
   }
 
   /**
@@ -296,7 +306,7 @@ export class RolesService {
     const userIds = usuarioRoles.map((ur) => ur.usuarioId);
 
     if (userIds.length > 0) {
-      await this.authorizationService.invalidateUsersCache(userIds);
+      await this.authPermissionsService.invalidateUsersCache(userIds);
     }
   }
 }

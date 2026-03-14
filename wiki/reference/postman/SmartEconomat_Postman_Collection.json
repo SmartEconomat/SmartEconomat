@@ -1,0 +1,714 @@
+{
+  "info": {
+    "_postman_id": "75c3214a-8e2b-4b2a-9e1a-96bad0e1f203",
+    "name": "SmartEconomat API v1",
+    "description": "Colección oficial SmartEconomat (v1). Basada en API.md y validada contra controladores NestJS. Incluye gestión de stock, FEFO, multi-pedidos y auditoría total.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01. Auth",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Usuario Demo\",\n  \"username\": \"userdemo\",\n  \"password\": \"PasswordFuerte123!\",\n  \"email\": \"demo@example.com\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": "{{base_url}}/auth/register",
+            "description": "Registra un nuevo usuario. Por defecto queda Inactivo e Invitado hasta validación de administrador."
+          }
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data && jsonData.data.access_token) {",
+                  "    pm.environment.set(\"jwt_token\", jsonData.data.access_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@smarteconomat.com\",\n  \"password\": \"SmartEconomat2026!\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": "{{base_url}}/auth/login",
+            "description": "Inicia sesión. El token se guarda automáticamente en la variable {{jwt_token}}."
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@example.com\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/auth/forgot-password"
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"uuid-token-recuperacion\",\n  \"newPassword\": \"NuevaSegura123!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/auth/reset-password"
+          }
+        },
+        {
+          "name": "Change Password (Authenticated)",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"SmartEconomat2026!\",\n  \"newPassword\": \"NuevaSegura!123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/auth/change-password"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02. Usuarios",
+      "item": [
+        {
+          "name": "Self-Service",
+          "item": [
+            {
+              "name": "Get My Profile",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/usuarios/perfil"
+              }
+            },
+            {
+              "name": "Update My Profile",
+              "request": {
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombre\": \"Mi Nuevo Nombre\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": "{{base_url}}/usuarios/perfil"
+              }
+            },
+            {
+              "name": "Change My Password",
+              "request": {
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"oldPassword\": \"123456\",\n  \"newPassword\": \"NuevaSegura999!\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": "{{base_url}}/usuarios/perfil/password"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Administration",
+          "item": [
+            {
+              "name": "List Users (Paginated)",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/usuarios?page=1&limit=20",
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "20" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get User Detail",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/usuarios/:id",
+                "variable": [{ "key": "id", "value": "" }]
+              }
+            },
+            {
+              "name": "Change Active Status",
+              "request": {
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"activo\": true\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": "{{base_url}}/usuarios/:id/activar",
+                "variable": [{ "key": "id", "value": "" }]
+              }
+            },
+            {
+              "name": "Change Role",
+              "request": {
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"rol\": \"profesor\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": "{{base_url}}/usuarios/:id/rol",
+                "variable": [{ "key": "id", "value": "" }]
+              }
+            },
+            {
+              "name": "Reset Password (Force)",
+              "request": {
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"password\": \"AdminReset123!\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": "{{base_url}}/usuarios/:id/password",
+                "variable": [{ "key": "id", "value": "" }]
+              }
+            },
+            {
+              "name": "Permissions Management",
+              "item": [
+                {
+                  "name": "Add Additional Permission",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{base_url}}/usuarios/:id/permisos-adicionales/:permisoId",
+                    "variable": [
+                      { "key": "id", "value": "" },
+                      { "key": "permisoId", "value": "" }
+                    ]
+                  }
+                },
+                {
+                  "name": "Add Excluded Permission",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{base_url}}/usuarios/:id/permisos-excluidos/:permisoId",
+                    "variable": [
+                      { "key": "id", "value": "" },
+                      { "key": "permisoId", "value": "" }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03. Productos",
+      "item": [
+        {
+          "name": "Generate EAN-13",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/productos/generar-ean13"
+          }
+        },
+        {
+          "name": "List Products (Search & Filter)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/productos?page=1&limit=20&searchTerm=leche&tipo=lacteo&alergenos=gluten&minStock=true",
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "searchTerm", "value": "leche", "disabled": true },
+                { "key": "codigoBarras", "value": "84123456789", "disabled": true },
+                { "key": "tipo", "value": "lacteo", "disabled": true },
+                { "key": "alergenos", "value": "gluten", "disabled": true },
+                { "key": "minStock", "value": "true", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Product (+Providers)",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Vino Tinto Rioja\",\n  \"marca\": \"Cune\",\n  \"descripcion\": \"Crianza 2020\",\n  \"unidad\": \"u\",\n  \"tipo\": \"bebida\",\n  \"contenido\": 0.75,\n  \"proveedores\": [\n    {\n      \"proveedorId\": \"uuid-proveedor\",\n      \"precioActual\": 6.50\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/productos"
+          }
+        },
+        {
+          "name": "Get Detail",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/productos/:id",
+            "variable": [{ "key": "id", "value": "" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04. Producto-Proveedor",
+      "item": [
+        {
+          "name": "Search (Autocomplete)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/producto-proveedor/search?q=rioja&limit=10",
+              "query": [
+                { "key": "q", "value": "rioja" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Price Pact",
+          "request": {
+            "method": "PATCH",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"precioActual\": 6.75\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/producto-proveedor/:id/precio",
+            "variable": [{ "key": "id", "value": "" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05. Proveedores",
+      "item": [
+        {
+          "name": "List & Search",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/proveedor?searchTerm=Global&page=1",
+              "query": [
+                { "key": "searchTerm", "value": "Global" },
+                { "key": "page", "value": "1" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Proveedor",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Proveedor España S.A.\",\n  \"cif\": \"A12345678\",\n  \"email\": \"contacto@provespana.com\",\n  \"telefono\": \"912344556\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/proveedor"
+          }
+        }
+      ]
+    },
+    {
+      "name": "06. Pedidos",
+      "item": [
+        {
+          "name": "Create Pedido",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proveedorId\": \"uuid-proveedor\",\n  \"productos\": [\n    {\n      \"productoProveedorId\": \"uuid-pp\",\n      \"cantidad\": 50,\n      \"precioUnitario\": 1.25\n    }\n  ],\n  \"fechaEntrega\": \"2026-04-01\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/pedidos"
+          }
+        },
+        {
+          "name": "List All",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/pedidos?page=1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "07. Recepción",
+      "item": [
+        {
+          "name": "Procesar Recepción Maestro",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pedidos\": [\n    {\n      \"pedidoId\": \"uuid-pedido-1\",\n      \"nAlbaran\": \"ALB-001/24\",\n      \"observaciones\": \"Entregado en muelle A\"\n    }\n  ],\n  \"nAlbaran\": \"ALB-GENERAL-001\",\n  \"observaciones\": \"Firma general del transportista\",\n  \"productos\": [\n    {\n      \"pedidoProductoId\": \"uuid-linea-pedido\",\n      \"cantidadRecibida\": 10,\n      \"estadoVisual\": \"OPTIMO\",\n      \"fechaCaducidad\": \"2026-12-31T00:00:00Z\",\n      \"observaciones\": \"Lote revisado\"\n    }\n  ],\n  \"productosNuevos\": [\n    {\n      \"pendienteCreacion\": true,\n      \"codigoBarras\": \"8410188003028\",\n      \"nombre\": \"Tomate frito Orlando\",\n      \"marca\": \"Orlando\",\n      \"unidad\": \"u\",\n      \"tipo\": \"otro\",\n      \"contenido\": 400,\n      \"cantidadRecibida\": 5,\n      \"observaciones\": \"Alta directa en descarga\"\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/recepcion",
+            "description": "Endpoint crítico. Procesa stock, movimientos, cierra pedidos y puede crear productos on-the-fly. Soporta multi-pedidos."
+          }
+        },
+        {
+          "name": "List History",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/recepcion"
+          }
+        }
+      ]
+    },
+    {
+      "name": "08. Movimientos",
+      "item": [
+        {
+          "name": "Get Trazabilidad (History)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/movimientos/historial?entityId=uuid-pp&type=entrada&startDate=2026-01-01",
+              "query": [
+                { "key": "entityId", "value": "uuid-pp", "description": "UUID ProductoProveedor" },
+                { "key": "userId", "value": "", "disabled": true, "description": "UUID Usuario auditado" },
+                { "key": "type", "value": "entrada" },
+                { "key": "startDate", "value": "2026-01-01" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Manual Adjustment",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"ajuste\",\n  \"cantidad\": -2,\n  \"inventarioId\": \"uuid-item-stock\",\n  \"descripcion\": \"Rotura accidental\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/movimientos"
+          }
+        }
+      ]
+    },
+    {
+      "name": "09. Dashboard",
+      "item": [
+        {
+          "name": "Get KPIs & Stats",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/dashboard/stats"
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Alertas",
+      "item": [
+        {
+          "name": "Check Expirations",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/alertas/caducidad"
+          }
+        },
+        {
+          "name": "Check Low Stock",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/alertas/stock"
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Recetas",
+      "item": [
+        {
+          "name": "List Recipes",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/recetas?searchTerm=Tortilla",
+              "query": [
+                { "key": "searchTerm", "value": "Tortilla" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Recipe",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Tortilla de Patatas\",\n  \"instrucciones\": \"1. Pelar...\",\n  \"tiempo\": \"30 min\",\n  \"dificultad\": \"Fácil\",\n  \"tiempoPreparacion\": \"10 min\",\n  \"ingredientes\": [\n    {\n      \"productoId\": \"uuid-patata\",\n      \"cantidad\": 1,\n      \"unidad\": \"KG\"\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/recetas"
+          }
+        },
+        {
+          "name": "Duplicate Recipe",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceId\": \"uuid-receta-original\",\n  \"newName\": \"Tortilla de Patatas Vegana\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/recetas/duplicate"
+          }
+        },
+        {
+          "name": "Get Escandallo (Cost Calculation)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/recetas/:id/escandallo",
+            "variable": [{ "key": "id", "value": "" }]
+          }
+        },
+        {
+          "name": "Recalculate Costs",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/recetas/:id/recalcular-costes",
+            "variable": [{ "key": "id", "value": "" }]
+          }
+        },
+        {
+          "name": "Cook Recipe (Manual Stock Consumption)",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cantidadProduccion\": 1,\n  \"unidadResultante\": \"racion\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/recetas/:id/cocinar",
+            "variable": [{ "key": "id", "value": "" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12. Ubicaciones",
+      "item": [
+        {
+          "name": "List Active",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/ubicacion"
+          }
+        },
+        {
+          "name": "Restore Deleted",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/ubicacion/:id/restore",
+            "variable": [{ "key": "id", "value": "" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13. Albaranes",
+      "item": [
+        {
+          "name": "List All",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/albaranes"
+          }
+        }
+      ]
+    },
+    {
+      "name": "14. Inventario Directo",
+      "item": [
+        {
+          "name": "List Stock Items",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/inventario"
+          }
+        }
+      ]
+    },
+    {
+      "name": "15. Producción",
+      "item": [
+        {
+          "name": "Ejecutar Producción (Generar Lote)",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"recetaId\": \"uuid-receta\",\n  \"cantidadResultante\": 10,\n  \"unidadResultante\": \"ud\",\n  \"ubicacionId\": \"uuid-ubicacion\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/produccion/ejecutar"
+          }
+        },
+        {
+          "name": "List Batch History",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/produccion"
+          }
+        }
+      ]
+    },
+    {
+      "name": "16. Sistema Educativo - Admin",
+      "item": [
+        {
+          "name": "Create Profesor",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Profesor X\",\n  \"email\": \"profe@example.com\",\n  \"username\": \"profex\",\n  \"password\": \"Password123!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/admin/profesores"
+          }
+        },
+        {
+          "name": "Activate User",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/admin/users/:id/activate",
+            "variable": [{ "key": "id", "value": "" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "17. Sistema Educativo - Profesores",
+      "item": [
+        {
+          "name": "Create Slots",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cantidad\": 5\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/profesores/slots"
+          }
+        },
+        {
+          "name": "List My Alumnos",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/profesores/alumnos"
+          }
+        }
+      ]
+    },
+    {
+      "name": "18. Sistema Educativo - Alumnos",
+      "item": [
+        {
+          "name": "Register Alumno (via Code)",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Alumno Demo\",\n  \"username\": \"alumnodemo\",\n  \"password\": \"Password123!\",\n  \"email\": \"alumno@example.com\",\n  \"codigoSlot\": \"ABC-123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/alumnos/register"
+          }
+        }
+      ]
+    },
+    {
+      "name": "19. Incidencias",
+      "item": [
+        {
+          "name": "List Pending",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/incidencias"
+          }
+        },
+        {
+          "name": "Resolve Incidencia",
+          "request": {
+            "method": "PATCH",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comentarioResolucion\": \"Abono realizado por el proveedor\",\n  \"cantidadAcepada\": 9\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/incidencias/:id/resolver",
+            "variable": [{ "key": "id", "value": "" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "99. Health Check",
+      "item": [
+        {
+          "name": "Root Check",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3000/"
+          }
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

@@ -9,13 +9,12 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
-  Query,
   Request,
 } from '@nestjs/common';
 import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { CreateRecepcionDto } from '../dto/create-recepcion.dto';
-import { ApiQuery } from '@nestjs/swagger';
 import { UpdateRecepcionDto } from '../dto/update-recepcion.dto';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { Recepcion } from '../recepcion.entity/recepcion.entity';
 import { RecepcionService } from '../service/recepcion.service';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
@@ -24,7 +23,7 @@ import { RecepcionStockService } from '../service/recepcion-stock.service';
 import { RecepcionResultadoDto } from '../dto/recepcion-resultado.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('recepcion')
@@ -41,17 +40,16 @@ export class RecepcionController {
     @Body() dto: CreateRecepcionDto,
     @Request() req: any
   ): Promise<RecepcionResultadoDto> {
-    const userId = req.user.sub;
+    const userId = req.user.id;
     dto.usuarioId = dto.usuarioId || userId;
     return this.recepcionStockService.procesarRecepcion(dto);
   }
 
   @Get()
   @RequirePermissions('recepciones:listar')
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
   findAll(
-    @Query() query: PaginationQueryDto
+    @SortableFields(['fechaRecepcion', 'estado', 'createdAt', 'updatedAt'])
+    query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Recepcion>> {
     return this.recepcionService.findAll(query);
   }

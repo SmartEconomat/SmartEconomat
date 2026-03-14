@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
+const BACKEND_ROOT = path.resolve(__dirname, '../..');
+
 /**
  * Script para eliminar comentarios de línea (
  * preservando aquellos que estén dentro de cadenas de texto.
@@ -55,17 +57,12 @@ function removeLineComments(content) {
   });
 }
 
-/**
- * Función principal
- */
-function main() {
-  const args = process.argv.slice(2);
+function resolveFiles(args = []) {
   let filesToProcess = [];
 
-  // Si se pasan argumentos, asumimos que son rutas de archivo (para lint-staged)
+  // Si se pasan argumentos, asumimos que son rutas de archivo staged
   if (args.length > 0) {
     filesToProcess = args;
-    console.log(`Recibidos ${args.length} archivos para procesar.`);
   } else {
     // Modo manual: escanear directorio src
     // Ajuste para buscar explícitamente en ../../src relativo a este script (scripts/git-hooks)
@@ -80,9 +77,12 @@ function main() {
     }
 
     filesToProcess = findFiles(srcDir);
-    console.log(`Encontrados ${filesToProcess.length} archivos .ts en src.`);
   }
 
+  return filesToProcess;
+}
+
+function processFiles(filesToProcess) {
   let modifiedCount = 0;
 
   filesToProcess.forEach((file) => {
@@ -90,7 +90,7 @@ function main() {
       // Asegurar ruta absoluta si viene relativa
       const absolutePath = path.isAbsolute(file)
         ? file
-        : path.resolve(process.cwd(), file);
+        : path.resolve(BACKEND_ROOT, file);
 
       if (!fs.existsSync(absolutePath)) {
         console.warn(`Archivo no encontrado (saltando): ${file}`);
@@ -110,6 +110,22 @@ function main() {
     }
   });
 
+  return modifiedCount;
+}
+
+/**
+ * Función principal
+ */
+function main() {
+  const args = process.argv.slice(2);
+  const filesToProcess = resolveFiles(args);
+
+  if (args.length > 0) {
+    console.log(`Recibidos ${args.length} archivos para procesar.`);
+  }
+
+  const modifiedCount = processFiles(filesToProcess);
+
   if (modifiedCount > 0) {
     console.log(
       `\nOperación completada. ${modifiedCount} archivos modificados.`
@@ -119,4 +135,12 @@ function main() {
   }
 }
 
-main();
+module.exports = {
+  removeLineComments,
+  resolveFiles,
+  processFiles,
+};
+
+if (require.main === module) {
+  main();
+}

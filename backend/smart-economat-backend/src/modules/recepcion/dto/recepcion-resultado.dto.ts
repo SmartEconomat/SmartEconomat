@@ -2,20 +2,19 @@ import { ApiProperty } from '@nestjs/swagger';
 
 class IncidenciaGeneradaDto {
   @ApiProperty({
-    description: 'UUID de la incidencia',
+    description: 'docs.UUID_DE_LA_INCIDENCIA',
     example: 'uuid-incidencia',
   })
   id: string;
 
   @ApiProperty({
-    description:
-      'Estado inicial de la incidencia (siempre PENDIENTE DE RESOLUCIÓN desde el frontend_view)',
+    description: 'docs.ESTADO_INICIAL_DE_LA_INCIDENCIA_SIEMPRE',
     example: 'PENDIENTE DE RESOLUCIÓN',
   })
   estado: string;
 
   @ApiProperty({
-    description: 'Datos inmutables capturados en el momento de la recepción',
+    description: 'docs.DATOS_INMUTABLES_CAPTURADOS_EN_EL_MOMENT',
     example: {
       productos: [
         {
@@ -33,17 +32,17 @@ class IncidenciaGeneradaDto {
 }
 
 class PedidoActualizadoDto {
-  @ApiProperty({ description: 'UUID del pedido', example: 'uuid-pedido' })
+  @ApiProperty({ description: 'docs.UUID_DEL_PEDIDO', example: 'uuid-pedido' })
   id: string;
 
   @ApiProperty({
-    description: 'Estado anterior antes de la recepción',
+    description: 'docs.ESTADO_ANTERIOR_ANTES_DE_LA_RECEPCI_N',
     example: 'en_proceso',
   })
   estadoAnterior: string;
 
   @ApiProperty({
-    description: 'Estado resultante tras la recepción',
+    description: 'docs.ESTADO_RESULTANTE_TRAS_LA_RECEPCI_N',
     example: 'recibido',
   })
   estadoNuevo: string;
@@ -51,61 +50,63 @@ class PedidoActualizadoDto {
 
 class ProductoCreadoDto {
   @ApiProperty({
-    description: 'UUID del producto creado',
+    description: 'docs.UUID_DEL_PRODUCTO_CREADO',
     example: 'uuid-prod',
   })
   id: string;
 
   @ApiProperty({
-    description: 'Nombre del producto',
+    description: 'docs.NOMBRE_DEL_PRODUCTO',
     example: 'Aceite de Girasol Bio',
   })
   nombre: string;
 
-  @ApiProperty({ description: 'Código de barras', example: '8410188009999' })
+  @ApiProperty({
+    description: 'docs.C_DIGO_DE_BARRAS',
+    example: '8410188009999',
+  })
   codigoBarras: string;
 }
 
 export class RecepcionResultadoDto {
   @ApiProperty({
-    description: 'UUID de la nueva recepción',
+    description: 'docs.UUID_DE_LA_NUEVA_RECEPCI_N',
     example: 'uuid-recepcion',
   })
   id: string;
 
   @ApiProperty({
-    description: 'Fecha de recepción',
+    description: 'docs.FECHA_DE_RECEPCI_N',
     example: '2023-10-15T12:00:00Z',
   })
   fechaRecepcion: Date;
 
   @ApiProperty({
-    description:
-      'Incidencias generadas automáticamente por discrepancias de cantidades',
+    description: 'docs.INCIDENCIAS_GENERADAS_AUTOM_TICAMENTE_PO',
     type: [IncidenciaGeneradaDto],
   })
   incidencias: IncidenciaGeneradaDto[];
 
   @ApiProperty({
-    description: 'Cambios de estado aplicados a los pedidos involucrados',
+    description: 'docs.CAMBIOS_DE_ESTADO_APLICADOS_A_LOS_PEDIDO',
     type: [PedidoActualizadoDto],
   })
   pedidosActualizados: PedidoActualizadoDto[];
 
   @ApiProperty({
-    description: 'Total de Movimientos de inventario generados (trazabilidad)',
+    description: 'docs.TOTAL_DE_MOVIMIENTOS_DE_INVENTARIO_GENER',
     example: 3,
   })
   movimientosGenerados: number;
 
   @ApiProperty({
-    description: 'Total de lotes de Inventario creados (FEFO)',
+    description: 'docs.TOTAL_DE_LOTES_DE_INVENTARIO_CREADOS_FEF',
     example: 3,
   })
   inventariosCreados: number;
 
   @ApiProperty({
-    description: 'Productos que fueron creados durante esta recepción',
+    description: 'docs.PRODUCTOS_QUE_FUERON_CREADOS_DURANTE_EST',
     type: [ProductoCreadoDto],
   })
   productosCreados: ProductoCreadoDto[];
