@@ -5,6 +5,9 @@ WORKDIR /app
 # Install git for git config commands in logger
 RUN apk add --no-cache git
 
+RUN mkdir -p /app/node_modules /app/dist \
+	&& chown -R node:node /app
+
 COPY package*.json ./
 RUN --mount=type=cache,target=/root/.npm npm install
 
