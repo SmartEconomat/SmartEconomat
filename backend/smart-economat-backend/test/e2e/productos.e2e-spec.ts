@@ -12,10 +12,8 @@ describe('ProductoController (e2e)', () => {
   let adminToken: string;
 
   beforeAll(async () => {
-    // Obtener app singleton (ya inicializada por jest.setup.ts)
     app = await getTestApp();
 
-    // Login una sola vez para todo el archivo de test
     adminToken = await loginAndGetToken(app);
   });
 
@@ -66,10 +64,14 @@ describe('ProductoController (e2e)', () => {
       expect(response.body.data.codigoBarras).toHaveLength(13);
     });
 
-    it('E2E-PRO-05-CRE-ERR: Error 400 por código de barras duplicado', async () => {
-      const ean = `1234567890${Date.now().toString().slice(-3)}`; // EAN único por timestamp
+    it('E2E-PRO-05-CRE-ERR: Error 409 por código de barras duplicado', async () => {
+      const eanResponse = await request(app.getHttpServer())
+        .get('/api/v1/productos/generar-ean13')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
 
-      // Crear primer producto
+      const ean = eanResponse.body.data.codigo_barras;
+
       await request(app.getHttpServer())
         .post('/api/v1/productos')
         .set('Authorization', `Bearer ${adminToken}`)
@@ -81,7 +83,6 @@ describe('ProductoController (e2e)', () => {
           codigoBarras: ean,
         });
 
-      // Intentar crear segundo producto con mismo EAN
       const response = await request(app.getHttpServer())
         .post('/api/v1/productos')
         .set('Authorization', `Bearer ${adminToken}`)
@@ -93,7 +94,7 @@ describe('ProductoController (e2e)', () => {
           codigoBarras: ean,
         });
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(409);
     });
   });
 
@@ -128,13 +129,11 @@ describe('ProductoController (e2e)', () => {
     it('E2E-PRO-22-DEL: Eliminar producto', async () => {
       const producto = await createProducto();
 
-      // Eliminar producto
       await request(app.getHttpServer())
         .delete(`/api/v1/productos/${producto.id}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(204);
 
-      // Verificar que no existe
       await request(app.getHttpServer())
         .get(`/api/v1/productos/${producto.id}`)
         .set('Authorization', `Bearer ${adminToken}`)

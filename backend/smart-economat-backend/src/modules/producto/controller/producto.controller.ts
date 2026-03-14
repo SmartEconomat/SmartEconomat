@@ -13,7 +13,13 @@ import {
   Request,
 } from '@nestjs/common';
 import { ProductoService } from '../service/producto.service';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBody,
+} from '@nestjs/swagger';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { ProductFilterDto } from '../dto/product-filter.dto';
 import { CreateProductoDto } from '../dto/create-producto.dto';
@@ -47,7 +53,12 @@ export class ProductoController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary:
-      'Crear un nuevo producto con opcionalmente alérgenos y proveedores',
+      'Alta compleja de producto maestro con alérgenos y proveedores en una sola operación',
+  })
+  @ApiBody({
+    type: CreateProductoDto,
+    description:
+      'Permite crear un producto maestro y, opcionalmente, asociar alérgenos y variantes de proveedor en el mismo flujo transaccional.',
   })
   @ApiResponse({
     status: 201,
@@ -57,6 +68,14 @@ export class ProductoController {
   @ApiResponse({
     status: 400,
     description: 'docs.DATOS_INV_LIDOS_O_C_DIGO_DE_BARRAS_DUPLI',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'docs.PROVEEDOR_NO_ENCONTRADO',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'docs.CONFLICTO_DE_PRODUCTO_O_RELACIONES_DUPLICADAS',
   })
   create(
     @Body() createProductoDto: CreateProductoDto,

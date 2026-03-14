@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { Producto } from '../producto.entity/producto.entity';
@@ -11,7 +12,7 @@ import { UpdateProductoDto } from '../dto/update-producto.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
-import { Repository, DataSource, EntityManager } from 'typeorm';
+import { Repository, DataSource, EntityManager, In } from 'typeorm';
 import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
 import { ProductFilterDto } from '../dto/product-filter.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
@@ -19,6 +20,7 @@ import { AddProveedorToProductoDto } from '../dto/producto-proveedor.dto/add-pro
 import { ProductoAlergeno } from '../producto-alergeno.entity/producto-alergeno.entity';
 import { generateEan13, validateEan13 } from '../../../common/utils/ean13.util';
 import { buildFindManyOptions } from '../../../common/utils/typeorm-query.helper';
+import { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
 
 @Injectable()
 export class ProductoService {
@@ -38,6 +40,7 @@ export class ProductoService {
     userId: string
   ): Promise<Producto> {
     const { alergenos, proveedores, ...rest } = createProductoDto;
+    const normalizedAlergenos = this.ensureUniqueAlergenos(alergenos);
 
     if (rest.codigoBarras) {
       if (!validateEan13(rest.codigoBarras)) {
@@ -49,8 +52,8 @@ export class ProductoService {
         rest.codigoBarras
       );
       if (exists) {
-        throw new BadRequestException(
-          I18nHelper.getError('EL_C_DIGO_DE_BARRAS_YA_EST_REGISTRADO')
+        throw new ConflictException(
+          'El código de barras del producto ya está registrado'
         );
       }
     } else {
@@ -58,17 +61,19 @@ export class ProductoService {
     }
 
     return await this.dataSource.transaction(async (manager) => {
+      await this.validateProveedorPayload(manager, proveedores, true);
+
       const producto = manager.create(Producto, rest);
 
-      if (alergenos && alergenos.length > 0) {
-        producto.alergenos = alergenos.map((a) =>
-          manager.create(ProductoAlergeno, {
-            alergeno: a,
-          })
+      const savedProduct = await manager.save(Producto, producto);
+
+      if (normalizedAlergenos !== undefined) {
+        await this.replaceAlergenosWithManager(
+          manager,
+          savedProduct.id,
+          normalizedAlergenos
         );
       }
-
-      const savedProduct = await manager.save(producto);
 
       if (proveedores !== undefined) {
         await this.syncProveedoresWithManager(
@@ -187,45 +192,69 @@ export class ProductoService {
     userId: string
   ): Promise<Producto> {
     const { alergenos, proveedores, ...rest } = updateProductoDto;
-    const producto = await this.findOne(id);
+    const normalizedAlergenos =
+      alergenos !== undefined
+        ? this.ensureUniqueAlergenos(alergenos)
+        : undefined;
 
-    if (rest.codigoBarras && rest.codigoBarras !== producto.codigoBarras) {
-      if (!validateEan13(rest.codigoBarras)) {
-        throw new BadRequestException(
-          'El código de barras proporcionado no es un EAN-13 válido'
+    return await this.dataSource.transaction(async (manager) => {
+      const producto = await manager.findOne(Producto, {
+        where: { id },
+        relations: ['proveedores', 'proveedores.proveedor', 'alergenos'],
+      });
+
+      if (!producto) {
+        throw new NotFoundException(I18nHelper.getError('PRODUCT_NOT_FOUND'));
+      }
+
+      if (rest.codigoBarras && rest.codigoBarras !== producto.codigoBarras) {
+        if (!validateEan13(rest.codigoBarras)) {
+          throw new BadRequestException(
+            'El código de barras proporcionado no es un EAN-13 válido'
+          );
+        }
+
+        const duplicatedBarcode = await manager.count(Producto, {
+          where: { codigoBarras: rest.codigoBarras },
+        });
+
+        if (duplicatedBarcode > 0) {
+          throw new ConflictException(
+            'El código de barras del producto ya está registrado'
+          );
+        }
+      }
+
+      if (proveedores !== undefined) {
+        await this.validateProveedorPayload(manager, proveedores);
+      }
+
+      manager.merge(Producto, producto, rest);
+      await manager.save(Producto, producto);
+
+      if (normalizedAlergenos !== undefined) {
+        await this.replaceAlergenosWithManager(
+          manager,
+          id,
+          normalizedAlergenos
         );
       }
-      const exists = await this.productoRepository.existsByCodigoBarras(
-        rest.codigoBarras
+
+      if (proveedores !== undefined) {
+        await this.syncProveedoresWithManager(manager, id, proveedores);
+      }
+
+      await this.movimientoHelper.trackProductoUpdate(
+        userId,
+        id,
+        `Actualización de producto: ${producto.nombre}`
       );
-      if (exists) {
-        throw new BadRequestException(
-          I18nHelper.getError('EL_C_DIGO_DE_BARRAS_YA_EST_REGISTRADO')
-        );
-      }
-    }
 
-    this.productoRepository.merge(producto, rest);
-
-    if (alergenos) {
-      producto.alergenos = alergenos.map((a) => ({
-        alergeno: a,
-        idProducto: id,
-      })) as any;
-    }
-
-    await this.productoRepository.save(producto);
-
-    if (proveedores !== undefined) {
-      await this.syncProveedores(id, proveedores);
-    }
-
-    await this.movimientoHelper.trackProductoUpdate(
-      userId,
-      id,
-      `Actualización de producto: ${producto.nombre}`
-    );
-    return this.findOne(id);
+      return (await manager.findOne(Producto, {
+        where: { id },
+        relations: ['proveedores', 'proveedores.proveedor', 'alergenos'],
+      })) as Producto;
+    });
   }
 
   async remove(id: string, userId: string): Promise<void> {
@@ -256,6 +285,110 @@ export class ProductoService {
     );
   }
 
+  private ensureUniqueAlergenos(
+    alergenos?: ProductoAlergeno['alergeno'][]
+  ): ProductoAlergeno['alergeno'][] | undefined {
+    if (alergenos === undefined) {
+      return undefined;
+    }
+
+    const uniqueAlergenos = [...new Set(alergenos)];
+
+    if (uniqueAlergenos.length !== alergenos.length) {
+      throw new ConflictException(
+        'No se pueden repetir alérgenos en la misma solicitud'
+      );
+    }
+
+    return uniqueAlergenos;
+  }
+
+  private async validateProveedorPayload(
+    manager: EntityManager,
+    proveedores?: AddProveedorToProductoDto[],
+    requirePrecioUnitario = false
+  ): Promise<void> {
+    if (proveedores === undefined) {
+      return;
+    }
+
+    const providerIds = proveedores.map((proveedor) => proveedor.proveedorId);
+    const uniqueProviderIds = new Set(providerIds);
+
+    if (uniqueProviderIds.size !== providerIds.length) {
+      throw new ConflictException(
+        'No se puede vincular el mismo proveedor más de una vez al producto'
+      );
+    }
+
+    for (const proveedor of proveedores) {
+      if (proveedor.codigoBarras && !validateEan13(proveedor.codigoBarras)) {
+        throw new BadRequestException(
+          `El código de barras del proveedor ${proveedor.proveedorId} no es un EAN-13 válido`
+        );
+      }
+
+      if (
+        requirePrecioUnitario &&
+        (proveedor.precioUnitario === undefined ||
+          proveedor.precioUnitario === null)
+      ) {
+        throw new BadRequestException(
+          `El precio unitario es obligatorio para el proveedor ${proveedor.proveedorId}`
+        );
+      }
+    }
+
+    if (providerIds.length === 0) {
+      return;
+    }
+
+    const providerRepo = manager.getRepository(Proveedor);
+    const existingProviders = await providerRepo.find({
+      where: { id: In(providerIds) },
+      select: { id: true },
+    });
+
+    const existingProviderIds = new Set(
+      existingProviders.map((provider) => provider.id)
+    );
+    const missingProviderId = providerIds.find(
+      (providerId) => !existingProviderIds.has(providerId)
+    );
+
+    if (missingProviderId) {
+      throw new NotFoundException(
+        `No existe el proveedor ${missingProviderId}`
+      );
+    }
+  }
+
+  private async replaceAlergenosWithManager(
+    manager: EntityManager,
+    productoId: string,
+    alergenos: ProductoAlergeno['alergeno'][]
+  ): Promise<void> {
+    await manager
+      .createQueryBuilder()
+      .delete()
+      .from(ProductoAlergeno)
+      .where('producto_id = :productoId', { productoId })
+      .execute();
+
+    if (alergenos.length === 0) {
+      return;
+    }
+
+    const relations = alergenos.map((alergeno) =>
+      manager.create(ProductoAlergeno, {
+        productoId,
+        alergeno,
+      })
+    );
+
+    await manager.save(ProductoAlergeno, relations);
+  }
+
   private async syncProveedoresWithManager(
     manager: EntityManager,
     productoId: string,
@@ -266,7 +399,7 @@ export class ProductoService {
       relations: ['proveedor'],
     });
 
-    const existingIds = existing.map((ep) => ep.proveedor.id);
+    const existingIds = existing.map((ep) => ep.proveedorId);
     const newProveedores = proveedores.filter(
       (p) => !existingIds.includes(p.proveedorId)
     );
@@ -277,6 +410,8 @@ export class ProductoService {
     if (newProveedores.length > 0) {
       const newRelations = newProveedores.map((p) =>
         manager.create(ProductoProveedor, {
+          productoId,
+          proveedorId: p.proveedorId,
           producto: { id: productoId } as any,
           proveedor: { id: p.proveedorId } as any,
           precioUnitario: p.precioUnitario ?? 0,
@@ -289,7 +424,7 @@ export class ProductoService {
 
     if (proveedoresToUpdate.length > 0) {
       for (const p of proveedoresToUpdate) {
-        const toUpdate = existing.find((e) => e.proveedor.id === p.proveedorId);
+        const toUpdate = existing.find((e) => e.proveedorId === p.proveedorId);
         if (toUpdate) {
           toUpdate.precioUnitario = p.precioUnitario ?? toUpdate.precioUnitario;
           toUpdate.marca = p.marcaEspecifica ?? toUpdate.marca;
@@ -312,16 +447,5 @@ export class ProductoService {
         }
       }
     }
-  }
-
-  private async syncProveedores(
-    productoId: string,
-    proveedores: AddProveedorToProductoDto[]
-  ) {
-    return this.syncProveedoresWithManager(
-      this.dataSource.manager,
-      productoId,
-      proveedores
-    );
   }
 }
