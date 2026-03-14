@@ -60,6 +60,20 @@ export class RecepcionController {
     return this.recepcionService.findAll(query);
   }
 
+  @Get('reporte-pdf')
+  @RequirePermissions('recepciones:listar')
+  async reportePdf(
+    @Query() filters: RecepcionReportePdfDto,
+    @Res() res: Response
+  ): Promise<void> {
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="reporte-recepcion.pdf"'
+    );
+    await this.pdfReportService.generateReport(filters, res);
+  }
+
   @Get(':id')
   @RequirePermissions('recepciones:ver')
   findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Recepcion> {
@@ -80,19 +94,5 @@ export class RecepcionController {
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.recepcionService.remove(id);
-  }
-
-  @Get('reporte-pdf')
-  @RequirePermissions('recepciones:listar')
-  async reportePdf(
-    @Query() filters: RecepcionReportePdfDto,
-    @Res() res: Response
-  ): Promise<void> {
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader(
-      'Content-Disposition',
-      'attachment; filename="reporte-recepcion.pdf"'
-    );
-    await this.pdfReportService.generateReport(filters, res);
   }
 }
