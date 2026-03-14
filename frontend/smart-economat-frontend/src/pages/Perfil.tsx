@@ -43,7 +43,8 @@ const Perfil: React.FC = () => {
     const isProfesor = user?.rol?.toUpperCase() === 'PROFESOR';
 
     // Estados de la Ficha
-    const [isEditing, setIsEditing] = useState(false);
+    const [isEditingProfile, setIsEditingProfile] = useState(false);
+    const [isEditingSlots, setIsEditingSlots] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -128,7 +129,7 @@ const Perfil: React.FC = () => {
         setNewSlot(prev => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
-    const handleGlobalSave = async () => {
+    const handleProfileSave = async () => {
         setIsSaving(true);
         setError(null);
         try {
@@ -146,22 +147,22 @@ const Perfil: React.FC = () => {
                 setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
             }
 
-            toast.success("Ficha actualizada correctamente");
+            toast.success("Perfil actualizado correctamente");
             
             // Refrescar datos locales
             const updatedUser = await authSvc.getCurrentUser();
             login(updatedUser, localStorage.getItem('token') || '');
             
-            setIsEditing(false);
+            setIsEditingProfile(false);
         } catch (err: any) {
             setError(err.message || "Error al guardar los cambios");
-            toast.error("Error al actualizar la ficha");
+            toast.error("Error al actualizar el perfil");
         } finally {
             setIsSaving(false);
         }
     };
 
-    const handleCancel = () => {
+    const handleProfileCancel = () => {
         // Resetear a datos actuales
         if (user) {
             setProfileData({
@@ -171,7 +172,7 @@ const Perfil: React.FC = () => {
             });
         }
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-        setIsEditing(false);
+        setIsEditingProfile(false);
         setError(null);
     };
 
@@ -267,7 +268,7 @@ const Perfil: React.FC = () => {
             {/* Cabecera */}
             <Box mb={{ xs: 3, md: 4 }}>
                 <Typography variant="h4" fontWeight={700} gutterBottom color="primary.main" sx={{ fontSize: { xs: '1.75rem', md: '2.125rem' } }}>
-                    Ficha de Usuario
+                    Perfil de Usuario
                 </Typography>
                 <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />}>
                     <Link underline="hover" color="inherit" component={RouterLink} to="/">Inicio</Link>
@@ -277,99 +278,127 @@ const Perfil: React.FC = () => {
 
             {error && <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>{error}</Alert>}
 
-            <Card elevation={2} sx={{ borderRadius: 3, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
-                <CardContent sx={{ p: { xs: 3, md: 5 } }}>
-                    <Stack spacing={6}>
-                        {/* SECCION 1: DATOS PERSONALES */}
-                        <ProfileForm 
-                            isEditing={isEditing}
-                            formData={profileData}
-                            onFormChange={handleProfileChange}
-                            onOpenEmailModal={() => setIsEmailModalOpen(true)}
-                            isSaving={isSaving}
-                        />
-
-                        {/* SECCION 2: SEGURIDAD (PASSWORD) */}
-                        <ChangePasswordForm 
-                            isEditing={isEditing}
-                            formData={passwordData}
-                            onFormChange={handlePasswordChange}
-                            isSaving={isSaving}
-                        />
-
-                        {/* SECCION 3: GESTIÓN DE AULAS (SOLO PROFESORES) */}
-                        {isProfesor && (
-                            <ProfessorSlotsManager 
-                                isEditing={isEditing}
-                                slots={slots}
-                                isLoading={false}
-                                isSaving={false}
-                                newSlot={newSlot}
-                                onNewSlotChange={handleNewSlotChange}
-                                onCreateSlot={handleCreateSlot}
-                                onDeleteSlot={handleDeleteSlot}
-                            />
-                        )}
-
-                        {/* SECCION 4: GESTIÓN DE ALUMNOS (SOLO PROFESORES) */}
-                        {isProfesor && (
-                            <ProfessorStudentList 
-                                students={students}
-                                slots={slots}
-                                isLoading={isLoading}
-                                onToggleStatus={handleToggleStudentStatus}
-                                onResetPassword={handleResetStudentPassword}
-                                onManagePermissions={handleManagePermissions}
-                                onDeleteStudent={handleDeleteStudent}
+            <Stack spacing={4}>
+                {/* TARJETA 1: DATOS PERSONALES Y SEGURIDAD */}
+                <Card elevation={2} sx={{ borderRadius: 3, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
+                    <CardContent sx={{ p: { xs: 3, md: 5 } }}>
+                        <Stack spacing={6}>
+                            <ProfileForm 
+                                isEditing={isEditingProfile}
+                                formData={profileData}
+                                onFormChange={handleProfileChange}
+                                onOpenEmailModal={() => setIsEmailModalOpen(true)}
                                 isSaving={isSaving}
                             />
-                        )}
 
-                        <Divider />
+                            <ChangePasswordForm 
+                                isEditing={isEditingProfile}
+                                formData={passwordData}
+                                onFormChange={handlePasswordChange}
+                                isSaving={isSaving}
+                            />
 
-                        {/* BOTONES DE ACCIÓN AL FINAL */}
-                        <Box 
-                            display="flex" 
-                            flexDirection={{ xs: 'column-reverse', sm: 'row' }} 
-                            justifyContent="flex-end" 
-                            gap={2}
-                            pt={2}
-                        >
-                            {!isEditing ? (
-                                <Button 
-                                    startIcon={<EditIcon />} 
-                                    onClick={() => setIsEditing(true)}
-                                    sx={{ borderRadius: 3, px: 4, width: { xs: '100%', sm: 'auto' } }}
+                            <Divider />
+
+                            <Box 
+                                display="flex" 
+                                flexDirection={{ xs: 'column-reverse', sm: 'row' }} 
+                                justifyContent="flex-end" 
+                                gap={2}
+                            >
+                                {!isEditingProfile ? (
+                                    <Button 
+                                        startIcon={<EditIcon />} 
+                                        onClick={() => setIsEditingProfile(true)}
+                                        sx={{ borderRadius: 3, px: 4, width: { xs: '100%', sm: 'auto' } }}
+                                    >
+                                        Editar Perfil
+                                    </Button>
+                                ) : (
+                                    <>
+                                        <Button 
+                                            variant="outlined" 
+                                            color="inherit" 
+                                            startIcon={<CancelIcon />} 
+                                            onClick={handleProfileCancel}
+                                            disabled={isSaving}
+                                            sx={{ px: 3, width: { xs: '100%', sm: 'auto' } }}
+                                        >
+                                            Cancelar
+                                        </Button>
+                                        <Button 
+                                            color="primary" 
+                                            startIcon={<SaveIcon />} 
+                                            onClick={handleProfileSave}
+                                            isLoading={isSaving}
+                                            sx={{ px: 4, width: { xs: '100%', sm: 'auto' } }}
+                                        >
+                                            Guardar Cambios
+                                        </Button>
+                                    </>
+                                )}
+                            </Box>
+                        </Stack>
+                    </CardContent>
+                </Card>
+
+                {/* TARJETA 2: GESTIÓN EDUCATIVA (SOLO PROFESORES) */}
+                {isProfesor && (
+                    <Card elevation={2} sx={{ borderRadius: 3, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
+                        <CardContent sx={{ p: { xs: 3, md: 5 } }}>
+                            <Stack spacing={6}>
+                                <Box display="flex" justifyContent="space-between" alignItems="center">
+                                    <Typography variant="h5" fontWeight={700}>Gestión Académica</Typography>
+                                </Box>
+                                
+                                <ProfessorSlotsManager 
+                                    isEditing={isEditingSlots}
+                                    slots={slots}
+                                    isLoading={false}
+                                    isSaving={false}
+                                    newSlot={newSlot}
+                                    onNewSlotChange={handleNewSlotChange}
+                                    onCreateSlot={handleCreateSlot}
+                                    onDeleteSlot={handleDeleteSlot}
+                                />
+
+                                <Divider />
+
+                                <ProfessorStudentList 
+                                    students={students}
+                                    slots={slots}
+                                    isLoading={isLoading}
+                                    onToggleStatus={handleToggleStudentStatus}
+                                    onResetPassword={handleResetStudentPassword}
+                                    onManagePermissions={handleManagePermissions}
+                                    onDeleteStudent={handleDeleteStudent}
+                                    isSaving={isSaving}
+                                />
+
+                                <Divider />
+
+                                <Box 
+                                    display="flex" 
+                                    flexDirection={{ xs: 'column-reverse', sm: 'row' }} 
+                                    justifyContent="flex-end" 
+                                    gap={2}
+                                    pt={2}
                                 >
-                                    Editar Ficha
-                                </Button>
-                            ) : (
-                                <>
                                     <Button 
-                                        variant="outlined" 
-                                        color="inherit" 
-                                        startIcon={<CancelIcon />} 
-                                        onClick={handleCancel}
-                                        disabled={isSaving}
-                                        sx={{ px: 3, width: { xs: '100%', sm: 'auto' } }}
+                                        variant={isEditingSlots ? "outlined" : "contained"}
+                                        color={isEditingSlots ? "inherit" : "primary"}
+                                        startIcon={isEditingSlots ? <CancelIcon /> : <EditIcon />}
+                                        onClick={() => setIsEditingSlots(!isEditingSlots)}
+                                        sx={{ borderRadius: 3, px: 4, width: { xs: '100%', sm: 'auto' } }}
                                     >
-                                        Cancelar
+                                        {isEditingSlots ? "Finalizar Edición" : "Gestionar Clases"}
                                     </Button>
-                                    <Button 
-                                        color="primary" 
-                                        startIcon={<SaveIcon />} 
-                                        onClick={handleGlobalSave}
-                                        isLoading={isSaving}
-                                        sx={{ px: 4, width: { xs: '100%', sm: 'auto' } }}
-                                    >
-                                        Guardar Cambios
-                                    </Button>
-                                </>
-                            )}
-                        </Box>
-                    </Stack>
-                </CardContent>
-            </Card>
+                                </Box>
+                            </Stack>
+                        </CardContent>
+                    </Card>
+                )}
+            </Stack>
 
             {/* Modal para solicitud de email */}
             <Dialog open={isEmailModalOpen} onClose={() => setIsEmailModalOpen(false)} fullWidth maxWidth="sm">

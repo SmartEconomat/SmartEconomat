@@ -59,7 +59,7 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
     : students.length > 0 
       ? [{
           id: 'temp-group',
-          aula: 'Alumnos Registrados',
+          aula: 'Alumnos sin Curso',
           numeroClase: 0,
           capacidad: students.length,
           codigoSlot: 'PENDIENTE',
@@ -133,13 +133,13 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
                     <MeetingRoomIcon color={isPanelExpanded ? "primary" : "action"} />
                     <Box flex={1}>
                       <Typography variant="subtitle1" fontWeight={700} color={isPanelExpanded ? "primary.main" : "text.primary"}>
-                        {group.aula} — Clase {group.numeroClase}
+                        Curso: {group.aula} — Clase {group.numeroClase}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         {group.students.length} alumnos de {group.capacidad} permitidos
                       </Typography>
                     </Box>
-                    <Tooltip title="Click para copiar código">
+                    <Tooltip title="Click para copiar código de clase">
                       <Chip 
                         label={group.codigoSlot || 'SIN CÓDIGO'} 
                         size="small" 
