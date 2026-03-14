@@ -32,6 +32,10 @@ Sistema de testing optimizado para **SmartEconomat Backend** usando **pg-mem**, 
 
 ## 🏗️ Arquitectura
 
+## 📘 Suites documentadas
+
+- [Tests E2E de contratos frontend-backend](frontend-backend-contracts-e2e.md): regresión específica para los contratos corregidos entre el frontend y la API NestJS.
+
 ### Componentes principales
 
 ```

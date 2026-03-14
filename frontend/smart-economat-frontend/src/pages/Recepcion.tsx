@@ -70,6 +70,7 @@ import { useAuth } from '../store/AuthContext';
 import {
   CategoriaProducto,
   UnidadMedida,
+  normalizeUnidadMedida,
 } from '../services/producto.types';
 import StatusChip from '../components/recepcion/StatusChip';
 import PasoSeleccionPedidos from '../components/recepcion/PasoSeleccionPedidos';
@@ -112,12 +113,17 @@ const Recepcion: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const [openModal, setOpenModal] = useState(false);
-  const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'error' | null>(null);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<
+    'saved' | 'saving' | 'error' | null
+  >(null);
   const [expandedPanel, setExpandedPanel] = useState<string | false>(false);
 
   // Báscula Modal State
   const [weightModalOpen, setWeightModalOpen] = useState(false);
-  const [weightTarget, setWeightTarget] = useState<{ pIdx: number | null; lIdx: number } | null>(null);
+  const [weightTarget, setWeightTarget] = useState<{
+    pIdx: number | null;
+    lIdx: number;
+  } | null>(null);
   const [capturedWeight, setCapturedWeight] = useState<number | null>(null);
   const [isWeighing, setIsWeighing] = useState(false);
   const [isScaleConnected, setIsScaleConnected] = useState(true);
@@ -137,7 +143,9 @@ const Recepcion: React.FC = () => {
 
   // Ref for persistence logic
   const draftRef = useRef(draft);
-  useEffect(() => { draftRef.current = draft; }, [draft]);
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
 
   // --- 1. Persistencia Robusta ---
 
@@ -151,11 +159,16 @@ const Recepcion: React.FC = () => {
         const diff = Date.now() - new Date(parsed.modificadoEn).getTime();
         if (diff < 24 * 60 * 60 * 1000) {
           setDraft(parsed);
-          const stepIdx = ['SELECCION_PEDIDOS', 'ESCANEO_LOTE', 'REVISION_FINAL', 'RESULTADO'].indexOf(parsed.paso);
+          const stepIdx = [
+            'SELECCION_PEDIDOS',
+            'ESCANEO_LOTE',
+            'REVISION_FINAL',
+            'RESULTADO',
+          ].indexOf(parsed.paso);
           if (stepIdx >= 0) setActiveStep(stepIdx);
         }
       } catch (e) {
-        console.error("Error al cargar draft", e);
+        console.error('Error al cargar draft', e);
       }
     }
 
@@ -169,10 +182,13 @@ const Recepcion: React.FC = () => {
 
     setAutoSaveStatus('saving');
     const timer = setTimeout(() => {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
-        ...draft,
-        modificadoEn: new Date().toISOString()
-      }));
+      localStorage.setItem(
+        LOCAL_STORAGE_KEY,
+        JSON.stringify({
+          ...draft,
+          modificadoEn: new Date().toISOString(),
+        })
+      );
       setAutoSaveStatus('saved');
     }, 1000);
 
@@ -183,7 +199,10 @@ const Recepcion: React.FC = () => {
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (activeStep > 0 && activeStep < 3) {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(draftRef.current));
+        localStorage.setItem(
+          LOCAL_STORAGE_KEY,
+          JSON.stringify(draftRef.current)
+        );
         e.preventDefault();
         e.returnValue = '';
       }
@@ -192,19 +211,21 @@ const Recepcion: React.FC = () => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [activeStep]);
 
-
   // --- 2. Acciones del Backend ---
 
   const loadPedidos = async () => {
     setLoadingPedidos(true);
     try {
-      const resp = await fetchPedidos(1, 100);
+      const resp = await fetchPedidos(1, 50);
       // Solo pedidos pendientes, en proceso o parciales
-      setPedidosDisponibles(resp.data.filter((p: Pedido) =>
-        p.estado === EstadoPedido.PENDIENTE ||
-        p.estado === EstadoPedido.EN_PROCESO ||
-        p.estado === EstadoPedido.PARCIAL
-      ));
+      setPedidosDisponibles(
+        resp.data.filter(
+          (p: Pedido) =>
+            p.estado === EstadoPedido.PENDIENTE ||
+            p.estado === EstadoPedido.EN_PROCESO ||
+            p.estado === EstadoPedido.PARCIAL
+        )
+      );
     } catch (err) {
       setError('Error al cargar pedidos compatibles.');
     } finally {
@@ -228,8 +249,8 @@ const Recepcion: React.FC = () => {
       estadoVisual: EstadoVisualProducto.OPTIMO,
       fechaCaducidad: '',
       observaciones: '',
-      estado: calculateEstado(0, Number(pp.cantidad))
-    }))
+      estado: calculateEstado(0, Number(pp.cantidad)),
+    })),
   });
 
   const handleSelectAll = () => {
@@ -277,18 +298,19 @@ const Recepcion: React.FC = () => {
   };
 
   const handleTogglePedido = (pedido: Pedido) => {
-    const isSelected = draft.pedidosSeleccionados.some(p => p.id === pedido.id);
+    const isSelected = draft.pedidosSeleccionados.some(
+      (p) => p.id === pedido.id
+    );
     let newPedidos = [...draft.pedidosSeleccionados];
 
     if (isSelected) {
-      newPedidos = newPedidos.filter(p => p.id !== pedido.id);
+      newPedidos = newPedidos.filter((p) => p.id !== pedido.id);
     } else {
       newPedidos.push(mapPedidoToDraft(pedido));
     }
 
     setDraft({ ...draft, pedidosSeleccionados: newPedidos });
   };
-
 
   // --- 3. Lógica de Escaneo (Paso 2) ---
 
@@ -337,9 +359,9 @@ const Recepcion: React.FC = () => {
     let foundPedidoId: string | null = null;
     let unitAdded = false;
 
-    const newPedidos = [...draft.pedidosSeleccionados].map(p => ({
+    const newPedidos = [...draft.pedidosSeleccionados].map((p) => ({
       ...p,
-      lineas: [...p.lineas]
+      lineas: [...p.lineas],
     }));
 
     // 1. Array de coincidencias en los pedidos seleccionados
@@ -347,8 +369,10 @@ const Recepcion: React.FC = () => {
     newPedidos.forEach((p, pIdx) => {
       p.lineas.forEach((l, lIdx) => {
         const matchId = l.idProducto === prod.id;
-        const matchBarcode = l.codigoBarras === prod.codigoBarras && prod.codigoBarras;
-        const matchName = l.nombreProducto.toLowerCase() === prod.nombre.toLowerCase();
+        const matchBarcode =
+          l.codigoBarras === prod.codigoBarras && prod.codigoBarras;
+        const matchName =
+          l.nombreProducto.toLowerCase() === prod.nombre.toLowerCase();
 
         if (matchId || matchBarcode || matchName) {
           matches.push({ pIdx, lIdx, l });
@@ -360,8 +384,9 @@ const Recepcion: React.FC = () => {
       foundInPedidos = true;
 
       // Buscar si algún match le falta stock
-      let targetMatch = matches.find(m => {
-        const currRec = m.l.cantidadRecibida === '' ? 0 : Number(m.l.cantidadRecibida);
+      let targetMatch = matches.find((m) => {
+        const currRec =
+          m.l.cantidadRecibida === '' ? 0 : Number(m.l.cantidadRecibida);
         return currRec < m.l.cantidadPedida;
       });
 
@@ -372,7 +397,8 @@ const Recepcion: React.FC = () => {
 
       foundPedidoId = newPedidos[targetMatch.pIdx].id;
       const tLinea = newPedidos[targetMatch.pIdx].lineas[targetMatch.lIdx];
-      const currRec = tLinea.cantidadRecibida === '' ? 0 : Number(tLinea.cantidadRecibida);
+      const currRec =
+        tLinea.cantidadRecibida === '' ? 0 : Number(tLinea.cantidadRecibida);
 
       if (isWeightUnit(tLinea.unidad)) {
         // En lugar de sumar +1 por defecto, abrimos la balanza para capturar su peso
@@ -384,30 +410,43 @@ const Recepcion: React.FC = () => {
       newPedidos[targetMatch.pIdx].lineas[targetMatch.lIdx] = {
         ...tLinea,
         cantidadRecibida: currRec + 1,
-        estado: calculateEstado(currRec + 1, tLinea.cantidadPedida)
+        estado: calculateEstado(currRec + 1, tLinea.cantidadPedida),
       };
 
       setDraft({ ...draft, pedidosSeleccionados: newPedidos });
       if (foundPedidoId) setExpandedPanel(foundPedidoId);
     } else {
       // 2. Si no esta, añadir a espontáneos
-      const existingEsp = draft.productosEspontaneos.find(l =>
-        l.idProducto === prod.id ||
-        (l.codigoBarras === prod.codigoBarras && prod.codigoBarras) ||
-        l.nombreProducto.toLowerCase() === prod.nombre.toLowerCase()
+      const existingEsp = draft.productosEspontaneos.find(
+        (l) =>
+          l.idProducto === prod.id ||
+          (l.codigoBarras === prod.codigoBarras && prod.codigoBarras) ||
+          l.nombreProducto.toLowerCase() === prod.nombre.toLowerCase()
       );
 
       if (existingEsp) {
-        const newEsp = draft.productosEspontaneos.map(l => {
-          const match = l.idProducto === prod.id ||
+        const newEsp = draft.productosEspontaneos.map((l) => {
+          const match =
+            l.idProducto === prod.id ||
             (l.codigoBarras === prod.codigoBarras && prod.codigoBarras) ||
             l.nombreProducto.toLowerCase() === prod.nombre.toLowerCase();
           return match
-            ? { ...l, cantidadRecibida: isWeightUnit(l.unidad) ? Number(l.cantidadRecibida) : Number(l.cantidadRecibida) + 1, estado: 'Exceso' as any }
+            ? {
+                ...l,
+                cantidadRecibida: isWeightUnit(l.unidad)
+                  ? Number(l.cantidadRecibida)
+                  : Number(l.cantidadRecibida) + 1,
+                estado: 'Exceso' as any,
+              }
             : l;
         });
 
-        const indexEsp = newEsp.findIndex(l => l.idProducto === prod.id || (l.codigoBarras === prod.codigoBarras && prod.codigoBarras) || l.nombreProducto.toLowerCase() === prod.nombre.toLowerCase());
+        const indexEsp = newEsp.findIndex(
+          (l) =>
+            l.idProducto === prod.id ||
+            (l.codigoBarras === prod.codigoBarras && prod.codigoBarras) ||
+            l.nombreProducto.toLowerCase() === prod.nombre.toLowerCase()
+        );
         setDraft({ ...draft, productosEspontaneos: newEsp });
 
         if (isWeightUnit(existingEsp.unidad)) {
@@ -428,12 +467,18 @@ const Recepcion: React.FC = () => {
           estadoVisual: EstadoVisualProducto.OPTIMO,
           fechaCaducidad: '',
           observaciones: '',
-          estado: 'Nuevo' as any
+          estado: 'Nuevo' as any,
         };
-        setDraft(prev => ({ ...prev, productosEspontaneos: [...prev.productosEspontaneos, newLinea] }));
+        setDraft((prev) => ({
+          ...prev,
+          productosEspontaneos: [...prev.productosEspontaneos, newLinea],
+        }));
 
         if (isWeightUnit(prod.unidad)) {
-          setTimeout(() => openWeightScale(null, draft.productosEspontaneos.length), 0);
+          setTimeout(
+            () => openWeightScale(null, draft.productosEspontaneos.length),
+            0
+          );
         }
       }
     }
@@ -446,14 +491,19 @@ const Recepcion: React.FC = () => {
     return 'Exceso';
   };
 
-  const handleUpdateLinea = (pIdx: number | null, lIdx: number, field: string, value: any) => {
+  const handleUpdateLinea = (
+    pIdx: number | null,
+    lIdx: number,
+    field: string,
+    value: any
+  ) => {
     let finalValue = value;
     if (field === 'cantidadRecibida') {
       const numValue = Number(value);
-      finalValue = (!isNaN(numValue) && numValue >= 0) ? numValue : 0;
+      finalValue = !isNaN(numValue) && numValue >= 0 ? numValue : 0;
     }
 
-    setDraft(prevDraft => {
+    setDraft((prevDraft) => {
       if (pIdx !== null) {
         const newPedidos = [...prevDraft.pedidosSeleccionados];
         const newPedido = { ...newPedidos[pIdx] };
@@ -461,7 +511,10 @@ const Recepcion: React.FC = () => {
         const newLinea = { ...newLineas[lIdx], [field]: finalValue };
 
         if (field === 'cantidadRecibida') {
-          newLinea.estado = calculateEstado(Number(finalValue), newLinea.cantidadPedida);
+          newLinea.estado = calculateEstado(
+            Number(finalValue),
+            newLinea.cantidadPedida
+          );
         }
 
         // Si el usuario edita a mano (escribiendo), y no teníamos isWeighedWithScale = true, lo mantenemos en false.
@@ -539,11 +592,13 @@ const Recepcion: React.FC = () => {
     let isValid = true;
 
     // Al menos 1 producto con cantidad > 0
-    const totalItems = draft.pedidosSeleccionados.flatMap(p => p.lineas).concat(draft.productosEspontaneos);
-    const hasReception = totalItems.some(l => Number(l.cantidadRecibida) > 0);
+    const totalItems = draft.pedidosSeleccionados
+      .flatMap((p) => p.lineas)
+      .concat(draft.productosEspontaneos);
+    const hasReception = totalItems.some((l) => Number(l.cantidadRecibida) > 0);
 
     if (!hasReception) {
-      setError("Debes recepcionar al menos un producto.");
+      setError('Debes recepcionar al menos un producto.');
       return false;
     }
 
@@ -554,11 +609,18 @@ const Recepcion: React.FC = () => {
         if (Number(l.cantidadRecibida) > 0 || l.estado === 'No entregado') {
           const hasDiscrepancy =
             Number(l.cantidadRecibida) !== l.cantidadPedida ||
-            (l.cantidadAlbaran !== '' && l.cantidadAlbaran != null && Number(l.cantidadAlbaran) !== l.cantidadPedida) ||
+            (l.cantidadAlbaran !== '' &&
+              l.cantidadAlbaran != null &&
+              Number(l.cantidadAlbaran) !== l.cantidadPedida) ||
             l.estadoVisual !== EstadoVisualProducto.OPTIMO;
 
-          if (hasDiscrepancy && (!l.observaciones || l.observaciones.trim() === '')) {
-            setError(`Falla Validativa: El producto "${l.nombreProducto}" presenta discrepancias con el pedido o estado y su campo de notas es obligatorio.`);
+          if (
+            hasDiscrepancy &&
+            (!l.observaciones || l.observaciones.trim() === '')
+          ) {
+            setError(
+              `Falla Validativa: El producto "${l.nombreProducto}" presenta discrepancias con el pedido o estado y su campo de notas es obligatorio.`
+            );
             return false;
           }
         }
@@ -568,7 +630,9 @@ const Recepcion: React.FC = () => {
     for (const esp of draft.productosEspontaneos) {
       // Los productos espontáneos siempre son discrepancias (exceso no planificado)
       if (!esp.observaciones || esp.observaciones.trim() === '') {
-        setError(`Falla Validativa: El producto espontáneo "${esp.nombreProducto || esp.productoNuevo?.nombre}" requiere obligatoriamente una nota justificativa.`);
+        setError(
+          `Falla Validativa: El producto espontáneo "${esp.nombreProducto || esp.productoNuevo?.nombre}" requiere obligatoriamente una nota justificativa.`
+        );
         return false;
       }
     }
@@ -584,37 +648,40 @@ const Recepcion: React.FC = () => {
     setError(null);
 
     const payload: any = {
-      pedidos: draft.pedidosSeleccionados.map(p => ({
+      pedidos: draft.pedidosSeleccionados.map((p) => ({
         pedidoId: p.id,
         nAlbaran: p.nAlbaran || draft.nAlbaran,
-        observaciones: draft.observaciones
+        observaciones: draft.observaciones,
       })),
       nAlbaran: draft.nAlbaran,
       observaciones: draft.observaciones,
-      productos: draft.pedidosSeleccionados.flatMap(p => p.lineas)
-        .filter(l => Number(l.cantidadRecibida) > 0)
-        .map(l => ({
+      productos: draft.pedidosSeleccionados
+        .flatMap((p) => p.lineas)
+        .filter((l) => Number(l.cantidadRecibida) > 0)
+        .map((l) => ({
           pedidoProductoId: l.pedidoProductoId!,
           cantidadRecibida: Number(l.cantidadRecibida),
           estadoVisual: l.estadoVisual,
-          fechaCaducidad: l.fechaCaducidad ? new Date(l.fechaCaducidad) : undefined,
+          fechaCaducidad: l.fechaCaducidad
+            ? new Date(l.fechaCaducidad)
+            : undefined,
           observaciones: l.observaciones,
-          isWeighedWithScale: Boolean(l.isWeighedWithScale)
+          isWeighedWithScale: Boolean(l.isWeighedWithScale),
         })),
-      productosNuevos: draft.productosEspontaneos.map(p => ({
+      productosNuevos: draft.productosEspontaneos.map((p) => ({
         pendienteCreacion: true,
         codigoBarras: p.productoNuevo?.codigoBarras || p.codigoBarras || '',
         nombre: p.productoNuevo?.nombre || p.nombreProducto,
         marca: p.productoNuevo?.marca || '',
-        unidad: p.productoNuevo?.unidad || p.unidad || UnidadMedida.KG,
+        unidad: normalizeUnidadMedida(
+          p.productoNuevo?.unidad || p.unidad || UnidadMedida.KG
+        ),
         tipo: p.productoNuevo?.tipo || CategoriaProducto.OTRO,
         contenido: p.productoNuevo?.contenido || 1,
         cantidadRecibida: Number(p.cantidadRecibida),
-        estadoVisual: p.estadoVisual,
-        fechaCaducidad: p.fechaCaducidad ? new Date(p.fechaCaducidad) : undefined,
         observaciones: p.observaciones,
-        isWeighedWithScale: Boolean(p.isWeighedWithScale)
-      }))
+        isWeighedWithScale: Boolean(p.isWeighedWithScale),
+      })),
     };
 
     try {
@@ -626,29 +693,40 @@ const Recepcion: React.FC = () => {
       setDraft(defaultDraft());
     } catch (err: any) {
       const errorMessage = err.message || '';
-      if (errorMessage.includes('Pedido no encontrado') || errorMessage.includes('ORDER_NOT_FOUND')) {
+      if (
+        errorMessage.includes('Pedido no encontrado') ||
+        errorMessage.includes('ORDER_NOT_FOUND')
+      ) {
         localStorage.removeItem(LOCAL_STORAGE_KEY);
         setDraft(defaultDraft());
         setActiveStep(0);
-        setError(`Error crítico: El pedido que intentabas recepcionar ya no existe o fue procesado. El borrador local obsoleto ha sido eliminado por seguridad. Por favor, selecciona nuevamente los pedidos a recepcionar.`);
+        setError(
+          `Error crítico: El pedido que intentabas recepcionar ya no existe o fue procesado. El borrador local obsoleto ha sido eliminado por seguridad. Por favor, selecciona nuevamente los pedidos a recepcionar.`
+        );
       } else {
-        setError(`Error crítico en la transacción: ${errorMessage}. Los datos siguen guardados localmente; puedes intentar enviarlos de nuevo.`);
+        setError(
+          `Error crítico en la transacción: ${errorMessage}. Los datos siguen guardados localmente; puedes intentar enviarlos de nuevo.`
+        );
       }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-
   // --- 5. Render Helpers ---
 
   const renderStepContent = (step: number) => {
     switch (step) {
-      case 0: return renderStep1();
-      case 1: return renderStep2();
-      case 2: return renderStep3();
-      case 3: return renderStep4();
-      default: return null;
+      case 0:
+        return renderStep1();
+      case 1:
+        return renderStep2();
+      case 2:
+        return renderStep3();
+      case 3:
+        return renderStep4();
+      default:
+        return null;
     }
   };
 
@@ -660,7 +738,7 @@ const Recepcion: React.FC = () => {
     <PasoSeleccionPedidos
       loadingPedidos={loadingPedidos}
       pedidosDisponibles={pedidosDisponibles}
-      pedidosSeleccionadosIds={draft.pedidosSeleccionados.map(p => p.id)}
+      pedidosSeleccionadosIds={draft.pedidosSeleccionados.map((p) => p.id)}
       uniqueProviders={uniqueProviders}
       onSelectAll={handleSelectAll}
       onDeselectAll={handleDeselectAll}
@@ -716,10 +794,15 @@ const Recepcion: React.FC = () => {
     if (activeStep === 2) {
       handleSubmit();
     } else {
-      const nextStep = (activeStep + 1);
+      const nextStep = activeStep + 1;
       setActiveStep(nextStep);
       // Actualizar meta en draft
-      const pasos: PasoWizard[] = ['SELECCION_PEDIDOS', 'ESCANEO_LOTE', 'REVISION_FINAL', 'RESULTADO'];
+      const pasos: PasoWizard[] = [
+        'SELECCION_PEDIDOS',
+        'ESCANEO_LOTE',
+        'REVISION_FINAL',
+        'RESULTADO',
+      ];
       setDraft({ ...draft, paso: pasos[nextStep] });
     }
   };
@@ -727,10 +810,14 @@ const Recepcion: React.FC = () => {
   const handleBack = () => {
     const prevStep = activeStep - 1;
     setActiveStep(prevStep);
-    const pasos: PasoWizard[] = ['SELECCION_PEDIDOS', 'ESCANEO_LOTE', 'REVISION_FINAL', 'RESULTADO'];
+    const pasos: PasoWizard[] = [
+      'SELECCION_PEDIDOS',
+      'ESCANEO_LOTE',
+      'REVISION_FINAL',
+      'RESULTADO',
+    ];
     setDraft({ ...draft, paso: pasos[prevStep] });
   };
-
 
   // --- 6. Modal Nuevo Producto ---
 
@@ -739,7 +826,7 @@ const Recepcion: React.FC = () => {
     marca: '',
     unidad: UnidadMedida.KG,
     tipo: CategoriaProducto.OTRO,
-    contenido: 1
+    contenido: 1,
   });
 
   const handleConfirmNewProduct = () => {
@@ -767,60 +854,131 @@ const Recepcion: React.FC = () => {
         tipo: modalData.tipo,
         contenido: modalData.contenido,
         cantidadRecibida: isWeight ? 0 : 1,
-        isWeighedWithScale: false
-      }
+        isWeighedWithScale: false,
+      },
     };
 
-    setDraft(prev => ({ ...prev, productosEspontaneos: [...prev.productosEspontaneos, newLinea] }));
+    setDraft((prev) => ({
+      ...prev,
+      productosEspontaneos: [...prev.productosEspontaneos, newLinea],
+    }));
 
     setOpenModal(false);
-    setModalData({ nombre: '', marca: '', unidad: UnidadMedida.KG, tipo: CategoriaProducto.OTRO, contenido: 1 });
+    setModalData({
+      nombre: '',
+      marca: '',
+      unidad: UnidadMedida.KG,
+      tipo: CategoriaProducto.OTRO,
+      contenido: 1,
+    });
 
     if (isWeight) {
-      setTimeout(() => openWeightScale(null, draft.productosEspontaneos.length), 50);
+      setTimeout(
+        () => openWeightScale(null, draft.productosEspontaneos.length),
+        50
+      );
     }
   };
-
 
   return (
     <Box sx={{ maxWidth: 1300, margin: 'auto', p: 3 }}>
       <Paper sx={{ p: 4, borderRadius: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-          <Typography variant="h4" component="h1">Gestión de Recepción</Typography>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 4,
+          }}
+        >
+          <Typography variant="h4" component="h1">
+            Gestión de Recepción
+          </Typography>
           {autoSaveStatus === 'saved' && (
             <Tooltip title="Borrador guardado localmente">
-              <Chip icon={<CheckCircleIcon />} label="Auto-guardado" size="small" color="success" variant="outlined" />
+              <Chip
+                icon={<CheckCircleIcon />}
+                label="Auto-guardado"
+                size="small"
+                color="success"
+                variant="outlined"
+              />
             </Tooltip>
           )}
         </Box>
 
         <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-          {steps.map((label) => <Step key={label}><StepLabel>{label}</StepLabel></Step>)}
+          {steps.map((label) => (
+            <Step key={label}>
+              <StepLabel>{label}</StepLabel>
+            </Step>
+          ))}
         </Stepper>
 
-        {error && <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>{error}</Alert>}
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+            {error}
+          </Alert>
+        )}
 
         {renderStepContent(activeStep)}
 
         {/* Botonera inferior común */}
         {activeStep < 3 && (
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4, pt: 2, borderTop: 1, borderColor: 'divider' }}>
-            <Button variant="outlined" onClick={() => {
-              if (window.confirm("¿Seguro que quieres borrar el borrador actual?")) resetWizard();
-            }} color="secondary">Descartar</Button>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              mt: 4,
+              pt: 2,
+              borderTop: 1,
+              borderColor: 'divider',
+            }}
+          >
+            <Button
+              variant="outlined"
+              onClick={() => {
+                if (
+                  window.confirm(
+                    '¿Seguro que quieres borrar el borrador actual?'
+                  )
+                )
+                  resetWizard();
+              }}
+              color="secondary"
+            >
+              Descartar
+            </Button>
 
             <Box>
-              <Button disabled={activeStep === 0 || isSubmitting} onClick={handleBack} sx={{ mr: 1 }}>Atrás</Button>
+              <Button
+                disabled={activeStep === 0 || isSubmitting}
+                onClick={handleBack}
+                sx={{ mr: 1 }}
+              >
+                Atrás
+              </Button>
               <Button
                 variant="contained"
                 onClick={handleNext}
                 disabled={
                   isSubmitting ||
-                  (activeStep === 0 && draft.pedidosSeleccionados.length === 0) ||
-                  (activeStep === 1 && !draft.pedidosSeleccionados.some(p => p.lineas.some(l => Number(l.cantidadRecibida) > 0)) && !draft.productosEspontaneos.some(l => Number(l.cantidadRecibida) > 0))
+                  (activeStep === 0 &&
+                    draft.pedidosSeleccionados.length === 0) ||
+                  (activeStep === 1 &&
+                    !draft.pedidosSeleccionados.some((p) =>
+                      p.lineas.some((l) => Number(l.cantidadRecibida) > 0)
+                    ) &&
+                    !draft.productosEspontaneos.some(
+                      (l) => Number(l.cantidadRecibida) > 0
+                    ))
                 }
               >
-                {activeStep === 2 ? (isSubmitting ? 'Procesando...' : 'Finalizar Recepción') : 'Siguiente'}
+                {activeStep === 2
+                  ? isSubmitting
+                    ? 'Procesando...'
+                    : 'Finalizar Recepción'
+                  : 'Siguiente'}
               </Button>
             </Box>
           </Box>
@@ -844,19 +1002,31 @@ const Recepcion: React.FC = () => {
         onConfirmWeight={confirmWeight}
       />
 
-      <Snackbar open={!!error} autoHideDuration={10000} onClose={() => setError(null)}>
+      <Snackbar
+        open={!!error}
+        autoHideDuration={10000}
+        onClose={() => setError(null)}
+      >
         <Alert onClose={() => setError(null)} severity="error" variant="filled">
           {error}
         </Alert>
       </Snackbar>
 
       <Backdrop
-        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1, flexDirection: 'column', gap: 2 }}
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          flexDirection: 'column',
+          gap: 2,
+        }}
         open={isSubmitting}
       >
         <CircularProgress color="inherit" />
         <Typography variant="h6">Procesando Recepción Masiva...</Typography>
-        <Typography variant="body2">Garantizando integridad transaccional (ACID). Por favor, no cierres el navegador.</Typography>
+        <Typography variant="body2">
+          Garantizando integridad transaccional (ACID). Por favor, no cierres el
+          navegador.
+        </Typography>
       </Backdrop>
     </Box>
   );

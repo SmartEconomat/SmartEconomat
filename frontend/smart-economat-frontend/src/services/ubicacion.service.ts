@@ -1,12 +1,16 @@
-import type { Ubicacion, CreateUbicacionDto, UpdateUbicacionDto } from './ubicacion.types';
-import { baseFetch, ApiResponse } from './api.service';
+import type {
+  Ubicacion,
+  CreateUbicacionDto,
+  UpdateUbicacionDto,
+} from './ubicacion.types';
+import { baseFetch, ApiResponse, unwrapList } from './api.service';
 
 export const UbicacionService = {
   findAll: async (): Promise<Ubicacion[]> => {
     const response = await baseFetch('/ubicacion');
     if (!response.ok) throw new Error('Error al obtener ubicaciones');
-    const { data } = (await response.json()) as ApiResponse<Ubicacion[]>;
-    return data || [];
+    const { data } = (await response.json()) as ApiResponse<unknown>;
+    return unwrapList<Ubicacion>(data);
   },
 
   create: async (data: CreateUbicacionDto): Promise<Ubicacion> => {

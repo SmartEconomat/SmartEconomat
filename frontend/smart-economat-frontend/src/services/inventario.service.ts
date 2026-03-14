@@ -1,4 +1,4 @@
-import { baseFetch, ApiResponse } from './api.service';
+import { baseFetch, ApiResponse, unwrapList } from './api.service';
 import type { InventarioItem, InventarioPorProducto } from './inventario.types';
 
 export async function fetchInventario(): Promise<InventarioItem[]> {
@@ -8,8 +8,8 @@ export async function fetchInventario(): Promise<InventarioItem[]> {
       `Error al obtener inventario: ${response.status} ${response.statusText}`
     );
   }
-  const body = (await response.json()) as ApiResponse<InventarioItem[]>;
-  return body.data ?? [];
+  const body = (await response.json()) as ApiResponse<unknown>;
+  return unwrapList<InventarioItem>(body.data);
 }
 
 /**
@@ -109,7 +109,8 @@ export async function updateInventarioItem(
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({}));
     throw new Error(
-      errorBody.message || `Error al actualizar el inventario: ${response.status}`
+      errorBody.message ||
+        `Error al actualizar el inventario: ${response.status}`
     );
   }
 

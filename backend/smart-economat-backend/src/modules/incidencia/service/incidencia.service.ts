@@ -12,6 +12,7 @@ import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { DataSource, Repository } from 'typeorm';
 import { ReportIncidenciaDto } from '../dto/report-incidencia.dto';
 import { ResolveIncidenciaDto } from '../dto/resolve-incidencia.dto';
+import { IncidenciaQueryDto } from '../dto/incidencia-query.dto';
 import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
@@ -42,7 +43,7 @@ export class IncidenciaService {
   }
 
   async findAll(
-    query: PaginationQueryDto
+    query: IncidenciaQueryDto
   ): Promise<PaginatedResponseDto<Incidencia>> {
     return this.incidenciaRepository.findAllPaginated(query);
   }

@@ -56,6 +56,7 @@ Documentación técnica y funcional del proyecto SmartEconomat, reorganizada por
 | [Referencia rápida backend](development/backend-quick-reference.md) | Cheatsheet backend |
 | [Seeders](development/seeders.md) | Datos de desarrollo y seeders |
 | [Testing](development/testing/README.md) | Sistema de tests y guías de uso |
+| [Contratos frontend-backend E2E](development/testing/frontend-backend-contracts-e2e.md) | Suite E2E que valida payloads y filtros corregidos entre frontend y backend |
 | [Análisis de rendimiento de tests](development/testing-performance-analysis.md) | Análisis del rendimiento de la infraestructura de testing |
 
 ## Seguridad

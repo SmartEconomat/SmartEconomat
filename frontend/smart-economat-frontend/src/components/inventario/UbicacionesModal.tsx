@@ -34,7 +34,7 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
     setLoading(true);
     try {
       const data = await UbicacionService.findAll();
-      setUbicaciones(data);
+      setUbicaciones(Array.isArray(data) ? data : []);
     } catch (err: any) {
       toast.error(err.message || 'Error al cargar ubicaciones');
     } finally {
@@ -90,7 +90,11 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
               }
             }}
           />
-          <Button variant="contained" onClick={handleAdd} disabled={!newNombre.trim()}>
+          <Button
+            variant="contained"
+            onClick={handleAdd}
+            disabled={!newNombre.trim()}
+          >
             Añadir
           </Button>
         </Box>
@@ -98,18 +102,30 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
         {loading ? (
           <Typography>Cargando...</Typography>
         ) : ubicaciones.length === 0 ? (
-          <Typography color="text.secondary">No hay ubicaciones registradas.</Typography>
+          <Typography color="text.secondary">
+            No hay ubicaciones registradas.
+          </Typography>
         ) : (
           <List>
             {ubicaciones.map((u) => (
               <ListItem
                 key={u.id}
                 secondaryAction={
-                  <IconButton edge="end" aria-label="delete" onClick={() => handleDelete(u.id)} color="error">
+                  <IconButton
+                    edge="end"
+                    aria-label="delete"
+                    onClick={() => handleDelete(u.id)}
+                    color="error"
+                  >
                     <DeleteIcon />
                   </IconButton>
                 }
-                sx={{ border: 1, borderColor: 'divider', mb: 1, borderRadius: 1 }}
+                sx={{
+                  border: 1,
+                  borderColor: 'divider',
+                  mb: 1,
+                  borderRadius: 1,
+                }}
               >
                 <ListItemText primary={u.nombre} secondary={u.descripcion} />
               </ListItem>

@@ -23,7 +23,10 @@ import {
   agregarInventarioPorProducto,
   createInventarioItem,
 } from '../services/inventario.service';
-import type { InventarioItem, InventarioPorProducto } from '../services/inventario.types';
+import type {
+  InventarioItem,
+  InventarioPorProducto,
+} from '../services/inventario.types';
 import { UbicacionService } from '../services/ubicacion.service';
 import type { Ubicacion } from '../services/ubicacion.types';
 import UbicacionesModal from '../components/inventario/UbicacionesModal';
@@ -43,7 +46,9 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import SyncAltIcon from '@mui/icons-material/SyncAlt';
 
 import PageToolbar from '../components/ui/PageToolbar';
-import InventarioFilters, { InventarioFiltersState } from '../features/inventario/InventarioFilters';
+import InventarioFilters, {
+  InventarioFiltersState,
+} from '../features/inventario/InventarioFilters';
 
 const initialFilters: InventarioFiltersState = {
   categorias: [],
@@ -54,7 +59,8 @@ const Inventario: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState<InventarioFiltersState>(initialFilters);
+  const [filters, setFilters] =
+    useState<InventarioFiltersState>(initialFilters);
   const [data, setData] = useState<InventarioPorProducto[]>([]);
   const [rawItems, setRawItems] = useState<InventarioItem[]>([]);
   const [totalItems, setTotalItems] = useState(0);
@@ -64,7 +70,9 @@ const Inventario: React.FC = () => {
   // Estado para el modal de detalle/auditoría
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [detailMode, setDetailMode] = useState<'view' | 'audit'>('view');
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(
+    null
+  );
 
   // Estado para crear nuevas entradas de inventario
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -89,9 +97,10 @@ const Inventario: React.FC = () => {
   const loadUbicaciones = async () => {
     try {
       const data = await UbicacionService.findAll();
-      setUbicaciones(data);
-      if (data.length > 0 && !ubicacionId) {
-        setUbicacionId(data[0].id);
+      const ubicacionesList = Array.isArray(data) ? data : [];
+      setUbicaciones(ubicacionesList);
+      if (ubicacionesList.length > 0 && !ubicacionId) {
+        setUbicacionId(ubicacionesList[0].id);
       }
     } catch (e: any) {
       toast.error('Error al cargar ubicaciones');
@@ -292,13 +301,15 @@ const Inventario: React.FC = () => {
 
     // Category filter
     if (filters.categorias.length > 0) {
-      result = result.filter(p => p.tipo && filters.categorias.includes(p.tipo as any));
+      result = result.filter(
+        (p) => p.tipo && filters.categorias.includes(p.tipo as any)
+      );
     }
 
     // Location filter
     if (filters.ubicaciones.length > 0) {
-      result = result.filter(p =>
-        p.ubicaciones?.some(loc => filters.ubicaciones.includes(loc))
+      result = result.filter((p) =>
+        p.ubicaciones?.some((loc) => filters.ubicaciones.includes(loc))
       );
     }
 
@@ -377,20 +388,28 @@ const Inventario: React.FC = () => {
       render: (row) => (
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
           <Tooltip title="Ver Detalles y Lotes">
-            <IconButton size="small" color="primary" onClick={() => {
-              setSelectedProductId(row.productoId);
-              setDetailMode('view');
-              setDetailModalOpen(true);
-            }}>
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={() => {
+                setSelectedProductId(row.productoId);
+                setDetailMode('view');
+                setDetailModalOpen(true);
+              }}
+            >
               <VisibilityIcon fontSize="small" />
             </IconButton>
           </Tooltip>
           <Tooltip title="Auditar / Conciliar Stock">
-            <IconButton size="small" color="secondary" onClick={() => {
-              setSelectedProductId(row.productoId);
-              setDetailMode('audit');
-              setDetailModalOpen(true);
-            }}>
+            <IconButton
+              size="small"
+              color="secondary"
+              onClick={() => {
+                setSelectedProductId(row.productoId);
+                setDetailMode('audit');
+                setDetailModalOpen(true);
+              }}
+            >
               <SyncAltIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -404,7 +423,10 @@ const Inventario: React.FC = () => {
       <PageToolbar
         title="Inventario por Producto"
         searchValue={searchTerm}
-        onSearchChange={(v) => { setSearchTerm(v); setPage(1); }}
+        onSearchChange={(v) => {
+          setSearchTerm(v);
+          setPage(1);
+        }}
         searchPlaceholder="Buscar por producto, tipo, proveedor o ubicación..."
         searchId="search-inventario"
         totalItems={totalItems}
@@ -458,12 +480,16 @@ const Inventario: React.FC = () => {
                 sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
               />
               <Typography variant="h6" color="text.secondary" gutterBottom>
-                {searchTerm.trim() || filters.categorias.length > 0 || filters.ubicaciones.length > 0
+                {searchTerm.trim() ||
+                filters.categorias.length > 0 ||
+                filters.ubicaciones.length > 0
                   ? 'No hay productos que coincidan con tu búsqueda o filtros'
                   : 'No hay stock en inventario'}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                {searchTerm.trim() || filters.categorias.length > 0 || filters.ubicaciones.length > 0
+                {searchTerm.trim() ||
+                filters.categorias.length > 0 ||
+                filters.ubicaciones.length > 0
                   ? 'Prueba con otros términos o limpia los filtros.'
                   : 'Registra recepciones o crea entradas de inventario para ver el stock.'}
               </Typography>
@@ -520,7 +546,7 @@ const Inventario: React.FC = () => {
                     }
                     helperText={
                       !productoProveedorValue &&
-                        productoProveedorInput.length > 0
+                      productoProveedorInput.length > 0
                         ? 'Debes seleccionar una opción válida'
                         : undefined
                     }
@@ -553,7 +579,7 @@ const Inventario: React.FC = () => {
                   }
                   helperText={
                     cantidadActual !== '' &&
-                      (Number.isNaN(cantActualNum) || cantActualNum < 0)
+                    (Number.isNaN(cantActualNum) || cantActualNum < 0)
                       ? 'Debe ser un número ≥ 0'
                       : undefined
                   }
@@ -572,7 +598,7 @@ const Inventario: React.FC = () => {
                   }
                   helperText={
                     cantidadMinima !== '' &&
-                      (Number.isNaN(cantMinNum) || cantMinNum < 0)
+                    (Number.isNaN(cantMinNum) || cantMinNum < 0)
                       ? 'Debe ser un número ≥ 0'
                       : undefined
                   }
