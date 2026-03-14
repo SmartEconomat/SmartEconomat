@@ -104,6 +104,10 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.56.1"
   },
+  "optionalDependencies": {
+    "@img/sharp-linuxmusl-x64": "^0.34.5",
+    "@img/sharp-linuxmusl-arm64": "^0.34.5"
+  },
   "overrides": {
     "file-type": "^21.3.2",
     "yauzl": "^3.2.1"
