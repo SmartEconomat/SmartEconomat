@@ -208,7 +208,7 @@ describe('ProductoController (e2e) - Alta compleja', () => {
         ],
       });
 
-    expectErrorResponse(response, 409);
+    expectErrorResponse(response, 400);
 
     await expectProductNotPersisted(nombreProducto);
   });
@@ -227,7 +227,7 @@ describe('ProductoController (e2e) - Alta compleja', () => {
         alergenos: ['LACTEOS', 'LACTEOS'],
       });
 
-    expectErrorResponse(response, 409);
+    expectErrorResponse(response, 400);
 
     await expectProductNotPersisted(nombreProducto);
   });

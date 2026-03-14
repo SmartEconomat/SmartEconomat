@@ -105,7 +105,6 @@
     "typescript-eslint": "^8.56.1"
   },
   "overrides": {
-    "ajv": "^8.18.0",
     "file-type": "^21.3.2",
     "yauzl": "^3.2.1"
   },

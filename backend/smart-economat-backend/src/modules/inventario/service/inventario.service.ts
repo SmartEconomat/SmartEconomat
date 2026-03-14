@@ -2,13 +2,15 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryFailedError, Repository } from 'typeorm';
+import { DataSource, QueryFailedError, Repository } from 'typeorm';
 import { Inventario } from '../inventario.entity/inventario.entity';
 import { InventarioRepository } from '../repository/inventario.repository';
 import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
 import { CreateInventarioItemDto } from '../dto/create-InventarioItem.dto';
+import { CreateMovimientoManualDto } from '../dto/create-movimiento-manual.dto';
 import { UpdateInventarioDto } from '../dto/update-inventario.dto';
 import { AlertaStockDTO } from '../dto/alertaStock.dto';
 import { AlertaCaducidadDTO } from '../dto/alertaCaducidad.dto';
@@ -19,9 +21,13 @@ import {
 } from '../dto/stock-result.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
-import { TipoMovimiento } from '../../movimiento/enums/movimiento.enums';
+import {
+  TipoMovimiento,
+  TipoMovimientoManual,
+} from '../../movimiento/enums/movimiento.enums';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
 
 @Injectable()
 export class InventarioService {
@@ -29,7 +35,8 @@ export class InventarioService {
     private readonly inventarioRepository: InventarioRepository,
     @InjectRepository(ProductoProveedor)
     private readonly productoProveedorRepository: Repository<ProductoProveedor>,
-    private readonly movimientoHelper: MovimientoHelper
+    private readonly movimientoHelper: MovimientoHelper,
+    private readonly dataSource: DataSource
   ) {}
 
   async create(
@@ -236,5 +243,108 @@ export class InventarioService {
     dto: InventoryQueryDto
   ): Promise<StockPorUbicacionDto[] | StockConsolidadoDto[]> {
     return this.inventarioRepository.queryStock(dto);
+  }
+
+  async ajustarManual(
+    dto: CreateMovimientoManualDto,
+    userId: string
+  ): Promise<Inventario> {
+    this.validarConsistenciaAjusteManual(dto);
+
+    try {
+      return await this.dataSource.transaction(async (manager) => {
+        const inventario = await manager
+          .createQueryBuilder(Inventario, 'inv')
+          .innerJoinAndSelect('inv.productoProveedor', 'pp')
+          .innerJoinAndSelect('pp.producto', 'producto')
+          .innerJoinAndSelect('pp.proveedor', 'proveedor')
+          .innerJoinAndSelect('inv.ubicacion', 'ubicacion')
+          .where('inv.id = :inventarioId', { inventarioId: dto.inventarioId })
+          .setLock('pessimistic_write')
+          .getOne();
+
+        if (!inventario) {
+          throw new NotFoundException(
+            I18nHelper.getError('INVENTARIO_NOT_FOUND')
+          );
+        }
+
+        const cantidadAnterior = Number(inventario.cantidadActual);
+
+        try {
+          inventario.ajustarCantidad(dto.ajuste);
+        } catch {
+          throw new ConflictException(
+            'El ajuste manual dejaría el stock en negativo'
+          );
+        }
+
+        const inventarioActualizado = await manager.save(
+          Inventario,
+          inventario
+        );
+
+        const movimiento = manager.create(Movimiento, {
+          tipo: dto.tipo,
+          cantidad: Math.abs(dto.ajuste),
+          inventario: inventarioActualizado,
+          productoProveedor: inventario.productoProveedor,
+          entidad: 'AjusteManualInventario',
+          entidadId: inventario.id,
+          descripcion: this.buildManualAdjustmentDescription(
+            inventario.productoProveedor.producto.nombre,
+            cantidadAnterior,
+            Number(inventarioActualizado.cantidadActual),
+            dto
+          ),
+          usuario: { id: userId } as any,
+        });
+
+        await manager.save(Movimiento, movimiento);
+
+        return inventarioActualizado;
+      });
+    } catch (err) {
+      if (err instanceof QueryFailedError) {
+        throw new BadRequestException(
+          I18nHelper.getError('INVENTARIO_CONSTRAINT_VIOLATION')
+        );
+      }
+
+      throw err;
+    }
+  }
+
+  private validarConsistenciaAjusteManual(
+    dto: CreateMovimientoManualDto
+  ): void {
+    if (dto.ajuste === 0) {
+      throw new BadRequestException('El ajuste manual no puede ser 0');
+    }
+
+    if (dto.tipo === TipoMovimientoManual.ENTRADA && dto.ajuste < 0) {
+      throw new BadRequestException(
+        'El tipo de movimiento de entrada requiere un ajuste positivo'
+      );
+    }
+
+    if (dto.tipo === TipoMovimientoManual.SALIDA_AJUSTE && dto.ajuste > 0) {
+      throw new BadRequestException(
+        'El tipo de movimiento de salida requiere un ajuste negativo'
+      );
+    }
+  }
+
+  private buildManualAdjustmentDescription(
+    productoNombre: string,
+    cantidadAnterior: number,
+    cantidadActual: number,
+    dto: CreateMovimientoManualDto
+  ): string {
+    const detalleObservaciones = dto.observaciones
+      ? ` | Observaciones: ${dto.observaciones}`
+      : '';
+
+    return `Ajuste manual de inventario: ${productoNombre} (${cantidadAnterior} -> ${cantidadActual}) | Motivo: ${dto.motivo}${detalleObservaciones}`;
   }
 }
