@@ -5,7 +5,6 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import * as path from 'path';
 import * as fs from 'fs';
-import sharp from 'sharp';
 
 describe('ArchivoController (e2e)', () => {
   jest.setTimeout(30000);
@@ -24,16 +23,10 @@ describe('ArchivoController (e2e)', () => {
     }
 
     app = await getTestApp();
-    validImageBuffer = await sharp({
-      create: {
-        width: 2,
-        height: 2,
-        channels: 4,
-        background: { r: 255, g: 0, b: 0, alpha: 1 },
-      },
-    })
-      .png()
-      .toBuffer();
+    validImageBuffer = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFElEQVR4AWL8z8Dwn4GBgYGJAQoAHxcCAr7cGDwAAAAASUVORK5CYII=',
+      'base64'
+    );
 
     const response = await request(app.getHttpServer())
       .post('/api/v1/auth/login')
