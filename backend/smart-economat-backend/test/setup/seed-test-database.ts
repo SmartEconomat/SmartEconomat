@@ -53,40 +53,31 @@ async function runSeedersSilently(
 }
 
 export async function seedTestDatabase(): Promise<DataSource> {
-  // Si ya hay un snapshot de seeders, restaurarlo en lugar de re-ejecutar
   const seedSnapshot = getSeedSnapshot();
   if (seedSnapshot && isSeeded()) {
-    // Silenciar: console.log('♻️  Restaurando snapshot de seeders existente...');
     restoreSnapshot(seedSnapshot);
 
-    // Importar el dataSource del módulo de seeders
     const { dataSource } = require('../../src/seeders/seed');
     return dataSource;
   }
 
-  // Inicializar pg-mem si no está inicializado
   initPgMem();
 
-  // Importar y ejecutar seeders del proyecto
   const { dataSource, runAllSeeders } = require('../../src/seeders/seed') as {
     dataSource: DataSource;
     runAllSeeders: () => Promise<void>;
   };
 
-  // Inicializar DataSource si no está inicializado
   if (!dataSource.isInitialized) {
     await dataSource.initialize();
   }
 
-  // Guardar DataSource en global para acceso posterior
   setTestDataSource(dataSource);
 
-  // Ejecutar todos los seeders
   await runSeedersSilently(runAllSeeders);
   markAsSeeded();
 
-  // Crear snapshot del estado post-seeders
-  const backup = takeSnapshot('seed-snapshot');
+  const backup = takeSnapshot();
   setSeedSnapshot(backup);
 
   return dataSource;

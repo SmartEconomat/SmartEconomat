@@ -1,5 +1,7 @@
 import { TransformFnParams } from 'class-transformer/types/interfaces';
 
+type TransformValueParams = Pick<TransformFnParams, 'value'>;
+
 /**
  * TrimStringTransformer
  *
@@ -12,7 +14,7 @@ import { TransformFnParams } from 'class-transformer/types/interfaces';
  * nombre: string;
  */
 export class TrimStringTransformer {
-  static transform(params: TransformFnParams): string | undefined {
+  static transform(params: TransformValueParams): string | undefined {
     const value = params.value as string;
     if (value == null) return value;
     if (typeof value !== 'string') return value;

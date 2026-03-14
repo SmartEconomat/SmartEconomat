@@ -29,6 +29,7 @@ import { PlantillasRolesModule } from './modules/plantillas-roles/plantillas-rol
 import { IsUniqueConstraint } from './common/decorators/is-unique.decorator';
 import { ExportModule } from './modules/export/export.module';
 import { MermaModule } from './modules/merma/merma.module';
+import { RecepcionDraftModule } from './modules/recepcion-draft/recepcion-draft.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { MermaModule } from './modules/merma/merma.module';
     PlantillasRolesModule,
     ExportModule,
     MermaModule,
+    RecepcionDraftModule,
   ],
   controllers: [AppController],
   providers: [AppService, IsUniqueConstraint],

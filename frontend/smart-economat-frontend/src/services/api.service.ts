@@ -16,6 +16,19 @@ export interface ApiResponse<T> {
   success: boolean;
   message: string;
   data: T;
+  error?: unknown;
+}
+
+export class ApiError extends Error {
+  status: number;
+  payload: unknown;
+
+  constructor(message: string, status: number, payload: unknown) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.payload = payload;
+  }
 }
 
 /**
@@ -92,11 +105,15 @@ export async function parseApiResponse<T>(
   const payload = await response.json().catch(() => null);
 
   if (!response.ok) {
-    throw new Error(extractApiMessage(payload) || fallbackMessage);
+    throw new ApiError(
+      extractApiMessage(payload) || fallbackMessage,
+      response.status,
+      payload
+    );
   }
 
   if (!payload || typeof payload !== 'object') {
-    throw new Error(fallbackMessage);
+    throw new ApiError(fallbackMessage, response.status, payload);
   }
 
   return payload as ApiResponse<T>;
@@ -137,8 +154,10 @@ export async function baseFetch(
       .clone()
       .json()
       .catch(() => null);
-    throw new Error(
-      extractApiMessage(payload) || 'Sesión expirada o no autorizada'
+    throw new ApiError(
+      extractApiMessage(payload) || 'Sesión expirada o no autorizada',
+      response.status,
+      payload
     );
   }
 

@@ -68,4 +68,5 @@ AGENTS.md
 #tests 
 backend/smart-economat-backend/uploads_test/
 **/uploads_test/
-**/uploads_tests/
+
+**/dist_old/

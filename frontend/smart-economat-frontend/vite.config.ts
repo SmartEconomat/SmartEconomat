@@ -66,6 +66,7 @@ function getManualChunk(id: string): string | undefined {
 
 export default defineConfig(() => {
   return {
+    cacheDir: '/tmp/.vite-smarteconomat',
     build: {
       outDir: 'build',
       rollupOptions: {

@@ -59,7 +59,11 @@ import { ProveedorAsociado } from '../components/ui/ProveedorSelector';
 
 type ProductoFormAlergeno = string | Pick<ProductoAlergeno, 'alergeno'>;
 
-interface ProductoFormProveedor extends ProveedorAsociado {
+interface ProductoFormProveedor {
+  proveedorId: string;
+  nombre?: string;
+  marca?: string;
+  codigoBarras?: string;
   precioUnitario?: number | string;
 }
 
@@ -253,6 +257,21 @@ const Productos: React.FC = () => {
         return trimmedValue !== '' ? trimmedValue : undefined;
       };
       const codigoBarras = toOptionalString(typedFormData.codigoBarras);
+      const normalizedAlergenos = Array.isArray(typedFormData.alergenos)
+        ? typedFormData.alergenos
+            .map((alergeno) =>
+              normalizeAlergeno(
+                typeof alergeno === 'string' ? alergeno : alergeno.alergeno
+              )
+            )
+            .filter(
+              (
+                alergeno
+              ): alergeno is NonNullable<
+                ReturnType<typeof normalizeAlergeno>
+              > => alergeno !== undefined
+            )
+        : undefined;
 
       if (codigoBarras && String(codigoBarras).trim().length > 130) {
         throw new Error(
@@ -268,15 +287,7 @@ const Productos: React.FC = () => {
         tipo: typedFormData.tipo,
         contenido: Number(typedFormData.contenido),
         codigoBarras,
-        alergenos: Array.isArray(typedFormData.alergenos)
-          ? typedFormData.alergenos
-              .map((alergeno) =>
-                normalizeAlergeno(
-                  typeof alergeno === 'string' ? alergeno : alergeno.alergeno
-                )
-              )
-              .filter(Boolean)
-          : undefined,
+        alergenos: normalizedAlergenos,
         proveedores: Array.isArray(typedFormData.proveedores)
           ? typedFormData.proveedores.map((proveedor) => ({
               proveedorId: proveedor.proveedorId,

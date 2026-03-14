@@ -23,37 +23,37 @@ export type PasoWizard =
   | 'RESULTADO';
 
 export interface RecepcionLineDto {
-    pedidoProductoId: string; 
-    cantidadRecibida: number;  
-    cantidadAlbaran?: number;
-    estadoVisual: EstadoVisualProducto;
-    fechaCaducidad?: Date;
-    observaciones?: string;    
-    isWeighedWithScale?: boolean;
+  pedidoProductoId: string;
+  cantidadRecibida: number;
+  cantidadAlbaran?: number;
+  estadoVisual: EstadoVisualProducto;
+  fechaCaducidad?: Date;
+  observaciones?: string;
+  isWeighedWithScale?: boolean;
 }
 
 export interface ProductoNuevoRecepcionDto extends ProductoNuevoDto {
-    cantidadRecibida: number;
-    cantidadAlbaran?: number;
-    observaciones?: string;
-    isWeighedWithScale?: boolean;
+  cantidadRecibida: number;
+  cantidadAlbaran?: number;
+  observaciones?: string;
+  isWeighedWithScale?: boolean;
 }
 
 export interface PedidoRecepcionDto {
-    pedidoId: string;
-    nAlbaran?: string;
-    observaciones?: string;
+  pedidoId: string;
+  nAlbaran?: string;
+  observaciones?: string;
 }
 
 export interface CreateRecepcionDto {
-    pedidos?: PedidoRecepcionDto[];
-    pedidoIds?: string[];
-    nAlbaran?: string;
-    fechaRecepcion?: string;
-    observaciones?: string;
-    productos: RecepcionLineDto[];
-    productosNuevos?: ProductoNuevoRecepcionDto[];
-    usuarioId?: string; 
+  pedidos?: PedidoRecepcionDto[];
+  pedidoIds?: string[];
+  nAlbaran?: string;
+  fechaRecepcion?: string;
+  observaciones?: string;
+  productos: RecepcionLineDto[];
+  productosNuevos?: ProductoNuevoRecepcionDto[];
+  usuarioId?: string;
 }
 
 // ==========================================
@@ -61,12 +61,12 @@ export interface CreateRecepcionDto {
 // ==========================================
 
 export interface LineaDraft {
-  pedidoProductoId: string | null;  // null si es producto espontáneo
+  pedidoProductoId: string | null; // null si es producto espontáneo
   idProducto?: string;
   codigoBarras?: string;
   nombreProducto: string;
   unidad: string;
-  cantidadPedida: number;           // 0 si no venía en ningún pedido
+  cantidadPedida: number; // 0 si no venía en ningún pedido
 
   // ── Producto nuevo (pendiente de crear en BD) ──────
   productoNuevo?: {
@@ -91,7 +91,19 @@ export interface LineaDraft {
   observaciones: string;
 
   // ── Estado visual ──────────────────────────────────
-  estado: 'escaneado' | 'sin_rellenar' | 'valida' | 'error' | 'parcial' | 'rechazada' | 'exceso' | 'OK' | 'Parcial' | 'Exceso' | 'No entregado' | 'Nuevo';
+  estado:
+    | 'escaneado'
+    | 'sin_rellenar'
+    | 'valida'
+    | 'error'
+    | 'parcial'
+    | 'rechazada'
+    | 'exceso'
+    | 'OK'
+    | 'Parcial'
+    | 'Exceso'
+    | 'No entregado'
+    | 'Nuevo';
 }
 
 export interface PedidoDraft {
@@ -105,9 +117,11 @@ export interface PedidoDraft {
 
 export interface RecepcionDraft {
   // ── Meta ───────────────────────────────────────────
-  version: number;            
-  creadoEn: string;           
-  modificadoEn: string;       
+  version: number;
+  creadoEn: string;
+  modificadoEn: string;
+  serverVersion?: number | null;
+  serverUpdatedAt?: string | null;
 
   // ── Cabecera ───────────────────────────────────────
   observaciones: string;
@@ -125,43 +139,53 @@ export interface RecepcionDraft {
   enviando: boolean;
 }
 
+export interface RecepcionDraftEnvelope {
+  id?: string;
+  version: number;
+  source: 'redis' | 'database';
+  createdAt: string;
+  updatedAt: string;
+  expiresAt: string | null;
+  payload: RecepcionDraft;
+}
+
 // ==========================================
 // Tipos del Resultado Enriquecido
 // ==========================================
 
 export interface IncidenciaGeneradaDto {
-    id: string;
-    estado: string;
-    datosOriginales: {
-        productos: {
-            idPedidoProducto: string;
-            nombreProducto: string;
-            cantidadPedida: number;
-            cantidadRecibida: number;
-            diferencia: number;
-            tipo: 'FALTA' | 'EXCESO' | 'NO_ENTREGADO';
-        }[];
-    };
+  id: string;
+  estado: string;
+  datosOriginales: {
+    productos: {
+      idPedidoProducto: string;
+      nombreProducto: string;
+      cantidadPedida: number;
+      cantidadRecibida: number;
+      diferencia: number;
+      tipo: 'FALTA' | 'EXCESO' | 'NO_ENTREGADO';
+    }[];
+  };
 }
 
 export interface PedidoActualizadoDto {
-    id: string;
-    estadoAnterior: string;
-    estadoNuevo: string;
+  id: string;
+  estadoAnterior: string;
+  estadoNuevo: string;
 }
 
 export interface ProductoCreadoDto {
-    id: string;
-    nombre: string;
-    codigoBarras: string;
+  id: string;
+  nombre: string;
+  codigoBarras: string;
 }
 
 export interface RecepcionResultado {
-    id: string;
-    fechaRecepcion: string;
-    incidencias: IncidenciaGeneradaDto[];
-    pedidosActualizados: PedidoActualizadoDto[];
-    movimientosGenerados: number;
-    inventariosCreados: number;
-    productosCreados: ProductoCreadoDto[];
+  id: string;
+  fechaRecepcion: string;
+  incidencias: IncidenciaGeneradaDto[];
+  pedidosActualizados: PedidoActualizadoDto[];
+  movimientosGenerados: number;
+  inventariosCreados: number;
+  productosCreados: ProductoCreadoDto[];
 }

@@ -11,23 +11,31 @@ services:
     volumes:
       - database_prod:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
       - smarteconomat-prod-network
 
+  redis:
+    image: redis:7-alpine
+    restart: always
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_prod:/data
+    networks:
+      - smarteconomat-prod-network
+
   backend:
     build:
-
       context: ./backend/smart-economat-backend
       dockerfile: ../Dockerfile.prod
     image: smarteconomat-backend:prod
 
     restart: always
     ports:
-      - "${BACKEND_PORT}:${BACKEND_PORT}"
+      - '${BACKEND_PORT}:${BACKEND_PORT}'
     env_file: .env.prod
     environment:
       # ── Info del anfitrión (inyectada por scripts/collect-host-info.sh o .ps1) ──
@@ -38,10 +46,14 @@ services:
       - HOST_MAC=${HOST_MAC:-}
       - HOST_GIT_USER=${GIT_USER:-}
       - HOST_GIT_EMAIL=${GIT_EMAIL:-}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     command: sh -c "npx ts-node scripts/log-user-info.ts && npm run start:prod"
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     networks:
       - smarteconomat-prod-network
     volumes:
@@ -58,13 +70,14 @@ services:
 
     restart: always
     ports:
-      - "${FRONTEND_PORT}:80"
+      - '${FRONTEND_PORT}:80'
     env_file: .env.prod
     networks:
       - smarteconomat-prod-network
 
 volumes:
   database_prod:
+  redis_prod:
 
 networks:
   smarteconomat-prod-network:

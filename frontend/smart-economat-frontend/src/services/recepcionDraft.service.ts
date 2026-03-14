@@ -1,0 +1,47 @@
+import { ApiResponse, baseFetch, parseApiResponse } from './api.service';
+import { RecepcionDraft, RecepcionDraftEnvelope } from './recepcion.types';
+
+export async function fetchRecepcionDraft(): Promise<RecepcionDraftEnvelope | null> {
+  const response = await baseFetch('/recepcion/draft');
+  const body = await parseApiResponse<RecepcionDraftEnvelope | null>(
+    response,
+    'No se pudo recuperar el borrador de recepción.'
+  );
+
+  return body.data;
+}
+
+export async function saveRecepcionDraft(
+  draft: RecepcionDraft
+): Promise<RecepcionDraftEnvelope> {
+  const response = await baseFetch('/recepcion/draft', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      payload: draft,
+      version: draft.serverVersion ?? undefined,
+    }),
+  });
+
+  const body = await parseApiResponse<RecepcionDraftEnvelope>(
+    response,
+    'No se pudo guardar el borrador de recepción.'
+  );
+
+  return body.data;
+}
+
+export async function deleteRecepcionDraft(): Promise<void> {
+  const response = await baseFetch('/recepcion/draft', {
+    method: 'DELETE',
+  });
+
+  if (response.status === 204) {
+    return;
+  }
+
+  await parseApiResponse<ApiResponse<null>>(
+    response,
+    'No se pudo eliminar el borrador de recepción.'
+  );
+}

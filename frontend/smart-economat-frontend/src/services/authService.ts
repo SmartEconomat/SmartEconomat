@@ -29,9 +29,13 @@ export const authService = {
     // Adaptar al formato esperado por el frontend
     return {
       id: result.data.id,
-      name: result.data.username || result.data.nombre || result.data.name,
+      name:
+        result.data.username ||
+        result.data.nombre ||
+        result.data.name ||
+        result.data.email,
       email: result.data.email,
-      rol: result.data.rol || result.data.role,
+      rol: result.data.rol || result.data.role || 'usuario',
       username: result.data.username,
     };
   },
