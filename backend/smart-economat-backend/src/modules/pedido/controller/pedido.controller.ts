@@ -10,8 +10,8 @@ import {
   HttpStatus,
   UseGuards,
   Request,
-  Query,
 } from '@nestjs/common';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { CreatePedidoDto } from '../dto/create-pedido.dto';
 import { CancelPedidoDto } from '../dto/cancelPedido.dto';
@@ -22,7 +22,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('pedidos')
@@ -33,14 +33,23 @@ export class PedidoController {
   @RequirePermissions('pedidos:crear')
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreatePedidoDto, @Request() req: any): Promise<Pedido> {
-    const userId = req.user.sub as string;
+    const userId = req.user.id as string;
     return this.pedidoService.create(dto, userId);
   }
 
   @Get()
   @RequirePermissions('pedidos:listar')
   findAll(
-    @Query() query: PaginationQueryDto
+    @SortableFields({
+      fechaPedido: 'fechaPedido',
+      fechaEntrega: 'fechaEntrega',
+      costeTotal: 'costeTotal',
+      estado: 'estado',
+      fechaCreacion: 'createdAt',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+    })
+    query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Pedido>> {
     return this.pedidoService.findAll(query);
   }

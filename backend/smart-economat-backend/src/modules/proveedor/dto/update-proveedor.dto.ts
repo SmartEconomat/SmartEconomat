@@ -5,21 +5,21 @@ import { LowercaseStringTransformer } from '../../../common/transformers/lowerca
 import { CreateProveedorDto } from './create-proveedor.dto';
 
 export class UpdateProveedorDto extends PartialType(CreateProveedorDto) {
-  @Transform(TrimStringTransformer.transform)
+  @Transform((params) => TrimStringTransformer.transform(params))
   nombre?: string;
 
-  @Transform(TrimStringTransformer.transform)
+  @Transform((params) => TrimStringTransformer.transform(params))
   contacto?: string;
 
-  @Transform(TrimStringTransformer.transform)
+  @Transform((params) => TrimStringTransformer.transform(params))
   telefono?: string;
 
-  @Transform(LowercaseStringTransformer.transform)
+  @Transform((params) => LowercaseStringTransformer.transform(params))
   email?: string;
 
-  @Transform(TrimStringTransformer.transform)
+  @Transform((params) => TrimStringTransformer.transform(params))
   direccion?: string;
 
-  @Transform(TrimStringTransformer.transform)
+  @Transform((params) => TrimStringTransformer.transform(params))
   nif?: string;
 }

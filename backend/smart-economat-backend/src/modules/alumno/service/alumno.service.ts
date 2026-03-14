@@ -82,6 +82,9 @@ export class AlumnoService {
       await manager.save(alumno);
 
       return {
+        id: alumno.id,
+        username: user.username,
+        status: user.status,
         message: I18nHelper.translate(
           'messages.ALUMNO_REGISTRADO_CON_XITO_ESPERANDO_ACT'
         ),

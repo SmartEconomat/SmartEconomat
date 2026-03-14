@@ -13,6 +13,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { MovimientoService } from '../service/movimiento.service';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { CreateMovimientoDto } from '../dto/create-movimiento.dto';
@@ -58,14 +59,13 @@ export class MovimientoController {
     summary: 'Listar todos los movimientos',
     description: 'docs.RETORNA_TODOS_LOS_MOVIMIENTOS_ORDENADOS',
   })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({
     status: 200,
     description: 'docs.LISTA_DE_MOVIMIENTOS_PAGINADA',
   })
   findAll(
-    @Query() query: PaginationQueryDto
+    @SortableFields(['tipo', 'cantidad', 'entidad', 'createdAt'])
+    query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<any>> {
     return this.movimientoService.findAll(query);
   }

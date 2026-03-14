@@ -7,9 +7,9 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import { PlantillaRol } from '../entities/plantilla-rol.entity';
-import { Permiso } from '../../permisos/entities/permiso.entity';
-import { Rol } from '../../roles/entities/rol.entity';
+import { PlantillaRol } from '../plantilla-rol.entity/plantilla-rol.entity';
+import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
+import { Rol } from '../../roles/rol.entity/rol.entity';
 import { CreatePlantillaDto } from '../dto/create-plantilla.dto';
 import { UpdatePlantillaDto } from '../dto/update-plantilla.dto';
 

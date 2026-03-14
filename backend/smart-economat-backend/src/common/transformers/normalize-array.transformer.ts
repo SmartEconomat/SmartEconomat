@@ -1,39 +1,38 @@
-import { TransformFnParams } from 'class-transformer/types/interfaces';
-
 /**
  * NormalizeArrayTransformer
- * 
+ *
  * Transformador para normalizar arrays:
  * - Convierte strings separados por comas a arrays
  * - Elimina elementos null/undefined
  * - Aplica trim a strings dentro del array
  * - Maneja valores null/undefined de forma segura
- * 
+ *
  * @example
- * 
+ *
  * @Transform(NormalizeArrayTransformer.transform)
  * tags: string[];
  */
 export class NormalizeArrayTransformer {
-  static transform(params: TransformFnParams): any[] | undefined {
+  static transform(params: { value: any }): any {
     const value = params.value;
-    if (value == null) return value;
-    
-    // Si ya es array, procesar elementos
+    if (value === null) return null;
+    if (value === undefined) return undefined;
+
     if (Array.isArray(value)) {
       return value
-        .filter(item => item != null)
-        .map(item => typeof item === 'string' ? item.trim() : item);
+        .filter((item: any) => item != null)
+        .map((item: any) => (typeof item === 'string' ? item.trim() : item));
     }
-    
-    // Si es string, intentar dividir por comas
+
     if (typeof value === 'string') {
       const trimmed = value.trim();
       if (trimmed === '') return undefined;
-      return trimmed.split(',').map(item => item.trim()).filter(item => item !== '');
+      return trimmed
+        .split(',')
+        .map((item): string => item.trim())
+        .filter((item): item is string => item !== '');
     }
-    
-    // Si es un solo elemento, convertirlo a array
-    return [value];
+
+    return [value] as unknown[];
   }
 }

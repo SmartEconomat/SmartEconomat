@@ -47,65 +47,74 @@ export class InventarioRepository extends Repository<Inventario> {
   async queryStock(
     dto: InventoryQueryDto
   ): Promise<StockPorUbicacionDto[] | StockConsolidadoDto[]> {
-    const qb = this.createQueryBuilder('inv')
-      .innerJoin('inv.productoProveedor', 'pp')
-      .innerJoin('pp.producto', 'producto')
-      .innerJoin('inv.ubicacion', 'ubicacion')
-      .select('producto.id', 'productoId')
-      .addSelect('producto.nombre', 'productoNombre')
-      .addSelect('SUM(inv.cantidadActual)', 'stock');
+    const inventarioItems = await this.createQueryBuilder('inv')
+      .innerJoinAndSelect('inv.productoProveedor', 'pp')
+      .innerJoinAndSelect('pp.producto', 'producto')
+      .innerJoinAndSelect('inv.ubicacion', 'ubicacion')
+      .where(dto.ubicacionId ? 'ubicacion.id = :ubicacionId' : '1=1', {
+        ubicacionId: dto.ubicacionId,
+      })
+      .getMany();
 
-    if (dto.productoId) {
-      qb.andWhere('producto.id = :productoId', { productoId: dto.productoId });
+    const filteredItems = inventarioItems.filter((item) => {
+      if (
+        dto.productoId &&
+        item.productoProveedor.producto.id !== dto.productoId
+      ) {
+        return false;
+      }
+
+      if (dto.onlyLowStock && !(item.cantidadActual < item.cantidadMinima)) {
+        return false;
+      }
+
+      return true;
+    });
+
+    if (dto.consolidado) {
+      const consolidated = new Map<string, StockConsolidadoDto>();
+
+      for (const item of filteredItems) {
+        const producto = item.productoProveedor.producto;
+        const existing = consolidated.get(producto.id);
+
+        if (existing) {
+          existing.stockTotal += Number(item.cantidadActual);
+          continue;
+        }
+
+        consolidated.set(producto.id, {
+          productoId: producto.id,
+          productoNombre: producto.nombre,
+          stockTotal: Number(item.cantidadActual),
+        });
+      }
+
+      return Array.from(consolidated.values());
     }
 
-    if (dto.ubicacionId) {
-      qb.andWhere('ubicacion.id = :ubicacionId', {
-        ubicacionId: dto.ubicacionId,
+    const byLocation = new Map<string, StockPorUbicacionDto>();
+
+    for (const item of filteredItems) {
+      const producto = item.productoProveedor.producto;
+      const ubicacion = item.ubicacion;
+      const key = `${producto.id}:${ubicacion.id}`;
+      const existing = byLocation.get(key);
+
+      if (existing) {
+        existing.stock += Number(item.cantidadActual);
+        continue;
+      }
+
+      byLocation.set(key, {
+        productoId: producto.id,
+        productoNombre: producto.nombre,
+        ubicacionId: ubicacion.id,
+        ubicacionNombre: ubicacion.nombre,
+        stock: Number(item.cantidadActual),
       });
     }
 
-    if (dto.onlyLowStock) {
-      qb.andWhere('inv.cantidadActual < inv.cantidadMinima');
-    }
-
-    if (dto.consolidado) {
-      qb.groupBy('producto.id').addGroupBy('producto.nombre');
-
-      const rows = await qb.getRawMany<{
-        productoId: string;
-        productoNombre: string;
-        stock: string;
-      }>();
-
-      return rows.map((r) => ({
-        productoId: r.productoId,
-        productoNombre: r.productoNombre,
-        stockTotal: Number(r.stock),
-      }));
-    }
-
-    qb.addSelect('ubicacion.id', 'ubicacionId')
-      .addSelect('ubicacion.nombre', 'ubicacionNombre')
-      .groupBy('producto.id')
-      .addGroupBy('producto.nombre')
-      .addGroupBy('ubicacion.id')
-      .addGroupBy('ubicacion.nombre');
-
-    const rows = await qb.getRawMany<{
-      productoId: string;
-      productoNombre: string;
-      ubicacionId: string;
-      ubicacionNombre: string;
-      stock: string;
-    }>();
-
-    return rows.map((r) => ({
-      productoId: r.productoId,
-      productoNombre: r.productoNombre,
-      ubicacionId: r.ubicacionId,
-      ubicacionNombre: r.ubicacionNombre,
-      stock: Number(r.stock),
-    }));
+    return Array.from(byLocation.values());
   }
 }

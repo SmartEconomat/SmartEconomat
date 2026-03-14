@@ -11,6 +11,8 @@ import { Incidencia } from '../incidencia.entity/incidencia.entity';
 import { CreateIncidenciaResuelaDto } from '../dto/create-incidencia.dto';
 import { UpdateIncidenciaResuelaDto } from '../dto/update-incidencia.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @Injectable()
 export class IncidenciaResuelaService {
@@ -54,10 +56,10 @@ export class IncidenciaResuelaService {
     return this.incidenciaResuelaRepository.save(resolucion);
   }
 
-  async findAll(): Promise<IncidenciaResuelta[]> {
-    return this.incidenciaResuelaRepository.find({
-      relations: ['incidencia', 'usuarioResolutor'],
-    });
+  async findAll(
+    query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<IncidenciaResuelta>> {
+    return this.incidenciaResuelaRepository.findAllPaginated(query);
   }
 
   async findOne(id: string): Promise<IncidenciaResuelta> {

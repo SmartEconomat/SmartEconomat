@@ -14,7 +14,10 @@ const envPaths = [
 for (const path of envPaths) {
   if (existsSync(path)) {
     dotenv.config({ path });
-    console.log(`Loaded environment from ${path}`);
+    // Solo loggear si NO es entorno de test
+    if (process.env.NODE_ENV !== 'test') {
+      console.log(`Loaded environment from ${path}`);
+    }
     break;
   }
 }
@@ -23,26 +26,33 @@ const isDocker = existsSync('/.dockerenv');
 const dbHost = process.env.DB_HOST || process.env.POSTGRES_HOST || 'localhost';
 const finalHost = !isDocker && dbHost === 'db' ? 'localhost' : dbHost;
 
+// En entorno de test, usar configuración dummy (será reemplazada por pg-mem)
+const isTestEnv = process.env.NODE_ENV === 'test';
+
 export const dbConfig: DataSourceOptions = {
   type: 'postgres',
-  host: finalHost,
-  port: parseInt(process.env.DB_PORT || '5432', 10),
-  username: process.env.DB_USERNAME || process.env.POSTGRES_USER || 'postgres',
-  password:
-    process.env.DB_PASSWORD || process.env.POSTGRES_PASSWORD || 'postgres',
-  database:
-    process.env.DB_DATABASE || process.env.POSTGRES_DB || 'smart_economat',
+  host: isTestEnv ? 'pg-mem' : finalHost,
+  port: isTestEnv ? 5432 : parseInt(process.env.DB_PORT || '5432', 10),
+  username: isTestEnv
+    ? 'test'
+    : process.env.DB_USERNAME || process.env.POSTGRES_USER || 'postgres',
+  password: isTestEnv
+    ? 'test'
+    : process.env.DB_PASSWORD || process.env.POSTGRES_PASSWORD || 'postgres',
+  database: isTestEnv
+    ? 'test'
+    : process.env.DB_DATABASE || process.env.POSTGRES_DB || 'smart_economat',
   synchronize:
     process.env.DB_SYNC === 'true' ||
     (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test'),
-  logging:
-    process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test',
+  logging: false, // Siempre false en test para evitar spam de logs
   entities: [join(__dirname, '../**/*.entity.{ts,js}')],
   migrations: [join(__dirname, '../migrations/*.{ts,js}')],
   subscribers: [],
 };
 
-if (process.env.NODE_ENV !== 'production') {
+// Solo loggear configuración en desarrollo (NO en test ni producción)
+if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
   console.log('Database Config:', {
     ...dbConfig,
     password: '*****',

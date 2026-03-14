@@ -9,8 +9,8 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
-  Query,
 } from '@nestjs/common';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { RecepcionProductoService } from '../service/recepcion-producto.service';
 import { CreateRecepcionProductoDto } from '../dto/create-recepcion-producto.dto';
@@ -20,7 +20,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('recepcion-productos')
@@ -39,7 +39,13 @@ export class RecepcionProductoController {
   @Get()
   @RequirePermissions('recepciones:listar')
   findAll(
-    @Query() query: PaginationQueryDto
+    @SortableFields([
+      'cantidadRecibida',
+      'fechaRecepcion',
+      'createdAt',
+      'updatedAt',
+    ])
+    query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<RecepcionProducto>> {
     return this.recepcionProductoService.findAll(query);
   }

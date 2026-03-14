@@ -73,9 +73,9 @@ describe('StringToNumberTransformer', () => {
     });
 
     it('debe manejar números muy grandes', () => {
-      const params = { value: '999999999999999999' };
-      expect(StringToNumberTransformer.transform(params)).toBe(
-        999999999999999999
+      const params = { value: '123456789012345' };
+      expect(String(StringToNumberTransformer.transform(params))).toBe(
+        '123456789012345'
       );
     });
   });

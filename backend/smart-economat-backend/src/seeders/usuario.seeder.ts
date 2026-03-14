@@ -38,14 +38,17 @@ export const runSeeder = async (dataSource: DataSource) => {
         email: 'profesor2@smarteconomat.com',
         cial: 'CIAL-22222',
       },
-      {
+    ];
+    if (process.env.NODE_ENV !== 'test') {
+      professorsToCreate.push({
         username: 'profesor3',
         email: 'profesor3@smarteconomat.com',
         cial: 'CIAL-33333',
-      },
-    ];
+      });
+    }
 
-    const aulas = ['Aula A', 'Aula B', 'Aula C'];
+    const aulas =
+      process.env.NODE_ENV === 'test' ? ['Aula A'] : ['Aula B', 'Aula C'];
 
     for (const profData of professorsToCreate) {
       let profUser = await manager.findOne(Usuario, {
@@ -78,7 +81,8 @@ export const runSeeder = async (dataSource: DataSource) => {
       if (!profEntity) continue;
 
       for (const aulaName of aulas) {
-        for (let i = 1; i <= 5; i++) {
+        const numSlots = process.env.NODE_ENV === 'test' ? 1 : 5;
+        for (let i = 1; i <= numSlots; i++) {
           const numeroClase = i;
 
           let slot = await manager.findOne(AlumnoSlot, {
@@ -110,10 +114,13 @@ export const runSeeder = async (dataSource: DataSource) => {
             .email({ firstName, lastName })
             .toLowerCase();
 
-          const statusValue = faker.helpers.arrayElement([
-            UserStatus.ACTIVE,
-            UserStatus.INACTIVE,
-          ]);
+          const statusValue =
+            process.env.NODE_ENV === 'test'
+              ? UserStatus.ACTIVE
+              : faker.helpers.arrayElement([
+                  UserStatus.ACTIVE,
+                  UserStatus.INACTIVE,
+                ]);
           const studentUser = manager.create(Usuario, {
             username,
             password: defaultPassword,

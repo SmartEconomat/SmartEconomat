@@ -5,7 +5,7 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 export class FileListFilterDto extends PaginationQueryDto {
   @ApiPropertyOptional({ description: 'docs.FILTRAR_POR_ID_DE_USUARIO' })
   @IsOptional()
-  @IsUUID()
+  @IsUUID('7')
   usuarioId?: string;
 
   @ApiPropertyOptional({

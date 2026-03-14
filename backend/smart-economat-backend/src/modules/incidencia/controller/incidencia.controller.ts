@@ -21,7 +21,8 @@ import { Incidencia } from '../incidencia.entity/incidencia.entity';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../authorization/guards/permisos.guard';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('incidencias')
@@ -39,8 +40,17 @@ export class IncidenciaController {
 
   @Get()
   @RequirePermissions('incidencias:listar')
-  findAll(): Promise<Incidencia[]> {
-    return this.incidenciaService.findAll();
+  findAll(
+    @SortableFields([
+      'recepcionId',
+      'pedidoId',
+      'fechaResolucion',
+      'createdAt',
+      'updatedAt',
+    ])
+    query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<Incidencia>> {
+    return this.incidenciaService.findAll(query);
   }
 
   @Get(':id')
