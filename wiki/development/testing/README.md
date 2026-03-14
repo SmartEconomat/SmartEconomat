@@ -5,6 +5,7 @@ Sistema de testing optimizado para **SmartEconomat Backend** usando **pg-mem**, 
 ## 📊 Rendimiento
 
 ### Antes de la optimización
+
 - ⏱️ Setup por test: **2-5 segundos**
 - 🐌 Tests lentos debido a:
   - Conexión a PostgreSQL real
@@ -14,6 +15,7 @@ Sistema de testing optimizado para **SmartEconomat Backend** usando **pg-mem**, 
   - bcrypt con 10 rounds (~100ms por hash)
 
 ### Después de la optimización
+
 - ⚡ Setup por test: **~0 milisegundos**
 - 🚀 Tests ultrarrápidos gracias a:
   - PostgreSQL en memoria (pg-mem)
@@ -24,6 +26,7 @@ Sistema de testing optimizado para **SmartEconomat Backend** usando **pg-mem**, 
   - bcrypt con 1 round (<1ms por hash)
 
 ### Resultados típicos
+
 - Suite completa de E2E: **reducción de 80-90% en tiempo**
 - Tests individuales: **< 100ms** (mayoría < 50ms)
 - Ejecución E2E principal: **un solo proceso** para evitar re-seeding por fichero
@@ -62,12 +65,14 @@ test/
 ## 🔄 Flujo de ejecución
 
 ### 1. Inicio de Jest (Proceso principal)
+
 ```
 globalSetup.ts
 └── Configura variables de entorno
 ```
 
 ### 2. Inicio de Jest para E2E
+
 ```
 jest.setup.ts (setupFilesAfterEnv)
 ├── Carga variables de entorno
@@ -81,7 +86,8 @@ jest.setup.ts (setupFilesAfterEnv)
 ```
 
 ### 3. Ejecución de suites E2E
-```
+
+````
 test/e2e/all.e2e-spec.ts
 └── importa todas las suites top-level
   └── cada suite restaura el estado seed antes de su beforeAll
@@ -104,7 +110,8 @@ npm run test:e2e
 
 # Ejecutar un archivo e2e concreto
 npm run test:e2e:file -- test/e2e/productos.e2e-spec.ts
-```
+````
+
 - Garantiza aislamiento entre tests
 
 ---
@@ -161,7 +168,7 @@ describe('MiModulo (e2e)', () => {
 
   it('crear recurso', async () => {
     const nombre = generateUniqueName('Recurso');
-    
+
     const response = await request(app.getHttpServer())
       .post('/api/v1/recursos')
       .set('Authorization', `Bearer ${adminToken}`)
@@ -199,11 +206,13 @@ describe('MiModulo (e2e)', () => {
 ### ✅ DO (Hacer)
 
 1. **Usar getTestApp()** en lugar de crear TestingModule
+
    ```typescript
    const app = await getTestApp();
    ```
 
 2. **Setup en beforeAll del archivo**, no en beforeEach
+
    ```typescript
    beforeAll(async () => {
      app = await getTestApp();
@@ -216,6 +225,7 @@ describe('MiModulo (e2e)', () => {
    - No necesitas limpiar datos manualmente
 
 4. **Usar helpers** para reducir código duplicado
+
    ```typescript
    const nombre = generateUniqueName('Test');
    const email = generateUniqueEmail('user');
@@ -229,6 +239,7 @@ describe('MiModulo (e2e)', () => {
 ### ❌ DON'T (No hacer)
 
 1. **No crear TestingModule manualmente**
+
    ```typescript
    // ❌ MAL
    const module = await Test.createTestingModule({
@@ -237,12 +248,14 @@ describe('MiModulo (e2e)', () => {
    ```
 
 2. **No ejecutar seeders manualmente**
+
    ```typescript
    // ❌ MAL - Los seeders ya se ejecutaron automáticamente
    await runAllSeeders();
    ```
 
 3. **No limpiar datos en afterEach**
+
    ```typescript
    // ❌ MAL - El snapshot restore lo hace automáticamente
    afterEach(async () => {
@@ -251,6 +264,7 @@ describe('MiModulo (e2e)', () => {
    ```
 
 4. **No usar transacciones manuales**
+
    ```typescript
    // ❌ MAL - Los snapshots son superiores
    beforeEach(async () => {
@@ -311,7 +325,8 @@ npm run test:cov
 
 ### Problema: Tests lentos
 
-**Solución:** 
+**Solución:**
+
 - Verifica que `maxWorkers` esté configurado en jest-e2e.json
 - Asegúrate de no estar creando la app en cada test
 - Verifica que no estés ejecutando seeders manualmente
@@ -319,6 +334,7 @@ npm run test:cov
 ### Problema: Datos de test interfieren entre sí
 
 **Solución:**
+
 - Usa nombres únicos: `generateUniqueName()` o `Date.now()`
 - Verifica que el snapshot restore esté funcionando
 - Los tests deben ser independientes del orden de ejecución
@@ -326,6 +342,7 @@ npm run test:cov
 ### Problema: Worker se queda colgado
 
 **Solución:**
+
 - Verifica que no haya `app.close()` en tests individuales
 - Aumenta el timeout si los seeders son muy grandes
 - Usa `--forceExit` solo si es absolutamente necesario
@@ -359,6 +376,7 @@ npm run test:e2e -- --verbose 2>&1 | grep -A 1 "PASS"
 El sistema reduce bcrypt a 1 round **solo en tests**.
 
 **¿Es seguro?**
+
 - ✅ Sí, porque solo afecta el entorno de test
 - ✅ La lógica de negocio sigue siendo la misma
 - ✅ Los tests validan el comportamiento, no la seguridad del hash
@@ -427,6 +445,7 @@ afterEach(async () => {
 ## 👥 Soporte
 
 Para preguntas o issues relacionados con el sistema de testing:
+
 1. Revisa este README
 2. Revisa los comentarios en el código fuente
 3. Consulta con el equipo de desarrollo

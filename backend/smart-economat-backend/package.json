@@ -26,7 +26,6 @@
     "db:reset": "npm run schema:drop && npm run schema:sync && npm run seed",
     "generate:erd": "ts-node tools/scripts/generate-erd.ts",
     "log-user-info": "ts-node scripts/log-user-info.ts",
-    "count-commits": "node ../../scripts/contributors/count-commits.js",
     "prepare": "cd ../.. && husky .husky"
   },
   "dependencies": {
