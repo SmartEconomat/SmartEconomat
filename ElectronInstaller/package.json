@@ -17,6 +17,9 @@
     "electron": "^40.7.0",
     "electron-builder": "^26.8.1"
   },
+  "overrides": {
+    "yauzl": "^3.2.1"
+  },
   "build": {
     "appId": "com.smarteconomat.installer",
     "productName": "SmartEconomat",
