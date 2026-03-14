@@ -106,6 +106,7 @@
 | `archivos.e2e-spec.ts` | 4 | Upload, listar, detalle, eliminar |
 | `alumnos.e2e-spec.ts` | 5 | Registro, CIAL inválido, ver alumnos, activar, reset |
 | `profesores.e2e-spec.ts` | 3 | Registro, slots, listar alumnos |
+| `frontend-integration-contracts.e2e-spec.ts` | 10 | Contratos frontend-backend: perfil, productos, pedidos, recepción, inventario, recetas e incidencias |
 | `master-requirements.e2e-spec.ts` | ~12 | Flujo maestro auth+registro+activación+RBAC+edge |
 
 ---

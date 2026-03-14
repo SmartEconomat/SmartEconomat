@@ -19,6 +19,7 @@ import {
   fetchPedidos,
   createPedido,
   updatePedido,
+  PedidoRequestPayload,
 } from '../services/pedido.service';
 import { deleteResource } from '../services/api.service';
 import { fetchProveedores } from '../services/proveedor.service';
@@ -45,12 +46,18 @@ const pedidoSchema: DynamicField[] = [
       { value: EstadoPedido.CANCELADO, label: 'Cancelado' },
     ],
   },
-  { name: 'fechaEntrega', label: 'Fecha de Entrega', type: 'date', width: 6 },
+  {
+    name: 'fechaEntrega',
+    label: 'Fecha de Entrega',
+    type: 'date',
+    width: 6,
+    required: true,
+  },
   {
     name: 'proveedorId',
     label: 'Proveedor',
     type: 'select',
-    required: false,
+    required: true,
     width: 6,
     options: [],
   },
@@ -93,7 +100,7 @@ const Pedidos: React.FC = () => {
     try {
       const [dataLoad, provLoad] = await Promise.all([
         fetchPedidos(page, pageSize, searchTerm),
-        fetchProveedores(1, 100).catch(() => ({ data: [] })),
+        fetchProveedores(1, 50).catch(() => ({ data: [] })),
       ]);
       setData(dataLoad.data);
       setTotalItems(dataLoad.total);
@@ -148,29 +155,53 @@ const Pedidos: React.FC = () => {
         setIsSaving(false);
         return;
       }
+      if (!formData.fechaEntrega) {
+        toast.error('La fecha de entrega es obligatoria.');
+        setIsSaving(false);
+        return;
+      }
       const lines = formData.pedidoProductos || [];
+      if (!Array.isArray(lines) || lines.length === 0) {
+        toast.error('El pedido debe contener al menos una línea válida.');
+        setIsSaving(false);
+        return;
+      }
+
+      const normalizedLines = lines
+        .map((l: any) => ({
+          productoProveedorId: l.productoProveedorId || l.id_producto_proveedor,
+          cantidad: Number(l.cantidad),
+        }))
+        .filter(
+          (l: any) =>
+            l.productoProveedorId &&
+            Number.isFinite(l.cantidad) &&
+            l.cantidad > 0
+        );
+
+      if (normalizedLines.length === 0) {
+        toast.error(
+          'Cada línea debe tener un producto-proveedor y una cantidad mayor que 0.'
+        );
+        setIsSaving(false);
+        return;
+      }
+
       const calculatedTotal = lines.reduce(
         (sum: number, line: any) =>
           sum + Number(line.cantidad || 0) * Number(line.precioUnitario || 0),
         0
       );
 
-      const payload = {
+      const payload: PedidoRequestPayload = {
         costeTotal: calculatedTotal,
         estado: formData.estado,
         proveedorId: formData.proveedorId,
-        ...(formData.fechaEntrega
-          ? { fechaEntrega: formData.fechaEntrega }
-          : {}),
+        fechaEntrega: formData.fechaEntrega,
         ...(formData.motivoCancelacion
           ? { motivoCancelacion: formData.motivoCancelacion }
           : {}),
-        pedidoProductos: lines.map((l: any) => ({
-          productoProveedorId: l.productoProveedorId || l.id_producto_proveedor,
-          cantidad: Number(l.cantidad),
-          precioUnitario: Number(l.precioUnitario),
-          observaciones: l.observaciones,
-        })),
+        lineas: normalizedLines,
       };
 
       if (formData.id) {
@@ -275,7 +306,10 @@ const Pedidos: React.FC = () => {
       <PageToolbar
         title="Gestión de Pedidos"
         searchValue={searchTerm}
-        onSearchChange={(v) => { setSearchTerm(v); setPage(1); }}
+        onSearchChange={(v) => {
+          setSearchTerm(v);
+          setPage(1);
+        }}
         searchPlaceholder="Buscar por proveedor, estado, usuario..."
         searchId="search-pedidos"
         totalItems={totalItems}

@@ -5,6 +5,7 @@ import './albaran.e2e-spec';
 import './alumnos.e2e-spec';
 import './archivos.e2e-spec';
 import './dashboard.e2e-spec';
+import './frontend-integration-contracts.e2e-spec';
 import './incidencias-recepcion.e2e-spec';
 import './incidencias.e2e-spec';
 import './inventario.e2e-spec';

@@ -21,7 +21,6 @@ describe('AuthController (e2e)', () => {
 
   describe('POST /auth/register', () => {
     const newUser = {
-      nombre: 'Test User Auth',
       username: `user_${Date.now()}`,
       email: `auth_${Date.now()}@test.com`,
       password: 'Password123!',
