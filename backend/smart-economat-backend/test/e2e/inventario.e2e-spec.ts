@@ -7,6 +7,7 @@ describe('InventarioController (e2e)', () => {
 
   let app: INestApplication;
   let adminToken: string;
+  let productoId: string;
   let productoProveedorId: string;
   let ubicacionId: string;
 
@@ -53,6 +54,8 @@ describe('InventarioController (e2e)', () => {
     const prodDetail = await request(app.getHttpServer() as string)
       .get(`/api/v1/productos/${prodRes.body.data.id}`)
       .set('Authorization', `Bearer ${adminToken}`);
+
+    productoId = prodRes.body.data.id;
 
     const relations =
       prodDetail.body.data.productoProveedores ||
@@ -123,6 +126,124 @@ describe('InventarioController (e2e)', () => {
         .delete(`/api/v1/inventario/${item.id}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(204);
+    });
+  });
+
+  describe('Consulta de stock multicriterio', () => {
+    async function createInventarioEnUbicacion(
+      currentUbicacionId: string,
+      cantidadActual: number,
+      cantidadMinima: number = 10
+    ) {
+      const res = await request(app.getHttpServer() as string)
+        .post('/api/v1/inventario')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          productoProveedorId,
+          ubicacionId: currentUbicacionId,
+          cantidadActual,
+          cantidadMinima,
+          cantidadMaxima: 200,
+        });
+
+      expect(res.status).toBe(201);
+      return res.body.data;
+    }
+
+    it('E2E-INV-STOCK-01: Debe desglosar stock por ubicación', async () => {
+      const segundaUbicacion = await request(app.getHttpServer() as string)
+        .post('/api/v1/ubicacion')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ nombre: `Ubi Inv Stock ${Date.now()}` });
+
+      expect(segundaUbicacion.status).toBe(201);
+
+      await createInventarioEnUbicacion(ubicacionId, 50, 10);
+      await createInventarioEnUbicacion(segundaUbicacion.body.data.id, 20, 10);
+
+      const response = await request(app.getHttpServer() as string)
+        .get('/api/v1/inventario/stock')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .query({ productoId });
+
+      expect(response.status).toBe(200);
+      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(response.body.data).toHaveLength(2);
+      expect(response.body.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            productoId,
+            ubicacionId,
+            stock: 50,
+          }),
+          expect.objectContaining({
+            productoId,
+            ubicacionId: segundaUbicacion.body.data.id,
+            stock: 20,
+          }),
+        ])
+      );
+    });
+
+    it('E2E-INV-STOCK-02: Debe devolver stock consolidado por producto', async () => {
+      const segundaUbicacion = await request(app.getHttpServer() as string)
+        .post('/api/v1/ubicacion')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ nombre: `Ubi Inv Consolidado ${Date.now()}` });
+
+      expect(segundaUbicacion.status).toBe(201);
+
+      await createInventarioEnUbicacion(ubicacionId, 50, 10);
+      await createInventarioEnUbicacion(segundaUbicacion.body.data.id, 20, 10);
+
+      const response = await request(app.getHttpServer() as string)
+        .get('/api/v1/inventario/stock')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .query({ productoId, consolidado: true });
+
+      expect(response.status).toBe(200);
+      expect(response.body.data).toEqual([
+        expect.objectContaining({
+          productoId,
+          stockTotal: 70,
+        }),
+      ]);
+    });
+
+    it('E2E-INV-STOCK-03: Debe filtrar sólo stock bajo', async () => {
+      const segundaUbicacion = await request(app.getHttpServer() as string)
+        .post('/api/v1/ubicacion')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ nombre: `Ubi Inv Low ${Date.now()}` });
+
+      expect(segundaUbicacion.status).toBe(201);
+
+      await createInventarioEnUbicacion(ubicacionId, 50, 10);
+      await createInventarioEnUbicacion(segundaUbicacion.body.data.id, 5, 10);
+
+      const response = await request(app.getHttpServer() as string)
+        .get('/api/v1/inventario/stock')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .query({ productoId, onlyLowStock: true });
+
+      expect(response.status).toBe(200);
+      expect(response.body.data).toHaveLength(1);
+      expect(response.body.data[0]).toEqual(
+        expect.objectContaining({
+          productoId,
+          ubicacionId: segundaUbicacion.body.data.id,
+          stock: 5,
+        })
+      );
+    });
+
+    it('E2E-INV-STOCK-04: Debe validar los filtros de entrada', async () => {
+      const response = await request(app.getHttpServer() as string)
+        .get('/api/v1/inventario/stock')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .query({ productoId: 'no-es-un-uuid' });
+
+      expect(response.status).toBe(400);
     });
   });
 

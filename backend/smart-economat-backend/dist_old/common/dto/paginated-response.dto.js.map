@@ -1,0 +1,1 @@
+{"version":3,"sources":["../../../src/common/dto/paginated-response.dto.ts"],"sourcesContent":["export class PaginatedResponseDto<T> {\n  data: T[];\n  total: number;\n  page: number;\n  limit: number;\n  totalPages: number;\n}\n"],"names":["PaginatedResponseDto"],"mappings":";;;;+BAAaA;;;eAAAA;;;AAAN,IAAA,AAAMA,uBAAN,MAAMA;AAMb"}

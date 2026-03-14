@@ -14,6 +14,7 @@ import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 */
 
 dotenv.config({ path: join(__dirname, '../../../../.env') });
+//dotenv.config({ path: join(__dirname, '../../../../.env.prod') });
 
 if (process.env.NODE_ENV === 'production') {
   console.error('No se permite ejecutar seeders en producción');
