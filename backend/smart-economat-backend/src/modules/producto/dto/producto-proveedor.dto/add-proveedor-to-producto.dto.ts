@@ -5,7 +5,6 @@ import {
   IsNumber,
   IsNotEmpty,
   IsUUID,
-  Matches,
   Min,
   MaxLength,
 } from 'class-validator';
@@ -57,8 +56,8 @@ export class AddProveedorToProductoDto {
   marcaEspecifica?: string;
 
   @ApiPropertyOptional({
-    description: 'Código de barras EAN-13 específico del proveedor.',
-    example: '8410123456789',
+    description: 'Código de barras o referencia específica del proveedor.',
+    example: 'PROV-LECHE-001',
   })
   @IsOptional()
   @Transform((params) => UppercaseStringTransformer.transform(params))
@@ -67,14 +66,9 @@ export class AddProveedorToProductoDto {
       'validation.EL_C_DIGO_DE_BARRAS_DEBE_SER_UNA_CADENA'
     ),
   })
-  @MaxLength(13, {
+  @MaxLength(130, {
     message: i18nValidationMessage(
       'validation.EL_C_DIGO_DE_BARRAS_NO_PUEDE_EXCEDER_LOS'
-    ),
-  })
-  @Matches(/^\d{13}$/, {
-    message: i18nValidationMessage(
-      'validation.EL_C_DIGO_DE_BARRAS_DEBE_SER_UN_EAN_13_D'
     ),
   })
   codigoBarras?: string;

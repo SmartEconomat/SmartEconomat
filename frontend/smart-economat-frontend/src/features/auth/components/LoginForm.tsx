@@ -20,6 +20,13 @@ import {
   STRONG_PASSWORD_MESSAGE,
 } from '../../../utils/passwordValidation';
 
+interface JwtPayload {
+  sub?: string;
+  username?: string;
+  email?: string;
+  role?: string;
+}
+
 const visuallyHidden = {
   border: 0,
   clip: 'rect(0 0 0 0)',
@@ -44,7 +51,7 @@ interface LoginFormProps {
   onLoginSuccess: (user: User, token: string) => void;
 }
 
-function parseJwt(token: string): Record<string, any> | null {
+function parseJwt(token: string): JwtPayload | null {
   try {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -59,6 +66,12 @@ function parseJwt(token: string): Record<string, any> | null {
   } catch {
     return null;
   }
+}
+
+function getErrorMessage(error: unknown, fallbackMessage: string): string {
+  return error instanceof Error && error.message
+    ? error.message
+    : fallbackMessage;
 }
 
 /**
@@ -123,8 +136,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
       } else {
         setErrorMsg(res.message || 'Credenciales inválidas, intenta de nuevo.');
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Error de conexión al servidor.');
+    } catch (err: unknown) {
+      setErrorMsg(getErrorMessage(err, 'Error de conexión al servidor.'));
     } finally {
       setIsLoading(false);
     }
@@ -160,8 +173,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
       } else {
         setErrorMsg(res.message || 'Error al procesar la solicitud.');
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Error de conexión al servidor.');
+    } catch (err: unknown) {
+      setErrorMsg(getErrorMessage(err, 'Error de conexión al servidor.'));
     } finally {
       setIsLoading(false);
     }
@@ -202,8 +215,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
       } else {
         setErrorMsg(res.message || 'Error al cambiar la contraseña.');
       }
-    } catch (err: any) {
-      setErrorMsg('Error de conexión al servidor.');
+    } catch (err: unknown) {
+      setErrorMsg(getErrorMessage(err, 'Error de conexión al servidor.'));
     } finally {
       if (previousToken) {
         localStorage.setItem('token', previousToken);

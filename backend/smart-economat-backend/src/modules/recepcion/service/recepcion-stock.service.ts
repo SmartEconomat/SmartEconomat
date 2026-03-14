@@ -233,6 +233,8 @@ export class RecepcionStockService {
               inventario: {
                 id: item.stockNuevo.id,
               } as Movimiento['inventario'],
+              productoProveedor: item.ppRef
+                .productoProveedor as Movimiento['productoProveedor'],
               descripcion: `Recepción Masiva Pedido ${item.ppRef.id} - Lote ${item.linea.estadoVisual || 'ÓPTIMO'} - Albarán ${dto.nAlbaran || 'N/A'}`,
               usuario: { id: userId },
             })
@@ -611,6 +613,7 @@ export class RecepcionStockService {
             entidadId: savedRecepcion.id,
             entidad: 'Recepcion',
             inventario: { id: savedStock.id } as any,
+            productoProveedor: ppRef.productoProveedor as any,
             descripcion: `Recepción Pedido ${ppRef.id} - Lote ${estadoVirtualDefault} - Albarán ${dto.nAlbaran || 'N/A'}`,
             usuario: { id: dto.usuarioId },
           });

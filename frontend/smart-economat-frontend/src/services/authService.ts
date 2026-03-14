@@ -1,5 +1,15 @@
-import { baseFetch, ApiResponse } from './api.service';
+import { baseFetch, parseApiResponse } from './api.service';
 import { User } from '../store/AuthContext';
+
+interface CurrentUserResponse {
+  id: string;
+  username?: string;
+  nombre?: string;
+  name?: string;
+  email: string;
+  rol?: string;
+  role?: string;
+}
 
 /**
  * Servicio de autenticación para gestionar el perfil del usuario.
@@ -11,10 +21,10 @@ export const authService = {
    */
   async getCurrentUser(): Promise<User> {
     const response = await baseFetch('/usuarios/perfil');
-    if (!response.ok) {
-      throw new Error('No se pudo obtener la información del usuario');
-    }
-    const result: ApiResponse<any> = await response.json();
+    const result = await parseApiResponse<CurrentUserResponse>(
+      response,
+      'No se pudo obtener la información del usuario'
+    );
 
     // Adaptar al formato esperado por el frontend
     return {
@@ -40,10 +50,7 @@ export const authService = {
       body: JSON.stringify(data),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Error al actualizar el perfil');
-    }
+    await parseApiResponse(response, 'Error al actualizar el perfil');
   },
 
   /**
@@ -61,9 +68,6 @@ export const authService = {
       body: JSON.stringify({ oldPassword: currentPassword, newPassword }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Error al cambiar la contraseña');
-    }
+    await parseApiResponse(response, 'Error al cambiar la contraseña');
   },
 };

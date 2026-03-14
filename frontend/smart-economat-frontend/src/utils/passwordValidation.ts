@@ -1,9 +1,37 @@
 export const STRONG_PASSWORD_MESSAGE =
   'La contraseña debe tener al menos 8 caracteres e incluir mayúscula, minúscula, número y símbolo.';
 
-const STRONG_PASSWORD_REGEX =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+type PasswordValidationResult = {
+  hasMinLength: boolean;
+  hasLowercase: boolean;
+  hasUppercase: boolean;
+  hasNumber: boolean;
+  hasSymbol: boolean;
+  isValid: boolean;
+};
+
+export function getPasswordValidationResult(
+  value: string
+): PasswordValidationResult {
+  const password = value ?? '';
+
+  const hasMinLength = password.length >= 8;
+  const hasLowercase = /[a-z]/.test(password);
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasNumber = /\d/.test(password);
+  const hasSymbol = /[^A-Za-z\d]/.test(password);
+
+  return {
+    hasMinLength,
+    hasLowercase,
+    hasUppercase,
+    hasNumber,
+    hasSymbol,
+    isValid:
+      hasMinLength && hasLowercase && hasUppercase && hasNumber && hasSymbol,
+  };
+}
 
 export function isStrongPassword(value: string): boolean {
-  return STRONG_PASSWORD_REGEX.test(value);
+  return getPasswordValidationResult(value).isValid;
 }

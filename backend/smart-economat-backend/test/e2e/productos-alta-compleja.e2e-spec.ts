@@ -31,6 +31,20 @@ describe('ProductoController (e2e) - Alta compleja', () => {
     return response.body.data as { id: string; nombre: string };
   }
 
+  async function expectProductNotPersisted(nombreProducto: string) {
+    const listResponse = await request(app.getHttpServer())
+      .get('/api/v1/productos')
+      .query({ searchTerm: nombreProducto })
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+
+    expect(
+      listResponse.body.data.data.some(
+        (producto: { nombre: string }) => producto.nombre === nombreProducto
+      )
+    ).toBe(false);
+  }
+
   it('crea un producto maestro con alérgenos y proveedor en una sola petición', async () => {
     const proveedor = await createProveedor();
     const nombreProducto = generateUniqueName('Leche alta compleja');
@@ -79,6 +93,73 @@ describe('ProductoController (e2e) - Alta compleja', () => {
     expect(getResponse.body.data.alergenos).toHaveLength(1);
   });
 
+  it('genera automáticamente un EAN-13 cuando el producto maestro no lo recibe en el payload', async () => {
+    const nombreProducto = generateUniqueName('Producto con ean autogenerado');
+
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/productos')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        nombre: nombreProducto,
+        tipo: 'otro',
+        unidad: 'UNIDAD',
+        contenido: 1,
+      })
+      .expect(201);
+
+    expectStandardResponse(response, 201);
+    expect(response.body.data.codigoBarras).toMatch(/^\d{13}$/);
+  });
+
+  it('acepta un código de barras alfanumérico del producto', async () => {
+    const nombreProducto = generateUniqueName('Producto codigo flexible');
+
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/productos')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        nombre: nombreProducto,
+        tipo: 'lacteo',
+        unidad: 'L',
+        contenido: 1,
+        codigoBarras: 'QAPNEBB8UX',
+      });
+
+    expectStandardResponse(response, 201);
+    expect(response.body.data.codigoBarras).toBe('QAPNEBB8UX');
+  });
+
+  it('rechaza un código de barras de producto duplicado y no persiste la segunda alta', async () => {
+    const firstCreateResponse = await request(app.getHttpServer())
+      .post('/api/v1/productos')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        nombre: generateUniqueName('Producto codigo unico'),
+        tipo: 'otro',
+        unidad: 'UNIDAD',
+        contenido: 1,
+      })
+      .expect(201);
+
+    const codigoBarras = firstCreateResponse.body.data.codigoBarras as string;
+
+    const nombreDuplicado = generateUniqueName('Producto codigo duplicado');
+
+    const duplicateResponse = await request(app.getHttpServer())
+      .post('/api/v1/productos')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        nombre: nombreDuplicado,
+        tipo: 'otro',
+        unidad: 'UNIDAD',
+        contenido: 1,
+        codigoBarras,
+      });
+
+    expectErrorResponse(duplicateResponse, 409);
+    await expectProductNotPersisted(nombreDuplicado);
+  });
+
   it('rechaza la alta compleja cuando el proveedor no existe y no persiste el producto', async () => {
     const nombreProducto = generateUniqueName('Leche proveedor inexistente');
 
@@ -100,17 +181,7 @@ describe('ProductoController (e2e) - Alta compleja', () => {
 
     expectErrorResponse(response, 404);
 
-    const listResponse = await request(app.getHttpServer())
-      .get('/api/v1/productos')
-      .query({ searchTerm: nombreProducto })
-      .set('Authorization', `Bearer ${adminToken}`)
-      .expect(200);
-
-    expect(
-      listResponse.body.data.data.some(
-        (producto: { nombre: string }) => producto.nombre === nombreProducto
-      )
-    ).toBe(false);
+    await expectProductNotPersisted(nombreProducto);
   });
 
   it('rechaza proveedores duplicados en el mismo payload y no persiste nada', async () => {
@@ -139,17 +210,7 @@ describe('ProductoController (e2e) - Alta compleja', () => {
 
     expectErrorResponse(response, 409);
 
-    const listResponse = await request(app.getHttpServer())
-      .get('/api/v1/productos')
-      .query({ searchTerm: nombreProducto })
-      .set('Authorization', `Bearer ${adminToken}`)
-      .expect(200);
-
-    expect(
-      listResponse.body.data.data.some(
-        (producto: { nombre: string }) => producto.nombre === nombreProducto
-      )
-    ).toBe(false);
+    await expectProductNotPersisted(nombreProducto);
   });
 
   it('rechaza alérgenos duplicados en el mismo payload y no persiste nada', async () => {
@@ -168,17 +229,64 @@ describe('ProductoController (e2e) - Alta compleja', () => {
 
     expectErrorResponse(response, 409);
 
-    const listResponse = await request(app.getHttpServer())
-      .get('/api/v1/productos')
-      .query({ searchTerm: nombreProducto })
-      .set('Authorization', `Bearer ${adminToken}`)
-      .expect(200);
+    await expectProductNotPersisted(nombreProducto);
+  });
 
-    expect(
-      listResponse.body.data.data.some(
-        (producto: { nombre: string }) => producto.nombre === nombreProducto
-      )
-    ).toBe(false);
+  it('rechaza la alta compleja cuando falta el precio unitario del proveedor y no persiste nada', async () => {
+    const proveedor = await createProveedor();
+    const nombreProducto = generateUniqueName('Producto sin precio unitario');
+
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/productos')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        nombre: nombreProducto,
+        tipo: 'lacteo',
+        unidad: 'L',
+        contenido: 1,
+        proveedores: [
+          {
+            proveedorId: proveedor.id,
+          },
+        ],
+      });
+
+    expectErrorResponse(response, 400);
+    await expectProductNotPersisted(nombreProducto);
+  });
+
+  it('acepta el código de barras alfanumérico de un proveedor', async () => {
+    const proveedor = await createProveedor();
+    const nombreProducto = generateUniqueName(
+      'Producto con proveedor flexible'
+    );
+
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/productos')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        nombre: nombreProducto,
+        tipo: 'lacteo',
+        unidad: 'L',
+        contenido: 1,
+        proveedores: [
+          {
+            proveedorId: proveedor.id,
+            precioUnitario: 1.45,
+            codigoBarras: 'PROV-123',
+          },
+        ],
+      });
+
+    expectStandardResponse(response, 201);
+    expect(response.body.data.proveedores).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          proveedorId: proveedor.id,
+          codigoBarras: 'PROV-123',
+        }),
+      ])
+    );
   });
 
   it('permite completar el flujo conectado actualizando alérgenos y proveedores después del alta base', async () => {
@@ -224,5 +332,115 @@ describe('ProductoController (e2e) - Alta compleja', () => {
     expect(updateResponse.body.data.nombre).toBe(`${nombreBase} premium`);
     expect(updateResponse.body.data.alergenos).toHaveLength(2);
     expect(updateResponse.body.data.proveedores).toHaveLength(2);
+  });
+
+  it('sincroniza el flujo conectado eliminando proveedores omitidos y sustituyendo alérgenos', async () => {
+    const proveedorA = await createProveedor();
+    const proveedorB = await createProveedor();
+    const nombreProducto = generateUniqueName('Producto sincronizacion patch');
+
+    const createResponse = await request(app.getHttpServer())
+      .post('/api/v1/productos')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        nombre: nombreProducto,
+        tipo: 'lacteo',
+        unidad: 'L',
+        contenido: 1,
+        alergenos: ['LACTEOS', 'GLUTEN'],
+        proveedores: [
+          {
+            proveedorId: proveedorA.id,
+            precioUnitario: 1.45,
+            marcaEspecifica: 'Marca A',
+          },
+          {
+            proveedorId: proveedorB.id,
+            precioUnitario: 1.7,
+            marcaEspecifica: 'Marca B',
+          },
+        ],
+      })
+      .expect(201);
+
+    const productoId = createResponse.body.data.id as string;
+
+    const updateResponse = await request(app.getHttpServer())
+      .patch(`/api/v1/productos/${productoId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        alergenos: ['LACTEOS'],
+        proveedores: [
+          {
+            proveedorId: proveedorA.id,
+            precioUnitario: 1.55,
+            marcaEspecifica: 'Marca A actualizada',
+          },
+        ],
+      })
+      .expect(200);
+
+    expectStandardResponse(updateResponse, 200);
+    expect(updateResponse.body.data.alergenos).toEqual([
+      expect.objectContaining({ alergeno: 'LACTEOS' }),
+    ]);
+    expect(updateResponse.body.data.proveedores).toEqual([
+      expect.objectContaining({
+        proveedorId: proveedorA.id,
+        precioUnitario: 1.55,
+      }),
+    ]);
+
+    const getResponse = await request(app.getHttpServer())
+      .get(`/api/v1/productos/${productoId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+
+    expect(getResponse.body.data.alergenos).toHaveLength(1);
+    expect(getResponse.body.data.proveedores).toHaveLength(1);
+    expect(
+      getResponse.body.data.proveedores.some(
+        (proveedor: { proveedorId: string }) =>
+          proveedor.proveedorId === proveedorB.id
+      )
+    ).toBe(false);
+  });
+
+  it('permite vaciar alérgenos y proveedores enviando arrays vacíos en PATCH', async () => {
+    const proveedor = await createProveedor();
+    const nombreProducto = generateUniqueName('Producto limpieza patch');
+
+    const createResponse = await request(app.getHttpServer())
+      .post('/api/v1/productos')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        nombre: nombreProducto,
+        tipo: 'lacteo',
+        unidad: 'L',
+        contenido: 1,
+        alergenos: ['LACTEOS'],
+        proveedores: [
+          {
+            proveedorId: proveedor.id,
+            precioUnitario: 1.45,
+          },
+        ],
+      })
+      .expect(201);
+
+    const productoId = createResponse.body.data.id as string;
+
+    const updateResponse = await request(app.getHttpServer())
+      .patch(`/api/v1/productos/${productoId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        alergenos: [],
+        proveedores: [],
+      })
+      .expect(200);
+
+    expectStandardResponse(updateResponse, 200);
+    expect(updateResponse.body.data.alergenos).toHaveLength(0);
+    expect(updateResponse.body.data.proveedores).toHaveLength(0);
   });
 });

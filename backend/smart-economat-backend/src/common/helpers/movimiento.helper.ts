@@ -39,6 +39,7 @@ export class MovimientoHelper {
       entidadId,
       usuario: userId,
       inventario: inventarioId || undefined,
+      productoProveedor: productoProveedorId || undefined,
       descripcion,
     };
 

@@ -78,7 +78,7 @@ export class Producto extends BaseEntity {
    */
   @Column({
     type: 'varchar',
-    length: 13,
+    length: 130,
     unique: true,
     nullable: true,
     name: 'codigo_barras',

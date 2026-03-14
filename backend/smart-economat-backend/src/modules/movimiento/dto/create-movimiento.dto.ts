@@ -72,6 +72,14 @@ export class CreateMovimientoDto {
 
   @IsUUID('7', {
     message: i18nValidationMessage(
+      'validation.EL_ID_DE_LA_ENTIDAD_DEBE_SER_UN_UUID_V_L'
+    ),
+  })
+  @IsOptional()
+  productoProveedor?: string;
+
+  @IsUUID('7', {
+    message: i18nValidationMessage(
       'validation.EL_ID_DEL_USUARIO_DEBE_SER_UN_UUID_V_LID'
     ),
   })
