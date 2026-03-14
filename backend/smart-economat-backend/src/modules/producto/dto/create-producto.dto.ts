@@ -13,6 +13,7 @@ import {
   Matches,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AddProveedorToProductoDto } from './producto-proveedor.dto/add-proveedor-to-producto.dto';
 import { TipoProducto, UnidadMedida, Alergeno } from '../enums/producto.enums';
 import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
@@ -20,6 +21,10 @@ import { UppercaseStringTransformer } from '../../../common/transformers/upperca
 import { StringToDateTransformer } from '../../../common/transformers/string-to-date.transformer';
 
 export class CreateProductoDto {
+  @ApiProperty({
+    description: 'Nombre genérico del producto maestro.',
+    example: 'Leche',
+  })
   @Transform((params) => TrimStringTransformer.transform(params))
   @IsString({
     message: i18nValidationMessage(
@@ -36,6 +41,10 @@ export class CreateProductoDto {
   })
   nombre: string;
 
+  @ApiPropertyOptional({
+    description: 'Marca genérica del producto maestro.',
+    example: 'Genérica',
+  })
   @IsOptional()
   @Transform((params) => TrimStringTransformer.transform(params))
   @IsString({
@@ -50,6 +59,10 @@ export class CreateProductoDto {
   })
   marca?: string;
 
+  @ApiPropertyOptional({
+    description: 'Descripción técnica o comercial del producto.',
+    example: 'Leche entera UHT',
+  })
   @IsOptional()
   @Transform((params) => TrimStringTransformer.transform(params))
   @IsString({
@@ -64,14 +77,25 @@ export class CreateProductoDto {
   })
   descripcion?: string;
 
-  @IsOptional()
+  @ApiProperty({
+    description: 'Unidad de medida base del producto.',
+    enum: UnidadMedida,
+    example: UnidadMedida.L,
+  })
+  @IsNotEmpty({
+    message: i18nValidationMessage('validation.LA_UNIDAD_DEL_PRODUCTO_ES_OBL'),
+  })
   @IsEnum(UnidadMedida, {
     message: i18nValidationMessage(
       'validation.LA_UNIDAD_DEL_PRODUCTO_NO_ES_V_LIDA'
     ),
   })
-  unidad?: UnidadMedida;
+  unidad!: UnidadMedida;
 
+  @ApiPropertyOptional({
+    description: 'Fecha de caducidad de referencia.',
+    example: '2026-12-31T00:00:00.000Z',
+  })
   @IsOptional()
   @Transform((params) => StringToDateTransformer.transform(params))
   @Type(() => Date)
@@ -82,6 +106,10 @@ export class CreateProductoDto {
   })
   fechaCaducidad?: Date;
 
+  @ApiPropertyOptional({
+    description: 'Ruta o URL de la imagen del producto.',
+    example: '/uploads/productos/leche.png',
+  })
   @IsOptional()
   @Transform((params) => TrimStringTransformer.transform(params))
   @IsString({
@@ -96,6 +124,11 @@ export class CreateProductoDto {
   })
   pathImg?: string;
 
+  @ApiPropertyOptional({
+    description: 'Tipo o categoría funcional del producto.',
+    enum: TipoProducto,
+    example: TipoProducto.LACTEO,
+  })
   @IsOptional()
   @IsEnum(TipoProducto, {
     message: i18nValidationMessage(
@@ -104,6 +137,10 @@ export class CreateProductoDto {
   })
   tipo?: TipoProducto;
 
+  @ApiPropertyOptional({
+    description: 'Código de barras EAN-13 del producto maestro.',
+    example: '8410123456789',
+  })
   @IsOptional()
   @Transform((params) => UppercaseStringTransformer.transform(params))
   @IsString({
@@ -123,6 +160,11 @@ export class CreateProductoDto {
   })
   codigoBarras?: string;
 
+  @ApiProperty({
+    description: 'Contenido numérico asociado a la unidad.',
+    example: 1,
+    minimum: 0,
+  })
   @IsNumber(
     {},
     {
@@ -138,6 +180,12 @@ export class CreateProductoDto {
   })
   contenido!: number;
 
+  @ApiPropertyOptional({
+    description: 'Listado de alérgenos a registrar en la misma operación.',
+    enum: Alergeno,
+    isArray: true,
+    example: [Alergeno.LACTEOS],
+  })
   @IsOptional()
   @IsArray({
     message: i18nValidationMessage(
@@ -150,6 +198,10 @@ export class CreateProductoDto {
   })
   alergenos?: Alergeno[];
 
+  @ApiPropertyOptional({
+    description: 'Proveedores a vincular al producto en la misma transacción.',
+    type: () => [AddProveedorToProductoDto],
+  })
   @IsOptional()
   @IsArray({
     message: i18nValidationMessage(

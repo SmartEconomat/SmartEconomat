@@ -9,15 +9,18 @@
 ### 🎖️ **Darel**
 
 Este guerrero del código lidera la carga con:
+
 - 💻 **292** Commits
 - 🔀 **74** PRs Fusionados
 
 Demostrando que:
+
 - ✨ El teclado es su arma favorita
 - 💪 La productividad es su segundo nombre
 - 🚀 Git commit es su mantra matutino
 
 **Estadísticas de Dominio:**
+
 - Posee el **46.13%** de todo el código.
 - Ha logrado fusionar **74** funcionalidades completas.
 
@@ -26,18 +29,22 @@ Demostrando que:
 ## 📊 Hall de la Fama
 
 ### 🥈 Alexis
+
 - 💻 Commits: **154** (24.33%)
 - 🔀 PRs Fusionados: **24**
 
 ### 🥈 Sergio
+
 - 💻 Commits: **94** (14.85%)
 - 🔀 PRs Fusionados: **16**
 
 ### 🥈 Maurizio
+
 - 💻 Commits: **64** (10.11%)
 - 🔀 PRs Fusionados: **8**
 
 ### 🥈 Guillermo
+
 - 💻 Commits: **29** (4.58%)
 - 🔀 PRs Fusionados: **7**
 
@@ -48,11 +55,13 @@ Demostrando que:
 ### 😅 **Guillermo**
 
 Con **29 commits** y **7 PRs**, tenemos aquí a alguien que:
+
 - 🤔 Prefiere la calidad sobre la cantidad (eso espero...)
 - 🏖️ Cree que git es una red social casual
 - 🎯 Está "esperando el momento perfecto" para contribuir
 
 **Tu misión (si decides aceptarla):**
+
 - [ ] Hacer al menos 1 commit esta semana
 - [ ] Lograr que te aprueben una rama
 - [ ] Intentar alcanzar al siguiente en la lista
@@ -61,13 +70,13 @@ Con **29 commits** y **7 PRs**, tenemos aquí a alguien que:
 
 ## 📈 Tabla Comparativa
 
-| Posición | Contribuidor | Commits | PRs Fusionados | % Código | Estado |
-|----------|--------------|---------|----------------|----------|--------|
-| #1 | Darel | **292** | 🔀 **74** | 46.13% | 👑 Líder |
-| #2 | Alexis | **154** | 🔀 **24** | 24.33% | 💪 Activo |
-| #3 | Sergio | **94** | 🔀 **16** | 14.85% | 💪 Activo |
-| #4 | Maurizio | **64** | 🔀 **8** | 10.11% | 💪 Activo |
-| #5 | Guillermo | **29** | 🔀 **7** | 4.58% | 🐌 Necesita café |
+| Posición | Contribuidor | Commits | PRs Fusionados | % Código | Estado           |
+| -------- | ------------ | ------- | -------------- | -------- | ---------------- |
+| #1       | Darel        | **292** | 🔀 **74**      | 46.13%   | 👑 Líder         |
+| #2       | Alexis       | **154** | 🔀 **24**      | 24.33%   | 💪 Activo        |
+| #3       | Sergio       | **94**  | 🔀 **16**      | 14.85%   | 💪 Activo        |
+| #4       | Maurizio     | **64**  | 🔀 **8**       | 10.11%   | 💪 Activo        |
+| #5       | Guillermo    | **29**  | 🔀 **7**       | 4.58%    | 🐌 Necesita café |
 
 ---
 
@@ -108,4 +117,4 @@ Con **29 commits** y **7 PRs**, tenemos aquí a alguien que:
 
 ---
 
-*Generado automáticamente por `count-commits.js`*
+_Generado automáticamente por `count-commits.js`_

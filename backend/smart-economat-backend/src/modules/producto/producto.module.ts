@@ -16,6 +16,7 @@ import { ProductoProveedor } from './producto-proveedor.entity/producto-proveedo
 import { HistorialPrecio } from './historial-precio-proveedor.entity/historial.entity';
 import { MovimientoModule } from '../movimiento/movimiento.module';
 import { MovimientoHelper } from '../../common/helpers/movimiento.helper';
+import { Proveedor } from '../proveedor/proveedor.entity/proveedor.entity';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { MovimientoHelper } from '../../common/helpers/movimiento.helper';
       ProductoProveedor,
       ProductoAlergeno,
       HistorialPrecio,
+      Proveedor,
     ]),
     MovimientoModule,
   ],

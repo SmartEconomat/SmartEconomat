@@ -146,8 +146,46 @@ Este endpoint soporta búsqueda avanzada y paginación mediante **Query Paramete
 > **Alta Compleja de Producto**: Al crear un producto mediante `POST /productos`, el sistema permite una operación transaccional que incluye:
 > 1. **Ficha Base**: Nombre, marca, unidad (`UnidadMedida`).
 > 2. **Alérgenos**: Array de `Alergeno` (Enum: `GLUTEN, LACTEOS, etc`).
-> 3. **Proveedores**: Array de `AddProveedorToProductoDto` (Incluye `proveedorId`, `precioUnitario`, `marcaEspecifica`).
+> 3. **Proveedores**: Array de `AddProveedorToProductoDto` (Incluye `proveedorId`, `precioUnitario`, `marcaEspecifica`, `codigoBarras`).
 > Todo el proceso se ejecuta bajo una transacción de base de datos para garantizar la integridad de los datos.
+
+#### DTOs relevantes para alta compleja
+
+**`CreateProductoDto`**
+
+| Campo | Tipo | Obligatorio | Observaciones |
+| :--- | :--- | :---: | :--- |
+| `nombre` | `string` | Sí | Nombre del producto maestro |
+| `marca` | `string` | No | Marca genérica |
+| `unidad` | `UnidadMedida` | Sí | Enum compartido |
+| `contenido` | `number` | Sí | Valor mayor o igual a 0 |
+| `tipo` | `TipoProducto` | No | Categoría del producto |
+| `codigoBarras` | `string` | No | EAN-13 único; si falta se genera automáticamente |
+| `alergenos` | `Alergeno[]` | No | Lista de alérgenos del producto |
+| `proveedores` | `AddProveedorToProductoDto[]` | No | Relaciones comerciales a crear o sincronizar |
+
+**`AddProveedorToProductoDto`**
+
+| Campo | Tipo | Obligatorio | Observaciones |
+| :--- | :--- | :---: | :--- |
+| `proveedorId` | `UUID v7` | Sí | Debe existir en el maestro de proveedores |
+| `precioUnitario` | `number` | Sí* | Obligatorio en alta compleja |
+| `marcaEspecifica` | `string` | No | Marca específica del proveedor |
+| `codigoBarras` | `string` | No | EAN-13 específico del proveedor |
+
+#### Errores esperados en alta compleja
+
+| Código | Caso |
+| :--- | :--- |
+| `400` | DTO inválido, EAN-13 inválido o precio unitario ausente |
+| `404` | Proveedor inexistente |
+| `409` | Código de barras duplicado, alérgenos duplicados o proveedores duplicados |
+
+> [!NOTE]
+> El sistema también soporta el flujo conectado mediante `PATCH /productos/:id` para completar después los `alergenos` y `proveedores` del producto maestro.
+
+> [!TIP]
+> Referencia ampliada en [Alta compleja de producto](../modules/producto/alta-compleja-producto-maestro-proveedores.md).
 
 ---
 
