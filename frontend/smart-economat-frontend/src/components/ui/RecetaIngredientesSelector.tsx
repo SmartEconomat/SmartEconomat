@@ -56,7 +56,7 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
     const loadProducts = async () => {
       setIsLoading(true);
       try {
-        const products = await fetchProductos(1, 100);
+        const products = await fetchProductos(1, 50);
         setAllProducts(products.data);
       } catch (error) {
         console.error('Error loading products for recipe:', error);

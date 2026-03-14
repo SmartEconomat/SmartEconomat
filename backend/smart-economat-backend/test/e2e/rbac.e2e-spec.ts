@@ -54,7 +54,6 @@ describe('RBAC System (e2e)', () => {
     const registerRes = await request(app.getHttpServer() as Server)
       .post('/api/v1/auth/register')
       .send({
-        nombre: 'Alumno RBAC Test',
         username,
         email,
         password: 'Password123!',

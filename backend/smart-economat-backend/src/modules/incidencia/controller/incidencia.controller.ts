@@ -17,6 +17,7 @@ import { UpdateIncidenciaDto } from '../dto/update-incidencia.dto';
 import { ResolverIncidenciaDto } from '../dto/resolver-incidencia.dto';
 import { ReportIncidenciaDto } from '../dto/report-incidencia.dto';
 import { ResolveIncidenciaDto } from '../dto/resolve-incidencia.dto';
+import { IncidenciaQueryDto } from '../dto/incidencia-query.dto';
 import { Incidencia } from '../incidencia.entity/incidencia.entity';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
@@ -48,7 +49,7 @@ export class IncidenciaController {
       'createdAt',
       'updatedAt',
     ])
-    query: PaginationQueryDto
+    query: IncidenciaQueryDto
   ): Promise<PaginatedResponseDto<Incidencia>> {
     return this.incidenciaService.findAll(query);
   }

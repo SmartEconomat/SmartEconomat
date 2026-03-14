@@ -5,7 +5,7 @@ import {
   IsOptional,
   IsUUID,
   Min,
-  IsDateString,
+  IsDate,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { StringToDateTransformer } from '../../../common/transformers/string-to-date.transformer';
@@ -87,13 +87,10 @@ export class CreateInventarioItemDto {
   @IsOptional()
   @Transform((params) => StringToDateTransformer.transform(params))
   @Type(() => Date)
-  @IsDateString(
-    {},
-    {
-      message: i18nValidationMessage(
-        'validation.LA_FECHA_DE_CADUCIDAD_DEBE_SER_UNA_FECHA'
-      ),
-    }
-  )
+  @IsDate({
+    message: i18nValidationMessage(
+      'validation.LA_FECHA_DE_CADUCIDAD_DEBE_SER_UNA_FECHA'
+    ),
+  })
   fechaCaducidad?: string;
 }
