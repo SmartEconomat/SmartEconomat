@@ -66,4 +66,5 @@ AGENTS.md
 
 #tests 
 **/uploads_test/
-**/uploads_tests/
+
+**/dist_old/

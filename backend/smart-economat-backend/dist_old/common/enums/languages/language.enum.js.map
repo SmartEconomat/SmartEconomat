@@ -1,1 +1,0 @@
-{"version":3,"sources":["../../../../src/common/enums/languages/language.enum.ts"],"sourcesContent":["export const LanguageEnum = {\n  ES: 'es',\n  EN: 'en',\n  FR: 'fr',\n  DE: 'de',\n};\n"],"names":["LanguageEnum","ES","EN","FR","DE"],"mappings":";;;;+BAAaA;;;eAAAA;;;AAAN,MAAMA,eAAe;IAC1BC,IAAI;IACJC,IAAI;IACJC,IAAI;IACJC,IAAI;AACN"}
