@@ -49,6 +49,9 @@ Este documento detalla los **Casos de Uso (UC)** del sistema SmartEconomat, desc
 - **Explicación Técnica**:
     - **Normalización**: Un `Producto` (entidad base) puede tener múltiples `ProductoProveedor` (relación comercial).
     - **Control de Precios**: Cada cambio de precio genera un registro en `HistorialPrecio`, permitiendo análisis de coste por proveedor a lo largo del tiempo.
+    - **Alta Compleja**: El alta de catálogo soporta crear en una sola transacción el `Producto`, sus `ProductoAlergeno` y sus relaciones `ProductoProveedor`, o bien completar el flujo posteriormente con `PATCH /productos/:id`.
+
+> Ver detalle técnico en [Alta compleja de producto](../../modules/producto/alta-compleja-producto-maestro-proveedores.md).
 
 ## 🗳️ 6. Gestión Directa de Inventario
 **Propósito**: Permite realizar inventariado manual o ajustes de stock sin pasar por un flujo de pedido.

@@ -13,6 +13,7 @@ import './movimientos.e2e-spec';
 import './password-recovery.e2e-spec';
 import './pedidos.e2e-spec';
 import './producto-proveedor.e2e-spec';
+import './productos-alta-compleja.e2e-spec';
 import './productos.e2e-spec';
 import './profesores.e2e-spec';
 import './proveedores.e2e-spec';

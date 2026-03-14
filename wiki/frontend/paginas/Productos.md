@@ -135,6 +135,35 @@ El esquema `productoSchema` define los campos:
 
 ---
 
+## Alta compleja de producto
+
+La página soporta el caso de uso de alta compleja del catálogo:
+
+- creación del `Producto` maestro;
+- selección opcional de `alergenos`;
+- asociación opcional de múltiples `proveedores` con precio y marca específica;
+- reutilización del mismo modal para completar el flujo con edición posterior.
+
+### Comportamiento esperado del formulario
+
+1. El usuario rellena los datos base del producto.
+2. Puede añadir alérgenos mediante el selector especializado.
+3. Puede añadir una o varias relaciones proveedor-producto en el mismo modal.
+4. El frontend envía un único payload a `POST /productos`.
+5. Si el producto ya existe y se edita, el frontend usa `PATCH /productos/:id` para sincronizar relaciones.
+
+### Reglas visibles para el usuario
+
+- `unidad` es obligatoria.
+- `contenido` debe ser mayor o igual a 0.
+- Los alérgenos deben pertenecer al enum oficial.
+- Cada proveedor solo puede aparecer una vez en el payload.
+- En alta compleja, cada proveedor debe llevar `precioUnitario`.
+
+> Ver detalle técnico del caso de uso en [Alta compleja de producto](../../modules/producto/alta-compleja-producto-maestro-proveedores.md).
+
+---
+
 ## Relación con otros componentes
 
 - [`DataTable`](../componentes/DataTable.md) — tabla/mosaico con cabecera de controles y paginación.
