@@ -10,7 +10,10 @@ import {
   HttpStatus,
   UseGuards,
   Request,
+  Query,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { CreateRecepcionDto } from '../dto/create-recepcion.dto';
 import { UpdateRecepcionDto } from '../dto/update-recepcion.dto';
@@ -24,13 +27,16 @@ import { RecepcionResultadoDto } from '../dto/recepcion-resultado.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { PdfReportService } from '../service/pdf-report.service';
+import { RecepcionReportePdfDto } from '../dto/recepcion-reporte-pdf.dto';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('recepcion')
 export class RecepcionController {
   constructor(
     private readonly recepcionService: RecepcionService,
-    private readonly recepcionStockService: RecepcionStockService
+    private readonly recepcionStockService: RecepcionStockService,
+    private readonly pdfReportService: PdfReportService
   ) {}
 
   @Post()
@@ -74,5 +80,19 @@ export class RecepcionController {
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.recepcionService.remove(id);
+  }
+
+  @Get('reporte-pdf')
+  @RequirePermissions('recepciones:listar')
+  async reportePdf(
+    @Query() filters: RecepcionReportePdfDto,
+    @Res() res: Response
+  ): Promise<void> {
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="reporte-recepcion.pdf"'
+    );
+    await this.pdfReportService.generateReport(filters, res);
   }
 }

@@ -47,7 +47,7 @@ Demostrando que:
 
 ### 😅 **Guillermo**
 
-Con **29 commits** y **7 PRs**, tenemos aquí a alguien que:
+Con **28 commits** y **7 PRs**, tenemos aquí a alguien que:
 - 🤔 Prefiere la calidad sobre la cantidad (eso espero...)
 - 🏖️ Cree que git es una red social casual
 - 🎯 Está "esperando el momento perfecto" para contribuir
@@ -86,16 +86,16 @@ Con **29 commits** y **7 PRs**, tenemos aquí a alguien que:
 `████████████████████` 294 commits | 77 PRs
 
 **Alexis**
-`██████████░░░░░░░░░░` 154 commits | 24 PRs
+`███████████░░░░░░░░░` 154 commits | 24 PRs
 
 **Sergio**
-`██████░░░░░░░░░░░░░░` 94 commits | 16 PRs
+`███████░░░░░░░░░░░░░` 108 commits | 16 PRs
 
 **Maurizio**
-`████░░░░░░░░░░░░░░░░` 64 commits | 8 PRs
+`████░░░░░░░░░░░░░░░░` 56 commits | 8 PRs
 
 **Guillermo**
-`██░░░░░░░░░░░░░░░░░░` 29 commits | 7 PRs
+`██░░░░░░░░░░░░░░░░░░` 28 commits | 7 PRs
 
 ---
 
