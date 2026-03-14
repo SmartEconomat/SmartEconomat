@@ -524,18 +524,57 @@ Documentos de entrega de proveedores que vinculan pedidos y recepciones. _Requie
 
 ## 🗳️ 16. Inventario Directo (`/inventario`)
 
-Gestión directa de ítems en stock. _Requiere `JwtAuthGuard` y `RolesGuard`._
+Gestión directa de ítems en stock. _Requiere `JwtAuthGuard` y `PermisosGuard`._
 
 | Método   | Endpoint            | Descripción                                   | Roles Permitidos            |
 | :------- | :------------------ | :-------------------------------------------- | :-------------------------- |
 | `POST`   | `/inventario`       | Crear registro de inventario                  | `ADMINISTRADOR`, `PROFESOR` |
 | `GET`    | `/inventario`       | Listar todos los ítems en inventario          | `ADMINISTRADOR`, `PROFESOR` |
 | `GET`    | `/inventario/stock` | Consulta de stock consolidado o por ubicación | `ADMINISTRADOR`, `PROFESOR` |
+| `POST`   | `/inventario/ajustes-manuales` | Registrar ajuste manual de stock con auditoría | `ADMINISTRADOR`, `PROFESOR` |
 | `GET`    | `/inventario/:id`   | Detalle de ítem en inventario                 | `ADMINISTRADOR`, `PROFESOR` |
 | `PATCH`  | `/inventario/:id`   | Actualizar ítem en inventario                 | `ADMINISTRADOR`, `PROFESOR` |
 | `DELETE` | `/inventario/:id`   | Eliminar ítem del inventario                  | `ADMINISTRADOR`             |
 
 **Filtros reales de `GET /inventario/stock`:** `productoId`, `ubicacionId`, `onlyLowStock`, `consolidado`.
+
+### Ajustes manuales auditados
+
+Permite registrar correcciones operativas de stock sin perder trazabilidad.
+
+**DTO real de `POST /inventario/ajustes-manuales`:**
+
+```json
+{
+  "inventarioId": "01954a87-0778-74d4-bb32-55b12044579f",
+  "tipo": "salida_ajuste",
+  "ajuste": -3,
+  "motivo": "Rotura interna",
+  "observaciones": "Envase dañado en almacén"
+}
+```
+
+**Enums permitidos para `tipo`:** `entrada`, `ajuste`, `salida_ajuste`.
+
+**Reglas reales del backend:**
+
+- `ajuste !== 0`
+- `tipo = entrada` requiere ajuste positivo
+- `tipo = salida_ajuste` requiere ajuste negativo
+- el stock final no puede quedar por debajo de `0`
+- se actualiza `Inventario` y se inserta `Movimiento` en la misma transacción
+- el movimiento registra el usuario autenticado y una descripción auditada
+
+**Errores esperados:**
+
+| Código | Caso |
+| :----- | :--- |
+| `400` | Payload inválido, ajuste `0` o signo inconsistente |
+| `404` | Inventario inexistente |
+| `409` | El ajuste dejaría el stock en negativo |
+
+> [!TIP]
+> La referencia funcional y técnica ampliada está en [wiki/modules/inventario/ajustes-manuales-auditoria.md](../modules/inventario/ajustes-manuales-auditoria.md).
 
 ---
 
