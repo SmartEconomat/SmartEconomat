@@ -1,6 +1,8 @@
 import { getTestApp } from '../setup/test-app';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
+import { DataSource } from 'typeorm';
+import { Movimiento } from '../../src/modules/movimiento/movimiento.entity/movimiento.entity';
 
 describe('InventarioController (e2e)', () => {
   jest.setTimeout(30000);
@@ -10,9 +12,11 @@ describe('InventarioController (e2e)', () => {
   let productoId: string;
   let productoProveedorId: string;
   let ubicacionId: string;
+  let dataSource: DataSource;
 
   beforeAll(async () => {
     app = await getTestApp();
+    dataSource = app.get(DataSource);
 
     const response = await request(app.getHttpServer() as string)
       .post('/api/v1/auth/login')
@@ -118,6 +122,101 @@ describe('InventarioController (e2e)', () => {
 
       expect(response.status).toBe(200);
       expect(Number(response.body.data.cantidadActual)).toBe(150);
+    });
+
+    it('E2E-INV-11-MANUAL-ADJ: Registrar ajuste manual auditado', async () => {
+      const item = await createInventario();
+      const response = await request(app.getHttpServer() as string)
+        .post('/api/v1/inventario/ajustes-manuales')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          inventarioId: item.id,
+          tipo: 'salida_ajuste',
+          ajuste: -15,
+          motivo: 'Rotura interna',
+          observaciones: 'Envase dañado en almacén',
+        });
+
+      expect(response.status).toBe(201);
+      expect(Number(response.body.data.cantidadActual)).toBe(85);
+
+      const movimientoRepo = dataSource.getRepository(Movimiento);
+      const movimiento = await movimientoRepo.findOne({
+        where: {
+          inventarioId: item.id,
+          entidad: 'AjusteManualInventario',
+        },
+        relations: ['usuario'],
+        order: {
+          createdAt: 'DESC',
+        },
+      });
+
+      expect(movimiento).toBeTruthy();
+      expect(movimiento?.tipo).toBe('salida_ajuste');
+      expect(Number(movimiento?.cantidad)).toBe(15);
+      expect(movimiento?.descripcion).toContain('Rotura interna');
+      expect(movimiento?.descripcion).toContain('Envase dañado en almacén');
+      expect(movimiento?.usuarioId).toBeTruthy();
+    });
+
+    it('E2E-INV-11B-MANUAL-ADJ-VALIDATION: Rechazar signo inconsistente para entrada manual', async () => {
+      const item = await createInventario();
+      const response = await request(app.getHttpServer() as string)
+        .post('/api/v1/inventario/ajustes-manuales')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          inventarioId: item.id,
+          tipo: 'entrada',
+          ajuste: -15,
+          motivo: 'Carga incorrecta',
+        });
+
+      expect(response.status).toBe(400);
+    });
+
+    it('E2E-INV-11C-MANUAL-ADJ-VALIDATION: Rechazar ajuste manual con valor 0', async () => {
+      const item = await createInventario();
+      const response = await request(app.getHttpServer() as string)
+        .post('/api/v1/inventario/ajustes-manuales')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          inventarioId: item.id,
+          tipo: 'ajuste',
+          ajuste: 0,
+          motivo: 'Ajuste nulo',
+        });
+
+      expect(response.status).toBe(400);
+    });
+
+    it('E2E-INV-11D-MANUAL-ADJ-NOTFOUND: Rechazar ajuste sobre inventario inexistente', async () => {
+      const response = await request(app.getHttpServer() as string)
+        .post('/api/v1/inventario/ajustes-manuales')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          inventarioId: '01954a87-0778-74d4-bb32-55b12044579f',
+          tipo: 'ajuste',
+          ajuste: 5,
+          motivo: 'Regularización sobre recurso inexistente',
+        });
+
+      expect(response.status).toBe(404);
+    });
+
+    it('E2E-INV-12-MANUAL-ADJ-CONFLICT: Rechazar ajuste que deja stock negativo', async () => {
+      const item = await createInventario();
+      const response = await request(app.getHttpServer() as string)
+        .post('/api/v1/inventario/ajustes-manuales')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          inventarioId: item.id,
+          tipo: 'salida_ajuste',
+          ajuste: -150,
+          motivo: 'Regularización inválida',
+        });
+
+      expect(response.status).toBe(409);
     });
 
     it('E2E-INV-15-DEL-OK: Eliminar item de inventario', async () => {
