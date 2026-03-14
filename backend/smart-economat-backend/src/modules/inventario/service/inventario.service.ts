@@ -285,7 +285,7 @@ export class InventarioService {
         );
 
         const movimiento = manager.create(Movimiento, {
-          tipo: dto.tipo,
+          tipo: dto.tipo as TipoMovimiento,
           cantidad: Math.abs(dto.ajuste),
           inventario: inventarioActualizado,
           productoProveedor: inventario.productoProveedor,
