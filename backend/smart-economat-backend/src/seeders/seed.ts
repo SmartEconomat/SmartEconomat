@@ -32,6 +32,28 @@ export const dataSource = new DataSource({
   dropSchema: process.argv.includes('reset'),
 });
 
+async function waitForDatabase(
+  ds: typeof dataSource,
+  retries = 5,
+  delayMs = 3000
+): Promise<void> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      await ds.initialize();
+      return;
+    } catch (err) {
+      if (attempt >= retries) {
+        throw err;
+      }
+
+      console.warn(
+        `[seed] DB no disponible (intento ${attempt}/${retries}), reintentando en ${delayMs}ms...`
+      );
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+}
+
 async function runAllSeeders() {
   const seedersInOrder = [
     'roles-permisos.seeder',
@@ -46,6 +68,7 @@ async function runAllSeeders() {
     'incidencia.seeder',
     'movimiento.seeder',
     'receta.seeder',
+    'merma.seeder',
   ];
 
   for (const name of seedersInOrder) {
@@ -107,7 +130,7 @@ if (require.main === module) {
   void (async () => {
     try {
       console.log('Iniciando seeders en entorno de desarrollo...');
-      await dataSource.initialize();
+      await waitForDatabase(dataSource);
       const [, , arg] = process.argv;
 
       if (!arg || arg === 'all' || arg === 'reset') {

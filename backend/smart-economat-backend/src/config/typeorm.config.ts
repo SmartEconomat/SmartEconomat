@@ -1,4 +1,3 @@
-import { DataSource } from 'typeorm';
-import { dbConfig } from './database.config';
+import { AppDataSource } from './database.config';
 
-export const AppDataSource = new DataSource(dbConfig);
+export default AppDataSource;
