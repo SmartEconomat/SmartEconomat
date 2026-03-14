@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
+const BACKEND_ROOT = path.resolve(__dirname, '../..');
+
 /**
  * Script para eliminar comentarios de línea (
  * preservando aquellos que estén dentro de cadenas de texto.
@@ -88,7 +90,7 @@ function processFiles(filesToProcess) {
       // Asegurar ruta absoluta si viene relativa
       const absolutePath = path.isAbsolute(file)
         ? file
-        : path.resolve(process.cwd(), file);
+        : path.resolve(BACKEND_ROOT, file);
 
       if (!fs.existsSync(absolutePath)) {
         console.warn(`Archivo no encontrado (saltando): ${file}`);
