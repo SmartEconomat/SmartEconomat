@@ -101,7 +101,7 @@ export class AlumnoService {
     return this.dataSource.transaction(async (manager) => {
       const alumno = await manager.findOne(Alumno, {
         where: { user: { id: alumnoUserId } },
-        relations: ['slot', 'slot.profesor'],
+        relations: ['user', 'slot', 'slot.profesor'],
       });
 
       if (!alumno)
@@ -109,7 +109,7 @@ export class AlumnoService {
           I18nHelper.getError('ALUMNO_NO_ENCONTRADO')
         );
 
-      if (reqUserRole !== rolUsuario.ADMINISTRADOR) {
+      if (reqUserRole === rolUsuario.PROFESOR) {
         const profesorActual = await manager.findOne(Profesor, {
           where: { user: { id: reqUserId } },
         });
@@ -119,6 +119,13 @@ export class AlumnoService {
             'No tienes permisos para cambiar a este alumno'
           );
         }
+      } else if (
+        reqUserRole === rolUsuario.ALUMNO &&
+        alumno.user.id !== reqUserId
+      ) {
+        throw new BadRequestException(
+          'No tienes permisos para cambiar a este alumno'
+        );
       }
 
       const nuevoProfesor = await manager.findOne(Profesor, {

@@ -15,10 +15,10 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { MovimientoService } from '../service/movimiento.service';
-import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { CreateMovimientoDto } from '../dto/create-movimiento.dto';
 import { UpdateMovimientoDto } from '../dto/update-movimiento.dto';
 import { MovimientoHistoryDto } from '../dto/movimiento-history.dto';
+import { MovimientoListQueryDto } from '../dto/movimiento-list-query.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/role.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
@@ -64,8 +64,11 @@ export class MovimientoController {
     description: 'docs.LISTA_DE_MOVIMIENTOS_PAGINADA',
   })
   findAll(
-    @SortableFields(['tipo', 'cantidad', 'entidad', 'createdAt'])
-    query: PaginationQueryDto
+    @SortableFields(
+      ['tipo', 'cantidad', 'entidad', 'createdAt'],
+      MovimientoListQueryDto
+    )
+    query: MovimientoListQueryDto
   ): Promise<PaginatedResponseDto<any>> {
     return this.movimientoService.findAll(query);
   }

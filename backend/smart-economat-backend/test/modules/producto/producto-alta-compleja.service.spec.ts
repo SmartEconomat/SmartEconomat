@@ -1,4 +1,8 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -20,6 +24,40 @@ function createDeleteQueryBuilderMock() {
     from: jest.fn().mockReturnThis(),
     where: jest.fn().mockReturnThis(),
     execute: jest.fn().mockResolvedValue(undefined),
+  };
+}
+
+function createManagerMock(overrides: Record<string, unknown> = {}) {
+  return {
+    getRepository: jest.fn().mockReturnValue({
+      find: jest.fn().mockResolvedValue([]),
+    }),
+    create: jest.fn((_: unknown, payload: unknown) => payload),
+    save: jest.fn((targetOrEntity: unknown, maybeEntity?: unknown) => {
+      if (targetOrEntity === Producto && maybeEntity) {
+        return Promise.resolve({
+          id: '01954a85-6215-7f83-8e5c-2b6fd3d6a4b1',
+          ...(maybeEntity as Record<string, unknown>),
+        });
+      }
+
+      return Promise.resolve(maybeEntity ?? targetOrEntity);
+    }),
+    find: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn(),
+    count: jest.fn().mockResolvedValue(0),
+    merge: jest.fn(
+      (
+        _: unknown,
+        target: Record<string, unknown>,
+        source: Record<string, unknown>
+      ) => Object.assign(target, source)
+    ),
+    createQueryBuilder: jest
+      .fn()
+      .mockReturnValue(createDeleteQueryBuilderMock()),
+    softDelete: jest.fn().mockResolvedValue(undefined),
+    ...overrides,
   };
 }
 
@@ -167,6 +205,103 @@ describe('ProductoService - Alta compleja', () => {
     );
   });
 
+  it('genera un EAN-13 único cuando no se envía código de barras', async () => {
+    const finalProduct = {
+      id: '01954a85-6215-7f83-8e5c-2b6fd3d6a4b1',
+      nombre: 'Harina',
+      unidad: UnidadMedida.KG,
+      contenido: 1,
+      codigoBarras: '8410123456789',
+      alergenos: [],
+      proveedores: [],
+    } as Producto;
+
+    const manager = createManagerMock({
+      findOne: jest.fn().mockResolvedValue(finalProduct),
+    });
+
+    jest
+      .spyOn(service, 'generateUniqueEan13')
+      .mockResolvedValue('8410123456789');
+
+    mockDataSource.transaction.mockImplementation((callback) =>
+      Promise.resolve(callback(manager))
+    );
+
+    const result = await service.create(
+      {
+        nombre: 'Harina',
+        unidad: UnidadMedida.KG,
+        contenido: 1,
+      },
+      'user-1'
+    );
+
+    expect(result).toEqual(finalProduct);
+    expect(service.generateUniqueEan13).toHaveBeenCalled();
+    expect(manager.create).toHaveBeenCalledWith(
+      Producto,
+      expect.objectContaining({ codigoBarras: '8410123456789' })
+    );
+  });
+
+  it('acepta códigos de barras alfanuméricos del producto antes de abrir la transacción', async () => {
+    mockProductoRepository.existsByCodigoBarras.mockResolvedValue(false);
+
+    const finalProduct = {
+      id: 'prod-alfanum',
+      nombre: 'Leche',
+      unidad: UnidadMedida.L,
+      contenido: 1,
+      codigoBarras: 'QAPNEBB8UX',
+      proveedores: [],
+      alergenos: [],
+    } as Producto;
+
+    const manager = createManagerMock({
+      create: jest.fn((_: unknown, payload: unknown) => payload),
+      save: jest.fn().mockResolvedValueOnce(finalProduct),
+      findOne: jest.fn().mockResolvedValue(finalProduct),
+    });
+
+    mockDataSource.transaction.mockImplementation((callback) =>
+      Promise.resolve(callback(manager))
+    );
+
+    const result = await service.create(
+      {
+        nombre: 'Leche',
+        unidad: UnidadMedida.L,
+        contenido: 1,
+        codigoBarras: 'QAPNEBB8UX',
+      },
+      'user-1'
+    );
+
+    expect(result).toEqual(finalProduct);
+    expect(mockProductoRepository.existsByCodigoBarras).toHaveBeenCalledWith(
+      'QAPNEBB8UX'
+    );
+  });
+
+  it('rechaza un código de barras de producto ya registrado antes de abrir la transacción', async () => {
+    mockProductoRepository.existsByCodigoBarras.mockResolvedValue(true);
+
+    await expect(
+      service.create(
+        {
+          nombre: 'Leche',
+          unidad: UnidadMedida.L,
+          contenido: 1,
+          codigoBarras: '4006381333931',
+        },
+        'user-1'
+      )
+    ).rejects.toBeInstanceOf(ConflictException);
+
+    expect(mockDataSource.transaction).not.toHaveBeenCalled();
+  });
+
   it('rechaza alérgenos duplicados antes de abrir la transacción', async () => {
     await expect(
       service.create(
@@ -273,6 +408,63 @@ describe('ProductoService - Alta compleja', () => {
         'user-1'
       )
     ).rejects.toThrow(/precio unitario/i);
+  });
+
+  it('acepta la alta compleja cuando el código de barras del proveedor es alfanumérico', async () => {
+    mockProductoRepository.existsByCodigoBarras.mockResolvedValue(false);
+    const finalProduct = {
+      id: 'prod-proveedor-alfanum',
+      nombre: 'Leche',
+      unidad: UnidadMedida.L,
+      contenido: 1,
+      codigoBarras: '4006381333931',
+      proveedores: [
+        {
+          proveedorId: '01954a87-0778-74d4-bb32-55b12044579f',
+          precioUnitario: 1.45,
+          codigoBarras: 'PROV-123',
+        },
+      ],
+      alergenos: [],
+    } as unknown as Producto;
+
+    mockDataSource.transaction.mockImplementation((callback) =>
+      Promise.resolve(
+        callback(
+          createManagerMock({
+            getRepository: jest.fn().mockReturnValue({
+              find: jest
+                .fn()
+                .mockResolvedValue([
+                  { id: '01954a87-0778-74d4-bb32-55b12044579f' },
+                ]),
+            }),
+            create: jest.fn((_: unknown, payload: unknown) => payload),
+            save: jest.fn().mockResolvedValueOnce(finalProduct),
+            findOne: jest.fn().mockResolvedValue(finalProduct),
+          })
+        )
+      )
+    );
+
+    const result = await service.create(
+      {
+        nombre: 'Leche',
+        unidad: UnidadMedida.L,
+        contenido: 1,
+        codigoBarras: '4006381333931',
+        proveedores: [
+          {
+            proveedorId: '01954a87-0778-74d4-bb32-55b12044579f',
+            precioUnitario: 1.45,
+            codigoBarras: 'PROV-123',
+          },
+        ],
+      },
+      'user-1'
+    );
+
+    expect(result).toEqual(finalProduct);
   });
 
   it('actualiza el producto y reemplaza alérgenos y relaciones de proveedor en flujo conectado', async () => {
@@ -398,5 +590,128 @@ describe('ProductoService - Alta compleja', () => {
       '01954a85-6215-7f83-8e5c-2b6fd3d6a4b1',
       'Actualización de producto: Leche Premium'
     );
+  });
+
+  it('permite vaciar alérgenos y eliminar todas las relaciones de proveedor en flujo conectado', async () => {
+    const existingProduct = {
+      id: '01954a85-6215-7f83-8e5c-2b6fd3d6a4b1',
+      nombre: 'Leche',
+      unidad: UnidadMedida.L,
+      contenido: 1,
+      codigoBarras: '4006381333931',
+      proveedores: [],
+      alergenos: [],
+    } as Producto;
+
+    const updatedProduct = {
+      ...existingProduct,
+      alergenos: [],
+      proveedores: [],
+    } as Producto;
+
+    const manager = createManagerMock({
+      findOne: jest
+        .fn()
+        .mockResolvedValueOnce(existingProduct)
+        .mockResolvedValueOnce(updatedProduct),
+      find: jest.fn().mockResolvedValue([
+        {
+          id: 'pp-1',
+          proveedorId: '01954a87-0778-74d4-bb32-55b12044579f',
+          proveedor: { id: '01954a87-0778-74d4-bb32-55b12044579f' },
+        },
+        {
+          id: 'pp-2',
+          proveedorId: '01954a87-0778-74d4-bb32-55b1204457af',
+          proveedor: { id: '01954a87-0778-74d4-bb32-55b1204457af' },
+        },
+      ]),
+    });
+
+    mockDataSource.transaction.mockImplementation((callback) =>
+      Promise.resolve(callback(manager))
+    );
+
+    const result = await service.update(
+      '01954a85-6215-7f83-8e5c-2b6fd3d6a4b1',
+      {
+        alergenos: [],
+        proveedores: [],
+      },
+      'user-1'
+    );
+
+    expect(result).toEqual(updatedProduct);
+    expect(manager.softDelete).toHaveBeenNthCalledWith(
+      1,
+      ProductoProveedor,
+      'pp-1'
+    );
+    expect(manager.softDelete).toHaveBeenNthCalledWith(
+      2,
+      ProductoProveedor,
+      'pp-2'
+    );
+    expect(manager.createQueryBuilder).toHaveBeenCalled();
+  });
+
+  it('acepta la actualización cuando el nuevo código de barras del producto es alfanumérico', async () => {
+    const existingProduct = {
+      id: '01954a85-6215-7f83-8e5c-2b6fd3d6a4b1',
+      nombre: 'Leche',
+      unidad: UnidadMedida.L,
+      contenido: 1,
+      codigoBarras: '4006381333931',
+    } as Producto;
+
+    const manager = createManagerMock({
+      findOne: jest
+        .fn()
+        .mockResolvedValueOnce(existingProduct)
+        .mockResolvedValueOnce({
+          ...existingProduct,
+          codigoBarras: 'QAPNEBB8UX',
+        }),
+      count: jest.fn().mockResolvedValue(0),
+    });
+
+    mockDataSource.transaction.mockImplementation((callback) =>
+      Promise.resolve(callback(manager))
+    );
+
+    const result = await service.update(
+      '01954a85-6215-7f83-8e5c-2b6fd3d6a4b1',
+      { codigoBarras: 'QAPNEBB8UX' },
+      'user-1'
+    );
+
+    expect(result.codigoBarras).toBe('QAPNEBB8UX');
+  });
+
+  it('rechaza la actualización cuando el nuevo código de barras ya existe', async () => {
+    const existingProduct = {
+      id: '01954a85-6215-7f83-8e5c-2b6fd3d6a4b1',
+      nombre: 'Leche',
+      unidad: UnidadMedida.L,
+      contenido: 1,
+      codigoBarras: '4006381333931',
+    } as Producto;
+
+    const manager = createManagerMock({
+      findOne: jest.fn().mockResolvedValue(existingProduct),
+      count: jest.fn().mockResolvedValue(1),
+    });
+
+    mockDataSource.transaction.mockImplementation((callback) =>
+      Promise.resolve(callback(manager))
+    );
+
+    await expect(
+      service.update(
+        '01954a85-6215-7f83-8e5c-2b6fd3d6a4b1',
+        { codigoBarras: '5901234123457' },
+        'user-1'
+      )
+    ).rejects.toBeInstanceOf(ConflictException);
   });
 });

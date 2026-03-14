@@ -18,7 +18,7 @@ import { ProductFilterDto } from '../dto/product-filter.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { AddProveedorToProductoDto } from '../dto/producto-proveedor.dto/add-proveedor-to-producto.dto';
 import { ProductoAlergeno } from '../producto-alergeno.entity/producto-alergeno.entity';
-import { generateEan13, validateEan13 } from '../../../common/utils/ean13.util';
+import { generateEan13 } from '../../../common/utils/ean13.util';
 import { buildFindManyOptions } from '../../../common/utils/typeorm-query.helper';
 import { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
 
@@ -43,9 +43,9 @@ export class ProductoService {
     const normalizedAlergenos = this.ensureUniqueAlergenos(alergenos);
 
     if (rest.codigoBarras) {
-      if (!validateEan13(rest.codigoBarras)) {
+      if (!this.isValidBarcode(rest.codigoBarras, 130)) {
         throw new BadRequestException(
-          'El código de barras proporcionado no es un EAN-13 válido'
+          'El código de barras proporcionado no es válido'
         );
       }
       const exists = await this.productoRepository.existsByCodigoBarras(
@@ -208,9 +208,9 @@ export class ProductoService {
       }
 
       if (rest.codigoBarras && rest.codigoBarras !== producto.codigoBarras) {
-        if (!validateEan13(rest.codigoBarras)) {
+        if (!this.isValidBarcode(rest.codigoBarras, 130)) {
           throw new BadRequestException(
-            'El código de barras proporcionado no es un EAN-13 válido'
+            'El código de barras proporcionado no es válido'
           );
         }
 
@@ -322,9 +322,12 @@ export class ProductoService {
     }
 
     for (const proveedor of proveedores) {
-      if (proveedor.codigoBarras && !validateEan13(proveedor.codigoBarras)) {
+      if (
+        proveedor.codigoBarras &&
+        !this.isValidBarcode(proveedor.codigoBarras, 130)
+      ) {
         throw new BadRequestException(
-          `El código de barras del proveedor ${proveedor.proveedorId} no es un EAN-13 válido`
+          `El código de barras del proveedor ${proveedor.proveedorId} no es válido`
         );
       }
 
@@ -361,6 +364,14 @@ export class ProductoService {
         `No existe el proveedor ${missingProviderId}`
       );
     }
+  }
+
+  private isValidBarcode(code: string, maxLength: number): boolean {
+    return (
+      typeof code === 'string' &&
+      code.trim().length > 0 &&
+      code.trim().length <= maxLength
+    );
   }
 
   private async replaceAlergenosWithManager(

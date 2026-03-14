@@ -10,7 +10,6 @@ import {
   IsDate,
   IsArray,
   ValidateNested,
-  Matches,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -138,8 +137,8 @@ export class CreateProductoDto {
   tipo?: TipoProducto;
 
   @ApiPropertyOptional({
-    description: 'Código de barras EAN-13 del producto maestro.',
-    example: '8410123456789',
+    description: 'Código de barras o referencia interna del producto maestro.',
+    example: 'QAPNEBB8UX',
   })
   @IsOptional()
   @Transform((params) => UppercaseStringTransformer.transform(params))
@@ -148,14 +147,9 @@ export class CreateProductoDto {
       'validation.EL_C_DIGO_DE_BARRAS_DEBE_SER_UNA_CADENA'
     ),
   })
-  @MaxLength(13, {
+  @MaxLength(130, {
     message: i18nValidationMessage(
       'validation.EL_C_DIGO_DE_BARRAS_NO_PUEDE_EXCEDER_LOS'
-    ),
-  })
-  @Matches(/^\d{13}$/, {
-    message: i18nValidationMessage(
-      'validation.EL_C_DIGO_DE_BARRAS_DEBE_SER_UN_EAN_13_D'
     ),
   })
   codigoBarras?: string;

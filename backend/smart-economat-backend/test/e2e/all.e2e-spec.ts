@@ -21,5 +21,6 @@ import './proveedores.e2e-spec';
 import './rbac.e2e-spec';
 import './recepcion.e2e-spec';
 import './recetas.e2e-spec';
+import './security-lifecycle.e2e-spec';
 import './ubicaciones.e2e-spec';
 import './usuarios.e2e-spec';

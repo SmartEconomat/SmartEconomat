@@ -7,7 +7,7 @@
  * y ventanas flotantes/modales (DetailModal, DynamicFormModal) para creación y detalles.
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Paper,
@@ -17,6 +17,7 @@ import {
   Button,
   Tooltip,
 } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material/Select';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -29,6 +30,8 @@ import DynamicFormModal, {
 import DetailModal from '../components/ui/DetailModal';
 import {
   Producto,
+  ProductoAlergeno,
+  ProductoProveedor,
   CategoriaProducto,
   UnidadMedida,
   normalizeAlergeno,
@@ -52,7 +55,34 @@ import { getCategoryIcon } from '../features/productos/utils/getCategoryIcon';
 import { EU_ALLERGENS } from '../components/ui/AllergenSelector';
 import ShoppingBasketOutlinedIcon from '@mui/icons-material/ShoppingBasketOutlined';
 import AddIcon from '@mui/icons-material/Add';
-import { useBreakpoints } from '../utils/useBreakpoints';
+import { ProveedorAsociado } from '../components/ui/ProveedorSelector';
+
+type ProductoFormAlergeno = string | Pick<ProductoAlergeno, 'alergeno'>;
+
+interface ProductoFormProveedor extends ProveedorAsociado {
+  precioUnitario?: number | string;
+}
+
+interface ProductoFormData extends Record<string, unknown> {
+  id?: string;
+  nombre?: string;
+  marca?: string;
+  descripcion?: string;
+  unidad?: string;
+  tipo?: CategoriaProducto;
+  contenido?: number | string;
+  codigoBarras?: string;
+  alergenos?: ProductoFormAlergeno[];
+  proveedores?: ProductoFormProveedor[];
+}
+
+interface ProveedoresResponse {
+  data: Proveedor[];
+  totalItems: number;
+  itemsPerPage: number;
+  totalPages: number;
+  page: number;
+}
 
 const productoSchema: DynamicField[] = [
   { name: 'nombre', label: 'Nombre Comercial', required: true },
@@ -127,7 +157,6 @@ const initialFilters: ProductFiltersState = {
 };
 
 const Productos: React.FC = () => {
-  const { isMobile } = useBreakpoints();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
   const [totalPages, setTotalPages] = useState(1);
@@ -149,22 +178,21 @@ const Productos: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const toast = useToast();
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
+    const fallbackProveedores: ProveedoresResponse = {
+      data: [],
+      totalItems: 0,
+      itemsPerPage: 50,
+      totalPages: 1,
+      page: 1,
+    };
+
     Promise.all([
       fetchProductos(page, pageSize, searchTerm, filters.categorias),
-      fetchProveedores(1, 50).catch(
-        () =>
-          ({
-            data: [],
-            totalItems: 0,
-            itemsPerPage: 50,
-            totalPages: 1,
-            page: 1,
-          }) as any
-      ),
+      fetchProveedores(1, 50).catch(() => fallbackProveedores),
     ])
       .then(([productosData, proveedoresData]) => {
         setData(productosData.data);
@@ -180,11 +208,11 @@ const Productos: React.FC = () => {
         setError(message);
       })
       .finally(() => setIsLoading(false));
-  };
+  }, [page, pageSize, searchTerm, filters.categorias]);
 
   useEffect(() => {
     loadData();
-  }, [page, pageSize, searchTerm, filters.categorias]);
+  }, [loadData]);
 
   useEffect(() => {
     setPage(1);
@@ -215,49 +243,55 @@ const Productos: React.FC = () => {
     }
   };
 
-  const handleSaveProduct = async (formData: Record<string, any>) => {
+  const handleSaveProduct = async (formData: Record<string, unknown>) => {
     setIsSaving(true);
     try {
-      const orUndefined = (v: any) =>
-        v && String(v).trim() !== '' ? v : undefined;
-      const codigoBarras = orUndefined(formData.codigoBarras);
+      const typedFormData = formData as ProductoFormData;
+      const toOptionalString = (value: unknown): string | undefined => {
+        if (value == null) return undefined;
+        const trimmedValue = String(value).trim();
+        return trimmedValue !== '' ? trimmedValue : undefined;
+      };
+      const codigoBarras = toOptionalString(typedFormData.codigoBarras);
 
-      if (codigoBarras && !/^\d{13}$/.test(codigoBarras)) {
+      if (codigoBarras && String(codigoBarras).trim().length > 130) {
         throw new Error(
-          'El código de barras debe contener exactamente 13 dígitos.'
+          'El código de barras no puede superar los 130 caracteres.'
         );
       }
 
-      const payload: any = {
-        nombre: formData.nombre,
-        marca: orUndefined(formData.marca),
-        descripcion: orUndefined(formData.descripcion),
-        unidad: normalizeUnidadMedida(formData.unidad),
-        tipo: formData.tipo,
-        contenido: Number(formData.contenido),
+      const payload = {
+        nombre: typedFormData.nombre,
+        marca: toOptionalString(typedFormData.marca),
+        descripcion: toOptionalString(typedFormData.descripcion),
+        unidad: normalizeUnidadMedida(typedFormData.unidad),
+        tipo: typedFormData.tipo,
+        contenido: Number(typedFormData.contenido),
         codigoBarras,
-        alergenos: Array.isArray(formData.alergenos)
-          ? formData.alergenos
-              .map((a: any) =>
-                normalizeAlergeno(typeof a === 'string' ? a : a.alergeno)
+        alergenos: Array.isArray(typedFormData.alergenos)
+          ? typedFormData.alergenos
+              .map((alergeno) =>
+                normalizeAlergeno(
+                  typeof alergeno === 'string' ? alergeno : alergeno.alergeno
+                )
               )
               .filter(Boolean)
           : undefined,
-        proveedores: Array.isArray(formData.proveedores)
-          ? formData.proveedores.map((p: any) => ({
-              proveedorId: p.proveedorId,
-              marcaEspecifica: orUndefined(p.marca),
-              codigoBarras: orUndefined(p.codigoBarras),
-              precioUnitario: p.precioUnitario
-                ? Number(p.precioUnitario)
+        proveedores: Array.isArray(typedFormData.proveedores)
+          ? typedFormData.proveedores.map((proveedor) => ({
+              proveedorId: proveedor.proveedorId,
+              marcaEspecifica: toOptionalString(proveedor.marca),
+              codigoBarras: toOptionalString(proveedor.codigoBarras),
+              precioUnitario: proveedor.precioUnitario
+                ? Number(proveedor.precioUnitario)
                 : undefined,
             }))
           : [],
       };
 
-      const category = formData.tipo as CategoriaProducto | undefined;
-      if (formData.id) {
-        await updateProducto(formData.id, payload);
+      const category = typedFormData.tipo;
+      if (typedFormData.id) {
+        await updateProducto(typedFormData.id, payload);
         toast.success('Producto actualizado correctamente.', undefined, {
           productCategory: category,
         });
@@ -275,7 +309,7 @@ const Productos: React.FC = () => {
       const message =
         err instanceof Error ? err.message : 'Error al guardar el producto.';
       toast.error(message, undefined, {
-        productCategory: formData.tipo as CategoriaProducto | undefined,
+        productCategory: (formData as ProductoFormData).tipo,
       });
     } finally {
       setIsSaving(false);
@@ -312,22 +346,24 @@ const Productos: React.FC = () => {
     },
   ];
 
-  const buildEditData = (row: Producto): Record<string, any> => {
-    const editData: Record<string, any> = { ...row };
+  const buildEditData = (row: Producto): Record<string, unknown> => {
+    const editData: Record<string, unknown> = { ...row };
     if (row.pathImg) editData.imagen = row.pathImg;
     if (row.alergenos) {
-      editData.alergenos = row.alergenos.map((a: any) =>
-        typeof a === 'string' ? a : a.alergeno || a
+      editData.alergenos = row.alergenos.map((alergeno) =>
+        typeof alergeno === 'string' ? alergeno : alergeno.alergeno || alergeno
       );
     }
     if (row.proveedores) {
-      editData.proveedores = row.proveedores.map((p: any) => ({
-        proveedorId: p.proveedor?.id || p.id,
-        nombre: p.proveedor?.nombre || '',
-        marca: p.marca || '',
-        codigoBarras: p.codigoBarras || '',
-        precioUnitario: p.precioUnitario || '',
-      }));
+      editData.proveedores = row.proveedores.map(
+        (proveedor: ProductoProveedor) => ({
+          proveedorId: proveedor.proveedor?.id || proveedor.id,
+          nombre: proveedor.proveedor?.nombre || '',
+          marca: proveedor.marca || '',
+          codigoBarras: proveedor.codigoBarras || '',
+          precioUnitario: proveedor.precioUnitario || '',
+        })
+      );
     }
     return editData;
   };
@@ -415,7 +451,7 @@ const Productos: React.FC = () => {
         onViewModeChange={setViewMode}
         pageSize={pageSize}
         pageSizeOptions={[4, 8, 12, 24]}
-        onPageSizeChange={(e: any) => {
+        onPageSizeChange={(e: SelectChangeEvent<number>) => {
           setPageSize(Number(e.target.value));
           setPage(1);
         }}
@@ -481,7 +517,7 @@ const Productos: React.FC = () => {
             onPageChange: (_, newPage) => setPage(newPage),
             pageSize: pageSize,
             pageSizeOptions: [4, 8, 12, 24],
-            onPageSizeChange: (e: any) => {
+            onPageSizeChange: (e: SelectChangeEvent<number>) => {
               setPageSize(Number(e.target.value));
               setPage(1);
             },
@@ -543,6 +579,7 @@ const Productos: React.FC = () => {
             const alergenosActivos = EU_ALLERGENS.filter((a) =>
               alergenoIds.includes(a.id)
             );
+            const proveedoresAsociados = p.proveedores ?? [];
 
             return (
               <DetailModal
@@ -649,26 +686,28 @@ const Productos: React.FC = () => {
                         },
                       ]
                     : []),
-                  ...(p.proveedores && p.proveedores.length > 0
+                  ...(proveedoresAsociados.length > 0
                     ? [
                         {
                           title: 'Proveedores asociados',
-                          fields: p.proveedores.map((pv: any, idx: number) => ({
-                            label:
-                              `Proveedor ${p.proveedores!.length > 1 ? idx + 1 : ''}`.trim(),
-                            value:
-                              [
-                                pv.proveedor?.nombre ?? pv.nombre,
-                                pv.marca && `Marca: ${pv.marca}`,
-                                pv.precioUnitario &&
-                                  `Precio: ${pv.precioUnitario}€`,
-                                pv.codigoBarras &&
-                                  `Cód. Barras: ${pv.codigoBarras}`,
-                              ]
-                                .filter(Boolean)
-                                .join(' · ') || '—',
-                            fullWidth: true,
-                          })),
+                          fields: proveedoresAsociados.map(
+                            (pv, idx: number) => ({
+                              label:
+                                `Proveedor ${proveedoresAsociados.length > 1 ? idx + 1 : ''}`.trim(),
+                              value:
+                                [
+                                  pv.proveedor?.nombre ?? pv.nombre,
+                                  pv.marca && `Marca: ${pv.marca}`,
+                                  pv.precioUnitario &&
+                                    `Precio: ${pv.precioUnitario}€`,
+                                  pv.codigoBarras &&
+                                    `Cód. Barras: ${pv.codigoBarras}`,
+                                ]
+                                  .filter(Boolean)
+                                  .join(' · ') || '—',
+                              fullWidth: true,
+                            })
+                          ),
                         },
                       ]
                     : []),

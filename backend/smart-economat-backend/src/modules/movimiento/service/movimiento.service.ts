@@ -7,7 +7,7 @@ import { MovimientoRepository } from '../repository/movimiento.repository';
 import { CreateMovimientoDto } from '../dto/create-movimiento.dto';
 import { UpdateMovimientoDto } from '../dto/update-movimiento.dto';
 import { MovimientoHistoryDto } from '../dto/movimiento-history.dto';
-import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { MovimientoListQueryDto } from '../dto/movimiento-list-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { Movimiento } from '../movimiento.entity/movimiento.entity';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
@@ -21,7 +21,7 @@ export class MovimientoService {
   }
 
   async findAll(
-    query: PaginationQueryDto
+    query: MovimientoListQueryDto
   ): Promise<PaginatedResponseDto<Movimiento>> {
     return this.movimientoRepo.findAll(query) as Promise<
       PaginatedResponseDto<Movimiento>

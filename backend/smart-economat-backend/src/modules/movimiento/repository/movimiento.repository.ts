@@ -1,10 +1,10 @@
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { Movimiento } from '../movimiento.entity/movimiento.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateMovimientoDto } from '../dto/create-movimiento.dto';
 import { UpdateMovimientoDto } from '../dto/update-movimiento.dto';
 import { MovimientoHistoryDto } from '../dto/movimiento-history.dto';
-import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { MovimientoListQueryDto } from '../dto/movimiento-list-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 export class MovimientoRepository {
@@ -22,40 +22,99 @@ export class MovimientoRepository {
       descripcion: data.descripcion,
       ...(data.usuario ? { usuario: { id: data.usuario } } : {}),
       ...(data.inventario ? { inventario: { id: data.inventario } } : {}),
+      ...(data.productoProveedor
+        ? { productoProveedor: { id: data.productoProveedor } }
+        : {}),
     };
     return this.repo.save(
       this.repo.create(movimientoData as Partial<Movimiento>)
     );
   }
 
-  findAll(query: PaginationQueryDto) {
+  async findAll(query: MovimientoListQueryDto) {
     const page = Number(query.page ?? 1);
     const limit = Math.min(Number(query.limit ?? 20), 50);
     const sortBy = query.sortBy ?? 'createdAt';
     const order = query.order ?? 'DESC';
-    return this.repo
-      .findAndCount({
-        relations: ['usuario', 'productoProveedor', 'inventario'],
-        order: { [sortBy]: order },
-        skip: (page - 1) * limit,
-        take: limit,
-      })
-      .then(
-        ([data, total]) =>
-          ({
-            data,
-            total,
-            page,
-            limit,
-            totalPages: Math.ceil(total / limit) || 1,
-          }) as PaginatedResponseDto<any>
+    const qb = this.repo
+      .createQueryBuilder('movimiento')
+      .leftJoinAndSelect('movimiento.usuario', 'usuario')
+      .leftJoinAndSelect('movimiento.productoProveedor', 'productoProveedor')
+      .leftJoinAndSelect('productoProveedor.producto', 'producto')
+      .leftJoinAndSelect('movimiento.inventario', 'inventario')
+      .leftJoinAndSelect(
+        'inventario.productoProveedor',
+        'inventarioProductoProveedor'
+      )
+      .leftJoinAndSelect(
+        'inventarioProductoProveedor.producto',
+        'inventarioProducto'
+      )
+      .orderBy(`movimiento.${sortBy}`, order)
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    if (query.type?.length) {
+      qb.andWhere('movimiento.tipo IN (:...types)', {
+        types: query.type,
+      });
+    }
+
+    if (query.startDate) {
+      qb.andWhere('movimiento.createdAt >= :startDate', {
+        startDate: new Date(query.startDate),
+      });
+    }
+
+    if (query.endDate) {
+      const endDate = new Date(query.endDate);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(query.endDate)) {
+        endDate.setHours(23, 59, 59, 999);
+      }
+
+      qb.andWhere('movimiento.createdAt <= :endDate', {
+        endDate,
+      });
+    }
+
+    if (query.searchTerm) {
+      const searchTerm = `%${query.searchTerm.trim()}%`;
+      qb.andWhere(
+        new Brackets((searchQb) => {
+          searchQb
+            .where('movimiento.descripcion ILIKE :searchTerm', { searchTerm })
+            .orWhere('movimiento.entidad ILIKE :searchTerm', { searchTerm })
+            .orWhere('usuario.nombre ILIKE :searchTerm', { searchTerm })
+            .orWhere('producto.nombre ILIKE :searchTerm', { searchTerm })
+            .orWhere('inventarioProducto.nombre ILIKE :searchTerm', {
+              searchTerm,
+            });
+        })
       );
+    }
+
+    const [data, total] = await qb.getManyAndCount();
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
+    } as PaginatedResponseDto<any>;
   }
 
   findById(id: string) {
     return this.repo.findOne({
       where: { id },
-      relations: ['usuario', 'productoProveedor', 'inventario'],
+      relations: [
+        'usuario',
+        'productoProveedor',
+        'productoProveedor.producto',
+        'inventario',
+        'inventario.productoProveedor',
+        'inventario.productoProveedor.producto',
+      ],
     });
   }
 
@@ -98,10 +157,27 @@ export class MovimientoRepository {
       .createQueryBuilder('movimiento')
       .leftJoinAndSelect('movimiento.usuario', 'usuario')
       .leftJoinAndSelect('movimiento.productoProveedor', 'productoProveedor')
-      .leftJoinAndSelect('movimiento.inventario', 'inventario');
+      .leftJoinAndSelect('productoProveedor.producto', 'producto')
+      .leftJoinAndSelect('movimiento.inventario', 'inventario')
+      .leftJoinAndSelect(
+        'inventario.productoProveedor',
+        'inventarioProductoProveedor'
+      )
+      .leftJoinAndSelect(
+        'inventarioProductoProveedor.producto',
+        'inventarioProducto'
+      );
 
     if (entityId) {
-      query.where('productoProveedor.id = :entityId', { entityId });
+      query.where(
+        new Brackets((entityQb) => {
+          entityQb
+            .where('productoProveedor.id = :entityId', { entityId })
+            .orWhere('inventarioProductoProveedor.id = :entityId', {
+              entityId,
+            });
+        })
+      );
     }
 
     if (userId) {

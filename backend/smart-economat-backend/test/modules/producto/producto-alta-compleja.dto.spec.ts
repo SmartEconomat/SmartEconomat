@@ -51,6 +51,39 @@ describe('DTOs - Alta compleja de producto', () => {
     expect(errors.some((error) => error.property === 'alergenos')).toBe(true);
   });
 
+  it('acepta un código de barras alfanumérico de producto', () => {
+    const dto = plainToInstance(CreateProductoDto, {
+      nombre: 'Leche',
+      unidad: 'L',
+      contenido: 1,
+      codigoBarras: 'QAPNEBB8UX',
+    });
+
+    const errors = validateSync(dto);
+
+    expect(errors.some((error) => error.property === 'codigoBarras')).toBe(
+      false
+    );
+  });
+
+  it('rechaza proveedores anidados inválidos dentro del payload de creación', () => {
+    const dto = plainToInstance(CreateProductoDto, {
+      nombre: 'Leche',
+      unidad: 'L',
+      contenido: 1,
+      proveedores: [
+        {
+          proveedorId: 'proveedor-invalido',
+          precioUnitario: -2,
+        },
+      ],
+    });
+
+    const errors = validateSync(dto);
+
+    expect(errors.some((error) => error.property === 'proveedores')).toBe(true);
+  });
+
   it('rechaza un proveedor sin UUID v7 válido', () => {
     const dto = plainToInstance(AddProveedorToProductoDto, {
       proveedorId: 'proveedor-invalido',
@@ -62,17 +95,17 @@ describe('DTOs - Alta compleja de producto', () => {
     expect(errors.some((error) => error.property === 'proveedorId')).toBe(true);
   });
 
-  it('rechaza códigos de barras de proveedor que no sean EAN-13', () => {
+  it('acepta códigos de barras alfanuméricos de proveedor', () => {
     const dto = plainToInstance(AddProveedorToProductoDto, {
       proveedorId: '01954a87-0778-74d4-bb32-55b12044579f',
       precioUnitario: 1.45,
-      codigoBarras: '12345',
+      codigoBarras: 'PROV-12345',
     });
 
     const errors = validateSync(dto);
 
     expect(errors.some((error) => error.property === 'codigoBarras')).toBe(
-      true
+      false
     );
   });
 

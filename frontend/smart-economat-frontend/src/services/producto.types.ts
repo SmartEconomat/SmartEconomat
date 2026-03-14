@@ -63,6 +63,18 @@ export interface ProductoAlergeno {
   alergeno: string;
 }
 
+export interface ProductoProveedor {
+  id: string;
+  nombre?: string;
+  marca?: string;
+  codigoBarras?: string;
+  precioUnitario?: number;
+  proveedor?: {
+    id: string;
+    nombre: string;
+  };
+}
+
 export interface Producto {
   id: string;
   nombre: string;
@@ -75,7 +87,7 @@ export interface Producto {
   alergenos?: ProductoAlergeno[];
   pathImg?: string;
   fechaCaducidad?: string;
-  proveedores?: { id: string; proveedor?: { id: string; nombre: string } }[];
+  proveedores?: ProductoProveedor[];
 }
 
 export interface ProductoNuevoDto {
