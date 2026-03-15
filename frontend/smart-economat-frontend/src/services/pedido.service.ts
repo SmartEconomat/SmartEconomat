@@ -7,16 +7,25 @@ interface ApiResponse<T> {
   data: T;
 }
 
-export interface PedidoRequestPayload {
+export interface PedidoLinePayload {
+  productoProveedorId: string;
+  cantidad: number;
+}
+
+export interface CreatePedidoPayload {
   proveedorId: string;
-  fechaEntrega: string;
-  costeTotal?: number;
-  estado?: string;
-  motivoCancelacion?: string;
-  lineas: Array<{
-    productoProveedorId: string;
-    cantidad: number;
-  }>;
+  observaciones?: string;
+  lineas: PedidoLinePayload[];
+}
+
+export interface UpdatePedidoPayload {
+  proveedorId?: string;
+  observaciones?: string;
+  lineas?: PedidoLinePayload[];
+}
+
+export interface CancelPedidoPayload {
+  motivoCancelacion: string;
 }
 
 export async function fetchPedidos(
@@ -42,7 +51,7 @@ export async function fetchPedidos(
 }
 
 export async function createPedido(
-  pedido: PedidoRequestPayload
+  pedido: CreatePedidoPayload
 ): Promise<Pedido> {
   const response = await baseFetch('/pedidos', {
     method: 'POST',
@@ -51,12 +60,20 @@ export async function createPedido(
   });
 
   if (!response.ok) {
+<<<<<<< HEAD
     let errorMessage = `Error al crear pedido: ${response.status}`;
     try {
       const errorDetail = (await response.json()) as { message?: string };
       if (errorDetail?.message) errorMessage = errorDetail.message;
     } catch {
       // ignore
+=======
+    let errorDetail: { message?: string } = {};
+    try {
+      errorDetail = await response.json();
+    } catch {
+      // ignore JSON parse errors
+>>>>>>> 2289ced (refactor(pedido): alineación total frontend-backend, tests y UI)
     }
     throw new Error(errorMessage);
   }
@@ -67,7 +84,7 @@ export async function createPedido(
 
 export async function updatePedido(
   id: string,
-  pedido: Partial<PedidoRequestPayload>
+  pedido: UpdatePedidoPayload
 ): Promise<Pedido> {
   const response = await baseFetch(`/pedidos/${id}`, {
     method: 'PATCH',
@@ -76,6 +93,7 @@ export async function updatePedido(
   });
 
   if (!response.ok) {
+<<<<<<< HEAD
     let errorMessage = `Error al actualizar pedido: ${response.status}`;
     try {
       const errorDetail = (await response.json()) as { message?: string };
@@ -84,6 +102,43 @@ export async function updatePedido(
       // ignore
     }
     throw new Error(errorMessage);
+=======
+    let errorDetail: { message?: string } = {};
+    try {
+      errorDetail = await response.json();
+    } catch {
+      // ignore JSON parse errors
+    }
+    throw new Error(
+      errorDetail?.message || `Error al actualizar pedido: ${response.status}`
+    );
+>>>>>>> 2289ced (refactor(pedido): alineación total frontend-backend, tests y UI)
+  }
+
+  const body = (await response.json()) as ApiResponse<Pedido>;
+  return body.data;
+}
+
+export async function cancelPedido(
+  id: string,
+  payload: CancelPedidoPayload
+): Promise<Pedido> {
+  const response = await baseFetch(`/pedidos/${id}/cancelar`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    let errorDetail: { message?: string } = {};
+    try {
+      errorDetail = await response.json();
+    } catch {
+      // ignore JSON parse errors
+    }
+    throw new Error(
+      errorDetail?.message || `Error al cancelar pedido: ${response.status}`
+    );
   }
 
   const body = (await response.json()) as ApiResponse<Pedido>;

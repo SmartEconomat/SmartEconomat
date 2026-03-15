@@ -747,13 +747,15 @@ export class RecepcionStockService {
   private async actualizarEstadoPedido(
     pedidoId: string,
     manager: EntityManager
-  ): Promise<string> {
+  ): Promise<EstadoPedido> {
     const pedido = await manager.findOne(Pedido, {
       where: { id: pedidoId },
       relations: ['pedidoProductos'],
     });
 
-    if (!pedido) return EstadoPedido.EN_PROCESO;
+    if (!pedido) {
+      throw new NotFoundException(I18nHelper.getError('ORDER_NOT_FOUND'));
+    }
 
     const recepcionPedidos = await manager.find(RecepcionPedido, {
       where: { pedido: { id: pedido.id } },
