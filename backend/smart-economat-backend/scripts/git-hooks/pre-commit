@@ -1,0 +1,18 @@
+#!/bin/sh
+# Pre-commit hook: bloquea commits con carpetas basura de entidades/modulos duplicados
+
+for forbidden in \
+  'modules/archivo/entities/' \
+  'modules/authorization/' \
+  'modules/permisos/entities/' \
+  'modules/plantillas-roles/entities/' \
+  'modules/roles/entities/'
+
+do
+  if git diff --cached --name-only | grep -q "$forbidden"; then
+    echo "\033[0;31mERROR: Intentas commitear basura prohibida: $forbidden\033[0m"
+    exit 1
+  fi
+done
+
+exit 0

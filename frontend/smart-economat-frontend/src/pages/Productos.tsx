@@ -55,7 +55,6 @@ import { getCategoryIcon } from '../features/productos/utils/getCategoryIcon';
 import { EU_ALLERGENS, Allergen } from '../utils/constants';
 import ShoppingBasketOutlinedIcon from '@mui/icons-material/ShoppingBasketOutlined';
 import AddIcon from '@mui/icons-material/Add';
-import { ProveedorAsociado } from '../components/ui/ProveedorSelector';
 
 type ProductoFormAlergeno = string | Pick<ProductoAlergeno, 'alergeno'>;
 

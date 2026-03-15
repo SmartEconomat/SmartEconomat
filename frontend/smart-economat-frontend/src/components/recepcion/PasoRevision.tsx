@@ -33,7 +33,7 @@ interface PasoRevisionProps {
     pIdx: number | null,
     lIdx: number,
     field: string,
-    value: any
+    value: string | number | boolean | undefined
   ) => void;
 }
 
@@ -131,9 +131,6 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                         l.estado === 'No entregado'
                     )
                     .map((l, lIdx) => {
-                      const realLineIdx = p.lineas.findIndex(
-                        (ln) => ln.pedidoProductoId === l.pedidoProductoId
-                      );
                       return (
                         <TableRow key={l.pedidoProductoId}>
                           <TableCell
@@ -199,7 +196,7 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                                 onChange={(e) =>
                                   onUpdateLinea(
                                     pIdx,
-                                    realLineIdx,
+                                    lIdx,
                                     'estadoVisual',
                                     e.target.value
                                   )
@@ -248,7 +245,7 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                                   onChange={(e) => {
                                     onUpdateLinea(
                                       pIdx,
-                                      realLineIdx,
+                                      lIdx,
                                       'observaciones',
                                       e.target.value
                                     );
