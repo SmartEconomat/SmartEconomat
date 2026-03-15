@@ -381,10 +381,11 @@
             "method": "POST",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"proveedorId\": \"uuid-proveedor\",\n  \"lineas\": [\n    {\n      \"productoProveedorId\": \"uuid-pp\",\n      \"cantidad\": 50\n    }\n  ],\n  \"fechaEntrega\": \"2026-04-01T00:00:00.000Z\"\n}",
+              "raw": "{\n  \"proveedorId\": \"uuid-proveedor\",\n  \"observaciones\": \"Pedido semanal de economato\",\n  \"lineas\": [\n    {\n      \"productoProveedorId\": \"uuid-pp\",\n      \"cantidad\": 50\n    }\n  ]\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": "{{base_url}}/pedidos"
+            "url": "{{base_url}}/pedidos",
+            "description": "Crea un pedido con estado inicial `PENDIENTE`. `fechaEntrega` se calcula automáticamente en backend con el offset configurado y el payload solo admite `proveedorId`, `lineas` y `observaciones`."
           }
         },
         {
@@ -497,7 +498,7 @@
           }
         },
         {
-          "name": "Update Fecha Entrega",
+          "name": "Update Fecha Entrega (rejected)",
           "request": {
             "method": "PATCH",
             "body": {
@@ -506,6 +507,7 @@
               "options": { "raw": { "language": "json" } }
             },
             "url": "{{base_url}}/pedidos/:id/fecha-entrega",
+            "description": "Endpoint mantenido por compatibilidad, pero en el flujo normal responde error porque `fechaEntrega` ya no se edita manualmente.",
             "variable": [{ "key": "id", "value": "" }]
           }
         },
@@ -519,6 +521,7 @@
               "options": { "raw": { "language": "json" } }
             },
             "url": "{{base_url}}/pedidos/:id/cancelar",
+            "description": "Cancela el pedido solo si no existe ninguna recepción vinculada. Si la recepción ya comenzó, backend devuelve error de regla de negocio.",
             "variable": [{ "key": "id", "value": "" }]
           }
         }

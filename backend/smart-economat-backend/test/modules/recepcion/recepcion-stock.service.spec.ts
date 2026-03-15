@@ -4,6 +4,7 @@ import { EstadoPedido } from '../../../src/modules/pedido/enums/estado-pedido.en
 import { EstadoVisualProducto } from '../../../src/modules/recepcion/enums/estado-visual.enum';
 import { Albaran } from '../../../src/modules/albaran/albaran.entity/albaran.entity';
 import { Pedido } from '../../../src/modules/pedido/pedido.entity/pedido.entity';
+import { PedidoStatusTrigger } from '../../../src/modules/pedido/enums/pedido-status-trigger.enum';
 import { Ubicacion } from '../../../src/modules/ubicacion/ubicacion.entity/ubicacion.entity';
 import { Usuario } from '../../../src/modules/usuario/usuario.entity/usuario.entity';
 
@@ -14,6 +15,10 @@ describe('RecepcionStockService', () => {
       find: jest.fn(),
     },
     createQueryRunner: jest.fn(),
+  };
+
+  const mockPedidoService = {
+    handleStatusTransition: jest.fn(),
   };
 
   let service: RecepcionStockService;
@@ -66,6 +71,7 @@ describe('RecepcionStockService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockPedidoService.handleStatusTransition.mockReset();
     idCounter = 0;
 
     queryRunner = {
@@ -87,7 +93,10 @@ describe('RecepcionStockService', () => {
     };
 
     mockDataSource.createQueryRunner.mockReturnValue(queryRunner);
-    service = new RecepcionStockService(mockDataSource as any);
+    service = new RecepcionStockService(
+      mockDataSource as any,
+      mockPedidoService as any
+    );
   });
 
   it('procesarRecepcionMasiva rechaza usuario inexistente', async () => {
@@ -210,7 +219,7 @@ describe('RecepcionStockService', () => {
 
     jest
       .spyOn(service as any, 'actualizarEstadoPedido')
-      .mockResolvedValue(EstadoPedido.PARCIAL);
+      .mockResolvedValue(EstadoPedido.EN_PROCESO);
 
     const result = await service.procesarRecepcionMasiva(
       {
@@ -236,7 +245,7 @@ describe('RecepcionStockService', () => {
       ])
     );
     expect(result.pedidosActualizados[0].estadoNuevo).toBe(
-      EstadoPedido.PARCIAL
+      EstadoPedido.EN_PROCESO
     );
     expect(queryRunner.commitTransaction).toHaveBeenCalledTimes(1);
   });
@@ -391,7 +400,7 @@ describe('RecepcionStockService', () => {
     expect(queryRunner.release).toHaveBeenCalledTimes(1);
   });
 
-  it('actualizarEstadoPedido marca PARCIAL cuando solo se recibe parte del pedido', async () => {
+  it('actualizarEstadoPedido dispara RECEPCION_PARCIAL y devuelve EN_PROCESO', async () => {
     const manager = {
       findOne: jest.fn().mockResolvedValue({
         id: 'ped-2',
@@ -413,15 +422,25 @@ describe('RecepcionStockService', () => {
         ),
     };
 
+    mockPedidoService.handleStatusTransition.mockResolvedValue({
+      id: 'ped-2',
+      estado: EstadoPedido.EN_PROCESO,
+    });
+
     const result = await (service as any).actualizarEstadoPedido(
       'ped-2',
       manager
     );
 
-    expect(result).toBe(EstadoPedido.PARCIAL);
+    expect(mockPedidoService.handleStatusTransition).toHaveBeenCalledWith(
+      'ped-2',
+      PedidoStatusTrigger.RECEPCION_PARCIAL,
+      manager
+    );
+    expect(result).toBe(EstadoPedido.EN_PROCESO);
   });
 
-  it('actualizarEstadoPedido marca INCIDENCIA cuando hay exceso o no entregado', async () => {
+  it('actualizarEstadoPedido mantiene RECEPCION_PARCIAL cuando hay exceso o no entregado', async () => {
     const manager = {
       findOne: jest.fn().mockResolvedValue({
         id: 'ped-3',
@@ -443,15 +462,25 @@ describe('RecepcionStockService', () => {
         ),
     };
 
+    mockPedidoService.handleStatusTransition.mockResolvedValue({
+      id: 'ped-3',
+      estado: EstadoPedido.EN_PROCESO,
+    });
+
     const result = await (service as any).actualizarEstadoPedido(
       'ped-3',
       manager
     );
 
-    expect(result).toBe(EstadoPedido.INCIDENCIA);
+    expect(mockPedidoService.handleStatusTransition).toHaveBeenCalledWith(
+      'ped-3',
+      PedidoStatusTrigger.RECEPCION_PARCIAL,
+      manager
+    );
+    expect(result).toBe(EstadoPedido.EN_PROCESO);
   });
 
-  it('actualizarEstadoPedido marca RECIBIDO cuando todas las cantidades coinciden', async () => {
+  it('actualizarEstadoPedido dispara RECEPCION_TOTAL cuando todas las cantidades coinciden', async () => {
     const manager = {
       findOne: jest.fn().mockResolvedValue({
         id: 'ped-4',
@@ -473,11 +502,21 @@ describe('RecepcionStockService', () => {
         ),
     };
 
+    mockPedidoService.handleStatusTransition.mockResolvedValue({
+      id: 'ped-4',
+      estado: EstadoPedido.RECIBIDO,
+    });
+
     const result = await (service as any).actualizarEstadoPedido(
       'ped-4',
       manager
     );
 
+    expect(mockPedidoService.handleStatusTransition).toHaveBeenCalledWith(
+      'ped-4',
+      PedidoStatusTrigger.RECEPCION_TOTAL,
+      manager
+    );
     expect(result).toBe(EstadoPedido.RECIBIDO);
   });
 });

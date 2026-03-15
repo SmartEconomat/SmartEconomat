@@ -4,7 +4,6 @@ import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { generateUniqueName, loginAndGetToken } from '../utils/test-helpers';
 import { Pedido } from '../../src/modules/pedido/pedido.entity/pedido.entity';
-import { Producto } from '../../src/modules/producto/producto.entity/producto.entity';
 import { EstadoPedido } from '../../src/modules/pedido/enums/estado-pedido.enum';
 import { TipoMovimiento } from '../../src/modules/movimiento/enums/movimiento.enums';
 import { EstadoRecepcion } from '../../src/modules/recepcion/enums/estado-recepcion.enum';
@@ -111,7 +110,7 @@ describe('RecepcionController (e2e)', () => {
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
         proveedorId,
-        fechaEntrega: new Date(Date.now() + 86400000).toISOString(),
+        observaciones: 'Pedido auxiliar para recepción',
         lineas,
       })
       .expect(201);
@@ -346,8 +345,80 @@ describe('RecepcionController (e2e)', () => {
         ])
       );
       expect(recepcion?.estado).toBe(EstadoRecepcion.CON_INCIDENCIAS);
-      expect(pedidoActualizado?.estado).toBe(EstadoPedido.PARCIAL);
+      expect(pedidoActualizado?.estado).toBe(EstadoPedido.EN_PROCESO);
       expect(incidencia.body.data.id).toBe(incidenciaId);
+    });
+
+    it('mueve el pedido de pendiente a en_proceso y después a recibido según recepciones parciales y totales', async () => {
+      const proveedor = await createProveedor();
+      const producto = await createProductoConProveedor(proveedor.id, {
+        nombre: generateUniqueName('Producto transición automática'),
+      });
+      const pedido = await createPedido(proveedor.id, [
+        { productoProveedorId: producto.productoProveedorId, cantidad: 5 },
+      ]);
+
+      const primeraRecepcion = await request(app.getHttpServer())
+        .post('/api/v1/recepcion')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          usuarioId: adminUserId,
+          pedidos: [{ pedidoId: pedido.pedidoId }],
+          observaciones: generateUniqueName('Recepción parcial transición'),
+          productos: [
+            {
+              pedidoProductoId: pedido.pedidoProductoIds[0],
+              cantidadRecibida: 2,
+              cantidadAlbaran: 2,
+              estadoVisual: EstadoVisualProducto.OPTIMO,
+            },
+          ],
+        })
+        .expect(201);
+
+      expect(primeraRecepcion.body.data.pedidosActualizados).toEqual([
+        expect.objectContaining({
+          id: pedido.pedidoId,
+          estadoAnterior: EstadoPedido.PENDIENTE,
+          estadoNuevo: EstadoPedido.EN_PROCESO,
+        }),
+      ]);
+
+      let pedidoActualizado = await dataSource.getRepository(Pedido).findOneBy({
+        id: pedido.pedidoId,
+      });
+      expect(pedidoActualizado?.estado).toBe(EstadoPedido.EN_PROCESO);
+
+      const segundaRecepcion = await request(app.getHttpServer())
+        .post('/api/v1/recepcion')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          usuarioId: adminUserId,
+          pedidos: [{ pedidoId: pedido.pedidoId }],
+          observaciones: generateUniqueName('Recepción total transición'),
+          productos: [
+            {
+              pedidoProductoId: pedido.pedidoProductoIds[0],
+              cantidadRecibida: 3,
+              cantidadAlbaran: 3,
+              estadoVisual: EstadoVisualProducto.OPTIMO,
+            },
+          ],
+        })
+        .expect(201);
+
+      expect(segundaRecepcion.body.data.pedidosActualizados).toEqual([
+        expect.objectContaining({
+          id: pedido.pedidoId,
+          estadoAnterior: EstadoPedido.EN_PROCESO,
+          estadoNuevo: EstadoPedido.RECIBIDO,
+        }),
+      ]);
+
+      pedidoActualizado = await dataSource.getRepository(Pedido).findOneBy({
+        id: pedido.pedidoId,
+      });
+      expect(pedidoActualizado?.estado).toBe(EstadoPedido.RECIBIDO);
     });
 
     it('crea productos nuevos durante la recepción y deja trazabilidad en stock', async () => {

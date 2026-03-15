@@ -33,7 +33,9 @@ export class CreateProfesorDto {
   @IsNotEmpty()
   email!: string;
 
-  @Transform(({ value }) => typeof value === 'string' ? value.toUpperCase() : value)
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.toUpperCase() : value
+  )
   @IsString()
   @IsNotEmpty()
   cial!: string;

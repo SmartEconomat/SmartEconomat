@@ -29,7 +29,6 @@ describe('IncidenciaController (e2e)', () => {
   beforeAll(async () => {
     app = await getTestApp();
 
-    // Login admin
     const adminResponse = await request(app.getHttpServer() as string)
       .post('/api/v1/auth/login')
       .send({
@@ -46,7 +45,6 @@ describe('IncidenciaController (e2e)', () => {
     adminUserId = (profileResponse.body as TestApiResponse<{ id: string }>).data
       .id;
 
-    // Login profesor
     const profesorResponse = await request(app.getHttpServer() as string)
       .post('/api/v1/auth/login')
       .send({
@@ -58,7 +56,6 @@ describe('IncidenciaController (e2e)', () => {
       profesorResponse.body as TestApiResponse<{ access_token: string }>
     ).data.access_token;
 
-    // Crear datos propios: proveedor → producto (con vínculo) → pedido → recepción
     const provRes = await request(app.getHttpServer() as string)
       .post('/api/v1/proveedor')
       .set('Authorization', `Bearer ${adminToken}`)
@@ -69,7 +66,6 @@ describe('IncidenciaController (e2e)', () => {
       console.error('Proveedor creation failed:', JSON.stringify(provRes.body));
     const proveedorId = provRes.body.data?.id;
 
-    // Crear producto CON proveedor vinculado en un solo paso
     const prodRes = await request(app.getHttpServer() as string)
       .post('/api/v1/productos')
       .set('Authorization', `Bearer ${adminToken}`)
@@ -84,7 +80,6 @@ describe('IncidenciaController (e2e)', () => {
       console.error('Producto creation failed:', JSON.stringify(prodRes.body));
     const productoId = prodRes.body.data?.id;
 
-    // Obtener productoProveedorId
     let productoProveedorId: string | undefined;
     if (productoId) {
       const prodDetail = await request(app.getHttpServer() as string)
@@ -97,18 +92,17 @@ describe('IncidenciaController (e2e)', () => {
       productoProveedorId = proveedores[0]?.id;
     }
 
-    // Crear pedido
     if (productoProveedorId && proveedorId) {
       const pedidoRes = await request(app.getHttpServer() as string)
         .post('/api/v1/pedidos')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           proveedorId,
-          productos: [
+          observaciones: 'Pedido incidencia legacy suite',
+          lineas: [
             {
-              idProductoProveedor: productoProveedorId,
+              productoProveedorId,
               cantidad: 10,
-              precioUnitario: 3.5,
             },
           ],
         });
@@ -119,7 +113,6 @@ describe('IncidenciaController (e2e)', () => {
         );
       const pedidoId = pedidoRes.body.data?.id;
 
-      // Obtener pedidoProductoId
       let pedidoProductoId: string | undefined;
       if (pedidoId) {
         const pedidoDetail = await request(app.getHttpServer() as string)
@@ -131,7 +124,6 @@ describe('IncidenciaController (e2e)', () => {
           [];
         pedidoProductoId = pedidoProductos[0]?.id;
 
-        // Crear recepción
         const recepRes = await request(app.getHttpServer() as string)
           .post('/api/v1/recepcion')
           .set('Authorization', `Bearer ${adminToken}`)

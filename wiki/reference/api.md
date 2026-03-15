@@ -283,7 +283,7 @@ Gestión de órdenes y seguimiento de suministros. _Requiere `JwtAuthGuard` y `R
 | `GET`    | `/pedidos`                   | Listar todos los pedidos (paginado)             | `ADMINISTRADOR`, `PROFESOR` |
 | `GET`    | `/pedidos/:id`               | Detalle completo (incluye líneas y recepciones) | `ADMINISTRADOR`, `PROFESOR` |
 | `PATCH`  | `/pedidos/:id`               | Actualizar datos o productos del pedido         | `ADMINISTRADOR`, `PROFESOR` |
-| `PATCH`  | `/pedidos/:id/fecha-entrega` | Cambiar previsión de llegada                    | `ADMINISTRADOR`, `PROFESOR` |
+| `PATCH`  | `/pedidos/:id/fecha-entrega` | Rechazado en flujo normal: fecha calculada      | `ADMINISTRADOR`, `PROFESOR` |
 | `PATCH`  | `/pedidos/:id/cancelar`      | Anular pedido (con motivo)                      | `ADMINISTRADOR`, `PROFESOR` |
 | `DELETE` | `/pedidos/:id`               | Eliminar pedido (Solo PENDIENTE/CANCELADO)      | `ADMINISTRADOR`             |
 
@@ -292,14 +292,20 @@ Gestión de órdenes y seguimiento de suministros. _Requiere `JwtAuthGuard` y `R
 El flujo de una orden se rige por los siguientes estados:
 
 1.  **`PENDIENTE`**: Recién creado, esperando envío o validación.
-2.  **`EN_PROCESO`**: Orden enviada al proveedor, esperando recepción.
+2.  **`EN_PROCESO`**: La recepción ya ha comenzado.
 3.  **`RECIBIDO`**: Mercancía recibida al 100% satisfactoriamente.
-4.  **`PARCIAL`**: Mercancía recibida parcialmente (esperando el resto).
-5.  **`INCIDENCIA`**: Recibido con discrepancias (faltas/roturas) por resolver.
+4.  **`PARCIAL`**: Estado legacy; no debe originarse en flujos nuevos.
+5.  **`INCIDENCIA`**: Estado legacy; no debe originarse en flujos nuevos.
 6.  **`CANCELADO`**: Orden anulada (no genera stock).
 
 > [!TIP]
-> Al crear un pedido (`POST /pedidos`), el backend espera la colección `lineas`. Cada línea incluye `productoProveedorId` y `cantidad`. El precio no forma parte del DTO de creación actual.
+> Al crear un pedido (`POST /pedidos`), el backend espera `proveedorId`, `lineas` y opcionalmente `observaciones`. `fechaEntrega` se calcula automáticamente con un offset por defecto de 48 horas y cualquier campo adicional se rechaza.
+
+> [!IMPORTANT]
+> No se puede cancelar un pedido si ya existe alguna recepción vinculada.
+
+> [!NOTE]
+> Referencia ampliada en [Automatización de fechas y estados](../modules/pedido/automatizacion-fechas-estados.md).
 
 ### 🧾 Generación desde recetas (`POST /pedidos/from-recipes`)
 
@@ -307,10 +313,10 @@ Este endpoint permite seleccionar $N$ recetas y generar un único pedido consoli
 
 #### Payload
 
-| Campo | Tipo | Obligatorio | Descripción |
-| :---- | :--- | :---------: | :---------- |
-| `recetaIds` | `UUID v7[]` | Sí | Lista de recetas a consolidar |
-| `observaciones` | `string` | No | Texto libre para trazabilidad del origen |
+| Campo           | Tipo        | Obligatorio | Descripción                              |
+| :-------------- | :---------- | :---------: | :--------------------------------------- |
+| `recetaIds`     | `UUID v7[]` |     Sí      | Lista de recetas a consolidar            |
+| `observaciones` | `string`    |     No      | Texto libre para trazabilidad del origen |
 
 **Ejemplo de request:**
 
@@ -337,11 +343,11 @@ Este endpoint permite seleccionar $N$ recetas y generar un único pedido consoli
 
 #### Respuestas esperadas
 
-| Código | Caso |
-| :----- | :--- |
-| `201` | Pedido creado correctamente |
-| `400` | Productos inactivos, unidades incompatibles o sin proveedor común |
-| `404` | Alguna receta no existe |
+| Código | Caso                                                              |
+| :----- | :---------------------------------------------------------------- |
+| `201`  | Pedido creado correctamente                                       |
+| `400`  | Productos inactivos, unidades incompatibles o sin proveedor común |
+| `404`  | Alguna receta no existe                                           |
 
 #### Ejemplo de respuesta `201 Created`
 
@@ -652,15 +658,15 @@ Documentos de entrega de proveedores que vinculan pedidos y recepciones. _Requie
 
 Gestión directa de ítems en stock. _Requiere `JwtAuthGuard` y `PermisosGuard`._
 
-| Método   | Endpoint            | Descripción                                   | Roles Permitidos            |
-| :------- | :------------------ | :-------------------------------------------- | :-------------------------- |
-| `POST`   | `/inventario`       | Crear registro de inventario                  | `ADMINISTRADOR`, `PROFESOR` |
-| `GET`    | `/inventario`       | Listar todos los ítems en inventario          | `ADMINISTRADOR`, `PROFESOR` |
-| `GET`    | `/inventario/stock` | Consulta de stock consolidado o por ubicación | `ADMINISTRADOR`, `PROFESOR` |
+| Método   | Endpoint                       | Descripción                                    | Roles Permitidos            |
+| :------- | :----------------------------- | :--------------------------------------------- | :-------------------------- |
+| `POST`   | `/inventario`                  | Crear registro de inventario                   | `ADMINISTRADOR`, `PROFESOR` |
+| `GET`    | `/inventario`                  | Listar todos los ítems en inventario           | `ADMINISTRADOR`, `PROFESOR` |
+| `GET`    | `/inventario/stock`            | Consulta de stock consolidado o por ubicación  | `ADMINISTRADOR`, `PROFESOR` |
 | `POST`   | `/inventario/ajustes-manuales` | Registrar ajuste manual de stock con auditoría | `ADMINISTRADOR`, `PROFESOR` |
-| `GET`    | `/inventario/:id`   | Detalle de ítem en inventario                 | `ADMINISTRADOR`, `PROFESOR` |
-| `PATCH`  | `/inventario/:id`   | Actualizar ítem en inventario                 | `ADMINISTRADOR`, `PROFESOR` |
-| `DELETE` | `/inventario/:id`   | Eliminar ítem del inventario                  | `ADMINISTRADOR`             |
+| `GET`    | `/inventario/:id`              | Detalle de ítem en inventario                  | `ADMINISTRADOR`, `PROFESOR` |
+| `PATCH`  | `/inventario/:id`              | Actualizar ítem en inventario                  | `ADMINISTRADOR`, `PROFESOR` |
+| `DELETE` | `/inventario/:id`              | Eliminar ítem del inventario                   | `ADMINISTRADOR`             |
 
 **Filtros reales de `GET /inventario/stock`:** `productoId`, `ubicacionId`, `onlyLowStock`, `consolidado`.
 
@@ -693,11 +699,11 @@ Permite registrar correcciones operativas de stock sin perder trazabilidad.
 
 **Errores esperados:**
 
-| Código | Caso |
-| :----- | :--- |
-| `400` | Payload inválido, ajuste `0` o signo inconsistente |
-| `404` | Inventario inexistente |
-| `409` | El ajuste dejaría el stock en negativo |
+| Código | Caso                                               |
+| :----- | :------------------------------------------------- |
+| `400`  | Payload inválido, ajuste `0` o signo inconsistente |
+| `404`  | Inventario inexistente                             |
+| `409`  | El ajuste dejaría el stock en negativo             |
 
 > [!TIP]
 > La referencia funcional y técnica ampliada está en [wiki/modules/inventario/ajustes-manuales-auditoria.md](../modules/inventario/ajustes-manuales-auditoria.md).
