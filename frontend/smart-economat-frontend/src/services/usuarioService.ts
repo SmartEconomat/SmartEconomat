@@ -24,7 +24,7 @@ const mapFrontendToBackend = (data: Partial<CrearUsuarioDTO>, isUpdate = false) 
 
   // Map Rol
   if (mapped.rol) {
-    let r = mapped.rol.toUpperCase();
+    let r = (mapped.rol as string).toUpperCase();
     if (r === 'ADMINISTRADOR') r = 'ADMIN';
     mapped.rol = r;
   }
@@ -54,23 +54,23 @@ const mapFrontendToBackend = (data: Partial<CrearUsuarioDTO>, isUpdate = false) 
     return mapped;
 };
 
-const mapBackendToFrontend = (user: any): Usuario => {
+const mapBackendToFrontend = (user: Record<string, unknown>): Usuario => {
   let rolUpper = 'Alumno';
-  const backendRol = user.rol?.toUpperCase();
+  const backendRol = (user.rol as string | undefined)?.toUpperCase();
   if (backendRol === 'ADMIN' || backendRol === 'ADMINISTRADOR')
     rolUpper = 'Administrador';
   if (backendRol === 'PROFESOR') rolUpper = 'Profesor';
 
   return {
-    id: user.id || 0,
-    username: user.username,
-    email: user.email,
-    rol: rolUpper as any,
+    id: (user.id as string | number) || 0,
+    username: user.username as string,
+    email: user.email as string,
+    rol: rolUpper as Usuario['rol'],
     estado:
       user.status === 'ACTIVE' || user.estado === 'Activo' || user.activo
         ? 'Activo'
         : 'Inactivo',
-    fecha_registro: user.createdAt || new Date().toISOString(),
+    fecha_registro: (user.createdAt as string) || new Date().toISOString(),
   };
 };
 
@@ -90,6 +90,7 @@ export const usuarioService = {
       });
 
       if (search?.trim()) params.set('searchTerm', search.trim());
+      if (filterRol && filterRol !== 'Todos') params.set('rol', filterRol);
       if (sortBy) params.set('sortBy', sortBy);
       if (sortOrder) params.set('order', sortOrder.toUpperCase());
 
@@ -110,25 +111,17 @@ export const usuarioService = {
           ? payload
           : [];
 
-      let mappedData = rawList.map(mapBackendToFrontend);
-
-      if (filterRol && filterRol !== 'Todos') {
-        mappedData = mappedData.filter((u: Usuario) => u.rol === filterRol);
-      }
+      const mappedData = (rawList as Record<string, unknown>[]).map(
+        mapBackendToFrontend
+      );
 
       return {
         data: mappedData,
         status: response.status,
-        total:
-          filterRol && filterRol !== 'Todos'
-            ? mappedData.length
-            : (payload?.total ?? mappedData.length),
+        total: payload?.total ?? mappedData.length,
         page: payload?.page ?? page,
         pageSize: payload?.limit ?? limit,
-        totalPages:
-          filterRol && filterRol !== 'Todos'
-            ? Math.max(1, Math.ceil(mappedData.length / limit))
-            : (payload?.totalPages ?? 1),
+        totalPages: payload?.totalPages ?? 1,
       };
     } catch (error) {
       console.error('Error al obtener usuarios', error);
@@ -155,7 +148,7 @@ export const usuarioService = {
         status: response.status,
         message: result.message || 'Usuario creado exitosamente',
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error al crear usuario', error);
       throw error;
     }
@@ -183,7 +176,7 @@ export const usuarioService = {
         status: response.status,
         message: result.message || 'Usuario actualizado exitosamente',
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error al actualizar usuario', error);
       throw error;
     }
@@ -206,7 +199,7 @@ export const usuarioService = {
         status: response.status,
         message: result.message || 'Usuario eliminado exitosamente',
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error al eliminar usuario', error);
       throw error;
     }
@@ -252,7 +245,7 @@ export const usuarioService = {
         status: response.status,
         message: result.message || 'Contraseña restablecida exitosamente',
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error al restablecer contraseña', error);
       throw error;
     }

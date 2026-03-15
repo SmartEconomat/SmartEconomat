@@ -26,6 +26,10 @@ export class PaginationQueryDto {
   sortBy?: string;
 
   @IsOptional()
+  @IsString()
+  rol?: string;
+
+  @IsOptional()
   @IsIn(['ASC', 'DESC'])
   order?: 'ASC' | 'DESC' = 'ASC';
 }

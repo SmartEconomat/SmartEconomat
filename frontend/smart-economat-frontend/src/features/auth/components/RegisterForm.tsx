@@ -42,7 +42,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
   const [aulas, setAulas] = useState<string[]>([]);
   const [clases, setClases] = useState<number[]>([]);
-  const [profesores, setProfesores] = useState<{ cial: string; nombre: string }[]>([]);
+  const [profesores, setProfesores] = useState<
+    { cial: string; nombre: string }[]
+  >([]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(false);
@@ -62,7 +64,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       loadClases(formData.aula);
     } else {
       setClases([]);
-      setFormData(prev => ({ ...prev, numeroClase: '', cialProfesor: '' }));
+      setFormData((prev) => ({ ...prev, numeroClase: '', cialProfesor: '' }));
     }
   }, [formData.aula, role]);
 
@@ -72,7 +74,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       loadProfesores(formData.aula, Number(formData.numeroClase));
     } else {
       setProfesores([]);
-      setFormData(prev => ({ ...prev, cialProfesor: '' }));
+      setFormData((prev) => ({ ...prev, cialProfesor: '' }));
     }
   }, [formData.numeroClase, role, formData.aula]);
 
@@ -150,6 +152,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         return;
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const payload: any = {
         username: formData.username?.trim(),
         password: formData.password,
@@ -157,7 +160,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
       if (isAlumno) {
         if (!formData.aula || !formData.numeroClase || !formData.cialProfesor) {
-          setErrorMsg('Por favor completa todos los campos de ubicación (Curso, Clase y Profesor).');
+          setErrorMsg(
+            'Por favor completa todos los campos de ubicación (Curso, Clase y Profesor).'
+          );
           return;
         }
         payload.aula = formData.aula;
@@ -177,6 +182,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       } else {
         setErrorMsg(res.message || 'Error en el registro');
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setErrorMsg(err.message || 'Error de conexión con el servidor.');
     } finally {
@@ -184,9 +190,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     }
   };
 
-  const handleChange = (
-    e: any
-  ) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleChange = (e: any) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -274,7 +279,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
               name="aula"
               value={formData.aula}
               onChange={handleChange}
-              options={aulas.map(a => ({ value: a, label: a }))}
+              options={aulas.map((a) => ({ value: a, label: a }))}
               required
               disabled={isLoadingData && aulas.length === 0}
             />
@@ -283,18 +288,29 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
               name="numeroClase"
               value={formData.numeroClase}
               onChange={handleChange}
-              options={clases.map(c => ({ value: String(c), label: `Clase ${c}` }))}
+              options={clases.map((c) => ({
+                value: String(c),
+                label: `Clase ${c}`,
+              }))}
               required
-              disabled={!formData.aula || (isLoadingData && clases.length === 0)}
+              disabled={
+                !formData.aula || (isLoadingData && clases.length === 0)
+              }
             />
             <Select
               label="Profesor"
               name="cialProfesor"
               value={formData.cialProfesor}
               onChange={handleChange}
-              options={profesores.map(p => ({ value: p.cial, label: p.nombre }))}
+              options={profesores.map((p) => ({
+                value: p.cial,
+                label: p.nombre,
+              }))}
               required
-              disabled={!formData.numeroClase || (isLoadingData && profesores.length === 0)}
+              disabled={
+                !formData.numeroClase ||
+                (isLoadingData && profesores.length === 0)
+              }
               helperText="Selecciona el profesor encargado de evaluarte"
             />
           </>

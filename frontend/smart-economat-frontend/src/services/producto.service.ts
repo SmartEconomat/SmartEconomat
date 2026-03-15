@@ -60,7 +60,9 @@ export async function fetchProductos(
   return body.data;
 }
 
-export interface ProductosPaginatedResult extends PaginatedData<Producto> {}
+// ─── Tipos para listados ──────────────────────────────────────────────────
+
+export type ProductosPaginatedResult = PaginatedData<Producto>;
 
 export async function fetchProductosPaginated(
   params?: ProductosQueryParams

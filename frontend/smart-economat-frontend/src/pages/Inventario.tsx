@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Box,
   Paper,
   Typography,
   Alert,
   TextField,
-  InputAdornment,
   Button,
   IconButton,
   Dialog,
@@ -14,6 +13,7 @@ import {
   DialogActions,
   MenuItem,
   Tooltip,
+  SelectChangeEvent,
 } from '@mui/material';
 import { Autocomplete, CircularProgress } from '@mui/material';
 import DataTable, { Column } from '../components/ui/DataTable';
@@ -31,14 +31,13 @@ import { UbicacionService } from '../services/ubicacion.service';
 import type { Ubicacion } from '../services/ubicacion.types';
 import UbicacionesModal from '../components/inventario/UbicacionesModal';
 import InventoryDetailModal from '../components/inventario/InventoryDetailModal';
-import { useToast } from '../store/ToastContext';
+import { useToast } from '../store/toast.hooks';
 import {
   searchProductoProveedor,
   type ProductoProveedorOption,
 } from '../services/productoProveedor.service';
 
 import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined';
-import SearchIcon from '@mui/icons-material/SearchOutlined';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -94,7 +93,9 @@ const Inventario: React.FC = () => {
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
   const [isUbicacionesModalOpen, setIsUbicacionesModalOpen] = useState(false);
 
-  const loadUbicaciones = async () => {
+  const toast = useToast();
+
+  const loadUbicaciones = useCallback(async () => {
     try {
       const data = await UbicacionService.findAll();
       const ubicacionesList = Array.isArray(data) ? data : [];
@@ -102,16 +103,10 @@ const Inventario: React.FC = () => {
       if (ubicacionesList.length > 0 && !ubicacionId) {
         setUbicacionId(ubicacionesList[0].id);
       }
-    } catch (e: any) {
+    } catch {
       toast.error('Error al cargar ubicaciones');
     }
-  };
-
-  useEffect(() => {
-    loadUbicaciones();
-  }, []);
-
-  const toast = useToast();
+  }, [toast, ubicacionId]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -302,6 +297,7 @@ const Inventario: React.FC = () => {
     // Category filter
     if (filters.categorias.length > 0) {
       result = result.filter(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (p) => p.tipo && filters.categorias.includes(p.tipo as any)
       );
     }
@@ -443,11 +439,7 @@ const Inventario: React.FC = () => {
           icon: <SettingsIcon />,
           id: 'btn-manage-locations',
         }}
-        pageSize={pageSize}
-        onPageSizeChange={(e: any) => {
-          setPageSize(Number(e.target.value));
-          setPage(1);
-        }}
+        onViewModeChange={undefined}
         filters={
           <Box width="100%">
             <InventarioFilters
@@ -501,7 +493,7 @@ const Inventario: React.FC = () => {
             onPageChange: (_, newPage) => setPage(newPage),
             pageSize: pageSize,
             pageSizeOptions: [5, 10, 25, 50],
-            onPageSizeChange: (e) => {
+            onPageSizeChange: (e: SelectChangeEvent<number>) => {
               setPageSize(Number(e.target.value));
               setPage(1);
             },

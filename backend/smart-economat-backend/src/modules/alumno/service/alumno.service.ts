@@ -39,19 +39,23 @@ export class AlumnoService {
           aula: dto.aula,
           numeroClase: dto.numeroClase,
         },
-        relations: ['alumno'],
+        relations: ['alumnos'],
       });
 
       if (!slot) {
-        slot = manager.create(AlumnoSlot, {
-          profesor,
-          aula: dto.aula,
-          numeroClase: dto.numeroClase,
-        });
-        await manager.save(slot);
-      } else if (slot.alumno) {
+        throw new NotFoundException(
+          I18nHelper.getError('EL_NUEVO_SLOT_ESPECIFICADO_NO_EXISTE')
+        );
+      }
+
+      // Verificar capacidad
+      const alumnosContados = await manager.count(Alumno, {
+        where: { slot: { id: slot.id } },
+      });
+
+      if (alumnosContados >= slot.capacidad) {
         throw new BadRequestException(
-          'El Slot ya está ocupado por otro alumno'
+          I18nHelper.getError('SLOT_CAPACITY_REACHED')
         );
       }
 
@@ -143,16 +147,21 @@ export class AlumnoService {
           aula: dto.nuevaAula,
           numeroClase: dto.nuevoNumeroClase,
         },
-        relations: ['alumno'],
+        relations: ['alumnos'],
       });
 
       if (!nuevoSlot)
         throw new NotFoundException(
           I18nHelper.getError('EL_NUEVO_SLOT_ESPECIFICADO_NO_EXISTE')
         );
-      if (nuevoSlot.alumno)
+
+      const alumnosEnNuevoSlot = await manager.count(Alumno, {
+        where: { slot: { id: nuevoSlot.id } },
+      });
+
+      if (alumnosEnNuevoSlot >= nuevoSlot.capacidad)
         throw new BadRequestException(
-          I18nHelper.getError('EL_NUEVO_SLOT_YA_EST_OCUPADO')
+          I18nHelper.getError('SLOT_CAPACITY_REACHED')
         );
 
       alumno.slot = nuevoSlot;
@@ -164,5 +173,35 @@ export class AlumnoService {
         ),
       };
     });
+  }
+
+  async getAulas() {
+    const slots = await this.dataSource.getRepository(AlumnoSlot).find({
+      select: ['aula'],
+    });
+    const aulas = [...new Set(slots.map((s) => s.aula))];
+    return aulas.sort();
+  }
+
+  async getClasesByAula(aula: string) {
+    const slots = await this.dataSource.getRepository(AlumnoSlot).find({
+      where: { aula },
+      select: ['numeroClase'],
+    });
+    const clases = [...new Set(slots.map((s) => s.numeroClase))];
+    return clases.sort((a: number, b: number) => a - b);
+  }
+
+  async getProfesoresBySlot(aula: string, numeroClase: number) {
+    const slots = await this.dataSource.getRepository(AlumnoSlot).find({
+      where: { aula, numeroClase },
+      relations: ['profesor', 'profesor.user'],
+    });
+
+    return slots.map((slot) => ({
+      cial: slot.profesor.cial,
+      nombre: slot.profesor.user.username, // O el nombre real si existe
+      codigoSlot: slot.codigoSlot,
+    }));
   }
 }

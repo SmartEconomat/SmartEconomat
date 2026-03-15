@@ -30,11 +30,9 @@ La página es 100% responsiva utilizando el sistema de breakpoints de MUI:
 
 ## Sistema de Ayuda Contextual
 
-La página integra el componente `TutorialHelper` configurado específicamente:
-- **Paso 1**: Introducción al Perfil de Usuario.
-- **Paso 2**: Guía de Seguridad/Password.
-- **Paso 3**: Administración de Aulas (Profesores).
-- **Paso 4**: Gestión de Alumnos y Activación.
+La página invoca al componente `TutorialHelper` de forma simplificada (`<TutorialHelper />`). La lógica de los pasos y el contenido se gestiona de forma centralizada en la configuración global, filtrando automáticamente por el rol del usuario:
+- **Vista Alumno**: Enfocado en datos personales, seguridad y el proceso de cambio de email con aprobación.
+- **Vista Profesor**: Incluye adicionalmente la gestión de aulas, slots y administración de alumnos.
 
 ---
 

@@ -45,6 +45,7 @@ export class RegisterAlumnoDto {
   numeroClase!: number;
 
   @Transform((params) => TrimStringTransformer.transform(params))
+  @Transform(({ value }) => typeof value === 'string' ? value.toUpperCase() : value)
   @IsString()
   @IsNotEmpty()
   cialProfesor!: string;

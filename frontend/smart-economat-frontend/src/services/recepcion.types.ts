@@ -1,4 +1,3 @@
-import { Pedido } from './pedido.types';
 import { ProductoNuevoDto } from './producto.types';
 
 export enum EstadoRecepcion {

@@ -54,6 +54,9 @@ Documentación de las vistas completas (componentes raíz de cada ruta).
 - [Proveedores](./paginas/Proveedores.md): Listado de proveedores con detalle expandido y gestión de contactos.
 - [Recetas](./paginas/Recetas.md): Gestión de escandallos y elaboración de platos.
 - [Pedidos](./paginas/Pedidos.md): Órdenes de compra a proveedores con seguimiento de estados.
+- [Perfil](./paginas/Perfil.md): Gestión de datos personales, seguridad y herramientas académicas por rol.
+- [Incidencias](./paginas/Incidencias.md): Registro y seguimiento de problemas técnicos o de stock.
+- [Movimientos](./paginas/Movimientos.md): Histórico de entradas y salidas de almacén.
 
 ---
 

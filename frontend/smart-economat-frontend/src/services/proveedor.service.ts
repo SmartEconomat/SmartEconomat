@@ -2,75 +2,94 @@ import { Proveedor } from './proveedor.types';
 import { baseFetch, ApiResponse, PaginatedData } from './api.service';
 
 export async function fetchProveedores(
-    page: number = 1, 
-    limit: number = 10, 
-    search: string = '',
-    sortBy?: string,
-    sortOrder?: 'asc' | 'desc'
+  page: number = 1,
+  limit: number = 10,
+  search: string = '',
+  sortBy?: string,
+  sortOrder?: 'asc' | 'desc'
 ): Promise<PaginatedData<Proveedor>> {
-    const params = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+  if (search) params.append('searchTerm', search);
+
+  const response = await baseFetch(`/proveedor?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error(
+      `Error al obtener proveedores: ${response.status} ${response.statusText}`
+    );
+  }
+  const body = (await response.json()) as ApiResponse<PaginatedData<Proveedor>>;
+  const data = body.data.data;
+
+  if (sortBy) {
+    data.sort((a, b) => {
+      const aVal = a as Record<string, unknown>;
+      const bVal = b as Record<string, unknown>;
+      let aValue = aVal[sortBy];
+      let bValue = bVal[sortBy];
+
+      if (aValue === null || aValue === undefined) aValue = '';
+      if (bValue === null || bValue === undefined) bValue = '';
+
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortOrder === 'desc'
+          ? bValue.localeCompare(aValue, undefined, {
+              numeric: true,
+              sensitivity: 'base',
+            })
+          : aValue.localeCompare(bValue, undefined, {
+              numeric: true,
+              sensitivity: 'base',
+            });
+      }
+
+      if (aValue < bValue) return sortOrder === 'desc' ? 1 : -1;
+      if (aValue > bValue) return sortOrder === 'desc' ? -1 : 1;
+      return 0;
     });
-    if (search) params.append('searchTerm', search);
+  }
 
-    const response = await baseFetch(`/proveedor?${params.toString()}`);
-    if (!response.ok) {
-        throw new Error(`Error al obtener proveedores: ${response.status} ${response.statusText}`);
-    }
-    const body = await response.json() as ApiResponse<PaginatedData<Proveedor>>;
-    let data = body.data.data;
-
-    if (sortBy) {
-        data.sort((a: any, b: any) => {
-            let aValue = a[sortBy];
-            let bValue = b[sortBy];
-
-            if (aValue === null || aValue === undefined) aValue = '';
-            if (bValue === null || bValue === undefined) bValue = '';
-
-            if (typeof aValue === 'string' && typeof bValue === 'string') {
-                return sortOrder === 'desc'
-                    ? bValue.localeCompare(aValue, undefined, { numeric: true, sensitivity: 'base' })
-                    : aValue.localeCompare(bValue, undefined, { numeric: true, sensitivity: 'base' });
-            }
-
-            if (aValue < bValue) return sortOrder === 'desc' ? 1 : -1;
-            if (aValue > bValue) return sortOrder === 'desc' ? -1 : 1;
-            return 0;
-        });
-    }
-
-    return {
-        ...body.data,
-        data: data
-    };
+  return {
+    ...body.data,
+    data: data,
+  };
 }
 
-export async function createProveedor(proveedor: Partial<Proveedor>): Promise<Proveedor> {
-    const response = await baseFetch('/proveedor', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(proveedor),
-    });
-    if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({}));
-        throw new Error(errorBody.message || `Error al crear proveedor: ${response.status}`);
-    }
-    const body = await response.json() as ApiResponse<Proveedor>;
-    return body.data;
+export async function createProveedor(
+  proveedor: Partial<Proveedor>
+): Promise<Proveedor> {
+  const response = await baseFetch('/proveedor', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(proveedor),
+  });
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    throw new Error(
+      errorBody.message || `Error al crear proveedor: ${response.status}`
+    );
+  }
+  const body = (await response.json()) as ApiResponse<Proveedor>;
+  return body.data;
 }
 
-export async function updateProveedor(id: string, proveedor: Partial<Proveedor>): Promise<Proveedor> {
-    const response = await baseFetch(`/proveedor/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(proveedor),
-    });
-    if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({}));
-        throw new Error(errorBody.message || `Error al actualizar proveedor: ${response.status}`);
-    }
-    const body = await response.json() as ApiResponse<Proveedor>;
-    return body.data;
+export async function updateProveedor(
+  id: string,
+  proveedor: Partial<Proveedor>
+): Promise<Proveedor> {
+  const response = await baseFetch(`/proveedor/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(proveedor),
+  });
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    throw new Error(
+      errorBody.message || `Error al actualizar proveedor: ${response.status}`
+    );
+  }
+  const body = (await response.json()) as ApiResponse<Proveedor>;
+  return body.data;
 }

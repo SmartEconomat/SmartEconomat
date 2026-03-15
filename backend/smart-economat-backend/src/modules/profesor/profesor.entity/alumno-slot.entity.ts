@@ -4,7 +4,7 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
-  OneToOne,
+  OneToMany,
   type Relation,
 } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
@@ -26,6 +26,12 @@ export class AlumnoSlot extends BaseEntity {
   @Column({ name: 'numero_clase' })
   numeroClase!: number;
 
-  @OneToOne(() => Alumno, (alumno) => alumno.slot, { nullable: true })
-  alumno?: Relation<Alumno>;
+  @Column({ default: 30 })
+  capacidad!: number;
+
+  @Column({ name: 'codigo_slot', unique: true, nullable: true })
+  codigoSlot?: string;
+
+  @OneToMany(() => Alumno, (alumno) => alumno.slot)
+  alumnos?: Relation<Alumno[]>;
 }

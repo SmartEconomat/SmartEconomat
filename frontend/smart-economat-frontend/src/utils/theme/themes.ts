@@ -1,19 +1,23 @@
-import { createTheme, ThemeOptions } from "@mui/material/styles";
+import { createTheme, Theme } from '@mui/material/styles';
 
 export type ThemeName =
-  | "light"
-  | "dark"
-  | "highContrastLight"
-  | "highContrastDark";
-export type FontSize = "small" | "medium" | "large";
+  | 'light'
+  | 'dark'
+  | 'highContrastLight'
+  | 'highContrastDark';
+export interface ProductoFiltros {
+  categoria?: string;
+  stockBajo?: boolean;
+}
+export type FontSize = 'small' | 'medium' | 'large';
 
 const getFontSize = (size: FontSize) => {
   switch (size) {
-    case "small":
+    case 'small':
       return 12;
-    case "medium":
+    case 'medium':
       return 14;
-    case "large":
+    case 'large':
       return 16;
     default:
       return 14;
@@ -22,138 +26,149 @@ const getFontSize = (size: FontSize) => {
 
 const getTypography = (fontSize: FontSize) => ({
   fontFamily: [
-    "-apple-system",
-    "BlinkMacSystemFont",
+    '-apple-system',
+    'BlinkMacSystemFont',
     '"Segoe UI"',
-    "Roboto",
+    'Roboto',
     '"Helvetica Neue"',
-    "Arial",
-    "sans-serif",
+    'Arial',
+    'sans-serif',
     '"Apple Color Emoji"',
     '"Segoe UI Emoji"',
     '"Segoe UI Symbol"',
-  ].join(","),
+  ].join(','),
   fontSize: getFontSize(fontSize),
 });
 
 const lightPalette = {
-  mode: "light" as const,
+  mode: 'light' as const,
   primary: {
-    main: "#dc004e",
+    main: '#dc004e',
   },
   secondary: {
-    main: "#0a6151",
+    main: '#0a6151',
   },
   background: {
-    default: "#f5f5f5",
+    default: '#f5f5f5',
   },
 };
 
 const darkPalette = {
-  mode: "dark" as const,
+  mode: 'dark' as const,
   primary: {
-    main: "#ff4081",
+    main: '#ff4081',
   },
   secondary: {
-    main: "#4db6ac",
+    main: '#4db6ac',
   },
   background: {
-    default: "#121212",
-    paper: "#1e1e1e",
+    default: '#121212',
+    paper: '#1e1e1e',
   },
 };
 
 const highContrastLightPalette = {
-  mode: "light" as const,
+  mode: 'light' as const,
   primary: {
-    main: "#000000",
+    main: '#000000',
   },
   secondary: {
-    main: "#000000",
+    main: '#000000',
   },
   background: {
-    default: "#ffffff",
-    paper: "#ffffff",
+    default: '#ffffff',
+    paper: '#ffffff',
   },
   text: {
-    primary: "#000000",
-    secondary: "#000000",
+    primary: '#000000',
+    secondary: '#000000',
   },
-  divider: "#000000",
+  divider: '#000000',
 };
 
 const highContrastDarkPalette = {
-  mode: "dark" as const,
+  mode: 'dark' as const,
   primary: {
-    main: "#ffffff",
+    main: '#ffffff',
   },
   secondary: {
-    main: "#ffffff",
+    main: '#ffffff',
   },
   background: {
-    default: "#000000",
-    paper: "#000000",
+    default: '#000000',
+    paper: '#000000',
   },
   text: {
-    primary: "#ffffff",
-    secondary: "#ffffff",
+    primary: '#ffffff',
+    secondary: '#ffffff',
   },
-  divider: "#ffffff",
+  divider: '#ffffff',
 };
 
 export const getTheme = (themeName: ThemeName, fontSize: FontSize) => {
-  const typography: any = getTypography(fontSize);
+  const typography = getTypography(fontSize) as Record<string, unknown>;
   let palette;
   let components = {};
 
   switch (themeName) {
-    case "light":
+    case 'light':
       palette = lightPalette;
       break;
-    case "dark":
+    case 'dark':
       palette = darkPalette;
       break;
-    case "highContrastLight":
+    case 'highContrastLight':
       palette = highContrastLightPalette;
       components = {
         MuiButton: {
           styleOverrides: {
             root: {
-              border: "2px solid #000000",
-              fontWeight: "bold",
+              border: '2px solid #000000',
+              fontWeight: 'bold',
             },
+          },
+        },
+        MuiTablePagination: {
+          styleOverrides: {
+            root: {
+              borderTop: 'none',
+            },
+            selectLabel: ({ theme }: { theme: Theme }) => ({
+              fontSize: '0.875rem',
+              color: theme.palette.text.secondary,
+            }),
           },
         },
         MuiPaper: {
           styleOverrides: {
             root: {
-              border: "1px solid #000000",
+              border: '1px solid #000000',
             },
           },
         },
       };
-      typography.allVariants = { fontWeight: "bold" };
+      typography.allVariants = { fontWeight: 'bold' };
       break;
-    case "highContrastDark":
+    case 'highContrastDark':
       palette = highContrastDarkPalette;
       components = {
         MuiButton: {
           styleOverrides: {
             root: {
-              border: "2px solid #ffffff",
-              fontWeight: "bold",
+              border: '2px solid #ffffff',
+              fontWeight: 'bold',
             },
           },
         },
         MuiPaper: {
           styleOverrides: {
             root: {
-              border: "1px solid #ffffff",
+              border: '1px solid #ffffff',
             },
           },
         },
       };
-      typography.allVariants = { fontWeight: "bold" };
+      typography.allVariants = { fontWeight: 'bold' };
       break;
     default:
       palette = lightPalette;

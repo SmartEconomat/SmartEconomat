@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Paper,
@@ -6,7 +6,6 @@ import {
   Typography,
   Alert,
   Button,
-  Tooltip,
   Chip,
   Card,
   CardContent,
@@ -31,7 +30,7 @@ import {
   updateReceta,
 } from '../services/receta.service';
 import { deleteResource } from '../services/api.service';
-import { useToast } from '../store/ToastContext';
+import { useToast } from '../store/toast.hooks';
 import StatusChip from '../components/ui/StatusChip';
 import RecipeCarousel from '../components/ui/RecipeCarousel';
 import PageToolbar from '../components/ui/PageToolbar';
@@ -100,14 +99,14 @@ const Recetas: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<Receta | null>(null);
-  const [itemToEdit, setItemToEdit] = useState<Record<string, any> | null>(
+  const [itemToEdit, setItemToEdit] = useState<Record<string, unknown> | null>(
     null
   );
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const toast = useToast();
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -124,11 +123,11 @@ const Recetas: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [page, pageSize, searchTerm]);
 
   useEffect(() => {
     loadData();
-  }, [page, pageSize, searchTerm]);
+  }, [loadData]);
 
   const handleDeleteConfirm = async () => {
     if (!itemToDelete) return;
@@ -147,7 +146,7 @@ const Recetas: React.FC = () => {
     }
   };
 
-  const handleSave = async (formData: Record<string, any>) => {
+  const handleSave = async (formData: Record<string, unknown>) => {
     setIsSaving(true);
     try {
       const normalizePreparationTime = (value: string) => {
@@ -166,13 +165,13 @@ const Recetas: React.FC = () => {
       };
 
       const ingredientes = Array.isArray(formData.ingredientes)
-        ? formData.ingredientes
-            .map((ing: any) => ({
-              productoId: ing.productoId,
+        ? (formData.ingredientes as Record<string, unknown>[])
+            .map((ing) => ({
+              productoId: ing.productoId as string,
               cantidad: Number(ing.cantidad),
-              unidad: ing.unidad,
+              unidad: ing.unidad as string,
             }))
-            .filter((ing: any) => ing.productoId && ing.cantidad > 0)
+            .filter((ing) => ing.productoId && ing.cantidad > 0)
         : [];
 
       if (ingredientes.length === 0) {
@@ -184,15 +183,19 @@ const Recetas: React.FC = () => {
         instrucciones: formData.instrucciones,
         tiempo: formData.tiempo,
         dificultad: formData.dificultad,
-        tiempoPreparacion: normalizePreparationTime(formData.tiempoPreparacion),
+        tiempoPreparacion: normalizePreparationTime(
+          formData.tiempoPreparacion as string
+        ),
         ingredientes,
       };
 
       if (formData.id) {
-        await updateReceta(formData.id, payload);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await updateReceta(String(formData.id), payload as any);
         toast.success('Receta actualizada correctamente.');
       } else {
-        await createReceta(payload);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await createReceta(payload as any);
         toast.success('Receta creada correctamente.');
       }
       await loadData();
@@ -207,7 +210,7 @@ const Recetas: React.FC = () => {
   };
 
   const handleEditClick = (row: Receta) => {
-    setItemToEdit({ ...row });
+    setItemToEdit({ ...row } as unknown as Record<string, unknown>);
   };
 
   const columns: Column<Receta>[] = [
@@ -292,13 +295,7 @@ const Recetas: React.FC = () => {
           onClick: () => setItemToEdit({}),
           id: 'btn-nueva-receta',
         }}
-        viewMode={viewMode}
         onViewModeChange={setViewMode}
-        pageSize={pageSize}
-        onPageSizeChange={(e: any) => {
-          setPageSize(Number(e.target.value));
-          setPage(1);
-        }}
       />
 
       <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
@@ -347,6 +344,7 @@ const Recetas: React.FC = () => {
             onPageChange: (_, newPage) => setPage(newPage),
             pageSize: pageSize,
             pageSizeOptions: [5, 10, 25, 50],
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onPageSizeChange: (e: any) => {
               setPageSize(Number(e.target.value));
               setPage(1);

@@ -11,6 +11,12 @@
 
 ---
 
+## Estructura de Campos
+
+- **Nombre de Usuario (Username)**: Editable por el usuario.
+- **ID de Usuario**: Campo de solo lectura que muestra el identificador único del sistema.
+- **Email**: Campo informativo con acción de solicitud de cambio.
+
 ## Funcionalidades Dinámicas
 
 ### Modal de Solicitud de Cambio de Correo
@@ -19,8 +25,11 @@ Si un usuario busca cambiar su dirección de email principal, debe interactuar c
 - Solicita la **Confirmación**.
 - Demanda adjuntar un **Motivo**.
 
-### Validaciones en Tiempo Real (Email)
-El sistema ejecuta un hook en Background (`useEffect`) a cada pulsación del estado (`onChange`) que revisa la integridad cruzada entre el nuevo email y la comprobación de tipeo de seguridad. Modificando iterativamente si *"Los correos coinciden"* con estilos nativos del Theme para Success y Error state pre-envío.
+### Validaciones de Solicitud de Email
+El proceso de solicitud en el componente principal (`Perfil.tsx`) implementa validaciones robustas:
+- **Formato**: Verificación mediante Regex del formato de correo electrónico.
+- **Unicidad**: El sistema impide que el nuevo correo sea igual al actual.
+- **Justificación**: Requiere obligatoriamente un motivo de al menos 10 caracteres para procesar la petición.
 
 ### Consistencia Vertical
 Este panel al ser par del módulo de nueva contraseña fue rediseñado usando flexbox vertical y espacios (`gap` de sub-cajas `0.25`) para mantener botones en simetría independientemente del estatus y los mensajes dinámicos que arrojen los helpers.
