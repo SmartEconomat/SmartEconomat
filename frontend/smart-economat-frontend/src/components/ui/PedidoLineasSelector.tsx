@@ -18,7 +18,10 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
-import { searchProductoProveedor } from '../../services/productoProveedor.service';
+import {
+  searchProductoProveedor,
+  ProductoProveedorOption,
+} from '../../services/productoProveedor.service';
 import { PedidoProducto } from '../../services/pedido.types';
 
 interface PedidoLineasSelectorProps {
@@ -35,6 +38,10 @@ interface FlatProductoProveedor {
   precioUnitario: number;
   marca?: string;
 }
+
+type ProductoProveedorSearchResult = ProductoProveedorOption & {
+  precioUnitario?: number;
+};
 
 const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
   value = [],
@@ -57,10 +64,9 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
           nombreProducto: pp.productoNombre || 'Desconocido',
           nombreProveedor: pp.proveedorNombre || 'Desconocido',
           proveedorId: pp.proveedorId || '',
-          precioUnitario:
-            (pp as Record<string, unknown>).precioUnitario !== undefined
-              ? Number((pp as Record<string, unknown>).precioUnitario)
-              : 0,
+          precioUnitario: Number(
+            (pp as ProductoProveedorSearchResult).precioUnitario ?? 0
+          ),
           marca: pp.marca,
         }));
         setAllFlatProducts(flat);

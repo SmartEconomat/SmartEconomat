@@ -16,6 +16,9 @@ import {
 } from '@mui/material';
 import { Theme } from '@mui/material/styles';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import SaveIcon from '@mui/icons-material/Save';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 import {
   RecepcionDraft,
@@ -106,6 +109,11 @@ const Recepcion: React.FC = () => {
     defaultDraft,
     setActiveStep,
   });
+  const draftRef = useRef(draft);
+
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
 
   useEffect(() => {
     if (activeStep === 1 && searchInputRef.current) {
@@ -599,7 +607,6 @@ const Recepcion: React.FC = () => {
             p.productoNuevo?.unidad || p.unidad || UnidadMedida.UNIDAD
           ) || UnidadMedida.UNIDAD,
         tipo: (p.productoNuevo?.tipo ||
-          (p as LineaDraft).tipo ||
           CategoriaProducto.OTRO) as CategoriaProducto,
         contenido: p.productoNuevo?.contenido || 1,
         cantidadRecibida: Number(p.cantidadRecibida),
@@ -613,8 +620,19 @@ const Recepcion: React.FC = () => {
       setResultado(res);
       setActiveStep(3);
       await clearRemoteDraft();
-    } catch (err: any) {
-      const errorMessage = err.message || '';
+    } catch (err: unknown) {
+      let errorMessage = '';
+      function isErrorWithMessage(e: unknown): e is { message: string } {
+        return (
+          typeof e === 'object' &&
+          e !== null &&
+          'message' in e &&
+          typeof (e as { message: unknown }).message === 'string'
+        );
+      }
+      if (isErrorWithMessage(err)) {
+        errorMessage = err.message;
+      }
       if (
         errorMessage.includes('Pedido no encontrado') ||
         errorMessage.includes('ORDER_NOT_FOUND')

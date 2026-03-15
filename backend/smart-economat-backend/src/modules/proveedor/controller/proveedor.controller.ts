@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { CreateProveedorDto } from '../dto/create-proveedor.dto';
 import { UpdateProveedorDto } from '../dto/update-proveedor.dto';
@@ -17,10 +18,7 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { Proveedor } from '../proveedor.entity/proveedor.entity';
 import { ProveedorService } from '../service/proveedor.service';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
-
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/role.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';

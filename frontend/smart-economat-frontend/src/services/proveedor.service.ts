@@ -1,6 +1,18 @@
 import { Proveedor } from './proveedor.types';
 import { baseFetch, ApiResponse, PaginatedData } from './api.service';
 
+function normalizeSortableValue(value: unknown): string | number | boolean {
+  if (value === null || value === undefined) return '';
+  if (
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean'
+  ) {
+    return value;
+  }
+  return String(value);
+}
+
 export async function fetchProveedores(
   page: number = 1,
   limit: number = 10,
@@ -25,13 +37,10 @@ export async function fetchProveedores(
 
   if (sortBy) {
     data.sort((a, b) => {
-      const aVal = a as Record<string, unknown>;
-      const bVal = b as Record<string, unknown>;
-      let aValue = aVal[sortBy];
-      let bValue = bVal[sortBy];
-
-      if (aValue === null || aValue === undefined) aValue = '';
-      if (bValue === null || bValue === undefined) bValue = '';
+      const aRecord = a as unknown as Record<string, unknown>;
+      const bRecord = b as unknown as Record<string, unknown>;
+      const aValue = normalizeSortableValue(aRecord[sortBy]);
+      const bValue = normalizeSortableValue(bRecord[sortBy]);
 
       if (typeof aValue === 'string' && typeof bValue === 'string') {
         return sortOrder === 'desc'
@@ -43,6 +52,12 @@ export async function fetchProveedores(
               numeric: true,
               sensitivity: 'base',
             });
+      }
+
+      if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
+        return sortOrder === 'desc'
+          ? Number(bValue) - Number(aValue)
+          : Number(aValue) - Number(bValue);
       }
 
       if (aValue < bValue) return sortOrder === 'desc' ? 1 : -1;

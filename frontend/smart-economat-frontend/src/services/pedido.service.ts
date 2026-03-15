@@ -37,7 +37,7 @@ export async function fetchPedidos(
       `Error al obtener pedidos: ${response.status} ${response.statusText}`
     );
   }
-  const body = (await response.json()) as ApiResponse<Pedido[]>;
+  const body = (await response.json()) as ApiResponse<PaginatedData<Pedido>>;
   return body.data;
 }
 

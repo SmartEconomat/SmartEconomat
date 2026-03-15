@@ -25,6 +25,11 @@ export interface RegisterProfesorRequest {
   cial: string;
 }
 
+export interface ProfesorOption {
+  cial: string;
+  nombre: string;
+}
+
 export interface ResetPasswordRequest {
   token?: string;
   newPassword: string;
@@ -69,6 +74,37 @@ export const authService = {
     return await parseApiResponse(
       response,
       'No se pudo completar el registro del profesor.'
+    );
+  },
+
+  async getAulas(): Promise<ApiResponse<string[]>> {
+    const response = await baseFetch('/alumnos/aulas');
+    return await parseApiResponse(
+      response,
+      'No se pudieron obtener las aulas.'
+    );
+  },
+
+  async getClases(aula: string): Promise<ApiResponse<number[]>> {
+    const response = await baseFetch(
+      `/alumnos/aulas/${encodeURIComponent(aula)}/clases`
+    );
+    return await parseApiResponse(
+      response,
+      'No se pudieron obtener las clases.'
+    );
+  },
+
+  async getProfesores(
+    aula: string,
+    clase: number
+  ): Promise<ApiResponse<ProfesorOption[]>> {
+    const response = await baseFetch(
+      `/alumnos/aulas/${encodeURIComponent(aula)}/clases/${clase}/profesores`
+    );
+    return await parseApiResponse(
+      response,
+      'No se pudieron obtener los profesores.'
     );
   },
 

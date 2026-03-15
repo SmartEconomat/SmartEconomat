@@ -7,9 +7,6 @@ import { UsuarioRepository } from './repository/usuario.repository';
 import { AuthModule } from '../auth/module/auth.module';
 import { Permiso } from '../permisos/permiso.entity/permiso.entity';
 
-import { Permiso } from '../permisos/entities/permiso.entity';
-import { AuthorizationModule } from '../authorization/authorization.module';
-
 @Module({
   imports: [TypeOrmModule.forFeature([Usuario, Permiso]), AuthModule],
   controllers: [UsuarioController],
