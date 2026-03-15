@@ -51,7 +51,7 @@ interface PasoEscaneoProps {
     pIdx: number | null,
     lIdx: number,
     field: string,
-    value: any
+    value: string | number | boolean | undefined
   ) => void;
   isWeightUnit: (u: string | undefined) => boolean;
   onOpenWeightScale: (pIdx: number | null, lIdx: number) => void;
