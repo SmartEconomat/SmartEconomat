@@ -16,7 +16,7 @@ import { AlbaranPedidoRecepcion } from '../albaran/albaran-pedido-recepcion.enti
 import { Pedido } from '../pedido/pedido.entity/pedido.entity';
 import { PedidoProducto } from '../pedido/pedido-producto.entity/pedido-producto.entity';
 import { MovimientoModule } from '../movimiento/movimiento.module';
-import { MovimientoHelper } from '../../common/helpers/movimiento.helper';
+
 import { PdfReportService } from './service/pdf-report.service';
 import { PedidoModule } from '../pedido/pedido.module';
 
@@ -42,7 +42,7 @@ import { PedidoModule } from '../pedido/pedido.module';
     RecepcionService,
     RecepcionStockService,
     RecepcionProductoService,
-    MovimientoHelper,
+
     PdfReportService,
   ],
   exports: [RecepcionService, RecepcionStockService],

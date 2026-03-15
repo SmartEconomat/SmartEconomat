@@ -7,7 +7,19 @@ import {
   IsBoolean,
   IsEnum,
   IsNumber,
+  Validate,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
 } from 'class-validator';
+@ValidatorConstraint({ name: 'notDraft', async: false })
+export class NotDraftConstraint implements ValidatorConstraintInterface {
+  validate(value: any) {
+    return typeof value === 'string' ? value !== 'draft' : true;
+  }
+  defaultMessage() {
+    return `El valor 'draft' no es válido para este campo.`;
+  }
+}
 import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EstadoVisualProducto } from '../enums/estado-visual.enum';
@@ -76,6 +88,7 @@ export class RecepcionLineDto {
   })
   @IsString()
   @IsOptional()
+  @Validate(NotDraftConstraint)
   pedidoProductoId: string;
 
   @ApiProperty({
@@ -183,6 +196,7 @@ export class ProductoNuevoRecepcionDto extends ProductoNuevoDto {
 export class PedidoRecepcionDto {
   @ApiProperty({ description: 'docs.ID_DEL_PEDIDO_AL_QUE_PERTENECE_LA_RECEPC' })
   @IsString()
+  @Validate(NotDraftConstraint)
   pedidoId: string;
 
   @ApiPropertyOptional({
@@ -210,6 +224,7 @@ export class CreateRecepcionDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
+  @Validate(NotDraftConstraint, { each: true })
   pedidoIds?: string[];
 
   @ApiPropertyOptional({
@@ -272,5 +287,6 @@ export class CreateRecepcionDto {
   })
   @IsOptional()
   @IsString()
+  @Validate(NotDraftConstraint)
   usuarioId?: string;
 }

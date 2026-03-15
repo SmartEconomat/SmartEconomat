@@ -1,6 +1,6 @@
 # 🏆 Clasificación de Contribuidores - SmartEconomat
 
-> **Última actualización:** 15/03/2026, 20:06:33
+> **Última actualización:** 15/03/2026, 23:39:31
 
 ---
 
@@ -9,7 +9,7 @@
 ### 🎖️ **Darel**
 
 Este guerrero del código lidera la carga con:
-- 💻 **311** Commits
+- 💻 **312** Commits
 - 🔀 **86** PRs Fusionados
 
 Demostrando que:
@@ -18,7 +18,7 @@ Demostrando que:
 - 🚀 Git commit es su mantra matutino
 
 **Estadísticas de Dominio:**
-- Posee el **50.08%** de todo el código.
+- Posee el **50.16%** de todo el código.
 - Ha logrado fusionar **86** funcionalidades completas.
 
 ---
@@ -26,15 +26,15 @@ Demostrando que:
 ## 📊 Hall de la Fama
 
 ### 🥈 Alexis
-- 💻 Commits: **151** (24.32%)
+- 💻 Commits: **151** (24.28%)
 - 🔀 PRs Fusionados: **21**
 
 ### 🥈 Sergio
-- 💻 Commits: **82** (13.20%)
+- 💻 Commits: **82** (13.18%)
 - 🔀 PRs Fusionados: **15**
 
 ### 🥈 Maurizio
-- 💻 Commits: **53** (8.53%)
+- 💻 Commits: **53** (8.52%)
 - 🔀 PRs Fusionados: **8**
 
 ### 🥈 Guillermo
@@ -63,27 +63,27 @@ Con **24 commits** y **6 PRs**, tenemos aquí a alguien que:
 
 | Posición | Contribuidor | Commits | PRs Fusionados | % Código | Estado |
 |----------|--------------|---------|----------------|----------|--------|
-| #1 | Darel | **311** | 🔀 **86** | 50.08% | 👑 Líder |
-| #2 | Alexis | **151** | 🔀 **21** | 24.32% | 💪 Activo |
-| #3 | Sergio | **82** | 🔀 **15** | 13.20% | 💪 Activo |
-| #4 | Maurizio | **53** | 🔀 **8** | 8.53% | 💪 Activo |
+| #1 | Darel | **312** | 🔀 **86** | 50.16% | 👑 Líder |
+| #2 | Alexis | **151** | 🔀 **21** | 24.28% | 💪 Activo |
+| #3 | Sergio | **82** | 🔀 **15** | 13.18% | 💪 Activo |
+| #4 | Maurizio | **53** | 🔀 **8** | 8.52% | 💪 Activo |
 | #5 | Guillermo | **24** | 🔀 **6** | 3.86% | 🐌 Necesita café |
 
 ---
 
 ## 📊 Estadísticas Generales
 
-- **Total de commits:** 621
+- **Total de commits:** 622
 - **Total de PRs fusionados:** 136
 - **Total de contribuidores:** 5
-- **Promedio de commits por persona:** 124.2
+- **Promedio de commits por persona:** 124.4
 
 ---
 
 ## 🎯 Ranking de Poder (Commits + PRs)
 
 **Darel**
-`████████████████████` 311 commits | 86 PRs
+`████████████████████` 312 commits | 86 PRs
 
 **Alexis**
 `█████████░░░░░░░░░░░` 151 commits | 21 PRs

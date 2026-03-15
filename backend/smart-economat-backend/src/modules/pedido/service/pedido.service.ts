@@ -17,6 +17,7 @@ import { PedidoProducto } from '../pedido-producto.entity/pedido-producto.entity
 import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
+import { buildPedidoAggregate } from '../../../application/pedido/pedido.factory';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { PedidoStatusTrigger } from '../enums/pedido-status-trigger.enum';
@@ -34,7 +35,6 @@ export class PedidoService {
     createPedidoDto: CreatePedidoDto,
     userId: string
   ): Promise<Pedido> {
-    const { lineas, proveedorId, observaciones } = createPedidoDto;
     const estadoInicial = this.getInitialStatus();
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -42,58 +42,17 @@ export class PedidoService {
     await queryRunner.startTransaction();
 
     try {
-      let costeTotal = 0;
-      const pedidoProductosEntities: any[] = [];
+      const built = await buildPedidoAggregate(
+        queryRunner.manager,
+        createPedidoDto,
+        userId,
+        estadoInicial,
+        () => this.calculateFechaEntrega()
+      );
 
-      for (const linea of lineas) {
-        const productoProveedor = await queryRunner.manager.findOne(
-          ProductoProveedor,
-          {
-            where: { id: linea.productoProveedorId },
-          }
-        );
+      const savedPedido = await queryRunner.manager.save(Pedido, built.pedido);
 
-        if (!productoProveedor) {
-          throw new NotFoundException(
-            `El producto proveedor con ID ${linea.productoProveedorId} no existe.`
-          );
-        }
-
-        if (productoProveedor.proveedorId !== proveedorId) {
-          throw new BadRequestException(
-            `El producto proveedor con ID ${linea.productoProveedorId} no pertenece al proveedor del pedido.`
-          );
-        }
-
-        const precioVigente = productoProveedor.precioUnitario;
-        if (precioVigente === null || precioVigente === undefined) {
-          throw new ConflictException(
-            `El producto proveedor con ID ${linea.productoProveedorId} no tiene un precio vigente (precio pactado) configurado.`
-          );
-        }
-
-        const costeLinea = Number(precioVigente) * Number(linea.cantidad);
-        costeTotal += costeLinea;
-
-        pedidoProductosEntities.push({
-          productoProveedor: { id: productoProveedor.id },
-          cantidad: linea.cantidad,
-          precioUnitario: precioVigente,
-        });
-      }
-
-      const pedido = queryRunner.manager.create(Pedido, {
-        usuario: { id: userId },
-        proveedor: { id: proveedorId },
-        estado: estadoInicial,
-        costeTotal,
-        fechaEntrega: this.calculateFechaEntrega(),
-        observaciones,
-      });
-
-      const savedPedido = await queryRunner.manager.save(Pedido, pedido);
-
-      for (const pp of pedidoProductosEntities) {
+      for (const pp of built.pedidoProductos) {
         await queryRunner.manager.save(PedidoProducto, {
           ...pp,
           pedido: { id: savedPedido.id },

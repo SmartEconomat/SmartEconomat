@@ -7,7 +7,7 @@ import { PedidoRepository } from './repository/pedido.repository';
 import { PedidoProducto } from './pedido-producto.entity/pedido-producto.entity';
 import { ProductoProveedor } from '../producto/producto-proveedor.entity/producto-proveedor.entity';
 import { MovimientoModule } from '../movimiento/movimiento.module';
-import { MovimientoHelper } from '../../common/helpers/movimiento.helper';
+
 import { RecetaModule } from '../receta/receta.module';
 import { RecetaToPedidoService } from './service/receta-to-pedido.service';
 
@@ -18,12 +18,7 @@ import { RecetaToPedidoService } from './service/receta-to-pedido.service';
     RecetaModule,
   ],
   controllers: [PedidoController],
-  providers: [
-    PedidoService,
-    PedidoRepository,
-    MovimientoHelper,
-    RecetaToPedidoService,
-  ],
+  providers: [PedidoService, PedidoRepository, RecetaToPedidoService],
   exports: [PedidoService],
 })
 export class PedidoModule {}
