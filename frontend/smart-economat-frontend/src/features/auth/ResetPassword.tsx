@@ -64,6 +64,7 @@ const ResetPassword: React.FC = () => {
       } else {
         setErrorMsg(res.message || 'Error al restablecer la contraseña.');
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setErrorMsg(err.message || 'Error de conexión con el servidor.');
     } finally {

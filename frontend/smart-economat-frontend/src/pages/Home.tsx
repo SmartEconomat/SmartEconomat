@@ -9,7 +9,7 @@ import {
   Button,
   Alert,
 } from '@mui/material';
-import { useAuth } from '../store/AuthContext';
+import { useAuth } from '../store/auth.hooks';
 import { useNavigate } from 'react-router-dom';
 
 // Icons
@@ -526,7 +526,11 @@ const Home: React.FC = () => {
                       {getActividadIcon(mov.tipo)}
                     </Box>
                     <Box>
-                      <Typography variant="body2" fontWeight={500} sx={{ mb: 0.5 }}>
+                      <Typography
+                        variant="body2"
+                        fontWeight={500}
+                        sx={{ mb: 0.5 }}
+                      >
                         {tipoActividadLabel(mov)}
                       </Typography>
                       <Stack direction="row" spacing={1} alignItems="center">
@@ -547,7 +551,11 @@ const Home: React.FC = () => {
                           <Typography
                             variant="caption"
                             color="text.secondary"
-                            sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 0.75,
+                            }}
                           >
                             <Box
                               component="span"

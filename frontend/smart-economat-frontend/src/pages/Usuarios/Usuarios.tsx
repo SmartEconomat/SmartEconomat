@@ -1,40 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-    Box,
-    Paper,
-    IconButton,
-    Typography,
-    Button,
-    Stack,
-    Card,
-    CardContent,
-    Divider,
-    CardActions,
-    Avatar,
-} from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import React from 'react';
+import UsuariosView from './UsuariosView';
 
-import DataTable, { Column } from '../../components/ui/DataTable';
-import ConfirmDialog from '../../components/ui/ConfirmDialog';
-import RoleBadge from '../../components/ui/RoleBadge';
-import StatusChip from '../../components/ui/StatusChip';
-import UserModal from './UserModal';
-import SelectField from '../../components/ui/SelectField';
-import InputField from '../../components/ui/InputField';
-
-import { usuarioService } from '../../services/usuarioService';
-import {
-    Usuario,
-    CrearUsuarioDTO,
-    ActualizarUsuarioDTO,
-} from '../../types/usuario';
-import { useToast } from '../../store/ToastContext';
-import { useAuth } from '../../store/AuthContext';
-
+/**
+ * Página de Gestión de Usuarios.
+ * Ahora delegada al componente UsuariosView para permitir reutilización en el panel de Administración.
+ */
 const Usuarios: React.FC = () => {
     // Estados principales
     const [usuarios, setUsuarios] = useState<Usuario[]>([]);

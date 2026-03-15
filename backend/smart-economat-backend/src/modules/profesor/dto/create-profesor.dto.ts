@@ -5,6 +5,7 @@ import {
   IsString,
   IsStrongPassword,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateProfesorDto {
   @IsString()
@@ -32,6 +33,7 @@ export class CreateProfesorDto {
   @IsNotEmpty()
   email!: string;
 
+  @Transform(({ value }) => typeof value === 'string' ? value.toUpperCase() : value)
   @IsString()
   @IsNotEmpty()
   cial!: string;

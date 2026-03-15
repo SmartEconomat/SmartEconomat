@@ -16,7 +16,7 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import { UbicacionService } from '../../services/ubicacion.service';
 import type { Ubicacion } from '../../services/ubicacion.types';
-import { useToast } from '../../store/ToastContext';
+import { useToast } from '../../store/toast.hooks';
 
 interface Props {
   open: boolean;
@@ -35,8 +35,9 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
     try {
       const data = await UbicacionService.findAll();
       setUbicaciones(Array.isArray(data) ? data : []);
-    } catch (err: any) {
-      toast.error(err.message || 'Error al cargar ubicaciones');
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || 'Error al cargar ubicaciones');
     } finally {
       setLoading(false);
     }
@@ -46,6 +47,7 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
     if (open) {
       loadUbicaciones();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const handleAdd = async () => {
@@ -56,8 +58,9 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
       toast.success('Ubicación añadida');
       onChanged();
       loadUbicaciones();
-    } catch (err: any) {
-      toast.error(err.message || 'Error al crear ubicación');
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || 'Error al crear ubicación');
     }
   };
 
@@ -67,8 +70,9 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
       toast.success('Ubicación eliminada');
       onChanged();
       loadUbicaciones();
-    } catch (err: any) {
-      toast.error(err.message || 'Error al eliminar ubicación');
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || 'Error al eliminar ubicación');
     }
   };
 

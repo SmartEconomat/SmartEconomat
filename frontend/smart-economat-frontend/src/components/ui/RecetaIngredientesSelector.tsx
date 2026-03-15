@@ -23,11 +23,8 @@ import AddIcon from '@mui/icons-material/Add';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { fetchProductos } from '../../services/producto.service';
 import { Producto } from '../../services/producto.types';
-import {
-  RecetaIngrediente,
-  UnidadIngrediente,
-} from '../../services/receta.types';
-import { EU_ALLERGENS } from './AllergenSelector';
+import { UnidadIngrediente } from '../../services/receta.types';
+import { EU_ALLERGENS } from '../../utils/constants';
 
 export interface UI_RecetaIngrediente {
   productoId: string;
@@ -83,6 +80,7 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
   const handleUpdateLine = (
     index: number,
     field: keyof UI_RecetaIngrediente,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     newValue: any
   ) => {
     const newLines = [...value];
@@ -114,9 +112,12 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
       }
     });
 
-    return Array.from(allergenSet)
-      .map((id) => EU_ALLERGENS.find((ea) => ea.id === id))
-      .filter((a): a is (typeof EU_ALLERGENS)[0] => a !== undefined);
+    return (
+      Array.from(allergenSet)
+        .map((id) => EU_ALLERGENS.find((ea) => ea.id === id))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .filter((a): a is any => a !== undefined)
+    );
   }, [value, allProducts]);
 
   return (
@@ -237,6 +238,7 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                     line.producto &&
                     !allProducts.find((p) => p.id === line.producto?.id)
                   ) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     options.push(line.producto as any);
                   }
 

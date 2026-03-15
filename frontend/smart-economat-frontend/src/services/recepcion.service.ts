@@ -5,7 +5,7 @@ import { baseFetch, ApiResponse, unwrapList } from './api.service';
  * Obtiene todas las recepciones registradas en el sistema.
  * El endpoint subyacente devolverá las entidades Recepcion con sus relaciones principales.
  */
-export async function fetchRecepciones(): Promise<any[]> {
+export async function fetchRecepciones(): Promise<unknown[]> {
   const response = await baseFetch('/recepcion?limit=50');
   if (!response.ok) {
     throw new Error(
@@ -13,7 +13,7 @@ export async function fetchRecepciones(): Promise<any[]> {
     );
   }
   const body = (await response.json()) as ApiResponse<unknown>;
-  return unwrapList<any>(body.data);
+  return unwrapList<unknown>(body.data);
 }
 
 /**
@@ -62,7 +62,9 @@ export async function deleteRecepcion(id: string): Promise<void> {
     try {
       const errorBody = await response.json();
       if (errorBody.message) errorMsg = errorBody.message;
-    } catch {}
+    } catch {
+      // Ignore
+    }
     throw new Error(errorMsg);
   }
 }

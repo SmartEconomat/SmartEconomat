@@ -8,4 +8,8 @@ export class CreateSlotDto {
   @IsInt()
   @Min(1)
   numeroClase!: number;
+
+  @IsInt()
+  @Min(1)
+  capacidad!: number;
 }

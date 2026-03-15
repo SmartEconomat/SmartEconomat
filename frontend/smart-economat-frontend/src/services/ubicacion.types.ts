@@ -9,4 +9,10 @@ export interface CreateUbicacionDto {
   descripcion?: string;
 }
 
-export interface UpdateUbicacionDto extends Partial<CreateUbicacionDto> {}
+export interface UbicacionQueryParams {
+  page?: number;
+  limit?: number;
+  searchTerm?: string;
+}
+
+export type UpdateUbicacionDto = Partial<CreateUbicacionDto>;

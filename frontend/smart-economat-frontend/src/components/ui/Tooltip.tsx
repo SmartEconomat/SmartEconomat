@@ -6,12 +6,7 @@ import { Tooltip as MuiTooltip, TooltipProps, Zoom } from '@mui/material';
  * Incluye por defecto la animación Zoom, flecha y posición a la derecha.
  */
 export const Tooltip = (props: TooltipProps) => {
-    return (
-        <MuiTooltip
-            TransitionComponent={Zoom}
-            arrow
-            placement="right"
-            {...props}
-        />
-    );
+  return (
+    <MuiTooltip TransitionComponent={Zoom} arrow placement="right" {...props} />
+  );
 };

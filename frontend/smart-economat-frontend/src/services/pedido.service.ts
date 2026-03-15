@@ -51,15 +51,14 @@ export async function createPedido(
   });
 
   if (!response.ok) {
-    let errorDetail: any = {};
+    let errorMessage = `Error al crear pedido: ${response.status}`;
     try {
-      errorDetail = await response.json();
-    } catch (e) {
-      // ignore JSON parse errors
+      const errorDetail = (await response.json()) as { message?: string };
+      if (errorDetail?.message) errorMessage = errorDetail.message;
+    } catch {
+      // ignore
     }
-    throw new Error(
-      errorDetail?.message || `Error al crear pedido: ${response.status}`
-    );
+    throw new Error(errorMessage);
   }
 
   const body = (await response.json()) as ApiResponse<Pedido>;
@@ -77,13 +76,14 @@ export async function updatePedido(
   });
 
   if (!response.ok) {
-    let errorDetail: any = {};
+    let errorMessage = `Error al actualizar pedido: ${response.status}`;
     try {
-      errorDetail = await response.json();
-    } catch (e) {}
-    throw new Error(
-      errorDetail?.message || `Error al actualizar pedido: ${response.status}`
-    );
+      const errorDetail = (await response.json()) as { message?: string };
+      if (errorDetail?.message) errorMessage = errorDetail.message;
+    } catch {
+      // ignore
+    }
+    throw new Error(errorMessage);
   }
 
   const body = (await response.json()) as ApiResponse<Pedido>;
