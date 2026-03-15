@@ -1,0 +1,4 @@
+export enum PedidoStatusTrigger {
+  RECEPCION_PARCIAL = 'RECEPCION_PARCIAL',
+  RECEPCION_TOTAL = 'RECEPCION_TOTAL',
+}

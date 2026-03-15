@@ -10,6 +10,7 @@ export const PEDIDO_COLUMNS: ExportColumn[] = [
   { header: 'Usuario', key: 'usuario', width: 25 },
   { header: 'Fecha Pedido', key: 'fechaPedido', width: 15 },
   { header: 'Fecha Entrega', key: 'fechaEntrega', width: 15 },
+  { header: 'Observaciones', key: 'observaciones', width: 40 },
   { header: 'Nº Líneas', key: 'numLineas', width: 10 },
   { header: 'Subtotal (€)', key: 'subtotal', width: 15, numFmt: '#,##0.00 €' },
   {
@@ -34,6 +35,7 @@ export function mapPedidoToExcelRow(pedido: Pedido): Record<string, unknown> {
     usuario: pedido.usuario?.username ?? '',
     fechaPedido: pedido.fechaPedido?.toISOString().split('T')[0] ?? '',
     fechaEntrega: pedido.fechaEntrega?.toISOString().split('T')[0] ?? '',
+    observaciones: pedido.observaciones ?? '',
     numLineas: pedido.pedidoProductos?.length ?? 0,
     subtotal,
     impuestos,

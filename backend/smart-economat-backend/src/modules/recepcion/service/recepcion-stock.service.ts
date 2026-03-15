@@ -15,6 +15,7 @@ import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity
 import { Pedido } from '../../pedido/pedido.entity/pedido.entity';
 import { TipoMovimiento } from '../../movimiento/enums/movimiento.enums';
 import { EstadoPedido } from '../../pedido/enums/estado-pedido.enum';
+import { PedidoStatusTrigger } from '../../pedido/enums/pedido-status-trigger.enum';
 import { PedidoProducto } from '../../pedido/pedido-producto.entity/pedido-producto.entity';
 import { Recepcion } from '../recepcion.entity/recepcion.entity';
 import { RecepcionPedido } from '../recepcion-pedido.entity/recepcion-pedido.entity';
@@ -28,6 +29,7 @@ import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { Producto } from '../../producto/producto.entity/producto.entity';
 import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
+import { PedidoService } from '../../pedido/service/pedido.service';
 import {
   RecepcionMasivaLoteDto,
   RecepcionMasivaProductoDto,
@@ -57,7 +59,10 @@ interface PedidoActualizado {
 
 @Injectable()
 export class RecepcionStockService {
-  constructor(private dataSource: DataSource) {}
+  constructor(
+    private dataSource: DataSource,
+    private readonly pedidoService: PedidoService
+  ) {}
 
   async procesarRecepcionMasiva(
     dto: RecepcionMasivaLoteDto,
@@ -763,7 +768,6 @@ export class RecepcionStockService {
       pedido.pedidoProductos as unknown as PedidoProducto[];
     const orderProductIds = new Set(pedidoProductosList.map((pp) => pp.id));
 
-    let totalRecibido = 0;
     const mapRecvd = new Map<string, number>();
 
     for (const repPedido of recepcionPedidos) {
@@ -775,7 +779,6 @@ export class RecepcionStockService {
           repProd.pedidoProducto &&
           orderProductIds.has(repProd.pedidoProducto.id)
         ) {
-          totalRecibido += Number(repProd.cantidadRecibida);
           const curr = mapRecvd.get(repProd.pedidoProducto.id) || 0;
           mapRecvd.set(
             repProd.pedidoProducto.id,
@@ -786,7 +789,6 @@ export class RecepcionStockService {
     }
 
     let isFull = true;
-    let isIncidencia = false;
 
     for (const pp of pedidoProductosList) {
       const cantReq = Number(pp.cantidad);
@@ -794,25 +796,17 @@ export class RecepcionStockService {
 
       if (cantRecv !== cantReq) {
         isFull = false;
-        if (cantRecv === 0 || cantRecv > cantReq) {
-          isIncidencia = true;
-        }
       }
     }
 
-    if (isFull) {
-      (pedido as any).estado = EstadoPedido.RECIBIDO;
-    } else {
-      if (isIncidencia) {
-        (pedido as any).estado = EstadoPedido.INCIDENCIA;
-      } else if (totalRecibido > 0) {
-        (pedido as any).estado = EstadoPedido.PARCIAL;
-      } else {
-        (pedido as any).estado = EstadoPedido.EN_PROCESO;
-      }
-    }
+    const updatedPedido = await this.pedidoService.handleStatusTransition(
+      pedidoId,
+      isFull
+        ? PedidoStatusTrigger.RECEPCION_TOTAL
+        : PedidoStatusTrigger.RECEPCION_PARCIAL,
+      manager
+    );
 
-    await manager.save(Pedido, pedido);
-    return pedido.estado;
+    return updatedPedido.estado;
   }
 }

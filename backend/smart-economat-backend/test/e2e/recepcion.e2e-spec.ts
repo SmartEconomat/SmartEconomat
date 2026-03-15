@@ -4,7 +4,6 @@ import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { generateUniqueName, loginAndGetToken } from '../utils/test-helpers';
 import { Pedido } from '../../src/modules/pedido/pedido.entity/pedido.entity';
-import { Producto } from '../../src/modules/producto/producto.entity/producto.entity';
 import { EstadoPedido } from '../../src/modules/pedido/enums/estado-pedido.enum';
 import { TipoMovimiento } from '../../src/modules/movimiento/enums/movimiento.enums';
 import { EstadoRecepcion } from '../../src/modules/recepcion/enums/estado-recepcion.enum';
@@ -111,7 +110,7 @@ describe('RecepcionController (e2e)', () => {
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
         proveedorId,
-        fechaEntrega: new Date(Date.now() + 86400000).toISOString(),
+        observaciones: 'Pedido auxiliar para recepción',
         lineas,
       })
       .expect(201);
@@ -346,7 +345,7 @@ describe('RecepcionController (e2e)', () => {
         ])
       );
       expect(recepcion?.estado).toBe(EstadoRecepcion.CON_INCIDENCIAS);
-      expect(pedidoActualizado?.estado).toBe(EstadoPedido.PARCIAL);
+      expect(pedidoActualizado?.estado).toBe(EstadoPedido.EN_PROCESO);
       expect(incidencia.body.data.id).toBe(incidenciaId);
     });
 

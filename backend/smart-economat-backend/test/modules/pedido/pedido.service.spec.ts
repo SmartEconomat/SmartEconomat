@@ -4,6 +4,7 @@ import { EstadoPedido } from '../../../src/modules/pedido/enums/estado-pedido.en
 import { Pedido } from '../../../src/modules/pedido/pedido.entity/pedido.entity';
 import { PedidoProducto } from '../../../src/modules/pedido/pedido-producto.entity/pedido-producto.entity';
 import { ProductoProveedor } from '../../../src/modules/producto/producto-proveedor.entity/producto-proveedor.entity';
+import { PedidoStatusTrigger } from '../../../src/modules/pedido/enums/pedido-status-trigger.enum';
 
 describe('PedidoService', () => {
   const mockPedidoRepository = {
@@ -21,6 +22,10 @@ describe('PedidoService', () => {
     createQueryRunner: jest.fn(),
   };
 
+  const mockConfigService = {
+    get: jest.fn().mockReturnValue(48),
+  };
+
   let service: PedidoService;
 
   beforeEach(() => {
@@ -28,7 +33,8 @@ describe('PedidoService', () => {
     service = new PedidoService(
       mockPedidoRepository as any,
       mockMovimientoHelper as any,
-      mockDataSource as any
+      mockDataSource as any,
+      mockConfigService as any
     );
   });
 
@@ -57,7 +63,7 @@ describe('PedidoService', () => {
     return queryRunner;
   }
 
-  it('create calcula costeTotal y persiste líneas del pedido', async () => {
+  it('create calcula costeTotal, autogenera fechaEntrega y persiste líneas del pedido', async () => {
     const queryRunner = createQueryRunner();
 
     queryRunner.manager.findOne
@@ -92,7 +98,7 @@ describe('PedidoService', () => {
     const result = await service.create(
       {
         proveedorId: 'prov-1',
-        fechaEntrega: '2026-03-20T12:00:00.000Z',
+        observaciones: 'Entrega semanal',
         lineas: [
           { productoProveedorId: 'pp-1', cantidad: 2 },
           { productoProveedorId: 'pp-2', cantidad: 3 },
@@ -107,6 +113,8 @@ describe('PedidoService', () => {
       expect.objectContaining({
         estado: EstadoPedido.PENDIENTE,
         costeTotal: 8.6,
+        observaciones: 'Entrega semanal',
+        fechaEntrega: expect.any(Date),
       })
     );
     expect(mockMovimientoHelper.trackPedidoCreation).toHaveBeenCalledWith(
@@ -119,6 +127,11 @@ describe('PedidoService', () => {
       costeTotal: 8.6,
       estado: EstadoPedido.PENDIENTE,
     });
+
+    const pedidoGuardado = queryRunner.manager.save.mock.calls[0][1] as Pedido;
+    const diffMs = pedidoGuardado.fechaEntrega!.getTime() - Date.now();
+    expect(diffMs).toBeGreaterThan(47 * 60 * 60 * 1000);
+    expect(diffMs).toBeLessThan(49 * 60 * 60 * 1000);
   });
 
   it('create rechaza líneas de producto proveedor de otro proveedor', async () => {
@@ -133,7 +146,6 @@ describe('PedidoService', () => {
       service.create(
         {
           proveedorId: 'prov-1',
-          fechaEntrega: '2026-03-20T12:00:00.000Z',
           lineas: [{ productoProveedorId: 'pp-1', cantidad: 1 }],
         } as any,
         'user-1'
@@ -155,7 +167,6 @@ describe('PedidoService', () => {
       service.create(
         {
           proveedorId: 'prov-1',
-          fechaEntrega: '2026-03-20T12:00:00.000Z',
           lineas: [{ productoProveedorId: 'pp-1', cantidad: 1 }],
         } as any,
         'user-1'
@@ -233,6 +244,60 @@ describe('PedidoService', () => {
       ).rejects.toBeInstanceOf(BadRequestException);
     }
   );
+
+  it('cancelarPedido rechaza pedidos con recepción iniciada aunque sigan pendientes', async () => {
+    mockPedidoRepository.findOneWithRelations.mockResolvedValue({
+      id: 'pedido-4b',
+      estado: EstadoPedido.PENDIENTE,
+      recepcionesPedido: [{ id: 'rec-ped-1' }],
+    });
+
+    await expect(
+      service.cancelarPedido('pedido-4b', {
+        motivoCancelacion: 'No procede',
+      } as any)
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('handleStatusTransition pasa a EN_PROCESO con recepción parcial', async () => {
+    mockPedidoRepository.findOneBy = jest.fn().mockResolvedValue({
+      id: 'pedido-6',
+      estado: EstadoPedido.PENDIENTE,
+    });
+    mockPedidoRepository.save.mockImplementation((pedido: Pedido) =>
+      Promise.resolve(pedido)
+    );
+
+    const result = await service.handleStatusTransition(
+      'pedido-6',
+      PedidoStatusTrigger.RECEPCION_PARCIAL
+    );
+
+    expect(result.estado).toBe(EstadoPedido.EN_PROCESO);
+  });
+
+  it('handleStatusTransition pasa a RECIBIDO con recepción total', async () => {
+    mockPedidoRepository.findOneBy = jest.fn().mockResolvedValue({
+      id: 'pedido-7',
+      estado: EstadoPedido.EN_PROCESO,
+    });
+    mockPedidoRepository.save.mockImplementation((pedido: Pedido) =>
+      Promise.resolve(pedido)
+    );
+
+    const result = await service.handleStatusTransition(
+      'pedido-7',
+      PedidoStatusTrigger.RECEPCION_TOTAL
+    );
+
+    expect(result.estado).toBe(EstadoPedido.RECIBIDO);
+  });
+
+  it('updateFechaEntrega bloquea la edición manual', () => {
+    expect(() => service.updateFechaEntrega('pedido-8', {} as any)).toThrow(
+      BadRequestException
+    );
+  });
 
   it('remove rechaza pedidos que no estén pendientes o cancelados', async () => {
     mockPedidoRepository.findOneWithRelations.mockResolvedValue({

@@ -18,6 +18,7 @@ import { PedidoProducto } from '../pedido/pedido-producto.entity/pedido-producto
 import { MovimientoModule } from '../movimiento/movimiento.module';
 import { MovimientoHelper } from '../../common/helpers/movimiento.helper';
 import { PdfReportService } from './service/pdf-report.service';
+import { PedidoModule } from '../pedido/pedido.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { PdfReportService } from './service/pdf-report.service';
       PedidoProducto,
     ]),
     MovimientoModule,
+    PedidoModule,
   ],
   controllers: [RecepcionController, RecepcionProductoController],
   providers: [

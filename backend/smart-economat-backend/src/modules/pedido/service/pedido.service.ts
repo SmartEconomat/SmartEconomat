@@ -4,7 +4,9 @@ import {
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
+import type { EntityManager } from 'typeorm';
 import { Pedido } from '../pedido.entity/pedido.entity';
 import { EstadoPedido } from '../enums/estado-pedido.enum';
 import { CreatePedidoDto } from '../dto/create-pedido.dto';
@@ -17,21 +19,22 @@ import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { PedidoStatusTrigger } from '../enums/pedido-status-trigger.enum';
 
 @Injectable()
 export class PedidoService {
   constructor(
     private readonly pedidoRepository: PedidoRepository,
     private readonly movimientoHelper: MovimientoHelper,
-    private readonly dataSource: DataSource
+    private readonly dataSource: DataSource,
+    private readonly configService: ConfigService
   ) {}
 
   async create(
     createPedidoDto: CreatePedidoDto,
     userId: string
   ): Promise<Pedido> {
-    const { lineas, fechaEntrega, proveedorId, ...pedidoFields } =
-      createPedidoDto;
+    const { lineas, proveedorId, observaciones } = createPedidoDto;
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -79,12 +82,12 @@ export class PedidoService {
       }
 
       const pedido = queryRunner.manager.create(Pedido, {
-        ...pedidoFields,
         usuario: { id: userId },
         proveedor: { id: proveedorId },
         estado: EstadoPedido.PENDIENTE,
         costeTotal,
-        fechaEntrega: new Date(fechaEntrega),
+        fechaEntrega: this.calculateFechaEntrega(),
+        observaciones,
       });
 
       const savedPedido = await queryRunner.manager.save(Pedido, pedido);
@@ -137,16 +140,12 @@ export class PedidoService {
   async update(id: string, updatePedidoDto: UpdatePedidoDto): Promise<Pedido> {
     const pedido = await this.findOne(id);
 
-    if (updatePedidoDto.fechaEntrega) {
-      pedido.fechaEntrega = new Date(updatePedidoDto.fechaEntrega);
-    }
-
-    if (updatePedidoDto.estado) {
-      pedido.estado = updatePedidoDto.estado;
-    }
-
     if (updatePedidoDto.proveedorId) {
       pedido.proveedor = { id: updatePedidoDto.proveedorId } as any;
+    }
+
+    if (updatePedidoDto.observaciones !== undefined) {
+      pedido.observaciones = updatePedidoDto.observaciones;
     }
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -228,23 +227,28 @@ export class PedidoService {
     }
   }
 
-  async updateFechaEntrega(id: string, dto: UpdatePedidoDto): Promise<Pedido> {
-    const pedido = await this.findOne(id);
-
-    if (dto.fechaEntrega) {
-      pedido.fechaEntrega = new Date(dto.fechaEntrega);
-      return await this.pedidoRepository.save(pedido);
-    }
-
-    return pedido;
+  updateFechaEntrega(id: string, dto: UpdatePedidoDto): Promise<Pedido> {
+    void id;
+    void dto;
+    throw new BadRequestException(
+      'La fecha de entrega se calcula automáticamente y no puede editarse manualmente.'
+    );
   }
 
   async cancelarPedido(id: string, dto: CancelPedidoDto): Promise<Pedido> {
     const pedido = await this.findOne(id);
 
+    if ((pedido.recepcionesPedido?.length ?? 0) > 0) {
+      throw new BadRequestException(
+        'No se puede cancelar un pedido si ya ha comenzado la recepción.'
+      );
+    }
+
     if (
+      pedido.estado === EstadoPedido.EN_PROCESO ||
       pedido.estado === EstadoPedido.RECIBIDO ||
-      pedido.estado === EstadoPedido.EN_PROCESO
+      pedido.estado === EstadoPedido.PARCIAL ||
+      pedido.estado === EstadoPedido.INCIDENCIA
     ) {
       throw new BadRequestException(
         I18nHelper.getError('ORDER_NOT_CANCELLABLE')
@@ -253,6 +257,36 @@ export class PedidoService {
 
     pedido.cancelar(dto.motivoCancelacion || 'Cancelado por el usuario');
     return await this.pedidoRepository.save(pedido);
+  }
+
+  async handleStatusTransition(
+    pedidoId: string,
+    trigger: PedidoStatusTrigger,
+    manager?: EntityManager
+  ): Promise<Pedido> {
+    const pedido = manager
+      ? await manager.findOne(Pedido, { where: { id: pedidoId } })
+      : await this.pedidoRepository.findOneBy({ id: pedidoId });
+
+    if (!pedido) {
+      throw new NotFoundException(I18nHelper.getError('ORDER_NOT_FOUND'));
+    }
+
+    if (pedido.estado === EstadoPedido.CANCELADO) {
+      throw new BadRequestException(
+        'No se puede transicionar un pedido cancelado.'
+      );
+    }
+
+    if (trigger === PedidoStatusTrigger.RECEPCION_TOTAL) {
+      pedido.estado = EstadoPedido.RECIBIDO;
+    } else {
+      pedido.estado = EstadoPedido.EN_PROCESO;
+    }
+
+    return manager
+      ? await manager.save(Pedido, pedido)
+      : await this.pedidoRepository.save(pedido);
   }
 
   async remove(id: string): Promise<void> {
@@ -268,5 +302,27 @@ export class PedidoService {
     }
 
     await this.pedidoRepository.remove(pedido);
+  }
+
+  private calculateFechaEntrega(baseDate = new Date()): Date {
+    const fechaEntrega = new Date(baseDate);
+    fechaEntrega.setHours(
+      fechaEntrega.getHours() + this.getFechaEntregaOffsetHoras()
+    );
+    return fechaEntrega;
+  }
+
+  private getFechaEntregaOffsetHoras(): number {
+    const rawValue = this.configService.get<string | number>(
+      'PEDIDO_FECHA_ENTREGA_OFFSET_HOURS',
+      48
+    );
+    const parsedValue = Number(rawValue);
+
+    if (!Number.isFinite(parsedValue) || parsedValue < 0) {
+      return 48;
+    }
+
+    return parsedValue;
   }
 }
