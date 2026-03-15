@@ -35,6 +35,7 @@ export class PedidoService {
     userId: string
   ): Promise<Pedido> {
     const { lineas, proveedorId, observaciones } = createPedidoDto;
+    const estadoInicial = this.getInitialStatus();
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -84,7 +85,7 @@ export class PedidoService {
       const pedido = queryRunner.manager.create(Pedido, {
         usuario: { id: userId },
         proveedor: { id: proveedorId },
-        estado: EstadoPedido.PENDIENTE,
+        estado: estadoInicial,
         costeTotal,
         fechaEntrega: this.calculateFechaEntrega(),
         observaciones,
@@ -278,11 +279,7 @@ export class PedidoService {
       );
     }
 
-    if (trigger === PedidoStatusTrigger.RECEPCION_TOTAL) {
-      pedido.estado = EstadoPedido.RECIBIDO;
-    } else {
-      pedido.estado = EstadoPedido.EN_PROCESO;
-    }
+    pedido.estado = this.resolveStatusFromTrigger(trigger);
 
     return manager
       ? await manager.save(Pedido, pedido)
@@ -310,6 +307,23 @@ export class PedidoService {
       fechaEntrega.getHours() + this.getFechaEntregaOffsetHoras()
     );
     return fechaEntrega;
+  }
+
+  private getInitialStatus(): EstadoPedido {
+    return EstadoPedido.PENDIENTE;
+  }
+
+  private resolveStatusFromTrigger(trigger: PedidoStatusTrigger): EstadoPedido {
+    switch (trigger) {
+      case PedidoStatusTrigger.RECEPCION_PARCIAL:
+        return EstadoPedido.EN_PROCESO;
+      case PedidoStatusTrigger.RECEPCION_TOTAL:
+        return EstadoPedido.RECIBIDO;
+      default:
+        throw new BadRequestException(
+          'Disparador de transición de pedido no soportado.'
+        );
+    }
   }
 
   private getFechaEntregaOffsetHoras(): number {

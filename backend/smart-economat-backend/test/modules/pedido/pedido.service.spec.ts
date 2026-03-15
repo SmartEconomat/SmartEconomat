@@ -293,6 +293,17 @@ describe('PedidoService', () => {
     expect(result.estado).toBe(EstadoPedido.RECIBIDO);
   });
 
+  it('handleStatusTransition rechaza disparadores no soportados', async () => {
+    mockPedidoRepository.findOneBy = jest.fn().mockResolvedValue({
+      id: 'pedido-7b',
+      estado: EstadoPedido.PENDIENTE,
+    });
+
+    await expect(
+      service.handleStatusTransition('pedido-7b', 'DESCONOCIDO' as any)
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
   it('updateFechaEntrega bloquea la edición manual', () => {
     expect(() => service.updateFechaEntrega('pedido-8', {} as any)).toThrow(
       BadRequestException

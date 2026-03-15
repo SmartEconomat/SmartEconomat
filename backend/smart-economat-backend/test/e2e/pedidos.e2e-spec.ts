@@ -129,6 +129,25 @@ describe('PedidoController (e2e)', () => {
       expect(response.body.success).toBe(false);
     });
 
+    it('E2E-PED-03-CRE-LEGACY: Rechaza motivoCancelacion en el payload de creación', async () => {
+      const response = await request(app.getHttpServer() as string)
+        .post('/api/v1/pedidos')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          proveedorId,
+          motivoCancelacion: 'Campo legacy no permitido',
+          lineas: [
+            {
+              productoProveedorId,
+              cantidad: 5,
+            },
+          ],
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+    });
+
     it('E2E-PED-09-GET: Listar pedidos', async () => {
       await createPedido();
       const response = await request(app.getHttpServer() as string)
