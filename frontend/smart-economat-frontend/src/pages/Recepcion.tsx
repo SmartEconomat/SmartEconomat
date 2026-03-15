@@ -615,6 +615,14 @@ const Recepcion: React.FC = () => {
       })),
     };
 
+    function isErrorWithMessage(e: unknown): e is { message: string } {
+      return (
+        typeof e === 'object' &&
+        e !== null &&
+        'message' in e &&
+        typeof (e as { message: unknown }).message === 'string'
+      );
+    }
     try {
       const res = await createRecepcion(payload);
       setResultado(res);
@@ -622,14 +630,6 @@ const Recepcion: React.FC = () => {
       await clearRemoteDraft();
     } catch (err: unknown) {
       let errorMessage = '';
-      function isErrorWithMessage(e: unknown): e is { message: string } {
-        return (
-          typeof e === 'object' &&
-          e !== null &&
-          'message' in e &&
-          typeof (e as { message: unknown }).message === 'string'
-        );
-      }
       if (isErrorWithMessage(err)) {
         errorMessage = err.message;
       }

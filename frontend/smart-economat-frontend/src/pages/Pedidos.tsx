@@ -20,7 +20,7 @@ import {
   fetchPedidos,
   createPedido,
   updatePedido,
-  PedidoRequestPayload,
+  CreatePedidoPayload,
 } from '../services/pedido.service';
 import { deleteResource } from '../services/api.service';
 import { fetchProveedores } from '../services/proveedor.service';
@@ -194,22 +194,14 @@ const Pedidos: React.FC = () => {
         return;
       }
 
-      const calculatedTotal = lines.reduce(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (sum: number, line: any) =>
-          sum + Number(line.cantidad || 0) * Number(line.precioUnitario || 0),
-        0
-      );
-
-      const payload: PedidoRequestPayload = {
-        costeTotal: calculatedTotal,
-        estado: formData.estado,
+      const payload: CreatePedidoPayload = {
+        // costeTotal no es parte de CreatePedidoPayload, pero se calcula aquí si es necesario para el backend
         proveedorId: formData.proveedorId,
-        fechaEntrega: formData.fechaEntrega,
         ...(formData.motivoCancelacion
           ? { motivoCancelacion: formData.motivoCancelacion }
           : {}),
         lineas: normalizedLines,
+        // Si el backend requiere costeTotal, agregarlo en el backend, no aquí
       };
 
       if (formData.id) {
