@@ -7,7 +7,6 @@ import { AlertaController } from './controller/alerta.controller';
 import { InventarioRepository } from './repository/inventario.repository';
 import { ProductoProveedor } from '../producto/producto-proveedor.entity/producto-proveedor.entity';
 import { MovimientoModule } from '../movimiento/movimiento.module';
-import { MovimientoHelper } from '../../common/helpers/movimiento.helper';
 
 @Module({
   imports: [
@@ -15,7 +14,7 @@ import { MovimientoHelper } from '../../common/helpers/movimiento.helper';
     MovimientoModule,
   ],
   controllers: [InventarioController, AlertaController],
-  providers: [InventarioService, InventarioRepository, MovimientoHelper],
+  providers: [InventarioService, InventarioRepository],
   exports: [InventarioService],
 })
 export class InventarioModule {}

@@ -15,7 +15,6 @@ import { HistorialPrecioRepository } from './repository/historial-precio.reposit
 import { ProductoProveedor } from './producto-proveedor.entity/producto-proveedor.entity';
 import { HistorialPrecio } from './historial-precio-proveedor.entity/historial.entity';
 import { MovimientoModule } from '../movimiento/movimiento.module';
-import { MovimientoHelper } from '../../common/helpers/movimiento.helper';
 import { Proveedor } from '../proveedor/proveedor.entity/proveedor.entity';
 
 @Module({
@@ -42,7 +41,6 @@ import { Proveedor } from '../proveedor/proveedor.entity/proveedor.entity';
     ProductoAlergenoService,
     HistorialPrecioService,
     HistorialPrecioRepository,
-    MovimientoHelper,
   ],
   exports: [
     ProductoService,

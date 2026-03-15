@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MovimientoService } from '../../modules/movimiento/service/movimiento.service';
+import { MovimientoPort } from '../../modules/movimiento/ports/movimiento.port';
 import { CreateMovimientoDto } from '../../modules/movimiento/dto/create-movimiento.dto';
 import { TipoMovimiento } from '../../modules/movimiento/enums/movimiento.enums';
 
@@ -9,7 +9,7 @@ import { TipoMovimiento } from '../../modules/movimiento/enums/movimiento.enums'
  */
 @Injectable()
 export class MovimientoHelper {
-  constructor(private readonly movimientoService: MovimientoService) {}
+  constructor(private readonly movimientoPort: MovimientoPort) {}
 
   /**
    * Create a movement record for any user action
@@ -43,7 +43,7 @@ export class MovimientoHelper {
       descripcion,
     };
 
-    const movimiento = await this.movimientoService.create(createMovimientoDto);
+    const movimiento = await this.movimientoPort.create(createMovimientoDto);
 
     return movimiento;
   }

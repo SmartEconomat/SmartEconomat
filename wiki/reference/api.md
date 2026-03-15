@@ -1,3 +1,700 @@
+# API - SmartEconomat Backend
+
+Introducción
+
+Breve: Documentación auto-contenida de todos los endpoints del backend SmartEconomat, generada desde el código fuente del backend (ruta: backend/smart-economat-backend/src).
+
+Base URL
+
+- Base prefix global: `http://{host}:{port}/api/v1`
+
+Autenticación
+
+- Sistema: JWT con soporte para cookie `access_token` (httpOnly) y también acepta Authorization: Bearer <token>.
+- Los endpoints marcados como públicos usan el decorador `@Public()`; el resto requiere autenticación por `JwtAuthGuard` y, en muchos casos, autorización por roles/permissions.
+- Implementación: [src/modules/auth/strategies/jwt.strategy.ts](src/modules/auth/strategies/jwt.strategy.ts#L1)
+
+Endpoints
+
+A continuación se listan todos los endpoints expuestos por el backend (prefijo `api/v1` aplicado globalmente en [src/main.ts](src/main.ts#L1)).
+
+**Root**
+
+- GET /api/v1/
+  - Descripción: Endpoint raíz que devuelve un saludo (texto simple).
+  - Request: {}
+  - Response (200): string
+    - Ejemplo: "Hello World!" (valor real dependiente de `AppService`)
+  - Errores posibles
+    - 500: Error interno del servidor
+
+--
+
+**Auth** (/auth)
+
+- POST /api/v1/auth/register
+  - Descripción: Registrar un usuario. Devuelve `access_token` en cookie si aplica.
+  - Body (DTO real): [src/modules/auth/dto/register-user.dto.ts](src/modules/auth/dto/register-user.dto.ts#L1)
+  - Request ejemplo (parcial, campos según DTO):
+    {
+      "username": "juanito",
+      "password": "P4ssw0rd!",
+      "email": "juan@example.com",
+      "rol": "ADMINISTRADOR" // opcional
+    }
+  - Response (201/200 según implementación): objeto con datos de usuario y `access_token` en cookie (interceptor `CookieInterceptor`).
+  - Errores posibles
+    - 400: Datos inválidos
+    - 409: Conflicto (usuario ya existe)
+
+- POST /api/v1/auth/login
+  - Descripción: Login. Devuelve `access_token` (cookie) y datos de sesión.
+  - Body (DTO real): [src/modules/auth/dto/login-user.dto.ts](src/modules/auth/dto/login-user.dto.ts#L1)
+  - Request ejemplo:
+    {
+      "email": "juan@example.com",
+      "password": "P4ssw0rd!"
+    }
+  - Response (200): objeto con `access_token` (en cookie por `CookieInterceptor`) y datos del usuario.
+  - Errores posibles
+    - 400: Credenciales inválidas
+    - 401: No autorizado
+
+- POST /api/v1/auth/forgot-password
+  - Descripción: Solicitar restablecimiento de contraseña (envía correo si el email existe).
+  - Body (DTO real): [src/modules/auth/dto/forgot-password.dto.ts](src/modules/auth/dto/forgot-password.dto.ts#L1)
+  - Request ejemplo: { "email": "juan@example.com" }
+  - Response (200): { message: string }
+  - Errores posibles
+    - 400: Email inválido
+
+- POST /api/v1/auth/reset-password
+  - Descripción: Restablecer contraseña mediante token.
+  - Body (DTO real): [src/modules/auth/dto/reset-password.dto.ts](src/modules/auth/dto/reset-password.dto.ts#L1)
+  - Request ejemplo:
+    {
+      "token": "<token-de-reset>",
+      "newPassword": "N3wP4ss!"
+    }
+  - Response (200): { message: string }
+  - Errores posibles
+    - 400: Token o contraseña inválida
+    - 404: Token no encontrado
+
+- POST /api/v1/auth/change-password
+  - Descripción: Cambio de contraseña para usuario autenticado.
+  - Autorización: Requiere JWT.
+  - Body (DTO real): [src/modules/auth/dto/change-password.dto.ts](src/modules/auth/dto/change-password.dto.ts#L1)
+  - Request ejemplo:
+    {
+      "currentPassword": "OldP4ss!",
+      "newPassword": "N3wP4ss!"
+    }
+  - Response (200): { message: string }
+  - Errores posibles
+    - 400: Datos inválidos
+    - 401: Contraseña actual incorrecta
+
+--
+
+**Usuarios** (/usuarios)
+
+Nota: Controlador protegido por `JwtAuthGuard`, `RolesGuard` y `PermisosGuard`.
+
+- POST /api/v1/usuarios
+  - Descripción: Crear usuario (autorizaciones via permisos `usuarios:crear`).
+  - Body (DTO real): [src/modules/usuario/dto/create-usuario.dto.ts](src/modules/usuario/dto/create-usuario.dto.ts#L1)
+  - Response (201): Usuario creado
+  - Errores: 400, 403
+
+- POST /api/v1/usuarios/admin
+  - Descripción: Crear usuario desde admin (roles restringidos).
+  - Body: [src/modules/usuario/dto/admin-create-usuario.dto.ts](src/modules/usuario/dto/admin-create-usuario.dto.ts#L1)
+
+- GET /api/v1/usuarios/perfil
+  - Descripción: Obtener perfil del usuario autenticado.
+  - Response (200): Usuario
+
+- PATCH /api/v1/usuarios/perfil
+  - Descripción: Actualizar perfil del usuario autenticado.
+  - Body: [src/modules/usuario/dto/update-usuario.dto.ts](src/modules/usuario/dto/update-usuario.dto.ts#L1)
+
+- PATCH /api/v1/usuarios/perfil/password
+  - Descripción: Cambiar contraseña (usuario autenticado).
+  - Body: [src/modules/auth/dto/change-password.dto.ts](src/modules/auth/dto/change-password.dto.ts#L1)
+
+- GET /api/v1/usuarios
+  - Descripción: Listar usuarios (paginated). Query params: ver `PaginationQueryDto`.
+  - Query DTO: [src/common/dto/pagination-query.dto.ts](src/common/dto/pagination-query.dto.ts#L1)
+
+- GET /api/v1/usuarios/:id
+  - Parámetros path: `id` UUID v7
+  - Descripción: Obtener usuario por id
+
+- PATCH /api/v1/usuarios/:id
+  - Body: [src/modules/usuario/dto/update-usuario.dto.ts](src/modules/usuario/dto/update-usuario.dto.ts#L1)
+
+- PATCH /api/v1/usuarios/:id/admin
+  - Descripción: Actualizar info sensible por admin
+  - Body: [src/modules/usuario/dto/admin-update-usuario.dto.ts](src/modules/usuario/dto/admin-update-usuario.dto.ts#L1)
+
+- PATCH /api/v1/usuarios/:id/activar
+  - Body: [src/modules/usuario/dto/update-status.dto.ts](src/modules/usuario/dto/update-status.dto.ts#L1)
+
+- PATCH /api/v1/usuarios/:id/rol
+  - Body: [src/modules/usuario/dto/update-rol.dto.ts](src/modules/usuario/dto/update-rol.dto.ts#L1)
+
+- PATCH /api/v1/usuarios/:id/password
+  - Body: [src/modules/usuario/dto/reset-password.dto.ts](src/modules/usuario/dto/reset-password.dto.ts#L1)
+
+- DELETE /api/v1/usuarios/:id
+  - Descripción: Eliminar usuario (soft-delete probable). Respuesta: 204 No Content
+
+- POST /api/v1/usuarios/:id/permisos-adicionales/:permisoId
+  - Descripción: Añadir permiso adicional a usuario
+
+- DELETE /api/v1/usuarios/:id/permisos-adicionales/:permisoId
+  - Descripción: Eliminar permiso adicional
+
+- POST /api/v1/usuarios/:id/permisos-excluidos/:permisoId
+  - Descripción: Añadir permiso excluido
+
+- DELETE /api/v1/usuarios/:id/permisos-excluidos/:permisoId
+  - Descripción: Eliminar permiso excluido
+
+--
+
+**Preparaciones** (/preparaciones)
+
+Protegido por JWT.
+
+- POST /api/v1/preparaciones
+  - Descripción: Crear preparación.
+  - Body: [src/modules/preparacion/dto/create-preparacion.dto.ts](src/modules/preparacion/dto/create-preparacion.dto.ts#L1)
+
+- GET /api/v1/preparaciones
+  - Descripción: Listar todas las preparaciones.
+
+- GET /api/v1/preparaciones/:uuid
+  - Parámetro: `uuid` (string)
+
+- PATCH /api/v1/preparaciones/:uuid
+  - Body: [src/modules/preparacion/dto/update-preparacion.dto.ts](src/modules/preparacion/dto/update-preparacion.dto.ts#L1)
+
+- DELETE /api/v1/preparaciones/:uuid
+
+- POST /api/v1/preparaciones/:uuid/ejecutar
+  - Descripción: Ejecutar preparación; body: { cantidad: number }
+
+--
+
+**Alertas de Inventario** (/alertas)
+
+- GET /api/v1/alertas/caducidad
+  - Descripción: Obtener alertas por caducidad
+  - Response: [src/modules/inventario/dto/alertaCaducidad.dto.ts](src/modules/inventario/dto/alertaCaducidad.dto.ts#L1)
+
+- GET /api/v1/alertas/stock
+  - Descripción: Obtener alertas por stock
+  - Response: [src/modules/inventario/dto/alertaStock.dto.ts](src/modules/inventario/dto/alertaStock.dto.ts#L1)
+
+--
+
+**Ubicaciones** (/ubicacion)
+
+- POST /api/v1/ubicacion
+  - Descripción: Crear ubicación
+  - Body: [src/modules/ubicacion/dto/create-ubicacion.dto.ts](src/modules/ubicacion/dto/create-ubicacion.dto.ts#L1)
+
+- GET /api/v1/ubicacion
+  - Descripción: Obtener todas las ubicaciones (paginado)
+
+- GET /api/v1/ubicacion/:id
+  - Parámetro: `id` UUID v7
+
+- PATCH /api/v1/ubicacion/:id
+  - Body: [src/modules/ubicacion/dto/update-ubicacion.dto.ts](src/modules/ubicacion/dto/update-ubicacion.dto.ts#L1)
+
+- DELETE /api/v1/ubicacion/:id
+  - Descripción: Eliminación lógica
+
+- POST /api/v1/ubicacion/:id/restore
+  - Descripción: Restaurar ubicación eliminada
+
+--
+
+**Inventario** (/inventario)
+
+- POST /api/v1/inventario
+  - Descripción: Crear item de inventario
+  - Body: [src/modules/inventario/dto/create-InventarioItem.dto.ts](src/modules/inventario/dto/create-InventarioItem.dto.ts#L1)
+  - Response: [src/modules/inventario/inventario.entity/inventario.entity.ts](src/modules/inventario/inventario.entity/inventario.entity.ts#L1)
+
+- GET /api/v1/inventario
+  - Descripción: Listar inventario (paginado)
+  - Query: [src/common/dto/pagination-query.dto.ts](src/common/dto/pagination-query.dto.ts#L1)
+
+- GET /api/v1/inventario/stock
+  - Descripción: Consultas de stock (consolidado o por ubicación)
+  - Query DTO: [src/modules/inventario/dto/inventory-query.dto.ts](src/modules/inventario/dto/inventory-query.dto.ts#L1)
+
+- POST /api/v1/inventario/ajustes-manuales
+  - Descripción: Registrar ajuste manual (auditado)
+  - Body: [src/modules/inventario/dto/create-movimiento-manual.dto.ts](src/modules/inventario/dto/create-movimiento-manual.dto.ts#L1)
+  - Response: Inventario actualizado
+  - Errores: 400, 404, 409
+
+- GET /api/v1/inventario/:id
+  - Descripción: Obtener item de inventario por id
+
+- PATCH /api/v1/inventario/:id
+  - Body: [src/modules/inventario/dto/update-inventario.dto.ts](src/modules/inventario/dto/update-inventario.dto.ts#L1)
+
+- DELETE /api/v1/inventario/:id
+  - Respuesta: 204 No Content
+
+--
+
+**Proveedores** (/proveedor)
+
+- POST /api/v1/proveedor
+  - Body: [src/modules/proveedor/dto/create-proveedor.dto.ts](src/modules/proveedor/dto/create-proveedor.dto.ts#L1)
+
+- GET /api/v1/proveedor
+  - Query: [src/common/dto/pagination-query.dto.ts](src/common/dto/pagination-query.dto.ts#L1)
+
+- GET /api/v1/proveedor/:id
+
+- PATCH /api/v1/proveedor/:id
+  - Body: [src/modules/proveedor/dto/update-proveedor.dto.ts](src/modules/proveedor/dto/update-proveedor.dto.ts#L1)
+
+- DELETE /api/v1/proveedor/:id
+  - Respuesta: 204
+
+--
+
+**Merma** (/merma)
+
+- POST /api/v1/merma
+  - Body: [src/modules/merma/dto/create-merma.dto.ts](src/modules/merma/dto/create-merma.dto.ts#L1)
+  - Response: Merma creada
+  - Errores: 400, 404
+
+- GET /api/v1/merma/stats
+  - Descripción: Obtener estadísticas de merma
+
+- GET /api/v1/merma
+  - Query: [src/common/dto/pagination-query.dto.ts](src/common/dto/pagination-query.dto.ts#L1)
+
+- GET /api/v1/merma/:id
+
+--
+
+**Dashboard** (/dashboard)
+
+- GET /api/v1/dashboard/stats
+  - Descripción: KPIs del dashboard
+  - Response DTO: [src/modules/dashboard/dto/dashboard-stats.dto.ts](src/modules/dashboard/dto/dashboard-stats.dto.ts#L1)
+
+--
+
+**Producción (Recetas)** (/produccion)
+
+- POST /api/v1/produccion/ejecutar
+  - Body: [src/modules/receta/dto/ejecutar-produccion.dto.ts](src/modules/receta/dto/ejecutar-produccion.dto.ts#L1)
+  - Response: [src/modules/receta/produccion-lote.entity/produccion-lote.entity.ts](src/modules/receta/produccion-lote.entity/produccion-lote.entity.ts#L1)
+  - Errores: 400, 404
+
+- GET /api/v1/produccion
+  - Query: paginación
+
+- GET /api/v1/produccion/:id
+
+--
+
+**Recetas** (/recetas)
+
+- POST /api/v1/recetas
+  - Body: [src/modules/receta/dto/create-receta.dto.ts](src/modules/receta/dto/create-receta.dto.ts#L1)
+
+- POST /api/v1/recetas/duplicate
+  - Body: [src/modules/receta/dto/duplicate-receta.dto.ts](src/modules/receta/dto/duplicate-receta.dto.ts#L1)
+
+- GET /api/v1/recetas
+  - Query: paginación y filtros
+
+- GET /api/v1/recetas/:id
+
+- GET /api/v1/recetas/:id/detalle
+  - Response DTO: [src/modules/receta/dto/detalle-receta.dto.ts](src/modules/receta/dto/detalle-receta.dto.ts#L1)
+
+- GET /api/v1/recetas/:id/escandallo
+  - Response DTO: [src/modules/receta/dto/receta-cost-response.dto.ts](src/modules/receta/dto/receta-cost-response.dto.ts#L1)
+
+- POST /api/v1/recetas/:id/cocinar
+  - Body: [src/modules/receta/dto/cocinar-receta.dto.ts](src/modules/receta/dto/cocinar-receta.dto.ts#L1)
+
+- POST /api/v1/recetas/:id/recalcular-costes
+  - Roles: ADMINISTRADOR, PROFESOR
+
+- PATCH /api/v1/recetas/:id
+  - Body: [src/modules/receta/dto/update-receta.dto.ts](src/modules/receta/dto/update-receta.dto.ts#L1)
+
+- DELETE /api/v1/recetas/:id
+  - Respuesta: 204
+
+--
+
+**Profesor** (/profesores)
+
+- POST /api/v1/profesores/register
+  - Público
+  - Body: [src/modules/profesor/dto/create-profesor.dto.ts](src/modules/profesor/dto/create-profesor.dto.ts#L1)
+
+- POST /api/v1/profesores/slots
+  - Body: [src/modules/profesor/dto/create-slot.dto.ts](src/modules/profesor/dto/create-slot.dto.ts#L1)
+
+- GET /api/v1/profesores/slots
+
+- GET /api/v1/profesores/all-slots
+
+- GET /api/v1/profesores/all-profesores
+
+- PATCH /api/v1/profesores/admin-slots/:id
+  - Body: UpdateSlotDto + { profesorId?: string }
+
+- PATCH /api/v1/profesores/slots/:id
+
+- DELETE /api/v1/profesores/slots/:id
+
+- PATCH /api/v1/profesores/alumnos/:id/activate
+
+- GET /api/v1/profesores/alumnos
+
+- POST /api/v1/profesores/alumnos/:id/force-reset
+
+--
+
+**Incidencias** (/incidencias)
+
+- POST /api/v1/incidencias
+  - Body: [src/modules/incidencia/dto/create-incidencia.dto.ts](src/modules/incidencia/dto/create-incidencia.dto.ts#L1)
+
+- GET /api/v1/incidencias
+  - Query: [src/modules/incidencia/dto/incidencia-query.dto.ts](src/modules/incidencia/dto/incidencia-query.dto.ts#L1)
+
+- GET /api/v1/incidencias/:id
+
+- PATCH /api/v1/incidencias/:id
+  - Body: [src/modules/incidencia/dto/update-incidencia.dto.ts](src/modules/incidencia/dto/update-incidencia.dto.ts#L1)
+
+- DELETE /api/v1/incidencias/:id
+
+- PATCH /api/v1/incidencias/:id/resolver
+  - Body: [src/modules/incidencia/dto/resolver-incidencia.dto.ts](src/modules/incidencia/dto/resolver-incidencia.dto.ts#L1)
+
+- POST /api/v1/incidencias/reportar
+  - Body: [src/modules/incidencia/dto/report-incidencia.dto.ts](src/modules/incidencia/dto/report-incidencia.dto.ts#L1)
+
+- POST /api/v1/incidencias/:id/resolver
+  - Body: [src/modules/incidencia/dto/resolve-incidencia.dto.ts](src/modules/incidencia/dto/resolve-incidencia.dto.ts#L1)
+
+--
+
+**Recepción** (/recepcion)
+
+- POST /api/v1/recepcion
+  - Roles: ADMINISTRADOR, PROFESOR
+  - Body: [src/modules/recepcion/dto/create-recepcion.dto.ts](src/modules/recepcion/dto/create-recepcion.dto.ts#L1)
+  - Response: [src/modules/recepcion/dto/recepcion-resultado.dto.ts](src/modules/recepcion/dto/recepcion-resultado.dto.ts#L1)
+
+- GET /api/v1/recepcion
+  - Query: paginación
+
+- GET /api/v1/recepcion/reporte-pdf
+  - Query: [src/modules/recepcion/dto/recepcion-reporte-pdf.dto.ts](src/modules/recepcion/dto/recepcion-reporte-pdf.dto.ts#L1)
+  - Response: PDF attachment
+
+- GET /api/v1/recepcion/:id
+
+- PATCH /api/v1/recepcion/:id
+  - Body: [src/modules/recepcion/dto/update-recepcion.dto.ts](src/modules/recepcion/dto/update-recepcion.dto.ts#L1)
+
+- DELETE /api/v1/recepcion/:id
+  - Respuesta: 204
+
+--
+
+**Recepción Productos** (/recepcion-productos)
+
+- POST /api/v1/recepcion-productos
+  - Body: [src/modules/recepcion/dto/create-recepcion-producto.dto.ts](src/modules/recepcion/dto/create-recepcion-producto.dto.ts#L1)
+
+- GET /api/v1/recepcion-productos
+  - Query: paginación
+
+- GET /api/v1/recepcion-productos/:id
+
+- PATCH /api/v1/recepcion-productos/:id
+  - Body: [src/modules/recepcion/dto/update-recepcion-producto.dto.ts](src/modules/recepcion/dto/update-recepcion-producto.dto.ts#L1)
+
+- DELETE /api/v1/recepcion-productos/:id
+  - Respuesta: 204
+
+--
+
+**Archivos** (/archivos)
+
+- POST /api/v1/archivos/upload
+  - Descripción: Subir archivo multipart/form-data (campo `file`)
+  - Consumes: `multipart/form-data`
+  - Response (201): { message: string, data: FileResponseDto }
+  - DTO de respuesta: [src/modules/archivo/dto/file-response.dto.ts](src/modules/archivo/dto/file-response.dto.ts#L1)
+
+- GET /api/v1/archivos
+  - Query: [src/modules/archivo/dto/file-list-filter.dto.ts](src/modules/archivo/dto/file-list-filter.dto.ts#L1)
+  - Response: listado paginado con metadata
+
+- GET /api/v1/archivos/:id
+  - Response: FileResponseDto
+
+- GET /api/v1/archivos/content/:filename
+  - Descripción: Servir contenido del archivo
+
+- DELETE /api/v1/archivos/:id
+  - Respuesta: 204
+
+--
+
+**Incidencias Resueltas** (/incidencias-resueltas)
+
+- POST /api/v1/incidencias-resueltas
+  - Body: [src/modules/incidencia/dto/create-incidencia.dto.ts](src/modules/incidencia/dto/create-incidencia.dto.ts#L1)
+
+- GET /api/v1/incidencias-resueltas
+  - Query: paginación
+
+- GET /api/v1/incidencias-resueltas/:id
+
+- PATCH /api/v1/incidencias-resueltas/:id
+  - Body: [src/modules/incidencia/dto/update-incidencia.dto.ts](src/modules/incidencia/dto/update-incidencia.dto.ts#L1)
+
+- DELETE /api/v1/incidencias-resueltas/:id
+  - Respuesta: 204
+
+--
+
+**Productos y relacionados**
+
+- GET /api/v1/productos/generar-ean13
+  - Descripción: Genera un EAN-13 único
+  - Response (200): { codigo_barras: string }
+
+- POST /api/v1/productos
+  - Body: [src/modules/producto/dto/create-producto.dto.ts](src/modules/producto/dto/create-producto.dto.ts#L1)
+
+- GET /api/v1/productos
+  - Query: filtros (ProductFilterDto)
+
+- GET /api/v1/productos/:id
+
+- PATCH /api/v1/productos/:id
+  - Body: [src/modules/producto/dto/update-producto.dto.ts](src/modules/producto/dto/update-producto.dto.ts#L1)
+
+- DELETE /api/v1/productos/:id
+
+--
+
+**Movimientos** (/movimientos)
+
+- POST /api/v1/movimientos
+  - Body: [src/modules/movimiento/dto/create-movimiento.dto.ts](src/modules/movimiento/dto/create-movimiento.dto.ts#L1)
+
+- GET /api/v1/movimientos
+  - Query: MovimientoListQueryDto / paginación
+
+- GET /api/v1/movimientos/historial
+  - Query params: entityId, userId, type, startDate, endDate, sortBy, sortOrder
+
+- GET /api/v1/movimientos/:id
+
+- PATCH /api/v1/movimientos/:id
+  - Body: [src/modules/movimiento/dto/update-movimiento.dto.ts](src/modules/movimiento/dto/update-movimiento.dto.ts#L1)
+
+- DELETE /api/v1/movimientos/:id
+
+--
+
+**Producto - Alérgenos** (/producto-alergenos)
+
+- POST /api/v1/producto-alergenos
+  - Body: [src/modules/producto/dto/producto-alergeno.dto/create-producto-alergeno.dto.ts](src/modules/producto/dto/producto-alergeno.dto/create-producto-alergeno.dto.ts#L1)
+
+- GET /api/v1/producto-alergenos
+  - Query: idProducto (opcional)
+
+- GET /api/v1/producto-alergenos/:id
+
+- PATCH /api/v1/producto-alergenos/:id
+  - Body: [src/modules/producto/dto/producto-alergeno.dto/update-producto-alergeno.dto.ts](src/modules/producto/dto/producto-alergeno.dto/update-producto-alergeno.dto.ts#L1)
+
+- DELETE /api/v1/producto-alergenos/:idProducto/:alergeno
+
+--
+
+**Producto-Proveedor** (/producto-proveedor)
+
+- PATCH /api/v1/producto-proveedor/:id/precio
+  - Body: [src/modules/producto/dto/update-precio-producto.dto.ts](src/modules/producto/dto/update-precio-producto.dto.ts#L1)
+
+- GET /api/v1/producto-proveedor/search
+  - Query: [src/modules/producto/dto/search-producto-proveedor.dto.ts](src/modules/producto/dto/search-producto-proveedor.dto.ts#L1)
+
+- GET /api/v1/producto-proveedor/:id/historial
+  - Query: page, limit (PaginationQueryDto)
+
+--
+
+**Historial de Precios** (/historial-precio)
+
+- POST /api/v1/historial-precio
+  - Body: [src/modules/producto/dto/historial-precio.dto/create-historial-precio.dto.ts](src/modules/producto/dto/historial-precio.dto/create-historial-precio.dto.ts#L1)
+
+- GET /api/v1/historial-precio
+  - Query: order (ASC|DESC)
+
+- GET /api/v1/historial-precio/:id
+
+- PATCH /api/v1/historial-precio/:id
+  - Body: [src/modules/producto/dto/historial-precio.dto/update-historial-precio.dto.ts](src/modules/producto/dto/historial-precio.dto/update-historial-precio.dto.ts#L1)
+
+- DELETE /api/v1/historial-precio/:id
+
+--
+
+**Pedidos** (/pedidos)
+
+- POST /api/v1/pedidos
+  - Body: [src/modules/pedido/dto/create-pedido.dto.ts](src/modules/pedido/dto/create-pedido.dto.ts#L1)
+
+- GET /api/v1/pedidos
+  - Query: paginación y filtros
+
+- POST /api/v1/pedidos/from-recipes
+  - Body: [src/modules/pedido/dto/generate-pedido-from-recetas.dto.ts](src/modules/pedido/dto/generate-pedido-from-recetas.dto.ts#L1)
+
+- GET /api/v1/pedidos/:id
+
+- PATCH /api/v1/pedidos/:id
+  - Body: [src/modules/pedido/dto/updatePedido.dto.ts](src/modules/pedido/dto/updatePedido.dto.ts#L1)
+
+- DELETE /api/v1/pedidos/:id
+
+- PATCH /api/v1/pedidos/:id/fecha-entrega
+  - Body: [src/modules/pedido/dto/updatePedido.dto.ts](src/modules/pedido/dto/updatePedido.dto.ts#L1)
+
+- PATCH /api/v1/pedidos/:id/cancelar
+  - Body: [src/modules/pedido/dto/cancelPedido.dto.ts](src/modules/pedido/dto/cancelPedido.dto.ts#L1)
+
+--
+
+**Export** (/export)
+
+Varios endpoints que devuelven archivos `xlsx` o `pdf`. Todos requieren rol ADMINISTRADOR o PROFESOR en la mayoría de rutas.
+
+- GET /api/v1/export/productos/xlsx
+- GET /api/v1/export/pedidos/xlsx
+- GET /api/v1/export/proveedores/xlsx
+- GET /api/v1/export/albaranes/xlsx
+- GET /api/v1/export/incidencias/xlsx
+- GET /api/v1/export/inventario/xlsx
+- GET /api/v1/export/movimientos/xlsx
+- GET /api/v1/export/recepciones/xlsx
+- GET /api/v1/export/recetas/xlsx
+- GET /api/v1/export/ubicaciones/xlsx
+- GET /api/v1/export/usuarios/xlsx
+- GET /api/v1/export/productos/pdf
+- GET /api/v1/export/proveedores/pdf
+- GET /api/v1/export/inventario/pdf
+- GET /api/v1/export/pedidos/pdf
+- GET /api/v1/export/albaranes/pdf
+- GET /api/v1/export/recetas/pdf
+
+Cada endpoint acepta query params específicos (DTOs en [src/modules/export/dto](src/modules/export/dto)).
+
+--
+
+**Recepción Draft** (/recepcion/draft)
+
+- POST /api/v1/recepcion/draft
+  - Body: [src/modules/recepcion-draft/dto/upsert-recepcion-draft.dto.ts](src/modules/recepcion-draft/dto/upsert-recepcion-draft.dto.ts#L1)
+  - Response: [src/modules/recepcion-draft/dto/recepcion-draft-response.dto.ts](src/modules/recepcion-draft/dto/recepcion-draft-response.dto.ts#L1)
+
+- GET /api/v1/recepcion/draft
+  - Response: RecepcionDraftResponseDto | null
+
+- DELETE /api/v1/recepcion/draft
+  - Respuesta: 204
+
+--
+
+**Admin** (/admin)
+
+- POST /api/v1/admin/profesores
+  - Body: [src/modules/profesor/dto/create-profesor.dto.ts](src/modules/profesor/dto/create-profesor.dto.ts#L1)
+
+- PATCH /api/v1/admin/users/:id/activate
+  - Descripción: Activar usuario
+
+- POST /api/v1/admin/users/:id/force-reset
+  - Descripción: Forzar reseteo de contraseña
+
+--
+
+**Albaranes** (/albaranes)
+
+- POST /api/v1/albaranes
+  - Body: [src/modules/albaran/dto/create-albaran.dto.ts](src/modules/albaran/dto/create-albaran.dto.ts#L1)
+
+- GET /api/v1/albaranes
+  - Query: paginación
+
+- GET /api/v1/albaranes/:id
+
+- PATCH /api/v1/albaranes/:id
+  - Body: [src/modules/albaran/dto/update-albaran.dto.ts](src/modules/albaran/dto/update-albaran.dto.ts#L1)
+
+- DELETE /api/v1/albaranes/:id
+
+--
+
+**Alumnos** (/alumnos)
+
+- POST /api/v1/alumnos/register
+  - Público
+  - Body: [src/modules/alumno/dto/register-alumno.dto.ts](src/modules/alumno/dto/register-alumno.dto.ts#L1)
+
+- GET /api/v1/alumnos/aulas
+  - Público
+
+- GET /api/v1/alumnos/aulas/:aula/clases
+  - Público
+
+- GET /api/v1/alumnos/aulas/:aula/clases/:clase/profesores
+  - Público
+
+- PATCH /api/v1/alumnos/change-profesor
+  - Body: [src/modules/alumno/dto/change-profesor.dto.ts](src/modules/alumno/dto/change-profesor.dto.ts#L1)
+
+--
+
+Notas finales
+
+- Todas las rutas usan el prefijo global `api/v1` definido en [src/main.ts](src/main.ts#L1).
+- Para ver los campos exactos de cada DTO, revisar los ficheros enlazados en cada endpoint (ej.: `src/modules/.../dto/*.ts`).
+- Si algún campo no resulta claro a partir del DTO, se ha indicado la ruta del archivo fuente para consulta directa.
+
+Documento generado automáticamente a partir de los controllers del backend.
 # Documentación maestra de la API - SmartEconomat
 
 Esta es la documentación **técnica y detallada** de la API. Diseñada para ser la fuente de verdad del sistema.

@@ -7,16 +7,30 @@ import {
   IsString,
   IsDateString,
   IsEnum,
+  Validate,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
 } from 'class-validator';
+@ValidatorConstraint({ name: 'notDraft', async: false })
+export class NotDraftConstraint implements ValidatorConstraintInterface {
+  validate(value: any) {
+    return typeof value === 'string' ? value !== 'draft' : true;
+  }
+  defaultMessage() {
+    return `El valor 'draft' no es válido para este campo.`;
+  }
+}
 import { EstadoProductoRecepcion } from '../enums/estado-producto.enum';
 
 export class CreateRecepcionProductoDto {
   @IsNotEmpty()
   @IsUUID('7')
+  @Validate(NotDraftConstraint)
   idRecepcion!: string;
 
   @IsNotEmpty()
   @IsUUID('7')
+  @Validate(NotDraftConstraint)
   idPedidoProducto!: string;
 
   @IsNumber()

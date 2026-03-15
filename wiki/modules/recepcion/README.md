@@ -12,7 +12,7 @@
 | 1 | [01-dominio-y-backend.md](./01-dominio-y-backend.md) | Análisis DDD, Aggregate Roots... |
 | 2 | [02-frontend.md](./02-frontend.md) | Formulario wizard, estado local, validaciones... |
 | 3 | [03-diagramas.md](./03-diagramas.md) | UML clases, casos de uso, secuencia **FE** + secuencia **BE**... |
-| 4 | [arquitectura_ui.md](./arquitectura_ui.md) | Detalle de fraccionamiento de la UI de React de Recepcion.tsx en componentes pequeños. |
+| 4 | [arquitectura-ui.md](./arquitectura-ui.md) | Detalle de fraccionamiento de la UI de React de Recepcion.tsx en componentes pequeños. |
 
 ---
 
