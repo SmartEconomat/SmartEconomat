@@ -9,7 +9,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
-import { Permiso } from '../../permisos/entities/permiso.entity';
+import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
 
 @Entity({ name: 'plantilla_rol' })
 @Index('idx_plantilla_nombre', ['nombre'])

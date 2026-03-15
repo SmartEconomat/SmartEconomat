@@ -8,7 +8,7 @@ import {
   CreateDateColumn,
 } from 'typeorm';
 import { Rol } from './rol.entity';
-import { Permiso } from '../../permisos/entities/permiso.entity';
+import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
 
 @Entity({ name: 'rol_permiso' })
 @Index('idx_rol_permiso_rol', ['rolId'])
