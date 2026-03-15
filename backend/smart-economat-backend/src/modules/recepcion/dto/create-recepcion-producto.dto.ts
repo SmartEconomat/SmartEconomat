@@ -6,7 +6,9 @@ import {
   IsOptional,
   IsString,
   IsDateString,
+  IsEnum,
 } from 'class-validator';
+import { EstadoProductoRecepcion } from '../enums/estado-producto.enum';
 
 export class CreateRecepcionProductoDto {
   @IsNotEmpty()
@@ -24,6 +26,10 @@ export class CreateRecepcionProductoDto {
   @IsOptional()
   @IsString()
   observaciones?: string;
+
+  @IsOptional()
+  @IsEnum(EstadoProductoRecepcion)
+  estadoProducto?: EstadoProductoRecepcion;
 
   @IsOptional()
   @IsDateString()

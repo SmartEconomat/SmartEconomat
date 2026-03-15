@@ -81,6 +81,7 @@ export class RecepcionService {
         'recepcionesPedidos',
         'recepcionesPedidos.pedido',
         'recepcionProductos',
+        'recepcionProductos.incidencia',
         'recepcionProductos.pedidoProducto',
         'recepcionProductos.pedidoProducto.productoProveedor',
         'recepcionProductos.pedidoProducto.productoProveedor.producto',
