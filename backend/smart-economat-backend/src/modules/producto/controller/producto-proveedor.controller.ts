@@ -26,8 +26,9 @@ import { SearchProductoProveedorDto } from '../dto/search-producto-proveedor.dto
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { RolesGuard } from '../../auth/guards/role.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { rolUsuario } from '../../usuario/enums/usuario.enums';
 
 @ApiTags('Producto Proveedor')
 @UseGuards(JwtAuthGuard, RolesGuard)

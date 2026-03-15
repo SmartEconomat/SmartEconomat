@@ -15,7 +15,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import { Producto } from '../../services/producto.types';
 import StatusChip from '../../components/ui/StatusChip';
 import { getCategoryIcon } from './utils/getCategoryIcon';
-import { EU_ALLERGENS } from '../../components/ui/AllergenSelector';
+import { Allergen, EU_ALLERGENS } from '../../utils/constants';
 
 export interface ProductCardProps {
   producto: Producto;
@@ -34,7 +34,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   // Alérgenos presentes en el producto
   const alergenoIds = producto.alergenos?.map((a) => a.alergeno) ?? [];
-  const alergenosActivos = EU_ALLERGENS.filter((a) =>
+  const alergenosActivos = EU_ALLERGENS.filter((a: Allergen) =>
     alergenoIds.includes(a.id)
   );
 
@@ -134,7 +134,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
               minHeight: 24,
             }}
           >
-            {alergenosActivos.map((a) => (
+            {alergenosActivos.map((a: Allergen) => (
               <Tooltip key={a.id} title={a.label} arrow>
                 <Box
                   sx={{

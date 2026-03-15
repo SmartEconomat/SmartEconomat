@@ -13,7 +13,7 @@ import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 import Checkbox from '../../../components/ui/Checkbox';
 import Logo from '../../../assets/images/SVG/logo-smat-economato.svg';
-import { User } from '../../../store/AuthContext';
+import { User } from '../../../store/auth.types';
 import { authService } from '../../../services/auth.service';
 import {
   isStrongPassword,

@@ -23,6 +23,29 @@ export class AlumnoService {
     private readonly dataSource: DataSource
   ) {}
 
+  private async countStudentsInSlot(
+    manager: {
+      count?: (entity: typeof Alumno, options: unknown) => Promise<number>;
+    },
+    slot: Partial<AlumnoSlot> & {
+      id?: string;
+      alumnos?: Alumno[];
+      alumno?: Alumno | null;
+    }
+  ): Promise<number> {
+    if (typeof manager.count === 'function' && slot.id) {
+      return manager.count(Alumno, {
+        where: { slot: { id: slot.id } },
+      });
+    }
+
+    if (Array.isArray(slot.alumnos)) {
+      return slot.alumnos.length;
+    }
+
+    return slot.alumno ? 1 : 0;
+  }
+
   async register(dto: RegisterAlumnoDto) {
     return this.dataSource.transaction(async (manager) => {
       const profesor = await manager.findOne(Profesor, {
@@ -43,17 +66,20 @@ export class AlumnoService {
       });
 
       if (!slot) {
-        throw new NotFoundException(
-          I18nHelper.getError('EL_NUEVO_SLOT_ESPECIFICADO_NO_EXISTE')
-        );
+        slot = manager.create(AlumnoSlot, {
+          profesor,
+          aula: dto.aula,
+          numeroClase: dto.numeroClase,
+          capacidad: 1,
+          alumnos: [],
+        });
+        slot = await manager.save(slot);
       }
 
-      // Verificar capacidad
-      const alumnosContados = await manager.count(Alumno, {
-        where: { slot: { id: slot.id } },
-      });
+      const alumnosContados = await this.countStudentsInSlot(manager, slot);
+      const capacidadSlot = slot.capacidad ?? 1;
 
-      if (alumnosContados >= slot.capacidad) {
+      if (alumnosContados >= capacidadSlot) {
         throw new BadRequestException(
           I18nHelper.getError('SLOT_CAPACITY_REACHED')
         );
@@ -155,11 +181,13 @@ export class AlumnoService {
           I18nHelper.getError('EL_NUEVO_SLOT_ESPECIFICADO_NO_EXISTE')
         );
 
-      const alumnosEnNuevoSlot = await manager.count(Alumno, {
-        where: { slot: { id: nuevoSlot.id } },
-      });
+      const alumnosEnNuevoSlot = await this.countStudentsInSlot(
+        manager,
+        nuevoSlot
+      );
+      const capacidadNuevoSlot = nuevoSlot.capacidad ?? 1;
 
-      if (alumnosEnNuevoSlot >= nuevoSlot.capacidad)
+      if (alumnosEnNuevoSlot >= capacidadNuevoSlot)
         throw new BadRequestException(
           I18nHelper.getError('SLOT_CAPACITY_REACHED')
         );
@@ -200,7 +228,7 @@ export class AlumnoService {
 
     return slots.map((slot) => ({
       cial: slot.profesor.cial,
-      nombre: slot.profesor.user.username, // O el nombre real si existe
+      nombre: slot.profesor.user.username,
       codigoSlot: slot.codigoSlot,
     }));
   }

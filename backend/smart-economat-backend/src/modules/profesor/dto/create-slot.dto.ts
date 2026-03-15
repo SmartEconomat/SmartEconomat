@@ -1,4 +1,4 @@
-import { IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
 
 export class CreateSlotDto {
   @IsString()
@@ -9,7 +9,8 @@ export class CreateSlotDto {
   @Min(1)
   numeroClase!: number;
 
+  @IsOptional()
   @IsInt()
   @Min(1)
-  capacidad!: number;
+  capacidad?: number;
 }

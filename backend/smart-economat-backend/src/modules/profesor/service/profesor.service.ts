@@ -99,19 +99,16 @@ export class ProfesorService {
     });
 
     if (existingSlot) {
-      throw new ConflictException(
-        I18nHelper.getError('DUPLICATE_ENTRY')
-      );
+      throw new ConflictException(I18nHelper.getError('DUPLICATE_ENTRY'));
     }
 
-    // Generar código único: PROF-{3 random bytes hex}
     const codigoSlot = `AL-${randomBytes(3).toString('hex').toUpperCase()}`;
 
     const slot = this.slotRepo.create({
       profesor,
       aula: dto.aula,
       numeroClase: dto.numeroClase,
-      capacidad: dto.capacidad,
+      capacidad: dto.capacidad ?? 1,
       codigoSlot,
     });
 
@@ -136,7 +133,6 @@ export class ProfesorService {
       throw new NotFoundException(I18nHelper.getError('NOT_FOUND'));
     }
 
-    // Si intenta cambiar aula o clase, verificar duplicados
     if (
       (dto.aula && dto.aula !== slot.aula) ||
       (dto.numeroClase && dto.numeroClase !== slot.numeroClase)
@@ -190,15 +186,11 @@ export class ProfesorService {
     });
 
     if (!slot) {
-      throw new NotFoundException(
-        I18nHelper.getError('NOT_FOUND')
-      );
+      throw new NotFoundException(I18nHelper.getError('NOT_FOUND'));
     }
 
     if (slot.alumnos && slot.alumnos.length > 0) {
-      throw new ConflictException(
-        I18nHelper.getError('SLOT_HAS_STUDENTS')
-      );
+      throw new ConflictException(I18nHelper.getError('SLOT_HAS_STUDENTS'));
     }
 
     await this.slotRepo.remove(slot);
@@ -320,7 +312,10 @@ export class ProfesorService {
   }
 
   /** Admin: actualiza un slot (campos basicos + reasignacion de profesor) */
-  async adminUpdateSlot(slotId: string, dto: UpdateSlotDto & { profesorId?: string }) {
+  async adminUpdateSlot(
+    slotId: string,
+    dto: UpdateSlotDto & { profesorId?: string }
+  ) {
     const slot = await this.slotRepo.findOne({
       where: { id: slotId },
       relations: ['profesor'],
@@ -330,12 +325,10 @@ export class ProfesorService {
       throw new NotFoundException(I18nHelper.getError('NOT_FOUND'));
     }
 
-    // Actualizar campos básicos
     if (dto.aula !== undefined) slot.aula = dto.aula;
     if (dto.numeroClase !== undefined) slot.numeroClase = dto.numeroClase;
     if (dto.capacidad !== undefined) slot.capacidad = dto.capacidad;
 
-    // Reasignar profesor si se proporciona
     if (dto.profesorId && dto.profesorId !== slot.profesor?.id) {
       const newProfesor = await this.profesorRepo.findOne({
         where: { id: dto.profesorId },

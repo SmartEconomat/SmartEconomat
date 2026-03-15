@@ -29,7 +29,6 @@ import { RecepcionStockService } from '../service/recepcion-stock.service';
 import { RecepcionResultadoDto } from '../dto/recepcion-resultado.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { PdfReportService } from '../service/pdf-report.service';
 import { RecepcionReportePdfDto } from '../dto/recepcion-reporte-pdf.dto';
 
@@ -79,14 +78,14 @@ export class RecepcionController {
 
   @Get(':id')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Recepcion> {
+  findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Recepcion> {
     return this.recepcionService.findOne(id);
   }
 
   @Patch(':id')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: UpdateRecepcionDto
   ): Promise<Recepcion> {
     return this.recepcionService.update(id, dto);
@@ -95,21 +94,7 @@ export class RecepcionController {
   @Delete(':id')
   @Roles(rolUsuario.ADMINISTRADOR)
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+  remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.recepcionService.remove(id);
-  }
-
-  @Get('reporte-pdf')
-  @RequirePermissions('recepciones:listar')
-  async reportePdf(
-    @Query() filters: RecepcionReportePdfDto,
-    @Res() res: Response
-  ): Promise<void> {
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader(
-      'Content-Disposition',
-      'attachment; filename="reporte-recepcion.pdf"'
-    );
-    await this.pdfReportService.generateReport(filters, res);
   }
 }

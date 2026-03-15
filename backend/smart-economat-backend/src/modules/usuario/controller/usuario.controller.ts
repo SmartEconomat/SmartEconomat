@@ -12,6 +12,7 @@ import {
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { UsuarioService } from '../service/usuario.service';
+import { CreateUsuarioDto } from '../dto/create-usuario.dto';
 import { UpdateUsuarioDto } from '../dto/update-usuario.dto';
 import { UpdateUsuarioStatusDto } from '../dto/update-status.dto';
 import { UpdateUsuarioRolDto } from '../dto/update-rol.dto';
