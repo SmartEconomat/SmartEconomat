@@ -84,9 +84,7 @@ const Pedidos: React.FC = () => {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [searchTerm, setSearchTerm] = useState('');
   const [data, setData] = useState<Pedido[]>([]);
-  const [proveedores, setProveedores] = useState<
-    { id: string; nombre: string }[]
-  >([]);
+  const [proveedores, setProveedores] = useState<unknown[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<Pedido | null>(null);
@@ -142,10 +140,11 @@ const Pedidos: React.FC = () => {
     }
   };
 
-  const handleSave = async (formData: Record<string, unknown>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleSave = async (formData: Record<string, any>) => {
     setIsSaving(true);
     try {
-      const proveedorId = String(formData.proveedorId ?? '');
+      const proveedorId = formData.proveedorId;
       if (!proveedorId) {
         toast.error('Selecciona un proveedor válido antes de continuar.');
         setIsSaving(false);
@@ -163,14 +162,7 @@ const Pedidos: React.FC = () => {
         setIsSaving(false);
         return;
       }
-      const lines =
-        (formData.pedidoProductos as
-          | Array<{
-              productoProveedorId?: string;
-              id_producto_proveedor?: string;
-              cantidad: number;
-            }>
-          | undefined) || [];
+      const lines = formData.pedidoProductos || [];
       if (!Array.isArray(lines) || lines.length === 0) {
         toast.error('El pedido debe contener al menos una línea válida.');
         setIsSaving(false);
@@ -178,15 +170,18 @@ const Pedidos: React.FC = () => {
       }
 
       const normalizedLines = lines
-        .map((l) => ({
-          productoProveedorId: String(
-            l.productoProveedorId || l.id_producto_proveedor || ''
-          ),
-          cantidad: Number(l.cantidad),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .map((l: any) => ({
+          productoProveedorId:
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (l as any).productoProveedorId || (l as any).id_producto_proveedor,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          cantidad: Number((l as any).cantidad),
         }))
         .filter(
-          (l) =>
-            !!l.productoProveedorId &&
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (l: any) =>
+            l.productoProveedorId &&
             Number.isFinite(l.cantidad) &&
             l.cantidad > 0
         );
@@ -208,20 +203,17 @@ const Pedidos: React.FC = () => {
 
       const payload: PedidoRequestPayload = {
         costeTotal: calculatedTotal,
-        estado: String(formData.estado ?? ''),
-        proveedorId: proveedorId,
-        fechaEntrega: String(formData.fechaEntrega ?? ''),
+        estado: formData.estado,
+        proveedorId: formData.proveedorId,
+        fechaEntrega: formData.fechaEntrega,
         ...(formData.motivoCancelacion
-          ? { motivoCancelacion: String(formData.motivoCancelacion) }
+          ? { motivoCancelacion: formData.motivoCancelacion }
           : {}),
-        lineas: normalizedLines as {
-          productoProveedorId: string;
-          cantidad: number;
-        }[],
+        lineas: normalizedLines,
       };
 
       if (formData.id) {
-        await updatePedido(String(formData.id), payload);
+        await updatePedido(formData.id, payload);
         toast.success('Pedido actualizado correctamente.');
       } else {
         await createPedido(payload);

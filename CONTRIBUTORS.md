@@ -1,18 +1,6 @@
 # 🏆 Clasificación de Contribuidores - SmartEconomat
 
-<<<<<<< HEAD
 > **Última actualización:** 15/03/2026, 19:05:14
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-> **Última actualización:** 15/03/2026, 18:52:39
-=======
-> **Última actualización:** 15/03/2026, 12:53:21
->>>>>>> a9e9d37 (refactoriza pedidos para automatizar fecha de entrega, transiciones de estado y documentación asociada)
-=======
-> **Última actualización:** 15/03/2026, 18:46:10
->>>>>>> 2289ced (refactor(pedido): alineación total frontend-backend, tests y UI)
->>>>>>> c157db2 (refactor(pedido): alineación total frontend-backend, tests y UI)
 
 ---
 
@@ -21,21 +9,8 @@
 ### 🎖️ **Darel**
 
 Este guerrero del código lidera la carga con:
-<<<<<<< HEAD
 - 💻 **338** Commits
 - 🔀 **84** PRs Fusionados
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-- 💻 **338** Commits
-=======
-- 💻 **309** Commits
->>>>>>> a9e9d37 (refactoriza pedidos para automatizar fecha de entrega, transiciones de estado y documentación asociada)
-=======
-- 💻 **336** Commits
->>>>>>> 2289ced (refactor(pedido): alineación total frontend-backend, tests y UI)
-- 🔀 **83** PRs Fusionados
->>>>>>> c157db2 (refactor(pedido): alineación total frontend-backend, tests y UI)
 
 Demostrando que:
 - ✨ El teclado es su arma favorita
@@ -43,45 +18,27 @@ Demostrando que:
 - 🚀 Git commit es su mantra matutino
 
 **Estadísticas de Dominio:**
-<<<<<<< HEAD
 - Posee el **50.90%** de todo el código.
 - Ha logrado fusionar **84** funcionalidades completas.
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-- Posee el **50.67%** de todo el código.
-=======
-- Posee el **49.36%** de todo el código.
->>>>>>> a9e9d37 (refactoriza pedidos para automatizar fecha de entrega, transiciones de estado y documentación asociada)
-=======
-- Posee el **50.53%** de todo el código.
->>>>>>> 2289ced (refactor(pedido): alineación total frontend-backend, tests y UI)
-- Ha logrado fusionar **83** funcionalidades completas.
->>>>>>> c157db2 (refactor(pedido): alineación total frontend-backend, tests y UI)
 
 ---
 
 ## 📊 Hall de la Fama
 
 ### 🥈 Alexis
-<<<<<<< HEAD
 - 💻 Commits: **159** (23.95%)
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-- 💻 Commits: **161** (24.14%)
->>>>>>> c157db2 (refactor(pedido): alineación total frontend-backend, tests y UI)
 - 🔀 PRs Fusionados: **21**
 
 ### 🥈 Sergio
-- 💻 Commits: **87** (13.10%)
+- 💻 Commits: **88** (13.19%)
 - 🔀 PRs Fusionados: **15**
 
 ### 🥈 Maurizio
-- 💻 Commits: **53** (7.98%)
+- 💻 Commits: **53** (7.95%)
 - 🔀 PRs Fusionados: **8**
 
 ### 🥈 Guillermo
+<<<<<<< Updated upstream
 <<<<<<< HEAD
 - 💻 Commits: **27** (4.07%)
 =======
@@ -109,6 +66,9 @@ Demostrando que:
 - 💻 Commits: **27** (4.06%)
 >>>>>>> 2289ced (refactor(pedido): alineación total frontend-backend, tests y UI)
 >>>>>>> c157db2 (refactor(pedido): alineación total frontend-backend, tests y UI)
+=======
+- 💻 Commits: **27** (4.05%)
+>>>>>>> Stashed changes
 - 🔀 PRs Fusionados: **6**
 
 ---
@@ -133,6 +93,7 @@ Con **27 commits** y **6 PRs**, tenemos aquí a alguien que:
 
 | Posición | Contribuidor | Commits | PRs Fusionados | % Código | Estado |
 |----------|--------------|---------|----------------|----------|--------|
+<<<<<<< Updated upstream
 <<<<<<< HEAD
 | #1 | Darel | **338** | 🔀 **84** | 50.90% | 👑 Líder |
 | #2 | Alexis | **159** | 🔀 **21** | 23.95% | 💪 Activo |
@@ -142,11 +103,14 @@ Con **27 commits** y **6 PRs**, tenemos aquí a alguien que:
 =======
 <<<<<<< HEAD
 <<<<<<< HEAD
+=======
+>>>>>>> Stashed changes
 | #1 | Darel | **338** | 🔀 **83** | 50.67% | 👑 Líder |
 | #2 | Alexis | **161** | 🔀 **21** | 24.14% | 💪 Activo |
 | #3 | Sergio | **88** | 🔀 **15** | 13.19% | 💪 Activo |
 | #4 | Maurizio | **53** | 🔀 **8** | 7.95% | 💪 Activo |
 | #5 | Guillermo | **27** | 🔀 **6** | 4.05% | 🐌 Necesita café |
+<<<<<<< Updated upstream
 =======
 | #1 | Darel | **309** | 🔀 **83** | 49.36% | 👑 Líder |
 | #2 | Alexis | **152** | 🔀 **21** | 24.28% | 💪 Activo |
@@ -162,11 +126,14 @@ Con **27 commits** y **6 PRs**, tenemos aquí a alguien que:
 | #5 | Guillermo | **27** | 🔀 **6** | 4.06% | 🐌 Necesita café |
 >>>>>>> 2289ced (refactor(pedido): alineación total frontend-backend, tests y UI)
 >>>>>>> c157db2 (refactor(pedido): alineación total frontend-backend, tests y UI)
+=======
+>>>>>>> Stashed changes
 
 ---
 
 ## 📊 Estadísticas Generales
 
+<<<<<<< Updated upstream
 <<<<<<< HEAD
 - **Total de commits:** 664
 - **Total de PRs fusionados:** 134
@@ -192,12 +159,19 @@ Con **27 commits** y **6 PRs**, tenemos aquí a alguien que:
 - **Promedio de commits por persona:** 133.0
 >>>>>>> 2289ced (refactor(pedido): alineación total frontend-backend, tests y UI)
 >>>>>>> c157db2 (refactor(pedido): alineación total frontend-backend, tests y UI)
+=======
+- **Total de commits:** 667
+- **Total de PRs fusionados:** 133
+- **Total de contribuidores:** 5
+- **Promedio de commits por persona:** 133.4
+>>>>>>> Stashed changes
 
 ---
 
 ## 🎯 Ranking de Poder (Commits + PRs)
 
 **Darel**
+<<<<<<< Updated upstream
 <<<<<<< HEAD
 `████████████████████` 338 commits | 84 PRs
 =======
@@ -211,12 +185,15 @@ Con **27 commits** y **6 PRs**, tenemos aquí a alguien que:
 `████████████████████` 336 commits | 83 PRs
 >>>>>>> 2289ced (refactor(pedido): alineación total frontend-backend, tests y UI)
 >>>>>>> c157db2 (refactor(pedido): alineación total frontend-backend, tests y UI)
+=======
+`████████████████████` 338 commits | 83 PRs
+>>>>>>> Stashed changes
 
 **Alexis**
-`█████████░░░░░░░░░░░` 159 commits | 21 PRs
+`█████████░░░░░░░░░░░` 161 commits | 21 PRs
 
 **Sergio**
-`█████░░░░░░░░░░░░░░░` 87 commits | 15 PRs
+`█████░░░░░░░░░░░░░░░` 88 commits | 15 PRs
 
 **Maurizio**
 `███░░░░░░░░░░░░░░░░░` 53 commits | 8 PRs
