@@ -7,7 +7,7 @@ import {
   CreateDateColumn,
 } from 'typeorm';
 import { PlantillaRol } from './plantilla-rol.entity';
-import { Permiso } from '../../permisos/entities/permiso.entity';
+import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
 
 @Entity({ name: 'plantilla_rol_permiso' })
 @Index('idx_plantilla_permiso_plantilla', ['plantillaRolId'])

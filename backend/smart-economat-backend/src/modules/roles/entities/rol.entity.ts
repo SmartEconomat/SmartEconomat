@@ -1,6 +1,6 @@
 import { Entity, Column, Index, ManyToMany, JoinTable } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
-import { Permiso } from '../../permisos/entities/permiso.entity';
+import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 
 @Entity({ name: 'rol' })
