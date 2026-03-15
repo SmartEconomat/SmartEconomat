@@ -319,6 +319,8 @@ export class PedidoService {
         return EstadoPedido.EN_PROCESO;
       case PedidoStatusTrigger.RECEPCION_TOTAL:
         return EstadoPedido.RECIBIDO;
+      case PedidoStatusTrigger.INCIDENCIA:
+        return EstadoPedido.INCIDENCIA;
       default:
         throw new BadRequestException(
           'Disparador de transición de pedido no soportado.'

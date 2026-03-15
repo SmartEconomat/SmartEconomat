@@ -976,7 +976,7 @@ export class RecepcionStockService {
     const pedidoProductosList =
       pedido.pedidoProductos as unknown as PedidoProducto[];
     const orderProductIds = new Set(pedidoProductosList.map((pp) => pp.id));
-    let totalRecibido = 0;
+
     let isIncidencia = false;
     const mapRecvd = new Map<string, number>();
 
@@ -988,17 +988,19 @@ export class RecepcionStockService {
           repProd.pedidoProducto &&
           orderProductIds.has(repProd.pedidoProducto.id)
         ) {
-          const cantidadComputable = permiteComputarComoRecibido(
-            repProd.estadoProducto || EstadoProductoRecepcion.PERFECTO
-          )
+          const estadoProducto: EstadoProductoRecepcion = Object.values(
+            EstadoProductoRecepcion
+          ).includes(repProd.estadoProducto)
+            ? repProd.estadoProducto
+            : EstadoProductoRecepcion.PERFECTO;
+          const cantidadComputable = permiteComputarComoRecibido(estadoProducto)
             ? Number(repProd.cantidadRecibida)
             : 0;
-          totalRecibido += cantidadComputable;
           const curr = mapRecvd.get(repProd.pedidoProducto.id) || 0;
           mapRecvd.set(repProd.pedidoProducto.id, curr + cantidadComputable);
           if (
-            repProd.estadoProducto &&
-            repProd.estadoProducto !== EstadoProductoRecepcion.PERFECTO
+            estadoProducto &&
+            estadoProducto !== EstadoProductoRecepcion.PERFECTO
           ) {
             isIncidencia = true;
           }
@@ -1015,11 +1017,17 @@ export class RecepcionStockService {
       }
     }
 
+    let trigger: PedidoStatusTrigger;
+    if (isIncidencia) {
+      trigger = PedidoStatusTrigger.INCIDENCIA;
+    } else if (isFull) {
+      trigger = PedidoStatusTrigger.RECEPCION_TOTAL;
+    } else {
+      trigger = PedidoStatusTrigger.RECEPCION_PARCIAL;
+    }
     const updatedPedido = await this.pedidoService.handleStatusTransition(
       pedidoId,
-      isFull
-        ? PedidoStatusTrigger.RECEPCION_TOTAL
-        : PedidoStatusTrigger.RECEPCION_PARCIAL,
+      trigger,
       manager
     );
     return updatedPedido.estado;
