@@ -15,7 +15,7 @@ export interface UsuarioBasico {
 
 export interface PedidoProducto {
   id: string;
-  id_producto_proveedor?: string;
+  id_producto_proveedor: string;
   productoProveedorId?: string;
   cantidad: number;
   precioUnitario: number;
@@ -28,10 +28,7 @@ export interface PedidoProducto {
       id: string;
       nombre: string;
       codigoBarras?: string;
-<<<<<<< HEAD
       unidad?: string;
-=======
->>>>>>> 2289ced (refactor(pedido): alineación total frontend-backend, tests y UI)
     };
     proveedor: {
       id: string;
@@ -46,10 +43,7 @@ export interface Pedido {
   fechaEntrega?: string;
   costeTotal: number;
   estado: EstadoPedido;
-<<<<<<< HEAD
-=======
   observaciones?: string;
->>>>>>> 2289ced (refactor(pedido): alineación total frontend-backend, tests y UI)
   motivoCancelacion?: string;
   usuario?: UsuarioBasico;
   proveedor?: {
