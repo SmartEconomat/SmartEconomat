@@ -284,8 +284,10 @@ export class InventarioService {
           inventario
         );
 
+        const tipoMovimiento = this.mapManualTipoToMovimiento(dto.tipo);
+
         const movimiento = manager.create(Movimiento, {
-          tipo: dto.tipo as TipoMovimiento,
+          tipo: tipoMovimiento,
           cantidad: Math.abs(dto.ajuste),
           inventario: inventarioActualizado,
           productoProveedor: inventario.productoProveedor,
@@ -332,6 +334,21 @@ export class InventarioService {
       throw new BadRequestException(
         'El tipo de movimiento de salida requiere un ajuste negativo'
       );
+    }
+  }
+
+  private mapManualTipoToMovimiento(
+    tipo: TipoMovimientoManual
+  ): TipoMovimiento {
+    switch (tipo) {
+      case TipoMovimientoManual.ENTRADA:
+        return TipoMovimiento.ENTRADA;
+      case TipoMovimientoManual.AJUSTE:
+        return TipoMovimiento.AJUSTE;
+      case TipoMovimientoManual.SALIDA_AJUSTE:
+        return TipoMovimiento.SALIDA_AJUSTE;
+      default:
+        throw new BadRequestException('Tipo de movimiento manual no válido');
     }
   }
 
