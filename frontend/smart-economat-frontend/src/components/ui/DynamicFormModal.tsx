@@ -33,18 +33,22 @@ export interface DynamicField {
   type?: FieldType;
   required?: boolean;
   options?: SelectOption[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   defaultValue?: any;
   disabled?: boolean;
   position?: 'left' | 'right' | 'bottom';
   multiple?: boolean;
   /** Opcional: Define el ancho del campo en una cuadrícula de 1-12 (Por defecto 12). Se aplica a partir del breakpoint 'sm'. */
   width?: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getFallbackIcon?: (formData: Record<string, any>) => React.ReactNode;
 }
 
 export interface DynamicFormModalProps extends Omit<ModalProps, 'children'> {
   fields?: DynamicField[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialData?: Record<string, any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSubmit: (data: Record<string, any>) => void | Promise<void>;
   onCancel?: () => void;
   submitLabel?: string;
@@ -69,6 +73,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   requireConfirmation = false,
   confirmationMessage,
 }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -376,7 +381,13 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                           name={name}
                           label={label}
                           value={value ?? (multiple ? [] : '')}
-                          onChange={(e) => handleTextChange(e as any)}
+                          onChange={(e) =>
+                            handleTextChange(
+                              e as React.ChangeEvent<
+                                HTMLInputElement | HTMLTextAreaElement
+                              >
+                            )
+                          }
                           options={options || []}
                           required={required}
                           disabled={disabled}

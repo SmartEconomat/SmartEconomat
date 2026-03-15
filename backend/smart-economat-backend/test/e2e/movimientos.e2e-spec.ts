@@ -247,7 +247,7 @@ describe('MovimientoController (e2e)', () => {
      */
     it('GET /movimientos/:id - UUID inexistente debe fallar (404)', async () => {
       const response = await request(app.getHttpServer() as string)
-        .get('/api/v1/movimientos/0191c30c-1e55-7000-8000-000000000000')
+        .get('/api/v1/movimientos/00000000-0000-0000-0000-000000000000')
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(404);
@@ -271,7 +271,7 @@ describe('MovimientoController (e2e)', () => {
      */
     it('DELETE /movimientos/:id - ID inexistente debe fallar (404)', async () => {
       const response = await request(app.getHttpServer() as string)
-        .delete('/api/v1/movimientos/0191c30c-1e55-7000-8000-000000000000')
+        .delete('/api/v1/movimientos/00000000-0000-0000-0000-000000000000')
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(404);

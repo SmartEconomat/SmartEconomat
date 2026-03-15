@@ -125,6 +125,8 @@ function getGitInfo(): { user: string; email: string } {
   return { user, email };
 }
 
+// ─── Función principal ──────────────────────────────────────────────────────
+
 async function logAndSendEmail() {
   const usuario = getUsername();
   const hostname = getHostname();
@@ -173,7 +175,7 @@ async function logAndSendEmail() {
           '09_Git_User': gitUser,
           '10_Git_Email': gitEmail,
         }),
-      }
+      },
     );
 
     if (response.ok) {

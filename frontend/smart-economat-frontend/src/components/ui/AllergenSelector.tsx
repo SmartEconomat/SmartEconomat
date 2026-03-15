@@ -1,43 +1,6 @@
 import React from 'react';
 import { Box, Typography, Tooltip } from '@mui/material';
-
-import EggIcon from '@mui/icons-material/Egg';
-import SetMealIcon from '@mui/icons-material/SetMeal';
-import GrassIcon from '@mui/icons-material/Grass';
-import BugReportIcon from '@mui/icons-material/BugReport';
-import GrainIcon from '@mui/icons-material/Grain';
-import NatureIcon from '@mui/icons-material/Nature';
-import LocalDrinkIcon from '@mui/icons-material/LocalDrink';
-import SpaIcon from '@mui/icons-material/Spa';
-import YardIcon from '@mui/icons-material/Yard';
-import ColorizeIcon from '@mui/icons-material/Colorize';
-import ScatterPlotIcon from '@mui/icons-material/ScatterPlot';
-import ScienceIcon from '@mui/icons-material/Science';
-import LocalFloristIcon from '@mui/icons-material/LocalFlorist';
-import WaterIcon from '@mui/icons-material/Water';
-
-export interface Allergen {
-  id: string;
-  label: string;
-  icon: React.ReactElement;
-}
-
-export const EU_ALLERGENS: Allergen[] = [
-  { id: 'GLUTEN', label: 'Gluten', icon: <GrassIcon /> },
-  { id: 'CRUSTACEOS', label: 'Crustáceos', icon: <BugReportIcon /> },
-  { id: 'HUEVOS', label: 'Huevos', icon: <EggIcon /> },
-  { id: 'PESCADO', label: 'Pescado', icon: <SetMealIcon /> },
-  { id: 'CACAHUETES', label: 'Cacahuetes', icon: <GrainIcon /> },
-  { id: 'SOJA', label: 'Soja', icon: <NatureIcon /> },
-  { id: 'LACTEOS', label: 'Lácteos', icon: <LocalDrinkIcon /> },
-  { id: 'FRUTOS_CON_CASCARA', label: 'Frutos de cáscara', icon: <SpaIcon /> },
-  { id: 'APIO', label: 'Apio', icon: <YardIcon /> },
-  { id: 'MOSTAZA', label: 'Mostaza', icon: <ColorizeIcon /> },
-  { id: 'SESAMO', label: 'Sésamo', icon: <ScatterPlotIcon /> },
-  { id: 'SULFITO', label: 'Sulfitos', icon: <ScienceIcon /> },
-  { id: 'ALTRAMUCES', label: 'Altramuces', icon: <LocalFloristIcon /> },
-  { id: 'MOLUSCOS', label: 'Moluscos', icon: <WaterIcon /> },
-];
+import { EU_ALLERGENS } from '../../utils/constants';
 
 export interface AllergenSelectorProps {
   value: string[];

@@ -1,25 +1,28 @@
 /**
  * @fileoverview Modal genérico y animado para presentar el detalle en formato de solo lectura de cualquier entidad.
- * Este componente incluye la capacidad de transmutar (morphing) de la vista de solo lectura 
+ * Este componente incluye la capacidad de transmutar (morphing) de la vista de solo lectura
  * a un formulario interactivo de edición usando form schemas reutilizando el contexto visual sin perder la ubicación.
  */
 
 import React, { useState } from 'react';
 import {
-    Box,
-    Button,
-    Divider,
-    IconButton,
-    Tooltip,
-    Typography,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
+  Box,
+  Button,
+  Divider,
+  IconButton,
+  Tooltip,
+  Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
-import DynamicFormModal, { DynamicField, DynamicFormModalProps } from './DynamicFormModal';
+import DynamicFormModal, {
+  DynamicField,
+  DynamicFormModalProps,
+} from './DynamicFormModal';
 import { ModalSize } from './Modal';
 
 // ─────────────────────────────────────────────────────────
@@ -27,49 +30,50 @@ import { ModalSize } from './Modal';
 // ─────────────────────────────────────────────────────────
 
 export interface DetailField {
-    label: string;
-    /** Texto, número o cualquier ReactNode (chip, icono…). */
-    value: React.ReactNode;
-    /** Si true, ocupa todo el ancho de la fila (1 / -1). */
-    fullWidth?: boolean;
-    /** Cuantas columnas ocupa en pantallas medianas/grandes. Por defecto 1. */
-    colSpan?: number;
+  label: string;
+  /** Texto, número o cualquier ReactNode (chip, icono…). */
+  value: React.ReactNode;
+  /** Si true, ocupa todo el ancho de la fila (1 / -1). */
+  fullWidth?: boolean;
+  /** Cuantas columnas ocupa en pantallas medianas/grandes. Por defecto 1. */
+  colSpan?: number;
 }
 
 export interface DetailSection {
-    title?: string;
-    /** Opcional: Número de columnas que componen el grid de esta sección. Por defecto: 2 */
-    columns?: number;
-    /** Matriz de campos clásicos conformados por clave: valor */
-    fields?: DetailField[];
-    /** Módulo inyectable personalizado en lugar del sistema tradicional de campos rígidos */
-    content?: React.ReactNode;
+  title?: string;
+  /** Opcional: Número de columnas que componen el grid de esta sección. Por defecto: 2 */
+  columns?: number;
+  /** Matriz de campos clásicos conformados por clave: valor */
+  fields?: DetailField[];
+  /** Módulo inyectable personalizado en lugar del sistema tradicional de campos rígidos */
+  content?: React.ReactNode;
 }
 
 export interface DetailModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    title: string;
-    subtitle?: React.ReactNode;
-    headerMedia?: React.ReactNode;
-    sections: DetailSection[];
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  subtitle?: React.ReactNode;
+  headerMedia?: React.ReactNode;
+  sections: DetailSection[];
+  size?: ModalSize;
+  /** Callback para abrir el modal de edición desde el padre. */
+  onEdit?: () => void;
+  editConfig?: {
+    title?: string;
+    fields: DynamicField[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    initialData: Record<string, any>;
+    onSubmit: DynamicFormModalProps['onSubmit'];
+    submitLabel?: string;
+    isSubmitting?: boolean;
+    requireConfirmation?: boolean;
+    confirmationMessage?: React.ReactNode;
     size?: ModalSize;
-    /** Callback para abrir el modal de edición desde el padre. */
-    onEdit?: () => void;
-    editConfig?: {
-        title?: string;
-        fields: DynamicField[];
-        initialData: Record<string, any>;
-        onSubmit: DynamicFormModalProps['onSubmit'];
-        submitLabel?: string;
-        isSubmitting?: boolean;
-        requireConfirmation?: boolean;
-        confirmationMessage?: React.ReactNode;
-        size?: ModalSize;
-    };
-    editLabel?: string;
-    /** Botones de acción adicionales para el footer. */
-    actions?: React.ReactNode;
+  };
+  editLabel?: string;
+  /** Botones de acción adicionales para el footer. */
+  actions?: React.ReactNode;
 }
 
 // ─────────────────────────────────────────────────────────
@@ -77,11 +81,11 @@ export interface DetailModalProps {
 // ─────────────────────────────────────────────────────────
 
 const SIZE_MAP: Record<ModalSize, string> = {
-    sm: '400px',
-    md: '600px',
-    lg: '900px',
-    xl: '1200px',
-    full: '100vw',
+  sm: '400px',
+  md: '600px',
+  lg: '900px',
+  xl: '1200px',
+  full: '100vw',
 };
 
 // ─────────────────────────────────────────────────────────
@@ -89,233 +93,272 @@ const SIZE_MAP: Record<ModalSize, string> = {
 // ─────────────────────────────────────────────────────────
 
 const DetailModal: React.FC<DetailModalProps> = ({
-    isOpen,
-    onClose,
-    title,
-    subtitle,
-    headerMedia,
-    sections,
-    size = 'md',
-    onEdit,
-    editConfig,
-    editLabel = 'Editar',
-    actions,
+  isOpen,
+  onClose,
+  title,
+  subtitle,
+  headerMedia,
+  sections,
+  size = 'md',
+  onEdit,
+  editConfig,
+  editLabel = 'Editar',
+  actions,
 }) => {
-    const [editOpen, setEditOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
-    const handleOpenEdit = () => {
-        if (onEdit) {
-            // El padre gestiona la apertura del editor
-            onEdit();
-        } else {
-            // Gestión interna: cierra detalle y abre editor
-            onClose();
-            setEditOpen(true);
-        }
-    };
+  const handleOpenEdit = () => {
+    if (onEdit) {
+      // El padre gestiona la apertura del editor
+      onEdit();
+    } else {
+      // Gestión interna: cierra detalle y abre editor
+      onClose();
+      setEditOpen(true);
+    }
+  };
 
-    const handleCloseEdit = () => {
-        setEditOpen(false);
-    };
+  const handleCloseEdit = () => {
+    setEditOpen(false);
+  };
 
-    return (
-        <>
-            {/* ─── FICHA DE DETALLE ─── */}
-            <Dialog
-                open={isOpen}
-                onClose={onClose}
-                scroll="paper"
-                fullScreen={size === 'full'}
-                PaperProps={{
-                    sx: {
-                        width: '100%',
-                        maxWidth: SIZE_MAP[size],
-                        maxHeight: size === 'full' ? '100vh' : '90vh',
-                        m: size === 'full' ? 0 : 2,
-                        bgcolor: 'background.paper',
-                        backgroundImage: 'none',
-                    },
-                }}
+  return (
+    <>
+      {/* ─── FICHA DE DETALLE ─── */}
+      <Dialog
+        open={isOpen}
+        onClose={onClose}
+        scroll="paper"
+        fullScreen={size === 'full'}
+        PaperProps={{
+          sx: {
+            width: '100%',
+            maxWidth: SIZE_MAP[size],
+            maxHeight: size === 'full' ? '100vh' : '90vh',
+            m: size === 'full' ? 0 : 2,
+            bgcolor: 'background.paper',
+            backgroundImage: 'none',
+          },
+        }}
+      >
+        {/* Header */}
+        <DialogTitle
+          component="div"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            px: 3,
+            py: 2,
+            borderBottom: 1,
+            borderColor: 'divider',
+            minHeight: 56,
+            gap: 1,
+          }}
+        >
+          <Box>
+            <Typography
+              variant="h6"
+              component="h2"
+              sx={{ fontWeight: 600, lineHeight: 1.2 }}
             >
-                {/* Header */}
-                <DialogTitle
-                    component="div"
-                    sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        px: 3,
-                        py: 2,
-                        borderBottom: 1,
-                        borderColor: 'divider',
-                        minHeight: 56,
-                        gap: 1,
-                    }}
-                >
-                    <Box>
-                        <Typography variant="h6" component="h2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
-                            {title}
-                        </Typography>
-                        {subtitle && (
-                            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-                                {subtitle}
-                            </Typography>
-                        )}
-                    </Box>
-
-                    <Tooltip title="Cerrar">
-                        <IconButton
-                            aria-label="Cerrar"
-                            onClick={onClose}
-                            size="small"
-                            sx={{
-                                color: 'text.secondary',
-                                '&:hover': { color: 'text.primary', bgcolor: 'action.hover' },
-                            }}
-                        >
-                            <CloseIcon fontSize="small" />
-                        </IconButton>
-                    </Tooltip>
-                </DialogTitle>
-
-                {/* Media */}
-                {headerMedia && (
-                    <Box
-                        sx={{
-                            width: '100%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            bgcolor: 'action.hover',
-                            py: 4,
-                            borderBottom: 1,
-                            borderColor: 'divider',
-                        }}
-                    >
-                        {headerMedia}
-                    </Box>
-                )}
-
-                {/* Secciones */}
-                <DialogContent sx={{ p: 0, overflowY: 'auto' }}>
-                    {sections.map((section, sIdx) => (
-                        <Box
-                            key={sIdx}
-                            sx={{
-                                px: 3,
-                                pt: sIdx === 0 ? 3 : 2,
-                                pb: sIdx === sections.length - 1 ? 3 : 0,
-                            }}
-                        >
-                            {section.title && (
-                                <>
-                                    <Typography
-                                        variant="overline"
-                                        color="text.secondary"
-                                        sx={{ fontWeight: 700, letterSpacing: 1 }}
-                                    >
-                                        {section.title}
-                                    </Typography>
-                                    <Divider sx={{ mb: 2, mt: 0.5 }} />
-                                </>
-                            )}
-
-                            {section.fields && section.fields.length > 0 && (
-                                <Box sx={{
-                                    display: 'grid',
-                                    gridTemplateColumns: section.columns ? `repeat(${section.columns}, 1fr)` : { xs: '1fr', sm: 'repeat(2, 1fr)' },
-                                    gap: { xs: 1, sm: 2 }
-                                }}>
-                                    {section.fields.map((field, fIdx) => (
-                                        <Box key={fIdx} sx={{ gridColumn: field.fullWidth ? '1 / -1' : (section.columns ? `span ${field.colSpan || 1}` : { xs: '1 / -1', sm: `span ${field.colSpan || 1}` }) }}>
-                                            <Typography
-                                                variant="caption"
-                                                color="text.secondary"
-                                                sx={{
-                                                    fontWeight: 600,
-                                                    textTransform: 'uppercase',
-                                                    letterSpacing: 0.5,
-                                                    display: 'block',
-                                                    mb: 0.25,
-                                                }}
-                                            >
-                                                {field.label}
-                                            </Typography>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5, minHeight: 28 }}>
-                                                {field.value != null && field.value !== '' ? (
-                                                    typeof field.value === 'string' || typeof field.value === 'number'
-                                                        ? <Typography variant="body2">{field.value}</Typography>
-                                                        : field.value
-                                                ) : (
-                                                    <Typography variant="body2" color="text.disabled">—</Typography>
-                                                )}
-                                            </Box>
-                                        </Box>
-                                    ))}
-                                </Box>
-                            )}
-
-                            {section.content && (
-                                <Box sx={{ mt: section.fields?.length ? 2 : 0 }}>
-                                    {section.content}
-                                </Box>
-                            )}
-
-                            {sIdx < sections.length - 1 && <Divider sx={{ mt: 2 }} />}
-                        </Box>
-                    ))}
-                </DialogContent>
-
-                {/* Footer */}
-                {(editConfig || onEdit || actions) && (
-                    <DialogActions
-                        sx={{
-                            px: 3,
-                            py: 2,
-                            borderTop: 1,
-                            borderColor: 'divider',
-                            justifyContent: 'flex-end',
-                            gap: 1.5,
-                        }}
-                    >
-                        {actions}
-                        {(editConfig || onEdit) && (
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                startIcon={<EditIcon />}
-                                onClick={handleOpenEdit}
-                                disableElevation
-                            >
-                                {editLabel}
-                            </Button>
-                        )}
-                    </DialogActions>
-                )}
-            </Dialog>
-
-            {/* ─── MODAL DE EDICIÓN ─── */}
-            {editConfig && (
-                <DynamicFormModal
-                    isOpen={editOpen}
-                    onClose={handleCloseEdit}
-                    title={editConfig.title ?? `Editar ${title}`}
-                    size={editConfig.size ?? 'lg'}
-                    fields={editConfig.fields}
-                    initialData={editConfig.initialData}
-                    onSubmit={async (data) => {
-                        await editConfig.onSubmit(data);
-                        handleCloseEdit();
-                    }}
-                    onCancel={handleCloseEdit}
-                    submitLabel={editConfig.submitLabel}
-                    isSubmitting={editConfig.isSubmitting}
-                    requireConfirmation={editConfig.requireConfirmation}
-                    confirmationMessage={editConfig.confirmationMessage}
-                />
+              {title}
+            </Typography>
+            {subtitle && (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 0.25 }}
+              >
+                {subtitle}
+              </Typography>
             )}
-        </>
-    );
+          </Box>
+
+          <Tooltip title="Cerrar">
+            <IconButton
+              aria-label="Cerrar"
+              onClick={onClose}
+              size="small"
+              sx={{
+                color: 'text.secondary',
+                '&:hover': { color: 'text.primary', bgcolor: 'action.hover' },
+              }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </DialogTitle>
+
+        {/* Media */}
+        {headerMedia && (
+          <Box
+            sx={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: 'action.hover',
+              py: 4,
+              borderBottom: 1,
+              borderColor: 'divider',
+            }}
+          >
+            {headerMedia}
+          </Box>
+        )}
+
+        {/* Secciones */}
+        <DialogContent sx={{ p: 0, overflowY: 'auto' }}>
+          {sections.map((section, sIdx) => (
+            <Box
+              key={sIdx}
+              sx={{
+                px: 3,
+                pt: sIdx === 0 ? 3 : 2,
+                pb: sIdx === sections.length - 1 ? 3 : 0,
+              }}
+            >
+              {section.title && (
+                <>
+                  <Typography
+                    variant="overline"
+                    color="text.secondary"
+                    sx={{ fontWeight: 700, letterSpacing: 1 }}
+                  >
+                    {section.title}
+                  </Typography>
+                  <Divider sx={{ mb: 2, mt: 0.5 }} />
+                </>
+              )}
+
+              {section.fields && section.fields.length > 0 && (
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: section.columns
+                      ? `repeat(${section.columns}, 1fr)`
+                      : { xs: '1fr', sm: 'repeat(2, 1fr)' },
+                    gap: { xs: 1, sm: 2 },
+                  }}
+                >
+                  {section.fields.map((field, fIdx) => (
+                    <Box
+                      key={fIdx}
+                      sx={{
+                        gridColumn: field.fullWidth
+                          ? '1 / -1'
+                          : section.columns
+                            ? `span ${field.colSpan || 1}`
+                            : {
+                                xs: '1 / -1',
+                                sm: `span ${field.colSpan || 1}`,
+                              },
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          letterSpacing: 0.5,
+                          display: 'block',
+                          mb: 0.25,
+                        }}
+                      >
+                        {field.label}
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          flexWrap: 'wrap',
+                          gap: 0.5,
+                          minHeight: 28,
+                        }}
+                      >
+                        {field.value != null && field.value !== '' ? (
+                          typeof field.value === 'string' ||
+                          typeof field.value === 'number' ? (
+                            <Typography variant="body2">
+                              {field.value}
+                            </Typography>
+                          ) : (
+                            field.value
+                          )
+                        ) : (
+                          <Typography variant="body2" color="text.disabled">
+                            —
+                          </Typography>
+                        )}
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+              )}
+
+              {section.content && (
+                <Box sx={{ mt: section.fields?.length ? 2 : 0 }}>
+                  {section.content}
+                </Box>
+              )}
+
+              {sIdx < sections.length - 1 && <Divider sx={{ mt: 2 }} />}
+            </Box>
+          ))}
+        </DialogContent>
+
+        {/* Footer */}
+        {(editConfig || onEdit || actions) && (
+          <DialogActions
+            sx={{
+              px: 3,
+              py: 2,
+              borderTop: 1,
+              borderColor: 'divider',
+              justifyContent: 'flex-end',
+              gap: 1.5,
+            }}
+          >
+            {actions}
+            {(editConfig || onEdit) && (
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<EditIcon />}
+                onClick={handleOpenEdit}
+                disableElevation
+              >
+                {editLabel}
+              </Button>
+            )}
+          </DialogActions>
+        )}
+      </Dialog>
+
+      {/* ─── MODAL DE EDICIÓN ─── */}
+      {editConfig && (
+        <DynamicFormModal
+          isOpen={editOpen}
+          onClose={handleCloseEdit}
+          title={editConfig.title ?? `Editar ${title}`}
+          size={editConfig.size ?? 'lg'}
+          fields={editConfig.fields}
+          initialData={editConfig.initialData}
+          onSubmit={async (data) => {
+            await editConfig.onSubmit(data);
+            handleCloseEdit();
+          }}
+          onCancel={handleCloseEdit}
+          submitLabel={editConfig.submitLabel}
+          isSubmitting={editConfig.isSubmitting}
+          requireConfirmation={editConfig.requireConfirmation}
+          confirmationMessage={editConfig.confirmationMessage}
+        />
+      )}
+    </>
+  );
 };
 
 export default DetailModal;

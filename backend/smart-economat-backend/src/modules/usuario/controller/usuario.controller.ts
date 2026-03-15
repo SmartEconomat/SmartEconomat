@@ -104,7 +104,7 @@ export class UsuarioController {
   }
 
   @Patch(':id/activar')
-  @RequirePermissions('usuarios:activar_desactivar')
+  @RequirePermissions('usuarios:editar')
   updateStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUsuarioStatusDto
@@ -113,7 +113,7 @@ export class UsuarioController {
   }
 
   @Patch(':id/rol')
-  @RequirePermissions('usuarios:cambiar_rol')
+  @RequirePermissions('usuarios:editar')
   updateRol(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUsuarioRolDto
@@ -122,7 +122,7 @@ export class UsuarioController {
   }
 
   @Patch(':id/password')
-  @RequirePermissions('usuarios:resetear_password')
+  @RequirePermissions('usuarios:editar')
   updatePassword(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ResetPasswordDto
@@ -137,7 +137,7 @@ export class UsuarioController {
   }
 
   @Post(':id/permisos-adicionales/:permisoId')
-  @RequirePermissions('permisos:gestionar')
+  @RequirePermissions('usuarios:editar')
   addAdditionalPermission(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('permisoId', ParseUUIDPipe) permisoId: string
@@ -146,7 +146,7 @@ export class UsuarioController {
   }
 
   @Delete(':id/permisos-adicionales/:permisoId')
-  @RequirePermissions('permisos:gestionar')
+  @RequirePermissions('usuarios:editar')
   removeAdditionalPermission(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('permisoId', ParseUUIDPipe) permisoId: string
@@ -155,7 +155,7 @@ export class UsuarioController {
   }
 
   @Post(':id/permisos-excluidos/:permisoId')
-  @RequirePermissions('permisos:gestionar')
+  @RequirePermissions('usuarios:editar')
   addExcludedPermission(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('permisoId', ParseUUIDPipe) permisoId: string
@@ -164,7 +164,7 @@ export class UsuarioController {
   }
 
   @Delete(':id/permisos-excluidos/:permisoId')
-  @RequirePermissions('permisos:gestionar')
+  @RequirePermissions('usuarios:editar')
   removeExcludedPermission(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('permisoId', ParseUUIDPipe) permisoId: string

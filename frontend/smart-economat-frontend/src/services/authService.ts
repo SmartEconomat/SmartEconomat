@@ -1,5 +1,5 @@
 import { baseFetch, parseApiResponse } from './api.service';
-import { User } from '../store/AuthContext';
+import { User } from '../store/auth.types';
 
 interface CurrentUserResponse {
   id: string;

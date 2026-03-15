@@ -1,6 +1,7 @@
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { ThemeContextProvider, useThemeContext } from './store/ThemeContext';
+import { ThemeContextProvider } from './store/ThemeContext';
+import { useThemeContext } from './store/theme.hooks';
 import AppRouter from './routes/AppRouter';
 import { AuthProvider } from './store/AuthContext';
 import { ToastProvider } from './store/ToastContext';

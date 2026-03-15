@@ -1,19 +1,19 @@
 export const getTooltipContent = (
-    sidebarOpen: boolean,
-    isLearningMode: boolean,
-    title: string,
-    description: string
+  sidebarOpen: boolean,
+  isLearningMode: boolean,
+  title: string,
+  description: string
 ): string => {
-    if (sidebarOpen) {
-        if (isLearningMode) {
-            return description;
-        }
-        return "";
-    }
-
+  if (sidebarOpen) {
     if (isLearningMode) {
-        return `${title}: ${description}`;
+      return description;
     }
-    
-    return title; 
+    return '';
+  }
+
+  if (isLearningMode) {
+    return `${title}: ${description}`;
+  }
+
+  return title;
 };

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Box,
   Stepper,
   Step,
   StepLabel,
@@ -8,49 +7,18 @@ import {
   Typography,
   Paper,
   Alert,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  Checkbox,
   CircularProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
   Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Select,
-  MenuItem,
-  InputLabel,
-  FormControl,
-  IconButton,
   Tooltip,
   Snackbar,
   Backdrop,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  InputAdornment,
-  Switch,
-  FormControlLabel,
+  Box,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import DeleteIcon from '@mui/icons-material/Delete';
-import ClearIcon from '@mui/icons-material/Clear';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import { Theme } from '@mui/material/styles';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import SaveIcon from '@mui/icons-material/Save';
-import ScaleIcon from '@mui/icons-material/Scale';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import FiberNewIcon from '@mui/icons-material/FiberNew';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 import {
   RecepcionDraft,
@@ -61,18 +29,17 @@ import {
 } from '../services/recepcion.types';
 import { createRecepcion } from '../services/recepcion.service';
 import { fetchPedidos } from '../services/pedido.service';
-import { Pedido, EstadoPedido } from '../services/pedido.types';
+import { Pedido, EstadoPedido, PedidoProducto } from '../services/pedido.types';
 import {
   getProductoByBarcode,
   searchProductosByName,
 } from '../services/producto.service';
-import { useAuth } from '../store/AuthContext';
+// import { useAuth } from '../store/AuthContext'; // Removed as unused
 import {
   CategoriaProducto,
   UnidadMedida,
   normalizeUnidadMedida,
 } from '../services/producto.types';
-import StatusChip from '../components/recepcion/StatusChip';
 import PasoSeleccionPedidos from '../components/recepcion/PasoSeleccionPedidos';
 import PasoEscaneo from '../components/recepcion/PasoEscaneo';
 import PasoRevision from '../components/recepcion/PasoRevision';
@@ -142,6 +109,11 @@ const Recepcion: React.FC = () => {
     defaultDraft,
     setActiveStep,
   });
+  const draftRef = useRef(draft);
+
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
 
   useEffect(() => {
     if (activeStep === 1 && searchInputRef.current) {
@@ -152,7 +124,7 @@ const Recepcion: React.FC = () => {
   // Data
   const [pedidosDisponibles, setPedidosDisponibles] = useState<Pedido[]>([]);
   const [loadingPedidos, setLoadingPedidos] = useState(false);
-  const { user } = useAuth();
+  // const { user } = useAuth(); // Comentado ya que no se usa y genera error de linting
 
   useEffect(() => {
     void loadPedidos();
@@ -173,38 +145,43 @@ const Recepcion: React.FC = () => {
             p.estado === EstadoPedido.PARCIAL
         )
       );
-    } catch (err) {
+    } catch {
       setError('Error al cargar pedidos compatibles.');
     } finally {
       setLoadingPedidos(false);
     }
   };
 
-  const mapPedidoToDraft = (pedido: Pedido): any => ({
-    id: pedido.id,
-    descripcion: `Pedido ${pedido.id.substring(0, 8)} - ${pedido.proveedor?.nombre}`,
-    proveedor: pedido.proveedor?.nombre || 'Desconocido',
-    lineas: (pedido.pedidoProductos || []).map((pp: any) => ({
+  const mapPedidoToDraft = (pedido: Pedido): LineaDraft[] =>
+    (pedido.pedidoProductos || []).map((pp: PedidoProducto) => ({
       pedidoProductoId: pp.id,
       idProducto: pp.productoProveedor?.producto?.id,
       codigoBarras: pp.productoProveedor?.producto?.codigoBarras,
       nombreProducto: pp.productoProveedor?.producto?.nombre || 'Producto',
-      unidad: pp.productoProveedor?.producto?.unidad || 'unidades',
       cantidadPedida: Number(pp.cantidad),
       cantidadAlbaran: '',
       cantidadRecibida: 0,
+      isWeighedWithScale: false,
       estadoVisual: EstadoVisualProducto.OPTIMO,
       fechaCaducidad: '',
       observaciones: '',
       estado: calculateEstado(0, Number(pp.cantidad)),
-    })),
+      unidad: pp.productoProveedor?.producto?.unidad || UnidadMedida.UNIDAD,
+    }));
+
+  // Helper para crear el objeto del pedido en el draft
+  const createDraftPedido = (pedido: Pedido) => ({
+    id: pedido.id,
+    descripcion: `Pedido ${pedido.id.substring(0, 8)} - ${pedido.proveedor?.nombre}`,
+    proveedor: pedido.proveedor?.nombre || 'Desconocido',
+    lineas: mapPedidoToDraft(pedido),
   });
 
   const handleSelectAll = () => {
     const newDraftPedidos = [...draft.pedidosSeleccionados];
     pedidosDisponibles.forEach((pedido) => {
       if (!newDraftPedidos.some((p) => p.id === pedido.id)) {
-        newDraftPedidos.push(mapPedidoToDraft(pedido));
+        newDraftPedidos.push(createDraftPedido(pedido));
       }
     });
     setDraft({ ...draft, pedidosSeleccionados: newDraftPedidos });
@@ -214,8 +191,9 @@ const Recepcion: React.FC = () => {
     setDraft({ ...draft, pedidosSeleccionados: [] });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSelectProvider = (e: any) => {
-    const providerName = e.target.value;
+    const providerName = e.target.value as string;
     if (!providerName) return;
 
     const pedidosDelProveedor = pedidosDisponibles.filter(
@@ -226,15 +204,16 @@ const Recepcion: React.FC = () => {
 
     pedidosDelProveedor.forEach((pedido) => {
       if (!newDraftPedidos.some((p) => p.id === pedido.id)) {
-        newDraftPedidos.push(mapPedidoToDraft(pedido));
+        newDraftPedidos.push(createDraftPedido(pedido));
       }
     });
 
     setDraft({ ...draft, pedidosSeleccionados: newDraftPedidos });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleDeselectProvider = (e: any) => {
-    const providerName = e.target.value;
+    const providerName = e.target.value as string;
     if (!providerName) return;
 
     const newDraftPedidos = draft.pedidosSeleccionados.filter(
@@ -253,7 +232,7 @@ const Recepcion: React.FC = () => {
     if (isSelected) {
       newPedidos = newPedidos.filter((p) => p.id !== pedido.id);
     } else {
-      newPedidos.push(mapPedidoToDraft(pedido));
+      newPedidos.push(createDraftPedido(pedido));
     }
 
     setDraft({ ...draft, pedidosSeleccionados: newPedidos });
@@ -290,7 +269,7 @@ const Recepcion: React.FC = () => {
         // No encontrado -> Modal creación
         setOpenModal(true);
       }
-    } catch (e) {
+    } catch {
       setOpenModal(true);
     } finally {
       setSearching(false);
@@ -301,18 +280,19 @@ const Recepcion: React.FC = () => {
     }
   };
 
-  const processProductFound = (prod: any) => {
-    let foundInPedidos = false;
-    let foundPedidoId: string | null = null;
-    let unitAdded = false;
-
+  const processProductFound = (prod: {
+    id: string;
+    codigoBarras?: string;
+    nombre: string;
+    unidad?: UnidadMedida;
+  }) => {
     const newPedidos = [...draft.pedidosSeleccionados].map((p) => ({
       ...p,
       lineas: [...p.lineas],
     }));
 
     // 1. Array de coincidencias en los pedidos seleccionados
-    const matches: { pIdx: number; lIdx: number; l: any }[] = [];
+    const matches: { pIdx: number; lIdx: number; l: LineaDraft }[] = [];
     newPedidos.forEach((p, pIdx) => {
       p.lineas.forEach((l, lIdx) => {
         const matchId = l.idProducto === prod.id;
@@ -328,8 +308,6 @@ const Recepcion: React.FC = () => {
     });
 
     if (matches.length > 0) {
-      foundInPedidos = true;
-
       // Buscar si algún match le falta stock
       let targetMatch = matches.find((m) => {
         const currRec =
@@ -342,7 +320,7 @@ const Recepcion: React.FC = () => {
         targetMatch = matches[0];
       }
 
-      foundPedidoId = newPedidos[targetMatch.pIdx].id;
+      const foundPedidoId = newPedidos[targetMatch.pIdx].id;
       const tLinea = newPedidos[targetMatch.pIdx].lineas[targetMatch.lIdx];
       const currRec =
         tLinea.cantidadRecibida === '' ? 0 : Number(tLinea.cantidadRecibida);
@@ -350,7 +328,7 @@ const Recepcion: React.FC = () => {
       if (isWeightUnit(tLinea.unidad)) {
         // En lugar de sumar +1 por defecto, abrimos la balanza para capturar su peso
         openWeightScale(targetMatch.pIdx, targetMatch.lIdx);
-        if (foundPedidoId) setExpandedPanel(foundPedidoId);
+        setExpandedPanel(foundPedidoId);
         return; // Detenemos aquí para esperar a que el usuario confirme el peso
       }
 
@@ -361,7 +339,7 @@ const Recepcion: React.FC = () => {
       };
 
       setDraft({ ...draft, pedidosSeleccionados: newPedidos });
-      if (foundPedidoId) setExpandedPanel(foundPedidoId);
+      setExpandedPanel(foundPedidoId);
     } else {
       // 2. Si no esta, añadir a espontáneos
       const existingEsp = draft.productosEspontaneos.find(
@@ -383,7 +361,7 @@ const Recepcion: React.FC = () => {
                 cantidadRecibida: isWeightUnit(l.unidad)
                   ? Number(l.cantidadRecibida)
                   : Number(l.cantidadRecibida) + 1,
-                estado: 'Exceso' as any,
+                estado: 'Exceso' as LineaDraft['estado'],
               }
             : l;
         });
@@ -414,7 +392,7 @@ const Recepcion: React.FC = () => {
           estadoVisual: EstadoVisualProducto.OPTIMO,
           fechaCaducidad: '',
           observaciones: '',
-          estado: 'Nuevo' as any,
+          estado: 'Nuevo',
         };
         setDraft((prev) => ({
           ...prev,
@@ -423,7 +401,11 @@ const Recepcion: React.FC = () => {
 
         if (isWeightUnit(prod.unidad)) {
           setTimeout(
-            () => openWeightScale(null, draft.productosEspontaneos.length),
+            () =>
+              openWeightScale(
+                null,
+                draftRef.current.productosEspontaneos.length
+              ),
             0
           );
         }
@@ -431,7 +413,7 @@ const Recepcion: React.FC = () => {
     }
   };
 
-  const calculateEstado = (rec: number, ped: number): any => {
+  const calculateEstado = (rec: number, ped: number): LineaDraft['estado'] => {
     if (rec === 0) return 'No entregado';
     if (rec === ped) return 'OK';
     if (rec < ped) return 'Parcial';
@@ -442,7 +424,7 @@ const Recepcion: React.FC = () => {
     pIdx: number | null,
     lIdx: number,
     field: string,
-    value: any
+    value: unknown
   ) => {
     let finalValue = value;
     if (field === 'cantidadRecibida') {
@@ -536,7 +518,7 @@ const Recepcion: React.FC = () => {
 
   const validarDraft = (): boolean => {
     const errores: Record<string, string[]> = {};
-    let isValid = true;
+    const isValid = true;
 
     // Al menos 1 producto con cantidad > 0
     const totalItems = draft.pedidosSeleccionados
@@ -594,7 +576,7 @@ const Recepcion: React.FC = () => {
     setIsSubmitting(true);
     setError(null);
 
-    const payload: any = {
+    const payload = {
       pedidos: draft.pedidosSeleccionados.map((p) => ({
         pedidoId: p.id,
         nAlbaran: p.nAlbaran || draft.nAlbaran,
@@ -620,10 +602,12 @@ const Recepcion: React.FC = () => {
         codigoBarras: p.productoNuevo?.codigoBarras || p.codigoBarras || '',
         nombre: p.productoNuevo?.nombre || p.nombreProducto,
         marca: p.productoNuevo?.marca || '',
-        unidad: normalizeUnidadMedida(
-          p.productoNuevo?.unidad || p.unidad || UnidadMedida.KG
-        ),
-        tipo: p.productoNuevo?.tipo || CategoriaProducto.OTRO,
+        unidad:
+          normalizeUnidadMedida(
+            p.productoNuevo?.unidad || p.unidad || UnidadMedida.UNIDAD
+          ) || UnidadMedida.UNIDAD,
+        tipo: (p.productoNuevo?.tipo ||
+          CategoriaProducto.OTRO) as CategoriaProducto,
         contenido: p.productoNuevo?.contenido || 1,
         cantidadRecibida: Number(p.cantidadRecibida),
         observaciones: p.observaciones,
@@ -636,8 +620,19 @@ const Recepcion: React.FC = () => {
       setResultado(res);
       setActiveStep(3);
       await clearRemoteDraft();
-    } catch (err: any) {
-      const errorMessage = err.message || '';
+    } catch (err: unknown) {
+      let errorMessage = '';
+      function isErrorWithMessage(e: unknown): e is { message: string } {
+        return (
+          typeof e === 'object' &&
+          e !== null &&
+          'message' in e &&
+          typeof (e as { message: unknown }).message === 'string'
+        );
+      }
+      if (isErrorWithMessage(err)) {
+        errorMessage = err.message;
+      }
       if (
         errorMessage.includes('Pedido no encontrado') ||
         errorMessage.includes('ORDER_NOT_FOUND')
@@ -787,7 +782,7 @@ const Recepcion: React.FC = () => {
       estadoVisual: EstadoVisualProducto.OPTIMO,
       fechaCaducidad: '',
       observaciones: '',
-      estado: 'Nuevo' as any,
+      estado: 'Nuevo',
       productoNuevo: {
         pendienteCreacion: true,
         codigoBarras: searchQuery || '',
@@ -1005,7 +1000,7 @@ const Recepcion: React.FC = () => {
       <Backdrop
         sx={{
           color: '#fff',
-          zIndex: (theme) => theme.zIndex.drawer + 1,
+          zIndex: (theme: Theme) => theme.zIndex.drawer + 1,
           flexDirection: 'column',
           gap: 2,
         }}

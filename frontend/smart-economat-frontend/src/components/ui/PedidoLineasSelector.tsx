@@ -18,7 +18,10 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
-import { searchProductoProveedor } from '../../services/productoProveedor.service';
+import {
+  searchProductoProveedor,
+  ProductoProveedorOption,
+} from '../../services/productoProveedor.service';
 import { PedidoProducto } from '../../services/pedido.types';
 
 interface PedidoLineasSelectorProps {
@@ -36,9 +39,9 @@ interface FlatProductoProveedor {
   marca?: string;
 }
 
-interface PedidoProductoWithKey extends Partial<PedidoProducto> {
-  _key?: string;
-}
+type ProductoProveedorSearchResult = ProductoProveedorOption & {
+  precioUnitario?: number;
+};
 
 const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
   value = [],
@@ -61,7 +64,9 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
           nombreProducto: pp.productoNombre || 'Desconocido',
           nombreProveedor: pp.proveedorNombre || 'Desconocido',
           proveedorId: pp.proveedorId || '',
-          precioUnitario: (pp as any).precioUnitario || 0,
+          precioUnitario: Number(
+            (pp as ProductoProveedorSearchResult).precioUnitario ?? 0
+          ),
           marca: pp.marca,
         }));
         setAllFlatProducts(flat);
@@ -109,6 +114,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
 
     // Si hay proveedor, agregar también productos existentes de otros proveedores
     value.forEach((line) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const lineData = line as any;
       if (
         lineData.productoProveedorId &&
@@ -132,14 +138,20 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
     return options;
   }, [filteredProducts, allFlatProducts, proveedorId, value]);
 
-  const handleUpdateLine = (index: number, field: string, newValue: any) => {
+  const handleUpdateLine = (
+    index: number,
+    field: string,
+    newValue: unknown
+  ) => {
     const newLines = [...value];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const lineData = newLines[index] as any;
     newLines[index] = { ...newLines[index], [field]: newValue };
-    
+
     // Preservar la clave única si existe
     if (lineData._key) {
-      (newLines[index] as any)._key = lineData._key;
+      (newLines[index] as Partial<PedidoProducto> & { _key?: string })._key =
+        lineData._key;
     }
 
     // Si cambiamos el producto, actualizamos automáticamente el precio unitario
@@ -245,6 +257,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                 </TableRow>
               ) : (
                 value.map((line, index) => {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   const lineData = line as any;
                   const selectedProduct = getAutocompleteOptions.find(
                     (p) => p.id === lineData.productoProveedorId
