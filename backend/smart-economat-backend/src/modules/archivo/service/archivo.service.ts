@@ -15,7 +15,7 @@ import { rolUsuario } from '../../usuario/enums/usuario.enums';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import * as fs from 'fs';
 import * as path from 'path';
-import sharp from 'sharp';
+import { Jimp, JimpMime } from 'jimp';
 import { ImageProcessOptionsDto } from '../dto/image-process-options.dto';
 
 export interface PaginatedFiles {
@@ -25,6 +25,8 @@ export interface PaginatedFiles {
   limit: number;
   totalPages: number;
 }
+
+type ProcessedImageFormat = 'jpeg' | 'png';
 
 @Injectable()
 export class ArchivoService {
@@ -105,39 +107,77 @@ export class ArchivoService {
     const name = path.basename(inputPath, ext);
     const timestamp = Date.now();
 
-    const outputFormat = options.formatoSalida || 'webp';
+    const outputFormat = this.resolveOutputFormat(options.formatoSalida);
     const outputFileName = `${name}_optimized_${timestamp}.${outputFormat}`;
     const outputPath = path.join(dir, outputFileName);
 
-    let transformer = sharp(inputPath);
+    const image = await Jimp.read(inputPath);
+    const targetWidth = options.ancho
+      ? Math.min(options.ancho, image.width)
+      : undefined;
+    const targetHeight = options.alto
+      ? Math.min(options.alto, image.height)
+      : undefined;
 
-    if (options.ancho || options.alto) {
-      transformer = transformer.resize({
-        width: options.ancho,
-        height: options.alto,
-        fit: options.mantenerAspectRatio ? 'inside' : 'fill',
-        withoutEnlargement: true,
-      });
+    if (targetWidth || targetHeight) {
+      if (targetWidth && targetHeight) {
+        if (options.mantenerAspectRatio !== false) {
+          image.scaleToFit({
+            w: targetWidth,
+            h: targetHeight,
+          });
+        } else {
+          image.resize({
+            w: targetWidth,
+            h: targetHeight,
+          });
+        }
+      } else if (targetWidth) {
+        image.resize({ w: targetWidth });
+      } else if (targetHeight) {
+        image.resize({ h: targetHeight });
+      }
     }
 
-    if (outputFormat === 'webp') {
-      transformer = transformer.webp({ quality: options.calidad });
-    } else if (outputFormat === 'jpeg' || outputFormat === 'jpg') {
-      transformer = transformer.jpeg({ quality: options.calidad });
-    } else if (outputFormat === 'png') {
-      transformer = transformer.png({ quality: options.calidad });
-    }
+    const mimeType = outputFormat === 'png' ? JimpMime.png : JimpMime.jpeg;
+    const outputBuffer =
+      outputFormat === 'png'
+        ? await image.getBuffer(JimpMime.png)
+        : await image.getBuffer(JimpMime.jpeg, {
+            quality: this.normalizeQuality(options.calidad),
+          });
 
-    await transformer.toFile(outputPath);
+    await fs.promises.writeFile(outputPath, outputBuffer);
 
     const stats = fs.statSync(outputPath);
-    const mimeType = `image/${outputFormat}`;
 
     return {
       path: outputPath,
       size: stats.size,
       mimeType,
     };
+  }
+
+  private resolveOutputFormat(
+    requestedFormat?: ImageProcessOptionsDto['formatoSalida']
+  ): ProcessedImageFormat {
+    if (requestedFormat === 'png') {
+      return 'png';
+    }
+
+    if (requestedFormat === 'webp' && process.env.NODE_ENV !== 'test') {
+      this.logger.warn(
+        'webp ya no está disponible en el backend; se normaliza a jpeg para mantener compatibilidad multiplataforma'
+      );
+    }
+
+    return 'jpeg';
+  }
+
+  private normalizeQuality(quality?: number): number {
+    const normalized = quality ?? 80;
+
+    return Math.max(1, Math.min(100, normalized));
   }
 
   async findAll(filterDto: FileListFilterDto): Promise<PaginatedFiles> {

@@ -5,6 +5,10 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import HelpIcon from '@mui/icons-material/Help';
+import PersonIcon from '@mui/icons-material/Person';
+import LockIcon from '@mui/icons-material/Lock';
+import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
+import GroupIcon from '@mui/icons-material/Group';
 
 export interface TutorialStep {
     icon: React.ReactNode;
@@ -61,6 +65,30 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
                 icon: <AssessmentIcon sx={{ fontSize: 60, color: 'info.main' }} />,
                 title: 'Ajustes y Filtros',
                 description: 'Realiza ajustes manuales y filtra por categorías para encontrar lo que buscas.'
+            }
+        ]
+    },
+    '/perfil': {
+        steps: [
+            {
+                icon: <PersonIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
+                title: 'Perfil de Usuario',
+                description: 'Aquí puedes ver y editar tu información básica, como nombre de usuario y correo electrónico.'
+            },
+            {
+                icon: <LockIcon sx={{ fontSize: 60, color: 'warning.main' }} />,
+                title: 'Seguridad',
+                description: 'Protege tu cuenta cambiando tu contraseña periódicamente desde esta sección.'
+            },
+            {
+                icon: <MeetingRoomIcon sx={{ fontSize: 60, color: 'secondary.main' }} />,
+                title: 'Gestión Académica',
+                description: 'Como profesor, puedes configurar tus cursos/grupos, asignar números de clase y generar códigos de registro.'
+            },
+            {
+                icon: <GroupIcon sx={{ fontSize: 60, color: 'success.main' }} />,
+                title: 'Control de Alumnos',
+                description: 'Administra la lista de alumnos, activa sus usuarios o resetea sus claves si las olvidan.'
             }
         ]
     },
