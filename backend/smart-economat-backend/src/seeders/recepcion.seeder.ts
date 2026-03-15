@@ -6,6 +6,7 @@ import { Pedido } from '../modules/pedido/pedido.entity/pedido.entity';
 import { PedidoProducto } from '../modules/pedido/pedido-producto.entity/pedido-producto.entity';
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
+import { EstadoProductoRecepcion } from '../modules/recepcion/enums/estado-producto.enum';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
@@ -75,6 +76,7 @@ export const runSeeder = async (dataSource: DataSource) => {
           observaciones: faker.datatype.boolean(0.3)
             ? faker.lorem.sentence()
             : undefined,
+          estadoProducto: EstadoProductoRecepcion.PERFECTO,
           fechaRecepcion: faker.date.recent(),
         })
       );
