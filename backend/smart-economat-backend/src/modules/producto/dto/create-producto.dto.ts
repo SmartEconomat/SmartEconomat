@@ -206,10 +206,13 @@ export class CreateProductoDto {
       'validation.LOS_PROVEEDORES_DEBEN_SER_UN_ARRAY'
     ),
   })
-  @ArrayUnique((proveedor: AddProveedorToProductoDto) => proveedor.proveedorId, {
-    message:
-      'No se puede vincular el mismo proveedor más de una vez al producto.',
-  })
+  @ArrayUnique(
+    (proveedor: AddProveedorToProductoDto) => proveedor.proveedorId,
+    {
+      message:
+        'No se puede vincular el mismo proveedor más de una vez al producto.',
+    }
+  )
   @ValidateNested({ each: true })
   @Type(() => AddProveedorToProductoDto)
   proveedores?: AddProveedorToProductoDto[];
