@@ -17,6 +17,7 @@ import {
 
 interface ChangePasswordFormProps {
   isEditing: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   formData: any;
   onFormChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isSaving: boolean;
@@ -50,21 +51,34 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
   );
 
   // Validaciones en tiempo real para UI
-  const passwordLengthValid = formData.newPassword ? isStrongPassword(formData.newPassword) : null;
-  const passwordsMatch = (formData.newPassword && formData.confirmPassword) ? formData.newPassword === formData.confirmPassword : null;
+  const passwordLengthValid = formData.newPassword
+    ? isStrongPassword(formData.newPassword)
+    : null;
+  const passwordsMatch =
+    formData.newPassword && formData.confirmPassword
+      ? formData.newPassword === formData.confirmPassword
+      : null;
 
   if (!isEditing) {
     return (
       <Box>
         <Box display="flex" alignItems="center" mb={{ xs: 2, md: 3 }}>
-          <LockOutlinedIcon color="primary" sx={{ fontSize: { xs: 28, md: 32 }, mr: 1.5 }} />
-          <Typography variant="h5" fontWeight={600} sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}>
+          <LockOutlinedIcon
+            color="primary"
+            sx={{ fontSize: { xs: 28, md: 32 }, mr: 1.5 }}
+          />
+          <Typography
+            variant="h5"
+            fontWeight={600}
+            sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}
+          >
             Seguridad
           </Typography>
         </Box>
         <Divider sx={{ mb: { xs: 3, md: 4 } }} />
         <Typography variant="body2" color="text.secondary">
-          La contraseña está protegida. Para cambiarla, activa el modo de edición de la ficha.
+          La contraseña está protegida. Para cambiarla, activa el modo de
+          edición de la ficha.
         </Typography>
       </Box>
     );
@@ -73,8 +87,15 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
   return (
     <Box>
       <Box display="flex" alignItems="center" mb={{ xs: 2, md: 3 }}>
-        <LockOutlinedIcon color="primary" sx={{ fontSize: { xs: 28, md: 32 }, mr: 1.5 }} />
-        <Typography variant="h5" fontWeight={600} sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}>
+        <LockOutlinedIcon
+          color="primary"
+          sx={{ fontSize: { xs: 28, md: 32 }, mr: 1.5 }}
+        />
+        <Typography
+          variant="h5"
+          fontWeight={600}
+          sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}
+        >
           Cambiar Contraseña
         </Typography>
       </Box>

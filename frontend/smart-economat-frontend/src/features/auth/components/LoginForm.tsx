@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -13,7 +13,7 @@ import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 import Checkbox from '../../../components/ui/Checkbox';
 import Logo from '../../../assets/images/SVG/logo-smat-economato.svg';
-import { User } from '../../../store/AuthContext';
+import { User } from '../../../store/auth.types';
 import { authService } from '../../../services/auth.service';
 import {
   isStrongPassword,
@@ -100,12 +100,27 @@ const LoginForm: React.FC<LoginFormProps> = ({
     user: User;
     token: string;
   } | null>(null);
+  const [rememberMe, setRememberMe] = useState(false);
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('rememberedUser');
+    if (savedUser) {
+      setFormData((prev) => ({ ...prev, email: savedUser }));
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMsg('');
     setIsLoading(true);
     try {
+      if (rememberMe) {
+        localStorage.setItem('rememberedUser', formData.email.trim());
+      } else {
+        localStorage.removeItem('rememberedUser');
+      }
+
       const res = await authService.login({
         email: formData.email?.trim(),
         password: formData.password,
@@ -429,7 +444,11 @@ const LoginForm: React.FC<LoginFormProps> = ({
               ),
             }}
           />
-          <Checkbox value="remember" label="Recordarme" />
+          <Checkbox
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            label="Recordarme"
+          />
           <Button type="submit" isLoading={isLoading} sx={{ mt: 2, mb: 0 }}>
             Acceder
           </Button>

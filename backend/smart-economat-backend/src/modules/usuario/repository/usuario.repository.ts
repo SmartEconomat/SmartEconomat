@@ -22,10 +22,41 @@ export class UsuarioRepository {
     const paginationOptions = buildFindManyOptions<Usuario>(query, 'username');
     const limit = paginationOptions.take ?? query.limit ?? 20;
 
+    let where: any = {};
+    if (query.rol) {
+      const backendRol = query.rol === 'Administrador' ? 'ADMIN' : query.rol.toUpperCase();
+      if (query.searchTerm) {
+        const term = require('typeorm').ILike(`%${query.searchTerm}%`);
+        where = [
+          { username: term, rol: backendRol },
+          { email: term, rol: backendRol },
+          { nombre: term, rol: backendRol }
+        ];
+      } else {
+        where = { rol: backendRol };
+      }
+    } else if (query.searchTerm) {
+      const term = require('typeorm').ILike(`%${query.searchTerm}%`);
+      where = [
+        { username: term },
+        { email: term },
+        { nombre: term }
+      ];
+    }
+
     return this.repo
       .findAndCount({
-        relations: ['movimientos', 'pedidos', 'recepciones'],
+        relations: [
+          'movimientos', 
+          'pedidos', 
+          'recepciones', 
+          'alumno', 
+          'alumno.slot', 
+          'alumno.profesor', 
+          'alumno.profesor.user'
+        ],
         ...paginationOptions,
+        where,
       })
       .then(([data, total]) => {
         const processedData = data.map((usuario) => ({
@@ -48,7 +79,15 @@ export class UsuarioRepository {
   findById(id: string) {
     return this.repo.findOne({
       where: { id },
-      relations: ['movimientos', 'pedidos', 'recepciones'],
+      relations: [
+        'movimientos', 
+        'pedidos', 
+        'recepciones', 
+        'alumno', 
+        'alumno.slot', 
+        'alumno.profesor', 
+        'alumno.profesor.user'
+      ],
     });
   }
 

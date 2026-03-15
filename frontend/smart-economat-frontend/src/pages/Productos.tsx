@@ -43,7 +43,7 @@ import {
   updateProducto,
 } from '../services/producto.service';
 import { deleteResource } from '../services/api.service';
-import { useToast } from '../store/ToastContext';
+import { useToast } from '../store/toast.hooks';
 import StatusChip from '../components/ui/StatusChip';
 import { fetchProveedores } from '../services/proveedor.service';
 import { Proveedor } from '../services/proveedor.types';
@@ -52,7 +52,7 @@ import ProductFilters, {
   ProductFiltersState,
 } from '../features/productos/ProductFilters';
 import { getCategoryIcon } from '../features/productos/utils/getCategoryIcon';
-import { EU_ALLERGENS } from '../components/ui/AllergenSelector';
+import { EU_ALLERGENS, Allergen } from '../utils/constants';
 import ShoppingBasketOutlinedIcon from '@mui/icons-material/ShoppingBasketOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import { ProveedorAsociado } from '../components/ui/ProveedorSelector';
@@ -302,12 +302,14 @@ const Productos: React.FC = () => {
 
       const category = typedFormData.tipo;
       if (typedFormData.id) {
-        await updateProducto(typedFormData.id, payload);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await updateProducto(typedFormData.id, payload as any);
         toast.success('Producto actualizado correctamente.', undefined, {
           productCategory: category,
         });
       } else {
-        await createProducto(payload);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await createProducto(payload as any);
         toast.success('Producto creado correctamente.', undefined, {
           productCategory: category,
         });
@@ -460,12 +462,6 @@ const Productos: React.FC = () => {
         }}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
-        pageSize={pageSize}
-        pageSizeOptions={[4, 8, 12, 24]}
-        onPageSizeChange={(e: SelectChangeEvent<number>) => {
-          setPageSize(Number(e.target.value));
-          setPage(1);
-        }}
         filters={
           <ProductFilters
             filters={filters}
@@ -586,8 +582,9 @@ const Productos: React.FC = () => {
         {productToView &&
           (() => {
             const p = productToView;
-            const alergenoIds = p.alergenos?.map((a) => a.alergeno) ?? [];
-            const alergenosActivos = EU_ALLERGENS.filter((a) =>
+            const alergenoIds =
+              p.alergenos?.map((a: ProductoAlergeno) => a.alergeno) ?? [];
+            const alergenosActivos = EU_ALLERGENS.filter((a: Allergen) =>
               alergenoIds.includes(a.id)
             );
             const proveedoresAsociados = p.proveedores ?? [];
@@ -663,7 +660,7 @@ const Productos: React.FC = () => {
                                 gap: 1.5,
                               }}
                             >
-                              {alergenosActivos.map((a) => (
+                              {alergenosActivos.map((a: Allergen) => (
                                 <Box
                                   key={a.id}
                                   sx={{

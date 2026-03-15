@@ -30,7 +30,7 @@ El componente completo que integra:
 -   Un **Botón Disparador** (El icono `?` en el header).
 -   Un **Popover** (Contenedor flotante) que aloja el contenido.
 -   La **Lógica de Estado** (`activeStep`) para manejar la navegación del carrusel.
--   La **Inyección de Datos** desde `tutorialConfig`, seleccionando el contenido según la URL actual.
+-   **Inyección de Datos** desde `tutorialConfig`, seleccionando el contenido según el **Rol del Usuario** (`PROFESOR`/`ALUMNO`) y la ruta actual, delegando la lógica de selección al componente.
 
 ## Props
 -   `mode`: `'icon' | 'listitem'` (Opcional, default: `'icon'`).
@@ -51,15 +51,18 @@ El contenido no está "hardcodeado" en el componente, sino que se inyecta desde 
 **Archivo:** `src/utils/config/tutorialConfig.tsx`
 
 ```typescript
-// Ejemplo de estructura
+// Estructura con soporte para roles
 '/ruta-pagina': {
-    steps: [
-        {
-            icon: <Icono />, 
-            title: "Título del Paso", 
-            description: "Explicación breve..." 
-        }
-    ]
+    roles: {
+        'PROFESOR': [
+            { icon: <Icono />, title: "...", description: "..." }
+        ],
+        'ALUMNO': [
+            { icon: <Icono />, title: "...", description: "..." }
+        ]
+    },
+    // Fallback si no hay roles definidos o para otros roles
+    steps: [ ... ] 
 }
 ```
 
@@ -75,4 +78,4 @@ Se ha configurado un tour de 4 pasos para guiar al usuario a través de la nueva
 ---
 
 ## Mantenimiento
-Para añadir nuevos tutoriales, simplemente añada una nueva entrada en `src/utils/config/tutorialConfig.tsx` con la ruta correspondiente y el array de pasos. Los iconos deben ser componentes de MUI para mantener la consistencia visual.
+Para añadir nuevos tutoriales, simplemente añada una nueva entrada en `src/utils/config/tutorialConfig.tsx`. El componente `TutorialHelper` utiliza el hook `useAuth` para identificar el rol y filtrar los pasos automáticamente. Si se requieren pasos muy específicos para un caso de uso único, el componente aún acepta la prop `steps` como override prioritario.

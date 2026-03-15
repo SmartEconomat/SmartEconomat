@@ -13,13 +13,12 @@ import { AlumnoSlot } from '../../profesor/profesor.entity/alumno-slot.entity';
 
 @Entity('alumno')
 @Index('idx_alumno_user', ['user'], { unique: true })
-@Index('idx_alumno_slot', ['slot'], { unique: true })
 export class Alumno extends BaseEntity {
   @OneToOne(() => Usuario, (u) => u.alumno)
   @JoinColumn({ name: 'user_id' })
   user!: Relation<Usuario>;
 
-  @OneToOne(() => AlumnoSlot, (slot) => slot.alumno)
+  @ManyToOne(() => AlumnoSlot, (slot) => slot.alumnos)
   @JoinColumn({ name: 'slot_id' })
   slot!: Relation<AlumnoSlot>;
 

@@ -1,80 +1,67 @@
-import React, { createContext, useState, useContext, useLayoutEffect } from 'react';
-import { Theme } from '@mui/material/styles';
+import React, { useState, useLayoutEffect } from 'react';
 import { getTheme, ThemeName, FontSize } from '../utils/theme/themes';
+import { ThemeContext } from './theme.context';
 
-interface ThemeContextType {
-    currentThemeName: ThemeName;
-    fontSize: FontSize;
-    setTheme: (name: ThemeName) => void;
-    setFontSize: (size: FontSize) => void;
-    isLearningMode: boolean;
-    setLearningMode: (mode: boolean) => void;
-    siteTheme: Theme;
-}
+export const ThemeContextProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [themeName, setThemeName] = useState<ThemeName>('light');
+  const [fontSize, setFontSizeState] = useState<FontSize>('medium');
+  const [isLearningMode, setLearningModeState] = useState(false);
 
-const ThemeContext = createContext<ThemeContextType>({
-    currentThemeName: 'light',
-    fontSize: 'medium',
-    setTheme: () => { },
-    setFontSize: () => { },
-    isLearningMode: false,
-    setLearningMode: () => { },
-    siteTheme: getTheme('light', 'medium'),
-});
+  useLayoutEffect(() => {
+    const savedTheme = localStorage.getItem('appTheme') as ThemeName;
+    const savedFontSize = localStorage.getItem('appFontSize') as FontSize;
 
-export const useThemeContext = () => useContext(ThemeContext);
+    if (
+      savedTheme &&
+      ['light', 'dark', 'highContrastLight', 'highContrastDark'].includes(
+        savedTheme
+      )
+    ) {
+      setThemeName(savedTheme);
+    }
 
-export const ThemeContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [themeName, setThemeName] = useState<ThemeName>('light');
-    const [fontSize, setFontSizeState] = useState<FontSize>('medium');
-    const [isLearningMode, setLearningModeState] = useState(false);
+    if (savedFontSize && ['small', 'medium', 'large'].includes(savedFontSize)) {
+      setFontSizeState(savedFontSize);
+    }
 
-    useLayoutEffect(() => {
-        const savedTheme = localStorage.getItem('appTheme') as ThemeName;
-        const savedFontSize = localStorage.getItem('appFontSize') as FontSize;
+    const savedLearningMode = localStorage.getItem('appLearningMode');
+    if (savedLearningMode !== null) {
+      setLearningModeState(savedLearningMode === 'true');
+    }
+  }, []);
 
-        if (savedTheme && ['light', 'dark', 'highContrastLight', 'highContrastDark'].includes(savedTheme)) {
-            setThemeName(savedTheme);
-        }
+  const setTheme = (name: ThemeName) => {
+    setThemeName(name);
+    localStorage.setItem('appTheme', name);
+  };
 
-        if (savedFontSize && ['small', 'medium', 'large'].includes(savedFontSize)) {
-            setFontSizeState(savedFontSize);
-        }
+  const setFontSize = (size: FontSize) => {
+    setFontSizeState(size);
+    localStorage.setItem('appFontSize', size);
+  };
 
-        const savedLearningMode = localStorage.getItem('appLearningMode');
-        if (savedLearningMode !== null) {
-            setLearningModeState(savedLearningMode === 'true');
-        }
-    }, []);
+  const setLearningMode = (mode: boolean) => {
+    setLearningModeState(mode);
+    localStorage.setItem('appLearningMode', String(mode));
+  };
 
-    const setTheme = (name: ThemeName) => {
-        setThemeName(name);
-        localStorage.setItem('appTheme', name);
-    };
+  const siteTheme = getTheme(themeName, fontSize);
 
-    const setFontSize = (size: FontSize) => {
-        setFontSizeState(size);
-        localStorage.setItem('appFontSize', size);
-    };
-
-    const setLearningMode = (mode: boolean) => {
-        setLearningModeState(mode);
-        localStorage.setItem('appLearningMode', String(mode));
-    };
-
-    const siteTheme = getTheme(themeName, fontSize);
-
-    return (
-        <ThemeContext.Provider value={{
-            currentThemeName: themeName,
-            fontSize,
-            setTheme,
-            setFontSize,
-            isLearningMode,
-            setLearningMode,
-            siteTheme
-        }}>
-            {children}
-        </ThemeContext.Provider>
-    );
+  return (
+    <ThemeContext.Provider
+      value={{
+        currentThemeName: themeName,
+        fontSize,
+        setTheme,
+        setFontSize,
+        isLearningMode,
+        setLearningMode,
+        siteTheme,
+      }}
+    >
+      {children}
+    </ThemeContext.Provider>
+  );
 };

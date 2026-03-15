@@ -1,4 +1,13 @@
-import { Body, Controller, Post, Patch, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Patch,
+  UseGuards,
+  Get,
+  Param,
+} from '@nestjs/common';
+import { Public } from '../../../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
@@ -12,8 +21,30 @@ export class AlumnoController {
   constructor(private readonly alumnoService: AlumnoService) {}
 
   @Post('register')
+  @Public()
   async register(@Body() dto: RegisterAlumnoDto) {
     return this.alumnoService.register(dto);
+  }
+
+  @Get('aulas')
+  @Public()
+  async getAulas() {
+    return this.alumnoService.getAulas();
+  }
+
+  @Get('aulas/:aula/clases')
+  @Public()
+  async getClasesByAula(@Param('aula') aula: string) {
+    return this.alumnoService.getClasesByAula(aula);
+  }
+
+  @Get('aulas/:aula/clases/:clase/profesores')
+  @Public()
+  async getProfesoresBySlot(
+    @Param('aula') aula: string,
+    @Param('clase') clase: string
+  ) {
+    return this.alumnoService.getProfesoresBySlot(aula, parseInt(clase));
   }
 
   @Patch('change-profesor')

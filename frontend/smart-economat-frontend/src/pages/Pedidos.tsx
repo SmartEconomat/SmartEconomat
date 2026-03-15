@@ -6,6 +6,7 @@ import {
   Typography,
   Alert,
   Button,
+  SelectChangeEvent,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -23,7 +24,7 @@ import {
 } from '../services/pedido.service';
 import { deleteResource } from '../services/api.service';
 import { fetchProveedores } from '../services/proveedor.service';
-import { useToast } from '../store/ToastContext';
+import { useToast } from '../store/toast.hooks';
 import StatusChip from '../components/ui/StatusChip';
 import PageToolbar from '../components/ui/PageToolbar';
 
@@ -83,11 +84,11 @@ const Pedidos: React.FC = () => {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [searchTerm, setSearchTerm] = useState('');
   const [data, setData] = useState<Pedido[]>([]);
-  const [proveedores, setProveedores] = useState<any[]>([]);
+  const [proveedores, setProveedores] = useState<unknown[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<Pedido | null>(null);
-  const [itemToEdit, setItemToEdit] = useState<Record<string, any> | null>(
+  const [itemToEdit, setItemToEdit] = useState<Record<string, unknown> | null>(
     null
   );
   const [isDeleting, setIsDeleting] = useState(false);
@@ -139,6 +140,7 @@ const Pedidos: React.FC = () => {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSave = async (formData: Record<string, any>) => {
     setIsSaving(true);
     try {
@@ -168,11 +170,16 @@ const Pedidos: React.FC = () => {
       }
 
       const normalizedLines = lines
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .map((l: any) => ({
-          productoProveedorId: l.productoProveedorId || l.id_producto_proveedor,
-          cantidad: Number(l.cantidad),
+          productoProveedorId:
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (l as any).productoProveedorId || (l as any).id_producto_proveedor,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          cantidad: Number((l as any).cantidad),
         }))
         .filter(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (l: any) =>
             l.productoProveedorId &&
             Number.isFinite(l.cantidad) &&
@@ -188,6 +195,7 @@ const Pedidos: React.FC = () => {
       }
 
       const calculatedTotal = lines.reduce(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (sum: number, line: any) =>
           sum + Number(line.cantidad || 0) * Number(line.precioUnitario || 0),
         0
@@ -321,11 +329,6 @@ const Pedidos: React.FC = () => {
         }}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
-        pageSize={pageSize}
-        onPageSizeChange={(e: any) => {
-          setPageSize(Number(e.target.value));
-          setPage(1);
-        }}
       />
 
       <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
@@ -368,7 +371,7 @@ const Pedidos: React.FC = () => {
             onPageChange: (_, newPage) => setPage(newPage),
             pageSize: pageSize,
             pageSizeOptions: [5, 10, 25, 50],
-            onPageSizeChange: (e: any) => {
+            onPageSizeChange: (e: SelectChangeEvent<number>) => {
               setPageSize(Number(e.target.value));
               setPage(1);
             },
@@ -407,7 +410,8 @@ const Pedidos: React.FC = () => {
               return {
                 ...field,
                 disabled: !!itemToEdit?.id,
-                options: proveedores.map((p) => ({
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                options: (proveedores as any[]).map((p) => ({
                   value: p.id,
                   label: p.nombre,
                 })),

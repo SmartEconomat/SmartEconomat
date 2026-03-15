@@ -1,115 +1,32 @@
-import React from 'react';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
-import InventoryIcon from '@mui/icons-material/Inventory';
-import HelpIcon from '@mui/icons-material/Help';
-import PersonIcon from '@mui/icons-material/Person';
-import LockIcon from '@mui/icons-material/Lock';
-import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
-import GroupIcon from '@mui/icons-material/Group';
+import React, { useState } from 'react';
+import { tutorialConfig, TutorialStep } from './tutorialData';
+import { TutorialContext } from '../../store/tutorial.context';
 
-export interface TutorialStep {
-    icon: React.ReactNode;
-    title: string;
-    description: string;
-}
+export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentSteps, setCurrentSteps] = useState<TutorialStep[]>([]);
 
-export interface TutorialConfigItem {
-    steps: TutorialStep[];
-}
-
-export const tutorialConfig: Record<string, TutorialConfigItem> = {
-    '/': {
-        steps: [
-            {
-                icon: <DashboardIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-                title: 'Panel de Inicio',
-                description: 'Este es tu centro de control principal. Aquí tendrás una vista rápida del estado de tu economato.'
-            },
-            {
-                icon: <AddShoppingCartIcon sx={{ fontSize: 60, color: 'secondary.main' }} />,
-                title: 'Accesos Rápidos',
-                description: 'Usa las tarjetas de acceso rápido para crear nuevos pedidos o registrar artículos en segundos.'
-            },
-            {
-                icon: <AssessmentIcon sx={{ fontSize: 60, color: 'success.main' }} />,
-                title: 'Resumen de Actividad',
-                description: 'Mantente al día con las últimas notificaciones y alertas de stock bajo.'
-            }
-        ]
-    },
-    '/recepcion': {
-        steps: [
-            {
-                icon: <QrCodeScannerIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-                title: 'Recepción de Mercancía',
-                description: 'Gestiona la entrada de productos al almacén de manera eficiente.'
-            },
-            {
-                icon: <QrCodeScannerIcon sx={{ fontSize: 60, color: 'secondary.main' }} />,
-                title: 'Escaneo de Códigos',
-                description: 'Usa el lector de códigos de barras para identificar productos rápidamente y evitar errores.'
-            }
-        ]
-    },
-    '/inventario': {
-        steps: [
-            {
-                icon: <InventoryIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-                title: 'Gestión de Inventario',
-                description: 'Consulta el stock actual de todos tus productos en tiempo real.'
-            },
-            {
-                icon: <AssessmentIcon sx={{ fontSize: 60, color: 'info.main' }} />,
-                title: 'Ajustes y Filtros',
-                description: 'Realiza ajustes manuales y filtra por categorías para encontrar lo que buscas.'
-            }
-        ]
-    },
-    '/perfil': {
-        steps: [
-            {
-                icon: <PersonIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-                title: 'Perfil de Usuario',
-                description: 'Aquí puedes ver y editar tu información básica, como nombre de usuario y correo electrónico.'
-            },
-            {
-                icon: <LockIcon sx={{ fontSize: 60, color: 'warning.main' }} />,
-                title: 'Seguridad',
-                description: 'Protege tu cuenta cambiando tu contraseña periódicamente desde esta sección.'
-            },
-            {
-                icon: <MeetingRoomIcon sx={{ fontSize: 60, color: 'secondary.main' }} />,
-                title: 'Gestión Académica',
-                description: 'Como profesor, puedes configurar tus cursos/grupos, asignar números de clase y generar códigos de registro.'
-            },
-            {
-                icon: <GroupIcon sx={{ fontSize: 60, color: 'success.main' }} />,
-                title: 'Control de Alumnos',
-                description: 'Administra la lista de alumnos, activa sus usuarios o resetea sus claves si las olvidan.'
-            }
-        ]
-    },
-    'default': {
-        steps: [
-            {
-                icon: <HelpIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-                title: 'Ayuda General',
-                description: 'Navega por el menú lateral para acceder a las diferentes secciones de la aplicación.'
-            },
-            {
-                icon: <SettingsIconWrapper />,
-                title: 'Configuración',
-                description: 'Personaliza tu experiencia, cambia el tema o gestiona tu perfil desde el menú superior.'
-            }
-        ]
+  const openTutorial = (path: string, role?: string) => {
+    const config = tutorialConfig[path] || tutorialConfig.default;
+    let steps: TutorialStep[] = [];
+    if (config.roles && role) {
+      steps = config.roles[role] || [];
+    } else {
+      steps = config.steps || [];
     }
+    setCurrentSteps(steps);
+    setIsOpen(true);
+  };
+
+  const closeTutorial = () => setIsOpen(false);
+
+  return (
+    <TutorialContext.Provider
+      value={{ isOpen, currentSteps, openTutorial, closeTutorial }}
+    >
+      {children}
+    </TutorialContext.Provider>
+  );
 };
-
-
-import SettingsIcon from '@mui/icons-material/Settings';
-function SettingsIconWrapper() {
-    return <SettingsIcon sx={{ fontSize: 60, color: 'action.active' }} />;
-}

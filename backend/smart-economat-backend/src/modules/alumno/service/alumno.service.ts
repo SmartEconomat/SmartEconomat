@@ -23,6 +23,29 @@ export class AlumnoService {
     private readonly dataSource: DataSource
   ) {}
 
+  private async countStudentsInSlot(
+    manager: {
+      count?: (entity: typeof Alumno, options: unknown) => Promise<number>;
+    },
+    slot: Partial<AlumnoSlot> & {
+      id?: string;
+      alumnos?: Alumno[];
+      alumno?: Alumno | null;
+    }
+  ): Promise<number> {
+    if (typeof manager.count === 'function' && slot.id) {
+      return manager.count(Alumno, {
+        where: { slot: { id: slot.id } },
+      });
+    }
+
+    if (Array.isArray(slot.alumnos)) {
+      return slot.alumnos.length;
+    }
+
+    return slot.alumno ? 1 : 0;
+  }
+
   async register(dto: RegisterAlumnoDto) {
     return this.dataSource.transaction(async (manager) => {
       const profesor = await manager.findOne(Profesor, {
@@ -39,7 +62,7 @@ export class AlumnoService {
           aula: dto.aula,
           numeroClase: dto.numeroClase,
         },
-        relations: ['alumno'],
+        relations: ['alumnos'],
       });
 
       if (!slot) {
@@ -47,11 +70,18 @@ export class AlumnoService {
           profesor,
           aula: dto.aula,
           numeroClase: dto.numeroClase,
+          capacidad: 1,
+          alumnos: [],
         });
-        await manager.save(slot);
-      } else if (slot.alumno) {
+        slot = await manager.save(slot);
+      }
+
+      const alumnosContados = await this.countStudentsInSlot(manager, slot);
+      const capacidadSlot = slot.capacidad ?? 1;
+
+      if (alumnosContados >= capacidadSlot) {
         throw new BadRequestException(
-          'El Slot ya está ocupado por otro alumno'
+          I18nHelper.getError('SLOT_CAPACITY_REACHED')
         );
       }
 
@@ -143,16 +173,23 @@ export class AlumnoService {
           aula: dto.nuevaAula,
           numeroClase: dto.nuevoNumeroClase,
         },
-        relations: ['alumno'],
+        relations: ['alumnos'],
       });
 
       if (!nuevoSlot)
         throw new NotFoundException(
           I18nHelper.getError('EL_NUEVO_SLOT_ESPECIFICADO_NO_EXISTE')
         );
-      if (nuevoSlot.alumno)
+
+      const alumnosEnNuevoSlot = await this.countStudentsInSlot(
+        manager,
+        nuevoSlot
+      );
+      const capacidadNuevoSlot = nuevoSlot.capacidad ?? 1;
+
+      if (alumnosEnNuevoSlot >= capacidadNuevoSlot)
         throw new BadRequestException(
-          I18nHelper.getError('EL_NUEVO_SLOT_YA_EST_OCUPADO')
+          I18nHelper.getError('SLOT_CAPACITY_REACHED')
         );
 
       alumno.slot = nuevoSlot;
@@ -164,5 +201,35 @@ export class AlumnoService {
         ),
       };
     });
+  }
+
+  async getAulas() {
+    const slots = await this.dataSource.getRepository(AlumnoSlot).find({
+      select: ['aula'],
+    });
+    const aulas = [...new Set(slots.map((s) => s.aula))];
+    return aulas.sort();
+  }
+
+  async getClasesByAula(aula: string) {
+    const slots = await this.dataSource.getRepository(AlumnoSlot).find({
+      where: { aula },
+      select: ['numeroClase'],
+    });
+    const clases = [...new Set(slots.map((s) => s.numeroClase))];
+    return clases.sort((a: number, b: number) => a - b);
+  }
+
+  async getProfesoresBySlot(aula: string, numeroClase: number) {
+    const slots = await this.dataSource.getRepository(AlumnoSlot).find({
+      where: { aula, numeroClase },
+      relations: ['profesor', 'profesor.user'],
+    });
+
+    return slots.map((slot) => ({
+      cial: slot.profesor.cial,
+      nombre: slot.profesor.user.username,
+      codigoSlot: slot.codigoSlot,
+    }));
   }
 }

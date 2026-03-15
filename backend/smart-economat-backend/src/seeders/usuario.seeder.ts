@@ -6,6 +6,7 @@ import { AlumnoSlot } from '../modules/profesor/profesor.entity/alumno-slot.enti
 import { rolUsuario, UserStatus } from '../modules/usuario/enums/usuario.enums';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'node:crypto';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
@@ -56,6 +57,8 @@ export const runSeeder = async (dataSource: DataSource) => {
       });
       let profEntity;
 
+      const cialUpper = profData.cial.toUpperCase();
+
       if (!profUser) {
         profUser = manager.create(Usuario, {
           username: profData.username,
@@ -69,7 +72,7 @@ export const runSeeder = async (dataSource: DataSource) => {
 
         profEntity = manager.create(Profesor, {
           user: profUser,
-          cial: profData.cial,
+          cial: cialUpper,
         });
         await manager.save(profEntity);
       } else {
@@ -91,7 +94,7 @@ export const runSeeder = async (dataSource: DataSource) => {
               aula: aulaName,
               numeroClase,
             },
-            relations: ['alumno'],
+            relations: ['alumnos'],
           });
 
           if (!slot) {
@@ -99,11 +102,13 @@ export const runSeeder = async (dataSource: DataSource) => {
               profesor: profEntity,
               aula: aulaName,
               numeroClase,
+              capacidad: 30,
+              codigoSlot: `AL-${randomBytes(3).toString('hex').toUpperCase()}`,
             });
             await manager.save(slot);
           }
 
-          if (slot.alumno) continue;
+          if (slot.alumnos && slot.alumnos.length > 0) continue;
 
           const firstName = faker.person.firstName();
           const lastName = faker.person.lastName();
@@ -134,6 +139,7 @@ export const runSeeder = async (dataSource: DataSource) => {
           const alumnoEntity = manager.create(Alumno, {
             user: studentUser,
             slot: slot,
+            profesor: profEntity,
           });
           await manager.save(alumnoEntity);
         }

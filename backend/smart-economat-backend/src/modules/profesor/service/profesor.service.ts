@@ -11,6 +11,7 @@ import { AlumnoSlot } from '../profesor.entity/alumno-slot.entity';
 import { rolUsuario, UserStatus } from '../../usuario/enums/usuario.enums';
 import { CreateSlotDto } from '../dto/create-slot.dto';
 import { CreateProfesorDto } from '../dto/create-profesor.dto';
+import { UpdateSlotDto } from '../dto/update-slot.dto';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'node:crypto';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
@@ -44,8 +45,10 @@ export class ProfesorService {
           I18nHelper.getError('USER_OR_EMAIL_ALREADY_EXISTS')
         );
 
+      const cialUpper = dto.cial.toUpperCase();
+
       const isCialExisting = await manager.findOne(Profesor, {
-        where: { cial: dto.cial },
+        where: { cial: cialUpper },
       });
       if (isCialExisting)
         throw new ConflictException(I18nHelper.getError('CIAL_ALREADY_EXISTS'));
@@ -63,7 +66,7 @@ export class ProfesorService {
 
       const profesor = manager.create(Profesor, {
         user,
-        cial: dto.cial,
+        cial: cialUpper,
       });
       await manager.save(profesor);
 
@@ -96,18 +99,102 @@ export class ProfesorService {
     });
 
     if (existingSlot) {
-      throw new ConflictException(
-        'Slot already exists for this aula and numeroClase'
-      );
+      throw new ConflictException(I18nHelper.getError('DUPLICATE_ENTRY'));
     }
+
+    const codigoSlot = `AL-${randomBytes(3).toString('hex').toUpperCase()}`;
 
     const slot = this.slotRepo.create({
       profesor,
       aula: dto.aula,
       numeroClase: dto.numeroClase,
+      capacidad: dto.capacidad ?? 1,
+      codigoSlot,
     });
 
     return this.slotRepo.save(slot);
+  }
+
+  async updateSlot(userId: string, slotId: string, dto: UpdateSlotDto) {
+    const profesor = await this.profesorRepo.findOne({
+      where: { user: { id: userId } },
+    });
+    if (!profesor) {
+      throw new NotFoundException(
+        I18nHelper.getError('PROFESSOR_PROFILE_NOT_FOUND')
+      );
+    }
+
+    const slot = await this.slotRepo.findOne({
+      where: { id: slotId, profesor: { id: profesor.id } },
+    });
+
+    if (!slot) {
+      throw new NotFoundException(I18nHelper.getError('NOT_FOUND'));
+    }
+
+    if (
+      (dto.aula && dto.aula !== slot.aula) ||
+      (dto.numeroClase && dto.numeroClase !== slot.numeroClase)
+    ) {
+      const existing = await this.slotRepo.findOne({
+        where: {
+          profesor: { id: profesor.id },
+          aula: dto.aula ?? slot.aula,
+          numeroClase: dto.numeroClase ?? slot.numeroClase,
+        },
+      });
+      if (existing && existing.id !== slotId) {
+        throw new ConflictException(I18nHelper.getError('DUPLICATE_ENTRY'));
+      }
+    }
+
+    Object.assign(slot, dto);
+    return this.slotRepo.save(slot);
+  }
+
+  async getSlots(userId: string) {
+    const profesor = await this.profesorRepo.findOne({
+      where: { user: { id: userId } },
+    });
+    if (!profesor) {
+      throw new NotFoundException(
+        I18nHelper.getError('PROFESSOR_PROFILE_NOT_FOUND')
+      );
+    }
+
+    return this.slotRepo.find({
+      where: { profesor: { id: profesor.id } },
+      relations: ['alumnos', 'alumnos.user'],
+      order: { aula: 'ASC', numeroClase: 'ASC' },
+    });
+  }
+
+  async deleteSlot(userId: string, slotId: string) {
+    const profesor = await this.profesorRepo.findOne({
+      where: { user: { id: userId } },
+    });
+    if (!profesor) {
+      throw new NotFoundException(
+        I18nHelper.getError('PROFESSOR_PROFILE_NOT_FOUND')
+      );
+    }
+
+    const slot = await this.slotRepo.findOne({
+      where: { id: slotId, profesor: { id: profesor.id } },
+      relations: ['alumnos'],
+    });
+
+    if (!slot) {
+      throw new NotFoundException(I18nHelper.getError('NOT_FOUND'));
+    }
+
+    if (slot.alumnos && slot.alumnos.length > 0) {
+      throw new ConflictException(I18nHelper.getError('SLOT_HAS_STUDENTS'));
+    }
+
+    await this.slotRepo.remove(slot);
+    return { message: I18nHelper.translate('success.DELETED') };
   }
 
   async activateAlumno(profesorUserId: string, alumnoId: string) {
@@ -200,5 +287,58 @@ export class ProfesorService {
       provisionalPassword,
       mustChangePassword: true,
     };
+  }
+
+  async getAllSlots() {
+    return this.slotRepo.find({
+      relations: ['profesor', 'profesor.user', 'alumnos'],
+      order: { aula: 'ASC', numeroClase: 'ASC' },
+    });
+  }
+
+  /** Lista todos los profesores con su info de usuario (para selector en panel admin) */
+  async getAllProfesores() {
+    const profesores = await this.profesorRepo.find({
+      relations: ['user'],
+      order: { user: { username: 'ASC' } },
+    });
+    return profesores.map((p) => ({
+      id: p.id,
+      userId: p.user?.id,
+      username: p.user?.username,
+      nombre: p.user?.nombre,
+      email: p.user?.email,
+    }));
+  }
+
+  /** Admin: actualiza un slot (campos basicos + reasignacion de profesor) */
+  async adminUpdateSlot(
+    slotId: string,
+    dto: UpdateSlotDto & { profesorId?: string }
+  ) {
+    const slot = await this.slotRepo.findOne({
+      where: { id: slotId },
+      relations: ['profesor'],
+    });
+
+    if (!slot) {
+      throw new NotFoundException(I18nHelper.getError('NOT_FOUND'));
+    }
+
+    if (dto.aula !== undefined) slot.aula = dto.aula;
+    if (dto.numeroClase !== undefined) slot.numeroClase = dto.numeroClase;
+    if (dto.capacidad !== undefined) slot.capacidad = dto.capacidad;
+
+    if (dto.profesorId && dto.profesorId !== slot.profesor?.id) {
+      const newProfesor = await this.profesorRepo.findOne({
+        where: { id: dto.profesorId },
+      });
+      if (!newProfesor) {
+        throw new NotFoundException('Profesor no encontrado');
+      }
+      slot.profesor = newProfesor;
+    }
+
+    return this.slotRepo.save(slot);
   }
 }

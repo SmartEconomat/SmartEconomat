@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Box,
   Paper,
@@ -10,7 +10,6 @@ import {
   useTheme,
   Button,
   Stack,
-  Divider,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -29,13 +28,13 @@ import {
   resolveIncidencia,
   removeIncidencia,
 } from '../services/incidencia.service';
-import { useToast } from '../store/ToastContext';
+import { useToast } from '../store/toast.hooks';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import IncidenciaFilters, {
   IncidenciaFiltersState,
 } from '../features/incidencias/IncidenciaFilters';
 import ResolveIncidenciaModal from '../features/incidencias/ResolveIncidenciaModal';
-import { useAuth } from '../store/AuthContext';
+import { useAuth } from '../store/auth.hooks';
 
 const Incidencias: React.FC = () => {
   const theme = useTheme();
@@ -60,7 +59,7 @@ const Incidencias: React.FC = () => {
   const [isResolving, setIsResolving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -76,16 +75,18 @@ const Incidencias: React.FC = () => {
       setData(result.data);
       setTotalItems(result.total);
       setTotalPages(result.totalPages);
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar incidencias');
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Error al cargar incidencias';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [page, pageSize, searchTerm, filters]);
 
   useEffect(() => {
     loadData();
-  }, [page, pageSize, searchTerm, filters]);
+  }, [loadData]);
 
   const handleResolve = async (id: string, observaciones: string) => {
     setIsResolving(true);
@@ -104,8 +105,10 @@ const Incidencias: React.FC = () => {
         setItemToView(null);
       }
       loadData();
-    } catch (err: any) {
-      toast.error(err.message || 'Error al resolver la incidencia');
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Error al resolver la incidencia';
+      toast.error(message);
     } finally {
       setIsResolving(false);
     }
@@ -119,8 +122,10 @@ const Incidencias: React.FC = () => {
       toast.success('Incidencia eliminada correctamente');
       setItemToDelete(null);
       loadData();
-    } catch (err: any) {
-      toast.error(err.message || 'Error al eliminar la incidencia');
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Error al eliminar la incidencia';
+      toast.error(message);
     } finally {
       setIsDeleting(false);
     }

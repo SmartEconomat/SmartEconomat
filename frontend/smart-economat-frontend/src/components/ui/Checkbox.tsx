@@ -1,17 +1,21 @@
 import React from 'react';
-import { FormControlLabel, Checkbox as MuiCheckbox, CheckboxProps as MuiCheckboxProps } from '@mui/material';
+import {
+  FormControlLabel,
+  Checkbox as MuiCheckbox,
+  CheckboxProps as MuiCheckboxProps,
+} from '@mui/material';
 
 interface CheckboxProps extends MuiCheckboxProps {
-    label: string;
+  label: string;
 }
 
 const Checkbox: React.FC<CheckboxProps> = ({ label, ...props }) => {
-    return (
-        <FormControlLabel
-            control={<MuiCheckbox color="primary" {...props} />}
-            label={label}
-        />
-    );
+  return (
+    <FormControlLabel
+      control={<MuiCheckbox color="primary" {...props} />}
+      label={label}
+    />
+  );
 };
 
 export default Checkbox;
