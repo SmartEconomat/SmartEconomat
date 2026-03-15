@@ -80,11 +80,18 @@ export class Pedido extends BaseEntity {
   fechaPedido!: Date;
 
   /**
-   * Fecha esperada o real de entrega.
+   * Fecha prevista de entrega calculada automáticamente por regla de negocio.
    * @type {Date | undefined}
    */
   @Column({ type: 'timestamptz', nullable: true, name: 'fecha_entrega' })
   fechaEntrega?: Date;
+
+  /**
+   * Observaciones operativas del pedido.
+   * @type {string | undefined}
+   */
+  @Column({ type: 'text', nullable: true, name: 'observaciones' })
+  observaciones?: string;
 
   /**
    * Coste total del pedido sumando todas las líneas.
@@ -154,7 +161,6 @@ export class Pedido extends BaseEntity {
    */
   marcarComoEntregado(): void {
     this.estado = EstadoPedido.RECIBIDO;
-    this.fechaEntrega = new Date();
   }
 
   /**

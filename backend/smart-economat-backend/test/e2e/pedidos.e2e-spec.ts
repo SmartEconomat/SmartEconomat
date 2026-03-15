@@ -64,7 +64,7 @@ describe('PedidoController (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           proveedorId,
-          fechaEntrega: new Date(Date.now() + 86400000).toISOString(),
+          observaciones: 'Pedido de prueba e2e',
           lineas: [
             {
               productoProveedorId,
@@ -72,7 +72,12 @@ describe('PedidoController (e2e)', () => {
             },
           ],
         });
-      return res.body.data;
+
+      const detail = await request(app.getHttpServer() as string)
+        .get(`/api/v1/pedidos/${res.body.data.id}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      return detail.body.data;
     }
 
     async function createPedidoWithDelay(delayMs = 25) {
@@ -87,7 +92,7 @@ describe('PedidoController (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           proveedorId,
-          fechaEntrega: new Date(Date.now() + 86400000).toISOString(),
+          observaciones: 'Pedido de prueba e2e',
           lineas: [
             {
               productoProveedorId,
@@ -99,6 +104,48 @@ describe('PedidoController (e2e)', () => {
       expect(response.status).toBe(201);
       expect(response.body.data.estado).toBe(EstadoPedido.PENDIENTE);
       expect(Number(response.body.data.costeTotal)).toBe(52.5);
+      const diffMs =
+        new Date(response.body.data.fechaEntrega).getTime() - Date.now();
+      expect(diffMs).toBeGreaterThan(47 * 60 * 60 * 1000);
+      expect(diffMs).toBeLessThan(49 * 60 * 60 * 1000);
+    });
+
+    it('E2E-PED-02-CRE-LEGACY: Rechaza fechaEntrega en el payload de creación', async () => {
+      const response = await request(app.getHttpServer() as string)
+        .post('/api/v1/pedidos')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          proveedorId,
+          fechaEntrega: new Date(Date.now() + 86400000).toISOString(),
+          lineas: [
+            {
+              productoProveedorId,
+              cantidad: 5,
+            },
+          ],
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+    });
+
+    it('E2E-PED-03-CRE-LEGACY: Rechaza motivoCancelacion en el payload de creación', async () => {
+      const response = await request(app.getHttpServer() as string)
+        .post('/api/v1/pedidos')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          proveedorId,
+          motivoCancelacion: 'Campo legacy no permitido',
+          lineas: [
+            {
+              productoProveedorId,
+              cantidad: 5,
+            },
+          ],
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
     });
 
     it('E2E-PED-09-GET: Listar pedidos', async () => {
@@ -151,7 +198,7 @@ describe('PedidoController (e2e)', () => {
       expect(response.body.data).toBeNull();
     });
 
-    it('E2E-PED-13-UPD-FENT: Actualizar fecha de entrega', async () => {
+    it('E2E-PED-13-UPD-FENT: Bloquea la actualización manual de fecha de entrega', async () => {
       const pedido = await createPedido();
       const newDate = new Date(Date.now() + 172800000).toISOString();
       const response = await request(app.getHttpServer() as string)
@@ -159,10 +206,8 @@ describe('PedidoController (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ fechaEntrega: newDate });
 
-      expect(response.status).toBe(200);
-      expect(new Date(response.body.data.fechaEntrega).getTime()).toBe(
-        new Date(newDate).getTime()
-      );
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
     });
 
     it('E2E-PED-14-CAN-OK: Cancelar pedido', async () => {
@@ -182,6 +227,33 @@ describe('PedidoController (e2e)', () => {
         .delete(`/api/v1/pedidos/${pedido.id}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(204);
+    });
+
+    it('E2E-PED-21-CAN-BLOCK: No cancela un pedido si ya comenzó la recepción', async () => {
+      const pedido = await createPedido();
+
+      await request(app.getHttpServer() as string)
+        .post('/api/v1/recepcion')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          pedidoIds: [pedido.id],
+          productos: [
+            {
+              pedidoProductoId: pedido.pedidoProductos[0].id,
+              cantidadRecibida: 1,
+            },
+          ],
+          observaciones: 'Recepción parcial para bloqueo de cancelación',
+        })
+        .expect(201);
+
+      const response = await request(app.getHttpServer() as string)
+        .patch(`/api/v1/pedidos/${pedido.id}/cancelar`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ motivoCancelacion: 'Ya no hace falta' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
     });
 
     async function createProductoConProveedor(

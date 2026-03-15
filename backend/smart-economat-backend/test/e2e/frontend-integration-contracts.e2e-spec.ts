@@ -152,7 +152,7 @@ describe('Frontend Integration Contracts (e2e)', () => {
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
         proveedorId: proveedor.id,
-        fechaEntrega: new Date(Date.now() + 86400000).toISOString(),
+        observaciones: 'Pedido integración frontend',
         lineas: [
           {
             productoProveedorId,
@@ -297,7 +297,6 @@ describe('Frontend Integration Contracts (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           proveedorId: proveedor.id,
-          fechaEntrega: new Date(Date.now() + 86400000).toISOString(),
           pedidoProductos: [
             {
               productoProveedorId,

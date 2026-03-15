@@ -31,7 +31,6 @@ describe('Incidencias en Recepción (e2e)', () => {
       adminResponse.body as TestApiResponse<{ access_token: string }>
     ).data.access_token;
 
-    // Obtener una recepción existente o crear una mínima
     const recepList = await request(app.getHttpServer() as string)
       .get('/api/v1/recepcion')
       .set('Authorization', `Bearer ${adminToken}`);
@@ -39,21 +38,60 @@ describe('Incidencias en Recepción (e2e)', () => {
     if (recepList.body.data?.data?.length > 0) {
       recepcionId = recepList.body.data.data[0].id;
     } else {
-      // Intentar crear una si no hay
+      const proveedorRes = await request(app.getHttpServer() as string)
+        .post('/api/v1/proveedor')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          nombre: `Prov Inc Recepcion ${Date.now()}`,
+          nif: `B${Math.floor(Math.random() * 100000000)}`,
+          email: `prov-inc-recep-${Date.now()}@example.com`,
+        });
+
+      const proveedorId = proveedorRes.body.data.id as string;
+
+      const productoRes = await request(app.getHttpServer() as string)
+        .post('/api/v1/productos')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          nombre: `Producto Inc Recepcion ${Date.now()}`,
+          unidad: 'KG',
+          tipo: 'verdura',
+          contenido: 1,
+          proveedores: [{ proveedorId, precioUnitario: 1.5 }],
+        });
+
+      const productoDetail = await request(app.getHttpServer() as string)
+        .get(`/api/v1/productos/${productoRes.body.data.id}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      const productoProveedorId = (productoDetail.body.data
+        .productoProveedores ||
+        productoDetail.body.data.proveedores ||
+        [])[0].id as string;
+
       const pedidoRes = await request(app.getHttpServer() as string)
         .post('/api/v1/pedidos')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          proveedorId: '019c9b4f-74f8-7a6e-8b5b-96191c30c1e5', // UUID de seeder
-          productos: [],
+          proveedorId,
+          observaciones: 'Pedido fallback incidencias recepción',
+          lineas: [{ productoProveedorId, cantidad: 1 }],
         });
+
+      const pedidoDetail = await request(app.getHttpServer() as string)
+        .get(`/api/v1/pedidos/${pedidoRes.body.data.id}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      const pedidoProductoId = (pedidoDetail.body.data.pedidoProductos ||
+        pedidoDetail.body.data.productos ||
+        [])[0].id as string;
 
       const recepRes = await request(app.getHttpServer() as string)
         .post('/api/v1/recepcion')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           pedidoIds: [pedidoRes.body.data?.id],
-          productos: [],
+          productos: [{ pedidoProductoId, cantidadRecibida: 1 }],
           observaciones: 'Recepción para test E2E',
         });
       recepcionId = recepRes.body.data?.id || recepRes.body.data?.[0]?.id;
@@ -61,7 +99,6 @@ describe('Incidencias en Recepción (e2e)', () => {
   });
 
   it('Flujo completo: Reportar -> Verificar Flag -> Resolver con Movimiento', async () => {
-    // 1. Reportar Incidencia
     const reportRes = await request(app.getHttpServer() as string)
       .post('/api/v1/incidencias/reportar')
       .set('Authorization', `Bearer ${adminToken}`)
@@ -73,14 +110,12 @@ describe('Incidencias en Recepción (e2e)', () => {
     expect(reportRes.status).toBe(201);
     const incidenciaId = reportRes.body.data.id;
 
-    // 2. Verificar que la recepción tiene el flag incidencia = true
     const recepCheck = await request(app.getHttpServer() as string)
       .get(`/api/v1/recepcion/${recepcionId}`)
       .set('Authorization', `Bearer ${adminToken}`);
 
     expect(recepCheck.body.data.incidencia).toBe(true);
 
-    // 3. Resolver Incidencia con DEVOLUCION (debe generar movimiento)
     const resolveRes = await request(app.getHttpServer() as string)
       .post(`/api/v1/incidencias/${incidenciaId}/resolver`)
       .set('Authorization', `Bearer ${adminToken}`)
@@ -92,7 +127,6 @@ describe('Incidencias en Recepción (e2e)', () => {
     expect(resolveRes.status).toBe(201);
     expect(resolveRes.body.data.fechaResolucion).toBeDefined();
 
-    // 4. Verificar que existe el movimiento de SALIDA_AJUSTE
     const movRes = await request(app.getHttpServer() as string)
       .get('/api/v1/movimientos')
       .set('Authorization', `Bearer ${adminToken}`);

@@ -24,36 +24,33 @@ export class UsuarioRepository {
 
     let where: any = {};
     if (query.rol) {
-      const backendRol = query.rol === 'Administrador' ? 'ADMIN' : query.rol.toUpperCase();
+      const backendRol =
+        query.rol === 'Administrador' ? 'ADMIN' : query.rol.toUpperCase();
       if (query.searchTerm) {
         const term = require('typeorm').ILike(`%${query.searchTerm}%`);
         where = [
           { username: term, rol: backendRol },
           { email: term, rol: backendRol },
-          { nombre: term, rol: backendRol }
+          { nombre: term, rol: backendRol },
         ];
       } else {
         where = { rol: backendRol };
       }
     } else if (query.searchTerm) {
       const term = require('typeorm').ILike(`%${query.searchTerm}%`);
-      where = [
-        { username: term },
-        { email: term },
-        { nombre: term }
-      ];
+      where = [{ username: term }, { email: term }, { nombre: term }];
     }
 
     return this.repo
       .findAndCount({
         relations: [
-          'movimientos', 
-          'pedidos', 
-          'recepciones', 
-          'alumno', 
-          'alumno.slot', 
-          'alumno.profesor', 
-          'alumno.profesor.user'
+          'movimientos',
+          'pedidos',
+          'recepciones',
+          'alumno',
+          'alumno.slot',
+          'alumno.profesor',
+          'alumno.profesor.user',
         ],
         ...paginationOptions,
         where,
@@ -80,13 +77,13 @@ export class UsuarioRepository {
     return this.repo.findOne({
       where: { id },
       relations: [
-        'movimientos', 
-        'pedidos', 
-        'recepciones', 
-        'alumno', 
-        'alumno.slot', 
-        'alumno.profesor', 
-        'alumno.profesor.user'
+        'movimientos',
+        'pedidos',
+        'recepciones',
+        'alumno',
+        'alumno.slot',
+        'alumno.profesor',
+        'alumno.profesor.user',
       ],
     });
   }
