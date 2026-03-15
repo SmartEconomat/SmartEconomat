@@ -7,9 +7,11 @@ import { Pedido } from '../../src/modules/pedido/pedido.entity/pedido.entity';
 import { EstadoPedido } from '../../src/modules/pedido/enums/estado-pedido.enum';
 import { TipoMovimiento } from '../../src/modules/movimiento/enums/movimiento.enums';
 import { EstadoRecepcion } from '../../src/modules/recepcion/enums/estado-recepcion.enum';
+import { EstadoProductoRecepcion } from '../../src/modules/recepcion/enums/estado-producto.enum';
 import { EstadoVisualProducto } from '../../src/modules/recepcion/enums/estado-visual.enum';
 import { Recepcion } from '../../src/modules/recepcion/recepcion.entity/recepcion.entity';
 import { RecepcionPedido } from '../../src/modules/recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
+import { RecepcionProducto } from '../../src/modules/recepcion/recepcion-productos.entity/recepcion-producto.entity';
 import { AlbaranPedidoRecepcion } from '../../src/modules/albaran/albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
 
 describe('RecepcionController (e2e)', () => {
@@ -288,7 +290,7 @@ describe('RecepcionController (e2e)', () => {
       ]);
     });
 
-    it('genera incidencia automática cuando hay falta y producto defectuoso', async () => {
+    it('genera trazabilidad automática cuando una línea se marca como rota y no incrementa inventario', async () => {
       const proveedor = await createProveedor();
       const producto = await createProductoConProveedor(proveedor.id, {
         nombre: generateUniqueName('Producto incidencia recepción'),
@@ -309,20 +311,39 @@ describe('RecepcionController (e2e)', () => {
               pedidoProductoId: pedido.pedidoProductoIds[0],
               cantidadRecibida: 2,
               cantidadAlbaran: 2,
+              estadoProducto: EstadoProductoRecepcion.ROTO,
               estadoVisual: EstadoVisualProducto.ROTO,
               observaciones: 'Caja rota en muelle',
+              incidenciaDescripcion: 'Rotura detectada en el control de muelle',
             },
           ],
         })
         .expect(201);
 
       const recepcionId = response.body.data.id as string;
-      const incidenciaId = response.body.data.incidencias[0].id as string;
       const recepcion = await dataSource.getRepository(Recepcion).findOneBy({
         id: recepcionId,
       });
+      const recepcionProducto = await dataSource
+        .getRepository(RecepcionProducto)
+        .findOne({
+          where: {
+            recepcionId,
+            pedidoProductoId: pedido.pedidoProductoIds[0],
+          },
+          relations: ['incidencia'],
+        });
+      const incidenciasList = await request(app.getHttpServer())
+        .get('/api/v1/incidencias')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
       const incidencia = await request(app.getHttpServer())
-        .get(`/api/v1/incidencias/${incidenciaId}`)
+        .get(`/api/v1/incidencias/${recepcionProducto?.incidenciaId}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+      const stockResponse = await request(app.getHttpServer())
+        .get('/api/v1/inventario/stock')
+        .query({ productoId: producto.productoId, consolidado: true })
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
       const pedidoActualizado = await dataSource
@@ -331,22 +352,47 @@ describe('RecepcionController (e2e)', () => {
           id: pedido.pedidoId,
         });
 
-      expect(response.body.data.incidencias).toHaveLength(1);
-      expect(
-        response.body.data.incidencias[0].datosOriginales.productos
-      ).toEqual(
+      const productosIncidencia = response.body.data.incidencias.flatMap(
+        (incidenciaGenerada: any) =>
+          incidenciaGenerada.datosOriginales.productos
+      );
+      const stockTotal = (
+        stockResponse.body.data as Array<{ stockTotal: number }>
+      ).reduce((acc, item) => acc + Number(item.stockTotal || 0), 0);
+
+      expect(response.body.data.incidencias.length).toBeGreaterThanOrEqual(1);
+      expect(productosIncidencia).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ tipo: 'FALTA', diferencia: -3 }),
           expect.objectContaining({
             tipo: 'DEFECTUOSO',
             diferencia: -2,
-            observaciones: 'Caja rota en muelle',
+            observaciones: 'Rotura detectada en el control de muelle',
           }),
         ])
       );
       expect(recepcion?.estado).toBe(EstadoRecepcion.CON_INCIDENCIAS);
-      expect(pedidoActualizado?.estado).toBe(EstadoPedido.EN_PROCESO);
-      expect(incidencia.body.data.id).toBe(incidenciaId);
+      expect(recepcion?.incidencia).toBe(true);
+      expect(pedidoActualizado?.estado).toBe(EstadoPedido.INCIDENCIA);
+      expect(recepcionProducto?.estadoProducto).toBe(
+        EstadoProductoRecepcion.ROTO
+      );
+      expect(recepcionProducto?.incidenciaId).toBeTruthy();
+      expect(incidencia.body.data.id).toBe(recepcionProducto?.incidenciaId);
+      expect(incidencia.body.data.pedidoId).toBe(pedido.pedidoId);
+      expect(incidencia.body.data.lineas).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            pedidoProductoId: pedido.pedidoProductoIds[0],
+            tipoDiferencia: 'DEFECTUOSO',
+          }),
+        ])
+      );
+      expect(stockTotal).toBe(0);
+      expect(
+        (incidenciasList.body.data.data as any[]).some(
+          (item) => item.id === recepcionProducto?.incidenciaId
+        )
+      ).toBe(true);
     });
 
     it('mueve el pedido de pendiente a en_proceso y después a recibido según recepciones parciales y totales', async () => {

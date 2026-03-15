@@ -9,6 +9,7 @@ import { UpdateRecepcionProductoDto } from '../dto/update-recepcion-producto.dto
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { EstadoProductoRecepcion } from '../enums/estado-producto.enum';
 
 @Injectable()
 export class RecepcionProductoService {
@@ -45,6 +46,7 @@ export class RecepcionProductoService {
       pedidoProducto,
       cantidadRecibida: dto.cantidadRecibida,
       observaciones: dto.observaciones,
+      estadoProducto: dto.estadoProducto || EstadoProductoRecepcion.PERFECTO,
       ...(dto.fechaRecepcion
         ? { fechaRecepcion: new Date(dto.fechaRecepcion) }
         : {}),
@@ -68,6 +70,7 @@ export class RecepcionProductoService {
         'pedidoProducto.productoProveedor',
         'pedidoProducto.productoProveedor.producto',
         'pedidoProducto.productoProveedor.proveedor',
+        'incidencia',
       ],
       order: { [sortBy]: order },
       skip: (page - 1) * limit,
@@ -87,6 +90,7 @@ export class RecepcionProductoService {
         'pedidoProducto.productoProveedor',
         'pedidoProducto.productoProveedor.producto',
         'pedidoProducto.productoProveedor.proveedor',
+        'incidencia',
       ],
     });
 
@@ -137,6 +141,10 @@ export class RecepcionProductoService {
 
     if (dto.observaciones !== undefined) {
       recepcionProducto.observaciones = dto.observaciones;
+    }
+
+    if (dto.estadoProducto !== undefined) {
+      recepcionProducto.estadoProducto = dto.estadoProducto;
     }
 
     if (dto.fechaRecepcion) {
