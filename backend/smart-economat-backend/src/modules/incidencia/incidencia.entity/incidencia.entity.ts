@@ -5,6 +5,7 @@ import {
   JoinColumn,
   Index,
   OneToMany,
+  OneToOne,
 } from 'typeorm';
 import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
@@ -12,6 +13,7 @@ import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
 import { Pedido } from '../../pedido/pedido.entity/pedido.entity';
 import { IncidenciaLinea } from '../incidencia-linea.entity/incidencia-linea.entity';
+import { RecepcionProducto } from '../../recepcion/recepcion-productos.entity/recepcion-producto.entity';
 
 /**
  * Entidad Incidencia
@@ -80,6 +82,12 @@ export class Incidencia extends BaseEntity {
     cascade: true,
   })
   lineas!: Relation<IncidenciaLinea[]>;
+
+  @OneToOne(
+    () => RecepcionProducto,
+    (recepcionProducto) => recepcionProducto.incidencia
+  )
+  recepcionProducto?: Relation<RecepcionProducto>;
 
   /**
    * Observaciones generales de la recepción relativas a esta incidencia.

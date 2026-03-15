@@ -11,6 +11,7 @@ import {
 import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EstadoVisualProducto } from '../enums/estado-visual.enum';
+import { EstadoProductoRecepcion } from '../enums/estado-producto.enum';
 import {
   TipoProducto,
   UnidadMedida,
@@ -105,6 +106,16 @@ export class RecepcionLineDto {
   estadoVisual?: EstadoVisualProducto;
 
   @ApiPropertyOptional({
+    description:
+      'Estado funcional del producto recepcionado para controlar inventario e incidencias',
+    enum: EstadoProductoRecepcion,
+    example: EstadoProductoRecepcion.PERFECTO,
+  })
+  @IsOptional()
+  @IsEnum(EstadoProductoRecepcion)
+  estadoProducto?: EstadoProductoRecepcion;
+
+  @ApiPropertyOptional({
     description: 'docs.FECHA_DE_CADUCIDAD_DEL_LOTE_F_SICO_RECIB',
     example: '2026-10-15T00:00:00.000Z',
   })
@@ -121,6 +132,16 @@ export class RecepcionLineDto {
   @Transform((params) => TrimStringTransformer.transform(params))
   @IsString()
   observaciones?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Descripción libre para la incidencia automática vinculada a la línea cuando el producto llegue roto',
+    example: 'Palé golpeado durante la descarga',
+  })
+  @IsOptional()
+  @Transform((params) => TrimStringTransformer.transform(params))
+  @IsString()
+  incidenciaDescripcion?: string;
 
   @ApiPropertyOptional({
     description: 'docs.INDICA_SI_EL_PESO_SE_OBTUVO_DESDE_LA_B_S',

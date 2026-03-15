@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { DataSource, EntityManager, In } from 'typeorm';
 import {
@@ -21,9 +22,14 @@ import { Recepcion } from '../recepcion.entity/recepcion.entity';
 import { RecepcionPedido } from '../recepcion-pedido.entity/recepcion-pedido.entity';
 import { RecepcionProducto } from '../recepcion-productos.entity/recepcion-producto.entity';
 import { Incidencia } from '../../incidencia/incidencia.entity/incidencia.entity';
+import {
+  IncidenciaLinea,
+  TipoDiferencia,
+} from '../../incidencia/incidencia-linea.entity/incidencia-linea.entity';
 import { Albaran } from '../../albaran/albaran.entity/albaran.entity';
 import { Ubicacion } from '../../ubicacion/ubicacion.entity/ubicacion.entity';
 import { EstadoRecepcion } from '../enums/estado-recepcion.enum';
+import { EstadoProductoRecepcion } from '../enums/estado-producto.enum';
 import { EstadoVisualProducto } from '../enums/estado-visual.enum';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
@@ -34,6 +40,11 @@ import {
   RecepcionMasivaLoteDto,
   RecepcionMasivaProductoDto,
 } from '../dto/recepcion-masiva.dto';
+import {
+  permiteComputarComoRecibido,
+  permiteIncrementarInventario,
+  resolveEstadoProducto,
+} from '../utils/recepcion-producto-state.util';
 
 interface LineaIncidencia {
   idPedidoProducto: string;
@@ -57,8 +68,15 @@ interface PedidoActualizado {
   estadoNuevo: string;
 }
 
+type RecepcionLineaProcesada = RecepcionLineDto & {
+  estadoVisual: EstadoVisualProducto;
+  estadoProducto: EstadoProductoRecepcion;
+};
+
 @Injectable()
 export class RecepcionStockService {
+  private readonly logger = new Logger(RecepcionStockService.name);
+
   constructor(
     private dataSource: DataSource,
     private readonly pedidoService: PedidoService
@@ -172,6 +190,9 @@ export class RecepcionStockService {
       }[] = [];
 
       for (const linea of dto.productosRecibidos) {
+        const estadoProducto = resolveEstadoProducto({
+          estadoVisual: linea.estadoVisual,
+        });
         const ppRef = mapPedidoProductos.get(linea.pedidoProductoId);
         if (!ppRef) {
           throw new BadRequestException(
@@ -194,13 +215,17 @@ export class RecepcionStockService {
             recepcion: savedRecepcion,
             cantidadAlbaran: linea.cantidadAlbaran || null,
             cantidadRecibida: linea.cantidadRecibida,
+            estadoProducto,
             observaciones: linea.observaciones,
             pedidoProducto: { id: ppRef.id },
             isWeighedWithScale: (linea as any).isWeighedWithScale || false,
           })
         );
 
-        if (linea.cantidadRecibida > 0) {
+        if (
+          linea.cantidadRecibida > 0 &&
+          permiteIncrementarInventario(estadoProducto)
+        ) {
           const defaultExpiration = new Date(
             Date.now() + 30 * 24 * 60 * 60 * 1000
           );
@@ -308,15 +333,14 @@ export class RecepcionStockService {
 
       if (lineasIncidencia.length > 0) {
         recepcionEstadoEnum = EstadoRecepcion.CON_INCIDENCIAS;
-        const incidenciaRec = queryRunner.manager.create(Incidencia, {
-          recepcion: savedRecepcion,
-          pedido: { id: pedido.id } as Pedido,
-          observacionesRecepcion:
-            dto.observaciones ||
+        const savedInci = await this.crearIncidenciaConLineas(
+          queryRunner.manager,
+          savedRecepcion,
+          pedido,
+          dto.observaciones ||
             'Generado vía Recepción Masiva con discrepancias.',
-          datosOriginales: { productos: lineasIncidencia },
-        });
-        const savedInci = await queryRunner.manager.save(incidenciaRec);
+          lineasIncidencia
+        );
 
         incidenciasGeneradas.push({
           id: savedInci.id,
@@ -325,6 +349,7 @@ export class RecepcionStockService {
         });
       }
 
+      savedRecepcion.incidencia = incidenciasGeneradas.length > 0;
       savedRecepcion.estado = recepcionEstadoEnum;
       await queryRunner.manager.save(savedRecepcion);
 
@@ -557,11 +582,32 @@ export class RecepcionStockService {
       }
 
       const sumadoRecibidoPorPP = new Map<string, number>();
-      const detallesRecibidos = new Map<string, RecepcionLineDto[]>();
+      const detallesRecibidos = new Map<string, RecepcionLineaProcesada[]>();
+      const pedidoPorPedidoProducto = new Map<string, Pedido>();
+
+      for (const pedido of pedidosArr) {
+        const ppArr = pedido.pedidoProductos as unknown as PedidoProducto[];
+        for (const pp of ppArr) {
+          pedidoPorPedidoProducto.set(pp.id, pedido);
+        }
+      }
 
       for (const linea of dto.productos) {
         const estadoVirtualDefault =
           linea.estadoVisual || EstadoVisualProducto.OPTIMO;
+        const estadoProducto = resolveEstadoProducto({
+          estadoProducto: linea.estadoProducto,
+          estadoVisual: estadoVirtualDefault,
+        });
+
+        if (
+          estadoProducto === EstadoProductoRecepcion.FALTA_TOTAL &&
+          Number(linea.cantidadRecibida) > 0
+        ) {
+          throw new BadRequestException(
+            'Una línea marcada como FALTA_TOTAL no puede incrementar cantidad recibida.'
+          );
+        }
 
         const ppRef = mapPedidoProductos.get(linea.pedidoProductoId);
         if (!ppRef) {
@@ -577,7 +623,11 @@ export class RecepcionStockService {
         );
 
         const detallesLinea = detallesRecibidos.get(ppRef.id) || [];
-        detallesLinea.push({ ...linea, estadoVisual: estadoVirtualDefault });
+        detallesLinea.push({
+          ...linea,
+          estadoVisual: estadoVirtualDefault,
+          estadoProducto,
+        });
         detallesRecibidos.set(ppRef.id, detallesLinea);
 
         const recepcionProducto = queryRunner.manager.create(
@@ -586,15 +636,81 @@ export class RecepcionStockService {
             recepcion: savedRecepcion,
             cantidadAlbaran: linea.cantidadAlbaran || null,
             cantidadRecibida: linea.cantidadRecibida,
+            estadoProducto,
             observaciones: linea.observaciones,
             pedidoProducto: { id: ppRef.id },
             isWeighedWithScale: linea.isWeighedWithScale || false,
           }
         );
 
-        await queryRunner.manager.save(recepcionProducto);
+        const savedRecepcionProducto =
+          await queryRunner.manager.save(recepcionProducto);
 
-        if (linea.cantidadRecibida > 0) {
+        const pedidoRelacionado = pedidoPorPedidoProducto.get(ppRef.id);
+        if (!pedidoRelacionado) {
+          throw new BadRequestException(
+            `Pedido asociado no encontrado para la línea ${ppRef.id}.`
+          );
+        }
+
+        if (estadoProducto === EstadoProductoRecepcion.ROTO) {
+          recepcionEstadoEnum = EstadoRecepcion.CON_INCIDENCIAS;
+
+          const descripcionIncidencia =
+            linea.incidenciaDescripcion ||
+            linea.observaciones ||
+            observacionesGlobales ||
+            'Producto recibido roto durante la recepción.';
+
+          const lineaIncidenciaRotura: LineaIncidencia = {
+            idPedidoProducto: ppRef.id,
+            nombreProducto:
+              ppRef.productoProveedor?.producto?.nombre || 'Producto',
+            cantidadPedida: Number(ppRef.cantidad),
+            cantidadRecibida: Number(linea.cantidadRecibida),
+            diferencia: -Number(linea.cantidadRecibida),
+            tipo: 'DEFECTUOSO',
+            observaciones: descripcionIncidencia,
+          };
+
+          const incidenciaRotura = await this.crearIncidenciaConLineas(
+            queryRunner.manager,
+            savedRecepcion,
+            pedidoRelacionado,
+            descripcionIncidencia,
+            [lineaIncidenciaRotura]
+          );
+
+          savedRecepcionProducto.incidencia = incidenciaRotura;
+          savedRecepcionProducto.incidenciaId = incidenciaRotura.id;
+          await queryRunner.manager.save(savedRecepcionProducto);
+
+          incidenciasGeneradas.push(
+            this.toIncidenciaGenerada(incidenciaRotura.id, [
+              lineaIncidenciaRotura,
+            ])
+          );
+
+          this.logger.log(
+            this.buildIncidenciaLogMessage({
+              incidenciaId: incidenciaRotura.id,
+              recepcionId: savedRecepcion.id,
+              pedidoId: pedidoRelacionado.id,
+              proveedorNombre: pedidoRelacionado.proveedor?.nombre,
+              productoNombre: lineaIncidenciaRotura.nombreProducto,
+              nAlbaran:
+                listaPedidos.find(
+                  (pedido) => pedido.pedidoId === pedidoRelacionado.id
+                )?.nAlbaran || dto.nAlbaran,
+              descripcion: descripcionIncidencia,
+            })
+          );
+        }
+
+        if (
+          linea.cantidadRecibida > 0 &&
+          permiteIncrementarInventario(estadoProducto)
+        ) {
           const defaultExpiration = new Date(
             Date.now() + 30 * 24 * 60 * 60 * 1000
           );
@@ -634,53 +750,49 @@ export class RecepcionStockService {
           const lineasRecibidas = detallesRecibidos.get(pp.id) || [];
           const cantPedida = Number(pp.cantidad);
 
-          let subCantOptima = 0;
-          let subCantRotaDefectuosa = 0;
+          let subCantComputable = 0;
+          let subCantRota = 0;
 
           for (const lr of lineasRecibidas) {
-            if (lr.estadoVisual === EstadoVisualProducto.OPTIMO) {
-              subCantOptima += Number(lr.cantidadRecibida);
-            } else {
-              subCantRotaDefectuosa += Number(lr.cantidadRecibida);
+            if (permiteComputarComoRecibido(lr.estadoProducto)) {
+              subCantComputable += Number(lr.cantidadRecibida);
+            }
+
+            if (lr.estadoProducto === EstadoProductoRecepcion.ROTO) {
+              subCantRota += Number(lr.cantidadRecibida);
             }
           }
 
-          const cantRecibidaTotal = subCantOptima + subCantRotaDefectuosa;
-          const difNumerica = cantRecibidaTotal - cantPedida;
+          const exceso = Math.max(0, subCantComputable - cantPedida);
+          const faltaNoExplicada = Math.max(
+            0,
+            cantPedida - subCantComputable - subCantRota
+          );
 
-          if (difNumerica !== 0) {
+          if (exceso > 0) {
             lineasIncidencia.push({
               idPedidoProducto: pp.id,
               nombreProducto:
                 pp.productoProveedor?.producto?.nombre || 'Producto',
               cantidadPedida: cantPedida,
-              cantidadRecibida: cantRecibidaTotal,
-              diferencia: difNumerica,
-              tipo:
-                cantRecibidaTotal === 0
-                  ? 'NO_ENTREGADO'
-                  : difNumerica < 0
-                    ? 'FALTA'
-                    : 'EXCESO',
+              cantidadRecibida: subCantComputable,
+              diferencia: exceso,
+              tipo: 'EXCESO',
             });
           }
 
-          if (subCantRotaDefectuosa > 0) {
-            const observacionesMermas = lineasRecibidas
-              .filter((lr) => lr.estadoVisual !== EstadoVisualProducto.OPTIMO)
-              .map((lr) => lr.observaciones)
-              .filter(Boolean)
-              .join('; ');
-
+          if (faltaNoExplicada > 0) {
             lineasIncidencia.push({
               idPedidoProducto: pp.id,
               nombreProducto:
                 pp.productoProveedor?.producto?.nombre || 'Producto',
               cantidadPedida: cantPedida,
-              cantidadRecibida: subCantRotaDefectuosa,
-              diferencia: -subCantRotaDefectuosa,
-              tipo: 'DEFECTUOSO',
-              observaciones: observacionesMermas,
+              cantidadRecibida: subCantComputable,
+              diferencia: -faltaNoExplicada,
+              tipo:
+                subCantComputable === 0 && subCantRota === 0
+                  ? 'NO_ENTREGADO'
+                  : 'FALTA',
             });
           }
         }
@@ -688,22 +800,39 @@ export class RecepcionStockService {
         if (lineasIncidencia.length > 0) {
           recepcionEstadoEnum = EstadoRecepcion.CON_INCIDENCIAS;
           const refPedido = listaPedidos.find((lp) => lp.pedidoId === p.id);
-          const incidenciaRec = queryRunner.manager.create(Incidencia, {
-            recepcion: savedRecepcion,
-            pedido: { id: p.id } as any,
-            observacionesRecepcion:
-              refPedido?.observaciones || observacionesGlobales,
-            datosOriginales: { productos: lineasIncidencia },
-          });
-          const savedInci = await queryRunner.manager.save(incidenciaRec);
+          const savedInci = await this.crearIncidenciaConLineas(
+            queryRunner.manager,
+            savedRecepcion,
+            p,
+            refPedido?.observaciones || observacionesGlobales,
+            lineasIncidencia
+          );
           incidenciasGeneradas.push({
             id: savedInci.id,
             estado: 'PENDIENTE DE RESOLUCIÓN',
             datosOriginales: { productos: lineasIncidencia },
           });
+
+          this.logger.log(
+            this.buildIncidenciaLogMessage({
+              incidenciaId: savedInci.id,
+              recepcionId: savedRecepcion.id,
+              pedidoId: p.id,
+              proveedorNombre: p.proveedor?.nombre,
+              productoNombre: lineasIncidencia
+                .map((linea) => linea.nombreProducto)
+                .join(', '),
+              nAlbaran: refPedido?.nAlbaran || dto.nAlbaran,
+              descripcion:
+                refPedido?.observaciones ||
+                observacionesGlobales ||
+                'Incidencia generada automáticamente durante la recepción.',
+            })
+          );
         }
       }
 
+      savedRecepcion.incidencia = incidenciasGeneradas.length > 0;
       savedRecepcion.estado = recepcionEstadoEnum;
       await queryRunner.manager.save(savedRecepcion);
 
@@ -744,6 +873,83 @@ export class RecepcionStockService {
     }
   }
 
+  private async crearIncidenciaConLineas(
+    manager: EntityManager,
+    recepcion: Recepcion,
+    pedido: Pedido,
+    observacionesRecepcion: string | undefined,
+    lineas: LineaIncidencia[]
+  ): Promise<Incidencia> {
+    const incidencia = manager.create(Incidencia, {
+      recepcion,
+      pedido: { id: pedido.id } as Pedido,
+      observacionesRecepcion,
+    });
+
+    const savedIncidencia = await manager.save(incidencia);
+
+    if (lineas.length > 0) {
+      const lineasPersistidas = lineas.map((linea) =>
+        manager.create(IncidenciaLinea, {
+          incidencia: savedIncidencia,
+          pedidoProducto: { id: linea.idPedidoProducto } as PedidoProducto,
+          cantidadEsperada: linea.cantidadPedida,
+          cantidadRecibida: linea.cantidadRecibida,
+          diferencia: linea.diferencia,
+          tipoDiferencia: this.mapTipoDiferencia(linea.tipo),
+          observaciones: linea.observaciones,
+        })
+      );
+
+      await manager.save(lineasPersistidas);
+    }
+
+    return savedIncidencia;
+  }
+
+  private mapTipoDiferencia(tipo: string): TipoDiferencia {
+    switch (tipo) {
+      case 'EXCESO':
+        return TipoDiferencia.EXCESO;
+      case 'DEFECTUOSO':
+        return TipoDiferencia.DEFECTUOSO;
+      default:
+        return TipoDiferencia.FALTANTE;
+    }
+  }
+
+  private toIncidenciaGenerada(
+    id: string,
+    productos: LineaIncidencia[]
+  ): IncidenciaGenerada {
+    return {
+      id,
+      estado: 'PENDIENTE DE RESOLUCIÓN',
+      datosOriginales: { productos },
+    };
+  }
+
+  private buildIncidenciaLogMessage(params: {
+    incidenciaId: string;
+    recepcionId: string;
+    pedidoId: string;
+    proveedorNombre?: string;
+    productoNombre?: string;
+    nAlbaran?: string;
+    descripcion?: string;
+  }): string {
+    return [
+      `Incidencia ${params.incidenciaId} vinculada a recepción ${params.recepcionId}`,
+      `pedido ${params.pedidoId}`,
+      params.proveedorNombre ? `proveedor ${params.proveedorNombre}` : null,
+      params.productoNombre ? `producto ${params.productoNombre}` : null,
+      `albarán ${params.nAlbaran || 'N/A'}`,
+      params.descripcion ? `detalle: ${params.descripcion}` : null,
+    ]
+      .filter(Boolean)
+      .join(' | ');
+  }
+
   private async actualizarEstadoPedido(
     pedidoId: string,
     manager: EntityManager
@@ -763,39 +969,47 @@ export class RecepcionStockService {
         'recepcion',
         'recepcion.recepcionProductos',
         'recepcion.recepcionProductos.pedidoProducto',
+        'recepcion.recepcionProductos.incidencia',
       ],
     });
 
     const pedidoProductosList =
       pedido.pedidoProductos as unknown as PedidoProducto[];
     const orderProductIds = new Set(pedidoProductosList.map((pp) => pp.id));
-
+    let totalRecibido = 0;
+    let isIncidencia = false;
     const mapRecvd = new Map<string, number>();
 
     for (const repPedido of recepcionPedidos) {
       if (!repPedido.recepcion || !repPedido.recepcion.recepcionProductos)
         continue;
-
       for (const repProd of repPedido.recepcion.recepcionProductos) {
         if (
           repProd.pedidoProducto &&
           orderProductIds.has(repProd.pedidoProducto.id)
         ) {
+          const cantidadComputable = permiteComputarComoRecibido(
+            repProd.estadoProducto || EstadoProductoRecepcion.PERFECTO
+          )
+            ? Number(repProd.cantidadRecibida)
+            : 0;
+          totalRecibido += cantidadComputable;
           const curr = mapRecvd.get(repProd.pedidoProducto.id) || 0;
-          mapRecvd.set(
-            repProd.pedidoProducto.id,
-            curr + Number(repProd.cantidadRecibida)
-          );
+          mapRecvd.set(repProd.pedidoProducto.id, curr + cantidadComputable);
+          if (
+            repProd.estadoProducto &&
+            repProd.estadoProducto !== EstadoProductoRecepcion.PERFECTO
+          ) {
+            isIncidencia = true;
+          }
         }
       }
     }
 
     let isFull = true;
-
     for (const pp of pedidoProductosList) {
       const cantReq = Number(pp.cantidad);
       const cantRecv = mapRecvd.get(pp.id) || 0;
-
       if (cantRecv !== cantReq) {
         isFull = false;
       }
@@ -808,7 +1022,6 @@ export class RecepcionStockService {
         : PedidoStatusTrigger.RECEPCION_PARCIAL,
       manager
     );
-
     return updatedPedido.estado;
   }
 }
