@@ -8,9 +8,7 @@
 
 ## Descripción General
 
-`RegisterForm` es el formulario de alta de nuevos usuarios. Recopila nombre, username, email y contraseña.
-
-> ⚠️ **Importante:** Al igual que `LoginForm`, este componente **no gestiona la navegación ni el feedback post-registro**. Cuando el registro es exitoso, invoca `onRegisterSuccess()` y delega al padre (`Login.tsx`) toda la lógica de animación y mensaje de confirmación.
+`RegisterForm` es el formulario de alta de nuevos usuarios. Recopila datos personales y, fundamentalmente, la vinculación con el sistema educativo para alumnos.
 
 ---
 
@@ -18,81 +16,41 @@
 
 | Prop | Tipo | Requerido | Descripción |
 |------|------|-----------|-------------|
-| `onToggleForm` | `() => void` | ✅ | Vuelve al formulario de inicio de sesión (toggle). |
-| `onRegisterSuccess` | `() => void` | ✅ | Invocado cuando el servidor confirma el registro. El padre controla el overlay de éxito y la vuelta a login. |
+| `onToggleForm` | `() => void` | ✅ | Vuelve al formulario de inicio de sesión. |
+| `onRegisterSuccess` | `() => void` | ✅ | Invocado al confirmar el registro. |
 
 ---
 
-## Estado Interno
+## Estado Interno (Campos Extendidos)
 
 | Estado | Tipo | Descripción |
 |--------|------|-------------|
-| `formData` | `{ nombre: string; username: string; email: string; password: string }` | Datos del nuevo usuario. |
-| `isLoading` | `boolean` | Spinner del botón durante la petición. |
-| `showPassword` | `boolean` | Alterna la visibilidad del campo contraseña. |
-| `errorMsg` | `string` | Error de validación o de red mostrado en `Alert`. |
+| `role` | `string` | 'ALUMNO' o 'PROFESOR'. Determina los campos visibles. |
+| `cial` | `string` | Identificador único del alumno (se normaliza a Mayúsculas). |
+| `aulaId` | `string` | Selección superior del Curso/Grupo. |
+| `slotId` | `string` | Selección de Clase específica vinculada al Aula. |
+| `profesorId` | `string` | Profesor asignado automáticamente al seleccionar el Slot. |
 
----
+## Integración con Sistema Educativo (Selects Dependientes)
 
-## Flujo de Registro
-
-```
-handleSubmit()
-    ↓
-POST /api/v1/auth/register  { nombre, username, email, password }
-    ↓ (ok)
-onRegisterSuccess()
-    ↓
-Login.tsx:
-  phase = 'register-exit'  →  layout sale a la derecha
-  Overlay "¡Registro exitoso!" visible (2500 ms)
-  phase = 'register-return' →  layout login entra desde la izquierda
-  phase = 'idle'
-```
-
----
-
-## Funcionalidades UX
-
-### Toggle de visibilidad de contraseña
-
-Campo contraseña con `InputAdornment` → `IconButton`:
-- `Visibility` / `VisibilityOff` al pulsar.
-
-### Feedback de error
-
-Si el servidor responde con error, se muestra `<Alert severity="error">` con el mensaje:
-- Si `message` es un array (errores de validación), se unen con `", "`.
-- Si es string, se muestra directamente.
-- Fallback: `"Error en el registro"`.
+Para los alumnos, el registro implementa una jerarquía de selección para garantizar la integridad de los datos:
+1. **Selección de Aula**: Se cargan los cursos disponibles (ej: 1º ESO A).
+2. **Selección de Clase (Slot)**: Al elegir aula, se habilitan los números de clase disponibles para ese curso.
+3. **Identificación de Profesor**: El sistema detecta y muestra el profesor responsable de ese slot antes de confirmar.
 
 ---
 
 ## API Consumida
 
-| Método | Endpoint | Body |
+| Método | Endpoint | Body (Alumno) |
 |--------|----------|------|
-| `POST` | `/api/v1/auth/register` | `{ nombre, username, email, password }` |
+| `POST` | `/api/v1/auth/register` | `{ nombre, username, email, password, role, cial, slotId }` |
 
-**Respuesta de éxito:** `HTTP 201` (cualquier 2xx).  
-**Respuesta de error esperada:**
-```json
-{
-  "message": "El email ya está registrado"
-}
-```
+**Normalización de Datos**:
+- El campo `CIAL` se convierte siempre a `toUpperCase()` antes del envío.
+- Se aplica `.trim()` a todos los campos de texto para evitar errores de duplicidad por espacios.
 
 ---
 
-## Dependencias de Componentes UI
-
-| Componente | Origen | Uso |
-|-----------|--------|-----|
-| `Input` | `components/ui/Input.tsx` | Todos los campos de texto |
-| `Button` | `components/ui/Button.tsx` | Botón con estado de carga |
-
----
-
-## Nota sobre el estado del usuario registrado
-
-Los usuarios creados mediante registro quedan en estado **pendiente de confirmación** hasta que un administrador los active. Este estado es visible en el overlay de éxito que muestra `Login.tsx` tras el registro.
+## Registro de Profesores
+Para el rol `PROFESOR`, no se solicitan campos de aula. El profesor se registra y, una vez logueado, configura sus clases desde su **Perfil de Usuario**.

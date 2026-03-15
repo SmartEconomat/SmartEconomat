@@ -1,339 +1,106 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Box,
   Typography,
-  Card,
-  CardContent,
   Divider,
-  CircularProgress,
-  Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
 } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import { authService } from '../../../services/authService';
-import { useAuth, User } from '../../../store/AuthContext';
-import { useToast } from '../../../store/ToastContext';
 import Input from '../../../components/ui/Input';
-import Button from '../../../components/ui/Button';
+
+interface ProfileFormProps {
+  isEditing: boolean;
+  formData: {
+    username: string;
+    email: string;
+    usernameAlias: string;
+  };
+  onFormChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onOpenEmailModal: () => void;
+  isSaving: boolean;
+}
 
 /**
- * Formulario para editar los datos básicos del perfil.
+ * Sección de Datos Personales para la Ficha de Perfil.
  */
-const ProfileForm: React.FC = () => {
-  const { user, login } = useAuth();
-  const toast = useToast();
-
-  const [formData, setFormData] = useState({
-    username: user?.username || user?.name || '',
-    email: user?.email || '',
-    usernameAlias: user?.username || '',
-  });
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Estado para el modal de cambio de email
-  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
-  const [emailFormData, setEmailFormData] = useState({
-    newEmail: '',
-    confirmNewEmail: '',
-    justification: '',
-  });
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [emailsMatch, setEmailsMatch] = useState<boolean | null>(null);
-
-  // Validación en tiempo real de correos
-  useEffect(() => {
-    if (emailFormData.newEmail && emailFormData.confirmNewEmail) {
-      setEmailsMatch(emailFormData.newEmail === emailFormData.confirmNewEmail);
-    } else {
-      setEmailsMatch(null);
-    }
-  }, [emailFormData.newEmail, emailFormData.confirmNewEmail]);
-
-  const isInitialized = React.useRef(false);
-
-  useEffect(() => {
-    if (isInitialized.current) return;
-
-    const fetchUserData = async () => {
-      setIsLoading(true);
-      try {
-        const updatedUser = await authService.getCurrentUser();
-        setFormData({
-          username: updatedUser.username || updatedUser.name,
-          email: updatedUser.email,
-          usernameAlias: updatedUser.username || '',
-        });
-        const token = localStorage.getItem('token') || '';
-        login(updatedUser, token);
-        isInitialized.current = true;
-      } catch (err: any) {
-        console.error('Error fetching profile:', err);
-        // Si falla pero tenemos el user del context, lo usamos
-        if (user) {
-          setFormData({
-            username: user.username || user.name,
-            email: user.email,
-            usernameAlias: user.username || '',
-          });
-          isInitialized.current = true;
-        } else {
-          setError('No se pudo cargar la información del perfil.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, [login, user]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleEmailModalChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setEmailFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleOpenEmailModal = () => {
-    setIsEmailModalOpen(true);
-    setEmailError(null);
-    setEmailFormData({ newEmail: '', confirmNewEmail: '', justification: '' });
-  };
-
-  const handleCloseEmailModal = () => {
-    setIsEmailModalOpen(false);
-  };
-
-  const handleEmailRequestSubmit = async () => {
-    setEmailError(null);
-    if (emailFormData.newEmail !== emailFormData.confirmNewEmail) {
-      setEmailError('Los correos electrónicos no coinciden.');
-      return;
-    }
-    if (!emailFormData.justification.trim()) {
-      setEmailError('Debes describir brevemente el por qué deseas cambiarlo.');
-      return;
-    }
-
-    // Simulación de envío a administración
-    setTimeout(() => {
-      toast.success('Solicitud enviada a administración correctamente.');
-      handleCloseEmailModal();
-    }, 1000);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSaving(true);
-    setError(null);
-
-    try {
-      await authService.updateProfile({ username: formData.username });
-
-      // Actualizar contexto localmente
-      if (user) {
-        const updatedUser: User = {
-          ...user,
-          name: formData.username,
-          username: formData.username,
-        };
-        const token = localStorage.getItem('token') || '';
-        login(updatedUser, token);
-      }
-
-      toast.success('Perfil actualizado con éxito');
-    } catch (err: any) {
-      setError(err.message || 'Error al actualizar el perfil');
-      toast.error('Error al actualizar el perfil');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <Box display="flex" justifyContent="center" py={4}>
-        <CircularProgress color="primary" />
-      </Box>
-    );
-  }
-
+const ProfileForm: React.FC<ProfileFormProps> = ({
+  isEditing,
+  formData,
+  onFormChange,
+  onOpenEmailModal,
+  isSaving,
+}) => {
   return (
-    <Card
-      elevation={0}
-      sx={{
-        border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: 2,
-        height: '100%',
-      }}
-    >
-      <CardContent
-        sx={{ p: { xs: 2, sm: 3, md: 4 }, px: { xs: 1.5, sm: 3, md: 4 } }}
+    <Box>
+      <Box display="flex" alignItems="center" mb={{ xs: 2, md: 3 }}>
+        <PersonOutlineIcon color="primary" sx={{ fontSize: { xs: 28, md: 32 }, mr: 1.5 }} />
+        <Typography variant="h5" fontWeight={600} sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}>
+          Datos Personales
+        </Typography>
+      </Box>
+      <Divider sx={{ mb: { xs: 3, md: 4 } }} />
+
+      <Box
+        display="grid"
+        gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }}
+        gap={3}
       >
-        <Box display="flex" alignItems="center" mb={3}>
-          <PersonOutlineIcon color="primary" sx={{ fontSize: 32, mr: 1.5 }} />
-          <Typography variant="h5" fontWeight={600}>
-            Datos Personales
+        {/* Nombre de Usuario */}
+        <Box>
+          {isEditing ? (
+            <Input
+              label="Nombre de Usuario"
+              name="username"
+              value={formData.username}
+              onChange={onFormChange}
+              required
+              disabled={isSaving}
+              helperText="El nombre que verán los demás"
+            />
+          ) : (
+            <Box>
+              <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', mb: 0.5, display: 'block' }}>
+                Nombre de Usuario
+              </Typography>
+              <Typography variant="body1" fontWeight={500}>
+                {formData.username || 'No configurado'}
+              </Typography>
+            </Box>
+          )}
+        </Box>
+
+        {/* Username Alias (Solo lectura siempre) */}
+        <Box>
+          <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', mb: 0.5, display: 'block' }}>
+            ID de Usuario
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            {formData.usernameAlias}
           </Typography>
         </Box>
-        <Divider sx={{ mb: 4 }} />
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
-          </Alert>
-        )}
-
-        <Box component="form" onSubmit={handleSubmit}>
-          <Box
-            display="grid"
-            gridTemplateColumns="1fr"
-            gap={0.5}
-            sx={{ mb: 2 }}
-          >
-            <Box>
-              <Input
-                label="Nombre de Usuario"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                required
-                disabled={isSaving}
-                helperText=" "
-              />
-            </Box>
-            <Box>
-              <Input
-                label="Nombre de Usuario"
-                name="usernameAlias"
-                value={formData.usernameAlias}
-                disabled
-                helperText="Valor actual sincronizado desde el backend"
-              />
-            </Box>
-            <Box>
-              <Input
-                label="Correo Electrónico"
-                name="email"
-                type="email"
-                value={formData.email}
-                disabled
-                helperText="Contacta con administración para cambiar tu email"
-              />
-            </Box>
-          </Box>
-
-          <Box
-            sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 0.25 }}
-          >
-            <Button
-              type="submit"
-              color="primary"
-              isLoading={isSaving}
-              sx={{ width: '100%', px: 4 }}
-            >
-              Actualizar
-            </Button>
-
-            <Button
-              type="button"
-              variant="outlined"
-              color="secondary"
-              onClick={handleOpenEmailModal}
-              sx={{ width: '100%', px: 4 }}
-            >
-              Contactar
-            </Button>
+        {/* Correo Electrónico */}
+        <Box sx={{ gridColumn: { sm: 'span 2' } }}>
+          <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', mb: 0.5, display: 'block' }}>
+            Correo Electrónico
+          </Typography>
+          <Box display="flex" alignItems="center" gap={1}>
+            <Typography variant="body1">
+              {formData.email}
+            </Typography>
+            {!isEditing && (
+              <Typography 
+                variant="caption" 
+                color="primary" 
+                onClick={onOpenEmailModal}
+                sx={{ cursor: 'pointer', textDecoration: 'underline', ml: 1, '&:hover': { color: 'primary.dark' } }}
+              >
+                Solicitar cambio
+              </Typography>
+            )}
           </Box>
         </Box>
-      </CardContent>
-
-      {/* Modal para solicitar cambio de email */}
-      <Dialog
-        open={isEmailModalOpen}
-        onClose={handleCloseEmailModal}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Solicitar Cambio de Correo</DialogTitle>
-        <DialogContent>
-          <Box
-            sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 1.5 }}
-          >
-            <Typography variant="body2" color="text.secondary">
-              Para cambiar tu correo electrónico necesitas la aprobación de un
-              administrador. Por favor, completa el siguiente formulario.
-            </Typography>
-
-            {emailError && <Alert severity="error">{emailError}</Alert>}
-
-            <Input
-              label="Nuevo Correo Electrónico"
-              name="newEmail"
-              type="email"
-              value={emailFormData.newEmail}
-              onChange={handleEmailModalChange}
-              required
-              helperText=" "
-            />
-            <Input
-              label="Confirmar Nuevo Correo"
-              name="confirmNewEmail"
-              type="email"
-              value={emailFormData.confirmNewEmail}
-              onChange={handleEmailModalChange}
-              required
-              error={emailsMatch === false}
-              helperText={
-                emailsMatch === false
-                  ? 'Los correos no coinciden'
-                  : emailsMatch === true
-                    ? 'Los correos coinciden'
-                    : ' '
-              }
-              FormHelperTextProps={{
-                sx: {
-                  color: emailsMatch === false ? 'error.main' : 'success.main',
-                },
-              }}
-            />
-            <Input
-              label="Motivo del cambio"
-              name="justification"
-              value={emailFormData.justification}
-              onChange={handleEmailModalChange}
-              required
-              multiline
-              rows={4}
-              placeholder="Justifica brevemente por qué necesitas cambiar tu correo..."
-              helperText=" "
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button
-            variant="outlined"
-            color="inherit"
-            onClick={handleCloseEmailModal}
-          >
-            Cancelar
-          </Button>
-          <Button color="primary" onClick={handleEmailRequestSubmit}>
-            Solicitar Cambio
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Card>
+      </Box>
+    </Box>
   );
 };
 

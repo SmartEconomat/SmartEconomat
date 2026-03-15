@@ -33,7 +33,6 @@ services:
       context: ./backend/smart-economat-backend
       dockerfile: ../Dockerfile.dev
     image: smarteconomat-backend:dev
-    user: '${UID:-1000}:${GID:-1000}'
     ports:
       - '${BACKEND_PORT}:${BACKEND_PORT}'
     env_file: .env.dev
@@ -51,7 +50,7 @@ services:
       - HOST_GIT_EMAIL=${GIT_EMAIL:-}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    command: sh -c "npx ts-node scripts/log-user-info.ts && npm run start:dev"
+    command: sh -c "sh scripts/ensure-deps.sh && npx ts-node scripts/log-user-info.ts && npm run start:dev"
     depends_on:
       db:
         condition: service_healthy

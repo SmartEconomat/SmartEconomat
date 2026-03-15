@@ -100,6 +100,12 @@ Este documento detalla los **Casos de Uso (UC)** del sistema SmartEconomat, desc
     - **Incidencias**: Generación automática de discrepancias si la cantidad recibida no coincide con el pedido (tipos: `FALTA`, `EXCESO`, `DEFECTUOSO`).
     - **Albaranes**: Registro del documento físico en la entidad `Albaran` vinculado a la `Recepcion`.
 
+## 👥 13. Gestión de Estructura Educativa (Cursos y Clases)
+**Propósito**: Organizar la jerarquía académica para vincular alumnos y profesores de forma ordenada.
+
+- **Descripción**: El profesor define sus cursos y clases, estableciendo cupos y generando códigos de acceso. El alumno se registra mediante estos códigos.
+- **Detalles**: Ver [Caso de Uso: Estructura Educativa](./estructura-educativa.md) para más detalles técnicos.
+
 ## 👤 12. Gestión de Perfil de Usuario
 **Propósito**: Permitir a los usuarios gestionar su propia información y credenciales.
 
