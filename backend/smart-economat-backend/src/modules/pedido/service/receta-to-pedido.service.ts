@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { DataSource, In } from 'typeorm';
 import { Pedido } from '../pedido.entity/pedido.entity';
+import { CreatePedidoDto } from '../dto/create-pedido.dto';
 import { GeneratePedidoFromRecetasDto } from '../dto/generate-pedido-from-recetas.dto';
 import { PedidoService } from './pedido.service';
 import { RecetaRepository } from '../../receta/repository/receta.repository';
@@ -81,14 +82,13 @@ export class RecetaToPedidoService {
       };
     });
 
-    const pedido = await this.pedidoService.create(
-      {
-        proveedorId,
-        fechaEntrega: new Date(),
-        lineas,
-      } as any,
-      userId
-    );
+    const createPedidoDto: CreatePedidoDto = {
+      proveedorId,
+      observaciones: dto.observaciones,
+      lineas,
+    };
+
+    const pedido = await this.pedidoService.create(createPedidoDto, userId);
 
     this.logger.log(
       `Pedido ${pedido.id} generado desde recetas [${dto.recetaIds.join(', ')}] por usuario ${userId}. ` +

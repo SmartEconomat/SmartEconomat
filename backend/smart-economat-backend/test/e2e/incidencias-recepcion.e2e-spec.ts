@@ -38,20 +38,60 @@ describe('Incidencias en Recepción (e2e)', () => {
     if (recepList.body.data?.data?.length > 0) {
       recepcionId = recepList.body.data.data[0].id;
     } else {
+      const proveedorRes = await request(app.getHttpServer() as string)
+        .post('/api/v1/proveedor')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          nombre: `Prov Inc Recepcion ${Date.now()}`,
+          nif: `B${Math.floor(Math.random() * 100000000)}`,
+          email: `prov-inc-recep-${Date.now()}@example.com`,
+        });
+
+      const proveedorId = proveedorRes.body.data.id as string;
+
+      const productoRes = await request(app.getHttpServer() as string)
+        .post('/api/v1/productos')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          nombre: `Producto Inc Recepcion ${Date.now()}`,
+          unidad: 'KG',
+          tipo: 'verdura',
+          contenido: 1,
+          proveedores: [{ proveedorId, precioUnitario: 1.5 }],
+        });
+
+      const productoDetail = await request(app.getHttpServer() as string)
+        .get(`/api/v1/productos/${productoRes.body.data.id}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      const productoProveedorId = (productoDetail.body.data
+        .productoProveedores ||
+        productoDetail.body.data.proveedores ||
+        [])[0].id as string;
+
       const pedidoRes = await request(app.getHttpServer() as string)
         .post('/api/v1/pedidos')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          proveedorId: '019c9b4f-74f8-7a6e-8b5b-96191c30c1e5',
-          productos: [],
+          proveedorId,
+          observaciones: 'Pedido fallback incidencias recepción',
+          lineas: [{ productoProveedorId, cantidad: 1 }],
         });
+
+      const pedidoDetail = await request(app.getHttpServer() as string)
+        .get(`/api/v1/pedidos/${pedidoRes.body.data.id}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      const pedidoProductoId = (pedidoDetail.body.data.pedidoProductos ||
+        pedidoDetail.body.data.productos ||
+        [])[0].id as string;
 
       const recepRes = await request(app.getHttpServer() as string)
         .post('/api/v1/recepcion')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           pedidoIds: [pedidoRes.body.data?.id],
-          productos: [],
+          productos: [{ pedidoProductoId, cantidadRecibida: 1 }],
           observaciones: 'Recepción para test E2E',
         });
       recepcionId = recepRes.body.data?.id || recepRes.body.data?.[0]?.id;

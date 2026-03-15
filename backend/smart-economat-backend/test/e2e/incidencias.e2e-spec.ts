@@ -88,7 +88,7 @@ describe('IncidenciaController (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           proveedorId,
-          fechaEntrega: new Date().toISOString(),
+          observaciones: 'Pedido incidencia e2e',
           lineas: [
             {
               productoProveedorId,
