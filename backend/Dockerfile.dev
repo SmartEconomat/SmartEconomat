@@ -1,16 +1,32 @@
 FROM node:22.2.0-alpine
 
+# Instalar dependencias del sistema necesarias para módulos nativos
+RUN apk add --no-cache \
+    git \
+    python3 \
+    make \
+    g++ \
+    dumb-init \
+    su-exec
+
 WORKDIR /app
 
-# Install git for git config commands in logger
-RUN apk add --no-cache git
+# Borrar USER node de aquí, el entrypoint lo hará con su-exec
+# Pero aseguramos que el código base sea del usuario node
+COPY --chown=node:node package*.json ./
 
-RUN mkdir -p /app/node_modules /app/dist \
-	&& chown -R node:node /app
+# Instalar dependencias
+RUN npm install
 
-COPY package*.json ./
-RUN --mount=type=cache,target=/root/.npm npm install
+# Copiar el resto del código
+COPY --chown=node:node . .
 
-COPY . .
+# Usar el script de entrypoint para corregir permisos en runtime
+COPY scripts/docker-entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
-CMD ["npm", "run", "start:dev"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+CMD ["sh", "-c", "sh scripts/ensure-deps.sh && npx ts-node scripts/log-user-info.ts && npm run start:dev"]
+
+
