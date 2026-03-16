@@ -1,3 +1,71 @@
+<<<<<<< HEAD
+# syntax=docker/dockerfile:1.7
+# =============================================================================
+# SmartEconomat – Frontend Dockerfile.dev
+# Multi-stage | BuildKit | cross-platform (AMD64 + ARM64)
+#
+# DECISIONES TÉCNICAS:
+# - @rollup/rollup-linux-x64-musl está como optionalDependency en package.json.
+#   En Alpine (musl) se instala automáticamente por npm. Sin --platform correcto,
+#   npm podría instalar el binario para la arquitectura equivocada.
+# - Stage "base": prepara el entorno con directorios y permisos
+# - Stage "deps": instala node_modules con caché BuildKit
+# - Stage "development": imagen final con entrypoint inteligente
+# =============================================================================
+
+# ── Stage 1: base ────────────────────────────────────────────────────────────
+FROM --platform=$BUILDPLATFORM node:22-alpine AS base
+
+WORKDIR /app
+
+# Rollup (compilador de Vite) tiene binarios nativos opcionales.
+# No necesita build-essential porque usamos los binarios prebuildeados de npm.
+# Solo necesitamos git si algún script de build lo requiere.
+RUN apk add --no-cache git ca-certificates
+
+ARG DEV_UID=1000
+ARG DEV_GID=1000
+RUN if [ "$DEV_UID" != "1000" ] || [ "$DEV_GID" != "1000" ]; then \
+      delgroup node 2>/dev/null || true; \
+      deluser node 2>/dev/null || true; \
+      addgroup -g "$DEV_GID" devgroup && \
+      adduser -D -u "$DEV_UID" -G devgroup devuser; \
+    else \
+      addgroup -g "$DEV_GID" devgroup 2>/dev/null || true; \
+    fi
+
+# Directorios con permisos para el proceso Vite
+# /tmp/.vite-smarteconomat es donde vite.config.ts guarda su caché
+RUN mkdir -p /app/node_modules /tmp/.vite-smarteconomat \
+ && chown -R "${DEV_UID}:${DEV_GID}" /app /tmp/.vite-smarteconomat
+
+# ── Stage 2: deps ─────────────────────────────────────────────────────────────
+FROM base AS deps
+
+USER "${DEV_UID}:${DEV_GID}"
+
+COPY --chown="${DEV_UID}:${DEV_GID}" package.json ./
+
+RUN --mount=type=cache,target=/app/.npm,uid="${DEV_UID}",gid="${DEV_GID}",sharing=locked \
+    npm set cache /app/.npm && \
+    npm install --prefer-offline
+
+# ── Stage 3: development ──────────────────────────────────────────────────────
+FROM base AS development
+
+USER "${DEV_UID}:${DEV_GID}"
+
+COPY --from=deps --chown="${DEV_UID}:${DEV_GID}" /app/node_modules ./node_modules
+COPY --chown="${DEV_UID}:${DEV_GID}" . .
+
+RUN chmod +x scripts/docker-entrypoint.sh
+
+EXPOSE 5173
+
+# HMR WebSocket: Vite abre una conexión WS en el mismo puerto.
+# No se precisa puerto separado porque usamos server.hmr.host en vite.config.ts.
+ENTRYPOINT ["sh", "scripts/docker-entrypoint.sh"]
+=======
 FROM node:22.2.0-alpine
 
 # Instalar dependencias del sistema necesarias
@@ -21,3 +89,6 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 CMD ["sh", "-c", "sh scripts/ensure-deps.sh && npm run dev -- --host"]
+
+
+>>>>>>> 86ce9cf (cambios docker para solución de errores de incompatibilidad entre S.O.)
