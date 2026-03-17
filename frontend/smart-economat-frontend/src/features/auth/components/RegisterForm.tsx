@@ -348,7 +348,23 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           helperText={STRONG_PASSWORD_MESSAGE}
         />
 
-        <Button type="submit" isLoading={isLoading} sx={{ mt: 3, mb: 0 }}>
+        <Button
+          type="submit"
+          isLoading={isLoading}
+          disabled={
+            role === 'ALUMNO'
+              ? !formData.username.trim() ||
+                !formData.aula ||
+                !formData.numeroClase ||
+                !formData.cialProfesor ||
+                !formData.password.trim()
+              : !formData.username.trim() ||
+                !formData.email.trim() ||
+                !formData.cial.trim() ||
+                !formData.password.trim()
+          }
+          sx={{ mt: 3, mb: 0 }}
+        >
           Registrarse como {role === 'ALUMNO' ? 'Alumno' : 'Profesor'}
         </Button>
 

@@ -126,6 +126,7 @@ const ResetPassword: React.FC = () => {
               value={formData.password}
               onChange={handleChange}
               required
+              helperText={STRONG_PASSWORD_MESSAGE}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -147,7 +148,14 @@ const ResetPassword: React.FC = () => {
               onChange={handleChange}
               required
             />
-            <Button type="submit" isLoading={isLoading} sx={{ mt: 3 }}>
+            <Button
+              type="submit"
+              isLoading={isLoading}
+              disabled={
+                !formData.password.trim() || !formData.confirmPassword.trim()
+              }
+              sx={{ mt: 3 }}
+            >
               Guardar Nueva Contraseña
             </Button>
           </Box>
