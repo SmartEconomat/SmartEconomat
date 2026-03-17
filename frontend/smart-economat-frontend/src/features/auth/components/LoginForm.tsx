@@ -322,6 +322,19 @@ const LoginForm: React.FC<LoginFormProps> = ({
             value={changePassData.newPassword}
             onChange={handleChangePass}
             required
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="revelar contraseña"
+                    onClick={togglePasswordVisibility}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
           <Input
             label="Confirmar Nueva Contraseña"
@@ -332,7 +345,15 @@ const LoginForm: React.FC<LoginFormProps> = ({
             required
           />
 
-          <Button type="submit" isLoading={isLoading} sx={{ mt: 3, mb: 0 }}>
+          <Button
+            type="submit"
+            isLoading={isLoading}
+            disabled={
+              !changePassData.newPassword.trim() ||
+              !changePassData.confirmPassword.trim()
+            }
+            sx={{ mt: 3, mb: 0 }}
+          >
             Actualizar y Acceder
           </Button>
 
@@ -371,7 +392,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
             value={formData.email}
             onChange={handleChange}
           />
-          <Button type="submit" isLoading={isLoading} sx={{ mt: 2, mb: 0 }}>
+          <Button
+            type="submit"
+            isLoading={isLoading}
+            disabled={!formData.email.trim()}
+            sx={{ mt: 2, mb: 0 }}
+          >
             Restablecer Contraseña
           </Button>
 
@@ -449,7 +475,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
             onChange={(e) => setRememberMe(e.target.checked)}
             label="Recordarme"
           />
-          <Button type="submit" isLoading={isLoading} sx={{ mt: 2, mb: 0 }}>
+          <Button
+            type="submit"
+            isLoading={isLoading}
+            disabled={!formData.email.trim() || !formData.password.trim()}
+            sx={{ mt: 2, mb: 0 }}
+          >
             Acceder
           </Button>
 
