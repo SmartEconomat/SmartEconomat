@@ -147,7 +147,12 @@ const ResetPassword: React.FC = () => {
               onChange={handleChange}
               required
             />
-            <Button type="submit" isLoading={isLoading} sx={{ mt: 3 }}>
+            <Button
+              type="submit"
+              isLoading={isLoading}
+              disabled={!formData.password || !formData.confirmPassword}
+              sx={{ mt: 3 }}
+            >
               Guardar Nueva Contraseña
             </Button>
           </Box>
