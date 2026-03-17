@@ -8,7 +8,7 @@ export class MailService {
     email: string,
     resetToken: string
   ): Promise<void> {
-    const recoveryLink = `http://localhost:5173/reset-password?token=${resetToken}`;
+    const recoveryLink = `http://localhost:5173/reset-password/${resetToken}`;
 
     this.logger.log(`\n================= EMAIL SIMULATION =================`);
     this.logger.log(`To: ${email}`);
