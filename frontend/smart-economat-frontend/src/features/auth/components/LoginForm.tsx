@@ -332,7 +332,15 @@ const LoginForm: React.FC<LoginFormProps> = ({
             required
           />
 
-          <Button type="submit" isLoading={isLoading} sx={{ mt: 3, mb: 0 }}>
+          <Button
+            type="submit"
+            isLoading={isLoading}
+            disabled={
+              changePassData.newPassword.length === 0 ||
+              changePassData.confirmPassword.length === 0
+            }
+            sx={{ mt: 3, mb: 0 }}
+          >
             Actualizar y Acceder
           </Button>
 
@@ -371,7 +379,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
             value={formData.email}
             onChange={handleChange}
           />
-          <Button type="submit" isLoading={isLoading} sx={{ mt: 2, mb: 0 }}>
+          <Button
+            type="submit"
+            isLoading={isLoading}
+            disabled={formData.email.trim().length === 0}
+            sx={{ mt: 2, mb: 0 }}
+          >
             Restablecer Contraseña
           </Button>
 
@@ -449,7 +462,15 @@ const LoginForm: React.FC<LoginFormProps> = ({
             onChange={(e) => setRememberMe(e.target.checked)}
             label="Recordarme"
           />
-          <Button type="submit" isLoading={isLoading} sx={{ mt: 2, mb: 0 }}>
+          <Button
+            type="submit"
+            isLoading={isLoading}
+            disabled={
+              formData.email.trim().length === 0 ||
+              formData.password.length === 0
+            }
+            sx={{ mt: 2, mb: 0 }}
+          >
             Acceder
           </Button>
 
