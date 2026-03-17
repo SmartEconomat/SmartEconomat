@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -21,7 +21,9 @@ import {
 } from '../../utils/passwordValidation';
 
 const ResetPassword: React.FC = () => {
-  const { token } = useParams<{ token: string }>();
+  const { token: pathToken } = useParams<{ token: string }>();
+  const [searchParams] = useSearchParams();
+  const token = pathToken ?? searchParams.get('token') ?? undefined;
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     password: '',
@@ -147,7 +149,14 @@ const ResetPassword: React.FC = () => {
               onChange={handleChange}
               required
             />
-            <Button type="submit" isLoading={isLoading} sx={{ mt: 3 }}>
+            <Button
+              type="submit"
+              isLoading={isLoading}
+              disabled={
+                !formData.password.length || !formData.confirmPassword.length
+              }
+              sx={{ mt: 3 }}
+            >
               Guardar Nueva Contraseña
             </Button>
           </Box>
