@@ -198,6 +198,18 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
   const togglePasswordVisibility = () => setShowPassword((v) => !v);
 
+  const isSubmitDisabled =
+    role === 'ALUMNO'
+      ? !formData.username.length ||
+        !formData.aula.length ||
+        !formData.numeroClase.length ||
+        !formData.cialProfesor.length ||
+        !formData.password.length
+      : !formData.username.length ||
+        !formData.email.length ||
+        !formData.cial.length ||
+        !formData.password.length;
+
   return (
     <Box
       sx={{
@@ -348,7 +360,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           helperText={STRONG_PASSWORD_MESSAGE}
         />
 
-        <Button type="submit" isLoading={isLoading} sx={{ mt: 3, mb: 0 }}>
+        <Button
+          type="submit"
+          isLoading={isLoading}
+          disabled={isSubmitDisabled}
+          sx={{ mt: 3, mb: 0 }}
+        >
           Registrarse como {role === 'ALUMNO' ? 'Alumno' : 'Profesor'}
         </Button>
 
