@@ -1,22 +1,31 @@
 name: smarteconomat-prod
+
 services:
   db:
     build:
       context: ./database
       dockerfile: Dockerfile
     image: smarteconomat-db:prod
-
     restart: always
     env_file: .env.prod
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - database_prod:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - smarteconomat-prod-network
+      - backend-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   redis:
     image: redis:7-alpine
@@ -25,40 +34,48 @@ services:
     volumes:
       - redis_prod:/data
     networks:
-      - smarteconomat-prod-network
+      - backend-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   backend:
     build:
       context: ./backend/smart-economat-backend
       dockerfile: ../Dockerfile.prod
     image: smarteconomat-backend:prod
-
     restart: always
-    ports:
-      - '${BACKEND_PORT}:${BACKEND_PORT}'
     env_file: .env.prod
     environment:
-      # ── Info del anfitrión (inyectada por scripts/collect-host-info.sh o .ps1) ──
-      - HOST_USER=${USER:-}
-      - HOST_HOSTNAME=${HOSTNAME:-}
-      - HOST_PWD=${PWD:-}
-      - HOST_SHELL=${SHELL:-}
-      - HOST_MAC=${HOST_MAC:-}
-      - HOST_GIT_USER=${GIT_USER:-}
-      - HOST_GIT_EMAIL=${GIT_EMAIL:-}
+      - NODE_ENV=production
+      - DB_HOST=db
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    command: sh -c "npx ts-node scripts/log-user-info.ts && npm run start:prod"
+      - FRONTEND_API_URL=${FRONTEND_API_URL}
+      - BACKEND_API_URL=${BACKEND_API_URL}
+      - DOMAIN=${DOMAIN}
     depends_on:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     networks:
-      - smarteconomat-prod-network
+      - backend-network
+      - frontend-network
     volumes:
-      - ./:/project_root
-      - ~/.gitconfig:/root/.gitconfig:ro
+      - ./uploads:/app/uploads
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
 
   frontend:
     build:
@@ -67,18 +84,30 @@ services:
       args:
         - VITE_SENTRY_DSN=${VITE_SENTRY_DSN}
     image: smarteconomat-frontend:prod
-
     restart: always
     ports:
-      - '${FRONTEND_PORT}:80'
+      - '80:80'
+      - '443:443'
+      - '5173:80' # Backup mapping
     env_file: .env.prod
     networks:
-      - smarteconomat-prod-network
+      - frontend-network
+    volumes:
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      - backend
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   database_prod:
   redis_prod:
 
 networks:
-  smarteconomat-prod-network:
+  backend-network:
+    driver: bridge
+  frontend-network:
     driver: bridge
