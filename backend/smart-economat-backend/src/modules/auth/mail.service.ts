@@ -8,7 +8,9 @@ export class MailService {
     email: string,
     resetToken: string
   ): Promise<void> {
-    const recoveryLink = `http://localhost:5173/reset-password?token=${resetToken}`;
+    const frontendUrl =
+      process.env.FRONTEND_API_URL || 'https://app.tudominio.com';
+    const recoveryLink = `${frontendUrl}/reset-password?token=${resetToken}`;
 
     this.logger.log(`\n================= EMAIL SIMULATION =================`);
     this.logger.log(`To: ${email}`);

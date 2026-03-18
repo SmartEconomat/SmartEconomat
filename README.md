@@ -149,14 +149,7 @@ El proyecto está configurado para usar **SWC** en desarrollo para una compilaci
 ---
 
 ## 📚 Documentación Adicional
-- [Wiki del Proyecto](./wiki/)
-- [Roles y Permisos](./wiki/roles_y_permisos.md)
-- [Paquetes y Dependencias](./wiki/paquetes_y_dependencias.md)
-- [Arquitectura Backend](./wiki/arquitectura_backend.md)
-
----
-
-## Licencia
+ - [Centralización de configuración para despliegue en Azure y dominios](./CENTRALIZACION_CONFIGURACION.md)
 
 **SmartEconomat - Todos los derechos reservados**  
 Este software es propiedad exclusiva de sus creadores. Queda estrictamente prohibido copiar, modificar, distribuir, sublicenciar o utilizar el software, en su totalidad o en parte, sin la autorización explícita y por escrito de los propietarios. Cualquier uso no autorizado constituye una violación de los derechos de propiedad intelectual y puede estar sujeto a acciones legales.

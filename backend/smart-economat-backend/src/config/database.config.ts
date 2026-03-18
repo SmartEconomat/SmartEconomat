@@ -23,8 +23,13 @@ for (const path of envPaths) {
 }
 
 const isDocker = existsSync('/.dockerenv');
-const dbHost = process.env.DB_HOST || process.env.POSTGRES_HOST || 'localhost';
-const finalHost = !isDocker && dbHost === 'db' ? 'localhost' : dbHost;
+const dbHost =
+  process.env.DB_HOST ||
+  process.env.POSTGRES_HOST ||
+  process.env.DOMAIN ||
+  'tudominio.com';
+const finalHost =
+  !isDocker && dbHost === 'db' ? process.env.DOMAIN || 'tudominio.com' : dbHost;
 
 // En entorno de test, usar configuración dummy (será reemplazada por pg-mem)
 const isTestEnv = process.env.NODE_ENV === 'test';

@@ -27,7 +27,7 @@ import { RECEPCION_DRAFT_REDIS } from './constants/recepcion-draft.constants';
         }
 
         return new Redis({
-          host: configService.get<string>('REDIS_HOST', '127.0.0.1'),
+          host: configService.get<string>('REDIS_HOST', 'redis'),
           port: Number(configService.get<string>('REDIS_PORT', '6379')),
           password: configService.get<string>('REDIS_PASSWORD') || undefined,
           db: Number(configService.get<string>('REDIS_DB', '0')),

@@ -44,6 +44,15 @@ async function bootstrap() {
     new TransformInterceptor()
   );
 
+  app.enableCors({
+    origin: process.env.FRONTEND_API_URL || '*',
+    credentials: true,
+  });
+
+  // Confiar en el proxy inverso (Nginx) para obtener la IP real del cliente y protocolo HTTPS
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.set('trust proxy', 1);
+
   await app.listen(process.env.BACKEND_PORT ?? 3000);
 }
 void bootstrap();
