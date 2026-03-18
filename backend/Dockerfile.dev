@@ -1,16 +1,91 @@
-FROM node:22.2.0-alpine
+# syntax=docker/dockerfile:1.7
+# =============================================================================
+# SmartEconomat – Backend Dockerfile.dev
+# Multi-stage | BuildKit | cross-platform (AMD64 + ARM64)
+#
+# DECISIONES TÉCNICAS:
+# - BUILDPLATFORM = plataforma del host que ejecuta el build
+# - TARGETPLATFORM = plataforma objetivo de la imagen final
+# - Stage "base": instala herramientas de sistema (incluye build-essential
+#   para compilar bcrypt y @sentry/profiling-node que son binarios nativos C++)
+# - Stage "deps": corre npm ci con caché de BuildKit (nunca se invalida
+#   salvo que package-lock.json cambie)
+# - Stage "development": bind mount del código fuente en runtime via compose
+# =============================================================================
+
+# ── Stage 1: base ────────────────────────────────────────────────────────────
+# Usamos el BUILDPLATFORM para compilar herramientas nativas con la CPU del host
+# (sin emulación QEMU). La imagen resultante es para TARGETPLATFORM.
+FROM --platform=$BUILDPLATFORM node:22-alpine AS base
 
 WORKDIR /app
 
-# Install git for git config commands in logger
-RUN apk add --no-cache git
+# Herramientas necesarias para compilar módulos nativos:
+#   - python3 + make + g++: node-gyp (bcrypt, profilers)
+#   - git: requerido por log-user-info.ts y hooks de husky
+# libuuid-dev no es necesario en alpine, uuid es pure-JS en este proyecto.
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    git \
+    ca-certificates \
+  && ln -sf python3 /usr/bin/python
 
-RUN mkdir -p /app/node_modules /app/dist \
-	&& chown -R node:node /app
+# Crear usuario con UID/GID configurable. Por defecto node (1000).
+# En Linux, se puede sobrescribir con UID/GID del host en compose.
+ARG DEV_UID=1000
+ARG DEV_GID=1000
+RUN if [ "$DEV_UID" != "1000" ] || [ "$DEV_GID" != "1000" ]; then \
+      delgroup node 2>/dev/null || true; \
+      deluser node 2>/dev/null || true; \
+      addgroup -g "$DEV_GID" devgroup && \
+      adduser -D -u "$DEV_UID" -G devgroup devuser; \
+    else \
+      addgroup -g "$DEV_GID" devgroup 2>/dev/null || true; \
+    fi
 
-COPY package*.json ./
-RUN --mount=type=cache,target=/root/.npm npm install
+# Directorios con permisos correctos para el usuario que correrá el proceso
+RUN mkdir -p /app/node_modules /app/dist /app/uploads \
+ && chown -R "${DEV_UID}:${DEV_GID}" /app
 
-COPY . .
+# ── Stage 2: deps ─────────────────────────────────────────────────────────────
+# Instalación de dependencias con caché persistente de BuildKit.
+FROM base AS deps
 
-CMD ["npm", "run", "start:dev"]
+# Cambiar al usuario no-root local para que npm instale con los mismos permisos
+# que el host (evita EACCES al montar volúmenes o usar scripts de entrypoint).
+USER "${DEV_UID}:${DEV_GID}"
+
+COPY --chown="${DEV_UID}:${DEV_GID}" package.json package-lock.json ./
+
+# npm ci: reproducible, determinístico, falla si lockfile != package.json
+# Usamos un caché mount persistente en una ruta accesible por el usuario.
+RUN --mount=type=cache,target=/app/.npm,uid="${DEV_UID}",gid="${DEV_GID}",sharing=locked \
+    npm set cache /app/.npm && \
+    npm ci --prefer-offline
+
+# ── Stage 3: development ──────────────────────────────────────────────────────
+# Imagen final de desarrollo. En runtime, docker-compose monta el código fuente
+# como bind mount sobre /app y node_modules como volumen anónimo.
+FROM base AS development
+
+# Cambiar al usuario no-root para la ejecución
+USER "${DEV_UID}:${DEV_GID}"
+
+# Copiar node_modules del stage deps (fallback si se corre sin compose)
+COPY --from=deps --chown="${DEV_UID}:${DEV_GID}" /app/node_modules ./node_modules
+
+# Copiar el código fuente (sobreescrito por el bind mount en compose, pero
+# necesario para que `docker run` sin compose funcione correctamente)
+COPY --chown="${DEV_UID}:${DEV_GID}" . .
+
+# Asegurar permisos del entrypoint
+RUN chmod +x scripts/ensure-deps.sh
+
+# Exponer puerto del backend (leído desde env en main.ts)
+EXPOSE 3000
+
+# ENTRYPOINT corre ensure-deps.sh (hash-based reinstall) y luego arranca NestJS
+# Se usa sh -c para que las variables de entorno de compose estén disponibles
+ENTRYPOINT ["sh", "-c", "sh scripts/ensure-deps.sh && exec npm run start:dev"]

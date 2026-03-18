@@ -4,8 +4,13 @@ SmartEconomat es una aplicación diseñada para gestionar el inventario de ingre
 
 ## Requisitos previos
 
-- **Docker**: Asegúrate de tener Docker instalado en tu sistema. Puedes descargarlo desde [el sitio oficial de Docker](https://www.docker.com/get-started).
-- **Docker Compose**: Viene incluido con Docker Desktop, pero verifica que esté disponible ejecutando `docker-compose --version` en tu terminal.
+| Herramienta | Versión mínima | Notas |
+|---|---|---|
+| [Docker](https://www.docker.com/get-started) | 23+ | BuildKit habilitado por defecto |
+| Docker Compose | v2.x | Incluido en Docker Desktop. Usar `docker compose` (sin guion) |
+| Git | cualquiera | Solo para clonar el repositorio |
+
+> **El host NO necesita tener Node.js, npm ni ninguna otra herramienta de desarrollo instalada.** Todas las dependencias se resuelven íntegramente dentro de los contenedores Docker.
 
 ## Configuración inicial
 
@@ -28,37 +33,52 @@ SmartEconomat es una aplicación diseñada para gestionar el inventario de ingre
 
    ### Entorno de Desarrollo (Hot Reload)
 
-   Ideal para programar. Incluye recarga automática (HMR) para backend y frontend. Se utiliza el archivo de entorno `.env.dev`.
+   Ideal para programar. Incluye hot reload automático (HMR) para frontend y backend. No requiere instalar nada en el host.
 
+   **Linux:**
    ```bash
-   docker compose --env-file .env.dev --file docker-compose.dev.yml up --build
+   # Exportar UID/GID del usuario actual para que los archivos creados por los
+   # contenedores (ej. uploads/) pertenezcan al usuario del host, no a root.
+   export UID GID
+   docker compose -f docker-compose.dev.yml up --build
    ```
 
-   - **Frontend**: [http://localhost:5173](http://localhost:5173)
-   - **Backend**: [http://localhost:3000](http://localhost:3000)
-   - **Swagger Docs**: [http://localhost:3000/docs](http://localhost:3000/docs)
-   - **Base de Datos**: localhost:5432
+   **macOS (Intel + Apple Silicon) y Windows (PowerShell / WSL2):**
+   ```bash
+   docker compose -f docker-compose.dev.yml up --build
+   ```
+   > En macOS y Windows Docker Desktop, el mapping de permisos es automático. No es necesario exportar `UID`/`GID`.
+
+   | Servicio | URL |
+   |---|---|
+   | Frontend (React + Vite) | http://localhost:5173 |
+   | Backend (NestJS) | http://localhost:3000 |
+   | Swagger Docs | http://localhost:3000/docs |
+   | Base de Datos | localhost:5432 |
+
+   El **primer arranque** tarda más porque Docker descarga las imágenes base y compila las dependencias nativas (`bcrypt`, profiler de Sentry). Los arranques posteriores son inmediatos gracias al caché de BuildKit.
 
    ### Entorno de Producción
 
-   Despliega la aplicación optimizada para producción (imágenes ligeras, sin código fuente montado). Se utiliza el archivo de entorno `.env.prod`.
+   Despliega la aplicación optimizada para producción (imágenes ligeras, sin código fuente montado, sin herramientas de desarrollo).
 
    ```bash
-   docker compose --env-file .env.prod --file docker-compose.prod.yml up --build --detach
+   docker compose -f docker-compose.prod.yml up --build --detach
    ```
 
-   - **Frontend**: [http://localhost:80](http://localhost:80)
-   - **Backend**: [http://localhost:3000](http://localhost:3000)
+   | Servicio | URL |
+   |---|---|
+   | Frontend (Nginx) | http://localhost:80 |
+   | Backend (NestJS) | http://localhost:3000 |
 
-4. **Detener el proyecto**  
-   Para detener y eliminar los contenedores, asegúrate de referenciar el archivo de configuración correcto:
+4. **Detener el proyecto**
 
    ```bash
-   # Desarrollo
-   docker compose --file docker-compose.dev.yml down
+   # Desarrollo — detiene y elimina contenedores (los volúmenes se conservan)
+   docker compose -f docker-compose.dev.yml down
 
    # Producción
-   docker compose --file docker-compose.prod.yml down
+   docker compose -f docker-compose.prod.yml down
    ```
 
 ## Scripts del Backend
@@ -103,45 +123,132 @@ npm run generate:erd
 
 El archivo generado se guardará en `tools/erd/erd.svg`.
 
-> **Nota para usuarios de Docker**:  
 > Puedes ejecutar estos comandos dentro del contenedor en ejecución:
 >
 > ```bash
-> docker compose --env-file .env.dev --file docker-compose.dev.yml exec backend npm run seed
+> docker compose -f docker-compose.dev.yml exec backend npm run seed
 > ```
 
 ## Notas adicionales
 
-- **Conflicto de puertos**: Ten en cuenta que si intentas levantar el entorno de desarrollo y producción simultáneamente en la misma máquina, es probable que ocurra un conflicto de puertos (por defecto, ambos intentan usar el puerto 3000 para el backend). Detén uno antes de iniciar el otro.
-- **Logs**: Para ver los logs de un entorno específico o de un servicio concreto:
+- **Conflicto de puertos**: El entorno de desarrollo y producción usan los mismos puertos (3000, 5173, 5432). Detén uno antes de iniciar el otro.
+- **Logs**: Para ver los logs de un servicio concreto:
 
   ```bash
-  # Desarrollo (Todos los servicios)
-  docker compose --env-file .env.dev --file docker-compose.dev.yml logs -f
+  # Todos los servicios en desarrollo
+  docker compose -f docker-compose.dev.yml logs -f
 
-  # Desarrollo (Solo backend)
-  docker compose --env-file .env.dev --file docker-compose.dev.yml logs -f backend
+  # Solo backend
+  docker compose -f docker-compose.dev.yml logs -f backend
 
-  # Producción
-  docker compose --env-file .env.prod --file docker-compose.prod.yml logs -f
+  # Solo frontend
+  docker compose -f docker-compose.dev.yml logs -f frontend
   ```
+
+---
+
+## Arquitectura del entorno de desarrollo Docker
+
+### Dual Volume Strategy (por qué `node_modules` no existe en el host)
+
+Para cada servicio Node.js el compose aplica dos montajes simultáneos:
+
+```
+Bind mount:   ./backend/smart-economat-backend  →  /app         (código fuente)
+Volumen Docker:  backend_node_modules           →  /app/node_modules  (dependencias)
+```
+
+Docker aplica los volúmenes **después** del bind mount. El volumen anónimo de `node_modules` «tapa» la carpeta vacía del bind mount. Result: las dependencias viven **exclusivamente dentro de Docker** y el host no necesita `npm install`.
+
+### Hot Reload cross-platform
+
+Docker Desktop en macOS y Windows **no implementa `inotify`** sobre bind mounts (los watchers de archivos de Linux). Sin configuración explícita, NestJS y Vite nunca detectan cambios.
+
+**Solución aplicada** — polling activado siempre:
+
+| Variable | Valor | Servicio | Motivo |
+|---|---|---|---|
+| `CHOKIDAR_USEPOLLING` | `true` | Backend + Frontend | Fuerza polling en chokidar (watcher de NestJS y Vite) |
+| `CHOKIDAR_INTERVAL` | `500` ms | Backend + Frontend | Balance entre reactividad y CPU. Ajustable en `.env.dev` |
+| `WATCHPACK_POLLING` | `true` | Backend | Preventivo para herramientas webpack-based |
+| `watch.usePolling` | `true` | Frontend (vite.config.ts) | Polling nativo de Vite |
+
+En Linux nativo, el overhead del polling es < 0.3% de CPU. En macOS/Windows es la única forma de que HMR funcione.
+
+### Dependencias nativas (bcrypt, Sentry profiler)
+
+`bcrypt` y `@sentry/profiling-node` son binarios C++ compilados vía **node-gyp**. El Dockerfile.dev del backend incluye `python3`, `make` y `g++` en un stage de sistema separado, de forma que la compilación nativa ocurre dentro del contenedor y no depende de ninguna herramienta del host.
+
+### Arquitectura agnóstica ARM64 + AMD64
+
+Ambos Dockerfiles usan `FROM --platform=$BUILDPLATFORM`. Docker BuildKit selecciona automáticamente la arquitectura correcta:
+- En Mac M1/M2/M3 (ARM64): compila y corre nativamente sin emulación.
+- En x86_64: comportamiento estándar.
+- En CI multi-arch: funciona sin cambios.
+
+### Entrypoints inteligentes (hash-based reinstall)
+
+Ambos servicios tienen un script de entrypoint que compara el hash SHA-256 del `package-lock.json` contra el último hash registrado:
+
+```
+[Arranque] → sha256(package-lock.json) == hash guardado?
+   ├── SÍ → Saltar instalación → Arrancar app
+   └── NO → npm ci → Guardar nuevo hash → Arrancar app
+```
+
+Esto garantiza que si un compañero hace `git pull` con nuevas dependencias, el contenedor las instala automáticamente en el siguiente `docker compose up`, sin necesidad de `--build`.
+
+---
 
 ## Solución de problemas comunes
 
-### Errores de dependencias o "Module not found" en Docker
-Si tras realizar un `pull`, instalar nuevas dependencias (por ejemplo, al añadir Sentry) o un `rebase` recibes errores de "Module not found" dentro del contenedor, se debe probablemente a que Docker está utilizando el volumen anónimo de `node_modules` de una compilación anterior.
+### Las dependencias cambiaron tras un `git pull` y hay errores "Module not found"
 
-**Solución:** Forzar a Docker a que renueve los volúmenes anónimos en el siguiente arranque para que recoja el nuevo `package.json`.
+El entrypoint detecta automáticamente el cambio de lockfile y reinstala. Si por alguna razón no lo hace, fuerza la reinstalación borrando solo el volumen de `node_modules`:
+
 ```bash
-# Levantar de nuevo reconstruyendo e indicando que renueve los volúmenes anónimos (-V)
-# Esto es totalmente seguro y NO borrará tu base de datos (volumen nombrado).
-docker compose --env-file .env.dev --file docker-compose.dev.yml up --build -V
+# Borrar SOLO el volumen de node_modules (la base de datos NO se ve afectada)
+docker volume rm smarteconomat-dev_backend_node_modules
+docker volume rm smarteconomat-dev_frontend_node_modules
+
+# Volver a arrancar — el entrypoint reinstalará al detectar node_modules vacío
+docker compose -f docker-compose.dev.yml up
+```
+
+Alternativamente, para forzar un rebuild completo de las imágenes:
+```bash
+# -V recrea todos los volúmenes anónimos (NO afecta la base de datos, que usa
+# un volumen nombrado `database_dev`)
+docker compose -f docker-compose.dev.yml up --build -V
+```
+
+### Reset total del entorno de desarrollo
+
+```bash
+# Elimina contenedores + volúmenes nombrados (INCLUYE la base de datos)
+docker compose -f docker-compose.dev.yml down -v
+
+# Rebuild desde cero sin caché
+docker compose -f docker-compose.dev.yml build --no-cache
+docker compose -f docker-compose.dev.yml up
 ```
 
 ### Problemas con la estructura de compilación o caché
 Si el servidor no arranca por errores estructurales o restos de builds anteriores:
 1. Elimina la carpeta `dist` local (si existe) para evitar interferencias con el volumen montado.
 2. Asegúrate de no tener archivos `.ts` en la raíz del proyecto backend que no pertenezcan a la carpeta `src` (ej: archivos de configuración en formato TS que no estén excluidos en `tsconfig.build.json`), ya que pueden alterar la estructura de salida del compilador.
+
+### El hot reload no funciona (cambios en `.tsx`/`.ts` no se reflejan)
+
+1. Verifica que el contenedor tenga `CHOKIDAR_USEPOLLING=true` en sus variables de entorno:
+   ```bash
+   docker compose -f docker-compose.dev.yml exec frontend env | grep CHOKIDAR
+   ```
+2. Si usas **Windows con Hyper-V** (no WSL2), asegúrate de que la carpeta del proyecto esté en la unidad `C:\` y no en una unidad de red.
+3. Aumenta el intervalo de polling en `.env.dev` si el HMR es errático en máquinas con muchos archivos:
+   ```
+   CHOKIDAR_INTERVAL=1000
+   ```
 
 ### Herramientas de desarrollo
 El proyecto está configurado para usar **SWC** en desarrollo para una compilación ultra rápida. Asegúrate de que el script `start:dev` en el `package.json` mantenga el flag `-b swc` para un rendimiento óptimo.
