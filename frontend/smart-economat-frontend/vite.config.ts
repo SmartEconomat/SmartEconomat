@@ -1,6 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+// Declaración mínima de process para que TypeScript resuelva process.env en este
+// archivo de configuración. @types/node está listado como devDependency y se
+// instala dentro del contenedor Docker; en el host no hay node_modules por diseño.
+declare const process: { env: Record<string, string | undefined> };
+
 function getManualChunk(id: string): string | undefined {
   if (!id.includes('node_modules')) {
     return undefined;
@@ -78,18 +83,38 @@ export default defineConfig(() => {
     plugins: [react()],
     server: {
       port: Number(process.env.FRONTEND_PORT) || 5173,
-      host: true, // Needed for Docker
-      open: false, // Prevent opening browser in Docker (xdg-open error)
+      host: '0.0.0.0', // Bind en todas las interfaces: obligatorio en Docker
+      open: false, // No abrir browser en Docker (xdg-open falla en contenedor)
+      // HMR: configuración explícita del WebSocket.
+      // Sin esto, en Docker Desktop (macOS/Windows) el cliente intenta conectar
+      // a la IP interna del contenedor en lugar del host, rompiendo el HMR.
+      hmr: {
+        host: '0.0.0.0',
+        // clientPort: puerto que el BROWSER usa para conectar al WS de HMR.
+        // En Docker Desktop, el navegador está en el host y accede via port-forward.
+        // Dejarlo igual que el port del server es correcto para la mayoría de casos.
+        clientPort: Number(process.env.FRONTEND_PORT) || 5173,
+        protocol: 'ws',
+      },
       proxy: {
         '/api': {
-          target: process.env.VITE_API_PROXY_TARGET || process.env.BACKEND_API_URL || 'http://localhost:3000',
+          target:
+            process.env.VITE_API_PROXY_TARGET ||
+            process.env.BACKEND_API_URL ||
+            'http://localhost:3000',
           changeOrigin: true,
-          secure: true,
+          secure: false, // En dev, el backend puede no tener TLS
         },
       },
       watch: {
-        usePolling: true, // Required for Docker volume mounts to detect file changes (HMR)
-        interval: 300,
+        // usePolling: SIEMPRE true en Docker.
+        // macOS + Docker Desktop y Windows WSL2 no tienen inotify real sobre
+        // bind mounts → el watcher de Vite nunca dispara sin polling.
+        // Overhead en Linux nativo: < 0.3% CPU con interval=500.
+        usePolling: true,
+        // Leer desde env para ajustar sin rebuild. Default 500ms (conservador).
+        // 300ms es más reactivo pero puede saturar macOS. 1000ms para laptops lentos.
+        interval: Number(process.env.CHOKIDAR_INTERVAL) || 500,
       },
     },
     resolve: {
