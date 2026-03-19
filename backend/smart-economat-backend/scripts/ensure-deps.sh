@@ -1,4 +1,9 @@
 #!/bin/sh
+# ──────────────────────────────────────────────────────────────────
+# ensure-deps.sh
+# Sincroniza node_modules si package-lock.json o package.json cambia
+# Compatible con: sh (ash/dash/busybox), bash, zsh
+# ──────────────────────────────────────────────────────────────────
 set -eu
 
 MANIFEST_FILE="package-lock.json"
@@ -10,7 +15,7 @@ if [ ! -f "$MANIFEST_FILE" ]; then
 fi
 
 if [ ! -f "$MANIFEST_FILE" ]; then
-  echo "❌ No se encontró package.json"
+  echo "[ERROR] No se encontro package.json"
   exit 1
 fi
 
@@ -22,7 +27,7 @@ if [ -f "$MARKER_FILE" ]; then
 fi
 
 if [ ! -d node_modules ] || [ ! -f node_modules/.bin/nest ] || [ "$CURRENT_HASH" != "$STORED_HASH" ]; then
-  echo "📦 Sincronizando dependencias del backend usando $MANIFEST_FILE..."
+  echo "[SYNC] Sincronizando dependencias del backend usando $MANIFEST_FILE..."
   if [ "$MANIFEST_FILE" = "package-lock.json" ]; then
     npm ci
   else
@@ -31,5 +36,5 @@ if [ ! -d node_modules ] || [ ! -f node_modules/.bin/nest ] || [ "$CURRENT_HASH"
   mkdir -p "$MARKER_DIR"
   printf '%s' "$CURRENT_HASH" > "$MARKER_FILE"
 else
-  echo "✅ Dependencias del backend al día"
+  echo "[OK] Dependencias del backend al dia"
 fi

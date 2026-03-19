@@ -1,0 +1,12 @@
+# ──────────────────────────────────────────────────────────────────
+# .gitattributes
+# Garantiza line endings correctos en todos los sistemas operativos
+# ──────────────────────────────────────────────────────────────────
+
+# Forzar LF en scripts shell (previene CRLF de Windows en Docker)
+*.sh text eol=lf
+
+# Otros archivos que deben mantener LF
+Dockerfile* text eol=lf
+docker-compose*.yml text eol=lf
+.env* text eol=lf
