@@ -31,7 +31,10 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import BarcodeIcon from '../ui/BarcodeIcon';
 import StatusChip from './StatusChip';
+import BarcodeScanner from '../ui/BarcodeScanner';
+import { Tooltip } from '@mui/material';
 import {
   RecepcionDraft,
   EstadoVisualProducto,
@@ -98,6 +101,16 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
   isWeightUnit,
   onOpenWeightScale,
 }) => {
+  const [scannerOpen, setScannerOpen] = React.useState(false);
+
+  const handleBarcodeScan = (code: string) => {
+    setSearchQuery(code);
+    // Usamos un pequeño timeout para asegurar que el estado se actualice antes de buscar
+    setTimeout(() => {
+      onSearch();
+    }, 100);
+  };
+
   return (
     <Box>
       <Box
@@ -132,6 +145,15 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
+                  <Tooltip title="Escanear con cámara">
+                    <IconButton
+                      onClick={() => setScannerOpen(true)}
+                      size="small"
+                      color="primary"
+                    >
+                      <BarcodeIcon />
+                    </IconButton>
+                  </Tooltip>
                   {searching ? (
                     <CircularProgress size={20} sx={{ mr: 1 }} />
                   ) : (
@@ -158,6 +180,12 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                 </InputAdornment>
               ),
             }}
+          />
+          <BarcodeScanner
+            open={scannerOpen}
+            onClose={() => setScannerOpen(false)}
+            onScan={handleBarcodeScan}
+            title="Escanear Producto"
           />
         </Box>
 
