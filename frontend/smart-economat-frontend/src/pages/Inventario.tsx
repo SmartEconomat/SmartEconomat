@@ -286,11 +286,13 @@ const Inventario: React.FC = () => {
       const term = normalize(searchTerm.trim());
       result = result.filter((p) => {
         const nombre = normalize(p.nombre ?? '');
+        const codigo = normalize(p.codigoBarras ?? '');
         const tipo = normalize(p.tipo ?? '');
         const provs = (p.proveedores ?? []).map(normalize).join(' ');
         const ubicaciones = (p.ubicaciones ?? []).map(normalize).join(' ');
         return (
           nombre.includes(term) ||
+          codigo.includes(term) ||
           tipo.includes(term) ||
           provs.includes(term) ||
           ubicaciones.includes(term)
