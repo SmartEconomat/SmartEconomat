@@ -87,6 +87,10 @@ const UsuariosView: React.FC = () => {
     return () => clearTimeout(handler);
   }, [search]);
 
+  // Ref to read pagination without adding it as a dependency to fetchRoleData
+  const paginationRef = React.useRef(pagination);
+  paginationRef.current = pagination;
+
   const fetchRoleData = useCallback(
     async (role: 'Administrador' | 'Profesor' | 'Alumno') => {
       const roleKey =
@@ -95,7 +99,7 @@ const UsuariosView: React.FC = () => {
           : role === 'Profesor'
             ? 'professor'
             : 'student';
-      const { page, limit } = pagination[roleKey];
+      const { page, limit } = paginationRef.current[roleKey];
 
       try {
         const res = await usuarioService.getUsuarios(
@@ -117,7 +121,7 @@ const UsuariosView: React.FC = () => {
         toast.error(`Error al cargar ${role.toLowerCase()}s`);
       }
     },
-    [debouncedSearch, pagination, toast]
+    [debouncedSearch, toast]
   );
 
   const fetchAllData = useCallback(async () => {
@@ -130,7 +134,7 @@ const UsuariosView: React.FC = () => {
     setIsLoading(false);
   }, [fetchRoleData]);
 
-  // Efectos por rol para paginación individual
+  // Efectos por rol para paginación individual – depend on primitive values, not the callback
   useEffect(() => {
     fetchRoleData('Administrador');
   }, [

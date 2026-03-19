@@ -7,6 +7,7 @@ import { Pedido } from '../pedido/pedido.entity/pedido.entity';
 import { Movimiento } from '../movimiento/movimiento.entity/movimiento.entity';
 import { Producto } from '../producto/producto.entity/producto.entity';
 import { Proveedor } from '../proveedor/proveedor.entity/proveedor.entity';
+import { Incidencia } from '../incidencia/incidencia.entity/incidencia.entity';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { Proveedor } from '../proveedor/proveedor.entity/proveedor.entity';
       Movimiento,
       Producto,
       Proveedor,
+      Incidencia,
     ]),
   ],
   controllers: [DashboardController],

@@ -38,6 +38,9 @@ describe('DashboardService', () => {
   const mockProveedorRepo = {
     count: jest.fn(),
   };
+  const mockIncidenciaRepo = {
+    count: jest.fn(),
+  };
 
   let service: DashboardService;
 
@@ -53,7 +56,8 @@ describe('DashboardService', () => {
       mockPedidoRepo as any,
       mockMovimientoRepo as any,
       mockProductoRepo as any,
-      mockProveedorRepo as any
+      mockProveedorRepo as any,
+      mockIncidenciaRepo as any
     );
   });
 
@@ -64,10 +68,8 @@ describe('DashboardService', () => {
       .mockResolvedValueOnce(10)
       .mockResolvedValueOnce(3)
       .mockResolvedValueOnce(1);
-    mockPedidoRepo.count
-      .mockResolvedValueOnce(4)
-      .mockResolvedValueOnce(1)
-      .mockResolvedValueOnce(2);
+    mockPedidoRepo.count.mockResolvedValueOnce(4).mockResolvedValueOnce(2);
+    mockIncidenciaRepo.count.mockResolvedValueOnce(1);
     pendingCostQb.getRawOne.mockResolvedValue({ costeTotal: '44.25' });
     mockProductoRepo.count.mockResolvedValueOnce(8).mockResolvedValueOnce(2);
     mockProveedorRepo.count.mockResolvedValue(5);
@@ -109,6 +111,7 @@ describe('DashboardService', () => {
     lowStockQb.getCount.mockResolvedValue(0);
     mockInventarioRepo.count.mockResolvedValue(0);
     mockPedidoRepo.count.mockResolvedValue(0);
+    mockIncidenciaRepo.count.mockResolvedValue(0);
     pendingCostQb.getRawOne.mockResolvedValue({ costeTotal: '0' });
     mockProductoRepo.count.mockResolvedValue(0);
     mockProveedorRepo.count.mockResolvedValue(0);

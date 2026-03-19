@@ -1,12 +1,13 @@
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan, Between, In } from 'typeorm';
+import { Repository, LessThan, Between, In, IsNull } from 'typeorm';
 import { Inventario } from '../../inventario/inventario.entity/inventario.entity';
 import { Pedido, EstadoPedido } from '../../pedido/pedido.entity/pedido.entity';
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
 import { Producto } from '../../producto/producto.entity/producto.entity';
 import { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
+import { Incidencia } from '../../incidencia/incidencia.entity/incidencia.entity';
 import { DashboardStatsDto } from '../dto/dashboard-stats.dto';
 
 @Injectable()
@@ -23,7 +24,9 @@ export class DashboardService {
     @InjectRepository(Producto)
     private readonly productoRepository: Repository<Producto>,
     @InjectRepository(Proveedor)
-    private readonly proveedorRepository: Repository<Proveedor>
+    private readonly proveedorRepository: Repository<Proveedor>,
+    @InjectRepository(Incidencia)
+    private readonly incidenciaRepository: Repository<Incidencia>
   ) {}
 
   async getStats(): Promise<DashboardStatsDto> {
@@ -104,9 +107,9 @@ export class DashboardService {
       },
     });
 
-    const incidenciasCount = await this.pedidoRepository.count({
+    const incidenciasCount = await this.incidenciaRepository.count({
       where: {
-        estado: EstadoPedido.INCIDENCIA,
+        fechaResolucion: IsNull(),
       },
     });
 

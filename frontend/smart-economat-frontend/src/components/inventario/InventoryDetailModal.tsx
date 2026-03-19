@@ -40,9 +40,13 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
   onRefreshItem,
 }) => {
   const toast = useToast();
-  // Filter items matching the product
-  const relevantItems = items.filter(
-    (item) => item.productoProveedor?.producto?.id === productoId
+  // Filter items matching the product – memoized to avoid new reference each render
+  const relevantItems = React.useMemo(
+    () =>
+      items.filter(
+        (item) => item.productoProveedor?.producto?.id === productoId
+      ),
+    [items, productoId]
   );
   const productName =
     relevantItems[0]?.productoProveedor?.producto?.nombre || 'Producto';
@@ -53,7 +57,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
   );
   const [isSaving, setIsSaving] = useState<Record<string, boolean>>({});
 
-  // Initialize local edit state when modal opens or items change
+  // Initialize local edit state ONLY when modal opens
   React.useEffect(() => {
     if (open) {
       const initialEdits: Record<string, string> = {};
@@ -62,7 +66,8 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
       });
       setEditQuantities(initialEdits);
     }
-  }, [open, relevantItems]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, productoId]);
 
   const handleQuantityChange = (id: string, val: string) => {
     setEditQuantities({ ...editQuantities, [id]: val });
