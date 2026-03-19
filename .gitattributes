@@ -1,4 +1,14 @@
-* text=auto
+# Enforce Unix line endings (LF) for shell scripts
+# This prevents "illegal option -" errors when running on Docker (Linux) from Windows
 *.sh text eol=lf
-Dockerfile* text eol=lf
-.env* text eol=lf
+docker-entrypoint.sh text eol=lf
+ensure-deps.sh text eol=lf
+
+# Standardize other text files to prevent git diff noise across platforms
+*.json text
+*.yml text
+*.yaml text
+*.md text
+*.txt text
+.env* text
+Dockerfile* text

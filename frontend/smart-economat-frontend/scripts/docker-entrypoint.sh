@@ -56,3 +56,4 @@ fi
 # exec reemplaza el proceso sh por npm → señales (SIGTERM) se propagan
 # correctamente al proceso de Vite para un shutdown limpio.
 exec npm run dev -- --host
+

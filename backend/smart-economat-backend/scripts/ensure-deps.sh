@@ -65,3 +65,4 @@ if [ "$NEEDS_INSTALL" = "true" ]; then
 else
   echo "✅ [ensure-deps] Dependencias del backend al día (hash: $CURRENT_HASH)"
 fi
+
