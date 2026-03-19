@@ -10,12 +10,24 @@ import {
   HttpStatus,
   UseGuards,
   Req,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { CreateAlbaranDto } from '../dto/create-albaran.dto';
 import { UpdateAlbaranDto } from '../dto/update-albaran.dto';
+import { UploadAlbaranDto } from '../dto/upload-albaran.dto';
 import { Albaran } from '../albaran.entity/albaran.entity';
 import { AlbaranService } from '../service/albaran.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -23,6 +35,8 @@ import { RequirePermissions } from '../../../common/decorators/require-permissio
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
+@ApiTags('Albaranes')
+@ApiBearerAuth()
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('albaranes')
 export class AlbaranController {
@@ -33,6 +47,81 @@ export class AlbaranController {
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateAlbaranDto): Promise<Albaran> {
     return this.albaranService.create(dto);
+  }
+
+  /**
+   * Sube un documento (foto o PDF) asociado a un albarán.
+   *
+   * - El archivo se envía como `multipart/form-data` en el campo `file`.
+   * - `numeroReferencia` es obligatorio y se envía como campo de texto.
+   * - `recepcionId` es opcional; si se incluye, se vincula el albarán a la recepción.
+   *
+   * Tipos soportados: image/jpeg, image/png, image/gif, application/pdf.
+   * Tamaño máximo: configurado en MAX_FILE_SIZE_MB (por defecto 10 MB).
+   */
+  @Post('upload-documento')
+  @RequirePermissions('albaranes:crear')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Subir documento de albarán',
+    description:
+      'Sube un archivo (foto o PDF) del albarán físico y lo vincula a una recepción.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file', 'numeroReferencia'],
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'Archivo del albarán (imagen o PDF)',
+        },
+        numeroReferencia: {
+          type: 'string',
+          description: 'Número de referencia del albarán',
+          example: 'ALB-2026-0042',
+        },
+        recepcionId: {
+          type: 'string',
+          format: 'uuid',
+          description: 'ID de la recepción a vincular (opcional)',
+        },
+        observaciones: {
+          type: 'string',
+          description: 'Observaciones sobre el documento (opcional)',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Documento subido y vinculado correctamente',
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Datos inválidos, archivo no proporcionado o tipo no soportado',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Recepción no encontrada',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'El albarán ya tiene un documento adjunto',
+  })
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadDocumento(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() dto: UploadAlbaranDto
+  ): Promise<{ message: string; data: Albaran }> {
+    const albaran = await this.albaranService.uploadDocumento(file, dto);
+    return {
+      message: 'Documento de albarán subido correctamente',
+      data: albaran,
+    };
   }
 
   @Get()
