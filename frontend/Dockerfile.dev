@@ -43,11 +43,11 @@ FROM base AS deps
 
 USER "${DEV_UID}:${DEV_GID}"
 
-COPY --chown="${DEV_UID}:${DEV_GID}" package.json package-lock.json ./
+COPY --chown="${DEV_UID}:${DEV_GID}" package.json ./
 
 RUN --mount=type=cache,target=/app/.npm,uid="${DEV_UID}",gid="${DEV_GID}",sharing=locked \
     npm set cache /app/.npm && \
-    npm ci --prefer-offline
+    npm install --prefer-offline
 
 # ── Stage 3: development ──────────────────────────────────────────────────────
 FROM base AS development
