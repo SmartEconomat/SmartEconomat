@@ -162,7 +162,6 @@ describe('AdminService', () => {
       .mockResolvedValueOnce(actor)
       .mockResolvedValueOnce(user)
       .mockResolvedValueOnce(updatedUser);
-
     mockRolRepo.findOne.mockResolvedValue(adminRole);
     mockUsuarioRepo.save.mockResolvedValue(updatedUser);
 
