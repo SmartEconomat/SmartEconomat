@@ -5,6 +5,14 @@ export interface Usuario {
   rol: 'Administrador' | 'Profesor' | 'Alumno';
   estado: 'Activo' | 'Inactivo';
   fecha_registro?: string;
+  roleId?: string;
+  roleName?: string;
+}
+
+export interface RolOption {
+  id: string;
+  nombre: string;
+  descripcion?: string;
 }
 
 export type CrearUsuarioDTO = Omit<Usuario, 'id' | 'fecha_registro'>;

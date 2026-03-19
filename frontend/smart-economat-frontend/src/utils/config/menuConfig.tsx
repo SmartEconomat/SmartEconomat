@@ -116,7 +116,7 @@ export const menuItems: MenuItem[] = [
     icon: <PersonIconOption />,
     component: Usuarios,
     showInMenu: false,
-    roles: ['ADMIN', 'SUPER_ADMIN'],
+    roles: ['ADMIN', 'ADMINISTRADOR', 'SUPER_ADMIN'],
   },
   {
     path: '/administracion',
@@ -125,7 +125,7 @@ export const menuItems: MenuItem[] = [
     icon: <AdminPanelSettingsIcon />,
     component: Administracion,
     showInMenu: true,
-    roles: ['PROFESOR', 'ADMIN', 'SUPER_ADMIN'],
+    roles: ['PROFESOR', 'ADMIN', 'ADMINISTRADOR', 'SUPER_ADMIN'],
   },
   {
     path: '/perfil',

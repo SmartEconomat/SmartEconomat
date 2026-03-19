@@ -15,6 +15,7 @@ import { Profesor } from '../../profesor/profesor.entity/profesor.entity';
 import { AlumnoSlot } from '../../profesor/profesor.entity/alumno-slot.entity';
 import { RegisterAlumnoDto } from '../dto/register-alumno.dto';
 import { ChangeProfesorDto } from '../dto/change-profesor.dto';
+import { Rol } from '../../roles/rol.entity/rol.entity';
 
 @Injectable()
 export class AlumnoService {
@@ -97,11 +98,16 @@ export class AlumnoService {
         );
 
       const passwordHash = await bcrypt.hash(dto.password, 10);
+      const alumnoRole = await manager.findOne(Rol, {
+        where: { nombre: rolUsuario.ALUMNO },
+      });
       const user = manager.create(Usuario, {
         username: dto.username,
         password: passwordHash,
         rol: rolUsuario.ALUMNO,
         status: UserStatus.INACTIVE,
+        activo: false,
+        roles: alumnoRole ? [alumnoRole] : [],
       });
       await manager.save(user);
 

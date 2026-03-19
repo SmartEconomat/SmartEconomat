@@ -25,6 +25,9 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
 import SchoolIcon from '@mui/icons-material/School';
 import SearchIcon from '@mui/icons-material/Search';
+import BlockIcon from '@mui/icons-material/Block';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import { useNavigate } from 'react-router-dom';
 
 import DataTable, { Column } from '../../components/ui/DataTable';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
@@ -36,16 +39,35 @@ import {
   Usuario,
   CrearUsuarioDTO,
   ActualizarUsuarioDTO,
+  RolOption,
 } from '../../types/usuario';
 import { ROLE_COLORS } from '../../utils/theme/roleColors';
 import { useToast } from '../../store/toast.hooks';
 import { useAuth } from '../../store/auth.hooks';
 
+const isAdminRole = (role?: string) => {
+  const normalized = role?.toUpperCase() || '';
+  return normalized === 'ADMIN' || normalized === 'ADMINISTRADOR';
+};
+
+const updatePaginationTotal = (
+  current: { total: number; page: number; limit: number },
+  nextTotal: number
+) => {
+  if (current.total === nextTotal) {
+    return current;
+  }
+
+  return { ...current, total: nextTotal };
+};
+
 const UsuariosView: React.FC = () => {
+  const navigate = useNavigate();
   // Estados para datos por rol
   const [admins, setAdmins] = useState<Usuario[]>([]);
   const [professors, setProfessors] = useState<Usuario[]>([]);
   const [students, setStudents] = useState<Usuario[]>([]);
+  const [roleOptions, setRoleOptions] = useState<RolOption[]>([]);
 
   // Metadatos de paginación para cada rol
   const [pagination, setPagination] = useState({
@@ -71,7 +93,13 @@ const UsuariosView: React.FC = () => {
   );
 
   const toast = useToast();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, refreshUser } = useAuth();
+
+  useEffect(() => {
+    if (currentUser && !isAdminRole(currentUser.rol)) {
+      navigate('/');
+    }
+  }, [currentUser, navigate]);
 
   // Debounce para el buscador
   useEffect(() => {
@@ -91,8 +119,23 @@ const UsuariosView: React.FC = () => {
   const paginationRef = React.useRef(pagination);
   paginationRef.current = pagination;
 
+  const loadRoles = useCallback(async () => {
+    try {
+      const response = await usuarioService.getRoles();
+      setRoleOptions((prev) => {
+        const nextSerialized = JSON.stringify(response.data);
+        const prevSerialized = JSON.stringify(prev);
+        return prevSerialized === nextSerialized ? prev : response.data;
+      });
+    } catch {
+      toast.error('Error al cargar los roles disponibles');
+    }
+  }, [toast]);
+
   const fetchRoleData = useCallback(
-    async (role: 'Administrador' | 'Profesor' | 'Alumno') => {
+    async (
+      role: 'Administrador' | 'Profesor' | 'Alumno'
+    ) => {
       const roleKey =
         role === 'Administrador'
           ? 'admin'
@@ -115,7 +158,7 @@ const UsuariosView: React.FC = () => {
 
         setPagination((prev) => ({
           ...prev,
-          [roleKey]: { ...prev[roleKey], total: res.total },
+          [roleKey]: updatePaginationTotal(prev[roleKey], res.total),
         }));
       } catch {
         toast.error(`Error al cargar ${role.toLowerCase()}s`);
@@ -127,12 +170,26 @@ const UsuariosView: React.FC = () => {
   const fetchAllData = useCallback(async () => {
     setIsLoading(true);
     await Promise.all([
+      loadRoles(),
       fetchRoleData('Administrador'),
       fetchRoleData('Profesor'),
       fetchRoleData('Alumno'),
     ]);
     setIsLoading(false);
-  }, [fetchRoleData]);
+  }, [
+    fetchRoleData,
+    loadRoles,
+    pagination.admin.limit,
+    pagination.admin.page,
+    pagination.professor.limit,
+    pagination.professor.page,
+    pagination.student.limit,
+    pagination.student.page,
+  ]);
+
+  useEffect(() => {
+    loadRoles();
+  }, [loadRoles]);
 
   // Efectos por rol para paginación individual – depend on primitive values, not the callback
   useEffect(() => {
@@ -168,10 +225,33 @@ const UsuariosView: React.FC = () => {
     setIsSaving(true);
     try {
       if (userToEdit) {
-        await usuarioService.actualizarUsuario(
-          userToEdit.id,
-          data as ActualizarUsuarioDTO
-        );
+        const payload = data as ActualizarUsuarioDTO;
+        const previousRoleId = userToEdit.roleId || '';
+        const previousStatus = userToEdit.estado;
+
+        await usuarioService.actualizarUsuario(userToEdit.id, payload);
+
+        if (payload.roleId && payload.roleId !== previousRoleId) {
+          await usuarioService.updateUserRole(userToEdit.id, payload.roleId);
+        }
+
+        if (payload.estado && payload.estado !== previousStatus) {
+          await usuarioService.setUserActivation(
+            userToEdit.id,
+            payload.estado === 'Activo'
+          );
+        }
+
+        if (
+          currentUser &&
+          userToEdit.id.toString() === currentUser.id.toString()
+        ) {
+          const refreshed = await refreshUser();
+          if (!refreshed || !isAdminRole(refreshed.rol)) {
+            navigate('/');
+          }
+        }
+
         toast.success('Usuario actualizado');
       } else {
         await usuarioService.crearUsuario(data as CrearUsuarioDTO);
@@ -244,6 +324,37 @@ const UsuariosView: React.FC = () => {
 
   const renderActions = (row: Usuario) => (
     <Stack direction="row" spacing={0.5} justifyContent="center">
+      {row.id.toString() !== currentUser?.id.toString() && (
+        <IconButton
+          color={row.estado === 'Activo' ? 'warning' : 'success'}
+          onClick={async () => {
+            try {
+              const shouldActivate = row.estado !== 'Activo';
+              await usuarioService.setUserActivation(row.id, shouldActivate);
+              toast.success(
+                shouldActivate
+                  ? 'Usuario activado correctamente'
+                  : 'Usuario suspendido correctamente'
+              );
+              fetchAllData();
+            } catch (error) {
+              const message =
+                error instanceof Error
+                  ? error.message
+                  : 'Error al actualizar el estado del usuario';
+              toast.error(message);
+            }
+          }}
+          size="small"
+          title={row.estado === 'Activo' ? 'Suspender' : 'Activar'}
+        >
+          {row.estado === 'Activo' ? (
+            <BlockIcon fontSize="small" />
+          ) : (
+            <CheckCircleOutlineIcon fontSize="small" />
+          )}
+        </IconButton>
+      )}
       {canResetTemporaryPassword(row) && (
         <IconButton
           color="primary"
@@ -461,7 +572,8 @@ const UsuariosView: React.FC = () => {
         userToEdit={userToEdit}
         onSave={handleSaveUsuario}
         isSaving={isSaving}
-        usuariosList={[]}
+        usuariosList={[...admins, ...professors, ...students]}
+        roleOptions={roleOptions}
       />
 
       <ConfirmDialog

@@ -12,6 +12,7 @@ import {
   Usuario,
   CrearUsuarioDTO,
   ActualizarUsuarioDTO,
+  RolOption,
 } from '../../types/usuario';
 import { useToast } from '../../store/toast.hooks';
 import SelectField from '../../components/ui/SelectField';
@@ -24,7 +25,19 @@ export interface UserModalProps {
   userToEdit?: Usuario | null;
   isSaving?: boolean;
   usuariosList: Usuario[];
+  roleOptions: RolOption[];
 }
+
+const getRoleLabel = (roleName?: string) => {
+  const normalized = roleName?.toUpperCase();
+  if (normalized === 'ADMIN' || normalized === 'ADMINISTRADOR') {
+    return 'Administrador';
+  }
+  if (normalized === 'PROFESOR') {
+    return 'Profesor';
+  }
+  return 'Alumno';
+};
 
 const UserModal: React.FC<UserModalProps> = ({
   open,
@@ -33,12 +46,14 @@ const UserModal: React.FC<UserModalProps> = ({
   userToEdit,
   isSaving = false,
   usuariosList,
+  roleOptions,
 }) => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     rol: 'Alumno',
     estado: 'Inactivo',
+    roleId: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -52,23 +67,40 @@ const UserModal: React.FC<UserModalProps> = ({
           email: userToEdit.email,
           rol: userToEdit.rol,
           estado: userToEdit.estado,
+          roleId: userToEdit.roleId || '',
         });
       } else {
+        const defaultRole = roleOptions[0];
         setFormData({
           username: '',
           email: '',
-          rol: 'Alumno',
+          rol: getRoleLabel(defaultRole?.nombre),
           estado: 'Inactivo',
+          roleId: defaultRole?.id || '',
         });
       }
       setErrors({});
     }
-  }, [open, userToEdit]);
+  }, [open, userToEdit, roleOptions]);
 
   const handleChange =
     (field: keyof typeof formData) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+      const nextValue = e.target.value;
+      setFormData((prev) => {
+        if (field === 'roleId') {
+          const selectedRole = roleOptions.find(
+            (role) => role.id === nextValue
+          );
+          return {
+            ...prev,
+            roleId: nextValue,
+            rol: getRoleLabel(selectedRole?.nombre),
+          };
+        }
+
+        return { ...prev, [field]: nextValue };
+      });
       if (errors[field]) {
         setErrors((prev) => ({ ...prev, [field]: '' }));
       }
@@ -90,6 +122,7 @@ const UserModal: React.FC<UserModalProps> = ({
     const newErrors: Record<string, string> = {};
     if (!formData.username.trim())
       newErrors.username = 'El usuario es obligatorio';
+    if (!formData.roleId.trim()) newErrors.roleId = 'Debes seleccionar un rol';
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (formData.rol !== 'Alumno') {
@@ -166,16 +199,15 @@ const UserModal: React.FC<UserModalProps> = ({
                 fullWidth
                 id="user-role-select"
                 label="Rol"
-                value={formData.rol}
-                onChange={handleChange('rol')}
-                error={!!errors.rol}
-                helperText={errors.rol}
+                value={formData.roleId}
+                onChange={handleChange('roleId')}
+                error={!!errors.roleId || !!errors.rol}
+                helperText={errors.roleId || errors.rol}
                 disabled={isSaving}
-                options={[
-                  { value: 'Administrador', label: 'Administrador' },
-                  { value: 'Profesor', label: 'Profesor' },
-                  { value: 'Alumno', label: 'Alumno' },
-                ]}
+                options={roleOptions.map((role) => ({
+                  value: role.id,
+                  label: getRoleLabel(role.nombre),
+                }))}
               />
             </Box>
             <Box flex={1} minWidth="200px">
