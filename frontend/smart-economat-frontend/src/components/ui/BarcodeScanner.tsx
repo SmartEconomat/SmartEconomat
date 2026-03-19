@@ -114,7 +114,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         const controls = await reader.decodeFromVideoDevice(
           deviceId || undefined,
           videoRef.current,
-          (result, error) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (result: any, error: any) => {
             if (result) {
               const code = result.getText();
               setLastCode(code);
@@ -134,8 +135,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         );
         controlsRef.current = controls;
       } catch (err: unknown) {
-        const errorMsg =
-          err instanceof Error ? err.message : String(err);
+        const errorMsg = err instanceof Error ? err.message : String(err);
         if (
           errorMsg.toLowerCase().includes('permission') ||
           errorMsg.toLowerCase().includes('denied') ||
@@ -172,10 +172,12 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
           return;
         }
 
-        const cameraList: CameraDevice[] = devices.map((d) => ({
-          deviceId: d.deviceId,
-          label: d.label || `Cámara ${d.deviceId.substring(0, 6)}`,
-        }));
+        const cameraList: CameraDevice[] = devices.map(
+          (d: MediaDeviceInfo) => ({
+            deviceId: d.deviceId,
+            label: d.label || `Cámara ${d.deviceId.substring(0, 6)}`,
+          })
+        );
         setCameras(cameraList);
 
         // Preferir cámara trasera en móviles
@@ -192,8 +194,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         setSelectedCamera(initialCamera);
         await startScanner(initialCamera);
       } catch (err: unknown) {
-        const errorMsg =
-          err instanceof Error ? err.message : String(err);
+        const errorMsg = err instanceof Error ? err.message : String(err);
         if (
           errorMsg.toLowerCase().includes('permission') ||
           errorMsg.toLowerCase().includes('denied')
@@ -409,7 +410,11 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
               }}
             >
               <CheckCircleIcon
-                sx={{ fontSize: 72, color: '#fff', filter: 'drop-shadow(0 0 8px #4CAF50)' }}
+                sx={{
+                  fontSize: 72,
+                  color: '#fff',
+                  filter: 'drop-shadow(0 0 8px #4CAF50)',
+                }}
               />
             </Box>
           </Fade>
