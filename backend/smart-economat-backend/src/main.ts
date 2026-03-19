@@ -49,10 +49,9 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Confiar en el proxy inverso (Nginx) para obtener la IP real del cliente y protocolo HTTPS
   const expressApp = app.getHttpAdapter().getInstance();
   expressApp.set('trust proxy', 1);
 
-  await app.listen(process.env.BACKEND_PORT ?? 3000);
+  await app.listen(process.env.BACKEND_PORT ?? 3000, '0.0.0.0');
 }
 void bootstrap();

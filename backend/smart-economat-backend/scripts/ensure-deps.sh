@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # ============================================================
 # ensure-deps.sh – Backend dependency guard (POSIX sh)
 # Lógica: hash-based reinstall del lockfile.
@@ -28,13 +28,15 @@ if [ -f "$MARKER_FILE" ]; then
   STORED_HASH="$(cat "$MARKER_FILE" 2>/dev/null || true)"
 fi
 
-# ── 3. Detectar si hay binarios nativos compilados ──────────
-# bcrypt y @sentry/profiling-node compilan archivos .node
-# Si node_modules existe pero los .node faltan → build corrupto
+# ── 3. Detectar si hay binarios nativos críticos ─────────────
+# Nota: bcrypt@^6 es JS puro; no requiere binarios. Evitar falsos positivos.
+# Verificamos solo paquetes que sí usan binarios nativos (p. ej. @sentry/profiling-node).
 NATIVE_OK=true
-if [ -d node_modules/bcrypt ] && [ ! -f node_modules/bcrypt/lib/binding/napi-v3/bcrypt_lib.node ]; then
-  echo "⚠️  [ensure-deps] Binario nativo de bcrypt no encontrado – forzando reinstalación"
-  NATIVE_OK=false
+if [ -d node_modules/@sentry/profiling-node ]; then
+  if ! find node_modules/@sentry/profiling-node -type f -name '*.node' | grep -q .; then
+    echo "⚠️  [ensure-deps] Binarios nativos de @sentry/profiling-node no encontrados – forzando reinstalación"
+    NATIVE_OK=false
+  fi
 fi
 
 # ── 4. Decidir si reinstalar ────────────────────────────────

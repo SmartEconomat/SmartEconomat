@@ -27,7 +27,6 @@ name: smarteconomat-dev
 # =============================================================================
 
 services:
-
   # ── PostgreSQL ─────────────────────────────────────────────────────────────
   db:
     build:
@@ -97,6 +96,9 @@ services:
       # WATCHPACK_POLLING: preventivo. Si en el futuro se introduce alguna
       # herramienta webpack-based (ej. un plugin de NestJS), ya estará activo.
       - WATCHPACK_POLLING=true
+      # TypeScript: forzar estrategia de polling para WSL2/macOS (fs events limitados)
+      - TSC_WATCHFILE=dynamicPriorityPolling
+      - TSC_WATCHDIRECTORY=dynamicPriorityPolling
       # ── Info del anfitrión ────────────────────────────────────────────────
       - HOST_USER=${USER:-}
       - HOST_HOSTNAME=${HOSTNAME:-}
