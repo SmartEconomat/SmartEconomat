@@ -1,19 +1,38 @@
 import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { Usuario } from '../usuario.entity/usuario.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { buildFindManyOptions } from '../../../common/utils/typeorm-query.helper';
+import { Rol } from '../../roles/rol.entity/rol.entity';
+import { UserStatus, rolUsuario } from '../enums/usuario.enums';
 
 @Injectable()
 export class UsuarioRepository {
   constructor(
     @InjectRepository(Usuario)
-    public readonly repo: Repository<Usuario>
+    public readonly repo: Repository<Usuario>,
+    @InjectRepository(Rol)
+    private readonly rolRepo: Repository<Rol>
   ) {}
 
-  createUsuario(data: Partial<Usuario>) {
+  private async resolveRolesForUserRole(role?: Usuario['rol']) {
+    if (!role) return undefined;
+
+    const systemRole = await this.rolRepo.findOne({ where: { nombre: role } });
+    return systemRole ? [systemRole] : [];
+  }
+
+  async createUsuario(data: Partial<Usuario>) {
+    if (data.status !== undefined && data.activo === undefined) {
+      data.activo = data.status === UserStatus.ACTIVE;
+    }
+
+    if (data.rol !== undefined && data.roles === undefined) {
+      data.roles = await this.resolveRolesForUserRole(data.rol);
+    }
+
     return this.repo.save(this.repo.create(data));
   }
 
@@ -25,9 +44,11 @@ export class UsuarioRepository {
     let where: any = {};
     if (query.rol) {
       const backendRol =
-        query.rol === 'Administrador' ? 'ADMIN' : query.rol.toUpperCase();
+        query.rol === 'Administrador'
+          ? rolUsuario.ADMINISTRADOR
+          : (query.rol.toUpperCase() as rolUsuario);
       if (query.searchTerm) {
-        const term = require('typeorm').ILike(`%${query.searchTerm}%`);
+        const term = ILike(`%${query.searchTerm}%`);
         where = [
           { username: term, rol: backendRol },
           { email: term, rol: backendRol },
@@ -37,7 +58,7 @@ export class UsuarioRepository {
         where = { rol: backendRol };
       }
     } else if (query.searchTerm) {
-      const term = require('typeorm').ILike(`%${query.searchTerm}%`);
+      const term = ILike(`%${query.searchTerm}%`);
       where = [{ username: term }, { email: term }, { nombre: term }];
     }
 
@@ -47,6 +68,7 @@ export class UsuarioRepository {
           'movimientos',
           'pedidos',
           'recepciones',
+          'roles',
           'alumno',
           'alumno.slot',
           'alumno.profesor',
@@ -80,6 +102,7 @@ export class UsuarioRepository {
         'movimientos',
         'pedidos',
         'recepciones',
+        'roles',
         'alumno',
         'alumno.slot',
         'alumno.profesor',
@@ -100,6 +123,18 @@ export class UsuarioRepository {
     const usuario = await this.findById(id);
     if (!usuario) return null;
 
+    if (data.status !== undefined && data.activo === undefined) {
+      data.activo = data.status === UserStatus.ACTIVE;
+    }
+
+    if (data.activo !== undefined && data.status === undefined) {
+      data.status = data.activo ? UserStatus.ACTIVE : UserStatus.INACTIVE;
+    }
+
+    if (data.rol !== undefined && data.roles === undefined) {
+      data.roles = await this.resolveRolesForUserRole(data.rol);
+    }
+
     Object.assign(usuario, data);
     await this.repo.save(usuario);
 
@@ -111,6 +146,7 @@ export class UsuarioRepository {
     if (!usuario) return null;
 
     usuario.activo = false;
+    usuario.status = UserStatus.INACTIVE;
     await this.repo.save(usuario);
 
     return this.findById(id);

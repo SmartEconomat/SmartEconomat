@@ -216,7 +216,9 @@ export default function MainLayout() {
           .filter((item) => {
             if (!item.roles) return true;
             const userRole = user?.rol?.toUpperCase() || '';
-            return item.roles.includes(userRole);
+            return item.roles
+              .map((role) => role.toUpperCase())
+              .includes(userRole);
           })
           .map((item) => (
             <ListItem key={item.path} disablePadding sx={{ display: 'block' }}>

@@ -16,6 +16,7 @@ import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'node:crypto';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { Alumno } from '../../alumno/alumno.entity/alumno.entity';
+import { Rol } from '../../roles/rol.entity/rol.entity';
 
 @Injectable()
 export class ProfesorService {
@@ -54,6 +55,9 @@ export class ProfesorService {
         throw new ConflictException(I18nHelper.getError('CIAL_ALREADY_EXISTS'));
 
       const passwordHash = await bcrypt.hash(dto.password, 10);
+      const profesorRole = await manager.findOne(Rol, {
+        where: { nombre: rolUsuario.PROFESOR },
+      });
 
       const user = manager.create(Usuario, {
         username: dto.username,
@@ -61,6 +65,8 @@ export class ProfesorService {
         password: passwordHash,
         rol: rolUsuario.PROFESOR,
         status: UserStatus.INACTIVE,
+        activo: false,
+        roles: profesorRole ? [profesorRole] : [],
       });
       await manager.save(user);
 
@@ -216,6 +222,7 @@ export class ProfesorService {
         );
 
       alumno.user.status = UserStatus.ACTIVE;
+      alumno.user.activo = true;
       await manager.save(alumno.user);
 
       return {

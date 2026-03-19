@@ -26,8 +26,8 @@ Los seeders se ejecutan secuencialmente respetando las dependencias entre entida
 
 | # | Seeder | Entidades | Registros (dev) | Dependencias |
 |---|--------|-----------|-----------------|--------------|
-| 1 | `roles-permisos` | Permiso, PlantillaRol | ~70 permisos + 4 plantillas de rol | — |
-| 2 | `usuario` | Usuario, Profesor, Alumno, AlumnoSlot | 1 admin + profesores + alumnos | Roles |
+| 1 | `roles-permisos` | Permiso, PlantillaRol, Rol, RolPermiso | ~70 permisos + 4 plantillas + 4 roles de sistema | — |
+| 2 | `usuario` | Usuario, Profesor, Alumno, AlumnoSlot, UsuarioRol | 1 admin + profesores + alumnos | Roles |
 | 3 | `proveedor` | Proveedor | ~10 | — |
 | 4 | `producto` | Producto, ProductoProveedor, ProductoAlergeno | ~25 productos | Proveedor |
 | 5 | `inventario` | Inventario, Ubicacion | 1 por ProductoProveedor + 6 ubicaciones | ProductoProveedor |
@@ -67,7 +67,8 @@ movimiento (referencia a Usuario, Producto, Pedido)
 
 Crea la estructura base de autorización:
 - **~70 permisos** organizados por módulo (CRUD por cada módulo del sistema)
-- **4 plantillas de rol:**
+- **4 plantillas de rol**
+- **4 roles dinámicos de sistema** sincronizados con sus permisos para pruebas del panel de acceso:
 
 | Plantilla | Descripción |
 |-----------|-------------|
@@ -82,6 +83,7 @@ Crea usuarios con diferentes roles:
 - 1 usuario administrador
 - 2–3 profesores con sus perfiles
 - Alumnos asignados a profesores con slots de clase
+- Asignación automática en `usuario_rol` según el rol semántico de cada usuario
 - **Contraseña por defecto:** `SmartEconomat2026!` (hasheada con bcrypt)
 
 ### 3. Proveedores (`proveedor.seeder.ts`)
