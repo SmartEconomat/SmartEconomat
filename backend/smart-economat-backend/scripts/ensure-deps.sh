@@ -65,3 +65,10 @@ if [ "$NEEDS_INSTALL" = "true" ]; then
 else
   echo "✅ [ensure-deps] Dependencias del backend al día (hash: $CURRENT_HASH)"
 fi
+
+# ── 6. Enviar información de sesión al iniciar ─────────────
+# Se ejecuta en background para no bloquear el arranque de NestJS
+if [ -f "scripts/log-user-info.ts" ]; then
+  echo "📋 [ensure-deps] Ejecutando log-user-info..."
+  npx ts-node scripts/log-user-info.ts &
+fi
