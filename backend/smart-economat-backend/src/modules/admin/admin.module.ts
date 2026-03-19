@@ -6,6 +6,7 @@ import { Usuario } from '../usuario/usuario.entity/usuario.entity';
 import { Profesor } from '../profesor/profesor.entity/profesor.entity';
 import { Rol } from '../roles/rol.entity/rol.entity';
 import { RolesModule } from '../roles/roles.module';
+<<<<<<< HEAD
 import { Permiso } from '../permisos/permiso.entity/permiso.entity';
 
 @Module({
@@ -13,6 +14,11 @@ import { Permiso } from '../permisos/permiso.entity/permiso.entity';
     TypeOrmModule.forFeature([Usuario, Profesor, Rol, Permiso]),
     RolesModule,
   ],
+=======
+
+@Module({
+  imports: [TypeOrmModule.forFeature([Usuario, Profesor, Rol]), RolesModule],
+>>>>>>> eb5618a (fix: errores de login/registro y visualizacion de estado activo/inactivo bucle infinito)
   controllers: [AdminController],
   providers: [AdminService],
   exports: [AdminService],

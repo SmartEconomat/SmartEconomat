@@ -31,6 +31,7 @@ export class AdminController {
     return this.adminService.getRoles();
   }
 
+<<<<<<< HEAD
   @Get('permissions')
   @Roles(rolUsuario.ADMINISTRADOR)
   @RequirePermissions('usuarios:listar')
@@ -38,6 +39,8 @@ export class AdminController {
     return this.adminService.getPermissions();
   }
 
+=======
+>>>>>>> eb5618a (fix: errores de login/registro y visualizacion de estado activo/inactivo bucle infinito)
   @Post('profesores')
   @Roles(rolUsuario.ADMINISTRADOR)
   @RequirePermissions('usuarios:crear')
@@ -53,6 +56,7 @@ export class AdminController {
     @Param('id') userId: string,
     @Body() dto: UpdateAdminUserRoleDto
   ) {
+<<<<<<< HEAD
     return this.adminService.updateUserRole(
       actorUserId,
       userId,
@@ -60,6 +64,9 @@ export class AdminController {
       dto.permisosAdicionalesIds,
       dto.permisosExcluidosIds
     );
+=======
+    return this.adminService.updateUserRole(actorUserId, userId, dto.roleId);
+>>>>>>> eb5618a (fix: errores de login/registro y visualizacion de estado activo/inactivo bucle infinito)
   }
 
   @Patch('users/:id/activate')
