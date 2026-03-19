@@ -186,6 +186,7 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
             onClose={() => setScannerOpen(false)}
             onScan={handleBarcodeScan}
             title="Escanear Producto"
+            continuous={true}
           />
         </Box>
 

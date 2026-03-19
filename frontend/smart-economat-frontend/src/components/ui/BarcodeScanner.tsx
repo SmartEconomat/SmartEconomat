@@ -27,7 +27,8 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import BarcodeIcon from './BarcodeIcon';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import { BrowserMultiFormatReader, NotFoundException } from '@zxing/browser';
+import { BrowserMultiFormatReader } from '@zxing/browser';
+import { NotFoundException } from '@zxing/library';
 
 export interface BarcodeScannerProps {
   /** Controla la visibilidad del modal */
