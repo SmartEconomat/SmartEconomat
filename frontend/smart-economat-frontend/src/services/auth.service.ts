@@ -13,9 +13,15 @@ export interface LoginResponse {
 export interface RegisterAlumnoRequest {
   username: string;
   password: string;
+  codigoClase: string;
+}
+
+export interface SlotReferenceResponse {
+  codigoClase?: string;
   aula: string;
   numeroClase: number;
-  cialProfesor: string;
+  profesor: string;
+  cialProfesor?: string;
 }
 
 export interface RegisterProfesorRequest {
@@ -61,6 +67,18 @@ export const authService = {
     return await parseApiResponse(
       response,
       'No se pudo completar el registro del alumno.'
+    );
+  },
+
+  async getSlotByCode(
+    codigoClase: string
+  ): Promise<ApiResponse<SlotReferenceResponse>> {
+    const response = await baseFetch(
+      `/alumnos/slots/${encodeURIComponent(codigoClase)}`
+    );
+    return await parseApiResponse(
+      response,
+      'No se pudo validar el código de la clase.'
     );
   },
 

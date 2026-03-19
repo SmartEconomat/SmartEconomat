@@ -5,13 +5,14 @@ import {
   IsString,
   IsStrongPassword,
   Min,
+  ValidateIf,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
-import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
-import { StringToNumberTransformer } from '../../../common/transformers/string-to-number.transformer';
 
 export class RegisterAlumnoDto {
-  @Transform((params) => TrimStringTransformer.transform(params))
+  @Transform(({ value }): string =>
+    typeof value === 'string' ? value.trim() : ''
+  )
   @IsString()
   @IsNotEmpty()
   username!: string;
@@ -33,22 +34,42 @@ export class RegisterAlumnoDto {
   )
   password!: string;
 
-  @Transform((params) => TrimStringTransformer.transform(params))
-  @IsString()
-  @IsNotEmpty()
-  aula!: string;
-
-  @Type(() => Number)
-  @Transform((params) => StringToNumberTransformer.transform(params))
-  @IsInt()
-  @Min(1)
-  numeroClase!: number;
-
-  @Transform((params) => TrimStringTransformer.transform(params))
-  @Transform(({ value }) =>
-    typeof value === 'string' ? value.toUpperCase() : value
+  @ValidateIf(
+    (object: RegisterAlumnoDto) =>
+      !object.aula && !object.numeroClase && !object.cialProfesor
+  )
+  @Transform(({ value }): string =>
+    typeof value === 'string' ? value.trim() : ''
+  )
+  @Transform(({ value }): string =>
+    typeof value === 'string' ? value.toUpperCase() : ''
   )
   @IsString()
   @IsNotEmpty()
-  cialProfesor!: string;
+  codigoClase!: string;
+
+  @ValidateIf((object: RegisterAlumnoDto) => !object.codigoClase)
+  @Transform(({ value }): string =>
+    typeof value === 'string' ? value.trim() : ''
+  )
+  @IsString()
+  @IsNotEmpty()
+  aula?: string;
+
+  @ValidateIf((object: RegisterAlumnoDto) => !object.codigoClase)
+  @Type(() => Number)
+  @Transform(({ value }): number | string =>
+    value === '' || value === null || value === undefined ? '' : Number(value)
+  )
+  @IsInt()
+  @Min(1)
+  numeroClase?: number;
+
+  @ValidateIf((object: RegisterAlumnoDto) => !object.codigoClase)
+  @Transform(({ value }): string =>
+    typeof value === 'string' ? value.trim().toUpperCase() : ''
+  )
+  @IsString()
+  @IsNotEmpty()
+  cialProfesor?: string;
 }
