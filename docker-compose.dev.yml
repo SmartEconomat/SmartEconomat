@@ -33,6 +33,8 @@ services:
       context: ./backend/smart-economat-backend
       dockerfile: ../Dockerfile.dev
     image: smarteconomat-backend:dev
+    # user: sincroniza el proceso con el UID/GID del host en runtime.
+    # Complementa el chown del Dockerfile.dev.
     ports:
       - '${BACKEND_PORT:-3000}:${BACKEND_PORT:-3000}'
     env_file: .env.dev
@@ -62,7 +64,6 @@ services:
       - ./backend/smart-economat-backend:/app
       - ./uploads:/app/uploads
       - /app/node_modules # Volumen anónimo para aislar node_modules
-      - /app/dist # Volumen anónimo para evitar colisiones de permisos
       - ./:/project_root
       - ~/.gitconfig:/tmp/.gitconfig:ro
 
