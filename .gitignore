@@ -11,7 +11,7 @@ pnpm-debug.log*
 .vscode/
 .idea/
 .DS_Store
-package-lock.json
+# package-lock.json # (Eliminado de la exclusión ya que Docker lo necesita para cumplir con npm ci)
 
 # Logs
 logs
