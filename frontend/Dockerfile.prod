@@ -13,10 +13,16 @@ RUN npm run build
 
 FROM nginx:alpine
 
+RUN apk add --no-cache inotify-tools bash openssl
+
 COPY --from=builder /app/build /usr/share/nginx/html
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 80
+# Watcher script to auto-reload Nginx on certificate updates
+COPY smart-economat-frontend/scripts/nginx-cert-watcher.sh /docker-entrypoint.d/99-nginx-cert-watcher.sh
+RUN chmod +x /docker-entrypoint.d/99-nginx-cert-watcher.sh
 
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 80 443
+
+CMD ["/bin/sh", "-c", "/docker-entrypoint.d/99-nginx-cert-watcher.sh & exec nginx -g 'daemon off;'"]

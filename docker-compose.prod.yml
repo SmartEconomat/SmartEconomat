@@ -15,17 +15,17 @@ services:
     volumes:
       - database_prod:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
       - backend-network
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: '10m'
+        max-file: '3'
 
   redis:
     image: redis:7-alpine
@@ -36,15 +36,15 @@ services:
     networks:
       - backend-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 5s
       retries: 5
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: '10m'
+        max-file: '3'
 
   backend:
     build:
@@ -72,10 +72,10 @@ services:
     volumes:
       - ./uploads:/app/uploads
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "50m"
-        max-file: "5"
+        max-size: '50m'
+        max-file: '5'
 
   frontend:
     build:
@@ -94,13 +94,47 @@ services:
       - frontend-network
     volumes:
       - ./certs:/etc/nginx/certs:ro
+      - ./certs-webroot:/var/www/certbot:ro
     depends_on:
       - backend
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: '10m'
+        max-file: '3'
+
+  certbot:
+    image: certbot/certbot:latest
+    restart: always
+    env_file: .env.prod
+    environment:
+      - ACME_DIRECTORY_URL=${ACME_DIRECTORY_URL}
+      - ACME_EMAIL=${ACME_EMAIL}
+      - DOMAIN=${DOMAIN}
+    entrypoint: ['/bin/sh', '-c']
+    command: |
+      set -e
+      mkdir -p /var/www/certbot/.well-known/acme-challenge
+      # 1) Attempt initial cert obtain (idempotent if already exists)
+      certbot certonly --non-interactive --agree-tos \
+        --server "${ACME_DIRECTORY_URL}" \
+        --email "${ACME_EMAIL}" \
+        --webroot -w /var/www/certbot \
+        -d "${DOMAIN}" -d "api.${DOMAIN}" || true
+      # 2) Renewal loop (twice a day)
+      while :; do
+        certbot renew --non-interactive --quiet \
+          --server "${ACME_DIRECTORY_URL}" \
+          --webroot -w /var/www/certbot \
+          --deploy-hook "/bin/sh /etc/letsencrypt/renewal-hooks/deploy/10-symlink-and-touch.sh" || true
+        sleep 12h
+      done
+    volumes:
+      - ./certs:/etc/letsencrypt
+      - ./certs-data:/var/lib/letsencrypt
+      - ./certs-webroot:/var/www/certbot
+    networks:
+      - frontend-network
 
 volumes:
   database_prod:
