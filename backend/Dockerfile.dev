@@ -57,13 +57,13 @@ FROM base AS deps
 # que el host (evita EACCES al montar volúmenes o usar scripts de entrypoint).
 USER "${DEV_UID}:${DEV_GID}"
 
-COPY --chown="${DEV_UID}:${DEV_GID}" package.json package-lock.json ./
+COPY --chown="${DEV_UID}:${DEV_GID}" package.json ./
 
-# npm ci: reproducible, determinístico, falla si lockfile != package.json
+# npm install: regenera el lockfile si no existe. 
 # Usamos un caché mount persistente en una ruta accesible por el usuario.
 RUN --mount=type=cache,target=/app/.npm,uid="${DEV_UID}",gid="${DEV_GID}",sharing=locked \
     npm set cache /app/.npm && \
-    npm ci --prefer-offline
+    npm install --prefer-offline
 
 # ── Stage 3: development ──────────────────────────────────────────────────────
 # Imagen final de desarrollo. En runtime, docker-compose monta el código fuente

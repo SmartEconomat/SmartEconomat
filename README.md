@@ -1,22 +1,16 @@
 # SmartEconomat
 
-SmartEconomat es una aplicación para gestionar el inventario de ingredientes y materiales en una escuela de cocina, optimizando el control de stock y facilitando la planificación de clases y recetas.
+SmartEconomat es una aplicación diseñada para gestionar el inventario de ingredientes y materiales en una escuela de cocina, optimizando el control de stock y facilitando la planificación de clases y recetas.
 
 ## Requisitos previos
 
-| Herramienta                                  | Versión mínima | Notas                                                         |
-| -------------------------------------------- | -------------- | ------------------------------------------------------------- |
-| [Docker](https://www.docker.com/get-started) | 23+            | BuildKit habilitado por defecto                               |
-| Docker Compose                               | v2.x           | Incluido en Docker Desktop. Usar `docker compose` (sin guion) |
-| Git                                          | cualquiera     | Solo para clonar el repositorio                               |
+| Herramienta | Versión mínima | Notas |
+|---|---|---|
+| [Docker](https://www.docker.com/get-started) | 23+ | BuildKit habilitado por defecto |
+| Docker Compose | v2.x | Incluido en Docker Desktop. Usar `docker compose` (sin guion) |
+| Git | cualquiera | Solo para clonar el repositorio |
 
 > **El host NO necesita tener Node.js, npm ni ninguna otra herramienta de desarrollo instalada.** Todas las dependencias se resuelven íntegramente dentro de los contenedores Docker.
-
-Notas por SO:
-
-- Windows: usa WSL2 y guarda el repo dentro del sistema de archivos de Linux (por ejemplo, `/home/<usuario>` o `\\wsl$\Ubuntu\home\<usuario>`). Evita rutas NTFS (C:) para mejor rendimiento de volúmenes.
-- macOS: Docker Desktop usa VM; el HMR funciona con polling ya configurado.
-- Linux: Docker nativo; todo funciona sin cambios.
 
 ## Configuración inicial
 
@@ -42,28 +36,25 @@ Notas por SO:
    Ideal para programar. Incluye hot reload automático (HMR) para frontend y backend. No requiere instalar nada en el host.
 
    **Linux:**
-
    ```bash
    # Exportar UID/GID del usuario actual para que los archivos creados por los
    # contenedores (ej. uploads/) pertenezcan al usuario del host, no a root.
    export UID GID
-   docker compose --env-file .env.dev -f docker-compose.dev.yml up --build
+   docker compose -f docker-compose.dev.yml up --build
    ```
 
    **macOS (Intel + Apple Silicon) y Windows (PowerShell / WSL2):**
-
    ```bash
-   docker compose --env-file .env.dev -f docker-compose.dev.yml up --build
+   docker compose -f docker-compose.dev.yml up --build
    ```
-
    > En macOS y Windows Docker Desktop, el mapping de permisos es automático. No es necesario exportar `UID`/`GID`.
 
-   | Servicio                | URL                        |
-   | ----------------------- | -------------------------- |
-   | Frontend (React + Vite) | http://localhost:5173      |
-   | Backend (NestJS)        | http://localhost:3000      |
-   | Swagger Docs            | http://localhost:3000/docs |
-   | Base de Datos           | localhost:5432             |
+   | Servicio | URL |
+   |---|---|
+   | Frontend (React + Vite) | http://localhost:5173 |
+   | Backend (NestJS) | http://localhost:3000 |
+   | Swagger Docs | http://localhost:3000/docs |
+   | Base de Datos | localhost:5432 |
 
    El **primer arranque** tarda más porque Docker descarga las imágenes base y compila las dependencias nativas (`bcrypt`, profiler de Sentry). Los arranques posteriores son inmediatos gracias al caché de BuildKit.
 
@@ -72,26 +63,22 @@ Notas por SO:
    Despliega la aplicación optimizada para producción (imágenes ligeras, sin código fuente montado, sin herramientas de desarrollo).
 
    ```bash
-   docker compose --env-file .env.prod -f docker-compose.prod.yml up --build --detach
+   docker compose -f docker-compose.prod.yml up --build --detach
    ```
 
-   | Servicio         | URL                   |
-   | ---------------- | --------------------- |
-   | Frontend (Nginx) | http://localhost:80   |
+   | Servicio | URL |
+   |---|---|
+   | Frontend (Nginx) | http://localhost:80 |
    | Backend (NestJS) | http://localhost:3000 |
-
-   TLS opcional en prod:
-   - Montamos `./certs` en Nginx. Puedes generar certificados locales con [scripts/generate-certs.sh](scripts/generate-certs.sh) y exponer 443 (ya mapeado en compose).
-   - Configura `DOMAIN`, `FRONTEND_API_URL` y `BACKEND_API_URL` en [/.env.prod](.env.prod).
 
 4. **Detener el proyecto**
 
    ```bash
    # Desarrollo — detiene y elimina contenedores (los volúmenes se conservan)
-   docker compose --env-file .env.dev -f docker-compose.dev.yml down
+   docker compose -f docker-compose.dev.yml down
 
    # Producción
-   docker compose --env-file .env.prod -f docker-compose.prod.yml down
+   docker compose -f docker-compose.prod.yml down
    ```
 
 ## Scripts del Backend
@@ -123,10 +110,8 @@ Para poblar la base de datos con datos iniciales o de prueba:
 
 ### Documentación de la API
 
-La documentación interactiva (Swagger) está disponible en tiempo de ejecución:
-
-- Desarrollo: http://localhost:3000/docs
-- Producción: https://TU_DOMINIO/docs (si usas TLS y proxy)
+Para una guía detallada de todos los endpoints, controladores y casos de uso, consulta el archivo:
+[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)
 
 ### Diagrama Entidad-Relación (ERD)
 
@@ -141,7 +126,7 @@ El archivo generado se guardará en `tools/erd/erd.svg`.
 > Puedes ejecutar estos comandos dentro del contenedor en ejecución:
 >
 > ```bash
-> docker compose --env-file .env.dev -f docker-compose.dev.yml exec backend npm run seed
+> docker compose -f docker-compose.dev.yml exec backend npm run seed
 > ```
 
 ## Notas adicionales
@@ -151,13 +136,13 @@ El archivo generado se guardará en `tools/erd/erd.svg`.
 
   ```bash
   # Todos los servicios en desarrollo
-   docker compose --env-file .env.dev -f docker-compose.dev.yml logs -f
+  docker compose -f docker-compose.dev.yml logs -f
 
   # Solo backend
-   docker compose --env-file .env.dev -f docker-compose.dev.yml logs -f backend
+  docker compose -f docker-compose.dev.yml logs -f backend
 
   # Solo frontend
-   docker compose --env-file .env.dev -f docker-compose.dev.yml logs -f frontend
+  docker compose -f docker-compose.dev.yml logs -f frontend
   ```
 
 ---
@@ -181,23 +166,22 @@ Docker Desktop en macOS y Windows **no implementa `inotify`** sobre bind mounts 
 
 **Solución aplicada** — polling activado siempre:
 
-| Variable              | Valor    | Servicio                  | Motivo                                                   |
-| --------------------- | -------- | ------------------------- | -------------------------------------------------------- |
-| `CHOKIDAR_USEPOLLING` | `true`   | Backend + Frontend        | Fuerza polling en chokidar (watcher de NestJS y Vite)    |
-| `CHOKIDAR_INTERVAL`   | `500` ms | Backend + Frontend        | Balance entre reactividad y CPU. Ajustable en `.env.dev` |
-| `WATCHPACK_POLLING`   | `true`   | Backend                   | Preventivo para herramientas webpack-based               |
-| `watch.usePolling`    | `true`   | Frontend (vite.config.ts) | Polling nativo de Vite                                   |
+| Variable | Valor | Servicio | Motivo |
+|---|---|---|---|
+| `CHOKIDAR_USEPOLLING` | `true` | Backend + Frontend | Fuerza polling en chokidar (watcher de NestJS y Vite) |
+| `CHOKIDAR_INTERVAL` | `500` ms | Backend + Frontend | Balance entre reactividad y CPU. Ajustable en `.env.dev` |
+| `WATCHPACK_POLLING` | `true` | Backend | Preventivo para herramientas webpack-based |
+| `watch.usePolling` | `true` | Frontend (vite.config.ts) | Polling nativo de Vite |
 
 En Linux nativo, el overhead del polling es < 0.3% de CPU. En macOS/Windows es la única forma de que HMR funcione.
 
-### Dependencias nativas (Sentry profiler)
+### Dependencias nativas (bcrypt, Sentry profiler)
 
-`@sentry/profiling-node` usa binarios nativos; el Dockerfile.dev del backend incluye `python3`, `make` y `g++` para compilar dentro del contenedor. `bcrypt@^6` es JS puro (no compila nativo), evitando problemas multiplataforma.
+`bcrypt` y `@sentry/profiling-node` son binarios C++ compilados vía **node-gyp**. El Dockerfile.dev del backend incluye `python3`, `make` y `g++` en un stage de sistema separado, de forma que la compilación nativa ocurre dentro del contenedor y no depende de ninguna herramienta del host.
 
 ### Arquitectura agnóstica ARM64 + AMD64
 
 Ambos Dockerfiles usan `FROM --platform=$BUILDPLATFORM`. Docker BuildKit selecciona automáticamente la arquitectura correcta:
-
 - En Mac M1/M2/M3 (ARM64): compila y corre nativamente sin emulación.
 - En x86_64: comportamiento estándar.
 - En CI multi-arch: funciona sin cambios.
@@ -228,32 +212,29 @@ docker volume rm smarteconomat-dev_backend_node_modules
 docker volume rm smarteconomat-dev_frontend_node_modules
 
 # Volver a arrancar — el entrypoint reinstalará al detectar node_modules vacío
-docker compose --env-file .env.dev -f docker-compose.dev.yml up
+docker compose -f docker-compose.dev.yml up
 ```
 
 Alternativamente, para forzar un rebuild completo de las imágenes:
-
 ```bash
 # -V recrea todos los volúmenes anónimos (NO afecta la base de datos, que usa
 # un volumen nombrado `database_dev`)
-docker compose --env-file .env.dev -f docker-compose.dev.yml up --build -V
+docker compose -f docker-compose.dev.yml up --build -V
 ```
 
 ### Reset total del entorno de desarrollo
 
 ```bash
 # Elimina contenedores + volúmenes nombrados (INCLUYE la base de datos)
-docker compose --env-file .env.dev -f docker-compose.dev.yml down -v
+docker compose -f docker-compose.dev.yml down -v
 
 # Rebuild desde cero sin caché
-docker compose --env-file .env.dev -f docker-compose.dev.yml build --no-cache
-docker compose --env-file .env.dev -f docker-compose.dev.yml up
+docker compose -f docker-compose.dev.yml build --no-cache
+docker compose -f docker-compose.dev.yml up
 ```
 
 ### Problemas con la estructura de compilación o caché
-
 Si el servidor no arranca por errores estructurales o restos de builds anteriores:
-
 1. Elimina la carpeta `dist` local (si existe) para evitar interferencias con el volumen montado.
 2. Asegúrate de no tener archivos `.ts` en la raíz del proyecto backend que no pertenezcan a la carpeta `src` (ej: archivos de configuración en formato TS que no estén excluidos en `tsconfig.build.json`), ya que pueden alterar la estructura de salida del compilador.
 
@@ -261,7 +242,7 @@ Si el servidor no arranca por errores estructurales o restos de builds anteriore
 
 1. Verifica que el contenedor tenga `CHOKIDAR_USEPOLLING=true` en sus variables de entorno:
    ```bash
-   docker compose --env-file .env.dev -f docker-compose.dev.yml exec frontend env | grep CHOKIDAR
+   docker compose -f docker-compose.dev.yml exec frontend env | grep CHOKIDAR
    ```
 2. Si usas **Windows con Hyper-V** (no WSL2), asegúrate de que la carpeta del proyecto esté en la unidad `C:\` y no en una unidad de red.
 3. Aumenta el intervalo de polling en `.env.dev` si el HMR es errático en máquinas con muchos archivos:
@@ -269,29 +250,13 @@ Si el servidor no arranca por errores estructurales o restos de builds anteriore
    CHOKIDAR_INTERVAL=1000
    ```
 
-### Comandos útiles
-
-- Entrar a un shell dentro de los contenedores:
-  ```bash
-  docker compose --env-file .env.dev -f docker-compose.dev.yml exec backend sh
-  docker compose --env-file .env.dev -f docker-compose.dev.yml exec frontend sh
-  ```
-- Ejecutar tests backend dentro del contenedor:
-  ```bash
-  docker compose --env-file .env.dev -f docker-compose.dev.yml exec backend npm test
-  ```
-  Ejecutar tests frontend:
-  ```bash
-  docker compose --env-file .env.dev -f docker-compose.dev.yml exec frontend npm run test
-  ```
+### Herramientas de desarrollo
+El proyecto está configurado para usar **SWC** en desarrollo para una compilación ultra rápida. Asegúrate de que el script `start:dev` en el `package.json` mantenga el flag `-b swc` para un rendimiento óptimo.
 
 ---
 
 ## 📚 Documentación Adicional
-
-- [Centralización de configuración](wiki/CENTRALIZACION_CONFIGURACION.md)
-- Arquitectura: [wiki/architecture/backend.md](wiki/architecture/backend.md), [wiki/architecture/frontend.md](wiki/architecture/frontend.md)
-- Despliegue: [wiki/DEPLOYMENT.md](wiki/DEPLOYMENT.md), [wiki/PRODUCTION.md](wiki/PRODUCTION.md)
+ - [Centralización de configuración para despliegue en Azure y dominios](./CENTRALIZACION_CONFIGURACION.md)
 
 **SmartEconomat - Todos los derechos reservados**  
 Este software es propiedad exclusiva de sus creadores. Queda estrictamente prohibido copiar, modificar, distribuir, sublicenciar o utilizar el software, en su totalidad o en parte, sin la autorización explícita y por escrito de los propietarios. Cualquier uso no autorizado constituye una violación de los derechos de propiedad intelectual y puede estar sujeto a acciones legales.
