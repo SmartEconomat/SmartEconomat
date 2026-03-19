@@ -14,7 +14,7 @@ const envPaths = [
 for (const path of envPaths) {
   if (existsSync(path)) {
     dotenv.config({ path });
-    // Solo loggear si NO es entorno de test
+
     if (process.env.NODE_ENV !== 'test') {
       console.log(`Loaded environment from ${path}`);
     }
@@ -23,15 +23,14 @@ for (const path of envPaths) {
 }
 
 const isDocker = existsSync('/.dockerenv');
-const dbHost =
-  process.env.DB_HOST ||
-  process.env.POSTGRES_HOST ||
-  process.env.DOMAIN ||
-  'tudominio.com';
-const finalHost =
-  !isDocker && dbHost === 'db' ? process.env.DOMAIN || 'tudominio.com' : dbHost;
+let dbHost = process.env.DB_HOST;
+if (!isDocker && dbHost === 'db') {
+  dbHost = 'localhost';
+} else if (!dbHost) {
+  dbHost = isDocker ? 'db' : 'localhost';
+}
+const finalHost = dbHost;
 
-// En entorno de test, usar configuración dummy (será reemplazada por pg-mem)
 const isTestEnv = process.env.NODE_ENV === 'test';
 
 export const dbConfig: DataSourceOptions = {
@@ -50,13 +49,12 @@ export const dbConfig: DataSourceOptions = {
   synchronize:
     process.env.DB_SYNC === 'true' ||
     (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test'),
-  logging: false, // Siempre false en test para evitar spam de logs
+  logging: false,
   entities: [join(__dirname, '../**/*.entity.{ts,js}')],
   migrations: [join(__dirname, '../migrations/*.{ts,js}')],
   subscribers: [],
 };
 
-// Solo loggear configuración en desarrollo (NO en test ni producción)
 if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
   console.log('Database Config:', {
     ...dbConfig,
