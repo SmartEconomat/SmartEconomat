@@ -11,11 +11,36 @@ describe('AlbaranService', () => {
     delete: jest.fn(),
   };
 
+  const mockDataSource = {
+    createQueryRunner: jest.fn().mockReturnValue({
+      connect: jest.fn(),
+      startTransaction: jest.fn(),
+      commitTransaction: jest.fn(),
+      rollbackTransaction: jest.fn(),
+      release: jest.fn(),
+      isTransactionActive: false,
+      manager: {
+        findOne: jest.fn(),
+        find: jest.fn(),
+        create: jest.fn(),
+        save: jest.fn(),
+      },
+    }),
+  };
+
+  const mockConfigService = {
+    get: jest.fn().mockReturnValue('./uploads'),
+  };
+
   let service: AlbaranService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new AlbaranService(mockRepo as any);
+    service = new AlbaranService(
+      mockRepo as any,
+      mockDataSource as any,
+      mockConfigService as any
+    );
   });
 
   it('remove lanza NotFoundException si no existe el albarán', async () => {
