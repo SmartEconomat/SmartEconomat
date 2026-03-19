@@ -14,6 +14,9 @@ import DatePicker from './DatePicker';
 import PedidoLineasSelector from './PedidoLineasSelector';
 import RecetaIngredientesSelector from './RecetaIngredientesSelector';
 import BatchPedidoLineasViewer from './BatchPedidoLineasViewer';
+import BarcodeScanner from './BarcodeScanner';
+import BarcodeIcon from './BarcodeIcon';
+import { InputAdornment, IconButton, Tooltip } from '@mui/material';
 
 export type FieldType =
   | 'text'
@@ -27,7 +30,8 @@ export type FieldType =
   | 'proveedores'
   | 'orderLines'
   | 'recipeIngredients'
-  | 'batchViewer';
+  | 'batchViewer'
+  | 'barcode';
 
 export interface DynamicField {
   name: string;
@@ -81,6 +85,9 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [activeBarcodeField, setActiveBarcodeField] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -378,6 +385,46 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
 
       case 'batchViewer':
         return <BatchPedidoLineasViewer key={name} batch={formData[name]} />;
+
+      case 'barcode':
+        return (
+          <Box key={name}>
+            <Input
+              name={name}
+              label={label}
+              type="text"
+              value={value ?? ''}
+              onChange={handleTextChange}
+              required={required}
+              disabled={disabled}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Tooltip title="Escanear con cámara">
+                      <IconButton
+                        edge="end"
+                        onClick={() => setActiveBarcodeField(name)}
+                        disabled={disabled}
+                      >
+                        <BarcodeIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <BarcodeScanner
+              open={activeBarcodeField === name}
+              onClose={() => setActiveBarcodeField(null)}
+              onScan={(code) => {
+                setFormData((prev) => ({ ...prev, [name]: code }));
+                setErrors((prev) => ({ ...prev, [name]: '' }));
+                setActiveBarcodeField(null);
+              }}
+              title={`Escanear ${label}`}
+            />
+          </Box>
+        );
 
       case 'text':
       default:
