@@ -24,6 +24,82 @@ export class AlumnoService {
     private readonly dataSource: DataSource
   ) {}
 
+  private async resolveSlotForRegistration(
+    manager: {
+      findOne: (...args: unknown[]) => Promise<unknown>;
+      create: (...args: unknown[]) => unknown;
+      save: (entity: unknown) => Promise<unknown>;
+    },
+    dto: RegisterAlumnoDto
+  ): Promise<AlumnoSlot> {
+    if (dto.codigoClase?.trim()) {
+      const slotByCode = await this.findSlotByCode(
+        manager,
+        dto.codigoClase,
+        true
+      );
+
+      if (!slotByCode) {
+        throw new NotFoundException('No existe ninguna clase con ese código.');
+      }
+
+      return slotByCode;
+    }
+
+    const profesor = (await manager.findOne(Profesor, {
+      where: { cial: dto.cialProfesor },
+    })) as Profesor | null;
+
+    if (!profesor) {
+      throw new NotFoundException(
+        'Profesor no encontrado con el cial proporcionado'
+      );
+    }
+
+    let legacySlot = (await manager.findOne(AlumnoSlot, {
+      where: {
+        profesor: { id: profesor.id },
+        aula: dto.aula,
+        numeroClase: dto.numeroClase,
+      },
+      relations: ['profesor', 'profesor.user', 'alumnos'],
+    })) as AlumnoSlot | null;
+
+    if (!legacySlot) {
+      legacySlot = manager.create(AlumnoSlot, {
+        profesor,
+        aula: dto.aula,
+        numeroClase: dto.numeroClase,
+        capacidad: 1,
+        alumnos: [],
+      }) as AlumnoSlot;
+      legacySlot = (await manager.save(legacySlot)) as AlumnoSlot;
+      legacySlot = (await manager.findOne(AlumnoSlot, {
+        where: { id: legacySlot.id },
+        relations: ['profesor', 'profesor.user', 'alumnos'],
+      })) as AlumnoSlot;
+    }
+
+    return legacySlot;
+  }
+
+  private async findSlotByCode(
+    manager: {
+      findOne: (...args: unknown[]) => Promise<unknown>;
+    },
+    codigoClase: string,
+    includeStudents = false
+  ): Promise<AlumnoSlot | null> {
+    const normalizedCode = codigoClase.trim().toUpperCase();
+
+    return (await manager.findOne(AlumnoSlot, {
+      where: { codigoSlot: normalizedCode },
+      relations: includeStudents
+        ? ['profesor', 'profesor.user', 'alumnos']
+        : ['profesor', 'profesor.user'],
+    })) as AlumnoSlot | null;
+  }
+
   private async countStudentsInSlot(
     manager: {
       count?: (entity: typeof Alumno, options: unknown) => Promise<number>;
@@ -49,33 +125,7 @@ export class AlumnoService {
 
   async register(dto: RegisterAlumnoDto) {
     return this.dataSource.transaction(async (manager) => {
-      const profesor = await manager.findOne(Profesor, {
-        where: { cial: dto.cialProfesor },
-      });
-      if (!profesor)
-        throw new NotFoundException(
-          'Profesor no encontrado con el cial proporcionado'
-        );
-
-      let slot = await manager.findOne(AlumnoSlot, {
-        where: {
-          profesor: { id: profesor.id },
-          aula: dto.aula,
-          numeroClase: dto.numeroClase,
-        },
-        relations: ['alumnos'],
-      });
-
-      if (!slot) {
-        slot = manager.create(AlumnoSlot, {
-          profesor,
-          aula: dto.aula,
-          numeroClase: dto.numeroClase,
-          capacidad: 1,
-          alumnos: [],
-        });
-        slot = await manager.save(slot);
-      }
+      const slot = await this.resolveSlotForRegistration(manager, dto);
 
       const alumnosContados = await this.countStudentsInSlot(manager, slot);
       const capacidadSlot = slot.capacidad ?? 1;
@@ -126,6 +176,26 @@ export class AlumnoService {
         ),
       };
     });
+  }
+
+  async getSlotByCode(codigoClase: string) {
+    const normalizedCode = codigoClase.trim().toUpperCase();
+    const slot = await this.dataSource.getRepository(AlumnoSlot).findOne({
+      where: { codigoSlot: normalizedCode },
+      relations: ['profesor', 'profesor.user'],
+    });
+
+    if (!slot) {
+      throw new NotFoundException('No existe ninguna clase con ese código.');
+    }
+
+    return {
+      codigoClase: slot.codigoSlot,
+      aula: slot.aula,
+      numeroClase: slot.numeroClase,
+      profesor: slot.profesor.user.username,
+      cialProfesor: slot.profesor.cial,
+    };
   }
 
   async changeProfesor(
