@@ -354,7 +354,7 @@ const Home: React.FC = () => {
                 <>
                   <ErrorOutlineIcon fontSize="small" />
                   {incidenciasCount > 0
-                    ? `${incidenciasCount} pedido${incidenciasCount !== 1 ? 's' : ''} con incidencias`
+                    ? `${incidenciasCount} incidencia${incidenciasCount !== 1 ? 's' : ''} pendiente${incidenciasCount !== 1 ? 's' : ''}`
                     : 'Sin incidencias'}
                 </>
               )
