@@ -15,6 +15,7 @@ import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { rolUsuario, UserStatus } from '../../usuario/enums/usuario.enums';
 import { MailService } from '../mail.service';
 import * as crypto from 'crypto';
+import { Rol } from '../../roles/rol.entity/rol.entity';
 
 @Injectable()
 export class AuthService {
@@ -43,10 +44,15 @@ export class AuthService {
         );
       }
 
+      const alumnoRole = await manager.findOne(Rol, {
+        where: { nombre: rolUsuario.ALUMNO },
+      });
+
       const usuario = manager.create(Usuario, {
         ...dto,
         status: UserStatus.INACTIVE,
         rol: rolUsuario.ALUMNO,
+        roles: alumnoRole ? [alumnoRole] : [],
       });
 
       await manager.save(usuario);

@@ -26,6 +26,12 @@ export class AlumnoController {
     return this.alumnoService.register(dto);
   }
 
+  @Get('slots/:codigoClase')
+  @Public()
+  async getSlotByCode(@Param('codigoClase') codigoClase: string) {
+    return this.alumnoService.getSlotByCode(codigoClase);
+  }
+
   @Get('aulas')
   @Public()
   async getAulas() {

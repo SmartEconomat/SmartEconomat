@@ -9,7 +9,7 @@ import {
   Button,
   Alert,
 } from '@mui/material';
-import { useAuth } from '../store/auth.hooks';
+import { useAuth, usePermission } from '../store/auth.hooks';
 import { useNavigate } from 'react-router-dom';
 
 // Icons
@@ -240,6 +240,17 @@ const Home: React.FC = () => {
     }
   }, []);
 
+  const canListProductos = usePermission('productos:listar');
+  const canListPedidos = usePermission('pedidos:listar');
+  const canListIncidencias = usePermission('incidencias:listar');
+  const canListProveedores = usePermission('proveedores:listar');
+  const canListInventario = usePermission('inventario:listar');
+  const canCreatePedido = usePermission('pedidos:crear');
+  const canCreateProducto = usePermission('productos:crear');
+  const canCreateRecepcion = usePermission('recepciones:crear');
+  const canCreateReceta = usePermission('recetas:crear');
+  const canListMovimientos = usePermission('movimientos:listar');
+
   useEffect(() => {
     loadStats();
   }, [loadStats]);
@@ -299,109 +310,119 @@ const Home: React.FC = () => {
         }}
       >
         {/* Total Productos */}
-        <Box>
-          <MetricCard
-            title="Total Productos"
-            value={isLoading ? <Spinner size="sm" /> : totalProductos}
-            icon={<InventoryIcon />}
-            color="primary"
-            subtitle={
-              isLoading ? undefined : (
-                <>
-                  {productosEsteMes > 0 ? (
-                    <TrendingUpIcon fontSize="small" color="success" />
-                  ) : (
-                    <TrendingFlatIcon fontSize="small" color="disabled" />
-                  )}
-                  {productosEsteMes > 0
-                    ? `+${productosEsteMes} agregado${productosEsteMes !== 1 ? 's' : ''} este mes`
-                    : 'Sin nuevos productos este mes'}
-                </>
-              )
-            }
-          />
-        </Box>
+        {canListProductos && (
+          <Box>
+            <MetricCard
+              title="Total Productos"
+              value={isLoading ? <Spinner size="sm" /> : totalProductos}
+              icon={<InventoryIcon />}
+              color="primary"
+              subtitle={
+                isLoading ? undefined : (
+                  <>
+                    {productosEsteMes > 0 ? (
+                      <TrendingUpIcon fontSize="small" color="success" />
+                    ) : (
+                      <TrendingFlatIcon fontSize="small" color="disabled" />
+                    )}
+                    {productosEsteMes > 0
+                      ? `+${productosEsteMes} agregado${productosEsteMes !== 1 ? 's' : ''} este mes`
+                      : 'Sin nuevos productos este mes'}
+                  </>
+                )
+              }
+            />
+          </Box>
+        )}
 
         {/* Pedidos Pendientes */}
-        <Box>
-          <MetricCard
-            title="Pedidos Pendientes"
-            value={isLoading ? <Spinner size="sm" /> : pedidosPendientes}
-            icon={<ShoppingCartIcon />}
-            color="warning"
-            subtitle={
-              isLoading ? undefined : (
-                <>
-                  <CalendarTodayIcon fontSize="small" />
-                  {pedidosProcesarHoy > 0
-                    ? `${pedidosProcesarHoy} recibido${pedidosProcesarHoy !== 1 ? 's' : ''} hoy`
-                    : 'Sin recepciones hoy'}
-                </>
-              )
-            }
-          />
-        </Box>
+        {canListPedidos && (
+          <Box>
+            <MetricCard
+              title="Pedidos Pendientes"
+              value={isLoading ? <Spinner size="sm" /> : pedidosPendientes}
+              icon={<ShoppingCartIcon />}
+              color="warning"
+              subtitle={
+                isLoading ? undefined : (
+                  <>
+                    <CalendarTodayIcon fontSize="small" />
+                    {pedidosProcesarHoy > 0
+                      ? `${pedidosProcesarHoy} recibido${pedidosProcesarHoy !== 1 ? 's' : ''} hoy`
+                      : 'Sin recepciones hoy'}
+                  </>
+                )
+              }
+            />
+          </Box>
+        )}
 
         {/* Incidencias */}
-        <Box>
-          <MetricCard
-            title="Incidencias"
-            value={isLoading ? <Spinner size="sm" /> : incidenciasCount}
-            icon={<ErrorOutlineIcon />}
-            color="error"
-            subtitle={
-              isLoading ? undefined : (
-                <>
-                  <ErrorOutlineIcon fontSize="small" />
-                  {incidenciasCount > 0
-                    ? `${incidenciasCount} incidencia${incidenciasCount !== 1 ? 's' : ''} pendiente${incidenciasCount !== 1 ? 's' : ''}`
-                    : 'Sin incidencias'}
-                </>
-              )
-            }
-          />
-        </Box>
+        {canListIncidencias && (
+          <Box>
+            <MetricCard
+              title="Incidencias"
+              value={isLoading ? <Spinner size="sm" /> : incidenciasCount}
+              icon={<ErrorOutlineIcon />}
+              color="error"
+              subtitle={
+                isLoading ? undefined : (
+                  <>
+                    <ErrorOutlineIcon fontSize="small" />
+                    {incidenciasCount > 0
+                      ? `${incidenciasCount} incidencia${incidenciasCount !== 1 ? 's' : ''} pendiente${incidenciasCount !== 1 ? 's' : ''}`
+                      : 'Sin incidencias'}
+                  </>
+                )
+              }
+            />
+          </Box>
+        )}
 
         {/* Proveedores */}
-        <Box>
-          <MetricCard
-            title="Proveedores"
-            value={isLoading ? <Spinner size="sm" /> : totalProveedores}
-            icon={<LocalShippingIcon />}
-            color="info"
-            subtitle={
-              isLoading ? undefined : (
-                <>
-                  <CheckCircleOutlineIcon fontSize="small" color="success" />
-                  Catálogo actualizado
-                </>
-              )
-            }
-          />
-        </Box>
+        {canListProveedores && (
+          <Box>
+            <MetricCard
+              title="Proveedores"
+              value={isLoading ? <Spinner size="sm" /> : totalProveedores}
+              icon={<LocalShippingIcon />}
+              color="info"
+              subtitle={
+                isLoading ? undefined : (
+                  <>
+                    <CheckCircleOutlineIcon fontSize="small" color="success" />
+                    Catálogo actualizado
+                  </>
+                )
+              }
+            />
+          </Box>
+        )}
 
         {/* Alertas de Stock */}
-        <Box>
-          <MetricCard
-            title="Alertas de Stock"
-            value={isLoading ? <Spinner size="sm" /> : alertasStock}
-            icon={<WarningAmberIcon />}
-            color="error"
-            subtitle={
-              isLoading ? undefined : (
-                <>
-                  <WarningAmberIcon
-                    fontSize="small"
-                    color={alertasStock > 0 ? 'error' : 'disabled'}
-                  />
-                  {alertasStock > 0
-                    ? `${alertasStock} ítem${alertasStock !== 1 ? 's' : ''} bajo mínimo`
-                    : 'Stock en niveles correctos'}
-                </>
-              )
-            }
-          />
-        </Box>
+        {canListInventario && (
+          <Box>
+            <MetricCard
+              title="Alertas de Stock"
+              value={isLoading ? <Spinner size="sm" /> : alertasStock}
+              icon={<WarningAmberIcon />}
+              color="error"
+              subtitle={
+                isLoading ? undefined : (
+                  <>
+                    <WarningAmberIcon
+                      fontSize="small"
+                      color={alertasStock > 0 ? 'error' : 'disabled'}
+                    />
+                    {alertasStock > 0
+                      ? `${alertasStock} ítem${alertasStock !== 1 ? 's' : ''} bajo mínimo`
+                      : 'Stock en niveles correctos'}
+                  </>
+                )
+              }
+            />
+          </Box>
+        )}
       </Box>
 
       {/* Quick Actions & Recent Activity */}
@@ -434,38 +455,46 @@ const Home: React.FC = () => {
                 gap: 2,
               }}
             >
-              <Box>
-                <QuickAction
-                  title="Nuevo Pedido"
-                  icon={<ShoppingCartIcon fontSize="small" />}
-                  color="primary"
-                  onClick={() => navigate('/pedidos')}
-                />
-              </Box>
-              <Box>
-                <QuickAction
-                  title="Añadir Producto"
-                  icon={<InventoryIcon fontSize="small" />}
-                  color="secondary"
-                  onClick={() => navigate('/productos')}
-                />
-              </Box>
-              <Box>
-                <QuickAction
-                  title="Registrar Recepción"
-                  icon={<AddCircleOutlineIcon fontSize="small" />}
-                  color="success"
-                  onClick={() => navigate('/recepcion')}
-                />
-              </Box>
-              <Box>
-                <QuickAction
-                  title="Nueva Receta"
-                  icon={<AssignmentIcon fontSize="small" />}
-                  color="warning"
-                  onClick={() => navigate('/recetas')}
-                />
-              </Box>
+              {canCreatePedido && (
+                <Box>
+                  <QuickAction
+                    title="Nuevo Pedido"
+                    icon={<ShoppingCartIcon fontSize="small" />}
+                    color="primary"
+                    onClick={() => navigate('/pedidos')}
+                  />
+                </Box>
+              )}
+              {canCreateProducto && (
+                <Box>
+                  <QuickAction
+                    title="Añadir Producto"
+                    icon={<InventoryIcon fontSize="small" />}
+                    color="secondary"
+                    onClick={() => navigate('/productos')}
+                  />
+                </Box>
+              )}
+              {canCreateRecepcion && (
+                <Box>
+                  <QuickAction
+                    title="Registrar Recepción"
+                    icon={<AddCircleOutlineIcon fontSize="small" />}
+                    color="success"
+                    onClick={() => navigate('/recepcion')}
+                  />
+                </Box>
+              )}
+              {canCreateReceta && (
+                <Box>
+                  <QuickAction
+                    title="Nueva Receta"
+                    icon={<AssignmentIcon fontSize="small" />}
+                    color="warning"
+                    onClick={() => navigate('/recetas')}
+                  />
+                </Box>
+              )}
             </Box>
           </Paper>
         </Box>
@@ -576,15 +605,17 @@ const Home: React.FC = () => {
               </Stack>
             )}
 
-            <Box mt={3} textAlign="center">
-              <Button
-                variant="text"
-                size="small"
-                onClick={() => navigate('/movimientos')}
-              >
-                Ver todo el historial
-              </Button>
-            </Box>
+            {canListMovimientos && (
+              <Box mt={3} textAlign="center">
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={() => navigate('/movimientos')}
+                >
+                  Ver todo el historial
+                </Button>
+              </Box>
+            )}
           </Paper>
         </Box>
       </Box>

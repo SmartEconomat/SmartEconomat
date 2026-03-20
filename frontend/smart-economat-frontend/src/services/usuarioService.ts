@@ -4,7 +4,10 @@ import {
   ActualizarUsuarioDTO,
   PaginatedResponse,
   ApiResponse,
+  RolOption,
+  Permiso,
 } from '../types/usuario';
+import { ApiError, baseFetch, parseApiResponse } from './api.service';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
@@ -25,11 +28,9 @@ const mapFrontendToBackend = (
 ): Record<string, unknown> => {
   const mapped: Record<string, unknown> = { ...data };
 
-  // Map Rol
+  // Map Rol (Asegurar upper case para compatibilidad con backend DB pero permitir nombres dinámicos)
   if (mapped.rol) {
-    let r = (mapped.rol as string).toUpperCase();
-    if (r === 'ADMINISTRADOR') r = 'ADMIN';
-    mapped.rol = r;
+    mapped.rol = (mapped.rol as string).toUpperCase();
   }
 
   // Map Status
@@ -53,31 +54,76 @@ const mapFrontendToBackend = (
   delete mapped.activo;
   delete mapped.id;
   delete mapped.fecha_registro;
+  delete mapped.roleId;
+  delete mapped.roleName;
 
   return mapped;
 };
 
 const mapBackendToFrontend = (user: Record<string, unknown>): Usuario => {
-  let rolUpper = 'Alumno';
-  const backendRol = (user.rol as string | undefined)?.toUpperCase();
-  if (backendRol === 'ADMIN' || backendRol === 'ADMINISTRADOR')
-    rolUpper = 'Administrador';
-  if (backendRol === 'PROFESOR') rolUpper = 'Profesor';
+  const dynamicRoles = Array.isArray(user.roles)
+    ? (user.roles as Array<Record<string, unknown>>)
+    : [];
+  const primaryRole = dynamicRoles[0];
+  const backendRol =
+    (primaryRole?.nombre as string | undefined) ||
+    (user.rol as string | undefined);
+  const rolName = backendRol || 'Alumno';
+
+  const backendStatus = (user.status as string | undefined)?.toUpperCase();
+  const isActiveFromStatus = backendStatus === 'ACTIVE';
+  const isInactiveFromStatus = backendStatus === 'INACTIVE';
+  const fallbackActivo = Boolean(user.activo);
 
   return {
     id: (user.id as string | number) || 0,
     username: user.username as string,
     email: user.email as string,
-    rol: rolUpper as Usuario['rol'],
-    estado:
-      user.status === 'ACTIVE' || user.estado === 'Activo' || user.activo
-        ? 'Activo'
-        : 'Inactivo',
+    rol: rolName,
+    roleId: primaryRole?.id as string | undefined,
+    roleName: primaryRole?.nombre as string | undefined,
+    estado: isActiveFromStatus
+      ? 'Activo'
+      : isInactiveFromStatus
+        ? 'Inactivo'
+        : fallbackActivo || user.estado === 'Activo'
+          ? 'Activo'
+          : 'Inactivo',
     fecha_registro: (user.createdAt as string) || new Date().toISOString(),
+    permisosAdicionales: (user.permisosAdicionales as Permiso[]) || [],
+    permisosExcluidos: (user.permisosExcluidos as Permiso[]) || [],
   };
 };
 
 export const usuarioService = {
+  async getRoles(): Promise<ApiResponse<RolOption[]>> {
+    const response = await baseFetch('/admin/roles');
+    const result = await parseApiResponse<RolOption[]>(
+      response,
+      'No se pudieron obtener los roles disponibles'
+    );
+
+    return {
+      data: result.data,
+      status: response.status,
+      message: result.message,
+    };
+  },
+
+  async getPermissions(): Promise<ApiResponse<Permiso[]>> {
+    const response = await baseFetch('/admin/permissions');
+    const result = await parseApiResponse<Permiso[]>(
+      response,
+      'No se pudieron obtener los permisos disponibles'
+    );
+
+    return {
+      data: result.data,
+      status: response.status,
+      message: result.message,
+    };
+  },
+
   async getUsuarios(
     page: number = 1,
     limit: number = 10,
@@ -162,18 +208,19 @@ export const usuarioService = {
     data: ActualizarUsuarioDTO
   ): Promise<ApiResponse<Usuario>> {
     const payload = mapFrontendToBackend(data, true);
+    delete payload.roleId;
+    delete payload.roleName;
     try {
-      const response = await fetch(`${API_URL}/usuarios/${id}`, {
+      const response = await baseFetch(`/usuarios/${id}`, {
         method: 'PATCH',
         headers: getHeaders(),
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Error al actualizar usuario');
-      }
-      const result = await response.json();
+      const result = await parseApiResponse<Record<string, unknown>>(
+        response,
+        'Error al actualizar usuario'
+      );
       return {
         data: mapBackendToFrontend(result.data),
         status: response.status,
@@ -183,6 +230,54 @@ export const usuarioService = {
       console.error('Error al actualizar usuario', error);
       throw error;
     }
+  },
+
+  async updateUserRole(
+    id: string | number,
+    roleId: string,
+    permisosAdicionalesIds?: string[],
+    permisosExcluidosIds?: string[]
+  ): Promise<ApiResponse<Usuario>> {
+    const response = await baseFetch(`/admin/users/${id}/role`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        roleId,
+        permisosAdicionalesIds,
+        permisosExcluidosIds,
+      }),
+    });
+
+    const result = await parseApiResponse<Record<string, unknown>>(
+      response,
+      'Error al actualizar el rol del usuario'
+    );
+
+    return {
+      data: mapBackendToFrontend(result.data),
+      status: response.status,
+      message: result.message || 'Privilegios actualizados correctamente',
+    };
+  },
+
+  async setUserActivation(
+    id: string | number,
+    active: boolean
+  ): Promise<ApiResponse<{ status: string; activo: boolean }>> {
+    const response = await baseFetch(`/admin/users/${id}/activate`, {
+      method: 'PATCH',
+      body: JSON.stringify({ active }),
+    });
+
+    const result = await parseApiResponse<{ status: string; activo: boolean }>(
+      response,
+      'Error al actualizar el estado del usuario'
+    );
+
+    return {
+      data: result.data,
+      status: response.status,
+      message: result.message,
+    };
   },
 
   async eliminarUsuario(id: string | number): Promise<ApiResponse<null>> {
@@ -232,17 +327,16 @@ export const usuarioService = {
     const randomPassword = generateRandomPassword();
 
     try {
-      const response = await fetch(`${API_URL}/usuarios/${id}/password`, {
+      const response = await baseFetch(`/usuarios/${id}/password`, {
         method: 'PATCH',
         headers: getHeaders(),
         body: JSON.stringify({ password: randomPassword }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Error al restablecer contraseña');
-      }
-      const result = await response.json();
+      const result = await parseApiResponse<unknown>(
+        response,
+        'Error al restablecer contraseña'
+      );
       return {
         data: randomPassword,
         status: response.status,
@@ -250,6 +344,9 @@ export const usuarioService = {
       };
     } catch (error) {
       console.error('Error al restablecer contraseña', error);
+      if (error instanceof ApiError) {
+        throw new Error(error.message);
+      }
       throw error;
     }
   },

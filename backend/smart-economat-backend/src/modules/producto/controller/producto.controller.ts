@@ -10,7 +10,7 @@ import {
   HttpStatus,
   UseGuards,
   ParseUUIDPipe,
-  Request,
+  Req,
 } from '@nestjs/common';
 import { ProductoService } from '../service/producto.service';
 import {
@@ -79,9 +79,9 @@ export class ProductoController {
   })
   create(
     @Body() createProductoDto: CreateProductoDto,
-    @Request() req: any
+    @Req() req: { user: { id: string } }
   ): Promise<Producto> {
-    const userId = req.user?.sub as string;
+    const userId = req.user.id;
     return this.productoService.create(createProductoDto, userId);
   }
 
@@ -93,9 +93,11 @@ export class ProductoController {
       ['nombre', 'codigoBarras', 'tipo', 'marca', 'createdAt', 'updatedAt'],
       ProductFilterDto
     )
-    query: ProductFilterDto
+    query: ProductFilterDto,
+    @Req() req: { user?: { rol?: string } }
   ): Promise<PaginatedResponseDto<Producto>> {
-    return this.productoService.findAll(query);
+    const userRole = req.user?.rol;
+    return this.productoService.findAll(query, userRole);
   }
 
   @Get(':id')
@@ -104,8 +106,12 @@ export class ProductoController {
   @ApiParam({ name: 'id', description: 'docs.UUID_DEL_PRODUCTO' })
   @ApiResponse({ status: 200, type: Producto })
   @ApiResponse({ status: 404, description: 'docs.PRODUCTO_NO_ENCONTRADO' })
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Producto> {
-    return this.productoService.findOne(id);
+  findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: { user?: { rol?: string } }
+  ): Promise<Producto> {
+    const userRole = req.user?.rol;
+    return this.productoService.findOne(id, userRole);
   }
 
   @Patch(':id')
@@ -115,9 +121,9 @@ export class ProductoController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateProductoDto: UpdateProductoDto,
-    @Request() req: any
+    @Req() req: { user: { id: string } }
   ): Promise<Producto> {
-    const userId = req.user?.sub as string;
+    const userId = req.user.id;
     return this.productoService.update(id, updateProductoDto, userId);
   }
 
@@ -128,9 +134,9 @@ export class ProductoController {
   @ApiResponse({ status: 204, description: 'docs.PRODUCTO_ELIMINADO' })
   remove(
     @Param('id', ParseUUIDPipe) id: string,
-    @Request() req: any
+    @Req() req: { user: { id: string } }
   ): Promise<void> {
-    const userId = req.user?.sub as string;
+    const userId = req.user.id;
     return this.productoService.remove(id, userId);
   }
 }

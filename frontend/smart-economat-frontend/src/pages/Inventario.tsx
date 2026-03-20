@@ -14,6 +14,7 @@ import {
   MenuItem,
   Tooltip,
   SelectChangeEvent,
+  Stack,
 } from '@mui/material';
 import { Autocomplete, CircularProgress } from '@mui/material';
 import DataTable, { Column } from '../components/ui/DataTable';
@@ -32,6 +33,7 @@ import type { Ubicacion } from '../services/ubicacion.types';
 import UbicacionesModal from '../components/inventario/UbicacionesModal';
 import InventoryDetailModal from '../components/inventario/InventoryDetailModal';
 import { useToast } from '../store/toast.hooks';
+import { usePermission } from '../store/auth.hooks';
 import {
   searchProductoProveedor,
   type ProductoProveedorOption,
@@ -92,7 +94,6 @@ const Inventario: React.FC = () => {
 
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
   const [isUbicacionesModalOpen, setIsUbicacionesModalOpen] = useState(false);
-
   const toast = useToast();
 
   const loadUbicaciones = useCallback(async () => {
@@ -316,6 +317,12 @@ const Inventario: React.FC = () => {
     setPage(1);
   }, [searchTerm, filters]);
 
+  const canAjustar = usePermission('inventario:ajustar_stock');
+  const canCrear = usePermission('inventario:crear');
+  const canGestionarUbicaciones = usePermission(
+    'inventario:gestionar_ubicaciones'
+  );
+
   const columns: Column<InventarioPorProducto>[] = [
     { id: 'nombre', label: 'Producto' },
     {
@@ -382,7 +389,7 @@ const Inventario: React.FC = () => {
       label: 'Acciones',
       align: 'right',
       render: (row) => (
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+        <Stack direction="row" spacing={1} justifyContent="flex-end">
           <Tooltip title="Ver Detalles y Lotes">
             <IconButton
               size="small"
@@ -396,20 +403,22 @@ const Inventario: React.FC = () => {
               <VisibilityIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Auditar / Conciliar Stock">
-            <IconButton
-              size="small"
-              color="secondary"
-              onClick={() => {
-                setSelectedProductId(row.productoId);
-                setDetailMode('audit');
-                setDetailModalOpen(true);
-              }}
-            >
-              <SyncAltIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Box>
+          {canAjustar && (
+            <Tooltip title="Auditar / Conciliar Stock">
+              <IconButton
+                size="small"
+                color="secondary"
+                onClick={() => {
+                  setSelectedProductId(row.productoId);
+                  setDetailMode('audit');
+                  setDetailModalOpen(true);
+                }}
+              >
+                <SyncAltIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Stack>
       ),
     },
   ];
@@ -427,18 +436,26 @@ const Inventario: React.FC = () => {
         searchId="search-inventario"
         totalItems={totalItems}
         totalItemsLabel="productos"
-        primaryAction={{
-          label: 'Añadir al inventario',
-          onClick: handleOpenCreate,
-          icon: <AddIcon />,
-          id: 'btn-add-inventario',
-        }}
-        secondaryAction={{
-          label: 'Gestionar Ubicaciones',
-          onClick: () => setIsUbicacionesModalOpen(true),
-          icon: <SettingsIcon />,
-          id: 'btn-manage-locations',
-        }}
+        primaryAction={
+          canCrear
+            ? {
+                label: 'Añadir al inventario',
+                onClick: handleOpenCreate,
+                icon: <AddIcon />,
+                id: 'btn-add-inventario',
+              }
+            : undefined
+        }
+        secondaryAction={
+          canGestionarUbicaciones
+            ? {
+                label: 'Gestionar Ubicaciones',
+                onClick: () => setIsUbicacionesModalOpen(true),
+                icon: <SettingsIcon />,
+                id: 'btn-manage-locations',
+              }
+            : undefined
+        }
         onViewModeChange={undefined}
         filters={
           <Box width="100%">

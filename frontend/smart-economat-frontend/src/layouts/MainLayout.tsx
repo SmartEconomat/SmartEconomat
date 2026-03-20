@@ -32,6 +32,7 @@ import PersonIcon from '@mui/icons-material/PersonOutlined';
 import LogoutIcon from '@mui/icons-material/LogoutOutlined';
 import { menuItems } from '../utils/config/menuConfig';
 import { useAuth } from '../store/auth.hooks';
+import { hasPermission } from '../utils/auth/permissionUtils';
 import { useThemeContext } from '../store/theme.hooks';
 import { getRoleColor } from '../utils/theme/roleColors';
 import SettingsMenu from '../components/common/Settings/SettingsMenu';
@@ -214,9 +215,19 @@ export default function MainLayout() {
         {menuItems
           .filter((item) => item.showInMenu)
           .filter((item) => {
-            if (!item.roles) return true;
-            const userRole = user?.rol?.toUpperCase() || '';
-            return item.roles.includes(userRole);
+            // Si el item tiene un requisito de permiso específico, verificarlo usando la utilidad
+            if (item.permiso) {
+              return hasPermission(user, item.permiso);
+            }
+            // Si no tiene permiso pero sí roles (fallback legado)
+            if (item.roles) {
+              const userRole = user?.rol?.toUpperCase() || '';
+              return item.roles
+                .map((role) => role.toUpperCase())
+                .includes(userRole);
+            }
+            // Si no tiene restricciones, mostrar
+            return true;
           })
           .map((item) => (
             <ListItem key={item.path} disablePadding sx={{ display: 'block' }}>

@@ -9,7 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
-  Request,
+  Req,
 } from '@nestjs/common';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { ParseUUIDv7Pipe } from '../../../common/pipes';
@@ -36,9 +36,11 @@ export class PedidoController {
 
   @Post()
   @RequirePermissions('pedidos:crear')
-  @HttpCode(HttpStatus.CREATED)
-  create(@Body() dto: CreatePedidoDto, @Request() req: any): Promise<Pedido> {
-    const userId = req.user.id as string;
+  create(
+    @Body() dto: CreatePedidoDto,
+    @Req() req: { user: { id: string } }
+  ): Promise<Pedido> {
+    const userId = req.user.id;
     return this.pedidoService.create(dto, userId);
   }
 
@@ -54,26 +56,31 @@ export class PedidoController {
       createdAt: 'createdAt',
       updatedAt: 'updatedAt',
     })
-    query: PaginationQueryDto
+    query: PaginationQueryDto,
+    @Req() req: { user?: { rol?: string } }
   ): Promise<PaginatedResponseDto<Pedido>> {
-    return this.pedidoService.findAll(query);
+    const userRole = req.user?.rol;
+    return this.pedidoService.findAll(query, userRole);
   }
 
   @Post('from-recipes')
   @RequirePermissions('pedidos:crear')
-  @HttpCode(HttpStatus.CREATED)
   createFromRecipes(
     @Body() dto: GeneratePedidoFromRecetasDto,
-    @Request() req: any
+    @Req() req: { user: { id: string } }
   ): Promise<Pedido> {
-    const userId = req.user.id as string;
+    const userId = req.user.id;
     return this.recetaToPedidoService.generateFromRecetas(dto, userId);
   }
 
   @Get(':id')
   @RequirePermissions('pedidos:ver')
-  findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Pedido> {
-    return this.pedidoService.findOne(id);
+  findOne(
+    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Req() req: { user?: { rol?: string } }
+  ): Promise<Pedido> {
+    const userRole = req.user?.rol;
+    return this.pedidoService.findOne(id, userRole);
   }
 
   @Patch(':id')

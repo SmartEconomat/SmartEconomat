@@ -57,14 +57,21 @@ export class IncidenciaResuelaService {
   }
 
   async findAll(
-    query: PaginationQueryDto
+    query: PaginationQueryDto,
+    userRole?: string
   ): Promise<PaginatedResponseDto<IncidenciaResuelta>> {
-    return this.incidenciaResuelaRepository.findAllPaginated(query);
+    return this.incidenciaResuelaRepository.findAllPaginated(query, userRole);
   }
 
-  async findOne(id: string): Promise<IncidenciaResuelta> {
+  async findOne(id: string, userRole?: string): Promise<IncidenciaResuelta> {
+    const isAdmin =
+      userRole?.toUpperCase() === 'ADMIN' ||
+      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
+      userRole?.toUpperCase() === 'SUPER_ADMIN';
+
     const resolucion = await this.incidenciaResuelaRepository.findOne({
       where: { id },
+      withDeleted: isAdmin,
       relations: ['incidencia', 'usuarioResolutor'],
     });
 
@@ -103,6 +110,6 @@ export class IncidenciaResuelaService {
     incidencia.observacionesResolucion = undefined;
     await this.incidenciaRepository.save(incidencia);
 
-    await this.incidenciaResuelaRepository.remove(resolucion);
+    await this.incidenciaResuelaRepository.softDelete(id);
   }
 }

@@ -1,6 +1,6 @@
 # 🔐 Sistema de Roles y Permisos - SmartEconomat
 
-Este documento detalla la jerarquía de accesos y las capacidades específicas de cada rol dentro del sistema SmartEconomat. La seguridad se basa en una estructura de **RBAC (Role-Based Access Control)** con permisos granulares por módulo y acción.
+Este documento detalla la jerarquía de accesos y las capacidades específicas de cada rol dentro del sistema SmartEconomat. La seguridad se basa en una estructura de **RBAC (Role-Based Access Control)** dinámica con 153 permisos granulares gestionados desde base de datos.
 
 ---
 
@@ -8,80 +8,79 @@ Este documento detalla la jerarquía de accesos y las capacidades específicas d
 
 | Rol | Nivel de Acceso | Descripción |
 | :--- | :--- | :--- |
-| **SUPER_ADMIN** | 🔴 Total | Acceso absoluto a todas las funciones y configuraciones del sistema. |
-| **ADMINISTRADOR** | 🟠 Alto | Gestión completa del economato y de los usuarios. |
-| **PROFESOR** | 🔵 Operativo | Gestión del día a día, recetas y supervisión de alumnos. |
-| **ALUMNO** | 🟢 Consulta | Acceso limitado para visualización de catálogo y stock. |
+| **SUPER_ADMIN** | 🔴 Total | Acceso absoluto a configuraciones raíz, plantillas de roles y borrado físico. |
+| **ADMINISTRADOR** | 🟠 Alto | Gestión completa del centro, usuarios y validación de profesores. |
+| **PROFESOR** | 🔵 Operativo | Gestión del día a día, recetas, inventario y supervisión de alumnos. |
+| **ALUMNO** | 🟢 Consulta | Acceso limitado para visualización de catálogo, stock y dashboard. |
 
 ---
 
 ## 📝 Detalle por Rol
 
 ### 👑 SUPER_ADMIN
-Es el perfil técnico y de máximo nivel. Generalmente reservado para mantenimiento del sistema.
+Es el perfil técnico de mantenimiento. 
 - **Acciones permitidas:**
-  - ✅ **TODO:** Sin restricciones.
-  - ✅ Gestión de la arquitectura de seguridad (Crear/Eliminar Permisos).
-  - ✅ Gestión de plantillas de roles.
-  - ✅ Eliminación física/permanente de registros críticos.
+  - ✅ **Control Total:** Puede realizar cualquier acción en cualquier módulo.
+  - ✅ **Meta-Seguridad:** Es el único que puede alterar la definición de permisos base y las plantillas protegidas.
+  - ✅ **Visibilidad Total:** Ve todos los registros, incluidos aquellos con Soft Delete, y puede realizar borrados físicos.
 
 ---
 
 ### 👔 ADMINISTRADOR
-Responsable principal del centro y de la gestión humana del sistema.
+Responsable de la gestión administrativa y humana del economato.
 - **Acciones permitidas:**
-  - ✅ **Gestión de Usuarios:** Crear, editar, activar/desactivar y resetear contraseñas de cualquier usuario.
-  - ✅ **Operaciones Totales:** Control total sobre Productos, Pedidos, Albaranes, Recepciones e Incidencias.
-  - ✅ **Inventario:** Ajustes de stock manuales y gestión de ubicaciones.
-  - ✅ **Seguridad:** Puede ver y gestionar permisos, pero tiene restricciones en la alteración de plantillas raíz que afecten al Super Admin.
-- **Lo que NO puede hacer:**
-  - ❌ Eliminar el rol de SUPER_ADMIN o modificar sus propios permisos base si están bloqueados por sistema.
+  - ✅ **Gestión de Usuarios:** Crear, editar y activar usuarios. Validación obligatoria de nuevas cuentas de Profesores.
+  - ✅ **Control de Inventario:** Gestión de ubicaciones y ajustes de stock manuales.
+  - ✅ **Auditoría:** Acceso a historial de movimientos y visualización de registros eliminados (Soft Delete).
+  - ✅ **Seguridad Granular:** Puede otorgar o denegar permisos específicos a usuarios individuales mediante checklists en el perfil de usuario.
 
 ---
 
 ### 👨‍🏫 PROFESOR
-Perfil orientado a la docencia y la operatividad del economato.
+Perfil centrado en la operativa docente y la gestión de sus alumnos vinculados.
 - **Acciones permitidas:**
-  - ✅ **Catálogo:** Crear y editar Productos (sin eliminar).
-  - ✅ **Operativa:** Crear Pedidos, Recepciones y registrar Movimientos.
-  - ✅ **Recetas:** Crear, editar, duplicar y ejecutar producciones (cocinado).
-  - ✅ **Alumnos:** Gestionar "Slots" de alumnos, activarlos y ver sus estadísticas.
-  - ✅ **Dashboard:** Ver estadísticas de consumo y exportar reportes.
-- **Restricciones Críticas:**
-  - ❌ **SIN ELIMINACIÓN:** Por seguridad, este rol no puede eliminar registros de productos, pedidos o movimientos realizados.
-  - ❌ **SIN GESTIÓN DE USUARIOS:** No puede ver ni editar otros profesores o administradores.
+  - ✅ **Operativa de Stock:** Crear productos, pedidos, recepciones y registrar mermas.
+  - ✅ **Gestión de Recetas:** Ciclo completo de recetas: creación, edición, duplicado y ejecución de producción.
+  - ✅ **Sistema Educativo:** Generación de **Slots** (códigos de clase) y activación de sus propios alumnos.
+  - ✅ **Incidencias:** Registro y resolución de incidencias operativas.
+- **Restricciones:**
+  - ❌ **Sin Borrado:** No puede eliminar productos, pedidos ni registros críticos (solo lectura de lo existente).
+  - ❌ **Aislamiento:** Solo gestiona a los alumnos vinculados a sus propios códigos de clase.
 
 ---
 
 ### 🎓 ALUMNO
-Perfil de consulta enfocado en el aprendizaje y la visualización de recursos.
+Perfil de consulta académica.
 - **Acciones permitidas:**
-  - ✅ **Lectura:** Ver el catálogo de productos y sus detalles (alérgenos, proveedores).
-  - ✅ **Consulta:** Ver el stock actual en inventario y ubicaciones de almacén.
-  - ✅ **Estadísticas:** Ver el dashboard de estadísticas generales.
-  - ✅ **Albaranes:** Visualizar albaranes existentes.
-- **Restricciones Críticas:**
-  - ❌ **SÓLO LECTURA:** No puede crear, editar ni eliminar absolutamente nada.
-  - ❌ **SIN GESTIÓN:** No tiene acceso a módulos de usuarios, proveedores, incidencias ni configuración.
+  - ✅ **Aprendizaje:** Visualización detallada del catálogo de productos, alérgenos y proveedores vincualdos.
+  - ✅ **Stock:** Consulta de existencias por ubicación en tiempo real.
+  - ✅ **Dashboard:** Acceso a estadísticas de consumo y tendencias del economato.
+- **Restricciones:**
+  - ❌ **Solo Lectura:** No posee permisos de creación, edición ni eliminación en ningún módulo operativo.
 
 ---
 
-## 📂 Matriz de Módulos y Permisos
+## 📂 Matriz de Capacidades
 
 | Módulo | SUPER_ADMIN | ADMIN | PROFESOR | ALUMNO |
 | :--- | :---: | :---: | :---: | :---: |
-| **Usuarios** | Full | Full | ❌ | ❌ |
-| **Productos** | Full | Full | Crear/Editar | Ver |
-| **Pedidos** | Full | Full | Crear/Editar | ❌ |
-| **Recepciones** | Full | Full | Crear/Editar | ❌ |
-| **Incidencias** | Full | Full | Crear/Editar/Res. | ❌ |
-| **Inventario** | Full | Full | Ajustar Stock | Ver |
-| **Recetas** | Full | Full | Full (sin elim.) | ❌ |
-| **Roles/Permisos** | Full | Ver/Gest. | ❌ | ❌ |
-| **Dashboard** | Full | Full | Ver | Ver |
+| **Gestión Usuarios** | Full | Full | Solo propios Alumnos | ❌ |
+| **Productos** | Full | Full | Crear / Editar | Solo Ver |
+| **Inventario** | Full | Full | Ajustar Stock | Solo Ver |
+| **Pedidos / Recepción** | Full | Full | Operar (Sin Eliminar) | ❌ |
+| **Recetas / Producción**| Full | Full | Operar (Sin Eliminar) | ❌ |
+| **Incidencias / Merma**  | Full | Full | Crear / Resolver | ❌ |
+| **Roles / Permisos** | Config. | Asignar | ❌ | ❌ |
+| **Dashboard / Stats** | Full | Full | Ver / Exportar | Solo Ver |
 
 ---
 
-## 💡 Notas Técnicas
-- **Soft Delete:** La mayoría de las eliminaciones son "lógicas". Los administradores pueden ver registros eliminados, pero los profesores no.
-- **Trazabilidad:** Cada vez que el PROFESOR o ALUMNO realiza una acción (reducida al login/lectura), el sistema registra el `userId` en los movimientos y logs de auditoría para asegurar un entorno educativo responsable.
+## 💡 Notas de Implementación
+1.  **Transversalidad**: El sistema comprueba permisos tanto en el frontend (para ocultar botones) como en el backend (Guards) para asegurar la integridad.
+2.  **Soft Delete**: Los registros "eliminados" por un Administrador desaparecen para el Profesor y Alumno, pero permanecen accesibles para auditoría en el panel de Administración.
+3.  **Herencia**: Si un usuario tiene varios roles, sus permisos se suman. Si se le asigna un permiso individual extracurricular, este se añade a su lista final.
+
+---
+## 🔗 Relacionado
+- [Permisos Dinámicos (Técnico)](./security/permisos-dinamicos.md)
+- [Soft Delete (Arquitectura)](./architecture/soft-delete.md)

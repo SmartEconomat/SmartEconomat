@@ -10,9 +10,18 @@ export class IncidenciaRepository extends Repository<Incidencia> {
     super(Incidencia, dataSource.createEntityManager());
   }
 
-  findOneWithRelations(id: string): Promise<Incidencia | null> {
+  findOneWithRelations(
+    id: string,
+    userRole?: string
+  ): Promise<Incidencia | null> {
+    const isAdmin =
+      userRole?.toUpperCase() === 'ADMIN' ||
+      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
+      userRole?.toUpperCase() === 'SUPER_ADMIN';
+
     return this.findOne({
       where: { id },
+      withDeleted: isAdmin,
       relations: [
         'recepcion',
         'pedido',
@@ -31,8 +40,14 @@ export class IncidenciaRepository extends Repository<Incidencia> {
   }
 
   async findAllPaginated(
-    query: IncidenciaQueryDto
+    query: IncidenciaQueryDto,
+    userRole?: string
   ): Promise<PaginatedResponseDto<Incidencia>> {
+    const isAdmin =
+      userRole?.toUpperCase() === 'ADMIN' ||
+      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
+      userRole?.toUpperCase() === 'SUPER_ADMIN';
+
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 50);
     const sortBy = query.sortBy ?? 'createdAt';
@@ -45,6 +60,10 @@ export class IncidenciaRepository extends Repository<Incidencia> {
       .leftJoinAndSelect('incidencia.usuarioResolutor', 'usuarioResolutor')
       .leftJoinAndSelect('incidencia.lineas', 'lineas')
       .leftJoinAndSelect('lineas.pedidoProducto', 'pedidoProducto');
+
+    if (isAdmin) {
+      queryBuilder.withDeleted();
+    }
 
     if (query.searchTerm?.trim()) {
       const searchTerm = `%${query.searchTerm.trim().toLowerCase()}%`;

@@ -3,6 +3,7 @@ import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
 import { Profesor } from '../modules/profesor/profesor.entity/profesor.entity';
 import { Alumno } from '../modules/alumno/alumno.entity/alumno.entity';
 import { AlumnoSlot } from '../modules/profesor/profesor.entity/alumno-slot.entity';
+import { Rol } from '../modules/roles/rol.entity/rol.entity';
 import { rolUsuario, UserStatus } from '../modules/usuario/enums/usuario.enums';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 import * as bcrypt from 'bcrypt';
@@ -13,6 +14,30 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   await dataSource.transaction(async (manager) => {
     const defaultPassword = await bcrypt.hash('SmartEconomat2026!', 10);
+    const rolesRepo = manager.getRepository(Rol);
+
+    const rolesByName = new Map(
+      (
+        await rolesRepo.find({
+          where: [
+            { nombre: 'SUPER_ADMIN' },
+            { nombre: rolUsuario.ADMINISTRADOR },
+            { nombre: rolUsuario.PROFESOR },
+            { nombre: rolUsuario.ALUMNO },
+          ],
+        })
+      ).map((role) => [role.nombre, role])
+    );
+
+    const getSeedRole = (roleName: string) => {
+      const role = rolesByName.get(roleName);
+      if (!role) {
+        throw new Error(
+          `No existe el rol dinámico "${roleName}". Ejecuta primero roles-permisos.seeder.ts`
+        );
+      }
+      return role;
+    };
 
     let adminUser = await manager.findOne(Usuario, {
       where: { username: 'admin' },
@@ -24,8 +49,33 @@ export const runSeeder = async (dataSource: DataSource) => {
         email: 'admin@smarteconomat.com',
         rol: rolUsuario.ADMINISTRADOR,
         status: UserStatus.ACTIVE,
+        activo: true,
+        roles: [getSeedRole(rolUsuario.ADMINISTRADOR)],
       });
       await manager.save(adminUser);
+    } else {
+      adminUser.rol = rolUsuario.ADMINISTRADOR;
+      adminUser.status = UserStatus.ACTIVE;
+      adminUser.activo = true;
+      adminUser.roles = [getSeedRole(rolUsuario.ADMINISTRADOR)];
+      await manager.save(adminUser);
+    }
+
+    let superAdminUser = await manager.findOne(Usuario, {
+      where: { username: 'superAdmin' },
+    });
+    if (!superAdminUser) {
+      const superAdminPassword = await bcrypt.hash('SmartEconomat2026*', 10);
+      superAdminUser = manager.create(Usuario, {
+        username: 'superAdmin',
+        password: superAdminPassword,
+        email: 'superadmin@smarteconomat.com',
+        rol: rolUsuario.SUPER_ADMIN,
+        status: UserStatus.ACTIVE,
+        activo: true,
+        roles: [getSeedRole(rolUsuario.SUPER_ADMIN)],
+      });
+      await manager.save(superAdminUser);
     }
 
     const professorsToCreate = [
@@ -67,6 +117,7 @@ export const runSeeder = async (dataSource: DataSource) => {
           rol: rolUsuario.PROFESOR,
           status: UserStatus.ACTIVE,
           activo: true,
+          roles: [getSeedRole(rolUsuario.PROFESOR)],
         });
         await manager.save(profUser);
 
@@ -79,6 +130,11 @@ export const runSeeder = async (dataSource: DataSource) => {
         profEntity = await manager.findOne(Profesor, {
           where: { user: { id: profUser.id } },
         });
+        profUser.rol = rolUsuario.PROFESOR;
+        profUser.status = UserStatus.ACTIVE;
+        profUser.activo = true;
+        profUser.roles = [getSeedRole(rolUsuario.PROFESOR)];
+        await manager.save(profUser);
       }
 
       if (!profEntity) continue;
@@ -133,6 +189,7 @@ export const runSeeder = async (dataSource: DataSource) => {
             rol: rolUsuario.ALUMNO,
             status: statusValue,
             activo: statusValue === UserStatus.ACTIVE,
+            roles: [getSeedRole(rolUsuario.ALUMNO)],
           });
           await manager.save(studentUser);
 
@@ -146,10 +203,6 @@ export const runSeeder = async (dataSource: DataSource) => {
       }
     }
 
-    console.log(
-      SeederI18nHelper.getSeederSuccess(
-        'usuarios, profesores, aulas y alumnos detallados'
-      )
-    );
+    console.log(SeederI18nHelper.getSeederSuccess('usuarios'));
   });
 };

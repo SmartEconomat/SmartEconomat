@@ -1,6 +1,7 @@
 import { DataSource } from 'typeorm';
 import { Permiso } from '../modules/permisos/permiso.entity/permiso.entity';
 import { PlantillaRol } from '../modules/plantillas-roles/plantilla-rol.entity/plantilla-rol.entity';
+import { Rol } from '../modules/roles/rol.entity/rol.entity';
 import { rolUsuario } from '../modules/usuario/enums/usuario.enums';
 
 /**
@@ -735,6 +736,7 @@ const PERMISOS_BASE = [
 export async function seedRolesPermisos(dataSource: DataSource): Promise<void> {
   const permisoRepo = dataSource.getRepository(Permiso);
   const plantillaRepo = dataSource.getRepository(PlantillaRol);
+  const rolRepo = dataSource.getRepository(Rol);
 
   console.log('🚀 Iniciando seeder de permisos y plantillas...');
 
@@ -762,11 +764,11 @@ export async function seedRolesPermisos(dataSource: DataSource): Promise<void> {
   const todosPermisos = await permisoRepo.find({ where: { activo: true } });
 
   let superAdmin = await plantillaRepo.findOne({
-    where: { nombre: 'SUPER_ADMIN' },
+    where: { nombre: rolUsuario.SUPER_ADMIN },
   });
   if (!superAdmin) {
     superAdmin = plantillaRepo.create({
-      nombre: 'SUPER_ADMIN',
+      nombre: rolUsuario.SUPER_ADMIN,
       descripcion: 'Acceso total al sistema sin restricciones',
       esEditable: false,
       activo: true,
@@ -869,6 +871,97 @@ export async function seedRolesPermisos(dataSource: DataSource): Promise<void> {
       `✅ Plantilla ALUMNO creada (${permisosBasico.length} permisos)`
     );
   }
+
+  const systemRoles = [
+    {
+      nombre: rolUsuario.SUPER_ADMIN,
+      descripcion: 'Rol de sistema con acceso total al sistema',
+      permisos: todosPermisos,
+    },
+    {
+      nombre: rolUsuario.ADMINISTRADOR,
+      descripcion:
+        'Rol de sistema para administración integral del economato y usuarios',
+      permisos: administrador?.permisos?.length
+        ? administrador.permisos
+        : todosPermisos.filter(
+            (p) =>
+              (!p.codigo.startsWith('roles:') &&
+                !p.codigo.startsWith('permisos:')) ||
+              p.codigo === 'permisos:gestionar'
+          ),
+    },
+    {
+      nombre: rolUsuario.PROFESOR,
+      descripcion: 'Rol de sistema para gestión operativa del economato',
+      permisos: gestor?.permisos?.length
+        ? gestor.permisos
+        : todosPermisos.filter(
+            (p) =>
+              [
+                'productos',
+                'pedidos',
+                'recepciones',
+                'inventario',
+                'movimientos',
+                'merma',
+                'incidencias',
+                'recetas',
+                'dashboard',
+                'profesor',
+                'albaranes',
+                'ubicaciones',
+              ].includes(p.modulo) && !p.accion.includes('eliminar')
+          ),
+    },
+    {
+      nombre: rolUsuario.ALUMNO,
+      descripcion: 'Rol de sistema de acceso limitado para alumnado',
+      permisos: usuarioBasico?.permisos?.length
+        ? usuarioBasico.permisos
+        : todosPermisos.filter(
+            (p) =>
+              [
+                'productos',
+                'inventario',
+                'dashboard',
+                'albaranes',
+                'ubicaciones',
+                'alumno',
+              ].includes(p.modulo) &&
+              [
+                'listar',
+                'ver',
+                'ver_estadisticas',
+                'cambiar_profesor',
+              ].includes(p.accion)
+          ),
+    },
+  ];
+
+  for (const roleData of systemRoles) {
+    let rol = await rolRepo.findOne({
+      where: { nombre: roleData.nombre },
+      relations: ['permisos'],
+    });
+
+    if (!rol) {
+      rol = rolRepo.create({
+        nombre: roleData.nombre,
+        descripcion: roleData.descripcion,
+        esSistema: true,
+        activo: true,
+      });
+    }
+
+    rol.descripcion = roleData.descripcion;
+    rol.esSistema = true;
+    rol.activo = true;
+    rol.permisos = roleData.permisos;
+    await rolRepo.save(rol);
+  }
+
+  console.log(`✅ ${systemRoles.length} roles de sistema sincronizados`);
 
   console.log('🎉 Seeder de roles y permisos completado exitosamente');
 }

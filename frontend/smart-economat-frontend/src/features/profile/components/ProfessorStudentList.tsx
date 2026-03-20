@@ -248,7 +248,7 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
                                       {student.username}
                                     </Typography>
                                     <Chip
-                                      label={isActive ? 'ACTIVO' : 'INACTIVO'}
+                                      label={isActive ? 'ACTIVO' : 'PENDIENTE'}
                                       size="small"
                                       color={isActive ? 'success' : 'warning'}
                                       variant="filled"
@@ -277,7 +277,7 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
                                 <Tooltip
                                   title={
                                     isActive
-                                      ? 'Desactivar alumno'
+                                      ? 'Alumno ya activado'
                                       : 'Activar alumno'
                                   }
                                 >
@@ -287,11 +287,21 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
                                     onChange={() =>
                                       onToggleStatus(student.id, student.status)
                                     }
-                                    disabled={isSaving}
+                                    disabled={isSaving || isActive}
                                     color="success"
                                   />
                                 </Tooltip>
                               </Box>
+
+                              {!isActive && (
+                                <Typography
+                                  variant="caption"
+                                  color="warning.main"
+                                  sx={{ minWidth: { xs: 'auto', sm: 180 } }}
+                                >
+                                  Pendiente de activación por el profesor
+                                </Typography>
+                              )}
 
                               <Box display="flex" gap={0.5}>
                                 <Tooltip title="Gestionar Permisos">

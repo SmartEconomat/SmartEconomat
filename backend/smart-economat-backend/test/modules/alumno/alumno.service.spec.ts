@@ -18,6 +18,7 @@ describe('AlumnoService', () => {
   const mockAlumnoRepo = {};
   const mockDataSource = {
     transaction: jest.fn(),
+    getRepository: jest.fn(),
   };
 
   let service: AlumnoService;
@@ -28,22 +29,20 @@ describe('AlumnoService', () => {
   });
 
   function buildManager(options?: {
-    profesor?: Profesor | null;
     slot?: AlumnoSlot | null;
     existingUser?: Usuario | null;
+    alumnoRole?: Record<string, unknown> | null;
   }) {
     const entities: Array<Record<string, any>> = [];
-    const profesorValue =
-      options && 'profesor' in options
-        ? options.profesor
-        : ({ id: 'prof-1' } as Profesor);
 
     return {
       findOne: jest
         .fn()
-        .mockResolvedValueOnce(profesorValue)
         .mockResolvedValueOnce(options?.slot ?? null)
-        .mockResolvedValueOnce(options?.existingUser ?? null),
+        .mockResolvedValueOnce(options?.existingUser ?? null)
+        .mockResolvedValueOnce(
+          options?.alumnoRole ?? { id: 'rol-alumno', nombre: rolUsuario.ALUMNO }
+        ),
       create: jest.fn().mockImplementation((Entity: any, payload: object) => {
         const entity = Object.assign(new Entity(), payload) as Record<
           string,
@@ -51,6 +50,15 @@ describe('AlumnoService', () => {
         >;
         entities.push(entity);
         return entity;
+      }),
+      count: jest.fn().mockImplementation((_entity: any, query: any) => {
+        if (query?.where?.slot?.id === options?.slot?.id) {
+          return Array.isArray(options?.slot?.alumnos)
+            ? options.slot.alumnos.length
+            : 0;
+        }
+
+        return 0;
       }),
       save: jest.fn().mockImplementation(async (entity: any) => {
         if (entity instanceof Usuario) {
@@ -66,8 +74,17 @@ describe('AlumnoService', () => {
     };
   }
 
-  it('register crea un alumno inactivo con contraseña hasheada y slot nuevo', async () => {
-    const manager = buildManager();
+  it('register crea un alumno inactivo con contraseña hasheada en el slot existente', async () => {
+    const slot = {
+      id: 'slot-1',
+      aula: 'Aula A',
+      numeroClase: 1,
+      codigoSlot: 'AL-ABC123',
+      capacidad: 30,
+      alumnos: [],
+      profesor: { id: 'prof-1' } as Profesor,
+    } as unknown as AlumnoSlot;
+    const manager = buildManager({ slot });
     mockDataSource.transaction.mockImplementation((callback) =>
       callback(manager)
     );
@@ -75,9 +92,7 @@ describe('AlumnoService', () => {
     const result = await service.register({
       username: 'alumno.demo',
       password: 'Password123!',
-      aula: 'Aula A',
-      numeroClase: 1,
-      cialProfesor: 'CIAL-001',
+      codigoClase: 'AL-ABC123',
     });
 
     expect(result).toEqual(
@@ -88,7 +103,7 @@ describe('AlumnoService', () => {
       })
     );
 
-    const savedUser = manager.save.mock.calls[1][0] as Usuario;
+    const savedUser = manager.save.mock.calls[0][0] as Usuario;
     expect(savedUser.rol).toBe(rolUsuario.ALUMNO);
     expect(savedUser.status).toBe(UserStatus.INACTIVE);
     expect(savedUser.password).not.toBe('Password123!');
@@ -97,27 +112,35 @@ describe('AlumnoService', () => {
     ).resolves.toBe(true);
 
     expect(manager.create).toHaveBeenCalledWith(
-      AlumnoSlot,
-      expect.objectContaining({
-        aula: 'Aula A',
-        numeroClase: 1,
-      })
-    );
-    expect(manager.create).toHaveBeenCalledWith(
       Alumno,
       expect.objectContaining({
-        slot: expect.objectContaining({
-          aula: 'Aula A',
-          numeroClase: 1,
-        }),
+        slot,
       })
     );
   });
 
   it('register permite registrar varios alumnos para el mismo profesor en slots distintos', async () => {
     const profesor = { id: 'prof-shared' } as Profesor;
+    const slotA = {
+      id: 'slot-a',
+      aula: 'Aula Multi',
+      numeroClase: 1,
+      codigoSlot: 'AL-MULTI1',
+      capacidad: 30,
+      alumnos: [],
+      profesor,
+    } as unknown as AlumnoSlot;
+    const slotB = {
+      id: 'slot-b',
+      aula: 'Aula Multi',
+      numeroClase: 2,
+      codigoSlot: 'AL-MULTI2',
+      capacidad: 30,
+      alumnos: [],
+      profesor,
+    } as unknown as AlumnoSlot;
 
-    const managerA = buildManager({ profesor });
+    const managerA = buildManager({ slot: slotA });
     mockDataSource.transaction.mockImplementationOnce((callback) =>
       callback(managerA)
     );
@@ -125,12 +148,10 @@ describe('AlumnoService', () => {
     const alumnoA = await service.register({
       username: 'alumno.a',
       password: 'Password123!',
-      aula: 'Aula Multi',
-      numeroClase: 1,
-      cialProfesor: 'CIAL-SHARED',
+      codigoClase: 'AL-MULTI1',
     });
 
-    const managerB = buildManager({ profesor });
+    const managerB = buildManager({ slot: slotB });
     mockDataSource.transaction.mockImplementationOnce((callback) =>
       callback(managerB)
     );
@@ -138,28 +159,18 @@ describe('AlumnoService', () => {
     const alumnoB = await service.register({
       username: 'alumno.b',
       password: 'Password123!',
-      aula: 'Aula Multi',
-      numeroClase: 2,
-      cialProfesor: 'CIAL-SHARED',
+      codigoClase: 'AL-MULTI2',
     });
 
     expect(alumnoA.username).toBe('alumno.a');
     expect(alumnoB.username).toBe('alumno.b');
     expect(managerA.create).toHaveBeenCalledWith(
-      AlumnoSlot,
-      expect.objectContaining({
-        profesor,
-        aula: 'Aula Multi',
-        numeroClase: 1,
-      })
+      Alumno,
+      expect.objectContaining({ slot: slotA })
     );
     expect(managerB.create).toHaveBeenCalledWith(
-      AlumnoSlot,
-      expect.objectContaining({
-        profesor,
-        aula: 'Aula Multi',
-        numeroClase: 2,
-      })
+      Alumno,
+      expect.objectContaining({ slot: slotB })
     );
   });
 
@@ -167,10 +178,13 @@ describe('AlumnoService', () => {
     const manager = buildManager({
       slot: {
         id: 'slot-1',
-        aula: 'Aula A',
+        aula: 'Aula Used',
         numeroClase: 1,
-        alumno: { id: 'alumno-existente' } as Alumno,
-      } as AlumnoSlot,
+        capacidad: 1,
+        codigoSlot: 'AL-USED01',
+        alumnos: [{ id: 'alumno-existente' } as Alumno],
+        profesor: { id: 'prof-1' } as Profesor,
+      } as unknown as AlumnoSlot,
     });
     mockDataSource.transaction.mockImplementation((callback) =>
       callback(manager)
@@ -180,15 +194,23 @@ describe('AlumnoService', () => {
       service.register({
         username: 'alumno.ocupado',
         password: 'Password123!',
-        aula: 'Aula A',
-        numeroClase: 1,
-        cialProfesor: 'CIAL-001',
+        codigoClase: 'AL-USED01',
       })
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('register rechaza usernames ya existentes', async () => {
+    const slot = {
+      id: 'slot-dup',
+      aula: 'Aula B',
+      numeroClase: 3,
+      codigoSlot: 'AL-DUP01',
+      capacidad: 30,
+      alumnos: [],
+      profesor: { id: 'prof-1' } as Profesor,
+    } as unknown as AlumnoSlot;
     const manager = buildManager({
+      slot,
       existingUser: Object.assign(new Usuario(), { id: 'user-existing' }),
     });
     mockDataSource.transaction.mockImplementation((callback) =>
@@ -199,28 +221,49 @@ describe('AlumnoService', () => {
       service.register({
         username: 'duplicado',
         password: 'Password123!',
-        aula: 'Aula B',
-        numeroClase: 3,
-        cialProfesor: 'CIAL-001',
+        codigoClase: 'AL-DUP01',
       })
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
-  it('register falla si el profesor no existe', async () => {
-    const manager = buildManager({ profesor: null });
+  it('register falla si el código del slot no existe', async () => {
+    const manager = buildManager({ slot: null });
     mockDataSource.transaction.mockImplementation((callback) =>
       callback(manager)
     );
 
     await expect(
       service.register({
-        username: 'sin.profesor',
+        username: 'sin.slot',
         password: 'Password123!',
-        aula: 'Aula Z',
-        numeroClase: 9,
-        cialProfesor: 'CIAL-MISSING',
+        codigoClase: 'AL-MISSING',
       })
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('getSlotByCode devuelve la referencia visual del código', async () => {
+    const slot = {
+      id: 'slot-ref',
+      aula: 'Aula Ref',
+      numeroClase: 5,
+      codigoSlot: 'AL-REF05',
+      profesor: {
+        cial: 'CIAL-REF',
+        user: { username: 'profesor.ref' },
+      },
+    } as unknown as AlumnoSlot;
+
+    mockDataSource.getRepository.mockReturnValue({
+      findOne: jest.fn().mockResolvedValue(slot),
+    } as any);
+
+    await expect(service.getSlotByCode('al-ref05')).resolves.toEqual({
+      codigoClase: 'AL-REF05',
+      aula: 'Aula Ref',
+      numeroClase: 5,
+      profesor: 'profesor.ref',
+      cialProfesor: 'CIAL-REF',
+    });
   });
 
   it('changeProfesor permite al alumno mover su propio registro a un slot libre', async () => {

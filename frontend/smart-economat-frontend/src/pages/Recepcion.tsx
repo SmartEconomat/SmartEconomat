@@ -34,7 +34,8 @@ import {
   getProductoByBarcode,
   searchProductosByName,
 } from '../services/producto.service';
-// import { useAuth } from '../store/AuthContext'; // Removed as unused
+import { useNavigate } from 'react-router-dom';
+import { usePermission } from '../store/auth.hooks';
 import {
   CategoriaProducto,
   UnidadMedida,
@@ -124,7 +125,14 @@ const Recepcion: React.FC = () => {
   // Data
   const [pedidosDisponibles, setPedidosDisponibles] = useState<Pedido[]>([]);
   const [loadingPedidos, setLoadingPedidos] = useState(false);
-  // const { user } = useAuth(); // Comentado ya que no se usa y genera error de linting
+  const navigate = useNavigate();
+  const canCreate = usePermission('recepciones:crear');
+
+  useEffect(() => {
+    if (canCreate === false) {
+      navigate('/');
+    }
+  }, [canCreate, navigate]);
 
   useEffect(() => {
     void loadPedidos();

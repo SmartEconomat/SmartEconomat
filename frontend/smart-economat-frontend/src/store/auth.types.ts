@@ -4,11 +4,16 @@ export interface User {
   email: string;
   rol: string;
   username?: string;
+  permisos?: string[];
 }
 
 export interface AuthContextType {
   isAuthenticated: boolean;
+  isAuthResolved: boolean;
+  isSessionVerified: boolean;
+  verifiedToken: string | null;
   user: User | null;
   login: (userData: User, token: string) => void;
   logout: () => void;
+  refreshUser: () => Promise<User | null>;
 }
