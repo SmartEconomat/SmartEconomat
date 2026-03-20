@@ -10,6 +10,7 @@
     "@mui/material": "^7.3.7",
     "@mui/x-date-pickers": "^8.27.2",
     "@nestjs/common": "^11.1.16",
+    "@rollup/rollup-win32-x64-msvc": "^4.59.0",
     "@sentry/react": "^10.43.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
