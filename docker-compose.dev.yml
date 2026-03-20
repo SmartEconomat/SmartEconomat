@@ -1,33 +1,5 @@
 name: smarteconomat-dev
-
-# =============================================================================
-# ESTRATEGIA DE VOLÚMENES (DUAL VOLUME PATTERN):
-#
-# Para cada servicio con Node.js:
-#   - BIND MOUNT: ./sourceDir:/app  → solo el código fuente del host
-#   - VOLUMEN ANÓNIMO NOMBRADO: service_node_modules:/app/node_modules
-#
-# Por qué funciona:
-#   Docker aplica los volúmenes DESPUÉS del bind mount. El volumen anónimo
-#   "tapa" la carpeta /app/node_modules del bind mount. Result: node_modules
-#   vive EXCLUSIVAMENTE dentro del volumen Docker. El host no necesita tener
-#   node_modules ni npm instalados.
-#
-# Por qué es necesario:
-#   Sin el volumen anónimo, el bind mount expone la carpeta node_modules del
-#   host (vacía, porque no corremos npm install localmente). Node.js fallaría
-#   con "Cannot find module" en el primer import.
-#
-# PERMISOS UID/GID:
-#   En Linux, si el UID del host ≠ 1000, los archivos creados por el contenedor
-#   (ej. uploads) serían de root en el host. Pasamos UID/GID como ARG al build
-#   y como user: en runtime para que los archivos queden con el owner correcto.
-#   En macOS/Windows Docker Desktop, los bind mounts usan un layer de
-#   virtualización y el UID mapping es automático → el valor se ignora.
-# =============================================================================
-
 services:
-  # ── PostgreSQL ─────────────────────────────────────────────────────────────
   db:
     build:
       context: ./database
@@ -35,7 +7,7 @@ services:
     image: smarteconomat-db:dev
     env_file: .env.dev
     ports:
-      - '${DB_PORT:-5432}:5432'
+      - '${DB_PORT}:5432'
     volumes:
       - database_dev:/var/lib/postgresql/data
     healthcheck:
@@ -43,63 +15,32 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
-      start_period: 10s
+      start_period: 5s
+      start_interval: 1s
     networks:
       - smarteconomat-dev-network
 
-  # ── Redis ──────────────────────────────────────────────────────────────────
   redis:
-    image: redis:7-alpine
+    image: redis:alpine
     command: redis-server --appendonly yes
     volumes:
       - redis_dev:/data
-    healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
-      interval: 5s
-      timeout: 3s
-      retries: 5
     networks:
       - smarteconomat-dev-network
 
-  # ── Backend (NestJS + TypeScript) ──────────────────────────────────────────
   backend:
     build:
       context: ./backend/smart-economat-backend
       dockerfile: ../Dockerfile.dev
-      args:
-        # Pasar UID/GID del host para que los archivos creados en el contenedor
-        # (ej. uploads/) tengan el owner correcto en el sistema de archivos del host.
-        # En macOS/Windows (Docker Desktop), estos valores son ignorados por el
-        # hypervisor y el mapping de permisos es transparente.
-        DEV_UID: '${UID:-1000}'
-        DEV_GID: '${GID:-1000}'
     image: smarteconomat-backend:dev
-    # user: sincroniza el proceso con el UID/GID del host en runtime.
-    # Complementa el chown del Dockerfile.dev.
-    user: '${UID:-1000}:${GID:-1000}'
     ports:
-      - '${BACKEND_PORT:-3000}:3000'
+      - '${BACKEND_PORT}:${BACKEND_PORT}'
     env_file: .env.dev
     environment:
-      - NODE_ENV=development
       - HOME=/tmp
-      # ── Chokidar / File Watching ──────────────────────────────────────────
-      # CHOKIDAR_USEPOLLING: SIEMPRE true en Docker.
-      # Razón: macOS con Docker Desktop y Windows WSL2/Hyper-V NO implementan
-      # inotify sobre bind mounts. Sin polling, nest start --watch nunca detecta
-      # cambios en los archivos fuente. En Linux nativo, el overhead es < 0.3% CPU.
       - CHOKIDAR_USEPOLLING=true
-      # CHOKIDAR_INTERVAL: frecuencia de polling en ms. 500 es el balance
-      # entre reactividad y carga de CPU. Reducir a 300 si se quiere más velocidad,
-      # aumentar a 1000 en máquinas lentas o con muchos archivos.
-      - CHOKIDAR_INTERVAL=500
-      # WATCHPACK_POLLING: preventivo. Si en el futuro se introduce alguna
-      # herramienta webpack-based (ej. un plugin de NestJS), ya estará activo.
-      - WATCHPACK_POLLING=true
-      # TypeScript: forzar estrategia de polling para WSL2/macOS (fs events limitados)
-      - TSC_WATCHFILE=dynamicPriorityPolling
-      - TSC_WATCHDIRECTORY=dynamicPriorityPolling
-      # ── Info del anfitrión ────────────────────────────────────────────────
+      - CHOKIDAR_INTERVAL=1000
+      # ── Info del anfitrión ──
       - HOST_USER=${USER:-}
       - HOST_HOSTNAME=${HOSTNAME:-}
       - HOST_PWD=${PWD:-}
@@ -107,77 +48,45 @@ services:
       - HOST_MAC=${HOST_MAC:-}
       - HOST_GIT_USER=${GIT_USER:-}
       - HOST_GIT_EMAIL=${GIT_EMAIL:-}
-      # ── Servicios internos ────────────────────────────────────────────────
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - DB_HOST=db
-    # tty + stdin_open: mejora la DX en terminal (colores, Ctrl+C limpio).
-    # Sin esto, los logs de NestJS pierden el color ANSI.
-    tty: true
-    stdin_open: true
+    command: sh -c "sh scripts/ensure-deps.sh && npx ts-node scripts/log-user-info.ts && npm run start:dev"
     depends_on:
       db:
         condition: service_healthy
       redis:
-        condition: service_healthy
+        condition: service_started
     networks:
       - smarteconomat-dev-network
     volumes:
-      # 1. Bind mount del código fuente ÚNICAMENTE
       - ./backend/smart-economat-backend:/app
-      # 2. Volumen anónimo para node_modules (aísla del bind mount del host)
-      - backend_node_modules:/app/node_modules
-      # 3. Volumen anónimo para dist (evitar que el bind mount borre el build)
-      - backend_dist:/app/dist
-      # 4. Solo lectura: gitconfig del host para scripts que usan git
+      - /app/node_modules # Volumen anónimo para aislar node_modules
+      - /app/dist # Volumen anónimo para evitar colisiones de permisos
+      - ./:/project_root
       - ~/.gitconfig:/tmp/.gitconfig:ro
 
-  # ── Frontend (React + Vite) ────────────────────────────────────────────────
   frontend:
     build:
       context: ./frontend/smart-economat-frontend
       dockerfile: ../Dockerfile.dev
-      args:
-        DEV_UID: '${UID:-1000}'
-        DEV_GID: '${GID:-1000}'
     image: smarteconomat-frontend:dev
-    user: '${UID:-1000}:${GID:-1000}'
     ports:
-      - '${FRONTEND_PORT:-5173}:5173'
+      - '${FRONTEND_PORT}:5173'
     env_file: .env.dev
     environment:
-      - NODE_ENV=development
       - HOME=/tmp
-      # ── File Watching para Vite ─────────────────────────────────────────
-      # Vite internamente también usa chokidar. Aunque vite.config.ts ya
-      # tiene usePolling:true hardcoded, CHOKIDAR_USEPOLLING lo refuerza como
-      # variable de entorno para cualquier watcher que Vite cargue dinámicamente.
-      - CHOKIDAR_USEPOLLING=true
-      - CHOKIDAR_INTERVAL=500
-    tty: true
-    stdin_open: true
-    depends_on:
-      - backend
+    command: sh -c "sh scripts/ensure-deps.sh && npm run dev -- --host"
     networks:
       - smarteconomat-dev-network
     volumes:
-      # 1. Bind mount del código fuente
       - ./frontend/smart-economat-frontend:/app
-      # 2. Volumen anónimo para node_modules (aísla del bind mount del host)
-      - frontend_node_modules:/app/node_modules
+      - /app/node_modules # Volumen anónimo para aislar node_modules
 
-# ── Volúmenes nombrados ────────────────────────────────────────────────────────
+
 volumes:
   database_dev:
   redis_dev:
-  # node_modules de backend y frontend viven ÚNICAMENTE dentro de Docker.
-  # Nunca se sincronizan con el host. Sobreviven a `docker compose down` pero
-  # se eliminan con `docker compose down -v` (reset total).
-  backend_node_modules:
-  backend_dist:
-  frontend_node_modules:
 
-# ── Redes ──────────────────────────────────────────────────────────────────────
 networks:
   smarteconomat-dev-network:
     driver: bridge
