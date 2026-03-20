@@ -109,7 +109,6 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   let offProducts: OffProduct[] = [];
 
-  // OPTIMIZATION: Skip API in test environment, respect OFF_API_ENABLED in other envs
   const isTestEnv = process.env.NODE_ENV === 'test';
   const enableOffApi = !isTestEnv && process.env.OFF_API_ENABLED !== 'false';
 
@@ -250,10 +249,12 @@ export const runSeeder = async (dataSource: DataSource) => {
 
     for (const proveedor of proveedoresAleatorios) {
       const precioRandom = (Math.random() * (200 - 5) + 5).toFixed(2);
+      const mermaRandom = parseFloat((Math.random() * 15).toFixed(2));
       const pp = productoProveedorRepo.create({
         producto,
         proveedor,
         precioUnitario: parseFloat(precioRandom),
+        mermaEsperada: mermaRandom,
         marca: producto.marca,
         codigoBarras:
           producto.codigoBarras ||

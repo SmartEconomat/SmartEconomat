@@ -10,7 +10,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
+  Chip,
   Paper,
+  Stack,
   IconButton,
   Typography,
   Alert,
@@ -740,23 +742,145 @@ const Productos: React.FC = () => {
                     ? [
                         {
                           title: 'Proveedores asociados',
-                          fields: proveedoresAsociados.map(
-                            (pv, idx: number) => ({
-                              label:
-                                `Proveedor ${proveedoresAsociados.length > 1 ? idx + 1 : ''}`.trim(),
-                              value:
-                                [
-                                  pv.proveedor?.nombre ?? pv.nombre,
-                                  pv.marca && `Marca: ${pv.marca}`,
-                                  pv.precioUnitario &&
-                                    `Precio: ${pv.precioUnitario}€`,
-                                  pv.codigoBarras &&
-                                    `Cód. Barras: ${pv.codigoBarras}`,
-                                ]
-                                  .filter(Boolean)
-                                  .join(' · ') || '—',
-                              fullWidth: true,
-                            })
+                          content: (
+                            <Stack spacing={1.5}>
+                              {proveedoresAsociados.map((pv, idx: number) => (
+                                <Paper
+                                  key={pv.id || idx}
+                                  variant="outlined"
+                                  sx={{
+                                    p: 2,
+                                    borderColor: pv.esOptimo
+                                      ? 'success.main'
+                                      : 'divider',
+                                    bgcolor: pv.esOptimo
+                                      ? 'rgba(46, 125, 50, 0.06)'
+                                      : 'transparent',
+                                  }}
+                                >
+                                  <Box
+                                    sx={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'space-between',
+                                      mb: 1.5,
+                                    }}
+                                  >
+                                    <Typography
+                                      variant="subtitle2"
+                                      fontWeight={600}
+                                    >
+                                      {pv.proveedor?.nombre ??
+                                        pv.nombre ??
+                                        `Proveedor ${idx + 1}`}
+                                    </Typography>
+                                    {pv.esOptimo && (
+                                      <Chip
+                                        label={
+                                          pv.ahorroAbsolutoPct != null
+                                            ? `Mejor Opción · -${pv.ahorroAbsolutoPct.toFixed(1)}%`
+                                            : 'Mejor Opción'
+                                        }
+                                        size="small"
+                                        color="success"
+                                      />
+                                    )}
+                                  </Box>
+                                  <Box
+                                    sx={{
+                                      display: 'grid',
+                                      gridTemplateColumns: 'repeat(3, 1fr)',
+                                      gap: 1.5,
+                                    }}
+                                  >
+                                    {pv.precioUnitario != null && (
+                                      <Box>
+                                        <Typography
+                                          variant="caption"
+                                          color="text.secondary"
+                                          display="block"
+                                          sx={{
+                                            fontWeight: 600,
+                                            textTransform: 'uppercase',
+                                            letterSpacing: 0.5,
+                                            mb: 0.25,
+                                          }}
+                                        >
+                                          Precio
+                                        </Typography>
+                                        <Typography variant="body2">
+                                          {pv.precioUnitario.toFixed(2)} €
+                                        </Typography>
+                                      </Box>
+                                    )}
+                                    {pv.mermaEsperada != null && (
+                                      <Box>
+                                        <Typography
+                                          variant="caption"
+                                          color="text.secondary"
+                                          display="block"
+                                          sx={{
+                                            fontWeight: 600,
+                                            textTransform: 'uppercase',
+                                            letterSpacing: 0.5,
+                                            mb: 0.25,
+                                          }}
+                                        >
+                                          Merma
+                                        </Typography>
+                                        <Typography variant="body2">
+                                          {pv.mermaEsperada.toFixed(1)} %
+                                        </Typography>
+                                      </Box>
+                                    )}
+                                    {pv.costeEfectivoUnitario != null && (
+                                      <Box>
+                                        <Typography
+                                          variant="caption"
+                                          color="text.secondary"
+                                          display="block"
+                                          sx={{
+                                            fontWeight: 600,
+                                            textTransform: 'uppercase',
+                                            letterSpacing: 0.5,
+                                            mb: 0.25,
+                                          }}
+                                        >
+                                          Coste Real
+                                        </Typography>
+                                        <Typography
+                                          variant="body2"
+                                          sx={{
+                                            fontWeight: 700,
+                                            color: pv.esOptimo
+                                              ? 'success.main'
+                                              : 'text.primary',
+                                          }}
+                                        >
+                                          {pv.costeEfectivoUnitario.toFixed(2)}{' '}
+                                          €
+                                        </Typography>
+                                      </Box>
+                                    )}
+                                  </Box>
+                                  {(pv.marca || pv.codigoBarras) && (
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                      sx={{ mt: 1, display: 'block' }}
+                                    >
+                                      {[
+                                        pv.marca && `Marca: ${pv.marca}`,
+                                        pv.codigoBarras &&
+                                          `Cód. Barras: ${pv.codigoBarras}`,
+                                      ]
+                                        .filter(Boolean)
+                                        .join(' · ')}
+                                    </Typography>
+                                  )}
+                                </Paper>
+                              ))}
+                            </Stack>
                           ),
                         },
                       ]
