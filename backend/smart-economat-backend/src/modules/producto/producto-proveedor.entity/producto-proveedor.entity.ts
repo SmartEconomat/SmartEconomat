@@ -86,6 +86,17 @@ export class ProductoProveedor extends BaseEntity {
   })
   precioUnitario?: number;
 
+  @Column({
+    type: 'numeric',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+    name: 'merma_esperada',
+    default: 0,
+    transformer: new ColumnNumericTransformer(),
+  })
+  mermaEsperada?: number;
+
   /**
    * Referencia al Proveedor.
    * Constraint: No se puede eliminar el proveedor si tiene productos vinculados (RESTRICT).

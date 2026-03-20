@@ -5,10 +5,12 @@ import {
   Get,
   UseGuards,
   Request,
+  Response,
   HttpCode,
   HttpStatus,
   Patch,
 } from '@nestjs/common';
+import type { Response as ExpressResponse } from 'express';
 import { AuthService } from '../service/auth.service';
 import { RegisterUserDto } from '../dto/register-user.dto';
 import { LoginUserDto } from '../dto/login-user.dto';
@@ -30,7 +32,11 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() loginUserDto: LoginUserDto) {
+  async login(
+    @Body() loginUserDto: LoginUserDto,
+    @Response({ passthrough: true }) res: ExpressResponse
+  ) {
+    res.clearCookie('access_token');
     return this.authService.login(loginUserDto);
   }
 

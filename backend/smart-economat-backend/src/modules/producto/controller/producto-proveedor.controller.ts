@@ -20,6 +20,7 @@ import {
 import { ProductoProveedorService } from '../service/producto-proveedor.service';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { UpdatePrecioProductoDto } from '../dto/update-precio-producto.dto';
+import { UpdateMermaProveedorDto } from '../dto/update-merma-proveedor.dto';
 import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
 import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.entity';
 import { SearchProductoProveedorDto } from '../dto/search-producto-proveedor.dto';
@@ -68,6 +69,33 @@ export class ProductoProveedorController {
     );
   }
 
+  @Patch(':id/merma')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Actualizar la merma esperada de un producto-proveedor',
+  })
+  @ApiParam({ name: 'id', description: 'docs.ID_DEL_PRODUCTOPROVEEDOR' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Merma actualizada correctamente.',
+    type: ProductoProveedor,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'docs.PRODUCTO_PROVEEDOR_NO_ENCONTRADO',
+  })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'La merma esperada es igual a la actual.',
+  })
+  async updateMerma(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateMermaProveedorDto
+  ): Promise<ProductoProveedor> {
+    return this.productoProveedorService.updateMerma(id, dto);
+  }
+
   @Get('search')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.OK)
@@ -76,6 +104,35 @@ export class ProductoProveedorController {
   })
   async search(@Query() dto: SearchProductoProveedorDto) {
     return this.productoProveedorService.search(dto);
+  }
+
+  @Get('comparar/:productoId')
+  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Comparar proveedores de un producto por coste efectivo (precio + merma esperada)',
+    description:
+      'Calcula el coste efectivo unitario de cada proveedor usando: costeEfectivo = precio × (1 + merma/100). ' +
+      'Devuelve los proveedores ordenados de menor a mayor coste efectivo, indicando el ahorro respecto al más caro.',
+  })
+  @ApiParam({
+    name: 'productoId',
+    description: 'UUID v7 del producto a comparar',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description:
+      'Comparación de proveedores ordenada por coste efectivo ascendente.',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'No se encontraron proveedores con precio para este producto.',
+  })
+  async compararProveedores(
+    @Param('productoId', ParseUUIDPipe) productoId: string
+  ) {
+    return this.productoProveedorService.compararProveedores(productoId);
   }
 
   @Get(':id/historial')

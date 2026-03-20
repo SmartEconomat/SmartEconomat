@@ -48,6 +48,7 @@ function runScript(scriptName, index, total) {
     cwd: frontendRoot,
     stdio: 'inherit',
     env: process.env,
+    shell: true,
   });
 
   if (result.status !== 0) {

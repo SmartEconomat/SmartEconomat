@@ -69,6 +69,11 @@ export interface ProductoProveedor {
   marca?: string;
   codigoBarras?: string;
   precioUnitario?: number;
+  mermaEsperada?: number;
+  costeEfectivoUnitario?: number;
+  esOptimo?: boolean;
+  ahorroAbsoluto?: number;
+  ahorroAbsolutoPct?: number;
   proveedor?: {
     id: string;
     nombre: string;
