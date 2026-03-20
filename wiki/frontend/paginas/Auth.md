@@ -113,8 +113,24 @@ Esto garantiza coherencia con el resto de la aplicación y soporte automático d
 ## Seguridad y Rutas
 
 La ruta `/login` es una **ruta pública** gestionada por `PublicRoute.tsx`:
-- Si el usuario ya está autenticado (token válido en `AuthContext`), se redirige automáticamente a `/`.
-- No hay acceso al layout principal ni a rutas protegidas sin autenticación.
+- Si el usuario ya está autenticado y la sesión fue verificada por `AuthContext`, se redirige automáticamente a `/`.
+- No hay acceso al layout principal ni a rutas protegidas sin autenticación verificada.
+
+### Verificación de sesión actual
+
+El flujo de auth frontend quedó endurecido para no confiar solo en datos persistidos en navegador:
+
+1. `login()` persiste `token` y `user` localmente.
+2. `AuthContext` valida localmente el JWT mediante `jwtUtils`.
+3. Si el token es utilizable, consulta `/api/v1/usuarios/perfil` para obtener el perfil real.
+4. El perfil devuelto por backend sustituye permisos y datos persistidos localmente.
+5. Hasta terminar esa verificación, las rutas protegidas muestran `Spinner` y no renderizan páginas internas.
+
+### Consecuencias prácticas
+
+- Un JWT expirado o mal formado provoca `logout` y redirección a `/login`.
+- Un JWT cambiado manualmente en `localStorage` obliga a revalidar antes de abrir una vista protegida.
+- Un array `permisos` alterado manualmente no concede acceso real, porque `AuthContext` lo sustituye con los permisos confirmados por backend.
 
 ---
 
@@ -128,6 +144,8 @@ La ruta `/login` es una **ruta pública** gestionada por `PublicRoute.tsx`:
 | `src/features/auth/components/RegisterForm.tsx` | Formulario de registro |
 | `src/store/AuthContext.tsx` | Contexto de autenticación |
 | `src/routes/PublicRoute.tsx` | Guard de ruta pública |
+| `src/routes/ProtectedRoute.tsx` | Guard de sesión verificada y permiso por ruta |
+| `src/utils/auth/jwtUtils.ts` | Validación local mínima del JWT |
 | `src/layouts/AuthLayout.tsx` | Layout sin menú lateral |
 
 ---
@@ -136,5 +154,6 @@ La ruta `/login` es una **ruta pública** gestionada por `PublicRoute.tsx`:
 
 | Fecha | Cambio |
 |-------|--------|
+| 2026-03-20 | Verificación obligatoria de sesión con `/usuarios/perfil`, revalidación si cambia el token y bloqueo de rutas por permiso en frontend. |
 | 2026-02-28 | Rediseño completo: paneles deslizantes con Elastic Wall Peel, carrusel en AuthSlide, icono animado, overlays de feedback para login y registro. |
 | Anterior | Formulario simple centrado con toggle básico. |

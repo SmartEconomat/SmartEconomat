@@ -9,6 +9,9 @@ export interface User {
 
 export interface AuthContextType {
   isAuthenticated: boolean;
+  isAuthResolved: boolean;
+  isSessionVerified: boolean;
+  verifiedToken: string | null;
   user: User | null;
   login: (userData: User, token: string) => void;
   logout: () => void;
