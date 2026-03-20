@@ -88,8 +88,13 @@ export class InventarioService {
   }
 
   async findAll(
-    query: PaginationQueryDto
+    query: PaginationQueryDto,
+    userRole?: string
   ): Promise<PaginatedResponseDto<Inventario>> {
+    const isAdmin =
+      userRole?.toUpperCase() === 'ADMIN' ||
+      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
+      userRole?.toUpperCase() === 'SUPER_ADMIN';
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 50);
     const sortBy = query.sortBy ?? 'createdAt';
@@ -105,6 +110,7 @@ export class InventarioService {
       order: { [sortBy]: order },
       skip: (page - 1) * limit,
       take: limit,
+      withDeleted: isAdmin,
     });
 
     return {
@@ -116,7 +122,12 @@ export class InventarioService {
     };
   }
 
-  async findOne(id: string): Promise<Inventario> {
+  async findOne(id: string, userRole?: string): Promise<Inventario> {
+    const isAdmin =
+      userRole?.toUpperCase() === 'ADMIN' ||
+      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
+      userRole?.toUpperCase() === 'SUPER_ADMIN';
+
     const inventario = await this.inventarioRepository.findOne({
       where: { id },
       relations: [
@@ -125,6 +136,7 @@ export class InventarioService {
         'productoProveedor.proveedor',
         'ubicacion',
       ],
+      withDeleted: isAdmin,
     });
     if (!inventario) {
       throw new NotFoundException(I18nHelper.getError('INVENTARIO_NOT_FOUND'));

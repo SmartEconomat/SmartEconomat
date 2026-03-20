@@ -7,7 +7,10 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
+  Req,
 } from '@nestjs/common';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { UbicacionService } from '../service/ubicacion.service';
 import { CreateUbicacionDto } from '../dto/create-ubicacion.dto';
@@ -43,15 +46,21 @@ export class UbicacionController extends BaseController<
   @Get()
   @RequirePermissions('ubicaciones:listar')
   @ApiOperation({ summary: 'Obtener todas las ubicaciones' })
-  override findAll() {
-    return super.findAll({ page: 1, limit: 100 });
+  override findAll(
+    @Query() query: PaginationQueryDto,
+    @Req() req: { user?: { rol?: string } }
+  ) {
+    return super.findAll(query, req);
   }
 
   @Get(':id')
   @RequirePermissions('ubicaciones:ver')
   @ApiOperation({ summary: 'Obtener ubicación por ID' })
-  override findOne(@Param('id', ParseUUIDv7Pipe) id: string) {
-    return super.findOne(id);
+  override findOne(
+    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Req() req: { user?: { rol?: string } }
+  ) {
+    return super.findOne(id, req);
   }
 
   @Patch(':id')

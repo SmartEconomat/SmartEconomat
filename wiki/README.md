@@ -43,6 +43,7 @@ Documentación técnica y funcional del proyecto SmartEconomat, reorganizada por
 | [Modelo de datos](architecture/data-model.md) | Entidades y relaciones principales |
 | [UUID v7](architecture/uuid-v7.md) | Implementación de UUID v7 en BD y aplicación |
 | [UI inventario](architecture/ui-inventario.md) | Arquitectura de la interfaz de inventario |
+| [Soft Delete](architecture/soft-delete.md) | Sistema de borrado lógico global |
 
 ## Desarrollo
 
@@ -63,9 +64,11 @@ Documentación técnica y funcional del proyecto SmartEconomat, reorganizada por
 
 | Documento | Descripción |
 |-----------|-------------|
-| [Roles y permisos](security/roles-y-permisos.md) | Matriz de permisos por módulo |
-| [Permisos dinámicos](security/permisos-dinamicos.md) | Sistema RBAC dinámico |
-| [Auth sistema educativo](security/auth-sistema-educativo.md) | Registro, login y recuperación de contraseña |
+| [Roles y permisos](security/roles-y-permisos.md) | Jerarquía de accesos y matriz de capacidades |
+| [Permisos dinámicos](security/permisos-dinamicos.md) | Sistema RBAC (153 permisos), lógica y hooks |
+| [Login y Registro](security/login-registro.md) | Flujos de acceso, validación de CIAL y Slots |
+| [Auth sistema educativo](security/auth-sistema-educativo.md) | Vinculación profesor-alumno y ciclo de vida |
+| [RBAC detallado](security/rbac.md) | Matriz técnica completa de permisos |
 
 ## Módulos funcionales
 
@@ -84,6 +87,8 @@ Documentación técnica y funcional del proyecto SmartEconomat, reorganizada por
 | [Índice frontend](frontend/README.md) | Punto de entrada a la documentación de UI |
 | [Arquitectura UI](frontend/arquitectura.md) | Arquitectura de la interfaz |
 | [useBreakpoints](frontend/useBreakpoints.md) | Hook responsive centralizado |
+| [Hooks de Permisos](frontend/hooks-permisos.md) | Gestión reactiva de autorizaciones |
+| [Gestión de Usuarios](frontend/gestion-usuarios.md) | Vista consolidada de administración |
 
 ## Referencia y operación
 

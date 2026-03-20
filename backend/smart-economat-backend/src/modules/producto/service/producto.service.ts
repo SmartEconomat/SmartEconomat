@@ -98,8 +98,13 @@ export class ProductoService {
   }
 
   async findAll(
-    query: ProductFilterDto
+    query: ProductFilterDto,
+    userRole?: string
   ): Promise<PaginatedResponseDto<Producto>> {
+    const isAdmin =
+      userRole?.toUpperCase() === 'ADMIN' ||
+      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
+      userRole?.toUpperCase() === 'SUPER_ADMIN';
     const page = query.page ?? 1;
     const {
       skip,
@@ -116,6 +121,10 @@ export class ProductoService {
       .leftJoinAndSelect('producto.proveedores', 'proveedores')
       .leftJoinAndSelect('proveedores.proveedor', 'proveedor')
       .leftJoinAndSelect('producto.alergenos', 'alergenos');
+
+    if (isAdmin) {
+      queryBuilder.withDeleted();
+    }
 
     if (query.codigoBarras) {
       queryBuilder.andWhere('producto.codigoBarras = :codigoBarras', {
@@ -172,7 +181,9 @@ export class ProductoService {
     return { data: processedData, total, page, limit, totalPages };
   }
 
-  async findOne(id: string): Promise<Producto> {
+  async findOne(id: string, _userRole?: string): Promise<Producto> {
+    void _userRole;
+
     const producto = await this.productoRepository.findOne({
       where: { id },
       relations: ['proveedores', 'proveedores.proveedor', 'alergenos'],
@@ -260,10 +271,8 @@ export class ProductoService {
 
   async remove(id: string, userId: string): Promise<void> {
     const producto = await this.findOne(id);
-
     await this.productoRepository.update(id, { deletedBy: userId });
     const result = await this.productoRepository.softDelete(id);
-
     if (result.affected === 0) {
       throw new NotFoundException(I18nHelper.getError('PRODUCT_NOT_FOUND'));
     }

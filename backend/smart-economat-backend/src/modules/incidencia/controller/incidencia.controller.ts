@@ -9,6 +9,7 @@ import {
   Patch,
   Post,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { IncidenciaService } from '../service/incidencia.service';
@@ -50,15 +51,21 @@ export class IncidenciaController {
       'createdAt',
       'updatedAt',
     ])
-    query: IncidenciaQueryDto
+    query: IncidenciaQueryDto,
+    @Req() req: { user?: { rol?: string } }
   ): Promise<PaginatedResponseDto<Incidencia>> {
-    return this.incidenciaService.findAll(query);
+    const userRole = req.user?.rol;
+    return this.incidenciaService.findAll(query, userRole);
   }
 
   @Get(':id')
   @RequirePermissions('incidencias:ver')
-  findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Incidencia> {
-    return this.incidenciaService.findOne(id);
+  findOne(
+    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Req() req: { user?: { rol?: string } }
+  ): Promise<Incidencia> {
+    const userRole = req.user?.rol;
+    return this.incidenciaService.findOne(id, userRole);
   }
 
   @Patch(':id')

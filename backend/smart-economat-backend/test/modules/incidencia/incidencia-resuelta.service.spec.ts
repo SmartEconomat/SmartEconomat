@@ -10,6 +10,7 @@ describe('IncidenciaResuelaService', () => {
     findOne: jest.fn(),
     merge: jest.fn(),
     remove: jest.fn(),
+    softDelete: jest.fn(),
   };
   const mockIncidenciaRepo = {
     findOne: jest.fn(),
@@ -61,6 +62,6 @@ describe('IncidenciaResuelaService', () => {
     expect(incidencia.fechaResolucion).toBeNull();
     expect(incidencia.usuarioResolutor).toBeUndefined();
     expect(incidencia.observacionesResolucion).toBeUndefined();
-    expect(mockRepo.remove).toHaveBeenCalled();
+    expect(mockRepo.softDelete).toHaveBeenCalledWith('res-2');
   });
 });

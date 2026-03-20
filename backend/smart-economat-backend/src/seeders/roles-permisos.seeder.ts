@@ -764,11 +764,11 @@ export async function seedRolesPermisos(dataSource: DataSource): Promise<void> {
   const todosPermisos = await permisoRepo.find({ where: { activo: true } });
 
   let superAdmin = await plantillaRepo.findOne({
-    where: { nombre: 'SUPER_ADMIN' },
+    where: { nombre: rolUsuario.SUPER_ADMIN },
   });
   if (!superAdmin) {
     superAdmin = plantillaRepo.create({
-      nombre: 'SUPER_ADMIN',
+      nombre: rolUsuario.SUPER_ADMIN,
       descripcion: 'Acceso total al sistema sin restricciones',
       esEditable: false,
       activo: true,
@@ -874,7 +874,7 @@ export async function seedRolesPermisos(dataSource: DataSource): Promise<void> {
 
   const systemRoles = [
     {
-      nombre: 'SUPER_ADMIN',
+      nombre: rolUsuario.SUPER_ADMIN,
       descripcion: 'Rol de sistema con acceso total al sistema',
       permisos: todosPermisos,
     },

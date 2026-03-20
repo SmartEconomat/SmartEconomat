@@ -5,6 +5,7 @@ import {
   PaginatedResponse,
   ApiResponse,
   RolOption,
+  Permiso,
 } from '../types/usuario';
 import { ApiError, baseFetch, parseApiResponse } from './api.service';
 
@@ -27,11 +28,9 @@ const mapFrontendToBackend = (
 ): Record<string, unknown> => {
   const mapped: Record<string, unknown> = { ...data };
 
-  // Map Rol
+  // Map Rol (Asegurar upper case para compatibilidad con backend DB pero permitir nombres dinámicos)
   if (mapped.rol) {
-    let r = (mapped.rol as string).toUpperCase();
-    if (r === 'ADMINISTRADOR') r = 'ADMIN';
-    mapped.rol = r;
+    mapped.rol = (mapped.rol as string).toUpperCase();
   }
 
   // Map Status
@@ -66,14 +65,10 @@ const mapBackendToFrontend = (user: Record<string, unknown>): Usuario => {
     ? (user.roles as Array<Record<string, unknown>>)
     : [];
   const primaryRole = dynamicRoles[0];
-  let rolUpper = 'Alumno';
-  const backendRol = (
+  const backendRol =
     (primaryRole?.nombre as string | undefined) ||
-    (user.rol as string | undefined)
-  )?.toUpperCase();
-  if (backendRol === 'ADMIN' || backendRol === 'ADMINISTRADOR')
-    rolUpper = 'Administrador';
-  if (backendRol === 'PROFESOR') rolUpper = 'Profesor';
+    (user.rol as string | undefined);
+  const rolName = backendRol || 'Alumno';
 
   const backendStatus = (user.status as string | undefined)?.toUpperCase();
   const isActiveFromStatus = backendStatus === 'ACTIVE';
@@ -84,7 +79,7 @@ const mapBackendToFrontend = (user: Record<string, unknown>): Usuario => {
     id: (user.id as string | number) || 0,
     username: user.username as string,
     email: user.email as string,
-    rol: rolUpper as Usuario['rol'],
+    rol: rolName,
     roleId: primaryRole?.id as string | undefined,
     roleName: primaryRole?.nombre as string | undefined,
     estado: isActiveFromStatus
@@ -95,6 +90,8 @@ const mapBackendToFrontend = (user: Record<string, unknown>): Usuario => {
           ? 'Activo'
           : 'Inactivo',
     fecha_registro: (user.createdAt as string) || new Date().toISOString(),
+    permisosAdicionales: (user.permisosAdicionales as Permiso[]) || [],
+    permisosExcluidos: (user.permisosExcluidos as Permiso[]) || [],
   };
 };
 
@@ -104,6 +101,20 @@ export const usuarioService = {
     const result = await parseApiResponse<RolOption[]>(
       response,
       'No se pudieron obtener los roles disponibles'
+    );
+
+    return {
+      data: result.data,
+      status: response.status,
+      message: result.message,
+    };
+  },
+
+  async getPermissions(): Promise<ApiResponse<Permiso[]>> {
+    const response = await baseFetch('/admin/permissions');
+    const result = await parseApiResponse<Permiso[]>(
+      response,
+      'No se pudieron obtener los permisos disponibles'
     );
 
     return {
@@ -223,11 +234,17 @@ export const usuarioService = {
 
   async updateUserRole(
     id: string | number,
-    roleId: string
+    roleId: string,
+    permisosAdicionalesIds?: string[],
+    permisosExcluidosIds?: string[]
   ): Promise<ApiResponse<Usuario>> {
     const response = await baseFetch(`/admin/users/${id}/role`, {
       method: 'PATCH',
-      body: JSON.stringify({ roleId }),
+      body: JSON.stringify({
+        roleId,
+        permisosAdicionalesIds,
+        permisosExcluidosIds,
+      }),
     });
 
     const result = await parseApiResponse<Record<string, unknown>>(
@@ -238,7 +255,7 @@ export const usuarioService = {
     return {
       data: mapBackendToFrontend(result.data),
       status: response.status,
-      message: result.message || 'Rol actualizado correctamente',
+      message: result.message || 'Privilegios actualizados correctamente',
     };
   },
 

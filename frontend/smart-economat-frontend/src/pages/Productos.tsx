@@ -15,6 +15,7 @@ import {
   Typography,
   Alert,
   Button,
+  Stack,
   Tooltip,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
@@ -45,6 +46,7 @@ import {
 import { deleteResource, uploadFile } from '../services/api.service';
 import { useToast } from '../store/toast.hooks';
 import StatusChip from '../components/ui/StatusChip';
+import { usePermission } from '../store/auth.hooks';
 import { fetchProveedores } from '../services/proveedor.service';
 import { Proveedor } from '../services/proveedor.types';
 import ProductCard from '../features/productos/ProductCard';
@@ -181,6 +183,10 @@ const Productos: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const toast = useToast();
+
+  const canEdit = usePermission('productos:editar');
+  const canDelete = usePermission('productos:eliminar');
+  const canCreate = usePermission('productos:crear');
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -330,7 +336,6 @@ const Productos: React.FC = () => {
         });
       }
 
-      // Recargar datos
       await loadData();
       setProductToEdit(null);
     } catch (err: unknown) {
@@ -418,7 +423,7 @@ const Productos: React.FC = () => {
   }, [proveedores]);
 
   const renderActions = (row: Producto) => (
-    <>
+    <Stack direction="row" spacing={1} justifyContent="center">
       <Tooltip title="Ver detalle">
         <IconButton
           onClick={() => handleViewClick(row)}
@@ -429,27 +434,33 @@ const Productos: React.FC = () => {
           <VisibilityIcon fontSize="small" />
         </IconButton>
       </Tooltip>
-      <Tooltip title="Editar">
-        <IconButton
-          color="secondary"
-          onClick={() => handleEditClick(row)}
-          size="small"
-          aria-label="Editar"
-        >
-          <EditIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-      <Tooltip title="Eliminar">
-        <IconButton
-          color="error"
-          onClick={() => setProductToDelete(row)}
-          size="small"
-          aria-label="Borrar"
-        >
-          <DeleteIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-    </>
+      {canEdit && (
+        <Tooltip title="Editar">
+          <IconButton
+            color="secondary"
+            onClick={() => {
+              setProductToEdit(buildEditData(row));
+            }}
+            size="small"
+            aria-label="Editar"
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
+      {canDelete && (
+        <Tooltip title="Eliminar">
+          <IconButton
+            color="error"
+            onClick={() => setProductToDelete(row)}
+            size="small"
+            aria-label="Borrar"
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
+    </Stack>
   );
 
   const hasActiveFilters =
@@ -470,11 +481,17 @@ const Productos: React.FC = () => {
         searchId="search-productos"
         totalItems={totalItems}
         totalItemsLabel="productos"
-        primaryAction={{
-          label: 'Nuevo Producto',
-          onClick: () => setProductToEdit({}),
-          id: 'btn-nuevo-producto',
-        }}
+        primaryAction={
+          canCreate
+            ? {
+                label: 'Nuevo Producto',
+                onClick: () => {
+                  setProductToEdit({});
+                },
+                id: 'btn-nuevo-producto',
+              }
+            : undefined
+        }
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         filters={
@@ -522,11 +539,17 @@ const Productos: React.FC = () => {
                   ? 'Prueba con otros términos o limpia los filtros.'
                   : 'Empieza añadiendo el primer producto a tu inventario.'}
               </Typography>
-              {!hasSearchOrFilters && (
+              {!hasSearchOrFilters && canCreate && (
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   startIcon={<AddIcon />}
-                  onClick={() => setProductToEdit({})}
+                  onClick={() => {
+                    setProductToEdit({});
+                  }}
+                  sx={{
+                    borderRadius: 2,
+                    px: 3,
+                  }}
                 >
                   Añadir Producto
                 </Button>
@@ -611,11 +634,15 @@ const Productos: React.FC = () => {
                 title={p.nombre}
                 subtitle={p.marca || undefined}
                 size="md"
-                editLabel="Editar producto"
-                onEdit={() => {
-                  setProductToEdit(buildEditData(p));
-                  setProductToView(null);
-                }}
+                editLabel={canEdit ? 'Editar producto' : undefined}
+                onEdit={
+                  canEdit
+                    ? () => {
+                        setProductToEdit(buildEditData(p));
+                        setProductToView(null);
+                      }
+                    : undefined
+                }
                 headerMedia={
                   p.pathImg ? (
                     <img

@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
@@ -44,15 +45,21 @@ export class AlbaranController {
       'createdAt',
       'updatedAt',
     ])
-    query: PaginationQueryDto
+    query: PaginationQueryDto,
+    @Req() req: { user?: { rol?: string } }
   ): Promise<PaginatedResponseDto<Albaran>> {
-    return this.albaranService.findAll(query);
+    const userRole = req.user?.rol;
+    return this.albaranService.findAll(query, userRole);
   }
 
   @Get(':id')
   @RequirePermissions('albaranes:ver')
-  findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Albaran> {
-    return this.albaranService.findOne(id);
+  findOne(
+    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Req() req: { user?: { rol?: string } }
+  ): Promise<Albaran> {
+    const userRole = req.user?.rol;
+    return this.albaranService.findOne(id, userRole);
   }
 
   @Patch(':id')
