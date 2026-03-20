@@ -11,6 +11,7 @@ import { TipoDiferencia } from '../../incidencia/incidencia-linea.entity/inciden
 export enum TipoReportePdf {
   PEDIDO = 'pedido',
   INCIDENCIAS = 'incidencias',
+  RECEPCION = 'recepcion',
 }
 
 export class RecepcionReportePdfDto {
@@ -62,4 +63,8 @@ export class RecepcionReportePdfDto {
     return false;
   })
   paginaPorProveedor?: boolean;
+
+  @IsOptional()
+  @IsUUID('all')
+  recepcionId?: string;
 }

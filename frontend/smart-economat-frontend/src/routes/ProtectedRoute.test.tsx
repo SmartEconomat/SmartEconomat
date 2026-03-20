@@ -1,15 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute';
 import { AuthContext } from '../store/auth.context';
 import type { AuthContextType, User } from '../store/auth.types';
-
-const createToken = (payload: Record<string, unknown>) => {
-  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-  const body = btoa(JSON.stringify(payload));
-  return `${header}.${body}.signature`;
-};
 
 const buildAuthContext = (
   overrides: Partial<AuthContextType> = {}
@@ -17,7 +11,6 @@ const buildAuthContext = (
   isAuthenticated: true,
   isAuthResolved: true,
   isSessionVerified: true,
-  verifiedToken: createToken({ exp: 9999999999 }),
   user: {
     id: 'user-1',
     name: 'Test User',
@@ -61,12 +54,10 @@ const renderProtectedRoute = ({
 
 describe('ProtectedRoute', () => {
   afterEach(() => {
-    localStorage.clear();
+    vi.clearAllMocks();
   });
 
-  it('renders the protected view when JWT and permission are valid', () => {
-    localStorage.setItem('token', createToken({ exp: 9999999999 }));
-
+  it('renders the protected view when the session is resolved and authorized', () => {
     renderProtectedRoute({
       authContext: buildAuthContext(),
       requiredPermission: 'usuarios:listar',
@@ -76,8 +67,6 @@ describe('ProtectedRoute', () => {
   });
 
   it('redirects to home when the user lacks the required permission', () => {
-    localStorage.setItem('token', createToken({ exp: 9999999999 }));
-
     const userWithoutPermission: User = {
       id: 'user-2',
       name: 'Limited User',
@@ -94,22 +83,24 @@ describe('ProtectedRoute', () => {
     expect(screen.getByText('Inicio')).toBeInTheDocument();
   });
 
-  it('redirects to login and logs out when the JWT is expired', async () => {
-    const logout = vi.fn();
-    localStorage.setItem('token', createToken({ exp: 1 }));
+  it('redirects to login when the resolved session is not authenticated', () => {
+    const logout = vi.fn().mockResolvedValue(undefined);
 
     renderProtectedRoute({
-      authContext: buildAuthContext({ logout }),
+      authContext: buildAuthContext({
+        logout,
+        isAuthenticated: false,
+        isSessionVerified: false,
+        user: null,
+      }),
       requiredPermission: 'usuarios:listar',
     });
 
     expect(screen.getByText('Login')).toBeInTheDocument();
-    await waitFor(() => expect(logout).toHaveBeenCalledTimes(1));
+    expect(logout).not.toHaveBeenCalled();
   });
 
   it('shows a loading spinner while the backend session check is pending', () => {
-    localStorage.setItem('token', createToken({ exp: 9999999999 }));
-
     renderProtectedRoute({
       authContext: buildAuthContext({
         isAuthenticated: false,
@@ -121,21 +112,5 @@ describe('ProtectedRoute', () => {
     });
 
     expect(screen.getByLabelText('Cargando')).toBeInTheDocument();
-  });
-
-  it('revalidates when the token in storage differs from the verified token', () => {
-    const refreshUser = vi.fn();
-    localStorage.setItem('token', createToken({ exp: 9999999999, sub: 'new' }));
-
-    renderProtectedRoute({
-      authContext: buildAuthContext({
-        refreshUser,
-        verifiedToken: createToken({ exp: 9999999999, sub: 'old' }),
-      }),
-      requiredPermission: 'usuarios:listar',
-    });
-
-    expect(screen.getByLabelText('Cargando')).toBeInTheDocument();
-    expect(refreshUser).toHaveBeenCalledTimes(1);
   });
 });

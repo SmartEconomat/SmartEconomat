@@ -76,4 +76,12 @@ export const authService = {
 
     await parseApiResponse(response, 'Error al cambiar la contraseña');
   },
+
+  async logout(): Promise<void> {
+    const response = await baseFetch('/auth/logout', {
+      method: 'POST',
+    });
+
+    await parseApiResponse(response, 'Error al cerrar la sesión');
+  },
 };

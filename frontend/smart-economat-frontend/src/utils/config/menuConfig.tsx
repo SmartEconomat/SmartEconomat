@@ -64,7 +64,7 @@ export const menuItems: MenuItem[] = [
     permiso: 'pedidos:listar',
   },
   {
-    path: '/recepcion',
+    path: '/recepciones',
     title: 'Recepción',
     description: 'Registrar entrada de mercancía al almacén',
     icon: <LoginIconOption />,

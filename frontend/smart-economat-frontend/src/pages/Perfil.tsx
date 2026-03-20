@@ -36,7 +36,7 @@ import Input from '../components/ui/Input';
  * Página de Perfil - Unificada como una Ficha de Usuario.
  */
 const Perfil: React.FC = () => {
-  const { user, login } = useAuth();
+  const { user, refreshUser } = useAuth();
   const toast = useToast();
 
   const userRole = user?.rol?.toUpperCase() || '';
@@ -70,25 +70,39 @@ const Perfil: React.FC = () => {
 
   useEffect(() => {
     const loadInitialData = async () => {
+      const fallbackUser = user;
+
+      if (user) {
+        setProfileData({
+          username: user.username || user.name,
+          email: user.email,
+          usernameAlias: user.username || '',
+        });
+        isInitialized.current = true;
+        return;
+      }
+
       setIsLoading(true);
       try {
-        const updatedUser = await authSvc.getCurrentUser();
+        const updatedUser = await refreshUser();
+
+        if (!updatedUser) {
+          return;
+        }
 
         setProfileData({
           username: updatedUser.username || updatedUser.name,
           email: updatedUser.email,
           usernameAlias: updatedUser.username || '',
         });
-
-        login(updatedUser, localStorage.getItem('token') || '');
       } catch (err) {
         console.error('Error loading profile data', err);
 
-        if (user) {
+        if (fallbackUser) {
           setProfileData({
-            username: user.username || user.name,
-            email: user.email,
-            usernameAlias: user.username || '',
+            username: fallbackUser.username || fallbackUser.name,
+            email: fallbackUser.email,
+            usernameAlias: fallbackUser.username || '',
           });
         }
       } finally {
@@ -97,10 +111,10 @@ const Perfil: React.FC = () => {
     };
 
     if (!isInitialized.current) {
-      loadInitialData();
+      void loadInitialData();
       isInitialized.current = true;
     }
-  }, [login, user]);
+  }, [refreshUser, user]);
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setProfileData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -138,8 +152,7 @@ const Perfil: React.FC = () => {
 
       toast.success('Perfil actualizado correctamente');
 
-      const updatedUser = await authSvc.getCurrentUser();
-      login(updatedUser, localStorage.getItem('token') || '');
+      await refreshUser();
 
       setIsEditingProfile(false);
     } catch (err) {

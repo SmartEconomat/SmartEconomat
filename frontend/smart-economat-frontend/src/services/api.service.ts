@@ -128,12 +128,7 @@ export async function baseFetch(
   path: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const token = localStorage.getItem('token');
   const headers = new Headers(options.headers);
-
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
 
   if (
     !headers.has('Content-Type') &&
@@ -146,6 +141,7 @@ export async function baseFetch(
   const response = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers,
+    credentials: 'include',
   });
 
   if (response.status === 401) {
@@ -178,10 +174,7 @@ export async function downloadFile(
   path: string,
   filename: string
 ): Promise<void> {
-  const token = localStorage.getItem('token');
-  const response = await baseFetch(path, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
+  const response = await baseFetch(path);
 
   if (!response.ok) {
     throw new Error(
