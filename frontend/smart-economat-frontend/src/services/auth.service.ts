@@ -48,7 +48,7 @@ export const authService = {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    return await parseApiResponse(response, 'No se pudo iniciar sesión.');
+    return await parseApiResponse(response, 'Usuario o contraseña inválidos.');
   },
 
   async registerAlumno(

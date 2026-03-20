@@ -24,6 +24,7 @@ const AppRouter: React.FC = () => {
           <Route element={<PublicRoute />}>
             <Route element={<AuthLayout />}>
               <Route path="/login" element={<Login />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route
                 path="/reset-password/:token"
                 element={<ResetPassword />}

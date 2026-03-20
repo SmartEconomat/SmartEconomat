@@ -19,6 +19,7 @@ import {
   isStrongPassword,
   STRONG_PASSWORD_MESSAGE,
 } from '../../../utils/passwordValidation';
+import { getAuthErrorMessage } from '../../../utils/authErrorMessages';
 
 interface JwtPayload {
   sub?: string;
@@ -68,12 +69,6 @@ function parseJwt(token: string): JwtPayload | null {
   }
 }
 
-function getErrorMessage(error: unknown, fallbackMessage: string): string {
-  return error instanceof Error && error.message
-    ? error.message
-    : fallbackMessage;
-}
-
 /**
  * Formulario de inicio de sesión.
  * Delega la navegación al padre mediante `onLoginSuccess` para permitir la
@@ -101,6 +96,14 @@ const LoginForm: React.FC<LoginFormProps> = ({
     token: string;
   } | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
+
+  const isLoginSubmitDisabled =
+    formData.email.trim().length === 0 || formData.password.length === 0;
+  const isForgotSubmitDisabled = formData.email.trim().length === 0;
+  const isForcedPasswordChangeDisabled =
+    changePassData.currentPassword.length === 0 ||
+    changePassData.newPassword.length === 0 ||
+    changePassData.confirmPassword.length === 0;
 
   useEffect(() => {
     const savedUser = localStorage.getItem('rememberedUser');
@@ -149,10 +152,18 @@ const LoginForm: React.FC<LoginFormProps> = ({
           onLoginSuccess(user, token);
         }
       } else {
-        setErrorMsg(res.message || 'Credenciales inválidas, intenta de nuevo.');
+        setErrorMsg(
+          getAuthErrorMessage(
+            res.message,
+            'login',
+            'No se pudo iniciar sesión con las credenciales ingresadas.'
+          )
+        );
       }
     } catch (err: unknown) {
-      setErrorMsg(getErrorMessage(err, 'Error de conexión al servidor.'));
+      setErrorMsg(
+        getAuthErrorMessage(err, 'login', 'Error de conexión al servidor.')
+      );
     } finally {
       setIsLoading(false);
     }
@@ -186,10 +197,22 @@ const LoginForm: React.FC<LoginFormProps> = ({
             'Si el correo electrónico figura en nuestro sistema, recibirás instrucciones próximamente.'
         );
       } else {
-        setErrorMsg(res.message || 'Error al procesar la solicitud.');
+        setErrorMsg(
+          getAuthErrorMessage(
+            res.message,
+            'forgotPassword',
+            'No se pudo procesar la solicitud de recuperación.'
+          )
+        );
       }
     } catch (err: unknown) {
-      setErrorMsg(getErrorMessage(err, 'Error de conexión al servidor.'));
+      setErrorMsg(
+        getAuthErrorMessage(
+          err,
+          'forgotPassword',
+          'Error de conexión al servidor.'
+        )
+      );
     } finally {
       setIsLoading(false);
     }
@@ -228,10 +251,22 @@ const LoginForm: React.FC<LoginFormProps> = ({
           onLoginSuccess(pendingLogin.user, pendingLogin.token);
         }
       } else {
-        setErrorMsg(res.message || 'Error al cambiar la contraseña.');
+        setErrorMsg(
+          getAuthErrorMessage(
+            res.message,
+            'changePassword',
+            'No se pudo cambiar la contraseña.'
+          )
+        );
       }
     } catch (err: unknown) {
-      setErrorMsg(getErrorMessage(err, 'Error de conexión al servidor.'));
+      setErrorMsg(
+        getAuthErrorMessage(
+          err,
+          'changePassword',
+          'Error de conexión al servidor.'
+        )
+      );
     } finally {
       if (previousToken) {
         localStorage.setItem('token', previousToken);
@@ -332,7 +367,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
             required
           />
 
-          <Button type="submit" isLoading={isLoading} sx={{ mt: 3, mb: 0 }}>
+          <Button
+            type="submit"
+            isLoading={isLoading}
+            disabled={isForcedPasswordChangeDisabled}
+            sx={{ mt: 3, mb: 0 }}
+          >
             Actualizar y Acceder
           </Button>
 
@@ -371,7 +411,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
             value={formData.email}
             onChange={handleChange}
           />
-          <Button type="submit" isLoading={isLoading} sx={{ mt: 2, mb: 0 }}>
+          <Button
+            type="submit"
+            isLoading={isLoading}
+            disabled={isForgotSubmitDisabled}
+            sx={{ mt: 2, mb: 0 }}
+          >
             Restablecer Contraseña
           </Button>
 
@@ -449,7 +494,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
             onChange={(e) => setRememberMe(e.target.checked)}
             label="Recordarme"
           />
-          <Button type="submit" isLoading={isLoading} sx={{ mt: 2, mb: 0 }}>
+          <Button
+            type="submit"
+            isLoading={isLoading}
+            disabled={isLoginSubmitDisabled}
+            sx={{ mt: 2, mb: 0 }}
+          >
             Acceder
           </Button>
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -19,9 +19,11 @@ import {
   isStrongPassword,
   STRONG_PASSWORD_MESSAGE,
 } from '../../utils/passwordValidation';
+import { getAuthErrorMessage } from '../../utils/authErrorMessages';
 
 const ResetPassword: React.FC = () => {
   const { token } = useParams<{ token: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     password: '',
@@ -31,6 +33,11 @@ const ResetPassword: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const resetToken = token ?? searchParams.get('token') ?? '';
+  const isSubmitDisabled =
+    resetToken.length === 0 ||
+    formData.password.length === 0 ||
+    formData.confirmPassword.length === 0;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -39,6 +46,13 @@ const ResetPassword: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
+
+    if (resetToken.length === 0) {
+      setErrorMsg(
+        'El enlace de recuperación no es válido o no contiene token.'
+      );
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setErrorMsg('Las contraseñas no coinciden.');
@@ -53,7 +67,7 @@ const ResetPassword: React.FC = () => {
     setIsLoading(true);
     try {
       const res = await authService.resetPassword({
-        token,
+        token: resetToken,
         newPassword: formData.password,
       });
       if (res.success) {
@@ -62,11 +76,23 @@ const ResetPassword: React.FC = () => {
         );
         setTimeout(() => navigate('/login'), 4000);
       } else {
-        setErrorMsg(res.message || 'Error al restablecer la contraseña.');
+        setErrorMsg(
+          getAuthErrorMessage(
+            res.message,
+            'resetPassword',
+            'No se pudo restablecer la contraseña.'
+          )
+        );
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setErrorMsg(err.message || 'Error de conexión con el servidor.');
+      setErrorMsg(
+        getAuthErrorMessage(
+          err,
+          'resetPassword',
+          'Error de conexión con el servidor.'
+        )
+      );
     } finally {
       setIsLoading(false);
     }
@@ -147,7 +173,12 @@ const ResetPassword: React.FC = () => {
               onChange={handleChange}
               required
             />
-            <Button type="submit" isLoading={isLoading} sx={{ mt: 3 }}>
+            <Button
+              type="submit"
+              isLoading={isLoading}
+              disabled={isSubmitDisabled}
+              sx={{ mt: 3 }}
+            >
               Guardar Nueva Contraseña
             </Button>
           </Box>
