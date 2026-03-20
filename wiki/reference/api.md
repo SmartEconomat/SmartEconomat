@@ -113,7 +113,9 @@ Nota: Controlador protegido por `JwtAuthGuard`, `RolesGuard` y `PermisosGuard`.
 
 - GET /api/v1/usuarios/perfil
   - Descripción: Obtener perfil del usuario autenticado.
-  - Response (200): Usuario
+  - Uso principal: endpoint canónico de verificación de sesión en frontend; se usa para confirmar que el JWT sigue siendo válido y para obtener los permisos reales vigentes del usuario.
+  - Response (200): Usuario autenticado + permisos resueltos por backend (`permisos`).
+  - Nota: este endpoint es el que debe prevalecer sobre cualquier copia local de `user` o `permisos` almacenada en navegador.
 
 - PATCH /api/v1/usuarios/perfil
   - Descripción: Actualizar perfil del usuario autenticado.
@@ -797,9 +799,18 @@ Gestión de cuentas, perfiles y permisos. _Requiere `JwtAuthGuard`, `RolesGuard`
 
 | Método  | Endpoint                    | Descripción                            | Roles Permitidos |
 | :------ | :-------------------------- | :------------------------------------- | :--------------- |
-| `GET`   | `/usuarios/perfil`          | Obtener datos del usuario logueado     | Todos            |
+| `GET`   | `/usuarios/perfil`          | Obtener perfil + permisos efectivos del usuario logueado | Todos |
 | `PATCH` | `/usuarios/perfil`          | Actualizar nombre o email propio       | Todos            |
 | `PATCH` | `/usuarios/perfil/password` | Cambiar contraseña (validando antigua) | Todos            |
+
+> [!NOTE]
+>
+> `GET /usuarios/perfil` es el endpoint recomendado para el bootstrap de sesión del frontend.
+> Debe usarse para:
+>
+> - verificar que el JWT almacenado sigue siendo aceptado por backend,
+> - resincronizar `user.permisos` tras cambios administrativos,
+> - invalidar cualquier permiso manipulado u obsoleto persistido en `localStorage`.
 
 ### Administración de Personal
 

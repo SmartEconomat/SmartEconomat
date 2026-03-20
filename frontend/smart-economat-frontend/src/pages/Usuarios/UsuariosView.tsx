@@ -25,6 +25,9 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
 import SchoolIcon from '@mui/icons-material/School';
 import SearchIcon from '@mui/icons-material/Search';
+import BlockIcon from '@mui/icons-material/Block';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import { useNavigate } from 'react-router-dom';
 
 import DataTable, { Column } from '../../components/ui/DataTable';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
@@ -36,16 +39,32 @@ import {
   Usuario,
   CrearUsuarioDTO,
   ActualizarUsuarioDTO,
+  RolOption,
 } from '../../types/usuario';
 import { ROLE_COLORS } from '../../utils/theme/roleColors';
 import { useToast } from '../../store/toast.hooks';
-import { useAuth } from '../../store/auth.hooks';
+import { useAuth, usePermission } from '../../store/auth.hooks';
+
+// Eliminada función isAdminRole en favor de hasPermission
+
+const updatePaginationTotal = (
+  current: { total: number; page: number; limit: number },
+  nextTotal: number
+) => {
+  if (current.total === nextTotal) {
+    return current;
+  }
+
+  return { ...current, total: nextTotal };
+};
 
 const UsuariosView: React.FC = () => {
+  const navigate = useNavigate();
   // Estados para datos por rol
   const [admins, setAdmins] = useState<Usuario[]>([]);
   const [professors, setProfessors] = useState<Usuario[]>([]);
   const [students, setStudents] = useState<Usuario[]>([]);
+  const [roleOptions, setRoleOptions] = useState<RolOption[]>([]);
 
   // Metadatos de paginación para cada rol
   const [pagination, setPagination] = useState({
@@ -71,7 +90,18 @@ const UsuariosView: React.FC = () => {
   );
 
   const toast = useToast();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, refreshUser } = useAuth();
+
+  const canList = usePermission('usuarios:listar');
+  const canEdit = usePermission('usuarios:editar');
+  const canDelete = usePermission('usuarios:eliminar');
+  const canCreate = usePermission('usuarios:crear');
+
+  useEffect(() => {
+    if (canList === false) {
+      navigate('/');
+    }
+  }, [canList, navigate]);
 
   // Debounce para el buscador
   useEffect(() => {
@@ -91,12 +121,26 @@ const UsuariosView: React.FC = () => {
   const paginationRef = React.useRef(pagination);
   paginationRef.current = pagination;
 
+  const loadRoles = useCallback(async () => {
+    try {
+      const response = await usuarioService.getRoles();
+      setRoleOptions((prev) => {
+        const nextSerialized = JSON.stringify(response.data);
+        const prevSerialized = JSON.stringify(prev);
+        return prevSerialized === nextSerialized ? prev : response.data;
+      });
+    } catch {
+      toast.error('Error al cargar los roles disponibles');
+    }
+  }, [toast]);
+
   const fetchRoleData = useCallback(
-    async (role: 'Administrador' | 'Profesor' | 'Alumno') => {
+    async (role: string) => {
+      const normalized = role.toUpperCase();
       const roleKey =
-        role === 'Administrador'
+        normalized === 'ADMIN' || normalized === 'ADMINISTRADOR'
           ? 'admin'
-          : role === 'Profesor'
+          : normalized === 'PROFESOR'
             ? 'professor'
             : 'student';
       const { page, limit } = paginationRef.current[roleKey];
@@ -109,13 +153,13 @@ const UsuariosView: React.FC = () => {
           role
         );
 
-        if (role === 'Administrador') setAdmins(res.data);
-        if (role === 'Profesor') setProfessors(res.data);
-        if (role === 'Alumno') setStudents(res.data);
+        if (role === 'ADMIN' || role === 'ADMINISTRADOR') setAdmins(res.data);
+        if (role === 'PROFESOR') setProfessors(res.data);
+        if (role === 'ALUMNO') setStudents(res.data);
 
         setPagination((prev) => ({
           ...prev,
-          [roleKey]: { ...prev[roleKey], total: res.total },
+          [roleKey]: updatePaginationTotal(prev[roleKey], res.total),
         }));
       } catch {
         toast.error(`Error al cargar ${role.toLowerCase()}s`);
@@ -127,16 +171,30 @@ const UsuariosView: React.FC = () => {
   const fetchAllData = useCallback(async () => {
     setIsLoading(true);
     await Promise.all([
-      fetchRoleData('Administrador'),
-      fetchRoleData('Profesor'),
-      fetchRoleData('Alumno'),
+      loadRoles(),
+      fetchRoleData('ADMIN'),
+      fetchRoleData('PROFESOR'),
+      fetchRoleData('ALUMNO'),
     ]);
     setIsLoading(false);
-  }, [fetchRoleData]);
+  }, [
+    fetchRoleData,
+    loadRoles,
+    pagination.admin.limit,
+    pagination.admin.page,
+    pagination.professor.limit,
+    pagination.professor.page,
+    pagination.student.limit,
+    pagination.student.page,
+  ]);
+
+  useEffect(() => {
+    loadRoles();
+  }, [loadRoles]);
 
   // Efectos por rol para paginación individual – depend on primitive values, not the callback
   useEffect(() => {
-    fetchRoleData('Administrador');
+    fetchRoleData('ADMIN');
   }, [
     pagination.admin.page,
     pagination.admin.limit,
@@ -145,7 +203,7 @@ const UsuariosView: React.FC = () => {
   ]);
 
   useEffect(() => {
-    fetchRoleData('Profesor');
+    fetchRoleData('PROFESOR');
   }, [
     pagination.professor.page,
     pagination.professor.limit,
@@ -154,7 +212,7 @@ const UsuariosView: React.FC = () => {
   ]);
 
   useEffect(() => {
-    fetchRoleData('Alumno');
+    fetchRoleData('ALUMNO');
   }, [
     pagination.student.page,
     pagination.student.limit,
@@ -168,10 +226,61 @@ const UsuariosView: React.FC = () => {
     setIsSaving(true);
     try {
       if (userToEdit) {
-        await usuarioService.actualizarUsuario(
-          userToEdit.id,
-          data as ActualizarUsuarioDTO
-        );
+        const payload = data as ActualizarUsuarioDTO;
+        const previousRoleId = userToEdit.roleId || '';
+        const previousStatus = userToEdit.estado;
+        const previousAdicionales = [
+          ...(userToEdit.permisosAdicionales?.map((permiso) => permiso.id) ||
+            []),
+        ].sort();
+        const previousExcluidos = [
+          ...(userToEdit.permisosExcluidos?.map((permiso) => permiso.id) || []),
+        ].sort();
+        const nextAdicionales = [
+          ...(payload.permisosAdicionalesIds || []),
+        ].sort();
+        const nextExcluidos = [...(payload.permisosExcluidosIds || [])].sort();
+        const roleChanged =
+          !!payload.roleId && payload.roleId !== previousRoleId;
+        const additionalPermissionsChanged =
+          JSON.stringify(previousAdicionales) !==
+          JSON.stringify(nextAdicionales);
+        const excludedPermissionsChanged =
+          JSON.stringify(previousExcluidos) !== JSON.stringify(nextExcluidos);
+
+        await usuarioService.actualizarUsuario(userToEdit.id, payload);
+
+        if (
+          payload.roleId &&
+          (roleChanged ||
+            additionalPermissionsChanged ||
+            excludedPermissionsChanged)
+        ) {
+          await usuarioService.updateUserRole(
+            userToEdit.id,
+            payload.roleId,
+            payload.permisosAdicionalesIds,
+            payload.permisosExcluidosIds
+          );
+        }
+
+        if (payload.estado && payload.estado !== previousStatus) {
+          await usuarioService.setUserActivation(
+            userToEdit.id,
+            payload.estado === 'Activo'
+          );
+        }
+
+        if (
+          currentUser &&
+          userToEdit.id.toString() === currentUser.id.toString()
+        ) {
+          const refreshed = await refreshUser();
+          if (!refreshed || !canList) {
+            navigate('/');
+          }
+        }
+
         toast.success('Usuario actualizado');
       } else {
         await usuarioService.crearUsuario(data as CrearUsuarioDTO);
@@ -244,7 +353,38 @@ const UsuariosView: React.FC = () => {
 
   const renderActions = (row: Usuario) => (
     <Stack direction="row" spacing={0.5} justifyContent="center">
-      {canResetTemporaryPassword(row) && (
+      {row.id.toString() !== currentUser?.id.toString() && canEdit && (
+        <IconButton
+          color={row.estado === 'Activo' ? 'warning' : 'success'}
+          onClick={async () => {
+            try {
+              const shouldActivate = row.estado !== 'Activo';
+              await usuarioService.setUserActivation(row.id, shouldActivate);
+              toast.success(
+                shouldActivate
+                  ? 'Usuario activado correctamente'
+                  : 'Usuario suspendido correctamente'
+              );
+              fetchAllData();
+            } catch (error) {
+              const message =
+                error instanceof Error
+                  ? error.message
+                  : 'Error al actualizar el estado del usuario';
+              toast.error(message);
+            }
+          }}
+          size="small"
+          title={row.estado === 'Activo' ? 'Suspender' : 'Activar'}
+        >
+          {row.estado === 'Activo' ? (
+            <BlockIcon fontSize="small" />
+          ) : (
+            <CheckCircleOutlineIcon fontSize="small" />
+          )}
+        </IconButton>
+      )}
+      {canResetTemporaryPassword(row) && canEdit && (
         <IconButton
           color="primary"
           onClick={() => setUserToReset(row)}
@@ -254,25 +394,29 @@ const UsuariosView: React.FC = () => {
           <VpnKeyIcon fontSize="small" />
         </IconButton>
       )}
-      <IconButton
-        color="secondary"
-        onClick={() => {
-          setUserToEdit(row);
-          setIsModalOpen(true);
-        }}
-        size="small"
-        title="Editar"
-      >
-        <EditIcon fontSize="small" />
-      </IconButton>
-      <IconButton
-        color="error"
-        onClick={() => setUserToDelete(row)}
-        size="small"
-        title="Eliminar"
-      >
-        <DeleteIcon fontSize="small" />
-      </IconButton>
+      {canEdit && (
+        <IconButton
+          color="secondary"
+          onClick={() => {
+            setUserToEdit(row);
+            setIsModalOpen(true);
+          }}
+          size="small"
+          title="Editar"
+        >
+          <EditIcon fontSize="small" />
+        </IconButton>
+      )}
+      {canDelete && (
+        <IconButton
+          color="error"
+          onClick={() => setUserToDelete(row)}
+          size="small"
+          title="Eliminar"
+        >
+          <DeleteIcon fontSize="small" />
+        </IconButton>
+      )}
     </Stack>
   );
 
@@ -410,17 +554,19 @@ const UsuariosView: React.FC = () => {
             >
               Refrescar
             </Button>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => {
-                setUserToEdit(null);
-                setIsModalOpen(true);
-              }}
-              sx={{ px: 3, borderRadius: 2 }}
-            >
-              Nuevo Usuario
-            </Button>
+            {canCreate && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => {
+                  setUserToEdit(null);
+                  setIsModalOpen(true);
+                }}
+                sx={{ px: 3, borderRadius: 2 }}
+              >
+                Nuevo Usuario
+              </Button>
+            )}
           </Stack>
         </Box>
       </Paper>
@@ -461,7 +607,8 @@ const UsuariosView: React.FC = () => {
         userToEdit={userToEdit}
         onSave={handleSaveUsuario}
         isSaving={isSaving}
-        usuariosList={[]}
+        usuariosList={[...admins, ...professors, ...students]}
+        roleOptions={roleOptions}
       />
 
       <ConfirmDialog

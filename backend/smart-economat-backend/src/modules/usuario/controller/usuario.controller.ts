@@ -47,8 +47,13 @@ export class UsuarioController {
   }
 
   @Get('perfil')
-  getPerfil(@GetUser('id') id: string) {
-    return this.usuarioService.findOne(id);
+  async getPerfil(@GetUser('id') id: string) {
+    const usuario = await this.usuarioService.findOne(id);
+    const permisos = await this.usuarioService.getUserPermissions(id);
+    return {
+      ...usuario,
+      permisos,
+    };
   }
 
   @Patch('perfil')
@@ -73,9 +78,10 @@ export class UsuarioController {
       'createdAt',
       'updatedAt',
     ])
-    query: PaginationQueryDto
+    query: PaginationQueryDto,
+    @GetUser('rol') userRole: string
   ) {
-    return this.usuarioService.findAll(query);
+    return this.usuarioService.findAll(query, userRole);
   }
 
   @Get(':id')

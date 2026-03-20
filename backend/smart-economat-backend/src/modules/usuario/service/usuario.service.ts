@@ -23,6 +23,7 @@ import { AuthPermissionsService } from '../../auth/service/auth-permissions.serv
 import { Profesor } from '../../profesor/profesor.entity/profesor.entity';
 import { AlumnoSlot } from '../../profesor/profesor.entity/alumno-slot.entity';
 import { Alumno } from '../../alumno/alumno.entity/alumno.entity';
+import { Rol } from '../../roles/rol.entity/rol.entity';
 
 @Injectable()
 export class UsuarioService {
@@ -45,11 +46,15 @@ export class UsuarioService {
   async createAdmin(dto: AdminCreateUsuarioDto) {
     return await this.dataSource.transaction(async (manager) => {
       const { aula, cial, ...userData } = dto;
+      const systemRole = await manager.findOne(Rol, {
+        where: { nombre: dto.rol },
+      });
 
       const usuario = manager.create(Usuario, {
         ...userData,
         status: UserStatus.ACTIVE,
         activo: true,
+        roles: systemRole ? [systemRole] : [],
       });
 
       const savedUser = await manager.save(usuario);
@@ -80,8 +85,8 @@ export class UsuarioService {
     });
   }
 
-  findAll(query: PaginationQueryDto) {
-    return this.usuarioRepo.findAll(query);
+  findAll(query: PaginationQueryDto, userRole?: string) {
+    return this.usuarioRepo.findAll(query, userRole);
   }
 
   async findOne(id: string) {
@@ -216,5 +221,9 @@ export class UsuarioService {
     await this.usuarioRepo.repo.save(basicUser);
     await this.authPermissionsService.invalidateUserCache(userId);
     return { success: true };
+  }
+
+  async getUserPermissions(userId: string): Promise<string[]> {
+    return this.authPermissionsService.getUserPermissions(userId);
   }
 }

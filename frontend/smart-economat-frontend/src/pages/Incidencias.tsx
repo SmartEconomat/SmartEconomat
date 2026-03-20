@@ -34,7 +34,7 @@ import IncidenciaFilters, {
   IncidenciaFiltersState,
 } from '../features/incidencias/IncidenciaFilters';
 import ResolveIncidenciaModal from '../features/incidencias/ResolveIncidenciaModal';
-import { useAuth } from '../store/auth.hooks';
+import { useAuth, usePermission } from '../store/auth.hooks';
 
 const Incidencias: React.FC = () => {
   const theme = useTheme();
@@ -58,6 +58,9 @@ const Incidencias: React.FC = () => {
   const [itemToDelete, setItemToDelete] = useState<Incidencia | null>(null);
   const [isResolving, setIsResolving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const canResolve = usePermission('incidencias:resolver');
+  const canDelete = usePermission('incidencias:eliminar');
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -194,7 +197,7 @@ const Incidencias: React.FC = () => {
         </Tooltip>
       </Box>
       <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-        {!row.resuelta && (
+        {!row.resuelta && canResolve && (
           <Tooltip title="Marcar como resuelta">
             <IconButton
               onClick={() => setItemToResolve(row)}
@@ -207,15 +210,17 @@ const Incidencias: React.FC = () => {
         )}
       </Box>
       <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-        <Tooltip title="Eliminar">
-          <IconButton
-            onClick={() => setItemToDelete(row)}
-            size="small"
-            color="error"
-          >
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
+        {canDelete && (
+          <Tooltip title="Eliminar">
+            <IconButton
+              onClick={() => setItemToDelete(row)}
+              size="small"
+              color="error"
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
       </Box>
     </Stack>
   );
@@ -470,7 +475,7 @@ const Incidencias: React.FC = () => {
         sections={detailSections}
         size="md"
         actions={
-          !itemToView?.resuelta ? (
+          !itemToView?.resuelta && canResolve ? (
             <Button
               variant="contained"
               color="success"

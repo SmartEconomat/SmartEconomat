@@ -11,6 +11,7 @@ import {
   CardContent,
   CardActions,
   Divider,
+  Stack,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -32,6 +33,7 @@ import {
 import { deleteResource } from '../services/api.service';
 import { useToast } from '../store/toast.hooks';
 import StatusChip from '../components/ui/StatusChip';
+import { usePermission } from '../store/auth.hooks';
 import RecipeCarousel from '../components/ui/RecipeCarousel';
 import PageToolbar from '../components/ui/PageToolbar';
 
@@ -254,25 +256,33 @@ const Recetas: React.FC = () => {
     },
   ];
 
+  const canEdit = usePermission('recetas:editar');
+  const canDelete = usePermission('recetas:eliminar');
+  const canCreate = usePermission('recetas:crear');
+
   const renderActions = (row: Receta) => (
-    <>
-      <IconButton
-        color="secondary"
-        onClick={() => handleEditClick(row)}
-        size="small"
-        aria-label="Editar"
-      >
-        <EditIcon fontSize="small" />
-      </IconButton>
-      <IconButton
-        color="error"
-        onClick={() => setItemToDelete(row)}
-        size="small"
-        aria-label="Borrar"
-      >
-        <DeleteIcon fontSize="small" />
-      </IconButton>
-    </>
+    <Stack direction="row" spacing={1} justifyContent="center">
+      {canEdit && (
+        <IconButton
+          color="secondary"
+          onClick={() => handleEditClick(row)}
+          size="small"
+          aria-label="Editar"
+        >
+          <EditIcon fontSize="small" />
+        </IconButton>
+      )}
+      {canDelete && (
+        <IconButton
+          color="error"
+          onClick={() => setItemToDelete(row)}
+          size="small"
+          aria-label="Borrar"
+        >
+          <DeleteIcon fontSize="small" />
+        </IconButton>
+      )}
+    </Stack>
   );
 
   return (
@@ -290,11 +300,15 @@ const Recetas: React.FC = () => {
         searchId="search-recetas"
         totalItems={totalItems}
         totalItemsLabel="recetas"
-        primaryAction={{
-          label: 'Nueva Receta',
-          onClick: () => setItemToEdit({}),
-          id: 'btn-nueva-receta',
-        }}
+        primaryAction={
+          canCreate
+            ? {
+                label: 'Nueva Receta',
+                onClick: () => setItemToEdit({}),
+                id: 'btn-nueva-receta',
+              }
+            : undefined
+        }
         onViewModeChange={setViewMode}
       />
 
@@ -327,7 +341,7 @@ const Recetas: React.FC = () => {
                   ? 'Prueba con otros términos o limpia el filtro.'
                   : 'Crea la primera receta del economato para comenzar.'}
               </Typography>
-              {!searchTerm.trim() && (
+              {!searchTerm.trim() && canCreate && (
                 <Button
                   variant="outlined"
                   startIcon={<AddIcon />}

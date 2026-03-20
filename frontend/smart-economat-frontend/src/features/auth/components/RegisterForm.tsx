@@ -1,24 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Box,
-  Typography,
-  InputAdornment,
-  IconButton,
   Alert,
+  Box,
+  IconButton,
+  InputAdornment,
   ToggleButton,
   ToggleButtonGroup,
+  Typography,
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Input from '../../../components/ui/Input';
-import Select from '../../../components/ui/Select';
 import Button from '../../../components/ui/Button';
 import Logo from '../../../assets/images/SVG/logo-smat-economato.svg';
+import {
+  authService,
+  SlotReferenceResponse,
+} from '../../../services/auth.service';
 import {
   isStrongPassword,
   STRONG_PASSWORD_MESSAGE,
 } from '../../../utils/passwordValidation';
-import { authService } from '../../../services/auth.service';
 import { getAuthErrorMessage } from '../../../utils/authErrorMessages';
 
 interface RegisterFormProps {
@@ -36,31 +38,22 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     email: '',
     password: '',
     confirmPassword: '',
-    aula: '',
-    numeroClase: '',
-    cialProfesor: '',
+    codigoClase: '',
     cial: '',
   });
-
-  const [aulas, setAulas] = useState<string[]>([]);
-  const [clases, setClases] = useState<number[]>([]);
-  const [profesores, setProfesores] = useState<
-    { cial: string; nombre: string }[]
-  >([]);
-
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [slotLoadError, setSlotLoadError] = useState('');
+  const [slotReference, setSlotReference] =
+    useState<SlotReferenceResponse | null>(null);
 
   const isAlumnoSubmitDisabled =
     formData.username.trim().length === 0 ||
     formData.password.length === 0 ||
     formData.confirmPassword.length === 0 ||
-    formData.aula.trim().length === 0 ||
-    formData.numeroClase.trim().length === 0 ||
-    formData.cialProfesor.trim().length === 0;
+    formData.codigoClase.trim().length === 0;
 
   const isProfesorSubmitDisabled =
     formData.username.trim().length === 0 ||
@@ -72,136 +65,95 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   const isSubmitDisabled =
     role === 'ALUMNO' ? isAlumnoSubmitDisabled : isProfesorSubmitDisabled;
 
-  const aulaHelperText = slotLoadError
+  const slotReferenceMessage = slotReference
+    ? `Te estás registrando en la clase ${slotReference.aula} - Clase ${slotReference.numeroClase} del profesor ${slotReference.profesor}.`
+    : '';
+
+  const codigoClaseHelperText = slotLoadError
     ? slotLoadError
-    : !isLoadingData && aulas.length === 0
-      ? 'No hay cursos disponibles todavía. Un profesor debe crear slots/clases primero.'
-      : 'Selecciona el curso o grupo al que perteneces.';
+    : slotReference
+      ? 'Código verificado correctamente.'
+      : 'Escribe el código de la clase para confirmar que corresponde a tu grupo.';
 
-  const claseHelperText = !formData.aula
-    ? 'Selecciona primero un curso o grupo.'
-    : slotLoadError
-      ? slotLoadError
-      : !isLoadingData && clases.length === 0
-        ? 'No hay clases disponibles para el curso seleccionado.'
-        : 'Selecciona tu número de clase.';
-
-  const profesorHelperText = !formData.numeroClase
-    ? 'Selecciona primero una clase.'
-    : slotLoadError
-      ? slotLoadError
-      : !isLoadingData && profesores.length === 0
-        ? 'No hay profesores disponibles para la clase seleccionada.'
-        : 'Selecciona el profesor encargado de evaluarte';
-
-  // Fetch aulas on mount for ALUMNO
   useEffect(() => {
-    if (role === 'ALUMNO') {
+    if (role !== 'ALUMNO') {
+      setSlotReference(null);
       setSlotLoadError('');
-      loadAulas();
+      setIsLoadingData(false);
+      return;
     }
-  }, [role]);
 
-  // Fetch clases when aula changes
-  useEffect(() => {
-    if (role === 'ALUMNO' && formData.aula) {
+    const normalizedCode = formData.codigoClase.trim().toUpperCase();
+
+    if (!normalizedCode) {
+      setSlotReference(null);
       setSlotLoadError('');
-      loadClases(formData.aula);
-    } else {
-      setClases([]);
-      setFormData((prev) => ({ ...prev, numeroClase: '', cialProfesor: '' }));
-    }
-  }, [formData.aula, role]);
-
-  // Fetch profesores when clase changes
-  useEffect(() => {
-    if (role === 'ALUMNO' && formData.aula && formData.numeroClase) {
-      setSlotLoadError('');
-      loadProfesores(formData.aula, Number(formData.numeroClase));
-    } else {
-      setProfesores([]);
-      setFormData((prev) => ({ ...prev, cialProfesor: '' }));
-    }
-  }, [formData.numeroClase, role, formData.aula]);
-
-  const loadAulas = async () => {
-    try {
-      setIsLoadingData(true);
-      const res = await authService.getAulas();
-      if (res.success) {
-        setAulas(res.data);
-        setSlotLoadError('');
-      }
-    } catch (err) {
-      console.error('Error fetching aulas:', err);
-      setSlotLoadError(
-        'No se pudieron cargar los cursos. Verifica que el backend esté activo y que existan slots/clases creadas.'
-      );
-    } finally {
       setIsLoadingData(false);
+      return;
     }
-  };
 
-  const loadClases = async (aula: string) => {
-    try {
-      setIsLoadingData(true);
-      const res = await authService.getClases(aula);
-      if (res.success) {
-        setClases(res.data);
-        setSlotLoadError('');
-      }
-    } catch (err) {
-      console.error('Error fetching clases:', err);
-      setSlotLoadError(
-        'No se pudieron cargar las clases del curso seleccionado.'
-      );
-    } finally {
-      setIsLoadingData(false);
-    }
-  };
+    setSlotReference(null);
+    setSlotLoadError('');
 
-  const loadProfesores = async (aula: string, clase: number) => {
-    try {
-      setIsLoadingData(true);
-      const res = await authService.getProfesores(aula, clase);
-      if (res.success) {
-        setProfesores(res.data);
-        setSlotLoadError('');
+    let cancelled = false;
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        setIsLoadingData(true);
+        const res = await authService.getSlotByCode(normalizedCode);
+
+        if (!cancelled && res.success) {
+          setSlotReference(res.data);
+          setSlotLoadError('');
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setSlotReference(null);
+          setSlotLoadError(
+            getAuthErrorMessage(
+              err,
+              'registerAlumno',
+              'No se pudo validar el código de la clase.'
+            )
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingData(false);
+        }
       }
-    } catch (err) {
-      console.error('Error fetching profesores:', err);
-      setSlotLoadError(
-        'No se pudieron cargar los profesores para la clase seleccionada.'
-      );
-    } finally {
-      setIsLoadingData(false);
-    }
-  };
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [formData.codigoClase, role]);
 
   const handleRoleChange = (
     _event: React.MouseEvent<HTMLElement>,
     newRole: 'ALUMNO' | 'PROFESOR' | null
   ) => {
-    if (newRole) {
-      setRole(newRole);
-      setErrorMsg('');
-      setFormData({
-        username: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-        aula: '',
-        numeroClase: '',
-        cialProfesor: '',
-        cial: '',
-      });
-    }
+    if (!newRole) return;
+
+    setRole(newRole);
+    setErrorMsg('');
+    setSlotLoadError('');
+    setSlotReference(null);
+    setFormData({
+      username: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      codigoClase: '',
+      cial: '',
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMsg('');
     setIsLoading(true);
+
     const isAlumno = role === 'ALUMNO';
 
     try {
@@ -215,30 +167,46 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         return;
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const payload: any = {
-        username: formData.username?.trim(),
-        password: formData.password,
-      };
-
       if (isAlumno) {
-        if (!formData.aula || !formData.numeroClase || !formData.cialProfesor) {
+        if (!formData.codigoClase.trim()) {
+          setErrorMsg('Por favor escribe el código de la clase.');
+          return;
+        }
+
+        if (!slotReference) {
           setErrorMsg(
-            'Por favor completa todos los campos de ubicación (Curso, Clase y Profesor).'
+            'Debes ingresar un código de clase válido para completar el registro.'
           );
           return;
         }
-        payload.aula = formData.aula;
-        payload.numeroClase = Number(formData.numeroClase);
-        payload.cialProfesor = formData.cialProfesor;
-      } else {
-        payload.email = formData.email?.trim();
-        payload.cial = formData.cial?.trim()?.toUpperCase();
+
+        const res = await authService.registerAlumno({
+          username: formData.username.trim(),
+          password: formData.password,
+          codigoClase: formData.codigoClase.trim().toUpperCase(),
+        });
+
+        if (res.success) {
+          onRegisterSuccess();
+        } else {
+          setErrorMsg(
+            getAuthErrorMessage(
+              res.message,
+              'registerAlumno',
+              'No se pudo completar el registro.'
+            )
+          );
+        }
+
+        return;
       }
 
-      const res = isAlumno
-        ? await authService.registerAlumno(payload)
-        : await authService.registerProfesor(payload);
+      const res = await authService.registerProfesor({
+        username: formData.username.trim(),
+        password: formData.password,
+        email: formData.email.trim(),
+        cial: formData.cial.trim().toUpperCase(),
+      });
 
       if (res.success) {
         onRegisterSuccess();
@@ -246,13 +214,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         setErrorMsg(
           getAuthErrorMessage(
             res.message,
-            isAlumno ? 'registerAlumno' : 'registerProfesor',
+            'registerProfesor',
             'No se pudo completar el registro.'
           )
         );
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
+    } catch (err) {
       setErrorMsg(
         getAuthErrorMessage(
           err,
@@ -265,10 +232,15 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleChange = (e: any) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === 'codigoClase' ? value.toUpperCase() : value,
+    }));
   };
 
   const togglePasswordVisibility = () => setShowPassword((v) => !v);
@@ -336,6 +308,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           onChange={handleChange}
           required
         />
+
+        {role === 'ALUMNO' && slotReferenceMessage && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            {slotReferenceMessage}
+          </Alert>
+        )}
+
         {role === 'PROFESOR' && (
           <Input
             label="Correo Electrónico"
@@ -349,50 +328,27 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
         {role === 'ALUMNO' ? (
           <>
-            <Select
-              label="Curso/Grupo"
-              name="aula"
-              value={formData.aula}
+            <Input
+              label="Código de la clase"
+              name="codigoClase"
+              value={formData.codigoClase}
               onChange={handleChange}
-              options={aulas.map((a) => ({ value: a, label: a }))}
               required
-              disabled={isLoadingData && aulas.length === 0}
               error={!!slotLoadError}
-              helperText={aulaHelperText}
+              helperText={codigoClaseHelperText}
             />
-            <Select
-              label="Número de Clase"
-              name="numeroClase"
-              value={formData.numeroClase}
-              onChange={handleChange}
-              options={clases.map((c) => ({
-                value: String(c),
-                label: `Clase ${c}`,
-              }))}
-              required
-              disabled={
-                !formData.aula || (isLoadingData && clases.length === 0)
-              }
-              error={!!slotLoadError}
-              helperText={claseHelperText}
-            />
-            <Select
-              label="Profesor"
-              name="cialProfesor"
-              value={formData.cialProfesor}
-              onChange={handleChange}
-              options={profesores.map((p) => ({
-                value: p.cial,
-                label: p.nombre,
-              }))}
-              required
-              disabled={
-                !formData.numeroClase ||
-                (isLoadingData && profesores.length === 0)
-              }
-              error={!!slotLoadError}
-              helperText={profesorHelperText}
-            />
+
+            {isLoadingData && formData.codigoClase.trim().length > 0 && (
+              <Alert severity="info" sx={{ mt: 1 }}>
+                Verificando el código de la clase…
+              </Alert>
+            )}
+
+            {slotReference && (
+              <Alert severity="success" sx={{ mt: 1 }}>
+                Código válido.
+              </Alert>
+            )}
           </>
         ) : (
           <Input

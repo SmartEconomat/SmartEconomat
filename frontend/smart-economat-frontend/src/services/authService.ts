@@ -9,6 +9,7 @@ interface CurrentUserResponse {
   email: string;
   rol?: string;
   role?: string;
+  permisos?: string[];
 }
 
 /**
@@ -37,6 +38,7 @@ export const authService = {
       email: result.data.email,
       rol: result.data.rol || result.data.role || 'usuario',
       username: result.data.username,
+      permisos: result.data.permisos || [],
     };
   },
 

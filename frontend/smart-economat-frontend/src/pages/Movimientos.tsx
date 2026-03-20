@@ -7,6 +7,7 @@ import {
   alpha,
   Tooltip,
   IconButton,
+  Stack,
 } from '@mui/material';
 import DataTable, { Column } from '../components/ui/DataTable';
 import PageToolbar from '../components/ui/PageToolbar';
@@ -24,6 +25,8 @@ import SyncAltIcon from '@mui/icons-material/SyncAlt';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import ConstructionIcon from '@mui/icons-material/Construction';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import { usePermission } from '../store/auth.hooks'; // Original import path
+import { useNavigate } from 'react-router-dom'; // Added useNavigate import
 
 const capitalize = (text: string) =>
   text.charAt(0).toUpperCase() + text.slice(1).replace(/_/g, ' ');
@@ -38,6 +41,14 @@ const getMovimientoNombreProducto = (row: Movimiento) => {
 
 const Movimientos: React.FC = () => {
   const theme = useTheme();
+  const canList = usePermission('movimientos:listar');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (canList === false) {
+      navigate('/');
+    }
+  }, [canList, navigate]);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
@@ -226,16 +237,18 @@ const Movimientos: React.FC = () => {
   };
 
   const renderActions = (row: Movimiento) => (
-    <Tooltip title="Ver detalle">
-      <IconButton
-        onClick={() => handleViewClick(row)}
-        size="small"
-        aria-label="Ver detalle"
-        sx={{ color: 'text.secondary' }}
-      >
-        <VisibilityIcon fontSize="small" />
-      </IconButton>
-    </Tooltip>
+    <Stack direction="row" spacing={0.5} justifyContent="center">
+      <Tooltip title="Ver detalle">
+        <IconButton
+          onClick={() => handleViewClick(row)}
+          size="small"
+          aria-label="Ver detalle"
+          sx={{ color: 'text.secondary' }}
+        >
+          <VisibilityIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+    </Stack>
   );
 
   const detailSections = useMemo(() => {

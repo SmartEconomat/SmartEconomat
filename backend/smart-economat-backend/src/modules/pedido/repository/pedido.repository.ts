@@ -32,8 +32,13 @@ export class PedidoRepository extends Repository<Pedido> {
 
   async findAllPaginated(
     query: PaginationQueryDto,
-    loadRelations = false
+    loadRelations = false,
+    userRole?: string
   ): Promise<PaginatedResponseDto<Pedido>> {
+    const isAdmin =
+      userRole?.toUpperCase() === 'ADMIN' ||
+      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
+      userRole?.toUpperCase() === 'SUPER_ADMIN';
     const page = query.page ?? 1;
     const paginationOptions = buildFindManyOptions<Pedido>(query, 'createdAt', {
       fechaCreacion: 'createdAt',
@@ -73,6 +78,7 @@ export class PedidoRepository extends Repository<Pedido> {
           ]
         : [],
       ...paginationOptions,
+      withDeleted: isAdmin,
     });
 
     const limit = paginationOptions.take ?? query.limit ?? 20;
@@ -88,8 +94,13 @@ export class PedidoRepository extends Repository<Pedido> {
 
   async findOneWithRelations(
     id: string,
-    loadRelations = false
+    loadRelations = false,
+    userRole?: string
   ): Promise<Pedido | null> {
+    const isAdmin =
+      userRole?.toUpperCase() === 'ADMIN' ||
+      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
+      userRole?.toUpperCase() === 'SUPER_ADMIN';
     return await this.findOne({
       where: { id },
       relations: loadRelations
@@ -103,6 +114,7 @@ export class PedidoRepository extends Repository<Pedido> {
             'recepcionesPedido',
           ]
         : [],
+      withDeleted: isAdmin,
     });
   }
 

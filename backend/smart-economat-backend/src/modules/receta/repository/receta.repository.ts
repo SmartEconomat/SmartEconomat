@@ -111,8 +111,13 @@ export class RecetaRepository {
   }
 
   async findAllPaginated(
-    query: PaginationQueryDto
+    query: PaginationQueryDto,
+    userRole?: string
   ): Promise<PaginatedResponseDto<Receta>> {
+    const isAdmin =
+      userRole?.toUpperCase() === 'ADMIN' ||
+      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
+      userRole?.toUpperCase() === 'SUPER_ADMIN';
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 50);
     const sortBy = query.sortBy ?? 'nombre';
@@ -131,6 +136,7 @@ export class RecetaRepository {
       order: { [sortBy]: order },
       skip: (page - 1) * limit,
       take: limit,
+      withDeleted: isAdmin,
     });
 
     return {
@@ -142,10 +148,16 @@ export class RecetaRepository {
     };
   }
 
-  async findById(id: string): Promise<Receta | null> {
+  async findById(id: string, userRole?: string): Promise<Receta | null> {
+    const isAdmin =
+      userRole?.toUpperCase() === 'ADMIN' ||
+      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
+      userRole?.toUpperCase() === 'SUPER_ADMIN';
+
     return this.recetaRepo.findOne({
       where: { id },
       relations: [...INGREDIENTES_RELATIONS],
+      withDeleted: isAdmin,
     });
   }
 

@@ -7,6 +7,7 @@ import {
   Alert,
   Button,
   Tooltip,
+  Stack,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -26,6 +27,7 @@ import {
 } from '../services/proveedor.service';
 import { deleteResource } from '../services/api.service';
 import { useToast } from '../store/toast.hooks';
+import { usePermission } from '../store/auth.hooks';
 
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import AddIcon from '@mui/icons-material/Add';
@@ -151,6 +153,10 @@ const Proveedores: React.FC = () => {
     setSortBy(key as string);
   };
 
+  const canEdit = usePermission('proveedores:editar');
+  const canDelete = usePermission('proveedores:eliminar');
+  const canCreate = usePermission('proveedores:crear');
+
   const columns: Column<Proveedor>[] = [
     { id: 'nombre', label: 'Nombre', sortable: true },
     {
@@ -184,7 +190,7 @@ const Proveedores: React.FC = () => {
   ];
 
   const renderActions = (row: Proveedor) => (
-    <>
+    <Stack direction="row" spacing={1} justifyContent="center">
       <Tooltip title="Ver detalle">
         <IconButton
           onClick={() => handleViewClick(row)}
@@ -195,27 +201,31 @@ const Proveedores: React.FC = () => {
           <VisibilityIcon fontSize="small" />
         </IconButton>
       </Tooltip>
-      <Tooltip title="Editar">
-        <IconButton
-          color="secondary"
-          onClick={() => handleEditClick(row)}
-          size="small"
-          aria-label="Editar"
-        >
-          <EditIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-      <Tooltip title="Eliminar">
-        <IconButton
-          color="error"
-          onClick={() => setItemToDelete(row)}
-          size="small"
-          aria-label="Borrar"
-        >
-          <DeleteIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-    </>
+      {canEdit && (
+        <Tooltip title="Editar">
+          <IconButton
+            color="secondary"
+            onClick={() => handleEditClick(row)}
+            size="small"
+            aria-label="Editar"
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
+      {canDelete && (
+        <Tooltip title="Eliminar">
+          <IconButton
+            color="error"
+            onClick={() => setItemToDelete(row)}
+            size="small"
+            aria-label="Borrar"
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
+    </Stack>
   );
 
   return (
@@ -231,11 +241,15 @@ const Proveedores: React.FC = () => {
         searchId="search-proveedores"
         totalItems={totalItems}
         totalItemsLabel="proveedores"
-        primaryAction={{
-          label: 'Nuevo Proveedor',
-          onClick: () => setItemToEdit({}),
-          id: 'btn-nuevo-proveedor',
-        }}
+        primaryAction={
+          canCreate
+            ? {
+                label: 'Nuevo Proveedor',
+                onClick: () => setItemToEdit({}),
+                id: 'btn-nuevo-proveedor',
+              }
+            : undefined
+        }
         onViewModeChange={undefined}
       />
 
@@ -269,7 +283,7 @@ const Proveedores: React.FC = () => {
                   ? 'Prueba con otros términos o limpia el filtro.'
                   : 'Empieza añadiendo el primer proveedor a tu catálogo.'}
               </Typography>
-              {!searchTerm.trim() && (
+              {!searchTerm.trim() && canCreate && (
                 <Button
                   variant="outlined"
                   startIcon={<AddIcon />}
@@ -340,12 +354,16 @@ const Proveedores: React.FC = () => {
           subtitle={itemToView?.nif || undefined}
           size="md"
           editLabel="Editar proveedor"
-          onEdit={() => {
-            if (itemToView) {
-              handleEditClick(itemToView);
-              setItemToView(null);
-            }
-          }}
+          onEdit={
+            canEdit
+              ? () => {
+                  if (itemToView) {
+                    handleEditClick(itemToView);
+                    setItemToView(null);
+                  }
+                }
+              : undefined
+          }
           sections={[
             {
               title: 'Información Fiscal',

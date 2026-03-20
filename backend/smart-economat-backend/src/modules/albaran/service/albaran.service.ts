@@ -21,8 +21,13 @@ export class AlbaranService {
   }
 
   async findAll(
-    query: PaginationQueryDto
+    query: PaginationQueryDto,
+    userRole?: string
   ): Promise<PaginatedResponseDto<Albaran>> {
+    const isAdmin =
+      userRole?.toUpperCase() === 'ADMIN' ||
+      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
+      userRole?.toUpperCase() === 'SUPER_ADMIN';
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 50);
     const sortBy = query.sortBy ?? 'fecha';
@@ -30,6 +35,7 @@ export class AlbaranService {
 
     const [data, total] = await this.albaranRepository.findAndCount({
       relations: ['albaranPedidoRecepcion'],
+      withDeleted: isAdmin,
       order: { [sortBy]: order },
       skip: (page - 1) * limit,
       take: limit,
@@ -44,7 +50,9 @@ export class AlbaranService {
     };
   }
 
-  async findOne(id: string): Promise<Albaran> {
+  async findOne(id: string, _userRole?: string): Promise<Albaran> {
+    void _userRole;
+
     const albaran = await this.albaranRepository.findOne({
       where: { id },
       relations: ['albaranPedidoRecepcion'],
@@ -64,10 +72,7 @@ export class AlbaranService {
   }
 
   async remove(id: string): Promise<void> {
-    const result = await this.albaranRepository.delete(id);
-
-    if (result.affected === 0) {
-      throw new NotFoundException(I18nHelper.getError('ALBARAN_NOT_FOUND'));
-    }
+    const albaran = await this.findOne(id);
+    await this.albaranRepository.softDelete(albaran.id);
   }
 }

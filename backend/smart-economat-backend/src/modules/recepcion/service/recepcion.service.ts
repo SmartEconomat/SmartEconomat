@@ -55,15 +55,20 @@ export class RecepcionService {
   }
 
   async findAll(
-    query: PaginationQueryDto
+    query: PaginationQueryDto,
+    userRole?: string
   ): Promise<PaginatedResponseDto<Recepcion>> {
+    const isAdmin =
+      userRole?.toUpperCase() === 'ADMIN' ||
+      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
+      userRole?.toUpperCase() === 'SUPER_ADMIN';
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 50);
     const sortBy = query.sortBy ?? 'fechaRecepcion';
     const order = query.order ?? 'DESC';
     const [data, total] = await this.recepcionRepository.findAndCount({
       relations: ['usuario'],
-      withDeleted: false,
+      withDeleted: isAdmin,
       order: { [sortBy]: order },
       skip: (page - 1) * limit,
       take: limit,
@@ -73,9 +78,15 @@ export class RecepcionService {
     return { data, total, page, limit, totalPages };
   }
 
-  async findOne(id: string): Promise<Recepcion> {
+  async findOne(id: string, userRole?: string): Promise<Recepcion> {
+    const isAdmin =
+      userRole?.toUpperCase() === 'ADMIN' ||
+      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
+      userRole?.toUpperCase() === 'SUPER_ADMIN';
+
     const recepcion = await this.recepcionRepository.findOne({
       where: { id },
+      withDeleted: isAdmin,
       relations: [
         'usuario',
         'recepcionesPedidos',

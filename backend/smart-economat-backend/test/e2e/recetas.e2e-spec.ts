@@ -147,11 +147,14 @@ describe('RecetaController (e2e)', () => {
      * @test Debe duplicar una receta.
      */
     it('POST /recetas/duplicate - Debe duplicar una receta (201)', async () => {
+      const originalName = `Receta Original ${Date.now()}_${Math.random()}`;
+      const duplicatedName = `Receta Duplicada ${Date.now()}_${Math.random()}`;
+
       const createRes = await request(app.getHttpServer() as string)
         .post('/api/v1/recetas')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          nombre: 'Receta Original',
+          nombre: originalName,
           instrucciones: 'Instrucciones originales',
           tiempo: '10 min',
           dificultad: 'Fácil',
@@ -179,7 +182,7 @@ describe('RecetaController (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           sourceId: originalId,
-          newName: 'Receta Duplicada',
+          newName: duplicatedName,
         })
         .expect((res) => {
           if (res.status !== 201) {
@@ -190,7 +193,7 @@ describe('RecetaController (e2e)', () => {
         });
 
       expect(duplicateRes.body.success).toBe(true);
-      expect(duplicateRes.body.data.nombre).toBe('Receta Duplicada');
+      expect(duplicateRes.body.data.nombre).toBe(duplicatedName);
       const duplicatedId = duplicateRes.body.data.id;
 
       await request(app.getHttpServer() as string)

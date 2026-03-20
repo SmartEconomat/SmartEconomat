@@ -14,6 +14,7 @@ import {
 } from '../../../common/decorators/require-permissions.decorator';
 import { IS_PUBLIC_KEY } from '../../../common/decorators/public.decorator';
 import { AuthPermissionsService } from '../service/auth-permissions.service';
+import { rolUsuario } from '../../usuario/enums/usuario.enums';
 
 /**
  * Guard principal de permisos basado en lógica dinámica.
@@ -77,6 +78,10 @@ export class AuthPermissionsGuard implements CanActivate {
       throw new ForbiddenException(
         I18nHelper.getError('USUARIO_NO_AUTENTICADO')
       );
+    }
+
+    if (user.rol === rolUsuario.SUPER_ADMIN) {
+      return true;
     }
 
     const hasPermission: boolean =

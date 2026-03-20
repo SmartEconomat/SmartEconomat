@@ -58,9 +58,10 @@ export class InventarioController {
       'createdAt',
       'updatedAt',
     ])
-    query: PaginationQueryDto
+    query: PaginationQueryDto,
+    @GetUser('rol') userRole: string
   ): Promise<PaginatedResponseDto<Inventario>> {
-    return this.inventarioService.findAll(query);
+    return this.inventarioService.findAll(query, userRole);
   }
 
   @Get('stock')
@@ -101,8 +102,11 @@ export class InventarioController {
 
   @Get(':id')
   @RequirePermissions('inventario:ver')
-  findOne(@Param('id') id: string): Promise<Inventario> {
-    return this.inventarioService.findOne(id);
+  findOne(
+    @Param('id') id: string,
+    @GetUser('rol') userRole: string
+  ): Promise<Inventario> {
+    return this.inventarioService.findOne(id, userRole);
   }
 
   @Patch(':id')

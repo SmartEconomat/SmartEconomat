@@ -22,7 +22,6 @@ const Movimientos = React.lazy(() => import('../../pages/Movimientos'));
 const Proveedores = React.lazy(() => import('../../pages/Proveedores'));
 const Recetas = React.lazy(() => import('../../pages/Recetas'));
 
-const Usuarios = React.lazy(() => import('../../pages/Usuarios/Usuarios'));
 const Perfil = React.lazy(() => import('../../pages/Perfil'));
 const Administracion = React.lazy(() => import('../../pages/Administracion'));
 
@@ -34,6 +33,7 @@ export interface MenuItem {
   component: React.ComponentType<Record<string, unknown>>;
   showInMenu: boolean;
   roles?: string[];
+  permiso?: string;
 }
 
 export const menuItems: MenuItem[] = [
@@ -52,6 +52,7 @@ export const menuItems: MenuItem[] = [
     icon: <CategoryIconOption />,
     component: Productos,
     showInMenu: true,
+    permiso: 'productos:listar',
   },
   {
     path: '/pedidos',
@@ -60,6 +61,7 @@ export const menuItems: MenuItem[] = [
     icon: <ShoppingCartIconOption />,
     component: Pedidos,
     showInMenu: true,
+    permiso: 'pedidos:listar',
   },
   {
     path: '/recepcion',
@@ -68,6 +70,7 @@ export const menuItems: MenuItem[] = [
     icon: <LoginIconOption />,
     component: Recepcion,
     showInMenu: true,
+    permiso: 'recepciones:listar',
   },
   {
     path: '/inventario',
@@ -76,6 +79,7 @@ export const menuItems: MenuItem[] = [
     icon: <InventoryIconOption />,
     component: Inventario,
     showInMenu: true,
+    permiso: 'inventario:listar',
   },
   {
     path: '/movimientos',
@@ -84,6 +88,7 @@ export const menuItems: MenuItem[] = [
     icon: <SwapHorizIconOption />,
     component: Movimientos,
     showInMenu: true,
+    permiso: 'movimientos:listar',
   },
   {
     path: '/proveedores',
@@ -92,6 +97,7 @@ export const menuItems: MenuItem[] = [
     icon: <LocalShippingIconOption />,
     component: Proveedores,
     showInMenu: true,
+    permiso: 'proveedores:listar',
   },
   {
     path: '/recetas',
@@ -100,6 +106,7 @@ export const menuItems: MenuItem[] = [
     icon: <MenuBookIconOption />,
     component: Recetas,
     showInMenu: true,
+    permiso: 'recetas:listar',
   },
   {
     path: '/incidencias',
@@ -108,15 +115,7 @@ export const menuItems: MenuItem[] = [
     icon: <ReportProblemIconOption />,
     component: Incidencias,
     showInMenu: true,
-  },
-  {
-    path: '/usuarios',
-    title: 'Usuarios',
-    description: 'Gestión de profesores, alumnos y administradores',
-    icon: <PersonIconOption />,
-    component: Usuarios,
-    showInMenu: false,
-    roles: ['ADMIN', 'SUPER_ADMIN'],
+    permiso: 'incidencias:listar',
   },
   {
     path: '/administracion',
@@ -125,7 +124,8 @@ export const menuItems: MenuItem[] = [
     icon: <AdminPanelSettingsIcon />,
     component: Administracion,
     showInMenu: true,
-    roles: ['PROFESOR', 'ADMIN', 'SUPER_ADMIN'],
+    roles: ['PROFESOR', 'ADMIN', 'ADMINISTRADOR', 'SUPER_ADMIN'],
+    permiso: 'usuarios:listar',
   },
   {
     path: '/perfil',
