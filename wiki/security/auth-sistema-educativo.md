@@ -1,99 +1,45 @@
-# Documentación Técnica: Sistema Educativo, Autenticación y Roles
+# 🎓 Autenticación y Sistema Educativo
 
-## 1. Introducción
-Este documento detalla el funcionamiento técnico del sistema de gestión de usuarios, roles y la estructura educativa (clases y grupos) del proyecto Smart Economat. El sistema está diseñado para gestionar de forma jerárquica a administradores, profesores y alumnos, asegurando que cada nivel tenga los permisos adecuados y una vinculación clara.
+Este documento detalla la lógica de vinculación profesor-alumno y los procesos de registro adaptados al entorno educativo de SmartEconomat.
 
----
+## 📝 Registro de Usuarios
 
-## 2. Sistema de Autenticación (Auth)
-La autenticación se basa en **JSON Web Tokens (JWT)**.
+El sistema ofrece un formulario de registro dual (`RegisterForm.tsx`) donde el usuario elige su rol antes de completar los datos.
 
-### 2.1. Registro de Usuarios
-Existen dos flujos principales de registro:
+### 1. Registro de Alumnos
+Los alumnos se registran de forma autónoma pero vinculada.
+- **Identificación**: Username y Password únicos. No se requiere email obligatoriamente para agilizar el registro en el aula.
+- **Vinculación por Código**: Deben introducir un **Código de Clase** (Slot) generado previamente por un profesor.
+- **Validación en Tiempo Real**: El sistema valida el código antes del envío, confirmando al alumno en qué aula y con qué profesor se está registrando.
+- **Estado Inicial**: `INACTIVE`. El alumno no puede iniciar sesión hasta que su profesor lo active desde el panel de gestión.
 
-#### A. Registro de Alumnos
-Los alumnos se registran de forma autónoma a través del `AlumnoController`. Para completar el registro, el sistema requiere:
-- **Datos de cuenta**: Username, Email y Password.
-- **Datos de vinculación**:
-    - **Código de Clase**: Un código alfanumérico único (ej: `ABC-123`) generado por el profesor.
-- **Validación**: El sistema verifica que la clase tenga cupo disponible y vincula automáticamente al alumno con el profesor dueño de la misma.
-
-*Nota: Al registrarse, el estado inicial del alumno es `INACTIVE` hasta que su profesor lo active.*
-
-#### B. Registro de Profesores
-Los profesores pueden ser registrados por un **Administrador** o mediante un proceso de registro propio (sujeto a validación).
-- Requieren un código **CIAL** único.
-- Su estado inicial es `INACTIVE` hasta que un Administrador valide su cuenta.
-
-### 2.2. Login y Sesión
-El proceso de login valida:
-1.  Existencia del `username` o `email`.
-2.  Coincidencia de `password` (hasheada con bcrypt).
-3.  Estado del usuario: Solo los usuarios con status `ACTIVE` pueden iniciar sesión.
-
-Si el login es exitoso, se devuelve un `access_token` que contiene el `id`, `username` y `rol` del usuario.
-
-### 2.3. Gestión de Contraseñas
-- **Cambio de Contraseña Forzado**: El sistema puede obligar a un usuario a cambiar su contraseña en el próximo login (`mustChangePassword: true`).
-- **Restablecimiento**: 
-    - Un **Administrador** puede resetear la clave de cualquier usuario.
-    - Un **Profesor** puede resetear la clave de sus alumnos vinculados.
-    - Se genera una clave provisional de 8 caracteres.
+### 2. Registro de Profesores
+- **Identificación**: Username, Email, Password y **CIAL** (identificador oficial).
+- **Validación Institucional**: Las cuentas de profesor son creadas como `INACTIVE` y requieren que un **Administrador** verifique su CIAL y active la cuenta.
+- **Capacidad**: Una vez activo, el profesor puede generar sus propios "Slots" para permitir el registro de sus alumnos.
 
 ---
 
-## 3. Roles y Permisos (RBAC)
+## 🕒 Ciclo de Vida y Activación
 
-El sistema define tres roles principales en el enum `rolUsuario`:
+Para mantener el orden y la seguridad, el sistema sigue este flujo de estados:
 
-| Rol | Descripción | Capacidades Clave |
-| :--- | :--- | :--- |
-| **SUPER_ADMIN** | Administrador Maestro. | Acceso absoluto, gestión de plantillas de roles y permisos raíz. |
-| **ADMINISTRADOR** | Administrador de Centro. | Gestión de usuarios, activación de profesores, configuración local. |
-| **PROFESOR** | Gestor de Aula. | Creación de slots, activación/gestión de sus alumnos, recetas y stock. |
-| **ALUMNO** | Estudiante. | Consulta de catálogo, stock y realización de pedidos supervisados. |
-
----
-
-## 4. Estructura Educativa: Clases y Sesiones
-
-El núcleo del sistema educativo se basa en la relación entre el Profesor, el Alumno y el espacio físico/temporal (la Clase).
-
-### 4.1. Entidad `Slot` (Clase)
-Define un cupo de registro creado por el profesor. Cada clase tiene un código único y una capacidad máxima definida.
-
-### 4.2. Flujo de Vinculación
-1.  El **Profesor** genera un lote de "Clases" desde su panel.
-2.  El sistema genera códigos únicos (ej: `SMA-PR-01`).
-3.  El **Alumno** introduce este código durante su registro.
-4.  El sistema valida:
-    - Que el código exista.
-    - Que el slot no haya superado su capacidad de alumnos.
-5.  Se crea la vinculación `Alumno -> Profesor` automáticamente.
+1.  **Registro**: El usuario crea la cuenta (Estado: `INACTIVE`).
+2.  **Validación**:
+    - **Alumnos**: El Profesor asignado los activa desde la pestaña "Alumnos" (Gestión por Acordeones).
+    - **Profesores**: Un Administrador los activa desde la vista de "Usuarios".
+3.  **Acceso**: Solo tras la activación el usuario puede realizar el **Login**.
 
 ---
 
-## 5. Ciclo de Vida del Usuario (Activación)
+## 🔑 Gestión de Credenciales Educativas
 
-Para garantizar la seguridad y el orden académico, el sistema implementa un flujo de activación manual:
-
-```mermaid
-graph TD
-    A[Registro Alumno] --> B{Estado: INACTIVE}
-    B --> C[Profesor revisa lista de Alumnos]
-    C --> D[Profesor activa Alumno]
-    D --> E{Estado: ACTIVE}
-    E --> F[Alumno puede hacer Login]
-```
-
-1.  **Activación de Profesores**: Realizada por un `ADMIN`. Valida que el profesor pertenece a la institución.
-291. **Activación de Alumnos**: Realizada por el `PROFESOR` vinculado. El sistema permite gestionar a los alumnos de forma jerárquica:
-    - Agrupados por **Aula** y **Clase** mediante acordeones desplegables.
-    - Acciones rápidas de activación, reseteo de clave y gestión de permisos por cada grupo.
+- **Reset de Alumnos**: Los profesores tienen la potestad de resetear la contraseña de sus propios alumnos en un solo click, generando una clave temporal para solucionar olvidos recurrentes en el aula.
+- **Cambio Forzado**: Al resetear una clave, se puede marcar como cambio obligatorio en el siguiente inicio de sesión para asegurar que el alumno mantenga su privacidad.
 
 ---
 
-# Documentación Técnica Adicional
-- **Backend**: NestJS + TypeORM (PostgreSQL).
-- **Frontend**: React + TypeScript.
-- **Seguridad**: Bcrypt para hashing, JWT para transport de sesión.
+## 🔗 Relacionado
+- [Login y Registro (Seguridad)](./login-registro.md)
+- [Gestión de Usuarios (UI)](../frontend/gestion-usuarios.md)
+- [Permisos por Rol](../roles_y_permisos.md)

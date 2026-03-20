@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ILike, Repository } from 'typeorm';
+import { FindOptionsWhere, ILike, Repository } from 'typeorm';
 import { Usuario } from '../usuario.entity/usuario.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
@@ -36,17 +36,25 @@ export class UsuarioRepository {
     return this.repo.save(this.repo.create(data));
   }
 
-  findAll(query: PaginationQueryDto) {
+  findAll(query: PaginationQueryDto, userRole?: string) {
     const page = query.page ?? 1;
     const paginationOptions = buildFindManyOptions<Usuario>(query, 'username');
     const limit = paginationOptions.take ?? query.limit ?? 20;
 
-    let where: any = {};
+    let where: FindOptionsWhere<Usuario> | FindOptionsWhere<Usuario>[] = {};
     if (query.rol) {
-      const backendRol =
-        query.rol === 'Administrador'
-          ? rolUsuario.ADMINISTRADOR
-          : (query.rol.toUpperCase() as rolUsuario);
+      const normalized = query.rol.toUpperCase();
+      let backendRol: rolUsuario;
+
+      if (normalized === 'ADMINISTRADOR' || normalized === 'ADMIN') {
+        backendRol = rolUsuario.ADMINISTRADOR;
+      } else if (normalized === 'PROFESOR') {
+        backendRol = rolUsuario.PROFESOR;
+      } else if (normalized === 'ALUMNO') {
+        backendRol = rolUsuario.ALUMNO;
+      } else {
+        backendRol = query.rol as rolUsuario;
+      }
       if (query.searchTerm) {
         const term = ILike(`%${query.searchTerm}%`);
         where = [
@@ -60,6 +68,19 @@ export class UsuarioRepository {
     } else if (query.searchTerm) {
       const term = ILike(`%${query.searchTerm}%`);
       where = [{ username: term }, { email: term }, { nombre: term }];
+    }
+
+    const isAdmin =
+      userRole?.toUpperCase() === (rolUsuario.ADMINISTRADOR as string) ||
+      userRole?.toUpperCase() === (rolUsuario.SUPER_ADMIN as string) ||
+      userRole?.toUpperCase() === 'ADMIN';
+
+    if (!isAdmin) {
+      if (Array.isArray(where)) {
+        where = where.map((w) => ({ ...w, activo: true }));
+      } else {
+        where.activo = true;
+      }
     }
 
     return this.repo

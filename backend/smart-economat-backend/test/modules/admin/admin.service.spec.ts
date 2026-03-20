@@ -150,9 +150,19 @@ describe('AdminService', () => {
       roles: [adminRole],
     };
 
+    const actor = {
+      id: 'admin-1',
+      rol: rolUsuario.ADMINISTRADOR,
+      status: UserStatus.ACTIVE,
+      activo: true,
+    };
+
     mockUsuarioRepo.findOne
       .mockResolvedValueOnce(user)
+      .mockResolvedValueOnce(actor)
+      .mockResolvedValueOnce(user)
       .mockResolvedValueOnce(updatedUser);
+
     mockRolRepo.findOne.mockResolvedValue(adminRole);
     mockUsuarioRepo.save.mockResolvedValue(updatedUser);
 

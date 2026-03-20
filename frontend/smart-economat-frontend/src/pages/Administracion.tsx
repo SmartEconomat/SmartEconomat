@@ -25,7 +25,7 @@ import ProfessorSlotsManager from '../features/profile/components/ProfessorSlots
 import ProfessorStudentList from '../features/profile/components/ProfessorStudentList';
 import UsuariosView from './Usuarios/UsuariosView';
 
-import { useAuth } from '../store/auth.hooks';
+import { useAuth, usePermission, useAnyPermission } from '../store/auth.hooks';
 import { useToast } from '../store/toast.hooks';
 import {
   profesorService,
@@ -73,12 +73,16 @@ const Administracion: React.FC = () => {
   const toast = useToast();
 
   const userRole = user?.rol?.toUpperCase() || '';
-  // isProfesor: controla acceso a la página (admins también tienen acceso)
-  const isProfesor =
-    userRole === 'PROFESOR' ||
-    userRole === 'ADMIN' ||
-    userRole === 'SUPER_ADMIN';
-  // isPureProfesor: solo el rol PROFESOR tiene perfil de Profesor en BD (los admins NO)
+  const canViewAdmin = useAnyPermission([
+    'profesor:ver_alumnos',
+    'profesor:gestionar_slots',
+    'usuarios:listar',
+  ]);
+  const isAdmin = usePermission('usuarios:listar');
+  const canManageSlots = usePermission('profesor:gestionar_slots');
+  const canViewStudents = usePermission('profesor:ver_alumnos');
+
+  // isPureProfesor: para cargar datos propios (esto se mantiene un poco por lógica de negocio del backend)
   const isPureProfesor = userRole === 'PROFESOR';
 
   const [tabValue, setTabValue] = useState(0);
@@ -96,12 +100,6 @@ const Administracion: React.FC = () => {
     capacidad: '',
   });
   const [students, setStudents] = useState<Alumno[]>([]);
-
-  // Estado para Administrador
-  const isAdmin =
-    userRole === 'ADMIN' ||
-    userRole === 'SUPER_ADMIN' ||
-    userRole === 'ADMINISTRADOR';
 
   const loadAlumnos = useCallback(async () => {
     setIsLoading(true);
@@ -155,15 +153,25 @@ const Administracion: React.FC = () => {
   }, [isAdmin]);
 
   useEffect(() => {
-    if (!isProfesor) {
+    if (canViewAdmin === false) {
       navigate('/');
       return;
     }
 
-    loadAlumnos();
-    loadAulas();
-    loadProfesores();
-  }, [isProfesor, navigate, loadAlumnos, loadAulas, loadProfesores]);
+    if (canViewStudents || isPureProfesor) loadAlumnos();
+    if (canManageSlots || isPureProfesor || isAdmin) loadAulas();
+    if (isAdmin) loadProfesores();
+  }, [
+    canViewAdmin,
+    navigate,
+    loadAlumnos,
+    loadAulas,
+    loadProfesores,
+    canViewStudents,
+    canManageSlots,
+    isPureProfesor,
+    isAdmin,
+  ]);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -384,20 +392,24 @@ const Administracion: React.FC = () => {
             textColor="primary"
             indicatorColor="primary"
           >
-            <Tab
-              icon={<SchoolIcon />}
-              iconPosition="start"
-              label="Aulas y Clases"
-              {...a11yProps(0)}
-              sx={{ fontWeight: 600, py: 2 }}
-            />
-            <Tab
-              icon={<PeopleIcon />}
-              iconPosition="start"
-              label="Alumnos"
-              {...a11yProps(1)}
-              sx={{ fontWeight: 600, py: 2 }}
-            />
+            {canManageSlots && (
+              <Tab
+                icon={<SchoolIcon />}
+                iconPosition="start"
+                label="Aulas y Clases"
+                {...a11yProps(0)}
+                sx={{ fontWeight: 600, py: 2 }}
+              />
+            )}
+            {canViewStudents && (
+              <Tab
+                icon={<PeopleIcon />}
+                iconPosition="start"
+                label="Alumnos"
+                {...a11yProps(1)}
+                sx={{ fontWeight: 600, py: 2 }}
+              />
+            )}
             {isAdmin && (
               <Tab
                 icon={<PeopleIcon />}
@@ -430,21 +442,23 @@ const Administracion: React.FC = () => {
 
               <Divider />
 
-              <Box display="flex" justifyContent="flex-end">
-                <Button
-                  variant={isEditingSlots ? 'outlined' : 'contained'}
-                  color={isEditingSlots ? 'inherit' : 'success'}
-                  startIcon={isEditingSlots ? <CancelIcon /> : <EditIcon />}
-                  onClick={() => setIsEditingSlots(!isEditingSlots)}
-                  sx={{
-                    borderRadius: 3,
-                    px: 4,
-                    width: { xs: '100%', sm: 'auto' },
-                  }}
-                >
-                  {isEditingSlots ? 'Finalizar Edición' : 'Gestionar'}
-                </Button>
-              </Box>
+              {canManageSlots && (
+                <Box display="flex" justifyContent="flex-end">
+                  <Button
+                    variant={isEditingSlots ? 'outlined' : 'contained'}
+                    color={isEditingSlots ? 'inherit' : 'success'}
+                    startIcon={isEditingSlots ? <CancelIcon /> : <EditIcon />}
+                    onClick={() => setIsEditingSlots(!isEditingSlots)}
+                    sx={{
+                      borderRadius: 3,
+                      px: 4,
+                      width: { xs: '100%', sm: 'auto' },
+                    }}
+                  >
+                    {isEditingSlots ? 'Finalizar Edición' : 'Gestionar'}
+                  </Button>
+                </Box>
+              )}
             </Stack>
           </CustomTabPanel>
 

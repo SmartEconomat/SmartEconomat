@@ -9,7 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
-  Request,
+  Req,
   Query,
   Res,
 } from '@nestjs/common';
@@ -46,7 +46,7 @@ export class RecepcionController {
   @HttpCode(HttpStatus.CREATED)
   create(
     @Body() dto: CreateRecepcionDto,
-    @Request() req: any
+    @Req() req: { user: { id: string } }
   ): Promise<RecepcionResultadoDto> {
     const userId = req.user.id;
     dto.usuarioId = dto.usuarioId || userId;
@@ -57,9 +57,11 @@ export class RecepcionController {
   @RequirePermissions('recepciones:listar')
   findAll(
     @SortableFields(['fechaRecepcion', 'estado', 'createdAt', 'updatedAt'])
-    query: PaginationQueryDto
+    query: PaginationQueryDto,
+    @Req() req: { user?: { rol?: string } }
   ): Promise<PaginatedResponseDto<Recepcion>> {
-    return this.recepcionService.findAll(query);
+    const userRole = req.user?.rol;
+    return this.recepcionService.findAll(query, userRole);
   }
 
   @Get('reporte-pdf')
@@ -78,8 +80,12 @@ export class RecepcionController {
 
   @Get(':id')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
-  findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Recepcion> {
-    return this.recepcionService.findOne(id);
+  findOne(
+    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Req() req: { user?: { rol?: string } }
+  ): Promise<Recepcion> {
+    const userRole = req.user?.rol;
+    return this.recepcionService.findOne(id, userRole);
   }
 
   @Patch(':id')

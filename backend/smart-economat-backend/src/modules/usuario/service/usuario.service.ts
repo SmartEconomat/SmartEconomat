@@ -85,8 +85,8 @@ export class UsuarioService {
     });
   }
 
-  findAll(query: PaginationQueryDto) {
-    return this.usuarioRepo.findAll(query);
+  findAll(query: PaginationQueryDto, userRole?: string) {
+    return this.usuarioRepo.findAll(query, userRole);
   }
 
   async findOne(id: string) {
@@ -221,5 +221,9 @@ export class UsuarioService {
     await this.usuarioRepo.repo.save(basicUser);
     await this.authPermissionsService.invalidateUserCache(userId);
     return { success: true };
+  }
+
+  async getUserPermissions(userId: string): Promise<string[]> {
+    return this.authPermissionsService.getUserPermissions(userId);
   }
 }

@@ -88,13 +88,18 @@ export class PedidoService {
   }
 
   async findAll(
-    query: PaginationQueryDto
+    query: PaginationQueryDto,
+    userRole?: string
   ): Promise<PaginatedResponseDto<Pedido>> {
-    return await this.pedidoRepository.findAllPaginated(query, true);
+    return await this.pedidoRepository.findAllPaginated(query, true, userRole);
   }
 
-  async findOne(id: string): Promise<Pedido> {
-    const pedido = await this.pedidoRepository.findOneWithRelations(id, true);
+  async findOne(id: string, userRole?: string): Promise<Pedido> {
+    const pedido = await this.pedidoRepository.findOneWithRelations(
+      id,
+      true,
+      userRole
+    );
     if (!pedido) {
       throw new NotFoundException(I18nHelper.getError('ORDER_NOT_FOUND'));
     }
@@ -277,7 +282,7 @@ export class PedidoService {
       );
     }
 
-    await this.pedidoRepository.softRemove(pedido);
+    await this.pedidoRepository.softDelete(id);
   }
 
   private calculateFechaEntrega(baseDate = new Date()): Date {

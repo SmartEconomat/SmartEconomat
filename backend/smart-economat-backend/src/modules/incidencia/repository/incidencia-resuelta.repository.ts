@@ -10,16 +10,31 @@ export class IncidenciaResuelaRepository extends Repository<IncidenciaResuelta> 
     super(IncidenciaResuelta, dataSource.createEntityManager());
   }
 
-  findByIncidencia(idIncidencia: string): Promise<IncidenciaResuelta | null> {
+  findByIncidencia(
+    idIncidencia: string,
+    userRole?: string
+  ): Promise<IncidenciaResuelta | null> {
+    const isAdmin =
+      userRole?.toUpperCase() === 'ADMIN' ||
+      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
+      userRole?.toUpperCase() === 'SUPER_ADMIN';
+
     return this.findOne({
       where: { incidencia: { id: idIncidencia } },
+      withDeleted: isAdmin,
       relations: ['incidencia', 'usuarioResolutor'],
     });
   }
 
   async findAllPaginated(
-    query: PaginationQueryDto
+    query: PaginationQueryDto,
+    userRole?: string
   ): Promise<PaginatedResponseDto<IncidenciaResuelta>> {
+    const isAdmin =
+      userRole?.toUpperCase() === 'ADMIN' ||
+      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
+      userRole?.toUpperCase() === 'SUPER_ADMIN';
+
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 50);
     const sortBy = query.sortBy ?? 'fechaResolucion';
@@ -27,6 +42,7 @@ export class IncidenciaResuelaRepository extends Repository<IncidenciaResuelta> 
 
     const [data, total] = await this.findAndCount({
       relations: ['incidencia', 'usuarioResolutor'],
+      withDeleted: isAdmin,
       order: { [sortBy]: order },
       skip: (page - 1) * limit,
       take: limit,

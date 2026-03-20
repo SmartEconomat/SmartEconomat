@@ -36,6 +36,7 @@ describe('AlbaranService', () => {
       order: { fecha: 'DESC' },
       skip: 0,
       take: 20,
+      withDeleted: false,
     });
     expect(result).toEqual({
       data: [{ id: 'alb-1' }],

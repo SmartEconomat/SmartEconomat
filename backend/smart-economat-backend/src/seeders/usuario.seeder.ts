@@ -61,6 +61,23 @@ export const runSeeder = async (dataSource: DataSource) => {
       await manager.save(adminUser);
     }
 
+    let superAdminUser = await manager.findOne(Usuario, {
+      where: { username: 'superAdmin' },
+    });
+    if (!superAdminUser) {
+      const superAdminPassword = await bcrypt.hash('SmartEconomat2026*', 10);
+      superAdminUser = manager.create(Usuario, {
+        username: 'superAdmin',
+        password: superAdminPassword,
+        email: 'superadmin@smarteconomat.com',
+        rol: rolUsuario.SUPER_ADMIN,
+        status: UserStatus.ACTIVE,
+        activo: true,
+        roles: [getSeedRole(rolUsuario.SUPER_ADMIN)],
+      });
+      await manager.save(superAdminUser);
+    }
+
     const professorsToCreate = [
       {
         username: 'profesor1',

@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  Req,
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { CreateProveedorDto } from '../dto/create-proveedor.dto';
@@ -49,15 +50,21 @@ export class ProveedorController {
       'createdAt',
       'updatedAt',
     ])
-    query: PaginationQueryDto
+    query: PaginationQueryDto,
+    @Req() req: { user?: { rol?: string } }
   ): Promise<PaginatedResponseDto<Proveedor>> {
-    return this.proveedorService.findAll(query);
+    const userRole = req.user?.rol;
+    return this.proveedorService.findAll(query, userRole);
   }
 
   @Get(':id')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Proveedor> {
-    return this.proveedorService.findOne(id);
+  findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: { user?: { rol?: string } }
+  ): Promise<Proveedor> {
+    const userRole = req.user?.rol;
+    return this.proveedorService.findOne(id, userRole);
   }
 
   @Patch(':id')

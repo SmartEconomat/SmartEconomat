@@ -8,6 +8,8 @@ import {
   Param,
   Patch,
   Post,
+  Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
@@ -19,7 +21,6 @@ import { UpdateIncidenciaResuelaDto } from '../dto/update-incidencia.dto';
 import { IncidenciaResuelta } from '../incidencia-resuelta.entity/incidencia-resuelta.entity';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
-import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
@@ -39,23 +40,21 @@ export class IncidenciaResuelaController {
   @Get()
   @RequirePermissions('incidencias:listar')
   findAll(
-    @SortableFields([
-      'fechaResolucion',
-      'tipoResolucion',
-      'createdAt',
-      'updatedAt',
-    ])
-    query: PaginationQueryDto
+    @Query() query: PaginationQueryDto,
+    @Req() req: { user?: { rol?: string } }
   ): Promise<PaginatedResponseDto<IncidenciaResuelta>> {
-    return this.incidenciaResuelaService.findAll(query);
+    const userRole = req.user?.rol;
+    return this.incidenciaResuelaService.findAll(query, userRole);
   }
 
   @Get(':id')
   @RequirePermissions('incidencias:ver')
   findOne(
-    @Param('id', ParseUUIDv7Pipe) id: string
+    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Req() req: { user?: { rol?: string } }
   ): Promise<IncidenciaResuelta> {
-    return this.incidenciaResuelaService.findOne(id);
+    const userRole = req.user?.rol;
+    return this.incidenciaResuelaService.findOne(id, userRole);
   }
 
   @Patch(':id')

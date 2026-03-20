@@ -44,13 +44,17 @@ export class IncidenciaService {
   }
 
   async findAll(
-    query: IncidenciaQueryDto
+    query: IncidenciaQueryDto,
+    userRole?: string
   ): Promise<PaginatedResponseDto<Incidencia>> {
-    return this.incidenciaRepository.findAllPaginated(query);
+    return this.incidenciaRepository.findAllPaginated(query, userRole);
   }
 
-  async findOne(id: string): Promise<Incidencia> {
-    const incidencia = await this.incidenciaRepository.findOneWithRelations(id);
+  async findOne(id: string, userRole?: string): Promise<Incidencia> {
+    const incidencia = await this.incidenciaRepository.findOneWithRelations(
+      id,
+      userRole
+    );
 
     if (!incidencia) {
       throw new NotFoundException(I18nHelper.getError('INCIDENCIA_NOT_FOUND'));

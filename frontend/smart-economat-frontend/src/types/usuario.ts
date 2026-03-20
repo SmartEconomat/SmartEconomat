@@ -1,22 +1,42 @@
+export interface Permiso {
+  id: string;
+  codigo: string;
+  nombre: string;
+  descripcion?: string;
+  modulo: string;
+  accion: string;
+}
+
 export interface Usuario {
   id: string | number;
   username: string;
   email: string;
-  rol: 'Administrador' | 'Profesor' | 'Alumno';
-  estado: 'Activo' | 'Inactivo';
+  rol: string;
+  estado: string;
   fecha_registro?: string;
   roleId?: string;
   roleName?: string;
+  permisosAdicionales?: Permiso[];
+  permisosExcluidos?: Permiso[];
 }
 
 export interface RolOption {
   id: string;
   nombre: string;
   descripcion?: string;
+  permisos?: Permiso[];
 }
 
-export type CrearUsuarioDTO = Omit<Usuario, 'id' | 'fecha_registro'>;
-export type ActualizarUsuarioDTO = Partial<CrearUsuarioDTO>;
+export type CrearUsuarioDTO = Omit<
+  Usuario,
+  'id' | 'fecha_registro' | 'permisosAdicionales' | 'permisosExcluidos'
+>;
+
+export interface ActualizarUsuarioDTO extends Partial<CrearUsuarioDTO> {
+  roleId?: string;
+  permisosAdicionalesIds?: string[];
+  permisosExcluidosIds?: string[];
+}
 
 export interface ApiResponse<T> {
   data: T;

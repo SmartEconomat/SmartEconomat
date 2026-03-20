@@ -10,6 +10,7 @@ import {
   HttpStatus,
   UseGuards,
   ParseUUIDPipe,
+  Req,
 } from '@nestjs/common';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
@@ -61,15 +62,21 @@ export class RecetaController {
       'createdAt',
       'updatedAt',
     ])
-    query: PaginationQueryDto
+    query: PaginationQueryDto,
+    @Req() req: { user?: { rol?: string } }
   ): Promise<PaginatedResponseDto<Receta>> {
-    return this.recetaService.findAll(query);
+    const userRole = req.user?.rol;
+    return this.recetaService.findAll(query, userRole);
   }
 
   @Get(':id')
   @RequirePermissions('recetas:ver')
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Receta> {
-    return this.recetaService.findOne(id);
+  findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: { user?: { rol?: string } }
+  ): Promise<Receta> {
+    const userRole = req.user?.rol;
+    return this.recetaService.findOne(id, userRole);
   }
 
   @Get(':id/detalle')

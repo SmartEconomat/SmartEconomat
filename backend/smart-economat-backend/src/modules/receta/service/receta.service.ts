@@ -39,13 +39,14 @@ export class RecetaService {
   }
 
   async findAll(
-    query: PaginationQueryDto
+    query: PaginationQueryDto,
+    userRole?: string
   ): Promise<PaginatedResponseDto<Receta>> {
-    return this.recetaRepository.findAllPaginated(query);
+    return this.recetaRepository.findAllPaginated(query, userRole);
   }
 
-  async findOne(id: string): Promise<Receta> {
-    const receta = await this.recetaRepository.findById(id);
+  async findOne(id: string, userRole?: string): Promise<Receta> {
+    const receta = await this.recetaRepository.findById(id, userRole);
 
     if (!receta) {
       throw new NotFoundException(I18nHelper.getError('RECIPE_NOT_FOUND'));

@@ -13,6 +13,7 @@ import {
   Typography,
   Alert,
   Button,
+  Stack,
   SelectChangeEvent,
   Tabs,
   Tab,
@@ -22,6 +23,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CheckIcon from '@mui/icons-material/Check';
 import CancelIcon from '@mui/icons-material/Cancel';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
+import AddIcon from '@mui/icons-material/Add';
 import DataTable, { Column } from '../components/ui/DataTable';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import DynamicFormModal, {
@@ -42,10 +45,8 @@ import { deleteResource } from '../services/api.service';
 import { fetchProveedores } from '../services/proveedor.service';
 import { useToast } from '../store/toast.hooks';
 import StatusChip from '../components/ui/StatusChip';
+import { usePermission } from '../store/auth.hooks';
 import PageToolbar from '../components/ui/PageToolbar';
-
-import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
-import AddIcon from '@mui/icons-material/Add';
 import { usePedidoDraft } from '../hooks/usePedidoDraft';
 
 const getPedidoSchema = (
@@ -385,6 +386,10 @@ const Pedidos: React.FC = () => {
     }
   };
 
+  const canEdit = usePermission('pedidos:editar');
+  const canDelete = usePermission('pedidos:eliminar');
+  const canCreate = usePermission('pedidos:crear');
+
   const handleEditClick = (row: Pedido) => {
     const editData = {
       ...row,
@@ -536,7 +541,7 @@ const Pedidos: React.FC = () => {
   ];
 
   const renderActions = (row: Pedido) => (
-    <>
+    <Stack direction="row" spacing={1} justifyContent="center">
       {row.estado !== EstadoPedido.PENDIENTE && (
         <IconButton
           color="primary"
@@ -548,7 +553,7 @@ const Pedidos: React.FC = () => {
           <VisibilityIcon fontSize="small" />
         </IconButton>
       )}
-      {row.estado === EstadoPedido.PENDIENTE && (
+      {canEdit && row.estado === EstadoPedido.PENDIENTE && (
         <IconButton
           color="success"
           onClick={() => setItemToAceptar(row)}
@@ -559,7 +564,7 @@ const Pedidos: React.FC = () => {
           <CheckIcon fontSize="small" />
         </IconButton>
       )}
-      {row.estado === EstadoPedido.PENDIENTE && (
+      {canEdit && row.estado === EstadoPedido.PENDIENTE && (
         <IconButton
           color="warning"
           onClick={() => setItemToCancelar(row)}
@@ -570,19 +575,20 @@ const Pedidos: React.FC = () => {
           <CancelIcon fontSize="small" />
         </IconButton>
       )}
-      {(row.estado === EstadoPedido.PENDIENTE ||
-        row.estado === EstadoPedido.CANCELADO) && (
-        <IconButton
-          color="error"
-          onClick={() => setItemToDelete(row)}
-          size="small"
-          aria-label="Borrar"
-          title="Eliminar de la base de datos"
-        >
-          <DeleteIcon fontSize="small" />
-        </IconButton>
-      )}
-      {row.estado === EstadoPedido.PENDIENTE && (
+      {canDelete &&
+        (row.estado === EstadoPedido.PENDIENTE ||
+          row.estado === EstadoPedido.CANCELADO) && (
+          <IconButton
+            color="error"
+            onClick={() => setItemToDelete(row)}
+            size="small"
+            aria-label="Borrar"
+            title="Eliminar de la base de datos"
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        )}
+      {canEdit && row.estado === EstadoPedido.PENDIENTE && (
         <IconButton
           color="secondary"
           onClick={() => handleEditClick(row)}
@@ -593,7 +599,7 @@ const Pedidos: React.FC = () => {
           <EditIcon fontSize="small" />
         </IconButton>
       )}
-    </>
+    </Stack>
   );
 
   return (
@@ -609,18 +615,22 @@ const Pedidos: React.FC = () => {
         searchId="search-pedidos"
         totalItems={totalItems}
         totalItemsLabel="pedidos"
-        primaryAction={{
-          label: 'Nuevo Pedido',
-          onClick: () => {
-            if (draft) {
-              setIsRecoveryOpen(true);
-            } else {
-              setItemToEdit({});
-            }
-          },
-          id: 'btn-nuevo-pedido',
-          isLoading: isLoadingDraft,
-        }}
+        primaryAction={
+          canCreate
+            ? {
+                label: 'Nuevo Pedido',
+                onClick: () => {
+                  if (draft) {
+                    setIsRecoveryOpen(true);
+                  } else {
+                    setItemToEdit({});
+                  }
+                },
+                id: 'btn-nuevo-pedido',
+                isLoading: isLoadingDraft,
+              }
+            : undefined
+        }
         viewMode={viewMode}
         onViewModeChange={setViewMode}
       />
@@ -690,13 +700,15 @@ const Pedidos: React.FC = () => {
                   Empieza registrando un nuevo pedido al catálogo de
                   proveedores.
                 </Typography>
-                <Button
-                  variant="outlined"
-                  startIcon={<AddIcon />}
-                  onClick={() => setItemToEdit({})}
-                >
-                  Registrar Pedido
-                </Button>
+                {canCreate && (
+                  <Button
+                    variant="outlined"
+                    startIcon={<AddIcon />}
+                    onClick={() => setItemToEdit({})}
+                  >
+                    Registrar Pedido
+                  </Button>
+                )}
               </Box>
             }
             pagination={{

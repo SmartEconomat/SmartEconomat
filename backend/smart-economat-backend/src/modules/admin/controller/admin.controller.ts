@@ -31,6 +31,13 @@ export class AdminController {
     return this.adminService.getRoles();
   }
 
+  @Get('permissions')
+  @Roles(rolUsuario.ADMINISTRADOR)
+  @RequirePermissions('usuarios:listar')
+  async getPermissions() {
+    return this.adminService.getPermissions();
+  }
+
   @Post('profesores')
   @Roles(rolUsuario.ADMINISTRADOR)
   @RequirePermissions('usuarios:crear')
@@ -46,7 +53,13 @@ export class AdminController {
     @Param('id') userId: string,
     @Body() dto: UpdateAdminUserRoleDto
   ) {
-    return this.adminService.updateUserRole(actorUserId, userId, dto.roleId);
+    return this.adminService.updateUserRole(
+      actorUserId,
+      userId,
+      dto.roleId,
+      dto.permisosAdicionalesIds,
+      dto.permisosExcluidosIds
+    );
   }
 
   @Patch('users/:id/activate')

@@ -16,6 +16,8 @@ import { CreateProfesorDto } from '../../profesor/dto/create-profesor.dto';
 import { rolUsuario, UserStatus } from '../../usuario/enums/usuario.enums';
 import { Rol } from '../../roles/rol.entity/rol.entity';
 import { AuthPermissionsService } from '../../auth/service/auth-permissions.service';
+import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
+import { In } from 'typeorm';
 
 @Injectable()
 export class AdminService {
@@ -29,25 +31,62 @@ export class AdminService {
     @Optional()
     private readonly rolRepo?: Repository<Rol>,
     @Optional()
-    private readonly authPermissionsService?: AuthPermissionsService
+    private readonly authPermissionsService?: AuthPermissionsService,
+    @InjectRepository(Permiso)
+    @Optional()
+    private readonly permisoRepo?: Repository<Permiso>
   ) {}
 
-  private normalizeStaticRole(roleName: string): rolUsuario {
-    const normalized = roleName.trim().toUpperCase();
+  private isAdminRole(role?: string) {
+    if (!role) return false;
+    const normalized = role.toUpperCase();
+    return (
+      normalized === (rolUsuario.ADMINISTRADOR as string) ||
+      normalized === (rolUsuario.SUPER_ADMIN as string) ||
+      normalized === 'ADMIN'
+    );
+  }
 
-    if (normalized === 'ADMIN') {
-      return rolUsuario.ADMINISTRADOR;
+  private isSuperAdmin(role?: string) {
+    return role?.toUpperCase() === rolUsuario.SUPER_ADMIN;
+  }
+
+  private async ensureNotDemotingAdmin(
+    actorId: string,
+    targetUserId: string,
+    nextRoleName?: string
+  ) {
+    const actor = await this.usuarioRepo.findOne({
+      where: { id: actorId },
+      relations: ['roles'],
+    });
+    const target = await this.usuarioRepo.findOne({
+      where: { id: targetUserId },
+      relations: ['roles'],
+    });
+
+    if (!actor || !target) return;
+
+    const actorIsSuper = this.isSuperAdmin(actor.rol);
+    const actorIsAdmin = this.isAdminRole(actor.rol);
+    const targetIsSuper = this.isSuperAdmin(target.rol);
+    const targetIsAdmin = this.isAdminRole(target.rol);
+
+    if (targetIsSuper && !actorIsSuper) {
+      throw new BadRequestException(
+        'Solo un Super Administrador puede modificar a otro Super Administrador'
+      );
     }
 
-    if (normalized === 'PROFESOR') {
-      return rolUsuario.PROFESOR;
+    if (targetIsAdmin && !actorIsAdmin) {
+      throw new BadRequestException(
+        'Solo un administrador puede modificar a otro administrador'
+      );
     }
 
-    if (normalized === 'ALUMNO') {
-      return rolUsuario.ALUMNO;
+    if (targetIsAdmin && !this.isAdminRole(nextRoleName)) {
+      await this.ensureNotLastActiveAdmin(target, rolUsuario.ALUMNO, true);
     }
-
-    throw new BadRequestException('El rol seleccionado no es compatible');
   }
 
   private async ensureNotLastActiveAdmin(
@@ -87,12 +126,20 @@ export class AdminService {
     }
 
     return this.rolRepo.find({
-      where: [
-        { nombre: rolUsuario.ADMINISTRADOR, activo: true },
-        { nombre: rolUsuario.PROFESOR, activo: true },
-        { nombre: rolUsuario.ALUMNO, activo: true },
-      ],
+      where: { activo: true },
+      relations: ['permisos'],
       order: { nombre: 'ASC' },
+    });
+  }
+
+  async getPermissions() {
+    if (!this.permisoRepo) {
+      return [];
+    }
+
+    return this.permisoRepo.find({
+      where: { activo: true },
+      order: { modulo: 'ASC', nombre: 'ASC' },
     });
   }
 
@@ -154,7 +201,13 @@ export class AdminService {
     });
   }
 
-  async updateUserRole(_actorUserId: string, userId: string, roleId: string) {
+  async updateUserRole(
+    actorUserId: string,
+    userId: string,
+    roleId: string,
+    extraPermisosIds?: string[],
+    excludedPermisosIds?: string[]
+  ) {
     if (!this.rolRepo) {
       throw new BadRequestException(
         'La gestión dinámica de roles no está disponible'
@@ -162,7 +215,10 @@ export class AdminService {
     }
 
     const [user, role] = await Promise.all([
-      this.usuarioRepo.findOne({ where: { id: userId }, relations: ['roles'] }),
+      this.usuarioRepo.findOne({
+        where: { id: userId },
+        relations: ['roles', 'permisosAdicionales', 'permisosExcluidos'],
+      }),
       this.rolRepo.findOne({ where: { id: roleId, activo: true } }),
     ]);
 
@@ -174,18 +230,46 @@ export class AdminService {
       throw new NotFoundException('Rol no encontrado');
     }
 
-    const nextRole = this.normalizeStaticRole(role.nombre);
+    await this.ensureNotDemotingAdmin(actorUserId, userId, role.nombre);
 
-    await this.ensureNotLastActiveAdmin(user, nextRole, user.activo);
+    let legacyRole = rolUsuario.ALUMNO;
+    const normalized = role.nombre.trim().toUpperCase();
+    if (
+      normalized === (rolUsuario.ADMINISTRADOR as string) ||
+      normalized === 'ADMIN'
+    ) {
+      legacyRole = rolUsuario.ADMINISTRADOR;
+    } else if (
+      normalized === (rolUsuario.PROFESOR as string) ||
+      normalized === 'PROFESOR'
+    ) {
+      legacyRole = rolUsuario.PROFESOR;
+    } else if (normalized === (rolUsuario.SUPER_ADMIN as string)) {
+      legacyRole = rolUsuario.SUPER_ADMIN;
+    }
 
-    user.rol = nextRole;
+    user.rol = legacyRole;
     user.roles = [role];
+
+    if (this.permisoRepo) {
+      if (extraPermisosIds) {
+        user.permisosAdicionales = await this.permisoRepo.find({
+          where: { id: In(extraPermisosIds) },
+        });
+      }
+      if (excludedPermisosIds) {
+        user.permisosExcluidos = await this.permisoRepo.find({
+          where: { id: In(excludedPermisosIds) },
+        });
+      }
+    }
+
     await this.usuarioRepo.save(user);
     await this.authPermissionsService?.invalidateUserCache(user.id);
 
     return this.usuarioRepo.findOne({
       where: { id: user.id },
-      relations: ['roles'],
+      relations: ['roles', 'permisosAdicionales', 'permisosExcluidos'],
     });
   }
 
