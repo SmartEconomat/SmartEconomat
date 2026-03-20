@@ -1,19 +1,13 @@
 import { NotFoundException, ConflictException } from '@nestjs/common';
-import {
-  Repository,
-  DataSource,
-  EntityManager,
-  ObjectLiteral,
-  FindOptionsWhere,
-  FindOptionsOrder,
-} from 'typeorm';
+import { Repository, DataSource, EntityManager } from 'typeorm';
 import { PaginationQueryDto } from '../dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../dto/paginated-response.dto';
 import { DeepPartial } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { BaseEntity } from '../entities/base.entity';
 
 export abstract class BaseService<
-  T extends ObjectLiteral,
+  T extends BaseEntity,
   CreateDto extends DeepPartial<T> = DeepPartial<T>,
   UpdateDto extends QueryDeepPartialEntity<T> = QueryDeepPartialEntity<T>,
 > {
@@ -30,7 +24,7 @@ export abstract class BaseService<
     void _userRole;
 
     const entity = await this.repository.findOne({
-      where: { id } as FindOptionsWhere<T>,
+      where: { id } as any,
       relations,
     });
     if (!entity) {
@@ -55,7 +49,7 @@ export abstract class BaseService<
       withDeleted: isAdmin,
       skip: (page - 1) * limit,
       take: limit,
-      order: { id: 'DESC' } as FindOptionsOrder<T>,
+      order: { id: 'DESC' } as any,
     });
     return {
       data,
