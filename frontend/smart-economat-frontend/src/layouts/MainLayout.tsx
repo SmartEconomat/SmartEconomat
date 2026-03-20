@@ -160,9 +160,9 @@ export default function MainLayout() {
     setUserMenuAnchor(null);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     handleUserMenuClose();
-    logout();
+    await logout();
     navigate('/login');
   };
 

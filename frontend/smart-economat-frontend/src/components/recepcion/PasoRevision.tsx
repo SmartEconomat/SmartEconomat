@@ -17,6 +17,7 @@ import {
   FormControl,
   Select,
   MenuItem,
+  Chip,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
@@ -119,144 +120,156 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                     <TableCell align="right" sx={{ width: '10%' }}>
                       Real
                     </TableCell>
+                    <TableCell sx={{ width: '12%' }}>Origen peso</TableCell>
                     <TableCell sx={{ width: '16%' }}>Estado Físico</TableCell>
                     <TableCell sx={{ width: '20%' }}>Notas</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {p.lineas
-                    .filter(
-                      (l) =>
-                        Number(l.cantidadRecibida) > 0 ||
-                        l.estado === 'No entregado'
-                    )
-                    .map((l, lIdx) => {
-                      return (
-                        <TableRow key={l.pedidoProductoId}>
-                          <TableCell
-                            sx={{
-                              lineHeight: 1.2,
-                              whiteSpace: 'normal',
-                              wordWrap: 'break-word',
-                              p: 1,
-                            }}
+                  {p.lineas.map((l, originalLIdx) => {
+                    const isVisible =
+                      Number(l.cantidadRecibida) > 0 ||
+                      l.estado === 'No entregado';
+
+                    if (!isVisible) return null;
+
+                    return (
+                      <TableRow key={l.pedidoProductoId}>
+                        <TableCell
+                          sx={{
+                            lineHeight: 1.2,
+                            whiteSpace: 'normal',
+                            wordWrap: 'break-word',
+                            p: 1,
+                          }}
+                        >
+                          <Typography
+                            variant="body2"
+                            sx={{ fontWeight: 500, display: 'block' }}
                           >
-                            <Typography
-                              variant="body2"
-                              sx={{ fontWeight: 500, display: 'block' }}
-                            >
-                              {l.nombreProducto}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              sx={{ color: 'text.secondary', display: 'block' }}
-                            >
-                              {l.codigoBarras
-                                ? `EAN: ${l.codigoBarras}`
-                                : 'Sin código'}
-                            </Typography>
-                          </TableCell>
-                          <TableCell align="center">
-                            <Typography
-                              variant="caption"
-                              sx={{ color: 'text.secondary' }}
-                            >
-                              {l.unidad}
-                            </Typography>
-                          </TableCell>
-                          <TableCell align="right">
-                            {l.cantidadPedida}
-                          </TableCell>
-                          <TableCell
-                            align="right"
-                            sx={{
-                              color: l.cantidadAlbaran
-                                ? 'inherit'
-                                : 'text.secondary',
-                            }}
+                            {l.nombreProducto}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            sx={{ color: 'text.secondary', display: 'block' }}
                           >
-                            {l.cantidadAlbaran || '-'}
-                          </TableCell>
-                          <TableCell
-                            align="right"
-                            sx={{
-                              color:
-                                Number(l.cantidadRecibida) !== l.cantidadPedida
-                                  ? 'orange'
-                                  : 'inherit',
-                              fontWeight: 'bold',
-                            }}
+                            {l.codigoBarras
+                              ? `EAN: ${l.codigoBarras}`
+                              : 'Sin código'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Typography
+                            variant="caption"
+                            sx={{ color: 'text.secondary' }}
                           >
-                            {l.cantidadRecibida || 0}
-                          </TableCell>
-                          <TableCell>
-                            <FormControl size="small" fullWidth>
-                              <Select
-                                value={l.estadoVisual}
-                                onChange={(e) =>
+                            {l.unidad}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right">{l.cantidadPedida}</TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{
+                            color: l.cantidadAlbaran
+                              ? 'inherit'
+                              : 'text.secondary',
+                          }}
+                        >
+                          {l.cantidadAlbaran || '-'}
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{
+                            color:
+                              Number(l.cantidadRecibida) !== l.cantidadPedida
+                                ? 'orange'
+                                : 'inherit',
+                            fontWeight: 'bold',
+                          }}
+                        >
+                          {l.cantidadRecibida || 0}
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            size="small"
+                            color={l.isWeighedWithScale ? 'success' : 'default'}
+                            label={
+                              Number(l.cantidadRecibida) > 0
+                                ? l.isWeighedWithScale
+                                  ? 'Báscula'
+                                  : 'Manual'
+                                : '—'
+                            }
+                            variant={
+                              l.isWeighedWithScale ? 'filled' : 'outlined'
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <FormControl size="small" fullWidth>
+                            <Select
+                              value={l.estadoVisual}
+                              onChange={(e) =>
+                                onUpdateLinea(
+                                  pIdx,
+                                  originalLIdx,
+                                  'estadoVisual',
+                                  e.target.value
+                                )
+                              }
+                            >
+                              <MenuItem value={EstadoVisualProducto.OPTIMO}>
+                                Óptimo
+                              </MenuItem>
+                              <MenuItem value={EstadoVisualProducto.ROTO}>
+                                Roto
+                              </MenuItem>
+                              <MenuItem value={EstadoVisualProducto.DEFECTUOSO}>
+                                Defectuoso
+                              </MenuItem>
+                            </Select>
+                          </FormControl>
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const hasDiscrepancy =
+                              Number(l.cantidadRecibida) !== l.cantidadPedida ||
+                              (l.cantidadAlbaran !== '' &&
+                                l.cantidadAlbaran != null &&
+                                Number(l.cantidadAlbaran) !==
+                                  l.cantidadPedida) ||
+                              l.estadoVisual !== EstadoVisualProducto.OPTIMO;
+                            const isMissingNote =
+                              hasDiscrepancy &&
+                              (!l.observaciones ||
+                                l.observaciones.trim() === '');
+
+                            return (
+                              <TextField
+                                placeholder={
+                                  hasDiscrepancy
+                                    ? 'Justificante Obligatorio*'
+                                    : 'Opcional...'
+                                }
+                                error={isMissingNote}
+                                size="small"
+                                fullWidth
+                                value={l.observaciones}
+                                onChange={(e) => {
                                   onUpdateLinea(
                                     pIdx,
-                                    lIdx,
-                                    'estadoVisual',
+                                    originalLIdx,
+                                    'observaciones',
                                     e.target.value
-                                  )
-                                }
-                              >
-                                <MenuItem value={EstadoVisualProducto.OPTIMO}>
-                                  Óptimo
-                                </MenuItem>
-                                <MenuItem value={EstadoVisualProducto.ROTO}>
-                                  Roto
-                                </MenuItem>
-                                <MenuItem
-                                  value={EstadoVisualProducto.DEFECTUOSO}
-                                >
-                                  Defectuoso
-                                </MenuItem>
-                              </Select>
-                            </FormControl>
-                          </TableCell>
-                          <TableCell>
-                            {(() => {
-                              const hasDiscrepancy =
-                                Number(l.cantidadRecibida) !==
-                                  l.cantidadPedida ||
-                                (l.cantidadAlbaran !== '' &&
-                                  l.cantidadAlbaran != null &&
-                                  Number(l.cantidadAlbaran) !==
-                                    l.cantidadPedida) ||
-                                l.estadoVisual !== EstadoVisualProducto.OPTIMO;
-                              const isMissingNote =
-                                hasDiscrepancy &&
-                                (!l.observaciones ||
-                                  l.observaciones.trim() === '');
-
-                              return (
-                                <TextField
-                                  placeholder={
-                                    hasDiscrepancy
-                                      ? 'Justificante Obligatorio*'
-                                      : 'Opcional...'
-                                  }
-                                  error={isMissingNote}
-                                  size="small"
-                                  fullWidth
-                                  value={l.observaciones}
-                                  onChange={(e) => {
-                                    onUpdateLinea(
-                                      pIdx,
-                                      lIdx,
-                                      'observaciones',
-                                      e.target.value
-                                    );
-                                  }}
-                                />
-                              );
-                            })()}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
+                                  );
+                                }}
+                              />
+                            );
+                          })()}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -306,6 +319,7 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                   <TableCell align="right" sx={{ width: '12%' }}>
                     Real
                   </TableCell>
+                  <TableCell sx={{ width: '12%' }}>Origen peso</TableCell>
                   <TableCell sx={{ width: '15%' }}>Estado Físico</TableCell>
                   <TableCell sx={{ width: '15%' }}>Notas</TableCell>
                 </TableRow>
@@ -328,6 +342,20 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                       sx={{ color: 'orange', fontWeight: 'bold' }}
                     >
                       {l.cantidadRecibida || 0}
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        size="small"
+                        color={l.isWeighedWithScale ? 'success' : 'default'}
+                        label={
+                          Number(l.cantidadRecibida) > 0
+                            ? l.isWeighedWithScale
+                              ? 'Báscula'
+                              : 'Manual'
+                            : '—'
+                        }
+                        variant={l.isWeighedWithScale ? 'filled' : 'outlined'}
+                      />
                     </TableCell>
                     <TableCell>
                       <FormControl size="small" fullWidth>

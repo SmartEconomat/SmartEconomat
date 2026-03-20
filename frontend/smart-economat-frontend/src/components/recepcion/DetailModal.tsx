@@ -73,12 +73,12 @@ const DetailModal: React.FC<DetailModalProps> = ({
         return (
           <Box>
             <Alert severity="success" sx={{ mb: 2 }}>
-              Se crearon <strong>{resultado.inventariosCreados}</strong> lotes
-              en el inventario físico bajo la política FEFO.
+              Se registraron <strong>{resultado.inventariosCreados}</strong>{' '}
+              nuevas entradas en el inventario físico.
             </Alert>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              * Los nuevos lotes ya están disponibles para consumo y asignación
-              en órdenes de trabajo.
+              * Las nuevas unidades ya están disponibles para su consumo y
+              asignación en órdenes de trabajo.
             </Typography>
             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
               <Button
@@ -90,7 +90,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
                   navigate('/inventario');
                 }}
               >
-                Ver Lotes de Inventario
+                Ver Inventario
               </Button>
             </Box>
           </Box>
@@ -146,7 +146,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
     if (type === 'inventarios')
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <InventoryIcon /> Lotes de Inventario (FEFO)
+          <InventoryIcon /> Entradas de Inventario
         </Box>
       );
     if (type === 'nuevos_productos') return 'Productos Creados (Espontáneos)';

@@ -25,13 +25,10 @@ La lógica reside en el `RecepcionStockService` y utiliza un patrón de transacc
 
 El wizard de recepción en React ha sido blindado para evitar la pérdida de trabajo del operario.
 
-### Características de Seguridad
-- **Persistencia Local (Draft Mode)**: Los datos escaneados se guardan en el `localStorage` del navegador en tiempo real.
-- **Bloqueo de Interfaz (Backdrop)**: Durante el envío masivo, se muestra un bloqueo visual que impide al usuario realizar más acciones o cerrar accidentalmente la pestaña, informando sobre la integridad de la transacción en curso.
-- **Retry Policy**: El borrador local (`localStorage`) solo se elimina tras recibir una confirmación `HTTP 200/201` exitosa del servidor. Si el servidor devuelve un error o la conexión se corta:
-  - El usuario recibe un aviso crítico.
-  - Los datos permanecen cargados en el formulario.
-  - El usuario puede volver a intentar "Finalizar Recepción" sin tener que volver a escanear nada.
+### Características de Seguridad e Integridad
+- **Persistencia de Borrador (Server-side)**: Los datos escaneados se sincronizan automáticamente con el servidor. Esto permite que el operario pueda cambiar de dispositivo o recargar la página sin perder el progreso, garantizando la resiliencia del trabajo.
+- **Bloqueo de Interfaz (Backdrop)**: Durante el envío final, se muestra un bloqueo visual que impide al usuario realizar más acciones, informando sobre la integridad de la transacción en curso.
+- **Políticas de Sincronización**: El borrador en el servidor solo se elimina tras recibir una confirmación `HTTP 200/201` exitosa del procesamiento final. Si ocurre un error de red o de base de datos, los datos permanecen seguros para un reintento inmediato.
 
 ## 3. Guía de Operación para Desarrolladores
 

@@ -3,9 +3,8 @@ import { eventBus, AUTH_EVENTS } from '../utils/eventBus';
 import { User } from './auth.types';
 import { AuthContext } from './auth.context';
 import { authService } from '../services/authService';
-import { isJwtUsable } from '../utils/auth/jwtUtils';
 
-const clearStoredSession = () => {
+const clearLegacySessionStorage = () => {
   localStorage.removeItem('user');
   localStorage.removeItem('token');
 };
@@ -14,94 +13,69 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isAuthResolved, setIsAuthResolved] = useState<boolean>(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      return true;
-    }
-
-    if (!isJwtUsable(token)) {
-      clearStoredSession();
-      return true;
-    }
-
-    return false;
-  });
+  const [isAuthResolved, setIsAuthResolved] = useState<boolean>(false);
   const [isSessionVerified, setIsSessionVerified] = useState(false);
-  const [verifiedToken, setVerifiedToken] = useState<string | null>(null);
+  const refreshPromiseRef = React.useRef<Promise<User | null> | null>(null);
 
-  const login = React.useCallback((userData: User, token: string) => {
-    if (!isJwtUsable(token)) {
-      clearStoredSession();
-      setUser(null);
-      setIsSessionVerified(false);
-      setIsAuthResolved(true);
-      setVerifiedToken(null);
-      return;
-    }
-
+  const login = React.useCallback((userData: User) => {
+    refreshPromiseRef.current = null;
+    clearLegacySessionStorage();
     setUser(userData);
     setIsSessionVerified(true);
     setIsAuthResolved(true);
-    setVerifiedToken(token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('token', token);
   }, []);
 
-  const logout = React.useCallback(() => {
+  const logout = React.useCallback(async () => {
+    refreshPromiseRef.current = null;
+    clearLegacySessionStorage();
     setUser(null);
     setIsSessionVerified(false);
     setIsAuthResolved(true);
-    setVerifiedToken(null);
-    clearStoredSession();
+    try {
+      await authService.logout();
+    } catch {
+      return;
+    }
   }, []);
 
   const refreshUser = React.useCallback(async () => {
-    const token = localStorage.getItem('token');
-    if (!token || !isJwtUsable(token)) {
-      logout();
-      return null;
+    if (refreshPromiseRef.current) {
+      return refreshPromiseRef.current;
     }
 
     setIsAuthResolved(false);
 
-    try {
-      const refreshedUser = await authService.getCurrentUser();
-      setUser(refreshedUser);
-      setIsSessionVerified(true);
-      setIsAuthResolved(true);
-      setVerifiedToken(token);
-      localStorage.setItem('user', JSON.stringify(refreshedUser));
-      return refreshedUser;
-    } catch {
-      logout();
-      return null;
-    }
-  }, [logout]);
+    const refreshPromise = authService
+      .getCurrentUser()
+      .then((refreshedUser) => {
+        setUser(refreshedUser);
+        setIsSessionVerified(true);
+        setIsAuthResolved(true);
+        return refreshedUser;
+      })
+      .catch(() => {
+        clearLegacySessionStorage();
+        setUser(null);
+        setIsSessionVerified(false);
+        setIsAuthResolved(true);
+        return null;
+      })
+      .finally(() => {
+        refreshPromiseRef.current = null;
+      });
+
+    refreshPromiseRef.current = refreshPromise;
+
+    return refreshPromise;
+  }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-
-    if (!token) {
-      setUser(null);
-      setIsSessionVerified(false);
-      setIsAuthResolved(true);
-      setVerifiedToken(null);
-      localStorage.removeItem('user');
-      return;
-    }
-
-    if (!isJwtUsable(token)) {
-      logout();
-      return;
-    }
-
     void refreshUser();
-  }, [logout, refreshUser]);
+  }, [refreshUser]);
 
   useEffect(() => {
     const handleUnauthorized = () => {
-      logout();
+      void logout();
     };
 
     eventBus.on(AUTH_EVENTS.UNAUTHORIZED, handleUnauthorized);
@@ -116,7 +90,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         isAuthenticated: !!user && isSessionVerified,
         isAuthResolved,
         isSessionVerified,
-        verifiedToken,
         user,
         login,
         logout,

@@ -235,12 +235,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
     }
 
     setIsLoading(true);
-    const previousToken = localStorage.getItem('token');
     try {
-      if (pendingLogin?.token) {
-        localStorage.setItem('token', pendingLogin.token);
-      }
-
       const res = await authService.changePassword({
         currentPassword: changePassData.currentPassword,
         newPassword: changePassData.newPassword,
@@ -268,11 +263,6 @@ const LoginForm: React.FC<LoginFormProps> = ({
         )
       );
     } finally {
-      if (previousToken) {
-        localStorage.setItem('token', previousToken);
-      } else {
-        localStorage.removeItem('token');
-      }
       setIsLoading(false);
     }
   };

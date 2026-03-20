@@ -12,8 +12,9 @@ Se ha implementado un **Sistema de Roles y Permisos Dinámicos Avanzado** que re
 - ✅ **Hooks Reactivos**: `usePermission` y `useAnyPermission` para una UI declarativa.
 - ✅ **Caching Agresivo**: Uso de `CacheManager` con TTL de 5 min para validaciones en < 5ms.
 - ✅ **Invalidación Inteligente**: El cache se limpia automáticamente al modificar roles o permisos de un usuario.
-- ✅ **Sesión Verificada en Frontend**: el cliente revalida el JWT con `/usuarios/perfil` antes de confiar en los permisos persistidos.
+- ✅ **Sesión Verificada en Frontend**: el cliente reconstruye la sesión desde cookie `httpOnly` y revalida permisos con `/usuarios/perfil`.
 - ✅ **Guardia de Ruta por Permiso**: las vistas protegidas bloquean navegación directa si el usuario no tiene el permiso requerido.
+- ✅ **Logout Backend-Driven**: el cierre de sesión limpia la cookie desde `POST /auth/logout` y reinicia el contexto de auth en frontend.
 
 ---
 
@@ -40,17 +41,24 @@ La gestión de permisos en la interfaz es reactiva, pero la fuente final de verd
 
 ### Fuente real de permisos en cliente
 
-El frontend usa `user.permisos`, pero solo después de una verificación de sesión:
+El frontend usa `user.permisos`, pero solo después de una verificación real de sesión contra backend:
 
-1. `AuthContext` detecta si existe un `token`.
-2. `jwtUtils` valida estructura y expiración del JWT.
-3. Si el token es utilizable, el frontend llama a `GET /api/v1/usuarios/perfil`.
-4. La respuesta sustituye cualquier permiso manipulado o desactualizado en `localStorage`.
+1. El navegador envía la cookie `access_token` automáticamente mediante `credentials: 'include'`.
+2. `AuthContext` llama a `GET /api/v1/usuarios/perfil` durante el arranque de la app.
+3. El backend resuelve permisos efectivos mediante `AuthPermissionsService`.
+4. La respuesta hidrata el contexto global del frontend en memoria.
 
 Esto evita dos problemas habituales:
 
 - **Permisos obsoletos** tras cambios administrativos hechos desde otra sesión.
-- **Permisos inyectados manualmente** en el objeto `user` persistido en navegador.
+- **Permisos inyectados manualmente** en datos persistidos del navegador.
+
+### Modelo de sesión recomendado
+
+- **Cliente**: no persiste `token` ni `user` como fuente de verdad.
+- **Servidor**: emite cookie `httpOnly` en login y la elimina explícitamente en logout.
+- **Routing**: las rutas protegidas esperan a `isAuthResolved` antes de decidir si renderizar o redirigir.
+- **Eventos globales**: cualquier `401` emitido por `baseFetch` desemboca en limpieza de sesión y vuelta a `/login`.
 
 ### Hooks Principal: `usePermission`
 Permite ocultar o deshabilitar elementos de la UI de forma declarativa.
@@ -78,9 +86,9 @@ if (!canManageStock) return null;
 
 `AppRouter` usa `ProtectedRoute` para todas las rutas privadas y, cuando una entrada de `menuConfig` define `permiso`, exige también ese permiso antes de renderizar la página.
 
-- Si falla JWT o la sesión no está verificada, el usuario vuelve a `/login`.
+- Mientras la sesión se resuelve, la aplicación muestra `Spinner`.
+- Si la sesión no existe o expiró, el usuario vuelve a `/login`.
 - Si la sesión es válida pero el permiso no existe, la navegación se redirige a `/`.
-- Si el token cambia mientras la app está abierta, `ProtectedRoute` fuerza `refreshUser()` antes de dejar pasar.
 
 ---
 
@@ -110,6 +118,8 @@ Desde la vista de **Gestión de Usuarios**, los administradores pueden:
 - [x] Documentar permisos en frontend (Hooks implementados).
 - [x] Sincronizar UI con `UsuariosView.tsx`.
 - [x] Verificar sesión y permisos reales en frontend antes de renderizar vistas protegidas.
+- [x] Migrar el frontend a modelo `cookie-first` sin depender de `token/user` persistidos para bootstrap de sesión.
+- [x] Añadir endpoint de logout para invalidación limpia de cookie desde backend.
 - [ ] Configurar Redis en producción para cache distribuido.
 
 ---

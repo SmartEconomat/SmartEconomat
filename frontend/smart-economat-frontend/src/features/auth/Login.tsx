@@ -128,7 +128,7 @@ export default function Login() {
    * Datos del usuario almacenados temporalmente hasta que termina
    * la animación de salida del login, momento en que se llama a `login()`.
    */
-  const pendingAuth = useRef<{ user: User; token: string } | null>(null);
+  const pendingAuth = useRef<{ user: User } | null>(null);
 
   /** Posición final de cada panel según el modo activo. */
   const slideLeft = isLogin ? '0%' : `${FORM_W}%`;
@@ -175,15 +175,14 @@ export default function Login() {
    * Activa la animación de salida del layout y, cuando termina, navega al dashboard.
    *
    * @param {User} user - Datos del usuario.
-   * @param {string} token - JWT de acceso.
    */
-  const handleLoginSuccess = (user: User, token: string) => {
-    pendingAuth.current = { user, token };
+  const handleLoginSuccess = (user: User) => {
+    pendingAuth.current = { user };
     setPhase('login-exit');
     // Cuando el layout termina de salir, ejecutamos login() → navega al dashboard
     setTimeout(() => {
       if (pendingAuth.current) {
-        login(pendingAuth.current.user, pendingAuth.current.token);
+        login(pendingAuth.current.user);
       }
     }, EXIT_DURATION + 200);
   };
