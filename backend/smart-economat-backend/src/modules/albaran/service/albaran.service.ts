@@ -19,6 +19,7 @@ import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
 import { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
 import { AlbaranPedidoRecepcion } from '../albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
 import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class AlbaranService {
@@ -123,6 +124,7 @@ export class AlbaranService {
       let albaran = await queryRunner.manager.findOne(Albaran, {
         where: { nAlbaran: dto.numeroReferencia },
         relations: ['albaranPedidoRecepcion'],
+        lock: { mode: 'pessimistic_write' },
       });
 
       if (!albaran) {
@@ -187,7 +189,7 @@ export class AlbaranService {
         }
       }
 
-      const fileUrl = `/api/v1/archivos/content/${file.filename}`;
+      const fileUrl = `/api/v1/albaranes/documento/${file.filename}`;
 
       albaran.documentoUrl = fileUrl;
       albaran.documentoNombre = file.originalname;
@@ -234,6 +236,27 @@ export class AlbaranService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  getDocumentoPath(filename: string): string {
+    const uploadDir = this.configService.get<string>(
+      'LOCAL_STORAGE_PATH',
+      './uploads'
+    );
+    const uploadDirResolved = path.resolve(uploadDir);
+    const filePath = path.resolve(uploadDir, filename);
+
+    if (!filePath.startsWith(uploadDirResolved + path.sep)) {
+      throw new BadRequestException(I18nHelper.getError('INVALID_FILE_PATH'));
+    }
+
+    if (!fs.existsSync(filePath)) {
+      throw new NotFoundException(
+        I18nHelper.getError('FILE_NOT_FOUND_PHYSICAL')
+      );
+    }
+
+    return filePath;
   }
 
   /**
