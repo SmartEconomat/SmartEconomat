@@ -19,6 +19,7 @@ import {
   STRONG_PASSWORD_MESSAGE,
 } from '../../../utils/passwordValidation';
 import { authService } from '../../../services/auth.service';
+import { getAuthErrorMessage } from '../../../utils/authErrorMessages';
 
 interface RegisterFormProps {
   onToggleForm: () => void;
@@ -34,6 +35,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     username: '',
     email: '',
     password: '',
+    confirmPassword: '',
     aula: '',
     numeroClase: '',
     cialProfesor: '',
@@ -50,10 +52,52 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [slotLoadError, setSlotLoadError] = useState('');
+
+  const isAlumnoSubmitDisabled =
+    formData.username.trim().length === 0 ||
+    formData.password.length === 0 ||
+    formData.confirmPassword.length === 0 ||
+    formData.aula.trim().length === 0 ||
+    formData.numeroClase.trim().length === 0 ||
+    formData.cialProfesor.trim().length === 0;
+
+  const isProfesorSubmitDisabled =
+    formData.username.trim().length === 0 ||
+    formData.email.trim().length === 0 ||
+    formData.password.length === 0 ||
+    formData.confirmPassword.length === 0 ||
+    formData.cial.trim().length === 0;
+
+  const isSubmitDisabled =
+    role === 'ALUMNO' ? isAlumnoSubmitDisabled : isProfesorSubmitDisabled;
+
+  const aulaHelperText = slotLoadError
+    ? slotLoadError
+    : !isLoadingData && aulas.length === 0
+      ? 'No hay cursos disponibles todavía. Un profesor debe crear slots/clases primero.'
+      : 'Selecciona el curso o grupo al que perteneces.';
+
+  const claseHelperText = !formData.aula
+    ? 'Selecciona primero un curso o grupo.'
+    : slotLoadError
+      ? slotLoadError
+      : !isLoadingData && clases.length === 0
+        ? 'No hay clases disponibles para el curso seleccionado.'
+        : 'Selecciona tu número de clase.';
+
+  const profesorHelperText = !formData.numeroClase
+    ? 'Selecciona primero una clase.'
+    : slotLoadError
+      ? slotLoadError
+      : !isLoadingData && profesores.length === 0
+        ? 'No hay profesores disponibles para la clase seleccionada.'
+        : 'Selecciona el profesor encargado de evaluarte';
 
   // Fetch aulas on mount for ALUMNO
   useEffect(() => {
     if (role === 'ALUMNO') {
+      setSlotLoadError('');
       loadAulas();
     }
   }, [role]);
@@ -61,6 +105,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   // Fetch clases when aula changes
   useEffect(() => {
     if (role === 'ALUMNO' && formData.aula) {
+      setSlotLoadError('');
       loadClases(formData.aula);
     } else {
       setClases([]);
@@ -71,6 +116,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   // Fetch profesores when clase changes
   useEffect(() => {
     if (role === 'ALUMNO' && formData.aula && formData.numeroClase) {
+      setSlotLoadError('');
       loadProfesores(formData.aula, Number(formData.numeroClase));
     } else {
       setProfesores([]);
@@ -84,9 +130,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       const res = await authService.getAulas();
       if (res.success) {
         setAulas(res.data);
+        setSlotLoadError('');
       }
     } catch (err) {
       console.error('Error fetching aulas:', err);
+      setSlotLoadError(
+        'No se pudieron cargar los cursos. Verifica que el backend esté activo y que existan slots/clases creadas.'
+      );
     } finally {
       setIsLoadingData(false);
     }
@@ -98,9 +148,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       const res = await authService.getClases(aula);
       if (res.success) {
         setClases(res.data);
+        setSlotLoadError('');
       }
     } catch (err) {
       console.error('Error fetching clases:', err);
+      setSlotLoadError(
+        'No se pudieron cargar las clases del curso seleccionado.'
+      );
     } finally {
       setIsLoadingData(false);
     }
@@ -112,9 +166,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       const res = await authService.getProfesores(aula, clase);
       if (res.success) {
         setProfesores(res.data);
+        setSlotLoadError('');
       }
     } catch (err) {
       console.error('Error fetching profesores:', err);
+      setSlotLoadError(
+        'No se pudieron cargar los profesores para la clase seleccionada.'
+      );
     } finally {
       setIsLoadingData(false);
     }
@@ -131,6 +189,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         username: '',
         email: '',
         password: '',
+        confirmPassword: '',
         aula: '',
         numeroClase: '',
         cialProfesor: '',
@@ -143,9 +202,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     e.preventDefault();
     setErrorMsg('');
     setIsLoading(true);
+    const isAlumno = role === 'ALUMNO';
 
     try {
-      const isAlumno = role === 'ALUMNO';
+      if (formData.password !== formData.confirmPassword) {
+        setErrorMsg('Las contraseñas no coinciden.');
+        return;
+      }
 
       if (!isStrongPassword(formData.password)) {
         setErrorMsg(STRONG_PASSWORD_MESSAGE);
@@ -180,11 +243,23 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       if (res.success) {
         onRegisterSuccess();
       } else {
-        setErrorMsg(res.message || 'Error en el registro');
+        setErrorMsg(
+          getAuthErrorMessage(
+            res.message,
+            isAlumno ? 'registerAlumno' : 'registerProfesor',
+            'No se pudo completar el registro.'
+          )
+        );
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setErrorMsg(err.message || 'Error de conexión con el servidor.');
+      setErrorMsg(
+        getAuthErrorMessage(
+          err,
+          isAlumno ? 'registerAlumno' : 'registerProfesor',
+          'Error de conexión con el servidor.'
+        )
+      );
     } finally {
       setIsLoading(false);
     }
@@ -282,6 +357,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
               options={aulas.map((a) => ({ value: a, label: a }))}
               required
               disabled={isLoadingData && aulas.length === 0}
+              error={!!slotLoadError}
+              helperText={aulaHelperText}
             />
             <Select
               label="Número de Clase"
@@ -296,6 +373,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
               disabled={
                 !formData.aula || (isLoadingData && clases.length === 0)
               }
+              error={!!slotLoadError}
+              helperText={claseHelperText}
             />
             <Select
               label="Profesor"
@@ -311,7 +390,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                 !formData.numeroClase ||
                 (isLoadingData && profesores.length === 0)
               }
-              helperText="Selecciona el profesor encargado de evaluarte"
+              error={!!slotLoadError}
+              helperText={profesorHelperText}
             />
           </>
         ) : (
@@ -348,13 +428,39 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           helperText={STRONG_PASSWORD_MESSAGE}
         />
 
-        <Button type="submit" isLoading={isLoading} sx={{ mt: 3, mb: 0 }}>
+        <Input
+          label="Confirmar Contraseña"
+          name="confirmPassword"
+          type={showPassword ? 'text' : 'password'}
+          autoComplete="new-password"
+          value={formData.confirmPassword}
+          onChange={handleChange}
+          required
+          error={
+            formData.confirmPassword.length > 0 &&
+            formData.password !== formData.confirmPassword
+          }
+          helperText={
+            formData.confirmPassword.length > 0 &&
+            formData.password !== formData.confirmPassword
+              ? 'Las contraseñas no coinciden.'
+              : ' '
+          }
+        />
+
+        <Button
+          type="submit"
+          isLoading={isLoading}
+          disabled={isSubmitDisabled}
+          sx={{ mt: 0, mb: 0 }}
+        >
           Registrarse como {role === 'ALUMNO' ? 'Alumno' : 'Profesor'}
         </Button>
 
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
           <Button
-            variant="text"
+            variant="outlined"
+            color="primary"
             onClick={() => onToggleForm()}
             sx={{ mt: 1, fontSize: '0.875rem', textTransform: 'none' }}
           >
