@@ -1,4 +1,8 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { SmartAuthThrottlerGuard } from './common/guards/smart-throttler.guard';
+import { HighTrafficAlertInterceptor } from './common/interceptors/high-traffic-alert.interceptor';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
@@ -30,9 +34,27 @@ import { IsUniqueConstraint } from './common/decorators/is-unique.decorator';
 import { ExportModule } from './modules/export/export.module';
 import { MermaModule } from './modules/merma/merma.module';
 import { RecepcionDraftModule } from './modules/recepcion-draft/recepcion-draft.module';
+import { PedidoDraftModule } from './modules/pedido-draft/pedido-draft.module';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([
+      {
+        name: 'auth',
+        ttl: 60000,
+        limit: 100,
+      },
+      {
+        name: 'write',
+        ttl: 60000,
+        limit: 200,
+      },
+      {
+        name: 'read',
+        ttl: 60000,
+        limit: 1000,
+      },
+    ]),
     SentryModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
@@ -44,6 +66,7 @@ import { RecepcionDraftModule } from './modules/recepcion-draft/recepcion-draft.
     ProductoModule,
     MovimientoModule,
     RecepcionDraftModule,
+    PedidoDraftModule,
     RecepcionModule,
     RecetaModule,
     ProveedorModule,
@@ -64,6 +87,17 @@ import { RecepcionDraftModule } from './modules/recepcion-draft/recepcion-draft.
     MermaModule,
   ],
   controllers: [AppController],
-  providers: [AppService, IsUniqueConstraint],
+  providers: [
+    AppService,
+    IsUniqueConstraint,
+    {
+      provide: APP_GUARD,
+      useClass: SmartAuthThrottlerGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: HighTrafficAlertInterceptor,
+    },
+  ],
 })
 export class AppModule {}

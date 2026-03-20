@@ -20,6 +20,9 @@ export interface ConfirmDialogProps {
   message: ReactNode;
   confirmText?: string;
   cancelText?: string;
+  cancelColor?: ButtonColor;
+  cancelVariant?: 'contained' | 'outlined' | 'text';
+  onCancel?: () => void;
   confirmColor?: ButtonColor;
   confirmVariant?: 'contained' | 'outlined' | 'text';
   isLoading?: boolean;
@@ -33,6 +36,9 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   message,
   confirmText = 'Confirmar',
   cancelText = 'Cancelar',
+  cancelColor = 'inherit',
+  cancelVariant = 'text',
+  onCancel,
   confirmColor = 'error',
   confirmVariant = 'contained',
   isLoading = false,
@@ -52,7 +58,11 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       {/* Acciones */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
         {cancelText && (
-          <Button onClick={onClose} color="inherit" variant="text">
+          <Button
+            onClick={onCancel || onClose}
+            color={cancelColor}
+            variant={cancelVariant}
+          >
             {cancelText}
           </Button>
         )}

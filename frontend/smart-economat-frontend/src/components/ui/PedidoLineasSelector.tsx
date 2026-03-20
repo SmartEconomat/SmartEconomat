@@ -28,6 +28,7 @@ interface PedidoLineasSelectorProps {
   value: Partial<PedidoProducto>[];
   onChange: (value: Partial<PedidoProducto>[]) => void;
   proveedorId?: string;
+  disabled?: boolean;
 }
 
 interface FlatProductoProveedor {
@@ -47,6 +48,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
   value = [],
   onChange,
   proveedorId,
+  disabled = false,
 }) => {
   const [allFlatProducts, setAllFlatProducts] = useState<
     FlatProductoProveedor[]
@@ -97,22 +99,13 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
     onChange(newLines);
   };
 
-  const filteredProducts = React.useMemo(() => {
-    if (!proveedorId) return allFlatProducts;
-    return allFlatProducts.filter((p) => p.proveedorId === proveedorId);
-  }, [allFlatProducts, proveedorId]);
+  const filteredProducts = allFlatProducts;
 
   // Obtener opciones del Autocomplete incluyendo productos existentes en el valor
   const getAutocompleteOptions = React.useMemo(() => {
-    // Siempre partir de los productos filtrados
     const options = [...filteredProducts];
 
-    // Si no hay proveedor seleccionado, usar todos los productos
-    if (!proveedorId) {
-      return allFlatProducts;
-    }
-
-    // Si hay proveedor, agregar también productos existentes de otros proveedores
+    // Siempre agregamos también productos existentes en 'value' por si no estuvieran en allFlatProducts
     value.forEach((line) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const lineData = line as any;
@@ -136,7 +129,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
     });
 
     return options;
-  }, [filteredProducts, allFlatProducts, proveedorId, value]);
+  }, [filteredProducts, value]);
 
   const handleUpdateLine = (
     index: number,
@@ -159,41 +152,261 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
       const product = filteredProducts.find((p) => p.id === newValue);
       if (product) {
         newLines[index].precioUnitario = product.precioUnitario;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (newLines[index] as any).proveedorId = product.proveedorId;
       }
     }
 
     onChange(newLines);
   };
 
-  // Auto-limpiar líneas si cambian de proveedor y los productos ya no están en las opciones
-  useEffect(() => {
-    if (allFlatProducts.length > 0 && proveedorId && value.length > 0) {
-      const hasInvalidLines = value.some(
-        (l) =>
-          l.productoProveedorId &&
-          !filteredProducts.find((p) => p.id === l.productoProveedorId)
-      );
-      if (hasInvalidLines) {
-        // Clear all product selections that don't belong to the new supplier
-        const newLines = value.map((l) => {
-          if (
-            l.productoProveedorId &&
-            !filteredProducts.find((p) => p.id === l.productoProveedorId)
-          ) {
-            return { ...l, productoProveedorId: '', precioUnitario: 0 };
-          }
-          return l;
-        });
-        onChange(newLines);
-      }
-    }
-  }, [proveedorId, allFlatProducts, filteredProducts, value, onChange]);
+  // La lógica que autolimpiaba las líneas de otros proveedores ha sido eliminada
+  // para permitir crear pedidos multi-proveedor desde el mismo modal.
 
   const totalOrder = value.reduce(
     (sum, line) =>
       sum + Number(line.cantidad || 0) * Number(line.precioUnitario || 0),
     0
   );
+
+  const groups = new Map<
+    string,
+    {
+      proveedorNombre: string;
+      lines: Array<{ line: Partial<PedidoProducto>; originalIndex: number }>;
+    }
+  >();
+
+  groups.set('empty', {
+    proveedorNombre: 'Nuevos Productos (Selecciona uno)',
+    lines: [],
+  });
+
+  value.forEach((line, index) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const lineData = line as any;
+    let pId = lineData.proveedorId;
+    let pName = lineData.nombreProveedor;
+
+    if (lineData.productoProveedorId) {
+      const prod =
+        allFlatProducts.find((p) => p.id === lineData.productoProveedorId) ||
+        value
+          .map((l: Partial<PedidoProducto>) => l.productoProveedor)
+          .find(
+            (pp: { id: string } | undefined) =>
+              pp?.id === lineData.productoProveedorId
+          );
+
+      if (prod) {
+        if ('proveedorId' in prod) {
+          pId = prod.proveedorId;
+          pName = prod.nombreProveedor;
+        } else if ('proveedor' in prod && prod.proveedor) {
+          pId = prod.proveedor.id;
+          pName = prod.proveedor.nombre;
+        }
+      }
+    }
+
+    if (!pId) {
+      groups.get('empty')!.lines.push({ line, originalIndex: index });
+    } else {
+      if (!groups.has(pId)) {
+        groups.set(pId, {
+          proveedorNombre: pName || 'Proveedor Desconocido',
+          lines: [],
+        });
+      }
+      groups.get(pId)!.lines.push({ line, originalIndex: index });
+    }
+  });
+
+  if (groups.get('empty')!.lines.length === 0) {
+    groups.delete('empty');
+  }
+
+  const renderLinesForGroup = (
+    groupLines: Array<{ line: Partial<PedidoProducto>; originalIndex: number }>,
+    proveedorName: string
+  ) => {
+    const groupTotal = groupLines.reduce(
+      (sum, item) =>
+        sum +
+        Number(item.line.cantidad || 0) * Number(item.line.precioUnitario || 0),
+      0
+    );
+
+    return (
+      <Box key={proveedorName} sx={{ mb: 4 }}>
+        <Typography
+          variant="subtitle2"
+          sx={{
+            fontWeight: 'bold',
+            mb: 1,
+            color: 'primary.main',
+            borderBottom: '1px solid #ccc',
+            pb: 0.5,
+          }}
+        >
+          Proveedor: {proveedorName}
+        </Typography>
+        <TableContainer component={Paper} variant="outlined" sx={{ mb: 2 }}>
+          <Table size="small">
+            <TableHead sx={{ bgcolor: 'action.hover' }}>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 'bold' }}>Producto</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
+                  Cantidad
+                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
+                  Precio Unid.
+                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
+                  Subtotal
+                </TableCell>
+                {!disabled && <TableCell sx={{ width: 50 }}></TableCell>}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {groupLines.map(({ line, originalIndex }) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const lineData = line as any;
+                const selectedProduct = getAutocompleteOptions.find(
+                  (p) => p.id === lineData.productoProveedorId
+                );
+                const uniqueKey =
+                  lineData._key || `${originalIndex}-${Date.now()}`;
+
+                return (
+                  <TableRow key={uniqueKey}>
+                    <TableCell>
+                      {disabled ? (
+                        <Typography variant="body2" sx={{ my: 1 }}>
+                          {selectedProduct
+                            ? `${selectedProduct.nombreProducto} (${selectedProduct.nombreProveedor}) ${selectedProduct.marca ? `- ${selectedProduct.marca}` : ''}`
+                            : '(Producto no encontrado)'}
+                        </Typography>
+                      ) : (
+                        <Autocomplete
+                          options={getAutocompleteOptions}
+                          getOptionLabel={(option) =>
+                            `${option.nombreProducto} (${option.nombreProveedor}) ${
+                              option.marca ? `- ${option.marca}` : ''
+                            }`
+                          }
+                          value={selectedProduct || null}
+                          onChange={(_, newValue) =>
+                            handleUpdateLine(
+                              originalIndex,
+                              'productoProveedorId',
+                              newValue?.id || ''
+                            )
+                          }
+                          disabled={disabled}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              variant="standard"
+                              placeholder={disabled ? '' : 'Buscar producto...'}
+                            />
+                          )}
+                          size="small"
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {disabled ? (
+                        <Typography variant="body2">
+                          {line.cantidad || 0}
+                        </Typography>
+                      ) : (
+                        <TextField
+                          type="number"
+                          disabled={disabled}
+                          value={line.cantidad || ''}
+                          onChange={(e) =>
+                            handleUpdateLine(
+                              originalIndex,
+                              'cantidad',
+                              Number(e.target.value)
+                            )
+                          }
+                          variant="standard"
+                          inputProps={{ min: 0.001, step: 'any' }}
+                          size="small"
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {disabled ? (
+                        <Typography variant="body2">
+                          {line.precioUnitario || '0.00'} €
+                        </Typography>
+                      ) : (
+                        <TextField
+                          type="number"
+                          disabled={disabled}
+                          value={line.precioUnitario || ''}
+                          onChange={(e) =>
+                            handleUpdateLine(
+                              originalIndex,
+                              'precioUnitario',
+                              Number(e.target.value)
+                            )
+                          }
+                          variant="standard"
+                          inputProps={{ min: 0, step: '0.01' }}
+                          size="small"
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2">
+                        {(
+                          Number(line.cantidad || 0) *
+                          Number(line.precioUnitario || 0)
+                        ).toFixed(2)}{' '}
+                        €
+                      </Typography>
+                    </TableCell>
+                    {!disabled && (
+                      <TableCell>
+                        <Tooltip title="Quitar">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleRemoveLine(originalIndex)}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                );
+              })}
+              {groupTotal > 0 && (
+                <TableRow sx={{ bgcolor: 'action.hover' }}>
+                  <TableCell
+                    colSpan={3}
+                    align="right"
+                    sx={{ fontWeight: 'bold' }}
+                  >
+                    SUBTOTAL {proveedorName}:
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    {groupTotal.toFixed(2)} €
+                  </TableCell>
+                  {!disabled && <TableCell></TableCell>}
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
+    );
+  };
 
   return (
     <Box sx={{ mt: 3 }}>
@@ -207,163 +420,56 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
       >
         <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
           Líneas del Pedido{' '}
-          {!proveedorId ? '(Selecciona Proveedor para Filtrar)' : ''}
+          {!proveedorId && !disabled ? '(Multi-Proveedor Habilitado)' : ''}
         </Typography>
-        <Button
-          startIcon={<AddIcon />}
-          variant="outlined"
-          size="small"
-          onClick={handleAddLine}
-          disabled={isLoading}
-        >
-          Añadir Producto
-        </Button>
+        {!disabled && (
+          <Button
+            startIcon={<AddIcon />}
+            variant="outlined"
+            size="small"
+            onClick={handleAddLine}
+            disabled={isLoading}
+            color="primary"
+          >
+            Añadir Producto
+          </Button>
+        )}
       </Box>
 
       {isLoading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
           <CircularProgress size={24} />
         </Box>
+      ) : value.length === 0 ? (
+        <Paper
+          variant="outlined"
+          sx={{ p: 4, textAlign: 'center', bgcolor: 'transparent' }}
+        >
+          <Typography color="text.secondary">
+            Aún no hay ningún producto en la cesta. Usa el botón "Añadir
+            Producto" para comenzar.
+          </Typography>
+        </Paper>
       ) : (
-        <TableContainer component={Paper} variant="outlined" sx={{ mb: 2 }}>
-          <Table size="small">
-            <TableHead sx={{ bgcolor: 'action.hover' }}>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 'bold' }}>
-                  Producto / Proveedor
-                </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
-                  Cantidad
-                </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
-                  Precio Unid.
-                </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
-                  Subtotal
-                </TableCell>
-                <TableCell sx={{ width: 50 }}></TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {value.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    align="center"
-                    sx={{ py: 3, color: 'text.secondary' }}
-                  >
-                    No hay productos añadidos al pedido
-                  </TableCell>
-                </TableRow>
-              ) : (
-                value.map((line, index) => {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  const lineData = line as any;
-                  const selectedProduct = getAutocompleteOptions.find(
-                    (p) => p.id === lineData.productoProveedorId
-                  );
-                  const uniqueKey = lineData._key || `${index}-${Date.now()}`;
-
-                  return (
-                    <TableRow key={uniqueKey}>
-                      <TableCell>
-                        <Autocomplete
-                          options={getAutocompleteOptions}
-                          getOptionLabel={(option) =>
-                            `${option.nombreProducto} (${option.nombreProveedor}) ${option.marca ? `- ${option.marca}` : ''}`
-                          }
-                          value={selectedProduct || null}
-                          onChange={(_, newValue) =>
-                            handleUpdateLine(
-                              index,
-                              'productoProveedorId',
-                              newValue?.id || ''
-                            )
-                          }
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              variant="standard"
-                              placeholder="Buscar producto..."
-                            />
-                          )}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          type="number"
-                          value={line.cantidad || ''}
-                          onChange={(e) =>
-                            handleUpdateLine(
-                              index,
-                              'cantidad',
-                              Number(e.target.value)
-                            )
-                          }
-                          variant="standard"
-                          inputProps={{ min: 0.001, step: 'any' }}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          type="number"
-                          value={line.precioUnitario || ''}
-                          onChange={(e) =>
-                            handleUpdateLine(
-                              index,
-                              'precioUnitario',
-                              Number(e.target.value)
-                            )
-                          }
-                          variant="standard"
-                          inputProps={{ min: 0, step: '0.01' }}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">
-                          {(
-                            Number(line.cantidad || 0) *
-                            Number(line.precioUnitario || 0)
-                          ).toFixed(2)}{' '}
-                          €
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Tooltip title="Quitar">
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => handleRemoveLine(index)}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-              {value.length > 0 && (
-                <TableRow sx={{ bgcolor: 'action.hover' }}>
-                  <TableCell
-                    colSpan={3}
-                    align="right"
-                    sx={{ fontWeight: 'bold' }}
-                  >
-                    TOTAL ESTIMADO:
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>
-                    {totalOrder.toFixed(2)} €
-                  </TableCell>
-                  <TableCell></TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <Box>
+          {Array.from(groups.values()).map((group) =>
+            renderLinesForGroup(group.lines, group.proveedorNombre)
+          )}
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              mt: 1,
+              p: 2,
+              bgcolor: 'action.hover',
+              borderRadius: 1,
+            }}
+          >
+            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+              TOTAL ESTIMADO: {totalOrder.toFixed(2)} €
+            </Typography>
+          </Box>
+        </Box>
       )}
     </Box>
   );

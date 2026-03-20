@@ -56,6 +56,7 @@ const getStatusColor = (
     case 'fácil':
     case 'entrada':
     case 'entrada_compra':
+    case 'completado':
       return 'success';
     case 'error':
     case 'failed':
@@ -71,6 +72,7 @@ const getStatusColor = (
     case 'review':
     case 'media':
     case 'ajuste':
+    case 'parcial':
       return 'warning';
     case 'info':
     case 'active':
@@ -109,6 +111,8 @@ const statusTranslations: Record<string, string> = {
   pedido: 'Pedido',
   entrada_compra: 'Entrada compra',
   salida_elaboracion: 'Salida elaboración',
+  parcial: 'Parcial',
+  completado: 'Completado',
 };
 
 const categoriaTranslations: Record<CategoriaProducto, string> = {

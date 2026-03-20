@@ -260,7 +260,10 @@ export class ProductoService {
 
   async remove(id: string, userId: string): Promise<void> {
     const producto = await this.findOne(id);
-    const result = await this.productoRepository.delete(id);
+
+    await this.productoRepository.update(id, { deletedBy: userId });
+    const result = await this.productoRepository.softDelete(id);
+
     if (result.affected === 0) {
       throw new NotFoundException(I18nHelper.getError('PRODUCT_NOT_FOUND'));
     }

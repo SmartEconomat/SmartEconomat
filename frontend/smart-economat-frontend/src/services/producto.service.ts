@@ -16,6 +16,7 @@ export interface ProductoMutationPayload {
   tipo?: string;
   contenido?: number;
   codigoBarras?: string;
+  pathImg?: string;
   alergenos?: string[];
   proveedores?: ProductoProveedorPayload[];
 }

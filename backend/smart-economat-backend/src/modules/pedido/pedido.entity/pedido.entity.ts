@@ -15,6 +15,7 @@ import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
 import { PedidoProducto } from '../pedido-producto.entity/pedido-producto.entity';
 import { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
+import { PurchaseBatch } from '../purchase-batch.entity/purchase-batch.entity';
 
 /**
  * Entidad Pedido
@@ -36,6 +37,7 @@ import { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
 @Index(['fechaPedido'])
 @Index(['usuarioId'])
 @Index(['proveedorId'])
+@Index(['batchId'])
 @Index(['estado', 'createdAt'])
 @Check(`"coste_total" >= 0`)
 export class Pedido extends BaseEntity {
@@ -44,6 +46,9 @@ export class Pedido extends BaseEntity {
 
   @Column({ name: 'proveedor_id', nullable: true })
   proveedorId?: string;
+
+  @Column({ name: 'batch_id', nullable: true })
+  batchId?: string;
 
   /**
    * Usuario que creó el pedido.
@@ -67,6 +72,16 @@ export class Pedido extends BaseEntity {
   })
   @JoinColumn({ name: 'proveedor_id' })
   proveedor?: Relation<Proveedor>;
+
+  /**
+   * Lote de compra al que pertenece este pedido (opcional para legacy).
+   */
+  @ManyToOne(() => PurchaseBatch, (batch) => batch.pedidos, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'batch_id' })
+  batch?: Relation<PurchaseBatch>;
 
   /**
    * Fecha de creación del pedido.
@@ -141,6 +156,12 @@ export class Pedido extends BaseEntity {
    */
   @Column({ type: 'text', nullable: true, name: 'motivo_cancelacion' })
   motivoCancelacion?: string;
+
+  /**
+   * Motivo de incidencia (solo si estado === INCIDENCIA).
+   */
+  @Column({ type: 'text', nullable: true, name: 'motivo_incidencia' })
+  motivoIncidencia?: string;
 
   /* --- Métodos de Dominio --- */
 

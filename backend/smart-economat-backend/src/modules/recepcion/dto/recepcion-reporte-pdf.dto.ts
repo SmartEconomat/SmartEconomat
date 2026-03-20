@@ -6,7 +6,6 @@ import {
   IsDateString,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { StringToBooleanTransformer } from '../../../common/transformers/string-to-boolean.transformer';
 import { TipoDiferencia } from '../../incidencia/incidencia-linea.entity/incidencia-linea.entity';
 
 export enum TipoReportePdf {
@@ -15,8 +14,9 @@ export enum TipoReportePdf {
 }
 
 export class RecepcionReportePdfDto {
+  @IsOptional()
   @IsEnum(TipoReportePdf)
-  tipo!: TipoReportePdf;
+  tipo?: TipoReportePdf;
 
   @IsOptional()
   @IsUUID('all')
@@ -36,10 +36,30 @@ export class RecepcionReportePdfDto {
 
   @IsOptional()
   @IsBoolean()
-  @Transform((params) => StringToBooleanTransformer.transform(params))
+  @Transform(({ value }) => value === 'true' || value === true)
   soloNoResueltas?: boolean;
 
   @IsOptional()
   @IsEnum(TipoDiferencia)
   tipoDiferencia?: TipoDiferencia;
+
+  @IsOptional()
+  @IsUUID('all')
+  batchId?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => {
+    if (value === 'true' || value === true || value === '1') return true;
+    return false;
+  })
+  incluirCancelados?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => {
+    if (value === 'true' || value === true || value === '1') return true;
+    return false;
+  })
+  paginaPorProveedor?: boolean;
 }

@@ -426,14 +426,14 @@ describe('RecepcionController (e2e)', () => {
         expect.objectContaining({
           id: pedido.pedidoId,
           estadoAnterior: EstadoPedido.PENDIENTE,
-          estadoNuevo: EstadoPedido.EN_PROCESO,
+          estadoNuevo: EstadoPedido.PARCIAL,
         }),
       ]);
 
       let pedidoActualizado = await dataSource.getRepository(Pedido).findOneBy({
         id: pedido.pedidoId,
       });
-      expect(pedidoActualizado?.estado).toBe(EstadoPedido.EN_PROCESO);
+      expect(pedidoActualizado?.estado).toBe(EstadoPedido.PARCIAL);
 
       const segundaRecepcion = await request(app.getHttpServer())
         .post('/api/v1/recepcion')
@@ -456,7 +456,7 @@ describe('RecepcionController (e2e)', () => {
       expect(segundaRecepcion.body.data.pedidosActualizados).toEqual([
         expect.objectContaining({
           id: pedido.pedidoId,
-          estadoAnterior: EstadoPedido.EN_PROCESO,
+          estadoAnterior: EstadoPedido.PARCIAL,
           estadoNuevo: EstadoPedido.RECIBIDO,
         }),
       ]);

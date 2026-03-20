@@ -160,7 +160,7 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
       const tempToken = loginRes.body.data.access_token;
 
       await request(app.getHttpServer())
-        .post('/api/v1/auth/change-password')
+        .patch('/api/v1/auth/change-password')
         .set('Authorization', `Bearer ${tempToken}`)
         .send({
           currentPassword: provisionalPass,

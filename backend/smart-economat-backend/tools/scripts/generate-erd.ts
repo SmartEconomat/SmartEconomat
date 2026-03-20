@@ -4,8 +4,8 @@ import { join } from 'path';
 
 const rootDir = process.cwd();
 const filesToDelete = ['erdiadb.json', 'index.html', 'mermaid.html'];
-const sourceFile = join(rootDir, 'smart-economat-backend.svg');
-const destFile = join(rootDir, 'tools/erd/erd.svg');
+const sourceFile = join(rootDir, 'smart-economat-backend.png');
+const destFile = join(rootDir, 'tools/erd/erd.png');
 
 try {
   console.log('Generating ERD...');

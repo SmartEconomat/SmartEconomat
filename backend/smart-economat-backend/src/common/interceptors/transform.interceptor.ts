@@ -16,10 +16,7 @@ export class TransformInterceptor<T> implements NestInterceptor<
   T,
   ApiResponse<T>
 > {
-  intercept(
-    context: ExecutionContext,
-    next: CallHandler
-  ): Observable<ApiResponse<T>> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
 
     const requestHeaders = request.headers as Record<
@@ -42,6 +39,14 @@ export class TransformInterceptor<T> implements NestInterceptor<
 
     return next.handle().pipe(
       map((data: unknown) => {
+        if (
+          response.headersSent ||
+          response.get('Content-Type')?.includes('application/pdf') ||
+          response.get('Content-Type')?.includes('spreadsheet')
+        ) {
+          return data;
+        }
+
         let message = 'Operación exitosa';
         let responseData: T | null = data as T;
 

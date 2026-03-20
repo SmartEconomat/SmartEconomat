@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import type { Response } from 'express';
@@ -9,6 +9,7 @@ import {
   RecepcionReportePdfDto,
   TipoReportePdf,
 } from '../dto/recepcion-reporte-pdf.dto';
+import { EstadoPedido } from '../../pedido/enums/estado-pedido.enum';
 
 export const IVA_RATE = 0.1;
 
@@ -43,7 +44,8 @@ export interface LineaPedidoAgrupada {
 export interface PedidoAgrupado {
   id: string;
   fecha: Date;
-  estado: string;
+  estado: EstadoPedido;
+  motivoCancelacion?: string;
   lineas: LineaPedidoAgrupada[];
   subtotalPedido: number;
 }
@@ -78,6 +80,8 @@ export interface ProveedorIncidenciaGroup {
 
 @Injectable()
 export class PdfReportService {
+  private readonly logger = new Logger(PdfReportService.name);
+
   private readonly docConfig = {
     autoFirstPage: false,
     size: 'A4' as const,
@@ -105,6 +109,15 @@ export class PdfReportService {
     filters: RecepcionReportePdfDto,
     res: Response
   ): Promise<void> {
+    this.logger.debug(
+      `generatePedidoReport: filters=${JSON.stringify(filters)}`
+    );
+
+    const isTrue = (val: any) => val === true || val === 'true';
+
+    const incluirCancelados = isTrue(filters.incluirCancelados);
+    const paginaPorProveedor = isTrue(filters.paginaPorProveedor);
+
     const qb = this.dataSource
       .createQueryBuilder(Pedido, 'pedido')
       .leftJoinAndSelect('pedido.proveedor', 'proveedor')
@@ -132,8 +145,21 @@ export class PdfReportService {
         endDate: filters.endDate,
       });
     }
+    if (filters.batchId) {
+      qb.andWhere('pedido.batchId = :batchId', {
+        batchId: filters.batchId,
+      });
+    }
+    if (!incluirCancelados) {
+      qb.andWhere('pedido.estado != :cancelado', {
+        cancelado: EstadoPedido.CANCELADO,
+      });
+    }
 
     const pedidos = await qb.getMany();
+    this.logger.debug(
+      `generatePedidoReport: pedidos found=${pedidos.length}, inclusionCancelados=${incluirCancelados}`
+    );
 
     if (pedidos.length === 0) {
       throw new BadRequestException(
@@ -142,7 +168,7 @@ export class PdfReportService {
     }
 
     const groups = this.groupPedidosByProveedor(pedidos);
-    await this.buildPedidoPdf(groups, res);
+    await this.buildPedidoPdf(groups, res, paginaPorProveedor);
   }
 
   async generateIncidenciasReport(
@@ -160,7 +186,10 @@ export class PdfReportService {
       .orderBy('proveedor.nombre', 'ASC')
       .addOrderBy('incidencia.createdAt', 'DESC');
 
-    if (filters.soloNoResueltas) {
+    const soloNoResueltas =
+      filters.soloNoResueltas === true ||
+      String(filters.soloNoResueltas) === 'true';
+    if (soloNoResueltas) {
       qb.andWhere('incidencia.fechaResolucion IS NULL');
     }
     if (filters.startDate) {
@@ -229,6 +258,7 @@ export class PdfReportService {
         id: pedido.id,
         fecha: pedido.fechaPedido,
         estado: pedido.estado,
+        motivoCancelacion: pedido.motivoCancelacion,
         lineas,
         subtotalPedido,
       });
@@ -281,8 +311,15 @@ export class PdfReportService {
 
   private buildPedidoPdf(
     groups: ProveedorGroup[],
-    res: Response
+    res: Response,
+    paginaPorProveedor = false
   ): Promise<void> {
+    this.logger.debug(
+      `buildPedidoPdf: starting for ${groups.length} groups, paginaPorProveedor=${paginaPorProveedor}`
+    );
+
+    const forceNewPageByGroup =
+      paginaPorProveedor === true || String(paginaPorProveedor) === 'true';
     return new Promise<void>((resolve, reject) => {
       const doc = new PDFDocument(this.docConfig);
       let pageNum = 0;
@@ -344,6 +381,9 @@ export class PdfReportService {
 
       const ensureSpace = (h: number) => {
         if (y + h > pageBottom) {
+          this.logger.debug(
+            `ensureSpace: page jump (y=${y.toFixed(0)}, h=${h}, bottom=${pageBottom.toFixed(0)})`
+          );
           doc.addPage();
           y = MARGIN;
         }
@@ -399,8 +439,15 @@ export class PdfReportService {
       let grandSubtotal = 0;
       let grandTotal = 0;
 
-      for (const group of groups) {
-        ensureSpace(HEADER_H + ROW_H * 2 + 60);
+      for (let i_group = 0; i_group < groups.length; i_group++) {
+        const group = groups[i_group];
+
+        if (forceNewPageByGroup && i_group > 0) {
+          doc.addPage();
+          y = MARGIN;
+        } else {
+          ensureSpace(HEADER_H + ROW_H * 2 + 20);
+        }
 
         doc.rect(MARGIN, y, usableW, HEADER_H).fill(C_SECTION_BG);
         doc
@@ -428,6 +475,23 @@ export class PdfReportService {
             y
           );
           y = doc.y + 4;
+
+          if (
+            pedido.estado === EstadoPedido.CANCELADO &&
+            pedido.motivoCancelacion
+          ) {
+            ensureSpace(ROW_H + 10);
+            doc
+              .fillColor(C_RED)
+              .font('Helvetica-Bold')
+              .fontSize(FONT_BODY - 1);
+            doc.text(
+              `* MOTIVO CANCELACIÓN: ${pedido.motivoCancelacion}`,
+              MARGIN + 4,
+              y
+            );
+            y = doc.y + 6;
+          }
 
           y = drawLineHeader(y);
 

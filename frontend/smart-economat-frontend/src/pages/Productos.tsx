@@ -42,7 +42,7 @@ import {
   createProducto,
   updateProducto,
 } from '../services/producto.service';
-import { deleteResource } from '../services/api.service';
+import { deleteResource, uploadFile } from '../services/api.service';
 import { useToast } from '../store/toast.hooks';
 import StatusChip from '../components/ui/StatusChip';
 import { fetchProveedores } from '../services/proveedor.service';
@@ -77,6 +77,7 @@ interface ProductoFormData extends Record<string, unknown> {
   codigoBarras?: string;
   alergenos?: ProductoFormAlergeno[];
   proveedores?: ProductoFormProveedor[];
+  imagen?: File | string;
 }
 
 interface ProveedoresResponse {
@@ -278,6 +279,20 @@ const Productos: React.FC = () => {
         );
       }
 
+      let finalPathImg: string | undefined = undefined;
+      if (typedFormData.imagen instanceof File) {
+        try {
+          finalPathImg = await uploadFile(typedFormData.imagen);
+        } catch {
+          throw new Error('Hubo un error al subir la imagen del producto.');
+        }
+      } else if (
+        typeof typedFormData.imagen === 'string' &&
+        typedFormData.imagen.trim()
+      ) {
+        finalPathImg = typedFormData.imagen.trim();
+      }
+
       const payload = {
         nombre: typedFormData.nombre,
         marca: toOptionalString(typedFormData.marca),
@@ -286,6 +301,7 @@ const Productos: React.FC = () => {
         tipo: typedFormData.tipo,
         contenido: Number(typedFormData.contenido),
         codigoBarras,
+        pathImg: finalPathImg,
         alergenos: normalizedAlergenos,
         proveedores: Array.isArray(typedFormData.proveedores)
           ? typedFormData.proveedores.map((proveedor) => ({
