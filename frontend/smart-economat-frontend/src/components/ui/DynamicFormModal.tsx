@@ -13,6 +13,7 @@ import ProveedorSelector, { ProveedorAsociado } from './ProveedorSelector';
 import DatePicker from './DatePicker';
 import PedidoLineasSelector from './PedidoLineasSelector';
 import RecetaIngredientesSelector from './RecetaIngredientesSelector';
+import BatchPedidoLineasViewer from './BatchPedidoLineasViewer';
 
 export type FieldType =
   | 'text'
@@ -25,7 +26,8 @@ export type FieldType =
   | 'allergens'
   | 'proveedores'
   | 'orderLines'
-  | 'recipeIngredients';
+  | 'recipeIngredients'
+  | 'batchViewer';
 
 export interface DynamicField {
   name: string;
@@ -56,6 +58,7 @@ export interface DynamicFormModalProps extends Omit<ModalProps, 'children'> {
   isSubmitting?: boolean;
   requireConfirmation?: boolean;
   confirmationMessage?: React.ReactNode;
+  onValuesChange?: (data: Record<string, unknown>) => void;
 }
 
 const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
@@ -72,6 +75,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   isSubmitting = false,
   requireConfirmation = false,
   confirmationMessage,
+  onValuesChange,
 }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [formData, setFormData] = useState<Record<string, any>>({});
@@ -92,8 +96,16 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
         }
       });
       setFormData(dataToSet);
+      if (onValuesChange) onValuesChange(dataToSet);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialData, fields]);
+
+  useEffect(() => {
+    if (isOpen && onValuesChange) {
+      onValuesChange(formData);
+    }
+  }, [formData, isOpen, onValuesChange]);
 
   const handleTextChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -221,6 +233,169 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
     (f) => f.position !== 'left' && f.position !== 'bottom'
   );
 
+  const renderFieldContent = (field: DynamicField) => {
+    const {
+      name,
+      label,
+      type = 'text',
+      required,
+      options,
+      disabled,
+      multiple,
+    } = field;
+    const value = formData[name];
+
+    switch (type) {
+      case 'boolean':
+        return (
+          <Checkbox
+            key={name}
+            name={name}
+            label={label}
+            checked={Boolean(value)}
+            onChange={handleCheckboxChange}
+            disabled={disabled}
+          />
+        );
+
+      case 'select':
+        return (
+          <Select
+            key={name}
+            name={name}
+            label={label}
+            value={value ?? (multiple ? [] : '')}
+            onChange={(e) =>
+              handleTextChange(
+                e as React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+              )
+            }
+            options={options || []}
+            required={required}
+            disabled={disabled}
+            multiple={multiple}
+            error={Boolean(errors[name])}
+            helperText={errors[name]}
+          />
+        );
+
+      case 'number':
+        return (
+          <Input
+            key={name}
+            name={name}
+            label={label}
+            type="number"
+            value={value ?? ''}
+            onChange={handleNumberChange}
+            required={required}
+            disabled={disabled}
+          />
+        );
+
+      case 'date':
+        return (
+          <DatePicker
+            key={name}
+            name={name}
+            label={label}
+            value={value || ''}
+            onChange={handleDateChange}
+            required={required}
+            disabled={disabled}
+          />
+        );
+
+      case 'allergens':
+        return (
+          <AllergenSelector
+            key={name}
+            value={Array.isArray(value) ? value : []}
+            onChange={handleAllergensChange(name)}
+            disabled={disabled}
+          />
+        );
+
+      case 'textarea':
+        return (
+          <Input
+            key={name}
+            name={name}
+            label={label}
+            type="text"
+            value={value ?? ''}
+            onChange={handleTextChange}
+            required={required}
+            disabled={disabled}
+            multiline
+            rows={4}
+          />
+        );
+
+      case 'proveedores':
+        return (
+          <ProveedorSelector
+            key={name}
+            value={Array.isArray(value) ? value : []}
+            onChange={(val: ProveedorAsociado[]) =>
+              setFormData((prev) => ({ ...prev, [name]: val }))
+            }
+            proveedores={
+              field.options?.map((o) => ({
+                id: o.value as string,
+                nombre: o.label,
+                email: '',
+                nifNie: '',
+              })) || []
+            }
+            disabled={disabled}
+          />
+        );
+
+      case 'orderLines':
+        return (
+          <PedidoLineasSelector
+            key={name}
+            value={Array.isArray(value) ? value : []}
+            onChange={(val) =>
+              setFormData((prev) => ({ ...prev, [name]: val }))
+            }
+            proveedorId={formData.proveedorId || formData.proveedor?.id}
+            disabled={disabled}
+          />
+        );
+
+      case 'recipeIngredients':
+        return (
+          <RecetaIngredientesSelector
+            key={name}
+            value={Array.isArray(value) ? value : []}
+            onChange={(val) =>
+              setFormData((prev) => ({ ...prev, [name]: val }))
+            }
+          />
+        );
+
+      case 'batchViewer':
+        return <BatchPedidoLineasViewer key={name} batch={formData[name]} />;
+
+      case 'text':
+      default:
+        return (
+          <Input
+            key={name}
+            name={name}
+            label={label}
+            type="text"
+            value={value ?? ''}
+            onChange={handleTextChange}
+            required={required}
+            disabled={disabled}
+          />
+        );
+    }
+  };
+
   return (
     <Modal
       isOpen={isOpen}
@@ -324,21 +499,9 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
               {/* Additional Left Column Fields (e.g. Allergens) */}
               {leftFields.length > 0 && (
                 <Stack spacing={1.5} sx={{ mt: 2, width: '100%' }}>
-                  {leftFields.map((field) => {
-                    const { name, type = 'text', disabled } = field;
-                    const value = formData[name];
-                    if (type === 'allergens') {
-                      return (
-                        <AllergenSelector
-                          key={name}
-                          value={Array.isArray(value) ? value : []}
-                          onChange={handleAllergensChange(name)}
-                          disabled={disabled}
-                        />
-                      );
-                    }
-                    return null;
-                  })}
+                  {leftFields.map((field) => (
+                    <Box key={field.name}>{renderFieldContent(field)}</Box>
+                  ))}
                 </Stack>
               )}
             </Box>
@@ -348,128 +511,11 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
           <Box flex={1} width="100%">
             <Box display="grid" gridTemplateColumns="repeat(12, 1fr)" gap={1.5}>
               {rightFields.map((field) => {
-                const {
-                  name,
-                  label,
-                  type = 'text',
-                  required,
-                  options,
-                  disabled,
-                  multiple,
-                  width = 12,
-                } = field;
-                const value = formData[name];
-
-                const renderField = () => {
-                  switch (type) {
-                    case 'boolean':
-                      return (
-                        <Checkbox
-                          key={name}
-                          name={name}
-                          label={label}
-                          checked={Boolean(value)}
-                          onChange={handleCheckboxChange}
-                          disabled={disabled}
-                        />
-                      );
-
-                    case 'select':
-                      return (
-                        <Select
-                          key={name}
-                          name={name}
-                          label={label}
-                          value={value ?? (multiple ? [] : '')}
-                          onChange={(e) =>
-                            handleTextChange(
-                              e as React.ChangeEvent<
-                                HTMLInputElement | HTMLTextAreaElement
-                              >
-                            )
-                          }
-                          options={options || []}
-                          required={required}
-                          disabled={disabled}
-                          multiple={multiple}
-                          error={Boolean(errors[name])}
-                          helperText={errors[name]}
-                        />
-                      );
-
-                    case 'number':
-                      return (
-                        <Input
-                          key={name}
-                          name={name}
-                          label={label}
-                          type="number"
-                          value={value ?? ''}
-                          onChange={handleNumberChange}
-                          required={required}
-                          disabled={disabled}
-                        />
-                      );
-
-                    case 'date':
-                      return (
-                        <DatePicker
-                          key={name}
-                          name={name}
-                          label={label}
-                          value={value || ''}
-                          onChange={handleDateChange}
-                          required={required}
-                          disabled={disabled}
-                        />
-                      );
-
-                    case 'allergens':
-                      return (
-                        <AllergenSelector
-                          key={name}
-                          value={Array.isArray(value) ? value : []}
-                          onChange={handleAllergensChange(name)}
-                          disabled={disabled}
-                        />
-                      );
-
-                    case 'textarea':
-                      return (
-                        <Input
-                          key={name}
-                          name={name}
-                          label={label}
-                          type="text"
-                          value={value ?? ''}
-                          onChange={handleTextChange}
-                          required={required}
-                          disabled={disabled}
-                          multiline
-                          rows={4}
-                        />
-                      );
-
-                    case 'text':
-                    default:
-                      return (
-                        <Input
-                          key={name}
-                          name={name}
-                          label={label}
-                          type="text"
-                          value={value ?? ''}
-                          onChange={handleTextChange}
-                          required={required}
-                          disabled={disabled}
-                        />
-                      );
-                  }
-                };
+                const { name, width = 12 } = field;
 
                 return (
                   <Box key={name} sx={{ gridColumn: { xs: `span ${width}` } }}>
-                    {renderField()}
+                    {renderFieldContent(field)}
                   </Box>
                 );
               })}
@@ -481,66 +527,9 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
         {bottomFields.length > 0 && (
           <Box sx={{ mt: 2, width: '100%' }}>
             <Stack spacing={1.5}>
-              {bottomFields.map((field) => {
-                const { name, type = 'text', disabled } = field;
-                const value = formData[name];
-                if (type === 'allergens') {
-                  return (
-                    <AllergenSelector
-                      key={name}
-                      value={Array.isArray(value) ? value : []}
-                      onChange={handleAllergensChange(name)}
-                      disabled={disabled}
-                    />
-                  );
-                }
-                if (type === 'proveedores') {
-                  return (
-                    <ProveedorSelector
-                      key={name}
-                      value={Array.isArray(value) ? value : []}
-                      onChange={(val: ProveedorAsociado[]) =>
-                        setFormData((prev) => ({ ...prev, [name]: val }))
-                      }
-                      proveedores={
-                        field.options?.map((o) => ({
-                          id: o.value as string,
-                          nombre: o.label,
-                          email: '',
-                          nifNie: '',
-                        })) || []
-                      }
-                      disabled={disabled}
-                    />
-                  );
-                }
-                if (type === 'orderLines') {
-                  return (
-                    <PedidoLineasSelector
-                      key={name}
-                      value={Array.isArray(value) ? value : []}
-                      onChange={(val) =>
-                        setFormData((prev) => ({ ...prev, [name]: val }))
-                      }
-                      proveedorId={
-                        formData.proveedorId || formData.proveedor?.id
-                      }
-                    />
-                  );
-                }
-                if (type === 'recipeIngredients') {
-                  return (
-                    <RecetaIngredientesSelector
-                      key={name}
-                      value={Array.isArray(value) ? value : []}
-                      onChange={(val) =>
-                        setFormData((prev) => ({ ...prev, [name]: val }))
-                      }
-                    />
-                  );
-                }
-                return null;
-              })}
+              {bottomFields.map((field) => (
+                <Box key={field.name}>{renderFieldContent(field)}</Box>
+              ))}
             </Stack>
           </Box>
         )}
@@ -548,17 +537,21 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
         <Box
           sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}
         >
-          <Button
-            onClick={handleCancel}
-            variant="outlined"
-            sx={{ mt: 0, mb: 0 }}
-          >
-            {cancelLabel}
-          </Button>
+          {Boolean(cancelLabel) && (
+            <Button
+              onClick={handleCancel}
+              variant="outlined"
+              fullWidth={false}
+              sx={{ mt: 0, mb: 0 }}
+            >
+              {cancelLabel}
+            </Button>
+          )}
           <Button
             type="submit"
             isLoading={isSubmitting}
             variant="contained"
+            fullWidth={false}
             sx={{ mt: 0, mb: 0 }}
           >
             {submitLabel}

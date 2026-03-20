@@ -21,6 +21,8 @@ import { buildPedidoAggregate } from '../../../application/pedido/pedido.factory
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { PedidoStatusTrigger } from '../enums/pedido-status-trigger.enum';
+import { PurchaseBatchService } from './purchase-batch.service';
+import { forwardRef, Inject } from '@nestjs/common';
 
 @Injectable()
 export class PedidoService {
@@ -28,7 +30,9 @@ export class PedidoService {
     private readonly pedidoRepository: PedidoRepository,
     private readonly movimientoHelper: MovimientoHelper,
     private readonly dataSource: DataSource,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    @Inject(forwardRef(() => PurchaseBatchService))
+    private readonly purchaseBatchService: PurchaseBatchService
   ) {}
 
   async create(
@@ -198,25 +202,32 @@ export class PedidoService {
   async cancelarPedido(id: string, dto: CancelPedidoDto): Promise<Pedido> {
     const pedido = await this.findOne(id);
 
-    if ((pedido.recepcionesPedido?.length ?? 0) > 0) {
+    if (pedido.estado !== EstadoPedido.PENDIENTE) {
       throw new BadRequestException(
-        'No se puede cancelar un pedido si ya ha comenzado la recepción.'
+        'Solo se pueden cancelar los pedidos que estén en estado pendiente.'
       );
     }
 
-    if (
-      pedido.estado === EstadoPedido.EN_PROCESO ||
-      pedido.estado === EstadoPedido.RECIBIDO ||
-      pedido.estado === EstadoPedido.PARCIAL ||
-      pedido.estado === EstadoPedido.INCIDENCIA
-    ) {
+    if (pedido.recepcionesPedido && pedido.recepcionesPedido.length > 0) {
       throw new BadRequestException(
-        I18nHelper.getError('ORDER_NOT_CANCELLABLE')
+        'No se puede cancelar un pedido que ya tiene recepciones registradas.'
       );
     }
 
-    pedido.cancelar(dto.motivoCancelacion || 'Cancelado por el usuario');
+    pedido.estado = EstadoPedido.CANCELADO;
+    pedido.motivoCancelacion =
+      dto.motivoCancelacion || 'Cancelado por el usuario';
     return await this.pedidoRepository.save(pedido);
+  }
+
+  async aceptarPedido(id: string): Promise<Pedido> {
+    const pedido = await this.findOne(id);
+    if (pedido.estado !== EstadoPedido.PENDIENTE) {
+      throw new BadRequestException(
+        'Solo los pedidos pendientes pueden ser aceptados.'
+      );
+    }
+    return this.handleStatusTransition(id, PedidoStatusTrigger.ACEPTAR);
   }
 
   async handleStatusTransition(
@@ -240,9 +251,18 @@ export class PedidoService {
 
     pedido.estado = this.resolveStatusFromTrigger(trigger);
 
-    return manager
+    const savedPedido = manager
       ? await manager.save(Pedido, pedido)
       : await this.pedidoRepository.save(pedido);
+
+    if (savedPedido.batchId) {
+      await this.purchaseBatchService.syncBatchStatus(
+        savedPedido.batchId,
+        manager
+      );
+    }
+
+    return savedPedido;
   }
 
   async remove(id: string): Promise<void> {
@@ -257,14 +277,15 @@ export class PedidoService {
       );
     }
 
-    await this.pedidoRepository.remove(pedido);
+    await this.pedidoRepository.softRemove(pedido);
   }
 
   private calculateFechaEntrega(baseDate = new Date()): Date {
-    const fechaEntrega = new Date(baseDate);
-    fechaEntrega.setHours(
-      fechaEntrega.getHours() + this.getFechaEntregaOffsetHoras()
+    const hours = this.configService.get<number>(
+      'PEDIDO_FECHA_ENTREGA_HOURS',
+      48
     );
+    const fechaEntrega = new Date(baseDate.getTime() + hours * 60 * 60 * 1000);
     return fechaEntrega;
   }
 
@@ -274,8 +295,10 @@ export class PedidoService {
 
   private resolveStatusFromTrigger(trigger: PedidoStatusTrigger): EstadoPedido {
     switch (trigger) {
-      case PedidoStatusTrigger.RECEPCION_PARCIAL:
+      case PedidoStatusTrigger.ACEPTAR:
         return EstadoPedido.EN_PROCESO;
+      case PedidoStatusTrigger.RECEPCION_PARCIAL:
+        return EstadoPedido.PARCIAL;
       case PedidoStatusTrigger.RECEPCION_TOTAL:
         return EstadoPedido.RECIBIDO;
       case PedidoStatusTrigger.INCIDENCIA:
@@ -285,19 +308,5 @@ export class PedidoService {
           'Disparador de transición de pedido no soportado.'
         );
     }
-  }
-
-  private getFechaEntregaOffsetHoras(): number {
-    const rawValue = this.configService.get<string | number>(
-      'PEDIDO_FECHA_ENTREGA_OFFSET_HOURS',
-      48
-    );
-    const parsedValue = Number(rawValue);
-
-    if (!Number.isFinite(parsedValue) || parsedValue < 0) {
-      return 48;
-    }
-
-    return parsedValue;
   }
 }

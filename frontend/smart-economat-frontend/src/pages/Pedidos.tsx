@@ -1,4 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from 'react';
+import dayjs from 'dayjs';
 import {
   Box,
   Paper,
@@ -7,20 +14,29 @@ import {
   Alert,
   Button,
   SelectChangeEvent,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import CheckIcon from '@mui/icons-material/Check';
+import CancelIcon from '@mui/icons-material/Cancel';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import DataTable, { Column } from '../components/ui/DataTable';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import DynamicFormModal, {
   DynamicField,
 } from '../components/ui/DynamicFormModal';
-import { Pedido, EstadoPedido } from '../services/pedido.types';
+import { Pedido, EstadoPedido, PurchaseBatch } from '../services/pedido.types';
 import {
   fetchPedidos,
   createPedido,
   updatePedido,
-  CreatePedidoPayload,
+  createPurchaseBatch,
+  fetchPurchaseBatches,
+  fetchPurchaseBatchById,
+  cancelPedido,
+  aceptarPedido,
 } from '../services/pedido.service';
 import { deleteResource } from '../services/api.service';
 import { fetchProveedores } from '../services/proveedor.service';
@@ -30,51 +46,67 @@ import PageToolbar from '../components/ui/PageToolbar';
 
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import AddIcon from '@mui/icons-material/Add';
+import { usePedidoDraft } from '../hooks/usePedidoDraft';
 
-const pedidoSchema: DynamicField[] = [
-  {
-    name: 'estado',
-    label: 'Estado del Pedido',
-    type: 'select',
-    required: false,
-    width: 6,
-    options: [
-      { value: EstadoPedido.PENDIENTE, label: 'Pendiente' },
-      { value: EstadoPedido.EN_PROCESO, label: 'En Proceso' },
-      { value: EstadoPedido.RECIBIDO, label: 'Recibido' },
-      { value: EstadoPedido.PARCIAL, label: 'Parcial' },
-      { value: EstadoPedido.INCIDENCIA, label: 'Incidencia' },
-      { value: EstadoPedido.CANCELADO, label: 'Cancelado' },
-    ],
-  },
-  {
-    name: 'fechaEntrega',
-    label: 'Fecha de Entrega',
-    type: 'date',
-    width: 6,
-    required: true,
-  },
-  {
-    name: 'proveedorId',
-    label: 'Proveedor',
-    type: 'select',
-    required: true,
-    width: 6,
-    options: [],
-  },
-  {
-    name: 'motivoCancelacion',
-    label: 'Motivo de Cancelación (Si aplica)',
-    type: 'text',
-    width: 12,
-  },
-  {
+const getPedidoSchema = (
+  row: Record<string, unknown> | null
+): DynamicField[] => {
+  if (!row)
+    return [
+      {
+        name: 'observaciones',
+        label: 'Observaciones Generales',
+        type: 'textarea',
+        position: 'bottom',
+      },
+      {
+        name: 'pedidoProductos',
+        label: 'Detalle de Productos',
+        type: 'orderLines',
+        position: 'bottom',
+      },
+    ];
+
+  const fields: DynamicField[] = [];
+
+  if (row.estado === EstadoPedido.CANCELADO) {
+    fields.push({
+      name: 'motivoCancelacion',
+      label: 'Motivo de la Cancelación',
+      type: 'textarea',
+      disabled: true,
+      position: 'bottom',
+    });
+  }
+
+  if (row.estado === EstadoPedido.INCIDENCIA) {
+    fields.push({
+      name: 'motivoIncidencia',
+      label: 'Motivo de la Incidencia',
+      type: 'textarea',
+      disabled: true,
+      position: 'bottom',
+    });
+  }
+
+  fields.push({
+    name: 'observaciones',
+    label: 'Observaciones Generales',
+    type: 'textarea',
+    position: 'bottom',
+    disabled: Boolean(row.estado && row.estado !== EstadoPedido.PENDIENTE),
+  });
+
+  fields.push({
     name: 'pedidoProductos',
     label: 'Detalle de Productos',
     type: 'orderLines',
     position: 'bottom',
-  },
-];
+    disabled: Boolean(row.estado && row.estado !== EstadoPedido.PENDIENTE),
+  });
+
+  return fields;
+};
 
 const Pedidos: React.FC = () => {
   const [page, setPage] = useState(1);
@@ -84,29 +116,62 @@ const Pedidos: React.FC = () => {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [searchTerm, setSearchTerm] = useState('');
   const [data, setData] = useState<Pedido[]>([]);
-  const [proveedores, setProveedores] = useState<unknown[]>([]);
+  const [batches, setBatches] = useState<PurchaseBatch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<Pedido | null>(null);
+  const [itemToAceptar, setItemToAceptar] = useState<Pedido | null>(null);
+  const [itemToCancelar, setItemToCancelar] = useState<Pedido | null>(null);
   const [itemToEdit, setItemToEdit] = useState<Record<string, unknown> | null>(
     null
   );
+  const [itemToViewBatch, setItemToViewBatch] = useState<PurchaseBatch | null>(
+    null
+  );
+  const [isFetchingBatch, setIsFetchingBatch] = useState(false);
+  const [tabIndex, setTabIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isAceptando, setIsAceptando] = useState(false);
+  const [isCancelando, setIsCancelando] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isRecoveryOpen, setIsRecoveryOpen] = useState(false);
+  const hasPromptedRef = useRef(false);
+  const latestValsRef = useRef<Record<string, unknown>>({});
+  const {
+    draft,
+    loadDraft,
+    saveDraft,
+    discardDraft,
+    isLoadingDraft,
+    flushSave,
+  } = usePedidoDraft();
   const toast = useToast();
 
-  const loadData = async () => {
+  const pedidoSchema = useMemo(
+    () => getPedidoSchema(itemToEdit || {}),
+    [itemToEdit]
+  );
+
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const [dataLoad, provLoad] = await Promise.all([
-        fetchPedidos(page, pageSize, searchTerm),
-        fetchProveedores(1, 50).catch(() => ({ data: [] })),
-      ]);
-      setData(dataLoad.data);
-      setTotalItems(dataLoad.total);
-      setTotalPages(dataLoad.totalPages);
-      setProveedores(provLoad.data);
+      if (tabIndex === 2) {
+        const batchesData = await fetchPurchaseBatches();
+        setBatches(batchesData);
+      } else {
+        const estadoFilter =
+          tabIndex === 0
+            ? EstadoPedido.PENDIENTE
+            : `NOT_${EstadoPedido.PENDIENTE}`;
+        const [dataLoad] = await Promise.all([
+          fetchPedidos(page, pageSize, searchTerm, estadoFilter),
+          fetchProveedores(1, 50).catch(() => ({ data: [] })),
+        ]);
+        setData(dataLoad.data);
+        setTotalItems(dataLoad.total);
+        setTotalPages(dataLoad.totalPages);
+      }
     } catch (err: unknown) {
       const message =
         err instanceof Error
@@ -116,12 +181,58 @@ const Pedidos: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [page, pageSize, searchTerm, tabIndex]);
 
   useEffect(() => {
-    loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize, searchTerm]);
+    void loadData();
+    void loadDraft();
+  }, [loadData, loadDraft, page, pageSize, searchTerm, tabIndex]);
+
+  useEffect(() => {
+    // Solo auto-prompt si no lo hemos hecho ya en esta carga de página
+    if (
+      draft &&
+      !isRecoveryOpen &&
+      !hasPromptedRef.current &&
+      (!itemToEdit || (Object.keys(itemToEdit).length === 0 && !itemToEdit.id))
+    ) {
+      setIsRecoveryOpen(true);
+      hasPromptedRef.current = true;
+    }
+  }, [draft, itemToEdit, isRecoveryOpen]);
+
+  const handleValuesChange = useCallback(
+    (vals: Record<string, unknown>) => {
+      latestValsRef.current = vals;
+      // Solo auto-guardar si es un pedido nuevo
+      if (!itemToEdit?.id) {
+        const lines = (vals['pedidoProductos'] as unknown[]) || [];
+        const observations = (vals['observaciones'] as string) || '';
+        const hasContent =
+          lines.length > 0 || (observations && observations.trim().length > 0);
+        if (hasContent) {
+          void saveDraft(vals);
+        }
+      }
+    },
+    [itemToEdit?.id, saveDraft]
+  );
+
+  const handleCloseModal = useCallback(() => {
+    // Forzar guardado antes de cerrar si es un borrador nuevo y tiene contenido
+    if (!itemToEdit?.id) {
+      const vals = latestValsRef.current;
+      const lines = (vals['pedidoProductos'] as unknown[]) || [];
+      const observations = (vals['observaciones'] as string) || '';
+      const hasContent =
+        lines.length > 0 || (observations && observations.trim().length > 0);
+      if (hasContent) {
+        void flushSave(vals);
+      }
+    }
+    setItemToEdit(null);
+    latestValsRef.current = {};
+  }, [itemToEdit?.id, flushSave]);
 
   const handleDeleteConfirm = async () => {
     if (!itemToDelete) return;
@@ -144,24 +255,7 @@ const Pedidos: React.FC = () => {
   const handleSave = async (formData: Record<string, any>) => {
     setIsSaving(true);
     try {
-      const proveedorId = formData.proveedorId;
-      if (!proveedorId) {
-        toast.error('Selecciona un proveedor válido antes de continuar.');
-        setIsSaving(false);
-        return;
-      }
-      const uuidRegex =
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(proveedorId)) {
-        toast.error('El ID del proveedor debe ser un UUID válido.');
-        setIsSaving(false);
-        return;
-      }
-      if (!formData.fechaEntrega) {
-        toast.error('La fecha de entrega es obligatoria.');
-        setIsSaving(false);
-        return;
-      }
+      const isEdit = !!formData.id;
       const lines = formData.pedidoProductos || [];
       if (!Array.isArray(lines) || lines.length === 0) {
         toast.error('El pedido debe contener al menos una línea válida.');
@@ -169,18 +263,23 @@ const Pedidos: React.FC = () => {
         return;
       }
 
-      const normalizedLines = lines
+      interface NormalizedLine {
+        productoProveedorId: string;
+        proveedorId: string;
+        cantidad: number;
+      }
+      const normalizedLines: NormalizedLine[] = lines
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .map((l: any) => ({
-          productoProveedorId:
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (l as any).productoProveedorId || (l as any).id_producto_proveedor,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          cantidad: Number((l as any).cantidad),
+          productoProveedorId: l.productoProveedorId || l.id_producto_proveedor,
+          proveedorId:
+            l.proveedorId ||
+            l.productoProveedor?.proveedor?.id ||
+            l.productoProveedor?.proveedorId,
+          cantidad: Number(l.cantidad),
         }))
         .filter(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (l: any) =>
+          (l) =>
             l.productoProveedorId &&
             Number.isFinite(l.cantidad) &&
             l.cantidad > 0
@@ -194,22 +293,86 @@ const Pedidos: React.FC = () => {
         return;
       }
 
-      const payload: CreatePedidoPayload = {
-        // costeTotal no es parte de CreatePedidoPayload, pero se calcula aquí si es necesario para el backend
-        proveedorId: formData.proveedorId,
-        ...(formData.motivoCancelacion
-          ? { motivoCancelacion: formData.motivoCancelacion }
-          : {}),
-        lineas: normalizedLines,
-        // Si el backend requiere costeTotal, agregarlo en el backend, no aquí
-      };
+      // Agrupar las líneas por proveedor
+      const linesByProvider = new Map<string, NormalizedLine[]>();
+      let missingProvider = false;
 
-      if (formData.id) {
-        await updatePedido(formData.id, payload);
-        toast.success('Pedido actualizado correctamente.');
+      normalizedLines.forEach((l) => {
+        const pId = l.proveedorId || formData.proveedorId;
+        if (!pId) missingProvider = true;
+        if (!linesByProvider.has(pId)) linesByProvider.set(pId, []);
+        linesByProvider.get(pId)!.push(l);
+      });
+
+      if (missingProvider) {
+        toast.error(
+          'Ocurrió un error al identificar el proveedor de algunos productos.'
+        );
+        setIsSaving(false);
+        return;
+      }
+
+      if (isEdit) {
+        // En una edición, obligatoriamente debemos actualizar el pedido actual con las líneas de su proveedor original
+        const mainProviderLines = linesByProvider.get(formData.proveedorId);
+        if (!mainProviderLines) {
+          toast.error(
+            'Debes mantener al menos un producto del proveedor original del pedido.'
+          );
+          setIsSaving(false);
+          return;
+        }
+
+        const mainApiLines = mainProviderLines.map((l) => ({
+          productoProveedorId: l.productoProveedorId,
+          cantidad: l.cantidad,
+        }));
+
+        await updatePedido(formData.id, {
+          proveedorId: formData.proveedorId,
+          lineas: mainApiLines,
+          observaciones: formData.observaciones,
+        });
+        linesByProvider.delete(formData.proveedorId);
+
+        // Si añadieron productos de otros proveedores, generamos nuevos pedidos para ellos
+        if (linesByProvider.size > 0) {
+          for (const [pId, pLines] of Array.from(linesByProvider.entries())) {
+            const extraApiLines = pLines.map((l) => ({
+              productoProveedorId: l.productoProveedorId,
+              cantidad: l.cantidad,
+            }));
+            await createPedido({
+              proveedorId: pId,
+              lineas: extraApiLines,
+              observaciones: formData.observaciones,
+            });
+          }
+          toast.success(
+            'Pedido actualizado, y se crearon nuevos pedidos separados para los otros proveedores.'
+          );
+        } else {
+          toast.success('Pedido actualizado correctamente.');
+        }
       } else {
-        await createPedido(payload);
-        toast.success('Pedido creado correctamente.');
+        // Modo Creación: enviar todo al backend en una única transacción de lote
+        const apiLines = normalizedLines.map((l) => ({
+          productoProveedorId: l.productoProveedorId,
+          cantidad: l.cantidad,
+        }));
+
+        await createPurchaseBatch({
+          lineas: apiLines,
+          observaciones: formData.observaciones,
+        });
+
+        toast.success(
+          linesByProvider.size > 1
+            ? `Se ha registrado el lote de compra con ${linesByProvider.size} pedidos agrupados.`
+            : 'Pedido registrado correctamente.'
+        );
+        // Limpiar borrador tras éxito
+        await discardDraft();
       }
       await loadData();
       setItemToEdit(null);
@@ -237,6 +400,56 @@ const Pedidos: React.FC = () => {
         })) || [],
     };
     setItemToEdit(editData);
+  };
+
+  const handleViewBatchClick = async (batch: PurchaseBatch) => {
+    setIsFetchingBatch(true);
+    try {
+      const fullBatch = await fetchPurchaseBatchById(batch.id);
+      setItemToViewBatch(fullBatch);
+    } catch (err: unknown) {
+      toast.error(
+        err instanceof Error ? err.message : 'Error al cargar el lote.'
+      );
+    } finally {
+      setIsFetchingBatch(false);
+    }
+  };
+
+  const handleAceptarConfirm = async () => {
+    if (!itemToAceptar) return;
+    setIsAceptando(true);
+    try {
+      await aceptarPedido(itemToAceptar.id);
+      toast.success('El pedido ha sido aceptado y ahora está en proceso.');
+      await loadData();
+    } catch (err: unknown) {
+      toast.error(
+        err instanceof Error ? err.message : 'Error al aceptar el pedido.'
+      );
+    } finally {
+      setIsAceptando(false);
+      setItemToAceptar(null);
+    }
+  };
+
+  const handleCancelarSubmit = async (formData: Record<string, unknown>) => {
+    if (!itemToCancelar) return;
+    setIsCancelando(true);
+    try {
+      const motivo =
+        (formData.motivoCancelacion as string) || 'Cancelado por el usuario';
+      await cancelPedido(itemToCancelar.id, { motivoCancelacion: motivo });
+      toast.success('El pedido ha sido cancelado.');
+      await loadData();
+      setItemToCancelar(null);
+    } catch (err: unknown) {
+      toast.error(
+        err instanceof Error ? err.message : 'Error al cancelar el pedido.'
+      );
+    } finally {
+      setIsCancelando(false);
+    }
   };
 
   const columns: Column<Pedido>[] = [
@@ -275,29 +488,111 @@ const Pedidos: React.FC = () => {
     {
       id: 'usuario',
       label: 'Creado Por',
-      render: (row) => row.usuario?.nombre ?? '—',
+      render: (row) => row.usuario?.nombre || row.usuario?.username || '—',
       hideOnMobile: true,
+    },
+  ];
+
+  const batchColumns: Column<PurchaseBatch>[] = [
+    {
+      id: 'createdAt',
+      label: 'Fecha Creación',
+      render: (row) => new Date(row.createdAt).toLocaleString(),
+    },
+    {
+      id: 'pedidos',
+      label: 'Nº Pedidos',
+      render: (row) => row.pedidos?.length || 0,
+    },
+    {
+      id: 'proveedores',
+      label: 'Proveedores',
+      render: (row) =>
+        (
+          row.pedidos?.map((p) => p.proveedor?.nombre).filter(Boolean) || []
+        ).join(', '),
+    },
+    {
+      id: 'costeTotal',
+      label: 'Coste Total Estimado',
+      align: 'right',
+      render: (row) => {
+        const total =
+          row.pedidos?.reduce((sum, p) => sum + Number(p.costeTotal || 0), 0) ||
+          0;
+        return `${total.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+      },
+    },
+    {
+      id: 'estado',
+      label: 'Estado Lote',
+      render: (row) => <StatusChip status={String(row.estado)} />,
+    },
+    {
+      id: 'usuario',
+      label: 'Creado Por',
+      render: (row) => row.usuario?.nombre || row.usuario?.username || '—',
     },
   ];
 
   const renderActions = (row: Pedido) => (
     <>
-      <IconButton
-        color="secondary"
-        onClick={() => handleEditClick(row)}
-        size="small"
-        aria-label="Editar"
-      >
-        <EditIcon fontSize="small" />
-      </IconButton>
-      <IconButton
-        color="error"
-        onClick={() => setItemToDelete(row)}
-        size="small"
-        aria-label="Borrar"
-      >
-        <DeleteIcon fontSize="small" />
-      </IconButton>
+      {row.estado !== EstadoPedido.PENDIENTE && (
+        <IconButton
+          color="primary"
+          onClick={() => handleEditClick(row)}
+          size="small"
+          aria-label="Ver Detalles"
+          title="Ver Detalles del Pedido"
+        >
+          <VisibilityIcon fontSize="small" />
+        </IconButton>
+      )}
+      {row.estado === EstadoPedido.PENDIENTE && (
+        <IconButton
+          color="success"
+          onClick={() => setItemToAceptar(row)}
+          size="small"
+          aria-label="Aprobar"
+          title="Aprobar Pedido"
+        >
+          <CheckIcon fontSize="small" />
+        </IconButton>
+      )}
+      {row.estado === EstadoPedido.PENDIENTE && (
+        <IconButton
+          color="warning"
+          onClick={() => setItemToCancelar(row)}
+          size="small"
+          aria-label="Cancelar"
+          title="Cancelar Pedido"
+        >
+          <CancelIcon fontSize="small" />
+        </IconButton>
+      )}
+      {(row.estado === EstadoPedido.PENDIENTE ||
+        row.estado === EstadoPedido.CANCELADO) && (
+        <IconButton
+          color="error"
+          onClick={() => setItemToDelete(row)}
+          size="small"
+          aria-label="Borrar"
+          title="Eliminar de la base de datos"
+        >
+          <DeleteIcon fontSize="small" />
+        </IconButton>
+      )}
+      {row.estado === EstadoPedido.PENDIENTE && (
+        <IconButton
+          color="secondary"
+          onClick={() => handleEditClick(row)}
+          size="small"
+          aria-label="Editar"
+          title="Editar Pedido"
+        >
+          <EditIcon fontSize="small" />
+        </IconButton>
+      )}
     </>
   );
 
@@ -316,8 +611,15 @@ const Pedidos: React.FC = () => {
         totalItemsLabel="pedidos"
         primaryAction={{
           label: 'Nuevo Pedido',
-          onClick: () => setItemToEdit({}),
+          onClick: () => {
+            if (draft) {
+              setIsRecoveryOpen(true);
+            } else {
+              setItemToEdit({});
+            }
+          },
           id: 'btn-nuevo-pedido',
+          isLoading: isLoadingDraft,
         }}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
@@ -330,46 +632,87 @@ const Pedidos: React.FC = () => {
           </Alert>
         )}
 
-        <DataTable
-          columns={columns}
-          data={data}
-          isLoading={isLoading}
-          hideTopBar
-          viewMode={viewMode}
-          defaultViewMode={viewMode}
-          emptyStateMessage={
-            <Box sx={{ py: 4, textAlign: 'center' }}>
-              <LocalShippingOutlinedIcon
-                sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
-              />
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                No se encontraron pedidos
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Empieza registrando un nuevo pedido al catálogo de proveedores.
-              </Typography>
-              <Button
-                variant="outlined"
-                startIcon={<AddIcon />}
-                onClick={() => setItemToEdit({})}
-              >
-                Registrar Pedido
-              </Button>
-            </Box>
-          }
-          pagination={{
-            currentPage: page,
-            totalPages: totalPages,
-            onPageChange: (_, newPage) => setPage(newPage),
-            pageSize: pageSize,
-            pageSizeOptions: [5, 10, 25, 50],
-            onPageSizeChange: (e: SelectChangeEvent<number>) => {
-              setPageSize(Number(e.target.value));
-              setPage(1);
-            },
+        <Tabs
+          value={tabIndex}
+          onChange={(_, newValue) => {
+            setTabIndex(newValue);
+            setPage(1);
           }}
-          renderActions={renderActions}
-        />
+          indicatorColor="primary"
+          textColor="primary"
+          sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
+        >
+          <Tab label="Pedidos Pendientes" />
+          <Tab label="Historial (En Proceso / Finalizados)" />
+          <Tab label="Lotes de Compra" />
+        </Tabs>
+
+        {tabIndex === 2 ? (
+          <DataTable
+            columns={batchColumns}
+            data={batches}
+            isLoading={isLoading}
+            hideTopBar
+            viewMode="list"
+            emptyStateMessage="No hay lotes de compra registrados."
+            renderActions={(row) => (
+              <IconButton
+                color="primary"
+                size="small"
+                onClick={() => handleViewBatchClick(row)}
+                disabled={isFetchingBatch}
+              >
+                <VisibilityIcon fontSize="small" />
+              </IconButton>
+            )}
+          />
+        ) : (
+          <DataTable
+            columns={columns}
+            data={data}
+            isLoading={isLoading}
+            hideTopBar
+            viewMode={viewMode}
+            defaultViewMode={viewMode}
+            emptyStateMessage={
+              <Box sx={{ py: 4, textAlign: 'center' }}>
+                <LocalShippingOutlinedIcon
+                  sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
+                />
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  No se encontraron pedidos
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mb: 3 }}
+                >
+                  Empieza registrando un nuevo pedido al catálogo de
+                  proveedores.
+                </Typography>
+                <Button
+                  variant="outlined"
+                  startIcon={<AddIcon />}
+                  onClick={() => setItemToEdit({})}
+                >
+                  Registrar Pedido
+                </Button>
+              </Box>
+            }
+            pagination={{
+              currentPage: page,
+              totalPages: totalPages,
+              onPageChange: (_, newPage) => setPage(newPage),
+              pageSize: pageSize,
+              pageSizeOptions: [5, 10, 25, 50],
+              onPageSizeChange: (e: SelectChangeEvent<number>) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              },
+            }}
+            renderActions={renderActions}
+          />
+        )}
 
         <ConfirmDialog
           isOpen={!!itemToDelete}
@@ -392,34 +735,139 @@ const Pedidos: React.FC = () => {
           isLoading={isDeleting}
         />
 
+        <ConfirmDialog
+          isOpen={!!itemToAceptar}
+          onClose={() => !isAceptando && setItemToAceptar(null)}
+          onConfirm={() => void handleAceptarConfirm()}
+          title="Aprobar Pedido"
+          message={
+            <>
+              ¿Estás seguro de que deseas aprobar el pedido al proveedor{' '}
+              <strong>{itemToAceptar?.proveedor?.nombre}</strong>? Pasará a
+              estar "En Proceso" y se considerará tramitado.
+            </>
+          }
+          confirmText="Sí, Aprobar"
+          cancelText="Cancelar"
+          isLoading={isAceptando}
+        />
+
+        <DynamicFormModal
+          isOpen={!!itemToCancelar}
+          onClose={() => !isCancelando && setItemToCancelar(null)}
+          title={`Cancelar Pedido: ${itemToCancelar?.proveedor?.nombre || ''}`}
+          size="sm"
+          fields={[
+            {
+              name: 'motivoCancelacion',
+              label: 'Motivo de Cancelación (Opcional)',
+              type: 'text',
+              width: 12,
+              required: false,
+            },
+          ]}
+          initialData={{ motivoCancelacion: '' }}
+          onSubmit={handleCancelarSubmit}
+          isSubmitting={isCancelando}
+          requireConfirmation={false}
+        />
+
         <DynamicFormModal
           isOpen={!!itemToEdit}
-          onClose={() => setItemToEdit(null)}
-          title={itemToEdit?.id ? `Editar Pedido` : 'Crear Nuevo Pedido'}
+          onClose={handleCloseModal}
+          title={
+            itemToEdit?.id
+              ? itemToEdit.estado === EstadoPedido.PENDIENTE
+                ? 'Editar Pedido'
+                : 'Detalles del Pedido (Solo lectura)'
+              : 'Crear Nuevo Pedido'
+          }
           size="lg"
-          fields={pedidoSchema.map((field) => {
-            if (field.name === 'proveedorId') {
-              return {
-                ...field,
-                disabled: !!itemToEdit?.id,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                options: (proveedores as any[]).map((p) => ({
-                  value: p.id,
-                  label: p.nombre,
-                })),
-              };
-            }
-            return field;
-          })}
+          fields={pedidoSchema}
           initialData={itemToEdit || {}}
-          onSubmit={handleSave}
+          onSubmit={
+            itemToEdit?.estado && itemToEdit.estado !== EstadoPedido.PENDIENTE
+              ? () => setItemToEdit(null)
+              : handleSave
+          }
           isSubmitting={isSaving}
-          requireConfirmation={true}
+          onValuesChange={handleValuesChange}
+          requireConfirmation={
+            itemToEdit?.estado === EstadoPedido.PENDIENTE || !itemToEdit?.id
+          }
+          submitLabel={
+            itemToEdit?.estado && itemToEdit.estado !== EstadoPedido.PENDIENTE
+              ? 'Cerrar'
+              : 'Guardar'
+          }
+          cancelLabel={
+            itemToEdit?.estado && itemToEdit.estado !== EstadoPedido.PENDIENTE
+              ? ''
+              : 'Cancelar'
+          }
           confirmationMessage={
             itemToEdit?.id
               ? '¿Estás seguro de que deseas guardar los cambios en este pedido?'
               : '¿Estás seguro de que deseas registrar este nuevo pedido?'
           }
+        />
+
+        <DynamicFormModal
+          isOpen={!!itemToViewBatch}
+          onClose={() => setItemToViewBatch(null)}
+          title={`Lote de Compra: ${itemToViewBatch?.id.split('-')[0]}...`}
+          size="lg"
+          fields={[
+            {
+              name: 'batch',
+              label: '',
+              type: 'batchViewer',
+              position: 'bottom',
+            },
+          ]}
+          initialData={{ batch: itemToViewBatch }}
+          onSubmit={() => setItemToViewBatch(null)}
+          submitLabel="Cerrar"
+          cancelLabel=""
+        />
+
+        <ConfirmDialog
+          isOpen={isRecoveryOpen}
+          onClose={() => setIsRecoveryOpen(false)}
+          onConfirm={() => {
+            if (draft) {
+              setItemToEdit(draft.payload);
+            }
+            setIsRecoveryOpen(false);
+          }}
+          title="Recuperar Pedido Pendiente"
+          message={
+            <>
+              Tienes un pedido que no llegaste a finalizar el día{' '}
+              <strong>
+                {dayjs(draft?.updatedAt).isValid()
+                  ? dayjs(draft?.updatedAt).format('DD/MM/YYYY')
+                  : '...'}
+              </strong>{' '}
+              a las{' '}
+              <strong>
+                {dayjs(draft?.updatedAt).isValid()
+                  ? dayjs(draft?.updatedAt).format('HH:mm')
+                  : '...'}
+              </strong>
+              .
+              <br />
+              <br />
+              ¿Deseas recuperarlo y continuar donde lo dejaste?
+            </>
+          }
+          confirmText="Sí, Recuperar"
+          cancelText="No, Descartar"
+          confirmColor="primary"
+          onCancel={() => {
+            void discardDraft();
+            setIsRecoveryOpen(false);
+          }}
         />
       </Paper>
     </Box>

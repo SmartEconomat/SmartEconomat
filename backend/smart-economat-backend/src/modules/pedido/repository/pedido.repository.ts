@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, Repository, FindOptionsWhere, Not, ILike } from 'typeorm';
 import { Pedido } from '../pedido.entity/pedido.entity';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
@@ -39,7 +39,28 @@ export class PedidoRepository extends Repository<Pedido> {
       fechaCreacion: 'createdAt',
     });
 
+    const whereConditions: FindOptionsWhere<Pedido>[] = [];
+
+    const baseCondition: FindOptionsWhere<Pedido> = {};
+    if (query.estado) {
+      if (query.estado.startsWith('NOT_')) {
+        baseCondition.estado = Not(query.estado.replace('NOT_', '')) as any;
+      } else {
+        baseCondition.estado = query.estado as any;
+      }
+    }
+
+    if (query.searchTerm) {
+      whereConditions.push({
+        ...baseCondition,
+        id: ILike(`%${query.searchTerm}%`),
+      });
+    } else {
+      whereConditions.push(baseCondition);
+    }
+
     const [data, total] = await this.findAndCount({
+      where: whereConditions,
       relations: loadRelations
         ? [
             'usuario',

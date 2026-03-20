@@ -57,3 +57,7 @@ if [ "$HAS_FRONTEND" -eq 1 ]; then
 else
   echo "ℹ️ No hay cambios staged en frontend."
 fi
+
+# Aseguramos que cualquier cambio de formato por Prettier/ESLint se añada al stage
+echo "✅ Finalizando hooks: Re-staged de archivos formateados..."
+git add .

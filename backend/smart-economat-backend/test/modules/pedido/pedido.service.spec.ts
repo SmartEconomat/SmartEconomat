@@ -10,6 +10,7 @@ describe('PedidoService', () => {
   const mockPedidoRepository = {
     findAllPaginated: jest.fn(),
     findOneWithRelations: jest.fn(),
+    findOneBy: jest.fn(),
     save: jest.fn(),
     remove: jest.fn(),
   };
@@ -273,7 +274,7 @@ describe('PedidoService', () => {
       PedidoStatusTrigger.RECEPCION_PARCIAL
     );
 
-    expect(result.estado).toBe(EstadoPedido.EN_PROCESO);
+    expect(result.estado).toBe(EstadoPedido.PARCIAL);
   });
 
   it('handleStatusTransition pasa a RECIBIDO con recepción total', async () => {

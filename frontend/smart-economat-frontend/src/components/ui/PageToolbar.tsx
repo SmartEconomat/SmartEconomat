@@ -14,6 +14,7 @@ import {
   alpha,
   useTheme,
   Collapse,
+  CircularProgress,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/SearchOutlined';
 import AddIcon from '@mui/icons-material/Add';
@@ -35,13 +36,13 @@ export interface PageToolbarProps {
   searchPlaceholder?: string;
   /** ID para el input de búsqueda */
   searchId?: string;
-  /** Acción principal (ej: "Nuevo Producto") */
   primaryAction?: {
     label: string;
     onClick: () => void;
     icon?: React.ReactNode;
     id?: string;
     disabled?: boolean;
+    isLoading?: boolean;
   };
   /** Acción secundaria (ej: "Gestionar") */
   secondaryAction?: {
@@ -50,6 +51,7 @@ export interface PageToolbarProps {
     icon?: React.ReactNode;
     id?: string;
     disabled?: boolean;
+    isLoading?: boolean;
   };
   /** Filtros adicionales (Autocomplete, Selects, etc.) */
   filters?: React.ReactNode;
@@ -303,9 +305,17 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                   <Button
                     id={secondaryAction.id}
                     variant="outlined"
-                    startIcon={secondaryAction.icon}
+                    startIcon={
+                      secondaryAction.isLoading ? (
+                        <CircularProgress size={20} color="inherit" />
+                      ) : (
+                        secondaryAction.icon
+                      )
+                    }
                     onClick={secondaryAction.onClick}
-                    disabled={secondaryAction.disabled}
+                    disabled={
+                      secondaryAction.disabled || secondaryAction.isLoading
+                    }
                     sx={{
                       borderRadius: 2,
                       px: { sm: 2, md: 3 },
@@ -345,9 +355,15 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                   <Button
                     id={primaryAction.id}
                     variant="contained"
-                    startIcon={primaryAction.icon || <AddIcon />}
+                    startIcon={
+                      primaryAction.isLoading ? (
+                        <CircularProgress size={20} color="inherit" />
+                      ) : (
+                        primaryAction.icon || <AddIcon />
+                      )
+                    }
                     onClick={primaryAction.onClick}
-                    disabled={primaryAction.disabled}
+                    disabled={primaryAction.disabled || primaryAction.isLoading}
                     sx={{
                       borderRadius: 2,
                       px: { sm: 2, md: 3 },

@@ -7,10 +7,17 @@ export enum EstadoPedido {
   PARCIAL = 'parcial',
 }
 
+export enum EstadoLote {
+  PENDIENTE = 'pendiente',
+  PARCIAL = 'parcial',
+  COMPLETADO = 'completado',
+}
+
 export interface UsuarioBasico {
   id: string;
   nombre: string;
   email: string;
+  username?: string;
 }
 
 export interface PedidoProducto {
@@ -45,10 +52,22 @@ export interface Pedido {
   estado: EstadoPedido;
   observaciones?: string;
   motivoCancelacion?: string;
+  motivoIncidencia?: string;
   usuario?: UsuarioBasico;
   proveedor?: {
     id: string;
     nombre: string;
   };
   pedidoProductos?: PedidoProducto[];
+  batchId?: string;
+  batch?: PurchaseBatch;
+}
+
+export interface PurchaseBatch {
+  id: string;
+  createdAt: string;
+  estado: EstadoLote;
+  observaciones?: string;
+  usuario?: UsuarioBasico;
+  pedidos?: Pedido[];
 }

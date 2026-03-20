@@ -1,77 +1,73 @@
-import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import {
   Controller,
   Post,
   Body,
+  Get,
   UseGuards,
-  Req,
+  Request,
   HttpCode,
   HttpStatus,
-  UseInterceptors,
+  Patch,
 } from '@nestjs/common';
-import type { Request } from 'express';
 import { AuthService } from '../service/auth.service';
 import { RegisterUserDto } from '../dto/register-user.dto';
 import { LoginUserDto } from '../dto/login-user.dto';
-import { ForgotPasswordDto } from '../dto/forgot-password.dto';
-import { ResetPasswordDto } from '../dto/reset-password.dto';
-import { ChangePasswordDto } from '../dto/change-password.dto';
+import { Public } from '../../../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { CookieInterceptor } from '../../../common/interceptors/cookie.interceptor';
+import { ChangePasswordDto } from '../dto/change-password.dto';
+import { ResetPasswordDto } from '../dto/reset-password.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
   @Post('register')
-  @UseInterceptors(CookieInterceptor)
-  async register(@Body() dto: RegisterUserDto) {
-    return await this.authService.register(dto);
+  async register(@Body() registerUserDto: RegisterUserDto) {
+    return this.authService.register(registerUserDto);
   }
 
+  @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @UseInterceptors(CookieInterceptor)
-  async login(@Body() dto: LoginUserDto) {
-    return await this.authService.login(dto);
+  async login(@Body() loginUserDto: LoginUserDto) {
+    return this.authService.login(loginUserDto);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  getProfile(@Request() req: any) {
+    return req.user;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('change-password')
+  @HttpCode(HttpStatus.OK)
+  async changePassword(@Request() req: any, @Body() dto: ChangePasswordDto) {
+    await this.authService.changePassword(
+      req.user.id,
+      dto.currentPassword,
+      dto.newPassword
+    );
+    return { message: 'Contraseña actualizada correctamente' };
+  }
+
+  @Public()
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
-  async forgotPassword(@Body() dto: ForgotPasswordDto) {
-    await this.authService.forgotPassword(dto.email);
+  async forgotPassword(@Body('email') email: string) {
+    await this.authService.forgotPassword(email);
     return {
-      message: I18nHelper.translate(
-        'messages.SI_EL_CORREO_EST_REGISTRADO_RECIBIR_S_UN'
-      ),
+      message:
+        'Si el correo existe, se ha enviado un enlace para restablecer la contraseña',
     };
   }
 
+  @Public()
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   async resetPassword(@Body() dto: ResetPasswordDto) {
     await this.authService.resetPassword(dto.token, dto.newPassword);
-    return {
-      message: I18nHelper.translate(
-        'messages.CONTRASE_A_RESTABLECIDA_CORRECTAMENTE'
-      ),
-    };
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('change-password')
-  @HttpCode(HttpStatus.OK)
-  async changePassword(@Req() req: Request, @Body() dto: ChangePasswordDto) {
-    const user = req.user as { id: string };
-    await this.authService.changePassword(
-      user.id,
-      dto.currentPassword,
-      dto.newPassword
-    );
-    return {
-      message: I18nHelper.translate(
-        'messages.CONTRASE_A_CAMBIADA_CORRECTAMENTE'
-      ),
-    };
+    return { message: 'Contraseña restablecida correctamente' };
   }
 }

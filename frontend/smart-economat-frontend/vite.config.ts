@@ -89,7 +89,7 @@ export default defineConfig(() => {
       // Sin esto, en Docker Desktop (macOS/Windows) el cliente intenta conectar
       // a la IP interna del contenedor en lugar del host, rompiendo el HMR.
       hmr: {
-        host: '0.0.0.0',
+        host: 'localhost',
         // clientPort: puerto que el BROWSER usa para conectar al WS de HMR.
         // En Docker Desktop, el navegador está en el host y accede via port-forward.
         // Dejarlo igual que el port del server es correcto para la mayoría de casos.
@@ -107,14 +107,10 @@ export default defineConfig(() => {
         },
       },
       watch: {
-        // usePolling: SIEMPRE true en Docker.
-        // macOS + Docker Desktop y Windows WSL2 no tienen inotify real sobre
-        // bind mounts → el watcher de Vite nunca dispara sin polling.
-        // Overhead en Linux nativo: < 0.3% CPU con interval=500.
-        usePolling: true,
-        // Leer desde env para ajustar sin rebuild. Default 500ms (conservador).
-        // 300ms es más reactivo pero puede saturar macOS. 1000ms para laptops lentos.
-        interval: Number(process.env.CHOKIDAR_INTERVAL) || 500,
+        // En Linux nativo inotify es eficiente y preferible.
+        // Solo usar polling si se observa que los cambios NO se detectan.
+        usePolling: false,
+        ignored: ['**/node_modules/**', '**/dist/**', '**/.git/**'],
       },
     },
     resolve: {

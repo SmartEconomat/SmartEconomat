@@ -192,9 +192,14 @@ export async function downloadFile(
   const blob = await response.blob();
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
+  anchor.style.display = 'none';
   anchor.href = url;
-  anchor.download = filename;
+  anchor.setAttribute('download', filename);
+
+  document.body.appendChild(anchor);
   anchor.click();
+  document.body.removeChild(anchor);
+
   URL.revokeObjectURL(url);
 }
 
@@ -214,4 +219,28 @@ export async function deleteResource(resourcePath: string): Promise<void> {
     }
     throw new Error(detail);
   }
+}
+
+/**
+ * Sube un archivo al backend (/archivos/upload).
+ * Utiliza FormData (baseFetch gestiona correctamente los headers para FormData).
+ */
+export async function uploadFile(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await baseFetch('/archivos/upload', {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    throw new Error(
+      errorBody.message || `Error al subir archivo: ${response.status}`
+    );
+  }
+
+  const body = (await response.json()) as ApiResponse<{ url: string }>;
+  return body.data.url;
 }

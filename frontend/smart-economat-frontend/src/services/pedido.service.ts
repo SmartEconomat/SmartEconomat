@@ -1,4 +1,4 @@
-import { Pedido } from './pedido.types';
+import { Pedido, PurchaseBatch } from './pedido.types';
 import { baseFetch, PaginatedData } from './api.service';
 
 interface ApiResponse<T> {
@@ -18,6 +18,11 @@ export interface CreatePedidoPayload {
   lineas: PedidoLinePayload[];
 }
 
+export interface CreatePurchaseBatchPayload {
+  observaciones?: string;
+  lineas: PedidoLinePayload[];
+}
+
 export interface UpdatePedidoPayload {
   proveedorId?: string;
   observaciones?: string;
@@ -31,7 +36,8 @@ export interface CancelPedidoPayload {
 export async function fetchPedidos(
   page: number = 1,
   limit: number = 10,
-  searchTerm: string = ''
+  searchTerm: string = '',
+  estado: string = ''
 ): Promise<PaginatedData<Pedido>> {
   const params = new URLSearchParams({
     page: String(page),
@@ -39,6 +45,7 @@ export async function fetchPedidos(
   });
 
   if (searchTerm.trim()) params.set('searchTerm', searchTerm.trim());
+  if (estado.trim()) params.set('estado', estado.trim());
 
   const response = await baseFetch(`/pedidos?${params.toString()}`);
   if (!response.ok) {
@@ -122,5 +129,70 @@ export async function cancelPedido(
   }
 
   const body = (await response.json()) as ApiResponse<Pedido>;
+  return body.data;
+}
+
+export async function aceptarPedido(id: string): Promise<Pedido> {
+  const response = await baseFetch(`/pedidos/${id}/aceptar`, {
+    method: 'PATCH',
+  });
+
+  if (!response.ok) {
+    let errorDetail: { message?: string } = {};
+    try {
+      errorDetail = await response.json();
+    } catch {
+      // ignore
+    }
+    throw new Error(
+      errorDetail?.message || `Error al aceptar pedido: ${response.status}`
+    );
+  }
+
+  const body = (await response.json()) as ApiResponse<Pedido>;
+  return body.data;
+}
+
+export async function createPurchaseBatch(
+  payload: CreatePurchaseBatchPayload
+): Promise<PurchaseBatch> {
+  const response = await baseFetch('/purchase-batches', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    let errorMessage = `Error al crear lote de compra: ${response.status}`;
+    try {
+      const errorDetail = (await response.json()) as { message?: string };
+      if (errorDetail?.message) errorMessage = errorDetail.message;
+    } catch {
+      // ignore
+    }
+    throw new Error(errorMessage);
+  }
+
+  const body = (await response.json()) as ApiResponse<PurchaseBatch>;
+  return body.data;
+}
+
+export async function fetchPurchaseBatches(): Promise<PurchaseBatch[]> {
+  const response = await baseFetch('/purchase-batches');
+  if (!response.ok) {
+    throw new Error(`Error al obtener lotes: ${response.status}`);
+  }
+  const body = (await response.json()) as ApiResponse<PurchaseBatch[]>;
+  return body.data;
+}
+
+export async function fetchPurchaseBatchById(
+  id: string
+): Promise<PurchaseBatch> {
+  const response = await baseFetch(`/purchase-batches/${id}`);
+  if (!response.ok) {
+    throw new Error(`Error al obtener el detalle del lote: ${response.status}`);
+  }
+  const body = (await response.json()) as ApiResponse<PurchaseBatch>;
   return body.data;
 }

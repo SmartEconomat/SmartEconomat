@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Recepcion } from './recepcion.entity/recepcion.entity';
 import { Usuario } from '../usuario/usuario.entity/usuario.entity';
@@ -35,7 +35,7 @@ import { PedidoModule } from '../pedido/pedido.module';
       PedidoProducto,
     ]),
     MovimientoModule,
-    PedidoModule,
+    forwardRef(() => PedidoModule),
   ],
   controllers: [RecepcionController, RecepcionProductoController],
   providers: [
@@ -45,6 +45,6 @@ import { PedidoModule } from '../pedido/pedido.module';
 
     PdfReportService,
   ],
-  exports: [RecepcionService, RecepcionStockService],
+  exports: [RecepcionService, RecepcionStockService, PdfReportService],
 })
 export class RecepcionModule {}

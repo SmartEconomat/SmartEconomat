@@ -109,4 +109,10 @@ export class PedidoController {
   ): Promise<Pedido> {
     return this.pedidoService.cancelarPedido(id, dto);
   }
+
+  @Patch(':id/aceptar')
+  @RequirePermissions('pedidos:editar')
+  aceptarPedido(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Pedido> {
+    return this.pedidoService.aceptarPedido(id);
+  }
 }
