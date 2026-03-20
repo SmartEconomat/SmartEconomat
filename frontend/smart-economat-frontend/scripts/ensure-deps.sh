@@ -3,7 +3,7 @@ set -eu
 
 MANIFEST_FILE="package-lock.json"
 MARKER_DIR="node_modules/.cache/smarteconomat"
-MARKER_FILE="$MARKER_DIR/backend-deps.sha256"
+MARKER_FILE="$MARKER_DIR/frontend-deps.sha256"
 
 if [ ! -f "$MANIFEST_FILE" ]; then
   MANIFEST_FILE="package.json"
@@ -21,13 +21,11 @@ if [ -f "$MARKER_FILE" ]; then
   STORED_HASH="$(cat "$MARKER_FILE")"
 fi
 
-if [ ! -d node_modules ] || [ ! -f node_modules/.bin/nest ] || [ "$CURRENT_HASH" != "$STORED_HASH" ]; then
-  echo "📦 Sincronizando dependencias del backend usando $MANIFEST_FILE..."
-  # Forzamos npm install para asegurar compatibilidad en dev
+if [ ! -d node_modules ] || [ "$CURRENT_HASH" != "$STORED_HASH" ]; then
+  echo "📦 Sincronizando dependencias del frontend usando $MANIFEST_FILE..."
   npm install
   mkdir -p "$MARKER_DIR"
   printf '%s' "$CURRENT_HASH" > "$MARKER_FILE"
 else
-
-  echo "✅ Dependencias del backend al día"
+  echo "✅ Dependencias del frontend al día"
 fi
