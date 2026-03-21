@@ -162,7 +162,7 @@ const MetricCard = ({
             p: 1,
             borderRadius: 1.5,
             bgcolor: `${color}.light`,
-            color: `${color}.main`,
+            color: 'common.white',
             display: 'flex',
             transition: 'transform 0.2s',
           }}
