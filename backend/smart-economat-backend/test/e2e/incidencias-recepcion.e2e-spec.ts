@@ -32,7 +32,7 @@ describe('Incidencias en Recepción (e2e)', () => {
     ).data.access_token;
 
     const recepList = await request(app.getHttpServer() as string)
-      .get('/api/v1/recepcion')
+      .get('/api/v1/recepciones')
       .set('Authorization', `Bearer ${adminToken}`);
 
     if (recepList.body.data?.data?.length > 0) {
@@ -87,7 +87,7 @@ describe('Incidencias en Recepción (e2e)', () => {
         [])[0].id as string;
 
       const recepRes = await request(app.getHttpServer() as string)
-        .post('/api/v1/recepcion')
+        .post('/api/v1/recepciones')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           pedidoIds: [pedidoRes.body.data?.id],
@@ -111,7 +111,7 @@ describe('Incidencias en Recepción (e2e)', () => {
     const incidenciaId = reportRes.body.data.id;
 
     const recepCheck = await request(app.getHttpServer() as string)
-      .get(`/api/v1/recepcion/${recepcionId}`)
+      .get(`/api/v1/recepciones/${recepcionId}`)
       .set('Authorization', `Bearer ${adminToken}`);
 
     expect(recepCheck.body.data.incidencia).toBe(true);

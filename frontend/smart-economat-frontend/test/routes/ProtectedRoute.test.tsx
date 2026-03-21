@@ -1,9 +1,10 @@
 import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import ProtectedRoute from './ProtectedRoute';
-import { AuthContext } from '../store/auth.context';
-import type { AuthContextType, User } from '../store/auth.types';
+import ProtectedRoute from '../../src/routes/ProtectedRoute';
+import { AuthContext } from '../../src/store/auth.context';
+import type { AuthContextType, User } from '../../src/store/auth.types';
 
 const buildAuthContext = (
   overrides: Partial<AuthContextType> = {}
