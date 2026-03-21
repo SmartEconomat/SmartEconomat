@@ -93,6 +93,13 @@ describe('ParseUUIDv7Pipe', () => {
       );
     });
 
+    it('debe rechazar "draft"', () => {
+      expect(() => pipe.transform('draft')).toThrow(BadRequestException);
+      expect(() => pipe.transform('draft')).toThrow(
+        "El valor 'draft' no es un UUID v7 válido"
+      );
+    });
+
     it('debe rechazar formato inválido', () => {
       expect(() => pipe.transform('invalid-uuid')).toThrow(BadRequestException);
     });

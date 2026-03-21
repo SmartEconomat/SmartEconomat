@@ -149,7 +149,7 @@ describe('RecepcionController (e2e)', () => {
   describe('Procesar Recepción (Batch ACID)', () => {
     it('POST /recepcion - Debe fallar con body vacío (400) por DTO multipedido', async () => {
       await request(app.getHttpServer())
-        .post('/api/v1/recepcion')
+        .post('/api/v1/recepciones')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({})
         .expect(400);
@@ -157,7 +157,7 @@ describe('RecepcionController (e2e)', () => {
 
     it('POST /recepcion - Debe fallar si el pedidoId no existe (404)', async () => {
       await request(app.getHttpServer())
-        .post('/api/v1/recepcion')
+        .post('/api/v1/recepciones')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           pedidoIds: ['0191c30c-1e55-7000-8000-000000000000'],
@@ -184,7 +184,7 @@ describe('RecepcionController (e2e)', () => {
       ]);
 
       const response = await request(app.getHttpServer())
-        .post('/api/v1/recepcion')
+        .post('/api/v1/recepciones')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           usuarioId: adminUserId,
@@ -300,7 +300,7 @@ describe('RecepcionController (e2e)', () => {
       ]);
 
       const response = await request(app.getHttpServer())
-        .post('/api/v1/recepcion')
+        .post('/api/v1/recepciones')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           usuarioId: adminUserId,
@@ -405,7 +405,7 @@ describe('RecepcionController (e2e)', () => {
       ]);
 
       const primeraRecepcion = await request(app.getHttpServer())
-        .post('/api/v1/recepcion')
+        .post('/api/v1/recepciones')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           usuarioId: adminUserId,
@@ -436,7 +436,7 @@ describe('RecepcionController (e2e)', () => {
       expect(pedidoActualizado?.estado).toBe(EstadoPedido.PARCIAL);
 
       const segundaRecepcion = await request(app.getHttpServer())
-        .post('/api/v1/recepcion')
+        .post('/api/v1/recepciones')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           usuarioId: adminUserId,
@@ -483,7 +483,7 @@ describe('RecepcionController (e2e)', () => {
       const codigoNuevo = barcode();
 
       const response = await request(app.getHttpServer())
-        .post('/api/v1/recepcion')
+        .post('/api/v1/recepciones')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           usuarioId: adminUserId,
@@ -568,7 +568,7 @@ describe('RecepcionController (e2e)', () => {
       ]);
 
       const response = await request(app.getHttpServer())
-        .post('/api/v1/recepcion')
+        .post('/api/v1/recepciones')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           usuarioId: adminUserId,
@@ -613,7 +613,7 @@ describe('RecepcionController (e2e)', () => {
       ]);
 
       const response = await request(app.getHttpServer())
-        .get('/api/v1/recepcion/reporte-pdf')
+        .get('/api/v1/recepciones/reporte-pdf')
         .query({ tipo: 'pedido', pedidoId: pedido.pedidoId })
         .set('Authorization', `Bearer ${adminToken}`)
         .buffer(true)
@@ -638,7 +638,7 @@ describe('RecepcionController (e2e)', () => {
       ]);
 
       await request(app.getHttpServer())
-        .post('/api/v1/recepcion')
+        .post('/api/v1/recepciones')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           usuarioId: adminUserId,
@@ -657,7 +657,7 @@ describe('RecepcionController (e2e)', () => {
         .expect(201);
 
       const response = await request(app.getHttpServer())
-        .get('/api/v1/recepcion/reporte-pdf')
+        .get('/api/v1/recepciones/reporte-pdf')
         .query({
           tipo: 'incidencias',
           proveedorId: proveedor.id,

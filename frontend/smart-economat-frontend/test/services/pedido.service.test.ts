@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cancelPedido, createPedido, updatePedido } from './pedido.service';
+import {
+  cancelPedido,
+  createPedido,
+  updatePedido,
+} from '../../src/services/pedido.service';
 
 describe('pedido.service', () => {
   const fetchMock = vi.fn();

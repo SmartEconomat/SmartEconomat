@@ -185,7 +185,7 @@ describe('Frontend Integration Contracts (e2e)', () => {
     const { pedido, pedidoProductoId } = await createPedidoConLinea();
 
     const recepcionResponse = await request(app.getHttpServer())
-      .post('/api/v1/recepcion')
+      .post('/api/v1/recepciones')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
         pedidoIds: [pedido.id],
@@ -315,7 +315,7 @@ describe('Frontend Integration Contracts (e2e)', () => {
       const { pedido } = await createPedidoConLinea();
 
       const response = await request(app.getHttpServer())
-        .post('/api/v1/recepcion')
+        .post('/api/v1/recepciones')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           pedidoIds: [pedido.id],
@@ -345,7 +345,7 @@ describe('Frontend Integration Contracts (e2e)', () => {
       const { pedido } = await createPedidoConLinea();
 
       const response = await request(app.getHttpServer())
-        .post('/api/v1/recepcion')
+        .post('/api/v1/recepciones')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           pedidoIds: [pedido.id],

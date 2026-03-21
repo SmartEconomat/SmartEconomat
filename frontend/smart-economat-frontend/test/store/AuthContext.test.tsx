@@ -1,11 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import React from 'react';
-import { AuthProvider } from './AuthContext';
-import { useAuth } from './auth.hooks';
-import { authService } from '../services/authService';
+import { AuthProvider } from '../../src/store/AuthContext';
+import { useAuth } from '../../src/store/auth.hooks';
+import { authService } from '../../src/services/authService';
 
-vi.mock('../services/authService', () => ({
+vi.mock('../../src/services/authService', () => ({
   authService: {
     getCurrentUser: vi.fn(),
     logout: vi.fn().mockResolvedValue(undefined),

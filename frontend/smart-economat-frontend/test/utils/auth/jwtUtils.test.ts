@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { getJwtPayload, isJwtUsable } from './jwtUtils';
+import { getJwtPayload, isJwtUsable } from '../../../src/utils/auth/jwtUtils';
 
 const createToken = (payload: Record<string, unknown>) => {
   const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
