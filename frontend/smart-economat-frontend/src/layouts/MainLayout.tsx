@@ -32,12 +32,13 @@ import PersonIcon from '@mui/icons-material/PersonOutlined';
 import LogoutIcon from '@mui/icons-material/LogoutOutlined';
 import { menuItems } from '../utils/config/menuConfig';
 import { useAuth } from '../store/auth.hooks';
-import { hasPermission } from '../utils/auth/permissionUtils';
+import { hasAnyPermission, hasPermission } from '../utils/auth/permissionUtils';
 import { useThemeContext } from '../store/theme.hooks';
 import { getRoleColor } from '../utils/theme/roleColors';
 import SettingsMenu from '../components/common/Settings/SettingsMenu';
 import TutorialHelper from '../components/common/Tutorial/TutorialHelper';
 import LearningModeToggle from '../components/common/Learning/LearningModeToggle';
+import NotificationCenter from '../components/common/Notification/NotificationCenter';
 import Logo from '../assets/images/SVG/logo-smat-economato.svg';
 import LogoBlanco from '../assets/images/SVG/logo-smart-economat-blanco.svg';
 
@@ -219,6 +220,9 @@ export default function MainLayout() {
             if (item.permiso) {
               return hasPermission(user, item.permiso);
             }
+            if (item.anyPermissions && item.anyPermissions.length > 0) {
+              return hasAnyPermission(user, item.anyPermissions);
+            }
             // Si no tiene permiso pero sí roles (fallback legado)
             if (item.roles) {
               const userRole = user?.rol?.toUpperCase() || '';
@@ -321,6 +325,7 @@ export default function MainLayout() {
           <Box
             sx={{ flexGrow: 0, display: 'flex', alignItems: 'center', gap: 2 }}
           >
+            <NotificationCenter />
             <Typography
               variant="subtitle1"
               sx={{ display: { xs: 'none', sm: 'block' } }}

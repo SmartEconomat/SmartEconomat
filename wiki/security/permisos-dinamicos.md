@@ -86,9 +86,24 @@ if (!canManageStock) return null;
 
 `AppRouter` usa `ProtectedRoute` para todas las rutas privadas y, cuando una entrada de `menuConfig` define `permiso`, exige también ese permiso antes de renderizar la página.
 
+Además, el router ya soporta casos de acceso por **cualquiera de varios permisos** (`requiredAnyPermissions`) para menús híbridos como `Administración`, donde conviven:
+
+- `usuarios:listar`
+- `profesor:gestionar_slots`
+- `profesor:ver_alumnos`
+
 - Mientras la sesión se resuelve, la aplicación muestra `Spinner`.
 - Si la sesión no existe o expiró, el usuario vuelve a `/login`.
 - Si la sesión es válida pero el permiso no existe, la navegación se redirige a `/`.
+
+### Caso especial: Dashboard refactorizado
+
+La refactorización del dashboard dejó de tratar `/` como una vista “pública dentro del área privada” y pasa a depender del permiso backend correcto:
+
+- Ruta protegida por `dashboard:ver_estadisticas`.
+- Consumo del endpoint oficial `GET /api/v1/dashboard/stats`.
+- Tarjetas internas protegidas adicionalmente por permisos granulares (`incidencias:listar`, `productos:listar`, etc.).
+- La visibilidad de tarjetas en UI no sustituye a la autorización real: ocultar o mostrar métricas no concede acceso a datos sin permiso.
 
 ---
 
@@ -120,6 +135,7 @@ Desde la vista de **Gestión de Usuarios**, los administradores pueden:
 - [x] Verificar sesión y permisos reales en frontend antes de renderizar vistas protegidas.
 - [x] Migrar el frontend a modelo `cookie-first` sin depender de `token/user` persistidos para bootstrap de sesión.
 - [x] Añadir endpoint de logout para invalidación limpia de cookie desde backend.
+- [x] Alinear el dashboard (`/`) con `dashboard:ver_estadisticas` y corregir dependencias de permisos granulares en métricas y vistas híbridas.
 - [ ] Configurar Redis en producción para cache distribuido.
 
 ---

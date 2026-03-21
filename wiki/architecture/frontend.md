@@ -35,7 +35,7 @@ Seguimos tres pilares fundamentales para mantener el código limpio:
 
 ### 1. Separación de Lógica y Datos
 -   **Componentes (Pages):** Se encargan de la orquestación visual y la unión de los datos con la interfaz. Gran parte de la lógica de negocio inmediata reside aquí.
--   **Services:** Encapsulan toda la comunicación con el backend (Axios) y el procesamiento previo de los datos para que lleguen limpios a los componentes.
+-   **Services:** Encapsulan toda la comunicación con el backend (`fetch` + wrappers compartidos) y el procesamiento previo de los datos para que lleguen limpios a los componentes.
 -   **Hooks:** Se utilizan para encapsular lógica reutilizable (como el estado de un formulario o la gestión de modales). *Nota: Si un componente crece en exceso, su lógica debe migrarse a hooks o services según corresponda.*
 
 ### 2. Composición de Componentes
@@ -73,19 +73,31 @@ El frontend funciona ahora en modo **cookie-first**. La fuente real de sesión y
 ### Qué sí queda en `localStorage`
 
 - `rememberedUser`: solo para autocompletar el identificador de login cuando el usuario marca “Recordarme”.
+- `dashboard_visible_metrics`: preferencia puramente visual del usuario para ocultar o mostrar tarjetas del dashboard.
 
 ### Qué ya no se usa para sesión
 
 - `token`
 - `user`
+- decodificación del `access_token` para decidir permisos, rol o navegación de sesión
 - comparaciones locales de expiración JWT para decidir acceso a rutas privadas
 
 ### Protección de rutas
 
 - **`PublicRoute`** mantiene fuera de `/login` a usuarios con sesión ya verificada.
 - **`ProtectedRoute`** espera a que `AuthContext` resuelva la sesión real con backend y luego valida el permiso requerido por ruta.
-- **`AppRouter`** envuelve las rutas definidas en `menuConfig` con `ProtectedRoute requiredPermission={item.permiso}` para bloquear navegación directa por URL.
+- **`AppRouter`** envuelve las rutas definidas en `menuConfig` con `ProtectedRoute`, soportando tanto `requiredPermission` como `requiredAnyPermissions` para casos con acceso por múltiples capacidades válidas.
 - **Resolución inicial**: mientras `isAuthResolved` es `false`, tanto rutas públicas como privadas muestran `Spinner` para evitar parpadeos o redirecciones incorrectas.
+
+### Dashboard (`src/pages/Home.tsx`)
+
+La ruta `/` actúa como dashboard principal y ya está integrada en el sistema de permisos y navegación real de la aplicación:
+
+- La página exige `dashboard:ver_estadisticas` para consultar `GET /api/v1/dashboard/stats`.
+- Cada tarjeta secundaria del dashboard se renderiza además con permisos granulares propios (`productos:listar`, `pedidos:listar`, `incidencias:listar`, `inventario:listar`, `proveedores:listar`).
+- Las acciones rápidas reutilizan servicios existentes (`createProducto`, `createPedido`, `createReceta`) y navegación hacia `/recepciones`, evitando flujos paralelos o endpoints alternativos.
+- La personalización de tarjetas visibles se guarda solo como preferencia de UI en `localStorage` mediante `dashboard_visible_metrics`; no afecta a seguridad ni sesión.
+- La sección “Actividad reciente” se alimenta del mismo payload consolidado del backend, evitando peticiones adicionales por widget.
 
 ### Transporte HTTP
 

@@ -44,7 +44,10 @@ const AppRouter: React.FC = () => {
                   key={item.path}
                   path={item.path}
                   element={
-                    <ProtectedRoute requiredPermission={item.permiso}>
+                    <ProtectedRoute
+                      requiredPermission={item.permiso}
+                      requiredAnyPermissions={item.anyPermissions}
+                    >
                       <item.component />
                     </ProtectedRoute>
                   }

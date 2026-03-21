@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Container,
@@ -14,7 +14,11 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import {
+  Link as RouterLink,
+  useNavigate,
+  useSearchParams,
+} from 'react-router-dom';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import EditIcon from '@mui/icons-material/Edit';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -37,12 +41,13 @@ import Button from '../components/ui/Button';
 
 interface TabPanelProps {
   children?: React.ReactNode;
-  index: number;
-  value: number;
+  index: string;
+  value: string;
+  isLoading?: boolean;
 }
 
 function CustomTabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
+  const { children, value, index, isLoading = false, ...other } = props;
 
   return (
     <div
@@ -52,17 +57,29 @@ function CustomTabPanel(props: TabPanelProps) {
       aria-labelledby={`admin-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+      {value === index && (
+        <Box sx={{ py: 3 }}>
+          {isLoading ? (
+            <Box display="flex" justifyContent="center" py={8}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            children
+          )}
+        </Box>
+      )}
     </div>
   );
 }
 
-function a11yProps(index: number) {
+function a11yProps(index: string) {
   return {
     id: `admin-tab-${index}`,
     'aria-controls': `admin-tabpanel-${index}`,
   };
 }
+
+type AdminTabKey = 'slots' | 'alumnos' | 'usuarios';
 
 /**
  * Página de Administración Académica para Profesores con Tabs.
@@ -70,6 +87,7 @@ function a11yProps(index: number) {
 const Administracion: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const toast = useToast();
 
   const userRole = user?.rol?.toUpperCase() || '';
@@ -85,9 +103,9 @@ const Administracion: React.FC = () => {
   // isPureProfesor: para cargar datos propios (esto se mantiene un poco por lógica de negocio del backend)
   const isPureProfesor = userRole === 'PROFESOR';
 
-  const [tabValue, setTabValue] = useState(0);
+  const [activeTab, setActiveTab] = useState<AdminTabKey>('slots');
   const [isEditingSlots, setIsEditingSlots] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadingTab, setLoadingTab] = useState<AdminTabKey | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -101,83 +119,161 @@ const Administracion: React.FC = () => {
     profesorId: '',
   });
   const [students, setStudents] = useState<Alumno[]>([]);
+  const [loadedTabs, setLoadedTabs] = useState<
+    Partial<Record<AdminTabKey, boolean>>
+  >({});
 
-  const loadAlumnos = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      if (isPureProfesor) {
-        const studentRes = await profesorService.getAlumnos();
-        if (studentRes.success) {
-          setStudents(studentRes.data);
-        }
-      }
-    } catch (_err) {
-      console.error('Error loading students', _err);
-      setError('Error al cargar los alumnos');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isPureProfesor]);
+  const availableTabs = useMemo(
+    () =>
+      [
+        canManageSlots
+          ? {
+              key: 'slots' as const,
+              label: 'Aulas y Clases',
+              icon: <SchoolIcon />,
+            }
+          : null,
+        canViewStudents
+          ? {
+              key: 'alumnos' as const,
+              label: 'Alumnos',
+              icon: <PeopleIcon />,
+            }
+          : null,
+        isAdmin
+          ? {
+              key: 'usuarios' as const,
+              label: 'Gestión Usuarios',
+              icon: <PeopleIcon />,
+            }
+          : null,
+      ].filter(Boolean) as Array<{
+        key: AdminTabKey;
+        label: string;
+        icon: React.ReactElement;
+      }>,
+    [canManageSlots, canViewStudents, isAdmin]
+  );
 
-  const loadAulas = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      if (isPureProfesor) {
-        const slotsRes = await profesorService.getSlots();
-        if (slotsRes.success) setSlots(slotsRes.data);
-      }
-      if (isAdmin) {
-        const allSlotsRes = await profesorService.getAllSlots();
-        if (allSlotsRes.success) setAllSlots(allSlotsRes.data);
-      }
-    } catch {
-      console.error('Error loading slots');
-      setError('Error al cargar las aulas');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isPureProfesor, isAdmin]);
+  const initialTab = useMemo<AdminTabKey>(() => {
+    const requestedTab = searchParams.get('tab');
 
-  const loadProfesores = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      if (isAdmin) {
-        const profesoresRes = await profesorService.getAllProfesores();
-        if (profesoresRes.success) setAllProfesores(profesoresRes.data);
-      }
-    } catch {
-      console.error('Error loading profesores');
-      setError('Error al cargar los profesores');
-    } finally {
-      setIsLoading(false);
+    if (requestedTab === 'usuarios' && isAdmin) {
+      return 'usuarios';
     }
-  }, [isAdmin]);
+
+    if (requestedTab === 'alumnos' && canViewStudents) {
+      return 'alumnos';
+    }
+
+    if (requestedTab === 'slots' && canManageSlots) {
+      return 'slots';
+    }
+
+    return availableTabs[0]?.key ?? 'slots';
+  }, [searchParams, isAdmin, canViewStudents, canManageSlots, availableTabs]);
 
   useEffect(() => {
+    if (activeTab !== initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab, activeTab]);
+
+  const loadSlotsTabData = useCallback(async () => {
     if (canViewAdmin === false) {
       navigate('/');
       return;
     }
 
-    if (canViewStudents || isPureProfesor) loadAlumnos();
-    if (canManageSlots || isPureProfesor || isAdmin) loadAulas();
-    if (isAdmin) loadProfesores();
-  }, [
-    canViewAdmin,
-    navigate,
-    loadAlumnos,
-    loadAulas,
-    loadProfesores,
-    canViewStudents,
-    canManageSlots,
-    isPureProfesor,
-    isAdmin,
-  ]);
+    setLoadingTab('slots');
+    setError(null);
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
+    try {
+      const [slotsRes, allSlotsRes, profesoresRes] = await Promise.all([
+        isPureProfesor ? profesorService.getSlots() : Promise.resolve(null),
+        isAdmin ? profesorService.getAllSlots() : Promise.resolve(null),
+        isAdmin ? profesorService.getAllProfesores() : Promise.resolve(null),
+      ]);
+
+      if (slotsRes?.success) {
+        setSlots(slotsRes.data);
+      }
+
+      if (allSlotsRes?.success) {
+        setAllSlots(allSlotsRes.data);
+      }
+
+      if (profesoresRes?.success) {
+        setAllProfesores(profesoresRes.data);
+      }
+
+      setLoadedTabs((prev) => ({ ...prev, slots: true }));
+    } catch (loadError) {
+      console.error('Error loading administración data', loadError);
+      setError('Error al cargar los datos de administración');
+    } finally {
+      setLoadingTab((current) => (current === 'slots' ? null : current));
+    }
+  }, [canViewAdmin, navigate, isPureProfesor, isAdmin]);
+
+  const loadStudentsTabData = useCallback(async () => {
+    if (canViewAdmin === false) {
+      navigate('/');
+      return;
+    }
+
+    setLoadingTab('alumnos');
+    setError(null);
+
+    try {
+      const [studentRes, slotsRes] = await Promise.all([
+        isPureProfesor ? profesorService.getAlumnos() : Promise.resolve(null),
+        isPureProfesor && slots.length === 0
+          ? profesorService.getSlots()
+          : Promise.resolve(null),
+      ]);
+
+      if (studentRes?.success) {
+        setStudents(studentRes.data);
+      }
+
+      if (slotsRes?.success) {
+        setSlots(slotsRes.data);
+      }
+
+      setLoadedTabs((prev) => ({
+        ...prev,
+        alumnos: true,
+        ...(slotsRes?.success ? { slots: true } : {}),
+      }));
+    } catch (loadError) {
+      console.error('Error loading administración students', loadError);
+      setError('Error al cargar los alumnos');
+    } finally {
+      setLoadingTab((current) => (current === 'alumnos' ? null : current));
+    }
+  }, [canViewAdmin, navigate, isPureProfesor, slots.length]);
+
+  useEffect(() => {
+    if (activeTab === 'slots' && !loadedTabs.slots) {
+      void loadSlotsTabData();
+    }
+
+    if (activeTab === 'alumnos' && !loadedTabs.alumnos) {
+      void loadStudentsTabData();
+    }
+  }, [activeTab, loadedTabs, loadSlotsTabData, loadStudentsTabData]);
+
+  const handleTabChange = (
+    _event: React.SyntheticEvent,
+    newValue: AdminTabKey
+  ) => {
+    setActiveTab(newValue);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('tab', newValue);
+    setSearchParams(nextParams, { replace: true });
     // Si cambiamos de tab, cerramos el modo edición de slots por seguridad visual
-    if (newValue !== 0) setIsEditingSlots(false);
+    if (newValue !== 'slots') setIsEditingSlots(false);
   };
 
   const handleNewSlotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -352,19 +448,6 @@ const Administracion: React.FC = () => {
 
   // Métodos de administración eliminados en favor de UsuariosView
 
-  if (isLoading) {
-    return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        height="60vh"
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   return (
     <Container maxWidth="lg" sx={{ py: 4, px: { xs: 1, sm: 2, md: 3 } }}>
       <Box mb={{ xs: 3, md: 4 }}>
@@ -415,45 +498,33 @@ const Administracion: React.FC = () => {
           }}
         >
           <Tabs
-            value={tabValue}
+            value={activeTab}
             onChange={handleTabChange}
             aria-label="admin tabs"
             variant="fullWidth"
             textColor="primary"
             indicatorColor="primary"
           >
-            {canManageSlots && (
+            {availableTabs.map((tab) => (
               <Tab
-                icon={<SchoolIcon />}
+                key={tab.key}
+                value={tab.key}
+                icon={tab.icon}
                 iconPosition="start"
-                label="Aulas y Clases"
-                {...a11yProps(0)}
+                label={tab.label}
+                {...a11yProps(tab.key)}
                 sx={{ fontWeight: 600, py: 2 }}
               />
-            )}
-            {canViewStudents && (
-              <Tab
-                icon={<PeopleIcon />}
-                iconPosition="start"
-                label="Alumnos"
-                {...a11yProps(1)}
-                sx={{ fontWeight: 600, py: 2 }}
-              />
-            )}
-            {isAdmin && (
-              <Tab
-                icon={<PeopleIcon />}
-                iconPosition="start"
-                label="Gestión Usuarios"
-                {...a11yProps(2)}
-                sx={{ fontWeight: 600, py: 2 }}
-              />
-            )}
+            ))}
           </Tabs>
         </Box>
 
         <CardContent sx={{ p: { xs: 2, md: 4 } }}>
-          <CustomTabPanel value={tabValue} index={0}>
+          <CustomTabPanel
+            value={activeTab}
+            index="slots"
+            isLoading={loadingTab === 'slots'}
+          >
             <Stack spacing={4}>
               <ProfessorSlotsManager
                 isEditing={isEditingSlots}
@@ -492,7 +563,11 @@ const Administracion: React.FC = () => {
             </Stack>
           </CustomTabPanel>
 
-          <CustomTabPanel value={tabValue} index={1}>
+          <CustomTabPanel
+            value={activeTab}
+            index="alumnos"
+            isLoading={loadingTab === 'alumnos'}
+          >
             <ProfessorStudentList
               students={students}
               slots={slots}
@@ -505,7 +580,7 @@ const Administracion: React.FC = () => {
           </CustomTabPanel>
 
           {isAdmin && (
-            <CustomTabPanel value={tabValue} index={2}>
+            <CustomTabPanel value={activeTab} index="usuarios">
               <UsuariosView />
             </CustomTabPanel>
           )}

@@ -21,13 +21,6 @@ import {
 } from '../../../utils/passwordValidation';
 import { getAuthErrorMessage } from '../../../utils/authErrorMessages';
 
-interface JwtPayload {
-  sub?: string;
-  username?: string;
-  email?: string;
-  role?: string;
-}
-
 const visuallyHidden = {
   border: 0,
   clip: 'rect(0 0 0 0)',
@@ -44,29 +37,12 @@ const visuallyHidden = {
  * Propiedades del componente LoginForm.
  * @interface LoginFormProps
  * @property {() => void} onToggleForm - Callback para cambiar al modo de registro.
- * @property {(user: User, token: string) => void} onLoginSuccess - Callback invocado
+ * @property {(user: User) => void} onLoginSuccess - Callback invocado
  *   cuando el login es exitoso. El padre se encarga de la animación de salida antes de navegar.
  */
 interface LoginFormProps {
   onToggleForm: () => void;
-  onLoginSuccess: (user: User, token: string) => void;
-}
-
-function parseJwt(token: string): JwtPayload | null {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const json = decodeURIComponent(
-      window
-        .atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-    return JSON.parse(json);
-  } catch {
-    return null;
-  }
+  onLoginSuccess: (user: User) => void;
 }
 
 /**
@@ -91,10 +67,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
     newPassword: '',
     confirmPassword: '',
   });
-  const [pendingLogin, setPendingLogin] = useState<{
-    user: User;
-    token: string;
-  } | null>(null);
+  const [pendingLogin, setPendingLogin] = useState<User | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
 
   const isLoginSubmitDisabled =
@@ -130,26 +103,25 @@ const LoginForm: React.FC<LoginFormProps> = ({
       });
 
       if (res.success) {
-        const token = res.data?.access_token;
-        const dec = token ? parseJwt(token) : null;
         const user = {
-          id: dec?.sub || '',
-          name: dec?.username || formData.email,
-          email:
-            dec?.email || (formData.email.includes('@') ? formData.email : ''),
-          rol: dec?.role || '',
-          username: dec?.username,
+          id: '',
+          name: formData.email.trim(),
+          email: formData.email.includes('@') ? formData.email.trim() : '',
+          rol: '',
+          username: formData.email.includes('@')
+            ? undefined
+            : formData.email.trim(),
         };
 
         if (res.data?.requirePasswordChange) {
-          setPendingLogin({ user, token });
+          setPendingLogin(user);
           setIsChangingPassword(true);
           setChangePassData((prev) => ({
             ...prev,
             currentPassword: formData.password,
           }));
         } else {
-          onLoginSuccess(user, token);
+          onLoginSuccess(user);
         }
       } else {
         setErrorMsg(
@@ -243,7 +215,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
       if (res.success) {
         if (pendingLogin) {
-          onLoginSuccess(pendingLogin.user, pendingLogin.token);
+          onLoginSuccess(pendingLogin);
         }
       } else {
         setErrorMsg(

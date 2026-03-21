@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
+  Alert,
   Box,
   Paper,
   IconButton,
@@ -27,7 +28,7 @@ import SchoolIcon from '@mui/icons-material/School';
 import SearchIcon from '@mui/icons-material/Search';
 import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import DataTable, { Column } from '../../components/ui/DataTable';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
@@ -58,19 +59,122 @@ const updatePaginationTotal = (
   return { ...current, total: nextTotal };
 };
 
+const UserAccordion = React.memo(
+  ({
+    title,
+    icon,
+    data,
+    role,
+    color,
+    rolePagination,
+    columns,
+    renderActions,
+    setPagination,
+  }: {
+    title: string;
+    icon: React.ReactNode;
+    data: Usuario[];
+    role: 'admin' | 'professor' | 'student';
+    color: string;
+    rolePagination: { total: number; page: number; limit: number };
+    columns: Column<Usuario>[];
+    renderActions: (row: Usuario) => React.ReactNode;
+    setPagination: React.Dispatch<
+      React.SetStateAction<{
+        admin: { total: number; page: number; limit: number };
+        professor: { total: number; page: number; limit: number };
+        student: { total: number; page: number; limit: number };
+      }>
+    >;
+  }) => (
+    <Accordion
+      defaultExpanded={data.length > 0}
+      sx={{
+        mb: 2,
+        borderRadius: '8px !important',
+        overflow: 'hidden',
+        border: '1px solid',
+        borderColor: 'divider',
+      }}
+    >
+      <AccordionSummary
+        expandIcon={<ExpandMoreIcon />}
+        sx={{ bgcolor: 'action.hover' }}
+      >
+        <Box display="flex" alignItems="center" gap={1.5}>
+          <Avatar sx={{ bgcolor: color, width: 32, height: 32 }}>{icon}</Avatar>
+          <Typography fontWeight={700}>
+            {title} ({rolePagination.total})
+          </Typography>
+        </Box>
+      </AccordionSummary>
+      <AccordionDetails sx={{ p: 0 }}>
+        {rolePagination.total === 0 ? (
+          <Typography
+            variant="body2"
+            sx={{
+              p: 3,
+              textAlign: 'center',
+              fontStyle: 'italic',
+              color: 'text.secondary',
+            }}
+          >
+            No hay usuarios encontrados para este rol y búsqueda.
+          </Typography>
+        ) : (
+          <DataTable
+            columns={columns}
+            data={data}
+            isLoading={false}
+            renderActions={renderActions}
+            pagination={{
+              currentPage: rolePagination.page,
+              totalPages: Math.ceil(
+                rolePagination.total / rolePagination.limit
+              ),
+              onPageChange: (_, newPage) => {
+                setPagination((prev) => ({
+                  ...prev,
+                  [role]: { ...prev[role], page: newPage },
+                }));
+              },
+              pageSize: rolePagination.limit,
+              onPageSizeChange: (e: SelectChangeEvent<number>) => {
+                setPagination((prev) => ({
+                  ...prev,
+                  [role]: {
+                    ...prev[role],
+                    limit: Number(e.target.value),
+                    page: 1,
+                  },
+                }));
+              },
+              pageSizeOptions: [10, 20, 50],
+            }}
+          />
+        )}
+      </AccordionDetails>
+    </Accordion>
+  )
+);
+
+UserAccordion.displayName = 'UserAccordion';
+
 const UsuariosView: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   // Estados para datos por rol
   const [admins, setAdmins] = useState<Usuario[]>([]);
   const [professors, setProfessors] = useState<Usuario[]>([]);
   const [students, setStudents] = useState<Usuario[]>([]);
   const [roleOptions, setRoleOptions] = useState<RolOption[]>([]);
+  const [isLoadingRoles, setIsLoadingRoles] = useState(false);
 
   // Metadatos de paginación para cada rol
   const [pagination, setPagination] = useState({
-    admin: { total: 0, page: 1, limit: 10 },
-    professor: { total: 0, page: 1, limit: 10 },
-    student: { total: 0, page: 1, limit: 10 },
+    admin: { total: 0, page: 1, limit: 20 },
+    professor: { total: 0, page: 1, limit: 20 },
+    student: { total: 0, page: 1, limit: 20 },
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -82,12 +186,15 @@ const UsuariosView: React.FC = () => {
   const [userToEdit, setUserToEdit] = useState<Usuario | null>(null);
   const [userToDelete, setUserToDelete] = useState<Usuario | null>(null);
   const [userToReset, setUserToReset] = useState<Usuario | null>(null);
+  const [isLoadingUserDetail, setIsLoadingUserDetail] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState<string | null>(
     null
   );
+  const statusFilter = searchParams.get('estado')?.trim() || '';
+  const focus = searchParams.get('focus');
 
   const toast = useToast();
   const { user: currentUser, refreshUser } = useAuth();
@@ -122,6 +229,7 @@ const UsuariosView: React.FC = () => {
   paginationRef.current = pagination;
 
   const loadRoles = useCallback(async () => {
+    setIsLoadingRoles(true);
     try {
       const response = await usuarioService.getRoles();
       setRoleOptions((prev) => {
@@ -131,93 +239,128 @@ const UsuariosView: React.FC = () => {
       });
     } catch {
       toast.error('Error al cargar los roles disponibles');
+    } finally {
+      setIsLoadingRoles(false);
     }
   }, [toast]);
 
-  const fetchRoleData = useCallback(
-    async (role: string) => {
-      const normalized = role.toUpperCase();
-      const roleKey =
-        normalized === 'ADMIN' || normalized === 'ADMINISTRADOR'
-          ? 'admin'
-          : normalized === 'PROFESOR'
-            ? 'professor'
-            : 'student';
-      const { page, limit } = paginationRef.current[roleKey];
+  const loadUsersByRole = useCallback(async () => {
+    setIsLoading(true);
 
-      try {
-        const res = await usuarioService.getUsuarios(
-          page,
-          limit,
+    try {
+      const currentPagination = paginationRef.current;
+      const [adminRes, professorRes, studentRes] = await Promise.all([
+        usuarioService.getUsuarios(
+          currentPagination.admin.page,
+          currentPagination.admin.limit,
           debouncedSearch,
-          role
-        );
+          'ADMIN',
+          undefined,
+          undefined,
+          statusFilter || undefined
+        ),
+        usuarioService.getUsuarios(
+          currentPagination.professor.page,
+          currentPagination.professor.limit,
+          debouncedSearch,
+          'PROFESOR',
+          undefined,
+          undefined,
+          statusFilter || undefined
+        ),
+        usuarioService.getUsuarios(
+          currentPagination.student.page,
+          currentPagination.student.limit,
+          debouncedSearch,
+          'ALUMNO',
+          undefined,
+          undefined,
+          statusFilter || undefined
+        ),
+      ]);
 
-        if (role === 'ADMIN' || role === 'ADMINISTRADOR') setAdmins(res.data);
-        if (role === 'PROFESOR') setProfessors(res.data);
-        if (role === 'ALUMNO') setStudents(res.data);
-
-        setPagination((prev) => ({
-          ...prev,
-          [roleKey]: updatePaginationTotal(prev[roleKey], res.total),
-        }));
-      } catch {
-        toast.error(`Error al cargar ${role.toLowerCase()}s`);
-      }
-    },
-    [debouncedSearch, toast]
-  );
+      setAdmins(adminRes.data);
+      setProfessors(professorRes.data);
+      setStudents(studentRes.data);
+      setPagination((prev) => ({
+        admin: updatePaginationTotal(prev.admin, adminRes.total),
+        professor: updatePaginationTotal(prev.professor, professorRes.total),
+        student: updatePaginationTotal(prev.student, studentRes.total),
+      }));
+    } catch {
+      toast.error('Error al cargar los usuarios');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [debouncedSearch, statusFilter, toast]);
 
   const fetchAllData = useCallback(async () => {
-    setIsLoading(true);
-    await Promise.all([
-      loadRoles(),
-      fetchRoleData('ADMIN'),
-      fetchRoleData('PROFESOR'),
-      fetchRoleData('ALUMNO'),
-    ]);
-    setIsLoading(false);
+    await loadUsersByRole();
+  }, [loadUsersByRole]);
+
+  useEffect(() => {
+    setPagination((prev) => ({
+      admin: { ...prev.admin, page: 1 },
+      professor: { ...prev.professor, page: 1 },
+      student: { ...prev.student, page: 1 },
+    }));
+  }, [statusFilter]);
+
+  const clearNotificationFilters = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('estado');
+    nextParams.delete('focus');
+    setSearchParams(nextParams, { replace: true });
+  };
+
+  const ensureRolesLoaded = useCallback(async () => {
+    if (roleOptions.length > 0) {
+      return;
+    }
+
+    await loadRoles();
+  }, [roleOptions.length, loadRoles]);
+
+  const handleEditUser = useCallback(
+    async (row: Usuario) => {
+      setIsLoadingUserDetail(true);
+      setUserToEdit(row);
+      setIsModalOpen(true);
+
+      try {
+        await ensureRolesLoaded();
+        const response = await usuarioService.getUsuarioById(row.id);
+        setUserToEdit(response.data);
+      } catch (error) {
+        console.warn(
+          'No se pudo cargar el detalle completo del usuario',
+          error
+        );
+      } finally {
+        setIsLoadingUserDetail(false);
+      }
+    },
+    [ensureRolesLoaded]
+  );
+
+  useEffect(() => {
+    if (!isModalOpen) {
+      return;
+    }
+
+    void ensureRolesLoaded();
+  }, [isModalOpen, ensureRolesLoaded]);
+
+  useEffect(() => {
+    void loadUsersByRole();
   }, [
-    fetchRoleData,
-    loadRoles,
-    pagination.admin.limit,
     pagination.admin.page,
-    pagination.professor.limit,
-    pagination.professor.page,
-    pagination.student.limit,
-    pagination.student.page,
-  ]);
-
-  useEffect(() => {
-    loadRoles();
-  }, [loadRoles]);
-
-  // Efectos por rol para paginación individual – depend on primitive values, not the callback
-  useEffect(() => {
-    fetchRoleData('ADMIN');
-  }, [
-    pagination.admin.page,
     pagination.admin.limit,
-    debouncedSearch,
-    fetchRoleData,
-  ]);
-
-  useEffect(() => {
-    fetchRoleData('PROFESOR');
-  }, [
     pagination.professor.page,
     pagination.professor.limit,
-    debouncedSearch,
-    fetchRoleData,
-  ]);
-
-  useEffect(() => {
-    fetchRoleData('ALUMNO');
-  }, [
     pagination.student.page,
     pagination.student.limit,
-    debouncedSearch,
-    fetchRoleData,
+    loadUsersByRole,
   ]);
 
   const handleSaveUsuario = async (
@@ -227,6 +370,10 @@ const UsuariosView: React.FC = () => {
     try {
       if (userToEdit) {
         const payload = data as ActualizarUsuarioDTO;
+        const updatePayload: ActualizarUsuarioDTO = {
+          username: payload.username,
+          email: payload.email,
+        };
         const previousRoleId = userToEdit.roleId || '';
         const previousStatus = userToEdit.estado;
         const previousAdicionales = [
@@ -247,8 +394,13 @@ const UsuariosView: React.FC = () => {
           JSON.stringify(nextAdicionales);
         const excludedPermissionsChanged =
           JSON.stringify(previousExcluidos) !== JSON.stringify(nextExcluidos);
+        const profileChanged =
+          updatePayload.username !== userToEdit.username ||
+          (updatePayload.email ?? '') !== (userToEdit.email ?? '');
 
-        await usuarioService.actualizarUsuario(userToEdit.id, payload);
+        if (profileChanged) {
+          await usuarioService.actualizarUsuario(userToEdit.id, updatePayload);
+        }
 
         if (
           payload.roleId &&
@@ -326,188 +478,122 @@ const UsuariosView: React.FC = () => {
     }
   };
 
-  const canResetTemporaryPassword = (targetUser: Usuario): boolean => {
-    if (!currentUser) return false;
-    const currentRol = currentUser.rol.toUpperCase();
-    if (targetUser.id.toString() === currentUser.id.toString()) return false;
-    if (currentRol === 'ADMIN' || currentRol === 'ADMINISTRADOR') return true;
-    if (currentRol === 'PROFESOR') return targetUser.rol === 'Alumno';
-    return false;
-  };
-
-  const columns: Column<Usuario>[] = [
-    { id: 'username', label: 'Usuario', sortable: true },
-    { id: 'email', label: 'Email', sortable: true, hideOnMobile: true },
-    {
-      id: 'estado',
-      label: 'Estado',
-      align: 'center',
-      render: (row) => (
-        <StatusChip
-          status={row.estado === 'Activo' ? 'success' : 'default'}
-          label={row.estado}
-        />
-      ),
+  const canResetTemporaryPassword = useCallback(
+    (targetUser: Usuario): boolean => {
+      if (!currentUser) return false;
+      const currentRol = currentUser.rol.toUpperCase();
+      if (targetUser.id.toString() === currentUser.id.toString()) return false;
+      if (currentRol === 'ADMIN' || currentRol === 'ADMINISTRADOR') {
+        return true;
+      }
+      if (currentRol === 'PROFESOR') return targetUser.rol === 'Alumno';
+      return false;
     },
-  ];
-
-  const renderActions = (row: Usuario) => (
-    <Stack direction="row" spacing={0.5} justifyContent="center">
-      {row.id.toString() !== currentUser?.id.toString() && canEdit && (
-        <IconButton
-          color={row.estado === 'Activo' ? 'warning' : 'success'}
-          onClick={async () => {
-            try {
-              const shouldActivate = row.estado !== 'Activo';
-              await usuarioService.setUserActivation(row.id, shouldActivate);
-              toast.success(
-                shouldActivate
-                  ? 'Usuario activado correctamente'
-                  : 'Usuario suspendido correctamente'
-              );
-              fetchAllData();
-            } catch (error) {
-              const message =
-                error instanceof Error
-                  ? error.message
-                  : 'Error al actualizar el estado del usuario';
-              toast.error(message);
-            }
-          }}
-          size="small"
-          title={row.estado === 'Activo' ? 'Suspender' : 'Activar'}
-        >
-          {row.estado === 'Activo' ? (
-            <BlockIcon fontSize="small" />
-          ) : (
-            <CheckCircleOutlineIcon fontSize="small" />
-          )}
-        </IconButton>
-      )}
-      {canResetTemporaryPassword(row) && canEdit && (
-        <IconButton
-          color="primary"
-          onClick={() => setUserToReset(row)}
-          size="small"
-          title="Reset Password"
-        >
-          <VpnKeyIcon fontSize="small" />
-        </IconButton>
-      )}
-      {canEdit && (
-        <IconButton
-          color="secondary"
-          onClick={() => {
-            setUserToEdit(row);
-            setIsModalOpen(true);
-          }}
-          size="small"
-          title="Editar"
-        >
-          <EditIcon fontSize="small" />
-        </IconButton>
-      )}
-      {canDelete && (
-        <IconButton
-          color="error"
-          onClick={() => setUserToDelete(row)}
-          size="small"
-          title="Eliminar"
-        >
-          <DeleteIcon fontSize="small" />
-        </IconButton>
-      )}
-    </Stack>
+    [currentUser]
   );
 
-  const UserAccordion = ({
-    title,
-    icon,
-    data,
-    role,
-    color,
-  }: {
-    title: string;
-    icon: React.ReactNode;
-    data: Usuario[];
-    role: 'admin' | 'professor' | 'student';
-    color: string;
-  }) => {
-    const rolePagination = pagination[role];
+  const columns = useMemo<Column<Usuario>[]>(
+    () => [
+      { id: 'username', label: 'Usuario', sortable: true },
+      { id: 'email', label: 'Email', sortable: true, hideOnMobile: true },
+      {
+        id: 'estado',
+        label: 'Estado',
+        align: 'center',
+        render: (row) => (
+          <StatusChip
+            status={row.estado === 'Activo' ? 'success' : 'default'}
+            label={row.estado}
+          />
+        ),
+      },
+    ],
+    []
+  );
 
-    return (
-      <Accordion
-        defaultExpanded={data.length > 0}
-        sx={{
-          mb: 2,
-          borderRadius: '8px !important',
-          overflow: 'hidden',
-          border: '1px solid',
-          borderColor: 'divider',
-        }}
-      >
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
-          sx={{ bgcolor: 'action.hover' }}
-        >
-          <Box display="flex" alignItems="center" gap={1.5}>
-            <Avatar sx={{ bgcolor: color, width: 32, height: 32 }}>
-              {icon}
-            </Avatar>
-            <Typography fontWeight={700}>
-              {title} ({rolePagination.total})
-            </Typography>
-          </Box>
-        </AccordionSummary>
-        <AccordionDetails sx={{ p: 0 }}>
-          {rolePagination.total === 0 ? (
-            <Typography
-              variant="body2"
-              sx={{
-                p: 3,
-                textAlign: 'center',
-                fontStyle: 'italic',
-                color: 'text.secondary',
-              }}
-            >
-              No hay usuarios encontrados para este rol y búsqueda.
-            </Typography>
-          ) : (
-            <DataTable
-              columns={columns}
-              data={data}
-              isLoading={false}
-              renderActions={renderActions}
-              pagination={{
-                currentPage: rolePagination.page,
-                totalPages: Math.ceil(
-                  rolePagination.total / rolePagination.limit
-                ),
-                onPageChange: (_, newPage) => {
-                  setPagination((prev) => ({
-                    ...prev,
-                    [role]: { ...prev[role], page: newPage },
-                  }));
-                },
-                pageSize: rolePagination.limit,
-                pageSizeOptions: [5, 10, 15, 20],
-                onPageSizeChange: (e: SelectChangeEvent<number>) => {
-                  setPagination((prev) => ({
-                    ...prev,
-                    [role]: {
-                      ...prev[role],
-                      limit: Number(e.target.value),
-                      page: 1,
-                    },
-                  }));
-                },
-              }}
-            />
-          )}
-        </AccordionDetails>
-      </Accordion>
-    );
-  };
+  const renderActions = useCallback(
+    (row: Usuario) => (
+      <Stack direction="row" spacing={0.5} justifyContent="center">
+        {row.id.toString() !== currentUser?.id.toString() && canEdit && (
+          <IconButton
+            color={row.estado === 'Activo' ? 'warning' : 'success'}
+            onClick={async () => {
+              try {
+                const shouldActivate = row.estado !== 'Activo';
+                await usuarioService.setUserActivation(row.id, shouldActivate);
+                toast.success(
+                  shouldActivate
+                    ? 'Usuario activado correctamente'
+                    : 'Usuario suspendido correctamente'
+                );
+                fetchAllData();
+              } catch (error) {
+                const message =
+                  error instanceof Error
+                    ? error.message
+                    : 'Error al actualizar el estado del usuario';
+                toast.error(message);
+              }
+            }}
+            size="small"
+            title={row.estado === 'Activo' ? 'Suspender' : 'Activar'}
+          >
+            {row.estado === 'Activo' ? (
+              <BlockIcon fontSize="small" />
+            ) : (
+              <CheckCircleOutlineIcon fontSize="small" />
+            )}
+          </IconButton>
+        )}
+        {canResetTemporaryPassword(row) && canEdit && (
+          <IconButton
+            color="primary"
+            onClick={() => setUserToReset(row)}
+            size="small"
+            title="Reset Password"
+          >
+            <VpnKeyIcon fontSize="small" />
+          </IconButton>
+        )}
+        {canEdit && (
+          <IconButton
+            color="secondary"
+            onClick={() => void handleEditUser(row)}
+            disabled={isLoadingUserDetail}
+            size="small"
+            title="Editar"
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+        )}
+        {canDelete && (
+          <IconButton
+            color="error"
+            onClick={() => setUserToDelete(row)}
+            size="small"
+            title="Eliminar"
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        )}
+      </Stack>
+    ),
+    [
+      canDelete,
+      canEdit,
+      canResetTemporaryPassword,
+      currentUser?.id,
+      fetchAllData,
+      handleEditUser,
+      isLoadingUserDetail,
+      toast,
+    ]
+  );
+
+  const usuariosList = useMemo(
+    () => [...admins, ...professors, ...students],
+    [admins, professors, students]
+  );
 
   return (
     <Box>
@@ -521,6 +607,26 @@ const UsuariosView: React.FC = () => {
           borderRadius: 2,
         }}
       >
+        {statusFilter ? (
+          <Alert
+            severity="info"
+            sx={{ mb: 2 }}
+            action={
+              <Button
+                color="inherit"
+                size="small"
+                onClick={clearNotificationFilters}
+              >
+                Quitar filtro
+              </Button>
+            }
+          >
+            {focus === 'pending-activation'
+              ? 'Mostrando usuarios pendientes de activación abiertos desde notificaciones.'
+              : `Filtro de estado activo: ${statusFilter}.`}
+          </Alert>
+        ) : null}
+
         <Box
           display="flex"
           flexWrap="wrap"
@@ -559,6 +665,7 @@ const UsuariosView: React.FC = () => {
                 variant="contained"
                 startIcon={<AddIcon />}
                 onClick={() => {
+                  void ensureRolesLoaded();
                   setUserToEdit(null);
                   setIsModalOpen(true);
                 }}
@@ -583,6 +690,10 @@ const UsuariosView: React.FC = () => {
             data={admins}
             role="admin"
             color={ROLE_COLORS.Administrador}
+            rolePagination={pagination.admin}
+            columns={columns}
+            renderActions={renderActions}
+            setPagination={setPagination}
           />
           <UserAccordion
             title="Profesores"
@@ -590,6 +701,10 @@ const UsuariosView: React.FC = () => {
             data={professors}
             role="professor"
             color={ROLE_COLORS.Profesor}
+            rolePagination={pagination.professor}
+            columns={columns}
+            renderActions={renderActions}
+            setPagination={setPagination}
           />
           <UserAccordion
             title="Alumnos"
@@ -597,6 +712,10 @@ const UsuariosView: React.FC = () => {
             data={students}
             role="student"
             color={ROLE_COLORS.Alumno}
+            rolePagination={pagination.student}
+            columns={columns}
+            renderActions={renderActions}
+            setPagination={setPagination}
           />
         </Box>
       )}
@@ -606,9 +725,11 @@ const UsuariosView: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         userToEdit={userToEdit}
         onSave={handleSaveUsuario}
-        isSaving={isSaving}
-        usuariosList={[...admins, ...professors, ...students]}
+        isSaving={isSaving || isLoadingUserDetail}
+        isLoadingContent={isLoadingUserDetail}
+        usuariosList={usuariosList}
         roleOptions={roleOptions}
+        isLoadingRoles={isLoadingRoles}
       />
 
       <ConfirmDialog
