@@ -87,6 +87,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const readerRef = useRef<BrowserMultiFormatReader | null>(null);
   const controlsRef = useRef<{ stop: () => void } | null>(null);
+  const startScannerIdRef = useRef(0);
+  const lastScannedRef = useRef({ code: '', time: 0 });
 
   const [cameras, setCameras] = useState<CameraDevice[]>([]);
   const [selectedCamera, setSelectedCamera] = useState<string>('');
@@ -95,6 +97,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   const [showSuccess, setShowSuccess] = useState(false);
 
   const stopScanner = useCallback(() => {
+    startScannerIdRef.current += 1;
     try {
       controlsRef.current?.stop();
     } catch {
@@ -110,6 +113,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       stopScanner();
 
       try {
+        const currentStartId = startScannerIdRef.current;
         const reader = readerRef.current!;
         const controls = await reader.decodeFromVideoDevice(
           deviceId || undefined,
@@ -118,6 +122,18 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
           (result: any, error: any) => {
             if (result) {
               const code = result.getText();
+              const now = Date.now();
+
+              // Evitar lecturas duplicadas continuas en ráfaga (2 segundos timeout por código)
+              if (
+                continuous &&
+                lastScannedRef.current.code === code &&
+                now - lastScannedRef.current.time < 2000
+              ) {
+                return;
+              }
+              lastScannedRef.current = { code, time: now };
+
               setLastCode(code);
               setShowSuccess(true);
               playBeep();
@@ -133,6 +149,12 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             }
           }
         );
+        
+        if (currentStartId !== startScannerIdRef.current) {
+          controls.stop();
+          return;
+        }
+
         controlsRef.current = controls;
       } catch (err: unknown) {
         const errorMsg = err instanceof Error ? err.message : String(err);
@@ -159,6 +181,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   useEffect(() => {
     if (!open) return;
 
+    lastScannedRef.current = { code: '', time: 0 };
     setLastCode('');
     setShowSuccess(false);
     setScannerState('requesting');

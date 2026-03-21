@@ -42,11 +42,12 @@ import {
   UnidadMedida,
   normalizeUnidadMedida,
 } from '../services/producto.types';
+import { fetchProductFromOFF } from '../services/openfoodfacts.service';
 import PasoSeleccionPedidos from '../components/recepcion/PasoSeleccionPedidos';
 import PasoEscaneo from '../components/recepcion/PasoEscaneo';
 import PasoRevision from '../components/recepcion/PasoRevision';
 import PasoResultado from '../components/recepcion/PasoResultado';
-import NewProductModal from '../components/recepcion/NewProductModal';
+import NewProductModal, { ModalProductData } from '../components/recepcion/NewProductModal';
 import WeightScaleModal from '../components/recepcion/WeightScaleModal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import RecepcionDraftConflictDialog from '../components/recepcion/RecepcionDraftConflictDialog';
@@ -471,23 +472,49 @@ const Recepcion: React.FC = () => {
 
   // --- 3. Lógica de Escaneo (Paso 2) ---
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
+  const handleSearch = async (overrideQuery?: string | unknown) => {
+    const queryToUse = typeof overrideQuery === 'string' ? overrideQuery : searchQuery;
+    if (!queryToUse.trim()) return;
     setSearching(true);
     setError(null);
 
     try {
       // 1. Intentar por código de barras
-      let prod = await getProductoByBarcode(searchQuery);
+      let prod = await getProductoByBarcode(queryToUse);
+
+      // Si no existe pero es un código numérico (escaner), intentar en OpenFoodFacts
+      if (!prod && /^\d{8,14}$/.test(queryToUse)) {
+        const offProduct = await fetchProductFromOFF(queryToUse);
+        if (offProduct) {
+          setModalData({
+            nombre: offProduct.nombre,
+            marca: offProduct.marca || '',
+            unidad: UnidadMedida.UNIDAD,
+            tipo: CategoriaProducto.OTRO,
+            contenido: 1,
+            codigoBarras: offProduct.codigoBarras,
+          });
+          setOpenModal(true);
+          return;
+        }
+      }
 
       // 2. Si no hay barcode, intentar búsqueda por nombre (Buscador)
       if (!prod) {
-        const results = await searchProductosByName(searchQuery);
+        const results = await searchProductosByName(queryToUse);
         if (results.length === 1) {
           prod = results[0];
         } else if (results.length > 1) {
           // Si hay varios, podríamos mostrar un selector, pero por ahora abrimos modal
           // con el primer resultado sugerido o dejamos al usuario crear
+          setModalData({
+            nombre: '',
+            marca: '',
+            unidad: UnidadMedida.KG,
+            tipo: CategoriaProducto.OTRO,
+            contenido: 1,
+            codigoBarras: typeof queryToUse === 'string' && /^\d{8,14}$/.test(queryToUse) ? queryToUse : ''
+          });
           setOpenModal(true);
           setSearching(false);
           return;
@@ -498,9 +525,25 @@ const Recepcion: React.FC = () => {
         processProductFound(prod);
       } else {
         // No encontrado -> Modal creación
+        setModalData({
+          nombre: '',
+          marca: '',
+          unidad: UnidadMedida.KG,
+          tipo: CategoriaProducto.OTRO,
+          contenido: 1,
+          codigoBarras: typeof queryToUse === 'string' && /^\d{8,14}$/.test(queryToUse) ? queryToUse : ''
+        });
         setOpenModal(true);
       }
     } catch {
+      setModalData({
+        nombre: '',
+        marca: '',
+        unidad: UnidadMedida.KG,
+        tipo: CategoriaProducto.OTRO,
+        contenido: 1,
+        codigoBarras: typeof queryToUse === 'string' && /^\d{8,14}$/.test(queryToUse) ? queryToUse : ''
+      });
       setOpenModal(true);
     } finally {
       setSearching(false);
@@ -1036,12 +1079,13 @@ const Recepcion: React.FC = () => {
 
   // --- 6. Modal Nuevo Producto ---
 
-  const [modalData, setModalData] = useState({
+  const [modalData, setModalData] = useState<ModalProductData>({
     nombre: '',
     marca: '',
     unidad: UnidadMedida.KG,
     tipo: CategoriaProducto.OTRO,
     contenido: 1,
+    codigoBarras: '',
   });
 
   const handleConfirmNewProduct = () => {
@@ -1049,7 +1093,7 @@ const Recepcion: React.FC = () => {
     const newLinea: LineaDraft = {
       pedidoProductoId: null,
       idProducto: '',
-      codigoBarras: searchQuery || '',
+      codigoBarras: modalData.codigoBarras,
       nombreProducto: modalData.nombre,
       unidad: modalData.unidad,
       cantidadPedida: 0,
@@ -1062,7 +1106,7 @@ const Recepcion: React.FC = () => {
       estado: 'Nuevo',
       productoNuevo: {
         pendienteCreacion: true,
-        codigoBarras: searchQuery || '',
+        codigoBarras: modalData.codigoBarras,
         nombre: modalData.nombre,
         marca: modalData.marca,
         unidad: modalData.unidad,
@@ -1085,6 +1129,7 @@ const Recepcion: React.FC = () => {
       unidad: UnidadMedida.KG,
       tipo: CategoriaProducto.OTRO,
       contenido: 1,
+      codigoBarras: '',
     });
 
     if (isWeight && isScaleConnected && isScaleEnabled) {

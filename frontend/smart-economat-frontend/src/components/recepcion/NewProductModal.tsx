@@ -18,6 +18,7 @@ export interface ModalProductData {
   unidad: UnidadMedida;
   tipo: CategoriaProducto;
   contenido: number;
+  codigoBarras: string;
 }
 
 interface NewProductModalProps {
@@ -35,13 +36,18 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
   setModalData,
   onConfirm,
 }) => {
+  const isAutoFilled = modalData.nombre.trim() !== '';
+
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Añadir Producto Desconocido</DialogTitle>
+      <DialogTitle>
+        {isAutoFilled ? 'Añadir Producto Encontrado' : 'Añadir Producto Desconocido'}
+      </DialogTitle>
       <DialogContent dividers>
         <Typography variant="body2" sx={{ mb: 2 }}>
-          Este producto no figura en el catálogo ni en los pedidos
-          seleccionados.
+          {isAutoFilled
+            ? 'Hemos auto-completado los datos usando una base de datos global. Revisa la información antes de añadir el producto a tu catálogo.'
+            : 'Este producto no figura en el catálogo ni en los pedidos seleccionados. Por favor, introduce sus datos básicos.'}
         </Typography>
         <Box
           sx={{
@@ -59,6 +65,16 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
             }
             fullWidth
           />
+          {modalData.codigoBarras && (
+            <TextField
+              label="Código de Barras"
+              value={modalData.codigoBarras}
+              disabled
+              fullWidth
+              size="small"
+              variant="filled"
+            />
+          )}
           <TextField
             label="Marca"
             value={modalData.marca}
