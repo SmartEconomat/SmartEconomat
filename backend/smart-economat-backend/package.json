@@ -1,6 +1,9 @@
 {
   "name": "smart-economat-backend",
   "version": "0.0.1",
+  "engines": {
+    "node": ">=22.2.0"
+  },
   "description": "",
   "author": "",
   "private": true,
