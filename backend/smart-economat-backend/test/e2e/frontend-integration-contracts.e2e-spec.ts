@@ -259,14 +259,14 @@ describe('Frontend Integration Contracts (e2e)', () => {
       expect(response.body.success).toBe(false);
     });
 
-    it('E2E-INT-USU-03: Debe rechazar el payload legado con nombre en perfil', async () => {
+    it('E2E-INT-USU-03: Debe aceptar el nombre en el perfil', async () => {
       const response = await request(app.getHttpServer())
         .patch('/api/v1/usuarios/perfil')
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ nombre: 'Nombre legado' })
-        .expect(400);
+        .send({ nombre: 'Nombre nuevo' })
+        .expect(200);
 
-      expect(response.body.success).toBe(false);
+      expect(response.body.data.nombre).toBe('Nombre nuevo');
     });
   });
 

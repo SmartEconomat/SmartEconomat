@@ -15,6 +15,12 @@ import { TrimStringTransformer } from '../../../common/transformers/trim-string.
 import { LowercaseStringTransformer } from '../../../common/transformers/lowercase-string.transformer';
 
 export class CreateUsuarioDto {
+  @IsOptional()
+  @IsString({
+    message: i18nValidationMessage('validation.EL_NOMBRE_DEBE_SER_UNA_CADENA'),
+  })
+  @MaxLength(150)
+  nombre?: string | null;
   @Transform((params) => TrimStringTransformer.transform(params))
   @IsString({
     message: i18nValidationMessage(

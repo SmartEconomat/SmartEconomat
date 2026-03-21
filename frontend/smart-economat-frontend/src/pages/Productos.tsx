@@ -44,7 +44,21 @@ import {
   createProducto,
   updateProducto,
 } from '../services/producto.service';
-import { deleteResource, uploadFile } from '../services/api.service';
+import {
+  deleteResource,
+  uploadFile,
+  downloadFile,
+} from '../services/api.service';
+// Utilidad para construir query string de filtros actuales
+function buildExportQuery(filters: ProductFiltersState, searchTerm: string) {
+  const params = new URLSearchParams();
+  if (searchTerm.trim()) params.set('searchTerm', searchTerm.trim());
+  if (filters.categorias && filters.categorias.length > 0)
+    params.set('categorias', filters.categorias.join(','));
+  if (filters.alergenos && filters.alergenos.length > 0)
+    params.set('alergenos', filters.alergenos.join(','));
+  return params.toString() ? `?${params.toString()}` : '';
+}
 import { useToast } from '../store/toast.hooks';
 import StatusChip from '../components/ui/StatusChip';
 import { usePermission } from '../store/auth.hooks';
@@ -184,6 +198,26 @@ const Productos: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const toast = useToast();
+
+  // Exportar productos a PDF
+  const handleExportPdf = async () => {
+    try {
+      const query = buildExportQuery(filters, searchTerm);
+      await downloadFile(`/export/productos/pdf${query}`, 'productos.pdf');
+    } catch {
+      toast.error('Error al exportar productos a PDF');
+    }
+  };
+
+  // Exportar productos a Excel
+  const handleExportExcel = async () => {
+    try {
+      const query = buildExportQuery(filters, searchTerm);
+      await downloadFile(`/export/productos/xlsx${query}`, 'productos.xlsx');
+    } catch {
+      toast.error('Error al exportar productos a Excel');
+    }
+  };
 
   const canEdit = usePermission('productos:editar');
   const canDelete = usePermission('productos:eliminar');
@@ -496,18 +530,38 @@ const Productos: React.FC = () => {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         filters={
-          <ProductFilters
-            filters={filters}
-            onChange={(newFilters) => {
-              setFilters(newFilters);
-              setPage(1);
-            }}
-            onClear={() => {
-              setFilters(initialFilters);
-              setPage(1);
-            }}
-            inline
-          />
+          <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
+            <ProductFilters
+              filters={filters}
+              onChange={(newFilters) => {
+                setFilters(newFilters);
+                setPage(1);
+              }}
+              onClear={() => {
+                setFilters(initialFilters);
+                setPage(1);
+              }}
+              inline
+            />
+            <Stack direction="row" spacing={1}>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={handleExportPdf}
+                size="small"
+              >
+                Exportar PDF
+              </Button>
+              <Button
+                variant="outlined"
+                color="success"
+                onClick={handleExportExcel}
+                size="small"
+              >
+                Exportar Excel
+              </Button>
+            </Stack>
+          </Box>
         }
       />
 

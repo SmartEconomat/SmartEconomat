@@ -70,7 +70,7 @@ const handleNumberInputKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
 };
 
 const formatNumberInput = (value: string) => {
-  let val = value;
+  let val = value.replace(/-/g, ''); // Fix against pasting negative numbers
   if (val.length > 1 && val.startsWith('0') && !val.startsWith('0.')) {
     val = val.replace(/^0+/, '');
     if (val === '') val = '0';
@@ -369,6 +369,7 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                             )
                           }
                           InputProps={{
+                            inputProps: { min: 0 },
                             startAdornment:
                               l.cantidadAlbaran !== '' &&
                               l.cantidadAlbaran != null ? (
@@ -623,6 +624,7 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                           )
                         }
                         InputProps={{
+                          inputProps: { min: 0 },
                           startAdornment:
                             l.cantidadAlbaran !== '' &&
                             l.cantidadAlbaran != null ? (

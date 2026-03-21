@@ -53,6 +53,7 @@ const UserModal: React.FC<UserModalProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     username: '',
+    nombre: '',
     email: '',
     rol: 'Alumno',
     estado: 'Inactivo',
@@ -84,6 +85,7 @@ const UserModal: React.FC<UserModalProps> = ({
       if (userToEdit) {
         setFormData({
           username: userToEdit.username,
+          nombre: userToEdit.nombre || '',
           email: userToEdit.email,
           rol: userToEdit.rol,
           estado: userToEdit.estado,
@@ -107,6 +109,7 @@ const UserModal: React.FC<UserModalProps> = ({
         const defaultRole = roleOptions[0];
         setFormData({
           username: '',
+          nombre: '',
           email: '',
           rol: defaultRole?.nombre || 'ALUMNO',
           estado: 'Inactivo',
@@ -269,6 +272,16 @@ const UserModal: React.FC<UserModalProps> = ({
             helperText={errors.username}
             disabled={isSaving}
             required
+          />
+          <InputField
+            id="user-nombre"
+            fullWidth
+            label="Nombre y Apellidos"
+            value={formData.nombre}
+            onChange={handleChange('nombre')}
+            error={!!errors.nombre}
+            helperText={errors.nombre}
+            disabled={isSaving}
           />
           {formData.rol !== 'Alumno' && (
             <InputField

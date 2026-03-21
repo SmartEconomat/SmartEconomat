@@ -46,6 +46,8 @@ const mapFrontendToBackend = (
   delete mapped.fecha_registro;
   delete mapped.roleId;
   delete mapped.roleName;
+  delete mapped.permisosAdicionalesIds;
+  delete mapped.permisosExcluidosIds;
 
   return mapped;
 };
@@ -68,6 +70,7 @@ const mapBackendToFrontend = (user: Record<string, unknown>): Usuario => {
   return {
     id: (user.id as string | number) || 0,
     username: user.username as string,
+    nombre: user.nombre as string | undefined,
     email: user.email as string,
     rol: rolName,
     roleId: primaryRole?.id as string | undefined,

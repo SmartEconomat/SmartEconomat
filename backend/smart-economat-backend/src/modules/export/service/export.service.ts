@@ -439,6 +439,11 @@ export class ExportService {
     headerRow.eachCell((cell) => {
       cell.border = BORDER_STYLE;
       cell.fill = HEADER_FILL;
+      cell.alignment = {
+        vertical: 'middle',
+        horizontal: 'center',
+        wrapText: true,
+      };
     });
     headerRow.commit();
 
@@ -460,7 +465,40 @@ export class ExportService {
           if (colDef?.numFmt) {
             cell.numFmt = colDef.numFmt;
           }
+          cell.alignment = {
+            vertical: 'middle',
+            horizontal: 'center',
+            wrapText: true,
+          };
         });
+
+        let maxLines = 1;
+        row.eachCell({ includeEmpty: true }, (cell) => {
+          const rawValue = cell.value;
+          let value = '';
+          if (rawValue !== null && rawValue !== undefined) {
+            if (typeof rawValue === 'object') {
+              if ('text' in rawValue && typeof rawValue.text === 'string') {
+                value = rawValue.text;
+              } else if (
+                'result' in rawValue &&
+                (typeof rawValue.result === 'string' ||
+                  typeof rawValue.result === 'number')
+              ) {
+                value = String(rawValue.result);
+              } else {
+                value = JSON.stringify(rawValue);
+              }
+            } else {
+              value = String(rawValue);
+            }
+          }
+          const lines = value.split(/\r?\n/).length;
+
+          const approx = Math.ceil(value.length / 40);
+          maxLines = Math.max(maxLines, Math.max(lines, approx));
+        });
+        row.height = 13 * maxLines;
         row.commit();
       }
 

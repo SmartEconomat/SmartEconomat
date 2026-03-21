@@ -196,4 +196,34 @@ export const profesorService = {
     const result = await response.json();
     return { ...result, status: response.status };
   },
+
+  /**
+   * Elimina un slot como administrador.
+   */
+  async adminDeleteSlot(
+    slotId: string
+  ): Promise<ApiResponse<void> & { status: number }> {
+    const response = await baseFetch(`/profesores/admin-slots/${slotId}`, {
+      method: 'DELETE',
+    });
+    const data = await response.json();
+    return { ...data, status: response.status };
+  },
+
+  /**
+   * Crea un nuevo slot como administrador para un profesor específico.
+   */
+  async adminCreateSlot(data: {
+    aula: string;
+    numeroClase: number;
+    capacidad: number;
+    profesorId: string;
+  }): Promise<ApiResponse<AlumnoSlot> & { status: number }> {
+    const response = await baseFetch('/profesores/admin-slots', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    return { ...result, status: response.status };
+  },
 };

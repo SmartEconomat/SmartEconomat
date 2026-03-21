@@ -44,6 +44,7 @@ export const runSeeder = async (dataSource: DataSource) => {
     });
     if (!adminUser) {
       adminUser = manager.create(Usuario, {
+        nombre: 'Administrador Principal',
         username: 'admin',
         password: defaultPassword,
         email: 'admin@smarteconomat.com',
@@ -51,13 +52,18 @@ export const runSeeder = async (dataSource: DataSource) => {
         status: UserStatus.ACTIVE,
         activo: true,
         roles: [getSeedRole(rolUsuario.ADMINISTRADOR)],
+        mustChangePassword: false,
+        passwordResetToken: null,
+        passwordResetExpires: null,
       });
       await manager.save(adminUser);
     } else {
+      adminUser.nombre = 'Administrador Principal';
       adminUser.rol = rolUsuario.ADMINISTRADOR;
       adminUser.status = UserStatus.ACTIVE;
       adminUser.activo = true;
       adminUser.roles = [getSeedRole(rolUsuario.ADMINISTRADOR)];
+      adminUser.mustChangePassword = false;
       await manager.save(adminUser);
     }
 
@@ -67,6 +73,7 @@ export const runSeeder = async (dataSource: DataSource) => {
     if (!superAdminUser) {
       const superAdminPassword = await bcrypt.hash('SmartEconomat2026*', 10);
       superAdminUser = manager.create(Usuario, {
+        nombre: 'Super Administrador',
         username: 'superAdmin',
         password: superAdminPassword,
         email: 'superadmin@smarteconomat.com',
@@ -74,32 +81,52 @@ export const runSeeder = async (dataSource: DataSource) => {
         status: UserStatus.ACTIVE,
         activo: true,
         roles: [getSeedRole(rolUsuario.SUPER_ADMIN)],
+        mustChangePassword: true,
+        passwordResetToken: null,
+        passwordResetExpires: null,
       });
+      await manager.save(superAdminUser);
+    } else {
+      superAdminUser.nombre = 'Super Administrador';
+      superAdminUser.rol = rolUsuario.SUPER_ADMIN;
+      superAdminUser.roles = [getSeedRole(rolUsuario.SUPER_ADMIN)];
       await manager.save(superAdminUser);
     }
 
     const professorsToCreate = [
       {
+        nombre: 'Profesor Uno (Cocina Básica)',
         username: 'profesor1',
         email: 'profesor1@smarteconomat.com',
         cial: 'CIAL-11111',
       },
       {
+        nombre: 'Profesora Dos (Pastelería)',
         username: 'profesor2',
         email: 'profesor2@smarteconomat.com',
         cial: 'CIAL-22222',
       },
-    ];
-    if (process.env.NODE_ENV !== 'test') {
-      professorsToCreate.push({
+      {
+        nombre: 'Profesor Tres (Teoría Nutricional)',
         username: 'profesor3',
         email: 'profesor3@smarteconomat.com',
         cial: 'CIAL-33333',
-      });
-    }
+      },
+      {
+        nombre: 'Profesora Cuatro (Corte y Preparación)',
+        username: 'profesor4',
+        email: 'profesor4@smarteconomat.com',
+        cial: 'CIAL-44444',
+      },
+    ];
 
-    const aulas =
-      process.env.NODE_ENV === 'test' ? ['Aula A'] : ['Aula B', 'Aula C'];
+    const aulas = [
+      'Aula 101 - Informática',
+      'Aula 102 - Cocina Práctica',
+      'Aula 201 - Nutrición',
+      'Taller Múltiple Panadería',
+      'Laboratorio Ciencias Alimentarias',
+    ];
 
     for (const profData of professorsToCreate) {
       let profUser = await manager.findOne(Usuario, {
@@ -111,6 +138,7 @@ export const runSeeder = async (dataSource: DataSource) => {
 
       if (!profUser) {
         profUser = manager.create(Usuario, {
+          nombre: profData.nombre,
           username: profData.username,
           password: defaultPassword,
           email: profData.email,
@@ -118,6 +146,7 @@ export const runSeeder = async (dataSource: DataSource) => {
           status: UserStatus.ACTIVE,
           activo: true,
           roles: [getSeedRole(rolUsuario.PROFESOR)],
+          mustChangePassword: false,
         });
         await manager.save(profUser);
 
@@ -183,6 +212,7 @@ export const runSeeder = async (dataSource: DataSource) => {
                   UserStatus.INACTIVE,
                 ]);
           const studentUser = manager.create(Usuario, {
+            nombre: `${firstName} ${lastName}`,
             username,
             password: defaultPassword,
             email: studentEmail,
@@ -190,6 +220,9 @@ export const runSeeder = async (dataSource: DataSource) => {
             status: statusValue,
             activo: statusValue === UserStatus.ACTIVE,
             roles: [getSeedRole(rolUsuario.ALUMNO)],
+            mustChangePassword: faker.datatype.boolean(),
+            passwordResetToken: null,
+            passwordResetExpires: null,
           });
           await manager.save(studentUser);
 

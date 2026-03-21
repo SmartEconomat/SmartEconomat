@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { FindOptionsWhere, ILike, Repository } from 'typeorm';
+import { DataSource, FindOptionsWhere, ILike, Repository } from 'typeorm';
 import { Usuario } from '../usuario.entity/usuario.entity';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { buildFindManyOptions } from '../../../common/utils/typeorm-query.helper';
 import { Rol } from '../../roles/rol.entity/rol.entity';
 import { UserStatus, rolUsuario } from '../enums/usuario.enums';
+import { Profesor } from '../../profesor/profesor.entity/profesor.entity';
+import { Alumno } from '../../alumno/alumno.entity/alumno.entity';
 
 @Injectable()
 export class UsuarioRepository {
@@ -14,7 +16,9 @@ export class UsuarioRepository {
     @InjectRepository(Usuario)
     public readonly repo: Repository<Usuario>,
     @InjectRepository(Rol)
-    private readonly rolRepo: Repository<Rol>
+    private readonly rolRepo: Repository<Rol>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource
   ) {}
 
   private async resolveRolesForUserRole(role?: Usuario['rol']) {
@@ -124,6 +128,7 @@ export class UsuarioRepository {
         'pedidos',
         'recepciones',
         'roles',
+        'profesor',
         'alumno',
         'alumno.slot',
         'alumno.profesor',
@@ -166,10 +171,17 @@ export class UsuarioRepository {
     const usuario = await this.findById(id);
     if (!usuario) return null;
 
-    usuario.activo = false;
-    usuario.status = UserStatus.INACTIVE;
-    await this.repo.save(usuario);
+    if (usuario.profesor) {
+      await this.dataSource
+        .getRepository(Profesor)
+        .softRemove(usuario.profesor);
+    }
+    if (usuario.alumno) {
+      await this.dataSource.getRepository(Alumno).softRemove(usuario.alumno);
+    }
 
-    return this.findById(id);
+    await this.repo.softRemove(usuario);
+
+    return { id, deleted: true };
   }
 }

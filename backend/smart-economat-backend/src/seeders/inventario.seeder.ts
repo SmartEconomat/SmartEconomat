@@ -23,20 +23,48 @@ export const runSeeder = async (dataSource: DataSource) => {
     `TRUNCATE TABLE "ubicacion" RESTART IDENTITY CASCADE;`
   );
 
-  const nombresUbicaciones = [
-    'Almacen A',
-    'Frigorifico A',
-    'Bodega A',
-    'Almacen B',
-    'Frigorifico B',
-    'Bodega B',
+  const tiposUbicaciones = [
+    {
+      nombre: 'Almacén Seco General',
+      descripcion:
+        'Estanterías para productos estables y no perecederos a temperatura ambiente',
+    },
+    {
+      nombre: 'Cámara Frigorífica A (Lácteos/Vegetales)',
+      descripcion: 'Mantenimiento de refrigerado entre 2°C y 8°C',
+    },
+    {
+      nombre: 'Cámara Frigorífica B (Carnes)',
+      descripcion: 'Mantenimiento de refrigerado entre 0°C y 4°C',
+    },
+    {
+      nombre: 'Cámara de Congelación',
+      descripcion: 'Mantenimiento a -18°C para congelados de largo plazo',
+    },
+    {
+      nombre: 'Expositor Vitrina',
+      descripcion: 'Productos cara al público comercial, consumo inmediato',
+    },
+    {
+      nombre: 'Zona de Recepción / Descarga',
+      descripcion: 'Punto de tránsito temporal pendiende de reubicación',
+    },
+    {
+      nombre: 'Despensa de Limpieza',
+      descripcion: 'Productos no comestibles, químicos y papelería aislados',
+    },
+    {
+      nombre: 'Mermas y Devoluciones',
+      descripcion:
+        'Espacio de aislamiento para productos estropeados o pendientes de abono',
+    },
   ];
 
   const dbUbicaciones: Ubicacion[] = [];
-  for (const nombre of nombresUbicaciones) {
+  for (const tipo of tiposUbicaciones) {
     const u = ubicacionRepo.create({
-      nombre,
-      descripcion: `Seeder: ${nombre}`,
+      nombre: tipo.nombre,
+      descripcion: tipo.descripcion,
     });
     dbUbicaciones.push(await ubicacionRepo.save(u));
   }
@@ -51,16 +79,27 @@ export const runSeeder = async (dataSource: DataSource) => {
       min: 0,
       max: inventario.cantidadActual,
     });
-    inventario.cantidadMaxima = faker.number.int({
-      min: Math.max(inventario.cantidadMinima, inventario.cantidadActual) + 10,
-      max: 200,
-    });
     inventario.ubicacion = faker.helpers.arrayElement(dbUbicaciones);
-    inventario.fechaEntrada = faker.date.recent({ days: 90 });
-    inventario.fechaCaducidad = faker.date.soon({
-      days: faker.number.int({ min: 1, max: 365 }),
-      refDate: inventario.fechaEntrada,
-    });
+    inventario.fechaEntrada = faker.date.recent({ days: 120 });
+
+    if (faker.datatype.boolean(0.85)) {
+      inventario.fechaCaducidad = faker.date.soon({
+        days: faker.number.int({ min: 1, max: 365 }),
+        refDate: inventario.fechaEntrada,
+      });
+    } else {
+      inventario.fechaCaducidad = null;
+    }
+
+    if (faker.datatype.boolean(0.7)) {
+      inventario.cantidadMaxima = faker.number.int({
+        min:
+          Math.max(inventario.cantidadMinima, inventario.cantidadActual) + 10,
+        max: 500,
+      });
+    } else {
+      inventario.cantidadMaxima = null;
+    }
 
     inventarios.push(inventario);
   }

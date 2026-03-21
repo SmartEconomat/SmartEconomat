@@ -7,6 +7,7 @@ import { PedidoProducto } from '../modules/pedido/pedido-producto.entity/pedido-
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 import { EstadoProductoRecepcion } from '../modules/recepcion/enums/estado-producto.enum';
+import { EstadoRecepcion } from '../modules/recepcion/enums/estado-recepcion.enum';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
@@ -27,7 +28,11 @@ export const runSeeder = async (dataSource: DataSource) => {
     throw new Error(SeederI18nHelper.getError('NO_USUARIOS'));
   }
 
-  for (const pedido of pedidos) {
+  const todosLosEstados = Object.values(EstadoRecepcion);
+  const totalEstados = todosLosEstados.length;
+
+  for (let i = 0; i < pedidos.length; i++) {
+    const pedido = pedidos[i];
     const pedidoProductos = await pedidoProductoRepo.find({
       where: { pedido: { id: pedido.id } },
       relations: ['productoProveedor'],
@@ -35,12 +40,18 @@ export const runSeeder = async (dataSource: DataSource) => {
 
     if (pedidoProductos.length === 0) continue;
 
+    const estadoAsignado = todosLosEstados[i % totalEstados];
+    const tieneIncidencia = estadoAsignado === EstadoRecepcion.CON_INCIDENCIAS;
+
     const recepcion = recepcionRepo.create({
       usuario: faker.helpers.arrayElement(usuarios),
       fechaRecepcion: faker.date.recent({ days: 3 }),
-      observaciones: faker.datatype.boolean(0.4)
-        ? faker.lorem.sentence()
-        : undefined,
+      estado: estadoAsignado,
+      incidencia: tieneIncidencia,
+      observaciones:
+        faker.datatype.boolean(0.6) || tieneIncidencia
+          ? `Recepción importada por seeder en estado ${estadoAsignado}. ${faker.lorem.sentence()}`
+          : undefined,
     });
     const recepcionGuardada = await recepcionRepo.save(recepcion);
 
@@ -51,33 +62,59 @@ export const runSeeder = async (dataSource: DataSource) => {
     });
     await recepcionPedidoRepo.save(rp);
 
-    const numRecibir = faker.number.int({
-      min: 1,
-      max: pedidoProductos.length,
-    });
+    const recepcionesProd: RecepcionProducto[] = [];
+
+    const numMaxRecibir =
+      estadoAsignado === EstadoRecepcion.COMPLETADA
+        ? pedidoProductos.length
+        : faker.number.int({ min: 1, max: pedidoProductos.length });
+
     const seleccionados = faker.helpers.arrayElements(
       pedidoProductos,
-      numRecibir
+      numMaxRecibir
     );
 
-    const recepcionesProd: RecepcionProducto[] = [];
     for (const pp of seleccionados) {
       const cantidadPedida = Number(pp.cantidad);
-      const recibida = faker.number.int({
-        min: 1,
-        max: Math.floor(cantidadPedida),
-      });
+      let recibida = cantidadPedida;
+
+      if (estadoAsignado === EstadoRecepcion.PARCIAL) {
+        recibida = faker.number.int({
+          min: 1,
+          max: Math.floor(cantidadPedida),
+        });
+
+        if (recibida === cantidadPedida) recibida = Math.max(0, recibida - 1);
+      } else if (estadoAsignado === EstadoRecepcion.CON_INCIDENCIAS) {
+        recibida = faker.number.int({
+          min: 0,
+          max: Math.floor(cantidadPedida) + 3,
+        });
+      }
+
+      const isWeighedScaleRand = faker.datatype.boolean(0.2);
+      const estadoProdRand = faker.helpers.arrayElement(
+        Object.values(EstadoProductoRecepcion)
+      );
 
       recepcionesProd.push(
         recepcionProductoRepo.create({
           recepcion: recepcionGuardada,
           pedidoProducto: pp,
           cantidadRecibida: recibida,
-          observaciones: faker.datatype.boolean(0.3)
-            ? faker.lorem.sentence()
-            : undefined,
-          estadoProducto: EstadoProductoRecepcion.PERFECTO,
-          fechaRecepcion: faker.date.recent(),
+          observaciones:
+            recibida !== cantidadPedida ||
+            estadoProdRand !== EstadoProductoRecepcion.PERFECTO
+              ? faker.lorem.sentence()
+              : faker.datatype.boolean(0.3)
+                ? faker.lorem.sentence()
+                : undefined,
+          estadoProducto:
+            estadoAsignado === EstadoRecepcion.CON_INCIDENCIAS
+              ? estadoProdRand
+              : EstadoProductoRecepcion.PERFECTO,
+          fechaRecepcion: recepcionGuardada.fechaRecepcion,
+          isWeighedWithScale: isWeighedScaleRand,
         })
       );
     }

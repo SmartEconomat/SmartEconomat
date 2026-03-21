@@ -35,6 +35,12 @@ export class ProfesorController {
     return this.profesorService.createSlot(userId, dto);
   }
 
+  @Post('admin-slots')
+  @RequirePermissions('usuarios:listar')
+  async adminCreateSlot(@Body() dto: CreateSlotDto & { profesorId: string }) {
+    return this.profesorService.adminCreateSlot(dto);
+  }
+
   @Get('slots')
   @RequirePermissions('profesor:gestionar_slots')
   async getSlots(@GetUser('id') userId: string) {
@@ -76,6 +82,12 @@ export class ProfesorController {
   @RequirePermissions('profesor:gestionar_slots')
   async deleteSlot(@GetUser('id') userId: string, @Param('id') slotId: string) {
     return this.profesorService.deleteSlot(userId, slotId);
+  }
+
+  @Delete('admin-slots/:id')
+  @RequirePermissions('usuarios:listar')
+  async adminDeleteSlot(@Param('id') slotId: string) {
+    return this.profesorService.adminDeleteSlot(slotId);
   }
 
   @Patch('alumnos/:id/activate')

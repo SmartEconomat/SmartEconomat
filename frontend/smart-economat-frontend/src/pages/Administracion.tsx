@@ -98,6 +98,7 @@ const Administracion: React.FC = () => {
     aula: '',
     numeroClase: '',
     capacidad: '',
+    profesorId: '',
   });
   const [students, setStudents] = useState<Alumno[]>([]);
 
@@ -187,15 +188,34 @@ const Administracion: React.FC = () => {
     e.preventDefault();
     setIsSaving(true);
     try {
-      const res = await profesorService.createSlot({
+      const data = {
         aula: newSlot.aula.trim(),
         numeroClase: Number(newSlot.numeroClase),
         capacidad: Number(newSlot.capacidad),
-      });
+      };
+
+      const res =
+        isAdmin && newSlot.profesorId
+          ? await profesorService.adminCreateSlot({
+              ...data,
+              profesorId: newSlot.profesorId,
+            })
+          : await profesorService.createSlot(data);
 
       if (res.success) {
-        setSlots((prev) => [...prev, res.data]);
-        setNewSlot({ aula: '', numeroClase: '', capacidad: '' });
+        if (isAdmin && newSlot.profesorId) {
+          // Si lo crea un admin para otro, recargamos la lista total
+          const allSlotsRes = await profesorService.getAllSlots();
+          if (allSlotsRes.success) setAllSlots(allSlotsRes.data);
+        } else {
+          setSlots((prev) => [...prev, res.data]);
+        }
+        setNewSlot({
+          aula: '',
+          numeroClase: '',
+          capacidad: '',
+          profesorId: '',
+        });
         toast.success('Aula/Clase añadida con éxito');
       } else {
         toast.error(res.message);
@@ -207,12 +227,22 @@ const Administracion: React.FC = () => {
     }
   };
 
-  const handleDeleteSlot = async (id: string) => {
+  const handleDeleteSlot = async (id: string, isAdminView?: boolean) => {
+    if (!window.confirm('¿Seguro que quieres eliminar esta clase?')) return;
     try {
-      const res = await profesorService.deleteSlot(id);
+      const res = isAdminView
+        ? await profesorService.adminDeleteSlot(id)
+        : await profesorService.deleteSlot(id);
+
       if (res.success) {
-        setSlots((prev) => prev.filter((s) => s.id !== id));
+        if (isAdminView) {
+          setAllSlots((prev) => prev.filter((s) => s.id !== id));
+        } else {
+          setSlots((prev) => prev.filter((s) => s.id !== id));
+        }
         toast.success('Ubicación eliminada');
+      } else {
+        toast.error(res.message || 'Error al eliminar');
       }
     } catch {
       toast.error('No se pudo eliminar');

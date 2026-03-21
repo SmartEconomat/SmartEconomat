@@ -7,6 +7,8 @@ import { PedidoProducto } from '../modules/pedido/pedido-producto.entity/pedido-
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
 import { Proveedor } from '../modules/proveedor/proveedor.entity/proveedor.entity';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
+import { PurchaseBatch } from '../modules/pedido/purchase-batch.entity/purchase-batch.entity';
+import { EstadoLote } from '../modules/pedido/enums/estado-lote.enum';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
@@ -29,58 +31,92 @@ export const runSeeder = async (dataSource: DataSource) => {
     throw new Error(SeederI18nHelper.getError('NO_PRODUCTOS_PROVEEDOR'));
   }
 
-  for (let i = 0; i < (process.env.NODE_ENV === 'test' ? 2 : 8); i++) {
-    const randomProveedor = faker.helpers.arrayElement(proveedoresValidos);
-    const pedido = pedidoRepo.create({
-      usuario: faker.helpers.arrayElement(usuarios),
-      proveedor: randomProveedor,
-      fechaPedido: faker.date.recent({ days: 7 }),
-      fechaEntrega: faker.date.soon({ days: 14 }),
-      estado: faker.helpers.arrayElement(Object.values(EstadoPedido)),
-      costeTotal: 0,
+  const batchRepo = dataSource.getRepository(PurchaseBatch);
+
+  const allStates = Object.values(EstadoPedido);
+  const numBatches = process.env.NODE_ENV === 'test' ? 1 : 3;
+
+  for (let batchIdx = 0; batchIdx < numBatches; batchIdx++) {
+    const usuarioLote = faker.helpers.arrayElement(usuarios);
+
+    const batch = batchRepo.create({
+      usuario: usuarioLote,
+      observaciones: `Lote automático de pedidos #${batchIdx + 1}`,
+      estado: EstadoLote.PENDIENTE,
     });
+    const savedBatch = await batchRepo.save(batch);
 
-    if (pedido.estado === EstadoPedido.CANCELADO) {
-      pedido.motivoCancelacion = faker.lorem.sentence();
-    }
+    const pedidosMapear =
+      process.env.NODE_ENV === 'test'
+        ? allStates.slice(0, 2)
+        : batchIdx === 0
+          ? allStates
+          : faker.helpers.arrayElements(allStates, 3);
 
-    const numItems = faker.number.int({
-      min: 1,
-      max: Math.min(5, randomProveedor.productos.length),
-    });
-    const itemsSeleccionados = faker.helpers.arrayElements(
-      randomProveedor.productos,
-      numItems
-    );
+    const pedidosInsertar: Pedido[] = [];
 
-    let acumuladoTotal = 0;
-    const detallesPedido: PedidoProducto[] = [];
+    for (const estado of pedidosMapear) {
+      const randomProveedor = faker.helpers.arrayElement(proveedoresValidos);
+      const pedido = pedidoRepo.create({
+        usuario: usuarioLote,
+        proveedor: randomProveedor,
+        batch: savedBatch,
+        fechaPedido: faker.date.recent({ days: 7 }),
+        fechaEntrega: faker.date.soon({ days: 14 }),
+        estado: estado,
+        costeTotal: 0,
+      });
 
-    for (const pp of itemsSeleccionados) {
-      const cantidad = faker.number.int({ min: 1, max: 10 });
-      const precioUnitario =
-        pp.precioUnitario ||
-        parseFloat(faker.commerce.price({ min: 10, max: 500 }));
+      if (pedido.estado === EstadoPedido.CANCELADO) {
+        pedido.motivoCancelacion = faker.lorem.sentence();
+      }
 
-      acumuladoTotal += precioUnitario * cantidad;
+      if (pedido.estado === EstadoPedido.INCIDENCIA) {
+        pedido.motivoIncidencia = 'Discrepancias en la recepción visual.';
+      }
 
-      detallesPedido.push(
-        pedidoProductoRepo.create({
-          productoProveedor: pp,
-          cantidad: cantidad,
-          precioUnitario: precioUnitario,
-          observaciones: faker.datatype.boolean()
-            ? faker.lorem.sentence()
-            : undefined,
-        })
+      const numItems = faker.number.int({
+        min: 1,
+        max: Math.min(5, randomProveedor.productos.length),
+      });
+      const itemsSeleccionados = faker.helpers.arrayElements(
+        randomProveedor.productos,
+        numItems
       );
+
+      let acumuladoTotal = 0;
+      const detallesPedido: PedidoProducto[] = [];
+
+      for (const pp of itemsSeleccionados) {
+        const cantidad = faker.number.int({ min: 1, max: 10 });
+        const precioUnitario =
+          pp.precioUnitario ||
+          parseFloat(faker.commerce.price({ min: 10, max: 500 }));
+
+        acumuladoTotal += precioUnitario * cantidad;
+
+        detallesPedido.push(
+          pedidoProductoRepo.create({
+            productoProveedor: pp,
+            cantidad: cantidad,
+            precioUnitario: precioUnitario,
+            observaciones: faker.datatype.boolean()
+              ? faker.lorem.sentence()
+              : undefined,
+          })
+        );
+      }
+
+      pedido.pedidoProductos = detallesPedido as any;
+      pedido.costeTotal = parseFloat(acumuladoTotal.toFixed(2));
+      pedidosInsertar.push(pedido);
     }
 
-    pedido.pedidoProductos = detallesPedido as any;
-    pedido.costeTotal = parseFloat(acumuladoTotal.toFixed(2));
+    const savedPedidos = await pedidoRepo.save(pedidosInsertar);
 
-    await pedidoRepo.save(pedido);
+    savedBatch.estado = PurchaseBatch.calcularEstadoLote(savedPedidos);
+    await batchRepo.save(savedBatch);
   }
 
-  console.log(SeederI18nHelper.getSeederSuccess('pedidos'));
+  console.log(SeederI18nHelper.getSeederSuccess('pedidos y lotes'));
 };

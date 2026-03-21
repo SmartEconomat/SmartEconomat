@@ -38,10 +38,15 @@ interface ProfessorSlotsManagerProps {
   allProfesores?: ProfesorInfo[];
   isLoading: boolean;
   isSaving: boolean;
-  newSlot: { aula: string; numeroClase: string; capacidad: string };
+  newSlot: {
+    aula: string;
+    numeroClase: string;
+    capacidad: string;
+    profesorId?: string;
+  };
   onNewSlotChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onCreateSlot: (e: React.FormEvent) => void;
-  onDeleteSlot: (id: string) => void;
+  onDeleteSlot: (id: string, isAdminView?: boolean) => void;
   onUpdateSlot: (
     id: string,
     data: Partial<Omit<AlumnoSlot, 'id' | 'codigoSlot'>>
@@ -116,7 +121,9 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
     setEditingSlotId(null);
   };
 
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEditChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setEditData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
@@ -234,7 +241,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                         <IconButton
                           edge="end"
                           aria-label="delete"
-                          onClick={() => onDeleteSlot(slot.id)}
+                          onClick={() => onDeleteSlot(slot.id, showOwner)}
                           color="error"
                           size="small"
                           disabled={isSaving}
@@ -458,6 +465,40 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                 disabled={isSaving}
               />
             </Box>
+
+            {allProfesores.length > 0 && (
+              <Box flex={2} width="100%">
+                <FormControl fullWidth size="small">
+                  <InputLabel id="new-slot-profesor-label">Profesor</InputLabel>
+                  <Select
+                    labelId="new-slot-profesor-label"
+                    label="Profesor"
+                    name="profesorId"
+                    value={newSlot.profesorId || ''}
+                    onChange={(e) =>
+                      onNewSlotChange({
+                        target: {
+                          name: 'profesorId',
+                          value: e.target.value as string,
+                        },
+                      } as React.ChangeEvent<HTMLInputElement>)
+                    }
+                    disabled={isSaving}
+                    sx={{ bgcolor: 'background.paper' }}
+                  >
+                    <MenuItem value="">
+                      <em>-- Mío (Propio) --</em>
+                    </MenuItem>
+                    {allProfesores.map((p) => (
+                      <MenuItem key={p.id} value={p.id}>
+                        {p.nombre || p.username || p.email || p.id}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
+            )}
+
             <Button
               type="submit"
               variant="contained"
