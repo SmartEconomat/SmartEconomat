@@ -362,7 +362,7 @@ const Recepcion: React.FC = () => {
         EstadoPedido.PENDIENTE,
         EstadoPedido.EN_PROCESO,
         EstadoPedido.PARCIAL,
-      ]);
+      ].join(','));
       setPedidosDisponibles(resp.data as Pedido[]);
     } catch {
       setError('Error al cargar pedidos compatibles.');
