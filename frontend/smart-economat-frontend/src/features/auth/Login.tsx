@@ -180,9 +180,9 @@ export default function Login() {
     pendingAuth.current = { user };
     setPhase('login-exit');
     // Cuando el layout termina de salir, ejecutamos login() → navega al dashboard
-    setTimeout(() => {
+    setTimeout(async () => {
       if (pendingAuth.current) {
-        login(pendingAuth.current.user);
+        await login(pendingAuth.current.user);
       }
     }, EXIT_DURATION + 200);
   };

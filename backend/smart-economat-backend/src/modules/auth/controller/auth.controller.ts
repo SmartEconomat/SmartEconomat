@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   Patch,
+  UseInterceptors,
 } from '@nestjs/common';
 import type { Response as ExpressResponse } from 'express';
 import { AuthService } from '../service/auth.service';
@@ -18,6 +19,7 @@ import { Public } from '../../../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
+import { CookieInterceptor } from '../../../common/interceptors/cookie.interceptor';
 
 @Controller('auth')
 export class AuthController {
@@ -30,6 +32,7 @@ export class AuthController {
   }
 
   @Public()
+  @UseInterceptors(CookieInterceptor)
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(
@@ -40,16 +43,29 @@ export class AuthController {
     return this.authService.login(loginUserDto);
   }
 
+  @Public()
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  logout(@Response({ passthrough: true }) res: ExpressResponse) {
+    res.clearCookie('access_token');
+    return { message: 'Sesión cerrada exitosamente' };
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  getProfile(@Request() req: any) {
+  getProfile(
+    @Request() req: { user: { id: string; username: string; rol: string } }
+  ) {
     return req.user;
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch('change-password')
   @HttpCode(HttpStatus.OK)
-  async changePassword(@Request() req: any, @Body() dto: ChangePasswordDto) {
+  async changePassword(
+    @Request() req: { user: { id: string } },
+    @Body() dto: ChangePasswordDto
+  ) {
     await this.authService.changePassword(
       req.user.id,
       dto.currentPassword,

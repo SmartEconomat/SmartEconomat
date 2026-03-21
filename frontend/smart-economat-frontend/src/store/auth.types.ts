@@ -12,7 +12,7 @@ export interface AuthContextType {
   isAuthResolved: boolean;
   isSessionVerified: boolean;
   user: User | null;
-  login: (userData: User) => void;
+  login: (userData: User) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<User | null>;
 }
