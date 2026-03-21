@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { usePedidoDraft } from './usePedidoDraft';
-import * as pedidoDraftService from '../services/pedidoDraft.service';
+import { usePedidoDraft } from '../../src/hooks/usePedidoDraft';
+import * as pedidoDraftService from '../../src/services/pedidoDraft.service';
 
-vi.mock('../services/pedidoDraft.service');
+vi.mock('../../src/services/pedidoDraft.service');
 
 describe('usePedidoDraft', () => {
   const mockDraft = {

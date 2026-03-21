@@ -191,6 +191,9 @@ const Pedidos: React.FC = () => {
 
   useEffect(() => {
     // Solo auto-prompt si no lo hemos hecho ya en esta carga de página
+    // Y después de que la carga inicial del borrador haya terminado (o si ya sabemos que no hay)
+    if (isLoadingDraft) return;
+
     if (
       draft &&
       !isRecoveryOpen &&
@@ -199,8 +202,12 @@ const Pedidos: React.FC = () => {
     ) {
       setIsRecoveryOpen(true);
       hasPromptedRef.current = true;
+    } else if (!draft && !isLoadingDraft && !hasPromptedRef.current) {
+      // Si ya cargó y no hay borrador, marcamos como notificado para evitar que
+      // borradores nuevos creados en esta sesión disparen el popup.
+      hasPromptedRef.current = true;
     }
-  }, [draft, itemToEdit, isRecoveryOpen]);
+  }, [draft, itemToEdit, isRecoveryOpen, isLoadingDraft]);
 
   const handleValuesChange = useCallback(
     (vals: Record<string, unknown>) => {
@@ -624,6 +631,7 @@ const Pedidos: React.FC = () => {
                     setIsRecoveryOpen(true);
                   } else {
                     setItemToEdit({});
+                    hasPromptedRef.current = true;
                   }
                 },
                 id: 'btn-nuevo-pedido',

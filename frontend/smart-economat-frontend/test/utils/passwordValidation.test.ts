@@ -4,7 +4,7 @@ import {
   getPasswordValidationResult,
   isStrongPassword,
   STRONG_PASSWORD_MESSAGE,
-} from './passwordValidation';
+} from '../../src/utils/passwordValidation';
 
 describe('password validation', () => {
   it('accepts a strong password', () => {

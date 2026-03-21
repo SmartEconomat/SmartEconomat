@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { AUTH_EVENTS, eventBus } from './utils/eventBus';
+import { AUTH_EVENTS, eventBus } from '../src/utils/eventBus';
 
 describe('eventBus', () => {
   it('notifies registered listeners once per event emission', () => {

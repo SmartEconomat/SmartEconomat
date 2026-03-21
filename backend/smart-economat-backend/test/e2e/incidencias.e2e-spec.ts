@@ -112,7 +112,7 @@ describe('IncidenciaController (e2e)', () => {
         pedidoProductoId = pedidoProductos[0]?.id;
 
         const recepRes = await request(app.getHttpServer() as string)
-          .post('/api/v1/recepcion')
+          .post('/api/v1/recepciones')
           .set('Authorization', `Bearer ${adminToken}`)
           .send({
             pedidoIds: [pedidoId],

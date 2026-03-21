@@ -12,18 +12,28 @@ import {
   CardActions,
   Divider,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import DataTable, { Column } from '../components/ui/DataTable';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import DynamicFormModal, {
   DynamicField,
 } from '../components/ui/DynamicFormModal';
+import DetailModal, { DetailSection } from '../components/ui/DetailModal';
+import RecetaAlergenos from '../components/ui/RecetaAlergenos';
 import {
   Receta,
   DificultadReceta,
   TiempoReceta,
+  RecetaIngrediente,
 } from '../services/receta.types';
 import {
   fetchRecetas,
@@ -90,6 +100,43 @@ const recetaSchema: DynamicField[] = [
   },
 ];
 
+const RecetaIngredientesView: React.FC<{
+  ingredientes?: RecetaIngrediente[];
+}> = ({ ingredientes = [] }) => {
+  if (ingredientes.length === 0) {
+    return (
+      <Typography variant="body2" color="text.secondary">
+        Sin ingredientes registrados.
+      </Typography>
+    );
+  }
+
+  return (
+    <TableContainer component={Paper} variant="outlined">
+      <Table size="small">
+        <TableHead sx={{ bgcolor: 'action.hover' }}>
+          <TableRow>
+            <TableCell sx={{ fontWeight: 'bold' }}>Producto</TableCell>
+            <TableCell sx={{ fontWeight: 'bold', width: 100 }}>
+              Cantidad
+            </TableCell>
+            <TableCell sx={{ fontWeight: 'bold', width: 80 }}>Unidad</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {ingredientes.map((ing, i) => (
+            <TableRow key={ing.id || i}>
+              <TableCell>{ing.producto?.nombre ?? '—'}</TableCell>
+              <TableCell>{ing.cantidad}</TableCell>
+              <TableCell>{ing.unidad}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+};
+
 const Recetas: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -104,6 +151,7 @@ const Recetas: React.FC = () => {
   const [itemToEdit, setItemToEdit] = useState<Record<string, unknown> | null>(
     null
   );
+  const [itemToView, setItemToView] = useState<Receta | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const toast = useToast();
@@ -262,6 +310,14 @@ const Recetas: React.FC = () => {
 
   const renderActions = (row: Receta) => (
     <Stack direction="row" spacing={1} justifyContent="center">
+      <IconButton
+        color="info"
+        onClick={() => setItemToView(row)}
+        size="small"
+        aria-label="Ver detalles"
+      >
+        <VisibilityIcon fontSize="small" />
+      </IconButton>
       {canEdit && (
         <IconButton
           color="secondary"
@@ -284,6 +340,52 @@ const Recetas: React.FC = () => {
       )}
     </Stack>
   );
+
+  const viewSections: DetailSection[] = itemToView
+    ? [
+        {
+          title: 'Información',
+          columns: 3,
+          fields: [
+            {
+              label: 'Dificultad',
+              value: itemToView.dificultad ? (
+                <StatusChip
+                  status={itemToView.dificultad}
+                  size="small"
+                  variant="outlined"
+                />
+              ) : undefined,
+            },
+            { label: 'Franja de tiempo', value: itemToView.tiempo },
+            {
+              label: 'Tiempo de preparación',
+              value: itemToView.tiempoPreparacion,
+            },
+          ],
+        },
+        {
+          title: 'Instrucciones',
+          fields: [
+            {
+              label: 'Pasos de elaboración',
+              value: itemToView.instrucciones,
+              fullWidth: true,
+            },
+          ],
+        },
+        {
+          title: 'Ingredientes',
+          content: (
+            <RecetaIngredientesView ingredientes={itemToView.ingredientes} />
+          ),
+        },
+        {
+          title: 'Alérgenos detectados',
+          content: <RecetaAlergenos ingredientes={itemToView.ingredientes} />,
+        },
+      ]
+    : [];
 
   return (
     <Box>
@@ -467,6 +569,21 @@ const Recetas: React.FC = () => {
               ? '¿Estás seguro de que deseas guardar los cambios realizados en esta receta?'
               : '¿Estás seguro de que deseas añadir esta nueva receta al sistema?'
           }
+        />
+
+        <DetailModal
+          isOpen={!!itemToView}
+          onClose={() => setItemToView(null)}
+          title={itemToView?.nombre ?? ''}
+          subtitle={`${itemToView?.ingredientes?.length ?? 0} ingredientes`}
+          size="lg"
+          sections={viewSections}
+          onEdit={() => {
+            const receta = itemToView;
+            setItemToView(null);
+            if (receta) handleEditClick(receta);
+          }}
+          editLabel="Editar receta"
         />
       </Paper>
     </Box>
