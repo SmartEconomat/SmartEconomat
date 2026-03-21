@@ -65,11 +65,6 @@ const mapBackendToFrontend = (user: Record<string, unknown>): Usuario => {
   const isInactiveFromStatus = backendStatus === 'INACTIVE';
   const fallbackActivo = Boolean(user.activo);
 
-  const backendStatus = (user.status as string | undefined)?.toUpperCase();
-  const isActiveFromStatus = backendStatus === 'ACTIVE';
-  const isInactiveFromStatus = backendStatus === 'INACTIVE';
-  const fallbackActivo = Boolean(user.activo);
-
   return {
     id: (user.id as string | number) || 0,
     username: user.username as string,
