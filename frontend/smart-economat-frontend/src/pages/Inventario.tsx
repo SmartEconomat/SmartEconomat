@@ -439,6 +439,7 @@ const Inventario: React.FC = () => {
         }}
         searchPlaceholder="Buscar por producto, tipo, proveedor o ubicación..."
         searchId="search-inventario"
+        autoFocusSearch={true}
         totalItems={totalItems}
         totalItemsLabel="productos"
         primaryAction={

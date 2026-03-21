@@ -516,6 +516,7 @@ const Productos: React.FC = () => {
         }}
         searchPlaceholder="Buscar por nombre, marca, código de barras..."
         searchId="search-productos"
+        autoFocusSearch={true}
         totalItems={totalItems}
         totalItemsLabel="productos"
         primaryAction={

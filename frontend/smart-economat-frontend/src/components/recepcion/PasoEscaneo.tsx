@@ -44,7 +44,7 @@ interface PasoEscaneoProps {
   searchInputRef: React.RefObject<HTMLInputElement | null>;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  onSearch: () => void;
+  onSearch: (query?: string | unknown) => void;
   searching: boolean;
   isScaleSupported: boolean;
   isScaleConnected: boolean;
@@ -105,10 +105,7 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
 
   const handleBarcodeScan = (code: string) => {
     setSearchQuery(code);
-    // Usamos un pequeño timeout para asegurar que el estado se actualice antes de buscar
-    setTimeout(() => {
-      onSearch();
-    }, 100);
+    onSearch(code);
   };
 
   return (
@@ -137,6 +134,7 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
           <TextField
             inputRef={searchInputRef}
             fullWidth
+            autoFocus
             label="Escanear Código de Barras o ID"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}

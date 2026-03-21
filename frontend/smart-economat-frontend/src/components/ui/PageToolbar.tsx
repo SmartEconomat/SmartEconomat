@@ -68,6 +68,8 @@ export interface PageToolbarProps {
   onViewModeChange?: (mode: 'list' | 'grid') => void;
   /** Callback para escanear código de barras/QR */
   onScanBarcode?: () => void; // Added onScanBarcode prop
+  /** Si es true, enfoca automáticamente el campo de búsqueda */
+  autoFocusSearch?: boolean;
   /** Si es true, el toolbar se mantiene arriba al hacer scroll */
   sticky?: boolean;
 }
@@ -91,6 +93,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
   viewMode,
   onViewModeChange,
   onScanBarcode, // Added onScanBarcode to destructuring
+  autoFocusSearch = false,
   sticky = true,
 }) => {
   const { isMobile, isMobileOrTablet } = useBreakpoints();
@@ -212,6 +215,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                   value={searchValue}
                   onChange={(e) => onSearchChange(e.target.value)}
                   size="small"
+                  autoFocus={autoFocusSearch}
                   sx={{
                     minWidth: { xs: '100%', sm: 240, md: 400 },
                     flex: { xs: '1 1 100%', sm: '1000 1 auto' },
