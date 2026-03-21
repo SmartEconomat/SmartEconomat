@@ -6,7 +6,7 @@ import { baseFetch, ApiResponse, unwrapList } from './api.service';
  * El endpoint subyacente devolverá las entidades Recepcion con sus relaciones principales.
  */
 export async function fetchRecepciones(): Promise<unknown[]> {
-  const response = await baseFetch('/recepcion?limit=50');
+  const response = await baseFetch('/recepciones?limit=50');
   if (!response.ok) {
     throw new Error(
       `Error al obtener recepciones: ${response.status} ${response.statusText}`
@@ -23,7 +23,7 @@ export async function fetchRecepciones(): Promise<unknown[]> {
 export async function createRecepcion(
   payload: CreateRecepcionDto
 ): Promise<RecepcionResultado> {
-  const response = await baseFetch('/recepcion', {
+  const response = await baseFetch('/recepciones', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -53,7 +53,7 @@ export async function createRecepcion(
  * OJO: El backend actual probablemente impida esto si afecta inventario cerrado.
  */
 export async function deleteRecepcion(id: string): Promise<void> {
-  const response = await baseFetch(`/recepcion/${id}`, {
+  const response = await baseFetch(`/recepciones/${id}`, {
     method: 'DELETE',
   });
 

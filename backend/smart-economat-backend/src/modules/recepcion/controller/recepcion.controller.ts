@@ -33,7 +33,7 @@ import { PdfReportService } from '../service/pdf-report.service';
 import { RecepcionReportePdfDto } from '../dto/recepcion-reporte-pdf.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('recepcion')
+@Controller('recepciones')
 export class RecepcionController {
   constructor(
     private readonly recepcionService: RecepcionService,

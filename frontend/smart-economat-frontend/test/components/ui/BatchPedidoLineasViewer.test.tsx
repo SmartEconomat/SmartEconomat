@@ -1,11 +1,14 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import BatchPedidoLineasViewer from './BatchPedidoLineasViewer';
-import { EstadoPedido, PurchaseBatch } from '../../services/pedido.types';
-import * as apiService from '../../services/api.service';
+import BatchPedidoLineasViewer from '../../../src/components/ui/BatchPedidoLineasViewer';
+import {
+  EstadoPedido,
+  PurchaseBatch,
+} from '../../../src/services/pedido.types';
+import * as apiService from '../../../src/services/api.service';
 
-vi.mock('../../services/api.service');
-vi.mock('../../store/toast.hooks', () => ({
+vi.mock('../../../src/services/api.service');
+vi.mock('../../../src/store/toast.hooks', () => ({
   useToast: () => ({
     error: vi.fn(),
     success: vi.fn(),

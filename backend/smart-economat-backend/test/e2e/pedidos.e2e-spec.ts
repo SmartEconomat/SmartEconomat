@@ -233,7 +233,7 @@ describe('PedidoController (e2e)', () => {
       const pedido = await createPedido();
 
       await request(app.getHttpServer() as string)
-        .post('/api/v1/recepcion')
+        .post('/api/v1/recepciones')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           pedidoIds: [pedido.id],
