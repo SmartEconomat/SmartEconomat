@@ -1,5 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository, FindOptionsWhere, Not, ILike } from 'typeorm';
+import {
+  DataSource,
+  Repository,
+  FindOptionsWhere,
+  Not,
+  ILike,
+  In,
+} from 'typeorm';
 import { Pedido } from '../pedido.entity/pedido.entity';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
@@ -49,7 +56,14 @@ export class PedidoRepository extends Repository<Pedido> {
     const baseCondition: FindOptionsWhere<Pedido> = {};
     if (query.estado) {
       if (query.estado.startsWith('NOT_')) {
-        baseCondition.estado = Not(query.estado.replace('NOT_', '')) as any;
+        const val = query.estado.replace('NOT_', '');
+        if (val.includes(',')) {
+          baseCondition.estado = Not(In(val.split(','))) as any;
+        } else {
+          baseCondition.estado = Not(val) as any;
+        }
+      } else if (query.estado.includes(',')) {
+        baseCondition.estado = In(query.estado.split(',')) as any;
       } else {
         baseCondition.estado = query.estado as any;
       }

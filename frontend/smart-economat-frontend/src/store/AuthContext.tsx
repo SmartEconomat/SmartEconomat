@@ -17,27 +17,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const [isSessionVerified, setIsSessionVerified] = useState(false);
   const refreshPromiseRef = React.useRef<Promise<User | null> | null>(null);
 
-  const login = React.useCallback((userData: User) => {
-    refreshPromiseRef.current = null;
-    clearLegacySessionStorage();
-    setUser(userData);
-    setIsSessionVerified(true);
-    setIsAuthResolved(true);
-  }, []);
-
-  const logout = React.useCallback(async () => {
-    refreshPromiseRef.current = null;
-    clearLegacySessionStorage();
-    setUser(null);
-    setIsSessionVerified(false);
-    setIsAuthResolved(true);
-    try {
-      await authService.logout();
-    } catch {
-      return;
-    }
-  }, []);
-
   const refreshUser = React.useCallback(async () => {
     if (refreshPromiseRef.current) {
       return refreshPromiseRef.current;
@@ -69,6 +48,39 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     return refreshPromise;
   }, []);
 
+  const logout = React.useCallback(async () => {
+    refreshPromiseRef.current = null;
+    clearLegacySessionStorage();
+    setUser(null);
+    setIsSessionVerified(false);
+    setIsAuthResolved(true);
+    try {
+      await authService.logout();
+    } catch {
+      return;
+    }
+  }, []);
+
+  const login = React.useCallback(
+    async (userData: User) => {
+      refreshPromiseRef.current = null;
+      clearLegacySessionStorage();
+      setUser(userData);
+      setIsSessionVerified(true);
+      // No marcamos como resuelto aún, esperamos a tener el perfil completo
+      setIsAuthResolved(false);
+
+      try {
+        await refreshUser();
+      } catch (error) {
+        console.error('Error refreshing user after login:', error);
+        // Si falla el refresh detallado, al menos resolvemos con la data básica
+        setIsAuthResolved(true);
+      }
+    },
+    [refreshUser]
+  );
+
   useEffect(() => {
     void refreshUser();
   }, [refreshUser]);
@@ -79,10 +91,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     };
 
     eventBus.on(AUTH_EVENTS.UNAUTHORIZED, handleUnauthorized);
+    eventBus.on(AUTH_EVENTS.REFRESH_USER, refreshUser);
     return () => {
       eventBus.off(AUTH_EVENTS.UNAUTHORIZED, handleUnauthorized);
+      eventBus.off(AUTH_EVENTS.REFRESH_USER, refreshUser);
     };
-  }, [logout]);
+  }, [logout, refreshUser]);
 
   return (
     <AuthContext.Provider

@@ -358,11 +358,16 @@ const Recepcion: React.FC = () => {
   const loadPedidos = async () => {
     setLoadingPedidos(true);
     try {
-      const resp = await fetchPedidos(1, 50, '', [
-        EstadoPedido.PENDIENTE,
-        EstadoPedido.EN_PROCESO,
-        EstadoPedido.PARCIAL,
-      ].join(','));
+      const resp = await fetchPedidos(
+        1,
+        50,
+        '',
+        [
+          EstadoPedido.PENDIENTE,
+          EstadoPedido.EN_PROCESO,
+          EstadoPedido.PARCIAL,
+        ].join(',')
+      );
       setPedidosDisponibles(resp.data as Pedido[]);
     } catch {
       setError('Error al cargar pedidos compatibles.');
