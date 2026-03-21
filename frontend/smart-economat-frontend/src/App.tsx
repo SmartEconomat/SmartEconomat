@@ -11,13 +11,18 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import 'dayjs/locale/es';
 
+import { Provider } from 'react-redux';
+import { store } from './store';
+
 function App() {
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
-      <ThemeContextProvider>
-        <Main />
-      </ThemeContextProvider>
-    </LocalizationProvider>
+    <Provider store={store}>
+      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
+        <ThemeContextProvider>
+          <Main />
+        </ThemeContextProvider>
+      </LocalizationProvider>
+    </Provider>
   );
 }
 

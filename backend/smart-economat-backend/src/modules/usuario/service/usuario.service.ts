@@ -142,13 +142,7 @@ export class UsuarioService {
   }
 
   async remove(id: string) {
-    const usuario = await this.usuarioRepo.findById(id);
-    if (!usuario) return null;
-
-    usuario.activo = false;
-    await this.usuarioRepo.repo.save(usuario);
-
-    return this.usuarioRepo.findById(id);
+    return this.usuarioRepo.deleteUsuario(id);
   }
 
   async addAdditionalPermission(userId: string, permisoId: string) {

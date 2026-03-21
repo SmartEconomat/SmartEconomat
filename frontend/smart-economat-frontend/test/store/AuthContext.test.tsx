@@ -13,6 +13,16 @@ vi.mock('../../src/services/authService', () => ({
   },
 }));
 
+vi.mock('../../src/store/hooks', () => ({
+  useAppDispatch: vi.fn(() => vi.fn()),
+  useAppSelector: vi.fn(),
+}));
+
+vi.mock('../../src/store/slices/permissionsSlice', () => ({
+  setPermissions: vi.fn(),
+  resetPermissions: vi.fn(),
+}));
+
 const mockedAuthService = vi.mocked(authService);
 
 const AuthConsumer = () => {

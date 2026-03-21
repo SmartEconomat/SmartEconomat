@@ -14,6 +14,12 @@ import { LowercaseStringTransformer } from '../../../common/transformers/lowerca
 
 export class UpdateUsuarioDto {
   @IsOptional()
+  @IsString({
+    message: i18nValidationMessage('validation.EL_NOMBRE_DEBE_SER_UNA_CADENA'),
+  })
+  @MaxLength(150)
+  nombre?: string | null;
+  @IsOptional()
   @Transform((params) => TrimStringTransformer.transform(params))
   @IsString({
     message: i18nValidationMessage(

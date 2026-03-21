@@ -109,14 +109,13 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   let offProducts: OffProduct[] = [];
 
-  const isTestEnv = process.env.NODE_ENV === 'test';
-  const enableOffApi = !isTestEnv && process.env.OFF_API_ENABLED !== 'false';
+  const enableOffApi = true;
 
   if (enableOffApi) {
     console.log('Obteniendo productos de OpenFoodFacts...');
     try {
       const offResponse = await fetch(
-        'https://es.openfoodfacts.org/cgi/search.pl?action=process&sort_by=unique_scans_n&json=1&page_size=20',
+        'https://es.openfoodfacts.org/cgi/search.pl?action=process&sort_by=unique_scans_n&json=1&page_size=100',
         { signal: AbortSignal.timeout(60000) }
       );
 
@@ -137,10 +136,6 @@ export const runSeeder = async (dataSource: DataSource) => {
         error.message
       );
     }
-  } else if (isTestEnv) {
-    console.log(
-      '✔️ Modo test: usando productos ficticios (OpenFoodFacts deshabilitado)'
-    );
   }
 
   const productosDB = await productoRepo.find({ select: ['codigoBarras'] });
@@ -195,40 +190,7 @@ export const runSeeder = async (dataSource: DataSource) => {
     (producto as any)._alergenosTags = offProduct.allergens_tags || [];
     productos.push(producto);
 
-    if (productos.length >= 25) break;
-  }
-
-  if (productos.length === 0) {
-    console.warn(
-      'Usando datos ficticios como fallback (OpenFoodFacts no disponible).'
-    );
-    const { faker } = await import('@faker-js/faker');
-    const numProductos = 10;
-
-    for (let i = 0; i < numProductos; i++) {
-      const codigoBarras = faker.helpers.fromRegExp('[0-9]{13}');
-
-      if (codigosVistos.has(codigoBarras)) {
-        continue;
-      }
-      codigosVistos.add(codigoBarras);
-
-      const producto = productoRepo.create({
-        nombre: faker.commerce.productName().substring(0, 150),
-        marca: faker.commerce.productAdjective().substring(0, 100),
-        descripcion: faker.commerce.productDescription().substring(0, 500),
-        unidad: faker.helpers.enumValue(UnidadMedida),
-        fechaCaducidad: Math.random() > 0.7 ? faker.date.future() : undefined,
-        tipo: faker.helpers.enumValue(TipoProducto),
-        pathImg: `https://via.placeholder.com/640x480.png?text=${encodeURIComponent(faker.commerce.productName().slice(0, 20))}`,
-        contenido: parseFloat(
-          faker.commerce.price({ min: 1, max: 100, dec: 2 })
-        ),
-        codigoBarras,
-      });
-
-      productos.push(producto);
-    }
+    if (productos.length >= 100) break;
   }
 
   if (productos.length === 0) {
@@ -271,7 +233,7 @@ export const runSeeder = async (dataSource: DataSource) => {
     const alergenosMapeados = new Set<Alergeno>();
 
     for (const tag of baseAlergenosTags) {
-      const mapeado = mapAlergeno(tag);
+      const mapeado = mapAlergeno(tag) || mapAlergeno(tag.toLowerCase());
       if (mapeado) alergenosMapeados.add(mapeado);
     }
 

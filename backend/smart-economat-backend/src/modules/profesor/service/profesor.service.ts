@@ -121,6 +121,39 @@ export class ProfesorService {
     return this.slotRepo.save(slot);
   }
 
+  async adminCreateSlot(dto: CreateSlotDto & { profesorId: string }) {
+    const profesor = await this.profesorRepo.findOne({
+      where: { id: dto.profesorId },
+    });
+    if (!profesor) {
+      throw new NotFoundException('Profesor no encontrado');
+    }
+
+    const existingSlot = await this.slotRepo.findOne({
+      where: {
+        profesor: { id: profesor.id },
+        aula: dto.aula,
+        numeroClase: dto.numeroClase,
+      },
+    });
+
+    if (existingSlot) {
+      throw new ConflictException(I18nHelper.getError('DUPLICATE_ENTRY'));
+    }
+
+    const codigoSlot = `AL-${randomBytes(3).toString('hex').toUpperCase()}`;
+
+    const slot = this.slotRepo.create({
+      profesor,
+      aula: dto.aula,
+      numeroClase: dto.numeroClase,
+      capacidad: dto.capacidad ?? 1,
+      codigoSlot,
+    });
+
+    return this.slotRepo.save(slot);
+  }
+
   async updateSlot(userId: string, slotId: string, dto: UpdateSlotDto) {
     const profesor = await this.profesorRepo.findOne({
       where: { user: { id: userId } },
@@ -346,6 +379,49 @@ export class ProfesorService {
       slot.profesor = newProfesor;
     }
 
+    const nextAula = dto.aula !== undefined ? dto.aula : slot.aula;
+    const nextClase =
+      dto.numeroClase !== undefined ? dto.numeroClase : slot.numeroClase;
+    const nextProfesorId = slot.profesor?.id;
+
+    if (nextProfesorId) {
+      const existing = await this.slotRepo.findOne({
+        where: {
+          profesor: { id: nextProfesorId },
+          aula: nextAula,
+          numeroClase: nextClase,
+        },
+      });
+
+      if (existing && existing.id !== slotId) {
+        throw new ConflictException(I18nHelper.getError('DUPLICATE_ENTRY'));
+      }
+    }
+
+    Object.assign(slot, {
+      aula: nextAula,
+      numeroClase: nextClase,
+      capacidad: dto.capacidad !== undefined ? dto.capacidad : slot.capacidad,
+    });
+
     return this.slotRepo.save(slot);
+  }
+
+  async adminDeleteSlot(slotId: string) {
+    const slot = await this.slotRepo.findOne({
+      where: { id: slotId },
+      relations: ['alumnos'],
+    });
+
+    if (!slot) {
+      throw new NotFoundException(I18nHelper.getError('NOT_FOUND'));
+    }
+
+    if (slot.alumnos && slot.alumnos.length > 0) {
+      throw new ConflictException(I18nHelper.getError('SLOT_HAS_STUDENTS'));
+    }
+
+    await this.slotRepo.remove(slot);
+    return { message: I18nHelper.translate('success.DELETED') };
   }
 }

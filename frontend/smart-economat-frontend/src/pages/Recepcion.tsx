@@ -48,6 +48,7 @@ import PasoRevision from '../components/recepcion/PasoRevision';
 import PasoResultado from '../components/recepcion/PasoResultado';
 import NewProductModal from '../components/recepcion/NewProductModal';
 import WeightScaleModal from '../components/recepcion/WeightScaleModal';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
 import RecepcionDraftConflictDialog from '../components/recepcion/RecepcionDraftConflictDialog';
 import { useRecepcionDraft } from '../hooks/useRecepcionDraft';
 import { delay, serialService } from '../services/serial.service';
@@ -157,6 +158,7 @@ const Recepcion: React.FC = () => {
   const [searching, setSearching] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const [expandedPanel, setExpandedPanel] = useState<string | false>(false);
+  const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
 
   // Báscula Modal State
   const [weightModalOpen, setWeightModalOpen] = useState(false);
@@ -653,6 +655,15 @@ const Recepcion: React.FC = () => {
     if (field === 'cantidadRecibida') {
       const numValue = Number(value);
       finalValue = !isNaN(numValue) && numValue >= 0 ? numValue : 0;
+    } else if (
+      field === 'cantidadAlbaran' &&
+      typeof value === 'string' &&
+      value !== ''
+    ) {
+      const numValue = Number(value);
+      finalValue = !isNaN(numValue) && numValue >= 0 ? String(numValue) : '0';
+    } else if (field === 'cantidadAlbaran' && typeof value === 'number') {
+      finalValue = value >= 0 ? String(value) : '0';
     }
 
     setDraft((prevDraft) => {
@@ -1227,15 +1238,7 @@ const Recepcion: React.FC = () => {
           >
             <Button
               variant="outlined"
-              onClick={() => {
-                if (
-                  window.confirm(
-                    '¿Seguro que quieres borrar el borrador actual?'
-                  )
-                ) {
-                  void resetWizard();
-                }
-              }}
+              onClick={() => setIsDiscardDialogOpen(true)}
               color="secondary"
             >
               Descartar
@@ -1301,6 +1304,19 @@ const Recepcion: React.FC = () => {
         remoteDraft={conflict?.remoteDraft}
         onUseRemote={useRemoteDraft}
         onKeepLocal={keepLocalDraft}
+      />
+
+      <ConfirmDialog
+        isOpen={isDiscardDialogOpen}
+        onClose={() => setIsDiscardDialogOpen(false)}
+        onConfirm={() => {
+          setIsDiscardDialogOpen(false);
+          void resetWizard();
+        }}
+        title="Descartar recepción"
+        message="¿Estás seguro de que quieres borrar el borrador de recepción actual? Perderás todo el progreso no validado."
+        confirmText="Sí, descartar"
+        cancelText="Cancelar"
       />
 
       <Snackbar

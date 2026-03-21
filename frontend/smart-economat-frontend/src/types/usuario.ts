@@ -10,6 +10,7 @@ export interface Permiso {
 export interface Usuario {
   id: string | number;
   username: string;
+  nombre?: string | null;
   email: string;
   rol: string;
   estado: string;
