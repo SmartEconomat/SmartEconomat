@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -13,6 +13,9 @@ import {
   Divider,
   Chip,
   Stack,
+  Paper,
+  Collapse,
+  Button,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import InventoryIcon from '@mui/icons-material/InventoryOutlined';
@@ -20,14 +23,21 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCartOutlined';
 import LocalShippingIcon from '@mui/icons-material/LocalShippingOutlined';
 import WarningAmberIcon from '@mui/icons-material/WarningAmberOutlined';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Spinner from './Spinner';
 import StatusChip from './StatusChip';
 import { fetchProductos } from '../../services/producto.service';
 import { fetchPedidos } from '../../services/pedido.service';
 import { fetchProveedores } from '../../services/proveedor.service';
 import { Producto } from '../../services/producto.types';
-import { Pedido } from '../../services/pedido.types';
+import { EstadoPedido, Pedido } from '../../services/pedido.types';
 import { Proveedor } from '../../services/proveedor.types';
+import { fetchIncidencias } from '../../services/incidencia.service';
+import {
+  EstadoReclamacion,
+  Incidencia,
+  TipoDiferencia,
+} from '../../services/incidencia.types';
 
 export type SummaryModalType =
   | 'productos'
@@ -52,12 +62,38 @@ interface SummaryProducto extends Producto {
   };
 }
 
-type SummaryItem = SummaryProducto | Pedido | Proveedor;
+type SummaryItem = SummaryProducto | Pedido | Proveedor | Incidencia;
 
 const isPedido = (item: SummaryItem): item is Pedido => 'fechaPedido' in item;
 
 const isProveedor = (item: SummaryItem): item is Proveedor =>
   !('fechaPedido' in item) && 'contacto' in item;
+
+const isIncidencia = (item: SummaryItem): item is Incidencia =>
+  'pedidoId' in item && 'lineas' in item;
+
+const isSummaryProducto = (item: SummaryItem): item is SummaryProducto =>
+  !isPedido(item) && !isProveedor(item) && !isIncidencia(item);
+
+const SUMMARY_PAGE_SIZE = 50;
+const DASHBOARD_PENDING_ORDER_STATES = [
+  EstadoPedido.PENDIENTE,
+  EstadoPedido.EN_PROCESO,
+  EstadoPedido.INCIDENCIA,
+] as const;
+
+const tipoDiferenciaLabel: Record<TipoDiferencia, string> = {
+  FALTANTE: 'Faltante',
+  EXCESO: 'Exceso',
+  DEFECTUOSO: 'Defectuoso',
+};
+
+const estadoReclamacionLabel: Record<EstadoReclamacion, string> = {
+  PENDIENTE: 'Pendiente',
+  RECLAMADO: 'Reclamado',
+  ABONADO: 'Abonado',
+  REENVIADO: 'Reenviado',
+};
 
 const SummaryModal: React.FC<SummaryModalProps> = ({
   isOpen,
@@ -68,6 +104,91 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<SummaryItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [expandedIncidenciaId, setExpandedIncidenciaId] = useState<
+    string | null
+  >(null);
+
+  const fetchAllPedidosByEstado = useCallback(
+    async (estado: EstadoPedido): Promise<Pedido[]> => {
+      const firstPage = await fetchPedidos(1, SUMMARY_PAGE_SIZE, '', estado);
+      const allPedidos = [...firstPage.data];
+
+      if (firstPage.totalPages <= 1) {
+        return allPedidos;
+      }
+
+      const remainingPages = await Promise.all(
+        Array.from({ length: firstPage.totalPages - 1 }, (_, index) =>
+          fetchPedidos(index + 2, SUMMARY_PAGE_SIZE, '', estado)
+        )
+      );
+
+      remainingPages.forEach((page) => {
+        allPedidos.push(...page.data);
+      });
+
+      return allPedidos;
+    },
+    []
+  );
+
+  const fetchDashboardPendingPedidos = useCallback(async (): Promise<
+    Pedido[]
+  > => {
+    const pagesByStatus = await Promise.all(
+      DASHBOARD_PENDING_ORDER_STATES.map((estado) =>
+        fetchAllPedidosByEstado(estado)
+      )
+    );
+
+    const dedupedPedidos = new Map<string, Pedido>();
+    pagesByStatus.flat().forEach((pedido) => {
+      dedupedPedidos.set(pedido.id, pedido);
+    });
+
+    return Array.from(dedupedPedidos.values()).sort(
+      (left, right) =>
+        new Date(right.fechaPedido).getTime() -
+        new Date(left.fechaPedido).getTime()
+    );
+  }, [fetchAllPedidosByEstado]);
+
+  const fetchAllIncidencias = useCallback(async (): Promise<Incidencia[]> => {
+    const firstPage = await fetchIncidencias({
+      page: 1,
+      limit: SUMMARY_PAGE_SIZE,
+      resuelta: false,
+    });
+
+    const incidencias = [...firstPage.data];
+
+    if (firstPage.totalPages <= 1) {
+      return incidencias.sort(
+        (left, right) =>
+          new Date(right.createdAt).getTime() -
+          new Date(left.createdAt).getTime()
+      );
+    }
+
+    const remainingPages = await Promise.all(
+      Array.from({ length: firstPage.totalPages - 1 }, (_, index) =>
+        fetchIncidencias({
+          page: index + 2,
+          limit: SUMMARY_PAGE_SIZE,
+          resuelta: false,
+        })
+      )
+    );
+
+    remainingPages.forEach((page) => {
+      incidencias.push(...page.data);
+    });
+
+    return incidencias.sort(
+      (left, right) =>
+        new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
+    );
+  }, []);
 
   const loadData = useCallback(async () => {
     if (!type) {
@@ -77,17 +198,16 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
     setLoading(true);
     setError(null);
+    setExpandedIncidenciaId(null);
     try {
       let result: SummaryItem[] = [];
       if (type === 'productos') {
         const res = await fetchProductos(1, 50);
         result = res.data as SummaryProducto[];
       } else if (type === 'pedidos') {
-        const res = await fetchPedidos(1, 50);
-        result = res.data.filter((pedido) => pedido.estado === 'pendiente');
+        result = await fetchDashboardPendingPedidos();
       } else if (type === 'incidencias') {
-        const res = await fetchPedidos(1, 50);
-        result = res.data.filter((pedido) => pedido.estado === 'incidencia');
+        result = await fetchAllIncidencias();
       } else if (type === 'stock') {
         const res = await fetchProductos(1, 100);
         result = (res.data as SummaryProducto[]).filter(
@@ -105,7 +225,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [type]);
+  }, [fetchAllIncidencias, fetchDashboardPendingPedidos, type]);
 
   useEffect(() => {
     if (isOpen && type) {
@@ -133,12 +253,28 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
     }
   };
 
+  const pendingPedidoSummary = useMemo(() => {
+    if (type !== 'pedidos') {
+      return null;
+    }
+
+    const pedidos = data.filter(isPedido);
+    const byStatus = DASHBOARD_PENDING_ORDER_STATES.map((estado) => ({
+      estado,
+      total: pedidos.filter((pedido) => pedido.estado === estado).length,
+    })).filter((entry) => entry.total > 0);
+
+    return byStatus;
+  }, [data, type]);
+
+  const handleToggleIncidencia = (incidenciaId: string) => {
+    setExpandedIncidenciaId((current) =>
+      current === incidenciaId ? null : incidenciaId
+    );
+  };
+
   const renderItem = (item: SummaryItem) => {
-    if (
-      (type === 'productos' || type === 'stock') &&
-      !isPedido(item) &&
-      !isProveedor(item)
-    ) {
+    if ((type === 'productos' || type === 'stock') && isSummaryProducto(item)) {
       return (
         <ListItem key={item.id} sx={{ px: 0 }}>
           <ListItemIcon>
@@ -171,7 +307,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       );
     }
 
-    if ((type === 'pedidos' || type === 'incidencias') && isPedido(item)) {
+    if (type === 'pedidos' && isPedido(item)) {
       return (
         <ListItem key={item.id} sx={{ px: 0 }}>
           <ListItemIcon>
@@ -195,6 +331,149 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       );
     }
 
+    if (type === 'incidencias' && isIncidencia(item)) {
+      const isExpanded = expandedIncidenciaId === item.id;
+
+      return (
+        <Paper
+          key={item.id}
+          variant="outlined"
+          sx={{
+            p: 2,
+            borderRadius: 2,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+          }}
+        >
+          <Stack spacing={1.5}>
+            <Stack
+              direction="row"
+              spacing={2}
+              alignItems="flex-start"
+              justifyContent="space-between"
+            >
+              <Box>
+                <Typography variant="subtitle1" fontWeight={700}>
+                  Pedido #{item.pedidoId.substring(0, 8)}
+                </Typography>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  alignItems="center"
+                  flexWrap="wrap"
+                  useFlexGap
+                  sx={{ mt: 0.75 }}
+                >
+                  <Typography variant="caption" color="text.secondary">
+                    {new Date(item.createdAt).toLocaleDateString('es-ES')}
+                  </Typography>
+                  <Chip
+                    size="small"
+                    color={item.resuelta ? 'success' : 'warning'}
+                    label={item.resuelta ? 'Resuelta' : 'Pendiente'}
+                  />
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    label={`${item.lineas.length} línea${item.lineas.length !== 1 ? 's' : ''}`}
+                  />
+                </Stack>
+              </Box>
+
+              <Button
+                size="small"
+                variant="text"
+                onClick={() => handleToggleIncidencia(item.id)}
+                endIcon={
+                  <ExpandMoreIcon
+                    sx={{
+                      transform: isExpanded ? 'rotate(180deg)' : 'none',
+                      transition: 'transform 0.2s ease',
+                    }}
+                  />
+                }
+                sx={{ alignSelf: 'center' }}
+              >
+                {isExpanded ? 'Ocultar resumen' : 'Ver resumen'}
+              </Button>
+            </Stack>
+
+            <Typography variant="body2" color="text.secondary">
+              Proveedor: {item.proveedorNombre || 'Sin proveedor'}
+            </Typography>
+
+            <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+              <Stack spacing={1.5} sx={{ pt: 0.5 }}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Observaciones de recepción
+                  </Typography>
+                  <Typography variant="body2">
+                    {item.observacionesRecepcion ||
+                      'Sin observaciones registradas.'}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mb: 1 }}
+                  >
+                    Detalle de la incidencia
+                  </Typography>
+                  <Stack spacing={1}>
+                    {item.lineas.map((linea) => (
+                      <Paper
+                        key={linea.id}
+                        variant="outlined"
+                        sx={{ p: 1.5, borderRadius: 1.5 }}
+                      >
+                        <Stack spacing={0.75}>
+                          <Stack
+                            direction="row"
+                            justifyContent="space-between"
+                            alignItems="center"
+                            spacing={1}
+                          >
+                            <Typography variant="body2" fontWeight={700}>
+                              {linea.nombreProducto}
+                            </Typography>
+                            <Chip
+                              size="small"
+                              color="error"
+                              label={tipoDiferenciaLabel[linea.tipoDiferencia]}
+                            />
+                          </Stack>
+                          <Typography variant="caption" color="text.secondary">
+                            Esperado: {linea.cantidadEsperada} · Recibido:{' '}
+                            {linea.cantidadRecibida} · Diferencia:{' '}
+                            {linea.diferencia}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Reclamación:{' '}
+                            {estadoReclamacionLabel[linea.estadoReclamacion]}
+                          </Typography>
+                          {linea.observaciones ? (
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              Nota: {linea.observaciones}
+                            </Typography>
+                          ) : null}
+                        </Stack>
+                      </Paper>
+                    ))}
+                  </Stack>
+                </Box>
+              </Stack>
+            </Collapse>
+          </Stack>
+        </Paper>
+      );
+    }
+
     if (type === 'proveedores' && isProveedor(item)) {
       return (
         <ListItem key={item.id} sx={{ px: 0 }}>
@@ -205,7 +484,14 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             primary={item.nombre}
             secondary={item.contacto || 'Sin contacto'}
           />
-          <Chip label={item.categoria || 'General'} size="small" />
+          <Chip
+            label={
+              item.productos?.length
+                ? `${item.productos.length} producto${item.productos.length !== 1 ? 's' : ''}`
+                : 'Proveedor'
+            }
+            size="small"
+          />
         </ListItem>
       );
     }
@@ -251,14 +537,37 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             </Typography>
           </Box>
         ) : (
-          <List disablePadding>
-            {data.map((item, index) => (
-              <React.Fragment key={item.id || index}>
-                {renderItem(item)}
-                {index < data.length - 1 && <Divider component="li" />}
-              </React.Fragment>
-            ))}
-          </List>
+          <>
+            {pendingPedidoSummary && pendingPedidoSummary.length > 0 ? (
+              <Stack
+                direction="row"
+                spacing={1}
+                useFlexGap
+                flexWrap="wrap"
+                sx={{ mb: 2 }}
+              >
+                {pendingPedidoSummary.map((entry) => (
+                  <Chip
+                    key={entry.estado}
+                    size="small"
+                    variant="outlined"
+                    label={`${entry.total} ${entry.estado.replace('_', ' ')}`}
+                  />
+                ))}
+              </Stack>
+            ) : null}
+
+            <List disablePadding>
+              {data.map((item, index) => (
+                <React.Fragment key={item.id || index}>
+                  {renderItem(item)}
+                  {type !== 'incidencias' && index < data.length - 1 && (
+                    <Divider component="li" />
+                  )}
+                </React.Fragment>
+              ))}
+            </List>
+          </>
         )}
       </DialogContent>
     </Dialog>
