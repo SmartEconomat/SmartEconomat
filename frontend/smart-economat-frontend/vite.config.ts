@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import react from '@vitejs/plugin-react-swc';
 
 // Declaración mínima de process para que TypeScript resuelva process.env en este
 // archivo de configuración. @types/node está listado como devDependency y se
