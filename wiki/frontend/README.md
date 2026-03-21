@@ -49,6 +49,7 @@ Documentación detallada de los componentes clave, desglosando su construcción 
 Documentación de las vistas completas (componentes raíz de cada ruta).
 
 - [Auth (Login / Registro)](./paginas/Auth.md): Sistema completo de autenticación — diseño, animaciones, seguridad y flujos.
+- [Dashboard / Inicio](./paginas/Dashboard.md): Vista principal con KPIs, actividad reciente, acciones rápidas y permisos granulares.
 - [Usuarios](./paginas/Usuarios.md): Gestión de usuarios con tabla y operaciones CRUD.
 - [Productos](./paginas/Productos.md): Catálogo de productos — búsqueda, filtrado por categoría, CRUD completo con vistas lista/mosaico e integración de `PageToolbar`.
 - [Proveedores](./paginas/Proveedores.md): Listado de proveedores con detalle expandido y gestión de contactos.

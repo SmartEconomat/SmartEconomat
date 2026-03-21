@@ -176,6 +176,7 @@ const ResetPassword: React.FC = () => {
             <Button
               type="submit"
               isLoading={isLoading}
+              loadingText="Guardando..."
               disabled={isSubmitDisabled}
               sx={{ mt: 3 }}
             >

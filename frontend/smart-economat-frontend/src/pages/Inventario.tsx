@@ -692,7 +692,7 @@ const Inventario: React.FC = () => {
               variant="contained"
               disabled={isSaving || !isFormValid}
             >
-              Guardar
+              {isSaving ? 'Guardando...' : 'Guardar'}
             </Button>
           </DialogActions>
         </Dialog>

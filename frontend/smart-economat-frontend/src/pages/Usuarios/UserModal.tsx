@@ -8,6 +8,7 @@ import {
   CircularProgress,
   Box,
   Typography,
+  Skeleton,
   Accordion,
   AccordionSummary,
   AccordionDetails,
@@ -36,6 +37,8 @@ export interface UserModalProps {
   onSave: (data: CrearUsuarioDTO | ActualizarUsuarioDTO) => Promise<void>;
   userToEdit?: Usuario | null;
   isSaving?: boolean;
+  isLoadingRoles?: boolean;
+  isLoadingContent?: boolean;
   usuariosList: Usuario[];
   roleOptions: RolOption[];
 }
@@ -48,6 +51,8 @@ const UserModal: React.FC<UserModalProps> = ({
   onSave,
   userToEdit,
   isSaving = false,
+  isLoadingRoles = false,
+  isLoadingContent = false,
   usuariosList,
   roleOptions,
 }) => {
@@ -64,21 +69,96 @@ const UserModal: React.FC<UserModalProps> = ({
     []
   );
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  const [isLoadingPermissions, setIsLoadingPermissions] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const toast = useToast();
 
   useEffect(() => {
     const fetchPerms = async () => {
+      setIsLoadingPermissions(true);
       try {
         const resp = await usuarioService.getPermissions();
         setAvailablePermissions(resp.data);
       } catch (err) {
         console.error('Error fetching permissions', err);
+      } finally {
+        setIsLoadingPermissions(false);
       }
     };
     if (open) fetchPerms();
   }, [open]);
+
+  const shouldShowSkeleton =
+    isLoadingContent || isLoadingRoles || isLoadingPermissions;
+
+  const renderFieldSkeleton = (width: string = '100%') => (
+    <Box width={width}>
+      <Skeleton
+        variant="text"
+        width={140}
+        height={20}
+        animation="wave"
+        sx={{ mb: 0.5 }}
+      />
+      <Skeleton variant="rounded" height={56} animation="wave" />
+    </Box>
+  );
+
+  const renderPermissionAccordionSkeleton = (
+    index: number,
+    expanded = false
+  ) => (
+    <Box
+      key={`permission-skeleton-${index}`}
+      sx={{
+        mb: 1,
+        border: '1px solid',
+        borderColor: 'divider',
+        borderRadius: 1,
+        overflow: 'hidden',
+        bgcolor: 'background.paper',
+      }}
+    >
+      <Box
+        sx={{
+          px: 2,
+          py: 1.75,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <Skeleton variant="text" width="42%" height={28} animation="wave" />
+        <Skeleton variant="circular" width={20} height={20} animation="wave" />
+      </Box>
+
+      {expanded ? (
+        <Box sx={{ px: 2, pb: 2, pt: 0.5 }}>
+          <Grid container spacing={1.5}>
+            {Array.from({ length: 6 }).map((_, permissionIndex) => (
+              <Grid size={{ xs: 12, sm: 6 }} key={permissionIndex}>
+                <Box display="flex" alignItems="center" gap={1.25}>
+                  <Skeleton
+                    variant="rounded"
+                    width={18}
+                    height={18}
+                    animation="wave"
+                  />
+                  <Skeleton
+                    variant="text"
+                    width={permissionIndex % 2 === 0 ? '72%' : '58%'}
+                    height={22}
+                    animation="wave"
+                  />
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      ) : null}
+    </Box>
+  );
 
   useEffect(() => {
     if (open) {
@@ -258,174 +338,246 @@ const UserModal: React.FC<UserModalProps> = ({
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>
-        {isEditMode ? 'Editar Usuario' : 'Nuevo Usuario'}
+        {isEditMode || isLoadingContent ? 'Editar Usuario' : 'Nuevo Usuario'}
       </DialogTitle>
       <DialogContent dividers>
-        <Box display="flex" flexDirection="column" gap={2} sx={{ mt: 1 }}>
-          <InputField
-            id="user-username"
-            fullWidth
-            label="Nombre de Usuario"
-            value={formData.username}
-            onChange={handleChange('username')}
-            error={!!errors.username}
-            helperText={errors.username}
-            disabled={isSaving}
-            required
-          />
-          <InputField
-            id="user-nombre"
-            fullWidth
-            label="Nombre y Apellidos"
-            value={formData.nombre}
-            onChange={handleChange('nombre')}
-            error={!!errors.nombre}
-            helperText={errors.nombre}
-            disabled={isSaving}
-          />
-          {formData.rol !== 'Alumno' && (
-            <InputField
-              id="user-email"
-              fullWidth
-              label="Correo Electrónico"
-              type="email"
-              value={formData.email}
-              onChange={handleChange('email')}
-              error={!!errors.email}
-              helperText={errors.email}
-              disabled={isSaving}
-              required
-            />
-          )}
-          <Box
-            display="flex"
-            gap={2}
-            flexWrap="wrap"
-            alignItems="center"
-            justifyContent="space-between"
-          >
-            <Box flex={1} minWidth="200px">
-              <SelectField
-                fullWidth
-                id="user-role-select"
-                label="Rol"
-                value={formData.roleId}
-                onChange={handleChange('roleId')}
-                error={!!errors.roleId || !!errors.rol}
-                helperText={errors.roleId || errors.rol}
-                disabled={isSaving}
-                options={roleOptions.map((role) => ({
-                  value: role.id,
-                  label: role.nombre,
-                }))}
-              />
-            </Box>
+        {shouldShowSkeleton ? (
+          <Box display="flex" flexDirection="column" gap={2} sx={{ mt: 1 }}>
+            {renderFieldSkeleton()}
+            {renderFieldSkeleton()}
+            {renderFieldSkeleton()}
 
-            {isEditMode && (
+            <Box display="flex" gap={2} flexWrap="wrap">
+              <Box flex={1} minWidth="200px">
+                {renderFieldSkeleton()}
+              </Box>
               <Box
+                flex={1}
+                minWidth="200px"
                 display="flex"
                 flexDirection="column"
                 alignItems="center"
-                gap={0.5}
+                justifyContent="center"
+                gap={0.75}
+                pt={0.5}
               >
-                <Typography variant="caption" color="text.secondary">
-                  Estado de cuenta
-                </Typography>
-                <Button
-                  variant={
-                    formData.estado === 'Activo' ? 'contained' : 'outlined'
-                  }
-                  color={formData.estado === 'Activo' ? 'success' : 'error'}
-                  onClick={handleToggleStatus}
-                  disabled={isSaving}
-                  sx={{
-                    borderRadius: 2,
-                    minWidth: 140,
-                    textTransform: 'none',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  {formData.estado === 'Activo'
-                    ? 'CUENTA ACTIVA'
-                    : 'CUENTA SUSPENDIDA'}
-                </Button>
-                {errors.estado && (
-                  <Typography variant="caption" color="error">
-                    {errors.estado}
-                  </Typography>
-                )}
+                <Skeleton
+                  variant="text"
+                  width={110}
+                  height={18}
+                  animation="wave"
+                />
+                <Skeleton
+                  variant="rounded"
+                  width={140}
+                  height={36}
+                  animation="wave"
+                  sx={{ borderRadius: 2 }}
+                />
               </Box>
-            )}
+            </Box>
 
-            {!isEditMode && (
+            <Divider sx={{ my: 1 }} />
+
+            <Box>
+              <Skeleton
+                variant="text"
+                width={220}
+                height={26}
+                animation="wave"
+              />
+            </Box>
+
+            <Box sx={{ maxHeight: 300, overflowY: 'auto', pr: 1 }}>
+              {renderPermissionAccordionSkeleton(1)}
+              {renderPermissionAccordionSkeleton(2, true)}
+              {renderPermissionAccordionSkeleton(3)}
+            </Box>
+          </Box>
+        ) : (
+          <Box display="flex" flexDirection="column" gap={2} sx={{ mt: 1 }}>
+            <InputField
+              id="user-username"
+              fullWidth
+              label="Nombre de Usuario"
+              value={formData.username}
+              onChange={handleChange('username')}
+              error={!!errors.username}
+              helperText={errors.username}
+              disabled={isSaving}
+              required
+            />
+            <InputField
+              id="user-nombre"
+              fullWidth
+              label="Nombre y Apellidos"
+              value={formData.nombre}
+              onChange={handleChange('nombre')}
+              error={!!errors.nombre}
+              helperText={errors.nombre}
+              disabled={isSaving}
+            />
+            {formData.rol !== 'Alumno' && (
+              <InputField
+                id="user-email"
+                fullWidth
+                label="Correo Electrónico"
+                type="email"
+                value={formData.email}
+                onChange={handleChange('email')}
+                error={!!errors.email}
+                helperText={errors.email}
+                disabled={isSaving}
+                required
+              />
+            )}
+            <Box
+              display="flex"
+              gap={2}
+              flexWrap="wrap"
+              alignItems="center"
+              justifyContent="space-between"
+            >
               <Box flex={1} minWidth="200px">
                 <SelectField
                   fullWidth
-                  id="user-status-select"
-                  label="Estado Inicial"
-                  value={formData.estado}
-                  onChange={handleChange('estado')}
-                  error={!!errors.estado}
-                  helperText={errors.estado}
-                  disabled={isSaving}
-                  options={[
-                    { value: 'Activo', label: 'Activo' },
-                    { value: 'Inactivo', label: 'Inactivo' },
-                  ]}
+                  id="user-role-select"
+                  label="Rol"
+                  value={formData.roleId}
+                  onChange={handleChange('roleId')}
+                  error={!!errors.roleId || !!errors.rol}
+                  helperText={
+                    errors.roleId ||
+                    errors.rol ||
+                    (isLoadingRoles ? 'Cargando roles...' : undefined)
+                  }
+                  disabled={
+                    isSaving || isLoadingRoles || roleOptions.length === 0
+                  }
+                  options={
+                    roleOptions.length > 0
+                      ? roleOptions.map((role) => ({
+                          value: role.id,
+                          label: role.nombre,
+                        }))
+                      : [
+                          {
+                            value: '',
+                            label: isLoadingRoles
+                              ? 'Cargando...'
+                              : 'No hay roles disponibles',
+                          },
+                        ]
+                  }
                 />
               </Box>
-            )}
-          </Box>
 
-          <Divider sx={{ my: 1 }} />
-          <Typography variant="subtitle2" color="primary" gutterBottom>
-            Permisos Individuales Adicionales
-          </Typography>
-
-          <Box sx={{ maxHeight: 300, overflowY: 'auto', pr: 1 }}>
-            {Object.entries(groupedPermissions).map(([module, perms]) => (
-              <Accordion
-                key={module}
-                elevation={0}
-                variant="outlined"
-                sx={{ mb: 1 }}
-              >
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography
-                    variant="body2"
-                    sx={{ fontWeight: 'bold', textTransform: 'capitalize' }}
-                  >
-                    Módulo: {module}
+              {isEditMode && (
+                <Box
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="center"
+                  gap={0.5}
+                >
+                  <Typography variant="caption" color="text.secondary">
+                    Estado de cuenta
                   </Typography>
-                </AccordionSummary>
-                <AccordionDetails sx={{ py: 0 }}>
-                  <FormGroup>
-                    <Grid container spacing={1}>
-                      {perms.map((p) => (
-                        <Grid size={{ xs: 12, sm: 6 }} key={p.id}>
-                          <FormControlLabel
-                            control={
-                              <Checkbox
-                                size="small"
-                                checked={selectedPermissions.includes(p.id)}
-                                onChange={() => handleTogglePermission(p.id)}
-                              />
-                            }
-                            label={
-                              <Typography variant="caption">
-                                {p.nombre}
-                              </Typography>
-                            }
-                          />
-                        </Grid>
-                      ))}
-                    </Grid>
-                  </FormGroup>
-                </AccordionDetails>
-              </Accordion>
-            ))}
+                  <Button
+                    variant={
+                      formData.estado === 'Activo' ? 'contained' : 'outlined'
+                    }
+                    color={formData.estado === 'Activo' ? 'success' : 'error'}
+                    onClick={handleToggleStatus}
+                    disabled={isSaving}
+                    sx={{
+                      borderRadius: 2,
+                      minWidth: 140,
+                      textTransform: 'none',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    {formData.estado === 'Activo'
+                      ? 'CUENTA ACTIVA'
+                      : 'CUENTA SUSPENDIDA'}
+                  </Button>
+                  {errors.estado && (
+                    <Typography variant="caption" color="error">
+                      {errors.estado}
+                    </Typography>
+                  )}
+                </Box>
+              )}
+
+              {!isEditMode && (
+                <Box flex={1} minWidth="200px">
+                  <SelectField
+                    fullWidth
+                    id="user-status-select"
+                    label="Estado Inicial"
+                    value={formData.estado}
+                    onChange={handleChange('estado')}
+                    error={!!errors.estado}
+                    helperText={errors.estado}
+                    disabled={isSaving}
+                    options={[
+                      { value: 'Activo', label: 'Activo' },
+                      { value: 'Inactivo', label: 'Inactivo' },
+                    ]}
+                  />
+                </Box>
+              )}
+            </Box>
+
+            <Divider sx={{ my: 1 }} />
+            <Typography variant="subtitle2" color="primary" gutterBottom>
+              Permisos Individuales Adicionales
+            </Typography>
+
+            <Box sx={{ maxHeight: 300, overflowY: 'auto', pr: 1 }}>
+              {Object.entries(groupedPermissions).map(([module, perms]) => (
+                <Accordion
+                  key={module}
+                  elevation={0}
+                  variant="outlined"
+                  sx={{ mb: 1 }}
+                >
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 'bold', textTransform: 'capitalize' }}
+                    >
+                      Módulo: {module}
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails sx={{ py: 0 }}>
+                    <FormGroup>
+                      <Grid container spacing={1}>
+                        {perms.map((p) => (
+                          <Grid size={{ xs: 12, sm: 6 }} key={p.id}>
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  size="small"
+                                  checked={selectedPermissions.includes(p.id)}
+                                  onChange={() => handleTogglePermission(p.id)}
+                                />
+                              }
+                              label={
+                                <Typography variant="caption">
+                                  {p.nombre}
+                                </Typography>
+                              }
+                            />
+                          </Grid>
+                        ))}
+                      </Grid>
+                    </FormGroup>
+                  </AccordionDetails>
+                </Accordion>
+              ))}
+            </Box>
           </Box>
-        </Box>
+        )}
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={isSaving}>
@@ -435,13 +587,25 @@ const UserModal: React.FC<UserModalProps> = ({
           onClick={handleSave}
           variant="contained"
           color="primary"
-          disabled={isSaving}
-          sx={{ px: 4, borderRadius: 2 }}
+          disabled={isSaving || shouldShowSkeleton}
+          sx={{
+            px: 4,
+            borderRadius: 2,
+            color: 'common.white',
+            '& .MuiCircularProgress-root': {
+              color: 'common.white',
+            },
+            '&.Mui-disabled': {
+              color: 'common.white',
+              bgcolor: 'primary.main',
+              opacity: 0.82,
+            },
+          }}
           startIcon={
             isSaving ? <CircularProgress size={20} color="inherit" /> : null
           }
         >
-          {isSaving ? 'Guardando Cambios' : 'Guardar'}
+          {isSaving ? 'Guardando...' : 'Guardar'}
         </Button>
       </DialogActions>
     </Dialog>

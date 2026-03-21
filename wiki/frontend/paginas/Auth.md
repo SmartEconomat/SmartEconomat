@@ -118,18 +118,18 @@ La ruta `/login` es una **ruta pública** gestionada por `PublicRoute.tsx`:
 
 ### Verificación de sesión actual
 
-El flujo de auth frontend quedó endurecido para no confiar solo en datos persistidos en navegador:
+El flujo de auth frontend quedó endurecido para no confiar en datos persistidos ni en decodificación local del JWT:
 
-1. `login()` persiste `token` y `user` localmente.
-2. `AuthContext` valida localmente el JWT mediante `jwtUtils`.
-3. Si el token es utilizable, consulta `/api/v1/usuarios/perfil` para obtener el perfil real.
-4. El perfil devuelto por backend sustituye permisos y datos persistidos localmente.
+1. `POST /api/v1/auth/login` establece la cookie `access_token` desde backend.
+2. `LoginForm` solo conserva un usuario base temporal para la animación de salida y el flujo de UX.
+3. `AuthContext.login()` invoca `refreshUser()` y consulta `/api/v1/usuarios/perfil` para obtener el perfil real.
+4. El perfil devuelto por backend sustituye cualquier estado provisional del cliente.
 5. Hasta terminar esa verificación, las rutas protegidas muestran `Spinner` y no renderizan páginas internas.
 
 ### Consecuencias prácticas
 
-- Un JWT expirado o mal formado provoca `logout` y redirección a `/login`.
-- Un JWT cambiado manualmente en `localStorage` obliga a revalidar antes de abrir una vista protegida.
+- Una cookie inválida o expirada provoca `logout` y redirección a `/login`.
+- Modificar `localStorage` no concede acceso, porque la sesión no se reconstruye desde `token/user` persistidos.
 - Un array `permisos` alterado manualmente no concede acceso real, porque `AuthContext` lo sustituye con los permisos confirmados por backend.
 
 ---
@@ -145,7 +145,6 @@ El flujo de auth frontend quedó endurecido para no confiar solo en datos persis
 | `src/store/AuthContext.tsx` | Contexto de autenticación |
 | `src/routes/PublicRoute.tsx` | Guard de ruta pública |
 | `src/routes/ProtectedRoute.tsx` | Guard de sesión verificada y permiso por ruta |
-| `src/utils/auth/jwtUtils.ts` | Validación local mínima del JWT |
 | `src/layouts/AuthLayout.tsx` | Layout sin menú lateral |
 
 ---
@@ -154,6 +153,7 @@ El flujo de auth frontend quedó endurecido para no confiar solo en datos persis
 
 | Fecha | Cambio |
 |-------|--------|
+| 2026-03-21 | Eliminada la dependencia del `access_token` en cliente para montar sesión; login y cambio forzado de contraseña quedan gobernados por cookie + `GET /usuarios/perfil`. |
 | 2026-03-20 | Verificación obligatoria de sesión con `/usuarios/perfil`, revalidación si cambia el token y bloqueo de rutas por permiso en frontend. |
 | 2026-02-28 | Rediseño completo: paneles deslizantes con Elastic Wall Peel, carrusel en AuthSlide, icono animado, overlays de feedback para login y registro. |
 | Anterior | Formulario simple centrado con toggle básico. |

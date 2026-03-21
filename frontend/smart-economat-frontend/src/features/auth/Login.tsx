@@ -171,7 +171,7 @@ export default function Login() {
   // ─────────────────────────────────────────
 
   /**
-   * Recibe los datos del usuario y el token tras un login correcto.
+   * Recibe los datos base del usuario tras un login correcto.
    * Activa la animación de salida del layout y, cuando termina, navega al dashboard.
    *
    * @param {User} user - Datos del usuario.

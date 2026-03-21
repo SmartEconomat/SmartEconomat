@@ -128,6 +128,9 @@ Nota: Controlador protegido por `JwtAuthGuard`, `RolesGuard` y `PermisosGuard`.
 - GET /api/v1/usuarios
   - Descripción: Listar usuarios (paginated). Query params: ver `PaginationQueryDto`.
   - Query DTO: [src/common/dto/pagination-query.dto.ts](src/common/dto/pagination-query.dto.ts#L1)
+  - Contrato compartido actual: `page` mínimo `1`, `limit` por defecto `20` y máximo `50`, `order` en `ASC|DESC`, filtros soportados `searchTerm`, `rol`, `estado`, `sortBy`.
+  - Referencia frontend: `frontend/smart-economat-frontend/src/services/usuarioService.ts` centraliza este contrato con `BACKEND_DEFAULT_PAGE_LIMIT` y `BACKEND_MAX_PAGE_LIMIT` para evitar divergencias.
+  - Navegación interna relacionada: las notificaciones de usuarios pendientes abren `/administracion?tab=usuarios&estado=Inactivo&focus=pending-activation`, reutilizando el mismo contrato de filtros.
 
 - GET /api/v1/usuarios/:id
   - Parámetros path: `id` UUID v7
@@ -1217,11 +1220,11 @@ _\*Debe proporcionarse al menos `entityId` o `userId` para que la consulta sea v
 
 ## 📊 11. Dashboard y Control (`/dashboard`)
 
-KPIs y estadísticas consolidadas en tiempo real. _Requiere `JwtAuthGuard` y `RolesGuard`._
+KPIs y estadísticas consolidadas en tiempo real. _Requiere `JwtAuthGuard` y `PermisosGuard`._
 
-| Método | Endpoint           | Descripción                                    | Roles Permitidos            |
-| :----- | :----------------- | :--------------------------------------------- | :-------------------------- |
-| `GET`  | `/dashboard/stats` | Obtener KPIs generales y estadísticas actuales | `ADMINISTRADOR`, `PROFESOR` |
+| Método | Endpoint           | Descripción                                    | Permiso Requerido              |
+| :----- | :----------------- | :--------------------------------------------- | :----------------------------- |
+| `GET`  | `/dashboard/stats` | Obtener KPIs generales y estadísticas actuales | `dashboard:ver_estadisticas` |
 
 **Estructura de Respuesta (`DashboardStatsDto`):**
 
@@ -1248,6 +1251,13 @@ KPIs y estadísticas consolidadas en tiempo real. _Requiere `JwtAuthGuard` y `Ro
   "movimientosRecientes": [...] // Últimas transacciones registradas
 }
 ```
+
+**Notas de integración frontend:**
+
+- La ruta `/` del frontend consume este endpoint mediante `fetchDashboardStats()`.
+- El acceso visual al dashboard no sustituye los permisos de cada módulo: las tarjetas internas se muestran según permisos granulares adicionales (`productos:listar`, `incidencias:listar`, etc.).
+- La personalización de métricas visibles (`dashboard_visible_metrics`) es solo preferencia de UI; no modifica el payload devuelto ni la autorización del backend.
+
 
 ---
 

@@ -40,6 +40,30 @@ export class UsuarioRepository {
     return this.repo.save(this.repo.create(data));
   }
 
+  private resolveStatusFilter(
+    estado?: string
+  ): Pick<Usuario, 'status' | 'activo'> | null {
+    if (!estado) {
+      return null;
+    }
+
+    const normalized = estado.trim().toUpperCase();
+
+    if (normalized === 'ACTIVO' || normalized === 'ACTIVE') {
+      return { status: UserStatus.ACTIVE, activo: true };
+    }
+
+    if (normalized === 'INACTIVO' || normalized === 'INACTIVE') {
+      return { status: UserStatus.INACTIVE, activo: false };
+    }
+
+    if (normalized === 'BLOQUEADO' || normalized === 'BLOCKED') {
+      return { status: UserStatus.BLOCKED, activo: false };
+    }
+
+    return null;
+  }
+
   findAll(query: PaginationQueryDto, userRole?: string) {
     const page = query.page ?? 1;
     const paginationOptions = buildFindManyOptions<Usuario>(query, 'username');
@@ -72,6 +96,16 @@ export class UsuarioRepository {
     } else if (query.searchTerm) {
       const term = ILike(`%${query.searchTerm}%`);
       where = [{ username: term }, { email: term }, { nombre: term }];
+    }
+
+    const statusFilter = this.resolveStatusFilter(query.estado);
+
+    if (statusFilter) {
+      if (Array.isArray(where)) {
+        where = where.map((condition) => ({ ...condition, ...statusFilter }));
+      } else {
+        where = { ...where, ...statusFilter };
+      }
     }
 
     const isAdmin =
@@ -129,6 +163,8 @@ export class UsuarioRepository {
         'recepciones',
         'roles',
         'profesor',
+        'permisosAdicionales',
+        'permisosExcluidos',
         'alumno',
         'alumno.slot',
         'alumno.profesor',
