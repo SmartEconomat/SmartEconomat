@@ -546,194 +546,202 @@ const Home: React.FC = () => {
       >
         {/* Main Column: Stats + Quick Actions */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          {/* Header of section with customizer button */}
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-          >
-            <Typography
-              variant="overline"
-              color="text.secondary"
-              fontWeight={700}
-              sx={{ letterSpacing: 1.2 }}
-            >
-              ESTADÍSTICAS DEL ENONOMATO
-            </Typography>
-            <IconButton
-              size="small"
-              onClick={() => setIsCustomizerOpen(true)}
-              sx={{
-                color: 'text.secondary',
-                '&:hover': { color: 'primary.main' },
-              }}
-            >
-              <SettingsIcon fontSize="small" />
-            </IconButton>
-          </Box>
-
-          {/* Metrics Grid (KPIs) */}
-          <Box
+          {/* Estadísticas del Economato */}
+          <Paper
+            elevation={0}
             sx={{
-              display: 'grid',
-              gridTemplateColumns: {
-                xs: '1fr',
-                sm: 'repeat(2, 1fr)',
-                md: 'repeat(3, 1fr)',
-              },
-              gap: 3,
+              p: 3,
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 2,
             }}
           >
-            {/* Total Productos */}
-            {visibleMetrics.includes('productos') && canListProductos && (
-              <MetricCard
-                title="Total Productos"
-                value={isLoading ? <Spinner size="sm" /> : totalProductos}
-                icon={<InventoryIcon />}
-                color="primary"
-                onClick={() => openSummary('productos', 'Listado de Productos')}
-                subtitle={
-                  isLoading ? undefined : (
-                    <>
-                      {productosEsteMes > 0 ? (
-                        <TrendingUpIcon fontSize="small" color="success" />
-                      ) : (
-                        <TrendingFlatIcon fontSize="small" color="disabled" />
-                      )}
-                      {productosEsteMes > 0
-                        ? `+${productosEsteMes} agregado${productosEsteMes !== 1 ? 's' : ''} este mes`
-                        : 'Sin nuevos productos este mes'}
-                    </>
-                  )
-                }
-              />
-            )}
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              mb={3}
+            >
+              <Typography variant="h6" fontWeight={600}>
+                Estadísticas del Economato
+              </Typography>
+              <IconButton
+                size="small"
+                onClick={() => setIsCustomizerOpen(true)}
+                sx={{
+                  color: 'text.secondary',
+                  '&:hover': { color: 'primary.main' },
+                }}
+              >
+                <SettingsIcon fontSize="small" />
+              </IconButton>
+            </Box>
 
-            {/* Pedidos Pendientes */}
-            {visibleMetrics.includes('pedidos') && canListPedidos && (
-              <MetricCard
-                title="Pedidos Pendientes"
-                value={isLoading ? <Spinner size="sm" /> : pedidosPendientes}
-                icon={<ShoppingCartIcon />}
-                color="warning"
-                onClick={() => openSummary('pedidos', 'Pedidos Pendientes')}
-                subtitle={
-                  isLoading ? undefined : (
-                    <>
-                      <CalendarTodayIcon fontSize="small" />
-                      {pedidosProcesarHoy > 0
-                        ? `${pedidosProcesarHoy} recibido${pedidosProcesarHoy !== 1 ? 's' : ''} hoy`
-                        : 'Sin recepciones hoy'}
-                    </>
-                  )
-                }
-              />
-            )}
+            {/* Metrics Grid (KPIs) */}
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: '1fr',
+                  sm: 'repeat(2, 1fr)',
+                  md: 'repeat(3, 1fr)',
+                },
+                gap: 3,
+              }}
+            >
+              {/* Total Productos */}
+              {visibleMetrics.includes('productos') && canListProductos && (
+                <MetricCard
+                  title="Total Productos"
+                  value={isLoading ? <Spinner size="sm" /> : totalProductos}
+                  icon={<InventoryIcon />}
+                  color="primary"
+                  onClick={() =>
+                    openSummary('productos', 'Listado de Productos')
+                  }
+                  subtitle={
+                    isLoading ? undefined : (
+                      <>
+                        {productosEsteMes > 0 ? (
+                          <TrendingUpIcon fontSize="small" color="success" />
+                        ) : (
+                          <TrendingFlatIcon fontSize="small" color="disabled" />
+                        )}
+                        {productosEsteMes > 0
+                          ? `+${productosEsteMes} agregado${productosEsteMes !== 1 ? 's' : ''} este mes`
+                          : 'Sin nuevos productos este mes'}
+                      </>
+                    )
+                  }
+                />
+              )}
 
-            {/* Incidencias */}
-            {visibleMetrics.includes('incidencias') && canListIncidencias && (
-              <MetricCard
-                title="Incidencias"
-                value={isLoading ? <Spinner size="sm" /> : incidenciasCount}
-                icon={<ErrorOutlineIcon />}
-                color="error"
-                onClick={() =>
-                  openSummary('incidencias', 'Listado de Incidencias')
-                }
-                subtitle={
-                  isLoading ? undefined : (
-                    <>
-                      <ErrorOutlineIcon fontSize="small" />
-                      {incidenciasCount > 0
-                        ? `${incidenciasCount} pedido${incidenciasCount !== 1 ? 's' : ''} con incidencias`
-                        : 'Sin incidencias'}
-                    </>
-                  )
-                }
-              />
-            )}
+              {/* Pedidos Pendientes */}
+              {visibleMetrics.includes('pedidos') && canListPedidos && (
+                <MetricCard
+                  title="Pedidos Pendientes"
+                  value={isLoading ? <Spinner size="sm" /> : pedidosPendientes}
+                  icon={<ShoppingCartIcon />}
+                  color="warning"
+                  onClick={() => openSummary('pedidos', 'Pedidos Pendientes')}
+                  subtitle={
+                    isLoading ? undefined : (
+                      <>
+                        <CalendarTodayIcon fontSize="small" />
+                        {pedidosProcesarHoy > 0
+                          ? `${pedidosProcesarHoy} recibido${pedidosProcesarHoy !== 1 ? 's' : ''} hoy`
+                          : 'Sin recepciones hoy'}
+                      </>
+                    )
+                  }
+                />
+              )}
 
-            {/* Alertas de Stock */}
-            {visibleMetrics.includes('stock') && canListInventario && (
-              <MetricCard
-                title="Alertas de Stock"
-                value={isLoading ? <Spinner size="sm" /> : alertasStock}
-                icon={<WarningAmberIcon />}
-                color="error"
-                onClick={() => openSummary('stock', 'Productos Bajo Mínimo')}
-                subtitle={
-                  isLoading ? undefined : (
-                    <>
-                      <WarningAmberIcon
-                        fontSize="small"
-                        color={alertasStock > 0 ? 'error' : 'disabled'}
-                      />
-                      {alertasStock > 0
-                        ? `${alertasStock} ítem${alertasStock !== 1 ? 's' : ''} bajo mínimo`
-                        : 'Stock correcto'}
-                    </>
-                  )
-                }
-              />
-            )}
+              {/* Incidencias */}
+              {visibleMetrics.includes('incidencias') && canListIncidencias && (
+                <MetricCard
+                  title="Incidencias"
+                  value={isLoading ? <Spinner size="sm" /> : incidenciasCount}
+                  icon={<ErrorOutlineIcon />}
+                  color="error"
+                  onClick={() =>
+                    openSummary('incidencias', 'Listado de Incidencias')
+                  }
+                  subtitle={
+                    isLoading ? undefined : (
+                      <>
+                        <ErrorOutlineIcon fontSize="small" />
+                        {incidenciasCount > 0
+                          ? `${incidenciasCount} pedido${incidenciasCount !== 1 ? 's' : ''} con incidencias`
+                          : 'Sin incidencias'}
+                      </>
+                    )
+                  }
+                />
+              )}
 
-            {/* Proveedores */}
-            {visibleMetrics.includes('proveedores') && canListProveedores && (
-              <MetricCard
-                title="Proveedores"
-                value={isLoading ? <Spinner size="sm" /> : totalProveedores}
-                icon={<LocalShippingIcon />}
-                color="info"
-                onClick={() =>
-                  openSummary('proveedores', 'Nuestros Proveedores')
-                }
-                subtitle={
-                  isLoading ? undefined : (
-                    <>
-                      <CheckCircleOutlineIcon
-                        fontSize="small"
-                        color="success"
-                      />
-                      Catálogo actualizado
-                    </>
-                  )
-                }
-              />
-            )}
+              {/* Alertas de Stock */}
+              {visibleMetrics.includes('stock') && canListInventario && (
+                <MetricCard
+                  title="Alertas de Stock"
+                  value={isLoading ? <Spinner size="sm" /> : alertasStock}
+                  icon={<WarningAmberIcon />}
+                  color="error"
+                  onClick={() => openSummary('stock', 'Productos Bajo Mínimo')}
+                  subtitle={
+                    isLoading ? undefined : (
+                      <>
+                        <WarningAmberIcon
+                          fontSize="small"
+                          color={alertasStock > 0 ? 'error' : 'disabled'}
+                        />
+                        {alertasStock > 0
+                          ? `${alertasStock} ítem${alertasStock !== 1 ? 's' : ''} bajo mínimo`
+                          : 'Stock correcto'}
+                      </>
+                    )
+                  }
+                />
+              )}
 
-            {/* Card de Notificaciones */}
-            {visibleMetrics.includes('notificaciones') && (
-              <MetricCard
-                title="Notificaciones"
-                value={
-                  isLoading ? (
-                    <Spinner size="sm" />
-                  ) : (
-                    notifications.reduce((acc, curr) => acc + curr.count, 0)
-                  )
-                }
-                icon={<NotificationsIcon />}
-                color={
-                  notifications.some((n) => n.priority === 'urgent')
-                    ? 'error'
-                    : 'primary'
-                }
-                onClick={() =>
-                  eventBus.emit(UI_EVENTS.OPEN_NOTIFICATION_CENTER)
-                }
-                subtitle={
-                  isLoading ? undefined : (
-                    <>
-                      <NotificationsIcon fontSize="small" />
-                      {notifications.length > 0
-                        ? `${notifications.reduce((acc, curr) => acc + curr.count, 0)} acción${notifications.reduce((acc, curr) => acc + curr.count, 0) !== 1 ? 'es' : ''} pendiente${notifications.reduce((acc, curr) => acc + curr.count, 0) !== 1 ? 'es' : ''}`
-                        : 'Sin notificaciones'}
-                    </>
-                  )
-                }
-              />
-            )}
-          </Box>
+              {/* Proveedores */}
+              {visibleMetrics.includes('proveedores') && canListProveedores && (
+                <MetricCard
+                  title="Proveedores"
+                  value={isLoading ? <Spinner size="sm" /> : totalProveedores}
+                  icon={<LocalShippingIcon />}
+                  color="info"
+                  onClick={() =>
+                    openSummary('proveedores', 'Nuestros Proveedores')
+                  }
+                  subtitle={
+                    isLoading ? undefined : (
+                      <>
+                        <CheckCircleOutlineIcon
+                          fontSize="small"
+                          color="success"
+                        />
+                        Catálogo actualizado
+                      </>
+                    )
+                  }
+                />
+              )}
+
+              {/* Card de Notificaciones */}
+              {visibleMetrics.includes('notificaciones') && (
+                <MetricCard
+                  title="Notificaciones"
+                  value={
+                    isLoading ? (
+                      <Spinner size="sm" />
+                    ) : (
+                      notifications.reduce((acc, curr) => acc + curr.count, 0)
+                    )
+                  }
+                  icon={<NotificationsIcon />}
+                  color={
+                    notifications.some((n) => n.priority === 'urgent')
+                      ? 'error'
+                      : 'primary'
+                  }
+                  onClick={() =>
+                    eventBus.emit(UI_EVENTS.OPEN_NOTIFICATION_CENTER)
+                  }
+                  subtitle={
+                    isLoading ? undefined : (
+                      <>
+                        <NotificationsIcon fontSize="small" />
+                        {notifications.length > 0
+                          ? `${notifications.reduce((acc, curr) => acc + curr.count, 0)} acción${notifications.reduce((acc, curr) => acc + curr.count, 0) !== 1 ? 'es' : ''} pendiente${notifications.reduce((acc, curr) => acc + curr.count, 0) !== 1 ? 'es' : ''}`
+                          : 'Sin notificaciones'}
+                      </>
+                    )
+                  }
+                />
+              )}
+            </Box>
+          </Paper>
 
           {/* Acciones Rápidas */}
           <Paper
