@@ -10,9 +10,11 @@ import {
   HttpStatus,
   UseGuards,
   Req,
+  Res,
   UseInterceptors,
   UploadedFile,
 } from '@nestjs/common';
+import type { Response as ExpressResponse } from 'express';
 import {
   ApiTags,
   ApiOperation,
@@ -122,6 +124,24 @@ export class AlbaranController {
       message: 'Documento de albarán subido correctamente',
       data: albaran,
     };
+  }
+
+  /**
+   * Obtiene el archivo físico del albarán.
+   * Requiere permiso 'albaranes:ver' en lugar del general 'archivos:ver'.
+   */
+  @Get('documento/:filename')
+  @RequirePermissions('albaranes:ver')
+  @ApiOperation({
+    summary: 'Obtener documento de albarán',
+    description: 'Sirve el archivo físico del albarán (imagen o PDF).',
+  })
+  serveDocumento(
+    @Param('filename') filename: string,
+    @Res() res: ExpressResponse
+  ) {
+    const filePath = this.albaranService.getDocumentoPath(filename);
+    return res.sendFile(filePath);
   }
 
   @Get()
