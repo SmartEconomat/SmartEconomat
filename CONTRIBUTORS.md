@@ -67,7 +67,7 @@ Con **31 commits** y **8 PRs**, tenemos aquí a alguien que:
 | #2 | Alexis | **178** | 🔀 **21** | 25.18% | 💪 Activo |
 | #3 | Sergio | **95** | 🔀 **20** | 13.44% | 💪 Activo |
 | #4 | Maurizio | **53** | 🔀 **8** | 7.50% | 💪 Activo |
-| #5 | Guillermo | **31** | 🔀 **8** | 4.38% |  Necesita café |
+| #5 | Guillermo | **31** | 🔀 **8** | 4.38% | Necesita café |
 
 ---
 
@@ -96,6 +96,15 @@ Con **31 commits** y **8 PRs**, tenemos aquí a alguien que:
 
 **Guillermo**
 `█░░░░░░░░░░░░░░░░░░░` 31 commits | 8 PRs
+**Sergio**
+`█████░░░░░░░░░░░░░░░` 93 commits | 15 PRs
+
+**Maurizio**
+`██░░░░░░░░░░░░░░░░░░` 53 commits | 8 PRs
+
+**Guillermo**
+`█░░░░░░░░░░░░░░░░░░░` 31 commits | 6 PRs
+>>>>>>> 49e842a (Fix(dashboard): Disposición de elementos, cards interactivos, implementación de notificaciones)
 
 ---
 
