@@ -408,6 +408,7 @@
     "UUID_DE_LA_UBICACI_N_DE_ALMAC_N_DESTINO": "UUID de la ubicación de almacén destino para el lote producido"
   },
   "messages": {
+    "SESI_N_CERRADA_CORRECTAMENTE": "Sesión cerrada correctamente",
     "ALUMNO_ACTIVADO_CORRECTAMENTE": "Alumno activado correctamente",
     "ALUMNO_REGISTRADO_CON_XITO_ESPERANDO_ACT": "Alumno registrado con éxito. Esperando activación por el profesor.",
     "CONTRASE_A_CAMBIADA_CORRECTAMENTE": "Contraseña cambiada correctamente.",

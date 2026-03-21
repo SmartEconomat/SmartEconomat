@@ -8,16 +8,11 @@ import { authService } from '../services/authService';
 vi.mock('../services/authService', () => ({
   authService: {
     getCurrentUser: vi.fn(),
+    logout: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
 const mockedAuthService = vi.mocked(authService);
-
-const createToken = (payload: Record<string, unknown>) => {
-  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-  const body = btoa(JSON.stringify(payload));
-  return `${header}.${body}.signature`;
-};
 
 const AuthConsumer = () => {
   const { isAuthenticated, isAuthResolved, isSessionVerified, user } =
@@ -33,6 +28,16 @@ const AuthConsumer = () => {
   );
 };
 
+const RefreshConsumer = () => {
+  const { refreshUser } = useAuth();
+
+  React.useEffect(() => {
+    void refreshUser();
+  }, [refreshUser]);
+
+  return null;
+};
+
 describe('AuthProvider', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -43,8 +48,7 @@ describe('AuthProvider', () => {
     localStorage.clear();
   });
 
-  it('verifies the token with backend and replaces tampered stored permissions', async () => {
-    localStorage.setItem('token', createToken({ exp: 9999999999 }));
+  it('bootstraps the session from backend and ignores legacy stored permissions', async () => {
     localStorage.setItem(
       'user',
       JSON.stringify({
@@ -71,6 +75,7 @@ describe('AuthProvider', () => {
     );
 
     expect(screen.getByTestId('resolved')).toHaveTextContent('false');
+    expect(screen.getByTestId('authenticated')).toHaveTextContent('false');
 
     await waitFor(() => {
       expect(mockedAuthService.getCurrentUser).toHaveBeenCalledTimes(1);
@@ -82,8 +87,17 @@ describe('AuthProvider', () => {
     });
   });
 
-  it('logs out when backend rejects the stored token', async () => {
-    localStorage.setItem('token', createToken({ exp: 9999999999 }));
+  it('clears stored session when backend rejects the cookie session', async () => {
+    localStorage.setItem(
+      'user',
+      JSON.stringify({
+        id: 'user-1',
+        name: 'Stale User',
+        email: 'stale@example.com',
+        rol: 'ADMIN',
+        permisos: ['usuarios:listar'],
+      })
+    );
     mockedAuthService.getCurrentUser.mockRejectedValue(
       new Error('Unauthorized')
     );
@@ -95,9 +109,44 @@ describe('AuthProvider', () => {
     );
 
     await waitFor(() => {
+      expect(mockedAuthService.getCurrentUser).toHaveBeenCalledTimes(1);
       expect(screen.getByTestId('authenticated')).toHaveTextContent('false');
       expect(screen.getByTestId('verified')).toHaveTextContent('false');
-      expect(localStorage.getItem('token')).toBeNull();
+      expect(localStorage.getItem('user')).toBeNull();
+    });
+  });
+
+  it('deduplicates concurrent refreshes against the current user endpoint', async () => {
+    let releaseRequest: () => void = () => undefined;
+
+    mockedAuthService.getCurrentUser.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          releaseRequest = () =>
+            resolve({
+              id: 'user-1',
+              name: 'Valid User',
+              email: 'valid@example.com',
+              rol: 'ADMIN',
+              permisos: ['usuarios:listar'],
+            });
+        })
+    );
+
+    render(
+      <AuthProvider>
+        <RefreshConsumer />
+      </AuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(mockedAuthService.getCurrentUser).toHaveBeenCalledTimes(1);
+    });
+
+    releaseRequest();
+
+    await waitFor(() => {
+      expect(mockedAuthService.getCurrentUser).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -5,6 +5,7 @@ import type { Response } from 'express';
 import PDFDocument from 'pdfkit';
 import { Pedido } from '../../pedido/pedido.entity/pedido.entity';
 import { Incidencia } from '../../incidencia/incidencia.entity/incidencia.entity';
+import { Recepcion } from '../recepcion.entity/recepcion.entity';
 import {
   RecepcionReportePdfDto,
   TipoReportePdf,
@@ -100,6 +101,13 @@ export class PdfReportService {
   ): Promise<void> {
     if (filters.tipo === TipoReportePdf.PEDIDO) {
       await this.generatePedidoReport(filters, res);
+    } else if (filters.tipo === TipoReportePdf.RECEPCION) {
+      if (!filters.recepcionId) {
+        throw new BadRequestException(
+          'recepcionId es obligatorio para este tipo de reporte.'
+        );
+      }
+      await this.generateSingleRecepcionReport(filters.recepcionId, res);
     } else {
       await this.generateIncidenciasReport(filters, res);
     }
@@ -718,6 +726,154 @@ export class PdfReportService {
         });
         y = doc.y + 12;
       }
+
+      doc.end();
+    });
+  }
+
+  async generateSingleRecepcionReport(
+    recepcionId: string,
+    res: Response
+  ): Promise<void> {
+    const recepcion = await this.dataSource.getRepository(Recepcion).findOne({
+      where: { id: recepcionId },
+      relations: [
+        'usuario',
+        'receccionesPedidos.pedido.proveedor',
+        'recepcionProductos.pedidoProducto.productoProveedor.producto',
+        'recepcionProductos.pedidoProducto.productoProveedor.producto',
+        'recepcionProductos.incidencia',
+      ],
+    });
+
+    if (!recepcion) {
+      throw new BadRequestException('No se encontró la recepción indicada.');
+    }
+
+    await this.buildRecepcionPdf(recepcion, res);
+  }
+
+  private buildRecepcionPdf(
+    recepcion: Recepcion,
+    res: Response
+  ): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      const doc = new PDFDocument(this.docConfig);
+      let pageNum = 0;
+
+      doc.on('pageAdded', () => {
+        pageNum++;
+        const w = doc.page.width;
+        const h = doc.page.height;
+        doc
+          .font('Helvetica')
+          .fontSize(7)
+          .fillColor(C_GRAY)
+          .text(
+            `SmartEconomat — Comprobante de Recepción | Pág. ${pageNum} | ${new Date(recepcion.fechaRecepcion).toLocaleDateString('es-ES')}`,
+            MARGIN,
+            h - MARGIN - 10,
+            { width: w - MARGIN * 2, align: 'center' }
+          );
+      });
+
+      doc.on('end', resolve);
+      doc.on('error', reject);
+      doc.pipe(res);
+      doc.addPage();
+
+      const usableW = doc.page.width - MARGIN * 2;
+      const pageBottom = doc.page.height - MARGIN - 16;
+      let y = MARGIN;
+
+      doc.font('Helvetica-Bold').fontSize(FONT_TITLE).fillColor(C_BLUE_DARK);
+      doc.text('Comprobante de Recepción de Mercancía', MARGIN, y);
+      y = doc.y + 10;
+
+      doc.font('Helvetica').fontSize(FONT_BODY).fillColor(C_TEXT);
+      doc.text(`ID Recepción: ${recepcion.id}`, MARGIN, y);
+      doc.text(
+        `Fecha: ${new Date(recepcion.fechaRecepcion).toLocaleString('es-ES')}`,
+        MARGIN,
+        doc.y + 2
+      );
+      doc.text(
+        `Usuario: ${recepcion.usuario?.nombre || 'N/A'}`,
+        MARGIN,
+        doc.y + 2
+      );
+      doc.text(`Estado Final: ${recepcion.estado}`, MARGIN, doc.y + 2);
+      if (recepcion.observaciones) {
+        doc.text(
+          `Notas Generales: ${recepcion.observaciones}`,
+          MARGIN,
+          doc.y + 4,
+          { width: usableW }
+        );
+      }
+      y = doc.y + 15;
+
+      const colW = [
+        usableW * 0.35,
+        usableW * 0.15,
+        usableW * 0.15,
+        usableW * 0.15,
+        usableW * 0.2,
+      ];
+      const colHeaders = [
+        'Producto / Referencia',
+        'Cant. Recibida',
+        'Unidad',
+        'Estado',
+        'Incidencia',
+      ];
+
+      const drawHeader = (sy: number) => {
+        doc.rect(MARGIN, sy, usableW, HEADER_H).fill(C_BLUE);
+        doc.fillColor(C_WHITE).font('Helvetica-Bold').fontSize(FONT_HEADER);
+        let x = MARGIN;
+        colHeaders.forEach((h, i) => {
+          doc.text(h, x + 4, sy + 7, { width: colW[i] - 8, lineBreak: false });
+          x += colW[i];
+        });
+        return sy + HEADER_H;
+      };
+
+      y = drawHeader(y);
+
+      recepcion.recepcionProductos.forEach((rp, i) => {
+        if (y + ROW_H > pageBottom) {
+          doc.addPage();
+          y = drawHeader(MARGIN);
+        }
+
+        if (i % 2 === 0)
+          doc.rect(MARGIN, y, usableW, ROW_H).fill(C_ROW_ALT_BLUE);
+        doc.fillColor(C_TEXT).font('Helvetica').fontSize(FONT_BODY);
+
+        const prodName =
+          rp.pedidoProducto?.productoProveedor?.producto?.nombre ||
+          'Producto Desconocido';
+        const vals = [
+          prodName,
+          rp.cantidadRecibida.toString(),
+          rp.pedidoProducto?.productoProveedor?.producto?.unidad || '-',
+          rp.estadoProducto,
+          rp.incidencia ? 'SÍ' : 'NO',
+        ];
+
+        let x = MARGIN;
+        vals.forEach((v, idx) => {
+          doc.text(v, x + 4, y + 5, {
+            width: colW[idx] - 8,
+            lineBreak: false,
+            ellipsis: true,
+          });
+          x += colW[idx];
+        });
+        doc.rect(MARGIN, y, usableW, ROW_H).stroke(C_BORDER);
+        y += ROW_H;
+      });
 
       doc.end();
     });

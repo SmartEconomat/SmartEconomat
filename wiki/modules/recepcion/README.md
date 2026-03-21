@@ -1,7 +1,7 @@
 # 📦 Recepción de Productos — SmartEconomat
 
 > Módulo de Recepción para la Escuela de Cocina.  
-> Trazabilidad alimentaria completa: lotes, inventario FEFO, incidencias automáticas.
+> Trazabilidad alimentaria completa: entradas de stock, incidencias automáticas y persistencia de borradores.
 
 ---
 
@@ -9,24 +9,22 @@
 
 | # | Fichero | Contenido |
 |---|---------|-----------|
-| 1 | [01-dominio-y-backend.md](./01-dominio-y-backend.md) | Análisis DDD, Aggregate Roots... |
-| 2 | [02-frontend.md](./02-frontend.md) | Formulario wizard, estado local, validaciones... |
-| 3 | [03-diagramas.md](./03-diagramas.md) | UML clases, casos de uso, secuencia **FE** + secuencia **BE**... |
-| 4 | [arquitectura-ui.md](./arquitectura-ui.md) | Detalle de fraccionamiento de la UI de React de Recepcion.tsx en componentes pequeños. |
+| 1 | [arquitectura-ui.md](./arquitectura-ui.md) | Detalle de fraccionamiento de la UI de React de Recepcion.tsx en componentes pequeños. |
+| 2 | [recepcion-masiva.md](./recepcion-masiva.md) | Documentación sobre recepión masiva/pedidose elásticos. |
 
 ---
 
 ## ⚡ Flujo Resumido
 
 ```
-[Frontend]  Wizard 3 pasos → 1 POST atómico
-                                    │
-               ┌────────────────────┘
+[Frontend]  Wizard 4 pasos (Borrador persistente) → 1 POST atómico
+                                     │
+               ┌─────────────────────┘
                │ Transacción ACID (backend)
                ├── ① INSERT recepcion
                ├── ② INSERT recepcion_pedido[]   (vínculos N:M)
                ├── ③ INSERT recepcion_producto[]  (líneas con cotejo)
-               │── ④ INSERT inventario[]          AUTO — lote FEFO
+               │── ④ INSERT inventario[]          AUTO — Entrada de stock
                │── ⑤ INSERT movimiento[]          AUTO — ENTRADA
                │── ⑥ INSERT incidencia[]          AUTO — si hay diferencias
                └── ⑦ UPDATE pedido.estado         AUTO — RECIBIDO / INCIDENCIA
@@ -34,8 +32,9 @@
 
 ## 🔑 Principios de Diseño
 
-- **Una sola llamada**: el frontend construye todo el payload y lo envía con un único POST.
-- **Trazabilidad automática**: inventario, movimientos e incidencias se generan en la misma transacción, sin acción adicional del usuario.
-- **Recepciones parciales**: un pedido puede recepcionarse en N entregas; permanece EN_PROCESO hasta completarse.
-- **Incidencias automáticas**: si `cantidad_recibida ≠ cantidad_pedida`, el backend crea una `Incidencia` con snapshot JSONB inmutable de las diferencias.
-- **FEFO**: cada línea aceptada crea un registro de `Inventario` propio con `fecha_caducidad`, ordenado para consumo FEFO (First Expired, First Out).
+- **Borrador Persistente (Auto-save)**: El frontend sincroniza el estado de la recepción con el servidor en tiempo real. Al recargar la página, se recupera el punto exacto donde lo dejó el usuario (excepto si finaliza).
+- **Una sola llamada**: El frontend construye todo el payload y lo envía con un único POST.
+- **Trazabilidad automática**: Inventario, movimientos e incidencias se generan en la misma transacción, sin acción adicional del usuario.
+- **Comprobante PDF**: Generación instantánea de reporte PDF al finalizar, detallando lo recibido y posibles incidencias.
+- **Recepciones parciales**: Un pedido puede recepcionarse en varias entregas; permanece EN_PROCESO hasta completarse.
+- **Gestión de Stock**: Cada línea aceptada crea un registro de `Inventario` y genera un `Movimiento` de entrada asociado.

@@ -13,7 +13,7 @@ src/
 ├── layouts/           # Estructuras de página (MainLayout, AuthLayout).
 ├── pages/             # Componentes de página (Vistas que contienen la mayor parte de la cohesión lógica).
 ├── routes/            # Configuración de enrutamiento (AppRouter, Guards).
-├── services/          # Comunicación con APIs y lógica de procesamiento de datos (Axios).
+├── services/          # Comunicación con APIs y lógica de procesamiento de datos (Fetch + wrappers compartidos).
 │   └── *.types.ts     # Definiciones de tipos específicas de cada servicio.
 ├── store/             # Gestión de estado global (Context API).
 │   ├── AuthContext.tsx
@@ -46,7 +46,7 @@ Seguimos tres pilares fundamentales para mantener el código limpio:
 
 ### Módulos Principales (Features)
 
-1. **Autenticación (`src/features/auth`)**: Gestión de login, registros vinculados, recuperación de contraseña y persistencia de sesión verificada.
+1. **Autenticación (`src/features/auth`)**: Gestión de login, registros vinculados, recuperación de contraseña y sesión verificada gobernada por backend.
 2. **Productos y Catálogo**: Gestión de fichas técnicas y códigos de barras.
 3. **Pedidos y Recepciones**: Flujos de compra y entrada de stock masiva/multi-pedido.
 4. **Inventario y Ubicaciones**: Control físico de stock FEFO y trazabilidad.
@@ -55,27 +55,43 @@ Seguimos tres pilares fundamentales para mantener el código limpio:
 
 ## Gestión de Estado (`src/store`)
 Utilizamos Context API para el estado global:
--   **AuthContext:** Gestiona el usuario autenticado, la verificación del JWT con backend y los permisos vigentes de la sesión.
+-   **AuthContext:** Gestiona el usuario autenticado, la verificación de sesión con backend y los permisos vigentes de la sesión.
 -   **ThemeContext:** Controla el tema de la aplicación.
 -   **ToastContext:** Gestiona las notificaciones globales del sistema.
 
 ### Flujo actual de autenticación y sesión
 
-El frontend ya no confía en `localStorage` como fuente final de permisos o validez de sesión.
+El frontend funciona ahora en modo **cookie-first**. La fuente real de sesión y permisos está en el backend, no en `localStorage`.
 
-1. **Persistencia local**: se conservan `token` y `user` para recuperar estado tras refresco.
-2. **Validación mínima del JWT**: `src/utils/auth/jwtUtils.ts` comprueba formato y expiración (`exp`).
-3. **Verificación obligatoria con backend**: si hay un token utilizable, `AuthContext` llama a `authService.getCurrentUser()` contra `GET /api/v1/usuarios/perfil`.
-4. **Sincronización de permisos**: los permisos devueltos por backend sustituyen cualquier valor previamente persistido en cliente.
-5. **Estados explícitos**: `AuthContext` expone `isAuthResolved`, `isSessionVerified` y `verifiedToken` para diferenciar entre sesión pendiente, sesión verificada y último token confirmado por servidor.
-6. **Cierre defensivo**: si el token es inválido, expira, cambia en `localStorage` o backend responde `401`, la sesión se limpia y el usuario vuelve a `/login`.
+1. **Login**: `POST /api/v1/auth/login` devuelve `access_token` y el backend lo persiste en una cookie `httpOnly` llamada `access_token`.
+2. **Bootstrap de app**: `AuthContext` llama a `authService.getCurrentUser()` contra `GET /api/v1/usuarios/perfil` al montar la aplicación.
+3. **Sesión en memoria**: el objeto `user` vive en memoria React (`Context API`) y se reconstruye tras recarga a partir de la cookie válida.
+4. **Sincronización de permisos**: los permisos efectivos se recalculan siempre en backend y sustituyen cualquier estado previo del cliente.
+5. **Cierre de sesión**: `POST /api/v1/auth/logout` limpia la cookie desde backend y el cliente reinicia su estado en memoria.
+6. **401 global**: `baseFetch` emite `AUTH_UNAUTHORIZED`; `AuthContext` captura ese evento y fuerza cierre de sesión limpio.
+
+### Qué sí queda en `localStorage`
+
+- `rememberedUser`: solo para autocompletar el identificador de login cuando el usuario marca “Recordarme”.
+
+### Qué ya no se usa para sesión
+
+- `token`
+- `user`
+- comparaciones locales de expiración JWT para decidir acceso a rutas privadas
 
 ### Protección de rutas
 
 - **`PublicRoute`** mantiene fuera de `/login` a usuarios con sesión ya verificada.
-- **`ProtectedRoute`** valida presencia de token, validez local del JWT, sesión verificada por backend y permiso requerido por ruta.
+- **`ProtectedRoute`** espera a que `AuthContext` resuelva la sesión real con backend y luego valida el permiso requerido por ruta.
 - **`AppRouter`** envuelve las rutas definidas en `menuConfig` con `ProtectedRoute requiredPermission={item.permiso}` para bloquear navegación directa por URL.
-- **Revalidación de token**: si el token actual difiere de `verifiedToken`, la vista protegida muestra un `Spinner` y fuerza una nueva verificación antes de renderizar contenido.
+- **Resolución inicial**: mientras `isAuthResolved` es `false`, tanto rutas públicas como privadas muestran `Spinner` para evitar parpadeos o redirecciones incorrectas.
+
+### Transporte HTTP
+
+- `src/services/api.service.ts` usa `fetch` con `credentials: 'include'` para enviar la cookie de sesión.
+- El frontend ya no inyecta `Authorization: Bearer ...` desde almacenamiento local para funcionamiento normal.
+- El backend mantiene soporte dual (`cookie` y `Bearer`) por compatibilidad, pero el flujo recomendado es el basado en cookie segura.
 
 
 ## Navegación y Estilo

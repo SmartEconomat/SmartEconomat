@@ -35,6 +35,10 @@ const AppRouter: React.FC = () => {
           {/* Protected Routes (Dashboard) */}
           <Route element={<ProtectedRoute />}>
             <Route element={<MainLayout />}>
+              <Route
+                path="/recepcion"
+                element={<Navigate to="/recepciones" replace />}
+              />
               {menuItems.map((item) => (
                 <Route
                   key={item.path}

@@ -481,7 +481,7 @@ const Home: React.FC = () => {
                     title="Registrar Recepción"
                     icon={<AddCircleOutlineIcon fontSize="small" />}
                     color="success"
-                    onClick={() => navigate('/recepcion')}
+                    onClick={() => navigate('/recepciones')}
                   />
                 </Box>
               )}

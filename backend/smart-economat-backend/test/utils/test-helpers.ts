@@ -12,10 +12,6 @@ import { getTestApp } from '../setup/test-app';
  * @author SmartEconomat Team
  */
 
-// ============================================================================
-// TIPOS
-// ============================================================================
-
 export interface LoginCredentials {
   email: string;
   password: string;
@@ -25,10 +21,6 @@ export interface AuthTokens {
   access_token: string;
   refresh_token?: string;
 }
-
-// ============================================================================
-// CREDENCIALES POR DEFECTO
-// ============================================================================
 
 export const DEFAULT_CREDENTIALS = {
   admin: {
@@ -40,10 +32,6 @@ export const DEFAULT_CREDENTIALS = {
     password: 'SmartEconomat2026!',
   },
 };
-
-// ============================================================================
-// HELPERS DE AUTENTICACIÓN
-// ============================================================================
 
 /**
  * Realiza login y obtiene el token de acceso.
@@ -58,8 +46,13 @@ export async function loginAndGetToken(
 ): Promise<string> {
   const response = await request(app.getHttpServer())
     .post('/api/v1/auth/login')
-    .send(credentials)
-    .expect(200);
+    .send(credentials);
+
+  if (response.status !== 200) {
+    console.error('LOGIN ERROR RESPONSE:', response.body);
+  }
+
+  expect(response.status).toBe(200);
 
   return response.body.data.access_token;
 }
@@ -129,10 +122,6 @@ export async function createAuthenticatedClient(
   };
 }
 
-// ============================================================================
-// HELPERS DE APP
-// ============================================================================
-
 /**
  * Obtiene la aplicación de test y el token de admin.
  * Útil para simplificar el setup de tests.
@@ -161,10 +150,6 @@ export async function setupTestWithTokens() {
   };
 }
 
-// ============================================================================
-// HELPERS DE DATOS DE TEST
-// ============================================================================
-
 /**
  * Genera un nombre único para tests.
  * Útil para evitar colisiones en tests paralelos.
@@ -185,10 +170,6 @@ export function generateUniqueName(prefix: string = 'Test'): string {
 export function generateUniqueEmail(prefix: string = 'test'): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}@test.com`;
 }
-
-// ============================================================================
-// HELPERS DE ASSERTIONS
-// ============================================================================
 
 /**
  * Verifica que una respuesta tenga el formato estándar de la API.
@@ -235,10 +216,6 @@ export function expectPaginatedResponse(response: any) {
   expect(Array.isArray(response.body.data.data)).toBe(true);
 }
 
-// ============================================================================
-// HELPERS DE WAIT/DELAY
-// ============================================================================
-
 /**
  * Espera un tiempo determinado.
  * Útil para tests que requieren delays (usar con moderación).
@@ -248,10 +225,6 @@ export function expectPaginatedResponse(response: any) {
 export function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
-
-// ============================================================================
-// HELPERS DE CLEANUP
-// ============================================================================
 
 /**
  * Elimina un recurso de forma segura.
@@ -270,7 +243,5 @@ export async function safeDelete(
     await request(app.getHttpServer())
       .delete(url)
       .set('Authorization', `Bearer ${token}`);
-  } catch {
-    // Ignorar errores (recurso no existe o ya fue eliminado)
-  }
+  } catch {}
 }

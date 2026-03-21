@@ -33,23 +33,7 @@ import {
 async function runSeedersSilently(
   runAllSeeders: () => Promise<void>
 ): Promise<void> {
-  if (process.env.NODE_ENV !== 'test') {
-    await runAllSeeders();
-    return;
-  }
-
-  const originalLog = console.log;
-  const originalWarn = console.warn;
-
-  console.log = () => undefined;
-  console.warn = () => undefined;
-
-  try {
-    await runAllSeeders();
-  } finally {
-    console.log = originalLog;
-    console.warn = originalWarn;
-  }
+  await runAllSeeders();
 }
 
 export async function seedTestDatabase(): Promise<DataSource> {

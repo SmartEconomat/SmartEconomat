@@ -24,7 +24,7 @@ export class UsuarioRol {
   /**
    * Fecha en que se asignó el rol al usuario
    */
-  @CreateDateColumn({ type: 'timestamp', name: 'asignado_en' })
+  @CreateDateColumn({ type: 'timestamptz', name: 'asignado_en' })
   asignadoEn!: Date;
 
   /**

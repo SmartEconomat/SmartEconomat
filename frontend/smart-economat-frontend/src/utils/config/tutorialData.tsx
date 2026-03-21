@@ -48,7 +48,7 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
       },
     ],
   },
-  '/recepcion': {
+  '/recepciones': {
     steps: [
       {
         icon: (
