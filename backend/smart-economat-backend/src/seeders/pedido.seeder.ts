@@ -47,7 +47,7 @@ export const runSeeder = async (context: SeedContext) => {
         productos: [],
       });
     }
-    ppsGroupedByProv.get(pp.proveedor.id).productos.push(pp);
+    ppsGroupedByProv.get(pp.proveedor.id)!.productos.push(pp);
   }
 
   const proveedoresValidos: ProveedorConProductos[] = Array.from(

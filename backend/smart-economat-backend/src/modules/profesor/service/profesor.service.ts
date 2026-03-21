@@ -315,8 +315,8 @@ export class ProfesorService {
 
     alumno.user.password = provisionalPassword;
     alumno.user.mustChangePassword = true;
-    alumno.user.passwordResetToken = null;
-    alumno.user.passwordResetExpires = null;
+    alumno.user.resetPasswordOtp = null;
+    alumno.user.resetPasswordOtpExpires = null;
 
     await this.dataSource.getRepository(Usuario).save(alumno.user);
 
