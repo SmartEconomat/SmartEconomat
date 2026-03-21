@@ -9,16 +9,6 @@ import {
 } from '../types/usuario';
 import { ApiError, baseFetch, parseApiResponse } from './api.service';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
-
-const getHeaders = () => {
-  const token = localStorage.getItem('token');
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-};
-
 const DEFAULT_TEMP_PASSWORD = 'Temp1234!';
 
 // Mapeo temporal para adaptar el formato del frontend al backend
@@ -143,22 +133,27 @@ export const usuarioService = {
       if (sortBy) params.set('sortBy', sortBy);
       if (sortOrder) params.set('order', sortOrder.toUpperCase());
 
-      const response = await fetch(`${API_URL}/usuarios?${params.toString()}`, {
-        headers: getHeaders(),
-      });
+      const response = await baseFetch(`/usuarios?${params.toString()}`);
+      const result = await parseApiResponse<Record<string, unknown>>(
+        response,
+        'Error al obtener usuarios'
+      );
+      const payload = result.data as
+        | {
+            data?: unknown[];
+            total?: number;
+            page?: number;
+            limit?: number;
+            totalPages?: number;
+          }
+        | unknown[];
 
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-
-      const result = await response.json();
-      const payload = result.data;
-
-      const rawList: unknown[] = Array.isArray(payload?.data)
-        ? payload.data
-        : Array.isArray(payload)
-          ? payload
-          : [];
+      const rawList: unknown[] =
+        !Array.isArray(payload) && Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(payload)
+            ? payload
+            : [];
 
       const mappedData = (rawList as Record<string, unknown>[]).map(
         mapBackendToFrontend
@@ -167,10 +162,12 @@ export const usuarioService = {
       return {
         data: mappedData,
         status: response.status,
-        total: payload?.total ?? mappedData.length,
-        page: payload?.page ?? page,
-        pageSize: payload?.limit ?? limit,
-        totalPages: payload?.totalPages ?? 1,
+        total: !Array.isArray(payload)
+          ? (payload?.total ?? mappedData.length)
+          : mappedData.length,
+        page: !Array.isArray(payload) ? (payload?.page ?? page) : page,
+        pageSize: !Array.isArray(payload) ? (payload?.limit ?? limit) : limit,
+        totalPages: !Array.isArray(payload) ? (payload?.totalPages ?? 1) : 1,
       };
     } catch (error) {
       console.error('Error al obtener usuarios', error);
@@ -181,17 +178,15 @@ export const usuarioService = {
   async crearUsuario(data: CrearUsuarioDTO): Promise<ApiResponse<Usuario>> {
     const payload = mapFrontendToBackend(data);
     try {
-      const response = await fetch(`${API_URL}/usuarios`, {
+      const response = await baseFetch('/usuarios', {
         method: 'POST',
-        headers: getHeaders(),
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Error al crear usuario');
-      }
-      const result = await response.json();
+      const result = await parseApiResponse<Record<string, unknown>>(
+        response,
+        'Error al crear usuario'
+      );
       return {
         data: mapBackendToFrontend(result.data),
         status: response.status,
@@ -213,7 +208,6 @@ export const usuarioService = {
     try {
       const response = await baseFetch(`/usuarios/${id}`, {
         method: 'PATCH',
-        headers: getHeaders(),
         body: JSON.stringify(payload),
       });
 
@@ -282,16 +276,14 @@ export const usuarioService = {
 
   async eliminarUsuario(id: string | number): Promise<ApiResponse<null>> {
     try {
-      const response = await fetch(`${API_URL}/usuarios/${id}`, {
+      const response = await baseFetch(`/usuarios/${id}`, {
         method: 'DELETE',
-        headers: getHeaders(),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Error al eliminar usuario');
-      }
-      const result = await response.json();
+      const result = await parseApiResponse<unknown>(
+        response,
+        'Error al eliminar usuario'
+      );
       return {
         data: null,
         status: response.status,
@@ -329,7 +321,6 @@ export const usuarioService = {
     try {
       const response = await baseFetch(`/usuarios/${id}/password`, {
         method: 'PATCH',
-        headers: getHeaders(),
         body: JSON.stringify({ password: randomPassword }),
       });
 

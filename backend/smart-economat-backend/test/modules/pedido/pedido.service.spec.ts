@@ -27,6 +27,10 @@ describe('PedidoService', () => {
     get: jest.fn().mockReturnValue(48),
   };
 
+  const mockPurchaseBatchService = {
+    syncBatchStatus: jest.fn(),
+  };
+
   let service: PedidoService;
 
   beforeEach(() => {
@@ -35,7 +39,8 @@ describe('PedidoService', () => {
       mockPedidoRepository as any,
       mockMovimientoHelper as any,
       mockDataSource as any,
-      mockConfigService as any
+      mockConfigService as any,
+      mockPurchaseBatchService as any
     );
   });
 

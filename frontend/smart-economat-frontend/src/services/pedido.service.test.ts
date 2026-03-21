@@ -6,14 +6,11 @@ describe('pedido.service', () => {
 
   beforeEach(() => {
     vi.stubGlobal('fetch', fetchMock);
-    localStorage.clear();
-    localStorage.setItem('token', 'token-test');
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.clearAllMocks();
-    localStorage.clear();
   });
 
   it('createPedido envía solo proveedorId, observaciones y líneas', async () => {

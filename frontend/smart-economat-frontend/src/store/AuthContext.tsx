@@ -3,9 +3,8 @@ import { eventBus, AUTH_EVENTS } from '../utils/eventBus';
 import { User } from './auth.types';
 import { AuthContext } from './auth.context';
 import { authService } from '../services/authService';
-import { isJwtUsable } from '../utils/auth/jwtUtils';
 
-const clearStoredSession = () => {
+const clearLegacySessionStorage = () => {
   localStorage.removeItem('user');
   localStorage.removeItem('token');
 };
@@ -14,101 +13,90 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isAuthResolved, setIsAuthResolved] = useState<boolean>(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      return true;
-    }
-
-    if (!isJwtUsable(token)) {
-      clearStoredSession();
-      return true;
-    }
-
-    return false;
-  });
+  const [isAuthResolved, setIsAuthResolved] = useState<boolean>(false);
   const [isSessionVerified, setIsSessionVerified] = useState(false);
-  const [verifiedToken, setVerifiedToken] = useState<string | null>(null);
-
-  const login = React.useCallback((userData: User, token: string) => {
-    if (!isJwtUsable(token)) {
-      clearStoredSession();
-      setUser(null);
-      setIsSessionVerified(false);
-      setIsAuthResolved(true);
-      setVerifiedToken(null);
-      return;
-    }
-
-    setUser(userData);
-    setIsSessionVerified(true);
-    setIsAuthResolved(true);
-    setVerifiedToken(token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('token', token);
-  }, []);
-
-  const logout = React.useCallback(() => {
-    setUser(null);
-    setIsSessionVerified(false);
-    setIsAuthResolved(true);
-    setVerifiedToken(null);
-    clearStoredSession();
-  }, []);
+  const refreshPromiseRef = React.useRef<Promise<User | null> | null>(null);
 
   const refreshUser = React.useCallback(async () => {
-    const token = localStorage.getItem('token');
-    if (!token || !isJwtUsable(token)) {
-      logout();
-      return null;
+    if (refreshPromiseRef.current) {
+      return refreshPromiseRef.current;
     }
 
     setIsAuthResolved(false);
 
+    const refreshPromise = authService
+      .getCurrentUser()
+      .then((refreshedUser) => {
+        setUser(refreshedUser);
+        setIsSessionVerified(true);
+        setIsAuthResolved(true);
+        return refreshedUser;
+      })
+      .catch(() => {
+        clearLegacySessionStorage();
+        setUser(null);
+        setIsSessionVerified(false);
+        setIsAuthResolved(true);
+        return null;
+      })
+      .finally(() => {
+        refreshPromiseRef.current = null;
+      });
+
+    refreshPromiseRef.current = refreshPromise;
+
+    return refreshPromise;
+  }, []);
+
+  const logout = React.useCallback(async () => {
+    refreshPromiseRef.current = null;
+    clearLegacySessionStorage();
+    setUser(null);
+    setIsSessionVerified(false);
+    setIsAuthResolved(true);
     try {
-      const refreshedUser = await authService.getCurrentUser();
-      setUser(refreshedUser);
-      setIsSessionVerified(true);
-      setIsAuthResolved(true);
-      setVerifiedToken(token);
-      localStorage.setItem('user', JSON.stringify(refreshedUser));
-      return refreshedUser;
+      await authService.logout();
     } catch {
-      logout();
-      return null;
+      return;
     }
-  }, [logout]);
+  }, []);
+
+  const login = React.useCallback(
+    async (userData: User) => {
+      refreshPromiseRef.current = null;
+      clearLegacySessionStorage();
+      setUser(userData);
+      setIsSessionVerified(true);
+      // No marcamos como resuelto aún, esperamos a tener el perfil completo
+      setIsAuthResolved(false);
+
+      try {
+        await refreshUser();
+      } catch (error) {
+        console.error('Error refreshing user after login:', error);
+        // Si falla el refresh detallado, al menos resolvemos con la data básica
+        setIsAuthResolved(true);
+      }
+    },
+    [refreshUser]
+  );
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-
-    if (!token) {
-      setUser(null);
-      setIsSessionVerified(false);
-      setIsAuthResolved(true);
-      setVerifiedToken(null);
-      localStorage.removeItem('user');
-      return;
-    }
-
-    if (!isJwtUsable(token)) {
-      logout();
-      return;
-    }
-
     void refreshUser();
-  }, [logout, refreshUser]);
+  }, [refreshUser]);
 
   useEffect(() => {
     const handleUnauthorized = () => {
-      logout();
+      void logout();
     };
 
     eventBus.on(AUTH_EVENTS.UNAUTHORIZED, handleUnauthorized);
+    eventBus.on(AUTH_EVENTS.REFRESH_USER, refreshUser);
     return () => {
       eventBus.off(AUTH_EVENTS.UNAUTHORIZED, handleUnauthorized);
+      eventBus.off(AUTH_EVENTS.REFRESH_USER, refreshUser);
     };
-  }, [logout]);
+  }, [logout, refreshUser]);
 
   return (
     <AuthContext.Provider
@@ -116,7 +104,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         isAuthenticated: !!user && isSessionVerified,
         isAuthResolved,
         isSessionVerified,
-        verifiedToken,
         user,
         login,
         logout,

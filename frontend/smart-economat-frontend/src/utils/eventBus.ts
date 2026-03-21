@@ -26,4 +26,5 @@ class EventBus {
 export const eventBus = new EventBus();
 export const AUTH_EVENTS = {
   UNAUTHORIZED: 'AUTH_UNAUTHORIZED',
+  REFRESH_USER: 'AUTH_REFRESH_USER',
 };

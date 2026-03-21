@@ -6,6 +6,13 @@ Este documento detalla los flujos de autenticación y creación de cuentas en Sm
 
 El acceso al sistema se gestiona a través de `LoginForm.tsx` y el `AuthService` del backend.
 
+### Sesión actual (`cookie-first`)
+
+- El backend responde al login estableciendo una cookie `httpOnly` `access_token`.
+- El frontend no usa `localStorage` como fuente de verdad para la sesión autenticada.
+- Tras el login, `AuthContext` mantiene el usuario en memoria y, en recargas, lo reconstruye consultando `GET /api/v1/usuarios/perfil`.
+- El logout se realiza mediante `POST /api/v1/auth/logout`, que limpia la cookie en backend.
+
 ### 📋 Requisitos de Acceso
 - **Identificación**: Se admite tanto el nombre de usuario como el correo electrónico.
 - **Estado de Cuenta**: Solo los usuarios con `status: 'ACTIVE'` pueden entrar. Si una cuenta está `INACTIVE` (pendientes de validación) o `BLOCKED`, se denegará el acceso.
@@ -46,7 +53,11 @@ Se aplica una política de "Contraseña Fuerte" tanto en registro como en cambio
 - Al menos un carácter especial (ej. `!@#$%^&*`).
 
 ### Protección de Rutas
-El sistema utiliza un `AuthGuard` en el frontend que redirige al login si no hay un token JWT válido o si el estado del usuario ha cambiado a inactivo durante la sesión.
+El sistema utiliza `PublicRoute` y `ProtectedRoute` en frontend, ambos basados en la verificación real de sesión con backend.
+
+- Si la cookie es válida, el usuario accede a la aplicación sin reintroducir credenciales.
+- Si backend responde `401`, la sesión se limpia y la app redirige a `/login`.
+- Si el usuario autenticado no dispone del permiso exigido por la ruta, se redirige a `/`.
 
 ---
 

@@ -7,7 +7,9 @@ import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import FiberNewIcon from '@mui/icons-material/FiberNew';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import DownloadIcon from '@mui/icons-material/Download';
 import { RecepcionResultado } from '../../services/recepcion.types';
+import { downloadFile } from '../../services/api.service';
 import DetailModal, { DetailType } from './DetailModal';
 
 interface PasoResultadoProps {
@@ -21,6 +23,22 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
 }) => {
   const [openDetailModal, setOpenDetailModal] =
     React.useState<DetailType>(null);
+  const [downloading, setDownloading] = React.useState(false);
+
+  const handleDownloadPdf = async () => {
+    if (!resultado?.id) return;
+    setDownloading(true);
+    try {
+      await downloadFile(
+        `/recepcion/reporte-pdf?tipo=recepcion&recepcionId=${resultado.id}`,
+        `recepcion_${new Date().toISOString().split('T')[0]}.pdf`
+      );
+    } catch (err) {
+      console.error('Error al descargar PDF:', err);
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   interface StatCardProps {
     title: string;
@@ -126,7 +144,7 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
           }}
         >
           <StatCard
-            title="Total Movimientos"
+            title="Registros Realizados"
             value={resultado?.movimientosGenerados || 0}
             subtitle="registrados autom."
             icon={<ReceiptLongIcon />}
@@ -134,9 +152,9 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
             onClick={() => setOpenDetailModal('movimientos')}
           />
           <StatCard
-            title="Lotes Creados (FEFO)"
+            title="Productos en Almacén"
             value={resultado?.inventariosCreados || 0}
-            subtitle="disponibles en almacén"
+            subtitle="disponibles ahora"
             icon={<InventoryIcon />}
             color="#FF9800" // Orange
             onClick={() => setOpenDetailModal('inventarios')}
@@ -159,34 +177,64 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
             <Typography
               variant="subtitle1"
               color="error"
-              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+              sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}
             >
-              <WarningAmberIcon /> Se han generado{' '}
-              {resultado.incidencias.length} incidencias automáticas
+              <WarningAmberIcon /> Se han detectado discrepancias en la
+              recepción
             </Typography>
             {resultado.incidencias.map((inc, i) => (
-              <Alert key={i} severity="warning" sx={{ mt: 1 }}>
-                {inc.datosOriginales.productos.length} productos con
-                discrepancia en pedido de {inc.id.substring(0, 8)}...
-              </Alert>
+              <Box key={i} sx={{ mb: 2, '&:last-child': { mb: 0 } }}>
+                <Typography
+                  variant="caption"
+                  fontWeight="bold"
+                  color="text.secondary"
+                  sx={{ display: 'block', mb: 0.5 }}
+                >
+                  Pedido Ref: {inc.id.substring(0, 8)}...
+                </Typography>
+                {inc.datosOriginales.productos.map((p, j) => (
+                  <Alert
+                    key={j}
+                    severity="warning"
+                    variant="outlined"
+                    sx={{
+                      mb: 0.5,
+                      py: 0,
+                      '& .MuiAlert-icon': { display: 'none' },
+                    }}
+                  >
+                    <strong>{p.nombreProducto}</strong>:{' '}
+                    {p.tipo === 'FALTA' ? 'Faltan' : 'Sobran'}{' '}
+                    {Math.abs(p.diferencia)} unidades
+                  </Alert>
+                ))}
+              </Box>
             ))}
           </Paper>
         )}
 
         <Alert severity="info" icon={<SaveIcon />}>
-          Toda la trazabilidad ha sido volcada y los pedidos elásticos han
-          actualizado su estado.
+          La recepción se ha guardado correctamente y el inventario ha sido
+          actualizado.
         </Alert>
       </Box>
 
-      <Button
-        variant="contained"
-        onClick={onResetWizard}
-        sx={{ mt: 4 }}
-        size="large"
-      >
-        Nueva Recepción
-      </Button>
+      <Box sx={{ display: 'flex', gap: 2, mt: 4, justifyContent: 'center' }}>
+        <Button
+          variant="contained"
+          color="primary"
+          size="large"
+          startIcon={<DownloadIcon />}
+          onClick={handleDownloadPdf}
+          disabled={downloading}
+        >
+          {downloading ? 'Descargando...' : 'Descargar Detalles (PDF)'}
+        </Button>
+
+        <Button variant="outlined" onClick={onResetWizard} size="large">
+          Finalizar y Volver
+        </Button>
+      </Box>
 
       <DetailModal
         open={openDetailModal !== null}

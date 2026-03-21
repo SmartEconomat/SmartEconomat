@@ -22,7 +22,7 @@ export class PlantillaRolPermiso {
   /**
    * Fecha en que se agregó el permiso a la plantilla
    */
-  @CreateDateColumn({ type: 'timestamp', name: 'asignado_en' })
+  @CreateDateColumn({ type: 'timestamptz', name: 'asignado_en' })
   asignadoEn!: Date;
 
   /**

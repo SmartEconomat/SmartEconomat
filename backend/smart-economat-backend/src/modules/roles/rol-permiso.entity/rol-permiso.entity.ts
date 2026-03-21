@@ -23,7 +23,7 @@ export class RolPermiso {
   /**
    * Fecha en que se asignó el permiso al rol
    */
-  @CreateDateColumn({ type: 'timestamp', name: 'asignado_en' })
+  @CreateDateColumn({ type: 'timestamptz', name: 'asignado_en' })
   asignadoEn!: Date;
 
   /**

@@ -19,6 +19,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SaveIcon from '@mui/icons-material/Save';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 import {
   RecepcionDraft,
@@ -49,6 +50,20 @@ import NewProductModal from '../components/recepcion/NewProductModal';
 import WeightScaleModal from '../components/recepcion/WeightScaleModal';
 import RecepcionDraftConflictDialog from '../components/recepcion/RecepcionDraftConflictDialog';
 import { useRecepcionDraft } from '../hooks/useRecepcionDraft';
+import { delay, serialService } from '../services/serial.service';
+
+const calculateEstado = (rec: number, ped: number): LineaDraft['estado'] => {
+  if (rec === 0) return 'No entregado';
+  if (rec === ped) return 'OK';
+  if (rec < ped) return 'Parcial';
+  return 'Exceso';
+};
+
+const isWeightUnit = (unidad: string | undefined): boolean => {
+  if (!unidad) return false;
+  const u = unidad.toLowerCase();
+  return u === 'kg' || u === 'g' || u === 'mg';
+};
 
 const steps = [
   'Selección de Pedidos',
@@ -56,6 +71,19 @@ const steps = [
   'Revisión y Ajuste',
   'Resultado',
 ];
+
+type SerialNavigator = Navigator & {
+  serial: {
+    addEventListener: (
+      type: 'connect' | 'disconnect',
+      listener: EventListenerOrEventListenerObject
+    ) => void;
+    removeEventListener: (
+      type: 'connect' | 'disconnect',
+      listener: EventListenerOrEventListenerObject
+    ) => void;
+  };
+};
 
 const defaultDraft = (): RecepcionDraft => ({
   version: 2,
@@ -71,6 +99,52 @@ const defaultDraft = (): RecepcionDraft => ({
   erroresPorLinea: {},
   enviando: false,
 });
+
+const getScaleHeaderChipConfig = (
+  isScaleSupported: boolean,
+  isScaleConnected: boolean,
+  isScaleEnabled: boolean,
+  isScaleBusy: boolean,
+  scaleStatusText: string
+) => {
+  if (!isScaleSupported) {
+    return {
+      icon: <WarningAmberIcon />,
+      label: 'Web Serial no disponible',
+      color: 'warning' as const,
+    };
+  }
+
+  if (isScaleBusy) {
+    return {
+      icon: <InfoOutlinedIcon />,
+      label: scaleStatusText,
+      color: 'info' as const,
+    };
+  }
+
+  if (isScaleConnected && isScaleEnabled) {
+    return {
+      icon: <CheckCircleIcon />,
+      label: scaleStatusText,
+      color: 'success' as const,
+    };
+  }
+
+  if (isScaleConnected) {
+    return {
+      icon: <InfoOutlinedIcon />,
+      label: scaleStatusText,
+      color: 'info' as const,
+    };
+  }
+
+  return {
+    icon: <WarningAmberIcon />,
+    label: scaleStatusText,
+    color: 'default' as const,
+  };
+};
 
 const Recepcion: React.FC = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -92,7 +166,14 @@ const Recepcion: React.FC = () => {
   } | null>(null);
   const [capturedWeight, setCapturedWeight] = useState<number | null>(null);
   const [isWeighing, setIsWeighing] = useState(false);
-  const [isScaleConnected, setIsScaleConnected] = useState(true);
+  const [isScaleSupported, setIsScaleSupported] = useState(false);
+  const [isScaleConnected, setIsScaleConnected] = useState(false);
+  const [isScaleEnabled, setIsScaleEnabled] = useState(false);
+  const [isScaleBusy, setIsScaleBusy] = useState(false);
+  const [scaleStatusText, setScaleStatusText] = useState(
+    'Sin báscula autorizada'
+  );
+  const scaleManuallyDisabledRef = useRef(false);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -100,6 +181,7 @@ const Recepcion: React.FC = () => {
     clearDraft: clearRemoteDraft,
     conflict,
     draft,
+    isReady,
     keepLocalDraft,
     setDraft,
     syncError,
@@ -111,6 +193,13 @@ const Recepcion: React.FC = () => {
     setActiveStep,
   });
   const draftRef = useRef(draft);
+  const scaleHeaderChip = getScaleHeaderChipConfig(
+    isScaleSupported,
+    isScaleConnected,
+    isScaleEnabled,
+    isScaleBusy,
+    scaleStatusText
+  );
 
   useEffect(() => {
     draftRef.current = draft;
@@ -121,6 +210,132 @@ const Recepcion: React.FC = () => {
       searchInputRef.current.focus();
     }
   }, [activeStep]);
+
+  useEffect(() => {
+    const supported = serialService.isSupported();
+    setIsScaleSupported(supported);
+
+    if (!supported) {
+      setScaleStatusText('Web Serial no disponible');
+      return;
+    }
+
+    let cancelled = false;
+    const serialNavigator = navigator as SerialNavigator;
+
+    const syncAuthorizedScale = async () => {
+      setIsScaleBusy(true);
+
+      try {
+        const connected = await serialService.ensureConnection();
+        if (cancelled) return;
+
+        setIsScaleConnected(connected);
+        if (connected) {
+          setScaleStatusText('Báscula conectada');
+          if (!scaleManuallyDisabledRef.current) {
+            setIsScaleEnabled(true);
+          }
+        } else {
+          setScaleStatusText('Sin báscula autorizada');
+        }
+      } catch {
+        if (!cancelled) {
+          setIsScaleConnected(false);
+          setIsScaleStatusDisconnected();
+        }
+      } finally {
+        if (!cancelled) {
+          setIsScaleBusy(false);
+        }
+      }
+    };
+
+    const handleConnect = () => {
+      void syncAuthorizedScale();
+    };
+
+    const handleDisconnect = () => {
+      serialService.stopContinuousRead();
+      setIsScaleConnected(false);
+      setIsWeighing(false);
+      setCapturedWeight(null);
+      setIsScaleStatusDisconnected();
+    };
+
+    void syncAuthorizedScale();
+    serialNavigator.serial.addEventListener('connect', handleConnect);
+    serialNavigator.serial.addEventListener('disconnect', handleDisconnect);
+
+    return () => {
+      cancelled = true;
+      serialNavigator.serial.removeEventListener('connect', handleConnect);
+      serialNavigator.serial.removeEventListener(
+        'disconnect',
+        handleDisconnect
+      );
+      serialService.stopContinuousRead();
+      void serialService.disconnect();
+    };
+  }, []);
+
+  const setIsScaleStatusDisconnected = () => {
+    setScaleStatusText('Báscula desconectada');
+    if (!scaleManuallyDisabledRef.current) {
+      setIsScaleEnabled(false);
+    }
+  };
+
+  const handleScaleToggle = (enabled: boolean) => {
+    scaleManuallyDisabledRef.current = !enabled;
+    setIsScaleEnabled(enabled);
+
+    if (!enabled) {
+      serialService.stopContinuousRead();
+      setIsWeighing(false);
+      setCapturedWeight(null);
+      setScaleStatusText(
+        isScaleConnected ? 'Báscula desactivada' : 'Báscula desconectada'
+      );
+      return;
+    }
+
+    if (isScaleConnected) {
+      setScaleStatusText('Báscula conectada');
+    }
+  };
+
+  const requestScaleAccess = async () => {
+    if (!isScaleSupported) {
+      setError(
+        'Este navegador no soporta Web Serial para conectar la báscula.'
+      );
+      return;
+    }
+
+    setIsScaleBusy(true);
+    setError(null);
+
+    try {
+      const selected = await serialService.requestPort();
+      if (!selected) {
+        setScaleStatusText('Selección de puerto cancelada');
+        return;
+      }
+
+      await serialService.connect();
+      setIsScaleConnected(true);
+      setIsScaleEnabled(true);
+      scaleManuallyDisabledRef.current = false;
+      setScaleStatusText('Báscula conectada');
+    } catch {
+      setIsScaleConnected(false);
+      setScaleStatusText('No se pudo conectar la báscula');
+      setError('No se pudo abrir el puerto serie de la báscula.');
+    } finally {
+      setIsScaleBusy(false);
+    }
+  };
 
   // Data
   const [pedidosDisponibles, setPedidosDisponibles] = useState<Pedido[]>([]);
@@ -143,16 +358,17 @@ const Recepcion: React.FC = () => {
   const loadPedidos = async () => {
     setLoadingPedidos(true);
     try {
-      const resp = await fetchPedidos(1, 50);
-      // Solo pedidos pendientes, en proceso o parciales
-      setPedidosDisponibles(
-        resp.data.filter(
-          (p: Pedido) =>
-            p.estado === EstadoPedido.PENDIENTE ||
-            p.estado === EstadoPedido.EN_PROCESO ||
-            p.estado === EstadoPedido.PARCIAL
-        )
+      const resp = await fetchPedidos(
+        1,
+        50,
+        '',
+        [
+          EstadoPedido.PENDIENTE,
+          EstadoPedido.EN_PROCESO,
+          EstadoPedido.PARCIAL,
+        ].join(',')
       );
+      setPedidosDisponibles(resp.data as Pedido[]);
     } catch {
       setError('Error al cargar pedidos compatibles.');
     } finally {
@@ -186,17 +402,19 @@ const Recepcion: React.FC = () => {
   });
 
   const handleSelectAll = () => {
-    const newDraftPedidos = [...draft.pedidosSeleccionados];
-    pedidosDisponibles.forEach((pedido) => {
-      if (!newDraftPedidos.some((p) => p.id === pedido.id)) {
-        newDraftPedidos.push(createDraftPedido(pedido));
-      }
+    setDraft((prevDraft) => {
+      const newDraftPedidos = [...prevDraft.pedidosSeleccionados];
+      pedidosDisponibles.forEach((pedido) => {
+        if (!newDraftPedidos.some((p) => p.id === pedido.id)) {
+          newDraftPedidos.push(createDraftPedido(pedido));
+        }
+      });
+      return { ...prevDraft, pedidosSeleccionados: newDraftPedidos };
     });
-    setDraft({ ...draft, pedidosSeleccionados: newDraftPedidos });
   };
 
   const handleDeselectAll = () => {
-    setDraft({ ...draft, pedidosSeleccionados: [] });
+    setDraft((prevDraft) => ({ ...prevDraft, pedidosSeleccionados: [] }));
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -224,26 +442,29 @@ const Recepcion: React.FC = () => {
     const providerName = e.target.value as string;
     if (!providerName) return;
 
-    const newDraftPedidos = draft.pedidosSeleccionados.filter(
-      (p) => p.proveedor !== providerName
-    );
-
-    setDraft({ ...draft, pedidosSeleccionados: newDraftPedidos });
+    setDraft((prevDraft) => {
+      const newDraftPedidos = prevDraft.pedidosSeleccionados.filter(
+        (p) => p.proveedor !== providerName
+      );
+      return { ...prevDraft, pedidosSeleccionados: newDraftPedidos };
+    });
   };
 
   const handleTogglePedido = (pedido: Pedido) => {
-    const isSelected = draft.pedidosSeleccionados.some(
-      (p) => p.id === pedido.id
-    );
-    let newPedidos = [...draft.pedidosSeleccionados];
+    setDraft((prevDraft) => {
+      const isSelected = prevDraft.pedidosSeleccionados.some(
+        (p) => p.id === pedido.id
+      );
+      let newPedidos = [...prevDraft.pedidosSeleccionados];
 
-    if (isSelected) {
-      newPedidos = newPedidos.filter((p) => p.id !== pedido.id);
-    } else {
-      newPedidos.push(createDraftPedido(pedido));
-    }
+      if (isSelected) {
+        newPedidos = newPedidos.filter((p) => p.id !== pedido.id);
+      } else {
+        newPedidos.push(createDraftPedido(pedido));
+      }
 
-    setDraft({ ...draft, pedidosSeleccionados: newPedidos });
+      return { ...prevDraft, pedidosSeleccionados: newPedidos };
+    });
   };
 
   // --- 3. Lógica de Escaneo (Paso 2) ---
@@ -294,138 +515,132 @@ const Recepcion: React.FC = () => {
     nombre: string;
     unidad?: UnidadMedida;
   }) => {
-    const newPedidos = [...draft.pedidosSeleccionados].map((p) => ({
-      ...p,
-      lineas: [...p.lineas],
-    }));
+    setDraft((prevDraft) => {
+      const newPedidos = [...prevDraft.pedidosSeleccionados].map((p) => ({
+        ...p,
+        lineas: [...p.lineas],
+      }));
 
-    // 1. Array de coincidencias en los pedidos seleccionados
-    const matches: { pIdx: number; lIdx: number; l: LineaDraft }[] = [];
-    newPedidos.forEach((p, pIdx) => {
-      p.lineas.forEach((l, lIdx) => {
-        const matchId = l.idProducto === prod.id;
-        const matchBarcode =
-          l.codigoBarras === prod.codigoBarras && prod.codigoBarras;
-        const matchName =
-          l.nombreProducto.toLowerCase() === prod.nombre.toLowerCase();
-
-        if (matchId || matchBarcode || matchName) {
-          matches.push({ pIdx, lIdx, l });
-        }
-      });
-    });
-
-    if (matches.length > 0) {
-      // Buscar si algún match le falta stock
-      let targetMatch = matches.find((m) => {
-        const currRec =
-          m.l.cantidadRecibida === '' ? 0 : Number(m.l.cantidadRecibida);
-        return currRec < m.l.cantidadPedida;
-      });
-
-      // Si todos los matches ya están llenos, sumar al primer match (exceso)
-      if (!targetMatch) {
-        targetMatch = matches[0];
-      }
-
-      const foundPedidoId = newPedidos[targetMatch.pIdx].id;
-      const tLinea = newPedidos[targetMatch.pIdx].lineas[targetMatch.lIdx];
-      const currRec =
-        tLinea.cantidadRecibida === '' ? 0 : Number(tLinea.cantidadRecibida);
-
-      if (isWeightUnit(tLinea.unidad)) {
-        // En lugar de sumar +1 por defecto, abrimos la balanza para capturar su peso
-        openWeightScale(targetMatch.pIdx, targetMatch.lIdx);
-        setExpandedPanel(foundPedidoId);
-        return; // Detenemos aquí para esperar a que el usuario confirme el peso
-      }
-
-      newPedidos[targetMatch.pIdx].lineas[targetMatch.lIdx] = {
-        ...tLinea,
-        cantidadRecibida: currRec + 1,
-        estado: calculateEstado(currRec + 1, tLinea.cantidadPedida),
-      };
-
-      setDraft({ ...draft, pedidosSeleccionados: newPedidos });
-      setExpandedPanel(foundPedidoId);
-    } else {
-      // 2. Si no esta, añadir a espontáneos
-      const existingEsp = draft.productosEspontaneos.find(
-        (l) =>
-          l.idProducto === prod.id ||
-          (l.codigoBarras === prod.codigoBarras && prod.codigoBarras) ||
-          l.nombreProducto.toLowerCase() === prod.nombre.toLowerCase()
-      );
-
-      if (existingEsp) {
-        const newEsp = draft.productosEspontaneos.map((l) => {
-          const match =
-            l.idProducto === prod.id ||
-            (l.codigoBarras === prod.codigoBarras && prod.codigoBarras) ||
+      // 1. Array de coincidencias en los pedidos seleccionados
+      const matches: { pIdx: number; lIdx: number; l: LineaDraft }[] = [];
+      newPedidos.forEach((p, pIdx) => {
+        p.lineas.forEach((l, lIdx) => {
+          const matchId = l.idProducto === prod.id;
+          const matchBarcode =
+            l.codigoBarras === prod.codigoBarras && prod.codigoBarras;
+          const matchName =
             l.nombreProducto.toLowerCase() === prod.nombre.toLowerCase();
-          return match
-            ? {
-                ...l,
-                cantidadRecibida: isWeightUnit(l.unidad)
-                  ? Number(l.cantidadRecibida)
-                  : Number(l.cantidadRecibida) + 1,
-                estado: 'Exceso' as LineaDraft['estado'],
-              }
-            : l;
+
+          if (matchId || matchBarcode || matchName) {
+            matches.push({ pIdx, lIdx, l });
+          }
+        });
+      });
+
+      if (matches.length > 0) {
+        // Buscar si algún match le falta stock
+        let targetMatch = matches.find((m) => {
+          const currRec =
+            m.l.cantidadRecibida === '' ? 0 : Number(m.l.cantidadRecibida);
+          return currRec < m.l.cantidadPedida;
         });
 
-        const indexEsp = newEsp.findIndex(
+        // Si todos los matches ya están llenos, sumar al primer match (exceso)
+        if (!targetMatch) {
+          targetMatch = matches[0];
+        }
+
+        const foundPedidoId = newPedidos[targetMatch.pIdx].id;
+        const tLinea = newPedidos[targetMatch.pIdx].lineas[targetMatch.lIdx];
+        const currRec =
+          tLinea.cantidadRecibida === '' ? 0 : Number(tLinea.cantidadRecibida);
+
+        if (isWeightUnit(tLinea.unidad) && isScaleConnected && isScaleEnabled) {
+          // Si hay báscula, abrimos modal de peso
+          setTimeout(() => {
+            openWeightScale(targetMatch!.pIdx, targetMatch!.lIdx);
+            setExpandedPanel(foundPedidoId);
+          }, 0);
+          return prevDraft; // El estado no cambia aquí, cambia tras el modal de peso
+        }
+
+        // Si es unidad de peso pero NO hay báscula, sumamos 1 por defecto (UX friendly)
+        // o si es unidad normal, sumamos 1.
+        const nextRec = currRec + 1;
+        newPedidos[targetMatch.pIdx].lineas[targetMatch.lIdx] = {
+          ...tLinea,
+          cantidadRecibida: nextRec,
+          estado: calculateEstado(nextRec, tLinea.cantidadPedida),
+        };
+
+        setExpandedPanel(foundPedidoId);
+        return { ...prevDraft, pedidosSeleccionados: newPedidos };
+      } else {
+        // 2. Si no está en pedido, añadir a espontáneos
+        const existingEsp = prevDraft.productosEspontaneos.find(
           (l) =>
             l.idProducto === prod.id ||
             (l.codigoBarras === prod.codigoBarras && prod.codigoBarras) ||
             l.nombreProducto.toLowerCase() === prod.nombre.toLowerCase()
         );
-        setDraft({ ...draft, productosEspontaneos: newEsp });
 
-        if (isWeightUnit(existingEsp.unidad)) {
-          // El estado tardará un render en actualizarse, pero openWeightScale usa índice directo
-          setTimeout(() => openWeightScale(null, indexEsp), 0);
-        }
-      } else {
-        const newLinea: LineaDraft = {
-          pedidoProductoId: null,
-          idProducto: prod.id,
-          codigoBarras: prod.codigoBarras,
-          nombreProducto: prod.nombre,
-          unidad: prod.unidad || 'uds',
-          cantidadPedida: 0,
-          cantidadAlbaran: '',
-          cantidadRecibida: isWeightUnit(prod.unidad) ? 0 : 1,
-          isWeighedWithScale: false,
-          estadoVisual: EstadoVisualProducto.OPTIMO,
-          fechaCaducidad: '',
-          observaciones: '',
-          estado: 'Nuevo',
-        };
-        setDraft((prev) => ({
-          ...prev,
-          productosEspontaneos: [...prev.productosEspontaneos, newLinea],
-        }));
-
-        if (isWeightUnit(prod.unidad)) {
-          setTimeout(
-            () =>
-              openWeightScale(
-                null,
-                draftRef.current.productosEspontaneos.length
-              ),
-            0
+        if (existingEsp) {
+          const indexEsp = prevDraft.productosEspontaneos.findIndex(
+            (l) =>
+              l.idProducto === prod.id ||
+              (l.codigoBarras === prod.codigoBarras && prod.codigoBarras) ||
+              l.nombreProducto.toLowerCase() === prod.nombre.toLowerCase()
           );
+
+          const newEsp = prevDraft.productosEspontaneos.map((l, idx) => {
+            if (idx !== indexEsp) return l;
+            return {
+              ...l,
+              cantidadRecibida: Number(l.cantidadRecibida) + 1,
+              estado: 'Exceso' as LineaDraft['estado'],
+            };
+          });
+
+          if (
+            isWeightUnit(existingEsp.unidad) &&
+            isScaleConnected &&
+            isScaleEnabled
+          ) {
+            setTimeout(() => openWeightScale(null, indexEsp), 0);
+            return prevDraft;
+          }
+
+          return { ...prevDraft, productosEspontaneos: newEsp };
+        } else {
+          // Crear nueva línea espontánea
+          const newLinea: LineaDraft = {
+            pedidoProductoId: null,
+            idProducto: prod.id,
+            codigoBarras: prod.codigoBarras,
+            nombreProducto: prod.nombre,
+            unidad: prod.unidad || 'uds',
+            cantidadPedida: 0,
+            cantidadAlbaran: '',
+            cantidadRecibida: 1, // Iniciamos en 1 siempre para evitar ruidos de 0
+            isWeighedWithScale: false,
+            estadoVisual: EstadoVisualProducto.OPTIMO,
+            fechaCaducidad: '',
+            observaciones: '',
+            estado: 'Nuevo',
+          };
+
+          const newEsp = [...prevDraft.productosEspontaneos, newLinea];
+          const newIdx = newEsp.length - 1;
+
+          if (isWeightUnit(prod.unidad) && isScaleConnected && isScaleEnabled) {
+            setTimeout(() => openWeightScale(null, newIdx), 0);
+            return { ...prevDraft, productosEspontaneos: newEsp };
+          }
+
+          return { ...prevDraft, productosEspontaneos: newEsp };
         }
       }
-    }
-  };
-
-  const calculateEstado = (rec: number, ped: number): LineaDraft['estado'] => {
-    if (rec === 0) return 'No entregado';
-    if (rec === ped) return 'OK';
-    if (rec < ped) return 'Parcial';
-    return 'Exceso';
+    });
   };
 
   const handleUpdateLinea = (
@@ -480,30 +695,62 @@ const Recepcion: React.FC = () => {
     });
   };
 
-  // --- 4. Funciones de Báscula Analógica (Simulada) ---
-  const isWeightUnit = (unidad: string | undefined): boolean => {
-    if (!unidad) return false;
-    const u = unidad.toLowerCase();
-    return u === 'kg' || u === 'g' || u === 'mg';
-  };
-
   const openWeightScale = (pIdx: number | null, lIdx: number) => {
+    if (!isScaleConnected || !isScaleEnabled) {
+      setError(
+        'La báscula no está activa. Vincúlala o introduce el peso manualmente.'
+      );
+      return;
+    }
+
     setWeightTarget({ pIdx, lIdx });
     setWeightModalOpen(true);
-    startWeighing();
+    void startWeighing();
   };
 
-  const startWeighing = () => {
+  const startWeighing = async () => {
+    if (!isScaleConnected || !isScaleEnabled) {
+      setError(
+        'La báscula no está activa. Vincúlala o introduce el peso manualmente.'
+      );
+      return;
+    }
+
     setIsWeighing(true);
     setCapturedWeight(null);
+    setScaleStatusText('Leyendo peso en tiempo real');
 
-    // Simular el tiempo de estabilización de la pesa (ej. 3 segundos)
-    setTimeout(() => {
-      // Simular peso capturado aleatorio entre 0.1 y 150 kg para la prueba
-      const randomWeight = (Math.random() * (150.0 - 0.1) + 0.1).toFixed(2);
-      setCapturedWeight(Number(randomWeight));
+    try {
+      const connected = await serialService.ensureConnection();
+      if (!connected) {
+        setIsWeighing(false);
+        setIsScaleConnected(false);
+        setScaleStatusText('Sin báscula autorizada');
+        setError('No hay una báscula autorizada disponible.');
+        return;
+      }
+
+      setIsScaleConnected(true);
+      await delay(75);
+      await serialService.restartContinuousRead(
+        (weight) => {
+          setCapturedWeight(weight);
+          setIsWeighing(false);
+          setScaleStatusText('Peso recibido desde báscula');
+        },
+        () => {
+          setIsWeighing(false);
+          setIsScaleConnected(false);
+          setScaleStatusText('Error de lectura en báscula');
+          setError('Se perdió la comunicación con la báscula.');
+        }
+      );
+    } catch {
       setIsWeighing(false);
-    }, 3000);
+      setIsScaleConnected(false);
+      setScaleStatusText('No se pudo leer la báscula');
+      setError('No se pudo iniciar la lectura de la báscula.');
+    }
   };
 
   const confirmWeight = () => {
@@ -516,10 +763,14 @@ const Recepcion: React.FC = () => {
   };
 
   const closeWeightScale = () => {
+    serialService.stopContinuousRead();
     setWeightModalOpen(false);
     setWeightTarget(null);
     setIsWeighing(false);
     setCapturedWeight(null);
+    if (isScaleConnected && isScaleEnabled) {
+      setScaleStatusText('Báscula conectada');
+    }
   };
 
   // --- 5. Validación y Envío (Paso 3) ---
@@ -702,8 +953,12 @@ const Recepcion: React.FC = () => {
       setSearchQuery={setSearchQuery}
       onSearch={handleSearch}
       searching={searching}
+      isScaleSupported={isScaleSupported}
       isScaleConnected={isScaleConnected}
-      setIsScaleConnected={setIsScaleConnected}
+      isScaleEnabled={isScaleEnabled}
+      setIsScaleEnabled={handleScaleToggle}
+      isScaleBusy={isScaleBusy}
+      onRequestScaleAccess={requestScaleAccess}
       draft={draft}
       setDraft={setDraft}
       expandedPanel={expandedPanel}
@@ -742,27 +997,30 @@ const Recepcion: React.FC = () => {
     } else {
       const nextStep = activeStep + 1;
       setActiveStep(nextStep);
-      // Actualizar meta en draft
-      const pasos: PasoWizard[] = [
-        'SELECCION_PEDIDOS',
-        'ESCANEO_LOTE',
-        'REVISION_FINAL',
-        'RESULTADO',
-      ];
-      setDraft({ ...draft, paso: pasos[nextStep] });
+      setDraft((prev) => {
+        const pasos: PasoWizard[] = [
+          'SELECCION_PEDIDOS',
+          'ESCANEO_LOTE',
+          'REVISION_FINAL',
+          'RESULTADO',
+        ];
+        return { ...prev, paso: pasos[nextStep] };
+      });
     }
   };
 
   const handleBack = () => {
     const prevStep = activeStep - 1;
     setActiveStep(prevStep);
-    const pasos: PasoWizard[] = [
-      'SELECCION_PEDIDOS',
-      'ESCANEO_LOTE',
-      'REVISION_FINAL',
-      'RESULTADO',
-    ];
-    setDraft({ ...draft, paso: pasos[prevStep] });
+    setDraft((prev) => {
+      const pasos: PasoWizard[] = [
+        'SELECCION_PEDIDOS',
+        'ESCANEO_LOTE',
+        'REVISION_FINAL',
+        'RESULTADO',
+      ];
+      return { ...prev, paso: pasos[prevStep] };
+    });
   };
 
   // --- 6. Modal Nuevo Producto ---
@@ -818,7 +1076,7 @@ const Recepcion: React.FC = () => {
       contenido: 1,
     });
 
-    if (isWeight) {
+    if (isWeight && isScaleConnected && isScaleEnabled) {
       setTimeout(
         () => openWeightScale(null, draft.productosEspontaneos.length),
         50
@@ -834,79 +1092,126 @@ const Recepcion: React.FC = () => {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            gap: 2,
+            flexWrap: 'wrap',
             mb: 4,
           }}
         >
           <Typography variant="h4" component="h1">
             Gestión de Recepción
           </Typography>
-          {syncStatus === 'saving' && (
-            <Tooltip title="Sincronizando borrador con el servidor">
-              <Chip
-                icon={<SaveIcon />}
-                label="Guardando..."
-                size="small"
-                color="warning"
-                variant="outlined"
-              />
-            </Tooltip>
-          )}
-          {syncStatus === 'synced' && (
-            <Tooltip title="Borrador sincronizado de forma segura">
-              <Chip
-                icon={<CheckCircleIcon />}
-                label="Sincronizado"
-                size="small"
-                color="success"
-                variant="outlined"
-              />
-            </Tooltip>
-          )}
-          {syncStatus === 'error' && (
-            <Tooltip title={syncError || 'Error al sincronizar el borrador'}>
-              <Chip
-                icon={<ErrorOutlineIcon />}
-                label="Error de sync"
-                size="small"
-                color="error"
-                variant="outlined"
-              />
-            </Tooltip>
-          )}
-          {syncStatus === 'conflict' && (
-            <Tooltip title="El borrador cambió en otro dispositivo">
-              <Chip
-                icon={<WarningAmberIcon />}
-                label="Conflicto"
-                size="small"
-                color="warning"
-                variant="outlined"
-              />
-            </Tooltip>
-          )}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              flexWrap: 'wrap',
+              justifyContent: { xs: 'flex-start', md: 'flex-end' },
+            }}
+          >
+            {activeStep === 1 && (
+              <Tooltip title={`Estado de báscula: ${scaleHeaderChip.label}`}>
+                <Chip
+                  icon={scaleHeaderChip.icon}
+                  label={scaleHeaderChip.label}
+                  size="small"
+                  color={scaleHeaderChip.color}
+                  variant="outlined"
+                />
+              </Tooltip>
+            )}
+            {syncStatus === 'saving' && (
+              <Tooltip title="Sincronizando borrador con el servidor">
+                <Chip
+                  icon={<SaveIcon />}
+                  label="Guardando..."
+                  size="small"
+                  color="warning"
+                  variant="outlined"
+                />
+              </Tooltip>
+            )}
+            {syncStatus === 'synced' && (
+              <Tooltip title="Borrador sincronizado de forma segura">
+                <Chip
+                  icon={<CheckCircleIcon />}
+                  label="Sincronizado"
+                  size="small"
+                  color="success"
+                  variant="outlined"
+                />
+              </Tooltip>
+            )}
+            {syncStatus === 'error' && (
+              <Tooltip title={syncError || 'Error al sincronizar el borrador'}>
+                <Chip
+                  icon={<ErrorOutlineIcon />}
+                  label="Error de sync"
+                  size="small"
+                  color="error"
+                  variant="outlined"
+                />
+              </Tooltip>
+            )}
+            {syncStatus === 'conflict' && (
+              <Tooltip title="El borrador cambió en otro dispositivo">
+                <Chip
+                  icon={<WarningAmberIcon />}
+                  label="Conflicto"
+                  size="small"
+                  color="warning"
+                  variant="outlined"
+                />
+              </Tooltip>
+            )}
+          </Box>
         </Box>
 
-        <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-          {steps.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
+        {!isReady ? (
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              py: 10,
+              gap: 2,
+            }}
+          >
+            <CircularProgress size={40} />
+            <Typography variant="body2" color="text.secondary">
+              Recuperando borrador de recepción...
+            </Typography>
+          </Box>
+        ) : (
+          <>
+            <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+              {steps.map((label) => (
+                <Step key={label}>
+                  <StepLabel>{label}</StepLabel>
+                </Step>
+              ))}
+            </Stepper>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
-            {error}
-          </Alert>
+            {error && (
+              <Alert
+                severity="error"
+                sx={{ mb: 3 }}
+                onClose={() => setError(null)}
+              >
+                {error}
+              </Alert>
+            )}
+
+            {!error && syncError && (
+              <Alert severity="warning" sx={{ mb: 3 }}>
+                {syncError}
+              </Alert>
+            )}
+
+            {renderStepContent(activeStep)}
+          </>
         )}
-
-        {!error && syncError && (
-          <Alert severity="warning" sx={{ mb: 3 }}>
-            {syncError}
-          </Alert>
-        )}
-
-        {renderStepContent(activeStep)}
 
         {/* Botonera inferior común */}
         {activeStep < 3 && (
@@ -983,8 +1288,11 @@ const Recepcion: React.FC = () => {
         open={weightModalOpen}
         isWeighing={isWeighing}
         capturedWeight={capturedWeight}
+        statusText={scaleStatusText}
         onClose={closeWeightScale}
-        onStartWeighing={startWeighing}
+        onStartWeighing={() => {
+          void startWeighing();
+        }}
         onConfirmWeight={confirmWeight}
       />
 

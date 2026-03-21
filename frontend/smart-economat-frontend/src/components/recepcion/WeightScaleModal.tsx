@@ -14,6 +14,7 @@ interface WeightScaleModalProps {
   open: boolean;
   isWeighing: boolean;
   capturedWeight: number | null;
+  statusText?: string;
   onClose: () => void;
   onStartWeighing: () => void;
   onConfirmWeight: () => void;
@@ -23,6 +24,7 @@ const WeightScaleModal: React.FC<WeightScaleModalProps> = ({
   open,
   isWeighing,
   capturedWeight,
+  statusText,
   onClose,
   onStartWeighing,
   onConfirmWeight,
@@ -58,7 +60,7 @@ const WeightScaleModal: React.FC<WeightScaleModalProps> = ({
           >
             <CircularProgress size={50} color="primary" />
             <Typography variant="h6" color="text.secondary">
-              Comunicando con la báscula...
+              {statusText || 'Comunicando con la báscula...'}
             </Typography>
           </Box>
         ) : (
@@ -81,6 +83,11 @@ const WeightScaleModal: React.FC<WeightScaleModalProps> = ({
               {capturedWeight !== null ? capturedWeight.toFixed(2) : '0.00'}
             </Typography>
           </Box>
+        )}
+        {!isWeighing && statusText && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            {statusText}
+          </Typography>
         )}
       </DialogContent>
       <DialogActions sx={{ justifyContent: 'center', px: 3, pb: 2 }}>

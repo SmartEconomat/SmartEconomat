@@ -4,7 +4,6 @@ export class UpdateAdminUserRoleDto {
   @IsUUID()
   @IsNotEmpty()
   roleId!: string;
-
   @IsArray()
   @IsOptional()
   @IsUUID('all', { each: true })
