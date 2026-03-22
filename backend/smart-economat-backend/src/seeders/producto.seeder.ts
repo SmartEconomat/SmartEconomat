@@ -141,6 +141,8 @@ export const runSeeder = async (dataSource: DataSource) => {
   const productoProveedorRepo = dataSource.getRepository(ProductoProveedor);
   const productoAlergenoRepo = dataSource.getRepository(ProductoAlergeno);
 
+  await dataSource.query(`TRUNCATE TABLE "producto" RESTART IDENTITY CASCADE;`);
+
   const proveedores = await proveedorRepo.find();
   if (proveedores.length === 0) {
     throw new Error(SeederI18nHelper.getError('NO_PROVEEDORES'));

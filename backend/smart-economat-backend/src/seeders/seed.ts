@@ -27,7 +27,9 @@ export const dataSource = new DataSource({
   entities: [join(__dirname, '../**/*.entity.{ts,js}')],
   migrations: [join(__dirname, '../migrations/*.{ts,js}')],
   synchronize:
-    process.env.NODE_ENV === 'test' || process.argv.includes('reset'),
+    dbConfig.synchronize ||
+    process.env.NODE_ENV === 'test' ||
+    process.argv.includes('reset'),
   dropSchema: process.argv.includes('reset'),
 });
 

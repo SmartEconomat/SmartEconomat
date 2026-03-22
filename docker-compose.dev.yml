@@ -50,6 +50,8 @@ services:
       - HOST_GIT_EMAIL=${GIT_EMAIL:-}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - HUSKY=0
+      - HUSKY_SKIP_INSTALL=1
     command: sh -c "sh scripts/ensure-deps.sh && npx ts-node scripts/log-user-info.ts && npm run start:dev"
     depends_on:
       db:

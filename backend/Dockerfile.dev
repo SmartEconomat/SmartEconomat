@@ -15,8 +15,8 @@ WORKDIR /app
 # Pero aseguramos que el código base sea del usuario node
 COPY --chown=node:node package*.json ./
 
-# Instalar dependencias
-RUN npm install
+# Instalar dependencias con Husky deshabilitado
+RUN HUSKY=0 npm install
 
 # Copiar el resto del código
 COPY --chown=node:node . .
