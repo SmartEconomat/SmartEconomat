@@ -15,6 +15,11 @@ const clearLegacySessionStorage = () => {
   localStorage.removeItem('sm_has_session');
 };
 
+const isPublicAuthPath = (pathname: string) =>
+  pathname === '/login' ||
+  pathname === '/reset-password' ||
+  pathname.startsWith('/reset-password/');
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
@@ -98,8 +103,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   useEffect(() => {
+    const currentPath = window.location.pathname;
     const hasSessionHint = localStorage.getItem('sm_has_session') === 'true';
-    if (hasSessionHint || window.location.pathname !== '/login') {
+    const shouldBootstrapSession = !isPublicAuthPath(currentPath) || hasSessionHint;
+
+    if (shouldBootstrapSession) {
       void refreshUser();
     } else {
       setIsAuthResolved(true);

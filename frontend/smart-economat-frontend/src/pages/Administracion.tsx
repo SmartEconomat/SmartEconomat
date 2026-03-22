@@ -10,7 +10,6 @@ import {
   CardContent,
   Divider,
   Alert,
-  CircularProgress,
   Tabs,
   Tab,
 } from '@mui/material';
@@ -46,28 +45,24 @@ interface TabPanelProps {
   isLoading?: boolean;
 }
 
+import { Fade } from '@mui/material';
+
 function CustomTabPanel(props: TabPanelProps) {
-  const { children, value, index, isLoading = false, ...other } = props;
+  const { children, value, index, ...other } = props;
+  const isActive = value === index;
 
   return (
     <div
       role="tabpanel"
-      hidden={value !== index}
+      hidden={!isActive}
       id={`admin-tabpanel-${index}`}
       aria-labelledby={`admin-tab-${index}`}
       {...other}
+      style={{ display: isActive ? 'block' : 'none' }}
     >
-      {value === index && (
-        <Box sx={{ py: 3 }}>
-          {isLoading ? (
-            <Box display="flex" justifyContent="center" py={8}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            children
-          )}
-        </Box>
-      )}
+      <Fade in={isActive} timeout={400}>
+        <Box sx={{ py: { xs: 2, md: 3 } }}>{children}</Box>
+      </Fade>
     </div>
   );
 }
@@ -520,18 +515,14 @@ const Administracion: React.FC = () => {
         </Box>
 
         <CardContent sx={{ p: { xs: 2, md: 4 } }}>
-          <CustomTabPanel
-            value={activeTab}
-            index="slots"
-            isLoading={loadingTab === 'slots'}
-          >
+          <CustomTabPanel value={activeTab} index="slots">
             <Stack spacing={4}>
               <ProfessorSlotsManager
                 isEditing={isEditingSlots}
                 slots={slots}
                 allSlots={allSlots}
                 allProfesores={allProfesores}
-                isLoading={false}
+                isLoading={loadingTab === 'slots'}
                 isSaving={isSaving}
                 newSlot={newSlot}
                 onNewSlotChange={handleNewSlotChange}
@@ -562,12 +553,7 @@ const Administracion: React.FC = () => {
               )}
             </Stack>
           </CustomTabPanel>
-
-          <CustomTabPanel
-            value={activeTab}
-            index="alumnos"
-            isLoading={loadingTab === 'alumnos'}
-          >
+          <CustomTabPanel value={activeTab} index="alumnos">
             <ProfessorStudentList
               students={students}
               slots={slots}
@@ -576,6 +562,7 @@ const Administracion: React.FC = () => {
               onManagePermissions={handleManagePermissions}
               onDeleteStudent={handleDeleteStudent}
               isSaving={isSaving}
+              isLoading={loadingTab === 'alumnos'}
             />
           </CustomTabPanel>
 

@@ -43,7 +43,7 @@ Demostrando que:
 
 ---
 
-## 🐌 **Zona de Mejora Continua** 🐌
+##  snail: **Zona de Mejora Continua** 🐌
 
 ### 😅 **Guillermo**
 
@@ -96,15 +96,19 @@ Con **31 commits** y **8 PRs**, tenemos aquí a alguien que:
 
 **Guillermo**
 `█░░░░░░░░░░░░░░░░░░░` 31 commits | 8 PRs
-**Sergio**
-`█████░░░░░░░░░░░░░░░` 93 commits | 15 PRs
 
-**Maurizio**
-`██░░░░░░░░░░░░░░░░░░` 53 commits | 8 PRs
+---
 
-**Guillermo**
-`█░░░░░░░░░░░░░░░░░░░` 31 commits | 6 PRs
->>>>>>> 49e842a (Fix(dashboard): Disposición de elementos, cards interactivos, implementación de notificaciones)
+## 💡 Notas
+
+- Este archivo se genera automáticamente en cada pre-commit.
+- **Commits:** Total acumulado.
+- **PRs Fusionados:** Ramas que han sido mergeadas al proyecto (crédito al autor original de la rama).
+- ¡Que la competencia sea sana y el código limpio! 🚀
+
+---
+
+*Generado automáticamente por `count-commits.js`*
 
 ---
 

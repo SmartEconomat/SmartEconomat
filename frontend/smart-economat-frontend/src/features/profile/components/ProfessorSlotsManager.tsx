@@ -7,7 +7,6 @@ import {
   List,
   ListItem,
   ListItemText,
-  CircularProgress,
   Accordion,
   AccordionSummary,
   AccordionDetails,
@@ -21,6 +20,7 @@ import {
 } from '@mui/material';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import ListSkeleton from '../../../components/ui/ListSkeleton';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import EditIcon from '@mui/icons-material/Edit';
@@ -139,11 +139,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
     onRowsPerPageChange: (newRows: number) => void
   ) => {
     if (isLoading) {
-      return (
-        <Box display="flex" justifyContent="center" py={3}>
-          <CircularProgress size={24} />
-        </Box>
-      );
+      return <ListSkeleton hasHeader={false} count={3} />;
     }
 
     if (items.length === 0) {
@@ -589,4 +585,4 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
   );
 };
 
-export default ProfessorSlotsManager;
+export default React.memo(ProfessorSlotsManager);
