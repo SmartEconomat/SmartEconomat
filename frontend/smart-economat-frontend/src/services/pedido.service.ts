@@ -23,6 +23,19 @@ export interface CreatePurchaseBatchPayload {
   lineas: PedidoLinePayload[];
 }
 
+export interface CreateMissingStockBatchPayload {
+  observaciones?: string;
+  items: Array<{
+    recetaId: string;
+    cantidad: number;
+  }>;
+}
+
+export interface CreatePedidoFromRecetasPayload {
+  recetaIds: string[];
+  observaciones?: string;
+}
+
 export interface UpdatePedidoPayload {
   proveedorId?: string;
   observaciones?: string;
@@ -164,6 +177,78 @@ export async function createPurchaseBatch(
 
   if (!response.ok) {
     let errorMessage = `Error al crear lote de compra: ${response.status}`;
+    try {
+      const errorDetail = (await response.json()) as { message?: string };
+      if (errorDetail?.message) errorMessage = errorDetail.message;
+    } catch {
+      // ignore
+    }
+    throw new Error(errorMessage);
+  }
+
+  const body = (await response.json()) as ApiResponse<PurchaseBatch>;
+  return body.data;
+}
+
+export async function createMissingStockBatch(
+  payload: CreateMissingStockBatchPayload
+): Promise<PurchaseBatch> {
+  const response = await baseFetch('/purchase-batches/from-missing-stock', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    let errorMessage = `Error al crear pedidos de faltantes: ${response.status}`;
+    try {
+      const errorDetail = (await response.json()) as { message?: string };
+      if (errorDetail?.message) errorMessage = errorDetail.message;
+    } catch {
+      // ignore
+    }
+    throw new Error(errorMessage);
+  }
+
+  const body = (await response.json()) as ApiResponse<PurchaseBatch>;
+  return body.data;
+}
+
+export async function createPedidoFromRecetas(
+  payload: CreatePedidoFromRecetasPayload
+): Promise<Pedido> {
+  const response = await baseFetch('/pedidos/from-recipes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    let errorMessage = `Error al crear pedido desde recetas: ${response.status}`;
+    try {
+      const errorDetail = (await response.json()) as { message?: string };
+      if (errorDetail?.message) errorMessage = errorDetail.message;
+    } catch {
+      // ignore
+    }
+    throw new Error(errorMessage);
+  }
+
+  const body = (await response.json()) as ApiResponse<Pedido>;
+  return body.data;
+}
+
+export async function createPurchaseBatchFromRecetas(
+  payload: CreatePedidoFromRecetasPayload
+): Promise<PurchaseBatch> {
+  const response = await baseFetch('/purchase-batches/from-recipes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    let errorMessage = `Error al crear lote desde recetas: ${response.status}`;
     try {
       const errorDetail = (await response.json()) as { message?: string };
       if (errorDetail?.message) errorMessage = errorDetail.message;

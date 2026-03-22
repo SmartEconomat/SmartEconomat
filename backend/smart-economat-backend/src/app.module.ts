@@ -33,11 +33,18 @@ import { PlantillasRolesModule } from './modules/plantillas-roles/plantillas-rol
 import { IsUniqueConstraint } from './common/decorators/is-unique.decorator';
 import { ExportModule } from './modules/export/export.module';
 import { MermaModule } from './modules/merma/merma.module';
+import { PreparacionModule } from './modules/preparacion/preparacion.module';
 import { RecepcionDraftModule } from './modules/recepcion-draft/recepcion-draft.module';
+import { CacheModule } from '@nestjs/cache-manager';
 import { PedidoDraftModule } from './modules/pedido-draft/pedido-draft.module';
 
 @Module({
   imports: [
+    CacheModule.register({
+      isGlobal: true,
+      ttl: 300000,
+      max: 100,
+    }),
     ThrottlerModule.forRoot([
       {
         name: 'auth',
@@ -69,6 +76,7 @@ import { PedidoDraftModule } from './modules/pedido-draft/pedido-draft.module';
     PedidoDraftModule,
     RecepcionModule,
     RecetaModule,
+    PreparacionModule,
     ProveedorModule,
     DashboardModule,
     InventarioModule,

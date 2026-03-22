@@ -1,5 +1,5 @@
 import { Receta } from './receta.types';
-import { baseFetch } from './api.service';
+import { baseFetch, downloadFile } from './api.service';
 
 import { PaginatedData } from './api.service';
 
@@ -30,11 +30,20 @@ export async function fetchRecetas(
   return body.data;
 }
 
-export async function createReceta(receta: Partial<Receta>): Promise<Receta> {
+export async function createReceta(
+  receta: Partial<Receta> & { imagen?: File }
+): Promise<Receta> {
+  // Excluir 'imagen' del payload (ya se subió por separado)
+  const payload = Object.fromEntries(
+    Object.entries(receta).filter(([key]) => key !== 'imagen')
+  );
+
   const response = await baseFetch('/recetas', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(receta),
+    body: JSON.stringify(payload),
+    headers: {
+      'Content-Type': 'application/json',
+    },
   });
   if (!response.ok) {
     const errorBody = (await response.json().catch(() => ({}))) as {
@@ -50,12 +59,19 @@ export async function createReceta(receta: Partial<Receta>): Promise<Receta> {
 
 export async function updateReceta(
   id: string,
-  receta: Partial<Receta>
+  receta: Partial<Receta> & { imagen?: File }
 ): Promise<Receta> {
+  // Excluir 'imagen' del payload (ya se subió por separado)
+  const payload = Object.fromEntries(
+    Object.entries(receta).filter(([key]) => key !== 'imagen')
+  );
+
   const response = await baseFetch(`/recetas/${id}`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(receta),
+    body: JSON.stringify(payload),
+    headers: {
+      'Content-Type': 'application/json',
+    },
   });
   if (!response.ok) {
     const errorBody = (await response.json().catch(() => ({}))) as {
@@ -67,4 +83,46 @@ export async function updateReceta(
   }
   const body = (await response.json()) as ApiResponse<Receta>;
   return body.data ?? (body as unknown as Receta);
+}
+type RecetaDetalleApiData = {
+  receta: Receta;
+  detalleIngredientes: Array<{
+    productoId: string;
+    productoNombre: string;
+    cantidadNecesaria: number;
+    stockActual: number;
+    cantidadFaltante: number;
+    unidad: string;
+  }>;
+  alergenosConsolidados: string[];
+};
+
+export async function getRecetaDetalle(
+  id: string
+): Promise<RecetaDetalleApiData> {
+  const response = await baseFetch(`/recetas/${id}/detalle`);
+  if (!response.ok) {
+    throw new Error(`Error al obtener detalle: ${response.status}`);
+  }
+  const body = (await response.json()) as ApiResponse<RecetaDetalleApiData>;
+  return body.data;
+}
+
+export async function exportRecipesPdf(
+  ids: string[],
+  options: { includeImage?: boolean } = {}
+): Promise<void> {
+  if (ids.length === 0) {
+    throw new Error('Debe seleccionar al menos una receta para exportar.');
+  }
+
+  const query = new URLSearchParams({
+    ids: ids.join(','),
+    includeImage: String(options.includeImage !== false),
+  });
+
+  await downloadFile(
+    `/recetas/export/pdf?${query.toString()}`,
+    `SmartEconomat_Recetas_${new Date().toISOString().split('T')[0]}.pdf`
+  );
 }

@@ -69,7 +69,7 @@ const RecipeCarousel: React.FC = () => {
       <Paper
         elevation={0}
         sx={{
-          height: { xs: 300, md: 400 },
+          height: { xs: 200, md: 280 },
           borderRadius: 4,
           overflow: 'hidden',
           position: 'relative',
@@ -109,7 +109,7 @@ const RecipeCarousel: React.FC = () => {
                 position: 'absolute',
                 bottom: 0,
                 left: 0,
-                p: { xs: 3, md: 5 },
+                p: { xs: 2, md: 3 },
                 width: { xs: '100%', md: '60%' },
                 zIndex: 2,
                 color: 'white',
@@ -122,20 +122,20 @@ const RecipeCarousel: React.FC = () => {
                 label={item.category}
                 size="small"
                 sx={{
-                  mb: 2,
+                  mb: 1,
                   bgcolor: 'primary.main',
                   color: 'white',
                   fontWeight: 'bold',
                   textTransform: 'uppercase',
-                  fontSize: '0.7rem',
+                  fontSize: '0.65rem',
                 }}
               />
               <Typography
                 variant="h3"
                 sx={{
                   fontWeight: 800,
-                  mb: 1,
-                  fontSize: { xs: '1.5rem', md: '2.5rem' },
+                  mb: 0.5,
+                  fontSize: { xs: '1.2rem', md: '1.8rem' },
                 }}
               >
                 {item.title}

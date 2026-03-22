@@ -243,5 +243,7 @@ export async function safeDelete(
     await request(app.getHttpServer())
       .delete(url)
       .set('Authorization', `Bearer ${token}`);
-  } catch {}
+  } catch {
+    return;
+  }
 }

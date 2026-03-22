@@ -5,31 +5,46 @@ import {
 } from '../modules/pedido/pedido.entity/pedido.entity';
 import { PedidoProducto } from '../modules/pedido/pedido-producto.entity/pedido-producto.entity';
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
-import { Proveedor } from '../modules/proveedor/proveedor.entity/proveedor.entity';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 import { PurchaseBatch } from '../modules/pedido/purchase-batch.entity/purchase-batch.entity';
 import { EstadoLote } from '../modules/pedido/enums/estado-lote.enum';
+import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
 
 export const runSeeder = async (dataSource: DataSource) => {
   const { faker } = await import('@faker-js/faker');
   const pedidoRepo = dataSource.getRepository(Pedido);
   const pedidoProductoRepo = dataSource.getRepository(PedidoProducto);
   const usuarioRepo = dataSource.getRepository(Usuario);
-  const proveedorRepo = dataSource.getRepository(Proveedor);
+  const productoProveedorRepo = dataSource.getRepository(ProductoProveedor);
 
-  const usuarios = await usuarioRepo.find();
-  const proveedores = await proveedorRepo.find({ relations: ['productos'] });
+  const usuarios = await usuarioRepo.find({ take: 5 });
 
-  const proveedoresValidos = proveedores.filter(
-    (p) => p.productos && p.productos.length > 0
-  );
+  console.log('Obteniendo muestra de productos/proveedores...');
+  const samplePPS = await productoProveedorRepo.find({
+    relations: ['proveedor'],
+    take: 100,
+  });
 
   if (usuarios.length === 0) {
     throw new Error(SeederI18nHelper.getError('NO_USUARIOS'));
   }
-  if (proveedoresValidos.length === 0) {
+  if (samplePPS.length === 0) {
     throw new Error(SeederI18nHelper.getError('NO_PRODUCTOS_PROVEEDOR'));
   }
+
+  const ppsGroupedByProv = new Map<string, any>();
+  for (const pp of samplePPS) {
+    if (!pp.proveedor) continue;
+    if (!ppsGroupedByProv.has(pp.proveedor.id)) {
+      ppsGroupedByProv.set(pp.proveedor.id, {
+        ...pp.proveedor,
+        productos: [],
+      });
+    }
+    ppsGroupedByProv.get(pp.proveedor.id).productos.push(pp);
+  }
+
+  const proveedoresValidos = Array.from(ppsGroupedByProv.values());
 
   const batchRepo = dataSource.getRepository(PurchaseBatch);
 
@@ -87,7 +102,7 @@ export const runSeeder = async (dataSource: DataSource) => {
       let acumuladoTotal = 0;
       const detallesPedido: PedidoProducto[] = [];
 
-      for (const pp of itemsSeleccionados) {
+      for (const pp of itemsSeleccionados as ProductoProveedor[]) {
         const cantidad = faker.number.int({ min: 1, max: 10 });
         const precioUnitario =
           pp.precioUnitario ||
@@ -118,5 +133,5 @@ export const runSeeder = async (dataSource: DataSource) => {
     await batchRepo.save(savedBatch);
   }
 
-  console.log(SeederI18nHelper.getSeederSuccess('pedidos y lotes'));
+  console.log(SeederI18nHelper.getSeederSuccess('pedidos'));
 };

@@ -21,19 +21,39 @@ export function agregarInventarioPorProducto(
 ): InventarioPorProducto[] {
   const map = new Map<string, InventarioPorProducto>();
 
+  type RawItem = InventarioItem & {
+    producto?: {
+      id: string;
+      nombre: string;
+      unidad?: string;
+      tipo?: string;
+      codigoBarras?: string;
+    };
+    proveedor?: { id: string; nombre: string };
+    cantidad_actual?: number;
+    cantidad_minima?: number;
+    ubicacionNombre?: string;
+  };
   for (const item of items) {
-    const pp = item.productoProveedor;
-    if (!pp?.producto) continue;
+    const raw = item as RawItem;
+    const pp = raw.productoProveedor;
+    const producto = pp?.producto ?? raw.producto;
+    const proveedor = pp?.proveedor ?? raw.proveedor;
 
-    const productoId = pp.producto.id;
-    const nombre = pp.producto.nombre ?? '';
-    const codigoBarras = pp.producto.codigoBarras;
-    const unidad = pp.producto.unidad;
-    const tipo = pp.producto.tipo;
-    const cantidadActual = Number(item.cantidadActual) || 0;
-    const cantidadMinima = Number(item.cantidadMinima) || 0;
-    const proveedorNombre = pp.proveedor?.nombre;
-    const ubicacion = item.ubicacion?.nombre;
+    if (!producto || !producto.id) continue;
+
+    const productoId = producto.id;
+    const nombre = producto.nombre ?? '';
+    const codigoBarras = producto.codigoBarras;
+    const unidad = producto.unidad;
+    const tipo = producto.tipo;
+
+    const cantidadActual =
+      Number(raw.cantidadActual ?? raw.cantidad_actual) || 0;
+    const cantidadMinima =
+      Number(raw.cantidadMinima ?? raw.cantidad_minima) || 0;
+    const proveedorNombre = proveedor?.nombre;
+    const ubicacion = raw.ubicacion?.nombre ?? raw.ubicacionNombre;
 
     const existing = map.get(productoId);
     if (existing) {

@@ -23,16 +23,18 @@
     "test:e2e": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config ./test/jest-e2e.json --runInBand test/e2e/all.e2e-spec.ts",
     "test:e2e:file": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config ./test/jest-e2e.json --runInBand",
     "seed": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.ts",
+    "seed:massive": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/massive.ts",
     "migration:run": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d src/config/typeorm.config.ts",
     "schema:drop": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js schema:drop -d src/config/typeorm.config.ts",
     "schema:sync": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js schema:sync -d src/config/typeorm.config.ts",
     "db:reset": "npm run schema:drop && npm run schema:sync && npm run seed",
     "generate:erd": "ts-node tools/scripts/generate-erd.ts",
     "log-user-info": "ts-node scripts/log-user-info.ts",
-    "prepare": "cd ../.. && husky .husky"
+    "prepare": "node -e \"const fs=require('fs');const cp=require('child_process');const path=require('path');const candidates=[path.resolve('/project_root'),path.resolve(process.cwd(),'../..'),process.cwd()];const repoRoot=candidates.find((dir)=>fs.existsSync(path.join(dir,'.git'))&&fs.existsSync(path.join(dir,'.husky')));if(repoRoot){cp.execSync('npx husky '+path.join(repoRoot,'.husky'),{stdio:'inherit'});}else{console.log('⏭️ Husky omitido: repositorio git no disponible');}\""
   },
   "dependencies": {
     "@faker-js/faker": "^10.1.0",
+    "@jimp/wasm-webp": "^1.6.0",
     "@nestjs/cache-manager": "^3.1.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.3",
@@ -55,6 +57,7 @@
     "dotenv": "^16.3.0",
     "exceljs": "^4.4.0",
     "ioredis": "^5.7.0",
+    "@jsquash/webp": "^1.5.0",
     "jimp": "^1.6.0",
     "nestjs-i18n": "^10.6.0",
     "passport": "^0.7.0",
@@ -66,7 +69,8 @@
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.1",
     "typeorm": "^0.3.27",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "wasm-feature-detect": "^1.8.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -86,6 +90,7 @@
     "@types/node": "^22.18.12",
     "@types/passport": "^1.0.17",
     "@types/passport-jwt": "^4.0.1",
+    "@types/pdfkit": "^0.17.5",
     "@types/supertest": "^6.0.2",
     "@types/uuid": "^9.0.8",
     "cross-env": "^10.1.0",

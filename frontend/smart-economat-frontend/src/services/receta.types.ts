@@ -28,6 +28,12 @@ export interface RecetaIngrediente {
   id: string;
   cantidad: number;
   unidad: UnidadIngrediente;
+  mermaAplicada?: number;
+  proveedorFavoritoId?: string;
+  proveedorFavorito?: {
+    id: string;
+    nombre: string;
+  };
   producto?: {
     id: string;
     nombre: string;
@@ -39,8 +45,19 @@ export interface Receta {
   id: string;
   nombre: string;
   instrucciones: string;
-  tiempo: TiempoReceta;
+  /** Franja de tiempo (opcional, usada en la UI) */
+  tiempo?: TiempoReceta;
+  /** Texto libre con el tiempo de preparación (ej. "30 minutos") */
+  tiempoPreparacion?: string;
+  tiempoEstimadoMinutos: number;
   dificultad: DificultadReceta;
-  tiempoPreparacion: string;
+  rendimiento?: number;
+  unidadResultado?: UnidadIngrediente;
+  diasCaducidad?: number;
+  costeUnitarioEstimado?: number;
+  pathImg?: string;
+  pathImgOptimized?: string;
   ingredientes?: RecetaIngrediente[];
+  raciones?: number;
+  tamanioRacion?: number;
 }

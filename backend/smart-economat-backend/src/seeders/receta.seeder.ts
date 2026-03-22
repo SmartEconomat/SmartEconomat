@@ -5,7 +5,6 @@ import { Producto } from '../modules/producto/producto.entity/producto.entity';
 import {
   UnidadIngrediente,
   DificultadReceta,
-  TiempoReceta,
 } from '../modules/receta/enums/receta.enums';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
@@ -24,12 +23,32 @@ export const runSeeder = async (dataSource: DataSource) => {
   }
 
   for (let i = 0; i < NUM_RECETAS; i++) {
+    const raciones = faker.number.int({ min: 1, max: 8 });
+    const tamanioRacion = faker.number.float({
+      min: 0.1,
+      max: 0.5,
+      multipleOf: 0.05,
+    });
+    const rendimiento = Number((raciones * tamanioRacion).toFixed(3));
+
     const receta = recetaRepo.create({
       nombre: faker.commerce.productName(),
-      instrucciones: faker.lorem.paragraphs(2).slice(0, 2000),
-      tiempo: faker.helpers.arrayElement(Object.values(TiempoReceta)),
+      instrucciones: faker.lorem.paragraphs(3),
+      tiempoEstimadoMinutos: faker.number.int({ min: 15, max: 150 }),
       dificultad: faker.helpers.arrayElement(Object.values(DificultadReceta)),
-      tiempoPreparacion: `${faker.number.int({ min: 10, max: 60 })} min`,
+      rendimiento,
+      unidadResultado: faker.helpers.arrayElement([
+        UnidadIngrediente.KILOGRAMO,
+        UnidadIngrediente.LITRO,
+      ]),
+      raciones,
+      tamanioRacion,
+      diasCaducidad: faker.number.int({ min: 2, max: 7 }),
+      costeUnitarioEstimado: faker.number.float({
+        min: 1.5,
+        max: 8.5,
+        multipleOf: 0.1,
+      }),
     });
 
     const recetaGuardada = await recetaRepo.save(receta);
@@ -40,14 +59,40 @@ export const runSeeder = async (dataSource: DataSource) => {
       numIngredientes
     );
 
+    const mapUnidad = (u: any): UnidadIngrediente => {
+      const val = String(u).toUpperCase();
+      if (val === 'G') return UnidadIngrediente.GRAMO;
+      if (val === 'KG') return UnidadIngrediente.KILOGRAMO;
+      if (val === 'L') return UnidadIngrediente.LITRO;
+      if (val === 'ML') return UnidadIngrediente.MILILITRO;
+      return UnidadIngrediente.KILOGRAMO;
+    };
+
     const ingredientes: RecetaIngrediente[] = productosAleatorios.map(
-      (producto) =>
-        ingredienteRepo.create({
+      (producto) => {
+        const unidad = mapUnidad(producto.unidad);
+        let cantidad = 0;
+        if (
+          unidad === UnidadIngrediente.GRAMO ||
+          unidad === UnidadIngrediente.MILILITRO
+        ) {
+          cantidad = faker.number.float({ min: 10, max: 100, multipleOf: 1 });
+        } else {
+          cantidad = faker.number.float({
+            min: 0.05,
+            max: 0.5,
+            multipleOf: 0.01,
+          });
+        }
+
+        return ingredienteRepo.create({
           receta: recetaGuardada,
           producto,
-          cantidad: faker.number.float({ min: 50, max: 500, multipleOf: 0.5 }),
-          unidad: faker.helpers.arrayElement(Object.values(UnidadIngrediente)),
-        })
+          cantidad,
+          unidad,
+          mermaAplicada: faker.number.int({ min: 0, max: 15 }),
+        });
+      }
     );
 
     await ingredienteRepo.save(ingredientes);

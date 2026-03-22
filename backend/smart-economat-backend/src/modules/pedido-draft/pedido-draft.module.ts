@@ -7,6 +7,7 @@ import { PedidoDraft } from './pedido-draft.entity/pedido-draft.entity';
 import { PEDIDO_DRAFT_REDIS } from './constants/pedido-draft.constants';
 import { PedidoModule } from '../pedido/pedido.module';
 import { PedidoDraftController } from './controller/pedido-draft.controller';
+import { createInMemoryRedisClient } from '../../common/testing/in-memory-redis';
 
 @Module({
   imports: [
@@ -20,6 +21,10 @@ import { PedidoDraftController } from './controller/pedido-draft.controller';
       provide: PEDIDO_DRAFT_REDIS,
       inject: [ConfigService],
       useFactory: (configService: ConfigService): Redis => {
+        if (process.env.NODE_ENV === 'test') {
+          return createInMemoryRedisClient() as unknown as Redis;
+        }
+
         const redisUrl = configService.get<string>('REDIS_URL');
 
         if (redisUrl) {

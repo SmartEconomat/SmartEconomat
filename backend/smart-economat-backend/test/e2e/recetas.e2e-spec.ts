@@ -1,7 +1,11 @@
 import { getTestApp } from '../setup/test-app';
 import { INestApplication } from '@nestjs/common';
-
 import request from 'supertest';
+import { DificultadReceta } from '../../src/modules/receta/enums/receta.enums';
+import {
+  UnidadMedida,
+  TipoProducto,
+} from '../../src/modules/producto/enums/producto.enums';
 
 /**
  * @file recetas.e2e-spec.ts
@@ -34,9 +38,9 @@ describe('RecetaController (e2e)', () => {
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
         nombre: `Producto Receta E2E ${Date.now()}_${Math.random()}`,
-        unidad: 'KG',
-        tipo: 'verdura',
-        contenido: 500,
+        unidad: UnidadMedida.KG,
+        tipo: TipoProducto.VERDURA,
+        contenido: 1,
       });
 
     if (productoRes.status !== 201) {
@@ -52,9 +56,8 @@ describe('RecetaController (e2e)', () => {
       .send({
         nombre: `Receta Base E2E ${Date.now()}_${Math.random()}`,
         instrucciones: 'Instrucciones base',
-        tiempo: '10 min',
-        dificultad: 'Fácil',
-        tiempoPreparacion: '10 minutos',
+        tiempoEstimadoMinutos: 10,
+        dificultad: DificultadReceta.FACIL,
         ingredientes: [{ productoId, cantidad: 1, unidad: 'kg' }],
       });
 
@@ -77,9 +80,8 @@ describe('RecetaController (e2e)', () => {
         .send({
           nombre: `Receta E2E ${Date.now()}`,
           instrucciones: 'Mezclar y cocinar.',
-          tiempo: '20 min',
-          dificultad: 'Media',
-          tiempoPreparacion: '15 minutos',
+          tiempoEstimadoMinutos: 20,
+          dificultad: DificultadReceta.MEDIA,
           ingredientes: [
             {
               productoId,
@@ -87,14 +89,13 @@ describe('RecetaController (e2e)', () => {
               unidad: 'kg',
             },
           ],
-        })
-        .expect((res) => {
-          if (res.status !== 201) {
-            throw new Error(
-              `Expected 201, got ${res.status}. Body: ${JSON.stringify(res.body)}`
-            );
-          }
         });
+
+      if (res.status !== 201) {
+        throw new Error(
+          `Expected 201, got ${res.status}. Body: ${JSON.stringify(res.body)}`
+        );
+      }
 
       expect(res.body.success).toBe(true);
       recetaId = res.body.data.id;
@@ -156,9 +157,8 @@ describe('RecetaController (e2e)', () => {
         .send({
           nombre: originalName,
           instrucciones: 'Instrucciones originales',
-          tiempo: '10 min',
-          dificultad: 'Fácil',
-          tiempoPreparacion: '5 minutos',
+          tiempoEstimadoMinutos: 15,
+          dificultad: DificultadReceta.FACIL,
           ingredientes: [
             {
               productoId,
@@ -166,14 +166,13 @@ describe('RecetaController (e2e)', () => {
               unidad: 'l',
             },
           ],
-        })
-        .expect((res) => {
-          if (res.status !== 201) {
-            throw new Error(
-              `Expected 201, got ${res.status}. Body: ${JSON.stringify(res.body)}`
-            );
-          }
         });
+
+      if (createRes.status !== 201) {
+        throw new Error(
+          `Expected 201, got ${createRes.status}. Body: ${JSON.stringify(createRes.body)}`
+        );
+      }
 
       const originalId = createRes.body.data.id;
 
@@ -183,14 +182,13 @@ describe('RecetaController (e2e)', () => {
         .send({
           sourceId: originalId,
           newName: duplicatedName,
-        })
-        .expect((res) => {
-          if (res.status !== 201) {
-            throw new Error(
-              `Expected 201, got ${res.status}. Body: ${JSON.stringify(res.body)}`
-            );
-          }
         });
+
+      if (duplicateRes.status !== 201) {
+        throw new Error(
+          `Expected 201, got ${duplicateRes.status}. Body: ${JSON.stringify(duplicateRes.body)}`
+        );
+      }
 
       expect(duplicateRes.body.success).toBe(true);
       expect(duplicateRes.body.data.nombre).toBe(duplicatedName);

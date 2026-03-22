@@ -6,22 +6,17 @@ import {
   ArrayMinSize,
   ValidateNested,
   MaxLength,
-  Matches,
   IsOptional,
-  IsUUID,
   IsNumber,
   Min,
   IsInt,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  DificultadReceta,
-  TiempoReceta,
-  UnidadIngrediente,
-} from '../enums/receta.enums';
+import { DificultadReceta, UnidadIngrediente } from '../enums/receta.enums';
 import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
 import { AddIngredienteDto } from './add-ingrediente.dto';
+import { StringToNumberTransformer } from '../../../common/transformers/string-to-number.transformer';
 
 export class CreateRecetaDto {
   @Transform((params) => TrimStringTransformer.transform(params))
@@ -35,33 +30,18 @@ export class CreateRecetaDto {
   @IsNotEmpty()
   instrucciones!: string;
 
-  @IsEnum(TiempoReceta)
-  tiempo!: TiempoReceta;
+  @IsInt()
+  @Min(0)
+  tiempoEstimadoMinutos!: number;
 
   @IsEnum(DificultadReceta)
   dificultad!: DificultadReceta;
-
-  @Transform((params) => TrimStringTransformer.transform(params))
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(50)
-  @Matches(/^\d+ (minutos|horas|segundos)$/, {
-    message:
-      'El tiempo de preparación debe seguir el formato: "10 minutos", "1 hora", etc.',
-  })
-  tiempoPreparacion!: string;
-
-  @ApiPropertyOptional({
-    description: 'docs.ID_DEL_PRODUCTO_QUE_RESULTA_DE_LA_ELABOR',
-  })
-  @IsOptional()
-  @IsUUID('7')
-  productoResultadoId?: string;
 
   @ApiPropertyOptional({
     description: 'docs.CANTIDAD_PRODUCIDA_POR_DEFECTO_RENDIMIEN',
   })
   @IsOptional()
+  @Transform((params) => StringToNumberTransformer.transform(params))
   @IsNumber()
   @Min(0.001)
   rendimiento?: number;
@@ -81,6 +61,26 @@ export class CreateRecetaDto {
   @IsInt()
   @Min(1)
   diasCaducidad?: number;
+
+  @IsOptional()
+  @IsString()
+  pathImg?: string;
+
+  @IsOptional()
+  @IsString()
+  pathImgOptimized?: string;
+
+  @IsOptional()
+  @Transform((params) => StringToNumberTransformer.transform(params))
+  @IsNumber()
+  @Min(0.001)
+  raciones?: number;
+
+  @IsOptional()
+  @Transform((params) => StringToNumberTransformer.transform(params))
+  @IsNumber()
+  @Min(0.001)
+  tamanioRacion?: number;
 
   @IsArray()
   @ArrayMinSize(1)

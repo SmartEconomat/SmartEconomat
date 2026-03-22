@@ -9,12 +9,17 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
-  ParseUUIDPipe,
   Req,
+  Res,
+  Query,
+  BadRequestException,
 } from '@nestjs/common';
+import { ParseUUIDv7Pipe } from '../../../common/pipes/parse-uuid-v7.pipe';
+import * as express from 'express';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { RecetaService } from '../service/receta.service';
+import { RecetaPdfService } from '../service/receta-pdf.service';
 import { CreateRecetaDto } from '../dto/create-receta.dto';
 import { UpdateRecetaDto } from '../dto/update-receta.dto';
 import { DuplicateRecetaDto } from '../dto/duplicate-receta.dto';
@@ -34,12 +39,15 @@ import { rolUsuario } from '../../usuario/enums/usuario.enums';
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('recetas')
 export class RecetaController {
-  constructor(private readonly recetaService: RecetaService) {}
+  constructor(
+    private readonly recetaService: RecetaService,
+    private readonly recetaPdfService: RecetaPdfService
+  ) {}
 
   @Post()
   @RequirePermissions('recetas:crear')
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() createRecetaDto: CreateRecetaDto): Promise<Receta> {
+  async create(@Body() createRecetaDto: CreateRecetaDto): Promise<Receta> {
     return this.recetaService.create(createRecetaDto);
   }
 
@@ -55,9 +63,9 @@ export class RecetaController {
   findAll(
     @SortableFields([
       'nombre',
-      'tiempo',
+      'tiempoEstimadoMinutos',
       'dificultad',
-      'tiempoPreparacion',
+      'rendimiento',
       'costeUnitarioEstimado',
       'createdAt',
       'updatedAt',
@@ -72,7 +80,7 @@ export class RecetaController {
   @Get(':id')
   @RequirePermissions('recetas:ver')
   findOne(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDv7Pipe) id: string,
     @Req() req: { user?: { rol?: string } }
   ): Promise<Receta> {
     const userRole = req.user?.rol;
@@ -82,7 +90,7 @@ export class RecetaController {
   @Get(':id/detalle')
   @RequirePermissions('recetas:ver')
   getDetalle(
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id', ParseUUIDv7Pipe) id: string
   ): Promise<DetalleRecetaDto> {
     return this.recetaService.getDetalle(id);
   }
@@ -94,7 +102,7 @@ export class RecetaController {
   @ApiResponse({ status: 200, type: RecetaCostResponseDto })
   @ApiResponse({ status: 404, description: 'docs.RECETA_NO_ENCONTRADA' })
   calcularEscandallo(
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id', ParseUUIDv7Pipe) id: string
   ): Promise<RecetaCostResponseDto> {
     return this.recetaService.calcularEscandallo(id);
   }
@@ -103,10 +111,44 @@ export class RecetaController {
   @RequirePermissions('recetas:cocinar')
   @HttpCode(HttpStatus.OK)
   cocinar(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() cocinarRecetaDto: CocinarRecetaDto
   ): Promise<void> {
     return this.recetaService.cocinar(id, cocinarRecetaDto);
+  }
+
+  @Get('export/pdf')
+  @RequirePermissions('recetas:ver')
+  @ApiOperation({ summary: 'Generar PDF de varias recetas' })
+  async exportMultiplePdf(
+    @Query('ids') ids: string | string[],
+    @Query('includeImage') includeImage: string | undefined,
+    @Res() res: express.Response
+  ): Promise<void> {
+    const idArray = Array.isArray(ids)
+      ? ids
+      : ids?.split(',').filter((id) => id.length > 0) || [];
+    if (idArray.length === 0) {
+      throw new BadRequestException(
+        'Debe proporcionar al menos un ID de receta.'
+      );
+    }
+    await this.recetaPdfService.generatePdf(idArray, res as any, {
+      includeImage: includeImage !== 'false',
+    });
+  }
+
+  @Get(':id/pdf')
+  @RequirePermissions('recetas:ver')
+  @ApiOperation({ summary: 'Generar PDF de una receta' })
+  async exportSinglePdf(
+    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Query('includeImage') includeImage: string | undefined,
+    @Res() res: express.Response
+  ): Promise<void> {
+    await this.recetaPdfService.generatePdf([id], res as any, {
+      includeImage: includeImage !== 'false',
+    });
   }
 
   @Post(':id/recalcular-costes')
@@ -117,14 +159,14 @@ export class RecetaController {
   })
   @ApiParam({ name: 'id', description: 'docs.UUID_DE_LA_RECETA' })
   @ApiResponse({ status: 200, type: Receta })
-  recalcularCostes(@Param('id', ParseUUIDPipe) id: string): Promise<Receta> {
+  recalcularCostes(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Receta> {
     return this.recetaService.recalcularCostes(id);
   }
 
   @Patch(':id')
   @RequirePermissions('recetas:editar')
-  update(
-    @Param('id', ParseUUIDPipe) id: string,
+  async update(
+    @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() updateRecetaDto: UpdateRecetaDto
   ): Promise<Receta> {
     return this.recetaService.update(id, updateRecetaDto);
@@ -133,7 +175,7 @@ export class RecetaController {
   @Delete(':id')
   @RequirePermissions('recetas:eliminar')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+  remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.recetaService.remove(id);
   }
 }

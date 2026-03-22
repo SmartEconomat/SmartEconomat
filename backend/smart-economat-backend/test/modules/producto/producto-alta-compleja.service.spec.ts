@@ -13,6 +13,7 @@ import {
 } from '../../../src/modules/producto/enums/producto.enums';
 import { ProductoRepository } from '../../../src/modules/producto/repository/producto.repository';
 import { ProductoService } from '../../../src/modules/producto/service/producto.service';
+import { ArchivoService } from '../../../src/modules/archivo/service/archivo.service';
 
 function createDeleteQueryBuilderMock() {
   return {
@@ -76,6 +77,11 @@ describe('ProductoService - Alta compleja', () => {
     trackProductoDeletion: jest.fn(),
   };
 
+  const mockArchivoService = {
+    normalizeStoredPath: jest.fn((value) => value),
+    removeFileByStoredPath: jest.fn(),
+  };
+
   const mockDataSource = {
     transaction: jest.fn(),
   };
@@ -97,6 +103,10 @@ describe('ProductoService - Alta compleja', () => {
         {
           provide: getRepositoryToken(ProductoAlergeno),
           useValue: mockProductoAlergenoRepository,
+        },
+        {
+          provide: ArchivoService,
+          useValue: mockArchivoService,
         },
         {
           provide: MovimientoHelper,

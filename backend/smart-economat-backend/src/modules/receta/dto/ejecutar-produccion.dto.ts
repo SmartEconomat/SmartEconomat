@@ -6,6 +6,8 @@ import {
   IsDateString,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+import { StringToNumberTransformer } from '../../../common/transformers/string-to-number.transformer';
 
 export class EjecutarProduccionDto {
   @ApiProperty({ description: 'docs.UUID_DE_LA_RECETA_A_PRODUCIR' })
@@ -13,6 +15,7 @@ export class EjecutarProduccionDto {
   recetaId!: string;
 
   @ApiProperty({ description: 'docs.CANTIDAD_TOTAL_A_PRODUCIR' })
+  @Transform((params) => StringToNumberTransformer.transform(params))
   @IsNumber()
   @Min(0.001)
   cantidadProducida!: number;
@@ -24,9 +27,10 @@ export class EjecutarProduccionDto {
   @IsDateString()
   fechaCaducidadManual?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'docs.UUID_DE_LA_UBICACI_N_DE_ALMAC_N_DESTINO',
   })
+  @IsOptional()
   @IsUUID('7')
-  ubicacionDestinoId!: string;
+  ubicacionDestinoId?: string;
 }

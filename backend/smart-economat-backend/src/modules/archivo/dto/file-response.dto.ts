@@ -19,6 +19,18 @@ export class FileResponseDto {
   @ApiProperty({ description: 'docs.FECHA_DE_SUBIDA_DEL_ARCHIVO' })
   fechaSubida: Date;
 
+  @ApiProperty({ description: 'URL optimizada del archivo', required: false })
+  urlOptimized?: string;
+
+  @ApiProperty({
+    description: 'Tamaño optimizado del archivo',
+    required: false,
+  })
+  tamanoOptimized?: number;
+
+  @ApiProperty({ description: 'Tipo MIME optimizado', required: false })
+  mimeTypeOptimized?: string;
+
   @ApiProperty({
     description: 'docs.INFORMACI_N_B_SICA_DEL_USUARIO_QUE_SUBI',
     required: false,

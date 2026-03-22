@@ -291,9 +291,8 @@ describe('PedidoController (e2e)', () => {
         .send({
           nombre,
           instrucciones: 'Preparación de prueba',
-          tiempo: '10 min',
           dificultad: 'Fácil',
-          tiempoPreparacion: '10 minutos',
+          tiempoEstimadoMinutos: 10,
           ingredientes,
         });
 

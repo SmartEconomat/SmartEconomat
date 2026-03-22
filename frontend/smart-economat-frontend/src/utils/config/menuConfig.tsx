@@ -9,6 +9,7 @@ import SwapHorizIconOption from '@mui/icons-material/SwapHorizOutlined';
 import LocalShippingIconOption from '@mui/icons-material/LocalShippingOutlined';
 import CategoryIconOption from '@mui/icons-material/CategoryOutlined';
 import MenuBookIconOption from '@mui/icons-material/MenuBookOutlined';
+import RestaurantIconOption from '@mui/icons-material/RestaurantOutlined';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 
 // Lazy load components
@@ -21,6 +22,7 @@ const Incidencias = React.lazy(() => import('../../pages/Incidencias'));
 const Movimientos = React.lazy(() => import('../../pages/Movimientos'));
 const Proveedores = React.lazy(() => import('../../pages/Proveedores'));
 const Recetas = React.lazy(() => import('../../pages/Recetas'));
+const Preparaciones = React.lazy(() => import('../../pages/Preparaciones'));
 
 const Perfil = React.lazy(() => import('../../pages/Perfil'));
 const Administracion = React.lazy(() => import('../../pages/Administracion'));
@@ -109,6 +111,15 @@ export const menuItems: MenuItem[] = [
     component: Movimientos,
     showInMenu: true,
     permiso: 'movimientos:listar',
+  },
+  {
+    path: '/preparaciones',
+    title: 'Preparaciones',
+    description: 'Historial de producción de recetas',
+    icon: <RestaurantIconOption />,
+    component: Preparaciones,
+    showInMenu: true,
+    permiso: 'recetas:listar',
   },
   {
     path: '/incidencias',

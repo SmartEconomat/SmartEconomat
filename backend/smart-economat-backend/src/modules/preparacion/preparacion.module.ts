@@ -1,14 +1,20 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { PreparacionEntity } from './preparacion.entity';
-import { Producto } from '../producto/producto.entity/producto.entity';
+import { Preparacion } from './preparacion.entity/preparacion.entity';
 import { PreparacionService } from './service/preparacion.service';
 import { PreparacionController } from './controller/preparacion.controller';
+import { PreparacionRepository } from './repository/preparacion.repository';
+import { RecetaModule } from '../receta/receta.module';
+import { UsuarioModule } from '../usuario/usuario.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PreparacionEntity, Producto])],
-  providers: [PreparacionService],
+  imports: [
+    TypeOrmModule.forFeature([Preparacion]),
+    UsuarioModule,
+    forwardRef(() => RecetaModule),
+  ],
+  providers: [PreparacionService, PreparacionRepository],
   controllers: [PreparacionController],
-  exports: [PreparacionService],
+  exports: [PreparacionService, PreparacionRepository],
 })
 export class PreparacionModule {}

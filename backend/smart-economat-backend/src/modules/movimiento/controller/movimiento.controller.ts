@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
+import { Movimiento } from '../movimiento.entity/movimiento.entity';
 import { MovimientoService } from '../service/movimiento.service';
 import { CreateMovimientoDto } from '../dto/create-movimiento.dto';
 import { UpdateMovimientoDto } from '../dto/update-movimiento.dto';
@@ -138,7 +139,9 @@ export class MovimientoController {
     status: 404,
     description: 'docs.NO_SE_ENCONTRARON_MOVIMIENTOS_QUE_COINCI',
   })
-  getMovimientoHistory(@Query() dto: MovimientoHistoryDto) {
+  getMovimientoHistory(
+    @Query() dto: MovimientoHistoryDto
+  ): Promise<PaginatedResponseDto<Movimiento>> {
     return this.movimientoService.getMovimientoHistory(dto);
   }
 

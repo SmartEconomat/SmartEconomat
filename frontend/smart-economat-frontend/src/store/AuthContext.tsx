@@ -9,6 +9,7 @@ import { setPermissions, resetPermissions } from './slices/permissionsSlice';
 const clearLegacySessionStorage = () => {
   localStorage.removeItem('user');
   localStorage.removeItem('token');
+  localStorage.removeItem('sm_has_session');
 };
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
@@ -38,10 +39,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         }
         setIsSessionVerified(true);
         setIsAuthResolved(true);
+        localStorage.setItem('sm_has_session', 'true');
         return refreshedUser;
       })
       .catch(() => {
         clearLegacySessionStorage();
+        setIsSessionVerified(false);
+        setIsAuthResolved(true);
+        localStorage.removeItem('sm_has_session');
         setUser(null);
         dispatch(resetPermissions());
         setIsSessionVerified(false);
@@ -60,10 +65,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const logout = React.useCallback(async () => {
     refreshPromiseRef.current = null;
     clearLegacySessionStorage();
-    setUser(null);
-    dispatch(resetPermissions());
     setIsSessionVerified(false);
     setIsAuthResolved(true);
+    localStorage.removeItem('sm_has_session');
     try {
       await authService.logout();
     } catch {
@@ -77,6 +81,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       clearLegacySessionStorage();
       setUser(userData);
       setIsSessionVerified(true);
+      localStorage.setItem('sm_has_session', 'true');
       // No marcamos como resuelto aún, esperamos a tener el perfil completo
       setIsAuthResolved(false);
 
@@ -92,7 +97,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   useEffect(() => {
-    void refreshUser();
+    const hasSessionHint = localStorage.getItem('sm_has_session') === 'true';
+    if (hasSessionHint || window.location.pathname !== '/login') {
+      void refreshUser();
+    } else {
+      setIsAuthResolved(true);
+    }
   }, [refreshUser]);
 
   useEffect(() => {

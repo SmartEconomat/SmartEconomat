@@ -6,15 +6,16 @@ import {
   IsOptional,
   Max,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { UnidadIngrediente } from '../enums/receta.enums';
+import { StringToNumberTransformer } from '../../../common/transformers/string-to-number.transformer';
 
 export class AddIngredienteDto {
   @IsUUID('7')
   productoId!: string;
 
-  @Type(() => Number)
+  @Transform((params) => StringToNumberTransformer.transform(params))
   @IsNumber()
   @Min(0.01)
   cantidad!: number;
@@ -27,9 +28,16 @@ export class AddIngredienteDto {
     default: 0,
   })
   @IsOptional()
-  @Type(() => Number)
+  @Transform((params) => StringToNumberTransformer.transform(params))
   @IsNumber()
   @Min(0)
   @Max(99)
   mermaAplicada?: number;
+
+  @ApiPropertyOptional({
+    description: 'ID del proveedor favorito para este ingrediente',
+  })
+  @IsOptional()
+  @IsUUID('7')
+  proveedorFavoritoId?: string;
 }
