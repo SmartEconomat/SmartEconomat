@@ -318,6 +318,19 @@ const LoginForm: React.FC<LoginFormProps> = ({
             value={changePassData.newPassword}
             onChange={handleChangePass}
             required
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="mostrar nueva contraseña"
+                    onClick={togglePasswordVisibility}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
             error={Boolean(
               changePassData.newPassword.length > 0 && forcedPasswordChangeError
             )}
@@ -334,6 +347,19 @@ const LoginForm: React.FC<LoginFormProps> = ({
             value={changePassData.confirmPassword}
             onChange={handleChangePass}
             required
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="mostrar confirmación de contraseña"
+                    onClick={togglePasswordVisibility}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
             error={Boolean(
               changePassData.confirmPassword.length > 0 &&
               forcedPasswordChangeError
