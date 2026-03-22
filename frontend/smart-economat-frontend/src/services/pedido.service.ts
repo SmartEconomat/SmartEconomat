@@ -1,5 +1,10 @@
 import { Pedido, PurchaseBatch } from './pedido.types';
-import { baseFetch, PaginatedData } from './api.service';
+import {
+  baseFetch,
+  downloadFile,
+  PaginatedData,
+  printPdfFile,
+} from './api.service';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -280,4 +285,21 @@ export async function fetchPurchaseBatchById(
   }
   const body = (await response.json()) as ApiResponse<PurchaseBatch>;
   return body.data;
+}
+
+function getPedidoPdfPath(id: string): string {
+  const params = new URLSearchParams({
+    tipo: 'pedido',
+    pedidoId: id,
+  });
+
+  return `/recepciones/reporte-pdf?${params.toString()}`;
+}
+
+export async function downloadPedidoPdf(id: string): Promise<void> {
+  await downloadFile(getPedidoPdfPath(id), `pedido-${id.slice(0, 8)}.pdf`);
+}
+
+export async function printPedidoPdf(id: string): Promise<void> {
+  await printPdfFile(getPedidoPdfPath(id));
 }

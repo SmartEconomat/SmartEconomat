@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Stack } from '@mui/material';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
-import Modal, { ModalProps, ModalSize } from './Modal';
+import Modal, { ModalCloseReason, ModalProps, ModalSize } from './Modal';
 import Input from './Input';
 import Button from './Button';
 import Checkbox from './Checkbox';
@@ -227,8 +227,16 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   };
 
   const handleCancel = () => {
-    if (onCancel) onCancel();
-    onClose();
+    if (onCancel) {
+      onCancel();
+      return;
+    }
+
+    onClose('backdropClick');
+  };
+
+  const handleModalClose = (reason?: ModalCloseReason) => {
+    onClose(reason);
   };
 
   const formFields =
@@ -560,7 +568,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={handleCancel}
+      onClose={handleModalClose}
       title={title}
       size={size || 'md'}
     >

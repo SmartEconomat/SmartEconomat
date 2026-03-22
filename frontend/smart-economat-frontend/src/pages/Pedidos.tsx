@@ -1,146 +1,63 @@
 import React, {
-  useState,
-  useEffect,
   useCallback,
-  useRef,
+  useEffect,
   useMemo,
+  useRef,
+  useState,
 } from 'react';
 import dayjs from 'dayjs';
-import {
-  Box,
-  Paper,
-  IconButton,
-  Typography,
-  Alert,
-  Button,
-  Stack,
-  SelectChangeEvent,
-  Tabs,
-  Tab,
-} from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import CheckIcon from '@mui/icons-material/Check';
-import CancelIcon from '@mui/icons-material/Cancel';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
-import AddIcon from '@mui/icons-material/Add';
+import { Box, Paper, Alert } from '@mui/material';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import DataTable, { Column } from '../components/ui/DataTable';
+
 import ConfirmDialog from '../components/ui/ConfirmDialog';
-import DynamicFormModal, {
-  DynamicField,
-} from '../components/ui/DynamicFormModal';
-import { Pedido, EstadoPedido, PurchaseBatch } from '../services/pedido.types';
-import {
-  fetchPedidos,
-  createPedido,
-  updatePedido,
-  createPurchaseBatch,
-  fetchPurchaseBatches,
-  fetchPurchaseBatchById,
-  cancelPedido,
-  aceptarPedido,
-} from '../services/pedido.service';
-import { deleteResource } from '../services/api.service';
-import { fetchProveedores } from '../services/proveedor.service';
-import { useToast } from '../store/toast.hooks';
-import StatusChip from '../components/ui/StatusChip';
+import DynamicFormModal from '../components/ui/DynamicFormModal';
+import { ModalCloseReason } from '../components/ui/Modal';
+import { EstadoPedido, Pedido, PurchaseBatch } from '../services/pedido.types';
 import { usePermission } from '../store/auth.hooks';
-import PageToolbar from '../components/ui/PageToolbar';
 import { usePedidoDraft } from '../hooks/usePedidoDraft';
 import ReporteSelectorModal from '../components/ui/ReporteSelectorModal';
 
-const getPedidoSchema = (
-  row: Record<string, unknown> | null
-): DynamicField[] => {
-  if (!row)
-    return [
-      {
-        name: 'observaciones',
-        label: 'Observaciones Generales',
-        type: 'textarea',
-        position: 'bottom',
-      },
-      {
-        name: 'pedidoProductos',
-        label: 'Detalle de Productos',
-        type: 'orderLines',
-        position: 'bottom',
-      },
-    ];
-
-  const fields: DynamicField[] = [];
-
-  if (row.estado === EstadoPedido.CANCELADO) {
-    fields.push({
-      name: 'motivoCancelacion',
-      label: 'Motivo de la Cancelación',
-      type: 'textarea',
-      disabled: true,
-      position: 'bottom',
-    });
-  }
-
-  if (row.estado === EstadoPedido.INCIDENCIA) {
-    fields.push({
-      name: 'motivoIncidencia',
-      label: 'Motivo de la Incidencia',
-      type: 'textarea',
-      disabled: true,
-      position: 'bottom',
-    });
-  }
-
-  fields.push({
-    name: 'observaciones',
-    label: 'Observaciones Generales',
-    type: 'textarea',
-    position: 'bottom',
-    disabled: Boolean(row.estado && row.estado !== EstadoPedido.PENDIENTE),
-  });
-
-  fields.push({
-    name: 'pedidoProductos',
-    label: 'Detalle de Productos',
-    type: 'orderLines',
-    position: 'bottom',
-    disabled: Boolean(row.estado && row.estado !== EstadoPedido.PENDIENTE),
-  });
-
-  return fields;
-};
+// Nuevos componentes y hooks del refactor
+import PedidoDeliveryDateDialog from '../features/pedidos/components/PedidoDeliveryDateDialog';
+import PedidoDetailDrawer from '../features/pedidos/components/PedidoDetailDrawer';
+import PedidoDraftBanner from '../features/pedidos/components/PedidoDraftBanner';
+import PedidosPageHeader from '../features/pedidos/components/PedidosPageHeader';
+import PedidosTable from '../features/pedidos/components/PedidosTable';
+import PedidosTabs from '../features/pedidos/components/PedidosTabs';
+import PurchaseBatchDetailModal from '../features/pedidos/components/PurchaseBatchDetailModal';
+import PurchaseBatchList from '../features/pedidos/components/PurchaseBatchList';
+import { usePedidoActions } from '../features/pedidos/hooks/usePedidoActions';
+import { usePedidosData } from '../features/pedidos/hooks/usePedidosData';
+import { usePedidosFilters } from '../features/pedidos/hooks/usePedidosFilters';
+import {
+  PedidoFormValues,
+  PedidoPermissions,
+} from '../features/pedidos/types/pedidos-ui.types';
+import { buildPedidoPermissions } from '../features/pedidos/utils/pedidoPermissions';
+import { getPedidoSchema } from '../features/pedidos/utils/pedidoSchema';
 
 const Pedidos: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [data, setData] = useState<Pedido[]>([]);
-  const [batches, setBatches] = useState<PurchaseBatch[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<Pedido | null>(null);
   const [itemToAceptar, setItemToAceptar] = useState<Pedido | null>(null);
   const [itemToCancelar, setItemToCancelar] = useState<Pedido | null>(null);
-  const [itemToEdit, setItemToEdit] = useState<Record<string, unknown> | null>(
-    null
-  );
+  const [itemToEdit, setItemToEdit] = useState<PedidoFormValues | null>(null);
   const [itemToViewBatch, setItemToViewBatch] = useState<PurchaseBatch | null>(
     null
   );
-  const [isFetchingBatch, setIsFetchingBatch] = useState(false);
-  const [tabIndex, setTabIndex] = useState(0);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isAceptando, setIsAceptando] = useState(false);
-  const [isCancelando, setIsCancelando] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [itemToViewDetails, setItemToViewDetails] = useState<Pedido | null>(
+    null
+  );
+  const [itemToViewDeliveryDate, setItemToViewDeliveryDate] =
+    useState<Pedido | null>(null);
   const [isRecoveryOpen, setIsRecoveryOpen] = useState(false);
   const [isReporteOpen, setIsReporteOpen] = useState(false);
+  const [isNewPedidoWarningOpen, setIsNewPedidoWarningOpen] = useState(false);
+  const [isDraftCloseConfirmOpen, setIsDraftCloseConfirmOpen] = useState(false);
   const hasPromptedRef = useRef(false);
   const latestValsRef = useRef<Record<string, unknown>>({});
+
   const {
     draft,
     loadDraft,
@@ -149,52 +66,67 @@ const Pedidos: React.FC = () => {
     isLoadingDraft,
     flushSave,
   } = usePedidoDraft();
-  const toast = useToast();
 
-  const pedidoSchema = useMemo(
-    () => getPedidoSchema(itemToEdit || {}),
-    [itemToEdit]
+  const canEdit = usePermission('pedidos:editar');
+  const canDelete = usePermission('pedidos:eliminar');
+  const canCreate = usePermission('pedidos:crear');
+  const permissions: PedidoPermissions = useMemo(
+    () => buildPedidoPermissions(canCreate, canEdit, canDelete),
+    [canCreate, canDelete, canEdit]
   );
 
-  const loadData = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      if (tabIndex === 2) {
-        const batchesData = await fetchPurchaseBatches();
-        setBatches(batchesData);
-      } else {
-        const estadoFilter =
-          tabIndex === 0
-            ? EstadoPedido.PENDIENTE
-            : `NOT_${EstadoPedido.PENDIENTE}`;
-        const [dataLoad] = await Promise.all([
-          fetchPedidos(page, pageSize, searchTerm, estadoFilter),
-          fetchProveedores(1, 50).catch(() => ({ data: [] })),
-        ]);
-        setData(dataLoad.data);
-        setTotalItems(dataLoad.total);
-        setTotalPages(dataLoad.totalPages);
-      }
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Error desconocido al cargar pedidos.';
-      setError(message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [page, pageSize, searchTerm, tabIndex]);
+  const {
+    searchTerm,
+    setSearchTerm,
+    viewMode,
+    setViewMode,
+    tabIndex,
+    setTabIndex,
+    isBatchTab,
+  } = usePedidosFilters();
+
+  const {
+    data,
+    batches,
+    isLoading,
+    error,
+    totalPages,
+    totalItems,
+    reload,
+    setData,
+  } = usePedidosData({
+    page,
+    pageSize,
+    searchTerm,
+    tabIndex,
+  });
+
+  const {
+    savePedido,
+    deletePedidoById,
+    approvePedidoById,
+    cancelPedidoById,
+    fetchBatchDetail,
+    isSaving,
+    isDeleting,
+    isAceptando,
+    isCancelando,
+    isFetchingBatch,
+  } = usePedidoActions({
+    reload,
+    discardDraft,
+    onPedidoDeleted: (deletedId) => {
+      setData((current) => current.filter((pedido) => pedido.id !== deletedId));
+    },
+  });
+
+  const pedidoSchema = useMemo(() => getPedidoSchema(itemToEdit), [itemToEdit]);
 
   useEffect(() => {
-    void loadData();
     void loadDraft();
-  }, [loadData, loadDraft, page, pageSize, searchTerm, tabIndex]);
+  }, [loadDraft]);
 
   useEffect(() => {
-    // Solo auto-prompt si no lo hemos hecho ya en esta carga de página
-    // Y después de que la carga inicial del borrador haya terminado (o si ya sabemos que no hay)
     if (isLoadingDraft) return;
 
     if (
@@ -205,460 +137,196 @@ const Pedidos: React.FC = () => {
     ) {
       setIsRecoveryOpen(true);
       hasPromptedRef.current = true;
-    } else if (!draft && !isLoadingDraft && !hasPromptedRef.current) {
-      // Si ya cargó y no hay borrador, marcamos como notificado para evitar que
-      // borradores nuevos creados en esta sesión disparen el popup.
+    } else if (!draft && !hasPromptedRef.current) {
       hasPromptedRef.current = true;
     }
-  }, [draft, itemToEdit, isRecoveryOpen, isLoadingDraft]);
+  }, [draft, isLoadingDraft, isRecoveryOpen, itemToEdit]);
+
+  const hasDraftableContent = useCallback((vals: Record<string, unknown>) => {
+    const lines = (vals.pedidoProductos as unknown[]) || [];
+    const observations = (vals.observaciones as string) || '';
+
+    return (
+      lines.length > 0 ||
+      Boolean(observations && observations.trim().length > 0)
+    );
+  }, []);
+
+  const closePedidoEditor = useCallback(() => {
+    setItemToEdit(null);
+    setIsDraftCloseConfirmOpen(false);
+    latestValsRef.current = {};
+  }, []);
 
   const handleValuesChange = useCallback(
     (vals: Record<string, unknown>) => {
       latestValsRef.current = vals;
-      // Solo auto-guardar si es un pedido nuevo
+
       if (!itemToEdit?.id) {
-        const lines = (vals['pedidoProductos'] as unknown[]) || [];
-        const observations = (vals['observaciones'] as string) || '';
-        const hasContent =
-          lines.length > 0 || (observations && observations.trim().length > 0);
+        const hasContent = hasDraftableContent(vals);
+
         if (hasContent) {
           void saveDraft(vals);
         }
       }
     },
-    [itemToEdit?.id, saveDraft]
+    [hasDraftableContent, itemToEdit?.id, saveDraft]
   );
 
-  const handleCloseModal = useCallback(() => {
-    // Forzar guardado antes de cerrar si es un borrador nuevo y tiene contenido
-    if (!itemToEdit?.id) {
-      const vals = latestValsRef.current;
-      const lines = (vals['pedidoProductos'] as unknown[]) || [];
-      const observations = (vals['observaciones'] as string) || '';
-      const hasContent =
-        lines.length > 0 || (observations && observations.trim().length > 0);
-      if (hasContent) {
-        void flushSave(vals);
-      }
-    }
-    setItemToEdit(null);
-    latestValsRef.current = {};
-  }, [itemToEdit?.id, flushSave]);
+  const handleCloseModal = useCallback(
+    (reason?: ModalCloseReason) => {
+      if (!itemToEdit?.id) {
+        const vals = latestValsRef.current;
+        const hasContent = hasDraftableContent(vals);
 
-  const handleDeleteConfirm = async () => {
-    if (!itemToDelete) return;
-    setIsDeleting(true);
-    try {
-      await deleteResource(`/pedidos/${itemToDelete.id}`);
-      setData((prev) => prev.filter((p) => p.id !== itemToDelete.id));
-      toast.success(`Pedido eliminado correctamente.`);
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Error al eliminar el pedido.';
-      toast.error(message);
-    } finally {
-      setIsDeleting(false);
-      setItemToDelete(null);
-    }
-  };
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleSave = async (formData: Record<string, any>) => {
-    setIsSaving(true);
-    try {
-      const isEdit = !!formData.id;
-      const lines = formData.pedidoProductos || [];
-      if (!Array.isArray(lines) || lines.length === 0) {
-        toast.error('El pedido debe contener al menos una línea válida.');
-        setIsSaving(false);
-        return;
-      }
-
-      interface NormalizedLine {
-        productoProveedorId: string;
-        proveedorId: string;
-        cantidad: number;
-      }
-      const normalizedLines: NormalizedLine[] = lines
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .map((l: any) => ({
-          productoProveedorId: l.productoProveedorId || l.id_producto_proveedor,
-          proveedorId:
-            l.proveedorId ||
-            l.productoProveedor?.proveedor?.id ||
-            l.productoProveedor?.proveedorId,
-          cantidad: Number(l.cantidad),
-        }))
-        .filter(
-          (l) =>
-            l.productoProveedorId &&
-            Number.isFinite(l.cantidad) &&
-            l.cantidad > 0
-        );
-
-      if (normalizedLines.length === 0) {
-        toast.error(
-          'Cada línea debe tener un producto-proveedor y una cantidad mayor que 0.'
-        );
-        setIsSaving(false);
-        return;
-      }
-
-      // Agrupar las líneas por proveedor
-      const linesByProvider = new Map<string, NormalizedLine[]>();
-      let missingProvider = false;
-
-      normalizedLines.forEach((l) => {
-        const pId = l.proveedorId || formData.proveedorId;
-        if (!pId) missingProvider = true;
-        if (!linesByProvider.has(pId)) linesByProvider.set(pId, []);
-        linesByProvider.get(pId)!.push(l);
-      });
-
-      if (missingProvider) {
-        toast.error(
-          'Ocurrió un error al identificar el proveedor de algunos productos.'
-        );
-        setIsSaving(false);
-        return;
-      }
-
-      if (isEdit) {
-        // En una edición, obligatoriamente debemos actualizar el pedido actual con las líneas de su proveedor original
-        const mainProviderLines = linesByProvider.get(formData.proveedorId);
-        if (!mainProviderLines) {
-          toast.error(
-            'Debes mantener al menos un producto del proveedor original del pedido.'
-          );
-          setIsSaving(false);
+        if (!hasContent) {
+          closePedidoEditor();
           return;
         }
 
-        const mainApiLines = mainProviderLines.map((l) => ({
-          productoProveedorId: l.productoProveedorId,
-          cantidad: l.cantidad,
-        }));
-
-        await updatePedido(formData.id, {
-          proveedorId: formData.proveedorId,
-          lineas: mainApiLines,
-          observaciones: formData.observaciones,
-        });
-        linesByProvider.delete(formData.proveedorId);
-
-        // Si añadieron productos de otros proveedores, generamos nuevos pedidos para ellos
-        if (linesByProvider.size > 0) {
-          for (const [pId, pLines] of Array.from(linesByProvider.entries())) {
-            const extraApiLines = pLines.map((l) => ({
-              productoProveedorId: l.productoProveedorId,
-              cantidad: l.cantidad,
-            }));
-            await createPedido({
-              proveedorId: pId,
-              lineas: extraApiLines,
-              observaciones: formData.observaciones,
-            });
-          }
-          toast.success(
-            'Pedido actualizado, y se crearon nuevos pedidos separados para los otros proveedores.'
-          );
-        } else {
-          toast.success('Pedido actualizado correctamente.');
+        if (reason === 'backdropClick') {
+          void flushSave(vals);
+          closePedidoEditor();
+          return;
         }
-      } else {
-        // Modo Creación: enviar todo al backend en una única transacción de lote
-        const apiLines = normalizedLines.map((l) => ({
-          productoProveedorId: l.productoProveedorId,
-          cantidad: l.cantidad,
-        }));
 
-        await createPurchaseBatch({
-          lineas: apiLines,
-          observaciones: formData.observaciones,
-        });
-
-        toast.success(
-          linesByProvider.size > 1
-            ? `Se ha registrado el lote de compra con ${linesByProvider.size} pedidos agrupados.`
-            : 'Pedido registrado correctamente.'
-        );
-        // Limpiar borrador tras éxito
-        await discardDraft();
+        setIsDraftCloseConfirmOpen(true);
+        return;
       }
-      await loadData();
-      setItemToEdit(null);
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Error al guardar el pedido.';
-      toast.error(message);
-    } finally {
-      setIsSaving(false);
+
+      closePedidoEditor();
+    },
+    [closePedidoEditor, flushSave, hasDraftableContent, itemToEdit?.id]
+  );
+
+  const handleSaveDraftAndClose = useCallback(() => {
+    const vals = latestValsRef.current;
+
+    if (hasDraftableContent(vals)) {
+      void flushSave(vals);
     }
-  };
 
-  const canEdit = usePermission('pedidos:editar');
-  const canDelete = usePermission('pedidos:eliminar');
-  const canCreate = usePermission('pedidos:crear');
+    closePedidoEditor();
+  }, [closePedidoEditor, flushSave, hasDraftableContent]);
 
-  const handleEditClick = (row: Pedido) => {
-    const editData = {
+  const handleDiscardDraftAndClose = useCallback(() => {
+    void discardDraft();
+    closePedidoEditor();
+  }, [closePedidoEditor, discardDraft]);
+
+  const buildEditData = useCallback((row: Pedido): PedidoFormValues => {
+    return {
       ...row,
       proveedorId: row.proveedor?.id,
       pedidoProductos:
-        row.pedidoProductos?.map((pp) => ({
-          id: pp.id,
-          productoProveedorId: pp.productoProveedor?.id,
-          productoProveedor: pp.productoProveedor,
-          cantidad: pp.cantidad,
-          precioUnitario: pp.precioUnitario,
-          observaciones: pp.observaciones,
+        row.pedidoProductos?.map((pedidoProducto) => ({
+          id: pedidoProducto.id,
+          productoProveedorId: pedidoProducto.productoProveedor?.id,
+          productoProveedor: pedidoProducto.productoProveedor,
+          cantidad: pedidoProducto.cantidad,
+          precioUnitario: pedidoProducto.precioUnitario,
+          observaciones: pedidoProducto.observaciones,
         })) || [],
     };
-    setItemToEdit(editData);
-  };
+  }, []);
 
-  const handleViewBatchClick = async (batch: PurchaseBatch) => {
-    setIsFetchingBatch(true);
-    try {
-      const fullBatch = await fetchPurchaseBatchById(batch.id);
-      setItemToViewBatch(fullBatch);
-    } catch (err: unknown) {
-      toast.error(
-        err instanceof Error ? err.message : 'Error al cargar el lote.'
-      );
-    } finally {
-      setIsFetchingBatch(false);
+  const openNewPedidoForm = useCallback(() => {
+    setItemToEdit({});
+    hasPromptedRef.current = true;
+  }, []);
+
+  const handleCreateClick = useCallback(() => {
+    if (draft) {
+      setIsNewPedidoWarningOpen(true);
+      return;
     }
-  };
 
-  const handleAceptarConfirm = async () => {
+    openNewPedidoForm();
+  }, [draft, openNewPedidoForm]);
+
+  const handleRecoverDraft = useCallback(() => {
+    if (draft) {
+      setItemToEdit(draft.payload as PedidoFormValues);
+    }
+    setIsRecoveryOpen(false);
+    setIsNewPedidoWarningOpen(false);
+  }, [draft]);
+
+  const handleDiscardDraft = useCallback(() => {
+    void discardDraft();
+    setIsRecoveryOpen(false);
+  }, [discardDraft]);
+
+  const handleSave = useCallback(
+    async (formData: Record<string, unknown>) => {
+      await savePedido(formData as PedidoFormValues);
+      setItemToEdit(null);
+    },
+    [savePedido]
+  );
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!itemToDelete) return;
+    await deletePedidoById(itemToDelete.id);
+    setItemToDelete(null);
+  }, [deletePedidoById, itemToDelete]);
+
+  const handleAceptarConfirm = useCallback(async () => {
     if (!itemToAceptar) return;
-    setIsAceptando(true);
-    try {
-      await aceptarPedido(itemToAceptar.id);
-      toast.success('El pedido ha sido aceptado y ahora está en proceso.');
-      await loadData();
-    } catch (err: unknown) {
-      toast.error(
-        err instanceof Error ? err.message : 'Error al aceptar el pedido.'
-      );
-    } finally {
-      setIsAceptando(false);
-      setItemToAceptar(null);
-    }
-  };
+    await approvePedidoById(itemToAceptar.id);
+    setItemToAceptar(null);
+  }, [approvePedidoById, itemToAceptar]);
 
-  const handleCancelarSubmit = async (formData: Record<string, unknown>) => {
-    if (!itemToCancelar) return;
-    setIsCancelando(true);
-    try {
+  const handleCancelarSubmit = useCallback(
+    async (formData: Record<string, unknown>) => {
+      if (!itemToCancelar) return;
       const motivo =
         (formData.motivoCancelacion as string) || 'Cancelado por el usuario';
-      await cancelPedido(itemToCancelar.id, { motivoCancelacion: motivo });
-      toast.success('El pedido ha sido cancelado.');
-      await loadData();
+      await cancelPedidoById(itemToCancelar.id, motivo);
       setItemToCancelar(null);
-    } catch (err: unknown) {
-      toast.error(
-        err instanceof Error ? err.message : 'Error al cancelar el pedido.'
-      );
-    } finally {
-      setIsCancelando(false);
-    }
-  };
+    },
+    [cancelPedidoById, itemToCancelar]
+  );
 
-  const columns: Column<Pedido>[] = [
-    {
-      id: 'fechaPedido',
-      label: 'Fecha Pedido',
-      render: (row) =>
-        row.fechaPedido ? new Date(row.fechaPedido).toLocaleDateString() : '—',
+  const handleViewBatch = useCallback(
+    async (batch: PurchaseBatch) => {
+      const fullBatch = await fetchBatchDetail(batch.id);
+      setItemToViewBatch(fullBatch);
     },
-    {
-      id: 'fechaEntrega',
-      label: 'Fecha Entrega',
-      render: (row) =>
-        row.fechaEntrega
-          ? new Date(row.fechaEntrega).toLocaleDateString()
-          : '—',
-      hideOnMobile: true,
-    },
-    {
-      id: 'proveedor',
-      label: 'Proveedor',
-      render: (row) => row.proveedor?.nombre ?? '—',
-    },
-    {
-      id: 'costeTotal',
-      label: 'Coste Total',
-      align: 'right',
-      render: (row) =>
-        `${Number(row.costeTotal).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`,
-    },
-    {
-      id: 'estado',
-      label: 'Estado',
-      render: (row) => <StatusChip status={row.estado} />,
-    },
-    {
-      id: 'usuario',
-      label: 'Creado Por',
-      render: (row) => row.usuario?.nombre || row.usuario?.username || '—',
-      hideOnMobile: true,
-    },
-  ];
+    [fetchBatchDetail]
+  );
 
-  const batchColumns: Column<PurchaseBatch>[] = [
-    {
-      id: 'createdAt',
-      label: 'Fecha Creación',
-      render: (row) => new Date(row.createdAt).toLocaleString(),
-    },
-    {
-      id: 'pedidos',
-      label: 'Nº Pedidos',
-      render: (row) => row.pedidos?.length || 0,
-    },
-    {
-      id: 'proveedores',
-      label: 'Proveedores',
-      render: (row) =>
-        (
-          row.pedidos?.map((p) => p.proveedor?.nombre).filter(Boolean) || []
-        ).join(', '),
-    },
-    {
-      id: 'costeTotal',
-      label: 'Coste Total Estimado',
-      align: 'right',
-      render: (row) => {
-        const total =
-          row.pedidos?.reduce((sum, p) => sum + Number(p.costeTotal || 0), 0) ||
-          0;
-        return `${total.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+  const handlers = useMemo(
+    () => ({
+      onView: (pedido: Pedido) => setItemToViewDetails(pedido),
+      onEdit: (pedido: Pedido) => {
+        setItemToViewDetails(null);
+        setItemToEdit(buildEditData(pedido));
       },
-    },
-    {
-      id: 'estado',
-      label: 'Estado Lote',
-      render: (row) => <StatusChip status={String(row.estado)} />,
-    },
-    {
-      id: 'usuario',
-      label: 'Creado Por',
-      render: (row) => row.usuario?.nombre || row.usuario?.username || '—',
-    },
-  ];
-
-  const renderActions = (row: Pedido) => (
-    <Stack direction="row" spacing={1} justifyContent="center">
-      {row.estado !== EstadoPedido.PENDIENTE && (
-        <IconButton
-          color="primary"
-          onClick={(e) => {
-            e.currentTarget.blur();
-            handleEditClick(row);
-          }}
-          size="small"
-          aria-label="Ver Detalles"
-          title="Ver Detalles del Pedido"
-        >
-          <VisibilityIcon fontSize="small" />
-        </IconButton>
-      )}
-      {canEdit && row.estado === EstadoPedido.PENDIENTE && (
-        <IconButton
-          color="success"
-          onClick={(e) => {
-            e.currentTarget.blur();
-            setItemToAceptar(row);
-          }}
-          size="small"
-          aria-label="Aprobar"
-          title="Aprobar Pedido"
-        >
-          <CheckIcon fontSize="small" />
-        </IconButton>
-      )}
-      {canEdit && row.estado === EstadoPedido.PENDIENTE && (
-        <IconButton
-          color="warning"
-          onClick={(e) => {
-            e.currentTarget.blur();
-            setItemToCancelar(row);
-          }}
-          size="small"
-          aria-label="Cancelar"
-          title="Cancelar Pedido"
-        >
-          <CancelIcon fontSize="small" />
-        </IconButton>
-      )}
-      {canDelete &&
-        (row.estado === EstadoPedido.PENDIENTE ||
-          row.estado === EstadoPedido.CANCELADO) && (
-          <IconButton
-            color="error"
-            onClick={(e) => {
-              e.currentTarget.blur();
-              setItemToDelete(row);
-            }}
-            size="small"
-            aria-label="Borrar"
-            title="Eliminar de la base de datos"
-          >
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        )}
-      {canEdit && row.estado === EstadoPedido.PENDIENTE && (
-        <IconButton
-          color="secondary"
-          onClick={(e) => {
-            e.currentTarget.blur();
-            handleEditClick(row);
-          }}
-          size="small"
-          aria-label="Editar"
-          title="Editar Pedido"
-        >
-          <EditIcon fontSize="small" />
-        </IconButton>
-      )}
-    </Stack>
+      onDelete: (pedido: Pedido) => setItemToDelete(pedido),
+      onApprove: (pedido: Pedido) => setItemToAceptar(pedido),
+      onCancel: (pedido: Pedido) => setItemToCancelar(pedido),
+      onViewDelivery: (pedido: Pedido) => setItemToViewDeliveryDate(pedido),
+    }),
+    [buildEditData]
   );
 
   return (
     <Box>
-      <PageToolbar
-        title="Gestión de Pedidos"
-        searchValue={searchTerm}
-        onSearchChange={(v) => {
-          setSearchTerm(v);
+      <PedidosPageHeader
+        canCreate={permissions.canCreate}
+        draft={draft}
+        isLoadingDraft={isLoadingDraft}
+        totalItems={totalItems}
+        searchTerm={searchTerm}
+        viewMode={viewMode}
+        onSearchChange={(value) => {
+          setSearchTerm(value);
           setPage(1);
         }}
-        searchPlaceholder="Buscar por proveedor, estado, usuario..."
-        searchId="search-pedidos"
-        totalItems={totalItems}
-        totalItemsLabel="pedidos"
-        primaryAction={
-          canCreate
-            ? {
-                label: 'Nuevo Pedido',
-                onClick: () => {
-                  if (draft) {
-                    setIsRecoveryOpen(true);
-                  } else {
-                    setItemToEdit({});
-                    hasPromptedRef.current = true;
-                  }
-                },
-                id: 'btn-nuevo-pedido',
-                isLoading: isLoadingDraft,
-              }
-            : undefined
-        }
-        viewMode={viewMode}
         onViewModeChange={setViewMode}
+        onCreateClick={handleCreateClick}
+        onContinueDraftClick={handleRecoverDraft}
         extraActions={[
           {
             label: 'Reporte PDF',
@@ -672,96 +340,51 @@ const Pedidos: React.FC = () => {
       />
 
       <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
+        {draft && !isRecoveryOpen && !itemToEdit && (
+          <PedidoDraftBanner
+            draft={draft}
+            onRecover={handleRecoverDraft}
+            onDiscard={handleDiscardDraft}
+          />
+        )}
+
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
 
-        <Tabs
+        <PedidosTabs
           value={tabIndex}
-          onChange={(_, newValue) => {
-            setTabIndex(newValue);
+          onChange={(value) => {
+            setTabIndex(value);
             setPage(1);
           }}
-          indicatorColor="primary"
-          textColor="primary"
-          sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
-        >
-          <Tab label="Pedidos Pendientes" />
-          <Tab label="Historial (En Proceso / Finalizados)" />
-          <Tab label="Lotes de Compra" />
-        </Tabs>
+        />
 
-        {tabIndex === 2 ? (
-          <DataTable
-            columns={batchColumns}
-            data={batches}
+        {isBatchTab ? (
+          <PurchaseBatchList
+            batches={batches}
             isLoading={isLoading}
-            hideTopBar
-            viewMode="list"
-            emptyStateMessage="No hay lotes de compra registrados."
-            renderActions={(row) => (
-              <IconButton
-                color="primary"
-                size="small"
-                onClick={(e) => {
-                  e.currentTarget.blur();
-                  handleViewBatchClick(row);
-                }}
-                disabled={isFetchingBatch}
-              >
-                <VisibilityIcon fontSize="small" />
-              </IconButton>
-            )}
+            isFetchingBatch={isFetchingBatch}
+            handlers={{ onView: handleViewBatch }}
           />
         ) : (
-          <DataTable
-            columns={columns}
+          <PedidosTable
             data={data}
             isLoading={isLoading}
-            hideTopBar
+            page={page}
+            pageSize={pageSize}
+            totalPages={totalPages}
             viewMode={viewMode}
-            defaultViewMode={viewMode}
-            emptyStateMessage={
-              <Box sx={{ py: 4, textAlign: 'center' }}>
-                <LocalShippingOutlinedIcon
-                  sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
-                />
-                <Typography variant="h6" color="text.secondary" gutterBottom>
-                  No se encontraron pedidos
-                </Typography>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mb: 3 }}
-                >
-                  Empieza registrando un nuevo pedido al catálogo de
-                  proveedores.
-                </Typography>
-                {canCreate && (
-                  <Button
-                    variant="outlined"
-                    startIcon={<AddIcon />}
-                    onClick={() => setItemToEdit({})}
-                  >
-                    Registrar Pedido
-                  </Button>
-                )}
-              </Box>
-            }
-            pagination={{
-              currentPage: page,
-              totalPages: totalPages,
-              onPageChange: (_, newPage) => setPage(newPage),
-              pageSize: pageSize,
-              pageSizeOptions: [5, 10, 25, 50],
-              onPageSizeChange: (e: SelectChangeEvent<number>) => {
-                setPageSize(Number(e.target.value));
-                setPage(1);
-              },
+            permissions={permissions}
+            handlers={handlers}
+            onPageChange={setPage}
+            onPageSizeChange={(nextPageSize) => {
+              setPageSize(nextPageSize);
+              setPage(1);
             }}
-            renderActions={renderActions}
+            onCreateClick={handleCreateClick}
           />
         )}
 
@@ -775,7 +398,7 @@ const Pedidos: React.FC = () => {
               ¿Estás seguro de que deseas eliminar el pedido del{' '}
               <strong>
                 {itemToDelete?.fechaPedido
-                  ? new Date(itemToDelete.fechaPedido).toLocaleDateString()
+                  ? dayjs(itemToDelete.fechaPedido).format('DD/MM/YYYY')
                   : ''}
               </strong>
               ? Esta acción no se puede deshacer.
@@ -801,6 +424,7 @@ const Pedidos: React.FC = () => {
           confirmText="Sí, Aprobar"
           cancelText="Cancelar"
           isLoading={isAceptando}
+          confirmColor="success"
         />
 
         <DynamicFormModal
@@ -863,23 +487,24 @@ const Pedidos: React.FC = () => {
           }
         />
 
-        <DynamicFormModal
-          isOpen={!!itemToViewBatch}
+        <PurchaseBatchDetailModal
+          batch={itemToViewBatch}
           onClose={() => setItemToViewBatch(null)}
-          title={`Lote de Compra: ${itemToViewBatch?.id.split('-')[0]}...`}
-          size="lg"
-          fields={[
-            {
-              name: 'batch',
-              label: '',
-              type: 'batchViewer',
-              position: 'bottom',
-            },
-          ]}
-          initialData={{ batch: itemToViewBatch }}
-          onSubmit={() => setItemToViewBatch(null)}
-          submitLabel="Cerrar"
-          cancelLabel=""
+        />
+
+        <PedidoDetailDrawer
+          pedido={itemToViewDetails}
+          canEdit={permissions.canEdit}
+          onClose={() => setItemToViewDetails(null)}
+          onEdit={(pedido) => {
+            setItemToViewDetails(null);
+            setItemToEdit(buildEditData(pedido));
+          }}
+        />
+
+        <PedidoDeliveryDateDialog
+          pedido={itemToViewDeliveryDate}
+          onClose={() => setItemToViewDeliveryDate(null)}
         />
 
         <ReporteSelectorModal
@@ -891,12 +516,7 @@ const Pedidos: React.FC = () => {
         <ConfirmDialog
           isOpen={isRecoveryOpen}
           onClose={() => setIsRecoveryOpen(false)}
-          onConfirm={() => {
-            if (draft) {
-              setItemToEdit(draft.payload);
-            }
-            setIsRecoveryOpen(false);
-          }}
+          onConfirm={handleRecoverDraft}
           title="Recuperar Pedido Pendiente"
           message={
             <>
@@ -921,10 +541,48 @@ const Pedidos: React.FC = () => {
           confirmText="Sí, Recuperar"
           cancelText="No, Descartar"
           confirmColor="primary"
-          onCancel={() => {
-            void discardDraft();
-            setIsRecoveryOpen(false);
+          onCancel={handleDiscardDraft}
+        />
+
+        <ConfirmDialog
+          isOpen={isNewPedidoWarningOpen}
+          onClose={() => setIsNewPedidoWarningOpen(false)}
+          onConfirm={() => {
+            setIsNewPedidoWarningOpen(false);
+            openNewPedidoForm();
           }}
+          title="Ya tienes un pedido pendiente"
+          message={
+            <>
+              Ya existe un borrador de pedido guardado del día{' '}
+              <strong>
+                {dayjs(draft?.updatedAt).isValid()
+                  ? dayjs(draft?.updatedAt).format('DD/MM/YYYY')
+                  : '...'}
+              </strong>
+              . Si empiezas uno nuevo y se guarda, el borrador pendiente se
+              reemplazará.
+              <br />
+              <br />
+              ¿Qué quieres hacer?
+            </>
+          }
+          confirmText="Crear nuevo pedido"
+          cancelText="Continuar borrador"
+          confirmColor="warning"
+          onCancel={handleRecoverDraft}
+        />
+
+        <ConfirmDialog
+          isOpen={isDraftCloseConfirmOpen}
+          onClose={() => setIsDraftCloseConfirmOpen(false)}
+          onConfirm={handleSaveDraftAndClose}
+          title="¿Qué quieres hacer con este pedido?"
+          message="Si lo guardas en borrador, podrás retomarlo más tarde. Si cancelas ahora, se descartará el pedido pendiente."
+          confirmText="Guardar en borrador"
+          cancelText="Cancelar pedido"
+          confirmColor="primary"
+          onCancel={handleDiscardDraftAndClose}
         />
       </Paper>
     </Box>

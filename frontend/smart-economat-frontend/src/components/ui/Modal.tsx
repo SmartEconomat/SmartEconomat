@@ -9,10 +9,15 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
+export type ModalCloseReason =
+  | 'backdropClick'
+  | 'escapeKeyDown'
+  | 'closeButton'
+  | 'cancelAction';
 
 export interface ModalProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose: (reason?: ModalCloseReason) => void;
   title?: string | React.ReactNode;
   size?: ModalSize;
   children: React.ReactNode;
@@ -37,7 +42,7 @@ const Modal = ({
   return (
     <Dialog
       open={isOpen}
-      onClose={onClose}
+      onClose={(_, reason) => onClose(reason)}
       // Dialog de MUI gestiona el focus trap ANTES de aplicar
       // aria-hidden al resto del DOM, evitando el warning de accesibilidad.
       scroll="paper"
@@ -78,7 +83,7 @@ const Modal = ({
         )}
         <IconButton
           aria-label="Cerrar modal"
-          onClick={onClose}
+          onClick={() => onClose('closeButton')}
           size="small"
           sx={{
             ml: 'auto',
