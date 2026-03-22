@@ -577,7 +577,27 @@ Protegido por JWT.
 
 --
 
-**Pedidos** (/pedidos)
+**Pedidos de negocio** (/pedido-usuarios)
+
+- POST /api/v1/pedido-usuarios
+  - Body: [src/modules/pedido/dto/pedido-usuario.dto.ts](src/modules/pedido/dto/pedido-usuario.dto.ts#L1)
+
+- GET /api/v1/pedido-usuarios
+  - Query: paginación y filtros (`usuarioId`, `fechaDesde`, `fechaHasta`, `estado`, `sortBy`, `order`)
+
+- GET /api/v1/pedido-usuarios/:id
+
+- PATCH /api/v1/pedido-usuarios/:id
+  - Body: [src/modules/pedido/dto/pedido-usuario.dto.ts](src/modules/pedido/dto/pedido-usuario.dto.ts#L1)
+
+- PATCH /api/v1/pedido-usuarios/:id/aceptar
+
+- PATCH /api/v1/pedido-usuarios/:id/cancelar
+  - Body: [src/modules/pedido/dto/pedido-usuario.dto.ts](src/modules/pedido/dto/pedido-usuario.dto.ts#L1)
+
+- GET /api/v1/pedido-usuarios/:id/pdf
+
+**Pedidos internos** (/pedidos)
 
 - POST /api/v1/pedidos
   - Body: [src/modules/pedido/dto/create-pedido.dto.ts](src/modules/pedido/dto/create-pedido.dto.ts#L1)
@@ -600,6 +620,19 @@ Protegido por JWT.
 
 - PATCH /api/v1/pedidos/:id/cancelar
   - Body: [src/modules/pedido/dto/cancelPedido.dto.ts](src/modules/pedido/dto/cancelPedido.dto.ts#L1)
+
+**Compras consolidadas** (/purchase-batches)
+
+- POST /api/v1/purchase-batches
+- POST /api/v1/purchase-batches/consolidate
+  - Body: [src/modules/pedido/dto/create-purchase-batch.dto.ts](src/modules/pedido/dto/create-purchase-batch.dto.ts#L1)
+
+- GET /api/v1/purchase-batches
+- GET /api/v1/purchase-batches/:id
+- PATCH /api/v1/purchase-batches/:id
+- PATCH /api/v1/purchase-batches/:id/aceptar
+- PATCH /api/v1/purchase-batches/:id/cancelar
+- GET /api/v1/purchase-batches/:id/pdf
 
 --
 
@@ -983,20 +1016,64 @@ Permite localizar proveedores mediante filtros en la URL.
 
 ---
 
-## 📦 8. Pedidos de Compra (`/pedidos`)
+## 📦 8. Pedidos y Compras
 
-Gestión de órdenes y seguimiento de suministros. _Requiere `JwtAuthGuard` y `RolesGuard`._
+El dominio actual separa tres APIs distintas:
 
-| Método   | Endpoint                     | Descripción                                     | Roles Permitidos            |
-| :------- | :--------------------------- | :---------------------------------------------- | :-------------------------- |
-| `POST`   | `/pedidos`                   | Crear un nuevo pedido                           | `ADMINISTRADOR`, `PROFESOR` |
-| `POST`   | `/pedidos/from-recipes`      | Generar un pedido único desde múltiples recetas | `ADMINISTRADOR`, `PROFESOR` |
-| `GET`    | `/pedidos`                   | Listar todos los pedidos (paginado)             | `ADMINISTRADOR`, `PROFESOR` |
-| `GET`    | `/pedidos/:id`               | Detalle completo (incluye líneas y recepciones) | `ADMINISTRADOR`, `PROFESOR` |
-| `PATCH`  | `/pedidos/:id`               | Actualizar datos o productos del pedido         | `ADMINISTRADOR`, `PROFESOR` |
-| `PATCH`  | `/pedidos/:id/fecha-entrega` | Rechazado en flujo normal: fecha calculada      | `ADMINISTRADOR`, `PROFESOR` |
-| `PATCH`  | `/pedidos/:id/cancelar`      | Anular pedido (con motivo)                      | `ADMINISTRADOR`, `PROFESOR` |
-| `DELETE` | `/pedidos/:id`               | Eliminar pedido (Solo PENDIENTE/CANCELADO)      | `ADMINISTRADOR`             |
+- `/pedido-usuarios`: pedido de negocio visible para usuario.
+- `/pedidos`: pedido interno por proveedor.
+- `/purchase-batches`: consolidación administrativa de compras.
+
+### 8.1 Pedido de negocio (`/pedido-usuarios`)
+
+| Método  | Endpoint                         | Descripción                                                    | Roles Permitidos            |
+| :------ | :------------------------------- | :------------------------------------------------------------- | :-------------------------- |
+| `POST`  | `/pedido-usuarios`               | Crear un `PedidoUsuario` a partir del borrador del usuario     | `ADMINISTRADOR`, `PROFESOR` |
+| `GET`   | `/pedido-usuarios`               | Listar pedidos de negocio (paginado)                           | `ADMINISTRADOR`, `PROFESOR` |
+| `GET`   | `/pedido-usuarios/:id`           | Obtener detalle completo del agregado                          | `ADMINISTRADOR`, `PROFESOR` |
+| `PATCH` | `/pedido-usuarios/:id`           | Editar líneas/observaciones si sigue pendiente                 | `ADMINISTRADOR`, `PROFESOR` |
+| `PATCH` | `/pedido-usuarios/:id/aceptar`   | Pasar el pedido a `en_proceso`                        | `ADMINISTRADOR`, `PROFESOR` |
+| `PATCH` | `/pedido-usuarios/:id/cancelar`  | Cancelar el pedido                                     | `ADMINISTRADOR`, `PROFESOR` |
+| `GET`   | `/pedido-usuarios/:id/pdf`       | Descargar PDF del pedido de negocio                            | `ADMINISTRADOR`, `PROFESOR` |
+
+#### Campos y comportamiento relevantes
+
+- `numeroGlobal`: numeración incremental de negocio, adicional al UUID v7.
+- `lineas`: líneas del agregado (`PedidoUsuarioLinea`).
+- `pedidos`: pedidos internos por proveedor generados automáticamente.
+- Estados del agregado: `pendiente`, `en_proceso`, `entregado`, `cancelado`.
+
+#### Query params principales
+
+| Campo | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `page` | `number` | Página actual. |
+| `limit` | `number` | Tamaño de página, máximo `50`. |
+| `searchTerm` | `string` | Busca por `numeroGlobal`, observaciones, usuario o proveedor interno. |
+| `estado` | `string` | Estado único o CSV de estados del agregado. |
+| `usuarioId` | `UUID v7` | Filtra por creador del pedido. |
+| `fechaDesde` | `ISO date` | Fecha mínima de `fechaPedido`. |
+| `fechaHasta` | `ISO date` | Fecha máxima de `fechaPedido`. |
+| `sortBy` | `string` | `fechaPedido`, `fechaEntrega`, `costeTotal`, `estado`, `numeroGlobal`, `createdAt`, `updatedAt`. |
+| `order` | `ASC\|DESC` | Orden del listado. |
+
+> [!TIP]
+> Este es el endpoint que debe consumir frontend para “Mis pedidos” y para la vista semanal operativa.
+
+### 8.2 Pedido interno (`/pedidos`)
+
+Gestión de órdenes internas por proveedor. _Requiere `JwtAuthGuard` y `RolesGuard`._
+
+| Método   | Endpoint                     | Descripción                                                       | Roles Permitidos            |
+| :------- | :--------------------------- | :---------------------------------------------------------------- | :-------------------------- |
+| `POST`   | `/pedidos`                   | Crear un pedido interno directo                                   | `ADMINISTRADOR`, `PROFESOR` |
+| `POST`   | `/pedidos/from-recipes`      | Generar un pedido interno único desde múltiples recetas           | `ADMINISTRADOR`, `PROFESOR` |
+| `GET`    | `/pedidos`                   | Listar pedidos internos (paginado)                                | `ADMINISTRADOR`, `PROFESOR` |
+| `GET`    | `/pedidos/:id`               | Detalle completo (incluye líneas y recepciones)                   | `ADMINISTRADOR`, `PROFESOR` |
+| `PATCH`  | `/pedidos/:id`               | Actualizar datos o productos del pedido interno                   | `ADMINISTRADOR`, `PROFESOR` |
+| `PATCH`  | `/pedidos/:id/fecha-entrega` | Rechazado en flujo normal: fecha calculada                        | `ADMINISTRADOR`, `PROFESOR` |
+| `PATCH`  | `/pedidos/:id/cancelar`      | Anular pedido interno (con motivo)                                | `ADMINISTRADOR`, `PROFESOR` |
+| `DELETE` | `/pedidos/:id`               | Eliminar pedido interno (solo `PENDIENTE/CANCELADO`)              | `ADMINISTRADOR`             |
 
 ### 🚦 Estados del Pedido
 
@@ -1017,6 +1094,36 @@ El flujo de una orden se rige por los siguientes estados:
 
 > [!NOTE]
 > Referencia ampliada en [Automatización de fechas y estados](../modules/pedido/automatizacion-fechas-estados.md).
+
+### 8.3 Compras consolidadas (`/purchase-batches`)
+
+`PurchaseBatch` queda reservado para compras administrativas o semanales.
+
+| Método  | Endpoint                           | Descripción                                                   | Roles Permitidos            |
+| :------ | :--------------------------------- | :------------------------------------------------------------ | :-------------------------- |
+| `POST`  | `/purchase-batches`                | Crear manualmente una compra consolidada                      | `ADMINISTRADOR`, `PROFESOR` |
+| `POST`  | `/purchase-batches/consolidate`    | Consolidar varios pedidos de negocio existentes en una compra | `ADMINISTRADOR`, `PROFESOR` |
+| `GET`   | `/purchase-batches`                | Listar compras consolidadas                                   | `ADMINISTRADOR`, `PROFESOR` |
+| `GET`   | `/purchase-batches/:id`            | Obtener detalle del lote de compra                            | `ADMINISTRADOR`, `PROFESOR` |
+| `PATCH` | `/purchase-batches/:id`            | Editar la compra si sus pedidos internos siguen pendientes    | `ADMINISTRADOR`, `PROFESOR` |
+| `PATCH` | `/purchase-batches/:id/aceptar`    | Aprobar la compra consolidada                                 | `ADMINISTRADOR`, `PROFESOR` |
+| `PATCH` | `/purchase-batches/:id/cancelar`   | Cancelar la compra consolidada                                | `ADMINISTRADOR`, `PROFESOR` |
+| `GET`   | `/purchase-batches/:id/pdf`        | Descargar PDF del lote                                        | `ADMINISTRADOR`, `PROFESOR` |
+
+#### Payload de consolidación
+
+```json
+{
+  "pedidoUsuarioIds": [
+    "01959e4b-0d6d-7f25-a2f0-1e4b6c8e0101",
+    "01959e4b-0d6d-7f25-a2f0-1e4b6c8e0102"
+  ],
+  "observaciones": "Lote semanal generado desde Semana 18/03 - 24/03"
+}
+```
+
+> [!IMPORTANT]
+> La consolidación semanal actual debe enviar `pedidoUsuarioIds`. `pedidoIds` queda como compatibilidad heredada y no debe usarse desde frontend nuevo.
 
 ### 🧾 Generación desde recetas (`POST /pedidos/from-recipes`)
 

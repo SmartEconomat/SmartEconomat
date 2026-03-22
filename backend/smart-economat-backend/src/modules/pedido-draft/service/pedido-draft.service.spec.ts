@@ -3,14 +3,14 @@ import { PedidoDraftService } from './pedido-draft.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { PedidoDraft } from '../pedido-draft.entity/pedido-draft.entity';
 import { PEDIDO_DRAFT_REDIS } from '../constants/pedido-draft.constants';
-import { PurchaseBatchService } from '../../pedido/service/purchase-batch.service';
+import { PedidoUsuarioService } from '../../pedido/service/pedido-usuario.service';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 
 describe('PedidoDraftService', () => {
   let service: PedidoDraftService;
-  let repository: typeof mockRepository;
-  let redisClient: typeof mockRedisClient;
-  let purchaseBatchService: typeof mockPurchaseBatchService;
+  let repository: any;
+  let redisClient: any;
+  let pedidoUsuarioService: any;
 
   const mockRepository = {
     findOne: jest.fn(),
@@ -28,8 +28,8 @@ describe('PedidoDraftService', () => {
     quit: jest.fn(),
   };
 
-  const mockPurchaseBatchService = {
-    createBatchOrder: jest.fn(),
+  const mockPedidoUsuarioService = {
+    create: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -45,8 +45,8 @@ describe('PedidoDraftService', () => {
           useValue: mockRedisClient,
         },
         {
-          provide: PurchaseBatchService,
-          useValue: mockPurchaseBatchService,
+          provide: PedidoUsuarioService,
+          useValue: mockPedidoUsuarioService,
         },
       ],
     }).compile();
@@ -54,7 +54,7 @@ describe('PedidoDraftService', () => {
     service = module.get<PedidoDraftService>(PedidoDraftService);
     repository = module.get(getRepositoryToken(PedidoDraft));
     redisClient = module.get(PEDIDO_DRAFT_REDIS);
-    purchaseBatchService = module.get(PurchaseBatchService);
+    pedidoUsuarioService = module.get(PedidoUsuarioService);
   });
 
   it('debería estar definido', () => {
@@ -94,18 +94,21 @@ describe('PedidoDraftService', () => {
   });
 
   describe('finalizeOrder', () => {
-    it('debería llamar a purchaseBatchService y limpiar el borrador', async () => {
+    it('debería llamar a pedidoUsuarioService y limpiar el borrador', async () => {
       const draft = { userId: 'u1', payload: { lineas: [] }, version: 1 };
       redisClient.get.mockResolvedValue(JSON.stringify(draft));
-      purchaseBatchService.createBatchOrder.mockResolvedValue({
-        id: 'batch-1',
+      pedidoUsuarioService.create.mockResolvedValue({
+        id: 'pedido-usuario-1',
       });
 
       const result = await service.finalizeOrder('u1');
 
-      expect(purchaseBatchService.createBatchOrder).toHaveBeenCalled();
+      expect(pedidoUsuarioService.create).toHaveBeenCalledWith(
+        draft.payload,
+        'u1'
+      );
       expect(redisClient.del).toHaveBeenCalled();
-      expect(result.id).toBe('batch-1');
+      expect(result.id).toBe('pedido-usuario-1');
     });
 
     it('debería lanzar NotFoundException si no hay borrador', async () => {

@@ -1,8 +1,16 @@
 import { i18nValidationMessage } from 'nestjs-i18n';
-import { IsUUID, IsNumber, Min } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsUUID, IsNumber, Min, IsOptional } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreatePedidoLineDto {
+  @ApiPropertyOptional({
+    description: 'ID de la línea de pedido existente, solo para edición',
+    format: 'uuid',
+  })
+  @IsOptional()
+  @IsUUID('7')
+  id?: string;
+
   @ApiProperty({ description: 'ID del Producto Proveedor', format: 'uuid' })
   @IsUUID('7', {
     message: i18nValidationMessage(

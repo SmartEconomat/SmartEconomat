@@ -14,7 +14,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PedidoDraftService } from '../service/pedido-draft.service';
 import { UpsertPedidoDraftDto } from '../dto/upsert-pedido-draft.dto';
 import { PedidoDraftResponseDto } from '../dto/pedido-draft-response.dto';
-import { PurchaseBatch } from '../../pedido/purchase-batch.entity/purchase-batch.entity';
+import { PedidoUsuario } from '../../pedido/pedido-usuario.entity/pedido-usuario.entity';
 import { PedidoDraftRecord } from '../interfaces/pedido-draft-record.interface';
 
 @ApiTags('Pedido Draft')
@@ -63,10 +63,10 @@ export class PedidoDraftController {
     summary:
       'Finalizar la creación del pedido a partir del borrador persistido',
   })
-  @ApiOkResponse({ type: PurchaseBatch })
+  @ApiOkResponse({ type: PedidoUsuario })
   async finalizeOrder(
     @Request() req: { user: { id: string } }
-  ): Promise<PurchaseBatch> {
+  ): Promise<PedidoUsuario> {
     return this.pedidoDraftService.finalizeOrder(req.user.id);
   }
 }

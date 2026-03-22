@@ -52,7 +52,9 @@ const getStatusColor = (
     case 'success':
     case 'completed':
     case 'delivered':
+    case 'entregado':
     case 'approved':
+    case 'recibido':
     case 'fácil':
     case 'entrada':
     case 'entrada_compra':
@@ -61,6 +63,7 @@ const getStatusColor = (
     case 'error':
     case 'failed':
     case 'cancelled':
+    case 'cancelado':
     case 'rejected':
     case 'difícil':
     case 'salida':
@@ -68,7 +71,9 @@ const getStatusColor = (
       return 'error';
     case 'warning':
     case 'pending':
+    case 'pendiente':
     case 'in_progress':
+    case 'en_proceso':
     case 'review':
     case 'media':
     case 'ajuste':
@@ -88,14 +93,19 @@ const statusTranslations: Record<string, string> = {
   success: 'Éxito',
   completed: 'Completado',
   delivered: 'Entregado',
+  entregado: 'Entregado',
   approved: 'Aprobado',
   error: 'Error',
   failed: 'Fallido',
   cancelled: 'Cancelado',
+  cancelado: 'Cancelado',
   rejected: 'Rechazado',
   warning: 'Advertencia',
   pending: 'Pendiente',
+  pendiente: 'Pendiente',
   in_progress: 'En progreso',
+  en_proceso: 'En proceso',
+  recibido: 'Recibido',
   review: 'En revisión',
   info: 'Info',
   active: 'Activo',

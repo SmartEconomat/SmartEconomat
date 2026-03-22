@@ -7,15 +7,15 @@ export const getPedidoSchema = (
   if (!row) {
     return [
       {
-        name: 'observaciones',
-        label: 'Observaciones Generales',
-        type: 'textarea',
-        position: 'bottom',
-      },
-      {
         name: 'pedidoProductos',
         label: 'Detalle de Productos',
         type: 'orderLines',
+        position: 'bottom',
+      },
+      {
+        name: 'observaciones',
+        label: 'Observaciones Generales',
+        type: 'textarea',
         position: 'bottom',
       },
     ];
@@ -44,17 +44,17 @@ export const getPedidoSchema = (
   }
 
   fields.push({
-    name: 'observaciones',
-    label: 'Observaciones Generales',
-    type: 'textarea',
+    name: 'pedidoProductos',
+    label: 'Detalle de Productos',
+    type: 'orderLines',
     position: 'bottom',
     disabled: Boolean(row.estado && row.estado !== EstadoPedido.PENDIENTE),
   });
 
   fields.push({
-    name: 'pedidoProductos',
-    label: 'Detalle de Productos',
-    type: 'orderLines',
+    name: 'observaciones',
+    label: 'Observaciones Generales',
+    type: 'textarea',
     position: 'bottom',
     disabled: Boolean(row.estado && row.estado !== EstadoPedido.PENDIENTE),
   });

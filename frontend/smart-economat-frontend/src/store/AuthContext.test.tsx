@@ -163,10 +163,12 @@ describe('AuthProvider', () => {
   it('skips auth bootstrap on login route when there is no session hint', async () => {
     window.history.replaceState({}, '', '/login');
 
-    renderWithProviders(
-      <AuthProvider>
-        <AuthConsumer />
-      </AuthProvider>
+    render(
+      <Provider store={store}>
+        <AuthProvider>
+          <AuthConsumer />
+        </AuthProvider>
+      </Provider>
     );
 
     await waitFor(() => {

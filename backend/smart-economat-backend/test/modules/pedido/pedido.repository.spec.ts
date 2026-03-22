@@ -3,14 +3,30 @@ import { PedidoRepository } from '../../../src/modules/pedido/repository/pedido.
 
 describe('PedidoRepository', () => {
   it('traduce sortBy=fechaCreacion a createdAt en la consulta paginada', async () => {
-    const findAndCount = jest.fn().mockResolvedValue([[{ id: 'pedido-2' }], 1]);
+    const queryBuilder = {
+      distinct: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      leftJoin: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      clone: jest.fn(),
+      orderBy: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      getMany: jest.fn().mockResolvedValue([{ id: 'pedido-2' }]),
+      getCount: jest.fn().mockResolvedValue(1),
+    };
+    queryBuilder.clone.mockReturnValue({
+      getCount: queryBuilder.getCount,
+    });
 
     const mockDataSource = {
       createEntityManager: jest.fn(),
     } as unknown as DataSource;
 
     const repository = new PedidoRepository(mockDataSource);
-    Object.assign(repository, { findAndCount });
+    jest
+      .spyOn(repository, 'createQueryBuilder')
+      .mockReturnValue(queryBuilder as any);
 
     const result = await repository.findAllPaginated(
       {
@@ -22,13 +38,12 @@ describe('PedidoRepository', () => {
       true
     );
 
-    expect(findAndCount).toHaveBeenCalledWith(
-      expect.objectContaining({
-        skip: 0,
-        take: 10,
-        order: { createdAt: 'DESC' },
-      })
+    expect(queryBuilder.orderBy).toHaveBeenCalledWith(
+      'pedido.createdAt',
+      'DESC'
     );
+    expect(queryBuilder.skip).toHaveBeenCalledWith(0);
+    expect(queryBuilder.take).toHaveBeenCalledWith(10);
 
     expect(result).toEqual({
       data: [{ id: 'pedido-2' }],

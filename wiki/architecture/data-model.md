@@ -44,6 +44,7 @@ Este documento detalla todas las entidades definidas en el backend de SmartEcono
 
 ```mermaid
 erDiagram
+  USUARIO ||--o{ PEDIDO_USUARIO : "crea"
   USUARIO ||--o{ PEDIDO : "crea"
   USUARIO ||--o{ RECEPCION : "registra"
   USUARIO ||--o{ MOVIMIENTO : "ejecuta"
@@ -55,9 +56,12 @@ erDiagram
   PRODUCTO ||--o{ RECETA_INGREDIENTE : "usado_en"
   RECETA ||--o{ RECETA_INGREDIENTE : "compuesta_de"
   PRODUCTO_PROVEEDOR ||--o{ INVENTARIO : "mantiene_stock"
+  PRODUCTO_PROVEEDOR ||--o{ PEDIDO_USUARIO_LINEA : "linea_negocio"
   PRODUCTO_PROVEEDOR ||--o{ PEDIDO_PRODUCTO : "se_pide"
   PRODUCTO_PROVEEDOR ||--o{ HISTORIAL_PRECIO : "evolucion_coste"
   UBICACION ||--o{ INVENTARIO : "lugar_fisico"
+  PEDIDO_USUARIO ||--o{ PEDIDO_USUARIO_LINEA : "detalle_negocio"
+  PEDIDO_USUARIO ||--o{ PEDIDO : "descompone_en"
   PEDIDO ||--o{ PEDIDO_PRODUCTO : "detalle"
   PEDIDO ||--o{ RECEPCION_PEDIDO : "vinculado"
   RECEPCION ||--o{ RECEPCION_PEDIDO : "vincula_pedidos"
@@ -180,17 +184,49 @@ Registro histórico (auditoría) de cualquier cambio en las cantidades de stock.
 
 ## Módulo: Pedido
 
+El módulo de pedidos se divide ahora en tres conceptos distintos:
+
+- `PedidoUsuario`: pedido de negocio visible para el usuario.
+- `Pedido`: pedido interno por proveedor.
+- `PurchaseBatch`: consolidación administrativa de compras.
+
+### PedidoUsuario
+Agregado principal de negocio. Es el pedido que aparece en “Mis pedidos” y en la vista semanal.
+
+| Campo | Tipo (DB) | Tipo (TS) | Función |
+| :--- | :--- | :--- | :--- |
+| **usuario** | FK (uuid) | `Relation<Usuario> \| null` | Usuario que crea el pedido de negocio (onDelete: SET NULL). |
+| **numeroGlobal** | bigint autoincrement | `string` | Numeración global incremental visible para negocio. |
+| **fechaPedido** | timestamptz | `Date` | Fecha de creación del agregado. |
+| **fechaEntrega** | timestamptz | `Date \| null` | Fecha estimada calculada por backend. |
+| **costeTotal** | numeric(14,4) | `number` | Coste total agregado de todas las líneas/proveedores. |
+| **estado** | enum | `EstadoPedidoUsuario` | `pendiente`, `en_proceso`, `entregado`, `cancelado`. |
+| **observaciones** | text | `string \| null` | Notas generales del pedido de negocio. |
+
+### PedidoUsuarioLinea
+Línea del agregado de negocio antes de la separación por proveedor.
+
+| Campo | Tipo (DB) | Tipo (TS) | Función |
+| :--- | :--- | :--- | :--- |
+| **pedidoUsuario** | FK (uuid) | `Relation<PedidoUsuario>` | Cabecera de negocio (onDelete: CASCADE). |
+| **productoProveedor** | FK (uuid) | `Relation<ProductoProveedor>` | Producto proveedor elegido por el usuario. |
+| **cantidad** | numeric(12,3) | `number` | Cantidad solicitada. |
+| **precioUnitario** | numeric(12,4) | `number` | Precio vigente congelado al crear el pedido. |
+| **observaciones** | text | `string \| null` | Observaciones opcionales de la línea. |
+
 ### 8. Pedido
-Orden de compra realizada a un proveedor.
+Pedido interno operativo realizado a un proveedor.
 
 | Campo | Tipo (DB) | Tipo (TS) | Función |
 | :--- | :--- | :--- | :--- |
 | **usuario** | FK (uuid) | `Relation<Usuario> \| null` | Solicitante del pedido (onDelete: SET NULL). |
 | **proveedor** | FK (uuid) | `Relation<Proveedor> \| null`| Proveedor adjudicatario (onDelete: RESTRICT). |
+| **pedidoUsuarioId** | FK (uuid) | `string \| null` | Referencia opcional al agregado `PedidoUsuario`. |
+| **batchId** | FK (uuid) | `string \| null` | Referencia opcional a `PurchaseBatch` cuando el pedido se consolida en compras. |
 | **fechaPedido** | timestamptz | `Date` | Fecha de emisión (default: NOW). |
 | **fechaEntrega** | timestamptz | `Date \| null` | Fecha prevista de llegada o real. |
 | **costeTotal** | numeric(14,4)| `number` | Coste calculado (Check >= 0). |
-| **estado** | enum | `EstadoPedido` | pendiente, en_procesos, recibido, incidencia, cancelado, parcial. |
+| **estado** | enum | `EstadoPedido` | `pendiente`, `en_proceso`, `recibido`, `incidencia`, `cancelado`, `parcial`. |
 | **motivoCancelacion**| text | `string \| null` | Obligatorio si el estado es 'cancelado'. |
 
 ### 9. PedidoProducto
@@ -200,9 +236,20 @@ Línea de detalle del pedido. Congela el precio en el momento de la compra.
 | :--- | :--- | :--- | :--- |
 | **pedido** | FK (uuid) | `Relation<Pedido>` | Cabecera (onDelete: RESTRICT). |
 | **productoProveedor**| FK (uuid) | `Relation<ProductoProveedor>`| Referencia al catálogo (onDelete: RESTRICT). |
+| **pedidoUsuarioLineaId** | FK (uuid) | `string \| null` | Trazabilidad hasta la línea original de `PedidoUsuarioLinea`. |
 | **cantidad** | numeric(12,3)| `number` | Cantidad solicitada (Check > 0). |
 | **precioUnitario**| numeric(12,4)| `number` | Precio unitario acordado (Check >= 0). |
 | **observaciones** | text | `string \| null` | Requisitos específicos para el proveedor. |
+
+### PurchaseBatch
+Lote administrativo de compra que agrupa varios `Pedido` internos ya existentes.
+
+| Campo | Tipo (DB) | Tipo (TS) | Función |
+| :--- | :--- | :--- | :--- |
+| **usuario** | FK (uuid) | `Relation<Usuario> \| null` | Usuario que genera la consolidación. |
+| **estado** | enum | `EstadoLote` | Estado de la compra consolidada. |
+| **observaciones** | text | `string \| null` | Notas globales de la compra. |
+| **pedidos** | relación | `Pedido[]` | Pedidos internos asociados al lote. |
 
 ---
 

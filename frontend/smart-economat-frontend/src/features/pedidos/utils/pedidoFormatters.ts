@@ -1,6 +1,8 @@
 import dayjs from 'dayjs';
 import { Pedido, PurchaseBatch } from '../../../services/pedido.types';
 
+const WEEKLY_BATCH_PREFIX = /^Lote semanal generado desde/i;
+
 export const formatPedidoDate = (
   value?: string,
   format: 'date' | 'datetime' = 'date'
@@ -19,6 +21,21 @@ export const formatCurrency = (value?: number | string | null): string => {
   })} €`;
 };
 
+export const formatPedidoId = (id?: string): string => {
+  if (!id) return '—';
+  return id.split('-')[0] || id;
+};
+
+export const formatPedidoListNumber = (
+  pedido: Pick<Pedido, 'id' | 'numeroGlobal'>
+): string => {
+  if (pedido.numeroGlobal) {
+    return String(pedido.numeroGlobal);
+  }
+
+  return formatPedidoId(pedido.id);
+};
+
 export const getPedidoCreatorName = (pedido: Pedido): string =>
   pedido.usuario?.nombre || pedido.usuario?.username || '—';
 
@@ -35,8 +52,19 @@ export const getBatchProvidersSummary = (batch: PurchaseBatch): string => {
   return uniqueProviders.length > 0 ? uniqueProviders.join(', ') : '—';
 };
 
-export const getBatchPedidosCount = (batch: PurchaseBatch): number =>
-  batch.pedidos?.length || 0;
+export const getBatchPedidosCount = (batch: PurchaseBatch): number => {
+  const pedidos = batch.pedidos || [];
+
+  if (pedidos.length === 0) {
+    return 0;
+  }
+
+  if (!WEEKLY_BATCH_PREFIX.test(batch.observaciones || '')) {
+    return 1;
+  }
+
+  return pedidos.length;
+};
 
 export const getBatchTotal = (batch: PurchaseBatch): number =>
   batch.pedidos?.reduce(

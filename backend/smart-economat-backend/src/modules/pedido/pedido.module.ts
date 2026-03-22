@@ -9,12 +9,16 @@ import { ProductoProveedor } from '../producto/producto-proveedor.entity/product
 import { MovimientoModule } from '../movimiento/movimiento.module';
 import { PurchaseBatch } from './purchase-batch.entity/purchase-batch.entity';
 import { PurchaseBatchService } from './service/purchase-batch.service';
+import { PedidoUsuario } from './pedido-usuario.entity/pedido-usuario.entity';
+import { PedidoUsuarioLinea } from './pedido-usuario-linea.entity/pedido-usuario-linea.entity';
 
 import { RecetaModule } from '../receta/receta.module';
 import { RecetaToPedidoService } from './service/receta-to-pedido.service';
 import { PedidoDraftModule } from '../pedido-draft/pedido-draft.module';
 import { PurchaseBatchController } from './controller/purchase-batch.controller';
 import { RecepcionModule } from '../recepcion/recepcion.module';
+import { PedidoUsuarioController } from './controller/pedido-usuario.controller';
+import { PedidoUsuarioService } from './service/pedido-usuario.service';
 
 @Module({
   imports: [
@@ -23,19 +27,26 @@ import { RecepcionModule } from '../recepcion/recepcion.module';
       PedidoProducto,
       ProductoProveedor,
       PurchaseBatch,
+      PedidoUsuario,
+      PedidoUsuarioLinea,
     ]),
     MovimientoModule,
     RecetaModule,
     forwardRef(() => PedidoDraftModule),
     forwardRef(() => RecepcionModule),
   ],
-  controllers: [PedidoController, PurchaseBatchController],
+  controllers: [
+    PedidoController,
+    PurchaseBatchController,
+    PedidoUsuarioController,
+  ],
   providers: [
     PedidoService,
     PedidoRepository,
     RecetaToPedidoService,
     PurchaseBatchService,
+    PedidoUsuarioService,
   ],
-  exports: [PedidoService, PurchaseBatchService],
+  exports: [PedidoService, PurchaseBatchService, PedidoUsuarioService],
 })
 export class PedidoModule {}

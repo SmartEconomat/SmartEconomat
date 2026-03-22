@@ -1,0 +1,161 @@
+name: Despliegue a Produccion
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '22.13.1'
+  APP_NAME: SmartEconomat
+  ARCHIVE_NAME: SmartEconomat_AI_Upload.zip
+  REMOTE_BASE_DIR: /home/psych
+
+jobs:
+  build-and-test:
+    name: Validar Backend y Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            backend/smart-economat-backend/package-lock.json
+            frontend/smart-economat-frontend/package-lock.json
+
+      - name: Instalar dependencias del backend
+        working-directory: backend/smart-economat-backend
+        run: npm ci
+
+      - name: Construir backend
+        working-directory: backend/smart-economat-backend
+        run: npm run build
+
+      - name: Instalar dependencias del frontend
+        working-directory: frontend/smart-economat-frontend
+        run: npm ci
+
+      - name: Construir frontend
+        working-directory: frontend/smart-economat-frontend
+        run: npm run build
+
+  deploy:
+    name: Desplegar en servidor
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    environment: SmartEconomatEnv
+
+    steps:
+      - name: Checkout del codigo
+        uses: actions/checkout@v4
+
+      - name: Validar secrets SSH requeridos
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT }}
+          SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+        run: |
+          set -e
+          [ -n "$SERVER_HOST" ] || { echo "Falta secret SERVER_HOST"; exit 1; }
+          [ -n "$SERVER_USER" ] || { echo "Falta secret SERVER_USER"; exit 1; }
+          [ -n "$SERVER_PORT" ] || { echo "Falta secret SERVER_PORT"; exit 1; }
+          [ -n "$SERVER_SSH_KEY" ] || { echo "Falta secret SERVER_SSH_KEY"; exit 1; }
+          echo "$SERVER_SSH_KEY" | grep -q "BEGIN .*PRIVATE KEY" || { echo "SERVER_SSH_KEY no parece una clave privada valida"; exit 1; }
+
+      - name: Crear paquete de despliegue
+        run: |
+          rm -f "${{ env.ARCHIVE_NAME }}"
+          zip -r "${{ env.ARCHIVE_NAME }}" . \
+            -x ".git/*" \
+            -x ".github/workflows/*" \
+            -x "**/node_modules/*" \
+            -x "**/dist/*" \
+            -x "**/coverage/*" \
+            -x "**/.env" \
+            -x "**/.env.*" \
+            -x "deploy_key" \
+            -x "deploy_key.pub"
+
+      - name: Subir paquete al servidor
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
+          port: ${{ secrets.SERVER_PORT }}
+          source: ${{ env.ARCHIVE_NAME }}
+          target: ${{ env.REMOTE_BASE_DIR }}
+          overwrite: true
+
+      - name: Desplegar por SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          APP_NAME: ${{ env.APP_NAME }}
+          ARCHIVE_NAME: ${{ env.ARCHIVE_NAME }}
+          REMOTE_BASE_DIR: ${{ env.REMOTE_BASE_DIR }}
+          NODE_ENV: production
+          DOMAIN: ${{ secrets.DOMAIN }}
+          BACKEND_API_URL: ${{ secrets.BACKEND_API_URL }}
+          FRONTEND_API_URL: ${{ secrets.FRONTEND_API_URL }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_EXPIRATION: ${{ secrets.JWT_EXPIRATION }}
+          VITE_API_PROXY_TARGET: ${{ secrets.VITE_API_PROXY_TARGET }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          ACME_DIRECTORY_URL: ${{ secrets.ACME_DIRECTORY_URL }}
+          ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
+          port: ${{ secrets.SERVER_PORT }}
+          timeout: 60s
+          envs: APP_NAME,ARCHIVE_NAME,REMOTE_BASE_DIR,NODE_ENV,DOMAIN,BACKEND_API_URL,FRONTEND_API_URL,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,DB_HOST,DB_PORT,DB_USERNAME,DB_PASSWORD,DB_DATABASE,JWT_SECRET,JWT_EXPIRATION,VITE_API_PROXY_TARGET,SENTRY_DSN,VITE_SENTRY_DSN,ACME_DIRECTORY_URL,ACME_EMAIL
+          script: |
+            set -e
+            ARCHIVE_PATH="$REMOTE_BASE_DIR/$ARCHIVE_NAME"
+            HELPER_DIR=$(mktemp -d)
+
+            if [ ! -f "$ARCHIVE_PATH" ]; then
+              echo "No se encontro el paquete de despliegue en $ARCHIVE_PATH"
+              exit 1
+            fi
+
+            unzip -q "$ARCHIVE_PATH" scripts/remote_deploy.sh -d "$HELPER_DIR"
+            chmod +x "$HELPER_DIR/scripts/remote_deploy.sh"
+            "$HELPER_DIR/scripts/remote_deploy.sh"
+            rm -rf "$HELPER_DIR"
+
+  notify:
+    name: Notificaciones post-despliegue
+    needs: [build-and-test, deploy]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Enviar mensaje a Slack
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: env.SLACK_WEBHOOK_URL != ''

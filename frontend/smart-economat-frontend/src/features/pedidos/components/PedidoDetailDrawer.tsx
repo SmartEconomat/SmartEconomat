@@ -27,6 +27,7 @@ import { useToast } from '../../../store/toast.hooks';
 import {
   formatCurrency,
   formatPedidoDate,
+  formatPedidoId,
   getPedidoCreatorName,
   getPedidoProviderName,
 } from '../utils/pedidoFormatters';
@@ -208,7 +209,7 @@ const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
       isOpen={!!pedido}
       onClose={onClose}
       title="Detalle del pedido"
-      subtitle={pedido ? `ID ${pedido.id.split('-')[0]}` : undefined}
+      subtitle={pedido ? `ID ${formatPedidoId(pedido.id)}` : undefined}
       size="lg"
       actions={
         pedido ? (

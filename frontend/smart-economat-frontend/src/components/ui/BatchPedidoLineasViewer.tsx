@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import {
+  PedidoUsuario,
   PurchaseBatch,
   Pedido,
   EstadoPedido,
@@ -27,13 +28,18 @@ import StatusChip from './StatusChip';
 import { downloadFile } from '../../services/api.service';
 import { useToast } from '../../store/toast.hooks';
 import CircularProgress from '@mui/material/CircularProgress';
+import { formatPedidoId } from '../../features/pedidos/utils/pedidoFormatters';
 
 interface BatchPedidoLineasViewerProps {
-  batch: PurchaseBatch;
+  batch: PurchaseBatch | PedidoUsuario;
+  mode?: 'batch' | 'pedido';
+  showPdfActions?: boolean;
 }
 
 const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
   batch,
+  mode = 'batch',
+  showPdfActions = true,
 }) => {
   const toast = useToast();
   const [incluirCancelados, setIncluirCancelados] = React.useState(true);
@@ -49,8 +55,8 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
 
     try {
       await downloadFile(
-        `/purchase-batches/${batch.id}/pdf?${params.toString()}`,
-        `reporte-lote-${batch.id.slice(0, 8)}.pdf`
+        `${mode === 'pedido' ? `/pedido-usuarios/${batch.id}/pdf` : `/purchase-batches/${batch.id}/pdf`}?${params.toString()}`,
+        `${mode === 'pedido' ? 'pedido' : 'reporte-lote'}-${batch.id.slice(0, 8)}.pdf`
       );
     } catch (err: unknown) {
       toast.error(
@@ -65,7 +71,9 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
         <Typography color="text.secondary">
-          No hay pedidos en este lote.
+          {mode === 'pedido'
+            ? 'No hay líneas asociadas a este pedido.'
+            : 'No hay pedidos en este lote.'}
         </Typography>
       </Box>
     );
@@ -74,6 +82,11 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
   const totalBatch = batch.pedidos
     .filter((p) => incluirCancelados || p.estado !== EstadoPedido.CANCELADO)
     .reduce((sum, p) => sum + Number(p.costeTotal || 0), 0);
+  const displayObservaciones =
+    mode === 'pedido' &&
+    /^Lote semanal generado desde/i.test(batch.observaciones || '')
+      ? ''
+      : batch.observaciones || '';
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -93,7 +106,7 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
             Observaciones Generales:
           </Typography>
           <Typography variant="body1">
-            {batch.observaciones || 'Sin observaciones.'}
+            {displayObservaciones || 'Sin observaciones.'}
           </Typography>
         </Box>
 
@@ -122,19 +135,21 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
               <Typography variant="caption">Pág. por proveedor</Typography>
             }
           />
-          <Tooltip title="Descargar Reporte PDF">
-            <IconButton
-              color="error"
-              onClick={handleDownloadPdf}
-              disabled={isDownloading}
-            >
-              {isDownloading ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                <PictureAsPdfIcon />
-              )}
-            </IconButton>
-          </Tooltip>
+          {showPdfActions && (
+            <Tooltip title="Descargar Reporte PDF">
+              <IconButton
+                color="error"
+                onClick={handleDownloadPdf}
+                disabled={isDownloading}
+              >
+                {isDownloading ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  <PictureAsPdfIcon />
+                )}
+              </IconButton>
+            </Tooltip>
+          )}
         </Stack>
       </Box>
 
@@ -162,7 +177,7 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
                   {pedido.proveedor?.nombre || 'Proveedor Desconocido'}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  ID Pedido: {pedido.id.split('-')[0]}... | Estado:
+                  ID Pedido: {formatPedidoId(pedido.id)} | Estado:
                 </Typography>
                 <StatusChip
                   status={pedido.estado}
@@ -183,6 +198,18 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
                   </Typography>{' '}
                   <Typography variant="caption">
                     {pedido.motivoCancelacion}
+                  </Typography>
+                </Alert>
+              )}
+
+            {pedido.estado === EstadoPedido.INCIDENCIA &&
+              pedido.motivoIncidencia && (
+                <Alert severity="error" sx={{ mb: 2, py: 0 }}>
+                  <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                    Motivo de incidencia:
+                  </Typography>{' '}
+                  <Typography variant="caption">
+                    {pedido.motivoIncidencia}
                   </Typography>
                 </Alert>
               )}
@@ -259,20 +286,24 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
 
       <Divider sx={{ my: 3 }} />
 
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          p: 2,
-          bgcolor: 'primary.main',
-          color: 'primary.contrastText',
-          borderRadius: 2,
-          boxShadow: 2,
-        }}
-      >
-        <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-          TOTAL LOTE DE COMPRA: {totalBatch.toFixed(2)} €
-        </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+        <Box
+          sx={{
+            display: 'inline-flex',
+            p: 2,
+            bgcolor: 'background.paper',
+            color: 'primary.main',
+            border: '2px solid',
+            borderColor: 'primary.main',
+            borderRadius: 2,
+            maxWidth: '100%',
+          }}
+        >
+          <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
+            {mode === 'pedido' ? 'TOTAL PEDIDO: ' : 'TOTAL COMPRA: '}
+            {totalBatch.toFixed(2)} €
+          </Typography>
+        </Box>
       </Box>
     </Box>
   );
