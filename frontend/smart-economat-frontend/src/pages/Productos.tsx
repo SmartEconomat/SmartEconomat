@@ -72,6 +72,8 @@ import { getCategoryIcon } from '../features/productos/utils/getCategoryIcon';
 import { EU_ALLERGENS, Allergen } from '../utils/constants';
 import ShoppingBasketOutlinedIcon from '@mui/icons-material/ShoppingBasketOutlined';
 import AddIcon from '@mui/icons-material/Add';
+import BarcodeScanner from '../components/ui/BarcodeScanner';
+import { fetchProductFromOFF } from '../services/openfoodfacts.service';
 
 type ProductoFormAlergeno = string | Pick<ProductoAlergeno, 'alergeno'>;
 
@@ -154,7 +156,7 @@ const productoSchema: DynamicField[] = [
     ],
   },
 
-  { name: 'codigoBarras', label: 'Código de Barras' },
+  { name: 'codigoBarras', label: 'Código de Barras', type: 'barcode' },
   {
     name: 'imagen',
     label: 'Cargar Imagen',
@@ -197,6 +199,7 @@ const Productos: React.FC = () => {
   const [productToView, setProductToView] = useState<Producto | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSearchScannerOpen, setIsSearchScannerOpen] = useState(false);
   const toast = useToast();
 
   // Exportar productos a PDF
@@ -285,6 +288,17 @@ const Productos: React.FC = () => {
     } finally {
       setIsDeleting(false);
       setProductToDelete(null);
+    }
+  };
+
+  // Autocompletado desde OpenFoodFacts
+  const handleBarcodeFetch = async (code: string) => {
+    const offData = await fetchProductFromOFF(code);
+    if (offData) {
+      return {
+        nombre: offData.nombre,
+        marca: offData.marca || '',
+      };
     }
   };
 
@@ -514,6 +528,7 @@ const Productos: React.FC = () => {
         }}
         searchPlaceholder="Buscar por nombre, marca, código de barras..."
         searchId="search-productos"
+        autoFocusSearch={true}
         totalItems={totalItems}
         totalItemsLabel="productos"
         primaryAction={
@@ -563,6 +578,17 @@ const Productos: React.FC = () => {
             </Stack>
           </Box>
         }
+        onScanBarcode={() => setIsSearchScannerOpen(true)}
+      />
+
+      <BarcodeScanner
+        open={isSearchScannerOpen}
+        onClose={() => setIsSearchScannerOpen(false)}
+        onScan={(code) => {
+          setSearchTerm(code);
+          setPage(1);
+        }}
+        title="Escanear Producto para Buscar"
       />
 
       <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
@@ -664,6 +690,7 @@ const Productos: React.FC = () => {
           onSubmit={handleSaveProduct}
           isSubmitting={isSaving}
           requireConfirmation={true}
+          onBarcodeFetch={handleBarcodeFetch}
           confirmationMessage={
             productToEdit?.id
               ? '¿Estás seguro de que deseas guardar los cambios realizados en este producto?'

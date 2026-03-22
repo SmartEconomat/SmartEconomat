@@ -15,11 +15,14 @@ import {
   useTheme,
   Collapse,
   CircularProgress,
+  Stack,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/SearchOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
+import BarcodeIcon from './BarcodeIcon';
+import ClearIcon from '@mui/icons-material/Clear'; // Added ClearIcon
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
@@ -63,6 +66,10 @@ export interface PageToolbarProps {
   viewMode?: 'list' | 'grid';
   /** Callback para cambiar modo de vista */
   onViewModeChange?: (mode: 'list' | 'grid') => void;
+  /** Callback para escanear código de barras/QR */
+  onScanBarcode?: () => void; // Added onScanBarcode prop
+  /** Si es true, enfoca automáticamente el campo de búsqueda */
+  autoFocusSearch?: boolean;
   /** Si es true, el toolbar se mantiene arriba al hacer scroll */
   sticky?: boolean;
 }
@@ -85,6 +92,8 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
   totalItemsLabel = 'elementos',
   viewMode,
   onViewModeChange,
+  onScanBarcode, // Added onScanBarcode to destructuring
+  autoFocusSearch = false,
   sticky = true,
 }) => {
   const { isMobile, isMobileOrTablet } = useBreakpoints();
@@ -206,6 +215,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                   value={searchValue}
                   onChange={(e) => onSearchChange(e.target.value)}
                   size="small"
+                  autoFocus={autoFocusSearch}
                   sx={{
                     minWidth: { xs: '100%', sm: 240, md: 400 },
                     flex: { xs: '1 1 100%', sm: '1000 1 auto' },
@@ -215,9 +225,36 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                     },
                   }}
                   InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon color="action" />
+                    'aria-label': searchPlaceholder,
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Stack direction="row" spacing={0.5}>
+                          {searchValue && (
+                            <IconButton
+                              size="small"
+                              onClick={() => onSearchChange?.('')}
+                              aria-label="Limpiar búsqueda"
+                            >
+                              <ClearIcon fontSize="small" />
+                            </IconButton>
+                          )}
+                          {onScanBarcode && (
+                            <Tooltip title="Escanear con cámara">
+                              <IconButton
+                                size="small"
+                                onClick={onScanBarcode}
+                                aria-label="Escanear código"
+                                color="primary"
+                              >
+                                <BarcodeIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          <SearchIcon
+                            fontSize="small"
+                            sx={{ color: 'text.disabled', ml: 0.5 }}
+                          />
+                        </Stack>
                       </InputAdornment>
                     ),
                   }}

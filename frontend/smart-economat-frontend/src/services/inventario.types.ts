@@ -10,7 +10,13 @@ export interface InventarioItem {
   fechaCaducidad?: string | null;
   productoProveedor?: {
     id: string;
-    producto?: { id: string; nombre: string; unidad?: string; tipo?: string };
+    producto?: {
+      id: string;
+      nombre: string;
+      codigoBarras?: string;
+      unidad?: string;
+      tipo?: string;
+    };
     proveedor?: { id: string; nombre: string };
   };
 }
@@ -22,6 +28,7 @@ export interface InventarioItem {
 export interface InventarioPorProducto {
   productoId: string;
   nombre: string;
+  codigoBarras?: string;
   unidad?: string;
   tipo?: string;
   cantidadTotal: number;

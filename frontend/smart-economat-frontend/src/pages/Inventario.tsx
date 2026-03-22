@@ -47,6 +47,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import SyncAltIcon from '@mui/icons-material/SyncAlt';
 
 import PageToolbar from '../components/ui/PageToolbar';
+import BarcodeScanner from '../components/ui/BarcodeScanner';
 import InventarioFilters, {
   InventarioFiltersState,
 } from '../features/inventario/InventarioFilters';
@@ -94,6 +95,8 @@ const Inventario: React.FC = () => {
 
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
   const [isUbicacionesModalOpen, setIsUbicacionesModalOpen] = useState(false);
+  const [isSearchScannerOpen, setIsSearchScannerOpen] = useState(false);
+
   const toast = useToast();
 
   const loadUbicaciones = useCallback(async () => {
@@ -283,11 +286,13 @@ const Inventario: React.FC = () => {
       const term = normalize(searchTerm.trim());
       result = result.filter((p) => {
         const nombre = normalize(p.nombre ?? '');
+        const codigo = normalize(p.codigoBarras ?? '');
         const tipo = normalize(p.tipo ?? '');
         const provs = (p.proveedores ?? []).map(normalize).join(' ');
         const ubicaciones = (p.ubicaciones ?? []).map(normalize).join(' ');
         return (
           nombre.includes(term) ||
+          codigo.includes(term) ||
           tipo.includes(term) ||
           provs.includes(term) ||
           ubicaciones.includes(term)
@@ -434,6 +439,7 @@ const Inventario: React.FC = () => {
         }}
         searchPlaceholder="Buscar por producto, tipo, proveedor o ubicación..."
         searchId="search-inventario"
+        autoFocusSearch={true}
         totalItems={totalItems}
         totalItemsLabel="productos"
         primaryAction={
@@ -469,6 +475,17 @@ const Inventario: React.FC = () => {
             />
           </Box>
         }
+        onScanBarcode={() => setIsSearchScannerOpen(true)}
+      />
+
+      <BarcodeScanner
+        open={isSearchScannerOpen}
+        onClose={() => setIsSearchScannerOpen(false)}
+        onScan={(code) => {
+          setSearchTerm(code);
+          setPage(1);
+        }}
+        title="Escanear Producto para Buscar"
       />
 
       <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
