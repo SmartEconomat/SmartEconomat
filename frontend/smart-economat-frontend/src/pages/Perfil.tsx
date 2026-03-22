@@ -354,6 +354,7 @@ const Perfil: React.FC = () => {
                       startIcon={<SaveIcon />}
                       onClick={handleProfileSave}
                       isLoading={isSaving}
+                      loadingText="Guardando..."
                       sx={{ px: 4, width: { xs: '100%', sm: 'auto' } }}
                     >
                       Guardar Cambios

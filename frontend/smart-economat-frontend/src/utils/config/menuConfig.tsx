@@ -34,6 +34,7 @@ export interface MenuItem {
   showInMenu: boolean;
   roles?: string[];
   permiso?: string;
+  anyPermissions?: string[];
 }
 
 export const menuItems: MenuItem[] = [
@@ -44,6 +45,7 @@ export const menuItems: MenuItem[] = [
     icon: <HomeIconOption />,
     component: Home,
     showInMenu: true,
+    permiso: 'dashboard:ver_estadisticas',
   },
   {
     path: '/productos',
@@ -53,6 +55,24 @@ export const menuItems: MenuItem[] = [
     component: Productos,
     showInMenu: true,
     permiso: 'productos:listar',
+  },
+  {
+    path: '/proveedores',
+    title: 'Proveedores',
+    description: 'Gestionar información de proveedores externos',
+    icon: <LocalShippingIconOption />,
+    component: Proveedores,
+    showInMenu: true,
+    permiso: 'proveedores:listar',
+  },
+  {
+    path: '/recetas',
+    title: 'Recetas',
+    description: 'Catálogo de recetas y escandallos',
+    icon: <MenuBookIconOption />,
+    component: Recetas,
+    showInMenu: true,
+    permiso: 'recetas:listar',
   },
   {
     path: '/pedidos',
@@ -91,24 +111,6 @@ export const menuItems: MenuItem[] = [
     permiso: 'movimientos:listar',
   },
   {
-    path: '/proveedores',
-    title: 'Proveedores',
-    description: 'Gestionar información de proveedores externos',
-    icon: <LocalShippingIconOption />,
-    component: Proveedores,
-    showInMenu: true,
-    permiso: 'proveedores:listar',
-  },
-  {
-    path: '/recetas',
-    title: 'Recetas',
-    description: 'Catálogo de recetas y escandallos',
-    icon: <MenuBookIconOption />,
-    component: Recetas,
-    showInMenu: true,
-    permiso: 'recetas:listar',
-  },
-  {
     path: '/incidencias',
     title: 'Incidencias',
     description: 'Reportar y gestionar problemas o devoluciones',
@@ -125,7 +127,11 @@ export const menuItems: MenuItem[] = [
     component: Administracion,
     showInMenu: true,
     roles: ['PROFESOR', 'ADMIN', 'ADMINISTRADOR', 'SUPER_ADMIN'],
-    permiso: 'usuarios:listar',
+    anyPermissions: [
+      'usuarios:listar',
+      'profesor:gestionar_slots',
+      'profesor:ver_alumnos',
+    ],
   },
   {
     path: '/perfil',
