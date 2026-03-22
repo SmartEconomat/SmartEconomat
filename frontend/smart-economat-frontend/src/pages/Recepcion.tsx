@@ -203,6 +203,7 @@ const Recepcion: React.FC = () => {
     isScaleBusy,
     scaleStatusText
   );
+  const isSearchingRef = useRef(false);
 
   useEffect(() => {
     draftRef.current = draft;
@@ -473,13 +474,37 @@ const Recepcion: React.FC = () => {
   // --- 3. Lógica de Escaneo (Paso 2) ---
 
   const handleSearch = async (overrideQuery?: string | unknown) => {
+    // Si ya estamos buscando o hay un modal abierto, ignoramos la nueva petición
+    if (isSearchingRef.current || searching || openModal || weightModalOpen) return;
+
     const queryToUse = typeof overrideQuery === 'string' ? overrideQuery : searchQuery;
     if (!queryToUse.trim()) return;
+
+    isSearchingRef.current = true;
     setSearching(true);
     setError(null);
 
     try {
-      // 1. Intentar por código de barras
+      // 0. Priorizar búsqueda LOCAL en lo ya recepcionado o pedidos seleccionados
+      const localPED = draft.pedidosSeleccionados
+        .flatMap((p) => p.lineas)
+        .find((l) => l.codigoBarras === queryToUse);
+      const localESP = draft.productosEspontaneos.find(
+        (l) => l.codigoBarras === queryToUse
+      );
+
+      const localMatch = localPED || localESP;
+      if (localMatch) {
+        processProductFound({
+          id: localMatch.idProducto || '',
+          codigoBarras: localMatch.codigoBarras,
+          nombre: localMatch.nombreProducto,
+          unidad: localMatch.unidad as UnidadMedida,
+        });
+        return;
+      }
+
+      // 1. Intentar por código de barras en BD Maestra
       let prod = await getProductoByBarcode(queryToUse);
 
       // Si no existe pero es un código numérico (escaner), intentar en OpenFoodFacts
@@ -546,6 +571,7 @@ const Recepcion: React.FC = () => {
       });
       setOpenModal(true);
     } finally {
+      isSearchingRef.current = false;
       setSearching(false);
       setSearchQuery('');
       if (searchInputRef.current) {
@@ -600,22 +626,17 @@ const Recepcion: React.FC = () => {
         const currRec =
           tLinea.cantidadRecibida === '' ? 0 : Number(tLinea.cantidadRecibida);
 
-        if (isWeightUnit(tLinea.unidad) && isScaleConnected && isScaleEnabled) {
-          // Si hay báscula, abrimos modal de peso
-          setTimeout(() => {
-            openWeightScale(targetMatch!.pIdx, targetMatch!.lIdx);
-            setExpandedPanel(foundPedidoId);
-          }, 0);
-          return prevDraft; // El estado no cambia aquí, cambia tras el modal de peso
+        if (isWeightUnit(tLinea.unidad)) {
+          // En lugar de sumar +1 por defecto, abrimos la balanza para capturar su peso
+          openWeightScale(targetMatch.pIdx, targetMatch.lIdx);
+          setExpandedPanel(foundPedidoId);
+          return prevDraft; // Detenemos aquí
         }
 
-        // Si es unidad de peso pero NO hay báscula, sumamos 1 por defecto (UX friendly)
-        // o si es unidad normal, sumamos 1.
-        const nextRec = currRec + 1;
         newPedidos[targetMatch.pIdx].lineas[targetMatch.lIdx] = {
           ...tLinea,
-          cantidadRecibida: nextRec,
-          estado: calculateEstado(nextRec, tLinea.cantidadPedida),
+          cantidadRecibida: currRec + 1,
+          estado: calculateEstado(currRec + 1, tLinea.cantidadPedida),
         };
 
         setExpandedPanel(foundPedidoId);
@@ -630,34 +651,34 @@ const Recepcion: React.FC = () => {
         );
 
         if (existingEsp) {
-          const indexEsp = prevDraft.productosEspontaneos.findIndex(
+          const newEsp = prevDraft.productosEspontaneos.map((l) => {
+            const match =
+              l.idProducto === prod.id ||
+              (l.codigoBarras === prod.codigoBarras && prod.codigoBarras) ||
+              l.nombreProducto.toLowerCase() === prod.nombre.toLowerCase();
+            return match
+              ? {
+                  ...l,
+                  cantidadRecibida: isWeightUnit(l.unidad)
+                    ? Number(l.cantidadRecibida)
+                    : Number(l.cantidadRecibida) + 1,
+                  estado: 'Exceso' as LineaDraft['estado'],
+                }
+              : l;
+          });
+
+          const indexEsp = newEsp.findIndex(
             (l) =>
               l.idProducto === prod.id ||
               (l.codigoBarras === prod.codigoBarras && prod.codigoBarras) ||
               l.nombreProducto.toLowerCase() === prod.nombre.toLowerCase()
           );
 
-          const newEsp = prevDraft.productosEspontaneos.map((l, idx) => {
-            if (idx !== indexEsp) return l;
-            return {
-              ...l,
-              cantidadRecibida: Number(l.cantidadRecibida) + 1,
-              estado: 'Exceso' as LineaDraft['estado'],
-            };
-          });
-
-          if (
-            isWeightUnit(existingEsp.unidad) &&
-            isScaleConnected &&
-            isScaleEnabled
-          ) {
+          if (isWeightUnit(existingEsp.unidad)) {
             setTimeout(() => openWeightScale(null, indexEsp), 0);
-            return prevDraft;
           }
-
           return { ...prevDraft, productosEspontaneos: newEsp };
         } else {
-          // Crear nueva línea espontánea
           const newLinea: LineaDraft = {
             pedidoProductoId: null,
             idProducto: prod.id,
@@ -666,7 +687,7 @@ const Recepcion: React.FC = () => {
             unidad: prod.unidad || 'uds',
             cantidadPedida: 0,
             cantidadAlbaran: '',
-            cantidadRecibida: 1, // Iniciamos en 1 siempre para evitar ruidos de 0
+            cantidadRecibida: isWeightUnit(prod.unidad) ? 0 : 1,
             isWeighedWithScale: false,
             estadoVisual: EstadoVisualProducto.OPTIMO,
             fechaCaducidad: '',
@@ -674,15 +695,17 @@ const Recepcion: React.FC = () => {
             estado: 'Nuevo',
           };
 
-          const newEsp = [...prevDraft.productosEspontaneos, newLinea];
-          const newIdx = newEsp.length - 1;
-
-          if (isWeightUnit(prod.unidad) && isScaleConnected && isScaleEnabled) {
-            setTimeout(() => openWeightScale(null, newIdx), 0);
-            return { ...prevDraft, productosEspontaneos: newEsp };
+          if (isWeightUnit(prod.unidad)) {
+            setTimeout(
+              () =>
+                openWeightScale(null, prevDraft.productosEspontaneos.length),
+              200
+            );
           }
-
-          return { ...prevDraft, productosEspontaneos: newEsp };
+          return {
+            ...prevDraft,
+            productosEspontaneos: [...prevDraft.productosEspontaneos, newLinea],
+          };
         }
       }
     });
@@ -750,12 +773,8 @@ const Recepcion: React.FC = () => {
   };
 
   const openWeightScale = (pIdx: number | null, lIdx: number) => {
-    if (!isScaleConnected || !isScaleEnabled) {
-      setError(
-        'La báscula no está activa. Vincúlala o introduce el peso manualmente.'
-      );
-      return;
-    }
+    // Si la báscula no está conectada, no abrimos el modal (opcional, pero ayuda a la fluidez)
+    if (!isScaleConnected) return;
 
     setWeightTarget({ pIdx, lIdx });
     setWeightModalOpen(true);
@@ -1342,6 +1361,14 @@ const Recepcion: React.FC = () => {
           void startWeighing();
         }}
         onConfirmWeight={confirmWeight}
+        productName={(() => {
+          if (!weightTarget) return '';
+          const { pIdx, lIdx } = weightTarget;
+          if (pIdx !== null) {
+            return draft.pedidosSeleccionados[pIdx]?.lineas[lIdx]?.nombreProducto || '';
+          }
+          return draft.productosEspontaneos[lIdx]?.nombreProducto || '';
+        })()}
       />
 
       <RecepcionDraftConflictDialog
