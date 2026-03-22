@@ -6,6 +6,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
+import { resolveSherlockEffectivePermissions } from '../../sherlock-auth/utils/access.utils';
 
 /**
  * Servicio centralizado de gestión de permisos con caching agresivo.
@@ -128,10 +129,12 @@ export class AuthPermissionsService {
 
     const codigosExcluidos = excluidos.map((p) => p.codigo);
 
-    const setFinal = new Set([...codigosBase, ...codigosAdicionales]);
-    codigosExcluidos.forEach((c) => setFinal.delete(c));
-
-    const result = Array.from(setFinal);
+    const result = resolveSherlockEffectivePermissions({
+      role: usuario.rol,
+      rolePermissions: codigosBase,
+      directPermissions: codigosAdicionales,
+      excludedPermissions: codigosExcluidos,
+    });
     this.logger.debug(
       `Permisos finales para usuario ${userId}: ${JSON.stringify(result)}. (Base: ${codigosBase.length}, Adicionales: ${codigosAdicionales.length}, Excluidos: ${codigosExcluidos.length})`
     );

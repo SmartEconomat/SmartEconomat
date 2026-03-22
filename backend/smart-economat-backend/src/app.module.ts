@@ -27,7 +27,7 @@ import { ProfesorModule } from './modules/profesor/profesor.module';
 import { AlumnoModule } from './modules/alumno/alumno.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { PermisosModule } from './modules/permisos/permisos.module';
-import { AuthModule } from './modules/auth/module/auth.module';
+import { SherlockAuthModule } from './modules/sherlock-auth/module/sherlock-auth.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { PlantillasRolesModule } from './modules/plantillas-roles/plantillas-roles.module';
 import { IsUniqueConstraint } from './common/decorators/is-unique.decorator';
@@ -88,7 +88,7 @@ import { PedidoDraftModule } from './modules/pedido-draft/pedido-draft.module';
     AlumnoModule,
     AdminModule,
     PermisosModule,
-    AuthModule,
+    SherlockAuthModule,
     RolesModule,
     PlantillasRolesModule,
     ExportModule,

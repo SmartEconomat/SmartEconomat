@@ -5,6 +5,7 @@ import { PaginatedResponseDto } from '../dto/paginated-response.dto';
 import { DeepPartial } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { BaseEntity } from '../entities/base.entity';
+import { isSherlockElevatedRole } from '../../modules/sherlock-auth/utils/access.utils';
 
 export abstract class BaseService<
   T extends BaseEntity,
@@ -38,10 +39,7 @@ export abstract class BaseService<
     relations?: string[],
     userRole?: string
   ): Promise<PaginatedResponseDto<T>> {
-    const isAdmin =
-      userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
-      userRole?.toUpperCase() === 'SUPER_ADMIN';
+    const isAdmin = isSherlockElevatedRole(userRole);
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 100);
     const [data, total] = await this.repository.findAndCount({
