@@ -9,6 +9,7 @@ import {
   VersionColumn,
 } from 'typeorm';
 import type { Relation } from 'typeorm';
+import { Exclude } from 'class-transformer';
 import { Producto } from '../producto.entity/producto.entity';
 import { Alergeno } from '../enums/producto.enums';
 
@@ -26,6 +27,7 @@ export class ProductoAlergeno {
   @PrimaryColumn({ type: 'enum', enum: Alergeno, name: 'alergeno' })
   alergeno!: Alergeno;
 
+  @Exclude()
   @ManyToOne(() => Producto, (producto) => producto.alergenos, {
     onDelete: 'CASCADE',
   })

@@ -1,23 +1,11 @@
-import {
-  Column,
-  Entity,
-  Index,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-} from 'typeorm';
+import { Column, Entity, Index, OneToMany } from 'typeorm';
 import type { Relation } from 'typeorm';
-import {
-  DificultadReceta,
-  TiempoReceta,
-  UnidadIngrediente,
-} from '../enums/receta.enums';
+import { DificultadReceta, UnidadIngrediente } from '../enums/receta.enums';
 import { RecetaIngrediente } from '../receta-ingrediente.entity/receta-ingrediente.entity';
-import { Producto } from '../../producto/producto.entity/producto.entity';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 
-@Index(['dificultad', 'tiempo'])
+@Index(['dificultad', 'tiempoEstimadoMinutos'])
 @Entity('receta')
 export class Receta extends BaseEntity {
   @Column({ length: 150 })
@@ -27,11 +15,11 @@ export class Receta extends BaseEntity {
   instrucciones!: string;
 
   @Column({
-    type: 'enum',
-    enum: TiempoReceta,
-    enumName: 'tiempo_receta_enum',
+    type: 'integer',
+    name: 'tiempo_estimado_minutos',
+    default: 0,
   })
-  tiempo!: TiempoReceta;
+  tiempoEstimadoMinutos!: number;
 
   @Column({
     type: 'enum',
@@ -40,20 +28,16 @@ export class Receta extends BaseEntity {
   })
   dificultad!: DificultadReceta;
 
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'path_img' })
+  pathImg?: string;
+
   @Column({
-    name: 'tiempo_preparacion',
     type: 'varchar',
-    length: 50,
-    nullable: false,
+    length: 255,
+    nullable: true,
+    name: 'path_img_optimized',
   })
-  tiempoPreparacion!: string;
-
-  @Column({ name: 'producto_resultado_id', nullable: true })
-  productoResultadoId?: string;
-
-  @ManyToOne(() => Producto, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'producto_resultado_id' })
-  productoResultado?: Relation<Producto>;
+  pathImgOptimized?: string;
 
   @Column({
     type: 'numeric',
@@ -89,6 +73,27 @@ export class Receta extends BaseEntity {
     transformer: new ColumnNumericTransformer(),
   })
   costeUnitarioEstimado?: number | null;
+
+  @Column({
+    type: 'numeric',
+    precision: 12,
+    scale: 3,
+    nullable: true,
+    name: 'raciones',
+    default: 1,
+    transformer: new ColumnNumericTransformer(),
+  })
+  raciones?: number | null;
+
+  @Column({
+    type: 'numeric',
+    precision: 12,
+    scale: 3,
+    nullable: true,
+    name: 'tamanio_racion',
+    transformer: new ColumnNumericTransformer(),
+  })
+  tamanioRacion?: number | null;
 
   @OneToMany(() => RecetaIngrediente, (ri) => ri.receta)
   ingredientes!: Relation<RecetaIngrediente[]>;

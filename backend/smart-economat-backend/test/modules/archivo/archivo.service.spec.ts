@@ -49,8 +49,9 @@ describe('ArchivoService', () => {
 
     expect((service as any).processImage).toHaveBeenCalled();
     expect(result).toMatchObject({
-      url: '/api/v1/archivos/content/image.png',
+      url: '/api/v1/archivos/content/image_optimized.webp',
       urlOptimized: '/api/v1/archivos/content/image_optimized.webp',
+      mimeType: 'image/webp',
       mimeTypeOptimized: 'image/webp',
     });
   });
@@ -70,9 +71,7 @@ describe('ArchivoService', () => {
 
     const result = await service.uploadFile(
       file as any,
-      { id: 'user-2' } as any,
-      undefined,
-      false
+      { id: 'user-2' } as any
     );
 
     expect(result).toMatchObject({

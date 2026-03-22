@@ -6,6 +6,7 @@ import { RecepcionDraftController } from './controller/recepcion-draft.controlle
 import { RecepcionDraftService } from './service/recepcion-draft.service';
 import { RecepcionDraft } from './recepcion-draft.entity/recepcion-draft.entity';
 import { RECEPCION_DRAFT_REDIS } from './constants/recepcion-draft.constants';
+import { createInMemoryRedisClient } from '../../common/testing/in-memory-redis';
 
 @Module({
   imports: [TypeOrmModule.forFeature([RecepcionDraft])],
@@ -16,6 +17,10 @@ import { RECEPCION_DRAFT_REDIS } from './constants/recepcion-draft.constants';
       provide: RECEPCION_DRAFT_REDIS,
       inject: [ConfigService],
       useFactory: (configService: ConfigService): Redis => {
+        if (process.env.NODE_ENV === 'test') {
+          return createInMemoryRedisClient() as unknown as Redis;
+        }
+
         const redisUrl = configService.get<string>('REDIS_URL');
 
         if (redisUrl) {

@@ -7,6 +7,7 @@ import {
 import { DataSource, In } from 'typeorm';
 import { Pedido } from '../pedido.entity/pedido.entity';
 import { CreatePedidoDto } from '../dto/create-pedido.dto';
+import { CreatePurchaseBatchDto } from '../dto/create-purchase-batch.dto';
 import { GeneratePedidoFromRecetasDto } from '../dto/generate-pedido-from-recetas.dto';
 import { PedidoService } from './pedido.service';
 import { RecetaRepository } from '../../receta/repository/receta.repository';
@@ -19,6 +20,14 @@ type ConsolidatedIngredient = {
   productoNombre: string;
   cantidad: number;
   unidad: UnidadIngrediente;
+};
+
+type ResolvedRecetaPedidoPayload = {
+  proveedorId: string;
+  lineas: Array<{
+    productoProveedorId: string;
+    cantidad: number;
+  }>;
 };
 
 @Injectable()
@@ -35,6 +44,40 @@ export class RecetaToPedidoService {
     dto: GeneratePedidoFromRecetasDto,
     userId: string
   ): Promise<Pedido> {
+    const { proveedorId, lineas } =
+      await this.resolvePedidoPayloadFromRecetas(dto);
+
+    const createPedidoDto: CreatePedidoDto = {
+      proveedorId,
+      observaciones: dto.observaciones,
+      lineas,
+    };
+
+    const pedido = await this.pedidoService.create(createPedidoDto, userId);
+
+    this.logger.log(
+      `Pedido ${pedido.id} generado desde recetas [${dto.recetaIds.join(', ')}] por usuario ${userId}. ` +
+        `Proveedor consolidado: ${proveedorId}.` +
+        (dto.observaciones ? ` Observaciones: ${dto.observaciones}` : '')
+    );
+
+    return pedido;
+  }
+
+  async buildBatchOrderFromRecetas(
+    dto: GeneratePedidoFromRecetasDto
+  ): Promise<CreatePurchaseBatchDto> {
+    const { lineas } = await this.resolvePedidoPayloadFromRecetas(dto);
+
+    return {
+      observaciones: dto.observaciones,
+      lineas,
+    };
+  }
+
+  private async resolvePedidoPayloadFromRecetas(
+    dto: GeneratePedidoFromRecetasDto
+  ): Promise<ResolvedRecetaPedidoPayload> {
     const recetas = await this.loadRecetas(dto.recetaIds);
     const consolidado = this.consolidarIngredientes(recetas);
 
@@ -82,21 +125,10 @@ export class RecetaToPedidoService {
       };
     });
 
-    const createPedidoDto: CreatePedidoDto = {
+    return {
       proveedorId,
-      observaciones: dto.observaciones,
       lineas,
     };
-
-    const pedido = await this.pedidoService.create(createPedidoDto, userId);
-
-    this.logger.log(
-      `Pedido ${pedido.id} generado desde recetas [${dto.recetaIds.join(', ')}] por usuario ${userId}. ` +
-        `Proveedor consolidado: ${proveedorId}.` +
-        (dto.observaciones ? ` Observaciones: ${dto.observaciones}` : '')
-    );
-
-    return pedido;
   }
 
   private async loadRecetas(recetaIds: string[]): Promise<Receta[]> {

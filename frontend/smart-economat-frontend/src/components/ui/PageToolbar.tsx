@@ -72,6 +72,23 @@ export interface PageToolbarProps {
   autoFocusSearch?: boolean;
   /** Si es true, el toolbar se mantiene arriba al hacer scroll */
   sticky?: boolean;
+  extraActions?: {
+    label: string;
+    onClick: () => void;
+    icon?: React.ReactNode;
+    id?: string;
+    disabled?: boolean;
+    isLoading?: boolean;
+    color?:
+      | 'primary'
+      | 'secondary'
+      | 'error'
+      | 'info'
+      | 'success'
+      | 'warning'
+      | 'inherit';
+    variant?: 'text' | 'outlined' | 'contained';
+  }[];
 }
 
 /**
@@ -95,6 +112,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
   onScanBarcode, // Added onScanBarcode to destructuring
   autoFocusSearch = false,
   sticky = true,
+  extraActions = [],
 }) => {
   const { isMobile, isMobileOrTablet } = useBreakpoints();
   const theme = useTheme();
@@ -317,6 +335,60 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
               gap: 1.5,
             }}
           >
+            {extraActions.map((action) => (
+              <React.Fragment key={action.id || action.label}>
+                {isMobile ? (
+                  <Tooltip title={action.label}>
+                    <IconButton
+                      id={action.id}
+                      onClick={action.onClick}
+                      disabled={action.disabled || action.isLoading}
+                      color={action.color || 'primary'}
+                      sx={{
+                        bgcolor: 'background.paper',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        width: 40,
+                        height: 40,
+                        borderRadius: 2,
+                      }}
+                    >
+                      {action.isLoading ? (
+                        <CircularProgress size={20} color="inherit" />
+                      ) : (
+                        action.icon
+                      )}
+                    </IconButton>
+                  </Tooltip>
+                ) : (
+                  <Button
+                    id={action.id}
+                    variant={action.variant || 'outlined'}
+                    color={action.color || 'primary'}
+                    startIcon={
+                      action.isLoading ? (
+                        <CircularProgress size={20} color="inherit" />
+                      ) : (
+                        action.icon
+                      )
+                    }
+                    onClick={action.onClick}
+                    disabled={action.disabled || action.isLoading}
+                    sx={{
+                      borderRadius: 2,
+                      px: { sm: 2, md: 3 },
+                      py: 1,
+                      fontWeight: 600,
+                      whiteSpace: 'nowrap',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {action.label}
+                  </Button>
+                )}
+              </React.Fragment>
+            ))}
+
             {secondaryAction && (
               <>
                 {isMobile ? (

@@ -70,7 +70,9 @@ export class MovimientoService {
    *   sortOrder: 'DESC'
    * })
    */
-  async getMovimientoHistory(dto: MovimientoHistoryDto): Promise<Movimiento[]> {
+  async getMovimientoHistory(
+    dto: MovimientoHistoryDto
+  ): Promise<PaginatedResponseDto<Movimiento>> {
     if (!dto.entityId && !dto.userId) {
       throw new BadRequestException(
         'Debe proporcionar entityId (ProductoProveedor) o userId (Usuario) para buscar el historial'
@@ -88,14 +90,14 @@ export class MovimientoService {
       }
     }
 
-    const movimientos = await this.movimientoRepo.findMovimientosByEntity(dto);
+    const result = await this.movimientoRepo.findMovimientosByEntity(dto);
 
-    if (!movimientos || movimientos.length === 0) {
+    if (!result.data || result.data.length === 0) {
       throw new NotFoundException(
         'No se encontraron movimientos que coincidan con los criterios especificados'
       );
     }
 
-    return movimientos;
+    return result;
   }
 }

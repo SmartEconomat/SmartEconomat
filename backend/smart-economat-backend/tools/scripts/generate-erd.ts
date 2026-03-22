@@ -10,7 +10,7 @@ const destFile = join(rootDir, 'tools/erd/erd.png');
 try {
   console.log('Generating ERD...');
   execSync(
-    'npx erdia build -d tools/erd/erd-datasource.ts --format image --image-format png --background-color white --viewport-width 8192 --viewport-height 4096 --width 8192px --puppeteer-config tools/erd/puppeteer-config.json',
+    'npx erdia build -d tools/erd/erd-datasource.ts --format image --image-format png --background-color white --viewport-width 8192 --viewport-height 4096 --width 8192px --puppeteer-config tools/erd/puppeteer-config.json --prettier-config tools/erd/puppeteer-config.json',
     {
       stdio: 'inherit',
       env: { ...process.env, NODE_OPTIONS: '-r ts-node/register' },

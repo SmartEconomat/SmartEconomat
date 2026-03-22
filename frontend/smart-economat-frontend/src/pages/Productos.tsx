@@ -46,6 +46,7 @@ import {
 } from '../services/producto.service';
 import {
   deleteResource,
+  resolveStoredFileUrl,
   uploadFile,
   downloadFile,
 } from '../services/api.service';
@@ -430,7 +431,7 @@ const Productos: React.FC = () => {
 
   const buildEditData = (row: Producto): Record<string, unknown> => {
     const editData: Record<string, unknown> = { ...row };
-    if (row.pathImg) editData.imagen = row.pathImg;
+    if (row.pathImg) editData.imagen = resolveStoredFileUrl(row.pathImg);
     if (row.alergenos) {
       editData.alergenos = row.alergenos.map((alergeno) =>
         typeof alergeno === 'string' ? alergeno : alergeno.alergeno || alergeno
@@ -475,10 +476,13 @@ const Productos: React.FC = () => {
     <Stack direction="row" spacing={1} justifyContent="center">
       <Tooltip title="Ver detalle">
         <IconButton
-          onClick={() => handleViewClick(row)}
+          color="primary"
+          onClick={(e) => {
+            e.currentTarget.blur();
+            handleViewClick(row);
+          }}
           size="small"
           aria-label="Ver detalle"
-          sx={{ color: 'text.secondary' }}
         >
           <VisibilityIcon fontSize="small" />
         </IconButton>
@@ -708,6 +712,7 @@ const Productos: React.FC = () => {
               alergenoIds.includes(a.id)
             );
             const proveedoresAsociados = p.proveedores ?? [];
+            const imageUrl = resolveStoredFileUrl(p.pathImg);
 
             return (
               <DetailModal
@@ -726,9 +731,9 @@ const Productos: React.FC = () => {
                     : undefined
                 }
                 headerMedia={
-                  p.pathImg ? (
+                  imageUrl ? (
                     <img
-                      src={p.pathImg}
+                      src={imageUrl}
                       alt={p.nombre}
                       style={{ height: 160, objectFit: 'cover', width: '100%' }}
                     />

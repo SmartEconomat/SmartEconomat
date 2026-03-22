@@ -22,6 +22,7 @@ import { generateEan13 } from '../../../common/utils/ean13.util';
 import { isValidBarcode as validateBarcode } from '../../../common/validators/barcode.validator';
 import { buildFindManyOptions } from '../../../common/utils/typeorm-query.helper';
 import { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
+import { ArchivoService } from '../../archivo/service/archivo.service';
 
 @Injectable()
 export class ProductoService {
@@ -31,6 +32,7 @@ export class ProductoService {
     private readonly productoProveedorRepository: Repository<ProductoProveedor>,
     @InjectRepository(ProductoAlergeno)
     private readonly productoAlergenoRepository: Repository<ProductoAlergeno>,
+    private readonly archivoService: ArchivoService,
     private readonly movimientoHelper: MovimientoHelper,
     @InjectDataSource()
     private readonly dataSource: DataSource
@@ -212,64 +214,76 @@ export class ProductoService {
         ? this.ensureUniqueAlergenos(alergenos)
         : undefined;
 
-    return await this.dataSource.transaction(async (manager) => {
-      const producto = await manager.findOne(Producto, {
-        where: { id },
-        relations: ['proveedores', 'proveedores.proveedor', 'alergenos'],
-      });
+    let previousImagePath: string | undefined;
 
-      if (!producto) {
-        throw new NotFoundException(I18nHelper.getError('PRODUCT_NOT_FOUND'));
-      }
-
-      if (rest.codigoBarras && rest.codigoBarras !== producto.codigoBarras) {
-        if (!validateBarcode(rest.codigoBarras, 130)) {
-          throw new BadRequestException(
-            'El código de barras proporcionado no es válido'
-          );
-        }
-
-        const duplicatedBarcode = await manager.count(Producto, {
-          where: { codigoBarras: rest.codigoBarras },
+    const updatedProduct = await this.dataSource.transaction(
+      async (manager) => {
+        const producto = await manager.findOne(Producto, {
+          where: { id },
+          relations: ['proveedores', 'proveedores.proveedor', 'alergenos'],
         });
 
-        if (duplicatedBarcode > 0) {
-          throw new ConflictException(
-            'El código de barras del producto ya está registrado'
+        if (!producto) {
+          throw new NotFoundException(I18nHelper.getError('PRODUCT_NOT_FOUND'));
+        }
+
+        previousImagePath = producto.pathImg;
+
+        if (rest.codigoBarras && rest.codigoBarras !== producto.codigoBarras) {
+          if (!validateBarcode(rest.codigoBarras, 130)) {
+            throw new BadRequestException(
+              'El código de barras proporcionado no es válido'
+            );
+          }
+
+          const duplicatedBarcode = await manager.count(Producto, {
+            where: { codigoBarras: rest.codigoBarras },
+          });
+
+          if (duplicatedBarcode > 0) {
+            throw new ConflictException(
+              'El código de barras del producto ya está registrado'
+            );
+          }
+        }
+
+        if (proveedores !== undefined) {
+          await this.validateProveedorPayload(manager, proveedores);
+        }
+
+        manager.merge(Producto, producto, rest);
+        await manager.save(Producto, producto);
+
+        if (normalizedAlergenos !== undefined) {
+          await this.replaceAlergenosWithManager(
+            manager,
+            id,
+            normalizedAlergenos
           );
         }
-      }
 
-      if (proveedores !== undefined) {
-        await this.validateProveedorPayload(manager, proveedores);
-      }
+        if (proveedores !== undefined) {
+          await this.syncProveedoresWithManager(manager, id, proveedores);
+        }
 
-      manager.merge(Producto, producto, rest);
-      await manager.save(Producto, producto);
-
-      if (normalizedAlergenos !== undefined) {
-        await this.replaceAlergenosWithManager(
-          manager,
+        await this.movimientoHelper.trackProductoUpdate(
+          userId,
           id,
-          normalizedAlergenos
+          `Actualización de producto: ${producto.nombre}`
         );
+
+        return (await manager.findOne(Producto, {
+          where: { id },
+          relations: ['proveedores', 'proveedores.proveedor', 'alergenos'],
+        })) as Producto;
       }
+    );
 
-      if (proveedores !== undefined) {
-        await this.syncProveedoresWithManager(manager, id, proveedores);
-      }
+    if (previousImagePath && previousImagePath !== updatedProduct.pathImg) {
+      await this.archivoService.cleanupByUrl(previousImagePath);
+    }
 
-      await this.movimientoHelper.trackProductoUpdate(
-        userId,
-        id,
-        `Actualización de producto: ${producto.nombre}`
-      );
-
-      return (await manager.findOne(Producto, {
-        where: { id },
-        relations: ['proveedores', 'proveedores.proveedor', 'alergenos'],
-      })) as Producto;
-    });
+    return updatedProduct;
   }
 
   async remove(id: string, userId: string): Promise<void> {
@@ -285,6 +299,10 @@ export class ProductoService {
       id,
       `Eliminación de producto: ${producto.nombre}`
     );
+
+    if (producto.pathImg) {
+      await this.archivoService.cleanupByUrl(producto.pathImg);
+    }
   }
 
   async generateUniqueEan13(): Promise<string> {

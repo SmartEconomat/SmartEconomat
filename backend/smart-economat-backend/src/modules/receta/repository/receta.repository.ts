@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, ILike, In, Repository } from 'typeorm';
+import { DataSource, ILike, In, Repository, EntityManager } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { Receta } from '../receta.entity/receta.entity';
 import { RecetaIngrediente } from '../receta-ingrediente.entity/receta-ingrediente.entity';
@@ -14,12 +14,20 @@ import { UpdateRecetaDto } from '../dto/update-receta.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import {
+  TipoProducto,
+  UnidadMedida,
+} from '../../producto/enums/producto.enums';
+import { UnidadIngrediente } from '../enums/receta.enums';
+import { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
+import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
+import { ProductoAlergeno } from '../../producto/producto-alergeno.entity/producto-alergeno.entity';
 
 const INGREDIENTES_RELATIONS = [
   'ingredientes',
   'ingredientes.producto',
   'ingredientes.producto.alergenos',
-  'productoResultado',
+  'ingredientes.proveedorFavorito',
 ] as const;
 
 @Injectable()
@@ -43,6 +51,7 @@ export class RecetaRepository {
 
       const productos = await manager.find(Producto, {
         where: { id: In(productoIds) },
+        relations: ['proveedores', 'proveedores.proveedor'],
       });
       const productosMap = new Map(
         productos.map((p) => [p.id.toLowerCase(), p])
@@ -55,32 +64,25 @@ export class RecetaRepository {
         throw new BadRequestException(I18nHelper.getError('PRODUCT_NOT_FOUND'));
       }
 
-      let productoResultado: Producto | undefined;
-      if (dto.productoResultadoId) {
-        const found = await manager.findOne(Producto, {
-          where: { id: dto.productoResultadoId },
-        });
-        if (!found) {
-          throw new BadRequestException(
-            I18nHelper.getError('PRODUCT_NOT_FOUND')
-          );
-        }
-        productoResultado = found;
-      }
-
       const receta = manager.create(Receta, {
         nombre: dto.nombre,
         instrucciones: dto.instrucciones,
-        tiempo: dto.tiempo,
+        tiempoEstimadoMinutos: dto.tiempoEstimadoMinutos,
         dificultad: dto.dificultad,
-        tiempoPreparacion: dto.tiempoPreparacion,
-        ...(productoResultado && { productoResultado }),
         ...(dto.rendimiento !== undefined && { rendimiento: dto.rendimiento }),
         ...(dto.unidadResultado !== undefined && {
           unidadResultado: dto.unidadResultado,
         }),
         ...(dto.diasCaducidad !== undefined && {
           diasCaducidad: dto.diasCaducidad,
+        }),
+        ...(dto.pathImg !== undefined && { pathImg: dto.pathImg }),
+        ...(dto.pathImgOptimized !== undefined && {
+          pathImgOptimized: dto.pathImgOptimized,
+        }),
+        ...(dto.raciones !== undefined && { raciones: dto.raciones }),
+        ...(dto.tamanioRacion !== undefined && {
+          tamanioRacion: dto.tamanioRacion,
         }),
       });
 
@@ -91,6 +93,10 @@ export class RecetaRepository {
           cantidad: ing.cantidad,
           unidad: ing.unidad,
           mermaAplicada: ing.mermaAplicada ?? 0,
+          proveedorFavoritoId: this.resolveProveedorFavoritoId(
+            productosMap.get(ing.productoId.toLowerCase()),
+            ing.proveedorFavoritoId
+          ),
           receta,
           producto: productosMap.get(ing.productoId.toLowerCase()),
         })
@@ -120,8 +126,12 @@ export class RecetaRepository {
       userRole?.toUpperCase() === 'SUPER_ADMIN';
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 50);
-    const sortBy = query.sortBy ?? 'nombre';
+    let sortBy = query.sortBy ?? 'nombre';
     const order = query.order ?? 'ASC';
+
+    if (sortBy === 'tiempo' || sortBy === 'tiempoPreparacion') {
+      sortBy = 'tiempoEstimadoMinutos';
+    }
 
     const whereCondition = query.searchTerm
       ? [
@@ -148,17 +158,34 @@ export class RecetaRepository {
     };
   }
 
+  async findByIds(ids: string[]): Promise<Receta[]> {
+    return this.recetaRepo.find({
+      where: { id: In(ids) },
+      relations: [...INGREDIENTES_RELATIONS],
+    });
+  }
+
   async findById(id: string, userRole?: string): Promise<Receta | null> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
       userRole?.toUpperCase() === 'ADMINISTRADOR' ||
       userRole?.toUpperCase() === 'SUPER_ADMIN';
 
-    return this.recetaRepo.findOne({
+    const receta = await this.recetaRepo.findOne({
       where: { id },
       relations: [...INGREDIENTES_RELATIONS],
       withDeleted: isAdmin,
     });
+
+    if (receta && (!receta.rendimiento || receta.rendimiento <= 0)) {
+      receta.rendimiento = 1;
+      if (!receta.unidadResultado) {
+        receta.unidadResultado = UnidadIngrediente.PIEZA;
+      }
+      await this.recetaRepo.save(receta);
+    }
+
+    return receta;
   }
 
   async update(id: string, dto: UpdateRecetaDto): Promise<Receta> {
@@ -174,6 +201,7 @@ export class RecetaRepository {
 
         const productos = await manager.find(Producto, {
           where: { id: In(productoIds) },
+          relations: ['proveedores', 'proveedores.proveedor'],
         });
         const productosMap = new Map(
           productos.map((p) => [p.id.toLowerCase(), p])
@@ -195,6 +223,10 @@ export class RecetaRepository {
             cantidad: ing.cantidad,
             unidad: ing.unidad,
             mermaAplicada: ing.mermaAplicada ?? 0,
+            proveedorFavoritoId: this.resolveProveedorFavoritoId(
+              productosMap.get(ing.productoId.toLowerCase()),
+              ing.proveedorFavoritoId
+            ),
             receta: { id } as Receta,
             producto: productosMap.get(ing.productoId.toLowerCase()),
           })
@@ -202,42 +234,29 @@ export class RecetaRepository {
         await manager.save(ingredientes);
       }
 
-      let productoResultado: Producto | null | undefined;
-      if (dto.productoResultadoId !== undefined) {
-        if (dto.productoResultadoId === null) {
-          productoResultado = null;
-        } else {
-          const found = await manager.findOne(Producto, {
-            where: { id: dto.productoResultadoId },
-          });
-          if (!found) {
-            throw new BadRequestException(
-              I18nHelper.getError('PRODUCT_NOT_FOUND')
-            );
-          }
-          productoResultado = found;
-        }
-      }
-
       const updateData: QueryDeepPartialEntity<Receta> = {
         ...(dto.nombre !== undefined && { nombre: dto.nombre }),
         ...(dto.instrucciones !== undefined && {
           instrucciones: dto.instrucciones,
         }),
-        ...(dto.tiempo !== undefined && { tiempo: dto.tiempo }),
+        ...(dto.tiempoEstimadoMinutos !== undefined && {
+          tiempoEstimadoMinutos: dto.tiempoEstimadoMinutos,
+        }),
         ...(dto.dificultad !== undefined && { dificultad: dto.dificultad }),
-        ...(dto.tiempoPreparacion !== undefined && {
-          tiempoPreparacion: dto.tiempoPreparacion,
-        }),
-        ...(productoResultado !== undefined && {
-          productoResultado: productoResultado as Producto,
-        }),
         ...(dto.rendimiento !== undefined && { rendimiento: dto.rendimiento }),
         ...(dto.unidadResultado !== undefined && {
           unidadResultado: dto.unidadResultado,
         }),
         ...(dto.diasCaducidad !== undefined && {
           diasCaducidad: dto.diasCaducidad,
+        }),
+        ...(dto.pathImg !== undefined && { pathImg: dto.pathImg }),
+        ...(dto.pathImgOptimized !== undefined && {
+          pathImgOptimized: dto.pathImgOptimized,
+        }),
+        ...(dto.raciones !== undefined && { raciones: dto.raciones }),
+        ...(dto.tamanioRacion !== undefined && {
+          tamanioRacion: dto.tamanioRacion,
         }),
       };
 
@@ -276,12 +295,8 @@ export class RecetaRepository {
       const newReceta = manager.create(Receta, {
         nombre: newName,
         instrucciones: sourceReceta.instrucciones,
-        tiempo: sourceReceta.tiempo,
+        tiempoEstimadoMinutos: sourceReceta.tiempoEstimadoMinutos,
         dificultad: sourceReceta.dificultad,
-        tiempoPreparacion: sourceReceta.tiempoPreparacion,
-        ...(sourceReceta.productoResultado && {
-          productoResultado: sourceReceta.productoResultado,
-        }),
         ...(sourceReceta.rendimiento != null &&
           !isNaN(sourceReceta.rendimiento) && {
             rendimiento: sourceReceta.rendimiento,
@@ -293,6 +308,8 @@ export class RecetaRepository {
           !isNaN(sourceReceta.diasCaducidad) && {
             diasCaducidad: sourceReceta.diasCaducidad,
           }),
+        raciones: sourceReceta.raciones,
+        tamanioRacion: sourceReceta.tamanioRacion,
       });
 
       await manager.save(newReceta);
@@ -303,6 +320,7 @@ export class RecetaRepository {
             cantidad: ing.cantidad,
             unidad: ing.unidad,
             mermaAplicada: ing.mermaAplicada ?? 0,
+            proveedorFavoritoId: ing.proveedorFavoritoId,
             receta: newReceta,
             producto: ing.producto,
           })
@@ -321,5 +339,176 @@ export class RecetaRepository {
 
       return saved;
     });
+  }
+
+  async ensureProductoElaborado(
+    manager: EntityManager,
+    receta: Pick<Receta, 'nombre' | 'unidadResultado' | 'ingredientes'>
+  ): Promise<Producto> {
+    const ingredientesProductos =
+      receta.ingredientes
+        ?.map((ingrediente) => ingrediente.producto)
+        .filter((producto): producto is Producto => Boolean(producto)) ?? [];
+
+    return this.resolveProductoElaborado(
+      manager,
+      receta.nombre,
+      receta.unidadResultado || undefined,
+      ingredientesProductos
+    );
+  }
+
+  private resolveProveedorFavoritoId(
+    producto?: Producto,
+    proveedorFavoritoId?: string
+  ): string | undefined {
+    const proveedores = producto?.proveedores ?? [];
+
+    if (!producto || proveedores.length === 0) {
+      return proveedorFavoritoId;
+    }
+
+    if (
+      proveedorFavoritoId &&
+      proveedores.some(
+        (proveedor) => proveedor.proveedorId === proveedorFavoritoId
+      )
+    ) {
+      return proveedorFavoritoId;
+    }
+
+    const proveedoresConPrecio = proveedores.filter(
+      (proveedor) => typeof proveedor.precioUnitario === 'number'
+    );
+
+    if (proveedoresConPrecio.length > 0) {
+      return proveedoresConPrecio.reduce((cheapest, current) =>
+        (current.precioUnitario ?? Number.POSITIVE_INFINITY) <
+        (cheapest.precioUnitario ?? Number.POSITIVE_INFINITY)
+          ? current
+          : cheapest
+      ).proveedorId;
+    }
+
+    return proveedores.find((proveedor) => proveedor.proveedorId)?.proveedorId;
+  }
+
+  private async resolveProductoElaborado(
+    manager: EntityManager,
+    recetaNombre: string,
+    unidadResultado?: UnidadIngrediente,
+    ingredientesProductos: Producto[] = []
+  ): Promise<Producto> {
+    const existing = await manager.findOne(Producto, {
+      where: { nombre: ILike(recetaNombre.trim()) },
+      relations: ['alergenos'],
+    });
+
+    if (existing) {
+      await this.ensureInternalProviderLink(manager, existing.id);
+      await this.syncAlergenosToProducto(
+        manager,
+        existing.id,
+        ingredientesProductos
+      );
+      return existing;
+    }
+
+    const newProduct = manager.create(Producto, {
+      nombre: recetaNombre,
+      tipo: TipoProducto.ELABORADO,
+      unidad: this.mapUnidadRecetaToMedida(
+        unidadResultado || UnidadIngrediente.PIEZA
+      ),
+      contenido: 1,
+    });
+
+    const savedProduct = await manager.save(Producto, newProduct);
+
+    await this.ensureInternalProviderLink(manager, savedProduct.id);
+
+    if (ingredientesProductos.length > 0) {
+      await this.syncAlergenosToProducto(
+        manager,
+        savedProduct.id,
+        ingredientesProductos
+      );
+    }
+
+    return savedProduct;
+  }
+
+  private async ensureInternalProviderLink(
+    manager: EntityManager,
+    productoId: string
+  ): Promise<void> {
+    const existingLink = await manager.findOne(ProductoProveedor, {
+      where: { productoId },
+    });
+
+    if (existingLink) {
+      return;
+    }
+
+    let internalProvider = await manager.findOne(Proveedor, {
+      where: { nombre: ILike('Producción Propia') },
+    });
+
+    if (!internalProvider) {
+      internalProvider = manager.create(Proveedor, {
+        nombre: 'Producción Propia',
+        email: 'produccion@economat.internal',
+        nif: 'INTERNAL-PP-001',
+        telefono: '000000000',
+        direccion: 'Sede Central',
+      });
+      internalProvider = await manager.save(Proveedor, internalProvider);
+    }
+
+    const pp = manager.create(ProductoProveedor, {
+      productoId,
+      proveedorId: internalProvider.id,
+      precioUnitario: 0,
+      marca: 'Interna',
+    });
+    await manager.save(ProductoProveedor, pp);
+  }
+
+  private mapUnidadRecetaToMedida(unidad: UnidadIngrediente): UnidadMedida {
+    const map: Record<string, UnidadMedida> = {
+      [UnidadIngrediente.KILOGRAMO]: UnidadMedida.KG,
+      [UnidadIngrediente.GRAMO]: UnidadMedida.G,
+      [UnidadIngrediente.LITRO]: UnidadMedida.L,
+      [UnidadIngrediente.MILILITRO]: UnidadMedida.ML,
+      [UnidadIngrediente.PIEZA]: UnidadMedida.UNIDAD,
+    };
+    return map[unidad] || UnidadMedida.UNIDAD;
+  }
+
+  private async syncAlergenosToProducto(
+    manager: EntityManager,
+    productoId: string,
+    ingredientesProductos: Producto[]
+  ) {
+    if (ingredientesProductos.length === 0) return;
+
+    const alergenosSet = new Set<string>();
+    for (const prod of ingredientesProductos) {
+      if (prod.alergenos) {
+        prod.alergenos.forEach((pa) => alergenosSet.add(pa.alergeno));
+      }
+    }
+
+    if (alergenosSet.size === 0) return;
+
+    await manager.delete(ProductoAlergeno, { productoId });
+
+    const paRows = Array.from(alergenosSet).map((alergeno) =>
+      manager.create(ProductoAlergeno, {
+        productoId,
+        alergeno: alergeno as any,
+      })
+    );
+    await manager.save(ProductoAlergeno, paRows);
   }
 }

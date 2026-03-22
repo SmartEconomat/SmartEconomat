@@ -188,9 +188,12 @@ const Incidencias: React.FC = () => {
       <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
         <Tooltip title="Ver detalle">
           <IconButton
-            onClick={() => setItemToView(row)}
+            color="primary"
+            onClick={(e) => {
+              e.currentTarget.blur();
+              setItemToView(row);
+            }}
             size="small"
-            color="inherit"
           >
             <VisibilityIcon fontSize="small" />
           </IconButton>

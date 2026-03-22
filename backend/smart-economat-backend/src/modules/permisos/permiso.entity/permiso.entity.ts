@@ -1,4 +1,5 @@
 import { Entity, Column, Index, ManyToMany, type Relation } from 'typeorm';
+import { Exclude } from 'class-transformer';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { Rol } from '../../roles/rol.entity/rol.entity';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
@@ -52,21 +53,25 @@ export class Permiso extends BaseEntity {
   /**
    * Relación ManyToMany con Rol (inversa)
    */
+  @Exclude()
   @ManyToMany(() => Rol, (rol) => rol.permisos)
   roles!: Rol[];
 
   /**
    * Usuarios que tienen este permiso asignado de forma individual
    */
+  @Exclude()
   @ManyToMany(() => Usuario, (usuario) => usuario.permisosAdicionales)
   usuariosAdicionales: Relation<Usuario>[];
 
   /**
    * Usuarios que tienen este permiso explícitamente revocado
    */
+  @Exclude()
   @ManyToMany(() => Usuario, (usuario) => usuario.permisosExcluidos)
   usuariosExcluidos: Relation<Usuario>[];
 
+  @Exclude()
   @ManyToMany(() => PlantillaRol, (plantilla) => plantilla.permisos)
   plantillasRoles: Relation<PlantillaRol>[];
 }

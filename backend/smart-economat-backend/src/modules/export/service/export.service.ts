@@ -779,8 +779,10 @@ export class ExportService {
       });
     }
 
-    if (query.tiempo) {
-      qb.andWhere('receta.tiempo = :tiempo', { tiempo: query.tiempo });
+    if (query.maxTiempoMinutos) {
+      qb.andWhere('receta.tiempoEstimadoMinutos <= :maxTiempoMinutos', {
+        maxTiempoMinutos: query.maxTiempoMinutos,
+      });
     }
 
     qb.orderBy('receta.nombre', 'ASC');

@@ -4,10 +4,12 @@ import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 import { Receta } from '../receta.entity/receta.entity';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
+import { EstadoLote } from '../enums/receta.enums';
 
 @Entity('produccion_lote')
 @Index(['recetaId'])
 @Index(['usuarioId'])
+@Index(['preparacionId'])
 @Index(['fechaProduccion'])
 export class ProduccionLote extends BaseEntity {
   @Column({ name: 'receta_id' })
@@ -15,6 +17,9 @@ export class ProduccionLote extends BaseEntity {
 
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
+
+  @Column({ name: 'preparacion_id', nullable: true })
+  preparacionId?: string;
 
   @ManyToOne(() => Receta, { nullable: false, onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'receta_id' })
@@ -55,4 +60,31 @@ export class ProduccionLote extends BaseEntity {
     transformer: new ColumnNumericTransformer(),
   })
   costeTotalReal!: number;
+
+  @Column({
+    type: 'numeric',
+    precision: 12,
+    scale: 3,
+    name: 'porciones_producidas',
+    default: 0,
+    transformer: new ColumnNumericTransformer(),
+  })
+  porcionesProducidas!: number;
+
+  @Column({
+    type: 'numeric',
+    precision: 10,
+    scale: 3,
+    name: 'porciones_restantes',
+    default: 0,
+    transformer: new ColumnNumericTransformer(),
+  })
+  porcionesRestantes!: number;
+
+  @Column({
+    type: 'enum',
+    enum: EstadoLote,
+    default: EstadoLote.DISPONIBLE,
+  })
+  estado!: EstadoLote;
 }

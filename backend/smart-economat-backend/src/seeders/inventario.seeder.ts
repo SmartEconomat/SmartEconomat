@@ -74,7 +74,7 @@ export const runSeeder = async (dataSource: DataSource) => {
   for (const pp of productosProv) {
     const inventario = new Inventario();
     inventario.productoProveedor = pp;
-    inventario.cantidadActual = faker.number.int({ min: 0, max: 100 });
+    inventario.cantidadActual = faker.number.int({ min: 50, max: 500 });
     inventario.cantidadMinima = faker.number.int({
       min: 0,
       max: inventario.cantidadActual,
@@ -95,7 +95,7 @@ export const runSeeder = async (dataSource: DataSource) => {
       inventario.cantidadMaxima = faker.number.int({
         min:
           Math.max(inventario.cantidadMinima, inventario.cantidadActual) + 10,
-        max: 500,
+        max: 1000,
       });
     } else {
       inventario.cantidadMaxima = null;
@@ -105,7 +105,14 @@ export const runSeeder = async (dataSource: DataSource) => {
   }
 
   if (inventarios.length > 0) {
-    await inventarioRepo.save(inventarios);
+    console.log(
+      `Guardando ${inventarios.length} registros de inventario en lotes...`
+    );
+    const CHUNK_SIZE = 500;
+    for (let i = 0; i < inventarios.length; i += CHUNK_SIZE) {
+      const chunk = inventarios.slice(i, i + CHUNK_SIZE);
+      await inventarioRepo.save(chunk);
+    }
   }
 
   console.log(SeederI18nHelper.getSeederSuccess('inventario'));

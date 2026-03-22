@@ -1,4 +1,5 @@
 import { Entity, Column, Index, ManyToMany, JoinTable } from 'typeorm';
+import { Exclude } from 'class-transformer';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
@@ -44,6 +45,7 @@ export class Rol extends BaseEntity {
   })
   permisos!: Permiso[];
 
+  @Exclude()
   @ManyToMany(() => Usuario, (usuario) => usuario.roles)
   usuarios!: Usuario[];
 }

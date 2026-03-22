@@ -27,7 +27,7 @@ export default function ToastContainer() {
           key={toast.id}
           open={true}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-          sx={{ position: 'relative', width: '100%' }}
+          sx={{ position: 'relative', width: 'auto' }}
         >
           <Alert
             onClose={() => removeToast(toast.id)}
@@ -35,24 +35,28 @@ export default function ToastContainer() {
             variant="filled"
             icon={false}
             sx={{
-              width: `${TOAST_WIDTH}px`,
-              maxWidth: '100%',
+              minWidth: { sm: 300 },
+              maxWidth: { xs: '90vw', sm: 500 },
               boxShadow: 3,
               display: 'flex',
               alignItems: 'center',
-              py: 1,
+              py: 1.5,
               px: 2,
+              borderRadius: 2,
+              overflow: 'visible', // Ensure no scrollbars
               '& .MuiAlert-message': {
                 width: '100%',
                 p: 0,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1.5,
+                overflow: 'visible',
               },
               '& .MuiAlert-action': {
                 pt: 0,
                 pr: 0,
-                ml: 'auto',
+                ml: 2,
+                flexShrink: 0,
                 alignItems: 'center',
               },
             }}

@@ -67,6 +67,7 @@ describe('RecetaService', () => {
           productoId: 'prod-1',
           productoNombre: 'Huevo',
           cantidad: 2,
+          cantidadReal: 2,
           unidad: 'ud',
           precioUnitario: 2,
           costoIngrediente: 4,

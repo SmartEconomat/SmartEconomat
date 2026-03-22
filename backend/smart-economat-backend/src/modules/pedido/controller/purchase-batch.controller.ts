@@ -24,6 +24,9 @@ import { Res, Query } from '@nestjs/common';
 import type { Response } from 'express';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { ParseUUIDv7Pipe } from '../../../common/pipes';
+import { CreateMissingStockBatchDto } from '../dto/create-missing-stock-batch.dto';
+import { GeneratePedidoFromRecetasDto } from '../dto/generate-pedido-from-recetas.dto';
+import { RecetaToPedidoService } from '../service/receta-to-pedido.service';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('purchase-batches')
@@ -31,7 +34,8 @@ export class PurchaseBatchController {
   constructor(
     private readonly batchService: PurchaseBatchService,
     private readonly pedidoDraftService: PedidoDraftService,
-    private readonly pdfReportService: PdfReportService
+    private readonly pdfReportService: PdfReportService,
+    private readonly recetaToPedidoService: RecetaToPedidoService
   ) {}
 
   @Post()
@@ -41,6 +45,32 @@ export class PurchaseBatchController {
     const userId = req.user.id as string;
 
     return this.pedidoDraftService.saveAndFinalize(userId, dto);
+  }
+
+  @Post('from-missing-stock')
+  @RequirePermissions('pedidos:crear')
+  @HttpCode(HttpStatus.CREATED)
+  createFromMissingStock(
+    @Body() dto: CreateMissingStockBatchDto,
+    @Request() req: any
+  ) {
+    const userId = req.user.id as string;
+
+    return this.batchService.createBatchOrderFromMissingStock(dto, userId);
+  }
+
+  @Post('from-recipes')
+  @RequirePermissions('pedidos:crear')
+  @HttpCode(HttpStatus.CREATED)
+  async createFromRecipes(
+    @Body() dto: GeneratePedidoFromRecetasDto,
+    @Request() req: any
+  ) {
+    const userId = req.user.id as string;
+    const batchDto =
+      await this.recetaToPedidoService.buildBatchOrderFromRecetas(dto);
+
+    return this.pedidoDraftService.saveAndFinalize(userId, batchDto);
   }
 
   @Get()

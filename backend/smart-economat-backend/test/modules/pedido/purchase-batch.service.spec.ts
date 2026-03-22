@@ -6,6 +6,7 @@ import { MovimientoHelper } from '../../../src/common/helpers/movimiento.helper'
 import { PurchaseBatch } from '../../../src/modules/pedido/purchase-batch.entity/purchase-batch.entity';
 import { EstadoLote } from '../../../src/modules/pedido/enums/estado-lote.enum';
 import { NotFoundException } from '@nestjs/common';
+import { ProduccionService } from '../../../src/modules/receta/service/produccion.service';
 
 describe('PurchaseBatchService', () => {
   let service: PurchaseBatchService;
@@ -41,6 +42,10 @@ describe('PurchaseBatchService', () => {
     trackPedidoCreation: jest.fn(),
   };
 
+  const mockProduccionService = {
+    validarMultiple: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -48,6 +53,7 @@ describe('PurchaseBatchService', () => {
         { provide: DataSource, useValue: mockDataSource },
         { provide: ConfigService, useValue: mockConfigService },
         { provide: MovimientoHelper, useValue: mockMovimientoHelper },
+        { provide: ProduccionService, useValue: mockProduccionService },
       ],
     }).compile();
 
