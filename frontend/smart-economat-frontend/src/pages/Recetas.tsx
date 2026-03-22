@@ -637,7 +637,10 @@ const Recetas: React.FC = () => {
     if (!stockValidation) return;
 
     const missing = stockValidation.ingredients.filter(
-      (ing) => !ing.isEnough && ing.cheapestProveedorId
+      (ing) =>
+        !ing.isEnough &&
+        ing.cheapestProveedorId &&
+        ing.cheapestProductoProveedorId
     );
     if (missing.length === 0) {
       toast.error(
@@ -655,7 +658,7 @@ const Recetas: React.FC = () => {
       const pId = ing.cheapestProveedorId!;
       if (!groups[pId]) groups[pId] = [];
       groups[pId].push({
-        productoProveedorId: ing.cheapestProductoProveedorId,
+        productoProveedorId: ing.cheapestProductoProveedorId!,
         cantidad: Number((ing.requerido - ing.disponible).toFixed(3)),
       });
     });
