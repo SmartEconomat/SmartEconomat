@@ -116,9 +116,4 @@ Con **31 commits** y **8 PRs**, tenemos aquí a alguien que:
 
 - Este archivo se genera automáticamente en cada pre-commit.
 - **Commits:** Total acumulado.
-- **PRs Fusionados:** Ramas que han sido mergeadas al proyecto (crédito al autor original de la rama).
-- ¡Que la competencia sea sana y el código limpio! 🚀
-
----
-
 *Generado automáticamente por `count-commits.js`*

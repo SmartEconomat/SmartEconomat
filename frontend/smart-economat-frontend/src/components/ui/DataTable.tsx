@@ -138,6 +138,10 @@ export interface DataTableProps<T> {
   uniqueKey?: keyof T | string;
   /** Handlers opcionales para exportación de datos */
   exportHandlers?: ExportHandlers;
+  /** Callback opcional al pulsar una fila de la tabla */
+  onRowClick?: (row: T) => void;
+  /** Etiqueta accesible opcional para filas interactivas */
+  getRowAriaLabel?: (row: T) => string;
 }
 
 /**
@@ -162,13 +166,15 @@ export function DataTable<T extends Record<string, any>>({
   leftHeaderAction,
   rightHeaderAction,
   hideTopBar = false,
-  viewMode: controlledViewMode,
-  onViewModeChange: onControlledViewModeChange,
   selectable = false,
   selectedIds = [],
   onSelectionChange,
   uniqueKey = 'id',
   exportHandlers,
+  onRowClick,
+  getRowAriaLabel,
+  viewMode: controlledViewMode,
+  onViewModeChange: onControlledViewModeChange,
 }: DataTableProps<T>) {
   const colSpanCount =
     columns.length + (renderActions ? 1 : 0) + (selectable ? 1 : 0);
@@ -204,6 +210,17 @@ export function DataTable<T extends Record<string, any>>({
   const totalItems =
     pagination?.totalItems ??
     (pagination ? pagination.totalPages * pageSize : 0);
+
+  const handleRowKeyDown = (
+    event: React.KeyboardEvent<HTMLTableRowElement>,
+    row: T
+  ) => {
+    if (!onRowClick) return;
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onRowClick(row);
+    }
+  };
 
   return (
     <Box sx={{ width: '100%', mb: 2 }}>
@@ -432,7 +449,33 @@ export function DataTable<T extends Record<string, any>>({
                     selected={selectedIds.includes(
                       String(row[uniqueKey as keyof T])
                     )}
-                    sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                    hover={Boolean(onRowClick)}
+                    tabIndex={onRowClick ? 0 : -1}
+                    role={onRowClick ? 'button' : undefined}
+                    aria-label={onRowClick ? getRowAriaLabel?.(row) : undefined}
+                    onClick={onRowClick ? () => onRowClick(row) : undefined}
+                    onKeyDown={
+                      onRowClick
+                        ? (event) => handleRowKeyDown(event, row)
+                        : undefined
+                    }
+                    sx={{
+                      '&:last-child td, &:last-child th': { border: 0 },
+                      ...(onRowClick
+                        ? {
+                            cursor: 'pointer',
+                            transition: 'background-color 0.2s ease',
+                            '&:hover': {
+                              backgroundColor: 'action.hover',
+                            },
+                            '&:focus-visible': {
+                              outline: '2px solid',
+                              outlineColor: 'primary.main',
+                              outlineOffset: '-2px',
+                            },
+                          }
+                        : {}),
+                    }}
                   >
                     {selectable && (
                       <TableCell padding="checkbox">
@@ -479,6 +522,8 @@ export function DataTable<T extends Record<string, any>>({
                       <TableCell
                         align={actionsAlign}
                         sx={{ width: actionsWidth }}
+                        onClick={(event) => event.stopPropagation()}
+                        onKeyDown={(event) => event.stopPropagation()}
                       >
                         <Stack
                           direction="row"
@@ -490,6 +535,8 @@ export function DataTable<T extends Record<string, any>>({
                                 ? 'center'
                                 : 'flex-start'
                           }
+                          onClick={(event) => event.stopPropagation()}
+                          onKeyDown={(event) => event.stopPropagation()}
                         >
                           {renderActions(row)}
                         </Stack>
