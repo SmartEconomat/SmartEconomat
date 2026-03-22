@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Stack } from '@mui/material';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
-import Modal, { ModalProps } from './Modal';
+import Modal, { ModalProps, ModalSize } from './Modal';
 import Input from './Input';
 import Button from './Button';
 import Checkbox from './Checkbox';
@@ -60,7 +60,7 @@ export interface DynamicFormModalProps extends Omit<ModalProps, 'children'> {
   submitLabel?: string;
   cancelLabel?: string;
   isSubmitting?: boolean;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: ModalSize;
   requireConfirmation?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onBarcodeFetch?: (code: string) => Promise<Record<string, any> | void>;

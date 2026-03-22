@@ -77,7 +77,7 @@ async function getPendingUsersNotification(): Promise<AppNotification | null> {
 
 const buildPendingUserPreview = (user: {
   username?: string;
-  nombre?: string;
+  nombre?: string | null;
   email?: string;
   rol?: string;
   fecha_registro?: string | null;

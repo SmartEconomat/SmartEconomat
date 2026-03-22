@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import React from 'react';
+import { Provider } from 'react-redux';
+import { store } from './index';
 import { AuthProvider } from './AuthContext';
 import { useAuth } from './auth.hooks';
 import { authService } from '../services/authService';
@@ -69,9 +71,11 @@ describe('AuthProvider', () => {
     });
 
     render(
-      <AuthProvider>
-        <AuthConsumer />
-      </AuthProvider>
+      <Provider store={store}>
+        <AuthProvider>
+          <AuthConsumer />
+        </AuthProvider>
+      </Provider>
     );
 
     expect(screen.getByTestId('resolved')).toHaveTextContent('false');
@@ -103,9 +107,11 @@ describe('AuthProvider', () => {
     );
 
     render(
-      <AuthProvider>
-        <AuthConsumer />
-      </AuthProvider>
+      <Provider store={store}>
+        <AuthProvider>
+          <AuthConsumer />
+        </AuthProvider>
+      </Provider>
     );
 
     await waitFor(() => {
@@ -134,9 +140,11 @@ describe('AuthProvider', () => {
     );
 
     render(
-      <AuthProvider>
-        <RefreshConsumer />
-      </AuthProvider>
+      <Provider store={store}>
+        <AuthProvider>
+          <RefreshConsumer />
+        </AuthProvider>
+      </Provider>
     );
 
     await waitFor(() => {
