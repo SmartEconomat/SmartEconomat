@@ -15,9 +15,9 @@ const PedidosTabs: React.FC<PedidosTabsProps> = ({ value, onChange }) => (
     textColor="primary"
     sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
   >
-    <Tab label="Pedidos Pendientes" />
-    <Tab label="Historial (En Proceso / Finalizados)" />
-    <Tab label="Lotes de Compra" />
+    <Tab label="Mis Pedidos" />
+    <Tab label="Pedidos" />
+    <Tab label="Compras" />
   </Tabs>
 );
 

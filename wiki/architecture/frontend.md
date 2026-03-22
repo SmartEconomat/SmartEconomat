@@ -53,6 +53,31 @@ Seguimos tres pilares fundamentales para mantener el código limpio:
 5. **Recetas y Producción**: Escandallos, cocinado y gestión de lotes producidos.
 6. **Módulo Educativo**: Panel de profesores y slots para alumnos.
 
+## Arquitectura actual del módulo de pedidos
+
+El frontend de pedidos ya no trabaja con un único tipo de entidad para todos los casos. La UI distingue tres capas:
+
+### `PedidoUsuario` en vistas de negocio
+- Las pestañas **Mis Pedidos** y **Pedidos** consumen `GET /pedido-usuarios`.
+- `src/services/pedido.service.ts` expone `fetchPedidoUsuarios`, `createPedidoUsuario`, `updatePedidoUsuario`, `aceptarPedidoUsuario` y `cancelPedidoUsuario`.
+- `mapPedidoUsuarioToPedidoRow(...)` adapta el agregado al shape visual reutilizado por tablas y tarjetas.
+
+### `PurchaseBatch` en vistas de compras
+- La pestaña **Compras** sigue consumiendo `PurchaseBatch`.
+- La consolidación semanal usa `POST /purchase-batches/consolidate` enviando `pedidoUsuarioIds`.
+- Los modales y visores (`PurchaseBatchDetailModal`, `BatchPedidoLineasViewer`) soportan tanto modo `batch` como modo `pedido`.
+
+### Hooks y utilidades clave
+- `usePedidosData` decide qué endpoint cargar según la pestaña activa.
+- `usePedidoActions` enruta acciones completas del pedido hacia `PedidoUsuario` y deja `PurchaseBatch` solo para compras.
+- `pedidoOwnOrders.ts` detecta agregados mediante `aggregateType === 'pedido_usuario'`.
+- `pedidoFormatters.ts` separa el identificador técnico del número visible en lista.
+
+### Convención visual actual
+- En listas se muestra `numeroGlobal` sin prefijo, bajo la columna **N de pedido**.
+- El UUID abreviado queda como identificador técnico para contextos de depuración o fallback.
+- Los chips de estado aceptan estados de negocio en español: `pendiente`, `en_proceso`, `entregado`, `cancelado`, `recibido`.
+
 ## Gestión de Estado (`src/store`)
 Utilizamos Context API para el estado global:
 -   **AuthContext:** Gestiona el usuario autenticado, la verificación de sesión con backend y los permisos vigentes de la sesión.

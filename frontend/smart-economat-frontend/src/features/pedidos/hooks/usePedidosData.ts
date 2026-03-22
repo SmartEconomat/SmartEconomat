@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  fetchPedidos,
+  FetchPedidoUsuariosOptions,
   fetchPurchaseBatches,
+  fetchPedidoUsuarios,
+  mapPedidoUsuarioToPedidoRow,
 } from '../../../services/pedido.service';
 import {
   EstadoPedido,
@@ -9,13 +11,18 @@ import {
   PurchaseBatch,
 } from '../../../services/pedido.types';
 import { fetchProveedores } from '../../../services/proveedor.service';
-import { PedidosTabValue } from '../types/pedidos-ui.types';
+import {
+  MisPedidosStatusFilter,
+  PedidosTabValue,
+} from '../types/pedidos-ui.types';
 
 interface UsePedidosDataParams {
   page: number;
   pageSize: number;
   searchTerm: string;
   tabIndex: PedidosTabValue;
+  currentUserId?: string;
+  misPedidosStatus: MisPedidosStatusFilter;
 }
 
 export function usePedidosData({
@@ -23,6 +30,8 @@ export function usePedidosData({
   pageSize,
   searchTerm,
   tabIndex,
+  currentUserId,
+  misPedidosStatus,
 }: UsePedidosDataParams) {
   const [data, setData] = useState<Pedido[]>([]);
   const [batches, setBatches] = useState<PurchaseBatch[]>([]);
@@ -44,19 +53,73 @@ export function usePedidosData({
         return;
       }
 
+      const pedidoOptions: FetchPedidoUsuariosOptions = {
+        sortBy: 'fechaPedido',
+        order: 'DESC',
+      };
+
+      if (tabIndex === 0 && currentUserId) {
+        pedidoOptions.usuarioId = currentUserId;
+      }
+
+      if (tabIndex === 1) {
+        pedidoOptions.sortBy = 'fechaPedido';
+      }
+
+      const effectivePageSize =
+        tabIndex === 1 || tabIndex === 0 ? 50 : pageSize;
+      const effectivePage = tabIndex === 0 ? 1 : page;
       const estadoFilter =
-        tabIndex === 0
+        tabIndex === 1
           ? EstadoPedido.PENDIENTE
-          : `NOT_${EstadoPedido.PENDIENTE}`;
+          : tabIndex === 0
+            ? ''
+            : misPedidosStatus === 'pendientes'
+              ? EstadoPedido.PENDIENTE
+              : misPedidosStatus === 'en_proceso'
+                ? EstadoPedido.EN_PROCESO
+                : [EstadoPedido.ENTREGADO, EstadoPedido.CANCELADO].join(',');
 
       const [pedidosResponse] = await Promise.all([
-        fetchPedidos(page, pageSize, searchTerm, estadoFilter),
+        fetchPedidoUsuarios(
+          effectivePage,
+          effectivePageSize,
+          searchTerm,
+          estadoFilter,
+          pedidoOptions
+        ),
         fetchProveedores(1, 50).catch(() => ({ data: [] })),
       ]);
 
-      setData(pedidosResponse.data);
+      if (tabIndex === 0 && pedidosResponse.totalPages > 1) {
+        const remainingPages = await Promise.all(
+          Array.from({ length: pedidosResponse.totalPages - 1 }, (_, index) =>
+            fetchPedidoUsuarios(
+              index + 2,
+              effectivePageSize,
+              searchTerm,
+              estadoFilter,
+              pedidoOptions
+            )
+          )
+        );
+
+        const mergedData = [
+          ...pedidosResponse.data,
+          ...remainingPages.flatMap((response) => response.data),
+        ];
+
+        setData(mergedData.map(mapPedidoUsuarioToPedidoRow));
+        setTotalItems(mergedData.length);
+        setTotalPages(1);
+        return;
+      }
+
+      setData(pedidosResponse.data.map(mapPedidoUsuarioToPedidoRow));
       setTotalItems(pedidosResponse.total);
-      setTotalPages(pedidosResponse.totalPages);
+      setTotalPages(
+        tabIndex === 1 || tabIndex === 0 ? 1 : pedidosResponse.totalPages
+      );
     } catch (err: unknown) {
       setError(
         err instanceof Error
@@ -66,7 +129,7 @@ export function usePedidosData({
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, searchTerm, tabIndex]);
+  }, [currentUserId, misPedidosStatus, page, pageSize, searchTerm, tabIndex]);
 
   useEffect(() => {
     void loadData();

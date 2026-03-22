@@ -20,6 +20,7 @@ describe('PurchaseBatchService', () => {
     manager: {
       create: jest.fn(),
       save: jest.fn(),
+      insert: jest.fn(),
       find: jest.fn(),
       findOne: jest.fn(),
     },
@@ -91,6 +92,7 @@ describe('PurchaseBatchService', () => {
 
       mockQueryRunner.manager.create.mockReturnValue(mockBatch);
       mockQueryRunner.manager.save.mockResolvedValue(mockBatch);
+      mockQueryRunner.manager.insert.mockResolvedValue(undefined);
       mockQueryRunner.manager.find.mockResolvedValue([mockPP1, mockPP2]);
 
       mockDataSource.getRepository().findOne.mockResolvedValue(mockBatch);
@@ -102,6 +104,7 @@ describe('PurchaseBatchService', () => {
         PurchaseBatch,
         expect.any(Object)
       );
+      expect(mockQueryRunner.manager.insert).toHaveBeenCalled();
       expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
       expect(result).toEqual(mockBatch);
     });

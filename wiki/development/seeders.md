@@ -31,7 +31,7 @@ Los seeders se ejecutan secuencialmente respetando las dependencias entre entida
 | 3 | `proveedor` | Proveedor | ~10 | — |
 | 4 | `producto` | Producto, ProductoProveedor, ProductoAlergeno | ~25 productos | Proveedor |
 | 5 | `inventario` | Inventario, Ubicacion | 1 por ProductoProveedor + 6 ubicaciones | ProductoProveedor |
-| 6 | `pedido` | Pedido, PedidoProducto | ~8 pedidos | Usuario, Proveedor, ProductoProveedor |
+| 6 | `pedido` | PedidoUsuario, PedidoUsuarioLinea, Pedido, PedidoProducto, PurchaseBatch | ~8 agregados con separación por proveedor | Usuario, Proveedor, ProductoProveedor |
 | 7 | `recepcion` | Recepcion, RecepcionPedido, RecepcionProducto | 1 por Pedido | Pedido |
 | 8 | `albaran` | Albaran, AlbaranPedidoRecepcion | ~5 | RecepcionPedido |
 | 9 | `historial-precio` | HistorialPrecio | 1–5 por ProductoProveedor | ProductoProveedor |
@@ -108,9 +108,11 @@ Crea ~25 productos con:
 
 ### 6. Pedidos (`pedido.seeder.ts`)
 
-- ~8 pedidos a proveedores aleatorios
-- 1–5 productos por pedido con cantidades y costes
-- Algunos pedidos con notas de cancelación
+- Genera `PedidoUsuario` como agregado visible de negocio
+- Crea automáticamente varios `Pedido` internos por proveedor cuando corresponde
+- Genera `PedidoUsuarioLinea` para mantener la trazabilidad de la línea original
+- Conserva `PurchaseBatch` para lotes administrativos de compra
+- Incluye pedidos semanales históricos para poblar “Mis pedidos” y la vista semanal
 
 ### 7. Recepción (`recepcion.seeder.ts`)
 
@@ -155,6 +157,12 @@ Crea ~25 productos con:
 | **development** | Conjunto completo (~10 proveedores, ~25 productos, etc.) | Activada | `npm run seed` |
 | **test** | Conjunto mínimo (~2 proveedores, datos reducidos) | Desactivada | Automática en E2E |
 | **production** | — | — | **Bloqueada** |
+
+## Notas de modelado recientes
+
+- Los seeders de pedidos ya no deben asumirse como “un pedido = un proveedor = una fila visible”.
+- `numeroGlobal` pertenece a `PedidoUsuario` y es el valor que la UI expone como numeración de negocio.
+- Las recepciones y las incidencias siguen colgando de `Pedido` y `PedidoProducto`, no de `PedidoUsuario`.
 
 ---
 

@@ -6,14 +6,18 @@ import React, {
   useState,
 } from 'react';
 import dayjs from 'dayjs';
-import { Box, Paper, Alert } from '@mui/material';
+import { Box, Alert, Chip, Paper, Stack } from '@mui/material';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import DynamicFormModal from '../components/ui/DynamicFormModal';
 import { ModalCloseReason } from '../components/ui/Modal';
-import { EstadoPedido, Pedido, PurchaseBatch } from '../services/pedido.types';
-import { usePermission } from '../store/auth.hooks';
+import {
+  EstadoPedido,
+  Pedido,
+  PedidoUsuario,
+  PurchaseBatch,
+} from '../services/pedido.types';
+import { useAuth, usePermission } from '../store/auth.hooks';
 import { usePedidoDraft } from '../hooks/usePedidoDraft';
 import ReporteSelectorModal from '../components/ui/ReporteSelectorModal';
 
@@ -24,27 +28,51 @@ import PedidoDraftBanner from '../features/pedidos/components/PedidoDraftBanner'
 import PedidosPageHeader from '../features/pedidos/components/PedidosPageHeader';
 import PedidosTable from '../features/pedidos/components/PedidosTable';
 import PedidosTabs from '../features/pedidos/components/PedidosTabs';
+import PedidosWeeklyBoard from '../features/pedidos/components/PedidosWeeklyBoard';
 import PurchaseBatchDetailModal from '../features/pedidos/components/PurchaseBatchDetailModal';
 import PurchaseBatchList from '../features/pedidos/components/PurchaseBatchList';
 import { usePedidoActions } from '../features/pedidos/hooks/usePedidoActions';
 import { usePedidosData } from '../features/pedidos/hooks/usePedidosData';
 import { usePedidosFilters } from '../features/pedidos/hooks/usePedidosFilters';
 import {
+  MisPedidosStatusFilter,
   PedidoFormValues,
   PedidoPermissions,
 } from '../features/pedidos/types/pedidos-ui.types';
 import { buildPedidoPermissions } from '../features/pedidos/utils/pedidoPermissions';
+import { isAggregatedBatchPedido } from '../features/pedidos/utils/pedidoOwnOrders';
+import { formatPedidoId } from '../features/pedidos/utils/pedidoFormatters';
 import { getPedidoSchema } from '../features/pedidos/utils/pedidoSchema';
+
+interface PedidoActionTarget {
+  id: string;
+  isBatchAggregate: boolean;
+  proveedorNombre?: string;
+  fechaPedido?: string;
+}
+
+const sanitizePedidoObservation = (observaciones?: string) => {
+  if (!observaciones) return '';
+  return /^Lote semanal generado desde/i.test(observaciones)
+    ? ''
+    : observaciones;
+};
 
 const Pedidos: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [itemToDelete, setItemToDelete] = useState<Pedido | null>(null);
-  const [itemToAceptar, setItemToAceptar] = useState<Pedido | null>(null);
-  const [itemToCancelar, setItemToCancelar] = useState<Pedido | null>(null);
-  const [itemToEdit, setItemToEdit] = useState<PedidoFormValues | null>(null);
-  const [itemToViewBatch, setItemToViewBatch] = useState<PurchaseBatch | null>(
+  const [itemToAceptar, setItemToAceptar] = useState<PedidoActionTarget | null>(
     null
+  );
+  const [itemToCancelar, setItemToCancelar] =
+    useState<PedidoActionTarget | null>(null);
+  const [itemToEdit, setItemToEdit] = useState<PedidoFormValues | null>(null);
+  const [itemToViewBatch, setItemToViewBatch] = useState<
+    PurchaseBatch | PedidoUsuario | null
+  >(null);
+  const [batchViewMode, setBatchViewMode] = useState<'batch' | 'pedido'>(
+    'batch'
   );
   const [itemToViewDetails, setItemToViewDetails] = useState<Pedido | null>(
     null
@@ -57,6 +85,7 @@ const Pedidos: React.FC = () => {
   const [isDraftCloseConfirmOpen, setIsDraftCloseConfirmOpen] = useState(false);
   const hasPromptedRef = useRef(false);
   const latestValsRef = useRef<Record<string, unknown>>({});
+  const { user } = useAuth();
 
   const {
     draft,
@@ -82,7 +111,11 @@ const Pedidos: React.FC = () => {
     setViewMode,
     tabIndex,
     setTabIndex,
+    misPedidosStatus,
+    setMisPedidosStatus,
+    isWeeklyTab,
     isBatchTab,
+    isOwnOrdersTab,
   } = usePedidosFilters();
 
   const {
@@ -99,24 +132,73 @@ const Pedidos: React.FC = () => {
     pageSize,
     searchTerm,
     tabIndex,
+    currentUserId: user?.id,
+    misPedidosStatus,
   });
+
+  const misPedidosStatusOptions = useMemo(
+    () => [
+      { value: 'pendientes' as MisPedidosStatusFilter, label: 'Pendientes' },
+      { value: 'en_proceso' as MisPedidosStatusFilter, label: 'En proceso' },
+      { value: 'finalizados' as MisPedidosStatusFilter, label: 'Finalizados' },
+    ],
+    []
+  );
+
+  const ownOrdersData = useMemo(() => {
+    if (!isOwnOrdersTab) return data;
+
+    return data.filter((pedido) => {
+      if (misPedidosStatus === 'pendientes') {
+        return pedido.estado === EstadoPedido.PENDIENTE;
+      }
+
+      if (misPedidosStatus === 'en_proceso') {
+        return (
+          pedido.estado === EstadoPedido.EN_PROCESO ||
+          pedido.estado === EstadoPedido.PARCIAL
+        );
+      }
+
+      return [EstadoPedido.ENTREGADO, EstadoPedido.CANCELADO].includes(
+        pedido.estado
+      );
+    });
+  }, [data, isOwnOrdersTab, misPedidosStatus]);
+
+  const ownOrdersTotalItems = isOwnOrdersTab
+    ? ownOrdersData.length
+    : totalItems;
+  const ownOrdersTotalPages = isOwnOrdersTab ? 1 : totalPages;
+  const visibleTotalItems = isBatchTab
+    ? batches.length
+    : isOwnOrdersTab
+      ? ownOrdersTotalItems
+      : totalItems;
 
   const {
     savePedido,
     deletePedidoById,
     approvePedidoById,
+    approvePurchaseBatchById,
     cancelPedidoById,
+    cancelPurchaseBatchById,
     fetchBatchDetail,
+    consolidatePedidosByIds,
     isSaving,
     isDeleting,
     isAceptando,
     isCancelando,
     isFetchingBatch,
+    isConsolidatingBatch,
   } = usePedidoActions({
     reload,
     discardDraft,
     onPedidoDeleted: (deletedId) => {
       setData((current) => current.filter((pedido) => pedido.id !== deletedId));
+    },
+    onBatchCreated: (batch) => {
+      setItemToViewBatch(batch);
     },
   });
 
@@ -230,6 +312,36 @@ const Pedidos: React.FC = () => {
     };
   }, []);
 
+  const buildBatchEditData = useCallback(
+    (batch: PurchaseBatch | PedidoUsuario): PedidoFormValues => {
+      const isEditable = String(batch.estado) === EstadoPedido.PENDIENTE;
+
+      return {
+        id: batch.id,
+        batchId: batch.id,
+        isBatchAggregate: true,
+        aggregateType:
+          'aggregateType' in batch ? batch.aggregateType : 'pedido_usuario',
+        numeroGlobal: 'numeroGlobal' in batch ? batch.numeroGlobal : undefined,
+        estado: isEditable ? EstadoPedido.PENDIENTE : EstadoPedido.EN_PROCESO,
+        observaciones: sanitizePedidoObservation(batch.observaciones),
+        pedidoProductos:
+          batch.pedidos?.flatMap((pedido) =>
+            (pedido.pedidoProductos || []).map((pedidoProducto) => ({
+              id: pedidoProducto.id,
+              productoProveedorId: pedidoProducto.productoProveedor?.id,
+              hasLinkedMovements: pedidoProducto.hasLinkedMovements,
+              productoProveedor: pedidoProducto.productoProveedor,
+              cantidad: pedidoProducto.cantidad,
+              precioUnitario: pedidoProducto.precioUnitario,
+              observaciones: pedidoProducto.observaciones,
+            }))
+          ) || [],
+      };
+    },
+    []
+  );
+
   const openNewPedidoForm = useCallback(() => {
     setItemToEdit({});
     hasPromptedRef.current = true;
@@ -273,42 +385,158 @@ const Pedidos: React.FC = () => {
 
   const handleAceptarConfirm = useCallback(async () => {
     if (!itemToAceptar) return;
-    await approvePedidoById(itemToAceptar.id);
+    if (itemToAceptar.isBatchAggregate) {
+      await approvePurchaseBatchById(itemToAceptar.id);
+    } else {
+      await approvePedidoById(itemToAceptar.id);
+    }
     setItemToAceptar(null);
-  }, [approvePedidoById, itemToAceptar]);
+  }, [approvePedidoById, approvePurchaseBatchById, itemToAceptar]);
 
   const handleCancelarSubmit = useCallback(
     async (formData: Record<string, unknown>) => {
       if (!itemToCancelar) return;
       const motivo =
         (formData.motivoCancelacion as string) || 'Cancelado por el usuario';
-      await cancelPedidoById(itemToCancelar.id, motivo);
+      if (itemToCancelar.isBatchAggregate) {
+        await cancelPurchaseBatchById(itemToCancelar.id, motivo);
+      } else {
+        await cancelPedidoById(itemToCancelar.id, motivo);
+      }
       setItemToCancelar(null);
     },
-    [cancelPedidoById, itemToCancelar]
+    [cancelPedidoById, cancelPurchaseBatchById, itemToCancelar]
   );
 
   const handleViewBatch = useCallback(
-    async (batch: PurchaseBatch) => {
-      const fullBatch = await fetchBatchDetail(batch.id);
+    async (
+      batch: PurchaseBatch | PedidoUsuario,
+      mode: 'batch' | 'pedido' = 'batch'
+    ) => {
+      const fullBatch = await fetchBatchDetail(
+        batch.id,
+        mode === 'pedido' ? 'pedido_usuario' : undefined
+      );
+      setBatchViewMode(mode);
       setItemToViewBatch(fullBatch);
     },
     [fetchBatchDetail]
   );
 
+  const handleEditBatch = useCallback(
+    (batch: PurchaseBatch | PedidoUsuario) => {
+      setItemToViewBatch(null);
+      setItemToEdit(buildBatchEditData(batch));
+    },
+    [buildBatchEditData]
+  );
+
+  const handleOpenBatchEditor = useCallback(
+    async (batchId: string) => {
+      const fullBatch = await fetchBatchDetail(batchId, 'pedido_usuario');
+      setItemToViewBatch(null);
+      setItemToViewDetails(null);
+      setItemToEdit(buildBatchEditData(fullBatch));
+    },
+    [buildBatchEditData, fetchBatchDetail]
+  );
+
+  const buildBatchActionTarget = useCallback(
+    (batch: PurchaseBatch | PedidoUsuario): PedidoActionTarget => {
+      const providerNames = Array.from(
+        new Set(
+          batch.pedidos
+            ?.map((pedido) => pedido.proveedor?.nombre)
+            .filter(Boolean) || []
+        )
+      );
+
+      return {
+        id: batch.id,
+        isBatchAggregate: true,
+        proveedorNombre:
+          providerNames.length > 0 ? providerNames.join(', ') : 'Pedido',
+        fechaPedido: 'createdAt' in batch ? batch.createdAt : batch.fechaPedido,
+      };
+    },
+    []
+  );
+
+  const handleConsolidateWeek = useCallback(
+    async (pedidoIds: string[], weekLabel: string) => {
+      await consolidatePedidosByIds(
+        pedidoIds,
+        `Lote semanal generado desde ${weekLabel}`
+      );
+    },
+    [consolidatePedidosByIds]
+  );
+
   const handlers = useMemo(
     () => ({
-      onView: (pedido: Pedido) => setItemToViewDetails(pedido),
+      onView: (pedido: Pedido) => {
+        if (isAggregatedBatchPedido(pedido)) {
+          void handleViewBatch(
+            { id: pedido.id, aggregateType: 'pedido_usuario' } as PedidoUsuario,
+            'pedido'
+          );
+          return;
+        }
+
+        setItemToViewDetails(pedido);
+      },
       onEdit: (pedido: Pedido) => {
+        if (isAggregatedBatchPedido(pedido)) {
+          void handleOpenBatchEditor(pedido.id);
+          return;
+        }
         setItemToViewDetails(null);
         setItemToEdit(buildEditData(pedido));
       },
-      onDelete: (pedido: Pedido) => setItemToDelete(pedido),
-      onApprove: (pedido: Pedido) => setItemToAceptar(pedido),
-      onCancel: (pedido: Pedido) => setItemToCancelar(pedido),
-      onViewDelivery: (pedido: Pedido) => setItemToViewDeliveryDate(pedido),
+      onDelete: (pedido: Pedido) => {
+        if (isAggregatedBatchPedido(pedido)) return;
+        setItemToDelete(pedido);
+      },
+      onApprove: (pedido: Pedido) => {
+        if (isAggregatedBatchPedido(pedido)) {
+          setItemToAceptar({
+            id: pedido.id,
+            isBatchAggregate: true,
+            proveedorNombre: pedido.proveedor?.nombre,
+            fechaPedido: pedido.fechaPedido,
+          });
+          return;
+        }
+        setItemToAceptar({
+          id: pedido.id,
+          isBatchAggregate: false,
+          proveedorNombre: pedido.proveedor?.nombre,
+          fechaPedido: pedido.fechaPedido,
+        });
+      },
+      onCancel: (pedido: Pedido) => {
+        if (isAggregatedBatchPedido(pedido)) {
+          setItemToCancelar({
+            id: pedido.id,
+            isBatchAggregate: true,
+            proveedorNombre: pedido.proveedor?.nombre,
+            fechaPedido: pedido.fechaPedido,
+          });
+          return;
+        }
+        setItemToCancelar({
+          id: pedido.id,
+          isBatchAggregate: false,
+          proveedorNombre: pedido.proveedor?.nombre,
+          fechaPedido: pedido.fechaPedido,
+        });
+      },
+      onViewDelivery: (pedido: Pedido) => {
+        if (isAggregatedBatchPedido(pedido)) return;
+        setItemToViewDeliveryDate(pedido);
+      },
     }),
-    [buildEditData]
+    [buildEditData, handleOpenBatchEditor, handleViewBatch]
   );
 
   return (
@@ -317,7 +545,7 @@ const Pedidos: React.FC = () => {
         canCreate={permissions.canCreate}
         draft={draft}
         isLoadingDraft={isLoadingDraft}
-        totalItems={totalItems}
+        totalItems={visibleTotalItems}
         searchTerm={searchTerm}
         viewMode={viewMode}
         onSearchChange={(value) => {
@@ -362,20 +590,58 @@ const Pedidos: React.FC = () => {
           }}
         />
 
+        {isOwnOrdersTab && (
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ mb: 3, flexWrap: 'wrap', rowGap: 1 }}
+          >
+            {misPedidosStatusOptions.map((option) => (
+              <Chip
+                key={option.value}
+                label={option.label}
+                clickable
+                color={
+                  misPedidosStatus === option.value ? 'primary' : 'default'
+                }
+                variant={
+                  misPedidosStatus === option.value ? 'filled' : 'outlined'
+                }
+                onClick={() => {
+                  setMisPedidosStatus(option.value);
+                  setPage(1);
+                }}
+              />
+            ))}
+          </Stack>
+        )}
+
         {isBatchTab ? (
           <PurchaseBatchList
             batches={batches}
             isLoading={isLoading}
             isFetchingBatch={isFetchingBatch}
-            handlers={{ onView: handleViewBatch }}
+            handlers={{
+              onView: (batch) => void handleViewBatch(batch, 'batch'),
+            }}
+          />
+        ) : isWeeklyTab ? (
+          <PedidosWeeklyBoard
+            data={data}
+            isLoading={isLoading}
+            permissions={permissions}
+            handlers={handlers}
+            totalItems={totalItems}
+            isConsolidating={isConsolidatingBatch}
+            onConsolidateWeek={handleConsolidateWeek}
           />
         ) : (
           <PedidosTable
-            data={data}
+            data={ownOrdersData}
             isLoading={isLoading}
-            page={page}
+            page={isOwnOrdersTab ? 1 : page}
             pageSize={pageSize}
-            totalPages={totalPages}
+            totalPages={ownOrdersTotalPages}
             viewMode={viewMode}
             permissions={permissions}
             handlers={handlers}
@@ -416,9 +682,20 @@ const Pedidos: React.FC = () => {
           title="Aprobar Pedido"
           message={
             <>
-              ¿Estás seguro de que deseas aprobar el pedido al proveedor{' '}
-              <strong>{itemToAceptar?.proveedor?.nombre}</strong>? Pasará a
-              estar "En Proceso" y se considerará tramitado.
+              {itemToAceptar?.isBatchAggregate ? (
+                <>
+                  ¿Estás seguro de que deseas aprobar el pedido{' '}
+                  <strong>{formatPedidoId(itemToAceptar?.id)}</strong>? Se
+                  tramitarán todos sus pedidos internos y pasará a estar en "En
+                  Proceso".
+                </>
+              ) : (
+                <>
+                  ¿Estás seguro de que deseas aprobar el pedido al proveedor{' '}
+                  <strong>{itemToAceptar?.proveedorNombre}</strong>? Pasará a
+                  estar "En Proceso" y se considerará tramitado.
+                </>
+              )}
             </>
           }
           confirmText="Sí, Aprobar"
@@ -430,7 +707,11 @@ const Pedidos: React.FC = () => {
         <DynamicFormModal
           isOpen={!!itemToCancelar}
           onClose={() => !isCancelando && setItemToCancelar(null)}
-          title={`Cancelar Pedido: ${itemToCancelar?.proveedor?.nombre || ''}`}
+          title={
+            itemToCancelar?.isBatchAggregate
+              ? `Cancelar Pedido : ${formatPedidoId(itemToCancelar?.id)}`
+              : `Cancelar Pedido: ${itemToCancelar?.proveedorNombre || ''}`
+          }
           size="sm"
           fields={[
             {
@@ -451,11 +732,15 @@ const Pedidos: React.FC = () => {
           isOpen={!!itemToEdit}
           onClose={handleCloseModal}
           title={
-            itemToEdit?.id
+            itemToEdit?.isBatchAggregate
               ? itemToEdit.estado === EstadoPedido.PENDIENTE
-                ? 'Editar Pedido'
-                : 'Detalles del Pedido (Solo lectura)'
-              : 'Crear Nuevo Pedido'
+                ? `Editar Pedido ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)}`
+                : `Detalles del Pedido ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)} (Solo lectura)`
+              : itemToEdit?.id
+                ? itemToEdit.estado === EstadoPedido.PENDIENTE
+                  ? 'Editar Pedido'
+                  : 'Detalles del Pedido (Solo lectura)'
+                : 'Crear Nuevo Pedido'
           }
           size="lg"
           fields={pedidoSchema}
@@ -482,14 +767,29 @@ const Pedidos: React.FC = () => {
           }
           confirmationMessage={
             itemToEdit?.id
-              ? '¿Estás seguro de que deseas guardar los cambios en este pedido?'
+              ? itemToEdit.isBatchAggregate
+                ? '¿Estás seguro de que deseas guardar los cambios en este pedido?'
+                : '¿Estás seguro de que deseas guardar los cambios en este pedido?'
               : '¿Estás seguro de que deseas registrar este nuevo pedido?'
           }
         />
 
         <PurchaseBatchDetailModal
           batch={itemToViewBatch}
+          canEdit={permissions.canEdit}
+          canApprove={permissions.canApprove}
+          canCancel={permissions.canCancel}
+          mode={batchViewMode}
           onClose={() => setItemToViewBatch(null)}
+          onEdit={handleEditBatch}
+          onApprove={(batch) => {
+            setItemToViewBatch(null);
+            setItemToAceptar(buildBatchActionTarget(batch));
+          }}
+          onCancel={(batch) => {
+            setItemToViewBatch(null);
+            setItemToCancelar(buildBatchActionTarget(batch));
+          }}
         />
 
         <PedidoDetailDrawer

@@ -6,6 +6,7 @@ import {
 import { PedidoFormValues } from '../types/pedidos-ui.types';
 
 export interface NormalizedPedidoLine {
+  id?: string;
   productoProveedorId: string;
   proveedorId: string;
   cantidad: number;
@@ -21,6 +22,7 @@ export const extractPedidoLines = (
   return lines
     .map((line) => {
       const current = line as {
+        id?: string;
         productoProveedorId?: string;
         id_producto_proveedor?: string;
         proveedorId?: string;
@@ -32,6 +34,7 @@ export const extractPedidoLines = (
       };
 
       return {
+        id: current.id,
         productoProveedorId:
           current.productoProveedorId || current.id_producto_proveedor || '',
         proveedorId:
@@ -99,6 +102,7 @@ export const buildPurchaseBatchPayload = (
 ): CreatePurchaseBatchPayload => ({
   observaciones,
   lineas: lines.map((line) => ({
+    id: line.id,
     productoProveedorId: line.productoProveedorId,
     cantidad: line.cantidad,
   })),

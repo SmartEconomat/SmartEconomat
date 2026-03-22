@@ -4,6 +4,8 @@ export interface ProductoProveedorOption {
   id: string;
   productoNombre: string;
   productoId?: string;
+  unidad?: string;
+  contenido?: number;
   proveedorNombre: string;
   proveedorId?: string;
   marca?: string;
@@ -43,6 +45,8 @@ export async function searchProductoProveedor(
       id: string;
       productoNombre: string;
       productoId?: string;
+      unidad?: string;
+      contenido?: number;
       proveedorNombre: string;
       proveedorId?: string;
       marca?: string;

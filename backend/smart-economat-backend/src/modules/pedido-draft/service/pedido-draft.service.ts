@@ -18,9 +18,9 @@ import {
 } from '../constants/pedido-draft.constants';
 import { UpsertPedidoDraftDto } from '../dto/upsert-pedido-draft.dto';
 import { PedidoDraftRecord } from '../interfaces/pedido-draft-record.interface';
-import { PurchaseBatchService } from '../../pedido/service/purchase-batch.service';
-import { CreatePurchaseBatchDto } from '../../pedido/dto/create-purchase-batch.dto';
-import { PurchaseBatch } from '../../pedido/purchase-batch.entity/purchase-batch.entity';
+import { CreatePedidoUsuarioDto } from '../../pedido/dto/pedido-usuario.dto';
+import { PedidoUsuario } from '../../pedido/pedido-usuario.entity/pedido-usuario.entity';
+import { PedidoUsuarioService } from '../../pedido/service/pedido-usuario.service';
 
 @Injectable()
 export class PedidoDraftService implements OnModuleDestroy {
@@ -31,8 +31,8 @@ export class PedidoDraftService implements OnModuleDestroy {
     private readonly pedidoDraftRepository: Repository<PedidoDraft>,
     @Inject(PEDIDO_DRAFT_REDIS)
     private readonly redisClient: Redis,
-    @Inject(forwardRef(() => PurchaseBatchService))
-    private readonly purchaseBatchService: PurchaseBatchService
+    @Inject(forwardRef(() => PedidoUsuarioService))
+    private readonly pedidoUsuarioService: PedidoUsuarioService
   ) {}
 
   async onModuleDestroy(): Promise<void> {
@@ -130,7 +130,7 @@ export class PedidoDraftService implements OnModuleDestroy {
     ]);
   }
 
-  async finalizeOrder(userId: string): Promise<PurchaseBatch> {
+  async finalizeOrder(userId: string): Promise<PedidoUsuario> {
     const draft = await this.getLatestDraft(userId);
     if (!draft) {
       throw new NotFoundException(
@@ -138,13 +138,10 @@ export class PedidoDraftService implements OnModuleDestroy {
       );
     }
 
-    const dto = draft.payload as unknown as CreatePurchaseBatchDto;
+    const dto = draft.payload as unknown as CreatePedidoUsuarioDto;
 
     try {
-      const result = await this.purchaseBatchService.createBatchOrder(
-        dto,
-        userId
-      );
+      const result = await this.pedidoUsuarioService.create(dto, userId);
       await this.clearDraft(userId);
       return result;
     } catch (error: any) {
@@ -162,17 +159,14 @@ export class PedidoDraftService implements OnModuleDestroy {
    */
   async saveAndFinalize(
     userId: string,
-    dto: CreatePurchaseBatchDto
-  ): Promise<PurchaseBatch> {
+    dto: CreatePedidoUsuarioDto
+  ): Promise<PedidoUsuario> {
     await this.upsertDraft(userId, {
       payload: dto as any,
     });
 
     try {
-      const result = await this.purchaseBatchService.createBatchOrder(
-        dto,
-        userId
-      );
+      const result = await this.pedidoUsuarioService.create(dto, userId);
 
       await this.clearDraft(userId);
       return result;

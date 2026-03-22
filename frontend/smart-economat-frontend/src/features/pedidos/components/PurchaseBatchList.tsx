@@ -2,7 +2,8 @@ import React from 'react';
 import DataTable from '../../../components/ui/DataTable';
 import { PurchaseBatch } from '../../../services/pedido.types';
 import { PurchaseBatchActionHandlers } from '../types/pedidos-ui.types';
-import { buildBatchColumns, renderBatchActions } from '../utils/pedidoColumns';
+import { buildBatchColumns } from '../utils/pedidoColumns';
+import { formatPedidoId } from '../utils/pedidoFormatters';
 
 interface PurchaseBatchListProps {
   batches: PurchaseBatch[];
@@ -16,7 +17,6 @@ const columns = buildBatchColumns();
 const PurchaseBatchList: React.FC<PurchaseBatchListProps> = ({
   batches,
   isLoading,
-  isFetchingBatch,
   handlers,
 }) => (
   <DataTable
@@ -25,8 +25,11 @@ const PurchaseBatchList: React.FC<PurchaseBatchListProps> = ({
     isLoading={isLoading}
     hideTopBar
     viewMode="list"
-    emptyStateMessage="No hay lotes de compra registrados."
-    renderActions={(row) => renderBatchActions(row, handlers, isFetchingBatch)}
+    emptyStateMessage="No hay compras registradas."
+    onRowClick={handlers.onView}
+    getRowAriaLabel={(row) =>
+      `Abrir detalle de la compra ${formatPedidoId(row.id)}`
+    }
   />
 );
 

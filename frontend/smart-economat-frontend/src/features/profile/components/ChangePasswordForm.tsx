@@ -111,6 +111,7 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
             label="Contraseña Actual"
             name="currentPassword"
             type={showPass.current ? 'text' : 'password'}
+            autoComplete="current-password"
             value={formData.currentPassword}
             onChange={onFormChange}
             required
@@ -124,6 +125,7 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
             label="Nueva Contraseña"
             name="newPassword"
             type={showPass.next ? 'text' : 'password'}
+            autoComplete="new-password"
             value={formData.newPassword}
             onChange={onFormChange}
             required
@@ -144,6 +146,7 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
             label="Confirmar Nueva Contraseña"
             name="confirmPassword"
             type={showPass.confirm ? 'text' : 'password'}
+            autoComplete="new-password"
             value={formData.confirmPassword}
             onChange={onFormChange}
             required

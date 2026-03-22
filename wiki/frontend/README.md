@@ -54,7 +54,7 @@ Documentación de las vistas completas (componentes raíz de cada ruta).
 - [Productos](./paginas/Productos.md): Catálogo de productos — búsqueda, filtrado por categoría, CRUD completo con vistas lista/mosaico e integración de `PageToolbar`.
 - [Proveedores](./paginas/Proveedores.md): Listado de proveedores con detalle expandido y gestión de contactos.
 - [Recetas](./paginas/Recetas.md): Gestión de escandallos y elaboración de platos.
-- [Pedidos](./paginas/Pedidos.md): Órdenes de compra a proveedores con seguimiento de estados.
+- [Pedidos](./paginas/Pedidos.md): Flujo de negocio con `PedidoUsuario`, vista semanal y compras consolidadas.
 - [Perfil](./paginas/Perfil.md): Gestión de datos personales, seguridad y herramientas académicas por rol.
 - [Incidencias](./paginas/Incidencias.md): Registro y seguimiento de problemas técnicos o de stock.
 - [Movimientos](./paginas/Movimientos.md): Histórico de entradas y salidas de almacén.

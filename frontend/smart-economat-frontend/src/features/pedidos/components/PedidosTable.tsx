@@ -13,6 +13,8 @@ import {
   buildPedidoColumns,
   renderPedidoActions,
 } from '../utils/pedidoColumns';
+import { formatPedidoListNumber } from '../utils/pedidoFormatters';
+import { isAggregatedBatchPedido } from '../utils/pedidoOwnOrders';
 
 interface PedidosTableProps {
   data: Pedido[];
@@ -84,7 +86,9 @@ const PedidosTable: React.FC<PedidosTableProps> = ({
       }}
       onRowClick={handlers.onView}
       getRowAriaLabel={(row) =>
-        `Ver detalle del pedido de ${row.proveedor?.nombre || 'proveedor desconocido'}`
+        isAggregatedBatchPedido(row)
+          ? `Ver detalle del pedido ${formatPedidoListNumber(row)}`
+          : `Ver detalle del pedido ${formatPedidoListNumber(row)}`
       }
       renderActions={(row) => renderPedidoActions(row, permissions, handlers)}
     />

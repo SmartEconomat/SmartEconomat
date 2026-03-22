@@ -1,14 +1,19 @@
 import { useCallback, useState } from 'react';
 import {
+  aceptarPedidoUsuario,
   aceptarPedido,
+  cancelPedidoUsuario,
   cancelPedido,
+  consolidatePurchaseBatch,
   createPedido,
-  createPurchaseBatch,
+  createPedidoUsuario,
   fetchPurchaseBatchById,
+  fetchPedidoUsuarioById,
+  updatePedidoUsuario,
   updatePedido,
 } from '../../../services/pedido.service';
 import { ApiError, deleteResource } from '../../../services/api.service';
-import { PurchaseBatch } from '../../../services/pedido.types';
+import { PedidoUsuario, PurchaseBatch } from '../../../services/pedido.types';
 import { useToast } from '../../../store/toast.hooks';
 import { PedidoFormValues } from '../types/pedidos-ui.types';
 import {
@@ -23,12 +28,14 @@ interface UsePedidoActionsParams {
   reload: () => Promise<void>;
   discardDraft: () => Promise<void>;
   onPedidoDeleted?: (id: string) => void;
+  onBatchCreated?: (batch: PurchaseBatch) => void;
 }
 
 export function usePedidoActions({
   reload,
   discardDraft,
   onPedidoDeleted,
+  onBatchCreated,
 }: UsePedidoActionsParams) {
   const toast = useToast();
   const [isSaving, setIsSaving] = useState(false);
@@ -36,6 +43,7 @@ export function usePedidoActions({
   const [isAceptando, setIsAceptando] = useState(false);
   const [isCancelando, setIsCancelando] = useState(false);
   const [isFetchingBatch, setIsFetchingBatch] = useState(false);
+  const [isConsolidatingBatch, setIsConsolidatingBatch] = useState(false);
 
   const savePedido = useCallback(
     async (formData: PedidoFormValues) => {
@@ -59,6 +67,17 @@ export function usePedidoActions({
           throw new Error(
             'Ocurrió un error al identificar el proveedor de algunos productos.'
           );
+        }
+
+        if (formData.isBatchAggregate && formData.batchId) {
+          await updatePedidoUsuario(
+            formData.batchId,
+            buildPurchaseBatchPayload(formData.observaciones, normalizedLines)
+          );
+
+          toast.success('Pedido actualizado correctamente.');
+          await reload();
+          return;
         }
 
         if (formData.id) {
@@ -100,13 +119,13 @@ export function usePedidoActions({
               : 'Pedido actualizado correctamente.'
           );
         } else {
-          await createPurchaseBatch(
+          await createPedidoUsuario(
             buildPurchaseBatchPayload(formData.observaciones, normalizedLines)
           );
 
           toast.success(
             linesByProvider.size > 1
-              ? `Se ha registrado el lote de compra con ${linesByProvider.size} pedidos agrupados.`
+              ? `Se ha registrado el pedido con ${normalizedLines.length} líneas y separación interna por proveedor.`
               : 'Pedido registrado correctamente.'
           );
           await discardDraft();
@@ -176,6 +195,25 @@ export function usePedidoActions({
     [reload, toast]
   );
 
+  const approvePurchaseBatchById = useCallback(
+    async (id: string) => {
+      setIsAceptando(true);
+      try {
+        await aceptarPedidoUsuario(id);
+        toast.success('El pedido ha sido aprobado y ahora está en proceso.');
+        await reload();
+      } catch (err: unknown) {
+        toast.error(
+          err instanceof Error ? err.message : 'Error al aprobar el pedido.'
+        );
+        throw err;
+      } finally {
+        setIsAceptando(false);
+      }
+    },
+    [reload, toast]
+  );
+
   const cancelPedidoById = useCallback(
     async (id: string, motivoCancelacion: string) => {
       setIsCancelando(true);
@@ -197,10 +235,38 @@ export function usePedidoActions({
     [reload, toast]
   );
 
+  const cancelPurchaseBatchById = useCallback(
+    async (id: string, motivoCancelacion: string) => {
+      setIsCancelando(true);
+      try {
+        await cancelPedidoUsuario(id, {
+          motivoCancelacion: motivoCancelacion || 'Cancelado por el usuario',
+        });
+        toast.success('El pedido a sido cancelado.');
+        await reload();
+      } catch (err: unknown) {
+        toast.error(
+          err instanceof Error ? err.message : 'Error al cancelar el pedido.'
+        );
+        throw err;
+      } finally {
+        setIsCancelando(false);
+      }
+    },
+    [reload, toast]
+  );
+
   const fetchBatchDetail = useCallback(
-    async (id: string): Promise<PurchaseBatch> => {
+    async (
+      id: string,
+      aggregateType?: 'pedido_usuario'
+    ): Promise<PurchaseBatch | PedidoUsuario> => {
       setIsFetchingBatch(true);
       try {
+        if (aggregateType === 'pedido_usuario') {
+          return await fetchPedidoUsuarioById(id);
+        }
+
         return await fetchPurchaseBatchById(id);
       } catch (err: unknown) {
         toast.error(
@@ -214,16 +280,46 @@ export function usePedidoActions({
     [toast]
   );
 
+  const consolidatePedidosByIds = useCallback(
+    async (pedidoIds: string[], observaciones?: string) => {
+      setIsConsolidatingBatch(true);
+      try {
+        const batch = await consolidatePurchaseBatch({
+          pedidoUsuarioIds: pedidoIds,
+          observaciones,
+        });
+        toast.success('Se ha generado el lote semanal correctamente.');
+        onBatchCreated?.(batch);
+        await reload();
+        return batch;
+      } catch (err: unknown) {
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : 'Error al consolidar pedidos en un lote.'
+        );
+        throw err;
+      } finally {
+        setIsConsolidatingBatch(false);
+      }
+    },
+    [onBatchCreated, reload, toast]
+  );
+
   return {
     savePedido,
     deletePedidoById,
     approvePedidoById,
+    approvePurchaseBatchById,
     cancelPedidoById,
+    cancelPurchaseBatchById,
     fetchBatchDetail,
+    consolidatePedidosByIds,
     isSaving,
     isDeleting,
     isAceptando,
     isCancelando,
     isFetchingBatch,
+    isConsolidatingBatch,
   };
 }

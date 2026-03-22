@@ -315,6 +315,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             label="Nueva Contraseña"
             name="newPassword"
             type={showPassword ? 'text' : 'password'}
+            autoComplete="new-password"
             value={changePassData.newPassword}
             onChange={handleChangePass}
             required
@@ -344,6 +345,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             label="Confirmar Nueva Contraseña"
             name="confirmPassword"
             type={showPassword ? 'text' : 'password'}
+            autoComplete="new-password"
             value={changePassData.confirmPassword}
             onChange={handleChangePass}
             required
@@ -467,7 +469,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
           <Input
             label="Usuario o Email"
             name="email"
-            autoComplete="email"
+            autoComplete="username"
             autoFocus
             value={formData.email}
             onChange={handleChange}

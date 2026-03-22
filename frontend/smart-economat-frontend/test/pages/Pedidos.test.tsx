@@ -40,6 +40,11 @@ describe('Pedidos Page - Recovery Modal Bug', () => {
 
     // Default mock implementation for auth
     vi.mocked(authHooks.usePermission).mockReturnValue(true);
+    vi.mocked(authHooks.useAuth).mockReturnValue({
+      user: {
+        id: 'user-1',
+      },
+    } as unknown as ReturnType<typeof authHooks.useAuth>);
 
     // Default mock for data fetching
     vi.mocked(pedidoService.fetchPedidos).mockResolvedValue({

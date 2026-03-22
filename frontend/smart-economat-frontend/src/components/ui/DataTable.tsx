@@ -44,7 +44,7 @@ export interface Column<T> {
   /** Identificador único o key del objeto de la fila */
   id: keyof T | string;
   /** Etiqueta visual que va en el encabezado de la columna */
-  label: string;
+  label: ReactNode;
   /** Renderizado personalizado opcional para la celda. Si no se pasa, inyecta `row[id]` directamente */
   render?: (row: T) => ReactNode;
   /** Alineación del texto en la columna */

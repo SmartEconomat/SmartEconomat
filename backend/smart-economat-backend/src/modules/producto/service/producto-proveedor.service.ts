@@ -197,6 +197,8 @@ export class ProductoProveedorService {
       id: string;
       productoId: string;
       productoNombre: string;
+      unidad?: string;
+      contenido?: number;
       proveedorId: string;
       proveedorNombre: string;
       marcaEspecifica?: string;
@@ -220,6 +222,8 @@ export class ProductoProveedorService {
         'pp.precioUnitario',
         'producto.id',
         'producto.nombre',
+        'producto.unidad',
+        'producto.contenido',
         'proveedor.id',
         'proveedor.nombre',
       ])
@@ -241,6 +245,8 @@ export class ProductoProveedorService {
       id: pp.id,
       productoId: pp.producto?.id,
       productoNombre: pp.producto?.nombre,
+      unidad: pp.producto?.unidad,
+      contenido: pp.producto?.contenido,
       proveedorId: pp.proveedor?.id,
       proveedorNombre: pp.proveedor?.nombre,
       marca: pp.marca,

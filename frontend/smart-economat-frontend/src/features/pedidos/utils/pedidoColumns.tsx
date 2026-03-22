@@ -5,7 +5,6 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CheckIcon from '@mui/icons-material/Check';
 import CancelIcon from '@mui/icons-material/Cancel';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import { Column } from '../../../components/ui/DataTable';
 import StatusChip from '../../../components/ui/StatusChip';
 import {
@@ -16,19 +15,23 @@ import {
 import {
   PedidoActionHandlers,
   PedidoPermissions,
-  PurchaseBatchActionHandlers,
 } from '../types/pedidos-ui.types';
 import {
+  formatPedidoListNumber,
   formatCurrency,
   formatPedidoDate,
   getBatchPedidosCount,
-  getBatchProvidersSummary,
   getBatchTotal,
   getPedidoCreatorName,
-  getPedidoProviderName,
 } from './pedidoFormatters';
+import { isAggregatedBatchPedido } from './pedidoOwnOrders';
 
 export const buildPedidoColumns = (): Column<Pedido>[] => [
+  {
+    id: 'pedidoId',
+    label: 'Nº de pedido',
+    render: (row) => formatPedidoListNumber(row),
+  },
   {
     id: 'fechaPedido',
     label: 'Fecha Pedido',
@@ -39,11 +42,6 @@ export const buildPedidoColumns = (): Column<Pedido>[] => [
     label: 'Fecha Entrega',
     render: (row) => formatPedidoDate(row.fechaEntrega),
     hideOnMobile: true,
-  },
-  {
-    id: 'proveedor',
-    label: 'Proveedor',
-    render: (row) => getPedidoProviderName(row),
   },
   {
     id: 'costeTotal',
@@ -76,11 +74,6 @@ export const buildBatchColumns = (): Column<PurchaseBatch>[] => [
     render: (row) => getBatchPedidosCount(row),
   },
   {
-    id: 'proveedores',
-    label: 'Proveedores',
-    render: (row) => getBatchProvidersSummary(row),
-  },
-  {
     id: 'costeTotal',
     label: 'Coste Total Estimado',
     align: 'right',
@@ -88,7 +81,7 @@ export const buildBatchColumns = (): Column<PurchaseBatch>[] => [
   },
   {
     id: 'estado',
-    label: 'Estado Lote',
+    label: 'Estado',
     render: (row) => <StatusChip status={String(row.estado)} />,
   },
   {
@@ -102,101 +95,133 @@ export const renderPedidoActions = (
   row: Pedido,
   permissions: PedidoPermissions,
   handlers: PedidoActionHandlers
-): React.ReactNode => (
-  <Stack direction="row" spacing={1} justifyContent="center">
-    <Tooltip title="Fecha estimada de entrega">
-      <span>
-        <IconButton
-          color="info"
-          onClick={() => handlers.onViewDelivery(row)}
-          size="small"
-          aria-label="Ver fecha de entrega"
-        >
-          <EventOutlinedIcon fontSize="small" />
-        </IconButton>
-      </span>
-    </Tooltip>
-
-    {permissions.canApprove && row.estado === EstadoPedido.PENDIENTE && (
-      <Tooltip title="Aprobar pedido">
-        <IconButton
-          color="success"
-          onClick={() => handlers.onApprove(row)}
-          size="small"
-          aria-label="Aprobar"
-        >
-          <CheckIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-    )}
-
-    {permissions.canCancel && row.estado === EstadoPedido.PENDIENTE && (
-      <Tooltip title="Cancelar pedido">
-        <IconButton
-          color="warning"
-          onClick={() => handlers.onCancel(row)}
-          size="small"
-          aria-label="Cancelar"
-        >
-          <CancelIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-    )}
-
-    {permissions.canDelete &&
-      (row.estado === EstadoPedido.PENDIENTE ||
-        row.estado === EstadoPedido.CANCELADO) && (
-        <Tooltip title="Eliminar pedido">
+): React.ReactNode =>
+  isAggregatedBatchPedido(row) ? (
+    <Stack direction="row" spacing={1} justifyContent="center">
+      {permissions.canApprove && row.estado === EstadoPedido.PENDIENTE && (
+        <Tooltip title="Aprobar pedido">
           <IconButton
-            color="error"
-            onClick={() => handlers.onDelete(row)}
+            color="success"
+            onClick={() => handlers.onApprove(row)}
             size="small"
-            aria-label="Eliminar"
+            aria-label="Aprobar pedido"
           >
-            <DeleteIcon fontSize="small" />
+            <CheckIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       )}
 
-    {permissions.canEdit && row.estado === EstadoPedido.PENDIENTE && (
-      <Tooltip title="Editar pedido">
-        <IconButton
-          color="secondary"
-          onClick={() => handlers.onEdit(row)}
+      {permissions.canCancel && row.estado === EstadoPedido.PENDIENTE && (
+        <Tooltip title="Cancelar pedido">
+          <IconButton
+            color="warning"
+            onClick={() => handlers.onCancel(row)}
+            size="small"
+            aria-label="Cancelar pedido"
+          >
+            <CancelIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
+
+      {permissions.canEdit && row.estado === EstadoPedido.PENDIENTE && (
+        <Tooltip title="Editar pedido">
+          <IconButton
+            color="secondary"
+            onClick={() => handlers.onEdit(row)}
+            size="small"
+            aria-label="Editar pedido"
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
+
+      {row.estado !== EstadoPedido.PENDIENTE && (
+        <Chip
           size="small"
-          aria-label="Editar"
-        >
-          <EditIcon fontSize="small" />
-        </IconButton>
+          color="default"
+          variant="outlined"
+          label={<Typography variant="caption">Pedido</Typography>}
+        />
+      )}
+    </Stack>
+  ) : (
+    <Stack direction="row" spacing={1} justifyContent="center">
+      <Tooltip title="Fecha estimada de entrega">
+        <span>
+          <IconButton
+            color="info"
+            onClick={() => handlers.onViewDelivery(row)}
+            size="small"
+            aria-label="Ver fecha de entrega"
+          >
+            <EventOutlinedIcon fontSize="small" />
+          </IconButton>
+        </span>
       </Tooltip>
-    )}
 
-    {row.estado !== EstadoPedido.PENDIENTE && (
-      <Chip
-        size="small"
-        color="default"
-        variant="outlined"
-        label={<Typography variant="caption">Solo lectura</Typography>}
-      />
-    )}
-  </Stack>
-);
+      {permissions.canApprove && row.estado === EstadoPedido.PENDIENTE && (
+        <Tooltip title="Aprobar pedido">
+          <IconButton
+            color="success"
+            onClick={() => handlers.onApprove(row)}
+            size="small"
+            aria-label="Aprobar"
+          >
+            <CheckIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
 
-export const renderBatchActions = (
-  row: PurchaseBatch,
-  handlers: PurchaseBatchActionHandlers,
-  isLoading?: boolean
-): React.ReactNode => (
-  <Tooltip title="Ver detalle del lote">
-    <span>
-      <IconButton
-        color="primary"
-        size="small"
-        onClick={() => handlers.onView(row)}
-        disabled={isLoading}
-      >
-        <VisibilityIcon fontSize="small" />
-      </IconButton>
-    </span>
-  </Tooltip>
-);
+      {permissions.canCancel && row.estado === EstadoPedido.PENDIENTE && (
+        <Tooltip title="Cancelar pedido">
+          <IconButton
+            color="warning"
+            onClick={() => handlers.onCancel(row)}
+            size="small"
+            aria-label="Cancelar"
+          >
+            <CancelIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
+
+      {permissions.canDelete &&
+        (row.estado === EstadoPedido.PENDIENTE ||
+          row.estado === EstadoPedido.CANCELADO) && (
+          <Tooltip title="Eliminar pedido">
+            <IconButton
+              color="error"
+              onClick={() => handlers.onDelete(row)}
+              size="small"
+              aria-label="Eliminar"
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
+
+      {permissions.canEdit && row.estado === EstadoPedido.PENDIENTE && (
+        <Tooltip title="Editar pedido">
+          <IconButton
+            color="secondary"
+            onClick={() => handlers.onEdit(row)}
+            size="small"
+            aria-label="Editar"
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
+
+      {row.estado !== EstadoPedido.PENDIENTE && (
+        <Chip
+          size="small"
+          color="default"
+          variant="outlined"
+          label={<Typography variant="caption">Solo lectura</Typography>}
+        />
+      )}
+    </Stack>
+  );
