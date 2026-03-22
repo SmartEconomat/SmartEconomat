@@ -3,7 +3,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeContextProvider } from './store/ThemeContext';
 import { useThemeContext } from './store/theme.hooks';
 import AppRouter from './routes/AppRouter';
-import { AuthProvider } from './store/AuthContext';
+import { AuthProvider } from './sherlock-auth/provider';
 import { ToastProvider } from './store/ToastContext';
 import ToastContainer from './components/common/Notification/ToastContainer';
 

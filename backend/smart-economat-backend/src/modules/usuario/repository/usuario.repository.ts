@@ -9,6 +9,7 @@ import { Rol } from '../../roles/rol.entity/rol.entity';
 import { UserStatus, rolUsuario } from '../enums/usuario.enums';
 import { Profesor } from '../../profesor/profesor.entity/profesor.entity';
 import { Alumno } from '../../alumno/alumno.entity/alumno.entity';
+import { isSherlockElevatedRole } from '../../sherlock-auth/utils/access.utils';
 
 @Injectable()
 export class UsuarioRepository {
@@ -108,10 +109,7 @@ export class UsuarioRepository {
       }
     }
 
-    const isAdmin =
-      userRole?.toUpperCase() === (rolUsuario.ADMINISTRADOR as string) ||
-      userRole?.toUpperCase() === (rolUsuario.SUPER_ADMIN as string) ||
-      userRole?.toUpperCase() === 'ADMIN';
+    const isAdmin = isSherlockElevatedRole(userRole);
 
     if (!isAdmin) {
       if (Array.isArray(where)) {
