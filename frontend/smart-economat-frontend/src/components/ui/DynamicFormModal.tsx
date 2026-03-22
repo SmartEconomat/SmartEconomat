@@ -14,6 +14,9 @@ import DatePicker from './DatePicker';
 import PedidoLineasSelector from './PedidoLineasSelector';
 import RecetaIngredientesSelector from './RecetaIngredientesSelector';
 import BatchPedidoLineasViewer from './BatchPedidoLineasViewer';
+import BarcodeScanner from './BarcodeScanner';
+import BarcodeIcon from './BarcodeIcon';
+import { InputAdornment, IconButton, Tooltip } from '@mui/material';
 
 export type FieldType =
   | 'text'
@@ -27,7 +30,8 @@ export type FieldType =
   | 'proveedores'
   | 'orderLines'
   | 'recipeIngredients'
-  | 'batchViewer';
+  | 'batchViewer'
+  | 'barcode';
 
 export interface DynamicField {
   name: string;
@@ -56,7 +60,10 @@ export interface DynamicFormModalProps extends Omit<ModalProps, 'children'> {
   submitLabel?: string;
   cancelLabel?: string;
   isSubmitting?: boolean;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   requireConfirmation?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onBarcodeFetch?: (code: string) => Promise<Record<string, any> | void>;
   confirmationMessage?: React.ReactNode;
   onValuesChange?: (data: Record<string, unknown>) => void;
 }
@@ -74,6 +81,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   cancelLabel = 'Cancelar',
   isSubmitting = false,
   requireConfirmation = false,
+  onBarcodeFetch,
   confirmationMessage,
   onValuesChange,
 }) => {
@@ -81,6 +89,9 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [activeBarcodeField, setActiveBarcodeField] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -378,6 +389,61 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
 
       case 'batchViewer':
         return <BatchPedidoLineasViewer key={name} batch={formData[name]} />;
+
+      case 'barcode':
+        return (
+          <Box key={name}>
+            <Input
+              name={name}
+              label={label}
+              type="text"
+              value={value ?? ''}
+              onChange={handleTextChange}
+              onBlur={async (e) => {
+                const code = (e.target as HTMLInputElement).value;
+                if (code && onBarcodeFetch && code !== initialData?.[name]) {
+                  const newData = await onBarcodeFetch(code);
+                  if (newData) {
+                    setFormData((prev) => ({ ...prev, ...newData }));
+                  }
+                }
+              }}
+              required={required}
+              disabled={disabled}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Tooltip title="Escanear con cámara">
+                      <IconButton
+                        edge="end"
+                        onClick={() => setActiveBarcodeField(name)}
+                        disabled={disabled}
+                      >
+                        <BarcodeIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <BarcodeScanner
+              open={activeBarcodeField === name}
+              onClose={() => setActiveBarcodeField(null)}
+              onScan={async (code) => {
+                setFormData((prev) => ({ ...prev, [name]: code }));
+                setErrors((prev) => ({ ...prev, [name]: '' }));
+                setActiveBarcodeField(null);
+                if (onBarcodeFetch) {
+                  const newData = await onBarcodeFetch(code);
+                  if (newData) {
+                    setFormData((prev) => ({ ...prev, ...newData }));
+                  }
+                }
+              }}
+              title={`Escanear ${label}`}
+            />
+          </Box>
+        );
 
       case 'text':
       default:

@@ -131,9 +131,12 @@ export class ProductoService {
         codigoBarras: query.codigoBarras,
       });
     } else if (query.searchTerm) {
-      queryBuilder.andWhere('producto.nombre ILIKE :searchTerm', {
-        searchTerm: `%${query.searchTerm}%`,
-      });
+      queryBuilder.andWhere(
+        '(producto.nombre ILIKE :searchTerm OR producto.codigoBarras ILIKE :searchTerm OR producto.marca ILIKE :searchTerm)',
+        {
+          searchTerm: `%${query.searchTerm}%`,
+        }
+      );
     }
 
     if (query.categorias && query.categorias.length > 0) {

@@ -27,6 +27,7 @@ export function agregarInventarioPorProducto(
 
     const productoId = pp.producto.id;
     const nombre = pp.producto.nombre ?? '';
+    const codigoBarras = pp.producto.codigoBarras;
     const unidad = pp.producto.unidad;
     const tipo = pp.producto.tipo;
     const cantidadActual = Number(item.cantidadActual) || 0;
@@ -54,6 +55,7 @@ export function agregarInventarioPorProducto(
         cantidadTotal: cantidadActual,
         cantidadMinima,
         bajoStock: cantidadActual < cantidadMinima,
+        codigoBarras,
         proveedores: proveedorNombre ? [proveedorNombre] : [],
         ubicaciones: ubicacion ? [ubicacion] : [],
       });
