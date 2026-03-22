@@ -60,7 +60,10 @@ export interface DynamicFormModalProps extends Omit<ModalProps, 'children'> {
   submitLabel?: string;
   cancelLabel?: string;
   isSubmitting?: boolean;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   requireConfirmation?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onBarcodeFetch?: (code: string) => Promise<Record<string, any> | void>;
   confirmationMessage?: React.ReactNode;
   onValuesChange?: (data: Record<string, unknown>) => void;
 }
@@ -78,6 +81,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   cancelLabel = 'Cancelar',
   isSubmitting = false,
   requireConfirmation = false,
+  onBarcodeFetch,
   confirmationMessage,
   onValuesChange,
 }) => {
@@ -395,6 +399,15 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
               type="text"
               value={value ?? ''}
               onChange={handleTextChange}
+              onBlur={async (e) => {
+                const code = (e.target as HTMLInputElement).value;
+                if (code && onBarcodeFetch && code !== initialData?.[name]) {
+                  const newData = await onBarcodeFetch(code);
+                  if (newData) {
+                    setFormData((prev) => ({ ...prev, ...newData }));
+                  }
+                }
+              }}
               required={required}
               disabled={disabled}
               InputProps={{
@@ -416,10 +429,16 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
             <BarcodeScanner
               open={activeBarcodeField === name}
               onClose={() => setActiveBarcodeField(null)}
-              onScan={(code) => {
+              onScan={async (code) => {
                 setFormData((prev) => ({ ...prev, [name]: code }));
                 setErrors((prev) => ({ ...prev, [name]: '' }));
                 setActiveBarcodeField(null);
+                if (onBarcodeFetch) {
+                  const newData = await onBarcodeFetch(code);
+                  if (newData) {
+                    setFormData((prev) => ({ ...prev, ...newData }));
+                  }
+                }
               }}
               title={`Escanear ${label}`}
             />

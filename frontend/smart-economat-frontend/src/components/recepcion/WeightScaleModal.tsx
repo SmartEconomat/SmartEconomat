@@ -18,6 +18,7 @@ interface WeightScaleModalProps {
   onClose: () => void;
   onStartWeighing: () => void;
   onConfirmWeight: () => void;
+  productName?: string;
 }
 
 const WeightScaleModal: React.FC<WeightScaleModalProps> = ({
@@ -28,6 +29,7 @@ const WeightScaleModal: React.FC<WeightScaleModalProps> = ({
   onClose,
   onStartWeighing,
   onConfirmWeight,
+  productName,
 }) => {
   return (
     <Dialog
@@ -40,6 +42,11 @@ const WeightScaleModal: React.FC<WeightScaleModalProps> = ({
       <DialogTitle sx={{ fontWeight: 'bold' }}>
         Báscula de Recepción
       </DialogTitle>
+      {productName && (
+        <Typography variant="subtitle2" color="primary" sx={{ px: 3, mt: -1 }}>
+          Pesando: {productName}
+        </Typography>
+      )}
       <DialogContent
         sx={{
           minHeight: 150,

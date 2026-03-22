@@ -73,6 +73,7 @@ import { EU_ALLERGENS, Allergen } from '../utils/constants';
 import ShoppingBasketOutlinedIcon from '@mui/icons-material/ShoppingBasketOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import BarcodeScanner from '../components/ui/BarcodeScanner';
+import { fetchProductFromOFF } from '../services/openfoodfacts.service';
 
 type ProductoFormAlergeno = string | Pick<ProductoAlergeno, 'alergeno'>;
 
@@ -287,6 +288,17 @@ const Productos: React.FC = () => {
     } finally {
       setIsDeleting(false);
       setProductToDelete(null);
+    }
+  };
+
+  // Autocompletado desde OpenFoodFacts
+  const handleBarcodeFetch = async (code: string) => {
+    const offData = await fetchProductFromOFF(code);
+    if (offData) {
+      return {
+        nombre: offData.nombre,
+        marca: offData.marca || '',
+      };
     }
   };
 
@@ -678,6 +690,7 @@ const Productos: React.FC = () => {
           onSubmit={handleSaveProduct}
           isSubmitting={isSaving}
           requireConfirmation={true}
+          onBarcodeFetch={handleBarcodeFetch}
           confirmationMessage={
             productToEdit?.id
               ? '¿Estás seguro de que deseas guardar los cambios realizados en este producto?'
