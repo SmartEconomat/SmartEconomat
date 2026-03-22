@@ -2,99 +2,116 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-  ForbiddenException,
+  ConflictException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { PreparacionEntity } from '../preparacion.entity';
+import { PreparacionRepository } from '../repository/preparacion.repository';
+import { ProduccionService } from '../../receta/service/produccion.service';
+import { RecetaRepository } from '../../receta/repository/receta.repository';
 import { CreatePreparacionDto } from '../dto/create-preparacion.dto';
-import { UpdatePreparacionDto } from '../dto/update-preparacion.dto';
-import { Producto } from '../../producto/producto.entity/producto.entity';
+import { PreparacionEstado } from '../enums/preparacion.enums';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { Preparacion } from '../preparacion.entity/preparacion.entity';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 
 @Injectable()
 export class PreparacionService {
   constructor(
-    @InjectRepository(PreparacionEntity)
-    private readonly preparacionRepository: Repository<PreparacionEntity>,
-    @InjectRepository(Producto)
-    private readonly productoRepository: Repository<Producto>
+    private readonly preparacionRepository: PreparacionRepository,
+    private readonly produccionService: ProduccionService,
+    private readonly recetaRepository: RecetaRepository
   ) {}
 
-  async create(dto: CreatePreparacionDto): Promise<PreparacionEntity> {
-    const ingredientes = await this.productoRepository.findByIds(
-      dto.ingredientes
-    );
-    if (ingredientes.length !== dto.ingredientes.length) {
-      throw new BadRequestException('Uno o más ingredientes no existen');
+  async create(
+    dto: CreatePreparacionDto,
+    userId: string
+  ): Promise<Preparacion> {
+    const receta = await this.recetaRepository.findById(dto.recetaId);
+    if (!receta) {
+      throw new NotFoundException(I18nHelper.getError('RECIPE_NOT_FOUND'));
     }
-    const preparacion = this.preparacionRepository.create({
-      ...dto,
-      ingredientes,
-    });
-    return this.preparacionRepository.save(preparacion);
+
+    return this.preparacionRepository.create(dto, userId);
   }
 
-  async findAll(): Promise<PreparacionEntity[]> {
-    return this.preparacionRepository.find();
+  async findAll(
+    query: PaginationQueryDto,
+    userRole?: string
+  ): Promise<PaginatedResponseDto<Preparacion>> {
+    return this.preparacionRepository.findAllPaginated(query, userRole);
   }
 
-  async findOne(uuid: string): Promise<PreparacionEntity> {
-    const preparacion = await this.preparacionRepository.findOne({
-      where: { uuid },
-    });
-    if (!preparacion) throw new NotFoundException('Preparación no encontrada');
+  async findOne(id: string, userRole?: string): Promise<Preparacion> {
+    const preparacion = await this.preparacionRepository.findById(id, userRole);
+    if (!preparacion) {
+      throw new NotFoundException(I18nHelper.getError('PREPARACION_NOT_FOUND'));
+    }
     return preparacion;
   }
 
-  async update(
-    uuid: string,
-    dto: UpdatePreparacionDto
-  ): Promise<PreparacionEntity> {
-    const preparacion = await this.findOne(uuid);
-    if (dto.ingredientes) {
-      const ingredientes = await this.productoRepository.findByIds(
-        dto.ingredientes
+  async iniciarPreparacion(id: string): Promise<Preparacion> {
+    const preparacion = await this.findOne(id);
+    if (preparacion.estado !== PreparacionEstado.PENDIENTE) {
+      throw new ConflictException(
+        `No se puede iniciar una preparación en estado ${preparacion.estado}`
       );
-      if (ingredientes.length !== dto.ingredientes.length) {
-        throw new BadRequestException('Uno o más ingredientes no existen');
-      }
-      preparacion.ingredientes = ingredientes;
     }
-    Object.assign(preparacion, dto);
+
+    preparacion.estado = PreparacionEstado.EN_PROCESO;
+    preparacion.fechaInicio = new Date();
     return this.preparacionRepository.save(preparacion);
   }
 
-  async remove(uuid: string): Promise<void> {
-    const preparacion = await this.findOne(uuid);
-    await this.preparacionRepository.remove(preparacion);
+  async finalizarPreparacion(
+    id: string,
+    userId: string,
+    ubicacionDestinoId?: string
+  ): Promise<Preparacion> {
+    const preparacion = await this.findOne(id);
+
+    if (preparacion.estado !== PreparacionEstado.EN_PROCESO) {
+      throw new ConflictException(
+        `Solo se pueden finalizar preparaciones EN_PROCESO. Estado actual: ${preparacion.estado}`
+      );
+    }
+
+    const destinoId = ubicacionDestinoId || preparacion.ubicacionDestinoId;
+    if (!destinoId) {
+      throw new BadRequestException(
+        'Se requiere una ubicación de destino para finalizar la preparación'
+      );
+    }
+
+    await this.produccionService.ejecutarProduccion(
+      {
+        recetaId: preparacion.recetaId,
+        cantidadProducida: preparacion.cantidadAProducir,
+        ubicacionDestinoId: destinoId,
+      },
+      userId,
+      preparacion.id
+    );
+
+    preparacion.estado = PreparacionEstado.COMPLETADA;
+    preparacion.fechaFinalizacion = new Date();
+    if (ubicacionDestinoId) preparacion.ubicacionDestinoId = ubicacionDestinoId;
+
+    return this.preparacionRepository.save(preparacion);
   }
 
-  async calcularCoste(uuid: string): Promise<number> {
-    const preparacion = await this.findOne(uuid);
-    if (!preparacion.ingredientes || preparacion.ingredientes.length === 0) {
-      return 0;
+  async cancelarPreparacion(id: string): Promise<Preparacion> {
+    const preparacion = await this.findOne(id);
+    if (preparacion.estado === PreparacionEstado.COMPLETADA) {
+      throw new ConflictException(
+        'No se puede cancelar una preparación ya completada'
+      );
     }
-    let total = 0;
-    for (const prod of preparacion.ingredientes) {
-      total +=
-        typeof (prod as any).costeEstimado === 'number'
-          ? (prod as any).costeEstimado
-          : 0;
-    }
-    return total;
+
+    preparacion.estado = PreparacionEstado.CANCELADA;
+    return this.preparacionRepository.save(preparacion);
   }
 
-  async ejecutarPreparacion(uuid: string, cantidad = 1): Promise<void> {
-    const preparacion = await this.findOne(uuid);
-
-    for (const ingrediente of preparacion.ingredientes) {
-      if (((ingrediente as any).stockActual || 0) < cantidad) {
-        throw new ForbiddenException(
-          `Stock insuficiente para ${(ingrediente as any).nombre}`
-        );
-      }
-      (ingrediente as any).stockActual -= cantidad;
-      await this.productoRepository.save(ingrediente);
-    }
+  async remove(id: string): Promise<void> {
+    return this.preparacionRepository.remove(id);
   }
 }

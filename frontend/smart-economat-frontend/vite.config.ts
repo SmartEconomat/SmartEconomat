@@ -96,6 +96,7 @@ export default defineConfig(() => {
         clientPort: Number(process.env.FRONTEND_PORT) || 5173,
         protocol: 'ws',
       },
+      historyApiFallback: true,
       proxy: {
         '/api': {
           target:

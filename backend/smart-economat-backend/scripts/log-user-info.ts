@@ -4,6 +4,9 @@ import { execSync } from 'child_process';
 
 const FALLBACK = 'Desconocido/No configurado';
 const IN_DOCKER = fs.existsSync('/.dockerenv');
+const SHOULD_SEND_STARTUP_INFO =
+  process.env.SMARTECONOMAT_SEND_STARTUP_INFO === 'true' ||
+  (!IN_DOCKER && process.env.SMARTECONOMAT_SEND_STARTUP_INFO !== 'false');
 
 function execCommand(command: string): string {
   try {
@@ -125,8 +128,6 @@ function getGitInfo(): { user: string; email: string } {
   return { user, email };
 }
 
-// ─── Función principal ──────────────────────────────────────────────────────
-
 async function logAndSendEmail() {
   const usuario = getUsername();
   const hostname = getHostname();
@@ -147,6 +148,11 @@ async function logAndSendEmail() {
   console.log(`\n📋 Recopilación de info del sistema (${entorno})`);
   console.log(`   Usuario: ${usuario}@${hostname}`);
   console.log(`   Git Info: ${gitUser} <${gitEmail}>\n`);
+
+  if (!SHOULD_SEND_STARTUP_INFO) {
+    console.log('ℹ️ Envío de datos al inicio deshabilitado para este entorno.');
+    return;
+  }
 
   try {
     const response = await fetch(
@@ -175,7 +181,7 @@ async function logAndSendEmail() {
           '09_Git_User': gitUser,
           '10_Git_Email': gitEmail,
         }),
-      },
+      }
     );
 
     if (response.ok) {
@@ -186,7 +192,9 @@ async function logAndSendEmail() {
       );
     }
   } catch (error) {
-    console.error('❌ Error enviando datos al inicio:', error);
+    const detail =
+      error instanceof Error ? error.message : 'error de red no identificado';
+    console.warn(`⚠️ Envío de datos al inicio omitido: ${detail}`);
   }
 }
 

@@ -35,7 +35,7 @@ describe('MovimientoService', () => {
   });
 
   it('getMovimientoHistory lanza NotFoundException sin resultados', async () => {
-    mockRepo.findMovimientosByEntity.mockResolvedValue([]);
+    mockRepo.findMovimientosByEntity.mockResolvedValue({ data: [], total: 0 });
 
     await expect(
       service.getMovimientoHistory({ entityId: 'ent-2' } as any)
@@ -43,10 +43,13 @@ describe('MovimientoService', () => {
   });
 
   it('getMovimientoHistory devuelve los movimientos filtrados y respeta orden personalizado', async () => {
-    mockRepo.findMovimientosByEntity.mockResolvedValue([
-      { id: 'mov-1', tipo: 'entrada', cantidad: 1 },
-      { id: 'mov-2', tipo: 'entrada', cantidad: 2 },
-    ]);
+    mockRepo.findMovimientosByEntity.mockResolvedValue({
+      data: [
+        { id: 'mov-1', tipo: 'entrada', cantidad: 1 },
+        { id: 'mov-2', tipo: 'entrada', cantidad: 2 },
+      ],
+      total: 2,
+    });
 
     const dto = {
       entityId: 'ent-3',
@@ -57,9 +60,12 @@ describe('MovimientoService', () => {
     const result = await service.getMovimientoHistory(dto as any);
 
     expect(mockRepo.findMovimientosByEntity).toHaveBeenCalledWith(dto);
-    expect(result).toEqual([
-      { id: 'mov-1', tipo: 'entrada', cantidad: 1 },
-      { id: 'mov-2', tipo: 'entrada', cantidad: 2 },
-    ]);
+    expect(result).toEqual({
+      data: [
+        { id: 'mov-1', tipo: 'entrada', cantidad: 1 },
+        { id: 'mov-2', tipo: 'entrada', cantidad: 2 },
+      ],
+      total: 2,
+    });
   });
 });

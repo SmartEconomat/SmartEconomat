@@ -31,13 +31,13 @@ export class ImageProcessOptionsDto {
 
   @ApiProperty({
     description:
-      'Formato de salida (jpeg, jpg, png). Si se envía webp, se normaliza a jpeg por compatibilidad multiplataforma',
+      'Formato de salida final. El backend genera WebP como formato estándar optimizado.',
     required: false,
-    default: 'jpeg',
+    default: 'webp',
   })
   @IsOptional()
   @IsString()
-  formatoSalida?: 'jpeg' | 'jpg' | 'webp' | 'png' = 'jpeg';
+  formatoSalida?: 'jpeg' | 'jpg' | 'webp' | 'png' = 'webp';
 
   @ApiProperty({
     description: 'Calidad de compresión (1-100)',

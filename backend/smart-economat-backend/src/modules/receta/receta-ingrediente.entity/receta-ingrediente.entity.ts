@@ -1,5 +1,6 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import type { Relation } from 'typeorm';
+import { Exclude } from 'class-transformer';
 import { Receta } from '../receta.entity/receta.entity';
 import { Producto } from '../../producto/producto.entity/producto.entity';
 import { UnidadIngrediente } from '../enums/receta.enums';
@@ -35,6 +36,7 @@ export class RecetaIngrediente extends BaseEntity {
   })
   mermaAplicada!: number;
 
+  @Exclude()
   @ManyToOne(() => Receta, (receta) => receta.ingredientes, {
     onDelete: 'CASCADE',
   })
@@ -44,4 +46,11 @@ export class RecetaIngrediente extends BaseEntity {
   @ManyToOne(() => Producto, { nullable: false })
   @JoinColumn({ name: 'producto_id' })
   producto!: Relation<Producto>;
+
+  @Column({ name: 'proveedor_favorito_id', nullable: true })
+  proveedorFavoritoId?: string;
+
+  @ManyToOne('Proveedor', { nullable: true })
+  @JoinColumn({ name: 'proveedor_favorito_id' })
+  proveedorFavorito?: Relation<any>;
 }

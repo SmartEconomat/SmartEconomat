@@ -13,6 +13,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { Producto } from '../../services/producto.types';
+import { resolveStoredFileUrl } from '../../services/api.service';
 import StatusChip from '../../components/ui/StatusChip';
 import { getCategoryIcon } from './utils/getCategoryIcon';
 import { Allergen, EU_ALLERGENS } from '../../utils/constants';
@@ -37,17 +38,18 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const alergenosActivos = EU_ALLERGENS.filter((a: Allergen) =>
     alergenoIds.includes(a.id)
   );
+  const imageUrl = resolveStoredFileUrl(producto.pathImg);
 
   return (
     <Card
       variant="outlined"
       sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
     >
-      {producto.pathImg ? (
+      {imageUrl ? (
         <CardMedia
           component="img"
           height="140"
-          image={producto.pathImg}
+          image={imageUrl}
           alt={producto.nombre}
           sx={{ objectFit: 'cover' }}
         />

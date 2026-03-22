@@ -97,7 +97,10 @@
     "USUARIO_NO_AUTENTICADO": "Usuario no autenticado",
     "YA_EXISTE_UNA_UBICACI_N_CON_ESTE_NOMBRE": "Ya existe una ubicación con este nombre",
     "INVALID_FILE_PATH": "Ruta de archivo inválida",
-    "TIPO_DE_ARCHIVO_NO_SOPORTADO": "Tipo de archivo no soportado. Solo se permiten imágenes (jpg, jpeg, png, gif) y PDF"
+    "TIPO_DE_ARCHIVO_NO_SOPORTADO": "Tipo de archivo no soportado. Solo se permiten imágenes (jpg, jpeg, png, gif) y PDF",
+    "RECIPE_NO_RESULT_PRODUCT": "La receta no tiene un producto de resultado configurado. Edita la receta para asignar uno.",
+    "RECIPE_NO_RENDIMIENTO": "La receta no tiene definido el rendimiento (cuánto produce). Edita la receta para especificarla.",
+    "RECIPE_NO_INGREDIENTS": "La receta no tiene ingredientes. Añade algunos antes de prepararla."
   },
   "success": {
     "CREATED": "Creado exitosamente",

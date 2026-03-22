@@ -14,10 +14,7 @@ export enum DificultadReceta {
   DIFICIL = 'Difícil',
 }
 
-export enum TiempoReceta {
-  MIN_10 = '10 min',
-  MIN_20 = '20 min',
-  MIN_30 = '30 min',
-  MIN_45 = '45 min',
-  MIN_60 = '60 min',
+export enum EstadoLote {
+  DISPONIBLE = 'disponible',
+  AGOTADO = 'agotado',
 }

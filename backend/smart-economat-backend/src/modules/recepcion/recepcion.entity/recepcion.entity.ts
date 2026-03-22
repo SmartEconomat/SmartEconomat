@@ -7,6 +7,7 @@ import {
   Index,
 } from 'typeorm';
 import type { Relation } from 'typeorm';
+import { Exclude } from 'class-transformer';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { EstadoRecepcion } from '../enums/estado-recepcion.enum';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
@@ -36,6 +37,7 @@ export class Recepcion extends BaseEntity {
    * La relación es SET NULL para mantener el histórico.
    * @type {Usuario | null}
    */
+  @Exclude()
   @ManyToOne(() => Usuario, (usuario) => usuario.recepciones, {
     nullable: true,
     onDelete: 'SET NULL',

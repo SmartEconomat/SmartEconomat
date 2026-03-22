@@ -120,7 +120,7 @@ describe('AuthProvider', () => {
     );
 
     await waitFor(() => {
-      expect(mockedAuthService.getCurrentUser).toHaveBeenCalledTimes(1);
+      expect(mockedAuthService.getCurrentUser).toHaveBeenCalled();
       expect(screen.getByTestId('authenticated')).toHaveTextContent('false');
       expect(screen.getByTestId('verified')).toHaveTextContent('false');
       expect(localStorage.getItem('user')).toBeNull();

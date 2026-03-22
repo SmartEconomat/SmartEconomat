@@ -15,7 +15,7 @@ import { rolUsuario } from '../../usuario/enums/usuario.enums';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Jimp, JimpMime } from 'jimp';
+import { Jimp } from 'jimp';
 import { ImageProcessOptionsDto } from '../dto/image-process-options.dto';
 
 export interface PaginatedFiles {
@@ -26,10 +26,11 @@ export interface PaginatedFiles {
   totalPages: number;
 }
 
-type ProcessedImageFormat = 'jpeg' | 'png';
+type ProcessedImageFormat = 'webp';
 
 @Injectable()
 export class ArchivoService {
+  private static webpEncoderInitPromise?: Promise<void>;
   private readonly logger = new Logger(ArchivoService.name);
   private readonly storageType: string;
   private readonly uploadDir: string;
@@ -57,6 +58,8 @@ export class ArchivoService {
     }
 
     let fileUrl = '';
+    let fileSize = file.size;
+    let fileMimeType = file.mimetype;
     let optimizedUrl = '';
     let optimizedSize = 0;
     let optimizedMimeType = '';
@@ -72,12 +75,18 @@ export class ArchivoService {
           optimizedUrl = `/api/v1/archivos/content/${path.basename(processed.path)}`;
           optimizedSize = processed.size;
           optimizedMimeType = processed.mimeType;
+          fileUrl = optimizedUrl;
+          fileSize = processed.size;
+          fileMimeType = processed.mimeType;
+
+          await this.deleteLocalFileQuietly(file.path);
         } catch (error) {
-          if (process.env.NODE_ENV !== 'test') {
-            this.logger.warn(
-              `Image optimization skipped for ${file.originalname}: ${error instanceof Error ? error.message : 'unknown error'}`
-            );
-          }
+          const reason =
+            error instanceof Error ? error.message : 'unknown error';
+
+          this.logger.warn(
+            `Image optimization failed for ${file.originalname}: ${reason}. Falling back to original file.`
+          );
         }
       }
     } else {
@@ -87,8 +96,8 @@ export class ArchivoService {
     const newArchivo = this.archivoRepository.create({
       nombre: file.originalname,
       url: fileUrl,
-      tamano: file.size,
-      mimeType: file.mimetype,
+      tamano: fileSize,
+      mimeType: fileMimeType,
       usuario: user,
       urlOptimized: optimizedUrl || undefined,
       tamanoOptimized: optimizedSize || undefined,
@@ -110,6 +119,8 @@ export class ArchivoService {
     const outputFormat = this.resolveOutputFormat(options.formatoSalida);
     const outputFileName = `${name}_optimized_${timestamp}.${outputFormat}`;
     const outputPath = path.join(dir, outputFileName);
+
+    await this.initializeWebpEncoder();
 
     const image = await Jimp.read(inputPath);
     const targetWidth = options.ancho
@@ -139,13 +150,24 @@ export class ArchivoService {
       }
     }
 
-    const mimeType = outputFormat === 'png' ? JimpMime.png : JimpMime.jpeg;
-    const outputBuffer =
-      outputFormat === 'png'
-        ? await image.getBuffer(JimpMime.png)
-        : await image.getBuffer(JimpMime.jpeg, {
-            quality: this.normalizeQuality(options.calidad),
-          });
+    const mimeType = 'image/webp';
+    const { default: encodeWebp } = await this.loadEsmModule<{
+      default: (imageData: unknown, options: unknown) => Promise<Uint8Array>;
+    }>('@jsquash/webp/encode.js');
+    const outputBuffer = Buffer.from(
+      await encodeWebp(
+        {
+          data: new Uint8ClampedArray(image.bitmap.data),
+          width: image.bitmap.width,
+          height: image.bitmap.height,
+          colorSpace: 'srgb',
+        },
+        {
+          quality: this.normalizeQuality(options.calidad),
+          alpha_quality: this.normalizeQuality(options.calidad),
+        }
+      )
+    );
 
     await fs.promises.writeFile(outputPath, outputBuffer);
 
@@ -161,23 +183,48 @@ export class ArchivoService {
   private resolveOutputFormat(
     requestedFormat?: ImageProcessOptionsDto['formatoSalida']
   ): ProcessedImageFormat {
-    if (requestedFormat === 'png') {
-      return 'png';
+    void requestedFormat;
+    return 'webp';
+  }
+
+  private async initializeWebpEncoder(): Promise<void> {
+    if (!ArchivoService.webpEncoderInitPromise) {
+      ArchivoService.webpEncoderInitPromise = (async () => {
+        const [{ init: initEncoder }, { simd }] = await Promise.all([
+          this.loadEsmModule<{
+            init: (options: { wasmBinary: Buffer }) => Promise<void>;
+          }>('@jsquash/webp/encode.js'),
+          this.loadEsmModule<{ simd: () => Promise<boolean> }>(
+            'wasm-feature-detect'
+          ),
+        ]);
+
+        const useSimd = await simd();
+        const encoderWasmPath = path.resolve(
+          process.cwd(),
+          'node_modules/@jsquash/webp/codec/enc',
+          useSimd ? 'webp_enc_simd.wasm' : 'webp_enc.wasm'
+        );
+
+        const encoderWasm = await fs.promises.readFile(encoderWasmPath);
+
+        await initEncoder({ wasmBinary: encoderWasm });
+      })();
     }
 
-    if (requestedFormat === 'webp' && process.env.NODE_ENV !== 'test') {
-      this.logger.warn(
-        'webp ya no está disponible en el backend; se normaliza a jpeg para mantener compatibilidad multiplataforma'
-      );
-    }
-
-    return 'jpeg';
+    return ArchivoService.webpEncoderInitPromise;
   }
 
   private normalizeQuality(quality?: number): number {
     const normalized = quality ?? 80;
 
     return Math.max(1, Math.min(100, normalized));
+  }
+
+  private loadEsmModule<T>(specifier: string): Promise<T> {
+    const importer = globalThis.eval as unknown as (code: string) => Promise<T>;
+
+    return importer(`import(${JSON.stringify(specifier)})`);
   }
 
   async findAll(filterDto: FileListFilterDto): Promise<PaginatedFiles> {
@@ -261,6 +308,104 @@ export class ArchivoService {
     archivo.isDeleted = true;
     await this.archivoRepository.save(archivo);
 
+    await this.deleteManagedFiles(archivo);
+
     await this.archivoRepository.softRemove(archivo);
+  }
+
+  async cleanupByUrl(fileUrl?: string): Promise<void> {
+    if (!fileUrl?.trim()) {
+      return;
+    }
+
+    const trimmedUrl = fileUrl.trim();
+    const archivo = await this.archivoRepository.findOne({
+      where: [
+        { url: trimmedUrl, isDeleted: false },
+        { urlOptimized: trimmedUrl, isDeleted: false },
+      ],
+    });
+
+    if (archivo) {
+      archivo.isDeleted = true;
+      await this.archivoRepository.save(archivo);
+      await this.deleteManagedFiles(archivo);
+      await this.archivoRepository.softRemove(archivo);
+      return;
+    }
+
+    await this.deletePhysicalFileFromUrl(trimmedUrl);
+  }
+
+  private async deleteManagedFiles(archivo: Archivo): Promise<void> {
+    await this.deletePhysicalFileFromUrl(archivo.url);
+
+    if (archivo.urlOptimized) {
+      await this.deletePhysicalFileFromUrl(archivo.urlOptimized);
+    }
+  }
+
+  private async deletePhysicalFileFromUrl(fileUrl?: string): Promise<void> {
+    const filename = this.extractFilenameFromUrl(fileUrl);
+    if (!filename) {
+      return;
+    }
+
+    const filePath = path.resolve(this.uploadDir, filename);
+    const uploadDirResolved = path.resolve(this.uploadDir);
+
+    if (!filePath.startsWith(uploadDirResolved + path.sep)) {
+      return;
+    }
+
+    if (!fs.existsSync(filePath)) {
+      return;
+    }
+
+    try {
+      await fs.promises.unlink(filePath);
+    } catch (error) {
+      this.logger.warn(
+        `No se pudo eliminar el archivo físico ${filePath}: ${error instanceof Error ? error.message : 'unknown error'}`
+      );
+    }
+  }
+
+  private async deleteLocalFileQuietly(filePath?: string): Promise<void> {
+    if (!filePath) {
+      return;
+    }
+
+    if (!fs.existsSync(filePath)) {
+      return;
+    }
+
+    try {
+      await fs.promises.unlink(filePath);
+    } catch (error) {
+      this.logger.warn(
+        `No se pudo eliminar el archivo temporal ${filePath}: ${error instanceof Error ? error.message : 'unknown error'}`
+      );
+    }
+  }
+
+  private extractFilenameFromUrl(fileUrl?: string): string | null {
+    if (!fileUrl?.trim()) {
+      return null;
+    }
+
+    const trimmedUrl = fileUrl.trim();
+    const normalizedUrl = trimmedUrl.split('?')[0];
+    const uploadsMatch = normalizedUrl.match(/(?:^|\/)uploads\/([^/]+)$/i);
+    if (uploadsMatch?.[1]) {
+      return uploadsMatch[1];
+    }
+
+    const contentMatch = normalizedUrl.match(/\/archivos\/content\/([^/]+)$/i);
+    if (contentMatch?.[1]) {
+      return contentMatch[1];
+    }
+
+    return null;
   }
 }

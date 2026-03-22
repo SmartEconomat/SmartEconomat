@@ -39,5 +39,6 @@ export enum TipoProducto {
   ACEITE = 'aceite',
   AZUCAR = 'azucar',
   BEBIDA = 'bebida',
+  ELABORADO = 'elaborado',
   OTRO = 'otro',
 }

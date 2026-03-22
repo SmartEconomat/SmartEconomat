@@ -552,7 +552,10 @@ const Pedidos: React.FC = () => {
       {row.estado !== EstadoPedido.PENDIENTE && (
         <IconButton
           color="primary"
-          onClick={() => handleEditClick(row)}
+          onClick={(e) => {
+            e.currentTarget.blur();
+            handleEditClick(row);
+          }}
           size="small"
           aria-label="Ver Detalles"
           title="Ver Detalles del Pedido"
@@ -563,7 +566,10 @@ const Pedidos: React.FC = () => {
       {canEdit && row.estado === EstadoPedido.PENDIENTE && (
         <IconButton
           color="success"
-          onClick={() => setItemToAceptar(row)}
+          onClick={(e) => {
+            e.currentTarget.blur();
+            setItemToAceptar(row);
+          }}
           size="small"
           aria-label="Aprobar"
           title="Aprobar Pedido"
@@ -574,7 +580,10 @@ const Pedidos: React.FC = () => {
       {canEdit && row.estado === EstadoPedido.PENDIENTE && (
         <IconButton
           color="warning"
-          onClick={() => setItemToCancelar(row)}
+          onClick={(e) => {
+            e.currentTarget.blur();
+            setItemToCancelar(row);
+          }}
           size="small"
           aria-label="Cancelar"
           title="Cancelar Pedido"
@@ -587,7 +596,10 @@ const Pedidos: React.FC = () => {
           row.estado === EstadoPedido.CANCELADO) && (
           <IconButton
             color="error"
-            onClick={() => setItemToDelete(row)}
+            onClick={(e) => {
+              e.currentTarget.blur();
+              setItemToDelete(row);
+            }}
             size="small"
             aria-label="Borrar"
             title="Eliminar de la base de datos"
@@ -598,7 +610,10 @@ const Pedidos: React.FC = () => {
       {canEdit && row.estado === EstadoPedido.PENDIENTE && (
         <IconButton
           color="secondary"
-          onClick={() => handleEditClick(row)}
+          onClick={(e) => {
+            e.currentTarget.blur();
+            handleEditClick(row);
+          }}
           size="small"
           aria-label="Editar"
           title="Editar Pedido"
@@ -677,7 +692,10 @@ const Pedidos: React.FC = () => {
               <IconButton
                 color="primary"
                 size="small"
-                onClick={() => handleViewBatchClick(row)}
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  handleViewBatchClick(row);
+                }}
                 disabled={isFetchingBatch}
               >
                 <VisibilityIcon fontSize="small" />

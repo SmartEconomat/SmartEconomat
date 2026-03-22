@@ -1,4 +1,5 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
+import { UseInterceptors, Controller, Get, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -20,6 +21,8 @@ export class DashboardController {
 
   @Get('stats')
   @RequirePermissions('dashboard:ver_estadisticas')
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(60000)
   @ApiOperation({ summary: 'Get dashboard statistics (KPIs)' })
   @ApiResponse({
     status: 200,

@@ -11,9 +11,20 @@ import { Inventario } from '../../inventario/inventario.entity/inventario.entity
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
 import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
 import { TipoMovimiento } from '../../movimiento/enums/movimiento.enums';
+import { ProductoAlergeno } from '../../producto/producto-alergeno.entity/producto-alergeno.entity';
+import { Alergeno } from '../../producto/enums/producto.enums';
+import { EstadoLote } from '../enums/receta.enums';
+import { Ubicacion } from '../../ubicacion/ubicacion.entity/ubicacion.entity';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { ValidarProduccionDto } from '../dto/validar-produccion.dto';
+import { In } from 'typeorm';
+import { Receta } from '../receta.entity/receta.entity';
+import {
+  ConsumirProduccionDto,
+  TipoConsumoProduccion,
+} from '../dto/consumir-produccion.dto';
 
 @Injectable()
 export class ProduccionService {
@@ -24,18 +35,13 @@ export class ProduccionService {
 
   async ejecutarProduccion(
     dto: EjecutarProduccionDto,
-    userId: string
+    userId: string,
+    preparacionId?: string
   ): Promise<ProduccionLote> {
     const receta = await this.recetaRepository.findById(dto.recetaId);
 
     if (!receta) {
       throw new NotFoundException(I18nHelper.getError('RECIPE_NOT_FOUND'));
-    }
-
-    if (!receta.productoResultado) {
-      throw new BadRequestException(
-        I18nHelper.getError('RECIPE_NO_RESULT_PRODUCT')
-      );
     }
 
     if (!receta.rendimiento || receta.rendimiento <= 0) {
@@ -50,25 +56,36 @@ export class ProduccionService {
       );
     }
 
-    const productoResultadoId = receta.productoResultado.id;
-
-    const productoProveedorResultado = await this.dataSource
-      .getRepository(ProductoProveedor)
-      .findOne({
-        where: { producto: { id: productoResultadoId } },
-        relations: ['producto'],
-      });
-
-    if (!productoProveedorResultado) {
-      throw new BadRequestException(
-        I18nHelper.getError('PRODUCT_PROVIDER_NOT_FOUND')
-      );
-    }
-
     return this.dataSource.transaction(async (manager) => {
+      const productoElaborado =
+        await this.recetaRepository.ensureProductoElaborado(manager, receta);
+
+      const productoElaboradoId = productoElaborado.id;
+
+      const productoProveedorResultado = await manager.findOne(
+        ProductoProveedor,
+        {
+          where: { producto: { id: productoElaboradoId } },
+          relations: ['producto'],
+        }
+      );
+
+      if (!productoProveedorResultado) {
+        throw new BadRequestException(
+          I18nHelper.getError('PRODUCT_PROVIDER_NOT_FOUND')
+        );
+      }
+
       const multiplicador = dto.cantidadProducida / receta.rendimiento!;
 
       const productoIds = receta.ingredientes.map((i) => i.producto.id);
+
+      console.log('DEBUG: recetaId', receta.id);
+      console.log('DEBUG: productoElaboradoId', productoElaboradoId);
+      console.log(
+        'DEBUG: productoProveedorResultado',
+        !!productoProveedorResultado
+      );
 
       const inventarios = await manager
         .createQueryBuilder(Inventario, 'inv')
@@ -99,18 +116,16 @@ export class ProduccionService {
             ? cantidadNeta / (1 - merma / 100)
             : cantidadNeta;
 
-        let cantidadRequerida = cantidadBruta;
+        const cantidadRequerida = cantidadBruta;
 
         const invsProducto = inventarios.filter(
           (inv) => inv.productoProveedor.producto.id === ing.producto.id
         );
 
-        const totalStock = invsProducto.reduce(
-          (sum, inv) => sum + Number(inv.cantidadActual),
-          0
-        );
+        const totalStockInIngredientUnit =
+          this.obtenerTotalStockEnUnidadIngrediente(invsProducto, ing.unidad);
 
-        if (totalStock < cantidadRequerida) {
+        if (totalStockInIngredientUnit < cantidadRequerida) {
           throw new BadRequestException(
             I18nHelper.getError('NOT_ENOUGH_STOCK_FOR_INGREDIENT', {
               ingredient: ing.producto.nombre,
@@ -118,30 +133,54 @@ export class ProduccionService {
           );
         }
 
+        let remainingToDeductInIngredientUnit = cantidadRequerida;
+
         for (const inv of invsProducto) {
-          if (cantidadRequerida <= 0) break;
+          if (remainingToDeductInIngredientUnit <= 0) break;
 
-          const disponible = Number(inv.cantidadActual);
-          const descontar = Math.min(disponible, cantidadRequerida);
+          console.log(
+            `DEBUG: ing="${ing.producto.nombre}" req=${cantidadRequerida} invId=${inv.id} stock=${inv.cantidadActual} unit=${inv.productoProveedor.producto.unidad}`
+          );
+          const invUnit = inv.productoProveedor.producto.unidad;
+          const disponibleInIngredientUnit =
+            Number(inv.cantidadActual) *
+            this.conversionFactor(invUnit, ing.unidad);
 
-          inv.ajustarCantidad(-descontar);
-          cantidadRequerida -= descontar;
+          const descontarInIngredientUnit = Math.min(
+            disponibleInIngredientUnit,
+            remainingToDeductInIngredientUnit
+          );
+          const factor = this.conversionFactor(ing.unidad, invUnit);
+          const descontarInInventoryUnit = descontarInIngredientUnit * factor;
+
+          console.log(
+            `DEBUG: disponibleInIngUnit=${disponibleInIngredientUnit} descontarInIngUnit=${descontarInIngredientUnit} factor=${factor} descontarInInvUnit=${descontarInInventoryUnit}`
+          );
+
+          inv.ajustarCantidad(-descontarInInventoryUnit);
+          remainingToDeductInIngredientUnit -= descontarInIngredientUnit;
 
           const precioUnitario =
             inv.productoProveedor.precioUnitario != null
               ? Number(inv.productoProveedor.precioUnitario)
               : 0;
-          costeTotalReal += precioUnitario * descontar;
+
+          const costAdd = precioUnitario * descontarInInventoryUnit;
+          costeTotalReal += costAdd;
+          console.log(
+            `DEBUG: precio=${precioUnitario} costAdd=${costAdd} totalNow=${costeTotalReal}`
+          );
 
           consumos.push({
             inv,
-            descontar,
+            descontar: descontarInInventoryUnit,
             pp: inv.productoProveedor,
             descripcion: `Producción: ${receta.nombre} — consumo de ${ing.producto.nombre}`,
           });
         }
       }
 
+      console.log('DEBUG: Final costeTotalReal', costeTotalReal);
       await manager.save(Inventario, inventarios);
 
       let fechaCaducidad: Date | null = null;
@@ -152,13 +191,36 @@ export class ProduccionService {
         fechaCaducidad.setDate(fechaCaducidad.getDate() + receta.diasCaducidad);
       }
 
+      let porcionesProducidas: number;
+      if (receta.tamanioRacion && Number(receta.tamanioRacion) > 0) {
+        porcionesProducidas = Number(
+          (dto.cantidadProducida / Number(receta.tamanioRacion)).toFixed(3)
+        );
+      } else {
+        const racionesReceta = receta.raciones || 1;
+        const rendimientoBase =
+          receta.rendimiento && Number(receta.rendimiento) > 0
+            ? Number(receta.rendimiento)
+            : racionesReceta;
+
+        porcionesProducidas = Number(
+          ((dto.cantidadProducida / rendimientoBase) * racionesReceta).toFixed(
+            3
+          )
+        );
+      }
+
       const lote = manager.create(ProduccionLote, {
         receta: { id: receta.id } as any,
         usuario: { id: userId } as any,
+        preparacionId: preparacionId,
         cantidadProducida: dto.cantidadProducida,
         fechaProduccion: new Date(),
         fechaCaducidad,
         costeTotalReal,
+        porcionesProducidas,
+        porcionesRestantes: porcionesProducidas,
+        estado: EstadoLote.DISPONIBLE,
       });
       await manager.save(lote);
 
@@ -176,12 +238,25 @@ export class ProduccionService {
       );
       await manager.save(Movimiento, movimientosConsumo);
 
+      let destinoId = dto.ubicacionDestinoId;
+      if (!destinoId) {
+        const defaultUbicacion = await manager
+          .getRepository(Ubicacion)
+          .findOne({ where: {} });
+        if (!defaultUbicacion) {
+          throw new BadRequestException(
+            'No se han encontrado ubicaciones en el sistema'
+          );
+        }
+        destinoId = defaultUbicacion.id;
+      }
+
       const inventarioResultado = manager.create(Inventario, {
         productoProveedor: productoProveedorResultado,
         cantidadActual: dto.cantidadProducida,
         cantidadMinima: 0,
         cantidadMaxima: null,
-        ubicacion: { id: dto.ubicacionDestinoId } as any,
+        ubicacion: { id: destinoId } as any,
         fechaEntrada: new Date(),
         fechaCaducidad,
       });
@@ -199,6 +274,38 @@ export class ProduccionService {
       });
       await manager.save(movResultado);
 
+      const ingredientAllergens = new Set<Alergeno>();
+      for (const ing of receta.ingredientes) {
+        if (ing.producto.alergenos) {
+          ing.producto.alergenos.forEach((pa) =>
+            ingredientAllergens.add(pa.alergeno)
+          );
+        }
+      }
+
+      const existingAllergens = await manager.find(ProductoAlergeno, {
+        where: { productoId: productoElaboradoId },
+      });
+      const existingAllergenSet = new Set(
+        existingAllergens.map((a) => a.alergeno)
+      );
+
+      for (const ag of ingredientAllergens) {
+        if (!existingAllergenSet.has(ag)) {
+          await manager.save(
+            manager.create(ProductoAlergeno, {
+              productoId: productoElaboradoId,
+              alergeno: ag,
+            })
+          );
+        }
+      }
+
+      const nuevoCosteUnitario = costeTotalReal / dto.cantidadProducida;
+      await manager.update(Receta, receta.id, {
+        costeUnitarioEstimado: nuevoCosteUnitario,
+      });
+
       const savedLote = await manager.findOne(ProduccionLote, {
         where: { id: lote.id },
         relations: ['receta', 'usuario'],
@@ -215,10 +322,12 @@ export class ProduccionService {
     const limit = Math.min(query.limit ?? 20, 50);
     const sortBy = query.sortBy ?? 'fechaProduccion';
     const order = query.order ?? 'DESC';
+    const estado = query.estado as EstadoLote;
 
     const [data, total] = await this.dataSource
       .getRepository(ProduccionLote)
       .findAndCount({
+        where: estado ? { estado } : {},
         relations: ['receta', 'usuario'],
         order: { [sortBy]: order },
         skip: (page - 1) * limit,
@@ -234,6 +343,97 @@ export class ProduccionService {
     };
   }
 
+  async consumirPorciones(
+    loteId: string,
+    dto: ConsumirProduccionDto
+  ): Promise<ProduccionLote> {
+    return this.dataSource.transaction(async (manager) => {
+      const lote = await manager.findOne(ProduccionLote, {
+        where: { id: loteId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!lote) {
+        throw new NotFoundException(
+          I18nHelper.getError('PRODUCCION_LOTE_NOT_FOUND')
+        );
+      }
+
+      if (lote.estado === EstadoLote.AGOTADO) {
+        throw new BadRequestException('El lote ya se encuentra agotado');
+      }
+
+      const receta = await manager.findOne(Receta, {
+        where: { id: lote.recetaId },
+      });
+
+      if (!receta) {
+        throw new NotFoundException(I18nHelper.getError('RECIPE_NOT_FOUND'));
+      }
+
+      lote.receta = receta;
+
+      const porciones = this.resolveConsumptionPortions(lote, dto);
+      const actuales = Number(lote.porcionesRestantes);
+      if (actuales + 0.000001 < porciones) {
+        throw new BadRequestException(
+          `No hay suficientes raciones disponibles. Actuales: ${Number(
+            actuales.toFixed(3)
+          )}`
+        );
+      }
+
+      const nuevasRestantes = Number((actuales - porciones).toFixed(3));
+      lote.porcionesRestantes = nuevasRestantes;
+
+      if (nuevasRestantes <= 0) {
+        lote.estado = EstadoLote.AGOTADO;
+      }
+
+      await manager.save(ProduccionLote, lote);
+
+      const loteActualizado = await manager.findOne(ProduccionLote, {
+        where: { id: lote.id },
+        relations: ['receta', 'usuario'],
+      });
+
+      return loteActualizado ?? lote;
+    });
+  }
+
+  private resolveConsumptionPortions(
+    lote: ProduccionLote,
+    dto: ConsumirProduccionDto
+  ): number {
+    if (dto.tipo === TipoConsumoProduccion.RACIONES) {
+      return dto.valor;
+    }
+
+    const recipe = lote.receta;
+    if (!recipe) {
+      throw new BadRequestException('No se pudo resolver la receta del lote.');
+    }
+
+    const tamanioRacion =
+      recipe.tamanioRacion && Number(recipe.tamanioRacion) > 0
+        ? Number(recipe.tamanioRacion)
+        : null;
+
+    const cantidadPorRacion = tamanioRacion
+      ? tamanioRacion
+      : recipe.rendimiento && recipe.raciones && Number(recipe.raciones) > 0
+        ? Number(recipe.rendimiento) / Number(recipe.raciones)
+        : null;
+
+    if (!cantidadPorRacion || cantidadPorRacion <= 0) {
+      throw new BadRequestException(
+        'La receta no tiene definida una equivalencia válida por ración.'
+      );
+    }
+
+    return dto.valor / cantidadPorRacion;
+  }
+
   async findOne(id: string): Promise<ProduccionLote> {
     const lote = await this.dataSource.getRepository(ProduccionLote).findOne({
       where: { id },
@@ -241,11 +441,145 @@ export class ProduccionService {
     });
 
     if (!lote) {
-      throw new NotFoundException(
-        I18nHelper.getError('PRODUCCION_LOTE_NOT_FOUND')
-      );
+      throw new NotFoundException(I18nHelper.getError('LOTE_NO_ENCONTRADO'));
     }
 
     return lote;
+  }
+
+  async validarMultiple(dto: ValidarProduccionDto) {
+    const recipeIds = dto.items.map((it) => it.recetaId);
+    if (recipeIds.length === 0) return { ingredients: [] };
+
+    const recetas = await this.recetaRepository.findByIds(recipeIds);
+    const agregation: Record<
+      string,
+      {
+        product: any;
+        required: number;
+        unit: string;
+        name: string;
+        proveedorFavoritoId?: string;
+      }
+    > = {};
+
+    for (const item of dto.items) {
+      const receta = recetas.find((r) => r.id === item.recetaId);
+      if (!receta) continue;
+
+      const multiplicador = item.cantidad / (receta.rendimiento || 1);
+
+      for (const ing of receta.ingredientes) {
+        const prodId = ing.producto.id;
+        const qty = Number((ing.cantidad * multiplicador).toFixed(3));
+
+        if (!agregation[prodId]) {
+          agregation[prodId] = {
+            product: ing.producto,
+            required: 0,
+            unit: String(ing.unidad),
+            name: ing.producto.nombre,
+            proveedorFavoritoId: ing.proveedorFavoritoId,
+          };
+        }
+
+        agregation[prodId].required += qty;
+      }
+    }
+
+    const productIds = Object.keys(agregation);
+    const inventarios = await this.dataSource.getRepository(Inventario).find({
+      where: { productoProveedor: { producto: { id: In(productIds) } } },
+      relations: ['productoProveedor', 'productoProveedor.producto'],
+    });
+
+    const proveedores = await this.dataSource
+      .getRepository(ProductoProveedor)
+      .find({
+        where: { productoId: In(productIds) },
+        relations: ['proveedor'],
+      });
+
+    const results = Object.values(agregation).map((req) => {
+      const prodInvs = inventarios.filter(
+        (inv) => inv.productoProveedor.producto.id === req.product.id
+      );
+      const totalStockInReqUnit = this.obtenerTotalStockEnUnidadIngrediente(
+        prodInvs,
+        req.unit
+      );
+
+      const prodProvs = proveedores.filter(
+        (p) => p.productoId === req.product.id && p.precioUnitario !== null
+      );
+
+      let selected = prodProvs.find(
+        (p) => p.proveedorId === req.proveedorFavoritoId
+      );
+      if (!selected) {
+        selected = prodProvs.sort(
+          (a, b) => Number(a.precioUnitario) - Number(b.precioUnitario)
+        )[0];
+      }
+
+      return {
+        productoId: req.product.id,
+        nombre: req.name,
+        requerido: Number(req.required.toFixed(3)),
+        disponible: Number(totalStockInReqUnit.toFixed(3)),
+        unidad: req.unit,
+        isEnough: totalStockInReqUnit >= req.required - 0.0001,
+        cheapestProveedorId: selected?.proveedorId,
+        cheapestProveedorNombre: selected?.proveedor?.nombre,
+        cheapestProductoProveedorId: selected?.id,
+        cheapestPrecio: selected?.precioUnitario,
+        isFavorite: !!(
+          req.proveedorFavoritoId &&
+          selected?.proveedorId === req.proveedorFavoritoId
+        ),
+      };
+    });
+
+    return { ingredients: results };
+  }
+
+  private conversionFactor(fromUnit: any, toUnit: any): number {
+    const from = String(fromUnit).toLowerCase();
+    const to = String(toUnit).toLowerCase();
+    if (from === to) return 1;
+    if (
+      (from === 'kg' || from === 'kilogramo') &&
+      (to === 'g' || to === 'gramo')
+    )
+      return 1000;
+    if (
+      (from === 'g' || from === 'gramo') &&
+      (to === 'kg' || to === 'kilogramo')
+    )
+      return 0.001;
+    if (
+      (from === 'l' || from === 'litro') &&
+      (to === 'ml' || to === 'mililitro')
+    )
+      return 1000;
+    if (
+      (from === 'ml' || from === 'mililitro') &&
+      (to === 'l' || to === 'litro')
+    )
+      return 0.001;
+    return 1;
+  }
+
+  private obtenerTotalStockEnUnidadIngrediente(
+    invs: Inventario[],
+    targetUnit: any
+  ): number {
+    let sum = 0;
+    for (const inv of invs) {
+      const invUnit = inv.productoProveedor.producto.unidad;
+      sum +=
+        Number(inv.cantidadActual) * this.conversionFactor(invUnit, targetUnit);
+    }
+    return sum;
   }
 }

@@ -21,8 +21,12 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import { fetchProductos } from '../../services/producto.service';
-import { Producto } from '../../services/producto.types';
+import {
+  fetchProductos,
+  getProductoById,
+  searchProductosByName,
+} from '../../services/producto.service';
+import { Producto, ProductoProveedor } from '../../services/producto.types';
 import { UnidadIngrediente } from '../../services/receta.types';
 import { EU_ALLERGENS } from '../../utils/constants';
 
@@ -30,10 +34,14 @@ export interface UI_RecetaIngrediente {
   productoId: string;
   cantidad: number;
   unidad: UnidadIngrediente;
+  mermaAplicada?: number;
+  proveedorFavoritoId?: string;
+  proveedorFavoritoAuto?: boolean;
   producto?: {
     id: string;
     nombre: string;
     alergenos?: { id_producto: string; alergeno: string }[];
+    proveedores?: ProductoProveedor[];
   };
 }
 
@@ -47,14 +55,85 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
   onChange,
 }) => {
   const [allProducts, setAllProducts] = useState<Producto[]>([]);
+  const [productDetails, setProductDetails] = useState<
+    Record<string, Producto>
+  >({});
   const [isLoading, setIsLoading] = useState(false);
+  const [searchResultsByLine, setSearchResultsByLine] = useState<
+    Record<number, Producto[]>
+  >({});
+  const [isSearchingByLine, setIsSearchingByLine] = useState<
+    Record<number, boolean>
+  >({});
+
+  const getAvailableProviders = (
+    line: UI_RecetaIngrediente,
+    fallbackProduct?: Producto | null
+  ): ProductoProveedor[] => {
+    const detailedProduct = line.productoId
+      ? productDetails[line.productoId]
+      : undefined;
+
+    return (
+      detailedProduct?.proveedores ||
+      fallbackProduct?.proveedores ||
+      line.producto?.proveedores ||
+      []
+    );
+  };
+
+  const getCheapestProvider = (
+    providers: ProductoProveedor[]
+  ): ProductoProveedor | undefined => {
+    const providersWithPrice = providers.filter(
+      (provider) =>
+        provider.proveedor?.id &&
+        typeof provider.precioUnitario === 'number' &&
+        Number.isFinite(provider.precioUnitario)
+    );
+
+    if (providersWithPrice.length > 0) {
+      return providersWithPrice.reduce((cheapest, current) =>
+        (current.precioUnitario ?? Number.POSITIVE_INFINITY) <
+        (cheapest.precioUnitario ?? Number.POSITIVE_INFINITY)
+          ? current
+          : cheapest
+      );
+    }
+
+    return providers.find((provider) => provider.proveedor?.id);
+  };
+
+  const buildInlineProduct = (product: Producto) => ({
+    id: product.id,
+    nombre: product.nombre,
+    alergenos: product.alergenos,
+    proveedores: product.proveedores,
+  });
 
   useEffect(() => {
     const loadProducts = async () => {
       setIsLoading(true);
       try {
-        const products = await fetchProductos(1, 50);
-        setAllProducts(products.data);
+        const limit = 50;
+        let currentPage = 1;
+        let totalPages = 1;
+        const loadedProducts: Producto[] = [];
+
+        do {
+          const response = await fetchProductos(currentPage, limit);
+          loadedProducts.push(...response.data);
+          totalPages = response.totalPages || 1;
+          currentPage += 1;
+        } while (currentPage <= totalPages);
+
+        const uniqueProducts = Array.from(
+          new Map(
+            loadedProducts.map((product) => [product.id, product])
+          ).values()
+        );
+
+        setAllProducts(uniqueProducts);
       } catch (error) {
         console.error('Error loading products for recipe:', error);
       } finally {
@@ -63,6 +142,115 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
     };
     loadProducts();
   }, []);
+
+  useEffect(() => {
+    const productIdsToLoad = Array.from(
+      new Set(
+        value
+          .map((line) => line.productoId)
+          .filter(
+            (productoId): productoId is string =>
+              Boolean(productoId) && !productDetails[productoId]
+          )
+      )
+    );
+
+    if (productIdsToLoad.length === 0) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadMissingProductDetails = async () => {
+      const loadedProducts = await Promise.all(
+        productIdsToLoad.map((productoId) => getProductoById(productoId))
+      );
+
+      if (cancelled) {
+        return;
+      }
+
+      setProductDetails((prev) => {
+        const next = { ...prev };
+        loadedProducts.forEach((product) => {
+          if (product) {
+            next[product.id] = product;
+          }
+        });
+        return next;
+      });
+    };
+
+    void loadMissingProductDetails();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [value, productDetails]);
+
+  useEffect(() => {
+    let hasChanges = false;
+
+    const nextLines = value.map((line) => {
+      if (!line.productoId) {
+        return line;
+      }
+
+      const detailedProduct = productDetails[line.productoId];
+      if (!detailedProduct) {
+        return line;
+      }
+
+      let nextLine = line;
+      const nextInlineProduct = buildInlineProduct(detailedProduct);
+
+      if (
+        !line.producto ||
+        line.producto.id !== detailedProduct.id ||
+        !line.producto.proveedores?.length
+      ) {
+        nextLine = {
+          ...nextLine,
+          producto: nextInlineProduct,
+        };
+        hasChanges = true;
+      }
+
+      const availableProviders = getAvailableProviders(
+        nextLine,
+        detailedProduct
+      );
+      const currentProviderIsValid = Boolean(
+        nextLine.proveedorFavoritoId &&
+        availableProviders.some(
+          (provider) => provider.proveedor?.id === nextLine.proveedorFavoritoId
+        )
+      );
+
+      if (!currentProviderIsValid) {
+        const cheapestProvider = getCheapestProvider(availableProviders);
+        const cheapestProviderId = cheapestProvider?.proveedor?.id;
+
+        if (
+          nextLine.proveedorFavoritoId !== cheapestProviderId ||
+          nextLine.proveedorFavoritoAuto !== Boolean(cheapestProviderId)
+        ) {
+          nextLine = {
+            ...nextLine,
+            proveedorFavoritoId: cheapestProviderId,
+            proveedorFavoritoAuto: Boolean(cheapestProviderId),
+          };
+          hasChanges = true;
+        }
+      }
+
+      return nextLine;
+    });
+
+    if (hasChanges) {
+      onChange(nextLines);
+    }
+  }, [value, productDetails, onChange]);
 
   const handleAddLine = () => {
     const newLines = [
@@ -75,6 +263,38 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
   const handleRemoveLine = (index: number) => {
     const newLines = value.filter((_, i) => i !== index);
     onChange(newLines);
+    setSearchResultsByLine((prev) => {
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
+    setIsSearchingByLine((prev) => {
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
+  };
+
+  const handleProductSearch = async (index: number, query: string) => {
+    const trimmedQuery = query.trim();
+
+    if (trimmedQuery.length < 2) {
+      setSearchResultsByLine((prev) => ({ ...prev, [index]: [] }));
+      setIsSearchingByLine((prev) => ({ ...prev, [index]: false }));
+      return;
+    }
+
+    setIsSearchingByLine((prev) => ({ ...prev, [index]: true }));
+
+    try {
+      const products = await searchProductosByName(trimmedQuery);
+      setSearchResultsByLine((prev) => ({ ...prev, [index]: products }));
+    } catch (error) {
+      console.error('Error searching products for recipe:', error);
+      setSearchResultsByLine((prev) => ({ ...prev, [index]: [] }));
+    } finally {
+      setIsSearchingByLine((prev) => ({ ...prev, [index]: false }));
+    }
   };
 
   const handleUpdateLine = (
@@ -86,18 +306,49 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
     const newLines = [...value];
     newLines[index] = { ...newLines[index], [field]: newValue };
 
-    if (field === 'productoId') {
-      const product = allProducts.find((p) => p.id === newValue);
-      if (product) {
-        newLines[index].producto = {
-          id: product.id,
-          nombre: product.nombre,
-          alergenos: product.alergenos,
-        };
-      }
-    }
+    if (field === 'productoId' && newValue) {
+      // Fetch the complete product with providers
+      getProductoById(newValue).then((product) => {
+        if (product) {
+          setProductDetails((prev) => ({ ...prev, [product.id]: product }));
 
-    onChange(newLines);
+          const cheapestProvider = getCheapestProvider(
+            product.proveedores || []
+          );
+
+          newLines[index].producto = {
+            ...buildInlineProduct(product),
+          };
+
+          newLines[index].proveedorFavoritoId = cheapestProvider?.proveedor?.id;
+          newLines[index].proveedorFavoritoAuto = Boolean(
+            cheapestProvider?.proveedor?.id
+          );
+          onChange(newLines);
+        }
+      });
+    } else if (field === 'productoId' && !newValue) {
+      // Reset if product is cleared
+      newLines[index].producto = undefined;
+      newLines[index].proveedorFavoritoId = undefined;
+      newLines[index].proveedorFavoritoAuto = undefined;
+      onChange(newLines);
+    } else if (field === 'proveedorFavoritoId') {
+      const availableProviders = getAvailableProviders(newLines[index]);
+      const cheapestProviderId =
+        getCheapestProvider(availableProviders)?.proveedor?.id;
+
+      if (!newValue) {
+        newLines[index].proveedorFavoritoId = cheapestProviderId;
+        newLines[index].proveedorFavoritoAuto = Boolean(cheapestProviderId);
+      } else {
+        newLines[index].proveedorFavoritoAuto = newValue === cheapestProviderId;
+      }
+
+      onChange(newLines);
+    } else {
+      onChange(newLines);
+    }
   };
 
   // Calcular alérgenos únicos de los productos seleccionados
@@ -209,8 +460,11 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                 <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
                   Cantidad
                 </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', width: 150 }}>
+                <TableCell sx={{ fontWeight: 'bold', width: 140 }}>
                   Unidad
+                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>
+                  Proveedor fav.
                 </TableCell>
                 <TableCell sx={{ width: 50 }}></TableCell>
               </TableRow>
@@ -229,29 +483,53 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
               ) : (
                 value.map((line, index) => {
                   const selectedProduct = line.productoId
-                    ? allProducts.find((p) => p.id === line.productoId)
+                    ? productDetails[line.productoId] ||
+                      allProducts.find((p) => p.id === line.productoId) ||
+                      null
                     : null;
+                  const availableProviders = getAvailableProviders(
+                    line,
+                    selectedProduct
+                  );
+                  const cheapestProviderId =
+                    getCheapestProvider(availableProviders)?.proveedor?.id;
 
-                  // Para opciones iniciales en caso de modo edición
-                  const options = [...allProducts];
-                  if (
-                    line.producto &&
-                    !allProducts.find((p) => p.id === line.producto?.id)
-                  ) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    options.push(line.producto as any);
+                  const optionsMap = new Map<string, Producto>();
+
+                  [
+                    ...allProducts,
+                    ...(searchResultsByLine[index] || []),
+                  ].forEach((product) => {
+                    optionsMap.set(product.id, product);
+                  });
+
+                  if (selectedProduct?.id) {
+                    optionsMap.set(selectedProduct.id, selectedProduct);
                   }
 
+                  if (line.producto?.id) {
+                    optionsMap.set(line.producto.id, line.producto as Producto);
+                  }
+
+                  const options = Array.from(optionsMap.values());
+
                   return (
-                    <TableRow key={index}>
-                      <TableCell>
+                    <TableRow key={`ing-row-${index}`}>
+                      <TableCell sx={{ minWidth: 250 }}>
                         <Autocomplete
                           options={options}
                           getOptionLabel={(option) => option.nombre || ''}
                           value={selectedProduct || line.producto || null}
+                          loading={Boolean(isSearchingByLine[index])}
+                          openOnFocus
                           isOptionEqualToValue={(option, val) =>
-                            option.id === val.id
+                            (option.id || option) === (val.id || val)
                           }
+                          onInputChange={(_, inputValue, reason) => {
+                            if (reason === 'input') {
+                              void handleProductSearch(index, inputValue);
+                            }
+                          }}
                           onChange={(_, newValue) =>
                             handleUpdateLine(
                               index,
@@ -259,14 +537,36 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                               newValue?.id || ''
                             )
                           }
+                          renderOption={(props, option) => (
+                            <li {...props} key={option.id}>
+                              {option.nombre}
+                            </li>
+                          )}
                           renderInput={(params) => (
                             <TextField
                               {...params}
                               variant="standard"
                               placeholder="Buscar producto..."
+                              helperText="Escribe al menos 2 letras para buscar productos."
+                              InputProps={{
+                                ...params.InputProps,
+                                endAdornment: (
+                                  <>
+                                    {isSearchingByLine[index] ? (
+                                      <CircularProgress
+                                        color="inherit"
+                                        size={16}
+                                      />
+                                    ) : null}
+                                    {params.InputProps.endAdornment}
+                                  </>
+                                ),
+                              }}
                             />
                           )}
+                          noOptionsText="No hay productos disponibles"
                           size="small"
+                          fullWidth
                         />
                       </TableCell>
                       <TableCell>
@@ -297,6 +597,118 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                           {Object.values(UnidadIngrediente).map((unidad) => (
                             <MenuItem key={unidad} value={unidad}>
                               {unidad}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={line.proveedorFavoritoId || ''}
+                          onChange={(e) =>
+                            handleUpdateLine(
+                              index,
+                              'proveedorFavoritoId',
+                              e.target.value
+                            )
+                          }
+                          variant="standard"
+                          fullWidth
+                          displayEmpty
+                          disabled={!line.productoId}
+                          renderValue={(val) => {
+                            if (!val) {
+                              return <em>Sin proveedor disponible</em>;
+                            }
+
+                            const selected = availableProviders.find(
+                              (pp) => pp.proveedor?.id === val
+                            );
+
+                            if (selected) {
+                              const isAutomatic =
+                                line.proveedorFavoritoAuto ||
+                                selected.proveedor?.id === cheapestProviderId;
+
+                              return (
+                                <Box
+                                  sx={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 0.75,
+                                    color: isAutomatic
+                                      ? 'success.dark'
+                                      : 'primary.dark',
+                                    fontWeight: 'bold',
+                                  }}
+                                >
+                                  <span>
+                                    {selected.proveedor?.nombre} (
+                                    {selected.precioUnitario}€)
+                                  </span>
+                                  {isAutomatic && (
+                                    <Box
+                                      component="span"
+                                      sx={{
+                                        fontSize: '0.7rem',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: 0.5,
+                                        fontWeight: 700,
+                                      }}
+                                    >
+                                      Auto
+                                    </Box>
+                                  )}
+                                </Box>
+                              );
+                            }
+                            return val;
+                          }}
+                        >
+                          <MenuItem value="">
+                            <em>Seleccionar automáticamente el más barato</em>
+                          </MenuItem>
+                          {availableProviders.map((pp) => (
+                            <MenuItem
+                              key={pp.proveedor?.id || 'unknown'}
+                              value={pp.proveedor?.id}
+                            >
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 1,
+                                  fontWeight:
+                                    pp.proveedor?.id === cheapestProviderId
+                                      ? 700
+                                      : 400,
+                                  color:
+                                    pp.proveedor?.id === cheapestProviderId
+                                      ? 'success.dark'
+                                      : 'inherit',
+                                }}
+                              >
+                                <span>
+                                  {pp.proveedor?.nombre ||
+                                    'Proveedor desconocido'}{' '}
+                                  ({pp.precioUnitario}€)
+                                </span>
+                                {pp.proveedor?.id === cheapestProviderId && (
+                                  <Box
+                                    component="span"
+                                    sx={{
+                                      fontSize: '0.72rem',
+                                      bgcolor: 'success.light',
+                                      color: 'success.dark',
+                                      px: 0.75,
+                                      py: 0.15,
+                                      borderRadius: 999,
+                                      fontWeight: 700,
+                                    }}
+                                  >
+                                    Más barato
+                                  </Box>
+                                )}
+                              </Box>
                             </MenuItem>
                           ))}
                         </Select>

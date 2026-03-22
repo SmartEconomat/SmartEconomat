@@ -130,6 +130,9 @@ export class ArchivoController {
     dto.tamano = archivo.tamano;
     dto.mimeType = archivo.mimeType;
     dto.fechaSubida = archivo.createdAt;
+    dto.urlOptimized = archivo.urlOptimized;
+    dto.tamanoOptimized = archivo.tamanoOptimized;
+    dto.mimeTypeOptimized = archivo.mimeTypeOptimized;
 
     if (archivo.usuario) {
       dto.subidoPor = {

@@ -15,6 +15,11 @@ describe('StringToNumberTransformer', () => {
       expect(StringToNumberTransformer.transform(params)).toBe(123.45);
     });
 
+    it('debe convertir string con coma decimal', () => {
+      const params = { value: '123,45' };
+      expect(StringToNumberTransformer.transform(params)).toBe(123.45);
+    });
+
     it('debe convertir string con trim', () => {
       const params = { value: '  123  ' };
       expect(StringToNumberTransformer.transform(params)).toBe(123);

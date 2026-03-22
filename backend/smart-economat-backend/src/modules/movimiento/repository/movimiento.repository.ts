@@ -36,23 +36,12 @@ export class MovimientoRepository {
     const limit = Math.min(Number(query.limit ?? 20), 50);
     const sortBy = query.sortBy ?? 'createdAt';
     const order = query.order ?? 'DESC';
+
     const qb = this.repo
       .createQueryBuilder('movimiento')
       .leftJoinAndSelect('movimiento.usuario', 'usuario')
-      .leftJoinAndSelect('movimiento.productoProveedor', 'productoProveedor')
-      .leftJoinAndSelect('productoProveedor.producto', 'producto')
-      .leftJoinAndSelect('movimiento.inventario', 'inventario')
-      .leftJoinAndSelect(
-        'inventario.productoProveedor',
-        'inventarioProductoProveedor'
-      )
-      .leftJoinAndSelect(
-        'inventarioProductoProveedor.producto',
-        'inventarioProducto'
-      )
-      .orderBy(`movimiento.${sortBy}`, order)
-      .skip((page - 1) * limit)
-      .take(limit);
+      .leftJoinAndSelect('movimiento.productoProveedor', 'pp')
+      .leftJoinAndSelect('pp.producto', 'prod');
 
     if (query.type?.length) {
       qb.andWhere('movimiento.tipo IN (:...types)', {
@@ -71,7 +60,6 @@ export class MovimientoRepository {
       if (/^\d{4}-\d{2}-\d{2}$/.test(query.endDate)) {
         endDate.setHours(23, 59, 59, 999);
       }
-
       qb.andWhere('movimiento.createdAt <= :endDate', {
         endDate,
       });
@@ -85,15 +73,43 @@ export class MovimientoRepository {
             .where('movimiento.descripcion ILIKE :searchTerm', { searchTerm })
             .orWhere('movimiento.entidad ILIKE :searchTerm', { searchTerm })
             .orWhere('usuario.nombre ILIKE :searchTerm', { searchTerm })
-            .orWhere('producto.nombre ILIKE :searchTerm', { searchTerm })
-            .orWhere('inventarioProducto.nombre ILIKE :searchTerm', {
-              searchTerm,
-            });
+            .orWhere('prod.nombre ILIKE :searchTerm', { searchTerm });
         })
       );
     }
 
-    const [data, total] = await qb.getManyAndCount();
+    let totalPromise: Promise<number>;
+    if (!query.searchTerm) {
+      const simpleCountQb = this.repo.createQueryBuilder('movimiento');
+      if (query.type?.length) {
+        simpleCountQb.andWhere('movimiento.tipo IN (:...types)', {
+          types: query.type,
+        });
+      }
+      if (query.startDate) {
+        simpleCountQb.andWhere('movimiento.createdAt >= :startDate', {
+          startDate: new Date(query.startDate),
+        });
+      }
+      if (query.endDate) {
+        const endDate = new Date(query.endDate);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(query.endDate))
+          endDate.setHours(23, 59, 59, 999);
+        simpleCountQb.andWhere('movimiento.createdAt <= :endDate', { endDate });
+      }
+      totalPromise = simpleCountQb.getCount();
+    } else {
+      totalPromise = qb.clone().getCount();
+    }
+
+    const [data, total] = await Promise.all([
+      qb
+        .orderBy(`movimiento.${sortBy}`, order)
+        .skip((page - 1) * limit)
+        .take(limit)
+        .getMany(),
+      totalPromise,
+    ]);
 
     return {
       data,
@@ -147,65 +163,81 @@ export class MovimientoRepository {
       endDate,
       sortBy = 'createdAt',
       sortOrder = 'DESC',
+      page = 1,
+      limit = 20,
     } = dto;
 
     if (!entityId && !userId) {
-      return [];
+      return {
+        data: [],
+        total: 0,
+        page,
+        limit,
+        totalPages: 0,
+      } as any;
     }
 
-    const query = this.repo
+    const qb = this.repo
       .createQueryBuilder('movimiento')
       .leftJoinAndSelect('movimiento.usuario', 'usuario')
-      .leftJoinAndSelect('movimiento.productoProveedor', 'productoProveedor')
-      .leftJoinAndSelect('productoProveedor.producto', 'producto')
-      .leftJoinAndSelect('movimiento.inventario', 'inventario')
-      .leftJoinAndSelect(
-        'inventario.productoProveedor',
-        'inventarioProductoProveedor'
-      )
-      .leftJoinAndSelect(
-        'inventarioProductoProveedor.producto',
-        'inventarioProducto'
-      );
+      .leftJoinAndSelect('movimiento.productoProveedor', 'pp')
+      .leftJoinAndSelect('pp.producto', 'prod');
 
     if (entityId) {
-      query.where(
-        new Brackets((entityQb) => {
-          entityQb
-            .where('productoProveedor.id = :entityId', { entityId })
-            .orWhere('inventarioProductoProveedor.id = :entityId', {
-              entityId,
-            });
-        })
-      );
+      qb.andWhere('movimiento.productoProveedorId = :entityId', { entityId });
     }
 
     if (userId) {
-      if (entityId) {
-        query.orWhere('usuario.id = :userId', { userId });
-      } else {
-        query.where('usuario.id = :userId', { userId });
-      }
+      qb.andWhere('movimiento.usuarioId = :userId', { userId });
     }
 
     if (type) {
-      query.andWhere('movimiento.tipo = :type', { type });
+      qb.andWhere('movimiento.tipo = :type', { type });
     }
 
     if (startDate) {
-      query.andWhere('movimiento.createdAt >= :startDate', {
+      qb.andWhere('movimiento.createdAt >= :startDate', {
         startDate: new Date(startDate),
       });
     }
 
     if (endDate) {
-      query.andWhere('movimiento.createdAt <= :endDate', {
+      qb.andWhere('movimiento.createdAt <= :endDate', {
         endDate: new Date(endDate),
       });
     }
 
-    query.orderBy(`movimiento.${sortBy}`, sortOrder);
+    const countQb = this.repo.createQueryBuilder('movimiento');
+    if (entityId)
+      countQb.andWhere('movimiento.productoProveedorId = :entityId', {
+        entityId,
+      });
+    if (userId) countQb.andWhere('movimiento.usuarioId = :userId', { userId });
+    if (type) countQb.andWhere('movimiento.tipo = :type', { type });
+    if (startDate)
+      countQb.andWhere('movimiento.createdAt >= :startDate', {
+        startDate: new Date(startDate),
+      });
+    if (endDate)
+      countQb.andWhere('movimiento.createdAt <= :endDate', {
+        endDate: new Date(endDate),
+      });
 
-    return query.getMany();
+    const [data, total] = await Promise.all([
+      qb
+        .orderBy(`movimiento.${sortBy}`, sortOrder)
+        .skip((page - 1) * limit)
+        .take(limit)
+        .getMany(),
+      countQb.getCount(),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
+    };
   }
 }

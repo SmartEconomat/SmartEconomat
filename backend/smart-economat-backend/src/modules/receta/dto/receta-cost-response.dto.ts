@@ -11,6 +11,9 @@ export class IngredienteCostoDto {
   @ApiProperty()
   cantidad!: number;
 
+  @ApiProperty({ description: 'Cantidad real tras aplicar merma' })
+  cantidadReal!: number;
+
   @ApiProperty({ enum: UnidadIngrediente })
   unidad!: UnidadIngrediente;
 

@@ -16,13 +16,16 @@ import { buildPedidoAggregate } from '../../../application/pedido/pedido.factory
 import { ConfigService } from '@nestjs/config';
 import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
 import { In } from 'typeorm';
+import { ProduccionService } from '../../receta/service/produccion.service';
+import { CreateMissingStockBatchDto } from '../dto/create-missing-stock-batch.dto';
 
 @Injectable()
 export class PurchaseBatchService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly configService: ConfigService,
-    private readonly movimientoHelper: MovimientoHelper
+    private readonly movimientoHelper: MovimientoHelper,
+    private readonly produccionService: ProduccionService
   ) {}
 
   /**
@@ -129,6 +132,71 @@ export class PurchaseBatchService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  async createBatchOrderFromMissingStock(
+    dto: CreateMissingStockBatchDto,
+    userId: string
+  ): Promise<PurchaseBatch> {
+    const validation = await this.produccionService.validarMultiple({
+      items: dto.items,
+    });
+
+    const groupedByProvider = new Map<
+      string,
+      Map<string, { productoProveedorId: string; cantidad: number }>
+    >();
+
+    for (const ingredient of validation.ingredients) {
+      const missingQuantity = Number(
+        (ingredient.requerido - ingredient.disponible).toFixed(3)
+      );
+
+      if (
+        ingredient.isEnough ||
+        !ingredient.cheapestProveedorId ||
+        !ingredient.cheapestProductoProveedorId ||
+        missingQuantity < 0.001
+      ) {
+        continue;
+      }
+
+      if (!groupedByProvider.has(ingredient.cheapestProveedorId)) {
+        groupedByProvider.set(ingredient.cheapestProveedorId, new Map());
+      }
+
+      const providerLines = groupedByProvider.get(
+        ingredient.cheapestProveedorId
+      )!;
+      const existing = providerLines.get(
+        ingredient.cheapestProductoProveedorId
+      );
+
+      providerLines.set(ingredient.cheapestProductoProveedorId, {
+        productoProveedorId: ingredient.cheapestProductoProveedorId,
+        cantidad: Number(
+          ((existing?.cantidad || 0) + missingQuantity).toFixed(3)
+        ),
+      });
+    }
+
+    const lineas = Array.from(groupedByProvider.values())
+      .flatMap((providerLines) => Array.from(providerLines.values()))
+      .filter((linea) => linea.cantidad >= 0.001);
+
+    if (lineas.length === 0) {
+      throw new BadRequestException(
+        'No se encontraron líneas válidas para generar pedidos de faltantes.'
+      );
+    }
+
+    return this.createBatchOrder(
+      {
+        observaciones: dto.observaciones,
+        lineas,
+      },
+      userId
+    );
   }
 
   async findAll(): Promise<PurchaseBatch[]> {
