@@ -4,6 +4,10 @@ import {
   ThrottlerException,
   ThrottlerStorage,
 } from '@nestjs/throttler';
+import type {
+  ThrottlerModuleOptions,
+  ThrottlerRequest,
+} from '@nestjs/throttler';
 import { Reflector } from '@nestjs/core';
 
 @Injectable()
@@ -11,7 +15,8 @@ export class SmartAuthThrottlerGuard extends ThrottlerGuard {
   private readonly smartLogger = new Logger(SmartAuthThrottlerGuard.name);
 
   constructor(
-    @Inject('THROTTLER:MODULE_OPTIONS') options: any,
+    @Inject('THROTTLER:MODULE_OPTIONS')
+    options: ThrottlerModuleOptions,
     @Inject(ThrottlerStorage) storageService: ThrottlerStorage,
     reflector: Reflector
   ) {
@@ -36,15 +41,20 @@ export class SmartAuthThrottlerGuard extends ThrottlerGuard {
       return `login_user_${String(body.username).toLowerCase().trim()}`;
     if (body?.token) return `reset_token_${String(body.token)}`;
 
-    return req.ips?.length ? req.ips[0] : req.ip || 'unknown_ip';
+    return req.ips?.length
+      ? String(req.ips[0])
+      : String(req.ip || 'unknown_ip');
   }
 
-  protected async handleRequest(requestProps: any): Promise<boolean> {
+  protected async handleRequest(
+    requestProps: ThrottlerRequest
+  ): Promise<boolean> {
     if (process.env.NODE_ENV === 'test') return true;
-    const { context, ttl, throttler } = requestProps;
-    const req = context.switchToHttp().getRequest();
-    const method = req.method;
-    const isAuthPath = req.url.includes('/auth/');
+    const { context, throttler } = requestProps;
+    const req = context.switchToHttp().getRequest<Record<string, any>>();
+    const method = req.method as string;
+    const url = req.url as string;
+    const isAuthPath = url.includes('/auth/');
 
     if (throttler.name === 'auth' && !isAuthPath) return true;
     if (throttler.name === 'write' && (method === 'GET' || isAuthPath))
@@ -53,14 +63,16 @@ export class SmartAuthThrottlerGuard extends ThrottlerGuard {
       return true;
 
     const tracker = await this.getTracker(req);
-    const key = this.generateKey(context, tracker, throttler.name);
+    const throttlerName = throttler.name ?? 'default';
+    const key = this.generateKey(context, tracker, throttlerName);
+    const { limit: resolvedLimit, ttl: resolvedTtl } = requestProps;
 
     const { totalHits } = await this.storageService.increment(
       key,
-      ttl,
-      throttler.limit,
+      resolvedTtl,
+      resolvedLimit,
       0,
-      throttler.name
+      throttlerName
     );
 
     let softLimit = 5;
@@ -81,12 +93,12 @@ export class SmartAuthThrottlerGuard extends ThrottlerGuard {
     }
 
     this.smartLogger.log(
-      `[HITS] ${throttler.name} | ${tracker} | Hits: ${totalHits} (Target Soft: ${softLimit}, Hard: ${hardLimit})`
+      `[HITS] ${throttlerName} | ${tracker} | Hits: ${totalHits} (Target Soft: ${softLimit}, Hard: ${hardLimit})`
     );
 
     if (totalHits > hardLimit) {
       this.smartLogger.error(
-        `[BLOCK] ${tracker} bloqueado en ${throttler.name} tras ${totalHits} peticiones.`
+        `[BLOCK] ${tracker} bloqueado en ${throttlerName} tras ${totalHits} peticiones.`
       );
       throw new ThrottlerException(
         'Demasiadas solicitudes. Por favor, espere un momento.'
@@ -99,7 +111,7 @@ export class SmartAuthThrottlerGuard extends ThrottlerGuard {
       const delayMs = Math.min(overLimit * delayMultiplier, 10000);
 
       this.smartLogger.warn(
-        `[SOFT LIMIT] ${tracker} en ${throttler.name}. Aplicando delay de ${delayMs}ms (Hit ${totalHits})`
+        `[SOFT LIMIT] ${tracker} en ${throttlerName}. Aplicando delay de ${delayMs}ms (Hit ${totalHits})`
       );
       await this.delay(delayMs);
     }

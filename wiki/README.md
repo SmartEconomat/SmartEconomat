@@ -75,7 +75,9 @@ Documentación técnica y funcional del proyecto SmartEconomat, reorganizada por
 | Documento | Descripción |
 |-----------|-------------|
 | [Alta compleja de producto](modules/producto/alta-compleja-producto-maestro-proveedores.md) | Caso de uso de creación transaccional de producto maestro con alérgenos y proveedores |
+| [Producción y raciones](modules/produccion/produccion-y-raciones.md) | Gestión de transformación de ingredientes, raciones producidas vs restantes y costes reales |
 | [Pedidos desde recetas](modules/pedido/pedidos-desde-recetas.md) | Consolidación de ingredientes de múltiples recetas en un pedido único |
+| [Edición y selección de líneas](modules/pedido/edicion-y-seleccion-lineas.md) | Selector avanzado de líneas de pedido con soporte multi-proveedor y autocompletado |
 | [Recepción](modules/recepcion/README.md) | Visión general del módulo de recepción |
 | [Recepción masiva](modules/recepcion/recepcion-masiva.md) | Flujo batch y garantías ACID |
 | [Arquitectura UI de recepción](modules/recepcion/arquitectura-ui.md) | Diseño de la interfaz del módulo |

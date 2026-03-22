@@ -5,7 +5,11 @@ import {
   IsDateString,
   IsUUID,
   IsString,
+  IsInt,
+  Min,
+  Max,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { TipoMovimiento } from '../enums/movimiento.enums';
 
 /**
@@ -75,4 +79,17 @@ export class MovimientoHistoryDto {
     message: i18nValidationMessage('validation.EL_ORDEN_DEBE_SER_ASC_O_DESC'),
   })
   sortOrder?: 'ASC' | 'DESC';
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number = 20;
 }

@@ -17,6 +17,8 @@ import BatchPedidoLineasViewer from './BatchPedidoLineasViewer';
 import BarcodeScanner from './BarcodeScanner';
 import BarcodeIcon from './BarcodeIcon';
 import { InputAdornment, IconButton, Tooltip } from '@mui/material';
+import { resolveStoredFileUrl } from '../../services/api.service';
+import { parseLocalizedNumber } from '../../utils/numberUtils';
 
 export type FieldType =
   | 'text'
@@ -130,9 +132,11 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+    const parsedValue = parseLocalizedNumber(value);
+
     setFormData((prev) => ({
       ...prev,
-      [name]: value === '' ? '' : Number(value),
+      [name]: value === '' ? '' : (parsedValue ?? value),
     }));
     setErrors((prev) => ({ ...prev, [name]: '' }));
   };
@@ -238,7 +242,6 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   const mainImageField = imageFields[0];
   const nonImageFields = formFields.filter((f) => f.type !== 'image');
 
-  const leftFields = nonImageFields.filter((f) => f.position === 'left');
   const bottomFields = nonImageFields.filter((f) => f.position === 'bottom');
   const rightFields = nonImageFields.filter(
     (f) => f.position !== 'left' && f.position !== 'bottom'
@@ -301,6 +304,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
             onChange={handleNumberChange}
             required={required}
             disabled={disabled}
+            inputProps={{ step: 'any', inputMode: 'decimal' }}
           />
         );
 
@@ -470,123 +474,104 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
       size={size || 'md'}
     >
       <form onSubmit={handleSubmit}>
-        <Box
-          display="flex"
-          flexDirection={{ xs: 'column', md: 'row' }}
-          gap={3}
-          sx={{ mt: 1 }}
-        >
-          {/* Left Column for Image */}
-          {mainImageField && (
-            <Box
-              width={{ xs: '100%', md: '30%' }}
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-            >
-              {(() => {
-                const { name, label, disabled, getFallbackIcon } =
-                  mainImageField;
-                const value = formData[name];
-                const previewUrl =
-                  value instanceof File
-                    ? URL.createObjectURL(value)
-                    : typeof value === 'string'
-                      ? value
-                      : null;
-                const Fallback = getFallbackIcon ? (
-                  getFallbackIcon(formData)
-                ) : (
-                  <PhotoCameraIcon
-                    sx={{ fontSize: 60, color: 'text.secondary' }}
-                  />
-                );
+        {/* Image at the top - full width */}
+        {mainImageField && (
+          <Box sx={{ width: '100%', mb: 3 }}>
+            {(() => {
+              const { name, label, disabled, getFallbackIcon } = mainImageField;
+              const value = formData[name];
+              const previewUrl =
+                value instanceof File
+                  ? URL.createObjectURL(value)
+                  : typeof value === 'string'
+                    ? resolveStoredFileUrl(value)
+                    : null;
+              const Fallback = getFallbackIcon ? (
+                getFallbackIcon(formData)
+              ) : (
+                <PhotoCameraIcon
+                  sx={{ fontSize: 60, color: 'text.secondary' }}
+                />
+              );
 
-                return (
+              return (
+                <Box
+                  key={name}
+                  sx={{
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 1,
+                  }}
+                >
                   <Box
-                    key={name}
                     sx={{
                       width: '100%',
+                      maxWidth: 280,
+                      aspectRatio: '1',
+                      border: '1px dashed grey',
+                      borderRadius: 1,
                       display: 'flex',
-                      flexDirection: 'column',
+                      justifyContent: 'center',
                       alignItems: 'center',
-                      gap: 1,
+                      overflow: 'hidden',
+                      mb: 1,
+                      bgcolor: 'background.default',
                     }}
                   >
-                    <Box
-                      sx={{
-                        width: '100%',
-                        aspectRatio: '1',
-                        border: '1px dashed grey',
-                        borderRadius: 1,
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        overflow: 'hidden',
-                        mb: 1,
-                        bgcolor: 'background.default',
-                      }}
-                    >
-                      {previewUrl ? (
-                        <img
-                          src={previewUrl}
-                          alt="Preview"
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                          }}
-                        />
-                      ) : (
-                        Fallback
-                      )}
-                    </Box>
-                    <Button
-                      variant="outlined"
-                      component="label"
-                      fullWidth={true}
-                      disabled={disabled}
-                      startIcon={<CloudUploadOutlinedIcon />}
-                      size="small"
-                      sx={{ mt: 0, py: 1 }}
-                    >
-                      {label || 'Cargar Imagen'}
-                      <input
-                        type="file"
-                        hidden
-                        accept="image/*"
-                        onChange={handleImageChange(name)}
+                    {previewUrl ? (
+                      <img
+                        src={previewUrl}
+                        alt="Preview"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
                       />
-                    </Button>
+                    ) : (
+                      Fallback
+                    )}
                   </Box>
-                );
-              })()}
-
-              {/* Additional Left Column Fields (e.g. Allergens) */}
-              {leftFields.length > 0 && (
-                <Stack spacing={1.5} sx={{ mt: 2, width: '100%' }}>
-                  {leftFields.map((field) => (
-                    <Box key={field.name}>{renderFieldContent(field)}</Box>
-                  ))}
-                </Stack>
-              )}
-            </Box>
-          )}
-
-          {/* Right Column for Fields */}
-          <Box flex={1} width="100%">
-            <Box display="grid" gridTemplateColumns="repeat(12, 1fr)" gap={1.5}>
-              {rightFields.map((field) => {
-                const { name, width = 12 } = field;
-
-                return (
-                  <Box key={name} sx={{ gridColumn: { xs: `span ${width}` } }}>
-                    {renderFieldContent(field)}
-                  </Box>
-                );
-              })}
-            </Box>
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    disabled={disabled}
+                    startIcon={<CloudUploadOutlinedIcon />}
+                    size="small"
+                    sx={{ mt: 0, py: 1 }}
+                  >
+                    {label || 'Cargar Imagen'}
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      onChange={handleImageChange(name)}
+                    />
+                  </Button>
+                </Box>
+              );
+            })()}
           </Box>
+        )}
+
+        {/* Main Fields Grid */}
+        <Box
+          display="grid"
+          gridTemplateColumns="repeat(12, 1fr)"
+          gap={1.5}
+          sx={{ mt: 1 }}
+        >
+          {rightFields.map((field) => {
+            const { name, width = 12 } = field;
+
+            return (
+              <Box key={name} sx={{ gridColumn: { xs: `span ${width}` } }}>
+                {renderFieldContent(field)}
+              </Box>
+            );
+          })}
         </Box>
 
         {/* Bottom Row Fields */}

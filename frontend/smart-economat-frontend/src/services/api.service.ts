@@ -6,6 +6,28 @@ import { eventBus, AUTH_EVENTS } from '../utils/eventBus';
 
 const API_BASE = '/api/v1';
 
+export function resolveStoredFileUrl(filePath?: string | null): string {
+  if (!filePath) return '';
+
+  const trimmedPath = filePath.trim();
+  if (!trimmedPath) return '';
+
+  if (/^https?:\/\//i.test(trimmedPath) || trimmedPath.startsWith('blob:')) {
+    return trimmedPath;
+  }
+
+  if (trimmedPath.startsWith(`${API_BASE}/`)) {
+    return trimmedPath;
+  }
+
+  const uploadMatch = trimmedPath.match(/(?:^|\/)uploads\/(.+)$/i);
+  if (uploadMatch?.[1]) {
+    return `${API_BASE}/archivos/content/${uploadMatch[1]}`;
+  }
+
+  return trimmedPath;
+}
+
 // ─── Tipos compartidos de la API ────────────────────────────────────────────
 
 /**
@@ -130,6 +152,13 @@ export async function baseFetch(
 ): Promise<Response> {
   const headers = new Headers(options.headers);
 
+  // Añadir token JWT si está disponible
+  const token = localStorage.getItem('token');
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  // Añadir Content-Type si corresponde
   if (
     !headers.has('Content-Type') &&
     options.body &&
@@ -228,12 +257,20 @@ export async function uploadFile(file: File): Promise<string> {
   });
 
   if (!response.ok) {
-    const errorBody = await response.json().catch(() => ({}));
-    throw new Error(
-      errorBody.message || `Error al subir archivo: ${response.status}`
-    );
+    let errorMessage = `Error al subir archivo: ${response.status}`;
+    try {
+      const errorBody = await response.json();
+      if (errorBody.message) errorMessage = errorBody.message;
+    } catch {
+      // sin body JSON
+    }
+    throw new Error(errorMessage);
   }
 
-  const body = (await response.json()) as ApiResponse<{ url: string }>;
-  return body.data.url;
+  const body = (await response.json()) as ApiResponse<{
+    url: string;
+    urlOptimized?: string;
+  }>;
+  // La respuesta viene como: { success, message, data: { id, nombre, url, ... } }
+  return body.data.urlOptimized || body.data.url;
 }

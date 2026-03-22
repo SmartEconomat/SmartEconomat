@@ -12,6 +12,7 @@ import {
   UnidadMedida,
   Alergeno,
 } from '../../../src/modules/producto/enums/producto.enums';
+import { ArchivoService } from '../../../src/modules/archivo/service/archivo.service';
 
 describe('ProductoService', () => {
   let service: ProductoService;
@@ -51,6 +52,11 @@ describe('ProductoService', () => {
     trackProductoDeletion: jest.fn(),
   };
 
+  const mockArchivoService = {
+    normalizeStoredPath: jest.fn((value) => value),
+    removeFileByStoredPath: jest.fn(),
+  };
+
   const mockDataSource = {
     createQueryRunner: jest.fn(),
     transaction: jest.fn(),
@@ -82,6 +88,10 @@ describe('ProductoService', () => {
         {
           provide: getRepositoryToken(Proveedor),
           useValue: mockProveedorRepository,
+        },
+        {
+          provide: ArchivoService,
+          useValue: mockArchivoService,
         },
         {
           provide: MovimientoHelper,

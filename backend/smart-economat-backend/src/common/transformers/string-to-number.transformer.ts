@@ -26,7 +26,8 @@ export class StringToNumberTransformer {
       const trimmed = value.trim();
       if (trimmed === '') return undefined;
 
-      const num = Number(trimmed);
+      const normalized = trimmed.replace(/\s+/g, '').replace(',', '.');
+      const num = Number(normalized);
       if (isNaN(num)) {
         throw new Error(`El valor '${value}' no puede ser convertido a número`);
       }

@@ -12,7 +12,8 @@ export const runSeeder = async (dataSource: DataSource) => {
     `TRUNCATE TABLE "historial_precio" RESTART IDENTITY CASCADE;`
   );
 
-  const productosProv = await productoProveedorRepo.find();
+  console.log('Obteniendo muestra de productos para historial...');
+  const productosProv = await productoProveedorRepo.find({ take: 500 });
   if (productosProv.length === 0) {
     throw new Error(SeederI18nHelper.getError('NO_PRODUCTOS_PROVEEDOR'));
   }
@@ -23,11 +24,11 @@ export const runSeeder = async (dataSource: DataSource) => {
     const numHistoriales =
       process.env.NODE_ENV === 'test'
         ? 1
-        : faker.number.int({ min: 1, max: 5 });
+        : faker.number.int({ min: 1, max: 3 });
     const precioActual = pp.precioUnitario || 10;
 
     for (let i = 0; i < numHistoriales; i++) {
-      const variacion = faker.number.float({ min: -0.3, max: 0.5 });
+      const variacion = faker.number.float({ min: -0.1, max: 0.2 });
       const precioAnterior = parseFloat(
         (precioActual * (1 + variacion)).toFixed(2)
       );
@@ -35,13 +36,20 @@ export const runSeeder = async (dataSource: DataSource) => {
       const historial = new HistorialPrecio();
       historial.productoProveedor = pp;
       historial.precio = precioAnterior;
-      historial.fecha = faker.date.recent({ days: 3 });
+      historial.fecha = faker.date.recent({ days: 30 });
       historiales.push(historial);
     }
   }
 
   if (historiales.length > 0) {
-    await historialRepo.save(historiales);
+    console.log(
+      `Guardando ${historiales.length} registros de historial de precios en lotes...`
+    );
+    const CHUNK_SIZE = 500;
+    for (let i = 0; i < historiales.length; i += CHUNK_SIZE) {
+      const chunk = historiales.slice(i, i + CHUNK_SIZE);
+      await historialRepo.save(chunk);
+    }
   }
 
   console.log(SeederI18nHelper.getSeederSuccess('historial_precio'));

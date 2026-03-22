@@ -103,7 +103,9 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
 
   // Obtener opciones del Autocomplete incluyendo productos existentes en el valor
   const getAutocompleteOptions = React.useMemo(() => {
-    const options = [...filteredProducts];
+    const optionsMap = new Map<string, FlatProductoProveedor>();
+
+    filteredProducts.forEach((p) => optionsMap.set(p.id, p));
 
     // Siempre agregamos también productos existentes en 'value' por si no estuvieran en allFlatProducts
     value.forEach((line) => {
@@ -111,10 +113,10 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
       const lineData = line as any;
       if (
         lineData.productoProveedorId &&
-        !options.find((p) => p.id === lineData.productoProveedorId)
+        !optionsMap.has(lineData.productoProveedorId)
       ) {
         if (lineData.productoProveedor) {
-          options.push({
+          optionsMap.set(lineData.productoProveedorId, {
             id: lineData.productoProveedorId,
             nombreProducto:
               lineData.productoProveedor.producto?.nombre || 'Desconocido',
@@ -128,7 +130,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
       }
     });
 
-    return options;
+    return Array.from(optionsMap.values());
   }, [filteredProducts, value]);
 
   const handleUpdateLine = (
@@ -149,11 +151,13 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
 
     // Si cambiamos el producto, actualizamos automáticamente el precio unitario
     if (field === 'productoProveedorId') {
-      const product = filteredProducts.find((p) => p.id === newValue);
+      const product = getAutocompleteOptions.find((p) => p.id === newValue);
       if (product) {
         newLines[index].precioUnitario = product.precioUnitario;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (newLines[index] as any).proveedorId = product.proveedorId;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (newLines[index] as any).nombreProveedor = product.nombreProveedor;
       }
     }
 
@@ -189,23 +193,13 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
     let pName = lineData.nombreProveedor;
 
     if (lineData.productoProveedorId) {
-      const prod =
-        allFlatProducts.find((p) => p.id === lineData.productoProveedorId) ||
-        value
-          .map((l: Partial<PedidoProducto>) => l.productoProveedor)
-          .find(
-            (pp: { id: string } | undefined) =>
-              pp?.id === lineData.productoProveedorId
-          );
+      const prod = getAutocompleteOptions.find(
+        (p) => p.id === lineData.productoProveedorId
+      );
 
       if (prod) {
-        if ('proveedorId' in prod) {
-          pId = prod.proveedorId;
-          pName = prod.nombreProveedor;
-        } else if ('proveedor' in prod && prod.proveedor) {
-          pId = prod.proveedor.id;
-          pName = prod.proveedor.nombre;
-        }
+        pId = prod.proveedorId;
+        pName = prod.nombreProveedor;
       }
     }
 
@@ -228,7 +222,8 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
 
   const renderLinesForGroup = (
     groupLines: Array<{ line: Partial<PedidoProducto>; originalIndex: number }>,
-    proveedorName: string
+    proveedorName: string,
+    groupId: string
   ) => {
     const groupTotal = groupLines.reduce(
       (sum, item) =>
@@ -238,7 +233,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
     );
 
     return (
-      <Box key={proveedorName} sx={{ mb: 4 }}>
+      <Box key={groupId} sx={{ mb: 4 }}>
         <Typography
           variant="subtitle2"
           sx={{
@@ -290,12 +285,16 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                       ) : (
                         <Autocomplete
                           options={getAutocompleteOptions}
-                          getOptionLabel={(option) =>
-                            `${option.nombreProducto} (${option.nombreProveedor}) ${
-                              option.marca ? `- ${option.marca}` : ''
-                            }`
-                          }
+                          getOptionLabel={(option) => {
+                            const label = `${option.nombreProducto} (${option.nombreProveedor})`;
+                            return option.marca
+                              ? `${label} - ${option.marca}`
+                              : label;
+                          }}
                           value={selectedProduct || null}
+                          isOptionEqualToValue={(option, val) =>
+                            option.id === val.id
+                          }
                           onChange={(_, newValue) =>
                             handleUpdateLine(
                               originalIndex,
@@ -304,6 +303,20 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                             )
                           }
                           disabled={disabled}
+                          renderOption={(props, option) => {
+                            const { key, ...restProps } =
+                              props as React.HTMLAttributes<HTMLLIElement> & {
+                                key?: React.Key;
+                              };
+                            const label = `${option.nombreProducto} (${option.nombreProveedor})`;
+                            return (
+                              <li {...restProps} key={key}>
+                                {option.marca
+                                  ? `${label} - ${option.marca}`
+                                  : label}
+                              </li>
+                            );
+                          }}
                           renderInput={(params) => (
                             <TextField
                               {...params}
@@ -452,8 +465,8 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
         </Paper>
       ) : (
         <Box>
-          {Array.from(groups.values()).map((group) =>
-            renderLinesForGroup(group.lines, group.proveedorNombre)
+          {Array.from(groups.entries()).map(([groupId, group]) =>
+            renderLinesForGroup(group.lines, group.proveedorNombre, groupId)
           )}
           <Box
             sx={{

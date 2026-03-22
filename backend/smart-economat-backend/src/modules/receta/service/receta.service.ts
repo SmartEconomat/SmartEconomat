@@ -35,7 +35,8 @@ export class RecetaService {
   ) {}
 
   async create(createRecetaDto: CreateRecetaDto): Promise<Receta> {
-    return this.recetaRepository.create(createRecetaDto);
+    const receta = await this.recetaRepository.create(createRecetaDto);
+    return this.recalcularCostes(receta.id);
   }
 
   async findAll(
@@ -57,7 +58,8 @@ export class RecetaService {
 
   async update(id: string, updateRecetaDto: UpdateRecetaDto): Promise<Receta> {
     await this.findOne(id);
-    return this.recetaRepository.update(id, updateRecetaDto);
+    await this.recetaRepository.update(id, updateRecetaDto);
+    return this.recalcularCostes(id);
   }
 
   async remove(id: string): Promise<void> {
@@ -191,13 +193,18 @@ export class RecetaService {
         precioUnitario = allHistorial.length > 0 ? allHistorial[0].precio : 0;
       }
 
-      const costoIngrediente = precioUnitario * ing.cantidad;
+      const merma = Number(ing.mermaAplicada ?? 0) / 100;
+      const cantidadReal =
+        merma > 0 && merma < 1 ? ing.cantidad / (1 - merma) : ing.cantidad;
+
+      const costoIngrediente = precioUnitario * cantidadReal;
       costoTotal += costoIngrediente;
 
       desglosePorIngrediente.push({
         productoId: ing.producto.id,
         productoNombre: ing.producto.nombre,
         cantidad: ing.cantidad,
+        cantidadReal,
         unidad: ing.unidad,
         precioUnitario,
         costoIngrediente,
@@ -296,14 +303,24 @@ export class RecetaService {
 
     const { costoTotal } = await this.calcularEscandallo(id);
 
+    const safeCostoTotal = Number.isFinite(costoTotal) ? costoTotal : 0;
+    const safeRendimiento =
+      receta.rendimiento &&
+      receta.rendimiento > 0 &&
+      Number.isFinite(receta.rendimiento)
+        ? receta.rendimiento
+        : 0;
+
     const costeUnitarioEstimado =
-      receta.rendimiento && receta.rendimiento > 0
-        ? costoTotal / receta.rendimiento
-        : costoTotal;
+      safeRendimiento > 0 ? safeCostoTotal / safeRendimiento : safeCostoTotal;
+
+    const safeCosteUnitarioEstimado = Number.isFinite(costeUnitarioEstimado)
+      ? costeUnitarioEstimado
+      : 0;
 
     await this.dataSource
       .getRepository(Receta)
-      .update(id, { costeUnitarioEstimado });
+      .update(id, { costeUnitarioEstimado: safeCosteUnitarioEstimado });
 
     const updated = await this.recetaRepository.findById(id);
     return updated!;

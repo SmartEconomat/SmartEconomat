@@ -11,6 +11,8 @@ import { RecetaController } from './controller/receta.controller';
 import { ProduccionController } from './controller/produccion.controller';
 import { RecetaRepository } from './repository/receta.repository';
 
+import { RecetaPdfService } from './service/receta-pdf.service';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -22,7 +24,17 @@ import { RecetaRepository } from './repository/receta.repository';
     ]),
   ],
   controllers: [RecetaController, ProduccionController],
-  providers: [RecetaService, ProduccionService, RecetaRepository],
-  exports: [RecetaService, ProduccionService, RecetaRepository],
+  providers: [
+    RecetaService,
+    ProduccionService,
+    RecetaRepository,
+    RecetaPdfService,
+  ],
+  exports: [
+    RecetaService,
+    ProduccionService,
+    RecetaRepository,
+    RecetaPdfService,
+  ],
 })
 export class RecetaModule {}

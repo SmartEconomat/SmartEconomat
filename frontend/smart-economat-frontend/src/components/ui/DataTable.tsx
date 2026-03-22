@@ -24,6 +24,9 @@ import {
   Grid,
   TableSortLabel,
   Skeleton,
+  Checkbox,
+  SxProps,
+  Theme,
 } from '@mui/material';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
@@ -54,6 +57,14 @@ export interface Column<T> {
   };
   /** Si es true, la columna permite ordenar de manera ascendente/descendente */
   sortable?: boolean;
+  /** Anchura sugerida de la columna */
+  width?: number | string;
+  /** Anchura mínima de la columna */
+  minWidth?: number | string;
+  /** Estilos extra para la cabecera */
+  headerSx?: SxProps<Theme>;
+  /** Estilos extra para las celdas */
+  cellSx?: SxProps<Theme>;
 }
 
 export interface DataTableProps<T> {
@@ -82,6 +93,8 @@ export interface DataTableProps<T> {
   actionsLabel?: string;
   /** Alineación de la columna de acciones. */
   actionsAlign?: 'inherit' | 'left' | 'center' | 'right' | 'justify';
+  /** Anchura sugerida de la columna de acciones. */
+  actionsWidth?: number | string;
   /** Función para renderizar un item en vista de cuadrícula (mosaico) */
   renderGridItem?: (row: T) => ReactNode;
   /** Modo de vista por defecto (list o grid). Si renderGridItem existe, se puede cambiar */
@@ -103,6 +116,14 @@ export interface DataTableProps<T> {
   rightHeaderAction?: ReactNode;
   /** Si es true, oculta la barra superior interna de la tabla (usado con PageToolbar externo) */
   hideTopBar?: boolean;
+  /** Si es true, habilita la selección de filas con checkboxes */
+  selectable?: boolean;
+  /** Array de IDs seleccionados (referenciados por la propiedad definida en uniqueKey o 'id') */
+  selectedIds?: string[];
+  /** Callback disparado al cambiar la selección */
+  onSelectionChange?: (ids: string[]) => void;
+  /** Propiedad del dato que sirve como ID único. Por defecto 'id'. */
+  uniqueKey?: keyof T | string;
 }
 
 /**
@@ -119,6 +140,7 @@ export function DataTable<T extends Record<string, any>>({
   renderActions,
   actionsLabel = 'Acciones',
   actionsAlign = 'center',
+  actionsWidth,
   renderGridItem,
   defaultViewMode = 'list',
   sortConfig,
@@ -128,8 +150,13 @@ export function DataTable<T extends Record<string, any>>({
   hideTopBar = false,
   viewMode: controlledViewMode,
   onViewModeChange: onControlledViewModeChange,
+  selectable = false,
+  selectedIds = [],
+  onSelectionChange,
+  uniqueKey = 'id',
 }: DataTableProps<T>) {
-  const colSpanCount = columns.length + (renderActions ? 1 : 0);
+  const colSpanCount =
+    columns.length + (renderActions ? 1 : 0) + (selectable ? 1 : 0);
   const [internalViewMode, setInternalViewMode] = useState<'list' | 'grid'>(
     defaultViewMode
   );
@@ -139,6 +166,9 @@ export function DataTable<T extends Record<string, any>>({
 
   const hasTopBarControls =
     !hideTopBar && (renderGridItem || leftHeaderAction || rightHeaderAction);
+  const hasSizedColumns =
+    columns.some((column) => column.width || column.minWidth) ||
+    Boolean(actionsWidth);
 
   const handleViewModeChange = (
     _event: React.MouseEvent<HTMLElement>,
@@ -205,22 +235,54 @@ export function DataTable<T extends Record<string, any>>({
       {viewMode === 'list' || !renderGridItem ? (
         <TableContainer component={Paper} elevation={0}>
           <Table
-            sx={{ minWidth: { xs: '100%', md: 650 } }}
+            sx={{
+              minWidth: { xs: '100%', md: 650 },
+              tableLayout: hasSizedColumns ? 'fixed' : 'auto',
+            }}
             aria-label="data table"
           >
             <TableHead>
               <TableRow>
+                {selectable && (
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      indeterminate={
+                        selectedIds.length > 0 &&
+                        selectedIds.length < data.length
+                      }
+                      checked={
+                        data.length > 0 && selectedIds.length === data.length
+                      }
+                      onChange={(e) => {
+                        if (onSelectionChange) {
+                          if (e.target.checked) {
+                            onSelectionChange(
+                              data.map((row) =>
+                                String(row[uniqueKey as keyof T])
+                              )
+                            );
+                          } else {
+                            onSelectionChange([]);
+                          }
+                        }
+                      }}
+                    />
+                  </TableCell>
+                )}
                 {columns.map((column) => (
                   <TableCell
                     key={String(column.id)}
                     align={column.align || 'left'}
                     sx={{
+                      width: column.width,
+                      minWidth: column.minWidth,
                       fontWeight: 'bold',
                       display:
                         column.responsiveDisplay ||
                         (column.hideOnMobile
                           ? { xs: 'none', md: 'table-cell' }
                           : undefined),
+                      ...column.headerSx,
                     }}
                     sortDirection={
                       sortConfig?.key === column.id
@@ -251,7 +313,10 @@ export function DataTable<T extends Record<string, any>>({
                   </TableCell>
                 ))}
                 {renderActions && (
-                  <TableCell align={actionsAlign} sx={{ fontWeight: 'bold' }}>
+                  <TableCell
+                    align={actionsAlign}
+                    sx={{ fontWeight: 'bold', width: actionsWidth }}
+                  >
                     {actionsLabel}
                   </TableCell>
                 )}
@@ -294,18 +359,45 @@ export function DataTable<T extends Record<string, any>>({
                 data.map((row, rowIndex) => (
                   <TableRow
                     key={`row-${rowIndex}`}
+                    selected={selectedIds.includes(
+                      String(row[uniqueKey as keyof T])
+                    )}
                     sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                   >
+                    {selectable && (
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={selectedIds.includes(
+                            String(row[uniqueKey as keyof T])
+                          )}
+                          onChange={(e) => {
+                            if (onSelectionChange) {
+                              const id = String(row[uniqueKey as keyof T]);
+                              if (e.target.checked) {
+                                onSelectionChange([...selectedIds, id]);
+                              } else {
+                                onSelectionChange(
+                                  selectedIds.filter((sid) => sid !== id)
+                                );
+                              }
+                            }
+                          }}
+                        />
+                      </TableCell>
+                    )}
                     {columns.map((column) => (
                       <TableCell
                         key={String(column.id)}
                         align={column.align || 'left'}
                         sx={{
+                          width: column.width,
+                          minWidth: column.minWidth,
                           display:
                             column.responsiveDisplay ||
                             (column.hideOnMobile
                               ? { xs: 'none', md: 'table-cell' }
                               : undefined),
+                          ...column.cellSx,
                         }}
                       >
                         {column.render
@@ -314,7 +406,10 @@ export function DataTable<T extends Record<string, any>>({
                       </TableCell>
                     ))}
                     {renderActions && (
-                      <TableCell align={actionsAlign}>
+                      <TableCell
+                        align={actionsAlign}
+                        sx={{ width: actionsWidth }}
+                      >
                         <Stack
                           direction="row"
                           spacing={1}

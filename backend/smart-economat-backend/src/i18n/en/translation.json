@@ -93,7 +93,10 @@
     "USUARIO_NO_AUTENTICADO": "Usuario no autenticado",
     "YA_EXISTE_UNA_UBICACI_N_CON_ESTE_NOMBRE": "Ya existe una ubicación con este nombre",
     "INVALID_FILE_PATH": "Invalid file path",
-    "TIPO_DE_ARCHIVO_NO_SOPORTADO": "Unsupported file type. Only images (jpg, jpeg, png, gif) and PDF are allowed"
+    "TIPO_DE_ARCHIVO_NO_SOPORTADO": "Unsupported file type. Only images (jpg, jpeg, png, gif) and PDF are allowed",
+    "RECIPE_NO_RESULT_PRODUCT": "The recipe has no result product configured. Edit the recipe to assign one.",
+    "RECIPE_NO_RENDIMIENTO": "The recipe has no yield (how much it produces) defined. Edit the recipe to specify it.",
+    "RECIPE_NO_INGREDIENTS": "The recipe has no ingredients. Add some before preparing it."
   },
   "success": {
     "CREATED": "Successfully created",

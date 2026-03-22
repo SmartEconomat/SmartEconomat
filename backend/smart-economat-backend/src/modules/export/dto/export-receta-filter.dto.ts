@@ -1,9 +1,6 @@
 import { IsOptional, IsEnum, IsString, IsInt, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
-import {
-  DificultadReceta,
-  TiempoReceta,
-} from '../../receta/enums/receta.enums';
+import { DificultadReceta } from '../../receta/enums/receta.enums';
 
 export class ExportRecetaFilterDto {
   @IsOptional()
@@ -15,8 +12,10 @@ export class ExportRecetaFilterDto {
   dificultad?: DificultadReceta;
 
   @IsOptional()
-  @IsEnum(TiempoReceta)
-  tiempo?: TiempoReceta;
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  maxTiempoMinutos?: number;
 
   @IsOptional()
   @Type(() => Number)

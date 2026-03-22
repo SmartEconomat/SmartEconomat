@@ -150,3 +150,10 @@ export async function searchProductosByName(name: string): Promise<Producto[]> {
   const body = (await response.json()) as ApiResponse<PaginatedData<Producto>>;
   return body.data.data;
 }
+
+export async function getProductoById(id: string): Promise<Producto | null> {
+  const response = await baseFetch(`/productos/${id}`);
+  if (!response.ok) return null;
+  const body = (await response.json()) as ApiResponse<Producto>;
+  return body.data;
+}

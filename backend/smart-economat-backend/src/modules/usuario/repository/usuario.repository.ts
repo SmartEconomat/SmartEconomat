@@ -124,9 +124,6 @@ export class UsuarioRepository {
     return this.repo
       .findAndCount({
         relations: [
-          'movimientos',
-          'pedidos',
-          'recepciones',
           'roles',
           'alumno',
           'alumno.slot',
@@ -137,20 +134,13 @@ export class UsuarioRepository {
         where,
       })
       .then(([data, total]) => {
-        const processedData = data.map((usuario) => ({
-          ...usuario,
-          movimientos: usuario.movimientos || [],
-          pedidos: usuario.pedidos || [],
-          recepciones: usuario.recepciones || [],
-        }));
-
         return {
-          data: processedData,
+          data,
           total,
           page,
           limit,
           totalPages: Math.ceil(total / limit) || 1,
-        } as PaginatedResponseDto<Usuario>;
+        } as unknown as PaginatedResponseDto<Usuario>;
       });
   }
 
@@ -158,9 +148,6 @@ export class UsuarioRepository {
     return this.repo.findOne({
       where: { id },
       relations: [
-        'movimientos',
-        'pedidos',
-        'recepciones',
         'roles',
         'profesor',
         'permisosAdicionales',
@@ -216,7 +203,7 @@ export class UsuarioRepository {
       await this.dataSource.getRepository(Alumno).softRemove(usuario.alumno);
     }
 
-    await this.repo.softRemove(usuario);
+    await this.repo.softDelete(id);
 
     return { id, deleted: true };
   }

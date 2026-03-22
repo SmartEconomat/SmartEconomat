@@ -40,7 +40,7 @@ import { I18nHelper } from '../../common/helpers/i18n.helper';
               configService.get<number>('MAX_FILE_SIZE_MB', 10) * 1024 * 1024,
           },
           fileFilter: (req, file, cb) => {
-            if (file.mimetype.match(/\/(jpg|jpeg|png|gif|pdf)$/)) {
+            if (file.mimetype.match(/\/(jpg|jpeg|png|gif|webp|pdf)$/)) {
               cb(null, true);
             } else {
               cb(
