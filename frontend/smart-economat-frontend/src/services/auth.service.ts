@@ -156,7 +156,7 @@ export const authService = {
     data: ChangePasswordRequest
   ): Promise<ApiResponse<AuthMutationResponse>> {
     const response = await baseFetch('/auth/change-password', {
-      method: 'POST',
+      method: 'PATCH',
       body: JSON.stringify(data),
     });
     return await parseApiResponse(
