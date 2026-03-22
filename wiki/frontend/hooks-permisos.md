@@ -55,8 +55,7 @@ const canManage = useAnyPermission(['inventario:ajustar_stock', 'inventario:gest
 
 Desde el endurecimiento de auth de marzo de 2026, `user.permisos` no se toma como un valor confiable solo por existir en `localStorage`.
 
-- `AuthContext` valida el JWT localmente.
-- Después consulta `GET /api/v1/usuarios/perfil`.
+- `AuthContext` arranca la aplicación consultando `GET /api/v1/usuarios/perfil` con cookie de sesión.
 - Solo tras esa verificación marca `isSessionVerified = true` y expone los permisos reales devueltos por backend.
 
 Por eso estos hooks **no disparan fetches por render**, pero tampoco dependen de permisos manipulados sin control: consumen el último perfil confirmado por servidor.
@@ -68,7 +67,7 @@ Por eso estos hooks **no disparan fetches por render**, pero tampoco dependen de
 1. **No usar `hasPermission` directamente**: En componentes funcionales, siempre prefiere los hooks para asegurar que la UI se actualice si los permisos cambian (por ejemplo, tras un refresco de token).
 2. **Granularidad**: Usa permisos específicos en lugar de roles (ej. `productos:crear` en lugar de `PROFESOR`).
 3. **No confiar solo en ocultar UI**: ocultar botones con hooks mejora UX, pero la protección real de navegación debe quedarse en `ProtectedRoute`.
-4. **Guardias de Ruta**: el proyecto ya protege rutas privadas desde `AppRouter` con `ProtectedRoute requiredPermission={item.permiso}`. Si un caso especial necesita una redirección adicional dentro de la página, puedes complementarlo con `useNavigate`:
+4. **Guardias de Ruta**: el proyecto ya protege rutas privadas desde `AppRouter` con `ProtectedRoute`, soportando tanto un permiso único (`requiredPermission`) como escenarios de “cualquiera de estos permisos” (`requiredAnyPermissions`). Si un caso especial necesita una redirección adicional dentro de la página, puedes complementarlo con `useNavigate`:
 
 ```tsx
 const canAccess = usePermission('admin:acceso');

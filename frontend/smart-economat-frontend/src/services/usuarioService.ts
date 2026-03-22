@@ -10,6 +10,8 @@ import {
 import { ApiError, baseFetch, parseApiResponse } from './api.service';
 
 const DEFAULT_TEMP_PASSWORD = 'Temp1234!';
+const BACKEND_DEFAULT_PAGE_LIMIT = 20;
+const BACKEND_MAX_PAGE_LIMIT = 50;
 
 // Mapeo temporal para adaptar el formato del frontend al backend
 const mapFrontendToBackend = (
@@ -117,24 +119,42 @@ export const usuarioService = {
     };
   },
 
+  async getUsuarioById(id: string | number): Promise<ApiResponse<Usuario>> {
+    const response = await baseFetch(`/usuarios/${id}`);
+    const result = await parseApiResponse<Record<string, unknown>>(
+      response,
+      'No se pudo obtener el detalle del usuario'
+    );
+
+    return {
+      data: mapBackendToFrontend(result.data),
+      status: response.status,
+      message: result.message,
+    };
+  },
+
   async getUsuarios(
     page: number = 1,
-    limit: number = 10,
+    limit: number = BACKEND_DEFAULT_PAGE_LIMIT,
     search?: string,
     filterRol?: string,
     sortBy?: string,
-    sortOrder?: 'asc' | 'desc'
+    sortOrder?: 'asc' | 'desc',
+    filterEstado?: string
   ): Promise<PaginatedResponse<Usuario>> {
     try {
+      const safeLimit = Math.min(Math.max(1, limit), BACKEND_MAX_PAGE_LIMIT);
+
       const params = new URLSearchParams({
         page: String(page),
-        limit: String(limit),
+        limit: String(safeLimit),
       });
 
       if (search?.trim()) params.set('searchTerm', search.trim());
       if (filterRol && filterRol !== 'Todos') params.set('rol', filterRol);
       if (sortBy) params.set('sortBy', sortBy);
       if (sortOrder) params.set('order', sortOrder.toUpperCase());
+      if (filterEstado?.trim()) params.set('estado', filterEstado.trim());
 
       const response = await baseFetch(`/usuarios?${params.toString()}`);
       const result = await parseApiResponse<Record<string, unknown>>(
@@ -169,7 +189,9 @@ export const usuarioService = {
           ? (payload?.total ?? mappedData.length)
           : mappedData.length,
         page: !Array.isArray(payload) ? (payload?.page ?? page) : page,
-        pageSize: !Array.isArray(payload) ? (payload?.limit ?? limit) : limit,
+        pageSize: !Array.isArray(payload)
+          ? (payload?.limit ?? safeLimit)
+          : safeLimit,
         totalPages: !Array.isArray(payload) ? (payload?.totalPages ?? 1) : 1,
       };
     } catch (error) {

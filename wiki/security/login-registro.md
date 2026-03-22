@@ -10,8 +10,9 @@ El acceso al sistema se gestiona a través de `LoginForm.tsx` y el `AuthService`
 
 - El backend responde al login estableciendo una cookie `httpOnly` `access_token`.
 - El frontend no usa `localStorage` como fuente de verdad para la sesión autenticada.
-- Tras el login, `AuthContext` mantiene el usuario en memoria y, en recargas, lo reconstruye consultando `GET /api/v1/usuarios/perfil`.
+- Tras el login, `AuthContext` mantiene un usuario temporal en memoria y completa el perfil real consultando `GET /api/v1/usuarios/perfil`.
 - El logout se realiza mediante `POST /api/v1/auth/logout`, que limpia la cookie en backend.
+- El frontend ya no decodifica el JWT de login para decidir permisos, rol o navegación. La sesión efectiva se confirma exclusivamente con backend.
 
 ### 📋 Requisitos de Acceso
 - **Identificación**: Se admite tanto el nombre de usuario como el correo electrónico.
@@ -58,6 +59,14 @@ El sistema utiliza `PublicRoute` y `ProtectedRoute` en frontend, ambos basados e
 - Si la cookie es válida, el usuario accede a la aplicación sin reintroducir credenciales.
 - Si backend responde `401`, la sesión se limpia y la app redirige a `/login`.
 - Si el usuario autenticado no dispone del permiso exigido por la ruta, se redirige a `/`.
+
+### Cambio de contraseña forzado sin JWT en cliente
+
+Cuando `login` devuelve `requirePasswordChange`, el frontend mantiene el flujo dentro de la misma sesión por cookie:
+
+1. Se presenta el formulario obligatorio de nueva contraseña.
+2. `POST /api/v1/auth/change-password` usa la cookie recién emitida.
+3. Tras el cambio correcto, el cliente no necesita leer `access_token`; llama al flujo normal de login en memoria y deja que `AuthContext` rehidrate el perfil con `/usuarios/perfil`.
 
 ---
 
