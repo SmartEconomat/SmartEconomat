@@ -35,3 +35,53 @@ export function getPasswordValidationResult(
 export function isStrongPassword(value: string): boolean {
   return getPasswordValidationResult(value).isValid;
 }
+
+type PasswordChangeValidationOptions = {
+  currentPassword?: string;
+  newPassword: string;
+  confirmPassword?: string;
+  requireCurrentPassword?: boolean;
+};
+
+export function getPasswordChangeError({
+  currentPassword,
+  newPassword,
+  confirmPassword,
+  requireCurrentPassword = false,
+}: PasswordChangeValidationOptions): string | null {
+  const normalizedCurrentPassword = currentPassword ?? '';
+  const normalizedNewPassword = newPassword ?? '';
+  const normalizedConfirmPassword = confirmPassword ?? '';
+
+  if (requireCurrentPassword && normalizedCurrentPassword.length === 0) {
+    return 'La contraseña actual es obligatoria.';
+  }
+
+  if (normalizedNewPassword.length === 0) {
+    return 'La nueva contraseña es obligatoria.';
+  }
+
+  if (confirmPassword !== undefined && normalizedConfirmPassword.length === 0) {
+    return 'Debes confirmar la nueva contraseña.';
+  }
+
+  if (
+    normalizedCurrentPassword.length > 0 &&
+    normalizedCurrentPassword === normalizedNewPassword
+  ) {
+    return 'La nueva contraseña debe ser diferente de la actual.';
+  }
+
+  if (
+    confirmPassword !== undefined &&
+    normalizedNewPassword !== normalizedConfirmPassword
+  ) {
+    return 'Las contraseñas no coinciden.';
+  }
+
+  if (!isStrongPassword(normalizedNewPassword)) {
+    return STRONG_PASSWORD_MESSAGE;
+  }
+
+  return null;
+}

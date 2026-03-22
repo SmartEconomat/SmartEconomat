@@ -44,10 +44,12 @@ describe('AuthProvider', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
+    window.history.replaceState({}, '', '/');
   });
 
   afterEach(() => {
     localStorage.clear();
+    window.history.replaceState({}, '', '/');
   });
 
   it('bootstraps the session from backend and ignores legacy stored permissions', async () => {
@@ -156,5 +158,22 @@ describe('AuthProvider', () => {
     await waitFor(() => {
       expect(mockedAuthService.getCurrentUser).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it('skips auth bootstrap on login route when there is no session hint', async () => {
+    window.history.replaceState({}, '', '/login');
+
+    renderWithProviders(
+      <AuthProvider>
+        <AuthConsumer />
+      </AuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('resolved')).toHaveTextContent('true');
+      expect(screen.getByTestId('authenticated')).toHaveTextContent('false');
+    });
+
+    expect(mockedAuthService.getCurrentUser).not.toHaveBeenCalled();
   });
 });

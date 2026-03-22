@@ -43,6 +43,7 @@
     "MOVEMENTS_NOT_FOUND": "No movements found for this entity",
     "MOVEMENT_NOT_FOUND": "Movement not found",
     "NOT_FOUND": "Resource not found",
+    "NEW_PASSWORD_MUST_DIFFER_FROM_CURRENT": "The new password must be different from the current one",
     "NO_PEDIDOS": "Missing orders. Run its seeder first.",
     "NO_PRODUCTOS": "No products found. Run producto.seeder.ts first.",
     "NO_PRODUCTOS_PROVEEDOR": "No products with supplier",

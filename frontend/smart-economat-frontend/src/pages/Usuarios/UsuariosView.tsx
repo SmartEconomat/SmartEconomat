@@ -11,11 +11,11 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  CircularProgress,
   TextField,
   InputAdornment,
   SelectChangeEvent,
 } from '@mui/material';
+import ListSkeleton from '../../components/ui/ListSkeleton';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -679,8 +679,8 @@ const UsuariosView: React.FC = () => {
       </Paper>
 
       {isLoading ? (
-        <Box display="flex" justifyContent="center" py={10}>
-          <CircularProgress />
+        <Box>
+          <ListSkeleton type="accordion" count={3} />
         </Box>
       ) : (
         <Box>
@@ -800,4 +800,4 @@ const UsuariosView: React.FC = () => {
   );
 };
 
-export default UsuariosView;
+export default React.memo(UsuariosView);
