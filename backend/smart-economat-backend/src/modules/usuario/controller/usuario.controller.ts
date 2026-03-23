@@ -84,6 +84,12 @@ export class UsuarioController {
     return this.usuarioService.findAll(query, userRole);
   }
 
+  @Get('minimos')
+  @RequirePermissions('usuarios:listar')
+  findAllMinimal() {
+    return this.usuarioService.findAllMinimal();
+  }
+
   @Get(':id')
   @RequirePermissions('usuarios:ver')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
