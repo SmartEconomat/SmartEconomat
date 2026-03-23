@@ -16,11 +16,19 @@ import {
   TextField,
   IconButton,
   CircularProgress,
+  Box,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import { InventarioItem } from '../../services/inventario.types';
 import { updateInventarioItem } from '../../services/inventario.service';
 import { useToast } from '../../store/toast.hooks';
+import ReportProblemIcon from '@mui/icons-material/ReportProblemOutlined';
+import DynamicFormModal, { DynamicField } from '../ui/DynamicFormModal';
+import { SelectOption } from '../ui/Select';
+import { mermaSchema } from '../../utils/schemas';
+import { createMerma } from '../../services/merma.service';
+import { MotivoMerma } from '../../services/merma.types';
+import { fetchProductosPaginated } from '../../services/producto.service';
 
 interface InventoryDetailModalProps {
   open: boolean;
@@ -56,6 +64,9 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
     {}
   );
   const [isSaving, setIsSaving] = useState<Record<string, boolean>>({});
+  const [isMermaModalOpen, setIsMermaModalOpen] = useState(false);
+  const [isSavingMerma, setIsSavingMerma] = useState(false);
+  const [productosOptions, setProductosOptions] = useState<SelectOption[]>([]);
 
   // Initialize local edit state ONLY when modal opens
   React.useEffect(() => {
@@ -93,6 +104,44 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
       setIsSaving({ ...isSaving, [id]: false });
     }
   };
+
+  const handleOpenMerma = async () => {
+    if (productosOptions.length === 0) {
+      const resp = await fetchProductosPaginated({ limit: 1000 });
+      setProductosOptions(
+        resp.data.map((p) => ({ value: p.id, label: p.nombre }))
+      );
+    }
+    setIsMermaModalOpen(true);
+  };
+
+  const handleSaveMerma = async (formData: Record<string, string | number>) => {
+    setIsSavingMerma(true);
+    try {
+      await createMerma({
+        productoId: String(formData.productoId),
+        cantidad: Number(formData.cantidad),
+        motivo: formData.motivo as MotivoMerma,
+        notas: formData.notas as string | undefined,
+      });
+      toast.success('Merma registrada correctamente');
+      setIsMermaModalOpen(false);
+      onRefreshItem();
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Error al registrar merma';
+      toast.error(message);
+    } finally {
+      setIsSavingMerma(false);
+    }
+  };
+
+  const dynamicMermaSchema: DynamicField[] = mermaSchema.map((field) => {
+    if (field.name === 'productoId') {
+      return { ...field, options: productosOptions, defaultValue: productoId };
+    }
+    return field;
+  });
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -188,11 +237,33 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
           </TableContainer>
         )}
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} variant="contained" color="primary">
-          {mode === 'audit' ? 'Cerrar Auditoría' : 'Cerrar'}
+      <DialogActions sx={{ px: 3, pb: 2, justifyContent: 'space-between' }}>
+        <Button
+          startIcon={<ReportProblemIcon />}
+          color="error"
+          variant="outlined"
+          onClick={handleOpenMerma}
+        >
+          Reportar Merma
         </Button>
+        <Box>
+          <Button onClick={onClose} variant="contained" color="primary">
+            {mode === 'audit' ? 'Cerrar Auditoría' : 'Cerrar'}
+          </Button>
+        </Box>
       </DialogActions>
+
+      <DynamicFormModal
+        isOpen={isMermaModalOpen}
+        onClose={() => setIsMermaModalOpen(false)}
+        title="Registrar Merma"
+        fields={dynamicMermaSchema}
+        onSubmit={handleSaveMerma}
+        isSubmitting={isSavingMerma}
+        initialData={{ productoId }}
+        requireConfirmation={true}
+        confirmationMessage="Esta acción descontará el stock del inventario de forma permanente. ¿Estás seguro?"
+      />
     </Dialog>
   );
 };
