@@ -1,5 +1,48 @@
 import { CreateRecepcionDto, RecepcionResultado } from './recepcion.types';
-import { baseFetch, ApiResponse, unwrapList } from './api.service';
+import {
+  baseFetch,
+  ApiResponse,
+  unwrapList,
+  openPdfInNewTab,
+} from './api.service';
+
+export interface ReportePedidosPdfParams {
+  startDate: string;
+  endDate: string;
+  proveedorId?: string;
+  incluirCancelados?: boolean;
+  paginaPorProveedor?: boolean;
+}
+
+export interface ReporteIncidenciasPdfParams {
+  startDate: string;
+  endDate: string;
+  proveedorId?: string;
+  soloNoResueltas?: boolean;
+}
+
+export async function downloadReportePedidosPdf(
+  params: ReportePedidosPdfParams
+): Promise<void> {
+  const query = new URLSearchParams({ tipo: 'pedido' });
+  query.set('startDate', params.startDate);
+  query.set('endDate', params.endDate);
+  if (params.proveedorId) query.set('proveedorId', params.proveedorId);
+  if (params.incluirCancelados) query.set('incluirCancelados', 'true');
+  if (params.paginaPorProveedor) query.set('paginaPorProveedor', 'true');
+  await openPdfInNewTab(`/recepciones/reporte-pdf?${query.toString()}`);
+}
+
+export async function downloadReporteIncidenciasPdf(
+  params: ReporteIncidenciasPdfParams
+): Promise<void> {
+  const query = new URLSearchParams({ tipo: 'incidencias' });
+  query.set('startDate', params.startDate);
+  query.set('endDate', params.endDate);
+  if (params.proveedorId) query.set('proveedorId', params.proveedorId);
+  if (params.soloNoResueltas) query.set('soloNoResueltas', 'true');
+  await openPdfInNewTab(`/recepciones/reporte-pdf?${query.toString()}`);
+}
 
 /**
  * Obtiene todas las recepciones registradas en el sistema.

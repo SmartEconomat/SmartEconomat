@@ -35,6 +35,8 @@ import IncidenciaFilters, {
 } from '../features/incidencias/IncidenciaFilters';
 import ResolveIncidenciaModal from '../features/incidencias/ResolveIncidenciaModal';
 import { useAuth, usePermission } from '../store/auth.hooks';
+import ReporteSelectorModal from '../components/ui/ReporteSelectorModal';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 
 const Incidencias: React.FC = () => {
   const theme = useTheme();
@@ -58,6 +60,7 @@ const Incidencias: React.FC = () => {
   const [itemToDelete, setItemToDelete] = useState<Incidencia | null>(null);
   const [isResolving, setIsResolving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isReporteOpen, setIsReporteOpen] = useState(false);
 
   const canResolve = usePermission('incidencias:resolver');
   const canDelete = usePermission('incidencias:eliminar');
@@ -415,6 +418,16 @@ const Incidencias: React.FC = () => {
           setPage(1);
         }}
         searchPlaceholder="Buscar por proveedor u observaciones..."
+        extraActions={[
+          {
+            label: 'Reporte PDF',
+            onClick: () => setIsReporteOpen(true),
+            icon: <PictureAsPdfIcon />,
+            id: 'btn-reporte-incidencias-pdf',
+            color: 'secondary',
+            variant: 'outlined',
+          },
+        ]}
         filters={
           <IncidenciaFilters
             filters={filters}
@@ -501,6 +514,12 @@ const Incidencias: React.FC = () => {
         message="¿Estás seguro de que deseas eliminar esta incidencia? Esta acción no se puede deshacer y se perderá el registro de la discrepancia."
         confirmText="Eliminar"
         isLoading={isDeleting}
+      />
+
+      <ReporteSelectorModal
+        isOpen={isReporteOpen}
+        onClose={() => setIsReporteOpen(false)}
+        tipo="incidencias"
       />
 
       <ResolveIncidenciaModal
