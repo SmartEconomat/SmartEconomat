@@ -158,6 +158,21 @@ export class UsuarioRepository {
     });
   }
 
+  findAllMinimal() {
+    return this.repo
+      .createQueryBuilder('usuario')
+      .select([
+        'usuario.id',
+        'usuario.username',
+        'usuario.nombre',
+        'usuario.email',
+        'usuario.rol',
+      ])
+      .where('usuario.activo = :activo', { activo: true })
+      .orderBy('usuario.username', 'ASC')
+      .getMany();
+  }
+
   findByIdWithPassword(id: string) {
     return this.repo
       .createQueryBuilder('usuario')

@@ -89,6 +89,10 @@ export class UsuarioService {
     return this.usuarioRepo.findAll(query, userRole);
   }
 
+  findAllMinimal() {
+    return this.usuarioRepo.findAllMinimal();
+  }
+
   async findOne(id: string) {
     const usuario = await this.usuarioRepo.findById(id);
     if (!usuario) {
