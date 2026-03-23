@@ -74,7 +74,11 @@ import { EU_ALLERGENS, Allergen } from '../utils/constants';
 import ShoppingBasketOutlinedIcon from '@mui/icons-material/ShoppingBasketOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import BarcodeScanner from '../components/ui/BarcodeScanner';
-import { fetchProductFromOFF } from '../services/openfoodfacts.service';
+import {
+  searchByBarcode,
+  searchByName,
+  OFFProduct,
+} from '../services/openfoodfacts.service';
 
 type ProductoFormAlergeno = string | Pick<ProductoAlergeno, 'alergeno'>;
 
@@ -292,15 +296,33 @@ const Productos: React.FC = () => {
     }
   };
 
-  // Autocompletado desde OpenFoodFacts
+  function mapOFFToForm(p: OFFProduct): Record<string, unknown> {
+    return {
+      nombre: p.name,
+      marca: p.brand ?? '',
+      descripcion: p.description ?? '',
+      unidad: p.uom ?? '',
+      contenido: p.quantity ?? '',
+      alergenos: p.allergens ?? [],
+      imagen: p.imageUrl ?? '',
+    };
+  }
+
   const handleBarcodeFetch = async (code: string) => {
-    const offData = await fetchProductFromOFF(code);
-    if (offData) {
-      return {
-        nombre: offData.nombre,
-        marca: offData.marca || '',
-      };
+    const product = await searchByBarcode(code);
+    if (product) return mapOFFToForm(product);
+  };
+
+  const handleOFFSearch = async (
+    value: string
+  ): Promise<Array<Record<string, unknown>>> => {
+    const isBarcode = /^\d+$/.test(value.trim());
+    if (isBarcode) {
+      const product = await searchByBarcode(value);
+      return product ? [mapOFFToForm(product)] : [];
     }
+    const products = await searchByName(value);
+    return products.map(mapOFFToForm);
   };
 
   const handleSaveProduct = async (formData: Record<string, unknown>) => {
@@ -695,6 +717,7 @@ const Productos: React.FC = () => {
           isSubmitting={isSaving}
           requireConfirmation={true}
           onBarcodeFetch={handleBarcodeFetch}
+          onOFFSearch={handleOFFSearch}
           confirmationMessage={
             productToEdit?.id
               ? '¿Estás seguro de que deseas guardar los cambios realizados en este producto?'
