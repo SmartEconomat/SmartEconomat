@@ -30,7 +30,7 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
     setDownloading(true);
     try {
       await downloadFile(
-        `/rececciones/reporte-pdf?tipo=recepcion&recepcionId=${resultado.id}`,
+        `/recepciones/reporte-pdf?tipo=recepcion&recepcionId=${resultado.id}`,
         `recepcion_${new Date().toISOString().split('T')[0]}.pdf`
       );
     } catch (err) {
