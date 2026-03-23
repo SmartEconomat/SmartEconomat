@@ -47,8 +47,9 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
 }) => {
   return (
     <Box>
-      <Alert severity="warning" sx={{ mb: 2 }}>
-        Revisa los totales y añade el Nº de Albarán del repartidor.
+      <Alert severity="info" sx={{ mb: 2 }}>
+        Revisa los totales. Si no indicas el Nº de Albarán, se generará uno
+        automáticamente.
       </Alert>
 
       {draft.pedidosSeleccionados.map((p, pIdx) => (
@@ -82,14 +83,15 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
               </Typography>
               <TextField
                 size="small"
-                label="Nº Albarán del Pedido"
+                label="Nº Albarán"
+                placeholder="Auto-generado si vacío"
                 value={p.nAlbaran || ''}
                 onChange={(e) => {
                   const newPedidos = [...draft.pedidosSeleccionados];
                   newPedidos[pIdx] = { ...p, nAlbaran: e.target.value };
                   setDraft({ ...draft, pedidosSeleccionados: newPedidos });
                 }}
-                sx={{ width: 200, mr: 2 }}
+                sx={{ width: 220, mr: 2 }}
               />
             </Box>
           </AccordionSummary>

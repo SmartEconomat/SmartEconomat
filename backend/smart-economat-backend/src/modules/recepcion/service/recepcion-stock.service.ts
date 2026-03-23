@@ -5,12 +5,13 @@ import {
   Logger,
 } from '@nestjs/common';
 import { DataSource, EntityManager, In } from 'typeorm';
+import { Albaran } from '../../albaran/albaran.entity/albaran.entity';
+import { AlbaranPedidoRecepcion } from '../../albaran/albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
 import {
   CreateRecepcionDto,
   RecepcionLineDto,
 } from '../dto/create-recepcion.dto';
 import { RecepcionResultadoDto } from '../dto/recepcion-resultado.dto';
-import { AlbaranPedidoRecepcion } from '../../albaran/albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
 import { Inventario } from '../../inventario/inventario.entity/inventario.entity';
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
 import { Pedido } from '../../pedido/pedido.entity/pedido.entity';
@@ -26,7 +27,6 @@ import {
   IncidenciaLinea,
   TipoDiferencia,
 } from '../../incidencia/incidencia-linea.entity/incidencia-linea.entity';
-import { Albaran } from '../../albaran/albaran.entity/albaran.entity';
 import { Ubicacion } from '../../ubicacion/ubicacion.entity/ubicacion.entity';
 import { EstadoRecepcion } from '../enums/estado-recepcion.enum';
 import { EstadoProductoRecepcion } from '../enums/estado-producto.enum';
@@ -45,6 +45,8 @@ import {
   permiteIncrementarInventario,
   resolveEstadoProducto,
 } from '../utils/recepcion-producto-state.util';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { RecepcionCompletadaEvent } from '../events/recepcion-completada.event';
 
 interface LineaIncidencia {
   idPedidoProducto: string;
@@ -79,7 +81,8 @@ export class RecepcionStockService {
 
   constructor(
     private dataSource: DataSource,
-    private readonly pedidoService: PedidoService
+    private readonly pedidoService: PedidoService,
+    private readonly eventEmitter: EventEmitter2
   ) {}
 
   async procesarRecepcionMasiva(
@@ -146,31 +149,37 @@ export class RecepcionStockService {
       });
       const savedRecepcion = await queryRunner.manager.save(recepcion);
 
-      let rp = queryRunner.manager.create(RecepcionPedido, {
-        recepcion: savedRecepcion,
-        pedido: { id: pedido.id },
+      const nAlbaranFinal = await this.getOrGenerateAlbaranNumber(
+        dto.nAlbaran,
+        queryRunner.manager
+      );
+
+      let albaran = await queryRunner.manager.findOne(Albaran, {
+        where: { nAlbaran: nAlbaranFinal },
       });
-      rp = await queryRunner.manager.save(rp);
 
-      if (dto.nAlbaran) {
-        let albaran = await queryRunner.manager.findOne(Albaran, {
-          where: { nAlbaran: dto.nAlbaran },
+      if (!albaran) {
+        albaran = queryRunner.manager.create(Albaran, {
+          nAlbaran: nAlbaranFinal,
+          fecha: savedRecepcion.fechaRecepcion,
+          esAutomatico: !dto.nAlbaran,
         });
-
-        if (!albaran) {
-          albaran = queryRunner.manager.create(Albaran, {
-            nAlbaran: dto.nAlbaran,
-            fecha: new Date(),
-          });
-          albaran = await queryRunner.manager.save(albaran);
-        }
-
-        const apr = queryRunner.manager.create(AlbaranPedidoRecepcion, {
-          albaran: albaran,
-          recepcionPedido: rp,
-        });
-        await queryRunner.manager.save(apr);
+        albaran = await queryRunner.manager.save(albaran);
       }
+
+      const rp = await queryRunner.manager.save(
+        queryRunner.manager.create(RecepcionPedido, {
+          recepcion: savedRecepcion,
+          pedido: { id: pedido.id },
+        })
+      );
+
+      await queryRunner.manager.save(
+        queryRunner.manager.create(AlbaranPedidoRecepcion, {
+          albaran,
+          recepcionPedido: rp,
+        })
+      );
 
       const mapPedidoProductos = new Map<string, PedidoProducto>();
       const ppArr = pedido.pedidoProductos as unknown as PedidoProducto[];
@@ -361,6 +370,17 @@ export class RecepcionStockService {
 
       await queryRunner.commitTransaction();
 
+      this.eventEmitter.emit(
+        'recepcion.completada',
+        new RecepcionCompletadaEvent(
+          savedRecepcion.id,
+          nAlbaranFinal,
+          [pedido.id],
+          savedRecepcion.fechaRecepcion,
+          userId
+        )
+      );
+
       return {
         id: savedRecepcion.id,
         fechaRecepcion: savedRecepcion.fechaRecepcion,
@@ -543,34 +563,45 @@ export class RecepcionStockService {
         }
       }
 
-      const savedRecepcionPedidos: RecepcionPedido[] = [];
-      for (const pRef of listaPedidos) {
-        let rp = queryRunner.manager.create(RecepcionPedido, {
-          recepcion: savedRecepcion,
-          pedido: { id: pRef.pedidoId },
-        });
-        rp = await queryRunner.manager.save(rp);
-        savedRecepcionPedidos.push(rp);
+      const albaranesCache = new Map<string, Albaran>();
 
-        if (pRef.nAlbaran) {
-          let albaran = await queryRunner.manager.findOne(Albaran, {
-            where: { nAlbaran: pRef.nAlbaran },
+      for (const pRef of listaPedidos) {
+        const rp = await queryRunner.manager.save(
+          queryRunner.manager.create(RecepcionPedido, {
+            recepcion: savedRecepcion,
+            pedido: { id: pRef.pedidoId },
+          })
+        );
+
+        const nAlbaranFinal = await this.getOrGenerateAlbaranNumber(
+          pRef.nAlbaran || dto.nAlbaran,
+          queryRunner.manager
+        );
+
+        let albaran: Albaran | null | undefined =
+          albaranesCache.get(nAlbaranFinal);
+        if (!albaran) {
+          albaran = await queryRunner.manager.findOne(Albaran, {
+            where: { nAlbaran: nAlbaranFinal },
           });
 
           if (!albaran) {
             albaran = queryRunner.manager.create(Albaran, {
-              nAlbaran: pRef.nAlbaran,
-              fecha: new Date(),
+              nAlbaran: nAlbaranFinal,
+              fecha: savedRecepcion.fechaRecepcion,
+              esAutomatico: !(pRef.nAlbaran || dto.nAlbaran),
             });
             albaran = await queryRunner.manager.save(albaran);
           }
-
-          const apr = queryRunner.manager.create(AlbaranPedidoRecepcion, {
-            albaran: albaran,
-            recepcionPedido: rp,
-          });
-          await queryRunner.manager.save(apr);
+          albaranesCache.set(nAlbaranFinal, albaran);
         }
+
+        await queryRunner.manager.save(
+          queryRunner.manager.create(AlbaranPedidoRecepcion, {
+            albaran,
+            recepcionPedido: rp,
+          })
+        );
       }
 
       const mapPedidoProductos = new Map<string, PedidoProducto>();
@@ -852,6 +883,20 @@ export class RecepcionStockService {
 
       await queryRunner.commitTransaction();
 
+      const nAlbaranReferencia =
+        dto.nAlbaran || listaPedidos[0]?.nAlbaran || 'N/A';
+
+      this.eventEmitter.emit(
+        'recepcion.completada',
+        new RecepcionCompletadaEvent(
+          savedRecepcion.id,
+          nAlbaranReferencia,
+          uniquePedidoIds,
+          savedRecepcion.fechaRecepcion,
+          dto.usuarioId
+        )
+      );
+
       return {
         id: savedRecepcion.id,
         fechaRecepcion: savedRecepcion.fechaRecepcion,
@@ -1031,5 +1076,42 @@ export class RecepcionStockService {
       manager
     );
     return updatedPedido.estado;
+  }
+
+  /**
+   * Obtiene el número de albarán proporcionado o genera uno automático.
+   */
+  private async getOrGenerateAlbaranNumber(
+    nAlbaran?: string,
+    manager?: EntityManager
+  ): Promise<string> {
+    if (nAlbaran) {
+      return nAlbaran;
+    }
+
+    const queryManager = manager || this.dataSource.manager;
+    const year = new Date().getFullYear();
+    const prefix = `AUTO-${year}-`;
+
+    const lastAlbaran = await queryManager
+      .getRepository(Albaran)
+      .createQueryBuilder('albaran')
+      .where('albaran.n_albaran LIKE :prefix', { prefix: `${prefix}%` })
+      .orderBy('albaran.createdAt', 'DESC')
+      .getOne();
+
+    let sequence = 1;
+    if (lastAlbaran) {
+      const parts = lastAlbaran.nAlbaran.split('-');
+      const lastSeq = parseInt(parts[parts.length - 1], 10);
+      if (!isNaN(lastSeq)) {
+        sequence = lastSeq + 1;
+      } else {
+        sequence = Math.floor(Math.random() * 1000000);
+      }
+    }
+
+    const paddedSeq = sequence.toString().padStart(5, '0');
+    return `${prefix}${paddedSeq}`;
   }
 }

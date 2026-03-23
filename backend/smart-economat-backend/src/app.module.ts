@@ -7,6 +7,7 @@ import { SentryModule } from '@sentry/nestjs/setup';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PedidoModule } from './modules/pedido/pedido.module';
 import { ProductoModule } from './modules/producto/producto.module';
@@ -40,6 +41,7 @@ import { PedidoDraftModule } from './modules/pedido-draft/pedido-draft.module';
 
 @Module({
   imports: [
+    EventEmitterModule.forRoot(),
     CacheModule.register({
       isGlobal: true,
       ttl: 300000,
