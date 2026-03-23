@@ -85,6 +85,7 @@ import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
 import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
 import ShoppingCartCheckoutOutlinedIcon from '@mui/icons-material/ShoppingCartCheckoutOutlined';
 import { parseLocalizedNumber } from '../utils/numberUtils';
+import { DownloadService } from '../services/download.service';
 
 const recetaSchema: DynamicField[] = [
   { name: 'nombre', label: 'Nombre de la Receta', required: true, width: 12 },
@@ -532,19 +533,32 @@ const Recetas: React.FC = () => {
     try {
       await exportRecipesPdf(exportIds, {
         includeImage: includeImageInPdf,
+        toast,
       });
-      toast.success(
-        exportIds.length === 1
-          ? 'Receta exportada a PDF correctamente.'
-          : `${exportIds.length} recetas exportadas a PDF correctamente.`
-      );
       setIsExportDialogOpen(false);
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Error al exportar recetas a PDF.';
-      toast.error(message);
+    } catch {
+      // El error ya lo maneja el servicio
     } finally {
       setIsExportingPdf(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      // Si hay seleccionados exportamos solo esos, si no, todo lo filtrado (searchTerm)
+      const ids = selectedIds.length > 0 ? selectedIds.join(',') : '';
+      const query = new URLSearchParams({ searchTerm });
+      if (ids) query.append('ids', ids);
+
+      await DownloadService.downloadFile(
+        `/export/recetas/xlsx?${query.toString()}`,
+        {
+          filename: 'recetas.xlsx',
+          toast,
+        }
+      );
+    } catch {
+      // Manejado
     }
   };
 
@@ -1093,6 +1107,28 @@ const Recetas: React.FC = () => {
                 },
               ]
             : []),
+          ...(canExportPdf
+            ? [
+                {
+                  label:
+                    selectedIds.length > 0
+                      ? `Exportar PDF (${selectedIds.length})`
+                      : 'Exportar PDF',
+                  icon: <PictureAsPdfOutlinedIcon />,
+                  onClick: () => {
+                    const ids =
+                      selectedIds.length > 0
+                        ? selectedIds
+                        : data.map((r) => r.id);
+                    openExportDialog(ids);
+                  },
+                  id: 'btn-exportar-pdf-recetas',
+                  disabled: selectedIds.length === 0,
+                  color: 'error' as const,
+                  variant: 'outlined' as const,
+                },
+              ]
+            : []),
           ...(canCreateOrders
             ? [
                 {
@@ -1115,25 +1151,6 @@ const Recetas: React.FC = () => {
                 },
               ]
             : []),
-          ...(canExportPdf
-            ? [
-                {
-                  label:
-                    selectedIds.length > 0
-                      ? `Exportar PDF (${selectedIds.length})`
-                      : 'Exportar PDF',
-                  icon: <PictureAsPdfOutlinedIcon />,
-                  onClick: () => {
-                    openExportDialog(selectedIds);
-                  },
-                  id: 'btn-exportar-recetas-pdf',
-                  disabled: selectedIds.length === 0 || isExportingPdf,
-                  isLoading: isExportingPdf,
-                  color: 'error' as const,
-                  variant: 'outlined' as const,
-                },
-              ]
-            : []),
         ]}
         onViewModeChange={setViewMode}
       />
@@ -1150,13 +1167,22 @@ const Recetas: React.FC = () => {
           data={data}
           isLoading={isLoading}
           actionsWidth={300}
-          hideTopBar
+          hideTopBar={false}
           actionsAlign="center"
           viewMode={viewMode}
           defaultViewMode={viewMode}
           selectable={canCook || canExportPdf || canCreateOrders}
           selectedIds={selectedIds}
           onSelectionChange={setSelectedIds}
+          exportHandlers={{
+            onExportPdf: () => {
+              const ids =
+                selectedIds.length > 0 ? selectedIds : data.map((r) => r.id);
+              openExportDialog(ids);
+            },
+            onExportExcel: handleExportExcel,
+            exportLabel: 'recetas filtradas',
+          }}
           emptyStateMessage={
             <Box sx={{ py: 4, textAlign: 'center' }}>
               <MenuBookOutlinedIcon
@@ -1327,19 +1353,19 @@ const Recetas: React.FC = () => {
           }
           sections={viewSections}
           actions={
-            itemToView ? (
-              <>
+            itemToView && (
+              <Box display="flex" gap={1}>
                 {canCook && (
                   <Button
                     variant="contained"
                     color="success"
                     startIcon={<PlayCircleOutlineIcon />}
                     onClick={() => {
-                      handleCookClick([itemToView]);
+                      handleCookClick([itemToView!]);
                       setItemToView(null);
                     }}
                   >
-                    Preparar receta
+                    Preparar
                   </Button>
                 )}
                 {canCreateOrders && (
@@ -1348,34 +1374,33 @@ const Recetas: React.FC = () => {
                     color="warning"
                     startIcon={<ShoppingCartCheckoutOutlinedIcon />}
                     onClick={() => {
-                      void handleCreateOrderFromRecipes([itemToView]);
+                      void handleCreateOrderFromRecipes([itemToView!]);
+                      setItemToView(null);
                     }}
-                    disabled={isCooking}
                   >
-                    Crear pedido
+                    Pedido
                   </Button>
                 )}
-                {canExportPdf && (
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    startIcon={<PictureAsPdfOutlinedIcon />}
-                    onClick={() => {
-                      openExportDialog([itemToView.id]);
-                    }}
-                    disabled={isExportingPdf}
-                  >
-                    Exportar PDF
-                  </Button>
-                )}
-              </>
-            ) : undefined
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<PictureAsPdfOutlinedIcon />}
+                  onClick={() => openExportDialog([itemToView!.id])}
+                >
+                  Ficha PDF
+                </Button>
+              </Box>
+            )
           }
-          onEdit={() => {
-            const receta = itemToView;
-            setItemToView(null);
-            if (receta) handleEditClick(receta);
-          }}
+          onEdit={
+            canEdit
+              ? () => {
+                  const receta = itemToView;
+                  setItemToView(null);
+                  if (receta) handleEditClick(receta);
+                }
+              : undefined
+          }
           editLabel="Editar receta"
         />
 

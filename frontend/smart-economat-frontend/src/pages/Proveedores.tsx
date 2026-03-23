@@ -31,6 +31,8 @@ import { usePermission } from '../store/auth.hooks';
 
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import AddIcon from '@mui/icons-material/Add';
+import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
+import { DownloadService } from '../services/download.service';
 
 const proveedorSchema: DynamicField[] = [
   { name: 'nif', label: 'NIF / CUIT', required: true, width: 4 },
@@ -153,6 +155,41 @@ const Proveedores: React.FC = () => {
     setSortBy(key as string);
   };
 
+  const handleExportPdf = async () => {
+    try {
+      await DownloadService.downloadFile(
+        `/export/proveedores/pdf?searchTerm=${searchTerm}`,
+        { filename: 'proveedores.pdf', toast }
+      );
+    } catch {
+      // Manejado por el servicio
+    }
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      await DownloadService.downloadFile(
+        `/export/proveedores/xlsx?searchTerm=${searchTerm}`,
+        { filename: 'proveedores.xlsx', toast }
+      );
+    } catch {
+      // Manejado por el servicio
+    }
+  };
+
+  const handleExportIndividualPdf = async (proveedor: Proveedor) => {
+    try {
+      // Usamos el searchTerm con el NIF para filtrar solo este proveedor
+      // Nota: Si el backend tuviera /proveedor/:id/pdf sería preferible
+      await DownloadService.downloadFile(
+        `/export/proveedores/pdf?searchTerm=${proveedor.nif || proveedor.nombre}`,
+        { filename: `proveedor_${proveedor.nombre}.pdf`, toast }
+      );
+    } catch {
+      // Manejado por el servicio
+    }
+  };
+
   const canEdit = usePermission('proveedores:editar');
   const canDelete = usePermission('proveedores:eliminar');
   const canCreate = usePermission('proveedores:crear');
@@ -264,7 +301,12 @@ const Proveedores: React.FC = () => {
           columns={columns}
           data={data}
           isLoading={isLoading}
-          hideTopBar
+          hideTopBar={false}
+          exportHandlers={{
+            onExportPdf: handleExportPdf,
+            onExportExcel: handleExportExcel,
+            exportLabel: 'proveedores filtrados',
+          }}
           onSort={handleSort}
           sortConfig={{ key: sortBy || '', direction: sortOrder }}
           defaultViewMode="list"
@@ -363,6 +405,19 @@ const Proveedores: React.FC = () => {
                   }
                 }
               : undefined
+          }
+          actions={
+            itemToView && (
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<PictureAsPdfOutlinedIcon />}
+                onClick={() => handleExportIndividualPdf(itemToView)}
+                disableElevation
+              >
+                Descargar Ficha
+              </Button>
+            )
           }
           sections={[
             {
