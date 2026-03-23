@@ -27,9 +27,14 @@ import {
   Checkbox,
   SxProps,
   Theme,
+  IconButton,
+  alpha,
 } from '@mui/material';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
+import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
+import { Tooltip } from './Tooltip';
 import Spinner from './Spinner';
 
 /**
@@ -65,6 +70,13 @@ export interface Column<T> {
   headerSx?: SxProps<Theme>;
   /** Estilos extra para las celdas */
   cellSx?: SxProps<Theme>;
+}
+
+export interface ExportHandlers {
+  onExportPdf?: () => void;
+  onExportExcel?: () => void;
+  /** Label para el tooltip (ej: "productos filtrados") */
+  exportLabel?: string;
 }
 
 export interface DataTableProps<T> {
@@ -124,6 +136,8 @@ export interface DataTableProps<T> {
   onSelectionChange?: (ids: string[]) => void;
   /** Propiedad del dato que sirve como ID único. Por defecto 'id'. */
   uniqueKey?: keyof T | string;
+  /** Handlers opcionales para exportación de datos */
+  exportHandlers?: ExportHandlers;
 }
 
 /**
@@ -154,6 +168,7 @@ export function DataTable<T extends Record<string, any>>({
   selectedIds = [],
   onSelectionChange,
   uniqueKey = 'id',
+  exportHandlers,
 }: DataTableProps<T>) {
   const colSpanCount =
     columns.length + (renderActions ? 1 : 0) + (selectable ? 1 : 0);
@@ -222,7 +237,62 @@ export function DataTable<T extends Record<string, any>>({
           </Box>
 
           {/* SECCIÓN DERECHA */}
-          <Box display="flex" alignItems="center">
+          <Box display="flex" alignItems="center" gap={1}>
+            {exportHandlers?.onExportPdf && (
+              <Tooltip
+                title={
+                  selectedIds.length > 0
+                    ? `Exportar los ${selectedIds.length} registros seleccionados a PDF`
+                    : `Exportar los ${pagination?.totalItems ?? data.length} ${
+                        exportHandlers.exportLabel || 'registros'
+                      } a PDF`
+                }
+              >
+                <IconButton
+                  color="error"
+                  size="small"
+                  onClick={exportHandlers.onExportPdf}
+                  sx={{
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'error.light',
+                    '&:hover': {
+                      bgcolor: (theme) => alpha(theme.palette.error.main, 0.1),
+                    },
+                  }}
+                >
+                  <PictureAsPdfOutlinedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+            {exportHandlers?.onExportExcel && (
+              <Tooltip
+                title={
+                  selectedIds.length > 0
+                    ? `Exportar los ${selectedIds.length} registros seleccionados a EXCEL`
+                    : `Exportar los ${pagination?.totalItems ?? data.length} ${
+                        exportHandlers.exportLabel || 'registros'
+                      } a EXCEL`
+                }
+              >
+                <IconButton
+                  color="success"
+                  size="small"
+                  onClick={exportHandlers.onExportExcel}
+                  sx={{
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'success.light',
+                    '&:hover': {
+                      bgcolor: (theme) =>
+                        alpha(theme.palette.success.main, 0.1),
+                    },
+                  }}
+                >
+                  <FileDownloadOutlinedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
             {rightHeaderAction && (
               <Box display="flex" alignItems="center">
                 {rightHeaderAction}

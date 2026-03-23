@@ -1,5 +1,6 @@
 import { Receta } from './receta.types';
-import { baseFetch, downloadFile } from './api.service';
+import { baseFetch } from './api.service';
+import { DownloadOptions, DownloadService } from './download.service';
 
 import { PaginatedData } from './api.service';
 
@@ -110,7 +111,7 @@ export async function getRecetaDetalle(
 
 export async function exportRecipesPdf(
   ids: string[],
-  options: { includeImage?: boolean } = {}
+  options: { includeImage?: boolean; toast: DownloadOptions['toast'] }
 ): Promise<void> {
   if (ids.length === 0) {
     throw new Error('Debe seleccionar al menos una receta para exportar.');
@@ -121,8 +122,11 @@ export async function exportRecipesPdf(
     includeImage: String(options.includeImage !== false),
   });
 
-  await downloadFile(
+  await DownloadService.downloadFile(
     `/recetas/export/pdf?${query.toString()}`,
-    `SmartEconomat_Recetas_${new Date().toISOString().split('T')[0]}.pdf`
+    {
+      filename: `SmartEconomat_Recetas_${new Date().toISOString().split('T')}.pdf`,
+      toast: options.toast,
+    }
   );
 }
