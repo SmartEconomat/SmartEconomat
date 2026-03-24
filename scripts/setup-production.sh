@@ -19,14 +19,13 @@ echo -e "${GREEN}====================================================${NC}"
 echo -e "${GREEN}       SmartEconomat - Preparación de Producción    ${NC}"
 echo -e "${GREEN}====================================================${NC}"
 
-# 1. Verificación del sistema y actualización de paquetes
-echo -e "\n${YELLOW}[1/5] Verificando sistema y actualizando paquetes...${NC}"
-sudo apt-get update -y
-sudo apt-get install -y ca-certificates curl gnupg lsb-release zip unzip
-
 # 2. Instalar Docker si no está presente
 if ! command -v docker &> /dev/null; then
     echo -e "${YELLOW}Docker no encontrado. Instalando Docker Engine...${NC}"
+    # Mover la actualización de paquetes aquí para orquestarla solo si es necesaria
+    sudo apt-get update -y
+    sudo apt-get install -y ca-certificates curl gnupg lsb-release zip unzip
+    
     sudo mkdir -p /etc/apt/keyrings
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
@@ -37,7 +36,7 @@ if ! command -v docker &> /dev/null; then
     sudo chmod 666 /var/run/docker.sock
     echo -e "${GREEN}Docker instalado correctamente.${NC}"
 else
-    echo -e "${GREEN}Docker ya está instalado.${NC}"
+    echo -e "${GREEN}Docker ya está instalado. Saltando instalación.${NC}"
     # Asegurar permisos del socket incluso si ya está instalado
     sudo chmod 666 /var/run/docker.sock
 fi
