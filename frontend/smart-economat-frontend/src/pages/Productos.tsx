@@ -43,7 +43,11 @@ import {
   fetchProductos,
   createProducto,
   updateProducto,
+<<<<<<< HEAD
   getProductoByBarcode,
+=======
+  fetchHistorialPrecios,
+>>>>>>> 5b5bc13 (feat: Se ha implementado el historial de precio de los productos)
 } from '../services/producto.service';
 import {
   deleteResource,
@@ -51,6 +55,10 @@ import {
   uploadFile,
 } from '../services/api.service';
 import { DownloadService } from '../services/download.service';
+import { HistorialPrecio } from '../services/producto.types';
+import { fetchHistorialPrecios } from '../services/producto.service';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import { Table, TableHead, TableRow, TableCell, TableBody, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 // Utilidad para construir query string de filtros actuales
 function buildExportQuery(filters: ProductFiltersState, searchTerm: string) {
   const params = new URLSearchParams();
@@ -206,6 +214,9 @@ const Productos: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSearchScannerOpen, setIsSearchScannerOpen] = useState(false);
+  const [priceHistory, setPriceHistory] = useState<HistorialPrecio[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [historyProviderFilter, setHistoryProviderFilter] = useState<string>('all');
   const toast = useToast();
 
   // Exportar productos a PDF
@@ -539,7 +550,28 @@ const Productos: React.FC = () => {
 
   const handleViewClick = (row: Producto) => {
     setProductToView(row);
+    setHistoryProviderFilter('all');
   };
+
+  useEffect(() => {
+    if (productToView) {
+      const loadHistory = async () => {
+        setIsLoadingHistory(true);
+        try {
+          const providerId = historyProviderFilter === 'all' ? undefined : historyProviderFilter;
+          const history = await fetchHistorialPrecios(productToView.id, providerId);
+          setPriceHistory(history);
+        } catch (error) {
+          console.error('Error fetching price history:', error);
+        } finally {
+          setIsLoadingHistory(false);
+        }
+      };
+      loadHistory();
+    } else {
+      setPriceHistory([]);
+    }
+  }, [productToView, historyProviderFilter]);
 
   const dynamicSchema = React.useMemo(() => {
     const schema = [...productoSchema];
@@ -840,6 +872,14 @@ const Productos: React.FC = () => {
                         value: p.codigoBarras ?? undefined,
                       },
                       {
+                        label: 'PMP Actual',
+                        value: p.pmp != null ? (
+                          <Typography variant="body2" fontWeight={700} color="primary.main">
+                            {Number(p.pmp).toFixed(4)} €
+                          </Typography>
+                        ) : undefined,
+                      },
+                      {
                         label: 'Descripción',
                         value: p.descripcion ?? undefined,
                         fullWidth: true,
@@ -1039,6 +1079,86 @@ const Productos: React.FC = () => {
                         },
                       ]
                     : []),
+                  {
+                    title: 'Histórico de precios',
+                    content: (
+                      <Box>
+                        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                          <FormControl size="small" sx={{ minWidth: 200 }}>
+                            <InputLabel id="history-provider-filter-label">Filtro por Proveedor</InputLabel>
+                            <Select
+                              labelId="history-provider-filter-label"
+                              id="history-provider-filter"
+                              value={historyProviderFilter}
+                              label="Filtro por Proveedor"
+                              onChange={(e) => setHistoryProviderFilter(e.target.value)}
+                            >
+                              <MenuItem value="all">Todos los proveedores</MenuItem>
+                              {p.proveedores?.map((pp) => (
+                                <MenuItem key={pp.proveedor?.id} value={pp.proveedor?.id}>
+                                  {pp.proveedor?.nombre}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </Box>
+
+                        {isLoadingHistory ? (
+                          <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 3 }}>
+                            Cargando historial...
+                          </Typography>
+                        ) : priceHistory.length > 0 ? (
+                          <Box sx={{ overflowX: 'auto' }}>
+                            <Table size="small">
+                              <TableHead>
+                                <TableRow>
+                                  <TableCell sx={{ fontWeight: 600 }}>Fecha</TableCell>
+                                  <TableCell sx={{ fontWeight: 600 }}>Proveedor</TableCell>
+                                  <TableCell sx={{ fontWeight: 600 }} align="right">Cant.</TableCell>
+                                  <TableCell sx={{ fontWeight: 600 }} align="right">Precio</TableCell>
+                                  <TableCell sx={{ fontWeight: 600 }} align="center">Doc.</TableCell>
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                {priceHistory.map((h) => (
+                                  <TableRow key={h.id}>
+                                    <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                                      {new Date(h.fecha).toLocaleDateString()}
+                                    </TableCell>
+                                    <TableCell>
+                                      {h.productoProveedor?.proveedor?.nombre || '—'}
+                                    </TableCell>
+                                    <TableCell align="right">
+                                      {h.cantidad != null ? Number(h.cantidad).toFixed(2) : '—'}
+                                    </TableCell>
+                                    <TableCell align="right" sx={{ fontWeight: 500 }}>
+                                      {Number(h.precio).toFixed(4)} €
+                                    </TableCell>
+                                    <TableCell align="center">
+                                      {h.documentoOrigen || '—'}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </Box>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 3, bgcolor: 'action.hover', borderRadius: 1 }}>
+                            No hay registros históricos para este producto.
+                          </Typography>
+                        )}
+                        
+                        {/* Placeholder para gráfico de evolución */}
+                        {priceHistory.length > 1 && (
+                          <Box sx={{ mt: 3, p: 2, border: '1px dashed', borderColor: 'divider', borderRadius: 1, textAlign: 'center' }}>
+                            <Typography variant="caption" color="text.secondary">
+                              Estructura preparada para gráfico de evolución de precios
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+                    ),
+                  },
                 ]}
               />
             );

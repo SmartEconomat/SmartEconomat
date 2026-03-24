@@ -108,7 +108,7 @@ describe('RecepcionStockService', () => {
     };
 
     mockDataSource.createQueryRunner.mockReturnValue(queryRunner);
-    service = new RecepcionStockService(
+        service = new RecepcionStockService(
       mockDataSource as any,
       mockPedidoService as any,
       mockEventEmitter as any

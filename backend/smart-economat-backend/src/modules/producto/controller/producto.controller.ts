@@ -11,8 +11,10 @@ import {
   UseGuards,
   ParseUUIDPipe,
   Req,
+  Query,
 } from '@nestjs/common';
 import { ProductoService } from '../service/producto.service';
+import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.entity';
 import {
   ApiTags,
   ApiOperation,
@@ -138,5 +140,32 @@ export class ProductoController {
   ): Promise<void> {
     const userId = req.user.id;
     return this.productoService.remove(id, userId);
+  }
+
+  @Get(':id/historial-precios')
+  @RequirePermissions('productos:ver')
+  @ApiOperation({ summary: 'Obtener el historial de precios de un producto' })
+  @ApiParam({ name: 'id', description: 'ID del producto' })
+  @ApiResponse({ status: 200, type: [HistorialPrecio] })
+  async getHistorialPrecios(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('proveedorId') proveedorId?: string
+  ): Promise<HistorialPrecio[]> {
+    return this.productoService.getHistorialPrecios(id, proveedorId);
+  }
+
+  @Get(':id/pmp')
+  @RequirePermissions('productos:ver')
+  @ApiOperation({ summary: 'Obtener el PMP actual de un producto' })
+  @ApiParam({ name: 'id', description: 'ID del producto' })
+  @ApiResponse({
+    status: 200,
+    schema: { properties: { pmp: { type: 'number' } } },
+  })
+  async getPmp(
+    @Param('id', ParseUUIDPipe) id: string
+  ): Promise<{ pmp: number }> {
+    const producto = await this.productoService.findOne(id);
+    return { pmp: producto.pmp };
   }
 }
