@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  NODE_VERSION: '22.2.0'
+  NODE_VERSION: '22.13.1'
   APP_NAME: SmartEconomat
   ARCHIVE_NAME: SmartEconomat_AI_Upload.zip
   REMOTE_BASE_DIR: /home/psych
@@ -55,6 +55,20 @@ jobs:
     steps:
       - name: Checkout del codigo
         uses: actions/checkout@v4
+
+      - name: Validar secrets SSH requeridos
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT }}
+          SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+        run: |
+          set -e
+          [ -n "$SERVER_HOST" ] || { echo "Falta secret SERVER_HOST"; exit 1; }
+          [ -n "$SERVER_USER" ] || { echo "Falta secret SERVER_USER"; exit 1; }
+          [ -n "$SERVER_PORT" ] || { echo "Falta secret SERVER_PORT"; exit 1; }
+          [ -n "$SERVER_SSH_KEY" ] || { echo "Falta secret SERVER_SSH_KEY"; exit 1; }
+          echo "$SERVER_SSH_KEY" | grep -q "BEGIN .*PRIVATE KEY" || { echo "SERVER_SSH_KEY no parece una clave privada valida"; exit 1; }
 
       - name: Crear paquete de despliegue
         run: |
