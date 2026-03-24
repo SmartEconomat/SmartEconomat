@@ -82,7 +82,7 @@ export class RecepcionStockService {
   constructor(
     private dataSource: DataSource,
     private readonly pedidoService: PedidoService,
-    private readonly eventEmitter: EventEmitter2
+  private readonly eventEmitter: EventEmitter2
   ) {}
 
   async procesarRecepcionMasiva(
@@ -281,6 +281,28 @@ export class RecepcionStockService {
         }
         await queryRunner.manager.save(batchMovimientos);
         movimientosGenerados = batchMovimientos.length;
+
+        for (const item of lineasConInventario) {
+          const precioUnitario = Number(item.ppRef.precioUnitario) || 0;
+          const cantidadRecibida = Number(item.linea.cantidadRecibida);
+
+          const historial = queryRunner.manager.create(HistorialPrecio, {
+            productoProveedorId: item.ppRef.productoProveedorId,
+            precio: precioUnitario,
+            cantidad: cantidadRecibida,
+            documentoOrigen: dto.nAlbaran || 'N/A',
+            recepcionId: savedRecepcion.id,
+            fecha: new Date(),
+          });
+          await queryRunner.manager.save(historial);
+
+          await this.productoService.actualizarPMP(
+            item.ppRef.productoProveedor.productoId,
+            cantidadRecibida,
+            precioUnitario,
+            queryRunner.manager
+          );
+        }
       }
 
       const lineasIncidencia: LineaIncidencia[] = [];
@@ -770,6 +792,26 @@ export class RecepcionStockService {
             usuario: { id: dto.usuarioId },
           });
           movimientosGenerados++;
+
+          const precioUnitario = Number(ppRef.precioUnitario) || 0;
+          const cantidadRecibida = Number(linea.cantidadRecibida);
+
+          const historial = queryRunner.manager.create(HistorialPrecio, {
+            productoProveedorId: ppRef.productoProveedorId,
+            precio: precioUnitario,
+            cantidad: cantidadRecibida,
+            documentoOrigen: dto.nAlbaran || 'N/A',
+            recepcionId: savedRecepcion.id,
+            fecha: new Date(),
+          });
+          await queryRunner.manager.save(historial);
+
+          await this.productoService.actualizarPMP(
+            ppRef.productoProveedor.productoId,
+            cantidadRecibida,
+            precioUnitario,
+            queryRunner.manager
+          );
         }
       }
 

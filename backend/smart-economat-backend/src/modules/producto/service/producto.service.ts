@@ -23,6 +23,8 @@ import { isValidBarcode as validateBarcode } from '../../../common/validators/ba
 import { buildFindManyOptions } from '../../../common/utils/typeorm-query.helper';
 import { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
 import { ArchivoService } from '../../archivo/service/archivo.service';
+import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.entity';
+import { Inventario } from '../../inventario/inventario.entity/inventario.entity';
 
 @Injectable()
 export class ProductoService {
@@ -317,6 +319,74 @@ export class ProductoService {
     throw new InternalServerErrorException(
       'No se pudo generar un código EAN-13 único después de varios intentos'
     );
+  }
+
+  async actualizarPMP(
+    productoId: string,
+    nuevaCantidad: number,
+    nuevoPrecio: number,
+    manager?: EntityManager
+  ): Promise<number> {
+    const em = manager || this.dataSource.manager;
+
+    const producto = await em.findOne(Producto, {
+      where: { id: productoId },
+      relations: ['proveedores'],
+    });
+
+    if (!producto) {
+      throw new NotFoundException(I18nHelper.getError('PRODUCT_NOT_FOUND'));
+    }
+
+    const ppIds = producto.proveedores.map((pp) => pp.id);
+
+    if (ppIds.length === 0) {
+      producto.pmp = nuevoPrecio;
+      await em.save(Producto, producto);
+      return nuevoPrecio;
+    }
+
+    const inventarios = await em.find(Inventario, {
+      where: { productoProveedorId: In(ppIds) },
+    });
+
+    const stockTotalActual = inventarios.reduce(
+      (sum, inv) => sum + Number(inv.cantidadActual),
+      0
+    );
+    const stockAnterior = Math.max(0, stockTotalActual - nuevaCantidad);
+    const pmpAnterior = Number(producto.pmp) || 0;
+
+    const divisor = stockAnterior + nuevaCantidad;
+    const nuevoPmp =
+      divisor > 0
+        ? (stockAnterior * pmpAnterior + nuevaCantidad * nuevoPrecio) / divisor
+        : nuevoPrecio;
+
+    producto.pmp = Number(nuevoPmp.toFixed(4));
+    await em.save(Producto, producto);
+
+    return producto.pmp;
+  }
+
+  async getHistorialPrecios(
+    productoId: string,
+    proveedorId?: string
+  ): Promise<HistorialPrecio[]> {
+    const query = this.dataSource
+      .getRepository(HistorialPrecio)
+      .createQueryBuilder('historial')
+      .innerJoinAndSelect('historial.productoProveedor', 'pp')
+      .innerJoinAndSelect('pp.proveedor', 'proveedor')
+      .where('pp.productoId = :productoId', { productoId });
+
+    if (proveedorId) {
+      query.andWhere('pp.proveedorId = :proveedorId', { proveedorId });
+    }
+
+    query.orderBy('historial.fecha', 'DESC');
+
+    return query.getMany();
   }
 
   private ensureUniqueAlergenos(

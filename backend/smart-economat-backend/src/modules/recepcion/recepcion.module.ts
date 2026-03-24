@@ -19,6 +19,7 @@ import { MovimientoModule } from '../movimiento/movimiento.module';
 
 import { PdfReportService } from './service/pdf-report.service';
 import { PedidoModule } from '../pedido/pedido.module';
+import { ProductoModule } from '../producto/producto.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { PedidoModule } from '../pedido/pedido.module';
     ]),
     MovimientoModule,
     forwardRef(() => PedidoModule),
+    ProductoModule,
   ],
   controllers: [RecepcionController, RecepcionProductoController],
   providers: [
