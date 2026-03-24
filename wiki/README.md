@@ -6,6 +6,40 @@ Documentación técnica y funcional del proyecto SmartEconomat, reorganizada por
 
 ---
 
+## Documentación Backend (Diátaxis)
+
+Este bloque agrupa la documentación completa y detallada del backend NestJS + TypeORM bajo los cuatro cuadrantes Diátaxis.
+
+### Índice principal
+
+| Sección | Documento |
+|---|---|
+| Overview | [Visión general backend](overview.md) |
+| Arquitectura | [Arquitectura NestJS + TypeORM](architecture/backend-nestjs-typeorm.md) |
+| Patrones | [Patrones y trade-offs](architecture/patrones-y-tradeoffs.md) |
+| Tutorial | [Levantar proyecto desde cero](tutorials/levantar-proyecto-desde-cero.md) |
+| How-to | [Crear entidad y relaciones](how-to/crear-entidad-y-relaciones.md) |
+| How-to | [Generar y aplicar migración](how-to/generar-y-aplicar-migracion.md) |
+| How-to | [Añadir módulo/controller/service/DTOs](how-to/anadir-modulo-controller-service-dtos.md) |
+| How-to | [Endpoint con validación y errores](how-to/endpoint-con-validacion-y-errores.md) |
+| How-to | [Usar transacciones seguras](how-to/usar-transacciones-seguras.md) |
+| How-to | [Añadir logging estructurado](how-to/anadir-logging-estructurado.md) |
+| How-to | [Configurar producción con Docker](how-to/configurar-produccion-docker.md) |
+| How-to | [Implementar soft-delete](how-to/implementar-soft-delete.md) |
+| How-to | [Relaciones many-to-many y one-to-many](how-to/relaciones-many-to-many-y-one-to-many.md) |
+| Explanation | [Flujo completo de una request](explanation/flujo-completo-request.md) |
+| Explanation | [Elección de patrones y trade-offs](explanation/patrones-eleccion-y-tradeoffs.md) |
+| Explanation | [Seguridad, performance y escalabilidad](explanation/seguridad-performance-escalabilidad.md) |
+| Reference | [Módulos y responsabilidades](reference/modulos-y-responsabilidades.md) |
+| Reference | [Entidades TypeORM](reference/entidades.md) |
+| Reference | [Endpoints](reference/endpoints.md) |
+| Reference | [TypeORM, DataSource y seeders](reference/typeorm-y-datasource.md) |
+| Reference | [Variables de entorno](reference/variables-entorno.md) |
+| Reference | [Pipes, guards, interceptors y filters](reference/pipes-guards-interceptors-globales.md) |
+| Diagramas | [Arquitectura backend (Mermaid)](diagrams/arquitectura-backend.md) |
+
+---
+
 ## Estructura recomendada
 
 | Área | Contenido |
@@ -98,8 +132,7 @@ Documentación técnica y funcional del proyecto SmartEconomat, reorganizada por
 |-----------|-------------|
 | [API](reference/api.md) | Referencia de endpoints, DTOs y autenticación |
 | [Troubleshooting](operations/troubleshooting/README.md) | Problemas frecuentes y soluciones |
-| [Auditoría backend](audits/backend/INDICE_AUDITORIA.md) | Índice de la auditoría técnica del backend |
-| [Auditoría frontend](audits/frontend/AUDITORIA_FRONTEND.md) | Auditoría del frontend |
+| [Auditoría backend](audits/backend-unused-endpoints.md) | Auditoría técnica disponible del backend |
 | [Casos de uso](planning/use-cases/use-cases.md) | Casos de uso funcionales |
 | [Mejoras propuestas](planning/improvements/) | Propuestas de evolución del producto |
 

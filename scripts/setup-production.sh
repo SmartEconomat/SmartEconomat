@@ -33,9 +33,13 @@ if ! command -v docker &> /dev/null; then
     sudo apt-get update -y
     sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
     sudo usermod -aG docker $USER
+    # Asegurar que el socket de docker tenga los permisos correctos inmediatamente
+    sudo chmod 666 /var/run/docker.sock
     echo -e "${GREEN}Docker instalado correctamente.${NC}"
 else
     echo -e "${GREEN}Docker ya está instalado.${NC}"
+    # Asegurar permisos del socket incluso si ya está instalado
+    sudo chmod 666 /var/run/docker.sock
 fi
 
 # 3. Configurar alias para Docker Compose V2 si es necesario

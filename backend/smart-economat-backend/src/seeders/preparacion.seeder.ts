@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import { DataSource } from 'typeorm';
 import { Preparacion } from '../modules/preparacion/preparacion.entity/preparacion.entity';
 import { Receta } from '../modules/receta/receta.entity/receta.entity';
@@ -9,7 +10,7 @@ import { EstadoLote } from '../modules/receta/enums/receta.enums';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
 export const runSeeder = async (dataSource: DataSource) => {
-  const { faker } = await import('@faker-js/faker');
+  
   const preparacionRepo = dataSource.getRepository(Preparacion);
   const produccionLoteRepo = dataSource.getRepository(ProduccionLote);
   const recetaRepo = dataSource.getRepository(Receta);

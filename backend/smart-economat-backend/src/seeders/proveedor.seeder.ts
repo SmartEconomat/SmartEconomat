@@ -1,9 +1,10 @@
+import { faker } from '@faker-js/faker';
 import { DataSource } from 'typeorm';
 import { Proveedor } from '../modules/proveedor/proveedor.entity/proveedor.entity';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
 export const runSeeder = async (dataSource: DataSource) => {
-  const { faker } = await import('@faker-js/faker');
+  
   const proveedorRepo = dataSource.getRepository(Proveedor);
 
   await dataSource.query(

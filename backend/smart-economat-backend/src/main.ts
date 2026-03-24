@@ -9,6 +9,8 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
 import cookieParser from 'cookie-parser';
 import { useContainer } from 'class-validator';
 
+import helmet from 'helmet';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
@@ -16,6 +18,7 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api/v1');
   app.use(cookieParser());
+  app.use(helmet());
 
   const config = new DocumentBuilder()
     .setTitle('SmartEconomat API')

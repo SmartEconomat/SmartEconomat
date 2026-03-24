@@ -92,7 +92,11 @@ async function runAllSeeders() {
       console.log(
         SeederI18nHelper.getSeederMessage('running', { file: filePath })
       );
-      await seeder.runSeeder(dataSource);
+      try {
+        await seeder.runSeeder(dataSource);
+      } catch (err) {
+        console.error(`Error ejecutando el seeder ${filePath}:`, err instanceof Error ? err.message : err);
+      }
     }
   }
 }

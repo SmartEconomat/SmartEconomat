@@ -1,10 +1,11 @@
+import { faker } from '@faker-js/faker';
 import { DataSource } from 'typeorm';
 import { HistorialPrecio } from '../modules/producto/historial-precio-proveedor.entity/historial.entity';
 import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
 export const runSeeder = async (dataSource: DataSource) => {
-  const { faker } = await import('@faker-js/faker');
+  
   const historialRepo = dataSource.getRepository(HistorialPrecio);
   const productoProveedorRepo = dataSource.getRepository(ProductoProveedor);
 
@@ -15,7 +16,8 @@ export const runSeeder = async (dataSource: DataSource) => {
   console.log('Obteniendo muestra de productos para historial...');
   const productosProv = await productoProveedorRepo.find({ take: 500 });
   if (productosProv.length === 0) {
-    throw new Error(SeederI18nHelper.getError('NO_PRODUCTOS_PROVEEDOR'));
+    console.warn(SeederI18nHelper.getError('NO_PRODUCTOS_PROVEEDOR'));
+    return;
   }
 
   const historiales: HistorialPrecio[] = [];

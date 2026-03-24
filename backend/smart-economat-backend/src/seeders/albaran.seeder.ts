@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import { DataSource } from 'typeorm';
 import { Albaran } from '../modules/albaran/albaran.entity/albaran.entity';
 import { RecepcionPedido } from '../modules/recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
@@ -5,7 +6,7 @@ import { AlbaranPedidoRecepcion } from '../modules/albaran/albaran-pedido-recepc
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
 export const runSeeder = async (dataSource: DataSource) => {
-  const { faker } = await import('@faker-js/faker');
+  
   const albaranRepo = dataSource.getRepository(Albaran);
   const recepcionPedidoRepo = dataSource.getRepository(RecepcionPedido);
   const albaranPedidoRepo = dataSource.getRepository(AlbaranPedidoRecepcion);
@@ -20,7 +21,8 @@ export const runSeeder = async (dataSource: DataSource) => {
   });
 
   if (!recepcionPedidos.length) {
-    throw new Error(SeederI18nHelper.getError('NO_RECEPCIONES_PRODUCTOS'));
+    console.warn(SeederI18nHelper.getError('NO_RECEPCIONES_PRODUCTOS'));
+    return;
   }
 
   const albaranes: Albaran[] = [];

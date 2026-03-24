@@ -70,3 +70,6 @@ backend/smart-economat-backend/uploads_test/
 **/uploads_test/
 
 **/dist_old/
+
+deploy_key
+deploy_key.pub

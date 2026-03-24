@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import { DataSource } from 'typeorm';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 import { Merma } from '../modules/merma/merma.entity/merma.entity';
@@ -8,7 +9,7 @@ import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
 const NUM_MERMAS = process.env.NODE_ENV === 'test' ? 3 : 20;
 
 export const runSeeder = async (dataSource: DataSource) => {
-  const { faker } = await import('@faker-js/faker');
+  
 
   const mermaRepo = dataSource.getRepository(Merma);
   const productoRepo = dataSource.getRepository(Producto);
@@ -18,7 +19,8 @@ export const runSeeder = async (dataSource: DataSource) => {
   const usuarios = await usuarioRepo.find();
 
   if (productos.length === 0) {
-    throw new Error(SeederI18nHelper.getError('NO_PRODUCTOS'));
+    console.warn(SeederI18nHelper.getError('NO_PRODUCTOS'));
+    return;
   }
 
   const motivos = Object.values(MotivoMerma);
