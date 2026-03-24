@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import { DataSource } from 'typeorm';
 import { Receta } from '../modules/receta/receta.entity/receta.entity';
 import { RecetaIngrediente } from '../modules/receta/receta-ingrediente.entity/receta-ingrediente.entity';
@@ -11,7 +12,7 @@ import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 const NUM_RECETAS = process.env.NODE_ENV === 'test' ? 2 : 10;
 
 export const runSeeder = async (dataSource: DataSource) => {
-  const { faker } = await import('@faker-js/faker');
+  
 
   const recetaRepo = dataSource.getRepository(Receta);
   const ingredienteRepo = dataSource.getRepository(RecetaIngrediente);
@@ -19,7 +20,8 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   const productos = await productoRepo.find();
   if (productos.length === 0) {
-    throw new Error(SeederI18nHelper.getError('NO_PRODUCTOS'));
+    console.warn(SeederI18nHelper.getError('NO_PRODUCTOS'));
+    return;
   }
 
   for (let i = 0; i < NUM_RECETAS; i++) {

@@ -111,24 +111,11 @@ services:
       - ACME_DIRECTORY_URL=${ACME_DIRECTORY_URL}
       - ACME_EMAIL=${ACME_EMAIL}
       - DOMAIN=${DOMAIN}
-    entrypoint: ['/bin/sh', '-c']
-    command: |
-      set -e
-      mkdir -p /var/www/certbot/.well-known/acme-challenge
-      # 1) Attempt initial cert obtain (idempotent if already exists)
-      certbot certonly --non-interactive --agree-tos \
-        --server "${ACME_DIRECTORY_URL}" \
-        --email "${ACME_EMAIL}" \
-        --webroot -w /var/www/certbot \
-        -d "${DOMAIN}" -d "api.${DOMAIN}" || true
-      # 2) Renewal loop (twice a day)
-      while :; do
-        certbot renew --non-interactive --quiet \
-          --server "${ACME_DIRECTORY_URL}" \
-          --webroot -w /var/www/certbot \
-          --deploy-hook "/bin/sh /etc/letsencrypt/renewal-hooks/deploy/10-symlink-and-touch.sh" || true
-        sleep 12h
-      done
+    entrypoint: /bin/sh
+    command: >
+      -c "set -e; mkdir -p /var/www/certbot/.well-known/acme-challenge; 
+      certbot certonly --non-interactive --agree-tos --server ${ACME_DIRECTORY_URL} --email ${ACME_EMAIL} --webroot -w /var/www/certbot -d ${DOMAIN} -d api.${DOMAIN} || true; 
+      while :; do certbot renew --non-interactive --quiet --server ${ACME_DIRECTORY_URL} --webroot -w /var/www/certbot --deploy-hook '/bin/sh /etc/letsencrypt/renewal-hooks/deploy/10-symlink-and-touch.sh' || true; sleep 12h; done"
     volumes:
       - ./certs:/etc/letsencrypt
       - ./certs-data:/var/lib/letsencrypt

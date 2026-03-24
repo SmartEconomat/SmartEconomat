@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import { DataSource } from 'typeorm';
 import { Recepcion } from '../modules/recepcion/recepcion.entity/recepcion.entity';
 import { RecepcionPedido } from '../modules/recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
@@ -10,7 +11,7 @@ import { EstadoProductoRecepcion } from '../modules/recepcion/enums/estado-produ
 import { EstadoRecepcion } from '../modules/recepcion/enums/estado-recepcion.enum';
 
 export const runSeeder = async (dataSource: DataSource) => {
-  const { faker } = await import('@faker-js/faker');
+  
   const recepcionRepo = dataSource.getRepository(Recepcion);
   const recepcionPedidoRepo = dataSource.getRepository(RecepcionPedido);
   const recepcionProductoRepo = dataSource.getRepository(RecepcionProducto);
@@ -22,10 +23,12 @@ export const runSeeder = async (dataSource: DataSource) => {
   const usuarios = await usuarioRepo.find();
 
   if (pedidos.length === 0) {
-    throw new Error(SeederI18nHelper.getError('NO_PEDIDOS'));
+    console.warn(SeederI18nHelper.getError('NO_PEDIDOS'));
+    return;
   }
   if (usuarios.length === 0) {
-    throw new Error(SeederI18nHelper.getError('NO_USUARIOS'));
+    console.warn(SeederI18nHelper.getError('NO_USUARIOS'));
+    return;
   }
 
   const todosLosEstados = Object.values(EstadoRecepcion);

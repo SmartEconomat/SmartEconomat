@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import { DataSource } from 'typeorm';
 import { Producto } from '../modules/producto/producto.entity/producto.entity';
 import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
@@ -25,7 +26,7 @@ interface OffProduct {
 }
 
 async function loadTestProducts(): Promise<OffProduct[]> {
-  const { faker } = await import('@faker-js/faker');
+  
 
   faker.seed(20260322);
 
@@ -177,6 +178,12 @@ export const runSeeder = async (dataSource: DataSource) => {
         'No se pudieron obtener productos de OpenFoodFacts:',
         error.message
       );
+    }
+
+    // Fallback: Si no hay productos (falla API o devuelve vacio), cargamos los de test para no romper el resto de seeders
+    if (offProducts.length === 0) {
+      console.log('Cargando productos de prueba (Fallback)...');
+      offProducts = await loadTestProducts();
     }
   }
 

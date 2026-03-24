@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import { DataSource } from 'typeorm';
 import {
   Pedido,
@@ -11,7 +12,7 @@ import { EstadoLote } from '../modules/pedido/enums/estado-lote.enum';
 import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
 
 export const runSeeder = async (dataSource: DataSource) => {
-  const { faker } = await import('@faker-js/faker');
+  
   const pedidoRepo = dataSource.getRepository(Pedido);
   const pedidoProductoRepo = dataSource.getRepository(PedidoProducto);
   const usuarioRepo = dataSource.getRepository(Usuario);
@@ -26,10 +27,12 @@ export const runSeeder = async (dataSource: DataSource) => {
   });
 
   if (usuarios.length === 0) {
-    throw new Error(SeederI18nHelper.getError('NO_USUARIOS'));
+    console.warn(SeederI18nHelper.getError('NO_USUARIOS'));
+    return;
   }
   if (samplePPS.length === 0) {
-    throw new Error(SeederI18nHelper.getError('NO_PRODUCTOS_PROVEEDOR'));
+    console.warn(SeederI18nHelper.getError('NO_PRODUCTOS_PROVEEDOR'));
+    return;
   }
 
   const ppsGroupedByProv = new Map<string, any>();
