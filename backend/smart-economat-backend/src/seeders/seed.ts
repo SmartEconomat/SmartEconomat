@@ -1,10 +1,14 @@
 import 'reflect-metadata';
+import { NestFactory } from '@nestjs/core';
 import { DataSource } from 'typeorm';
 import { readdirSync } from 'fs';
 import { join } from 'path';
 import * as dotenv from 'dotenv';
+import { useContainer } from 'class-validator';
 import { Seeder } from './interfaces/seeder.interface';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
+import { SeedContext } from './seed-context';
+import { AppModule } from '../app.module';
 
 /* 
   dotenv.config({ path: join(__dirname, '../../../../.env.prod') }); 
@@ -36,6 +40,10 @@ async function waitForDatabase(
   retries = 5,
   delayMs = 3000
 ): Promise<void> {
+  if (ds.isInitialized) {
+    return;
+  }
+
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       await ds.initialize();
@@ -54,26 +62,70 @@ async function waitForDatabase(
 }
 
 async function runAllSeeders() {
-  const seedersInOrder = [
-    'roles-permisos.seeder',
-    'usuario.seeder',
-    'proveedor.seeder',
-    'producto.seeder',
-    'inventario.seeder',
-    'pedido.seeder',
-    'recepcion.seeder',
-    'albaran.seeder',
-    'historial-precio.seeder',
-    'incidencia.seeder',
-    'movimiento.seeder',
-    'receta.seeder',
-    'preparacion.seeder',
-    'merma.seeder',
-  ];
+  await waitForDatabase(dataSource);
+  const context = await createSeedContext();
 
-  for (const name of seedersInOrder) {
-    const fileTs = `${name}.ts`;
-    const fileJs = `${name}.js`;
+  try {
+    const seedersInOrder = [
+      'roles-permisos.seeder',
+      'usuario.seeder',
+      'proveedor.seeder',
+      'producto.seeder',
+      'inventario.seeder',
+      'pedido.seeder',
+      'recepcion.seeder',
+      'albaran.seeder',
+      'historial-precio.seeder',
+      'incidencia.seeder',
+      'movimiento.seeder',
+      'receta.seeder',
+      'preparacion.seeder',
+      'merma.seeder',
+    ];
+
+    for (const name of seedersInOrder) {
+      const fileTs = `${name}.ts`;
+      const fileJs = `${name}.js`;
+      const dirFiles = readdirSync(__dirname);
+      const filePath = dirFiles.includes(fileTs)
+        ? fileTs
+        : dirFiles.includes(fileJs)
+          ? fileJs
+          : null;
+
+      if (!filePath) {
+        console.warn(`Seeder file not found for: ${name}`);
+        continue;
+      }
+
+      const seederPath = join(__dirname, filePath);
+      const seeder: Seeder = require(seederPath);
+      if (typeof seeder.runSeeder === 'function') {
+        console.log(
+          SeederI18nHelper.getSeederMessage('running', { file: filePath })
+        );
+        try {
+          await seeder.runSeeder(context);
+        } catch (err) {
+          console.error(
+            `Error ejecutando el seeder ${filePath}:`,
+            err instanceof Error ? err.message : err
+          );
+        }
+      }
+    }
+  } finally {
+    await context.close();
+  }
+}
+
+async function runSeederByName(name: string) {
+  await waitForDatabase(dataSource);
+  const context = await createSeedContext();
+
+  try {
+    const fileTs = `${name}.seeder.ts`;
+    const fileJs = `${name}.seeder.js`;
     const dirFiles = readdirSync(__dirname);
     const filePath = dirFiles.includes(fileTs)
       ? fileTs
@@ -82,50 +134,35 @@ async function runAllSeeders() {
         : null;
 
     if (!filePath) {
-      console.warn(`Seeder file not found for: ${name}`);
-      continue;
+      throw new Error(
+        `${SeederI18nHelper.getError('SEEDER_NOT_FOUND')}: ${name}`
+      );
     }
 
-    const seederPath = join(__dirname, filePath);
-    const seeder: Seeder = require(seederPath);
-    if (typeof seeder.runSeeder === 'function') {
-      console.log(
-        SeederI18nHelper.getSeederMessage('running', { file: filePath })
+    const seeder: Seeder = require(join(__dirname, filePath));
+    if (typeof seeder.runSeeder !== 'function') {
+      throw new Error(
+        `${SeederI18nHelper.getError('RUN_SEEDER_NOT_FOUND')} ${filePath}`
       );
-      try {
-        await seeder.runSeeder(dataSource);
-      } catch (err) {
-        console.error(`Error ejecutando el seeder ${filePath}:`, err instanceof Error ? err.message : err);
-      }
     }
+
+    console.log(
+      SeederI18nHelper.getSeederMessage('running', { file: filePath })
+    );
+    await seeder.runSeeder(context);
+  } finally {
+    await context.close();
   }
 }
 
-async function runSeederByName(name: string) {
-  const fileTs = `${name}.seeder.ts`;
-  const fileJs = `${name}.seeder.js`;
-  const dirFiles = readdirSync(__dirname);
-  const filePath = dirFiles.includes(fileTs)
-    ? fileTs
-    : dirFiles.includes(fileJs)
-      ? fileJs
-      : null;
+async function createSeedContext(): Promise<SeedContext> {
+  const app = await NestFactory.createApplicationContext(AppModule, {
+    logger: process.env.NODE_ENV === 'test' ? false : undefined,
+  });
 
-  if (!filePath) {
-    throw new Error(
-      `${SeederI18nHelper.getError('SEEDER_NOT_FOUND')}: ${name}`
-    );
-  }
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
-  const seeder: Seeder = require(join(__dirname, filePath));
-  if (typeof seeder.runSeeder !== 'function') {
-    throw new Error(
-      `${SeederI18nHelper.getError('RUN_SEEDER_NOT_FOUND')} ${filePath}`
-    );
-  }
-
-  console.log(SeederI18nHelper.getSeederMessage('running', { file: filePath }));
-  await seeder.runSeeder(dataSource);
+  return new SeedContext(app, dataSource);
 }
 
 export { runAllSeeders, runSeederByName };

@@ -23,12 +23,19 @@ import {
   IconButton,
   CircularProgress,
   Fade,
+  Stack,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import FlashOnIcon from '@mui/icons-material/FlashOn';
+import FlashOffIcon from '@mui/icons-material/FlashOff';
 import BarcodeIcon from './BarcodeIcon';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import { BrowserMultiFormatReader } from '@zxing/browser';
-import { NotFoundException } from '@zxing/library';
+import { BrowserMultiFormatReader, IScannerControls } from '@zxing/browser';
+import {
+  BarcodeFormat,
+  DecodeHintType,
+  NotFoundException,
+} from '@zxing/library';
 
 export interface BarcodeScannerProps {
   /** Controla la visibilidad del modal */
@@ -36,7 +43,7 @@ export interface BarcodeScannerProps {
   /** Callback para cerrar el modal */
   onClose: () => void;
   /** Callback que se llama con el código escaneado. Si devuelve true, el modal se cierra. */
-  onScan: (code: string) => void;
+  onScan: (code: string) => void | Promise<void>;
   /** Título opcional del modal */
   title?: string;
   /** Si es true, permite escaneos múltiples secuenciales sin cerrar el modal */
@@ -56,6 +63,127 @@ type ScannerState =
   | 'error_permission'
   | 'error_no_camera'
   | 'error_generic';
+
+const SCANNER_HINTS = new Map<DecodeHintType, unknown>([
+  [
+    DecodeHintType.POSSIBLE_FORMATS,
+    [
+      BarcodeFormat.EAN_13,
+      BarcodeFormat.EAN_8,
+      BarcodeFormat.UPC_A,
+      BarcodeFormat.UPC_E,
+      BarcodeFormat.CODE_128,
+      BarcodeFormat.CODE_39,
+      BarcodeFormat.ITF,
+      BarcodeFormat.CODABAR,
+    ],
+  ],
+  [DecodeHintType.TRY_HARDER, true],
+]);
+
+const READER_OPTIONS = {
+  delayBetweenScanAttempts: 120,
+  delayBetweenScanSuccess: 600,
+  tryPlayVideoTimeout: 4000,
+};
+
+const buildVideoConstraints = (deviceId: string): MediaTrackConstraints => ({
+  ...(deviceId
+    ? { deviceId: { exact: deviceId } }
+    : { facingMode: { ideal: 'environment' } }),
+  width: { ideal: 1920 },
+  height: { ideal: 1080 },
+  aspectRatio: { ideal: 1.7777777778 },
+});
+
+const getActiveVideoTrack = (
+  videoElement: HTMLVideoElement | null
+): MediaStreamTrack | undefined => {
+  const stream = videoElement?.srcObject;
+  return stream instanceof MediaStream ? stream.getVideoTracks()[0] : undefined;
+};
+
+const applyPreferredTrackSettings = async (
+  track: MediaStreamTrack | undefined
+): Promise<{ torchAvailable: boolean }> => {
+  if (!track || typeof track.getCapabilities !== 'function') {
+    return { torchAvailable: false };
+  }
+
+  try {
+    const capabilities = track.getCapabilities() as Record<string, unknown>;
+    const advanced: Record<string, unknown> = {};
+
+    const focusModes = Array.isArray(capabilities.focusMode)
+      ? capabilities.focusMode.filter(
+          (mode): mode is string => typeof mode === 'string'
+        )
+      : [];
+    if (focusModes.includes('continuous')) {
+      advanced.focusMode = 'continuous';
+    } else if (focusModes.includes('single-shot')) {
+      advanced.focusMode = 'single-shot';
+    }
+
+    const exposureModes = Array.isArray(capabilities.exposureMode)
+      ? capabilities.exposureMode.filter(
+          (mode): mode is string => typeof mode === 'string'
+        )
+      : [];
+    if (exposureModes.includes('continuous')) {
+      advanced.exposureMode = 'continuous';
+    }
+
+    if (Object.keys(advanced).length > 0) {
+      await track.applyConstraints({
+        advanced: [advanced] as MediaTrackConstraintSet[],
+      });
+    }
+
+    return { torchAvailable: Boolean(capabilities.torch) };
+  } catch {
+    return { torchAvailable: false };
+  }
+};
+
+const requestCameraAccess = async () => {
+  const attempts: MediaStreamConstraints[] = [
+    { audio: false, video: { facingMode: { ideal: 'environment' } } },
+    { audio: false, video: true },
+  ];
+
+  let lastError: unknown = null;
+
+  for (const constraints of attempts) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      stream.getTracks().forEach((track) => track.stop());
+      return;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError;
+};
+
+const isExpectedVideoAbortError = (error: unknown): boolean => {
+  if (error instanceof DOMException && error.name === 'AbortError') {
+    return true;
+  }
+
+  const errorMsg = error instanceof Error ? error.message : String(error);
+  const normalizedErrorMsg = errorMsg.toLowerCase();
+
+  return (
+    normalizedErrorMsg.includes('aborted by the user agent') ||
+    normalizedErrorMsg.includes(
+      'the fetching process for the media resource was aborted'
+    ) ||
+    normalizedErrorMsg.includes('play() request was interrupted') ||
+    normalizedErrorMsg.includes('it was not possible to play the video')
+  );
+};
 
 /** Emite un beep corto usando la Web Audio API */
 const playBeep = () => {
@@ -86,7 +214,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const readerRef = useRef<BrowserMultiFormatReader | null>(null);
-  const controlsRef = useRef<{ stop: () => void } | null>(null);
+  const controlsRef = useRef<IScannerControls | null>(null);
+  const isOpenRef = useRef(open);
   const startScannerIdRef = useRef(0);
   const lastScannedRef = useRef({ code: '', time: 0 });
 
@@ -95,6 +224,28 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   const [scannerState, setScannerState] = useState<ScannerState>('idle');
   const [lastCode, setLastCode] = useState<string>('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [torchAvailable, setTorchAvailable] = useState(false);
+  const [torchEnabled, setTorchEnabled] = useState(false);
+  const [torchBusy, setTorchBusy] = useState(false);
+
+  useEffect(() => {
+    isOpenRef.current = open;
+  }, [open]);
+
+  const releaseVideoStream = useCallback(() => {
+    const videoElement = videoRef.current;
+    if (!videoElement) {
+      return;
+    }
+
+    const stream = videoElement.srcObject;
+    if (stream instanceof MediaStream) {
+      stream.getTracks().forEach((track) => track.stop());
+    }
+
+    videoElement.pause();
+    videoElement.srcObject = null;
+  }, []);
 
   const stopScanner = useCallback(() => {
     startScannerIdRef.current += 1;
@@ -104,7 +255,11 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       // ignorar
     }
     controlsRef.current = null;
-  }, []);
+    releaseVideoStream();
+    setTorchAvailable(false);
+    setTorchEnabled(false);
+    setTorchBusy(false);
+  }, [releaseVideoStream]);
 
   const startScanner = useCallback(
     async (deviceId: string) => {
@@ -112,23 +267,28 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       setScannerState('scanning');
       stopScanner();
 
+      const currentStartId = startScannerIdRef.current;
+
       try {
-        const currentStartId = startScannerIdRef.current;
         const reader = readerRef.current!;
-        const controls = await reader.decodeFromVideoDevice(
-          deviceId || undefined,
+        const controls = await reader.decodeFromConstraints(
+          {
+            audio: false,
+            video: buildVideoConstraints(deviceId),
+          },
           videoRef.current,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (result: any, error: any) => {
             if (result) {
-              const code = result.getText();
-              const now = Date.now();
+              const code = String(result.getText() || '').trim();
+              if (!code) return;
 
-              // Evitar lecturas duplicadas continuas en ráfaga (2 segundos timeout por código)
+              const now = Date.now();
+              const duplicateTimeout = continuous ? 2000 : 1500;
+
               if (
-                continuous &&
                 lastScannedRef.current.code === code &&
-                now - lastScannedRef.current.time < 2000
+                now - lastScannedRef.current.time < duplicateTimeout
               ) {
                 return;
               }
@@ -149,14 +309,27 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             }
           }
         );
-        
+
         if (currentStartId !== startScannerIdRef.current) {
           controls.stop();
           return;
         }
 
         controlsRef.current = controls;
+        const { torchAvailable: canUseTorch } =
+          await applyPreferredTrackSettings(
+            getActiveVideoTrack(videoRef.current)
+          );
+        setTorchAvailable(Boolean(controls.switchTorch && canUseTorch));
       } catch (err: unknown) {
+        if (
+          currentStartId !== startScannerIdRef.current ||
+          !isOpenRef.current ||
+          isExpectedVideoAbortError(err)
+        ) {
+          return;
+        }
+
         const errorMsg = err instanceof Error ? err.message : String(err);
         if (
           errorMsg.toLowerCase().includes('permission') ||
@@ -184,11 +357,22 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     lastScannedRef.current = { code: '', time: 0 };
     setLastCode('');
     setShowSuccess(false);
+    setTorchAvailable(false);
+    setTorchEnabled(false);
     setScannerState('requesting');
-    readerRef.current = new BrowserMultiFormatReader();
+    readerRef.current = new BrowserMultiFormatReader(
+      SCANNER_HINTS,
+      READER_OPTIONS
+    );
 
     const init = async () => {
       try {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          setScannerState('error_no_camera');
+          return;
+        }
+
+        await requestCameraAccess();
         const devices = await BrowserMultiFormatReader.listVideoInputDevices();
         if (!devices || devices.length === 0) {
           setScannerState('error_no_camera');
@@ -248,6 +432,19 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   const handleCameraChange = async (deviceId: string) => {
     setSelectedCamera(deviceId);
     await startScanner(deviceId);
+  };
+
+  const handleToggleTorch = async () => {
+    const switchTorch = controlsRef.current?.switchTorch;
+    if (!switchTorch || torchBusy) return;
+
+    setTorchBusy(true);
+    try {
+      await switchTorch(!torchEnabled);
+      setTorchEnabled((prev) => !prev);
+    } finally {
+      setTorchBusy(false);
+    }
   };
 
   const renderContent = () => {
@@ -477,8 +674,38 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             color="text.secondary"
             sx={{ display: 'block', textAlign: 'center', mt: 1.5 }}
           >
-            Apunta la cámara al código de barras EAN-13 o UPC-A
+            Acerca el código al recuadro. Se priorizan cámaras traseras, enfoque
+            continuo y formatos EAN, UPC y Code 128.
           </Typography>
+        )}
+
+        {isScanning && (
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={1}
+            sx={{ mt: 2 }}
+          >
+            <Button
+              fullWidth
+              variant="outlined"
+              size="small"
+              onClick={() => void startScanner(selectedCamera)}
+            >
+              Reiniciar cámara
+            </Button>
+            {torchAvailable && (
+              <Button
+                fullWidth
+                variant={torchEnabled ? 'contained' : 'outlined'}
+                size="small"
+                onClick={() => void handleToggleTorch()}
+                disabled={torchBusy}
+                startIcon={torchEnabled ? <FlashOffIcon /> : <FlashOnIcon />}
+              >
+                {torchEnabled ? 'Apagar luz' : 'Encender luz'}
+              </Button>
+            )}
+          </Stack>
         )}
       </DialogContent>
 

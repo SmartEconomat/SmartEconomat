@@ -1,11 +1,11 @@
 import { faker } from '@faker-js/faker';
-import { DataSource } from 'typeorm';
 import { Proveedor } from '../modules/proveedor/proveedor.entity/proveedor.entity';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
+import { SeedContext } from './seed-context';
 
-export const runSeeder = async (dataSource: DataSource) => {
-  
-  const proveedorRepo = dataSource.getRepository(Proveedor);
+export const runSeeder = async (context: SeedContext) => {
+  const dataSource = context.getDataSource();
+  const proveedorRepo = context.getRepository(Proveedor);
 
   await dataSource.query(
     `TRUNCATE TABLE "proveedor" RESTART IDENTITY CASCADE;`

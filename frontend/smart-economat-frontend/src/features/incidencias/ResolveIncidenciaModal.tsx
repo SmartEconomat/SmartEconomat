@@ -47,9 +47,12 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
       }}
     >
       <form onSubmit={handleSubmit}>
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <DialogTitle
+          component="div"
+          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+        >
           <CheckCircleIcon color="success" />
-          <Typography variant="h6" fontWeight={700}>
+          <Typography variant="h6" component="h2" fontWeight={700}>
             Marcar como Resuelta
           </Typography>
         </DialogTitle>

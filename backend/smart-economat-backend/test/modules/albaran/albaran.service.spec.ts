@@ -32,6 +32,17 @@ describe('AlbaranService', () => {
     get: jest.fn().mockReturnValue('./uploads'),
   };
 
+  const mockArchivoService = {
+    compressImageFile: jest.fn().mockImplementation((file: any) =>
+      Promise.resolve({
+        filename: file.filename,
+        path: file.path,
+        size: file.size,
+        mimeType: file.mimetype,
+      })
+    ),
+  };
+
   let service: AlbaranService;
 
   beforeEach(() => {
@@ -39,7 +50,8 @@ describe('AlbaranService', () => {
     service = new AlbaranService(
       mockRepo as any,
       mockDataSource as any,
-      mockConfigService as any
+      mockConfigService as any,
+      mockArchivoService as any
     );
   });
 

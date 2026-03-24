@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsDateString, IsEnum, IsOptional } from 'class-validator';
+import { IsDateString, IsEnum, IsIn, IsOptional } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { TipoMovimiento } from '../enums/movimiento.enums';
@@ -15,6 +15,10 @@ function normalizeTipos(value: unknown): TipoMovimiento[] | undefined {
 }
 
 export class MovimientoListQueryDto extends PaginationQueryDto {
+  @IsOptional()
+  @IsIn(['ASC', 'DESC'])
+  order?: 'ASC' | 'DESC' = 'DESC';
+
   @IsOptional()
   @Transform(({ value }) => normalizeTipos(value))
   @IsEnum(TipoMovimiento, {

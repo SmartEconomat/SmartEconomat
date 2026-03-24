@@ -1,10 +1,71 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 
 // Declaración mínima de process para que TypeScript resuelva process.env en este
 // archivo de configuración. @types/node está listado como devDependency y se
 // instala dentro del contenedor Docker; en el host no hay node_modules por diseño.
 declare const process: { env: Record<string, string | undefined> };
+
+const DEVTOOLS_SOURCEMAP_PATHS = new Set([
+  '/installHook.js.map',
+  '/react_devtools_backend_compact.js.map',
+]);
+
+function createSyntheticSourceMap(pathname: string): string {
+  const fileName = pathname.slice(1, -4);
+  const syntheticSource = `synthetic-devtools-sourcemap://${fileName}`;
+
+  return JSON.stringify({
+    version: 3,
+    file: fileName,
+    sources: [syntheticSource],
+    sourcesContent: [''],
+    names: [],
+    mappings: 'AAAA',
+  });
+}
+
+function createSyntheticSourceMapPlugin(): Plugin {
+  const respondWithSyntheticMap = (
+    url: string | undefined,
+    end: (chunk: string) => void,
+    setHeader: (name: string, value: string) => void
+  ): boolean => {
+    if (!url) {
+      return false;
+    }
+
+    const pathname = url.split('?')[0];
+    if (!DEVTOOLS_SOURCEMAP_PATHS.has(pathname)) {
+      return false;
+    }
+
+    setHeader('Content-Type', 'application/json; charset=utf-8');
+    setHeader('Cache-Control', 'no-store');
+    end(createSyntheticSourceMap(pathname));
+    return true;
+  };
+
+  return {
+    name: 'sherlock-auth-synthetic-devtools-sourcemaps',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const handled = respondWithSyntheticMap(
+          req.url,
+          (chunk) => res.end(chunk),
+          (name, value) => res.setHeader(name, value)
+        );
+
+        if (handled) {
+          return;
+        }
+
+        next();
+      });
+    },
+  };
+}
 
 function getManualChunk(id: string): string | undefined {
   if (!id.includes('node_modules')) {
@@ -80,7 +141,7 @@ export default defineConfig(() => {
         },
       },
     },
-    plugins: [react()],
+    plugins: [createSyntheticSourceMapPlugin(), react()],
     server: {
       port: Number(process.env.FRONTEND_PORT) || 5173,
       host: '0.0.0.0', // Bind en todas las interfaces: obligatorio en Docker

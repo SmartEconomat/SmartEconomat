@@ -1,234 +1,187 @@
 import 'reflect-metadata';
-import { DataSource, EntityTarget, ObjectLiteral } from 'typeorm';
-import * as dotenv from 'dotenv';
 import { join } from 'path';
-import { Movimiento } from '../modules/movimiento/movimiento.entity/movimiento.entity';
-import { TipoMovimiento } from '../modules/movimiento/enums/movimiento.enums';
-import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
-import { rolUsuario, UserStatus } from '../modules/usuario/enums/usuario.enums';
-import { Inventario } from '../modules/inventario/inventario.entity/inventario.entity';
-import { Producto } from '../modules/producto/producto.entity/producto.entity';
-import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
+import * as dotenv from 'dotenv';
+import { NestFactory } from '@nestjs/core';
+import { dataSource, runAllSeeders } from './seed';
+import { AppModule } from '../app.module';
+import { SeedContext } from './seed-context';
 import { Proveedor } from '../modules/proveedor/proveedor.entity/proveedor.entity';
-import { ProductoAlergeno } from '../modules/producto/producto-alergeno.entity/producto-alergeno.entity';
-import { Ubicacion } from '../modules/ubicacion/ubicacion.entity/ubicacion.entity';
+import { Producto } from '../modules/producto/producto.entity/producto.entity';
+import { Inventario } from '../modules/inventario/inventario.entity/inventario.entity';
 import {
   UnidadMedida,
   TipoProducto,
-  Alergeno,
 } from '../modules/producto/enums/producto.enums';
-import { dbConfig } from '../config/database.config';
-import * as crypto from 'crypto';
+import { ProveedorService } from '../modules/proveedor/service/proveedor.service';
+import { ProductoService } from '../modules/producto/service/producto.service';
+import { InventarioService } from '../modules/inventario/service/inventario.service';
+import { UbicacionService } from '../modules/ubicacion/service/ubicacion.service';
+import { Ubicacion } from '../modules/ubicacion/ubicacion.entity/ubicacion.entity';
+import { CreateProveedorDto } from '../modules/proveedor/dto/create-proveedor.dto';
+import { CreateProductoDto } from '../modules/producto/dto/create-producto.dto';
+import { CreateInventarioItemDto } from '../modules/inventario/dto/create-InventarioItem.dto';
+import { CreateUbicacionDto } from '../modules/ubicacion/dto/create-ubicacion.dto';
+import { CreateMovimientoManualDto } from '../modules/inventario/dto/create-movimiento-manual.dto';
+import { TipoMovimientoManual } from '../modules/movimiento/enums/movimiento.enums';
 
 dotenv.config({ path: join(__dirname, '../../../../.env') });
 
-const dataSource = new DataSource({
-  ...dbConfig,
-  entities: [join(__dirname, '../**/*.entity.{ts,js}')],
-  logging: false,
-});
+async function createMassiveContext(): Promise<SeedContext> {
+  const app = await NestFactory.createApplicationContext(AppModule, {
+    logger: false,
+  });
 
-/**
- * Inserta datos en lotes pequeños para evitar el límite de parámetros de Postgres.
- */
-async function batchInsert<T extends ObjectLiteral>(
-  entity: EntityTarget<T>,
-  values: any[],
-  batchSize = 500
-) {
-  for (let i = 0; i < values.length; i += batchSize) {
-    const batch = values.slice(i, i + batchSize);
-    await dataSource
-      .createQueryBuilder()
-      .insert()
-      .into(entity)
-      .values(batch)
-      .orIgnore()
-      .execute();
-  }
+  return new SeedContext(app, dataSource);
 }
 
 async function runMegaMassiveSeeder() {
-  await dataSource.initialize();
-  console.log('🚀 Iniciando Inserción MEGA-MASIVA (Múltiples Entidades)...');
+  const providerCount = Number(process.env.MASSIVE_PROVIDER_COUNT || 10);
+  const productCount = Number(process.env.MASSIVE_PRODUCT_COUNT || 50);
+  const movementCount = Number(process.env.MASSIVE_MOVEMENT_COUNT || 500);
 
+  if (!dataSource.isInitialized) {
+    await dataSource.initialize();
+  }
+
+  console.log('🚀 Iniciando seeder masivo alineado con lógica de negocio...');
   const startTime = Date.now();
 
-  const numUsuarios = 1000;
-  console.log(`👤 Generando ${numUsuarios} usuarios...`);
-  const usuarios: any[] = [];
-  for (let i = 0; i < numUsuarios; i++) {
-    usuarios.push({
-      id: crypto.randomUUID(),
-      nombre: `Usuario Masivo ${i}`,
-      username: `user_massive_${i}_${crypto.randomBytes(3).toString('hex')}`,
-      email: `user_${i}_${crypto.randomBytes(2).toString('hex')}@example.com`,
-      password: 'no-password-needed-for-seed',
-      rol: rolUsuario.ALUMNO,
-      status: UserStatus.ACTIVE,
-      activo: true,
-      version: 1,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-  }
-  await batchInsert(Usuario, usuarios);
-  console.log('✅ Usuarios insertados.');
+  await runAllSeeders();
 
-  const numProductos = 5000;
-  console.log(`📦 Generando ${numProductos} productos...`);
-  const productos: any[] = [];
-  for (let i = 0; i < numProductos; i++) {
-    productos.push({
-      id: crypto.randomUUID(),
-      nombre: `Producto Masivo ${i}`,
-      marca: 'Marca Blanca',
-      unidad: UnidadMedida.KG,
-      tipo: TipoProducto.OTRO,
-      contenido: 1,
-      codigoBarras: `MB-${crypto.randomBytes(4).toString('hex')}`,
-      version: 1,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-  }
-  await batchInsert(Producto, productos);
-  console.log('✅ Productos insertados.');
+  const context = await createMassiveContext();
 
-  console.log('🧪 Asignando alérgenos a productos masivos...');
-  const baseAlergenos = Object.values(Alergeno);
-  const productoAlergenos: any[] = [];
-  for (const p of productos) {
-    if (Math.random() > 0.3) {
-      const numAlergenos = Math.floor(Math.random() * 3) + 1;
-      const selected = Array.from(
-        { length: numAlergenos },
-        () => baseAlergenos[Math.floor(Math.random() * baseAlergenos.length)]
+  try {
+    const { faker } = await import('@faker-js/faker');
+    const proveedorService = context.get<ProveedorService>(ProveedorService);
+    const productoService = context.get<ProductoService>(ProductoService);
+    const inventarioService = context.get<InventarioService>(InventarioService);
+    const ubicacionService = context.get<UbicacionService>(UbicacionService);
+    const actorId = await context.getSeedActorUserId();
+
+    let ubicacionMasiva = await context.findOne(Ubicacion, {
+      where: { nombre: 'Almacén Masivo Seed' } as any,
+    });
+
+    if (!ubicacionMasiva) {
+      ubicacionMasiva = await ubicacionService.create(
+        await context.validateDto(CreateUbicacionDto, {
+          nombre: 'Almacén Masivo Seed',
+          descripcion:
+            'Ubicación creada por el seeder masivo mediante servicios',
+        })
       );
-      const uniqueSelected = Array.from(new Set(selected));
+    }
 
-      for (const al of uniqueSelected) {
-        productoAlergenos.push({
-          id: crypto.randomUUID(),
-          productoId: p.id,
-          alergeno: al,
-          version: 1,
-        });
+    for (let i = 0; i < providerCount; i++) {
+      const nif = `MASSEED${String(i + 1).padStart(3, '0')}`;
+      const existing = await context.findOne(Proveedor, {
+        where: { nif } as any,
+      });
+      if (existing) {
+        continue;
+      }
+
+      await proveedorService.create(
+        await context.validateDto(CreateProveedorDto, {
+          nombre: `Proveedor Masivo ${i + 1}`,
+          email: `massive.provider.${i + 1}@smarteconomat.test`,
+          direccion: faker.location.streetAddress(),
+          nif,
+          telefono: faker.phone.number().slice(0, 20),
+        })
+      );
+    }
+
+    const proveedores = await context.find(Proveedor, {
+      order: { createdAt: 'ASC' } as any,
+    });
+
+    for (let i = 0; i < productCount; i++) {
+      const barcode = String(9500000000000 + i);
+      const existing = await context.findOne(Producto, {
+        where: { codigoBarras: barcode } as any,
+      });
+      if (existing) {
+        continue;
+      }
+
+      const proveedor = proveedores[i % proveedores.length];
+      const producto = await productoService.create(
+        await context.validateDto(CreateProductoDto, {
+          nombre: `Producto Masivo ${i + 1}`,
+          marca: 'Massive Seed',
+          descripcion: 'Producto generado por flujo masivo de seeding',
+          unidad: UnidadMedida.KG,
+          tipo: TipoProducto.OTRO,
+          contenido: 1,
+          codigoBarras: barcode,
+          proveedores: [
+            {
+              proveedorId: proveedor.id,
+              precioUnitario: Number((5 + (i % 30)).toFixed(2)),
+              marcaEspecifica: 'Massive Seed',
+              codigoBarras: barcode,
+            },
+          ],
+        }),
+        actorId
+      );
+
+      const productoProveedor = producto.proveedores?.[0];
+      if (!productoProveedor) {
+        continue;
+      }
+
+      const existingInventory = await context.findOne(Inventario, {
+        where: { productoProveedor: { id: productoProveedor.id } } as any,
+      });
+      if (!existingInventory) {
+        await inventarioService.create(
+          await context.validateDto(CreateInventarioItemDto, {
+            productoProveedorId: productoProveedor.id,
+            cantidadActual: 100,
+            cantidadMinima: 10,
+            cantidadMaxima: 250,
+            ubicacionId: ubicacionMasiva.id,
+          }),
+          actorId
+        );
       }
     }
-  }
-  await batchInsert(ProductoAlergeno, productoAlergenos);
-  console.log('✅ Alérgenos asignados.');
 
-  console.log('🔗 Vinculando productos con proveedores...');
-  const allProvs = await dataSource.getRepository(Proveedor).find();
-  const allProds = await dataSource
-    .getRepository(Producto)
-    .find({ skip: 0, take: numProductos });
-
-  const ppValues: Partial<ProductoProveedor>[] = [];
-  for (const p of allProds) {
-    const prov = allProvs[Math.floor(Math.random() * allProvs.length)];
-    ppValues.push({
-      id: crypto.randomUUID(),
-      productoId: p.id,
-      proveedorId: prov.id,
-      precioUnitario: Math.random() * 50,
-      mermaEsperada: Math.random() * 10,
-      marca: p.marca,
-      codigoBarras: p.codigoBarras,
-      version: 1,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+    const inventarios = await context.find(Inventario, {
+      relations: ['productoProveedor', 'productoProveedor.producto'],
+      take: Math.max(50, movementCount),
     });
-  }
-  await batchInsert(ProductoProveedor, ppValues);
-  console.log('✅ ProductoProveedor insertados.');
 
-  console.log('🏠 Generando registros de inventario...');
-  const allPPs = await dataSource
-    .getRepository(ProductoProveedor)
-    .find({ relations: ['producto'] });
-  const allUbis = await dataSource.getRepository(Ubicacion).find();
-  if (allUbis.length === 0)
-    throw new Error('No hay ubicaciones. Ejecuta seed base primero.');
+    for (let i = 0; i < movementCount; i++) {
+      const inventario = inventarios[i % inventarios.length];
+      const isEntrada = i % 3 === 0;
 
-  const invValues: Partial<Inventario>[] = [];
-  for (const pp of allPPs) {
-    const ubi = allUbis[Math.floor(Math.random() * allUbis.length)];
-    invValues.push({
-      id: crypto.randomUUID(),
-      productoProveedorId: pp.id,
-      ubicacionId: ubi.id,
-      cantidadActual: Math.random() * 100,
-      cantidadMinima: 10,
-      cantidadMaxima: 200,
-      fechaEntrada: new Date(),
-      version: 1,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-  }
-  await batchInsert(Inventario, invValues);
-  console.log('✅ Inventario insertado.');
-
-  const TOTAL_MOVIMIENTOS = 1000000;
-  const BATCH_SIZE_MOV = 5000;
-  const numBatches = TOTAL_MOVIMIENTOS / BATCH_SIZE_MOV;
-
-  const allInvs = await dataSource
-    .getRepository(Inventario)
-    .find({ relations: ['productoProveedor'] });
-  const userBase = await dataSource
-    .getRepository(Usuario)
-    .findOne({ where: {} });
-
-  console.log(
-    `📉 Generando ${TOTAL_MOVIMIENTOS.toLocaleString()} movimientos...`
-  );
-  for (let i = 0; i < numBatches; i++) {
-    const batch: Partial<Movimiento>[] = [];
-    for (let j = 0; j < BATCH_SIZE_MOV; j++) {
-      const inv = allInvs[Math.floor(Math.random() * allInvs.length)];
-      batch.push({
-        id: crypto.randomUUID(),
-        tipo:
-          j % 2 === 0
-            ? TipoMovimiento.ENTRADA_COMPRA
-            : TipoMovimiento.SALIDA_ELABORACION,
-        cantidad: Math.floor(Math.random() * 10),
-        usuarioId: userBase?.id,
-        inventarioId: inv.id,
-        productoProveedorId: inv.productoProveedor?.id,
-        entidad: 'MassiveSeeder',
-        entidadId: crypto.randomUUID(),
-        descripcion: `Movimiento automático #${i * BATCH_SIZE_MOV + j}`,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-    }
-
-    await dataSource
-      .createQueryBuilder()
-      .insert()
-      .into(Movimiento)
-      .values(batch)
-      .orIgnore()
-      .execute();
-
-    if ((i + 1) % 40 === 0 || i === numBatches - 1) {
-      const progress = (((i + 1) / numBatches) * 100).toFixed(1);
-      console.log(
-        `⏳ Progreso Movimientos: ${progress}% (${((i + 1) * BATCH_SIZE_MOV).toLocaleString()} registros)`
+      await inventarioService.ajustarManual(
+        await context.validateDto(CreateMovimientoManualDto, {
+          inventarioId: inventario.id,
+          tipo: isEntrada
+            ? TipoMovimientoManual.ENTRADA
+            : TipoMovimientoManual.SALIDA_AJUSTE,
+          ajuste: isEntrada ? 2 : -1,
+          motivo: `MASSIVE-SEED-${i + 1}`,
+          observaciones: `Movimiento masivo ${i + 1} para ${inventario.productoProveedor?.producto?.nombre || inventario.id}`,
+        }),
+        actorId
       );
     }
-  }
 
-  const totalTime = (Date.now() - startTime) / 1000;
-  console.log(
-    `✅ Inserción MEGA-MASIVA completada en ${totalTime.toFixed(2)}s`
-  );
-  await dataSource.destroy();
+    const totalTime = (Date.now() - startTime) / 1000;
+    console.log(
+      `✅ Seeder masivo completado en ${totalTime.toFixed(2)}s usando lógica de negocio`
+    );
+  } finally {
+    await context.close();
+    if (dataSource.isInitialized) {
+      await dataSource.destroy();
+    }
+  }
 }
 
 void runMegaMassiveSeeder();

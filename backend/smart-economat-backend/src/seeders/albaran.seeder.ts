@@ -1,12 +1,12 @@
+import { SeedContext } from './seed-context';
 import { faker } from '@faker-js/faker';
-import { DataSource } from 'typeorm';
 import { Albaran } from '../modules/albaran/albaran.entity/albaran.entity';
 import { RecepcionPedido } from '../modules/recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
 import { AlbaranPedidoRecepcion } from '../modules/albaran/albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
-export const runSeeder = async (dataSource: DataSource) => {
-  
+export const runSeeder = async (context: SeedContext) => {
+  const dataSource = context.getDataSource();
   const albaranRepo = dataSource.getRepository(Albaran);
   const recepcionPedidoRepo = dataSource.getRepository(RecepcionPedido);
   const albaranPedidoRepo = dataSource.getRepository(AlbaranPedidoRecepcion);

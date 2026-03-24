@@ -1,5 +1,5 @@
-import { DataSource } from 'typeorm';
+import { SeedContext } from '../seed-context';
 
 export interface Seeder {
-  runSeeder: (dataSource: DataSource) => Promise<void>;
+  runSeeder: (context: SeedContext) => Promise<void>;
 }

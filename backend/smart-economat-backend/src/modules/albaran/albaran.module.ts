@@ -11,11 +11,13 @@ import { AlbaranPedidoRecepcion } from './albaran-pedido-recepcion.entity/albara
 import { AlbaranController } from './controller/albaran.controller';
 import { AlbaranService } from './service/albaran.service';
 import { I18nHelper } from '../../common/helpers/i18n.helper';
+import { ArchivoModule } from '../archivo/archivo.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Albaran, AlbaranPedidoRecepcion]),
     ConfigModule,
+    ArchivoModule,
     MulterModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

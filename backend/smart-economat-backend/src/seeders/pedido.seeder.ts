@@ -1,5 +1,5 @@
+import { SeedContext } from './seed-context';
 import { faker } from '@faker-js/faker';
-import { DataSource } from 'typeorm';
 import {
   Pedido,
   EstadoPedido,
@@ -11,8 +11,8 @@ import { PurchaseBatch } from '../modules/pedido/purchase-batch.entity/purchase-
 import { EstadoLote } from '../modules/pedido/enums/estado-lote.enum';
 import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
 
-export const runSeeder = async (dataSource: DataSource) => {
-  
+export const runSeeder = async (context: SeedContext) => {
+  const dataSource = context.getDataSource();
   const pedidoRepo = dataSource.getRepository(Pedido);
   const pedidoProductoRepo = dataSource.getRepository(PedidoProducto);
   const usuarioRepo = dataSource.getRepository(Usuario);

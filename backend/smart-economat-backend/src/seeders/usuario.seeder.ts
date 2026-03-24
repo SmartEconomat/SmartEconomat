@@ -1,4 +1,3 @@
-import { DataSource } from 'typeorm';
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
 import { Profesor } from '../modules/profesor/profesor.entity/profesor.entity';
 import { Alumno } from '../modules/alumno/alumno.entity/alumno.entity';
@@ -6,12 +5,13 @@ import { AlumnoSlot } from '../modules/profesor/profesor.entity/alumno-slot.enti
 import { Rol } from '../modules/roles/rol.entity/rol.entity';
 import { rolUsuario, UserStatus } from '../modules/usuario/enums/usuario.enums';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
+import { SeedContext } from './seed-context';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'node:crypto';
 import { faker } from '@faker-js/faker';
 
-export const runSeeder = async (dataSource: DataSource) => {
-
+export const runSeeder = async (context: SeedContext) => {
+  const dataSource = context.getDataSource();
   await dataSource.transaction(async (manager) => {
     const defaultPassword = await bcrypt.hash('SmartEconomat2026!', 10);
     const rolesRepo = manager.getRepository(Rol);

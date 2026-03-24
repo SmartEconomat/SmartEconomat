@@ -96,9 +96,16 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        {mode === 'audit' ? 'Auditar Stock / Conciliar' : 'Detalles de Lotes'}
-        <Typography variant="subtitle2" color="text.secondary">
+      <DialogTitle component="div">
+        <Typography variant="h6" component="h2">
+          {mode === 'audit' ? 'Auditar Stock / Conciliar' : 'Detalles de Lotes'}
+        </Typography>
+        <Typography
+          variant="subtitle2"
+          component="span"
+          color="text.secondary"
+          sx={{ display: 'block' }}
+        >
           {productName}
         </Typography>
       </DialogTitle>
