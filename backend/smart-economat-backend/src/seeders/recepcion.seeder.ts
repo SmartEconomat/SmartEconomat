@@ -1,5 +1,5 @@
+import { SeedContext } from './seed-context';
 import { faker } from '@faker-js/faker';
-import { DataSource } from 'typeorm';
 import { Recepcion } from '../modules/recepcion/recepcion.entity/recepcion.entity';
 import { RecepcionPedido } from '../modules/recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
 import { RecepcionProducto } from '../modules/recepcion/recepcion-productos.entity/recepcion-producto.entity';
@@ -10,8 +10,8 @@ import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 import { EstadoProductoRecepcion } from '../modules/recepcion/enums/estado-producto.enum';
 import { EstadoRecepcion } from '../modules/recepcion/enums/estado-recepcion.enum';
 
-export const runSeeder = async (dataSource: DataSource) => {
-  
+export const runSeeder = async (context: SeedContext) => {
+  const dataSource = context.getDataSource();
   const recepcionRepo = dataSource.getRepository(Recepcion);
   const recepcionPedidoRepo = dataSource.getRepository(RecepcionPedido);
   const recepcionProductoRepo = dataSource.getRepository(RecepcionProducto);

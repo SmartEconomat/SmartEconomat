@@ -1,4 +1,4 @@
-import { DataSource } from 'typeorm';
+import { SeedContext } from './seed-context';
 import { Movimiento } from '../modules/movimiento/movimiento.entity/movimiento.entity';
 import {
   TipoMovimiento,
@@ -14,8 +14,8 @@ const NUM_MOVIMIENTOS = process.env.NODE_ENV === 'test' ? 5 : 50;
 import { randomUUID } from 'node:crypto';
 import { faker } from '@faker-js/faker';
 
-export const runSeeder = async (dataSource: DataSource) => {
-
+export const runSeeder = async (context: SeedContext) => {
+  const dataSource = context.getDataSource();
   const movimientoRepo = dataSource.getRepository(Movimiento);
   const usuarioRepo = dataSource.getRepository(Usuario);
   const productoRepo = dataSource.getRepository(Producto);

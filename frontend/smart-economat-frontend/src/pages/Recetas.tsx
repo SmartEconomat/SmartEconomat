@@ -55,7 +55,7 @@ import {
   StockValidationResult,
 } from '../services/produccion.service';
 import {
-  createPedido,
+  createMissingStockBatch,
   createPurchaseBatchFromRecetas,
 } from '../services/pedido.service';
 import { UbicacionService } from '../services/ubicacion.service';
@@ -636,12 +636,8 @@ const Recetas: React.FC = () => {
   const handleCreateMissingOrder = async () => {
     if (!stockValidation) return;
 
-    const missing = stockValidation.ingredients.filter(
-      (ing) =>
-        !ing.isEnough &&
-        ing.cheapestProveedorId &&
-        ing.cheapestProductoProveedorId
-    );
+    const missing = stockValidation.ingredients.filter((ing) => !ing.isEnough);
+
     if (missing.length === 0) {
       toast.error(
         'No se encontraron proveedores válidos para los ingredientes faltantes.'
@@ -649,33 +645,21 @@ const Recetas: React.FC = () => {
       return;
     }
 
-    // Agrupar por proveedor
-    const groups: Record<
-      string,
-      { productoProveedorId: string; cantidad: number }[]
-    > = {};
-    missing.forEach((ing) => {
-      const pId = ing.cheapestProveedorId!;
-      if (!groups[pId]) groups[pId] = [];
-      groups[pId].push({
-        productoProveedorId: ing.cheapestProductoProveedorId!,
-        cantidad: Number((ing.requerido - ing.disponible).toFixed(3)),
-      });
-    });
-
     setIsCooking(true);
     try {
-      const promises = Object.entries(groups).map(([provId, lineas]) =>
-        createPedido({
-          proveedorId: provId,
-          observaciones: `Pedido automático por falta de stock para: ${cookData.items.map((it) => it.receta.nombre).join(', ')}`,
-          lineas,
-        })
-      );
+      const batch = await createMissingStockBatch({
+        observaciones: `Pedido automático por falta de stock para: ${cookData.items.map((it) => it.receta.nombre).join(', ')}`,
+        items: cookData.items.map((item) => ({
+          recetaId: item.receta.id,
+          cantidad: item.cantidad,
+        })),
+      });
 
-      await Promise.all(promises);
+      const totalPedidos = batch.pedidos?.length ?? 0;
       toast.success(
-        `Se han generado ${Object.keys(groups).length} pedidos para cubrir los faltantes.`
+        totalPedidos > 0
+          ? `Se han generado ${totalPedidos} pedidos para cubrir los faltantes.`
+          : 'Se ha generado un lote de pedidos para cubrir los faltantes.'
       );
       setIsCookModalOpen(false);
     } catch (err: unknown) {
@@ -1446,6 +1430,7 @@ const Recetas: React.FC = () => {
           }}
         >
           <DialogTitle
+            component="div"
             sx={{
               fontWeight: 800,
               display: 'flex',
@@ -1457,11 +1442,14 @@ const Recetas: React.FC = () => {
           >
             <PlayCircleOutlineIcon sx={{ fontSize: 32 }} />
             <Box>
-              {cookData.items.length > 1
-                ? `Producción en Lote (${cookData.items.length} recetas)`
-                : `Preparar Receta: ${cookData.items[0]?.receta.nombre}`}
+              <Typography variant="h6" component="h2" sx={{ fontWeight: 800 }}>
+                {cookData.items.length > 1
+                  ? `Producción en Lote (${cookData.items.length} recetas)`
+                  : `Preparar Receta: ${cookData.items[0]?.receta.nombre}`}
+              </Typography>
               <Typography
                 variant="caption"
+                component="span"
                 sx={{
                   display: 'block',
                   color: 'text.secondary',

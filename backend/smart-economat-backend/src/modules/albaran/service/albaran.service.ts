@@ -18,6 +18,7 @@ import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto
 import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
 import { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
 import { AlbaranPedidoRecepcion } from '../albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
+import { ArchivoService } from '../../archivo/service/archivo.service';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -29,7 +30,8 @@ export class AlbaranService {
     @InjectRepository(Albaran)
     private readonly albaranRepository: Repository<Albaran>,
     private readonly dataSource: DataSource,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly archivoService: ArchivoService
   ) {}
 
   async create(dto: CreateAlbaranDto): Promise<Albaran> {
@@ -116,6 +118,8 @@ export class AlbaranService {
       throw new BadRequestException(I18nHelper.getError('FILE_REQUIRED'));
     }
 
+    const processedFile = await this.archivoService.compressImageFile(file);
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -139,7 +143,7 @@ export class AlbaranService {
       }
 
       if (albaran.documentoUrl) {
-        this.deleteFileQuietly(file.path);
+        this.deleteFileQuietly(processedFile.path);
 
         throw new ConflictException(
           I18nHelper.getError('ALBARAN_ALREADY_HAS_DOCUMENT', {
@@ -189,12 +193,12 @@ export class AlbaranService {
         }
       }
 
-      const fileUrl = `/api/v1/albaranes/documento/${file.filename}`;
+      const fileUrl = `/api/v1/albaranes/documento/${processedFile.filename}`;
 
       albaran.documentoUrl = fileUrl;
       albaran.documentoNombre = file.originalname;
-      albaran.documentoMimeType = file.mimetype;
-      albaran.documentoTamano = file.size;
+      albaran.documentoMimeType = processedFile.mimeType;
+      albaran.documentoTamano = processedFile.size;
 
       const savedAlbaran = await queryRunner.manager.save(albaran);
 
@@ -214,7 +218,7 @@ export class AlbaranService {
         !(error instanceof ConflictException) &&
         !(error instanceof NotFoundException)
       ) {
-        this.deleteFileQuietly(file.path);
+        this.deleteFileQuietly(processedFile.path);
       }
 
       if (

@@ -101,6 +101,11 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
 
   const filteredProducts = allFlatProducts;
 
+  const buildOptionLabel = (option: FlatProductoProveedor) => {
+    const label = `${option.nombreProducto} (${option.nombreProveedor})`;
+    return option.marca ? `${label} - ${option.marca}` : label;
+  };
+
   // Obtener opciones del Autocomplete incluyendo productos existentes en el valor
   const getAutocompleteOptions = React.useMemo(() => {
     const optionsMap = new Map<string, FlatProductoProveedor>();
@@ -271,7 +276,9 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                   (p) => p.id === lineData.productoProveedorId
                 );
                 const uniqueKey =
-                  lineData._key || `${originalIndex}-${Date.now()}`;
+                  lineData._key ||
+                  lineData.id ||
+                  `${groupId}-${lineData.productoProveedorId || 'linea'}-${originalIndex}`;
 
                 return (
                   <TableRow key={uniqueKey}>
@@ -284,13 +291,10 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                         </Typography>
                       ) : (
                         <Autocomplete
+                          id={`pedido-linea-producto-${groupId}-${originalIndex}`}
                           options={getAutocompleteOptions}
-                          getOptionLabel={(option) => {
-                            const label = `${option.nombreProducto} (${option.nombreProveedor})`;
-                            return option.marca
-                              ? `${label} - ${option.marca}`
-                              : label;
-                          }}
+                          getOptionLabel={buildOptionLabel}
+                          getOptionKey={(option) => option.id}
                           value={selectedProduct || null}
                           isOptionEqualToValue={(option, val) =>
                             option.id === val.id
@@ -308,18 +312,16 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                               props as React.HTMLAttributes<HTMLLIElement> & {
                                 key?: React.Key;
                               };
-                            const label = `${option.nombreProducto} (${option.nombreProveedor})`;
                             return (
                               <li {...restProps} key={key}>
-                                {option.marca
-                                  ? `${label} - ${option.marca}`
-                                  : label}
+                                {buildOptionLabel(option)}
                               </li>
                             );
                           }}
                           renderInput={(params) => (
                             <TextField
                               {...params}
+                              id={`pedido-linea-producto-input-${groupId}-${originalIndex}`}
                               variant="standard"
                               placeholder={disabled ? '' : 'Buscar producto...'}
                             />

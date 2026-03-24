@@ -60,12 +60,71 @@ export class RolesService {
     const savedRol = await this.rolRepo.save(rol);
 
     if (dto.permisoIds && dto.permisoIds.length > 0) {
-      await this.assignPermissions(savedRol.id, {
-        permisoIds: dto.permisoIds,
-      });
+      if (dto.esSistema) {
+        const permisos = await this.permisoRepo.find({
+          where: { id: In(dto.permisoIds) },
+        });
+
+        if (permisos.length !== dto.permisoIds.length) {
+          throw new BadRequestException(
+            I18nHelper.getError('ALGUNOS_PERMISOS_NO_EXISTEN')
+          );
+        }
+
+        savedRol.permisos = permisos;
+        await this.rolRepo.save(savedRol);
+      } else {
+        await this.assignPermissions(savedRol.id, {
+          permisoIds: dto.permisoIds,
+        });
+      }
     }
 
     return this.findOne(savedRol.id);
+  }
+
+  async upsertSystemRole(dto: CreateRolDto): Promise<Rol> {
+    if (!dto.esSistema) {
+      throw new BadRequestException(
+        'upsertSystemRole solo admite roles marcados como de sistema'
+      );
+    }
+
+    const permisos = dto.permisoIds?.length
+      ? await this.permisoRepo.find({
+          where: { id: In(dto.permisoIds) },
+        })
+      : [];
+
+    if ((dto.permisoIds?.length ?? 0) !== permisos.length) {
+      throw new BadRequestException(
+        I18nHelper.getError('ALGUNOS_PERMISOS_NO_EXISTEN')
+      );
+    }
+
+    let rol = await this.rolRepo.findOne({
+      where: { nombre: dto.nombre },
+      relations: ['permisos'],
+    });
+
+    if (!rol) {
+      rol = this.rolRepo.create({
+        nombre: dto.nombre,
+        descripcion: dto.descripcion,
+        esSistema: true,
+        activo: dto.activo !== undefined ? dto.activo : true,
+      });
+    }
+
+    rol.descripcion = dto.descripcion;
+    rol.esSistema = true;
+    rol.activo = dto.activo !== undefined ? dto.activo : true;
+    rol.permisos = permisos;
+
+    await this.rolRepo.save(rol);
+    await this.invalidateCacheForRole(rol.id);
+
+    return this.findOne(rol.id);
   }
 
   /**

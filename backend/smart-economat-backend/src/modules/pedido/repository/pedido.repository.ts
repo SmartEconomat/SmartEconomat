@@ -7,10 +7,13 @@ import {
   ILike,
   In,
 } from 'typeorm';
-import { Pedido } from '../pedido.entity/pedido.entity';
+import { Pedido, EstadoPedido } from '../pedido.entity/pedido.entity';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { buildFindManyOptions } from '../../../common/utils/typeorm-query.helper';
+
+const UUID_SEARCH_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 @Injectable()
 export class PedidoRepository extends Repository<Pedido> {
@@ -69,11 +72,70 @@ export class PedidoRepository extends Repository<Pedido> {
       }
     }
 
-    if (query.searchTerm) {
+    const normalizedSearchTerm = query.searchTerm?.trim();
+
+    if (normalizedSearchTerm) {
+      const likeTerm = ILike(`%${normalizedSearchTerm}%`);
+
       whereConditions.push({
         ...baseCondition,
-        id: ILike(`%${query.searchTerm}%`),
+        observaciones: likeTerm,
       });
+
+      whereConditions.push(
+        {
+          ...baseCondition,
+          proveedor: { nombre: likeTerm },
+        },
+        {
+          ...baseCondition,
+          proveedor: { nif: likeTerm },
+        },
+        {
+          ...baseCondition,
+          proveedor: { email: likeTerm },
+        },
+        {
+          ...baseCondition,
+          usuario: { nombre: likeTerm },
+        },
+        {
+          ...baseCondition,
+          usuario: { username: likeTerm },
+        },
+        {
+          ...baseCondition,
+          usuario: { email: likeTerm },
+        },
+        {
+          ...baseCondition,
+          motivoCancelacion: likeTerm,
+        },
+        {
+          ...baseCondition,
+          motivoIncidencia: likeTerm,
+        }
+      );
+
+      if (UUID_SEARCH_REGEX.test(normalizedSearchTerm)) {
+        whereConditions.push({
+          ...baseCondition,
+          id: normalizedSearchTerm,
+        });
+      }
+
+      if (!query.estado) {
+        const matchingStates = Object.values(EstadoPedido).filter((estado) =>
+          estado.toLowerCase().includes(normalizedSearchTerm.toLowerCase())
+        );
+
+        whereConditions.push(
+          ...matchingStates.map((estado) => ({
+            ...baseCondition,
+            estado,
+          }))
+        );
+      }
     } else {
       whereConditions.push(baseCondition);
     }

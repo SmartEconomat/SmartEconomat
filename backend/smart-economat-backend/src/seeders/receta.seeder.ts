@@ -1,5 +1,5 @@
+import { SeedContext } from './seed-context';
 import { faker } from '@faker-js/faker';
-import { DataSource } from 'typeorm';
 import { Receta } from '../modules/receta/receta.entity/receta.entity';
 import { RecetaIngrediente } from '../modules/receta/receta-ingrediente.entity/receta-ingrediente.entity';
 import { Producto } from '../modules/producto/producto.entity/producto.entity';
@@ -11,9 +11,8 @@ import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
 const NUM_RECETAS = process.env.NODE_ENV === 'test' ? 2 : 10;
 
-export const runSeeder = async (dataSource: DataSource) => {
-  
-
+export const runSeeder = async (context: SeedContext) => {
+  const dataSource = context.getDataSource();
   const recetaRepo = dataSource.getRepository(Receta);
   const ingredienteRepo = dataSource.getRepository(RecetaIngrediente);
   const productoRepo = dataSource.getRepository(Producto);

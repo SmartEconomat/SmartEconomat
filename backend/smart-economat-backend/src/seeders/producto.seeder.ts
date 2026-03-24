@@ -1,5 +1,4 @@
 import { faker } from '@faker-js/faker';
-import { DataSource } from 'typeorm';
 import { Producto } from '../modules/producto/producto.entity/producto.entity';
 import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
 import { ProductoAlergeno } from '../modules/producto/producto-alergeno.entity/producto-alergeno.entity';
@@ -10,6 +9,7 @@ import {
   Alergeno,
 } from '../modules/producto/enums/producto.enums';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
+import { SeedContext } from './seed-context';
 
 interface OffProduct {
   product_name_es?: string;
@@ -25,9 +25,7 @@ interface OffProduct {
   allergens_tags?: string[];
 }
 
-async function loadTestProducts(): Promise<OffProduct[]> {
-  
-
+function loadTestProducts(): OffProduct[] {
   faker.seed(20260322);
 
   const quantities = ['250 g', '500 g', '1 kg', '2 kg', '330 ml', '1 l'];
@@ -136,11 +134,11 @@ function parseQuantity(q: string | undefined): {
   return { contenido: val, unidad };
 }
 
-export const runSeeder = async (dataSource: DataSource) => {
-  const productoRepo = dataSource.getRepository(Producto);
-  const proveedorRepo = dataSource.getRepository(Proveedor);
-  const productoProveedorRepo = dataSource.getRepository(ProductoProveedor);
-  const productoAlergenoRepo = dataSource.getRepository(ProductoAlergeno);
+export const runSeeder = async (context: SeedContext) => {
+  const productoRepo = context.getRepository(Producto);
+  const proveedorRepo = context.getRepository(Proveedor);
+  const productoProveedorRepo = context.getRepository(ProductoProveedor);
+  const productoAlergenoRepo = context.getRepository(ProductoAlergeno);
 
   const proveedores = await proveedorRepo.find();
   if (proveedores.length === 0) {
@@ -151,7 +149,7 @@ export const runSeeder = async (dataSource: DataSource) => {
 
   if (process.env.NODE_ENV === 'test') {
     console.log('Generando productos faker para entorno de test...');
-    offProducts = await loadTestProducts();
+    offProducts = loadTestProducts();
   }
 
   if (process.env.NODE_ENV !== 'test') {
@@ -180,10 +178,9 @@ export const runSeeder = async (dataSource: DataSource) => {
       );
     }
 
-    // Fallback: Si no hay productos (falla API o devuelve vacio), cargamos los de test para no romper el resto de seeders
     if (offProducts.length === 0) {
       console.log('Cargando productos de prueba (Fallback)...');
-      offProducts = await loadTestProducts();
+      offProducts = loadTestProducts();
     }
   }
 

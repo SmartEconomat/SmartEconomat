@@ -44,7 +44,7 @@ export class UsuarioService {
   }
 
   async createAdmin(dto: AdminCreateUsuarioDto) {
-    return await this.dataSource.transaction(async (manager) => {
+    const savedUserId = await this.dataSource.transaction(async (manager) => {
       const { aula, cial, ...userData } = dto;
       const systemRole = await manager.findOne(Rol, {
         where: { nombre: dto.rol },
@@ -81,8 +81,10 @@ export class UsuarioService {
         await manager.save(alumno);
       }
 
-      return this.findOne(savedUser.id);
+      return savedUser.id;
     });
+
+    return this.findOne(savedUserId);
   }
 
   findAll(query: PaginationQueryDto, userRole?: string) {

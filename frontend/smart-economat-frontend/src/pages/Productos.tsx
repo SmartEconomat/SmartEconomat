@@ -43,6 +43,7 @@ import {
   fetchProductos,
   createProducto,
   updateProducto,
+  getProductoByBarcode,
 } from '../services/producto.service';
 import {
   deleteResource,
@@ -451,6 +452,59 @@ const Productos: React.FC = () => {
     return editData;
   };
 
+  const buildCreateProductDraft = async (barcode: string) => {
+    const offData = await fetchProductFromOFF(barcode);
+
+    return {
+      nombre: offData?.nombre || '',
+      marca: offData?.marca || '',
+      unidad: UnidadMedida.UNIDAD,
+      tipo: CategoriaProducto.OTRO,
+      contenido: 1,
+      codigoBarras: barcode,
+    };
+  };
+
+  const handleSearchScannerResult = async (rawCode: string) => {
+    const code = rawCode.trim();
+    if (!code) return;
+
+    setSearchTerm(code);
+    setPage(1);
+
+    try {
+      const existingProduct = await getProductoByBarcode(code);
+
+      if (existingProduct) {
+        setProductToEdit(buildEditData(existingProduct));
+        toast.success('Producto localizado. Abriendo su ficha para editar.');
+        return;
+      }
+
+      if (!canCreate) {
+        toast.info(
+          'No se encontró el producto. Se dejó el código en la búsqueda.'
+        );
+        return;
+      }
+
+      setProductToEdit(await buildCreateProductDraft(code));
+      toast.info(
+        'Producto no encontrado. Se abrió el formulario para crearlo.'
+      );
+    } catch {
+      if (!canCreate) {
+        toast.error('No se pudo validar el código escaneado.');
+        return;
+      }
+
+      setProductToEdit(await buildCreateProductDraft(code));
+      toast.warning(
+        'No se pudo comprobar el catálogo, pero se abrió el alta del producto.'
+      );
+    }
+  };
+
   const handleEditClick = (row: Producto) => {
     setProductToEdit(buildEditData(row));
   };
@@ -589,8 +643,7 @@ const Productos: React.FC = () => {
         open={isSearchScannerOpen}
         onClose={() => setIsSearchScannerOpen(false)}
         onScan={(code) => {
-          setSearchTerm(code);
-          setPage(1);
+          void handleSearchScannerResult(code);
         }}
         title="Escanear Producto para Buscar"
       />

@@ -13,6 +13,19 @@ export class MovimientoRepository {
     private readonly repo: Repository<Movimiento>
   ) {}
 
+  private normalizeMovimientoPayload(movimiento: any) {
+    const entidadId =
+      movimiento?.entidadId ??
+      movimiento?.entidad_id ??
+      movimiento?.entidadID ??
+      undefined;
+
+    return {
+      ...movimiento,
+      ...(entidadId ? { entidadId } : {}),
+    };
+  }
+
   createMovimiento(data: CreateMovimientoDto) {
     const movimientoData: Record<string, unknown> = {
       tipo: data.tipo,
@@ -111,8 +124,12 @@ export class MovimientoRepository {
       totalPromise,
     ]);
 
+    const normalizedData = data.map((mov) =>
+      this.normalizeMovimientoPayload(mov)
+    );
+
     return {
-      data,
+      data: normalizedData,
       total,
       page,
       limit,
@@ -232,8 +249,12 @@ export class MovimientoRepository {
       countQb.getCount(),
     ]);
 
+    const normalizedData = data.map((mov) =>
+      this.normalizeMovimientoPayload(mov)
+    );
+
     return {
-      data,
+      data: normalizedData,
       total,
       page,
       limit,

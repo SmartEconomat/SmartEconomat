@@ -107,6 +107,61 @@ export class ArchivoService {
     return await this.archivoRepository.save(newArchivo);
   }
 
+  /**
+   * Comprime un archivo de imagen (JPEG, PNG, GIF, WebP) al formato WebP
+   * usando los parámetros por defecto del pipeline de optimización.
+   *
+   * - Si el archivo no es una imagen, devuelve los datos originales sin modificar.
+   * - Si la compresión falla, hace fallback al archivo original con un aviso en log.
+   * - El archivo original es eliminado del disco tras una compresión exitosa.
+   *
+   * Este método es la puerta de entrada compartida para cualquier módulo que
+   * necesite comprimir imágenes antes de persistirlas (albaranes, productos, etc.)
+   * sin necesidad de pasar por el registro en la entidad Archivo.
+   */
+  async compressImageFile(file: Express.Multer.File): Promise<{
+    filename: string;
+    path: string;
+    size: number;
+    mimeType: string;
+  }> {
+    if (!file.mimetype.startsWith('image/')) {
+      return {
+        filename: file.filename,
+        path: file.path,
+        size: file.size,
+        mimeType: file.mimetype,
+      };
+    }
+
+    try {
+      const options = new ImageProcessOptionsDto();
+      const processed = await this.processImage(file.path, options);
+
+      await this.deleteLocalFileQuietly(file.path);
+
+      return {
+        filename: path.basename(processed.path),
+        path: processed.path,
+        size: processed.size,
+        mimeType: processed.mimeType,
+      };
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : 'unknown error';
+
+      this.logger.warn(
+        `Image compression failed for ${file.originalname}: ${reason}. Falling back to original file.`
+      );
+
+      return {
+        filename: file.filename,
+        path: file.path,
+        size: file.size,
+        mimeType: file.mimetype,
+      };
+    }
+  }
+
   private async processImage(
     inputPath: string,
     options: ImageProcessOptionsDto

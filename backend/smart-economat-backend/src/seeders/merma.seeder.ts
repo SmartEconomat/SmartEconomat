@@ -1,5 +1,5 @@
+import { SeedContext } from './seed-context';
 import { faker } from '@faker-js/faker';
-import { DataSource } from 'typeorm';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 import { Merma } from '../modules/merma/merma.entity/merma.entity';
 import { MotivoMerma } from '../modules/merma/enums/merma.enums';
@@ -8,9 +8,8 @@ import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
 
 const NUM_MERMAS = process.env.NODE_ENV === 'test' ? 3 : 20;
 
-export const runSeeder = async (dataSource: DataSource) => {
-  
-
+export const runSeeder = async (context: SeedContext) => {
+  const dataSource = context.getDataSource();
   const mermaRepo = dataSource.getRepository(Merma);
   const productoRepo = dataSource.getRepository(Producto);
   const usuarioRepo = dataSource.getRepository(Usuario);

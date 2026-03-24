@@ -1,3 +1,4 @@
+import { SeedContext } from './seed-context';
 import { faker } from '@faker-js/faker';
 import { Incidencia } from '../modules/incidencia/incidencia.entity/incidencia.entity';
 import { RecepcionPedido } from '../modules/recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
@@ -6,12 +7,10 @@ import {
   TipoDiferencia,
   EstadoReclamacion,
 } from '../modules/incidencia/incidencia-linea.entity/incidencia-linea.entity';
-import { DataSource } from 'typeorm';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
-export const runSeeder = async (dataSource: DataSource) => {
-  
-
+export const runSeeder = async (context: SeedContext) => {
+  const dataSource = context.getDataSource();
   const incidenciaRepo = dataSource.getRepository(Incidencia);
   const incidenciaLineaRepo = dataSource.getRepository(IncidenciaLinea);
   const recepcionPedidoRepo = dataSource.getRepository(RecepcionPedido);

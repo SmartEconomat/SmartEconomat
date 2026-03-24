@@ -46,9 +46,12 @@ const MetricsCustomizer: React.FC<MetricsCustomizerProps> = ({
 
   return (
     <Dialog open={isOpen} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <DialogTitle
+        component="div"
+        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+      >
         <SettingsIcon color="primary" />
-        <Typography variant="h6" fontWeight={700}>
+        <Typography variant="h6" component="h2" fontWeight={700}>
           Personalizar Panel
         </Typography>
         <IconButton

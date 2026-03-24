@@ -1,8 +1,9 @@
-import { DataSource } from 'typeorm';
 import { Permiso } from '../modules/permisos/permiso.entity/permiso.entity';
-import { PlantillaRol } from '../modules/plantillas-roles/plantilla-rol.entity/plantilla-rol.entity';
-import { Rol } from '../modules/roles/rol.entity/rol.entity';
 import { rolUsuario } from '../modules/usuario/enums/usuario.enums';
+import { SeedContext } from './seed-context';
+import { PermisosService } from '../modules/permisos/service/permisos.service';
+import { PlantillasRolesService } from '../modules/plantillas-roles/service/plantillas-roles.service';
+import { RolesService } from '../modules/roles/service/roles.service';
 
 /**
  * Definición completa de 60+ permisos base del sistema
@@ -638,13 +639,6 @@ const PERMISOS_BASE = [
     descripcion: 'Registrar la producción/cocinado de una receta',
   },
   {
-    codigo: 'incidencias:resolver',
-    nombre: 'Resolver incidencia',
-    modulo: 'incidencias',
-    accion: 'resolver',
-    descripcion: 'Marcar una incidencia como resuelta',
-  },
-  {
     codigo: 'movimientos:historial',
     nombre: 'Ver historial de movimientos',
     modulo: 'movimientos',
@@ -652,32 +646,11 @@ const PERMISOS_BASE = [
     descripcion: 'Ver trazabilidad detallada de movimientos',
   },
   {
-    codigo: 'archivos:subir',
-    nombre: 'Subir archivo',
-    modulo: 'archivos',
-    accion: 'subir',
-    descripcion: 'Subir nuevos archivos al sistema',
-  },
-  {
-    codigo: 'archivos:listar',
-    nombre: 'Listar archivos',
-    modulo: 'archivos',
-    accion: 'listar',
-    descripcion: 'Ver listado de archivos subidos',
-  },
-  {
     codigo: 'archivos:ver',
     nombre: 'Ver archivo',
     modulo: 'archivos',
     accion: 'ver',
     descripcion: 'Ver detalle o descargar contenido de un archivo',
-  },
-  {
-    codigo: 'archivos:eliminar',
-    nombre: 'Eliminar archivo',
-    modulo: 'archivos',
-    accion: 'eliminar',
-    descripcion: 'Eliminar archivos del sistema',
   },
   {
     codigo: 'ubicaciones:listar',
@@ -733,10 +706,12 @@ const PERMISOS_BASE = [
 /**
  * Seeder para crear permisos base y plantillas de roles
  */
-export async function seedRolesPermisos(dataSource: DataSource): Promise<void> {
-  const permisoRepo = dataSource.getRepository(Permiso);
-  const plantillaRepo = dataSource.getRepository(PlantillaRol);
-  const rolRepo = dataSource.getRepository(Rol);
+export async function seedRolesPermisos(context: SeedContext): Promise<void> {
+  const permisosService = context.get<PermisosService>(PermisosService);
+  const plantillasService = context.get<PlantillasRolesService>(
+    PlantillasRolesService
+  );
+  const rolesService = context.get<RolesService>(RolesService);
 
   console.log('🚀 Iniciando seeder de permisos y plantillas...');
 
@@ -744,13 +719,10 @@ export async function seedRolesPermisos(dataSource: DataSource): Promise<void> {
   const permisosCreados: Permiso[] = [];
 
   for (const permisoData of PERMISOS_BASE) {
-    let permiso = await permisoRepo.findOne({
-      where: { codigo: permisoData.codigo },
-    });
+    let permiso = await permisosService.findByCodigo(permisoData.codigo);
 
     if (!permiso) {
-      permiso = permisoRepo.create({ ...permisoData, activo: true });
-      await permisoRepo.save(permiso);
+      permiso = await permisosService.create({ ...permisoData, activo: true });
       permisosCreados.push(permiso);
     }
   }
@@ -761,204 +733,124 @@ export async function seedRolesPermisos(dataSource: DataSource): Promise<void> {
 
   console.log('🎨 Creando plantillas de roles...');
 
-  const todosPermisos = await permisoRepo.find({ where: { activo: true } });
+  const todosPermisos = await permisosService.findAllNoPagination();
+  const plantillasExistentes = await plantillasService.findAll();
+  const plantillaByNombre = new Map(
+    plantillasExistentes.map((plantilla) => [plantilla.nombre, plantilla])
+  );
 
-  let superAdmin = await plantillaRepo.findOne({
-    where: { nombre: rolUsuario.SUPER_ADMIN },
-  });
-  if (!superAdmin) {
-    superAdmin = plantillaRepo.create({
-      nombre: rolUsuario.SUPER_ADMIN,
-      descripcion: 'Acceso total al sistema sin restricciones',
-      esEditable: false,
-      activo: true,
-    });
-    superAdmin = await plantillaRepo.save(superAdmin);
-    superAdmin.permisos = todosPermisos;
-    await plantillaRepo.save(superAdmin);
-    console.log(
-      `✅ Plantilla SUPER_ADMIN creada (${todosPermisos.length} permisos)`
-    );
-  }
+  const ensurePlantilla = async (payload: {
+    nombre: string;
+    descripcion: string;
+    esEditable: boolean;
+    permisoIds: string[];
+  }) => {
+    let plantilla = plantillaByNombre.get(payload.nombre);
+    if (!plantilla) {
+      plantilla = await plantillasService.create(payload);
+      plantillaByNombre.set(payload.nombre, plantilla);
+    }
+    return plantilla;
+  };
 
-  let administrador = await plantillaRepo.findOne({
-    where: { nombre: rolUsuario.ADMINISTRADOR },
-  });
-  if (!administrador) {
-    const permisosAdmin = todosPermisos.filter(
-      (p) =>
-        (!p.codigo.startsWith('roles:') && !p.codigo.startsWith('permisos:')) ||
-        p.codigo === 'permisos:gestionar'
-    );
-    administrador = plantillaRepo.create({
-      nombre: rolUsuario.ADMINISTRADOR,
-      descripcion:
-        'Administrador completo del economato (incluye gestión de permisos de usuario)',
-      esEditable: true,
-      activo: true,
-    });
-    administrador = await plantillaRepo.save(administrador);
-    administrador.permisos = permisosAdmin;
-    await plantillaRepo.save(administrador);
-    console.log(
-      `✅ Plantilla ADMINISTRADOR ('${rolUsuario.ADMINISTRADOR}') creada (${permisosAdmin.length} permisos)`
-    );
-  }
+  const permisosAdmin = todosPermisos.filter(
+    (p) =>
+      (!p.codigo.startsWith('roles:') && !p.codigo.startsWith('permisos:')) ||
+      p.codigo === 'permisos:gestionar'
+  );
+  const permisosProfesor = todosPermisos.filter(
+    (p) =>
+      [
+        'productos',
+        'pedidos',
+        'recepciones',
+        'inventario',
+        'movimientos',
+        'merma',
+        'incidencias',
+        'recetas',
+        'dashboard',
+        'profesor',
+        'albaranes',
+        'ubicaciones',
+      ].includes(p.modulo) && !p.accion.includes('eliminar')
+  );
+  const permisosAlumno = todosPermisos.filter(
+    (p) =>
+      [
+        'productos',
+        'inventario',
+        'dashboard',
+        'albaranes',
+        'ubicaciones',
+        'alumno',
+      ].includes(p.modulo) &&
+      ['listar', 'ver', 'ver_estadisticas', 'cambiar_profesor'].includes(
+        p.accion
+      )
+  );
 
-  let gestor = await plantillaRepo.findOne({
-    where: { nombre: rolUsuario.PROFESOR },
+  await ensurePlantilla({
+    nombre: rolUsuario.SUPER_ADMIN,
+    descripcion: 'Acceso total al sistema sin restricciones',
+    esEditable: false,
+    permisoIds: todosPermisos.map((permiso) => permiso.id),
   });
-  if (!gestor) {
-    const permisosGestor = todosPermisos.filter(
-      (p) =>
-        [
-          'productos',
-          'pedidos',
-          'recepciones',
-          'inventario',
-          'movimientos',
-          'merma',
-          'incidencias',
-          'recetas',
-          'dashboard',
-          'profesor',
-          'albaranes',
-          'ubicaciones',
-        ].includes(p.modulo) && !p.accion.includes('eliminar')
-    );
-    gestor = plantillaRepo.create({
-      nombre: rolUsuario.PROFESOR,
-      descripcion: 'Gestión operativa del economato (perfil profesor)',
-      esEditable: true,
-      activo: true,
-    });
-    gestor = await plantillaRepo.save(gestor);
-    gestor.permisos = permisosGestor;
-    await plantillaRepo.save(gestor);
-    console.log(
-      `✅ Plantilla PROFESOR creada (${permisosGestor.length} permisos)`
-    );
-  }
 
-  let usuarioBasico = await plantillaRepo.findOne({
-    where: { nombre: rolUsuario.ALUMNO },
+  await ensurePlantilla({
+    nombre: rolUsuario.ADMINISTRADOR,
+    descripcion:
+      'Administrador completo del economato (incluye gestión de permisos de usuario)',
+    esEditable: true,
+    permisoIds: permisosAdmin.map((permiso) => permiso.id),
   });
-  if (!usuarioBasico) {
-    const permisosBasico = todosPermisos.filter(
-      (p) =>
-        [
-          'productos',
-          'inventario',
-          'dashboard',
-          'albaranes',
-          'ubicaciones',
-          'alumno',
-        ].includes(p.modulo) &&
-        ['listar', 'ver', 'ver_estadisticas', 'cambiar_profesor'].includes(
-          p.accion
-        )
-    );
-    usuarioBasico = plantillaRepo.create({
-      nombre: rolUsuario.ALUMNO,
-      descripcion: 'Usuario con permisos de solo lectura (perfil alumno)',
-      esEditable: true,
-      activo: true,
-    });
-    usuarioBasico = await plantillaRepo.save(usuarioBasico);
-    usuarioBasico.permisos = permisosBasico;
-    await plantillaRepo.save(usuarioBasico);
-    console.log(
-      `✅ Plantilla ALUMNO creada (${permisosBasico.length} permisos)`
-    );
-  }
+
+  await ensurePlantilla({
+    nombre: rolUsuario.PROFESOR,
+    descripcion: 'Gestión operativa del economato (perfil profesor)',
+    esEditable: true,
+    permisoIds: permisosProfesor.map((permiso) => permiso.id),
+  });
+
+  await ensurePlantilla({
+    nombre: rolUsuario.ALUMNO,
+    descripcion: 'Usuario con permisos de solo lectura (perfil alumno)',
+    esEditable: true,
+    permisoIds: permisosAlumno.map((permiso) => permiso.id),
+  });
 
   const systemRoles = [
     {
       nombre: rolUsuario.SUPER_ADMIN,
       descripcion: 'Rol de sistema con acceso total al sistema',
-      permisos: todosPermisos,
+      permisoIds: todosPermisos.map((permiso) => permiso.id),
     },
     {
       nombre: rolUsuario.ADMINISTRADOR,
       descripcion:
         'Rol de sistema para administración integral del economato y usuarios',
-      permisos: administrador?.permisos?.length
-        ? administrador.permisos
-        : todosPermisos.filter(
-            (p) =>
-              (!p.codigo.startsWith('roles:') &&
-                !p.codigo.startsWith('permisos:')) ||
-              p.codigo === 'permisos:gestionar'
-          ),
+      permisoIds: permisosAdmin.map((permiso) => permiso.id),
     },
     {
       nombre: rolUsuario.PROFESOR,
       descripcion: 'Rol de sistema para gestión operativa del economato',
-      permisos: gestor?.permisos?.length
-        ? gestor.permisos
-        : todosPermisos.filter(
-            (p) =>
-              [
-                'productos',
-                'pedidos',
-                'recepciones',
-                'inventario',
-                'movimientos',
-                'merma',
-                'incidencias',
-                'recetas',
-                'dashboard',
-                'profesor',
-                'albaranes',
-                'ubicaciones',
-              ].includes(p.modulo) && !p.accion.includes('eliminar')
-          ),
+      permisoIds: permisosProfesor.map((permiso) => permiso.id),
     },
     {
       nombre: rolUsuario.ALUMNO,
       descripcion: 'Rol de sistema de acceso limitado para alumnado',
-      permisos: usuarioBasico?.permisos?.length
-        ? usuarioBasico.permisos
-        : todosPermisos.filter(
-            (p) =>
-              [
-                'productos',
-                'inventario',
-                'dashboard',
-                'albaranes',
-                'ubicaciones',
-                'alumno',
-              ].includes(p.modulo) &&
-              [
-                'listar',
-                'ver',
-                'ver_estadisticas',
-                'cambiar_profesor',
-              ].includes(p.accion)
-          ),
+      permisoIds: permisosAlumno.map((permiso) => permiso.id),
     },
   ];
 
   for (const roleData of systemRoles) {
-    let rol = await rolRepo.findOne({
-      where: { nombre: roleData.nombre },
-      relations: ['permisos'],
+    await rolesService.upsertSystemRole({
+      nombre: roleData.nombre,
+      descripcion: roleData.descripcion,
+      esSistema: true,
+      activo: true,
+      permisoIds: roleData.permisoIds,
     });
-
-    if (!rol) {
-      rol = rolRepo.create({
-        nombre: roleData.nombre,
-        descripcion: roleData.descripcion,
-        esSistema: true,
-        activo: true,
-      });
-    }
-
-    rol.descripcion = roleData.descripcion;
-    rol.esSistema = true;
-    rol.activo = true;
-    rol.permisos = roleData.permisos;
-    await rolRepo.save(rol);
   }
 
   console.log(`✅ ${systemRoles.length} roles de sistema sincronizados`);
@@ -966,6 +858,6 @@ export async function seedRolesPermisos(dataSource: DataSource): Promise<void> {
   console.log('🎉 Seeder de roles y permisos completado exitosamente');
 }
 
-export async function runSeeder(dataSource: DataSource): Promise<void> {
-  await seedRolesPermisos(dataSource);
+export async function runSeeder(context: SeedContext): Promise<void> {
+  await seedRolesPermisos(context);
 }

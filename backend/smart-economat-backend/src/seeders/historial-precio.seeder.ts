@@ -1,11 +1,11 @@
+import { SeedContext } from './seed-context';
 import { faker } from '@faker-js/faker';
-import { DataSource } from 'typeorm';
 import { HistorialPrecio } from '../modules/producto/historial-precio-proveedor.entity/historial.entity';
 import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 
-export const runSeeder = async (dataSource: DataSource) => {
-  
+export const runSeeder = async (context: SeedContext) => {
+  const dataSource = context.getDataSource();
   const historialRepo = dataSource.getRepository(HistorialPrecio);
   const productoProveedorRepo = dataSource.getRepository(ProductoProveedor);
 
