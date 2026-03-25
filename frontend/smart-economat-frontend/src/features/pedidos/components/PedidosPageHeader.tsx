@@ -8,6 +8,7 @@ interface PedidosPageHeaderProps {
   draft: PedidoDraftRecord | null;
   isLoadingDraft: boolean;
   totalItems: number;
+  totalItemsLabel?: string;
   searchTerm: string;
   viewMode: PedidosViewMode;
   onSearchChange: (value: string) => void;
@@ -22,6 +23,7 @@ const PedidosPageHeader: React.FC<PedidosPageHeaderProps> = ({
   draft,
   isLoadingDraft,
   totalItems,
+  totalItemsLabel = 'pedidos',
   searchTerm,
   viewMode,
   onSearchChange,
@@ -37,7 +39,9 @@ const PedidosPageHeader: React.FC<PedidosPageHeaderProps> = ({
     searchPlaceholder="Buscar por proveedor, estado, usuario..."
     searchId="search-pedidos"
     totalItems={totalItems}
-    totalItemsLabel="pedidos"
+    totalItemsLabel={totalItemsLabel}
+    viewMode={viewMode}
+    onViewModeChange={onViewModeChange}
     primaryAction={
       canCreate
         ? {
@@ -57,8 +61,6 @@ const PedidosPageHeader: React.FC<PedidosPageHeaderProps> = ({
           }
         : undefined
     }
-    viewMode={viewMode}
-    onViewModeChange={onViewModeChange}
     extraActions={extraActions}
   />
 );

@@ -182,10 +182,15 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
 
             <Box display="flex" alignItems="center" gap={1}>
               {totalItems !== undefined && (
-                <Tooltip title={`${totalItems} ${totalItemsLabel} registrados`}>
+                <Tooltip title={`Total de ${totalItemsLabel}: ${totalItems}`}>
                   <Chip
                     icon={<CheckCircleIcon fontSize="small" />}
-                    label={`${totalItems} ${totalItemsLabel} registrados`}
+                    label={
+                      <>
+                        Total de <strong>{totalItemsLabel}</strong>:{' '}
+                        {totalItems}
+                      </>
+                    }
                     size="small"
                     color="success"
                     variant="outlined"
@@ -201,7 +206,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
               {/* Móvil: Versión más compacta del chip */}
               {totalItems !== undefined && (
                 <Chip
-                  label={`${totalItems}  ${totalItemsLabel}`}
+                  label={`Total ${totalItemsLabel}: ${totalItems}`}
                   size="small"
                   color="success"
                   variant="outlined"

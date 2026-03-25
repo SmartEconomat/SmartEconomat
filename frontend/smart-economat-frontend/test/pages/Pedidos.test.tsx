@@ -15,6 +15,7 @@ import * as proveedorService from '../../src/services/proveedor.service';
 import * as productoProveedorService from '../../src/services/productoProveedor.service';
 import { PedidoDraftRecord } from '../../src/services/pedidoDraft.service';
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 
 // Mocking hooks and components
 vi.mock('../../src/hooks/usePedidoDraft');
@@ -110,7 +111,11 @@ describe('Pedidos Page - Recovery Modal Bug', () => {
       flushSave: mockFlushSave,
     } as unknown as ReturnType<typeof pedidoDraftHook.usePedidoDraft>);
 
-    return <Pedidos />;
+    return (
+      <MemoryRouter>
+        <Pedidos />
+      </MemoryRouter>
+    );
   };
 
   it('no debería mostrar el modal de recuperación al crear un nuevo pedido y autoguardar un borrador', async () => {
@@ -163,7 +168,11 @@ describe('Pedidos Page - Recovery Modal Bug', () => {
       flushSave: mockFlushSave,
     } as unknown as ReturnType<typeof pedidoDraftHook.usePedidoDraft>);
 
-    render(<Pedidos />);
+    render(
+      <MemoryRouter>
+        <Pedidos />
+      </MemoryRouter>
+    );
 
     // Esperar a que el modal aparezca
     await waitFor(() => {

@@ -53,4 +53,5 @@ export interface PedidoActionHandlers {
 
 export interface PurchaseBatchActionHandlers {
   onView: (batch: PurchaseBatch) => void;
+  onRecepcion: (batch: PurchaseBatch) => void;
 }

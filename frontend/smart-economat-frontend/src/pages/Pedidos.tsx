@@ -30,7 +30,7 @@ import PedidosTable from '../features/pedidos/components/PedidosTable';
 import PedidosTabs from '../features/pedidos/components/PedidosTabs';
 import PedidosWeeklyBoard from '../features/pedidos/components/PedidosWeeklyBoard';
 import PurchaseBatchDetailModal from '../features/pedidos/components/PurchaseBatchDetailModal';
-import PurchaseBatchList from '../features/pedidos/components/PurchaseBatchList';
+import PurchasesWeeklyBoard from '../features/pedidos/components/PurchasesWeeklyBoard';
 import { usePedidoActions } from '../features/pedidos/hooks/usePedidoActions';
 import { usePedidosData } from '../features/pedidos/hooks/usePedidosData';
 import { usePedidosFilters } from '../features/pedidos/hooks/usePedidosFilters';
@@ -49,6 +49,7 @@ interface PedidoActionTarget {
   isBatchAggregate: boolean;
   proveedorNombre?: string;
   fechaPedido?: string;
+  numeroGlobal?: string | number;
 }
 
 const sanitizePedidoObservation = (observaciones?: string) => {
@@ -179,17 +180,16 @@ const Pedidos: React.FC = () => {
   const {
     savePedido,
     deletePedidoById,
-    approvePedidoById,
     approvePurchaseBatchById,
     cancelPedidoById,
     cancelPurchaseBatchById,
     fetchBatchDetail,
     consolidatePedidosByIds,
+    startRecepcionFromBatch,
     isSaving,
     isDeleting,
     isAceptando,
     isCancelando,
-    isFetchingBatch,
     isConsolidatingBatch,
   } = usePedidoActions({
     reload,
@@ -388,10 +388,14 @@ const Pedidos: React.FC = () => {
     if (itemToAceptar.isBatchAggregate) {
       await approvePurchaseBatchById(itemToAceptar.id);
     } else {
-      await approvePedidoById(itemToAceptar.id);
+      // Al aprobar un pedido individual, lo consolidamos (se une a la lista de compra de la semana)
+      await consolidatePedidosByIds(
+        [itemToAceptar.id],
+        `Lote generado al aprobar pedido individual de ${itemToAceptar.proveedorNombre}`
+      );
     }
     setItemToAceptar(null);
-  }, [approvePedidoById, approvePurchaseBatchById, itemToAceptar]);
+  }, [consolidatePedidosByIds, approvePurchaseBatchById, itemToAceptar]);
 
   const handleCancelarSubmit = useCallback(
     async (formData: Record<string, unknown>) => {
@@ -457,6 +461,7 @@ const Pedidos: React.FC = () => {
         proveedorNombre:
           providerNames.length > 0 ? providerNames.join(', ') : 'Pedido',
         fechaPedido: 'createdAt' in batch ? batch.createdAt : batch.fechaPedido,
+        numeroGlobal: 'numeroGlobal' in batch ? batch.numeroGlobal : undefined,
       };
     },
     []
@@ -504,6 +509,7 @@ const Pedidos: React.FC = () => {
             isBatchAggregate: true,
             proveedorNombre: pedido.proveedor?.nombre,
             fechaPedido: pedido.fechaPedido,
+            numeroGlobal: pedido.numeroGlobal,
           });
           return;
         }
@@ -512,6 +518,7 @@ const Pedidos: React.FC = () => {
           isBatchAggregate: false,
           proveedorNombre: pedido.proveedor?.nombre,
           fechaPedido: pedido.fechaPedido,
+          numeroGlobal: pedido.numeroGlobal,
         });
       },
       onCancel: (pedido: Pedido) => {
@@ -546,6 +553,7 @@ const Pedidos: React.FC = () => {
         draft={draft}
         isLoadingDraft={isLoadingDraft}
         totalItems={visibleTotalItems}
+        totalItemsLabel={isBatchTab ? 'compras' : 'pedidos'}
         searchTerm={searchTerm}
         viewMode={viewMode}
         onSearchChange={(value) => {
@@ -617,12 +625,12 @@ const Pedidos: React.FC = () => {
         )}
 
         {isBatchTab ? (
-          <PurchaseBatchList
+          <PurchasesWeeklyBoard
             batches={batches}
             isLoading={isLoading}
-            isFetchingBatch={isFetchingBatch}
             handlers={{
               onView: (batch) => void handleViewBatch(batch, 'batch'),
+              onRecepcion: (batch) => void startRecepcionFromBatch(batch),
             }}
           />
         ) : isWeeklyTab ? (
@@ -685,15 +693,25 @@ const Pedidos: React.FC = () => {
               {itemToAceptar?.isBatchAggregate ? (
                 <>
                   ¿Estás seguro de que deseas aprobar el pedido{' '}
-                  <strong>{formatPedidoId(itemToAceptar?.id)}</strong>? Se
-                  tramitarán todos sus pedidos internos y pasará a estar en "En
-                  Proceso".
+                  <strong>
+                    {itemToAceptar?.numeroGlobal
+                      ? `#${itemToAceptar.numeroGlobal} `
+                      : ''}
+                  </strong>
+                  ({formatPedidoId(itemToAceptar?.id)}) ? Este se tramitará como
+                  compra única y pasará a estar en <strong>En Proceso</strong>.
                 </>
               ) : (
                 <>
-                  ¿Estás seguro de que deseas aprobar el pedido al proveedor{' '}
-                  <strong>{itemToAceptar?.proveedorNombre}</strong>? Pasará a
-                  estar "En Proceso" y se considerará tramitado.
+                  ¿Estás seguro de que deseas aprobar el pedido{' '}
+                  <strong>
+                    {itemToAceptar?.numeroGlobal
+                      ? `#${itemToAceptar.numeroGlobal} `
+                      : ''}
+                    ({formatPedidoId(itemToAceptar?.id)})
+                  </strong>{' '}
+                  al proveedor <strong>{itemToAceptar?.proveedorNombre}</strong>
+                  ? Pasará a estar "En Proceso" y se considerará tramitado.
                 </>
               )}
             </>
@@ -789,6 +807,10 @@ const Pedidos: React.FC = () => {
           onCancel={(batch) => {
             setItemToViewBatch(null);
             setItemToCancelar(buildBatchActionTarget(batch));
+          }}
+          onRecepcion={(batch) => {
+            setItemToViewBatch(null);
+            void startRecepcionFromBatch(batch);
           }}
         />
 

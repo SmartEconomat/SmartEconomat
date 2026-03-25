@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Button, Stack } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import CancelIcon from '@mui/icons-material/Cancel';
+import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import PrintOutlinedIcon from '@mui/icons-material/PrintOutlined';
 import DetailModal from '../../../components/ui/DetailModal';
@@ -30,6 +31,7 @@ interface PurchaseBatchDetailModalProps {
   onEdit?: (batch: PurchaseBatch | PedidoUsuario) => void;
   onApprove?: (batch: PurchaseBatch | PedidoUsuario) => void;
   onCancel?: (batch: PurchaseBatch | PedidoUsuario) => void;
+  onRecepcion?: (batch: PurchaseBatch) => void;
 }
 
 const PurchaseBatchDetailModal: React.FC<PurchaseBatchDetailModalProps> = ({
@@ -42,6 +44,7 @@ const PurchaseBatchDetailModal: React.FC<PurchaseBatchDetailModalProps> = ({
   onEdit,
   onApprove,
   onCancel,
+  onRecepcion,
 }) => {
   const toast = useToast();
   const [isDownloadingPdf, setIsDownloadingPdf] = React.useState(false);
@@ -173,6 +176,17 @@ const PurchaseBatchDetailModal: React.FC<PurchaseBatchDetailModalProps> = ({
                     Editar pedido
                   </Button>
                 )}
+              {mode === 'batch' && onRecepcion && (
+                <Button
+                  variant="contained"
+                  color="success"
+                  disableElevation
+                  startIcon={<LoginOutlinedIcon />}
+                  onClick={() => onRecepcion(batch as PurchaseBatch)}
+                >
+                  Recepción
+                </Button>
+              )}
             </Stack>
           </Box>
         ) : undefined

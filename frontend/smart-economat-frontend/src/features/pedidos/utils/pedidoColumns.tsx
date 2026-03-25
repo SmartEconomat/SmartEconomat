@@ -5,6 +5,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CheckIcon from '@mui/icons-material/Check';
 import CancelIcon from '@mui/icons-material/Cancel';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
+import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
 import { Column } from '../../../components/ui/DataTable';
 import StatusChip from '../../../components/ui/StatusChip';
 import {
@@ -15,6 +16,7 @@ import {
 import {
   PedidoActionHandlers,
   PedidoPermissions,
+  PurchaseBatchActionHandlers,
 } from '../types/pedidos-ui.types';
 import {
   formatPedidoListNumber,
@@ -225,3 +227,24 @@ export const renderPedidoActions = (
       )}
     </Stack>
   );
+
+export const renderBatchActions = (
+  row: PurchaseBatch,
+  handlers: PurchaseBatchActionHandlers
+): React.ReactNode => (
+  <Stack direction="row" spacing={1} justifyContent="center">
+    <Tooltip title="Iniciar Recepción">
+      <IconButton
+        color="success"
+        onClick={(e) => {
+          e.stopPropagation();
+          handlers.onRecepcion(row);
+        }}
+        size="small"
+        aria-label="Iniciar Recepción"
+      >
+        <LoginOutlinedIcon fontSize="small" />
+      </IconButton>
+    </Tooltip>
+  </Stack>
+);

@@ -43,7 +43,7 @@ export interface CreatePedidoFromRecetasPayload {
 }
 
 export interface ConsolidatePurchaseBatchPayload {
-  pedidoUsuarioIds: string[];
+  pedidoIds: string[];
   observaciones?: string;
 }
 

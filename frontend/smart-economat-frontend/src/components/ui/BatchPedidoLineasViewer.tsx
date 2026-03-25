@@ -10,12 +10,10 @@ import {
   TableRow,
   Paper,
   Divider,
-  Alert,
-  IconButton,
-  Tooltip,
   Stack,
   FormControlLabel,
   Checkbox,
+  Button,
 } from '@mui/material';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import {
@@ -29,6 +27,31 @@ import { downloadFile } from '../../services/api.service';
 import { useToast } from '../../store/toast.hooks';
 import CircularProgress from '@mui/material/CircularProgress';
 import { formatPedidoId } from '../../features/pedidos/utils/pedidoFormatters';
+
+type PedidoWithAggregate = Pedido & {
+  pedidoUsuario?: Pick<PedidoUsuario, 'id' | 'numeroGlobal'>;
+};
+
+interface BatchProviderGroup {
+  proveedor?: Pedido['proveedor'];
+  pedidos: Pedido[];
+  total: number;
+}
+
+interface InvolvedPedidoSummary {
+  numero?: string;
+  id: string;
+  usuario?: string;
+  fecha: string;
+  estado: EstadoPedido;
+}
+
+interface AggregatedProductGroup {
+  pp: NonNullable<Pedido['pedidoProductos']>[number];
+  totalCantidad: number;
+  usuarios: Set<string>;
+  numerosGlobales: Set<string>;
+}
 
 interface BatchPedidoLineasViewerProps {
   batch: PurchaseBatch | PedidoUsuario;
@@ -67,6 +90,78 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
     }
   };
 
+  const groupedByProvider = React.useMemo(() => {
+    const groups: Record<string, BatchProviderGroup> = {};
+
+    batch.pedidos?.forEach((p) => {
+      if (!incluirCancelados && p.estado === EstadoPedido.CANCELADO) return;
+      const provId = p.proveedor?.id || 'unknown';
+      if (!groups[provId]) {
+        groups[provId] = { proveedor: p.proveedor, pedidos: [], total: 0 };
+      }
+      groups[provId].pedidos.push(p);
+      groups[provId].total += Number(p.costeTotal || 0);
+    });
+
+    return Object.values(groups);
+  }, [batch.pedidos, incluirCancelados]);
+
+  const involvedPedidos = React.useMemo(() => {
+    const seen = new Set<string>();
+    const list: InvolvedPedidoSummary[] = [];
+
+    batch.pedidos?.forEach((p) => {
+      const pedido = p as PedidoWithAggregate;
+      const id = pedido.pedidoUsuario?.id || pedido.id;
+      if (!seen.has(id)) {
+        seen.add(id);
+        list.push({
+          numero: pedido.pedidoUsuario?.numeroGlobal || pedido.numeroGlobal,
+          id,
+          usuario: pedido.usuario?.nombre,
+          fecha: pedido.fechaPedido,
+          estado: pedido.estado,
+        });
+      }
+    });
+    return list;
+  }, [batch.pedidos]);
+
+  const groupedProductsByProvider = React.useMemo(() => {
+    return groupedByProvider.map((group) => {
+      const productMap: Record<string, AggregatedProductGroup> = {};
+
+      group.pedidos.forEach((pedido) => {
+        pedido.pedidoProductos?.forEach((pp) => {
+          const key = pp.productoProveedor?.id || pp.id;
+          if (!productMap[key]) {
+            productMap[key] = {
+              pp,
+              totalCantidad: 0,
+              usuarios: new Set(),
+              numerosGlobales: new Set(),
+            };
+          }
+          productMap[key].totalCantidad += Number(pp.cantidad || 0);
+          if (pedido.usuario?.nombre) {
+            productMap[key].usuarios.add(pedido.usuario.nombre);
+          }
+          const numero =
+            (pedido as PedidoWithAggregate).pedidoUsuario?.numeroGlobal ||
+            pedido.numeroGlobal;
+          if (numero) {
+            productMap[key].numerosGlobales.add(String(numero));
+          }
+        });
+      });
+
+      return {
+        ...group,
+        productosAgrupados: Object.values(productMap),
+      };
+    });
+  }, [groupedByProvider]);
+
   if (!batch || !batch.pedidos || batch.pedidos.length === 0) {
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
@@ -82,228 +177,283 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
   const totalBatch = batch.pedidos
     .filter((p) => incluirCancelados || p.estado !== EstadoPedido.CANCELADO)
     .reduce((sum, p) => sum + Number(p.costeTotal || 0), 0);
-  const displayObservaciones =
-    mode === 'pedido' &&
-    /^Lote semanal generado desde/i.test(batch.observaciones || '')
-      ? ''
-      : batch.observaciones || '';
+
+  const isAutomatedObservation = /^Lote semanal generado desde/i.test(
+    batch.observaciones || ''
+  );
+  const hasCustomObservations =
+    batch.observaciones &&
+    !isAutomatedObservation &&
+    batch.observaciones.trim() !== '';
 
   return (
     <Box sx={{ mt: 2 }}>
+      {/* Solo mostramos observaciones si son personalizadas */}
+      {hasCustomObservations && (
+        <Box
+          sx={{
+            mb: 3,
+            p: 2,
+            bgcolor: 'info.lighter',
+            borderLeft: '4px solid',
+            borderColor: 'info.main',
+            borderRadius: '0 4px 4px 0',
+          }}
+        >
+          <Typography
+            variant="caption"
+            color="info.main"
+            sx={{ fontWeight: 'bold', textTransform: 'uppercase' }}
+          >
+            Observaciones:
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 0.5 }}>
+            {batch.observaciones}
+          </Typography>
+        </Box>
+      )}
+
+      {groupedProductsByProvider.map((group) => (
+        <Box key={group.proveedor?.id || 'unknown'} sx={{ mb: 4 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'end',
+              mb: 1,
+              borderBottom: '2px solid',
+              borderColor: 'primary.light',
+              pb: 1,
+            }}
+          >
+            <Box>
+              <Typography
+                variant="h6"
+                color="primary.main"
+                sx={{ fontWeight: 'bold' }}
+              >
+                {group.proveedor?.nombre || 'Proveedor Desconocido'}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {group.pedidos.length} pedido(s) consolidado(s) para este
+                proveedor
+              </Typography>
+            </Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+              Subtotal: {group.total.toFixed(2)} €
+            </Typography>
+          </Box>
+
+          <TableContainer component={Paper} variant="outlined" elevation={0}>
+            <Table size="small">
+              <TableHead sx={{ bgcolor: 'grey.50' }}>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    Producto / Marca
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Pedido por</TableCell>
+                  <TableCell
+                    align="right"
+                    sx={{ fontWeight: 'bold', width: 90 }}
+                  >
+                    Cantidad
+                  </TableCell>
+                  <TableCell
+                    align="right"
+                    sx={{ fontWeight: 'bold', width: 110 }}
+                  >
+                    Precio Unid.
+                  </TableCell>
+                  <TableCell
+                    align="right"
+                    sx={{ fontWeight: 'bold', width: 110 }}
+                  >
+                    Subtotal
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {group.productosAgrupados.map((item) => (
+                  <TableRow key={item.pp.id} hover>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {item.pp.productoProveedor?.producto?.nombre ||
+                          'Desconocido'}
+                      </Typography>
+                      {item.pp.productoProveedor?.marca && (
+                        <Typography variant="caption" color="text.secondary">
+                          Marca: {item.pp.productoProveedor.marca}
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="caption" sx={{ fontWeight: 500 }}>
+                        {Array.from(item.usuarios).join(', ') || '—'}
+                      </Typography>
+                      {item.numerosGlobales.size > 0 && (
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          display="block"
+                          sx={{ fontSize: '0.7rem' }}
+                        >
+                          Nº: {Array.from(item.numerosGlobales).join(', ')}
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell align="right">{item.totalCantidad}</TableCell>
+                    <TableCell align="right">
+                      {Number(item.pp.precioUnitario || 0).toFixed(2)} €
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 500 }}>
+                      {(
+                        Number(item.totalCantidad || 0) *
+                        Number(item.pp.precioUnitario || 0)
+                      ).toFixed(2)}{' '}
+                      €
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
+      ))}
+
+      <Divider sx={{ my: 4 }} />
+
+      {mode === 'batch' && involvedPedidos.length > 0 && (
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+            Pedidos involucrados en la compra
+          </Typography>
+          <TableContainer component={Paper} variant="outlined" elevation={0}>
+            <Table size="small">
+              <TableHead sx={{ bgcolor: 'grey.50' }}>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    Nº de Pedido
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Usuario</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Fecha</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                    Estado
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {involvedPedidos.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {p.numero ? `#${p.numero}` : formatPedidoId(p.id)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>{p.usuario || '—'}</TableCell>
+                    <TableCell>
+                      {new Date(p.fecha).toLocaleDateString('es-ES')}
+                    </TableCell>
+                    <TableCell align="center">
+                      <StatusChip status={p.estado} size="small" />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
+      )}
+
       <Box
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          mb: 2,
+          width: '100%',
+          mt: 4,
           p: 2,
-          bgcolor: 'action.hover',
-          borderRadius: 1,
+          bgcolor: 'grey.50',
+          borderRadius: 2,
+          border: '1px dashed',
+          borderColor: 'divider',
         }}
       >
         <Box>
-          <Typography variant="subtitle2" color="text.secondary">
-            Observaciones Generales:
+          <Typography
+            variant="subtitle2"
+            gutterBottom
+            sx={{ fontWeight: 'bold', color: 'text.secondary' }}
+          >
+            OPCIONES DE IMPRESIÓN / REPORTE
           </Typography>
-          <Typography variant="body1">
-            {displayObservaciones || 'Sin observaciones.'}
-          </Typography>
+          <Stack direction="row" spacing={3}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  size="small"
+                  checked={incluirCancelados}
+                  onChange={(e) => setIncluirCancelados(e.target.checked)}
+                />
+              }
+              label={
+                <Typography variant="caption" sx={{ fontWeight: 500 }}>
+                  Incluir cancelados
+                </Typography>
+              }
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  size="small"
+                  checked={paginaPorProveedor}
+                  onChange={(e) => setPaginaPorProveedor(e.target.checked)}
+                />
+              }
+              label={
+                <Typography variant="caption" sx={{ fontWeight: 500 }}>
+                  Pág. por proveedor
+                </Typography>
+              }
+            />
+          </Stack>
         </Box>
 
         <Stack direction="row" spacing={2} alignItems="center">
-          <FormControlLabel
-            control={
-              <Checkbox
-                size="small"
-                checked={incluirCancelados}
-                onChange={(e) => setIncluirCancelados(e.target.checked)}
-              />
-            }
-            label={
-              <Typography variant="caption">Incluir cancelados</Typography>
-            }
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                size="small"
-                checked={paginaPorProveedor}
-                onChange={(e) => setPaginaPorProveedor(e.target.checked)}
-              />
-            }
-            label={
-              <Typography variant="caption">Pág. por proveedor</Typography>
-            }
-          />
           {showPdfActions && (
-            <Tooltip title="Descargar Reporte PDF">
-              <IconButton
-                color="error"
-                onClick={handleDownloadPdf}
-                disabled={isDownloading}
-              >
-                {isDownloading ? (
-                  <CircularProgress size={24} color="inherit" />
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={
+                isDownloading ? (
+                  <CircularProgress size={18} color="inherit" />
                 ) : (
                   <PictureAsPdfIcon />
-                )}
-              </IconButton>
-            </Tooltip>
-          )}
-        </Stack>
-      </Box>
-
-      {batch.pedidos
-        .filter((p) => incluirCancelados || p.estado !== EstadoPedido.CANCELADO)
-        .map((pedido: Pedido) => (
-          <Box key={pedido.id} sx={{ mb: 4 }}>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'end',
-                mb: 1,
-                borderBottom: '2px solid',
-                borderColor: 'primary.light',
-                pb: 1,
-              }}
+                )
+              }
+              onClick={handleDownloadPdf}
+              disabled={isDownloading}
+              size="small"
             >
-              <Box>
-                <Typography
-                  variant="h6"
-                  color="primary.main"
-                  sx={{ fontWeight: 'bold' }}
-                >
-                  {pedido.proveedor?.nombre || 'Proveedor Desconocido'}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  ID Pedido: {formatPedidoId(pedido.id)} | Estado:
-                </Typography>
-                <StatusChip
-                  status={pedido.estado}
-                  size="small"
-                  sx={{ ml: 1 }}
-                />
-              </Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                Subtotal: {Number(pedido.costeTotal || 0).toFixed(2)} €
-              </Typography>
-            </Box>
-
-            {pedido.estado === EstadoPedido.CANCELADO &&
-              pedido.motivoCancelacion && (
-                <Alert severity="warning" sx={{ mb: 2, py: 0 }}>
-                  <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
-                    Motivo de cancelación:
-                  </Typography>{' '}
-                  <Typography variant="caption">
-                    {pedido.motivoCancelacion}
-                  </Typography>
-                </Alert>
-              )}
-
-            {pedido.estado === EstadoPedido.INCIDENCIA &&
-              pedido.motivoIncidencia && (
-                <Alert severity="error" sx={{ mb: 2, py: 0 }}>
-                  <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
-                    Motivo de incidencia:
-                  </Typography>{' '}
-                  <Typography variant="caption">
-                    {pedido.motivoIncidencia}
-                  </Typography>
-                </Alert>
-              )}
-
-            <TableContainer component={Paper} variant="outlined" elevation={0}>
-              <Table size="small">
-                <TableHead sx={{ bgcolor: 'grey.50' }}>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 'bold' }}>
-                      Producto / Marca
-                    </TableCell>
-                    <TableCell
-                      align="right"
-                      sx={{ fontWeight: 'bold', width: 100 }}
-                    >
-                      Cantidad
-                    </TableCell>
-                    <TableCell
-                      align="right"
-                      sx={{ fontWeight: 'bold', width: 120 }}
-                    >
-                      Precio Unid.
-                    </TableCell>
-                    <TableCell
-                      align="right"
-                      sx={{ fontWeight: 'bold', width: 120 }}
-                    >
-                      Subtotal
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {pedido.pedidoProductos?.map((pp) => (
-                    <TableRow key={pp.id} hover>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                          {pp.productoProveedor?.producto?.nombre ||
-                            'Desconocido'}
-                        </Typography>
-                        {pp.productoProveedor?.marca && (
-                          <Typography variant="caption" color="text.secondary">
-                            Marca: {pp.productoProveedor.marca}
-                          </Typography>
-                        )}
-                      </TableCell>
-                      <TableCell align="right">{pp.cantidad}</TableCell>
-                      <TableCell align="right">
-                        {Number(pp.precioUnitario || 0).toFixed(2)} €
-                      </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 500 }}>
-                        {(
-                          Number(pp.cantidad || 0) *
-                          Number(pp.precioUnitario || 0)
-                        ).toFixed(2)}{' '}
-                        €
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-
-            {pedido.observaciones && (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ mt: 1, display: 'block' }}
-              >
-                * Observaciones: {pedido.observaciones}
-              </Typography>
-            )}
+              Descargar PDF
+            </Button>
+          )}
+          <Box
+            sx={{
+              display: 'inline-flex',
+              p: 1.5,
+              bgcolor: 'background.paper',
+              color: 'primary.main',
+              border: '2px solid',
+              borderColor: 'primary.main',
+              borderRadius: 2,
+            }}
+          >
+            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+              {mode === 'pedido' ? 'TOTAL: ' : 'TOTAL COMPRA: '}
+              {totalBatch.toFixed(2)} €
+            </Typography>
           </Box>
-        ))}
-
-      <Divider sx={{ my: 3 }} />
-
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
-        <Box
-          sx={{
-            display: 'inline-flex',
-            p: 2,
-            bgcolor: 'background.paper',
-            color: 'primary.main',
-            border: '2px solid',
-            borderColor: 'primary.main',
-            borderRadius: 2,
-            maxWidth: '100%',
-          }}
-        >
-          <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-            {mode === 'pedido' ? 'TOTAL PEDIDO: ' : 'TOTAL COMPRA: '}
-            {totalBatch.toFixed(2)} €
-          </Typography>
-        </Box>
+        </Stack>
       </Box>
     </Box>
   );

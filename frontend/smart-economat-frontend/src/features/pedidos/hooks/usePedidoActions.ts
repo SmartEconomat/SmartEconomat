@@ -12,7 +12,10 @@ import {
   updatePedidoUsuario,
   updatePedido,
 } from '../../../services/pedido.service';
+import { saveRecepcionDraft } from '../../../services/recepcionDraft.service';
 import { ApiError, deleteResource } from '../../../services/api.service';
+import { useNavigate } from 'react-router-dom';
+import { mapPurchaseBatchToRecepcionDraft } from '../../recepcion/utils/recepcionMapping.utils';
 import { PedidoUsuario, PurchaseBatch } from '../../../services/pedido.types';
 import { useToast } from '../../../store/toast.hooks';
 import { PedidoFormValues } from '../types/pedidos-ui.types';
@@ -44,6 +47,7 @@ export function usePedidoActions({
   const [isCancelando, setIsCancelando] = useState(false);
   const [isFetchingBatch, setIsFetchingBatch] = useState(false);
   const [isConsolidatingBatch, setIsConsolidatingBatch] = useState(false);
+  const navigate = useNavigate();
 
   const savePedido = useCallback(
     async (formData: PedidoFormValues) => {
@@ -285,7 +289,7 @@ export function usePedidoActions({
       setIsConsolidatingBatch(true);
       try {
         const batch = await consolidatePurchaseBatch({
-          pedidoUsuarioIds: pedidoIds,
+          pedidoIds: pedidoIds,
           observaciones,
         });
         toast.success('Se ha generado el lote semanal correctamente.');
@@ -306,6 +310,26 @@ export function usePedidoActions({
     [onBatchCreated, reload, toast]
   );
 
+  const startRecepcionFromBatch = useCallback(
+    async (batch: PurchaseBatch) => {
+      try {
+        const draft = mapPurchaseBatchToRecepcionDraft(batch);
+        await saveRecepcionDraft(draft);
+        navigate('/recepcion');
+        toast.success(
+          'Se ha iniciado la recepción con los productos de la compra.'
+        );
+      } catch (err: unknown) {
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : 'Error al iniciar la recepción desde la compra.'
+        );
+      }
+    },
+    [navigate, toast]
+  );
+
   return {
     savePedido,
     deletePedidoById,
@@ -315,6 +339,7 @@ export function usePedidoActions({
     cancelPurchaseBatchById,
     fetchBatchDetail,
     consolidatePedidosByIds,
+    startRecepcionFromBatch,
     isSaving,
     isDeleting,
     isAceptando,

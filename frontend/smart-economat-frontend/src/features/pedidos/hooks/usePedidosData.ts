@@ -71,7 +71,7 @@ export function usePedidosData({
       const effectivePage = tabIndex === 0 ? 1 : page;
       const estadoFilter =
         tabIndex === 1
-          ? EstadoPedido.PENDIENTE
+          ? ''
           : tabIndex === 0
             ? ''
             : misPedidosStatus === 'pendientes'
