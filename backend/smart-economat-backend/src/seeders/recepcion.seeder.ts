@@ -9,9 +9,26 @@ import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 import { EstadoProductoRecepcion } from '../modules/recepcion/enums/estado-producto.enum';
 import { EstadoRecepcion } from '../modules/recepcion/enums/estado-recepcion.enum';
+import { EstadoPedido } from '../modules/pedido/enums/estado-pedido.enum';
+
+const RECEPCIONABLE_STATES: Partial<Record<EstadoPedido, EstadoRecepcion>> = {
+  [EstadoPedido.PARCIAL]: EstadoRecepcion.PARCIAL,
+  [EstadoPedido.RECIBIDO]: EstadoRecepcion.COMPLETADA,
+  [EstadoPedido.INCIDENCIA]: EstadoRecepcion.CON_INCIDENCIAS,
+};
+
+const loadFaker = async () => {
+  try {
+    return (await import('@faker-js/faker')).faker;
+  } catch {
+    return (require('@faker-js/faker') as typeof import('@faker-js/faker'))
+      .faker;
+  }
+};
 
 export const runSeeder = async (context: SeedContext) => {
   const dataSource = context.getDataSource();
+  const faker = await loadFaker();
   const recepcionRepo = dataSource.getRepository(Recepcion);
   const recepcionPedidoRepo = dataSource.getRepository(RecepcionPedido);
   const recepcionProductoRepo = dataSource.getRepository(RecepcionProducto);
@@ -31,11 +48,11 @@ export const runSeeder = async (context: SeedContext) => {
     return;
   }
 
-  const todosLosEstados = Object.values(EstadoRecepcion);
-  const totalEstados = todosLosEstados.length;
+  const pedidosRecepcionables = pedidos.filter(
+    (pedido) => RECEPCIONABLE_STATES[pedido.estado] !== undefined
+  );
 
-  for (let i = 0; i < pedidos.length; i++) {
-    const pedido = pedidos[i];
+  for (const pedido of pedidosRecepcionables) {
     const pedidoProductos = await pedidoProductoRepo.find({
       where: { pedido: { id: pedido.id } },
       relations: ['productoProveedor'],
@@ -43,7 +60,9 @@ export const runSeeder = async (context: SeedContext) => {
 
     if (pedidoProductos.length === 0) continue;
 
-    const estadoAsignado = todosLosEstados[i % totalEstados];
+    const estadoAsignado = RECEPCIONABLE_STATES[pedido.estado];
+    if (!estadoAsignado) continue;
+
     const tieneIncidencia = estadoAsignado === EstadoRecepcion.CON_INCIDENCIAS;
 
     const recepcion = recepcionRepo.create({
