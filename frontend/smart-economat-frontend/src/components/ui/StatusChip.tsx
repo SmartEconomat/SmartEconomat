@@ -1,5 +1,6 @@
 import React from 'react';
 import { Chip, ChipProps } from '@mui/material';
+import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import { CategoriaProducto } from '../../services/producto.types';
 import { getCategoryIconFilled } from '../../features/productos/utils/getCategoryIconFilled';
 
@@ -70,8 +71,6 @@ const getStatusColor = (
     case 'salida_elaboracion':
       return 'error';
     case 'warning':
-    case 'pending':
-    case 'pendiente':
     case 'in_progress':
     case 'en_proceso':
     case 'review':
@@ -79,6 +78,8 @@ const getStatusColor = (
     case 'ajuste':
     case 'parcial':
       return 'warning';
+    case 'pending':
+    case 'pendiente':
     case 'info':
     case 'active':
     case 'archived':
@@ -165,7 +166,7 @@ export const StatusChip: React.FC<StatusChipProps> = ({
   status,
   label,
   size = 'small',
-  variant = 'filled',
+  variant = 'outlined',
   ...rest
 }) => {
   const statusStr = status as string;
@@ -178,13 +179,18 @@ export const StatusChip: React.FC<StatusChipProps> = ({
       ? categoriaTranslations[statusStr.toLowerCase() as CategoriaProducto]
       : getTranslatedStatus(statusStr));
 
+  // Icono de punto para estados que no son categorías
+  const dotIcon = (
+    <FiberManualRecordIcon sx={{ fontSize: '10px !important' }} />
+  );
+
   const resolvedIcon =
     rest.icon ||
     (isCategoria
       ? getCategoryIconFilled(statusStr.toLowerCase() as CategoriaProducto, {
           sx: { fontSize: 14 },
         })
-      : undefined);
+      : dotIcon);
 
   return (
     <Chip
@@ -195,7 +201,11 @@ export const StatusChip: React.FC<StatusChipProps> = ({
       variant={variant}
       icon={resolvedIcon}
       sx={{
-        fontWeight: 500,
+        fontWeight: 600,
+        borderRadius: '6px',
+        textTransform: 'uppercase',
+        fontSize: '0.65rem',
+        letterSpacing: '0.025em',
         ...(isCategoria && {
           minWidth: CATEGORY_CHIP_MIN_WIDTH,
           justifyContent: 'center',
@@ -203,6 +213,12 @@ export const StatusChip: React.FC<StatusChipProps> = ({
             marginLeft: '0px',
             marginRight: '2px',
             fontSize: 14,
+          },
+        }),
+        ...(!isCategoria && {
+          '& .MuiChip-icon': {
+            marginLeft: '6px',
+            marginRight: '-4px',
           },
         }),
         ...rest.sx,

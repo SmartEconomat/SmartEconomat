@@ -73,10 +73,10 @@ Con **34 commits** y **8 PRs**, tenemos aquí a alguien que:
 
 ## 📊 Estadísticas Generales
 
-- **Total de commits:** 770
+- **Total de commits:** 771
 - **Total de PRs fusionados:** 154
 - **Total de contribuidores:** 5
-- **Promedio de commits por persona:** 154.0
+- **Promedio de commits por persona:** 154.2
 
 ---
 

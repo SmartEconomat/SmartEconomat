@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DataTable, { Column } from '../../../components/ui/DataTable';
-import { Pedido } from '../../../services/pedido.types';
+import { EstadoPedido, Pedido } from '../../../services/pedido.types';
 import {
   PedidoActionHandlers,
   PedidoPermissions,
@@ -85,6 +85,9 @@ const getPedidoUserName = (pedido: Pedido): string =>
   pedido.usuario?.username ||
   pedido.usuario?.email ||
   'Usuario sin identificar';
+
+const isPendingPedido = (pedido: Pedido): boolean =>
+  pedido.estado === EstadoPedido.PENDIENTE;
 
 const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
   data,
@@ -166,6 +169,12 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
     });
   };
 
+  const getSelectablePedidoIds = (pedido: Pedido): string[] =>
+    isPendingPedido(pedido) ? getAggregatedPedidoSourceIds(pedido) : [];
+
+  const hasSelectablePedidos = (group: WeeklyGroup): boolean =>
+    group.users.some((user) => user.visiblePedidos.some(isPendingPedido));
+
   const buildSelectableColumns = (
     pedidoIdsInScope: string[]
   ): Column<Pedido>[] => [
@@ -195,7 +204,8 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
       align: 'center',
       render: (pedido) =>
         (() => {
-          const pedidoIds = getAggregatedPedidoSourceIds(pedido);
+          const pedidoIds = getSelectablePedidoIds(pedido);
+          const isSelectable = pedidoIds.length > 0;
           const allSelected = pedidoIds.every((id) =>
             selectedPedidoIds.includes(id)
           );
@@ -206,11 +216,15 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
           return (
             <Checkbox
               size="small"
-              checked={allSelected}
-              indeterminate={someSelected && !allSelected}
+              checked={isSelectable && allSelected}
+              indeterminate={isSelectable && someSelected && !allSelected}
+              disabled={!isSelectable}
               onClick={(event) => event.stopPropagation()}
               onChange={(event) => {
                 event.stopPropagation();
+                if (!isSelectable) {
+                  return;
+                }
                 toggleUserSelection(pedidoIds);
               }}
               inputProps={{
@@ -228,7 +242,9 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
 
   const selectedWeekPedidoIds = (group: WeeklyGroup): string[] =>
     group.users
-      .flatMap((user) => user.pedidos.map((pedido) => pedido.id))
+      .flatMap((user) =>
+        user.visiblePedidos.flatMap((pedido) => getSelectablePedidoIds(pedido))
+      )
       .filter((id) => selectedPedidoIds.includes(id));
 
   return (
@@ -288,37 +304,41 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
               </Box>
             </AccordionSummary>
             <AccordionDetails>
-              {enableSelection && onConsolidateWeek && (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    mb: 2,
-                  }}
-                >
-                  <Button
-                    size="small"
-                    variant="contained"
-                    disabled={
-                      isConsolidating ||
-                      selectedWeekPedidoIds(group).length === 0
-                    }
-                    onClick={() => {
-                      const weekPedidoIds = selectedWeekPedidoIds(group);
-
-                      void onConsolidateWeek(weekPedidoIds, group.label).then(
-                        () => {
-                          setSelectedPedidoIds((current) =>
-                            current.filter((id) => !weekPedidoIds.includes(id))
-                          );
-                        }
-                      );
+              {enableSelection &&
+                onConsolidateWeek &&
+                hasSelectablePedidos(group) && (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      mb: 2,
                     }}
                   >
-                    Consolidar semana
-                  </Button>
-                </Box>
-              )}
+                    <Button
+                      size="small"
+                      variant="contained"
+                      disabled={
+                        isConsolidating ||
+                        selectedWeekPedidoIds(group).length === 0
+                      }
+                      onClick={() => {
+                        const weekPedidoIds = selectedWeekPedidoIds(group);
+
+                        void onConsolidateWeek(weekPedidoIds, group.label).then(
+                          () => {
+                            setSelectedPedidoIds((current) =>
+                              current.filter(
+                                (id) => !weekPedidoIds.includes(id)
+                              )
+                            );
+                          }
+                        );
+                      }}
+                    >
+                      Consolidar semana
+                    </Button>
+                  </Box>
+                )}
               <Stack spacing={2.5}>
                 {group.users.map((user) => (
                   <Accordion

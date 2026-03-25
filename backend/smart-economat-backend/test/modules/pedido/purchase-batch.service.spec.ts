@@ -7,6 +7,10 @@ import { PurchaseBatch } from '../../../src/modules/pedido/purchase-batch.entity
 import { EstadoLote } from '../../../src/modules/pedido/enums/estado-lote.enum';
 import { NotFoundException } from '@nestjs/common';
 import { ProduccionService } from '../../../src/modules/receta/service/produccion.service';
+import { EstadoPedido } from '../../../src/modules/pedido/enums/estado-pedido.enum';
+import { EstadoPedidoUsuario } from '../../../src/modules/pedido/enums/estado-pedido-usuario.enum';
+import { Pedido } from '../../../src/modules/pedido/pedido.entity/pedido.entity';
+import { PedidoUsuario } from '../../../src/modules/pedido/pedido-usuario.entity/pedido-usuario.entity';
 
 describe('PurchaseBatchService', () => {
   let service: PurchaseBatchService;
@@ -142,6 +146,91 @@ describe('PurchaseBatchService', () => {
       );
 
       calcEnumSpy.mockRestore();
+    });
+  });
+
+  describe('consolidateExistingOrders', () => {
+    it('debería consolidar y dejar los pedidos en proceso automáticamente', async () => {
+      const dto = { pedidoIds: ['pu-1', 'pu-2'], observaciones: 'Semana 12' };
+      const pedidosInternos = [
+        {
+          id: 'pedido-1',
+          estado: EstadoPedido.PENDIENTE,
+          proveedor: { id: 'prov-1', nombre: 'Proveedor 1' },
+          usuario: { id: 'user-1', nombre: 'Ana' },
+          pedidoProductos: [],
+        },
+        {
+          id: 'pedido-2',
+          estado: EstadoPedido.PENDIENTE,
+          proveedor: { id: 'prov-2', nombre: 'Proveedor 2' },
+          usuario: { id: 'user-1', nombre: 'Ana' },
+          pedidoProductos: [],
+        },
+      ];
+
+      const pedidosUsuario = [
+        {
+          id: 'pu-1',
+          estado: EstadoPedidoUsuario.PENDIENTE,
+          pedidos: [pedidosInternos[0]],
+        },
+        {
+          id: 'pu-2',
+          estado: EstadoPedidoUsuario.PENDIENTE,
+          pedidos: [pedidosInternos[1]],
+        },
+      ];
+
+      const createdBatch = {
+        id: 'batch-1',
+        estado: EstadoLote.PENDIENTE,
+        observaciones: dto.observaciones,
+      };
+
+      mockQueryRunner.manager.find.mockResolvedValue(pedidosUsuario);
+      mockQueryRunner.manager.create.mockReturnValue(createdBatch);
+      mockQueryRunner.manager.save.mockImplementation((_entity, value) =>
+        Promise.resolve(value)
+      );
+      jest
+        .spyOn(service, 'findOne')
+        .mockResolvedValue(createdBatch as PurchaseBatch);
+      jest.spyOn(service, 'syncBatchStatus').mockResolvedValue();
+
+      const result = await service.consolidateExistingOrders(dto, 'user-1');
+
+      expect(result).toEqual(createdBatch);
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(
+        Pedido,
+        expect.objectContaining({
+          id: 'pedido-1',
+          batchId: 'batch-1',
+          estado: EstadoPedido.EN_PROCESO,
+        })
+      );
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(
+        Pedido,
+        expect.objectContaining({
+          id: 'pedido-2',
+          batchId: 'batch-1',
+          estado: EstadoPedido.EN_PROCESO,
+        })
+      );
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(
+        PedidoUsuario,
+        expect.objectContaining({
+          id: 'pu-1',
+          estado: EstadoPedidoUsuario.EN_PROCESO,
+        })
+      );
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(
+        PedidoUsuario,
+        expect.objectContaining({
+          id: 'pu-2',
+          estado: EstadoPedidoUsuario.EN_PROCESO,
+        })
+      );
     });
   });
 });

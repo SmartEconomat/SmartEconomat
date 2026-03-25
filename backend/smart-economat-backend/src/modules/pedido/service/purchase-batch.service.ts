@@ -287,7 +287,13 @@ export class PurchaseBatchService {
 
       for (const pedido of pedidos) {
         pedido.batchId = savedBatch.id;
+        pedido.estado = EstadoPedido.EN_PROCESO;
         await queryRunner.manager.save(Pedido, pedido);
+      }
+
+      for (const pedidoUsuario of pedidosUsuario) {
+        pedidoUsuario.estado = EstadoPedidoUsuario.EN_PROCESO;
+        await queryRunner.manager.save(PedidoUsuario, pedidoUsuario);
       }
 
       await this.syncBatchStatus(savedBatch.id, queryRunner.manager);
@@ -674,6 +680,8 @@ export class PurchaseBatchService {
       relations: [
         'pedidos',
         'pedidos.proveedor',
+        'pedidos.usuario',
+        'pedidos.pedidoUsuario',
         'pedidos.pedidoProductos',
         'pedidos.pedidoProductos.productoProveedor',
         'pedidos.pedidoProductos.productoProveedor.producto',
