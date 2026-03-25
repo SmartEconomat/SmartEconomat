@@ -15,6 +15,7 @@ import {
 } from '../utils/pedidoColumns';
 import { formatPedidoListNumber } from '../utils/pedidoFormatters';
 import { isAggregatedBatchPedido } from '../utils/pedidoOwnOrders';
+import PedidoCard from './PedidoCard';
 
 interface PedidosTableProps {
   data: Pedido[];
@@ -53,6 +54,13 @@ const PedidosTable: React.FC<PedidosTableProps> = ({
       hideTopBar
       viewMode={viewMode}
       defaultViewMode={viewMode}
+      renderGridItem={(row) => (
+        <PedidoCard
+          pedido={row}
+          actions={renderPedidoActions(row, permissions, handlers)}
+          onRowClick={handlers.onView}
+        />
+      )}
       emptyStateMessage={
         <Box sx={{ py: 4, textAlign: 'center' }}>
           <LocalShippingOutlinedIcon

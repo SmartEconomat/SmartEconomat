@@ -20,7 +20,9 @@ import { EstadoPedido, Pedido } from '../../../services/pedido.types';
 import {
   PedidoActionHandlers,
   PedidoPermissions,
+  PedidosViewMode,
 } from '../types/pedidos-ui.types';
+import PedidoCard from './PedidoCard';
 import {
   buildPedidoColumns,
   renderPedidoActions,
@@ -41,6 +43,7 @@ interface PedidosWeeklyBoardProps {
   data: Pedido[];
   isLoading: boolean;
   permissions: PedidoPermissions;
+  viewMode: PedidosViewMode;
   handlers: PedidoActionHandlers;
   totalItems: number;
   isConsolidating?: boolean;
@@ -92,6 +95,7 @@ const isPendingPedido = (pedido: Pedido): boolean =>
 const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
   data,
   isLoading,
+  viewMode,
   permissions,
   handlers,
   totalItems,
@@ -394,6 +398,47 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
                         data={user.visiblePedidos}
                         isLoading={false}
                         hideTopBar
+                        viewMode={viewMode}
+                        renderGridItem={(row) => {
+                          const pedidoIds = getAggregatedPedidoSourceIds(row);
+                          const isSelectable =
+                            isPendingPedido(row) && pedidoIds.length > 0;
+                          const allSelected =
+                            isSelectable &&
+                            pedidoIds.every((id) =>
+                              selectedPedidoIds.includes(id)
+                            );
+                          const someSelected =
+                            isSelectable &&
+                            pedidoIds.some((id) =>
+                              selectedPedidoIds.includes(id)
+                            );
+
+                          return (
+                            <PedidoCard
+                              pedido={row}
+                              actions={renderPedidoActions(
+                                row,
+                                permissions,
+                                handlers
+                              )}
+                              onRowClick={handlers.onView}
+                              selectionProps={
+                                isSelectable
+                                  ? {
+                                      checked: allSelected,
+                                      indeterminate:
+                                        someSelected && !allSelected,
+                                      onChange: (e) => {
+                                        e.stopPropagation();
+                                        toggleUserSelection(pedidoIds);
+                                      },
+                                    }
+                                  : undefined
+                              }
+                            />
+                          );
+                        }}
                         onRowClick={handlers.onView}
                         getRowAriaLabel={(pedido) =>
                           isAggregatedBatchPedido(pedido)
