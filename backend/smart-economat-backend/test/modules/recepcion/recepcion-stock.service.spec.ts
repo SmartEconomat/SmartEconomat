@@ -21,6 +21,10 @@ describe('RecepcionStockService', () => {
     handleStatusTransition: jest.fn(),
   };
 
+  const mockEventEmitter = {
+    emit: jest.fn(),
+  };
+
   let service: RecepcionStockService;
   let queryRunner: {
     connect: jest.Mock;
@@ -34,6 +38,7 @@ describe('RecepcionStockService', () => {
       find: jest.Mock;
       create: jest.Mock;
       save: jest.Mock;
+      getRepository: jest.Mock;
     };
   };
   let idCounter: number;
@@ -62,8 +67,8 @@ describe('RecepcionStockService', () => {
       return value;
     }
 
-    if (value && typeof value === 'object' && !(value as any).id) {
-      (value as any).id = `generated-${++idCounter}`;
+    if (value && typeof value === 'object' && !('id' in value)) {
+      (value as Record<string, unknown>).id = `generated-${++idCounter}`;
     }
 
     return value;
@@ -72,6 +77,7 @@ describe('RecepcionStockService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockPedidoService.handleStatusTransition.mockReset();
+    mockEventEmitter.emit.mockReset();
     idCounter = 0;
 
     queryRunner = {
@@ -84,10 +90,19 @@ describe('RecepcionStockService', () => {
       manager: {
         findOne: jest.fn(),
         find: jest.fn(),
-        create: jest.fn((_entity, data) => ({ ...data })),
+        create: jest.fn((_entity: unknown, data: Record<string, unknown>) => ({
+          ...data,
+        })),
         save: jest.fn().mockImplementation((...args: unknown[]) => {
           const entity = args.length === 1 ? args[0] : args[1];
           return Promise.resolve(assignIdsInPlace(entity));
+        }),
+        getRepository: jest.fn().mockReturnValue({
+          createQueryBuilder: jest.fn().mockReturnValue({
+            where: jest.fn().mockReturnThis(),
+            orderBy: jest.fn().mockReturnThis(),
+            getOne: jest.fn().mockResolvedValue(null),
+          }),
         }),
       },
     };
@@ -95,7 +110,8 @@ describe('RecepcionStockService', () => {
     mockDataSource.createQueryRunner.mockReturnValue(queryRunner);
     service = new RecepcionStockService(
       mockDataSource as any,
-      mockPedidoService as any
+      mockPedidoService as any,
+      mockEventEmitter as any
     );
   });
 
@@ -179,8 +195,9 @@ describe('RecepcionStockService', () => {
         estadoNuevo: EstadoPedido.RECIBIDO,
       },
     ]);
+
     const hasRecepcionProductosBatch = queryRunner.manager.save.mock.calls.some(
-      ([arg]) => {
+      ([arg]: [any]) => {
         if (!Array.isArray(arg) || arg.length !== 1) {
           return false;
         }
@@ -193,6 +210,14 @@ describe('RecepcionStockService', () => {
     expect(hasRecepcionProductosBatch).toBe(true);
     expect(queryRunner.commitTransaction).toHaveBeenCalledTimes(1);
     expect(queryRunner.rollbackTransaction).not.toHaveBeenCalled();
+
+    expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+      'recepcion.completada',
+      expect.objectContaining({
+        recepcionId: result.id,
+        nAlbaran: 'ALB-UNIT-001',
+      })
+    );
   });
 
   it('procesarRecepcionMasiva genera incidencias por falta y defectuoso', async () => {
@@ -248,6 +273,14 @@ describe('RecepcionStockService', () => {
       EstadoPedido.EN_PROCESO
     );
     expect(queryRunner.commitTransaction).toHaveBeenCalledTimes(1);
+
+    expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+      'recepcion.completada',
+      expect.objectContaining({
+        recepcionId: result.id,
+        pedidoIds: ['ped-2'],
+      })
+    );
   });
 
   it('procesarRecepcion soporta multipedido y alta directa en una sola transacción', async () => {
@@ -348,6 +381,28 @@ describe('RecepcionStockService', () => {
     ]);
     expect(actualizarEstadoPedidoSpy).toHaveBeenCalledTimes(2);
     expect(queryRunner.commitTransaction).toHaveBeenCalledTimes(1);
+
+    expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+      'recepcion.completada',
+      expect.objectContaining({
+        recepcionId: result.id,
+        nAlbaran: 'ALB-MULTI-1',
+      })
+    );
+
+    const saveCalls = queryRunner.manager.save.mock.calls;
+    const albaranLinkSaves = saveCalls.filter(([arg]: [any]) => {
+      const item = Array.isArray(arg) ? arg[0] : arg;
+      return item && item.albaran && item.recepcionPedido;
+    });
+
+    expect(albaranLinkSaves.length).toBeGreaterThanOrEqual(1);
+
+    const albaranSaves = saveCalls.filter(([arg]: [any]) => {
+      const item = Array.isArray(arg) ? arg[0] : arg;
+      return item && item.nAlbaran && (item.fecha || item.createdAt);
+    });
+    expect(albaranSaves.length).toBeGreaterThanOrEqual(1);
   });
 
   it('procesarRecepcion hace rollback si una línea no pertenece a los pedidos seleccionados', async () => {
@@ -417,8 +472,9 @@ describe('RecepcionStockService', () => {
       ]),
       save: jest
         .fn()
-        .mockImplementation((_: unknown, pedidoGuardado: any) =>
-          Promise.resolve(pedidoGuardado)
+        .mockImplementation(
+          (_: unknown, pedidoGuardado: Record<string, unknown>) =>
+            Promise.resolve(pedidoGuardado)
         ),
     };
 
@@ -457,8 +513,9 @@ describe('RecepcionStockService', () => {
       ]),
       save: jest
         .fn()
-        .mockImplementation((_: unknown, pedidoGuardado: any) =>
-          Promise.resolve(pedidoGuardado)
+        .mockImplementation(
+          (_: unknown, pedidoGuardado: Record<string, unknown>) =>
+            Promise.resolve(pedidoGuardado)
         ),
     };
 
@@ -497,8 +554,9 @@ describe('RecepcionStockService', () => {
       ]),
       save: jest
         .fn()
-        .mockImplementation((_: unknown, pedidoGuardado: any) =>
-          Promise.resolve(pedidoGuardado)
+        .mockImplementation(
+          (_: unknown, pedidoGuardado: Record<string, unknown>) =>
+            Promise.resolve(pedidoGuardado)
         ),
     };
 

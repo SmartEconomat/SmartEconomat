@@ -6,7 +6,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, Repository, EntityManager } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Albaran } from '../albaran.entity/albaran.entity';
 import { CreateAlbaranDto } from '../dto/create-albaran.dto';
@@ -37,6 +37,65 @@ export class AlbaranService {
   async create(dto: CreateAlbaranDto): Promise<Albaran> {
     const albaran = this.albaranRepository.create(dto);
     return await this.albaranRepository.save(albaran);
+  }
+
+  async createOrGetAlbaran(params: {
+    numeroReferencia?: string;
+    fecha?: Date;
+    manager?: EntityManager;
+  }): Promise<Albaran> {
+    const { numeroReferencia, fecha, manager } = params;
+    const repo = manager
+      ? manager.getRepository(Albaran)
+      : this.albaranRepository;
+
+    let nAlbaran = numeroReferencia;
+    let esAutomatico = false;
+
+    if (!nAlbaran) {
+      nAlbaran = await this.generateAutomaticNumber(repo);
+      esAutomatico = true;
+    }
+
+    let albaran = await repo.findOne({ where: { nAlbaran } });
+
+    if (!albaran) {
+      albaran = repo.create({
+        nAlbaran,
+        fecha: fecha || new Date(),
+        esAutomatico,
+      });
+      albaran = await repo.save(albaran);
+    }
+
+    return albaran;
+  }
+
+  private async generateAutomaticNumber(
+    repo: Repository<Albaran>
+  ): Promise<string> {
+    const year = new Date().getFullYear();
+    const prefix = `AUTO-${year}-`;
+
+    const lastAlbaran = await repo
+      .createQueryBuilder('albaran')
+      .where('albaran.n_albaran LIKE :prefix', { prefix: `${prefix}%` })
+      .orderBy('albaran.createdAt', 'DESC')
+      .getOne();
+
+    let sequence = 1;
+    if (lastAlbaran) {
+      const parts = lastAlbaran.nAlbaran.split('-');
+      const lastSeq = parseInt(parts[parts.length - 1], 10);
+      if (!isNaN(lastSeq)) {
+        sequence = lastSeq + 1;
+      } else {
+        sequence = Math.floor(Math.random() * 1000000);
+      }
+    }
+
+    const paddedSeq = sequence.toString().padStart(5, '0');
+    return `${prefix}${paddedSeq}`;
   }
 
   async findAll(

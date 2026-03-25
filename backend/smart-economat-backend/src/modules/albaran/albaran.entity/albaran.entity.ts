@@ -10,6 +10,9 @@ export class Albaran extends BaseEntity {
   @Column({ type: 'varchar', length: 50, unique: true, name: 'n_albaran' })
   nAlbaran!: string;
 
+  @Column({ type: 'boolean', default: false, name: 'es_automatico' })
+  esAutomatico!: boolean;
+
   @Column({ type: 'boolean', nullable: true })
   concordancia?: boolean;
 
