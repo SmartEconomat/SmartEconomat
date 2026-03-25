@@ -89,18 +89,46 @@ export class SeederI18nHelper {
   private static loadTranslations(): void {
     if (this.translations) return;
 
-    const i18nPath = path.join(__dirname, '../../i18n');
+    let i18nPath = process.env.I18N_PATH;
+    const triedPaths: string[] = [];
+    if (!i18nPath) {
+      const distPath = path.resolve(__dirname, '../../dist/i18n');
+      triedPaths.push(distPath);
+      if (fs.existsSync(distPath)) {
+        i18nPath = distPath;
+      } else {
+        const srcPath = path.resolve(__dirname, '../../src/i18n');
+        triedPaths.push(srcPath);
+        if (fs.existsSync(srcPath)) {
+          i18nPath = srcPath;
+        } else {
+          const legacyPath = path.resolve(__dirname, '../../i18n');
+          triedPaths.push(legacyPath);
+          if (fs.existsSync(legacyPath)) {
+            i18nPath = legacyPath;
+          }
+        }
+      }
+    }
+    if (!i18nPath) {
+      throw new Error(
+        `No se encontró ningún directorio de i18n válido. Intentados: ${triedPaths.join(', ')}`
+      );
+    }
     const esPath = path.join(i18nPath, 'es/translation.json');
     const enPath = path.join(i18nPath, 'en/translation.json');
-
     try {
       this.translations = {
         es: JSON.parse(fs.readFileSync(esPath, 'utf-8')),
         en: JSON.parse(fs.readFileSync(enPath, 'utf-8')),
       };
+
+      console.log(
+        `[SeederI18nHelper] Traducciones cargadas desde: ${i18nPath}`
+      );
     } catch (error) {
       throw new Error(
-        `Error loading translation files: ${error instanceof Error ? error.message : String(error)}`
+        `Error loading translation files: ${error instanceof Error ? error.message : String(error)} | intentado en: ${i18nPath}`
       );
     }
   }

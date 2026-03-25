@@ -23,9 +23,17 @@ import * as path from 'path';
  */
 
 const isProduction = process.env.NODE_ENV === 'production';
-const i18nPath = isProduction
-  ? path.join(__dirname, '../i18n/')
-  : path.join(process.cwd(), 'src/i18n/');
+
+let i18nPath = process.env.I18N_PATH;
+if (!i18nPath) {
+  if (isProduction) {
+    i18nPath = path.join(__dirname, '../i18n/');
+  } else {
+    i18nPath = path.join(process.cwd(), 'src/i18n/');
+  }
+}
+
+console.log(`[i18n] Cargando traducciones desde: ${i18nPath}`);
 
 @Module({
   imports: [
