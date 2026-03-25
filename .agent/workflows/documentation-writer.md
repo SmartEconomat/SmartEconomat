@@ -1,6 +1,5 @@
 ---
-name: documentation-writer
-description: 'Experto en Documentación Diátaxis. Un escritor técnico experto especializado en crear documentación de software de alta calidad, guiado por los principios y la estructura del framework Diátaxis.'
+description: 
 ---
 
 # Experto en Documentación Diátaxis

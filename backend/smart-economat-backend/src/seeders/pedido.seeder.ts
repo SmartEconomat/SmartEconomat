@@ -76,7 +76,13 @@ export const runSeeder = async (context: SeedContext) => {
 
     const pedidosMapear =
       process.env.NODE_ENV === 'test'
-        ? allStates.slice(0, 2)
+        ? [
+            EstadoPedido.PENDIENTE,
+            EstadoPedido.EN_PROCESO,
+            EstadoPedido.PARCIAL,
+            EstadoPedido.RECIBIDO,
+            EstadoPedido.INCIDENCIA,
+          ]
         : batchIdx === 0
           ? allStates
           : faker.helpers.arrayElements(allStates, 3);
