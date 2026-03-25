@@ -11,9 +11,11 @@ import CategoryIconOption from '@mui/icons-material/CategoryOutlined';
 import MenuBookIconOption from '@mui/icons-material/MenuBookOutlined';
 import RestaurantIconOption from '@mui/icons-material/RestaurantOutlined';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
+import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 
 // Lazy load components
 const Home = React.lazy(() => import('../../pages/Home'));
+const Albaranes = React.lazy(() => import('../../pages/Albaran'));
 const Productos = React.lazy(() => import('../../pages/Productos'));
 const Pedidos = React.lazy(() => import('../../pages/Pedidos'));
 const Recepcion = React.lazy(() => import('../../pages/Recepcion'));
@@ -94,6 +96,15 @@ export const menuItems: MenuItem[] = [
     component: Recepcion,
     showInMenu: true,
     permiso: 'recepciones:listar',
+  },
+  {
+    path: '/albaranes',
+    title: 'Albaranes',
+    description: 'Gestionar y digitalizar albaranes de recepción',
+    icon: <AssignmentOutlinedIcon />,
+    component: Albaranes,
+    showInMenu: true,
+    permiso: 'albaranes:listar',
   },
   {
     path: '/inventario',

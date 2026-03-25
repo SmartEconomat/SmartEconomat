@@ -10,6 +10,7 @@ import { Albaran } from './albaran.entity/albaran.entity';
 import { AlbaranPedidoRecepcion } from './albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
 import { AlbaranController } from './controller/albaran.controller';
 import { AlbaranService } from './service/albaran.service';
+import { AlbaranRecepcionListener } from './listeners/albaran-recepcion.listener';
 import { I18nHelper } from '../../common/helpers/i18n.helper';
 import { ArchivoModule } from '../archivo/archivo.module';
 
@@ -42,7 +43,11 @@ import { ArchivoModule } from '../archivo/archivo.module';
             fileSize:
               configService.get<number>('MAX_FILE_SIZE_MB', 10) * 1024 * 1024,
           },
-          fileFilter: (_req: any, file: any, cb: any) => {
+          fileFilter: (
+            _req: unknown,
+            file: Express.Multer.File,
+            cb: (error: Error | null, acceptFile: boolean) => void
+          ) => {
             if (file.mimetype.match(/\/(jpg|jpeg|png|gif|pdf)$/)) {
               cb(null, true);
             } else {
@@ -59,7 +64,7 @@ import { ArchivoModule } from '../archivo/archivo.module';
     }),
   ],
   controllers: [AlbaranController],
-  providers: [AlbaranService],
+  providers: [AlbaranService, AlbaranRecepcionListener],
   exports: [AlbaranService],
 })
 export class AlbaranModule {}
