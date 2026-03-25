@@ -23,6 +23,7 @@ const Movimientos = React.lazy(() => import('../../pages/Movimientos'));
 const Proveedores = React.lazy(() => import('../../pages/Proveedores'));
 const Recetas = React.lazy(() => import('../../pages/Recetas'));
 const Preparaciones = React.lazy(() => import('../../pages/Preparaciones'));
+const Mermas = React.lazy(() => import('../../pages/Mermas'));
 
 const Perfil = React.lazy(() => import('../../pages/Perfil'));
 const Administracion = React.lazy(() => import('../../pages/Administracion'));
@@ -129,6 +130,15 @@ export const menuItems: MenuItem[] = [
     component: Incidencias,
     showInMenu: true,
     permiso: 'incidencias:listar',
+  },
+  {
+    path: '/mermas',
+    title: 'Mermas',
+    description: 'Gestión de pérdidas y roturas de productos',
+    icon: <ReportProblemIconOption />,
+    component: Mermas,
+    showInMenu: true,
+    permiso: 'merma:listar',
   },
   {
     path: '/administracion',
