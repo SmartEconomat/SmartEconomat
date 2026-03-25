@@ -481,11 +481,11 @@ const Productos: React.FC = () => {
   };
 
   const buildCreateProductDraft = async (barcode: string) => {
-    const offData = await fetchProductFromOFF(barcode);
+    const offData = await searchByBarcode(barcode);
 
     return {
-      nombre: offData?.nombre || '',
-      marca: offData?.marca || '',
+      nombre: offData?.name || '',
+      marca: offData?.brand || '',
       unidad: UnidadMedida.UNIDAD,
       tipo: CategoriaProducto.OTRO,
       contenido: 1,
