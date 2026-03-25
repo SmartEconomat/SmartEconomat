@@ -42,12 +42,14 @@ import {
   UnidadMedida,
   normalizeUnidadMedida,
 } from '../services/producto.types';
-import { fetchProductFromOFF } from '../services/openfoodfacts.service';
+import { searchByBarcode } from '../services/openfoodfacts.service';
 import PasoSeleccionPedidos from '../components/recepcion/PasoSeleccionPedidos';
 import PasoEscaneo from '../components/recepcion/PasoEscaneo';
 import PasoRevision from '../components/recepcion/PasoRevision';
 import PasoResultado from '../components/recepcion/PasoResultado';
-import NewProductModal, { ModalProductData } from '../components/recepcion/NewProductModal';
+import NewProductModal, {
+  ModalProductData,
+} from '../components/recepcion/NewProductModal';
 import WeightScaleModal from '../components/recepcion/WeightScaleModal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import RecepcionDraftConflictDialog from '../components/recepcion/RecepcionDraftConflictDialog';
@@ -475,9 +477,11 @@ const Recepcion: React.FC = () => {
 
   const handleSearch = async (overrideQuery?: string | unknown) => {
     // Si ya estamos buscando o hay un modal abierto, ignoramos la nueva petición
-    if (isSearchingRef.current || searching || openModal || weightModalOpen) return;
+    if (isSearchingRef.current || searching || openModal || weightModalOpen)
+      return;
 
-    const queryToUse = typeof overrideQuery === 'string' ? overrideQuery : searchQuery;
+    const queryToUse =
+      typeof overrideQuery === 'string' ? overrideQuery : searchQuery;
     if (!queryToUse.trim()) return;
 
     isSearchingRef.current = true;
@@ -509,15 +513,15 @@ const Recepcion: React.FC = () => {
 
       // Si no existe pero es un código numérico (escaner), intentar en OpenFoodFacts
       if (!prod && /^\d{8,14}$/.test(queryToUse)) {
-        const offProduct = await fetchProductFromOFF(queryToUse);
+        const offProduct = await searchByBarcode(queryToUse);
         if (offProduct) {
           setModalData({
-            nombre: offProduct.nombre,
-            marca: offProduct.marca || '',
+            nombre: offProduct.name,
+            marca: offProduct.brand || '',
             unidad: UnidadMedida.UNIDAD,
             tipo: CategoriaProducto.OTRO,
             contenido: 1,
-            codigoBarras: offProduct.codigoBarras,
+            codigoBarras: queryToUse,
           });
           setOpenModal(true);
           return;
@@ -538,7 +542,10 @@ const Recepcion: React.FC = () => {
             unidad: UnidadMedida.KG,
             tipo: CategoriaProducto.OTRO,
             contenido: 1,
-            codigoBarras: typeof queryToUse === 'string' && /^\d{8,14}$/.test(queryToUse) ? queryToUse : ''
+            codigoBarras:
+              typeof queryToUse === 'string' && /^\d{8,14}$/.test(queryToUse)
+                ? queryToUse
+                : '',
           });
           setOpenModal(true);
           setSearching(false);
@@ -556,7 +563,10 @@ const Recepcion: React.FC = () => {
           unidad: UnidadMedida.KG,
           tipo: CategoriaProducto.OTRO,
           contenido: 1,
-          codigoBarras: typeof queryToUse === 'string' && /^\d{8,14}$/.test(queryToUse) ? queryToUse : ''
+          codigoBarras:
+            typeof queryToUse === 'string' && /^\d{8,14}$/.test(queryToUse)
+              ? queryToUse
+              : '',
         });
         setOpenModal(true);
       }
@@ -567,7 +577,10 @@ const Recepcion: React.FC = () => {
         unidad: UnidadMedida.KG,
         tipo: CategoriaProducto.OTRO,
         contenido: 1,
-        codigoBarras: typeof queryToUse === 'string' && /^\d{8,14}$/.test(queryToUse) ? queryToUse : ''
+        codigoBarras:
+          typeof queryToUse === 'string' && /^\d{8,14}$/.test(queryToUse)
+            ? queryToUse
+            : '',
       });
       setOpenModal(true);
     } finally {
@@ -1365,7 +1378,10 @@ const Recepcion: React.FC = () => {
           if (!weightTarget) return '';
           const { pIdx, lIdx } = weightTarget;
           if (pIdx !== null) {
-            return draft.pedidosSeleccionados[pIdx]?.lineas[lIdx]?.nombreProducto || '';
+            return (
+              draft.pedidosSeleccionados[pIdx]?.lineas[lIdx]?.nombreProducto ||
+              ''
+            );
           }
           return draft.productosEspontaneos[lIdx]?.nombreProducto || '';
         })()}
