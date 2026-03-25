@@ -89,27 +89,20 @@ export class AuthService {
   }
 
   async forgotPassword(email: string): Promise<void> {
-    if (!email) {
-      return;
-    }
+    if (!email) return;
+
     const usuario = await this.usuarioRepo.findOne({ where: { email } });
-    if (!usuario) {
-      return;
-    }
+    if (!usuario) return;
 
     const token = crypto.randomBytes(32).toString('hex');
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
-    usuario.passwordResetToken = hashedToken;
-    usuario.passwordResetExpires = new Date(Date.now() + 15 * 60 * 1000);
+    usuario.resetPasswordOtp = hashedToken;
+    usuario.resetPasswordOtpExpires = new Date(Date.now() + 60 * 60 * 1000);
     await this.usuarioRepo.save(usuario);
 
-    try {
-      if (usuario.email) {
-        await this.mailService.sendPasswordResetEmail(usuario.email, token);
-      }
-    } catch (error) {
-      console.error('Error sending password reset email:', error);
+    if (usuario.email) {
+      await this.mailService.sendPasswordResetEmail(usuario.email, token);
     }
   }
 
@@ -117,14 +110,14 @@ export class AuthService {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
     const usuario = await this.usuarioRepo.findOne({
-      where: { passwordResetToken: hashedToken },
-      select: ['id', 'passwordResetToken', 'passwordResetExpires'],
+      where: { resetPasswordOtp: hashedToken },
+      select: ['id', 'resetPasswordOtp', 'resetPasswordOtpExpires'],
     });
 
     if (
       !usuario ||
-      !usuario.passwordResetExpires ||
-      usuario.passwordResetExpires < new Date()
+      !usuario.resetPasswordOtpExpires ||
+      usuario.resetPasswordOtpExpires < new Date()
     ) {
       throw new BadRequestException(
         I18nHelper.getError('EL_TOKEN_ES_INV_LIDO_O_HA_EXPIRADO')
@@ -132,8 +125,8 @@ export class AuthService {
     }
 
     usuario.password = newPassword;
-    usuario.passwordResetToken = null;
-    usuario.passwordResetExpires = null;
+    usuario.resetPasswordOtp = null;
+    usuario.resetPasswordOtpExpires = null;
     usuario.mustChangePassword = false;
 
     await this.usuarioRepo.save(usuario);

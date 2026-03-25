@@ -81,6 +81,7 @@ export class AuthController {
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     await this.authService.forgotPassword(dto.email);
     return {
+      success: true,
       message:
         'Si el correo existe, se ha enviado un enlace para restablecer la contraseña',
     };

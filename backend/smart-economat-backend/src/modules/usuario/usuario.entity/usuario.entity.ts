@@ -52,10 +52,10 @@ export class Usuario extends BaseEntity {
   status!: UserStatus;
 
   @Column({ type: 'varchar', nullable: true, select: false })
-  passwordResetToken?: string | null;
+  resetPasswordOtp?: string | null;
 
   @Column({ type: 'timestamptz', nullable: true })
-  passwordResetExpires?: Date | null;
+  resetPasswordOtpExpires?: Date | null;
 
   @Column({ type: 'boolean', default: false, name: 'must_change_password' })
   mustChangePassword!: boolean;
