@@ -237,7 +237,7 @@ describe('AuthService', () => {
     expect(mockMailService.sendPasswordResetEmail).not.toHaveBeenCalled();
   });
 
-  it('forgotPassword genera hash SHA256 y expiración de 15 minutos', async () => {
+  it('forgotPassword genera hash SHA256 y expiración de 1 hora', async () => {
     const now = new Date('2026-03-14T10:00:00.000Z').getTime();
     const usuario = createUsuario({
       id: 'user-5',
@@ -258,9 +258,9 @@ describe('AuthService', () => {
       .update(sentToken)
       .digest('hex');
 
-    expect(usuario.passwordResetToken).toBe(expectedHash);
-    expect(usuario.passwordResetExpires).toEqual(
-      new Date(now + 15 * 60 * 1000)
+    expect(usuario.resetPasswordOtp).toBe(expectedHash);
+    expect(usuario.resetPasswordOtpExpires).toEqual(
+      new Date(now + 60 * 60 * 1000)
     );
     expect(mockMailService.sendPasswordResetEmail).toHaveBeenCalledWith(
       'reset@demo.local',
@@ -272,8 +272,8 @@ describe('AuthService', () => {
     mockUsuarioRepo.findOne.mockResolvedValue(
       createUsuario({
         id: 'user-6',
-        passwordResetToken: 'hash',
-        passwordResetExpires: new Date('2026-03-14T09:59:59.000Z'),
+        resetPasswordOtp: 'hash',
+        resetPasswordOtpExpires: new Date('2026-03-14T09:59:59.000Z'),
       })
     );
 
@@ -288,11 +288,8 @@ describe('AuthService', () => {
     const usuario = createUsuario({
       id: 'user-7',
       password: 'OldPass123*',
-      passwordResetToken: crypto
-        .createHash('sha256')
-        .update(token)
-        .digest('hex'),
-      passwordResetExpires: futureExpiry,
+      resetPasswordOtp: crypto.createHash('sha256').update(token).digest('hex'),
+      resetPasswordOtpExpires: futureExpiry,
       mustChangePassword: true,
     });
 
@@ -305,8 +302,8 @@ describe('AuthService', () => {
     await service.resetPassword(token, 'NuevaPass123*');
 
     const savedUser = mockUsuarioRepo.save.mock.calls[0][0] as Usuario;
-    expect(savedUser.passwordResetToken).toBeNull();
-    expect(savedUser.passwordResetExpires).toBeNull();
+    expect(savedUser.resetPasswordOtp).toBeNull();
+    expect(savedUser.resetPasswordOtpExpires).toBeNull();
     expect(savedUser.mustChangePassword).toBe(false);
     await expect(
       bcrypt.compare('NuevaPass123*', savedUser.password)

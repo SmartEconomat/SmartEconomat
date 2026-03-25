@@ -1,0 +1,23 @@
+{
+  "name": "smarteconomat",
+  "version": "1.0.0",
+  "description": "SmartEconomat es una aplicación diseñada para gestionar el inventario de ingredientes y materiales en una escuela de cocina, optimizando el control de stock y facilitando la planificación de clases y recetas.",
+  "main": "test-mail.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SmartEconomat/SmartEconomat.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SmartEconomat/SmartEconomat/issues"
+  },
+  "homepage": "https://github.com/SmartEconomat/SmartEconomat#readme",
+  "dependencies": {
+    "nodemailer": "^8.0.4"
+  }
+}
