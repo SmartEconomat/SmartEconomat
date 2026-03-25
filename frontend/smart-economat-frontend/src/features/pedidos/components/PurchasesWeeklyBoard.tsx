@@ -18,12 +18,15 @@ import { PurchaseBatch } from '../../../services/pedido.types';
 import { PurchaseBatchActionHandlers } from '../types/pedidos-ui.types';
 import { buildBatchColumns, renderBatchActions } from '../utils/pedidoColumns';
 import { formatCurrency, getBatchTotal } from '../utils/pedidoFormatters';
+import { PedidosViewMode } from '../types/pedidos-ui.types';
+import PurchaseBatchCard from './PurchaseBatchCard';
 
 dayjs.extend(isoWeek);
 
 interface PurchasesWeeklyBoardProps {
   batches: PurchaseBatch[];
   isLoading: boolean;
+  viewMode: PedidosViewMode;
   handlers: PurchaseBatchActionHandlers;
   emptyMessage?: string;
 }
@@ -49,6 +52,7 @@ const getWeekRangeLabel = (referenceDate?: string): string => {
 const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
   batches,
   isLoading,
+  viewMode,
   handlers,
   emptyMessage = 'No hay compras registradas para los filtros actuales.',
 }) => {
@@ -135,6 +139,14 @@ const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
                 data={group.batches}
                 isLoading={false}
                 hideTopBar
+                viewMode={viewMode}
+                renderGridItem={(row) => (
+                  <PurchaseBatchCard
+                    batch={row}
+                    actions={renderBatchActions(row, handlers)}
+                    onRowClick={handlers.onView}
+                  />
+                )}
                 onRowClick={handlers.onView}
                 getRowAriaLabel={(row) =>
                   `Abrir detalle de la compra ${row.id.substring(0, 8)}`

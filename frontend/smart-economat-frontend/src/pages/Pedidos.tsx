@@ -628,6 +628,7 @@ const Pedidos: React.FC = () => {
           <PurchasesWeeklyBoard
             batches={batches}
             isLoading={isLoading}
+            viewMode={viewMode}
             handlers={{
               onView: (batch) => void handleViewBatch(batch, 'batch'),
               onRecepcion: (batch) => void startRecepcionFromBatch(batch),
@@ -637,6 +638,7 @@ const Pedidos: React.FC = () => {
           <PedidosWeeklyBoard
             data={data}
             isLoading={isLoading}
+            viewMode={viewMode}
             permissions={permissions}
             handlers={handlers}
             totalItems={totalItems}
@@ -654,7 +656,7 @@ const Pedidos: React.FC = () => {
             permissions={permissions}
             handlers={handlers}
             onPageChange={setPage}
-            onPageSizeChange={(nextPageSize) => {
+            onPageSizeChange={(nextPageSize: number) => {
               setPageSize(nextPageSize);
               setPage(1);
             }}
