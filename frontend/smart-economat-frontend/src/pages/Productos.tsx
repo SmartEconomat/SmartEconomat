@@ -49,8 +49,8 @@ import {
   deleteResource,
   resolveStoredFileUrl,
   uploadFile,
-  downloadFile,
 } from '../services/api.service';
+import { DownloadService } from '../services/download.service';
 // Utilidad para construir query string de filtros actuales
 function buildExportQuery(filters: ProductFiltersState, searchTerm: string) {
   const params = new URLSearchParams();
@@ -208,9 +208,12 @@ const Productos: React.FC = () => {
   const handleExportPdf = async () => {
     try {
       const query = buildExportQuery(filters, searchTerm);
-      await downloadFile(`/export/productos/pdf${query}`, 'productos.pdf');
+      await DownloadService.downloadFile(`/export/productos/pdf${query}`, {
+        filename: 'productos.pdf',
+        toast,
+      });
     } catch {
-      toast.error('Error al exportar productos a PDF');
+      // El error ya lo maneja el servicio mediante toast
     }
   };
 
@@ -218,9 +221,12 @@ const Productos: React.FC = () => {
   const handleExportExcel = async () => {
     try {
       const query = buildExportQuery(filters, searchTerm);
-      await downloadFile(`/export/productos/xlsx${query}`, 'productos.xlsx');
+      await DownloadService.downloadFile(`/export/productos/xlsx${query}`, {
+        filename: 'productos.xlsx',
+        toast,
+      });
     } catch {
-      toast.error('Error al exportar productos a Excel');
+      // El error ya lo maneja el servicio
     }
   };
 
@@ -616,24 +622,6 @@ const Productos: React.FC = () => {
               }}
               inline
             />
-            <Stack direction="row" spacing={1}>
-              <Button
-                variant="outlined"
-                color="primary"
-                onClick={handleExportPdf}
-                size="small"
-              >
-                Exportar PDF
-              </Button>
-              <Button
-                variant="outlined"
-                color="success"
-                onClick={handleExportExcel}
-                size="small"
-              >
-                Exportar Excel
-              </Button>
-            </Stack>
           </Box>
         }
         onScanBarcode={() => setIsSearchScannerOpen(true)}
@@ -659,7 +647,12 @@ const Productos: React.FC = () => {
           columns={columns}
           data={data}
           isLoading={isLoading}
-          hideTopBar
+          hideTopBar={false}
+          exportHandlers={{
+            onExportPdf: handleExportPdf,
+            onExportExcel: handleExportExcel,
+            exportLabel: 'productos filtrados',
+          }}
           viewMode={viewMode}
           defaultViewMode={viewMode}
           emptyStateMessage={
