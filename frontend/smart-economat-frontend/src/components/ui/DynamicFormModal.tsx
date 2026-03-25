@@ -16,7 +16,17 @@ import RecetaIngredientesSelector from './RecetaIngredientesSelector';
 import BatchPedidoLineasViewer from './BatchPedidoLineasViewer';
 import BarcodeScanner from './BarcodeScanner';
 import BarcodeIcon from './BarcodeIcon';
-import { InputAdornment, IconButton, Tooltip } from '@mui/material';
+import {
+  InputAdornment,
+  IconButton,
+  Tooltip,
+  List,
+  ListItemButton,
+  ListItemText,
+  Paper,
+  CircularProgress,
+} from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
 import { resolveStoredFileUrl } from '../../services/api.service';
 import { parseLocalizedNumber } from '../../utils/numberUtils';
 
@@ -66,6 +76,8 @@ export interface DynamicFormModalProps extends Omit<ModalProps, 'children'> {
   requireConfirmation?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onBarcodeFetch?: (code: string) => Promise<Record<string, any> | void>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onOFFSearch?: (value: string) => Promise<Array<Record<string, any>>>;
   confirmationMessage?: React.ReactNode;
   onValuesChange?: (data: Record<string, unknown>) => void;
 }
@@ -84,6 +96,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   isSubmitting = false,
   requireConfirmation = false,
   onBarcodeFetch,
+  onOFFSearch,
   confirmationMessage,
   onValuesChange,
 }) => {
@@ -94,6 +107,10 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   const [activeBarcodeField, setActiveBarcodeField] = useState<string | null>(
     null
   );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [offResults, setOffResults] = useState<Array<Record<string, any>>>([]);
+  const [showOFFResults, setShowOFFResults] = useState(false);
+  const [isOFFSearching, setIsOFFSearching] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -109,6 +126,8 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
         }
       });
       setFormData(dataToSet);
+      setShowOFFResults(false);
+      setOffResults([]);
       if (onValuesChange) onValuesChange(dataToSet);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -396,7 +415,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
 
       case 'barcode':
         return (
-          <Box key={name}>
+          <Box key={name} sx={{ position: 'relative' }}>
             <Input
               name={name}
               label={label}
@@ -417,6 +436,38 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
+                    {onOFFSearch && (
+                      <Tooltip title="Buscar en OpenFoodFacts">
+                        <span>
+                          <IconButton
+                            edge="end"
+                            disabled={disabled || isOFFSearching || !value}
+                            onClick={async () => {
+                              if (!value || isOFFSearching) return;
+                              setIsOFFSearching(true);
+                              setShowOFFResults(false);
+                              const results = await onOFFSearch(String(value));
+                              setIsOFFSearching(false);
+                              if (results.length === 1) {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  ...results[0],
+                                }));
+                              } else if (results.length > 1) {
+                                setOffResults(results);
+                                setShowOFFResults(true);
+                              }
+                            }}
+                          >
+                            {isOFFSearching ? (
+                              <CircularProgress size={20} />
+                            ) : (
+                              <SearchIcon fontSize="small" />
+                            )}
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                    )}
                     <Tooltip title="Escanear con cámara">
                       <IconButton
                         edge="end"
@@ -430,6 +481,46 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                 ),
               }}
             />
+            {showOFFResults && offResults.length > 0 && (
+              <Paper
+                elevation={8}
+                sx={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  zIndex: 1300,
+                  maxHeight: 260,
+                  overflowY: 'auto',
+                }}
+              >
+                <List dense disablePadding>
+                  {offResults.map((result, idx) => (
+                    <ListItemButton
+                      key={idx}
+                      onClick={() => {
+                        setFormData((prev) => ({ ...prev, ...result }));
+                        setShowOFFResults(false);
+                        setOffResults([]);
+                      }}
+                    >
+                      <ListItemText
+                        primary={
+                          (result['nombre'] as string) ||
+                          (result['name'] as string) ||
+                          `Producto ${idx + 1}`
+                        }
+                        secondary={
+                          (result['marca'] as string) ||
+                          (result['brand'] as string) ||
+                          undefined
+                        }
+                      />
+                    </ListItemButton>
+                  ))}
+                </List>
+              </Paper>
+            )}
             <BarcodeScanner
               open={activeBarcodeField === name}
               onClose={() => setActiveBarcodeField(null)}
