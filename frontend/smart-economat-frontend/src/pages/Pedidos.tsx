@@ -25,6 +25,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import AddIcon from '@mui/icons-material/Add';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import DataTable, { Column } from '../components/ui/DataTable';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import DynamicFormModal, {
@@ -48,6 +49,7 @@ import StatusChip from '../components/ui/StatusChip';
 import { usePermission } from '../store/auth.hooks';
 import PageToolbar from '../components/ui/PageToolbar';
 import { usePedidoDraft } from '../hooks/usePedidoDraft';
+import ReporteSelectorModal from '../components/ui/ReporteSelectorModal';
 
 const getPedidoSchema = (
   row: Record<string, unknown> | null
@@ -136,6 +138,7 @@ const Pedidos: React.FC = () => {
   const [isCancelando, setIsCancelando] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isRecoveryOpen, setIsRecoveryOpen] = useState(false);
+  const [isReporteOpen, setIsReporteOpen] = useState(false);
   const hasPromptedRef = useRef(false);
   const latestValsRef = useRef<Record<string, unknown>>({});
   const {
@@ -656,6 +659,16 @@ const Pedidos: React.FC = () => {
         }
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        extraActions={[
+          {
+            label: 'Reporte PDF',
+            onClick: () => setIsReporteOpen(true),
+            icon: <PictureAsPdfIcon />,
+            id: 'btn-reporte-pedidos-pdf',
+            color: 'secondary',
+            variant: 'outlined',
+          },
+        ]}
       />
 
       <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
@@ -867,6 +880,12 @@ const Pedidos: React.FC = () => {
           onSubmit={() => setItemToViewBatch(null)}
           submitLabel="Cerrar"
           cancelLabel=""
+        />
+
+        <ReporteSelectorModal
+          isOpen={isReporteOpen}
+          onClose={() => setIsReporteOpen(false)}
+          tipo="pedido"
         />
 
         <ConfirmDialog

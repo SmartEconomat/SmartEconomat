@@ -225,6 +225,30 @@ export async function downloadFile(
   URL.revokeObjectURL(url);
 }
 
+export async function openPdfInNewTab(path: string): Promise<void> {
+  const response = await baseFetch(path);
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null);
+    throw new Error(
+      extractApiMessage(payload) ||
+        `Error al generar el reporte: ${response.status} ${response.statusText}`
+    );
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.style.display = 'none';
+  anchor.href = url;
+  anchor.target = '_blank';
+  anchor.rel = 'noopener noreferrer';
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
 export async function deleteResource(resourcePath: string): Promise<void> {
   const response = await baseFetch(resourcePath, {
     method: 'DELETE',
