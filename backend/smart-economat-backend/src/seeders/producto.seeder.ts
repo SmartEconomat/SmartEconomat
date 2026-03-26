@@ -232,6 +232,7 @@ export const runSeeder = async (context: SeedContext) => {
         'https://via.placeholder.com/640x480.png?text=Sin+Imagen',
       contenido,
       codigoBarras,
+      pmp: 0,
     });
 
     const aTags =
@@ -282,6 +283,7 @@ export const runSeeder = async (context: SeedContext) => {
         mermaEsperada: merma,
         marca: producto.marca,
         codigoBarras: producto.codigoBarras,
+        pmp: 0,
       });
       productoProveedores.push(pp);
     }

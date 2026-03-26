@@ -133,7 +133,7 @@ export class RecetaController {
         'Debe proporcionar al menos un ID de receta.'
       );
     }
-    await this.recetaPdfService.generatePdf(idArray, res as any, {
+    await this.recetaPdfService.generatePdf(idArray, res, {
       includeImage: includeImage !== 'false',
     });
   }
@@ -146,7 +146,7 @@ export class RecetaController {
     @Query('includeImage') includeImage: string | undefined,
     @Res() res: express.Response
   ): Promise<void> {
-    await this.recetaPdfService.generatePdf([id], res as any, {
+    await this.recetaPdfService.generatePdf([id], res, {
       includeImage: includeImage !== 'false',
     });
   }

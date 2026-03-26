@@ -157,7 +157,7 @@ async function runSeederByName(name: string) {
 
 async function createSeedContext(): Promise<SeedContext> {
   const app = await NestFactory.createApplicationContext(AppModule, {
-    logger: process.env.NODE_ENV === 'test' ? false : undefined,
+    logger: ['error', 'warn'],
   });
 
   useContainer(app.select(AppModule), { fallbackOnErrors: true });

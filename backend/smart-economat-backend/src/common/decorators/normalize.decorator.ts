@@ -121,5 +121,7 @@ export function NormalizeDate(): PropertyDecorator {
  * Convierte strings separados por comas a arrays, aplica trim a elementos.
  */
 export function NormalizeArray(): PropertyDecorator {
-  return Transform((params) => NormalizeArrayTransformer.transform(params));
+  return Transform(
+    (params) => NormalizeArrayTransformer.transform(params) as unknown[]
+  );
 }

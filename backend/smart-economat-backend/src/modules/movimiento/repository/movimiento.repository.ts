@@ -13,7 +13,7 @@ export class MovimientoRepository {
     private readonly repo: Repository<Movimiento>
   ) {}
 
-  private normalizeMovimientoPayload(movimiento: any) {
+  private normalizeMovimientoPayload(movimiento: Record<string, unknown>) {
     const entidadId =
       movimiento?.entidadId ??
       movimiento?.entidad_id ??
@@ -124,17 +124,13 @@ export class MovimientoRepository {
       totalPromise,
     ]);
 
-    const normalizedData = data.map((mov) =>
-      this.normalizeMovimientoPayload(mov)
-    );
-
     return {
-      data: normalizedData,
+      data,
       total,
       page,
       limit,
       totalPages: Math.ceil(total / limit) || 1,
-    } as PaginatedResponseDto<any>;
+    } as PaginatedResponseDto<Movimiento>;
   }
 
   findById(id: string) {
@@ -191,7 +187,7 @@ export class MovimientoRepository {
         page,
         limit,
         totalPages: 0,
-      } as any;
+      } as import('../../../common/dto/paginated-response.dto').PaginatedResponseDto<Movimiento>;
     }
 
     const qb = this.repo
@@ -249,12 +245,8 @@ export class MovimientoRepository {
       countQb.getCount(),
     ]);
 
-    const normalizedData = data.map((mov) =>
-      this.normalizeMovimientoPayload(mov)
-    );
-
     return {
-      data: normalizedData,
+      data,
       total,
       page,
       limit,

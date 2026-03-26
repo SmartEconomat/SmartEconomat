@@ -74,10 +74,17 @@ describe('RecepcionStockService', () => {
     return value;
   };
 
+  const mockProductoService = {
+    actualizarPMP: jest.fn(),
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockPedidoService.handleStatusTransition.mockReset();
     mockEventEmitter.emit.mockReset();
+    if (mockProductoService.actualizarPMP.mockReset) {
+      mockProductoService.actualizarPMP.mockReset();
+    }
     idCounter = 0;
 
     queryRunner = {
@@ -111,7 +118,8 @@ describe('RecepcionStockService', () => {
     service = new RecepcionStockService(
       mockDataSource as any,
       mockPedidoService as any,
-      mockEventEmitter as any
+      mockEventEmitter as any,
+      mockProductoService as any
     );
   });
 

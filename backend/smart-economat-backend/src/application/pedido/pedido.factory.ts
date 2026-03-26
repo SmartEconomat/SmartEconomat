@@ -1,6 +1,7 @@
 import { EntityManager, In } from 'typeorm';
 import { CreatePedidoDto } from '../../modules/pedido/dto/create-pedido.dto';
 import { Pedido } from '../../modules/pedido/pedido.entity/pedido.entity';
+import { EstadoPedido } from '../../modules/pedido/enums/estado-pedido.enum';
 import { PedidoProducto } from '../../modules/pedido/pedido-producto.entity/pedido-producto.entity';
 import { ProductoProveedor } from '../../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
 import {
@@ -23,7 +24,7 @@ export async function buildPedidoAggregate(
   manager: EntityManager,
   dto: CreatePedidoDto,
   userId: string,
-  initialStatus: any,
+  initialStatus: string,
   calculateFechaEntrega: () => Date
 ): Promise<BuiltPedido> {
   const { lineas, proveedorId, observaciones } = dto;
@@ -40,7 +41,10 @@ export async function buildPedidoAggregate(
 
   const maybeFind = (
     manager as unknown as {
-      find?: (entity: any, options?: any) => Promise<ProductoProveedor[]>;
+      find?: (
+        entity: typeof ProductoProveedor,
+        options?: { where: { id: number[] }; relations: string[] }
+      ) => Promise<ProductoProveedor[]>;
     }
   ).find;
 
@@ -57,23 +61,27 @@ export async function buildPedidoAggregate(
     const maybeFindOne = (
       manager as unknown as {
         findOne?: (
-          entity: any,
-          options?: any
+          entity: typeof ProductoProveedor,
+          options?: { where: { id: number }; relations: string[] }
         ) => Promise<ProductoProveedor | undefined>;
       }
     ).findOne;
 
     if (typeof maybeFindOne === 'function') {
-      productoProveedoresResolved = (
-        await Promise.all(
-          productoProveedorIds.map((id) =>
+      const resolved: (ProductoProveedor | undefined)[] = await Promise.all(
+        productoProveedorIds.map(
+          (id) =>
             maybeFindOne.call(manager, ProductoProveedor, {
               where: { id },
               relations: ['proveedor'],
-            })
-          )
+            }) as Promise<ProductoProveedor | undefined>
         )
-      ).filter(Boolean) as ProductoProveedor[];
+      );
+      productoProveedoresResolved = resolved.filter(
+        (pp: ProductoProveedor | undefined): pp is ProductoProveedor => {
+          return typeof pp !== 'undefined' && pp !== null;
+        }
+      );
     } else {
       throw new ConflictException(
         'El gestor de entidades no soporta métodos de búsqueda necesarios.'
@@ -119,13 +127,17 @@ export async function buildPedidoAggregate(
   }
 
   const pedido = manager.create(Pedido, {
-    usuario: { id: userId },
-    proveedor: { id: proveedorId },
-    estado: initialStatus,
+    usuarioId: userId,
+    proveedorId: proveedorId,
+    estado: initialStatus as EstadoPedido,
     costeTotal,
     fechaEntrega: calculateFechaEntrega(),
     observaciones,
   });
 
-  return { pedido, pedidoProductos: pedidoProductosEntities, costeTotal };
+  return {
+    pedido,
+    pedidoProductos: pedidoProductosEntities,
+    costeTotal: Number(costeTotal),
+  };
 }

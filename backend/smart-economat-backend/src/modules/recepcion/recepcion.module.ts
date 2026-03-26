@@ -1,4 +1,5 @@
 import { forwardRef, Module } from '@nestjs/common';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Recepcion } from './recepcion.entity/recepcion.entity';
 import { Usuario } from '../usuario/usuario.entity/usuario.entity';
@@ -19,6 +20,7 @@ import { MovimientoModule } from '../movimiento/movimiento.module';
 
 import { PdfReportService } from './service/pdf-report.service';
 import { PedidoModule } from '../pedido/pedido.module';
+import { ProductoModule } from '../producto/producto.module';
 
 @Module({
   imports: [
@@ -36,13 +38,14 @@ import { PedidoModule } from '../pedido/pedido.module';
     ]),
     MovimientoModule,
     forwardRef(() => PedidoModule),
+    forwardRef(() => ProductoModule),
+    EventEmitterModule,
   ],
   controllers: [RecepcionController, RecepcionProductoController],
   providers: [
     RecepcionService,
     RecepcionStockService,
     RecepcionProductoService,
-
     PdfReportService,
   ],
   exports: [RecepcionService, RecepcionStockService, PdfReportService],

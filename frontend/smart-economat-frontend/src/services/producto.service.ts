@@ -1,4 +1,4 @@
-import { Producto, ProductosQueryParams } from './producto.types';
+import { Producto, ProductosQueryParams, HistorialPrecio } from './producto.types';
 import { baseFetch, ApiResponse, PaginatedData } from './api.service';
 
 export interface ProductoProveedorPayload {
@@ -155,5 +155,19 @@ export async function getProductoById(id: string): Promise<Producto | null> {
   const response = await baseFetch(`/productos/${id}`);
   if (!response.ok) return null;
   const body = (await response.json()) as ApiResponse<Producto>;
+  return body.data;
+}
+
+export async function fetchHistorialPrecios(
+  productoId: string,
+  proveedorId?: string
+): Promise<HistorialPrecio[]> {
+  const query = new URLSearchParams();
+  if (proveedorId) query.set('proveedorId', proveedorId);
+  const response = await baseFetch(`/productos/${productoId}/historial-precios?${query.toString()}`);
+  if (!response.ok) {
+    throw new Error(`Error al obtener historial de precios: ${response.status}`);
+  }
+  const body = (await response.json()) as ApiResponse<HistorialPrecio[]>;
   return body.data;
 }

@@ -48,6 +48,42 @@ export class HistorialPrecio extends BaseEntity {
   precio!: number;
 
   /**
+   * Cantidad asociada a este registro histórico.
+   * Representa la cantidad que se recibió al precio unitario especificado.
+   * @type {number}
+   */
+  @Column({
+    type: 'numeric',
+    precision: 12,
+    scale: 3,
+    nullable: true,
+    transformer: new ColumnNumericTransformer(),
+  })
+  cantidad?: number;
+
+  /**
+   * Identificador del documento de origen (Nº Albarán, etc.) que generó esta entrada.
+   * @type {string | undefined}
+   */
+  @Column({
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+    name: 'documento_origen',
+  })
+  documentoOrigen?: string;
+
+  /**
+   * Identificador de la recepción asociada que generó este cambio.
+   */
+  @Column({
+    type: 'uuid',
+    nullable: true,
+    name: 'recepcion_id',
+  })
+  recepcionId?: string;
+
+  /**
    * Fecha en la que se registró (o entró en vigor) este precio.
    * @type {Date}
    */

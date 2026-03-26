@@ -11,8 +11,10 @@ import {
   UseGuards,
   ParseUUIDPipe,
   Req,
+  Query,
 } from '@nestjs/common';
 import { ProductoService } from '../service/producto.service';
+import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.entity';
 import {
   ApiTags,
   ApiOperation,
@@ -138,5 +140,61 @@ export class ProductoController {
   ): Promise<void> {
     const userId = req.user.id;
     return this.productoService.remove(id, userId);
+  }
+
+  @Get(':id/historial-precios')
+  @RequirePermissions('productos:ver')
+  @ApiOperation({ summary: 'Obtener el historial de precios de un producto' })
+  @ApiParam({ name: 'id', description: 'ID del producto' })
+  @ApiResponse({ status: 200, type: [HistorialPrecio] })
+  async getHistorialPrecios(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('proveedorId') proveedorId?: string
+  ): Promise<HistorialPrecio[]> {
+    return this.productoService.getHistorialPrecios(id, proveedorId);
+  }
+
+  @Get(':id/pmp')
+  @RequirePermissions('productos:ver')
+  @ApiOperation({
+    summary: 'Obtener el PMP actual de un producto, desglosado por proveedor',
+  })
+  @ApiParam({ name: 'id', description: 'ID del producto' })
+  @ApiResponse({
+    status: 200,
+    schema: {
+      properties: {
+        pmp: {
+          type: 'number',
+          description: 'PMP global ponderado del producto',
+        },
+        porProveedor: {
+          type: 'array',
+          items: {
+            properties: {
+              productoProveedorId: { type: 'string' },
+              proveedorId: { type: 'string' },
+              pmp: { type: 'number' },
+            },
+          },
+        },
+      },
+    },
+  })
+  async getPmp(@Param('id', ParseUUIDPipe) id: string): Promise<{
+    pmp: number;
+    porProveedor: {
+      productoProveedorId: string;
+      proveedorId: string;
+      pmp: number;
+    }[];
+  }> {
+    const producto = await this.productoService.findOne(id);
+    const porProveedor = (producto.proveedores || []).map((pp) => ({
+      productoProveedorId: pp.id,
+      proveedorId: pp.proveedorId,
+      pmp: Number(pp.pmp) || 0,
+    }));
+    return { pmp: producto.pmp, porProveedor };
   }
 }

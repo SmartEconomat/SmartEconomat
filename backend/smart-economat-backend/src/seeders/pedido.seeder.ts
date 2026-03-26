@@ -35,7 +35,10 @@ export const runSeeder = async (context: SeedContext) => {
     return;
   }
 
-  const ppsGroupedByProv = new Map<string, any>();
+  type ProveedorConProductos = (typeof samplePPS)[0]['proveedor'] & {
+    productos: ProductoProveedor[];
+  };
+  const ppsGroupedByProv = new Map<string, ProveedorConProductos>();
   for (const pp of samplePPS) {
     if (!pp.proveedor) continue;
     if (!ppsGroupedByProv.has(pp.proveedor.id)) {
@@ -47,7 +50,9 @@ export const runSeeder = async (context: SeedContext) => {
     ppsGroupedByProv.get(pp.proveedor.id).productos.push(pp);
   }
 
-  const proveedoresValidos = Array.from(ppsGroupedByProv.values());
+  const proveedoresValidos: ProveedorConProductos[] = Array.from(
+    ppsGroupedByProv.values()
+  );
 
   const batchRepo = dataSource.getRepository(PurchaseBatch);
 
@@ -97,15 +102,13 @@ export const runSeeder = async (context: SeedContext) => {
         min: 1,
         max: Math.min(5, randomProveedor.productos.length),
       });
-      const itemsSeleccionados = faker.helpers.arrayElements(
-        randomProveedor.productos,
-        numItems
-      );
+      const itemsSeleccionados: ProductoProveedor[] =
+        faker.helpers.arrayElements(randomProveedor.productos, numItems);
 
       let acumuladoTotal = 0;
       const detallesPedido: PedidoProducto[] = [];
 
-      for (const pp of itemsSeleccionados as ProductoProveedor[]) {
+      for (const pp of itemsSeleccionados) {
         const cantidad = faker.number.int({ min: 1, max: 10 });
         const precioUnitario =
           pp.precioUnitario ||
@@ -125,7 +128,7 @@ export const runSeeder = async (context: SeedContext) => {
         );
       }
 
-      pedido.pedidoProductos = detallesPedido as any;
+      pedido.pedidoProductos = detallesPedido;
       pedido.costeTotal = parseFloat(acumuladoTotal.toFixed(2));
       pedidosInsertar.push(pedido);
     }
