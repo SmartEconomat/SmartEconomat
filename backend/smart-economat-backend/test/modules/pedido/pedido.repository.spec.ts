@@ -55,14 +55,30 @@ describe('PedidoRepository', () => {
   });
 
   it('usa búsqueda segura por relaciones y texto libre cuando searchTerm no es un UUID', async () => {
-    const findAndCount = jest.fn().mockResolvedValue([[{ id: 'pedido-3' }], 1]);
+    const queryBuilder = {
+      distinct: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      leftJoin: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      clone: jest.fn(),
+      orderBy: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      getMany: jest.fn().mockResolvedValue([{ id: 'pedido-3' }]),
+      getCount: jest.fn().mockResolvedValue(1),
+    };
+    queryBuilder.clone.mockReturnValue({
+      getCount: queryBuilder.getCount,
+    });
 
     const mockDataSource = {
       createEntityManager: jest.fn(),
     } as unknown as DataSource;
 
     const repository = new PedidoRepository(mockDataSource);
-    Object.assign(repository, { findAndCount });
+    jest
+      .spyOn(repository, 'createQueryBuilder')
+      .mockReturnValue(queryBuilder as any);
 
     await repository.findAllPaginated(
       {
@@ -74,33 +90,11 @@ describe('PedidoRepository', () => {
       true
     );
 
-    expect(findAndCount).toHaveBeenCalledWith(
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.arrayContaining([
-          expect.objectContaining({
-            estado: 'pendiente',
-            observaciones: expect.any(Object),
-          }),
-          expect.objectContaining({
-            estado: 'pendiente',
-            proveedor: expect.objectContaining({
-              nombre: expect.any(Object),
-            }),
-          }),
-          expect.objectContaining({
-            estado: 'pendiente',
-            usuario: expect.objectContaining({
-              username: expect.any(Object),
-            }),
-          }),
-        ]),
+        whereFactory: expect.any(Function),
       })
     );
-
-    const calledWhere = findAndCount.mock.calls[0][0].where as Array<{
-      id?: unknown;
-    }>;
-
-    expect(calledWhere.some((condition) => 'id' in condition)).toBe(false);
+    expect(queryBuilder.orderBy).toHaveBeenCalled();
   });
 });

@@ -2,12 +2,15 @@ import 'reflect-metadata';
 import { join } from 'path';
 import * as dotenv from 'dotenv';
 import { NestFactory } from '@nestjs/core';
+import { useContainer } from 'class-validator';
 import { dataSource, runAllSeeders } from './seed';
 import { AppModule } from '../app.module';
 import { SeedContext } from './seed-context';
 import { Proveedor } from '../modules/proveedor/proveedor.entity/proveedor.entity';
 import { Producto } from '../modules/producto/producto.entity/producto.entity';
 import { Inventario } from '../modules/inventario/inventario.entity/inventario.entity';
+import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
+import { HistorialPrecio } from '../modules/producto/historial-precio-proveedor.entity/historial.entity';
 import {
   UnidadMedida,
   TipoProducto,
@@ -28,8 +31,10 @@ dotenv.config({ path: join(__dirname, '../../../../.env') });
 
 async function createMassiveContext(): Promise<SeedContext> {
   const app = await NestFactory.createApplicationContext(AppModule, {
-    logger: false,
+    logger: ['error', 'warn'],
   });
+
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   return new SeedContext(app, dataSource);
 }
@@ -146,6 +151,61 @@ async function runMegaMassiveSeeder() {
           }),
           actorId
         );
+
+        const numHistoriales = faker.number.int({ min: 2, max: 4 });
+        const basePrecio = productoProveedor.precioUnitario || 10;
+        let sumaPonderada = 0;
+        let totalCantidad = 0;
+        let ultimoPrecio = basePrecio;
+
+        for (let h = 0; h < numHistoriales; h++) {
+          const variacion = faker.number.float({ min: -0.1, max: 0.1 });
+          const precioH = parseFloat((basePrecio * (1 + variacion)).toFixed(2));
+          const cantidadH = faker.number.int({ min: 10, max: 50 });
+
+          await context
+            .getDataSource()
+            .getRepository(HistorialPrecio)
+            .save({
+              productoProveedorId: productoProveedor.id,
+              precio: precioH,
+              cantidad: cantidadH,
+              documentoOrigen: `MAS-SEED-ALB-${faker.string.alphanumeric(6).toUpperCase()}`,
+              fecha: faker.date.recent({ days: 60 }),
+            });
+
+          sumaPonderada += precioH * cantidadH;
+          totalCantidad += cantidadH;
+          ultimoPrecio = precioH;
+        }
+
+        productoProveedor.pmp =
+          totalCantidad > 0
+            ? Number((sumaPonderada / totalCantidad).toFixed(4))
+            : ultimoPrecio;
+        productoProveedor.precioUnitario = ultimoPrecio;
+        await context
+          .getDataSource()
+          .getRepository(ProductoProveedor)
+          .save(productoProveedor);
+
+        const productoBase = await context.findOne(Producto, {
+          where: { id: producto.id },
+          relations: ['proveedores'],
+        });
+        if (productoBase && productoBase.proveedores.length > 0) {
+          const sumPmp = productoBase.proveedores.reduce(
+            (s, p) => s + Number(p.pmp || 0),
+            0
+          );
+          productoBase.pmp = Number(
+            (sumPmp / productoBase.proveedores.length).toFixed(4)
+          );
+          await context
+            .getDataSource()
+            .getRepository(Producto)
+            .save(productoBase);
+        }
       }
     }
 

@@ -117,7 +117,7 @@ export class Usuario extends BaseEntity {
   @BeforeInsert()
   @BeforeUpdate()
   async hashPassword(): Promise<void> {
-    if (this.password && !this.password.startsWith('$2b$')) {
+    if (this.password && !this.password.startsWith('$2')) {
       this.password = await bcrypt.hash(this.password, 10);
     }
   }

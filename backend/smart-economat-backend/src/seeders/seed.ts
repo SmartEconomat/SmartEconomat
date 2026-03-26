@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
+import { INestApplicationContext, Type } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { readdirSync } from 'fs';
 import { join } from 'path';
@@ -166,6 +167,30 @@ async function runSeederByName(name: string) {
 }
 
 async function createSeedContext(): Promise<SeedContext> {
+  if (process.env.NODE_ENV === 'test') {
+    const g = global as { __NEST_APP_FOR_SEED__?: INestApplicationContext };
+    const nestApp = g.__NEST_APP_FOR_SEED__;
+
+    if (nestApp) {
+      return new SeedContext(nestApp, dataSource);
+    }
+
+    return new SeedContext(
+      {
+        get: (token: Type<unknown> | string | symbol) => {
+          throw new Error(
+            `Propiedad app.get(${String(
+              token
+            )}) no disponible en contexto de test. ` +
+              'Si un seeder lo requiere, usa una alternativa mockeada.'
+          );
+        },
+        close: async () => {},
+      } as unknown as INestApplicationContext,
+      dataSource
+    );
+  }
+
   const app = await NestFactory.createApplicationContext(AppModule, {
     logger: ['error', 'warn'],
   });
