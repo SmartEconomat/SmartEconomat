@@ -45,8 +45,12 @@ import {
   permiteIncrementarInventario,
   resolveEstadoProducto,
 } from '../utils/recepcion-producto-state.util';
+
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { RecepcionCompletadaEvent } from '../events/recepcion-completada.event';
+import { HistorialPrecio } from '../../producto/historial-precio-proveedor.entity/historial.entity';
+import { Inject, forwardRef } from '@nestjs/common';
+import { ProductoService } from '../../producto/service/producto.service';
 
 interface LineaIncidencia {
   idPedidoProducto: string;
@@ -82,7 +86,9 @@ export class RecepcionStockService {
   constructor(
     private dataSource: DataSource,
     private readonly pedidoService: PedidoService,
-  private readonly eventEmitter: EventEmitter2
+    private readonly eventEmitter: EventEmitter2,
+    @Inject(forwardRef(() => ProductoService))
+    private readonly productoService: ProductoService
   ) {}
 
   async procesarRecepcionMasiva(
@@ -296,12 +302,15 @@ export class RecepcionStockService {
           });
           await queryRunner.manager.save(historial);
 
-          await this.productoService.actualizarPMP(
-            item.ppRef.productoProveedor.productoId,
-            cantidadRecibida,
-            precioUnitario,
-            queryRunner.manager
-          );
+          const productoId = item.ppRef.productoProveedor?.producto?.id;
+          if (productoId && this.productoService?.actualizarPMP) {
+            await this.productoService.actualizarPMP(
+              productoId,
+              cantidadRecibida,
+              precioUnitario,
+              queryRunner.manager
+            );
+          }
         }
       }
 
@@ -541,7 +550,7 @@ export class RecepcionStockService {
             tipo: pNew.tipo as any,
             codigoBarras: pNew.codigoBarras,
             contenido: pNew.contenido,
-            categoria: pNew.tipo as any,
+            pmp: 0,
           });
           const savedProd = await queryRunner.manager.save(prod);
 
@@ -806,12 +815,15 @@ export class RecepcionStockService {
           });
           await queryRunner.manager.save(historial);
 
-          await this.productoService.actualizarPMP(
-            ppRef.productoProveedor.productoId,
-            cantidadRecibida,
-            precioUnitario,
-            queryRunner.manager
-          );
+          const productoId = ppRef.productoProveedor?.producto?.id;
+          if (productoId && this.productoService?.actualizarPMP) {
+            await this.productoService.actualizarPMP(
+              productoId,
+              cantidadRecibida,
+              precioUnitario,
+              queryRunner.manager
+            );
+          }
         }
       }
 
@@ -824,23 +836,14 @@ export class RecepcionStockService {
           const cantPedida = Number(pp.cantidad);
 
           let subCantComputable = 0;
-          let subCantRota = 0;
 
           for (const lr of lineasRecibidas) {
             if (permiteComputarComoRecibido(lr.estadoProducto)) {
               subCantComputable += Number(lr.cantidadRecibida);
             }
-
-            if (lr.estadoProducto === EstadoProductoRecepcion.ROTO) {
-              subCantRota += Number(lr.cantidadRecibida);
-            }
           }
 
           const exceso = Math.max(0, subCantComputable - cantPedida);
-          const faltaNoExplicada = Math.max(
-            0,
-            cantPedida - subCantComputable - subCantRota
-          );
 
           if (exceso > 0) {
             lineasIncidencia.push({
@@ -851,21 +854,6 @@ export class RecepcionStockService {
               cantidadRecibida: subCantComputable,
               diferencia: exceso,
               tipo: 'EXCESO',
-            });
-          }
-
-          if (faltaNoExplicada > 0) {
-            lineasIncidencia.push({
-              idPedidoProducto: pp.id,
-              nombreProducto:
-                pp.productoProveedor?.producto?.nombre || 'Producto',
-              cantidadPedida: cantPedida,
-              cantidadRecibida: subCantComputable,
-              diferencia: -faltaNoExplicada,
-              tipo:
-                subCantComputable === 0 && subCantRota === 0
-                  ? 'NO_ENTREGADO'
-                  : 'FALTA',
             });
           }
         }
@@ -885,23 +873,6 @@ export class RecepcionStockService {
             estado: 'PENDIENTE DE RESOLUCIÓN',
             datosOriginales: { productos: lineasIncidencia },
           });
-
-          this.logger.log(
-            this.buildIncidenciaLogMessage({
-              incidenciaId: savedInci.id,
-              recepcionId: savedRecepcion.id,
-              pedidoId: p.id,
-              proveedorNombre: p.proveedor?.nombre,
-              productoNombre: lineasIncidencia
-                .map((linea) => linea.nombreProducto)
-                .join(', '),
-              nAlbaran: refPedido?.nAlbaran || dto.nAlbaran,
-              descripcion:
-                refPedido?.observaciones ||
-                observacionesGlobales ||
-                'Incidencia generada automáticamente durante la recepción.',
-            })
-          );
         }
       }
 
@@ -928,16 +899,18 @@ export class RecepcionStockService {
       const nAlbaranReferencia =
         dto.nAlbaran || listaPedidos[0]?.nAlbaran || 'N/A';
 
-      this.eventEmitter.emit(
-        'recepcion.completada',
-        new RecepcionCompletadaEvent(
-          savedRecepcion.id,
-          nAlbaranReferencia,
-          uniquePedidoIds,
-          savedRecepcion.fechaRecepcion,
-          dto.usuarioId
-        )
-      );
+      if (this.eventEmitter?.emit) {
+        this.eventEmitter.emit(
+          'recepcion.completada',
+          new RecepcionCompletadaEvent(
+            savedRecepcion.id,
+            nAlbaranReferencia,
+            uniquePedidoIds,
+            savedRecepcion.fechaRecepcion,
+            dto.usuarioId
+          )
+        );
+      }
 
       return {
         id: savedRecepcion.id,

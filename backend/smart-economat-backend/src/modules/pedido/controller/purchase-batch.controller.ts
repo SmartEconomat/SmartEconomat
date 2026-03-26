@@ -91,13 +91,13 @@ export class PurchaseBatchController {
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Query() query: RecepcionReportePdfDto,
     @Res() res: Response,
-    @Request() req: any
+    @Request() req: Request
   ) {
     const logger = new Logger('PurchaseBatchController');
     logger.debug(`generatePdf: RAW URL=${req.url}`);
     logger.debug(`generatePdf: Initial Query=${JSON.stringify(query)}`);
 
-    const url = new URL(req.url, 'http://localhost');
+    const url = new URL(String(req.url), 'http://localhost');
     const qIncluir = url.searchParams.get('incluirCancelados');
     const qPagina = url.searchParams.get('paginaPorProveedor');
 

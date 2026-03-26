@@ -13,11 +13,11 @@ import { Injectable } from '@nestjs/common';
 export class IsUniqueConstraint implements ValidatorConstraintInterface {
   constructor(private readonly dataSource: DataSource) {}
 
-  async validate(value: any, args: ValidationArguments) {
-    const [entityClass, field] = args.constraints;
+  async validate(value: unknown, args: ValidationArguments) {
+    const [entityClass, field] = args.constraints as [new () => object, string];
     const repository = this.dataSource.getRepository(entityClass);
     const exists = await repository.findOne({
-      where: { [field || args.property]: value } as any,
+      where: { [field || args.property]: value } as Record<string, unknown>,
     });
     return !exists;
   }

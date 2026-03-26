@@ -68,7 +68,10 @@ export class ProductoService {
     return await this.dataSource.transaction(async (manager) => {
       await this.validateProveedorPayload(manager, proveedores, true);
 
-      const producto = manager.create(Producto, rest);
+      const producto = manager.create(Producto, {
+        ...rest,
+        pmp: 0,
+      });
 
       const savedProduct = await manager.save(Producto, producto);
 

@@ -43,11 +43,7 @@ import {
   fetchProductos,
   createProducto,
   updateProducto,
-<<<<<<< HEAD
-  getProductoByBarcode,
-=======
   fetchHistorialPrecios,
->>>>>>> 5b5bc13 (feat: Se ha implementado el historial de precio de los productos)
 } from '../services/producto.service';
 import {
   deleteResource,
@@ -56,9 +52,19 @@ import {
 } from '../services/api.service';
 import { DownloadService } from '../services/download.service';
 import { HistorialPrecio } from '../services/producto.types';
-import { fetchHistorialPrecios } from '../services/producto.service';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import { Table, TableHead, TableRow, TableCell, TableBody, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
+import { getProductoByBarcode } from '../services/producto.service';
+
+import {
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+} from '@mui/material';
 // Utilidad para construir query string de filtros actuales
 function buildExportQuery(filters: ProductFiltersState, searchTerm: string) {
   const params = new URLSearchParams();
@@ -216,7 +222,8 @@ const Productos: React.FC = () => {
   const [isSearchScannerOpen, setIsSearchScannerOpen] = useState(false);
   const [priceHistory, setPriceHistory] = useState<HistorialPrecio[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-  const [historyProviderFilter, setHistoryProviderFilter] = useState<string>('all');
+  const [historyProviderFilter, setHistoryProviderFilter] =
+    useState<string>('all');
   const toast = useToast();
 
   // Exportar productos a PDF
@@ -558,8 +565,12 @@ const Productos: React.FC = () => {
       const loadHistory = async () => {
         setIsLoadingHistory(true);
         try {
-          const providerId = historyProviderFilter === 'all' ? undefined : historyProviderFilter;
-          const history = await fetchHistorialPrecios(productToView.id, providerId);
+          const providerId =
+            historyProviderFilter === 'all' ? undefined : historyProviderFilter;
+          const history = await fetchHistorialPrecios(
+            productToView.id,
+            providerId
+          );
           setPriceHistory(history);
         } catch (error) {
           console.error('Error fetching price history:', error);
@@ -873,11 +884,16 @@ const Productos: React.FC = () => {
                       },
                       {
                         label: 'PMP Actual',
-                        value: p.pmp != null ? (
-                          <Typography variant="body2" fontWeight={700} color="primary.main">
-                            {Number(p.pmp).toFixed(4)} €
-                          </Typography>
-                        ) : undefined,
+                        value:
+                          p.pmp != null ? (
+                            <Typography
+                              variant="body2"
+                              fontWeight={700}
+                              color="primary.main"
+                            >
+                              {Number(p.pmp).toFixed(4)} €
+                            </Typography>
+                          ) : undefined,
                       },
                       {
                         label: 'Descripción',
@@ -1083,19 +1099,34 @@ const Productos: React.FC = () => {
                     title: 'Histórico de precios',
                     content: (
                       <Box>
-                        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                        <Box
+                          sx={{
+                            mb: 2,
+                            display: 'flex',
+                            justifyContent: 'flex-end',
+                          }}
+                        >
                           <FormControl size="small" sx={{ minWidth: 200 }}>
-                            <InputLabel id="history-provider-filter-label">Filtro por Proveedor</InputLabel>
+                            <InputLabel id="history-provider-filter-label">
+                              Filtro por Proveedor
+                            </InputLabel>
                             <Select
                               labelId="history-provider-filter-label"
                               id="history-provider-filter"
                               value={historyProviderFilter}
                               label="Filtro por Proveedor"
-                              onChange={(e) => setHistoryProviderFilter(e.target.value)}
+                              onChange={(e) =>
+                                setHistoryProviderFilter(e.target.value)
+                              }
                             >
-                              <MenuItem value="all">Todos los proveedores</MenuItem>
+                              <MenuItem value="all">
+                                Todos los proveedores
+                              </MenuItem>
                               {p.proveedores?.map((pp) => (
-                                <MenuItem key={pp.proveedor?.id} value={pp.proveedor?.id}>
+                                <MenuItem
+                                  key={pp.proveedor?.id}
+                                  value={pp.proveedor?.id}
+                                >
                                   {pp.proveedor?.nombre}
                                 </MenuItem>
                               ))}
@@ -1104,7 +1135,12 @@ const Productos: React.FC = () => {
                         </Box>
 
                         {isLoadingHistory ? (
-                          <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 3 }}>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            align="center"
+                            sx={{ py: 3 }}
+                          >
                             Cargando historial...
                           </Typography>
                         ) : priceHistory.length > 0 ? (
@@ -1112,11 +1148,30 @@ const Productos: React.FC = () => {
                             <Table size="small">
                               <TableHead>
                                 <TableRow>
-                                  <TableCell sx={{ fontWeight: 600 }}>Fecha</TableCell>
-                                  <TableCell sx={{ fontWeight: 600 }}>Proveedor</TableCell>
-                                  <TableCell sx={{ fontWeight: 600 }} align="right">Cant.</TableCell>
-                                  <TableCell sx={{ fontWeight: 600 }} align="right">Precio</TableCell>
-                                  <TableCell sx={{ fontWeight: 600 }} align="center">Doc.</TableCell>
+                                  <TableCell sx={{ fontWeight: 600 }}>
+                                    Fecha
+                                  </TableCell>
+                                  <TableCell sx={{ fontWeight: 600 }}>
+                                    Proveedor
+                                  </TableCell>
+                                  <TableCell
+                                    sx={{ fontWeight: 600 }}
+                                    align="right"
+                                  >
+                                    Cant.
+                                  </TableCell>
+                                  <TableCell
+                                    sx={{ fontWeight: 600 }}
+                                    align="right"
+                                  >
+                                    Precio
+                                  </TableCell>
+                                  <TableCell
+                                    sx={{ fontWeight: 600 }}
+                                    align="center"
+                                  >
+                                    Doc.
+                                  </TableCell>
                                 </TableRow>
                               </TableHead>
                               <TableBody>
@@ -1126,12 +1181,18 @@ const Productos: React.FC = () => {
                                       {new Date(h.fecha).toLocaleDateString()}
                                     </TableCell>
                                     <TableCell>
-                                      {h.productoProveedor?.proveedor?.nombre || '—'}
+                                      {h.productoProveedor?.proveedor?.nombre ||
+                                        '—'}
                                     </TableCell>
                                     <TableCell align="right">
-                                      {h.cantidad != null ? Number(h.cantidad).toFixed(2) : '—'}
+                                      {h.cantidad != null
+                                        ? Number(h.cantidad).toFixed(2)
+                                        : '—'}
                                     </TableCell>
-                                    <TableCell align="right" sx={{ fontWeight: 500 }}>
+                                    <TableCell
+                                      align="right"
+                                      sx={{ fontWeight: 500 }}
+                                    >
                                       {Number(h.precio).toFixed(4)} €
                                     </TableCell>
                                     <TableCell align="center">
@@ -1143,16 +1204,38 @@ const Productos: React.FC = () => {
                             </Table>
                           </Box>
                         ) : (
-                          <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 3, bgcolor: 'action.hover', borderRadius: 1 }}>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            align="center"
+                            sx={{
+                              py: 3,
+                              bgcolor: 'action.hover',
+                              borderRadius: 1,
+                            }}
+                          >
                             No hay registros históricos para este producto.
                           </Typography>
                         )}
-                        
+
                         {/* Placeholder para gráfico de evolución */}
                         {priceHistory.length > 1 && (
-                          <Box sx={{ mt: 3, p: 2, border: '1px dashed', borderColor: 'divider', borderRadius: 1, textAlign: 'center' }}>
-                            <Typography variant="caption" color="text.secondary">
-                              Estructura preparada para gráfico de evolución de precios
+                          <Box
+                            sx={{
+                              mt: 3,
+                              p: 2,
+                              border: '1px dashed',
+                              borderColor: 'divider',
+                              borderRadius: 1,
+                              textAlign: 'center',
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              Estructura preparada para gráfico de evolución de
+                              precios
                             </Typography>
                           </Box>
                         )}

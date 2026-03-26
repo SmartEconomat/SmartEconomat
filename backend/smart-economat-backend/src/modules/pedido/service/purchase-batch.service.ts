@@ -85,7 +85,7 @@ export class PurchaseBatchService {
 
         const built = await buildPedidoAggregate(
           queryRunner.manager,
-          createPedidoDto as any,
+          createPedidoDto,
           userId,
           EstadoPedido.PENDIENTE,
           () => this.calculateFechaEntrega()

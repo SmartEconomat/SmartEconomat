@@ -32,9 +32,34 @@ const COLORS = {
 };
 
 export interface CompleteRecetaData {
-  receta: any;
-  alergenosConsolidados: any[];
-  escandallo: any;
+  receta: {
+    nombre?: string;
+    pathImgOptimized?: string;
+    pathImg?: string;
+    dificultad?: string;
+    ingredientes?: Array<{
+      producto?: {
+        nombre?: string;
+        id?: string;
+        alergenos?: Array<{ alergeno?: string }>;
+      };
+      cantidad: number;
+      unidad?: string;
+      merma?: number;
+    }>;
+    instrucciones?: string;
+    rendimiento?: string;
+    unidadResultado?: string;
+    raciones?: number;
+    tiempoEstimadoMinutos?: number;
+  };
+  alergenosConsolidados: string[];
+  escandallo: {
+    desglosePorIngrediente: Array<{
+      productoId?: string;
+      cantidadReal?: number;
+    }>;
+  };
   printDate: string;
 }
 
@@ -86,7 +111,7 @@ export class RecetaPdfService {
 
       if (recipesData.length === 0) return;
 
-      const doc: PDFKit.PDFDocument = new (PDFDocument as any)({
+      const doc = new PDFDocument({
         size: 'A4',
         margins: { top: MARGIN, bottom: MARGIN, left: MARGIN, right: MARGIN },
         displayTitle: true,
@@ -344,11 +369,24 @@ export class RecetaPdfService {
     );
 
     doc.font('Helvetica').fontSize(FONT_BODY).fillColor(COLORS.TEXT);
-    receta.ingredientes?.forEach((ing: any, idx: number) => {
+    (
+      receta.ingredientes as
+        | Array<{
+            producto?: {
+              nombre?: string;
+              id?: string;
+              alergenos?: Array<{ alergeno?: string }>;
+            };
+            cantidad: number;
+            unidad?: string;
+            merma?: number;
+          }>
+        | undefined
+    )?.forEach((ing, idx) => {
       const productText = ing.producto?.nombre || '—';
       const alersText =
         (ing.producto?.alergenos || [])
-          .map((pa: any) => (pa.alergeno || '').replace(/_/g, ' '))
+          .map((pa) => (pa.alergeno || '').replace(/_/g, ' '))
           .join(', ') || '—';
 
       const h1 = doc.heightOfString(productText, {
@@ -393,7 +431,7 @@ export class RecetaPdfService {
       doc.fillColor(COLORS.TEXT);
       let xOffset = MARGIN;
       const escandalloIng = escandallo.desglosePorIngrediente.find(
-        (ei: any) => ei.productoId === ing.producto?.id
+        (ei: { productoId?: string }) => ei.productoId === ing.producto?.id
       );
       const realQty = escandalloIng?.cantidadReal || ing.cantidad;
 
@@ -412,7 +450,7 @@ export class RecetaPdfService {
         align: 'center',
       });
       xOffset += tableWidth * 0.1;
-      doc.text(`${ing.mermaAplicada || 0}%`, xOffset + 5, currentY + 4, {
+      doc.text(`${ing.merma ?? 0}%`, xOffset + 5, currentY + 4, {
         width: tableWidth * 0.1 - 10,
         align: 'right',
       });
@@ -577,13 +615,12 @@ export class RecetaPdfService {
       }>('@jsquash/webp/decode.js');
       const imageBuffer = await fs.promises.readFile(imagePath);
       const decodedImage = await decodeWebp(imageBuffer);
-      const image = Jimp.fromBitmap({
-        data: Buffer.from(decodedImage.data),
-        width: decodedImage.width,
-        height: decodedImage.height,
-      });
+      const image = await Jimp.read(Buffer.from(decodedImage.data));
 
-      return await image.getBuffer(JimpMime.png);
+      const buffer = (await (image as any).getBufferAsync(
+        JimpMime.png
+      )) as Buffer;
+      return buffer;
     } catch {
       return null;
     }
@@ -762,7 +799,7 @@ export class RecetaPdfService {
     columns.forEach((col) => {
       doc.text(col.label, xOffset + 8, y + 4, {
         width: width * col.width - 16,
-        align: col.align as any,
+        align: col.align as 'left' | 'center' | 'right' | undefined,
       });
       xOffset += width * col.width;
     });
@@ -802,7 +839,7 @@ export class RecetaPdfService {
 
   private drawAllergensBox(
     doc: PDFKit.PDFDocument,
-    alergenos: any[],
+    alergenos: string[],
     x: number,
     y: number,
     width: number

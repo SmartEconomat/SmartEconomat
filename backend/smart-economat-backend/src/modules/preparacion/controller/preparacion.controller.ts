@@ -22,20 +22,32 @@ export class PreparacionController {
   constructor(private readonly preparacionService: PreparacionService) {}
 
   @Post()
-  async create(@Body() dto: CreatePreparacionDto, @Req() req: Request) {
-    const userId = (req.user as any).id;
+  async create(
+    @Body() dto: CreatePreparacionDto,
+    @Req() req: Request & { user?: { id?: string } }
+  ) {
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new Error('No se pudo determinar el usuario autenticado');
+    }
     return this.preparacionService.create(dto, userId);
   }
 
   @Get()
-  async findAll(@Query() query: PaginationQueryDto, @Req() req: Request) {
-    const userRole = (req.user as any).rol?.nombre;
+  async findAll(
+    @Query() query: PaginationQueryDto,
+    @Req() req: Request & { user?: { rol?: { nombre?: string } } }
+  ) {
+    const userRole = req.user?.rol?.nombre;
     return this.preparacionService.findAll(query, userRole);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string, @Req() req: Request) {
-    const userRole = (req.user as any).rol?.nombre;
+  async findOne(
+    @Param('id') id: string,
+    @Req() req: Request & { user?: { rol?: { nombre?: string } } }
+  ) {
+    const userRole = req.user?.rol?.nombre;
     return this.preparacionService.findOne(id, userRole);
   }
 
@@ -47,10 +59,13 @@ export class PreparacionController {
   @Patch(':id/finalizar')
   async finalizar(
     @Param('id') id: string,
-    @Req() req: Request,
+    @Req() req: Request & { user?: { id?: string } },
     @Body('ubicacionDestinoId') ubicacionDestinoId?: string
   ) {
-    const userId = (req.user as any).id;
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new Error('No se pudo determinar el usuario autenticado');
+    }
     return this.preparacionService.finalizarPreparacion(
       id,
       userId,

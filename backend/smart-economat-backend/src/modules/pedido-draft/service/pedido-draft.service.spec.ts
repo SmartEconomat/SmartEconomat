@@ -8,9 +8,9 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 
 describe('PedidoDraftService', () => {
   let service: PedidoDraftService;
-  let repository: any;
-  let redisClient: any;
-  let purchaseBatchService: any;
+  let repository: typeof mockRepository;
+  let redisClient: typeof mockRedisClient;
+  let purchaseBatchService: typeof mockPurchaseBatchService;
 
   const mockRepository = {
     findOne: jest.fn(),

@@ -232,6 +232,7 @@ export const runSeeder = async (context: SeedContext) => {
         'https://via.placeholder.com/640x480.png?text=Sin+Imagen',
       contenido,
       codigoBarras,
+      pmp: 0,
     });
 
     const aTags =

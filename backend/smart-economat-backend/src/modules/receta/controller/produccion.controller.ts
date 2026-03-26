@@ -1,3 +1,4 @@
+import { ValidarProduccionDto } from '../dto/validar-produccion.dto';
 import {
   Controller,
   Post,
@@ -55,7 +56,7 @@ export class ProduccionController {
   @ApiOperation({
     summary: 'Validar stock disponible para una o varias producciones',
   })
-  validarStock(@Body() dto: any) {
+  validarStock(@Body() dto: ValidarProduccionDto) {
     return this.produccionService.validarMultiple(dto);
   }
 

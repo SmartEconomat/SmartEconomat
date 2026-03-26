@@ -20,7 +20,7 @@ export const getAuthCookieOptions = () => ({
 export class CookieInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
-      tap((data) => {
+      tap((data: { access_token?: string }) => {
         const response = context.switchToHttp().getResponse<Response>();
         if (data?.access_token) {
           response.cookie(
