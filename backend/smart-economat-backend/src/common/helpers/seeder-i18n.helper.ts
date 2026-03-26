@@ -92,22 +92,18 @@ export class SeederI18nHelper {
     let i18nPath = process.env.I18N_PATH;
     const triedPaths: string[] = [];
     if (!i18nPath) {
-      const distPath = path.resolve(__dirname, '../../dist/i18n');
-      triedPaths.push(distPath);
-      if (fs.existsSync(distPath)) {
-        i18nPath = distPath;
-      } else {
-        const srcPath = path.resolve(__dirname, '../../src/i18n');
-        triedPaths.push(srcPath);
-        if (fs.existsSync(srcPath)) {
-          i18nPath = srcPath;
-        } else {
-          const legacyPath = path.resolve(__dirname, '../../i18n');
-          triedPaths.push(legacyPath);
-          if (fs.existsSync(legacyPath)) {
-            i18nPath = legacyPath;
-          }
-        }
+      const pathRelativeToModule = path.resolve(__dirname, '../../i18n');
+      const pathInSrc = path.join(process.cwd(), 'src/i18n');
+      const pathInDist = path.join(process.cwd(), 'dist/i18n');
+
+      triedPaths.push(pathRelativeToModule, pathInSrc, pathInDist);
+
+      if (fs.existsSync(pathRelativeToModule)) {
+        i18nPath = pathRelativeToModule;
+      } else if (fs.existsSync(pathInSrc)) {
+        i18nPath = pathInSrc;
+      } else if (fs.existsSync(pathInDist)) {
+        i18nPath = pathInDist;
       }
     }
     if (!i18nPath) {
