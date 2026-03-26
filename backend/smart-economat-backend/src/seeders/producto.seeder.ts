@@ -283,6 +283,7 @@ export const runSeeder = async (context: SeedContext) => {
         mermaEsperada: merma,
         marca: producto.marca,
         codigoBarras: producto.codigoBarras,
+        pmp: 0,
       });
       productoProveedores.push(pp);
     }
