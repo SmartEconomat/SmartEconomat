@@ -22,6 +22,7 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { PedidoStatusTrigger } from '../enums/pedido-status-trigger.enum';
 import { PurchaseBatchService } from './purchase-batch.service';
+import { PedidoUsuarioService } from './pedido-usuario.service';
 import { forwardRef, Inject } from '@nestjs/common';
 
 @Injectable()
@@ -32,7 +33,9 @@ export class PedidoService {
     private readonly dataSource: DataSource,
     private readonly configService: ConfigService,
     @Inject(forwardRef(() => PurchaseBatchService))
-    private readonly purchaseBatchService: PurchaseBatchService
+    private readonly purchaseBatchService: PurchaseBatchService,
+    @Inject(forwardRef(() => PedidoUsuarioService))
+    private readonly pedidoUsuarioService: PedidoUsuarioService
   ) {}
 
   async create(
@@ -88,18 +91,13 @@ export class PedidoService {
   }
 
   async findAll(
-    query: PaginationQueryDto,
-    userRole?: string
+    query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Pedido>> {
-    return await this.pedidoRepository.findAllPaginated(query, true, userRole);
+    return await this.pedidoRepository.findAllPaginated(query, true);
   }
 
-  async findOne(id: string, userRole?: string): Promise<Pedido> {
-    const pedido = await this.pedidoRepository.findOneWithRelations(
-      id,
-      true,
-      userRole
-    );
+  async findOne(id: string): Promise<Pedido> {
+    const pedido = await this.pedidoRepository.findOneWithRelations(id, true);
     if (!pedido) {
       throw new NotFoundException(I18nHelper.getError('ORDER_NOT_FOUND'));
     }
@@ -263,6 +261,13 @@ export class PedidoService {
     if (savedPedido.batchId) {
       await this.purchaseBatchService.syncBatchStatus(
         savedPedido.batchId,
+        manager
+      );
+    }
+
+    if (savedPedido.pedidoUsuarioId) {
+      await this.pedidoUsuarioService.syncPedidoUsuarioStatus(
+        savedPedido.pedidoUsuarioId,
         manager
       );
     }

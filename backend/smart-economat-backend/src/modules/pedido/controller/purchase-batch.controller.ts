@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Param,
+  Patch,
   HttpCode,
   HttpStatus,
   UseGuards,
@@ -11,7 +12,12 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PurchaseBatchService } from '../service/purchase-batch.service';
-import { CreatePurchaseBatchDto } from '../dto/create-purchase-batch.dto';
+import {
+  CreatePurchaseBatchDto,
+  ConsolidatePurchaseBatchDto,
+  UpdatePurchaseBatchDto,
+  CancelPurchaseBatchDto,
+} from '../dto/create-purchase-batch.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { PedidoDraftService } from '../../pedido-draft/service/pedido-draft.service';
@@ -28,6 +34,11 @@ import { CreateMissingStockBatchDto } from '../dto/create-missing-stock-batch.dt
 import { GeneratePedidoFromRecetasDto } from '../dto/generate-pedido-from-recetas.dto';
 import { RecetaToPedidoService } from '../service/receta-to-pedido.service';
 
+type PurchaseBatchRequest = {
+  user: { id: string };
+  url: string;
+};
+
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('purchase-batches')
 export class PurchaseBatchController {
@@ -41,8 +52,11 @@ export class PurchaseBatchController {
   @Post()
   @RequirePermissions('pedidos:crear')
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() dto: CreatePurchaseBatchDto, @Request() req: any) {
-    const userId = req.user.id as string;
+  create(
+    @Body() dto: CreatePurchaseBatchDto,
+    @Request() req: PurchaseBatchRequest
+  ) {
+    const userId = req.user.id;
 
     return this.pedidoDraftService.saveAndFinalize(userId, dto);
   }
@@ -79,10 +93,43 @@ export class PurchaseBatchController {
     return this.batchService.findAll();
   }
 
+  @Post('consolidate')
+  @RequirePermissions('pedidos:crear')
+  @HttpCode(HttpStatus.CREATED)
+  consolidate(@Body() dto: ConsolidatePurchaseBatchDto, @Request() req: any) {
+    const userId = req.user.id as string;
+
+    return this.batchService.consolidateExistingOrders(dto, userId);
+  }
+
   @Get(':id')
   @RequirePermissions('pedidos:ver')
   findOne(@Param('id', ParseUUIDv7Pipe) id: string) {
     return this.batchService.findOne(id);
+  }
+
+  @Patch(':id')
+  @RequirePermissions('pedidos:editar')
+  update(
+    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Body() dto: UpdatePurchaseBatchDto
+  ) {
+    return this.batchService.updateBatchOrder(id, dto);
+  }
+
+  @Patch(':id/aceptar')
+  @RequirePermissions('pedidos:editar')
+  accept(@Param('id', ParseUUIDv7Pipe) id: string) {
+    return this.batchService.acceptBatchOrder(id);
+  }
+
+  @Patch(':id/cancelar')
+  @RequirePermissions('pedidos:cancelar')
+  cancel(
+    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Body() dto: CancelPurchaseBatchDto
+  ) {
+    return this.batchService.cancelBatchOrder(id, dto);
   }
 
   @Get(':id/pdf')
@@ -91,7 +138,7 @@ export class PurchaseBatchController {
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Query() query: RecepcionReportePdfDto,
     @Res() res: Response,
-    @Request() req: Request
+    @Request() req: PurchaseBatchRequest
   ) {
     const logger = new Logger('PurchaseBatchController');
     logger.debug(`generatePdf: RAW URL=${req.url}`);

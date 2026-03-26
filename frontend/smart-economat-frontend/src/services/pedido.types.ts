@@ -1,6 +1,7 @@
 export enum EstadoPedido {
   PENDIENTE = 'pendiente',
   EN_PROCESO = 'en_proceso',
+  ENTREGADO = 'entregado',
   RECIBIDO = 'recibido',
   INCIDENCIA = 'incidencia',
   CANCELADO = 'cancelado',
@@ -24,6 +25,7 @@ export interface PedidoProducto {
   id: string;
   id_producto_proveedor: string;
   productoProveedorId?: string;
+  hasLinkedMovements?: boolean;
   cantidad: number;
   precioUnitario: number;
   observaciones?: string;
@@ -36,6 +38,7 @@ export interface PedidoProducto {
       nombre: string;
       codigoBarras?: string;
       unidad?: string;
+      contenido?: number;
     };
     proveedor: {
       id: string;
@@ -46,6 +49,9 @@ export interface PedidoProducto {
 
 export interface Pedido {
   id: string;
+  pedidoUsuarioId?: string;
+  numeroGlobal?: string;
+  aggregateType?: 'pedido_usuario';
   fechaPedido: string;
   fechaEntrega?: string;
   costeTotal: number;
@@ -59,8 +65,24 @@ export interface Pedido {
     nombre: string;
   };
   pedidoProductos?: PedidoProducto[];
+  pedidos?: Pedido[];
   batchId?: string;
   batch?: PurchaseBatch;
+}
+
+export interface PedidoUsuarioLinea {
+  id: string;
+  productoProveedorId?: string;
+  cantidad: number;
+  precioUnitario: number;
+  observaciones?: string;
+  productoProveedor?: PedidoProducto['productoProveedor'];
+}
+
+export interface PedidoUsuario extends Pedido {
+  numeroGlobal: string;
+  lineas?: PedidoUsuarioLinea[];
+  pedidos?: Pedido[];
 }
 
 export interface PurchaseBatch {

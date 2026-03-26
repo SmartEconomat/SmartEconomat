@@ -13,8 +13,9 @@ vi.mock('../../src/services/authService', () => ({
   },
 }));
 
+const mockDispatch = vi.fn();
 vi.mock('../../src/store/hooks', () => ({
-  useAppDispatch: vi.fn(() => vi.fn()),
+  useAppDispatch: () => mockDispatch,
   useAppSelector: vi.fn(),
 }));
 

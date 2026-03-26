@@ -78,6 +78,39 @@ Implementado en la `BaseEntity`. Los registros no se borran físicamente (`DELET
 - **SWC**: Utilizado en desarrollo para una compilación ultra rápida.
 - **Cache-Manager**: Integrado con Redis para cachear respuestas pesadas o datos de configuración frecuentes.
 
+## Modelo actual de pedidos
+
+El dominio de compras quedó separado en tres niveles para evitar ambigüedades funcionales:
+
+### 1. `PedidoUsuario`
+- Es el agregado de negocio que representa el pedido visible para el usuario.
+- Mantiene el identificador técnico UUID v7 y además expone `numeroGlobal` como numeración incremental de negocio.
+- Agrupa líneas de negocio (`PedidoUsuarioLinea`) y varios pedidos internos por proveedor.
+- Sus estados son: `pendiente`, `en_proceso`, `entregado`, `cancelado`.
+
+### 2. `Pedido`
+- Ya no representa el pedido “completo” de cara a negocio.
+- Ahora es el pedido interno operativo dirigido a un proveedor concreto.
+- Puede vincularse opcionalmente a `pedidoUsuarioId` y a un `batchId` cuando entra en una compra consolidada.
+- Sigue siendo la unidad que interactúa directamente con recepción, incidencias y movimientos de stock.
+
+### 3. `PurchaseBatch`
+- Pasa a representar exclusivamente una consolidación de compras.
+- Agrupa pedidos internos ya existentes para gestionar compras semanales o administrativas.
+- No sustituye a `PedidoUsuario` ni se utiliza ya como agregado principal de “Mis pedidos”.
+
+### Sincronización entre capas
+- `PedidoDraftService` finaliza borradores creando `PedidoUsuario`.
+- `PedidoUsuarioService` descompone el agregado en varios `Pedido` internos usando `buildPedidoAggregate(...)`.
+- `PedidoService.handleStatusTransition(...)` sigue recalculando el estado del pedido interno y, además, sincroniza el estado del `PurchaseBatch` y del `PedidoUsuario` asociado.
+- `PdfReportService` y recepción permiten filtrar por `pedidoUsuarioId` para emitir documentos del agregado completo.
+
+### Contratos backend relevantes
+- `GET/POST/PATCH /pedido-usuarios`: agregado visible de negocio.
+- `GET/POST/PATCH /purchase-batches` y `POST /purchase-batches/consolidate`: consolidación de compras.
+- `GET/PATCH /pedidos`: pedido interno por proveedor.
+- `PaginationQueryDto` se amplía con `usuarioId`, `fechaDesde`, `fechaHasta` y `sinLote` para reutilizar filtros en varios módulos.
+
 ## Seguridad
 
 *   **Autenticación:** Basada en **JWT (JSON Web Tokens)**.

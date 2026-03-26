@@ -2,9 +2,12 @@
 
 ## Objetivo
 
-Permitir seleccionar $N$ recetas y generar un único pedido consolidado para compra.
+Permitir seleccionar $N$ recetas y generar un único pedido interno consolidado para compra.
 
 El flujo aplana los ingredientes de todas las recetas seleccionadas, agrupa productos repetidos y crea un `Pedido` único contra un proveedor común válido.
+
+> [!NOTE]
+> Este flujo sigue generando un `Pedido` interno por proveedor. No crea directamente un `PedidoUsuario`.
 
 ---
 
@@ -24,7 +27,7 @@ El flujo aplana los ingredientes de todas las recetas seleccionadas, agrupa prod
 ### Respuesta esperada
 
 - `201 Created`
-- Devuelve el `Pedido` creado con sus líneas consolidadas.
+- Devuelve el `Pedido` interno creado con sus líneas consolidadas.
 
 ---
 
@@ -76,6 +79,10 @@ Una vez consolidado el conjunto de líneas:
 - Se llama internamente a `PedidoService.create()`.
 - El pedido queda vinculado al usuario autenticado extraído del JWT.
 - El estado inicial es `PENDIENTE`.
+
+### 6.1 Alcance del flujo
+
+Este endpoint se mantiene como una utilidad de generación operativa. Si negocio necesita un pedido visible en “Mis pedidos”, el flujo recomendado es `POST /pedido-usuarios`.
 
 ### 7. Trazabilidad del origen
 

@@ -18,6 +18,8 @@ const Input: React.FC<InputProps> = ({
   required = false,
   ...props
 }) => {
+  const autoComplete = props.autoComplete ?? undefined;
+
   return (
     <TextField
       margin="normal"
@@ -27,7 +29,7 @@ const Input: React.FC<InputProps> = ({
       label={label}
       name={name}
       type={type}
-      autoComplete={name}
+      autoComplete={autoComplete}
       value={value}
       onChange={onChange}
       {...props}
