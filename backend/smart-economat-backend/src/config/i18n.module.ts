@@ -22,14 +22,21 @@ import * as path from 'path';
  * @module I18nConfigModule
  */
 
+import * as fs from 'fs';
+
 const isProduction = process.env.NODE_ENV === 'production';
 
 let i18nPath = process.env.I18N_PATH;
 if (!i18nPath) {
-  if (isProduction) {
-    i18nPath = path.join(__dirname, '../i18n/');
+  const pathInDist = path.join(__dirname, '../i18n/');
+  const pathInSrc = path.join(process.cwd(), 'src/i18n/');
+
+  if (fs.existsSync(pathInDist)) {
+    i18nPath = pathInDist;
+  } else if (fs.existsSync(pathInSrc)) {
+    i18nPath = pathInSrc;
   } else {
-    i18nPath = path.join(process.cwd(), 'src/i18n/');
+    i18nPath = isProduction ? pathInDist : pathInSrc;
   }
 }
 
