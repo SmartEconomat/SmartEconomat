@@ -49,6 +49,10 @@ export class RecepcionReportePdfDto {
   batchId?: string;
 
   @IsOptional()
+  @IsUUID('all')
+  pedidoUsuarioId?: string;
+
+  @IsOptional()
   @IsBoolean()
   @Transform(({ value }) => {
     if (value === 'true' || value === true || value === '1') return true;

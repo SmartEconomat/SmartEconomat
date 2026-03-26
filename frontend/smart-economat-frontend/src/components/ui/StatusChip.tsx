@@ -1,5 +1,6 @@
 import React from 'react';
 import { Chip, ChipProps } from '@mui/material';
+import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import { CategoriaProducto } from '../../services/producto.types';
 import { getCategoryIconFilled } from '../../features/productos/utils/getCategoryIconFilled';
 
@@ -52,7 +53,9 @@ const getStatusColor = (
     case 'success':
     case 'completed':
     case 'delivered':
+    case 'entregado':
     case 'approved':
+    case 'recibido':
     case 'fácil':
     case 'entrada':
     case 'entrada_compra':
@@ -61,19 +64,22 @@ const getStatusColor = (
     case 'error':
     case 'failed':
     case 'cancelled':
+    case 'cancelado':
     case 'rejected':
     case 'difícil':
     case 'salida':
     case 'salida_elaboracion':
       return 'error';
     case 'warning':
-    case 'pending':
     case 'in_progress':
+    case 'en_proceso':
     case 'review':
     case 'media':
     case 'ajuste':
     case 'parcial':
       return 'warning';
+    case 'pending':
+    case 'pendiente':
     case 'info':
     case 'active':
     case 'archived':
@@ -88,14 +94,19 @@ const statusTranslations: Record<string, string> = {
   success: 'Éxito',
   completed: 'Completado',
   delivered: 'Entregado',
+  entregado: 'Entregado',
   approved: 'Aprobado',
   error: 'Error',
   failed: 'Fallido',
   cancelled: 'Cancelado',
+  cancelado: 'Cancelado',
   rejected: 'Rechazado',
   warning: 'Advertencia',
   pending: 'Pendiente',
+  pendiente: 'Pendiente',
   in_progress: 'En progreso',
+  en_proceso: 'En proceso',
+  recibido: 'Recibido',
   review: 'En revisión',
   info: 'Info',
   active: 'Activo',
@@ -155,7 +166,7 @@ export const StatusChip: React.FC<StatusChipProps> = ({
   status,
   label,
   size = 'small',
-  variant = 'filled',
+  variant = 'outlined',
   ...rest
 }) => {
   const statusStr = status as string;
@@ -168,13 +179,18 @@ export const StatusChip: React.FC<StatusChipProps> = ({
       ? categoriaTranslations[statusStr.toLowerCase() as CategoriaProducto]
       : getTranslatedStatus(statusStr));
 
+  // Icono de punto para estados que no son categorías
+  const dotIcon = (
+    <FiberManualRecordIcon sx={{ fontSize: '10px !important' }} />
+  );
+
   const resolvedIcon =
     rest.icon ||
     (isCategoria
       ? getCategoryIconFilled(statusStr.toLowerCase() as CategoriaProducto, {
           sx: { fontSize: 14 },
         })
-      : undefined);
+      : dotIcon);
 
   return (
     <Chip
@@ -185,7 +201,11 @@ export const StatusChip: React.FC<StatusChipProps> = ({
       variant={variant}
       icon={resolvedIcon}
       sx={{
-        fontWeight: 500,
+        fontWeight: 600,
+        borderRadius: '6px',
+        textTransform: 'uppercase',
+        fontSize: '0.65rem',
+        letterSpacing: '0.025em',
         ...(isCategoria && {
           minWidth: CATEGORY_CHIP_MIN_WIDTH,
           justifyContent: 'center',
@@ -193,6 +213,12 @@ export const StatusChip: React.FC<StatusChipProps> = ({
             marginLeft: '0px',
             marginRight: '2px',
             fontSize: 14,
+          },
+        }),
+        ...(!isCategoria && {
+          '& .MuiChip-icon': {
+            marginLeft: '6px',
+            marginRight: '-4px',
           },
         }),
         ...rest.sx,

@@ -110,6 +110,8 @@ Este bloque agrupa la documentación completa y detallada del backend NestJS + T
 |-----------|-------------|
 | [Alta compleja de producto](modules/producto/alta-compleja-producto-maestro-proveedores.md) | Caso de uso de creación transaccional de producto maestro con alérgenos y proveedores |
 | [Producción y raciones](modules/produccion/produccion-y-raciones.md) | Gestión de transformación de ingredientes, raciones producidas vs restantes y costes reales |
+| [Módulo de pedidos](modules/pedido/README.md) | Visión funcional del nuevo modelo `PedidoUsuario` + pedidos internos + compras consolidadas |
+| [Automatización de pedidos](modules/pedido/automatizacion-fechas-estados.md) | Estados, fechas automáticas y sincronización entre agregados y pedidos internos |
 | [Pedidos desde recetas](modules/pedido/pedidos-desde-recetas.md) | Consolidación de ingredientes de múltiples recetas en un pedido único |
 | [Edición y selección de líneas](modules/pedido/edicion-y-seleccion-lineas.md) | Selector avanzado de líneas de pedido con soporte multi-proveedor y autocompletado |
 | [Recepción](modules/recepcion/README.md) | Visión general del módulo de recepción |

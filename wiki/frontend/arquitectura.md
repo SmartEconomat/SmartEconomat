@@ -43,3 +43,25 @@ Para mantener la consistencia UX/UI, todo nuevo componente debe seguir este fluj
     - Si es específico de una función -> `src/features/[feature]`
 3.  **Implementación:** Crear archivo `.tsx` y definir sus `Props` explícitamente.
 4.  **Estilado:** Usar `MUI` (Material UI) con el tema personalizado en `src/utils/theme`.
+
+## Caso especial: arquitectura actual de pedidos
+
+La feature de pedidos es ahora uno de los módulos más compuestos del frontend porque integra tres contratos de backend distintos:
+
+- `PedidoUsuario`: agregado visible de negocio.
+- `Pedido`: pedido interno por proveedor.
+- `PurchaseBatch`: compra consolidada.
+
+### Organización aplicada
+
+- `src/pages/Pedidos.tsx` orquesta pestañas, modales y permisos.
+- `src/features/pedidos/hooks/usePedidosData.ts` decide qué endpoint cargar según la pestaña.
+- `src/features/pedidos/hooks/usePedidoActions.ts` separa acciones de negocio (`PedidoUsuario`) y acciones de compras (`PurchaseBatch`).
+- `src/services/pedido.service.ts` centraliza el mapping entre contratos backend y filas visibles.
+
+### Convención de UI
+
+- **Mis Pedidos** y la vista semanal trabajan con `PedidoUsuario`.
+- **Compras** trabaja con `PurchaseBatch`.
+- La columna principal muestra **N de pedido** usando `numeroGlobal` sin `#` en contexto de lista.
+- Los modales de detalle reutilizan el mismo visor, cambiando el modo entre `pedido` y `batch`.

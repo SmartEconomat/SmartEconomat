@@ -1,5 +1,11 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from '@testing-library/react';
 import BatchPedidoLineasViewer from '../../../src/components/ui/BatchPedidoLineasViewer';
 import {
   EstadoPedido,
@@ -16,6 +22,11 @@ vi.mock('../../../src/store/toast.hooks', () => ({
 }));
 
 describe('BatchPedidoLineasViewer', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(apiService.downloadFile).mockResolvedValue(undefined);
+  });
+
   const mockBatch = {
     id: 'batch-1',
     observaciones: 'Lote de prueba',
@@ -51,7 +62,7 @@ describe('BatchPedidoLineasViewer', () => {
 
     expect(screen.getByText('Lote de prueba')).toBeDefined();
     expect(screen.getByText('Proveedor A')).toBeDefined();
-    expect(screen.getByText('TOTAL LOTE DE COMPRA: 150.00 €')).toBeDefined();
+    expect(screen.getByText('TOTAL COMPRA: 150.00 €')).toBeDefined();
   });
 
   it('debería filtrar pedidos cancelados al desmarcar el checkbox', () => {
@@ -60,13 +71,13 @@ describe('BatchPedidoLineasViewer', () => {
     );
 
     // Por defecto están incluidos. Total 150.
-    expect(screen.getByText('TOTAL LOTE DE COMPRA: 150.00 €')).toBeDefined();
+    expect(screen.getByText('TOTAL COMPRA: 150.00 €')).toBeDefined();
 
     const checkbox = screen.getByLabelText('Incluir cancelados');
     fireEvent.click(checkbox);
 
     // Ahora excluidos. Solo queda ped-1 (100).
-    expect(screen.getByText('TOTAL LOTE DE COMPRA: 100.00 €')).toBeDefined();
+    expect(screen.getByText('TOTAL COMPRA: 100.00 €')).toBeDefined();
     expect(screen.queryByText('Proveedor B')).toBeNull();
   });
 
@@ -76,11 +87,16 @@ describe('BatchPedidoLineasViewer', () => {
     );
 
     const pdfButton = screen.getByTestId('PictureAsPdfIcon').parentElement!;
-    fireEvent.click(pdfButton);
 
-    expect(apiService.downloadFile).toHaveBeenCalledWith(
-      expect.stringContaining('/purchase-batches/batch-1/pdf'),
-      expect.stringContaining('reporte-lote-batch-1')
-    );
+    await act(async () => {
+      fireEvent.click(pdfButton);
+    });
+
+    await waitFor(() => {
+      expect(apiService.downloadFile).toHaveBeenCalledWith(
+        expect.stringContaining('/purchase-batches/batch-1/pdf'),
+        'reporte-lote-batch-1.pdf'
+      );
+    });
   });
 });

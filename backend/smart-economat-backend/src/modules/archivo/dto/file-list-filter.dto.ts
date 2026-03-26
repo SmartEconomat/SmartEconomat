@@ -6,7 +6,7 @@ export class FileListFilterDto extends PaginationQueryDto {
   @ApiPropertyOptional({ description: 'docs.FILTRAR_POR_ID_DE_USUARIO' })
   @IsOptional()
   @IsUUID('7')
-  usuarioId?: string;
+  declare usuarioId?: string;
 
   @ApiPropertyOptional({
     description: 'docs.FILTRAR_POR_TIPO_MIME_EJ_IMAGE_PNG',

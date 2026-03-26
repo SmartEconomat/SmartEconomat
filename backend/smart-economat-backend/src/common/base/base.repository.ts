@@ -25,7 +25,7 @@ export abstract class BaseRepository<
         if (errorHandler) {
           errorHandler(error);
         }
-        throw new ConflictException(`Transaction failed: ${error.message}`);
+        throw new ConflictException(`Transaction failed: ${(error as any).message}`);
       }
     });
   }

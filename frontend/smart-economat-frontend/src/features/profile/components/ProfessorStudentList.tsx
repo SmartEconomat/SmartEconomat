@@ -21,6 +21,7 @@ import SecurityIcon from '@mui/icons-material/Security';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
+import ListSkeleton from '../../../components/ui/ListSkeleton';
 import { Alumno, AlumnoSlot } from '../../../services/profesor.service';
 
 interface ProfessorStudentListProps {
@@ -32,6 +33,7 @@ interface ProfessorStudentListProps {
   onManagePermissions: (alumno: Alumno) => void;
   onDeleteStudent: (alumnoId: string) => void;
   isSaving: boolean;
+  isLoading?: boolean;
 }
 
 /**
@@ -46,6 +48,7 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
   onManagePermissions,
   onDeleteStudent,
   isSaving,
+  isLoading = false,
 }) => {
   const [expanded, setExpanded] = React.useState<string | false>(false);
 
@@ -116,7 +119,9 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
       </Box>
       <Divider sx={{ mb: { xs: 3, md: 4 } }} />
 
-      {slots.length === 0 ? (
+      {isLoading ? (
+        <ListSkeleton type="accordion" count={2} />
+      ) : slots.length === 0 ? (
         <Typography
           variant="body2"
           color="text.secondary"
@@ -142,7 +147,6 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
                   border: '1px solid',
                   borderColor: isPanelExpanded ? 'primary.main' : 'divider',
                   boxShadow: isPanelExpanded ? 2 : 'none',
-                  transition: 'all 0.3s ease',
                   '&:before': { display: 'none' },
                 }}
               >
@@ -357,4 +361,4 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
   );
 };
 
-export default ProfessorStudentList;
+export default React.memo(ProfessorStudentList);

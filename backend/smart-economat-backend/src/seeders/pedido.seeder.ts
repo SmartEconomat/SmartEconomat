@@ -10,6 +10,9 @@ import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 import { PurchaseBatch } from '../modules/pedido/purchase-batch.entity/purchase-batch.entity';
 import { EstadoLote } from '../modules/pedido/enums/estado-lote.enum';
 import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
+import { PedidoUsuario } from '../modules/pedido/pedido-usuario.entity/pedido-usuario.entity';
+import { PedidoUsuarioLinea } from '../modules/pedido/pedido-usuario-linea.entity/pedido-usuario-linea.entity';
+import { EstadoPedidoUsuario } from '../modules/pedido/enums/estado-pedido-usuario.enum';
 
 export const runSeeder = async (context: SeedContext) => {
   const dataSource = context.getDataSource();
@@ -47,7 +50,7 @@ export const runSeeder = async (context: SeedContext) => {
         productos: [],
       });
     }
-    ppsGroupedByProv.get(pp.proveedor.id).productos.push(pp);
+    ppsGroupedByProv.get(pp.proveedor.id)!.productos.push(pp);
   }
 
   const proveedoresValidos: ProveedorConProductos[] = Array.from(
@@ -55,6 +58,8 @@ export const runSeeder = async (context: SeedContext) => {
   );
 
   const batchRepo = dataSource.getRepository(PurchaseBatch);
+  const pedidoUsuarioRepo = dataSource.getRepository(PedidoUsuario);
+  const pedidoUsuarioLineaRepo = dataSource.getRepository(PedidoUsuarioLinea);
 
   const allStates = Object.values(EstadoPedido);
   const numBatches = process.env.NODE_ENV === 'test' ? 1 : 3;
@@ -71,7 +76,13 @@ export const runSeeder = async (context: SeedContext) => {
 
     const pedidosMapear =
       process.env.NODE_ENV === 'test'
-        ? allStates.slice(0, 2)
+        ? [
+            EstadoPedido.PENDIENTE,
+            EstadoPedido.EN_PROCESO,
+            EstadoPedido.PARCIAL,
+            EstadoPedido.RECIBIDO,
+            EstadoPedido.INCIDENCIA,
+          ]
         : batchIdx === 0
           ? allStates
           : faker.helpers.arrayElements(allStates, 3);
@@ -139,5 +150,114 @@ export const runSeeder = async (context: SeedContext) => {
     await batchRepo.save(savedBatch);
   }
 
-  console.log(SeederI18nHelper.getSeederSuccess('pedidos'));
+  const usuariosActivos = usuarios.filter((usuario) => usuario.activo);
+  const usuariosOperativos =
+    usuariosActivos.length > 0 ? usuariosActivos : usuarios.slice(0, 4);
+
+  const weeklyOffsets = process.env.NODE_ENV === 'test' ? [0, 7] : [0, 7, 14];
+
+  for (const offset of weeklyOffsets) {
+    for (const usuario of usuariosOperativos.slice(
+      0,
+      Math.min(4, usuariosOperativos.length)
+    )) {
+      const pedidosPorUsuario = process.env.NODE_ENV === 'test' ? 1 : 2;
+
+      for (let index = 0; index < pedidosPorUsuario; index++) {
+        const fechaPedido = faker.date.between({
+          from: new Date(Date.now() - (offset + 6) * 24 * 60 * 60 * 1000),
+          to: new Date(Date.now() - offset * 24 * 60 * 60 * 1000),
+        });
+        const pedidoUsuario = pedidoUsuarioRepo.create({
+          usuario,
+          fechaPedido,
+          fechaEntrega: faker.date.soon({ days: 7, refDate: fechaPedido }),
+          estado: EstadoPedidoUsuario.PENDIENTE,
+          observaciones: `Pedido semanal de ${usuario.username} (${offset === 0 ? 'semana actual' : `hace ${offset / 7} semana(s)`})`,
+          costeTotal: 0,
+        });
+        const savedPedidoUsuario = await pedidoUsuarioRepo.save(pedidoUsuario);
+
+        const proveedoresDelPedido = faker.helpers.arrayElements(
+          proveedoresValidos,
+          faker.number.int({
+            min: 1,
+            max: Math.min(2, proveedoresValidos.length),
+          })
+        );
+
+        let totalPedidoUsuario = 0;
+
+        for (const proveedor of proveedoresDelPedido) {
+          const pedido = pedidoRepo.create({
+            usuario,
+            proveedor,
+            pedidoUsuario: savedPedidoUsuario,
+            pedidoUsuarioId: savedPedidoUsuario.id,
+            fechaPedido,
+            fechaEntrega: savedPedidoUsuario.fechaEntrega,
+            estado: EstadoPedido.PENDIENTE,
+            observaciones: savedPedidoUsuario.observaciones,
+            costeTotal: 0,
+          });
+
+          const numItems = faker.number.int({
+            min: 1,
+            max: Math.min(4, proveedor.productos.length),
+          });
+          const itemsSeleccionados = faker.helpers.arrayElements(
+            proveedor.productos,
+            numItems
+          );
+
+          let totalPedidoProveedor = 0;
+          const detallesPedido: PedidoProducto[] = [];
+
+          for (const productoProveedor of itemsSeleccionados) {
+            const cantidad = faker.number.int({ min: 1, max: 8 });
+            const precioUnitario =
+              productoProveedor.precioUnitario ||
+              parseFloat(faker.commerce.price({ min: 5, max: 120 }));
+
+            const lineaUsuario = await pedidoUsuarioLineaRepo.save(
+              pedidoUsuarioLineaRepo.create({
+                pedidoUsuario: savedPedidoUsuario,
+                pedidoUsuarioId: savedPedidoUsuario.id,
+                productoProveedor,
+                productoProveedorId: productoProveedor.id,
+                cantidad,
+                precioUnitario,
+              })
+            );
+
+            totalPedidoProveedor += cantidad * precioUnitario;
+            detallesPedido.push(
+              pedidoProductoRepo.create({
+                productoProveedor,
+                pedidoUsuarioLineaId: lineaUsuario.id,
+                cantidad,
+                precioUnitario,
+                observaciones: faker.datatype.boolean()
+                  ? faker.lorem.words(4)
+                  : undefined,
+              })
+            );
+          }
+
+          pedido.pedidoProductos = detallesPedido as any;
+          pedido.costeTotal = parseFloat(totalPedidoProveedor.toFixed(2));
+          totalPedidoUsuario += pedido.costeTotal;
+
+          await pedidoRepo.save(pedido);
+        }
+
+        savedPedidoUsuario.costeTotal = parseFloat(
+          totalPedidoUsuario.toFixed(2)
+        );
+        await pedidoUsuarioRepo.save(savedPedidoUsuario);
+      }
+    }
+  }
+
+  console.log(SeederI18nHelper.getSeederSuccess('pedidos, lotes y usuarios'));
 };

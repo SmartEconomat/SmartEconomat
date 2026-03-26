@@ -56,11 +56,9 @@ export class PedidoController {
       createdAt: 'createdAt',
       updatedAt: 'updatedAt',
     })
-    query: PaginationQueryDto,
-    @Req() req: { user?: { rol?: string } }
+    query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Pedido>> {
-    const userRole = req.user?.rol;
-    return this.pedidoService.findAll(query, userRole);
+    return this.pedidoService.findAll(query);
   }
 
   @Post('from-recipes')
@@ -75,12 +73,8 @@ export class PedidoController {
 
   @Get(':id')
   @RequirePermissions('pedidos:ver')
-  findOne(
-    @Param('id', ParseUUIDv7Pipe) id: string,
-    @Req() req: { user?: { rol?: string } }
-  ): Promise<Pedido> {
-    const userRole = req.user?.rol;
-    return this.pedidoService.findOne(id, userRole);
+  findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Pedido> {
+    return this.pedidoService.findOne(id);
   }
 
   @Patch(':id')

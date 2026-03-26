@@ -62,6 +62,109 @@ function loadTestProducts(): OffProduct[] {
   }));
 }
 
+function buildFallbackProducts(): Array<{
+  nombre: string;
+  marca: string;
+  descripcion: string;
+  unidad: UnidadMedida;
+  tipo: TipoProducto;
+  contenido: number;
+  codigoBarras: string;
+}> {
+  return [
+    {
+      nombre: 'Arroz redondo',
+      marca: 'Smart Base',
+      descripcion: 'Arroz de grano corto para cocina diaria.',
+      unidad: UnidadMedida.KG,
+      tipo: TipoProducto.CEREAL,
+      contenido: 1,
+      codigoBarras: '8400000000001',
+    },
+    {
+      nombre: 'Leche entera',
+      marca: 'Smart Base',
+      descripcion: 'Leche entera UHT para cocina y desayunos.',
+      unidad: UnidadMedida.L,
+      tipo: TipoProducto.LACTEO,
+      contenido: 1,
+      codigoBarras: '8400000000002',
+    },
+    {
+      nombre: 'Aceite de oliva suave',
+      marca: 'Smart Base',
+      descripcion: 'Aceite de oliva suave para fritura y plancha.',
+      unidad: UnidadMedida.L,
+      tipo: TipoProducto.ACEITE,
+      contenido: 1,
+      codigoBarras: '8400000000003',
+    },
+    {
+      nombre: 'Pechuga de pollo',
+      marca: 'Smart Base',
+      descripcion: 'Pechuga de pollo fresca refrigerada.',
+      unidad: UnidadMedida.KG,
+      tipo: TipoProducto.CARNE,
+      contenido: 1,
+      codigoBarras: '8400000000004',
+    },
+    {
+      nombre: 'Tomate triturado',
+      marca: 'Smart Base',
+      descripcion: 'Tomate triturado en conserva.',
+      unidad: UnidadMedida.G,
+      tipo: TipoProducto.VERDURA,
+      contenido: 400,
+      codigoBarras: '8400000000005',
+    },
+    {
+      nombre: 'Garbanzos cocidos',
+      marca: 'Smart Base',
+      descripcion: 'Legumbre cocida lista para usar.',
+      unidad: UnidadMedida.G,
+      tipo: TipoProducto.LEGUMBRE,
+      contenido: 570,
+      codigoBarras: '8400000000006',
+    },
+    {
+      nombre: 'Merluza congelada',
+      marca: 'Smart Base',
+      descripcion: 'Filete de merluza ultracongelado.',
+      unidad: UnidadMedida.KG,
+      tipo: TipoProducto.PESCADO,
+      contenido: 1,
+      codigoBarras: '8400000000007',
+    },
+    {
+      nombre: 'Zumo de naranja',
+      marca: 'Smart Base',
+      descripcion: 'Bebida refrigerada sabor naranja.',
+      unidad: UnidadMedida.L,
+      tipo: TipoProducto.BEBIDA,
+      contenido: 1,
+      codigoBarras: '8400000000008',
+    },
+    {
+      nombre: 'Huevos clase M',
+      marca: 'Smart Base',
+      descripcion: 'Docena de huevos frescos.',
+      unidad: UnidadMedida.UNIDAD,
+      tipo: TipoProducto.HUEVO,
+      contenido: 12,
+      codigoBarras: '8400000000009',
+    },
+    {
+      nombre: 'Azúcar blanco',
+      marca: 'Smart Base',
+      descripcion: 'Azúcar blanco refinado.',
+      unidad: UnidadMedida.KG,
+      tipo: TipoProducto.AZUCAR,
+      contenido: 1,
+      codigoBarras: '8400000000010',
+    },
+  ];
+}
+
 function mapAlergeno(offTag: string): Alergeno | null {
   const map: Record<string, Alergeno> = {
     'en:gluten': Alergeno.GLUTEN,
@@ -146,6 +249,7 @@ export const runSeeder = async (context: SeedContext) => {
   }
 
   let offProducts: OffProduct[] = [];
+  const productosExistentes = await productoRepo.find();
 
   if (process.env.NODE_ENV === 'test') {
     console.log('Generando productos faker para entorno de test...');
@@ -244,13 +348,29 @@ export const runSeeder = async (context: SeedContext) => {
     productos.push(producto);
   }
 
-  console.log(`Guardando ${productos.length} nuevos productos...`);
-  const CHUNK_SIZE = 500;
-  for (let i = 0; i < productos.length; i += CHUNK_SIZE) {
-    const chunk = productos.slice(i, i + CHUNK_SIZE);
-    await productoRepo.save(chunk);
+  let productosGuardados: Producto[];
+
+  if (productos.length > 0) {
+    const CHUNK_SIZE = 500;
+    productosGuardados = [];
+    for (let i = 0; i < productos.length; i += CHUNK_SIZE) {
+      const chunk = productos.slice(i, i + CHUNK_SIZE);
+      const saved = await productoRepo.save(chunk);
+      productosGuardados.push(...saved);
+    }
+  } else if (productosExistentes.length > 0) {
+    console.warn(
+      'No hay productos nuevos válidos para insertar. Se reutilizan productos existentes para regenerar relaciones con proveedores.'
+    );
+    productosGuardados = productosExistentes;
+  } else {
+    console.warn(
+      'OpenFoodFacts no ha aportado productos utilizables. Se crea un lote local de respaldo.'
+    );
+    productosGuardados = await productoRepo.save(
+      buildFallbackProducts().map((producto) => productoRepo.create(producto))
+    );
   }
-  const todosLosProductos = await productoRepo.find();
 
   const productoProveedores: ProductoProveedor[] = [];
   const ppsExistentes = await productoProveedorRepo.find({
@@ -258,7 +378,8 @@ export const runSeeder = async (context: SeedContext) => {
   });
   const idsConProveedor = new Set(ppsExistentes.map((pp) => pp.producto.id));
 
-  for (const producto of todosLosProductos) {
+  const CHUNK_SIZE = 500;
+  for (const producto of productosGuardados) {
     if (idsConProveedor.has(producto.id)) continue;
 
     const seed = parseInt(producto.id.substring(0, 8), 16) || 0;
@@ -305,7 +426,7 @@ export const runSeeder = async (context: SeedContext) => {
   });
   const idsConAlergenos = new Set(apsExistentes.map((ap) => ap.producto.id));
 
-  for (const producto of todosLosProductos) {
+  for (const producto of productosGuardados) {
     if (idsConAlergenos.has(producto.id)) continue;
 
     const baseAlergenosTags: string[] =

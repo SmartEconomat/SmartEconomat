@@ -321,8 +321,8 @@ export class AdminService {
 
     user.password = provisionalPassword;
     user.mustChangePassword = true;
-    user.passwordResetToken = null;
-    user.passwordResetExpires = null;
+    user.resetPasswordOtp = null;
+    user.resetPasswordOtpExpires = null;
 
     await this.usuarioRepo.save(user);
 

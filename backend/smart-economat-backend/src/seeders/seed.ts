@@ -9,6 +9,7 @@ import { Seeder } from './interfaces/seeder.interface';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 import { SeedContext } from './seed-context';
 import { AppModule } from '../app.module';
+import { findInvalidReceptionLinks } from './utils/reception-consistency.util';
 
 /* 
   dotenv.config({ path: join(__dirname, '../../../../.env.prod') }); 
@@ -152,6 +153,15 @@ async function runSeederByName(name: string) {
     await seeder.runSeeder(context);
   } finally {
     await context.close();
+  }
+
+  const invalidLinks = await findInvalidReceptionLinks(dataSource.manager);
+  if (invalidLinks.length > 0) {
+    throw new Error(
+      `[seed] Se detectaron ${invalidLinks.length} recepciones inválidas asociadas a pedidos en estados no recepcionables: ${invalidLinks
+        .map((item) => `${item.estado}:${item.pedidoId}`)
+        .join(', ')}`
+    );
   }
 }
 

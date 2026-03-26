@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Box, Stack } from '@mui/material';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
-import Modal, { ModalProps, ModalSize } from './Modal';
+import Modal, { ModalCloseReason, ModalProps, ModalSize } from './Modal';
 import Input from './Input';
 import Button from './Button';
 import Checkbox from './Checkbox';
@@ -29,6 +29,7 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 import { resolveStoredFileUrl } from '../../services/api.service';
 import { parseLocalizedNumber } from '../../utils/numberUtils';
+import { PedidoUsuario, PurchaseBatch } from '../../services/pedido.types';
 
 export type FieldType =
   | 'text'
@@ -100,8 +101,8 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   confirmationMessage,
   onValuesChange,
 }) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [formData, setFormData] = useState<Record<string, unknown>>({});
+  const formDataRef = useRef<Record<string, unknown>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [activeBarcodeField, setActiveBarcodeField] = useState<string | null>(
@@ -111,6 +112,31 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   const [offResults, setOffResults] = useState<Array<Record<string, any>>>([]);
   const [showOFFResults, setShowOFFResults] = useState(false);
   const [isOFFSearching, setIsOFFSearching] = useState(false);
+
+  const selectedProveedorId =
+    typeof formData.proveedorId === 'string'
+      ? formData.proveedorId
+      : typeof formData.proveedor === 'object' &&
+          formData.proveedor !== null &&
+          'id' in formData.proveedor &&
+          typeof formData.proveedor.id === 'string'
+        ? formData.proveedor.id
+        : undefined;
+
+  const updateFormData = useCallback(
+    (
+      updater:
+        | Record<string, unknown>
+        | ((prev: Record<string, unknown>) => Record<string, unknown>)
+    ) => {
+      setFormData((prev) => {
+        const next = typeof updater === 'function' ? updater(prev) : updater;
+        formDataRef.current = next;
+        return next;
+      });
+    },
+    []
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -125,6 +151,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                 : '';
         }
       });
+      formDataRef.current = dataToSet;
       setFormData(dataToSet);
       setShowOFFResults(false);
       setOffResults([]);
@@ -143,7 +170,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    updateFormData((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
@@ -153,7 +180,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
     const { name, value } = e.target;
     const parsedValue = parseLocalizedNumber(value);
 
-    setFormData((prev) => ({
+    updateFormData((prev) => ({
       ...prev,
       [name]: value === '' ? '' : (parsedValue ?? value),
     }));
@@ -162,23 +189,23 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: checked }));
+    updateFormData((prev) => ({ ...prev, [name]: checked }));
   };
 
   const handleDateChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    updateFormData((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
   const handleAllergensChange = (name: string) => (newValue: string[]) => {
-    setFormData((prev) => ({ ...prev, [name]: newValue }));
+    updateFormData((prev) => ({ ...prev, [name]: newValue }));
   };
 
   const handleImageChange =
     (name: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
-        setFormData((prev) => ({ ...prev, [name]: file }));
+        updateFormData((prev) => ({ ...prev, [name]: file }));
         setErrors((prev) => ({ ...prev, [name]: '' }));
       }
     };
@@ -189,7 +216,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
     const newErrors: Record<string, string> = {};
     fields.forEach((field) => {
       if (field.required) {
-        const val = formData[field.name];
+        const val = formDataRef.current[field.name];
         const isEmpty =
           val === undefined ||
           val === null ||
@@ -200,10 +227,10 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
         }
       }
       // Specific validation: proveedorId must be UUID v4
-      if (field.name === 'proveedorId' && formData[field.name]) {
+      if (field.name === 'proveedorId' && formDataRef.current[field.name]) {
         const uuidRegex =
           /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        if (!uuidRegex.test(String(formData[field.name]))) {
+        if (!uuidRegex.test(String(formDataRef.current[field.name]))) {
           newErrors[field.name] = 'El ID del proveedor debe ser un UUID válido';
         }
       }
@@ -217,18 +244,26 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
     if (requireConfirmation) {
       setIsConfirmOpen(true);
     } else {
-      await onSubmit(formData);
+      await onSubmit(formDataRef.current);
     }
   };
 
   const handleConfirmSubmit = async () => {
     setIsConfirmOpen(false);
-    await onSubmit(formData);
+    await onSubmit(formDataRef.current);
   };
 
   const handleCancel = () => {
-    if (onCancel) onCancel();
-    onClose();
+    if (onCancel) {
+      onCancel();
+      return;
+    }
+
+    onClose('backdropClick');
+  };
+
+  const handleModalClose = (reason?: ModalCloseReason) => {
+    onClose(reason);
   };
 
   const formFields =
@@ -333,7 +368,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
             key={name}
             name={name}
             label={label}
-            value={value || ''}
+            value={typeof value === 'string' ? value : ''}
             onChange={handleDateChange}
             required={required}
             disabled={disabled}
@@ -372,7 +407,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
             key={name}
             value={Array.isArray(value) ? value : []}
             onChange={(val: ProveedorAsociado[]) =>
-              setFormData((prev) => ({ ...prev, [name]: val }))
+              updateFormData((prev) => ({ ...prev, [name]: val }))
             }
             proveedores={
               field.options?.map((o) => ({
@@ -392,9 +427,9 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
             key={name}
             value={Array.isArray(value) ? value : []}
             onChange={(val) =>
-              setFormData((prev) => ({ ...prev, [name]: val }))
+              updateFormData((prev) => ({ ...prev, [name]: val }))
             }
-            proveedorId={formData.proveedorId || formData.proveedor?.id}
+            proveedorId={selectedProveedorId}
             disabled={disabled}
           />
         );
@@ -405,13 +440,18 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
             key={name}
             value={Array.isArray(value) ? value : []}
             onChange={(val) =>
-              setFormData((prev) => ({ ...prev, [name]: val }))
+              updateFormData((prev) => ({ ...prev, [name]: val }))
             }
           />
         );
 
       case 'batchViewer':
-        return <BatchPedidoLineasViewer key={name} batch={formData[name]} />;
+        return (
+          <BatchPedidoLineasViewer
+            key={name}
+            batch={formData[name] as PurchaseBatch | PedidoUsuario}
+          />
+        );
 
       case 'barcode':
         return (
@@ -560,7 +600,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={handleCancel}
+      onClose={handleModalClose}
       title={title}
       size={size || 'md'}
     >

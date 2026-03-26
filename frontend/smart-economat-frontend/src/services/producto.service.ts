@@ -1,6 +1,16 @@
 import { Producto, ProductosQueryParams, HistorialPrecio } from './producto.types';
 import { baseFetch, ApiResponse, PaginatedData } from './api.service';
 
+const PRODUCTOS_CACHE_TTL_MS = 1000;
+
+const productosRequestCache = new Map<
+  string,
+  {
+    promise: Promise<PaginatedData<Producto>>;
+    expiresAt: number;
+  }
+>();
+
 export interface ProductoProveedorPayload {
   proveedorId: string;
   marcaEspecifica?: string;
@@ -39,6 +49,58 @@ function buildProductosQueryString(params?: ProductosQueryParams): string {
   return qs ? `?${qs}` : '?limit=500';
 }
 
+function clearExpiredProductosCache() {
+  const now = Date.now();
+
+  productosRequestCache.forEach((entry, key) => {
+    if (entry.expiresAt <= now) {
+      productosRequestCache.delete(key);
+    }
+  });
+}
+
+export function invalidateProductosCache() {
+  productosRequestCache.clear();
+}
+
+async function requestProductos(
+  query: string
+): Promise<PaginatedData<Producto>> {
+  clearExpiredProductosCache();
+
+  const cacheKey = query;
+  const cached = productosRequestCache.get(cacheKey);
+
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.promise;
+  }
+
+  const requestPromise = baseFetch(`/productos${query}`)
+    .then(async (response) => {
+      if (!response.ok) {
+        throw new Error(
+          `Error al obtener productos: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const body = (await response.json()) as ApiResponse<
+        PaginatedData<Producto>
+      >;
+      return body.data;
+    })
+    .catch((error) => {
+      productosRequestCache.delete(cacheKey);
+      throw error;
+    });
+
+  productosRequestCache.set(cacheKey, {
+    promise: requestPromise,
+    expiresAt: Date.now() + PRODUCTOS_CACHE_TTL_MS,
+  });
+
+  return requestPromise;
+}
+
 export async function fetchProductos(
   page: number = 1,
   limit: number = 10,
@@ -51,14 +113,7 @@ export async function fetchProductos(
     searchTerm: search,
     categorias: categorias.length > 0 ? categorias : undefined,
   });
-  const response = await baseFetch(`/productos${query}`);
-  if (!response.ok) {
-    throw new Error(
-      `Error al obtener productos: ${response.status} ${response.statusText}`
-    );
-  }
-  const body = (await response.json()) as ApiResponse<PaginatedData<Producto>>;
-  return body.data;
+  return requestProductos(query);
 }
 
 // ─── Tipos para listados ──────────────────────────────────────────────────
@@ -69,14 +124,7 @@ export async function fetchProductosPaginated(
   params?: ProductosQueryParams
 ): Promise<ProductosPaginatedResult> {
   const query = buildProductosQueryString({ limit: 20, ...params });
-  const response = await baseFetch(`/productos${query}`);
-  if (!response.ok) {
-    throw new Error(
-      `Error al obtener productos: ${response.status} ${response.statusText}`
-    );
-  }
-  const body = (await response.json()) as ApiResponse<PaginatedData<Producto>>;
-  const inner = body.data;
+  const inner = await requestProductos(query);
   if (!inner || !Array.isArray(inner.data)) {
     return {
       data: [],
@@ -98,6 +146,7 @@ export async function fetchProductosPaginated(
 export async function createProducto(
   producto: ProductoMutationPayload
 ): Promise<Producto> {
+  invalidateProductosCache();
   const response = await baseFetch('/productos', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -117,6 +166,7 @@ export async function updateProducto(
   id: string,
   producto: ProductoMutationPayload
 ): Promise<Producto> {
+  invalidateProductosCache();
   const response = await baseFetch(`/productos/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },

@@ -158,6 +158,11 @@ export class PdfReportService {
         batchId: filters.batchId,
       });
     }
+    if (filters.pedidoUsuarioId) {
+      qb.andWhere('pedido.pedidoUsuarioId = :pedidoUsuarioId', {
+        pedidoUsuarioId: filters.pedidoUsuarioId,
+      });
+    }
     if (!incluirCancelados) {
       qb.andWhere('pedido.estado != :cancelado', {
         cancelado: EstadoPedido.CANCELADO,

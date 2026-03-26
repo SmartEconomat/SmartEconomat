@@ -15,10 +15,7 @@ import Checkbox from '../../../components/ui/Checkbox';
 import Logo from '../../../assets/images/SVG/logo-smat-economato.svg';
 import { User } from '../../../store/auth.types';
 import { authService } from '../../../services/auth.service';
-import {
-  isStrongPassword,
-  STRONG_PASSWORD_MESSAGE,
-} from '../../../utils/passwordValidation';
+import { getPasswordChangeError } from '../../../utils/passwordValidation';
 import { getAuthErrorMessage } from '../../../utils/authErrorMessages';
 
 const visuallyHidden = {
@@ -73,10 +70,17 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const isLoginSubmitDisabled =
     formData.email.trim().length === 0 || formData.password.length === 0;
   const isForgotSubmitDisabled = formData.email.trim().length === 0;
+  const forcedPasswordChangeError = getPasswordChangeError({
+    currentPassword: changePassData.currentPassword,
+    newPassword: changePassData.newPassword,
+    confirmPassword: changePassData.confirmPassword,
+    requireCurrentPassword: true,
+  });
   const isForcedPasswordChangeDisabled =
     changePassData.currentPassword.length === 0 ||
     changePassData.newPassword.length === 0 ||
-    changePassData.confirmPassword.length === 0;
+    changePassData.confirmPassword.length === 0 ||
+    forcedPasswordChangeError !== null;
 
   useEffect(() => {
     const savedUser = localStorage.getItem('rememberedUser');
@@ -196,13 +200,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
     e.preventDefault();
     setErrorMsg('');
 
-    if (changePassData.newPassword !== changePassData.confirmPassword) {
-      setErrorMsg('Las contraseñas nuevas no coinciden.');
-      return;
-    }
-
-    if (!isStrongPassword(changePassData.newPassword)) {
-      setErrorMsg(STRONG_PASSWORD_MESSAGE);
+    if (forcedPasswordChangeError) {
+      setErrorMsg(forcedPasswordChangeError);
       return;
     }
 
@@ -316,17 +315,62 @@ const LoginForm: React.FC<LoginFormProps> = ({
             label="Nueva Contraseña"
             name="newPassword"
             type={showPassword ? 'text' : 'password'}
+            autoComplete="new-password"
             value={changePassData.newPassword}
             onChange={handleChangePass}
             required
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="mostrar nueva contraseña"
+                    onClick={togglePasswordVisibility}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            error={Boolean(
+              changePassData.newPassword.length > 0 && forcedPasswordChangeError
+            )}
+            helperText={
+              changePassData.newPassword.length > 0
+                ? forcedPasswordChangeError
+                : ''
+            }
           />
           <Input
             label="Confirmar Nueva Contraseña"
             name="confirmPassword"
             type={showPassword ? 'text' : 'password'}
+            autoComplete="new-password"
             value={changePassData.confirmPassword}
             onChange={handleChangePass}
             required
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="mostrar confirmación de contraseña"
+                    onClick={togglePasswordVisibility}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            error={Boolean(
+              changePassData.confirmPassword.length > 0 &&
+              forcedPasswordChangeError
+            )}
+            helperText={
+              changePassData.confirmPassword.length > 0
+                ? forcedPasswordChangeError
+                : ''
+            }
           />
 
           <Button
@@ -425,7 +469,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
           <Input
             label="Usuario o Email"
             name="email"
-            autoComplete="email"
+            autoComplete="username"
             autoFocus
             value={formData.email}
             onChange={handleChange}

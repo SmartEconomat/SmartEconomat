@@ -249,6 +249,52 @@ export async function openPdfInNewTab(path: string): Promise<void> {
   setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
+export async function printPdfFile(path: string): Promise<void> {
+  const response = await baseFetch(path);
+
+  if (!response.ok) {
+    throw new Error(
+      `Error al preparar la impresión del archivo: ${response.status} ${response.statusText}`
+    );
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const iframe = document.createElement('iframe');
+
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  iframe.src = url;
+
+  let hasCleanedUp = false;
+
+  const cleanup = () => {
+    if (hasCleanedUp) return;
+    hasCleanedUp = true;
+    iframe.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  iframe.onload = () => {
+    window.setTimeout(() => {
+      try {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      } catch {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      } finally {
+        window.setTimeout(cleanup, 60000);
+      }
+    }, 350);
+  };
+
+  document.body.appendChild(iframe);
+}
+
 export async function deleteResource(resourcePath: string): Promise<void> {
   const response = await baseFetch(resourcePath, {
     method: 'DELETE',
@@ -256,14 +302,10 @@ export async function deleteResource(resourcePath: string): Promise<void> {
 
   // 204 No Content es éxito sin cuerpo
   if (!response.ok) {
-    let detail = `${response.status} ${response.statusText}`;
-    try {
-      const body = (await response.json()) as { message?: string };
-      if (body.message) detail = body.message;
-    } catch {
-      // la respuesta no tiene cuerpo JSON, usamos el status
-    }
-    throw new Error(detail);
+    const payload = await response.json().catch(() => null);
+    const detail =
+      extractApiMessage(payload) || `${response.status} ${response.statusText}`;
+    throw new ApiError(detail, response.status, payload);
   }
 }
 
