@@ -23,9 +23,7 @@ export class MovimientoService {
   async findAll(
     query: MovimientoListQueryDto
   ): Promise<PaginatedResponseDto<Movimiento>> {
-    return this.movimientoRepo.findAll(query) as Promise<
-      PaginatedResponseDto<Movimiento>
-    >;
+    return this.movimientoRepo.findAll(query);
   }
 
   async findOne(id: string) {

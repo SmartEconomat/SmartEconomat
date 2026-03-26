@@ -93,6 +93,17 @@ export interface Producto {
   pathImg?: string;
   fechaCaducidad?: string;
   proveedores?: ProductoProveedor[];
+  pmp?: number;
+}
+
+export interface HistorialPrecio {
+  id: string;
+  precio: number;
+  cantidad?: number;
+  documentoOrigen?: string;
+  recepcionId?: string;
+  fecha: string;
+  productoProveedor: ProductoProveedor;
 }
 
 export interface ProductoNuevoDto {

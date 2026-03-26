@@ -3,6 +3,7 @@ import type { Relation } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { Receta } from '../receta.entity/receta.entity';
 import { Producto } from '../../producto/producto.entity/producto.entity';
+import { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
 import { UnidadIngrediente } from '../enums/receta.enums';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
@@ -50,7 +51,7 @@ export class RecetaIngrediente extends BaseEntity {
   @Column({ name: 'proveedor_favorito_id', nullable: true })
   proveedorFavoritoId?: string;
 
-  @ManyToOne('Proveedor', { nullable: true })
+  @ManyToOne(() => Proveedor, { nullable: true })
   @JoinColumn({ name: 'proveedor_favorito_id' })
-  proveedorFavorito?: Relation<any>;
+  proveedorFavorito?: Relation<Proveedor>;
 }

@@ -103,6 +103,21 @@ export class Producto extends BaseEntity {
   contenido!: number;
 
   /**
+   * Precio Medio Ponderado (PMP) del producto.
+   * Se recalcula automáticamente en cada recepción.
+   * @type {number}
+   */
+  @Column({
+    type: 'numeric',
+    precision: 10,
+    scale: 4,
+    default: 0,
+    name: 'pmp',
+    transformer: new ColumnNumericTransformer(),
+  })
+  pmp!: number;
+
+  /**
    * Relación con los alérgenos que contiene el producto.
    */
   @OneToMany(() => ProductoAlergeno, (pa) => pa.producto, {

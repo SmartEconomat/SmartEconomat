@@ -20,8 +20,10 @@ export class HighTrafficAlertInterceptor implements NestInterceptor {
   private readonly ALERT_WINDOW_MS = 10000;
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const req = context.switchToHttp().getRequest<Request>();
-    const userId = (req as any).user?.id;
+    const req = context
+      .switchToHttp()
+      .getRequest<Request & { user?: { id?: string } }>();
+    const userId = req.user?.id;
 
     if (userId) {
       this.monitorUser(userId, req.path);
