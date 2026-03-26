@@ -1,4 +1,5 @@
-import { DataSource } from 'typeorm';
+import { DataSource, EntityTarget, ObjectLiteral } from 'typeorm';
+import { SeedContext } from './seed-context';
 import { runSeeder } from './recepcion.seeder';
 import { Recepcion } from '../modules/recepcion/recepcion.entity/recepcion.entity';
 import { RecepcionPedido } from '../modules/recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
@@ -133,7 +134,13 @@ describe('recepcion.seeder', () => {
       }),
     } as unknown as DataSource;
 
-    await runSeeder(dataSource);
+    const context = {
+      getDataSource: () => dataSource,
+      getRepository: (entity: EntityTarget<ObjectLiteral>) =>
+        dataSource.getRepository(entity),
+    } as unknown as SeedContext;
+
+    await runSeeder(context);
 
     expect(recepcionRepo.save).toHaveBeenCalledTimes(3);
     expect(recepcionesGuardadas).toEqual([

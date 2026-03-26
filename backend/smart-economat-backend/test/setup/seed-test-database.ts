@@ -15,41 +15,31 @@ import {
  * @description Sistema de seeders optimizado para tests.
  *
  * Estrategia:
- * 1. Los seeders se ejecutan UNA SOLA VEZ por worker de Jest
- * 2. Después de ejecutar seeders, se crea un snapshot
- * 3. Los tests restauran el snapshot en lugar de re-ejecutar seeders
- *
- * Esto reduce el tiempo de setup de ~5-10s a ~0ms por test.
+ * 1. Inicializar pg-mem y DataSource (schema creado via synchronize:true)
+ * 2. Inicializar app NestJS (ya tiene un DataSource listo)
+ * 3. Ejecutar seeders con la app disponible para servicios de DI
+ * 4. Crear snapshot
+ * 5. En cada test restaurar snapshot (instantáneo)
  *
  * @author SmartEconomat Team
  */
 
 /**
- * Ejecuta todos los seeders del proyecto y crea un snapshot.
- * Esta función solo se ejecuta una vez por worker de Jest.
- *
- * @returns DataSource inicializado con datos de seeders
+ * Fase 1: Inicializa pg-mem + DataSource (sin correr seeders).
+ * Debe llamarse ANTES de crear la app NestJS.
  */
-async function runSeedersSilently(
-  runAllSeeders: () => Promise<void>
-): Promise<void> {
-  await runAllSeeders();
-}
-
-export async function seedTestDatabase(): Promise<DataSource> {
+export async function initTestDataSource(): Promise<DataSource> {
   const seedSnapshot = getSeedSnapshot();
   if (seedSnapshot && isSeeded()) {
     restoreSnapshot(seedSnapshot);
-
     const { dataSource } = require('../../src/seeders/seed');
     return dataSource;
   }
 
   initPgMem();
 
-  const { dataSource, runAllSeeders } = require('../../src/seeders/seed') as {
+  const { dataSource } = require('../../src/seeders/seed') as {
     dataSource: DataSource;
-    runAllSeeders: () => Promise<void>;
   };
 
   if (!dataSource.isInitialized) {
@@ -57,8 +47,26 @@ export async function seedTestDatabase(): Promise<DataSource> {
   }
 
   setTestDataSource(dataSource);
+  return dataSource;
+}
 
-  await runSeedersSilently(runAllSeeders);
+/**
+ * Fase 2: Ejecuta seeders (requiere que la app NestJS ya esté creada).
+ * El seeder de roles-permisos necesita context.get() con servicios de NestJS.
+ */
+export async function runTestSeeders(): Promise<DataSource> {
+  const seedSnapshot = getSeedSnapshot();
+  if (seedSnapshot && isSeeded()) {
+    const { dataSource } = require('../../src/seeders/seed');
+    return dataSource;
+  }
+
+  const { dataSource, runAllSeeders } = require('../../src/seeders/seed') as {
+    dataSource: DataSource;
+    runAllSeeders: () => Promise<void>;
+  };
+
+  await runAllSeeders();
   markAsSeeded();
 
   const backup = takeSnapshot();
@@ -68,12 +76,23 @@ export async function seedTestDatabase(): Promise<DataSource> {
 }
 
 /**
+ * Función de compatibilidad: inicializa DataSource + seeders en un solo paso.
+ * Solo usar cuando no se necesite DI de NestJS en los seeders.
+ */
+export async function seedTestDatabase(): Promise<DataSource> {
+  const ds = await initTestDataSource();
+
+  const seedSnapshot = getSeedSnapshot();
+  if (seedSnapshot && isSeeded()) {
+    return ds;
+  }
+
+  return runTestSeeders();
+}
+
+/**
  * Restaura la base de datos al estado post-seeders.
  * Esta operación es instantánea (~0ms).
- *
- * Se usa en:
- * - beforeAll de cada archivo de test (restaurar al estado seed limpio)
- * - Manualmente si un test necesita resetear a estado inicial
  */
 export function restoreToSeedState(): void {
   const seedSnapshot = getSeedSnapshot();
@@ -90,9 +109,6 @@ export function restoreToSeedState(): void {
 
 /**
  * Obtiene el DataSource de TypeORM para uso en tests.
- * Útil cuando los tests necesitan acceso directo al DataSource.
- *
- * @returns DataSource inicializado
  */
 export function getSeededDataSource(): DataSource {
   const { dataSource } = require('../../src/seeders/seed');

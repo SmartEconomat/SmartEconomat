@@ -220,8 +220,8 @@ describe('AdminService', () => {
       id: 'user-3',
       password: 'old',
       mustChangePassword: false,
-      passwordResetToken: 'token',
-      passwordResetExpires: new Date(),
+      resetPasswordOtp: 'token',
+      resetPasswordOtpExpires: new Date(),
     };
     mockUsuarioRepo.findOne.mockResolvedValue(user);
     mockUsuarioRepo.save.mockImplementation((entity: unknown) =>
@@ -233,7 +233,7 @@ describe('AdminService', () => {
     expect(result.provisionalPassword).toHaveLength(8);
     expect(result.mustChangePassword).toBe(true);
     expect(user.mustChangePassword).toBe(true);
-    expect(user.passwordResetToken).toBeNull();
-    expect(user.passwordResetExpires).toBeNull();
+    expect(user.resetPasswordOtp).toBeNull();
+    expect(user.resetPasswordOtpExpires).toBeNull();
   });
 });

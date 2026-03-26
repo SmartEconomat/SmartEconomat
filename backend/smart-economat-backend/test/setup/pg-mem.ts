@@ -56,15 +56,10 @@ export function initPgMem(): { db: IMemoryDb; pg: any } {
     return { db: g.__PG_MEM_DB__, pg: g.__PG_MEM_PG__ };
   }
 
-  // Silenciar: console.log('🚀 Inicializando pg-mem (PostgreSQL en memoria)...');
-
-  // Crear instancia de pg-mem
   const db = newDb({
-    // Optimización: crear índices automáticamente para foreign keys
     autoCreateForeignKeyIndices: true,
   });
 
-  // Registrar funciones PostgreSQL necesarias
   db.public.registerFunction({
     name: 'current_database',
     implementation: () => 'test',
@@ -78,7 +73,7 @@ export function initPgMem(): { db: IMemoryDb; pg: any } {
   db.public.registerFunction({
     name: 'uuid_generate_v7',
     implementation: () => generateUuidV7(),
-    impure: true, // Marca como impura (resultados diferentes en cada llamada)
+    impure: true,
   });
 
   db.public.registerFunction({
@@ -87,7 +82,6 @@ export function initPgMem(): { db: IMemoryDb; pg: any } {
     impure: true,
   });
 
-  // Guardar en global para reutilización
   g.__PG_MEM_DB__ = db;
   g.__PG_MEM_PG__ = db.adapters.createPg();
 
@@ -100,9 +94,13 @@ export function initPgMem(): { db: IMemoryDb; pg: any } {
  *
  * @returns DataSource inicializado
  */
-export function getTestDataSource(): DataSource {
+export async function getTestDataSource(): Promise<DataSource> {
   if (g.__TEST_DATASOURCE__) {
-    return g.__TEST_DATASOURCE__;
+    const ds = g.__TEST_DATASOURCE__;
+    if (!ds.isInitialized) {
+      await ds.initialize();
+    }
+    return ds;
   }
 
   throw new Error(
