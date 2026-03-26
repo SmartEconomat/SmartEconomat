@@ -20,8 +20,10 @@ export class NormalizeArrayTransformer {
 
     if (Array.isArray(value)) {
       return value
-        .filter((item: any) => item != null)
-        .map((item: any) => (typeof item === 'string' ? item.trim() : item));
+        .filter((item: unknown) => item != null)
+        .map((item: unknown) =>
+          typeof item === 'string' ? item.trim() : item
+        );
     }
 
     if (typeof value === 'string') {

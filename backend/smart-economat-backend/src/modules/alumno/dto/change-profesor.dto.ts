@@ -3,7 +3,7 @@ import { Transform } from 'class-transformer';
 
 export class ChangeProfesorDto {
   @Transform(({ value }) =>
-    typeof value === 'string' ? value.toUpperCase() : value
+    typeof value === 'string' ? value.toUpperCase() : String(value)
   )
   @IsString()
   @IsNotEmpty()

@@ -57,7 +57,7 @@ export class SherlockPermissionsGuard implements CanActivate {
       ]) ?? 'all';
 
     const request = context.switchToHttp().getRequest();
-    const user = request.user;
+    const user = request.user as { id: string; nombre?: string; rol?: string };
 
     if (!user || !user.id) {
       this.logger.warn(
