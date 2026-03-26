@@ -325,51 +325,103 @@ export class ProductoService {
   }
 
   async actualizarPMP(
-    productoId: string,
+    productoProveedorId: string,
     nuevaCantidad: number,
     nuevoPrecio: number,
     manager?: EntityManager
   ): Promise<number> {
     const em = manager || this.dataSource.manager;
 
+    const pp = await em.findOne(ProductoProveedor, {
+      where: { id: productoProveedorId },
+      relations: ['producto'],
+    });
+
+    if (!pp) {
+      return nuevoPrecio;
+    }
+
+    const inventariosPP = await em.find(Inventario, {
+      where: { productoProveedorId },
+    });
+
+    const stockTotalPP = inventariosPP.reduce(
+      (sum, inv) => sum + Number(inv.cantidadActual),
+      0
+    );
+    const stockAnteriorPP = Math.max(0, stockTotalPP - nuevaCantidad);
+    const pmpAnteriorPP = Number(pp.pmp) || 0;
+
+    const divisorPP = stockAnteriorPP + nuevaCantidad;
+    const nuevoPmpPP =
+      divisorPP > 0
+        ? (stockAnteriorPP * pmpAnteriorPP + nuevaCantidad * nuevoPrecio) /
+          divisorPP
+        : nuevoPrecio;
+
+    pp.pmp = Number(nuevoPmpPP.toFixed(4));
+    await em.save(ProductoProveedor, pp);
+
+    if (pp.producto) {
+      await this.recalcularPmpProducto(pp.producto.id, em);
+    }
+
+    return pp.pmp;
+  }
+
+  /**
+   * Recalcula el campo Producto.pmp como media ponderada del PMP de todos
+   * sus ProductoProveedor activos, ponderada por el stock de cada uno.
+   * Este campo es derivado y se usa para consultas rápidas y reportes.
+   */
+  private async recalcularPmpProducto(
+    productoId: string,
+    em: EntityManager
+  ): Promise<void> {
     const producto = await em.findOne(Producto, {
       where: { id: productoId },
       relations: ['proveedores'],
     });
+    if (!producto) return;
 
-    if (!producto) {
-      throw new NotFoundException(I18nHelper.getError('PRODUCT_NOT_FOUND'));
-    }
+    const ppIds = producto.proveedores.map((p) => p.id);
+    if (ppIds.length === 0) return;
 
-    const ppIds = producto.proveedores.map((pp) => pp.id);
-
-    if (ppIds.length === 0) {
-      producto.pmp = nuevoPrecio;
-      await em.save(Producto, producto);
-      return nuevoPrecio;
-    }
-
-    const inventarios = await em.find(Inventario, {
+    const todosInventarios = await em.find(Inventario, {
       where: { productoProveedorId: In(ppIds) },
     });
 
-    const stockTotalActual = inventarios.reduce(
-      (sum, inv) => sum + Number(inv.cantidadActual),
-      0
-    );
-    const stockAnterior = Math.max(0, stockTotalActual - nuevaCantidad);
-    const pmpAnterior = Number(producto.pmp) || 0;
+    let stockTotal = 0;
+    let sumaPonderada = 0;
 
-    const divisor = stockAnterior + nuevaCantidad;
-    const nuevoPmp =
-      divisor > 0
-        ? (stockAnterior * pmpAnterior + nuevaCantidad * nuevoPrecio) / divisor
-        : nuevoPrecio;
+    for (const pp of producto.proveedores) {
+      const invPP = todosInventarios.filter(
+        (inv) => inv.productoProveedorId === pp.id
+      );
+      const stockPP = invPP.reduce(
+        (sum, inv) => sum + Number(inv.cantidadActual),
+        0
+      );
+      const pmpPP = Number(pp.pmp) || 0;
+      stockTotal += stockPP;
+      sumaPonderada += stockPP * pmpPP;
+    }
 
-    producto.pmp = Number(nuevoPmp.toFixed(4));
+    producto.pmp =
+      stockTotal > 0
+        ? Number((sumaPonderada / stockTotal).toFixed(4))
+        : producto.proveedores.length > 0
+          ? Number(
+              (
+                producto.proveedores.reduce(
+                  (sum, p) => sum + Number(p.pmp),
+                  0
+                ) / producto.proveedores.length
+              ).toFixed(4)
+            )
+          : 0;
+
     await em.save(Producto, producto);
-
-    return producto.pmp;
   }
 
   async getHistorialPrecios(
@@ -527,6 +579,7 @@ export class ProductoService {
           precioUnitario: p.precioUnitario ?? 0,
           marca: p.marcaEspecifica,
           codigoBarras: p.codigoBarras,
+          pmp: 0,
         })
       );
       await manager.save(newRelations);

@@ -156,16 +156,45 @@ export class ProductoController {
 
   @Get(':id/pmp')
   @RequirePermissions('productos:ver')
-  @ApiOperation({ summary: 'Obtener el PMP actual de un producto' })
+  @ApiOperation({
+    summary: 'Obtener el PMP actual de un producto, desglosado por proveedor',
+  })
   @ApiParam({ name: 'id', description: 'ID del producto' })
   @ApiResponse({
     status: 200,
-    schema: { properties: { pmp: { type: 'number' } } },
+    schema: {
+      properties: {
+        pmp: {
+          type: 'number',
+          description: 'PMP global ponderado del producto',
+        },
+        porProveedor: {
+          type: 'array',
+          items: {
+            properties: {
+              productoProveedorId: { type: 'string' },
+              proveedorId: { type: 'string' },
+              pmp: { type: 'number' },
+            },
+          },
+        },
+      },
+    },
   })
-  async getPmp(
-    @Param('id', ParseUUIDPipe) id: string
-  ): Promise<{ pmp: number }> {
+  async getPmp(@Param('id', ParseUUIDPipe) id: string): Promise<{
+    pmp: number;
+    porProveedor: {
+      productoProveedorId: string;
+      proveedorId: string;
+      pmp: number;
+    }[];
+  }> {
     const producto = await this.productoService.findOne(id);
-    return { pmp: producto.pmp };
+    const porProveedor = (producto.proveedores || []).map((pp) => ({
+      productoProveedorId: pp.id,
+      proveedorId: pp.proveedorId,
+      pmp: Number(pp.pmp) || 0,
+    }));
+    return { pmp: producto.pmp, porProveedor };
   }
 }

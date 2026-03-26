@@ -98,6 +98,22 @@ export class ProductoProveedor extends BaseEntity {
   mermaEsperada?: number;
 
   /**
+   * Precio Medio Ponderado (PMP) de este producto para este proveedor concreto.
+   * Se recalcula automáticamente en cada recepción de mercancía.
+   * Fuente de verdad del PMP a nivel producto-proveedor.
+   * @type {number}
+   */
+  @Column({
+    type: 'numeric',
+    precision: 10,
+    scale: 4,
+    default: 0,
+    name: 'pmp',
+    transformer: new ColumnNumericTransformer(),
+  })
+  pmp!: number;
+
+  /**
    * Referencia al Proveedor.
    * Constraint: No se puede eliminar el proveedor si tiene productos vinculados (RESTRICT).
    */

@@ -302,10 +302,10 @@ export class RecepcionStockService {
           });
           await queryRunner.manager.save(historial);
 
-          const productoId = item.ppRef.productoProveedor?.producto?.id;
-          if (productoId && this.productoService?.actualizarPMP) {
+          const productoProveedorIdPMP = item.ppRef.productoProveedorId;
+          if (productoProveedorIdPMP && this.productoService?.actualizarPMP) {
             await this.productoService.actualizarPMP(
-              productoId,
+              productoProveedorIdPMP,
               cantidadRecibida,
               precioUnitario,
               queryRunner.manager
@@ -559,6 +559,7 @@ export class RecepcionStockService {
             proveedor: defaultProvider as any,
             marca: pNew.marca,
             codigoBarras: pNew.codigoBarras,
+            pmp: 0,
           });
           const savedPP = await queryRunner.manager.save(pp);
 
@@ -815,10 +816,10 @@ export class RecepcionStockService {
           });
           await queryRunner.manager.save(historial);
 
-          const productoId = ppRef.productoProveedor?.producto?.id;
-          if (productoId && this.productoService?.actualizarPMP) {
+          const productoProveedorIdPMP = ppRef.productoProveedorId;
+          if (productoProveedorIdPMP && this.productoService?.actualizarPMP) {
             await this.productoService.actualizarPMP(
-              productoId,
+              productoProveedorIdPMP,
               cantidadRecibida,
               precioUnitario,
               queryRunner.manager
