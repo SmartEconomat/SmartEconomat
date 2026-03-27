@@ -211,6 +211,7 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                           <FormControl size="small" fullWidth>
                             <Select
                               value={l.estadoVisual}
+                              MenuProps={{ disableScrollLock: true, disablePortal: true }}
                               onChange={(e) =>
                                 onUpdateLinea(
                                   pIdx,
@@ -363,6 +364,7 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                       <FormControl size="small" fullWidth>
                         <Select
                           value={l.estadoVisual || EstadoVisualProducto.OPTIMO}
+                          MenuProps={{ disableScrollLock: true, disablePortal: true }}
                           onChange={(e) =>
                             onUpdateLinea(
                               null,
