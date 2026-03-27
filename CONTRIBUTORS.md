@@ -34,11 +34,11 @@ Demostrando que:
 - 🔀 PRs Fusionados: **21**
 
 ### 🥈 Maurizio
-- 💻 Commits: **53** (7.39%)
+- 💻 Commits: **75** (7.33%)
 - 🔀 PRs Fusionados: **8**
 
 ### 🥈 Guillermo
-- 💻 Commits: **31** (4.32%)
+- 💻 Commits: **45** (4.40%)
 - 🔀 PRs Fusionados: **8**
 
 ---
@@ -47,7 +47,7 @@ Demostrando que:
 
 ### 😅 **Guillermo**
 
-Con **31 commits** y **8 PRs**, tenemos aquí a alguien que:
+Con **45 commits** y **8 PRs**, tenemos aquí a alguien que:
 - 🤔 Prefiere la calidad sobre la cantidad (eso espero...)
 - 🏖️ Cree que git es una red social casual
 - 🎯 Está "esperando el momento perfecto" para contribuir
@@ -73,10 +73,10 @@ Con **31 commits** y **8 PRs**, tenemos aquí a alguien que:
 
 ## 📊 Estadísticas Generales
 
-- **Total de commits:** 717
+- **Total de commits:** 1023
 - **Total de PRs fusionados:** 156
 - **Total de contribuidores:** 5
-- **Promedio de commits por persona:** 143.4
+- **Promedio de commits por persona:** 204.6
 
 ---
 
@@ -92,10 +92,10 @@ Con **31 commits** y **8 PRs**, tenemos aquí a alguien que:
 `█████░░░░░░░░░░░░░░░` 98 commits | 21 PRs
 
 **Maurizio**
-`███░░░░░░░░░░░░░░░░░` 53 commits | 8 PRs
+`███░░░░░░░░░░░░░░░░░` 75 commits | 8 PRs
 
 **Guillermo**
-`█░░░░░░░░░░░░░░░░░░░` 31 commits | 8 PRs
+`█░░░░░░░░░░░░░░░░░░░` 45 commits | 8 PRs
 
 ---
 

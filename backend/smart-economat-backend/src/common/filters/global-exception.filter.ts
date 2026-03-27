@@ -12,7 +12,7 @@ import { randomUUID } from 'node:crypto';
 import { QueryFailedError } from 'typeorm';
 import { ApiResponse } from '../interfaces/api-response.interface';
 import { APP_VERSION } from '../helpers/app-version.helper';
-import { I18nContext } from 'nestjs-i18n';
+import { I18nContext, I18nValidationException } from 'nestjs-i18n';
 
 /**
  * Keys used to fetch readable messages for database errors.
@@ -75,6 +75,20 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       );
     }
 
+    if (exception instanceof I18nValidationException) {
+      const messages = this.flattenValidationErrors(exception.errors ?? []);
+      const fallback = i18n
+        ? i18n.translate('translation.errors.INTERNAL_SERVER_ERROR')
+        : 'translation.errors.INTERNAL_SERVER_ERROR';
+      return this.sendResponse(
+        response,
+        HttpStatus.BAD_REQUEST,
+        messages.length > 0 ? messages.join(', ') : fallback,
+        { errors: exception.errors },
+        requestId
+      );
+    }
+
     const status =
       exception instanceof HttpException
         ? exception.getStatus()
@@ -124,6 +138,28 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       errorDetails,
       requestId
     );
+  }
+
+  private flattenValidationErrors(
+    errors: { constraints?: Record<string, string>; children?: unknown[] }[]
+  ): string[] {
+    const messages: string[] = [];
+    for (const error of errors) {
+      if (error.constraints) {
+        messages.push(...Object.values(error.constraints));
+      }
+      if (Array.isArray(error.children) && error.children.length > 0) {
+        messages.push(
+          ...this.flattenValidationErrors(
+            error.children as {
+              constraints?: Record<string, string>;
+              children?: unknown[];
+            }[]
+          )
+        );
+      }
+    }
+    return messages;
   }
 
   private sendResponse(
