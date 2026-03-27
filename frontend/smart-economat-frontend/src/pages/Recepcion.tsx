@@ -325,17 +325,7 @@ const Recepcion: React.FC = () => {
     setError(null);
 
     try {
-      const ports = await serialService.getAuthorizedPorts();
-      
-      // Si ya hay un puerto autorizado y no estamos conectados, conectamos directo.
-      if (ports.length > 0 && !isScaleConnected && await serialService.ensureConnection()) {
-        setIsScaleConnected(true);
-        setIsScaleEnabled(true);
-        scaleManuallyDisabledRef.current = false;
-        setScaleStatusText('Báscula conectada');
-        return;
-      }
-
+      // Forzamos el diálogo nativo siempre que den a Vincular, según petición
       const selected = await serialService.requestPort();
       if (!selected) {
         setScaleStatusText('Selección de puerto cancelada');

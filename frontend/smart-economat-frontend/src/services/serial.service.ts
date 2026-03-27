@@ -1,18 +1,11 @@
 export class SerialService {
   private port: SerialPort | null = null;
-  private reader: ReadableStreamDefaultReader<
-    Uint8Array<ArrayBufferLike>
-  > | null = null;
-  private writer: WritableStreamDefaultWriter<
-    Uint8Array<ArrayBufferLike>
-  > | null = null;
-  private buffer: Uint8Array<ArrayBufferLike> = new Uint8Array(0);
+  private reader: ReadableStreamDefaultReader<string> | null = null;
+  private writer: WritableStreamDefaultWriter<Uint8Array> | null = null;
+  private buffer: string = '';
 
-  private readonly STX = 0x02;
-  private readonly ETX = 0x03;
-
-  private readonly decoder = new TextDecoder();
-  private readonly encoder = new TextEncoder();
+  private readonly STX = '\x02';
+  private readonly ETX = '\x03';
 
   private readingLoopActive = false;
 
@@ -64,20 +57,12 @@ export class SerialService {
       if (!hasPort) return false;
     }
 
-    if (this.port?.readable && this.port?.writable) {
-      if (!this.reader) {
-        this.reader = this.port.readable.getReader();
-      }
-
-      if (!this.writer) {
-        this.writer = this.port.writable.getWriter();
-      }
-
+    try {
+      await this.connect();
       return true;
+    } catch {
+      return false;
     }
-
-    await this.connect();
-    return true;
   }
 
   public async connect(): Promise<void> {
@@ -99,65 +84,58 @@ export class SerialService {
       );
     }
 
+    // Convertimos datos binarios a texto 
     if (!this.reader) {
-      this.reader = this.port.readable.getReader();
-    }
-
-    if (!this.writer) {
-      this.writer = this.port.writable.getWriter();
+      const decoder = new TextDecoderStream();
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      this.port.readable.pipeTo(decoder.writable).catch(() => {});
+      this.reader = decoder.readable.getReader();
     }
   }
 
-  private concatBuffer(
-    a: Uint8Array<ArrayBufferLike>,
-    b: Uint8Array<ArrayBufferLike>
-  ): Uint8Array<ArrayBufferLike> {
-    const result = new Uint8Array(a.length + b.length);
-    result.set(a, 0);
-    result.set(b, a.length);
-    return result;
-  }
-
-  private extractFrames(buf: Uint8Array): {
-    frames: Uint8Array<ArrayBufferLike>[];
-    rest: Uint8Array<ArrayBufferLike>;
-  } {
-    const frames: Uint8Array<ArrayBufferLike>[] = [];
-    let buffer = buf;
+  private extractFrames(buf: string): [string[], string] {
+    const frames: string[] = [];
 
     while (true) {
-      const stxIndex = buffer.indexOf(this.STX);
-      if (stxIndex !== -1) {
-        buffer = buffer.slice(stxIndex + 1);
-        const etxIndex = buffer.indexOf(this.ETX);
+      // 1) Buscar STX
+      const i = buf.indexOf(this.STX);
 
-        if (etxIndex === -1) {
-          return {
-            frames,
-            rest: this.concatBuffer(new Uint8Array([this.STX]), buffer),
-          };
-        }
+      if (i !== -1) {
+        // Eliminar todo antes del STX
+        buf = buf.slice(i + 1);
 
-        frames.push(buffer.slice(0, etxIndex));
-        buffer = buffer.slice(etxIndex + 1);
+        // Buscar ETX
+        const j = buf.indexOf(this.ETX);
+
+        // Si no hay ETX aún -> trama incompleta
+        if (j === -1) return [frames, this.STX + buf];
+
+        // Extraer contenido entre STX y ETX
+        frames.push(buf.slice(0, j));
+
+        // Eliminar la trama procesada del buffer
+        buf = buf.slice(j + 1);
         continue;
       }
 
-      const newLineIndex = buffer.indexOf(10);
+      // 2) Intentar separar por salto de línea \n
+      const newLineIndex = buf.indexOf('\n');
       if (newLineIndex !== -1) {
-        frames.push(buffer.slice(0, newLineIndex));
-        buffer = buffer.slice(newLineIndex + 1);
+        frames.push(buf.slice(0, newLineIndex));
+        buf = buf.slice(newLineIndex + 1);
         continue;
       }
 
-      const carriageReturnIndex = buffer.indexOf(13);
+      // 3) Intentar separar por \r
+      const carriageReturnIndex = buf.indexOf('\r');
       if (carriageReturnIndex !== -1) {
-        frames.push(buffer.slice(0, carriageReturnIndex));
-        buffer = buffer.slice(carriageReturnIndex + 1);
+        frames.push(buf.slice(0, carriageReturnIndex));
+        buf = buf.slice(carriageReturnIndex + 1);
         continue;
       }
 
-      return { frames, rest: buffer };
+      return [frames, buf];
     }
   }
 
@@ -201,13 +179,12 @@ export class SerialService {
         }
 
         if (value) {
-          this.buffer = this.concatBuffer(this.buffer, value);
-          const { frames, rest } = this.extractFrames(this.buffer);
+          this.buffer += value;
+          const [frames, rest] = this.extractFrames(this.buffer);
           this.buffer = rest;
 
           for (const frame of frames) {
-            const text = this.decoder.decode(frame).trim();
-            const weight = this.parseWeight(text);
+            const weight = this.parseWeight(frame.trim());
             if (weight !== null && weight !== ultimoPesoDetectado) {
               ultimoPesoDetectado = weight;
               onWeight(weight);
@@ -256,7 +233,7 @@ export class SerialService {
       }
 
       this.port = null;
-      this.buffer = new Uint8Array(0);
+      this.buffer = '';
     } catch (error) {
       console.error('Error cerrando el puerto serie:', error);
     }
