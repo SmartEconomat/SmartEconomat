@@ -15,7 +15,6 @@ export class SerialService {
   private readonly encoder = new TextEncoder();
 
   private readingLoopActive = false;
-  private writeTimer: number | null = null;
 
   public isSupported(): boolean {
     return typeof navigator !== 'undefined' && 'serial' in navigator;
@@ -183,22 +182,14 @@ export class SerialService {
     onWeight: (weight: number) => void,
     onError?: (error: Error) => void
   ): Promise<void> {
-    if (!this.reader || !this.writer) {
-      throw new Error('La báscula no está conectada.');
+    if (!this.reader) {
+      throw new Error('La báscula no está conectada o no hay lector activo.');
     }
 
     if (this.readingLoopActive) return;
 
     this.readingLoopActive = true;
-
-    if (this.writeTimer !== null) {
-      window.clearInterval(this.writeTimer);
-    }
-    this.writeTimer = window.setInterval(() => {
-      if (this.writer && this.readingLoopActive) {
-        this.writer.write(this.encoder.encode('P\r\n')).catch(() => {});
-      }
-    }, 400);
+    let ultimoPesoDetectado: number | null = null;
 
     while (this.readingLoopActive) {
       try {
@@ -217,32 +208,23 @@ export class SerialService {
           for (const frame of frames) {
             const text = this.decoder.decode(frame).trim();
             const weight = this.parseWeight(text);
-            if (weight !== null) {
+            if (weight !== null && weight !== ultimoPesoDetectado) {
+              ultimoPesoDetectado = weight;
               onWeight(weight);
             }
           }
         }
       } catch (error: unknown) {
-        const serialError =
-          error instanceof Error
-            ? error
-            : new Error('Error leyendo datos desde la báscula.');
-        this.readingLoopActive = false;
-        onError?.(serialError);
-      }
-
-      if (this.readingLoopActive) {
-        await delay(50);
+        if (this.readingLoopActive) {
+          console.error('Error leyenda báscula:', error);
+          await delay(200);
+        }
       }
     }
   }
 
   public stopContinuousRead(): void {
     this.readingLoopActive = false;
-    if (this.writeTimer !== null) {
-      window.clearInterval(this.writeTimer);
-      this.writeTimer = null;
-    }
   }
 
   public async disconnect(): Promise<void> {
