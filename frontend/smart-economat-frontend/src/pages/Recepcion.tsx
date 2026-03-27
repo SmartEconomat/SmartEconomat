@@ -229,20 +229,19 @@ const Recepcion: React.FC = () => {
     let cancelled = false;
     const serialNavigator = navigator as SerialNavigator;
 
-    const syncAuthorizedScale = async () => {
+    const checkAuthorizedScale = async () => {
       setIsScaleBusy(true);
 
       try {
-        const connected = await serialService.ensureConnection();
+        const ports = await serialService.getAuthorizedPorts();
         if (cancelled) return;
 
-        setIsScaleConnected(connected);
-        if (connected) {
-          setScaleStatusText('Báscula conectada');
-          if (!scaleManuallyDisabledRef.current) {
-            setIsScaleEnabled(true);
-          }
+        if (ports.length > 0) {
+          setIsScaleConnected(false);
+          setIsScaleEnabled(false);
+          setScaleStatusText('Báscula guardada, lista para conectar');
         } else {
+          setIsScaleConnected(false);
           setScaleStatusText('Sin báscula autorizada');
         }
       } catch {
@@ -258,18 +257,21 @@ const Recepcion: React.FC = () => {
     };
 
     const handleConnect = () => {
-      void syncAuthorizedScale();
+      setIsScaleConnected(true);
+      setIsScaleEnabled(true);
+      setScaleStatusText('Báscula conectada');
     };
 
     const handleDisconnect = () => {
       serialService.stopContinuousRead();
       setIsScaleConnected(false);
+      setIsScaleEnabled(false);
       setIsWeighing(false);
       setCapturedWeight(null);
       setIsScaleStatusDisconnected();
     };
 
-    void syncAuthorizedScale();
+    void checkAuthorizedScale();
     serialNavigator.serial.addEventListener('connect', handleConnect);
     serialNavigator.serial.addEventListener('disconnect', handleDisconnect);
 
@@ -323,6 +325,17 @@ const Recepcion: React.FC = () => {
     setError(null);
 
     try {
+      const ports = await serialService.getAuthorizedPorts();
+      
+      // Si ya hay un puerto autorizado y no estamos conectados, conectamos directo.
+      if (ports.length > 0 && !isScaleConnected && await serialService.ensureConnection()) {
+        setIsScaleConnected(true);
+        setIsScaleEnabled(true);
+        scaleManuallyDisabledRef.current = false;
+        setScaleStatusText('Báscula conectada');
+        return;
+      }
+
       const selected = await serialService.requestPort();
       if (!selected) {
         setScaleStatusText('Selección de puerto cancelada');
