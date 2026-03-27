@@ -15,6 +15,7 @@ export class SerialService {
   private readonly encoder = new TextEncoder();
 
   private readingLoopActive = false;
+  private writeTimer: number | null = null;
 
   public isSupported(): boolean {
     return typeof navigator !== 'undefined' && 'serial' in navigator;
@@ -190,9 +191,17 @@ export class SerialService {
 
     this.readingLoopActive = true;
 
+    if (this.writeTimer !== null) {
+      window.clearInterval(this.writeTimer);
+    }
+    this.writeTimer = window.setInterval(() => {
+      if (this.writer && this.readingLoopActive) {
+        this.writer.write(this.encoder.encode('P\r\n')).catch(() => {});
+      }
+    }, 400);
+
     while (this.readingLoopActive) {
       try {
-        await this.writer.write(this.encoder.encode('P\r\n'));
         const { value, done } = await this.reader.read();
 
         if (done) {
@@ -223,13 +232,17 @@ export class SerialService {
       }
 
       if (this.readingLoopActive) {
-        await delay(200);
+        await delay(50);
       }
     }
   }
 
   public stopContinuousRead(): void {
     this.readingLoopActive = false;
+    if (this.writeTimer !== null) {
+      window.clearInterval(this.writeTimer);
+      this.writeTimer = null;
+    }
   }
 
   public async disconnect(): Promise<void> {
