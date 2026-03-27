@@ -26,6 +26,7 @@ import { DuplicateRecetaDto } from '../dto/duplicate-receta.dto';
 import { DetalleRecetaDto } from '../dto/detalle-receta.dto';
 import { CocinarRecetaDto } from '../dto/cocinar-receta.dto';
 import { RecetaCostResponseDto } from '../dto/receta-cost-response.dto';
+import { RecetaPreviewCostDto } from '../dto/receta-preview-cost.dto';
 import { Receta } from '../receta.entity/receta.entity';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
@@ -115,6 +116,18 @@ export class RecetaController {
     @Body() cocinarRecetaDto: CocinarRecetaDto
   ): Promise<void> {
     return this.recetaService.cocinar(id, cocinarRecetaDto);
+  }
+
+  @Post('calculate-preview')
+  @RequirePermissions('recetas:ver')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Vista previa del coste de una receta antes de crearla/editarla',
+  })
+  calculatePreviewCost(
+    @Body() dto: RecetaPreviewCostDto
+  ): Promise<RecetaCostResponseDto> {
+    return this.recetaService.calculatePreviewCost(dto);
   }
 
   @Get('export/pdf')

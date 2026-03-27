@@ -4,6 +4,8 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { ProductoPrecioActualizadoEvent } from '../events/producto-precio-actualizado.event';
 import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
 import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.entity';
 import { UpdatePrecioProductoDto } from '../dto/update-precio-producto.dto';
@@ -34,7 +36,10 @@ export interface ComparacionProveedoresResponse {
 
 @Injectable()
 export class ProductoProveedorService {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly eventEmitter: EventEmitter2
+  ) {}
 
   async updatePrecio(
     idProductoProveedor: string,
@@ -67,7 +72,19 @@ export class ProductoProveedorService {
       }
 
       productoProveedor.precioUnitario = nuevoPrecio;
-      return await manager.save(ProductoProveedor, productoProveedor);
+      const saved = await manager.save(ProductoProveedor, productoProveedor);
+
+      this.eventEmitter.emit(
+        'producto.precio.actualizado',
+        new ProductoPrecioActualizadoEvent(
+          saved.productoId,
+          saved.proveedorId,
+          nuevoPrecio,
+          previousPrice ?? undefined
+        )
+      );
+
+      return saved;
     });
   }
 

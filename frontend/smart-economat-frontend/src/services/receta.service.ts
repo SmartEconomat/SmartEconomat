@@ -130,3 +130,29 @@ export async function exportRecipesPdf(
     }
   );
 }
+export async function calculatePreviewCost(dto: {
+  ingredientes: Array<{
+    productoId: string;
+    cantidad: number;
+    unidad: string;
+    mermaAplicada?: number;
+    proveedorFavoritoId?: string;
+  }>;
+  rendimiento?: number;
+}): Promise<{ costoTotal: number; costoUnitarioEstimado?: number }> {
+  const response = await baseFetch('/recetas/calculate-preview', {
+    method: 'POST',
+    body: JSON.stringify(dto),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`Error al previsualizar coste: ${response.status}`);
+  }
+  const body = (await response.json()) as ApiResponse<{
+    costoTotal: number;
+    costoUnitarioEstimado?: number;
+  }>;
+  return body.data;
+}

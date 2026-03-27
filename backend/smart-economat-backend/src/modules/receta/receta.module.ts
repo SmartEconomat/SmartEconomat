@@ -12,6 +12,7 @@ import { ProduccionController } from './controller/produccion.controller';
 import { RecetaRepository } from './repository/receta.repository';
 
 import { RecetaPdfService } from './service/receta-pdf.service';
+import { RecetaRecepcionListener } from './listeners/receta-recepcion.listener';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { RecetaPdfService } from './service/receta-pdf.service';
     ProduccionService,
     RecetaRepository,
     RecetaPdfService,
+    RecetaRecepcionListener,
   ],
   exports: [
     RecetaService,
