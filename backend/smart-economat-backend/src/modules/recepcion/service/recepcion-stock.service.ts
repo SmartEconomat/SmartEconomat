@@ -215,38 +215,50 @@ export class RecepcionStockService {
           );
         }
 
+        const cantidad = Number(linea.cantidadRecibida);
+        if (isNaN(cantidad) || cantidad < 0) {
+          throw new BadRequestException(
+            `La cantidad recibida debe ser un número positivo.`
+          );
+        }
+
+        if (cantidad > 100000) {
+          throw new BadRequestException(
+            `La cantidad recibida es irrealmente alta.`
+          );
+        }
+
         const valActual = sumadoRecibidoPorPP.get(ppRef.id) || 0;
-        sumadoRecibidoPorPP.set(
-          ppRef.id,
-          valActual + Number(linea.cantidadRecibida)
-        );
+        sumadoRecibidoPorPP.set(ppRef.id, valActual + cantidad);
 
         const detallesLinea = detallesRecibidos.get(ppRef.id) || [];
         detallesLinea.push(linea);
         detallesRecibidos.set(ppRef.id, detallesLinea);
 
+        const weighed =
+          typeof linea.isWeighedWithScale === 'boolean'
+            ? linea.isWeighedWithScale
+            : false;
+
         batchRecepcionProductos.push(
           queryRunner.manager.create(RecepcionProducto, {
             recepcion: savedRecepcion,
             cantidadAlbaran: linea.cantidadAlbaran || null,
-            cantidadRecibida: linea.cantidadRecibida,
+            cantidadRecibida: cantidad,
             estadoProducto,
             observaciones: linea.observaciones,
             pedidoProducto: { id: ppRef.id },
-            isWeighedWithScale: (linea as any).isWeighedWithScale || false,
+            isWeighedWithScale: weighed,
           })
         );
 
-        if (
-          linea.cantidadRecibida > 0 &&
-          permiteIncrementarInventario(estadoProducto)
-        ) {
+        if (cantidad > 0 && permiteIncrementarInventario(estadoProducto)) {
           const defaultExpiration = new Date(
             Date.now() + 30 * 24 * 60 * 60 * 1000
           );
           const stockNuevo = queryRunner.manager.create(Inventario, {
             productoProveedor: ppRef.productoProveedor,
-            cantidadActual: linea.cantidadRecibida,
+            cantidadActual: cantidad,
             cantidadMinima: 10,
             fechaEntrada: new Date(),
             ubicacion: defaultUbicacion,

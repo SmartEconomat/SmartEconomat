@@ -272,16 +272,21 @@ const Recepcion: React.FC = () => {
     };
 
     void checkAuthorizedScale();
-    serialNavigator.serial.addEventListener('connect', handleConnect);
-    serialNavigator.serial.addEventListener('disconnect', handleDisconnect);
+
+    if (serialNavigator.serial?.addEventListener) {
+      serialNavigator.serial.addEventListener('connect', handleConnect);
+      serialNavigator.serial.addEventListener('disconnect', handleDisconnect);
+    }
 
     return () => {
       cancelled = true;
-      serialNavigator.serial.removeEventListener('connect', handleConnect);
-      serialNavigator.serial.removeEventListener(
-        'disconnect',
-        handleDisconnect
-      );
+      if (serialNavigator.serial?.removeEventListener) {
+        serialNavigator.serial.removeEventListener('connect', handleConnect);
+        serialNavigator.serial.removeEventListener(
+          'disconnect',
+          handleDisconnect
+        );
+      }
       serialService.stopContinuousRead();
       void serialService.disconnect();
     };

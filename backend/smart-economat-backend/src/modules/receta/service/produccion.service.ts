@@ -360,7 +360,9 @@ export class ProduccionService {
       }
 
       if (lote.estado === EstadoLote.AGOTADO) {
-        throw new BadRequestException('El lote ya se encuentra agotado');
+        throw new BadRequestException(
+          I18nHelper.getError('BATCH_ALREADY_DEPLETED')
+        );
       }
 
       const receta = await manager.findOne(Receta, {
@@ -411,7 +413,9 @@ export class ProduccionService {
 
     const recipe = lote.receta;
     if (!recipe) {
-      throw new BadRequestException('No se pudo resolver la receta del lote.');
+      throw new BadRequestException(
+        I18nHelper.getError('COULD_NOT_RESOLVE_LOT_RECIPE')
+      );
     }
 
     const tamanioRacion =

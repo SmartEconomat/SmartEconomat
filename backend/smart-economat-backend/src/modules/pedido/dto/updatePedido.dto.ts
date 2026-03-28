@@ -45,7 +45,11 @@ export class UpdatePedidoDto {
   })
   @IsOptional()
   @IsArray()
-  @ArrayNotEmpty({ message: 'El pedido debe contener al menos una línea' })
+  @ArrayNotEmpty({
+    message: i18nValidationMessage(
+      'validation.E_PEDIDO_DEBE_CONTENER_AL_MENOS_UNA_LINEA'
+    ),
+  })
   @ValidateNested({ each: true })
   @Type(() => CreatePedidoLineDto)
   lineas?: CreatePedidoLineDto[];

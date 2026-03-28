@@ -126,7 +126,7 @@ export class ProfesorService {
       where: { id: dto.profesorId },
     });
     if (!profesor) {
-      throw new NotFoundException('Profesor no encontrado');
+      throw new NotFoundException(I18nHelper.getError('PROFESOR_NOT_FOUND'));
     }
 
     const existingSlot = await this.slotRepo.findOne({
@@ -374,7 +374,7 @@ export class ProfesorService {
         where: { id: dto.profesorId },
       });
       if (!newProfesor) {
-        throw new NotFoundException('Profesor no encontrado');
+        throw new NotFoundException(I18nHelper.getError('PROFESOR_NOT_FOUND'));
       }
       slot.profesor = newProfesor;
     }

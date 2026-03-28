@@ -62,7 +62,6 @@ build/
 .env.dev
 .env.prod
 
-AGENTS.md
 .aider*
 
 #tests 

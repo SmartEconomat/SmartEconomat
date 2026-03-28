@@ -227,7 +227,9 @@ export class AdminService {
     }
 
     if (!role) {
-      throw new NotFoundException('Rol no encontrado');
+      throw new NotFoundException(
+        I18nHelper.getError('ROLE_NOT_FOUND', { id: roleId })
+      );
     }
 
     await this.ensureNotDemotingAdmin(actorUserId, userId, role.nombre);

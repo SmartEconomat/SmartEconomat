@@ -23,7 +23,13 @@ export class UpdateMermaProveedorDto {
       'validation.EL_PRECIO_NO_PUEDE_SER_NEGATIVO'
     ),
   })
-  @Max(99.99, { message: 'La merma esperada no puede superar el 99.99%.' })
-  @IsNotEmpty({ message: 'La merma esperada es obligatoria.' })
+  @Max(99.99, {
+    message: i18nValidationMessage(
+      'validation.MERMA_ESPERADA_NO_DEFAULT_SUPERAR'
+    ),
+  })
+  @IsNotEmpty({
+    message: i18nValidationMessage('validation.MERMA_ESPERADA_OBLIGATORIA'),
+  })
   nuevaMerma: number;
 }

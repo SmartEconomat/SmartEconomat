@@ -6,6 +6,7 @@ import {
   EntityTarget,
 } from 'typeorm';
 import { ConflictException } from '@nestjs/common';
+import { I18nHelper } from '../helpers/i18n.helper';
 
 export abstract class BaseRepository<
   T extends ObjectLiteral,
@@ -25,7 +26,11 @@ export abstract class BaseRepository<
         if (errorHandler) {
           errorHandler(error);
         }
-        throw new ConflictException(`Transaction failed: ${(error as any).message}`);
+        throw new ConflictException(
+          I18nHelper.getError('TRANSACTION_FAILED', {
+            message: (error as any).message,
+          })
+        );
       }
     });
   }

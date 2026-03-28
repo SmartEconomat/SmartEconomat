@@ -58,17 +58,13 @@ jobs:
 
       - name: Validar secrets SSH requeridos
         env:
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-          SERVER_USER: ${{ secrets.SERVER_USER }}
           SERVER_PORT: ${{ secrets.SERVER_PORT }}
-          SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          DEPLOY_SSH_KEY: ${{ secrets.SmartEconomat_DO }}
         run: |
           set -e
-          [ -n "$SERVER_HOST" ] || { echo "Falta secret SERVER_HOST"; exit 1; }
-          [ -n "$SERVER_USER" ] || { echo "Falta secret SERVER_USER"; exit 1; }
-          [ -n "$SERVER_PORT" ] || { echo "Falta secret SERVER_PORT"; exit 1; }
-          [ -n "$SERVER_SSH_KEY" ] || { echo "Falta secret SERVER_SSH_KEY"; exit 1; }
-          echo "$SERVER_SSH_KEY" | grep -q "BEGIN .*PRIVATE KEY" || { echo "SERVER_SSH_KEY no parece una clave privada valida"; exit 1; }
+          [ -n "$DEPLOY_SSH_KEY" ] || { echo "Falta secret SmartEconomat_DO"; exit 1; }
+          [ -n "$SERVER_PORT" ] || { echo "SERVER_PORT no definido, se usara 22 por defecto"; }
+          echo "$DEPLOY_SSH_KEY" | grep -q "BEGIN .*PRIVATE KEY" || { echo "SmartEconomat_DO no parece una clave privada SSH valida"; exit 1; }
 
       - name: Crear paquete de despliegue
         run: |
@@ -87,11 +83,11 @@ jobs:
       - name: Subir paquete al servidor
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
+          host: 159.89.96.187
+          username: root
+          key: ${{ secrets.SmartEconomat_DO }}
           passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
-          port: ${{ secrets.SERVER_PORT }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
           source: ${{ env.ARCHIVE_NAME }}
           target: ${{ env.REMOTE_BASE_DIR }}
           overwrite: true
@@ -122,11 +118,11 @@ jobs:
           ACME_DIRECTORY_URL: ${{ secrets.ACME_DIRECTORY_URL }}
           ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
+          host: 159.89.96.187
+          username: root
+          key: ${{ secrets.SmartEconomat_DO }}
           passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
-          port: ${{ secrets.SERVER_PORT }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
           timeout: 60s
           envs: APP_NAME,ARCHIVE_NAME,REMOTE_BASE_DIR,NODE_ENV,DOMAIN,BACKEND_API_URL,FRONTEND_API_URL,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,DB_HOST,DB_PORT,DB_USERNAME,DB_PASSWORD,DB_DATABASE,JWT_SECRET,JWT_EXPIRATION,VITE_API_PROXY_TARGET,SENTRY_DSN,VITE_SENTRY_DSN,ACME_DIRECTORY_URL,ACME_EMAIL
           script: |

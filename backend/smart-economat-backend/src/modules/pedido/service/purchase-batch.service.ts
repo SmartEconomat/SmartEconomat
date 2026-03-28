@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { PurchaseBatch } from '../purchase-batch.entity/purchase-batch.entity';
 import {
   CreatePurchaseBatchDto,
@@ -228,7 +229,9 @@ export class PurchaseBatchService {
       new Set(dto.pedidoUsuarioIds || dto.pedidoIds || [])
     );
     if (uniquePedidoUsuarioIds.length === 0) {
-      throw new BadRequestException('Debes seleccionar al menos un pedido.');
+      throw new BadRequestException(
+        I18nHelper.getError('SELECT_AT_LEAST_ONE_ORDER')
+      );
     }
 
     const queryRunner = this.dataSource.createQueryRunner();

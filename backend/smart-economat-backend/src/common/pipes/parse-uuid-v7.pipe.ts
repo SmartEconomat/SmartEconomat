@@ -60,13 +60,13 @@ export class ParseUUIDv7Pipe implements PipeTransform<string | undefined> {
 
     if (!isUUID(value, '7')) {
       throw new BadRequestException(
-        `El valor '${value}' no es un UUID v7 válido`
+        I18nHelper.getError('INVALID_UUID_V7', { value })
       );
     }
 
     if (!ParseUUIDv7Pipe.UUID_V7_REGEX.test(value)) {
       throw new BadRequestException(
-        `El valor '${value}' no tiene el formato correcto de UUID v7`
+        I18nHelper.getError('INVALID_UUID_V7_FORMAT', { value })
       );
     }
 

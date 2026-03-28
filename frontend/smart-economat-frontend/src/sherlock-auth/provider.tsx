@@ -56,9 +56,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         setIsAuthResolved(true);
         localStorage.removeItem('sm_has_session');
         setUser(null);
-        dispatch(resetPermissions());
-        setIsSessionVerified(false);
-        setIsAuthResolved(true);
+        // No resetear permisos aquí para evitar navegación inesperada en vistas protegidas
+        // dispatch(resetPermissions()); // Comentado para preservar permisos hasta logout
         return null;
       })
       .finally(() => {
@@ -105,7 +104,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   useEffect(() => {
     const currentPath = window.location.pathname;
     const hasSessionHint = localStorage.getItem('sm_has_session') === 'true';
-    const shouldBootstrapSession = !isPublicAuthPath(currentPath) || hasSessionHint;
+    const shouldBootstrapSession =
+      !isPublicAuthPath(currentPath) || hasSessionHint;
 
     if (shouldBootstrapSession) {
       void refreshUser();

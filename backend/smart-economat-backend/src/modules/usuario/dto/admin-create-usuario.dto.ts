@@ -7,24 +7,37 @@ import {
   IsStrongPassword,
   MaxLength,
 } from 'class-validator';
+import { i18nValidationMessage } from 'nestjs-i18n';
 import { rolUsuario } from '../enums/usuario.enums';
 
 export class AdminCreateUsuarioDto {
-  @IsString({ message: 'El nombre completo debe ser una cadena de texto' })
-  @IsNotEmpty({ message: 'El nombre completo es obligatorio' })
+  @IsString({
+    message: i18nValidationMessage(
+      'validation.NOMBRE_COMPLETO_DEBE_SER_CADENA'
+    ),
+  })
+  @IsNotEmpty({
+    message: i18nValidationMessage('validation.NOMBRE_COMPLETO_OBLIGATORIO'),
+  })
   @MaxLength(150, {
-    message: 'El nombre completo no puede exceder los 150 caracteres',
+    message: i18nValidationMessage('validation.NOMBRE_COMPLETO_MAX_LENGTH'),
   })
   nombre!: string;
 
-  @IsString({ message: 'El nombre de usuario debe ser una cadena de texto' })
-  @IsNotEmpty({ message: 'El nombre de usuario es obligatorio' })
+  @IsString({
+    message: i18nValidationMessage('validation.NOMBRE_USUARIO_DEBE_SER_CADENA'),
+  })
+  @IsNotEmpty({
+    message: i18nValidationMessage('validation.NOMBRE_USUARIO_OBLIGATORIO'),
+  })
   @MaxLength(100, {
-    message: 'El nombre de usuario no puede exceder los 100 caracteres',
+    message: i18nValidationMessage('validation.NOMBRE_USUARIO_MAX_LENGTH'),
   })
   username!: string;
 
-  @IsString({ message: 'La contraseña debe ser una cadena de texto' })
+  @IsString({
+    message: i18nValidationMessage('validation.CONTRASEÑA_DEBE_SER_CADENA'),
+  })
   @IsStrongPassword(
     {
       minLength: 8,
@@ -34,27 +47,37 @@ export class AdminCreateUsuarioDto {
       minSymbols: 1,
     },
     {
-      message:
-        'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo',
+      message: i18nValidationMessage('validation.CONTRASEÑA_FUERTE_REQUERIDA'),
     }
   )
   password!: string;
 
   @IsOptional()
-  @IsEmail({}, { message: 'El correo electrónico no es válido' })
+  @IsEmail(
+    {},
+    {
+      message: i18nValidationMessage('validation.CORREO_ELECTRONICO_NO_VALIDO'),
+    }
+  )
   @MaxLength(255, {
-    message: 'El correo electrónico no puede exceder los 255 caracteres',
+    message: i18nValidationMessage('validation.CORREO_ELECTRONICO_MAX_LENGTH'),
   })
   email?: string | null;
 
-  @IsEnum(rolUsuario, { message: 'El rol de usuario no es válido' })
+  @IsEnum(rolUsuario, {
+    message: i18nValidationMessage('validation.ROL_USUARIO_NO_VALIDO'),
+  })
   rol!: rolUsuario;
 
   @IsOptional()
-  @IsString({ message: 'El aula/clase debe ser una cadena de texto' })
+  @IsString({
+    message: i18nValidationMessage('validation.AULA_CLASE_DEBE_SER_CADENA'),
+  })
   aula?: string;
 
   @IsOptional()
-  @IsString({ message: 'El CIAL debe ser una cadena de texto' })
+  @IsString({
+    message: i18nValidationMessage('validation.CIAL_DEBE_SER_CADENA'),
+  })
   cial?: string;
 }

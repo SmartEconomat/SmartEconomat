@@ -1,4 +1,6 @@
 import { TransformFnParams } from 'class-transformer/types/interfaces';
+import { BadRequestException } from '@nestjs/common';
+import { I18nHelper } from '../helpers/i18n.helper';
 
 type TransformValueParams = Pick<TransformFnParams, 'value'>;
 
@@ -29,7 +31,9 @@ export class StringToNumberTransformer {
       const normalized = trimmed.replace(/\s+/g, '').replace(',', '.');
       const num = Number(normalized);
       if (isNaN(num)) {
-        throw new Error(`El valor '${value}' no puede ser convertido a número`);
+        throw new BadRequestException(
+          I18nHelper.getError('CANNOT_CONVERT_TO_NUMBER', { value })
+        );
       }
       return num;
     }

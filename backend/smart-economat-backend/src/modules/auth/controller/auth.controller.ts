@@ -18,6 +18,7 @@ import { LoginUserDto } from '../dto/login-user.dto';
 import { Public } from '../../../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { ChangePasswordDto } from '../dto/change-password.dto';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { CookieInterceptor } from '../../../common/interceptors/cookie.interceptor';
@@ -49,7 +50,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   logout(@Response({ passthrough: true }) res: ExpressResponse) {
     res.clearCookie('access_token');
-    return { message: 'Sesión cerrada exitosamente' };
+    return { message: I18nHelper.getSuccess('LOGOUT_SUCCESS') };
   }
 
   @UseGuards(JwtAuthGuard)
@@ -72,7 +73,7 @@ export class AuthController {
       dto.currentPassword,
       dto.newPassword
     );
-    return { message: 'Contraseña actualizada correctamente' };
+    return { message: I18nHelper.getSuccess('PASSWORD_CHANGED') };
   }
 
   @Public()
@@ -82,8 +83,7 @@ export class AuthController {
     await this.authService.forgotPassword(dto.email);
     return {
       success: true,
-      message:
-        'Si el correo existe, se ha enviado un enlace para restablecer la contraseña',
+      message: I18nHelper.getSuccess('FORGOT_PASSWORD_EMAIL_SENT'),
     };
   }
 
@@ -92,6 +92,6 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async resetPassword(@Body() dto: ResetPasswordDto) {
     await this.authService.resetPassword(dto.token, dto.newPassword);
-    return { message: 'Contraseña restablecida correctamente' };
+    return { message: I18nHelper.getSuccess('PASSWORD_RESET') };
   }
 }

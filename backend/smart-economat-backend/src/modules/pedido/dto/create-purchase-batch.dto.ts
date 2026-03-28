@@ -8,6 +8,7 @@ import {
   IsUUID,
   ValidateNested,
 } from 'class-validator';
+import { i18nValidationMessage } from 'nestjs-i18n';
 import { CreatePedidoLineDto } from './create-pedido-line.dto';
 
 export class CreatePurchaseBatchDto {
@@ -18,7 +19,11 @@ export class CreatePurchaseBatchDto {
     required: true,
   })
   @IsArray()
-  @ArrayNotEmpty({ message: 'El lote debe contener al menos una línea' })
+  @ArrayNotEmpty({
+    message: i18nValidationMessage(
+      'validation.EL_LOTE_DEBE_CONTENER_AL_MENOS_UNA_LINEA'
+    ),
+  })
   @ValidateNested({ each: true })
   @Type(() => CreatePedidoLineDto)
   lineas!: CreatePedidoLineDto[];
@@ -38,7 +43,11 @@ export class ConsolidatePurchaseBatchDto {
     type: [String],
   })
   @IsArray()
-  @ArrayNotEmpty({ message: 'Debes seleccionar al menos un pedido.' })
+  @ArrayNotEmpty({
+    message: i18nValidationMessage(
+      'validation.DEBES_SELECCIONAR_AL_MENOS_UN_PEDIDO'
+    ),
+  })
   @IsUUID('7', { each: true })
   @Type(() => String)
   pedidoIds!: string[];

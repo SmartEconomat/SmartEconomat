@@ -172,7 +172,9 @@ export class RolesService {
     });
 
     if (!rol) {
-      throw new NotFoundException(`Rol con ID "${id}" no encontrado`);
+      throw new NotFoundException(
+        I18nHelper.getError('ROLE_NOT_FOUND', { id })
+      );
     }
 
     return rol;

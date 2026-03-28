@@ -45,7 +45,9 @@ export class AddProveedorToProductoDto {
   @IsOptional()
   @Transform((params) => TrimStringTransformer.transform(params))
   @IsNotEmpty({
-    message: 'La marca específica no puede estar vacía.',
+    message: i18nValidationMessage(
+      'validation.LA_MARCA_ESPECIFICA_NO_PUEDE_ESTAR_VACIA'
+    ),
   })
   @IsString({
     message: i18nValidationMessage(
@@ -66,7 +68,9 @@ export class AddProveedorToProductoDto {
   @IsOptional()
   @Transform((params) => UppercaseStringTransformer.transform(params))
   @IsNotEmpty({
-    message: 'El código de barras no puede estar vacío.',
+    message: i18nValidationMessage(
+      'validation.EL_CODIGO_DE_BARRAS_NO_PUEDE_ESTAR_VACIO'
+    ),
   })
   @IsString({
     message: i18nValidationMessage(
@@ -86,7 +90,9 @@ export class AddProveedorToProductoDto {
     minimum: 0,
   })
   @IsDefined({
-    message: 'El precio unitario es obligatorio.',
+    message: i18nValidationMessage(
+      'validation.EL_PRECIO_UNITARIO_ES_OBLIGATORIO'
+    ),
   })
   @IsNumber(
     {},

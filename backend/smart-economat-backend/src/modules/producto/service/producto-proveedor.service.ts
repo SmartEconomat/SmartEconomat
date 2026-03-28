@@ -116,7 +116,9 @@ export class ProductoProveedorService {
       }
 
       if (productoProveedor.mermaEsperada === dto.nuevaMerma) {
-        throw new ConflictException('La merma esperada es igual a la actual.');
+        throw new ConflictException(
+          I18nHelper.getError('EXPECTED_WASTE_UNCHANGED')
+        );
       }
 
       productoProveedor.mermaEsperada = dto.nuevaMerma;

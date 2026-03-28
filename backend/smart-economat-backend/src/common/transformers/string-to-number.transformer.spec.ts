@@ -62,9 +62,7 @@ describe('StringToNumberTransformer', () => {
 
     it('debe lanzar error si el string no es numérico', () => {
       const params = { value: 'abc' };
-      expect(() => StringToNumberTransformer.transform(params)).toThrow(
-        "El valor 'abc' no puede ser convertido a número"
-      );
+      expect(() => StringToNumberTransformer.transform(params)).toThrow();
     });
 
     it('debe lanzar error si el string es mixto', () => {

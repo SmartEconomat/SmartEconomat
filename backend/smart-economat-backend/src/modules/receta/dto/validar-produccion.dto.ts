@@ -5,14 +5,24 @@ import {
   IsUUID,
   ValidateNested,
 } from 'class-validator';
+import { i18nValidationMessage } from 'nestjs-i18n';
 import { Type } from 'class-transformer';
 
 class ValidarItemDto {
-  @IsUUID('7', { message: 'ID de receta inválido' })
+  @IsUUID('7', {
+    message: i18nValidationMessage('validation.ID_RECETA_INVALIDO'),
+  })
   recetaId!: string;
 
-  @IsNumber({}, { message: 'La cantidad debe ser un número' })
-  @IsPositive({ message: 'La cantidad debe ser positiva' })
+  @IsNumber(
+    {},
+    {
+      message: i18nValidationMessage('validation.CANTIDAD_DEBE_SER_NUMERO'),
+    }
+  )
+  @IsPositive({
+    message: i18nValidationMessage('validation.CANTIDAD_DEBE_SER_POSITIVA'),
+  })
   cantidad!: number;
 }
 

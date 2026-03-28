@@ -7,6 +7,7 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
+import { i18nValidationMessage } from 'nestjs-i18n';
 
 export class ConsolidatePurchaseBatchDto {
   @ApiProperty({
@@ -14,7 +15,11 @@ export class ConsolidatePurchaseBatchDto {
     type: [String],
   })
   @IsArray()
-  @ArrayNotEmpty({ message: 'Debes seleccionar al menos un pedido.' })
+  @ArrayNotEmpty({
+    message: i18nValidationMessage(
+      'validation.DEBES_SELECCIONAR_AL_MENOS_UN_PEDIDO'
+    ),
+  })
   @IsUUID('7', { each: true })
   @Type(() => String)
   pedidoIds!: string[];

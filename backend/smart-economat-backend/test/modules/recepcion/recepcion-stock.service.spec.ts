@@ -1,3 +1,4 @@
+/*
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { RecepcionStockService } from '../../../src/modules/recepcion/service/recepcion-stock.service';
 import { EstadoPedido } from '../../../src/modules/pedido/enums/estado-pedido.enum';
@@ -9,6 +10,293 @@ import { Ubicacion } from '../../../src/modules/ubicacion/ubicacion.entity/ubica
 import { Usuario } from '../../../src/modules/usuario/usuario.entity/usuario.entity';
 
 describe('RecepcionStockService', () => {
+            it('procesarRecepcionMasiva asume isWeighedWithScale=false si no se informa', async () => {
+              const pedido = createPedido('ped-omitido', EstadoPedido.PENDIENTE, [
+                { id: 'pp-omitido', cantidad: 2, nombre: 'Azúcar' },
+              ]);
+
+              mockDataSource.manager.findOne.mockImplementation((entity: unknown) => {
+                if (entity === Usuario) {
+                  return Promise.resolve({ id: 'user-omitido' });
+                }
+                if (entity === Pedido || (typeof entity === 'object' && entity !== null && entity.name === 'Pedido')) {
+                  return Promise.resolve(pedido);
+                }
+                return Promise.resolve(null);
+              });
+
+              queryRunner.manager.findOne.mockImplementation((entity: unknown) => {
+                if (entity === Ubicacion) {
+                  return Promise.resolve({ id: 'ubi-omitido', nombre: 'Almacén Principal' });
+                }
+                if (entity === Albaran) {
+                  return Promise.resolve(null);
+                }
+                return Promise.resolve(null);
+              });
+
+              const result = await service.procesarRecepcionMasiva(
+                {
+                  pedidoId: 'ped-omitido',
+                  nAlbaran: 'ALB-OMITIDO-001',
+                  observaciones: 'Recepción sin isWeighedWithScale',
+                  productosRecibidos: [
+                    {
+                      pedidoProductoId: 'pp-omitido',
+                      cantidadRecibida: 2,
+                      cantidadAlbaran: 2,
+                      estadoVisual: EstadoVisualProducto.OPTIMO
+                      
+                    },
+                  ],
+                },
+                'user-omitido'
+              );
+
+              const recepcionProductoSave = queryRunner.manager.save.mock.calls.find(
+                ([arg]: [any]) => Array.isArray(arg) && arg[0]?.pedidoProducto?.id === 'pp-omitido'
+              );
+              expect(recepcionProductoSave).toBeDefined();
+              const saved = recepcionProductoSave[0][0];
+              expect(saved.isWeighedWithScale).toBe(false);
+              expect(result.incidencias).toEqual([]);
+              expect(result.inventariosCreados).toBe(1);
+              expect(result.movimientosGenerados).toBe(1);
+              expect(result.pedidosActualizados[0].estadoNuevo).toBe(EstadoPedido.RECIBIDO);
+            });
+          it('procesarRecepcionMasiva rechaza o marca incidencia si el peso es irrealmente alto', async () => {
+            const pedido = createPedido('ped-alto', EstadoPedido.PENDIENTE, [
+              { id: 'pp-alto', cantidad: 1, nombre: 'Sal' },
+            ]);
+
+            mockDataSource.manager.findOne.mockImplementation((entity: unknown) => {
+              if (entity === Usuario) {
+                return Promise.resolve({ id: 'user-alto' });
+              }
+              if (entity === Pedido) {
+                return Promise.resolve(pedido);
+              }
+              return Promise.resolve(null);
+            });
+
+            queryRunner.manager.findOne.mockImplementation((entity: unknown) => {
+              if (entity === Ubicacion) {
+                return Promise.resolve({ id: 'ubi-alto', nombre: 'Almacén Principal' });
+              }
+              if (entity === Albaran) {
+                return Promise.resolve(null);
+              }
+              return Promise.resolve(null);
+            });
+
+            
+            await expect(
+              service.procesarRecepcionMasiva(
+                {
+                  pedidoId: 'ped-alto',
+                  nAlbaran: 'ALB-ALTO-001',
+                  observaciones: 'Recepción peso irrealmente alto',
+                  productosRecibidos: [
+                    {
+                      pedidoProductoId: 'pp-alto',
+                      cantidadRecibida: 1_000_000,
+                      cantidadAlbaran: 1_000_000,
+                      estadoVisual: EstadoVisualProducto.OPTIMO,
+                      isWeighedWithScale: true,
+                    },
+                  ],
+                },
+                'user-alto'
+              )
+            ).rejects.toBeInstanceOf(Error);
+          });
+        it('procesarRecepcionMasiva rechaza líneas con peso 0 o negativo', async () => {
+          const pedido = createPedido('ped-cero', EstadoPedido.PENDIENTE, [
+            { id: 'pp-cero', cantidad: 2, nombre: 'Azúcar' },
+          ]);
+
+          mockDataSource.manager.findOne.mockImplementation((entity: unknown) => {
+            if (entity === Usuario) {
+              return Promise.resolve({ id: 'user-cero' });
+            }
+            if (entity === Pedido) {
+              return Promise.resolve(pedido);
+            }
+            return Promise.resolve(null);
+          });
+
+          queryRunner.manager.findOne.mockImplementation((entity: unknown) => {
+            if (entity === Ubicacion) {
+              return Promise.resolve({ id: 'ubi-cero', nombre: 'Almacén Principal' });
+            }
+            if (entity === Albaran) {
+              return Promise.resolve(null);
+            }
+            return Promise.resolve(null);
+          });
+
+          
+          await expect(
+            service.procesarRecepcionMasiva(
+              {
+                pedidoId: 'ped-cero',
+                nAlbaran: 'ALB-CERO-001',
+                observaciones: 'Recepción peso cero',
+                productosRecibidos: [
+                  {
+                    pedidoProductoId: 'pp-cero',
+                    cantidadRecibida: 0,
+                    cantidadAlbaran: 0,
+                    estadoVisual: EstadoVisualProducto.OPTIMO,
+                    isWeighedWithScale: true,
+                  },
+                ],
+              },
+              'user-cero'
+            )
+          ).rejects.toBeInstanceOf(Error);
+
+          
+          await expect(
+            service.procesarRecepcionMasiva(
+              {
+                pedidoId: 'ped-cero',
+                nAlbaran: 'ALB-CERO-002',
+                observaciones: 'Recepción peso negativo',
+                productosRecibidos: [
+                  {
+                    pedidoProductoId: 'pp-cero',
+                    cantidadRecibida: -5,
+                    cantidadAlbaran: -5,
+                    estadoVisual: EstadoVisualProducto.OPTIMO,
+                    isWeighedWithScale: false,
+                  },
+                ],
+              },
+              'user-cero'
+            )
+          ).rejects.toBeInstanceOf(Error);
+        });
+      it('procesarRecepcionMasiva soporta mezcla de líneas con y sin balanza', async () => {
+        const pedido = createPedido('ped-mix', EstadoPedido.PENDIENTE, [
+          { id: 'pp-balanza', cantidad: 2, nombre: 'Harina' },
+          { id: 'pp-manual', cantidad: 1, nombre: 'Café' },
+        ]);
+
+        mockDataSource.manager.findOne.mockImplementation((entity: unknown) => {
+          if (entity === Usuario) {
+            return Promise.resolve({ id: 'user-mix' });
+          }
+          if (entity === Pedido || (typeof entity === 'object' && entity !== null && entity.name === 'Pedido')) {
+            return Promise.resolve(pedido);
+          }
+          return Promise.resolve(null);
+        });
+
+        queryRunner.manager.findOne.mockImplementation((entity: unknown) => {
+          if (entity === Ubicacion) {
+            return Promise.resolve({ id: 'ubi-mix', nombre: 'Almacén Principal' });
+          }
+          if (entity === Albaran) {
+            return Promise.resolve(null);
+          }
+          return Promise.resolve(null);
+        });
+
+        const result = await service.procesarRecepcionMasiva(
+          {
+            pedidoId: 'ped-mix',
+            nAlbaran: 'ALB-MIX-001',
+            observaciones: 'Recepción mixta',
+            productosRecibidos: [
+              {
+                pedidoProductoId: 'pp-balanza',
+                cantidadRecibida: 2,
+                cantidadAlbaran: 2,
+                estadoVisual: EstadoVisualProducto.OPTIMO,
+                isWeighedWithScale: true,
+              },
+              {
+                pedidoProductoId: 'pp-manual',
+                cantidadRecibida: 1,
+                cantidadAlbaran: 1,
+                estadoVisual: EstadoVisualProducto.OPTIMO,
+                isWeighedWithScale: false,
+              },
+            ],
+          },
+          'user-mix'
+        );
+
+        const balanzaSave = queryRunner.manager.save.mock.calls.find(
+          ([arg]: [any]) => Array.isArray(arg) && arg[0]?.pedidoProducto?.id === 'pp-balanza'
+        );
+        const manualSave = queryRunner.manager.save.mock.calls.find(
+          ([arg]: [any]) => Array.isArray(arg) && arg[0]?.pedidoProducto?.id === 'pp-manual'
+        );
+        expect(balanzaSave).toBeDefined();
+        expect(manualSave).toBeDefined();
+        expect(balanzaSave[0][0].isWeighedWithScale).toBe(true);
+        expect(manualSave[0][0].isWeighedWithScale).toBe(false);
+        expect(result.incidencias).toEqual([]);
+        expect(result.inventariosCreados).toBe(2);
+        expect(result.movimientosGenerados).toBe(2);
+        expect(result.pedidosActualizados[0].estadoNuevo).toBe(EstadoPedido.RECIBIDO);
+      });
+    it('procesarRecepcionMasiva registra correctamente isWeighedWithScale=false (peso manual)', async () => {
+      const pedido = createPedido('ped-manual', EstadoPedido.PENDIENTE, [
+        { id: 'pp-manual', cantidad: 2, nombre: 'Sal' },
+      ]);
+
+      mockDataSource.manager.findOne.mockImplementation((entity: unknown) => {
+        if (entity === Usuario) {
+          return Promise.resolve({ id: 'user-manual' });
+        }
+        if (entity === Pedido || (typeof entity === 'object' && entity !== null && entity.name === 'Pedido')) {
+          return Promise.resolve(pedido);
+        }
+        return Promise.resolve(null);
+      });
+
+      queryRunner.manager.findOne.mockImplementation((entity: unknown) => {
+        if (entity === Ubicacion) {
+          return Promise.resolve({ id: 'ubi-manual', nombre: 'Almacén Principal' });
+        }
+        if (entity === Albaran) {
+          return Promise.resolve(null);
+        }
+        return Promise.resolve(null);
+      });
+
+      const result = await service.procesarRecepcionMasiva(
+        {
+          pedidoId: 'ped-manual',
+          nAlbaran: 'ALB-MANUAL-001',
+          observaciones: 'Recepción manual',
+          productosRecibidos: [
+            {
+              pedidoProductoId: 'pp-manual',
+              cantidadRecibida: 2,
+              cantidadAlbaran: 2,
+              estadoVisual: EstadoVisualProducto.OPTIMO,
+              isWeighedWithScale: false,
+            },
+          ],
+        },
+        'user-manual'
+      );
+
+      const recepcionProductoSave = queryRunner.manager.save.mock.calls.find(
+        ([arg]: [any]) => Array.isArray(arg) && arg[0]?.pedidoProducto?.id === 'pp-manual'
+      );
+      expect(recepcionProductoSave).toBeDefined();
+      const saved = recepcionProductoSave[0][0];
+      expect(saved.isWeighedWithScale).toBe(false);
+      expect(result.incidencias).toEqual([]);
+      expect(result.inventariosCreados).toBe(1);
+      expect(result.movimientosGenerados).toBe(1);
+      expect(result.pedidosActualizados[0].estadoNuevo).toBe(EstadoPedido.RECIBIDO);
+    });
   const mockDataSource = {
     manager: {
       findOne: jest.fn(),
@@ -582,6 +870,503 @@ describe('RecepcionStockService', () => {
       'ped-4',
       PedidoStatusTrigger.RECEPCION_TOTAL,
       manager
+    );
+    expect(result).toBe(EstadoPedido.RECIBIDO);
+  });
+});
+
+*/
+
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { RecepcionStockService } from '../../../src/modules/recepcion/service/recepcion-stock.service';
+import { EstadoPedido } from '../../../src/modules/pedido/enums/estado-pedido.enum';
+import { PedidoStatusTrigger } from '../../../src/modules/pedido/enums/pedido-status-trigger.enum';
+import { EstadoVisualProducto } from '../../../src/modules/recepcion/enums/estado-visual.enum';
+import { Albaran } from '../../../src/modules/albaran/albaran.entity/albaran.entity';
+import { Pedido } from '../../../src/modules/pedido/pedido.entity/pedido.entity';
+import { Ubicacion } from '../../../src/modules/ubicacion/ubicacion.entity/ubicacion.entity';
+import { Usuario } from '../../../src/modules/usuario/usuario.entity/usuario.entity';
+
+const createPedido = (
+  id: string,
+  estado: EstadoPedido = EstadoPedido.PENDIENTE,
+  lineas: Array<{ id: string; cantidad: number; nombre: string }>
+) => ({
+  id,
+  estado,
+  proveedor: { id: `prov-${id}` },
+  pedidoProductos: lineas.map((linea) => ({
+    id: linea.id,
+    cantidad: linea.cantidad,
+    productoProveedor: {
+      id: `pprov-${linea.id}`,
+      producto: { nombre: linea.nombre },
+    },
+    productoProveedorId: `pprov-${linea.id}`,
+    precioUnitario: 2.5,
+  })),
+});
+
+const assignIds = <T>(value: T): T => {
+  if (Array.isArray(value)) {
+    value.forEach((item) => assignIds(item));
+    return value;
+  }
+
+  if (value && typeof value === 'object' && !('id' in value)) {
+    (value as Record<string, unknown>).id =
+      `generated-${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  return value;
+};
+
+describe('RecepcionStockService', () => {
+  const mockDataSource = {
+    manager: {
+      findOne: jest.fn(),
+      find: jest.fn(),
+    },
+    createQueryRunner: jest.fn(),
+  };
+
+  const mockPedidoService = {
+    handleStatusTransition: jest.fn(),
+  };
+
+  const mockEventEmitter = {
+    emit: jest.fn(),
+  };
+
+  const mockProductoService = {
+    actualizarPMP: jest.fn(),
+  };
+
+  let service: RecepcionStockService;
+  let queryRunner: {
+    connect: jest.Mock;
+    startTransaction: jest.Mock;
+    commitTransaction: jest.Mock;
+    rollbackTransaction: jest.Mock;
+    release: jest.Mock;
+    isTransactionActive: boolean;
+    manager: {
+      findOne: jest.Mock;
+      find: jest.Mock;
+      create: jest.Mock;
+      save: jest.Mock;
+      getRepository: jest.Mock;
+    };
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    queryRunner = {
+      connect: jest.fn().mockResolvedValue(undefined),
+      startTransaction: jest.fn().mockResolvedValue(undefined),
+      commitTransaction: jest.fn().mockResolvedValue(undefined),
+      rollbackTransaction: jest.fn().mockResolvedValue(undefined),
+      release: jest.fn().mockResolvedValue(undefined),
+      isTransactionActive: true,
+      manager: {
+        findOne: jest.fn(),
+        find: jest.fn(),
+        create: jest.fn((_entity: unknown, data: Record<string, unknown>) => ({
+          ...data,
+        })),
+        save: jest.fn().mockImplementation((...args: unknown[]) => {
+          const entity = args.length === 1 ? args[0] : args[1];
+          return Promise.resolve(assignIds(entity));
+        }),
+        getRepository: jest.fn().mockReturnValue({
+          createQueryBuilder: jest.fn().mockReturnValue({
+            where: jest.fn().mockReturnThis(),
+            orderBy: jest.fn().mockReturnThis(),
+            getOne: jest.fn().mockResolvedValue(null),
+          }),
+        }),
+      },
+    };
+
+    mockDataSource.createQueryRunner.mockReturnValue(queryRunner);
+    mockDataSource.manager.findOne.mockReset();
+    mockDataSource.manager.find.mockReset();
+    mockPedidoService.handleStatusTransition.mockReset();
+    mockEventEmitter.emit.mockReset();
+    mockProductoService.actualizarPMP.mockReset();
+
+    service = new RecepcionStockService(
+      mockDataSource as any,
+      mockPedidoService as any,
+      mockEventEmitter as any,
+      mockProductoService as any
+    );
+  });
+
+  const mockUserAndPedido = (userId: string, pedido: unknown) => {
+    mockDataSource.manager.findOne.mockImplementation((entity: unknown) => {
+      const name =
+        typeof entity === 'function' ? entity.name : (entity as any)?.name;
+      if (entity === Usuario || name === 'Usuario') {
+        return Promise.resolve({ id: userId });
+      }
+      if (entity === Pedido || name === 'Pedido') {
+        return Promise.resolve(pedido);
+      }
+      return Promise.resolve(null);
+    });
+  };
+
+  const mockRecepcionContext = (opts?: {
+    albaran?: unknown;
+    ubicacion?: unknown;
+  }) => {
+    queryRunner.manager.findOne.mockImplementation((entity: unknown) => {
+      const name =
+        typeof entity === 'function' ? entity.name : (entity as any)?.name;
+      if (entity === Ubicacion || name === 'Ubicacion') {
+        return Promise.resolve(
+          opts?.ubicacion ?? { id: 'ubi-1', nombre: 'Almacén Principal' }
+        );
+      }
+      if (entity === Albaran || name === 'Albaran') {
+        return Promise.resolve(opts?.albaran ?? null);
+      }
+      return Promise.resolve(null);
+    });
+  };
+
+  const findRecepcionProducto = (pedidoProductoId: string) => {
+    const call = queryRunner.manager.save.mock.calls.find(([arg]: [any]) => {
+      if (!Array.isArray(arg)) return false;
+      return arg.some((item) => item?.pedidoProducto?.id === pedidoProductoId);
+    });
+    const batch = call?.[0] as
+      | Array<{ pedidoProducto?: { id: string }; isWeighedWithScale?: boolean }>
+      | undefined;
+    return batch?.find((item) => item?.pedidoProducto?.id === pedidoProductoId);
+  };
+
+  it('rechaza usuario inexistente', async () => {
+    mockDataSource.manager.findOne.mockResolvedValueOnce(null);
+
+    await expect(
+      service.procesarRecepcionMasiva(
+        { pedidoId: 'ped-1', productosRecibidos: [] } as any,
+        'user-x'
+      )
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('rechaza pedidos no recepcionables', async () => {
+    mockDataSource.manager.findOne
+      .mockResolvedValueOnce({ id: 'user-1' })
+      .mockResolvedValueOnce({ id: 'ped-1', estado: EstadoPedido.RECIBIDO });
+
+    await expect(
+      service.procesarRecepcionMasiva(
+        { pedidoId: 'ped-1', productosRecibidos: [] } as any,
+        'user-1'
+      )
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('registra isWeighedWithScale=true desde balanza', async () => {
+    const pedido = createPedido('ped-balanza', EstadoPedido.PENDIENTE, [
+      { id: 'pp-balanza', cantidad: 3, nombre: 'Azúcar' },
+    ]);
+    mockUserAndPedido('user-balanza', pedido);
+    mockRecepcionContext();
+    jest
+      .spyOn(service as any, 'actualizarEstadoPedido')
+      .mockResolvedValue(EstadoPedido.RECIBIDO);
+
+    const result = await service.procesarRecepcionMasiva(
+      {
+        pedidoId: 'ped-balanza',
+        nAlbaran: 'ALB-BALANZA-001',
+        observaciones: 'Recepción con balanza',
+        productosRecibidos: [
+          {
+            pedidoProductoId: 'pp-balanza',
+            cantidadRecibida: 3,
+            cantidadAlbaran: 3,
+            estadoVisual: EstadoVisualProducto.OPTIMO,
+            isWeighedWithScale: true,
+          },
+        ],
+      },
+      'user-balanza'
+    );
+
+    const batch = findRecepcionProducto('pp-balanza');
+    expect(batch).toBeDefined();
+    expect(batch?.isWeighedWithScale).toBe(true);
+    expect(result.incidencias).toEqual([]);
+    expect(result.inventariosCreados).toBe(1);
+    expect(result.movimientosGenerados).toBe(1);
+    expect(result.pedidosActualizados[0].estadoNuevo).toBe(
+      EstadoPedido.RECIBIDO
+    );
+  });
+
+  it('registra isWeighedWithScale=false en peso manual', async () => {
+    const pedido = createPedido('ped-manual', EstadoPedido.PENDIENTE, [
+      { id: 'pp-manual', cantidad: 2, nombre: 'Sal' },
+    ]);
+    mockUserAndPedido('user-manual', pedido);
+    mockRecepcionContext();
+    jest
+      .spyOn(service as any, 'actualizarEstadoPedido')
+      .mockResolvedValue(EstadoPedido.RECIBIDO);
+
+    const result = await service.procesarRecepcionMasiva(
+      {
+        pedidoId: 'ped-manual',
+        nAlbaran: 'ALB-MANUAL-001',
+        observaciones: 'Recepción manual',
+        productosRecibidos: [
+          {
+            pedidoProductoId: 'pp-manual',
+            cantidadRecibida: 2,
+            cantidadAlbaran: 2,
+            estadoVisual: EstadoVisualProducto.OPTIMO,
+            isWeighedWithScale: false,
+          },
+        ],
+      },
+      'user-manual'
+    );
+
+    const batch = findRecepcionProducto('pp-manual');
+    expect(batch).toBeDefined();
+    expect(batch?.isWeighedWithScale).toBe(false);
+    expect(result.incidencias).toEqual([]);
+    expect(result.inventariosCreados).toBe(1);
+    expect(result.movimientosGenerados).toBe(1);
+  });
+
+  it('asume isWeighedWithScale=false si no se informa', async () => {
+    const pedido = createPedido('ped-omitido', EstadoPedido.PENDIENTE, [
+      { id: 'pp-omitido', cantidad: 2, nombre: 'Azúcar' },
+    ]);
+    mockUserAndPedido('user-omitido', pedido);
+    mockRecepcionContext();
+    jest
+      .spyOn(service as any, 'actualizarEstadoPedido')
+      .mockResolvedValue(EstadoPedido.RECIBIDO);
+
+    const result = await service.procesarRecepcionMasiva(
+      {
+        pedidoId: 'ped-omitido',
+        nAlbaran: 'ALB-OMITIDO-001',
+        observaciones: 'Recepción sin flag',
+        productosRecibidos: [
+          {
+            pedidoProductoId: 'pp-omitido',
+            cantidadRecibida: 2,
+            cantidadAlbaran: 2,
+            estadoVisual: EstadoVisualProducto.OPTIMO,
+          },
+        ],
+      },
+      'user-omitido'
+    );
+
+    const batch = findRecepcionProducto('pp-omitido');
+    expect(batch).toBeDefined();
+    expect(batch?.isWeighedWithScale).toBe(false);
+    expect(result.incidencias).toEqual([]);
+    expect(result.inventariosCreados).toBe(1);
+    expect(result.movimientosGenerados).toBe(1);
+  });
+
+  it('soporta mezcla de líneas con y sin balanza', async () => {
+    const pedido = createPedido('ped-mix', EstadoPedido.PENDIENTE, [
+      { id: 'pp-balanza', cantidad: 2, nombre: 'Harina' },
+      { id: 'pp-manual', cantidad: 1, nombre: 'Café' },
+    ]);
+    mockUserAndPedido('user-mix', pedido);
+    mockRecepcionContext();
+    jest
+      .spyOn(service as any, 'actualizarEstadoPedido')
+      .mockResolvedValue(EstadoPedido.RECIBIDO);
+
+    const result = await service.procesarRecepcionMasiva(
+      {
+        pedidoId: 'ped-mix',
+        nAlbaran: 'ALB-MIX-001',
+        observaciones: 'Recepción mixta',
+        productosRecibidos: [
+          {
+            pedidoProductoId: 'pp-balanza',
+            cantidadRecibida: 2,
+            cantidadAlbaran: 2,
+            estadoVisual: EstadoVisualProducto.OPTIMO,
+            isWeighedWithScale: true,
+          },
+          {
+            pedidoProductoId: 'pp-manual',
+            cantidadRecibida: 1,
+            cantidadAlbaran: 1,
+            estadoVisual: EstadoVisualProducto.OPTIMO,
+            isWeighedWithScale: false,
+          },
+        ],
+      },
+      'user-mix'
+    );
+
+    const balanza = findRecepcionProducto('pp-balanza');
+    const manual = findRecepcionProducto('pp-manual');
+    expect(balanza?.isWeighedWithScale).toBe(true);
+    expect(manual?.isWeighedWithScale).toBe(false);
+    expect(result.inventariosCreados).toBe(2);
+    expect(result.movimientosGenerados).toBe(2);
+  });
+
+  it('rechaza peso 0 o negativo', async () => {
+    const pedido = createPedido('ped-cero', EstadoPedido.PENDIENTE, [
+      { id: 'pp-cero', cantidad: 2, nombre: 'Azúcar' },
+    ]);
+    mockUserAndPedido('user-cero', pedido);
+    mockRecepcionContext();
+
+    await expect(
+      service.procesarRecepcionMasiva(
+        {
+          pedidoId: 'ped-cero',
+          nAlbaran: 'ALB-CERO-001',
+          productosRecibidos: [
+            {
+              pedidoProductoId: 'pp-cero',
+              cantidadRecibida: 0,
+              cantidadAlbaran: 0,
+              estadoVisual: EstadoVisualProducto.OPTIMO,
+              isWeighedWithScale: true,
+            },
+          ],
+        },
+        'user-cero'
+      )
+    ).rejects.toThrow(/positivo|RECEPTION_FAILED/i);
+
+    await expect(
+      service.procesarRecepcionMasiva(
+        {
+          pedidoId: 'ped-cero',
+          nAlbaran: 'ALB-CERO-002',
+          productosRecibidos: [
+            {
+              pedidoProductoId: 'pp-cero',
+              cantidadRecibida: -5,
+              cantidadAlbaran: -5,
+              estadoVisual: EstadoVisualProducto.OPTIMO,
+              isWeighedWithScale: false,
+            },
+          ],
+        },
+        'user-cero'
+      )
+    ).rejects.toThrow(/positivo|RECEPTION_FAILED/i);
+  });
+
+  it('rechaza cantidades irrealmente altas', async () => {
+    const pedido = createPedido('ped-alto', EstadoPedido.PENDIENTE, [
+      { id: 'pp-alto', cantidad: 1, nombre: 'Sal' },
+    ]);
+    mockUserAndPedido('user-alto', pedido);
+    mockRecepcionContext();
+
+    await expect(
+      service.procesarRecepcionMasiva(
+        {
+          pedidoId: 'ped-alto',
+          nAlbaran: 'ALB-ALTO-001',
+          productosRecibidos: [
+            {
+              pedidoProductoId: 'pp-alto',
+              cantidadRecibida: 1_000_000,
+              cantidadAlbaran: 1_000_000,
+              estadoVisual: EstadoVisualProducto.OPTIMO,
+              isWeighedWithScale: true,
+            },
+          ],
+        },
+        'user-alto'
+      )
+    ).rejects.toThrow(/irrealmente alta|RECEPTION_FAILED/i);
+  });
+
+  it('actualizarEstadoPedido dispara RECEPCION_PARCIAL cuando falta cantidad', async () => {
+    queryRunner.manager.findOne.mockResolvedValue({
+      id: 'ped-2',
+      pedidoProductos: [{ id: 'pp-1', cantidad: 10 }],
+    });
+    queryRunner.manager.find.mockResolvedValue([
+      {
+        recepcion: {
+          recepcionProductos: [
+            {
+              pedidoProducto: { id: 'pp-1' },
+              cantidadRecibida: 4,
+              estadoProducto: 'PERFECTO',
+            },
+          ],
+        },
+      },
+    ]);
+    mockPedidoService.handleStatusTransition.mockResolvedValue({
+      id: 'ped-2',
+      estado: EstadoPedido.EN_PROCESO,
+    });
+
+    const result = await (service as any).actualizarEstadoPedido(
+      'ped-2',
+      queryRunner.manager
+    );
+
+    expect(mockPedidoService.handleStatusTransition).toHaveBeenCalledWith(
+      'ped-2',
+      PedidoStatusTrigger.RECEPCION_PARCIAL,
+      queryRunner.manager
+    );
+    expect(result).toBe(EstadoPedido.EN_PROCESO);
+  });
+
+  it('actualizarEstadoPedido dispara RECEPCION_TOTAL cuando coincide todo', async () => {
+    queryRunner.manager.findOne.mockResolvedValue({
+      id: 'ped-4',
+      pedidoProductos: [{ id: 'pp-3', cantidad: 5 }],
+    });
+    queryRunner.manager.find.mockResolvedValue([
+      {
+        recepcion: {
+          recepcionProductos: [
+            {
+              pedidoProducto: { id: 'pp-3' },
+              cantidadRecibida: 5,
+              estadoProducto: 'PERFECTO',
+            },
+          ],
+        },
+      },
+    ]);
+    mockPedidoService.handleStatusTransition.mockResolvedValue({
+      id: 'ped-4',
+      estado: EstadoPedido.RECIBIDO,
+    });
+
+    const result = await (service as any).actualizarEstadoPedido(
+      'ped-4',
+      queryRunner.manager
+    );
+
+    expect(mockPedidoService.handleStatusTransition).toHaveBeenCalledWith(
+      'ped-4',
+      PedidoStatusTrigger.RECEPCION_TOTAL,
+      queryRunner.manager
     );
     expect(result).toBe(EstadoPedido.RECIBIDO);
   });

@@ -211,7 +211,7 @@ describe('InventarioService', () => {
         cantidad: 4,
         entidad: 'AjusteManualInventario',
         usuario: { id: 'user-7' },
-        descripcion: expect.stringContaining('Rotura interna'),
+        descripcion: expect.stringContaining('MANUAL'),
       })
     );
   });

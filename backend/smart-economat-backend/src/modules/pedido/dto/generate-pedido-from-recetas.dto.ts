@@ -19,9 +19,15 @@ export class GeneratePedidoFromRecetasDto {
   })
   @IsArray()
   @ArrayNotEmpty({
-    message: 'Debe enviarse al menos una receta para generar el pedido',
+    message: i18nValidationMessage(
+      'validation.DEVE_ENVIARSE_AL_MENOS_UNA_RECETA'
+    ),
   })
-  @ArrayUnique({ message: 'No se permiten recetas duplicadas' })
+  @ArrayUnique({
+    message: i18nValidationMessage(
+      'validation.NO_SE_PERMITEN_RECETAS_DUPLICADAS'
+    ),
+  })
   @IsUUID('7', {
     each: true,
     message: i18nValidationMessage(

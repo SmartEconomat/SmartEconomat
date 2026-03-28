@@ -40,7 +40,11 @@ export class AlumnoService {
       );
 
       if (!slotByCode) {
-        throw new NotFoundException('No existe ninguna clase con ese código.');
+        throw new NotFoundException(
+          I18nHelper.getError('CLASS_NOT_FOUND_BY_CODE', {
+            codigoClase: dto.codigoClase,
+          })
+        );
       }
 
       return slotByCode;
@@ -52,7 +56,9 @@ export class AlumnoService {
 
     if (!profesor) {
       throw new NotFoundException(
-        'Profesor no encontrado con el cial proporcionado'
+        I18nHelper.getError('PROFESSOR_NOT_FOUND_WITH_CIAL', {
+          cial: dto.cialProfesor,
+        })
       );
     }
 
@@ -186,7 +192,11 @@ export class AlumnoService {
     });
 
     if (!slot) {
-      throw new NotFoundException('No existe ninguna clase con ese código.');
+      throw new NotFoundException(
+        I18nHelper.getError('CLASS_NOT_FOUND_BY_CODE', {
+          codigoClase: codigoClase,
+        })
+      );
     }
 
     return {
