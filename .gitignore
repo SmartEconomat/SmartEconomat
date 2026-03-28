@@ -72,3 +72,10 @@ backend/smart-economat-backend/uploads_test/
 
 deploy_key
 deploy_key.pub
+
+# SSL certs & prod volumes (Except renewal hooks)
+/certs-data/
+/certs-webroot/
+/uploads/
+/certs/*
+!/certs/renewal-hooks/
