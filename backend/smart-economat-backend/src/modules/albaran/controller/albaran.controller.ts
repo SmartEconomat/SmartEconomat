@@ -15,6 +15,7 @@ import {
   UploadedFile,
 } from '@nestjs/common';
 import type { Response as ExpressResponse } from 'express';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import {
   ApiTags,
   ApiOperation,
@@ -121,7 +122,7 @@ export class AlbaranController {
   ): Promise<{ message: string; data: Albaran }> {
     const albaran = await this.albaranService.uploadDocumento(file, dto);
     return {
-      message: 'Documento de albarán subido correctamente',
+      message: I18nHelper.getSuccess('DELIVERY_NOTE_UPLOADED'),
       data: albaran,
     };
   }

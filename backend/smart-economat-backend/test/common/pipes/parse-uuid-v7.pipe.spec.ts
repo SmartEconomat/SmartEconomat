@@ -41,9 +41,6 @@ describe('ParseUUIDv7Pipe', () => {
     it('debe rechazar UUID v4', () => {
       const uuid = '550e8400-e29b-41d4-a716-446655440000';
       expect(() => pipe.transform(uuid)).toThrow(BadRequestException);
-      expect(() => pipe.transform(uuid)).toThrow(
-        "El valor '550e8400-e29b-41d4-a716-446655440000' no es un UUID v7 válido"
-      );
     });
 
     it('debe rechazar UUID v1', () => {

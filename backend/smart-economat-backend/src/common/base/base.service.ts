@@ -6,6 +6,7 @@ import { DeepPartial } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { BaseEntity } from '../entities/base.entity';
 import { isSherlockElevatedRole } from '../../modules/sherlock-auth/utils/access.utils';
+import { I18nHelper } from '../helpers/i18n.helper';
 
 export abstract class BaseService<
   T extends BaseEntity,
@@ -81,7 +82,9 @@ export abstract class BaseService<
       try {
         return await operation(manager);
       } catch (error) {
-        throw new ConflictException(`Transaction failed: ${error.message}`);
+        throw new ConflictException(
+          I18nHelper.getError('TRANSACTION_FAILED', { message: error.message })
+        );
       }
     });
   }

@@ -84,7 +84,9 @@ export class PlantillasRolesService {
     });
 
     if (!plantilla) {
-      throw new NotFoundException(`Plantilla con ID "${id}" no encontrada`);
+      throw new NotFoundException(
+        I18nHelper.getError('TEMPLATE_NOT_FOUND', { id })
+      );
     }
 
     return plantilla;

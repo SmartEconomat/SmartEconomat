@@ -1,12 +1,19 @@
 import { IsBoolean, IsEnum, IsOptional } from 'class-validator';
+import { i18nValidationMessage } from 'nestjs-i18n';
 import { rolUsuario } from '../enums/usuario.enums';
 
 export class AdminUpdateUsuarioDto {
   @IsOptional()
-  @IsBoolean({ message: 'El estado activo debe ser un booleano' })
+  @IsBoolean({
+    message: i18nValidationMessage(
+      'validation.ESTADO_ACTIVO_DEBE_SER_BOOLEANO'
+    ),
+  })
   activo?: boolean;
 
   @IsOptional()
-  @IsEnum(rolUsuario, { message: 'El rol de usuario no es válido' })
+  @IsEnum(rolUsuario, {
+    message: i18nValidationMessage('validation.ROL_USUARIO_NO_VALIDO'),
+  })
   rol?: rolUsuario;
 }

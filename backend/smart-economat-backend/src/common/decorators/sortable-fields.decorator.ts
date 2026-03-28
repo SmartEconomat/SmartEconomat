@@ -6,6 +6,7 @@ import {
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { PaginationQueryDto } from '../dto/pagination-query.dto';
+import { I18nHelper } from '../helpers/i18n.helper';
 
 export type SortableFieldsConfig = string[] | Record<string, string>;
 type SortableQueryDtoClass<T extends PaginationQueryDto = PaginationQueryDto> =
@@ -46,7 +47,10 @@ export function validateSortableField(
 
   if (sortBy && !allowedFieldNames.includes(sortBy)) {
     throw new BadRequestException(
-      `Campo de ordenación inválido: "${sortBy}". Campos permitidos: ${allowedFieldNames.join(', ')}`
+      I18nHelper.getError('INVALID_SORT_FIELD', {
+        sortBy,
+        allowedFields: allowedFieldNames.join(', '),
+      })
     );
   }
 }

@@ -333,18 +333,22 @@ export class InventarioService {
     dto: CreateMovimientoManualDto
   ): void {
     if (dto.ajuste === 0) {
-      throw new BadRequestException('El ajuste manual no puede ser 0');
+      throw new BadRequestException(
+        I18nHelper.getError('MANUAL_ADJUSTMENT_CANNOT_BE_ZERO')
+      );
     }
 
     if (dto.tipo === TipoMovimientoManual.ENTRADA && dto.ajuste < 0) {
       throw new BadRequestException(
-        'El tipo de movimiento de entrada requiere un ajuste positivo'
+        I18nHelper.getError(
+          'MANUAL_MOVEMENT_ENTRY_REQUIRES_POSITIVE_ADJUSTMENT'
+        )
       );
     }
 
     if (dto.tipo === TipoMovimientoManual.SALIDA_AJUSTE && dto.ajuste > 0) {
       throw new BadRequestException(
-        'El tipo de movimiento de salida requiere un ajuste negativo'
+        I18nHelper.getError('MANUAL_MOVEMENT_EXIT_REQUIRES_NEGATIVE_ADJUSTMENT')
       );
     }
   }
@@ -360,7 +364,9 @@ export class InventarioService {
       case TipoMovimientoManual.SALIDA_AJUSTE:
         return TipoMovimiento.SALIDA_AJUSTE;
       default:
-        throw new BadRequestException('Tipo de movimiento manual no válido');
+        throw new BadRequestException(
+          I18nHelper.getError('INVALID_MANUAL_MOVEMENT_TYPE')
+        );
     }
   }
 
@@ -371,9 +377,15 @@ export class InventarioService {
     dto: CreateMovimientoManualDto
   ): string {
     const detalleObservaciones = dto.observaciones
-      ? ` | Observaciones: ${dto.observaciones}`
+      ? ` | ${I18nHelper.getError('OBSERVATIONS')}: ${dto.observaciones}`
       : '';
 
-    return `Ajuste manual de inventario: ${productoNombre} (${cantidadAnterior} -> ${cantidadActual}) | Motivo: ${dto.motivo}${detalleObservaciones}`;
+    return I18nHelper.getError('MANUAL_INVENTORY_ADJUSTMENT_DESCRIPTION', {
+      productoNombre,
+      cantidadAnterior,
+      cantidadActual,
+      motivo: dto.motivo,
+      detalleObservaciones,
+    });
   }
 }

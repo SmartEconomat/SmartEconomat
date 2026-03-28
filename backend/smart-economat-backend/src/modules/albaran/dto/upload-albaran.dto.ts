@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { i18nValidationMessage } from 'nestjs-i18n';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
@@ -15,7 +16,9 @@ export class UploadAlbaranDto {
     example: 'ALB-2026-0042',
   })
   @IsString()
-  @IsNotEmpty({ message: 'El número de referencia es obligatorio' })
+  @IsNotEmpty({
+    message: i18nValidationMessage('validation.NUMERO_REFERENCIA_OBLIGATORIO'),
+  })
   @Transform((params) => TrimStringTransformer.transform(params))
   numeroReferencia!: string;
 
@@ -25,7 +28,9 @@ export class UploadAlbaranDto {
     format: 'uuid',
   })
   @IsOptional()
-  @IsUUID('all', { message: 'El ID de recepción debe ser un UUID válido' })
+  @IsUUID('all', {
+    message: i18nValidationMessage('validation.RECEPCION_ID_UUID_INVALIDO'),
+  })
   recepcionId?: string;
 
   @ApiPropertyOptional({

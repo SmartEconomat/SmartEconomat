@@ -1,4 +1,6 @@
 import { TransformFnParams } from 'class-transformer/types/interfaces';
+import { BadRequestException } from '@nestjs/common';
+import { I18nHelper } from '../helpers/i18n.helper';
 
 /**
  * NormalizeStringPipe
@@ -38,8 +40,8 @@ export class NormalizeStringPipe {
       }
 
       if (uppercase && lowercase) {
-        throw new Error(
-          'No se pueden activar uppercase y lowercase al mismo tiempo'
+        throw new BadRequestException(
+          I18nHelper.getError('UPPERCASE_LOWERCASE_CONFLICT')
         );
       }
 

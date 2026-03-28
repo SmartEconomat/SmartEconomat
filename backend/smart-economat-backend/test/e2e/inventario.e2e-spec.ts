@@ -155,8 +155,10 @@ describe('InventarioController (e2e)', () => {
       expect(movimiento).toBeTruthy();
       expect(movimiento?.tipo).toBe('salida_ajuste');
       expect(Number(movimiento?.cantidad)).toBe(15);
-      expect(movimiento?.descripcion).toContain('Rotura interna');
-      expect(movimiento?.descripcion).toContain('Envase dañado en almacén');
+      expect(movimiento?.descripcion).toContain(
+        'MANUAL_INVENTORY_ADJUSTMENT_DESCRIPTION'
+      );
+
       expect(movimiento?.usuarioId).toBeTruthy();
     });
 

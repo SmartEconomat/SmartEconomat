@@ -14,6 +14,7 @@ import { PreparacionService } from '../service/preparacion.service';
 import { CreatePreparacionDto } from '../dto/create-preparacion.dto';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import type { Request } from 'express';
 
 @Controller('preparaciones')
@@ -28,7 +29,7 @@ export class PreparacionController {
   ) {
     const userId = req.user?.id;
     if (!userId) {
-      throw new Error('No se pudo determinar el usuario autenticado');
+      throw new Error(I18nHelper.getError('USUARIO_NO_AUTENTICADO'));
     }
     return this.preparacionService.create(dto, userId);
   }
@@ -64,7 +65,7 @@ export class PreparacionController {
   ) {
     const userId = req.user?.id;
     if (!userId) {
-      throw new Error('No se pudo determinar el usuario autenticado');
+      throw new Error(I18nHelper.getError('USUARIO_NO_AUTENTICADO'));
     }
     return this.preparacionService.finalizarPreparacion(
       id,

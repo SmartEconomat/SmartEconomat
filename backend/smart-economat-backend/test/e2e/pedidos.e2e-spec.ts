@@ -194,7 +194,7 @@ describe('PedidoController (e2e)', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('Campo de ordenación inválido');
+      expect(response.body.message).toContain('INVALID_SORT_FIELD');
       expect(response.body.data).toBeNull();
     });
 

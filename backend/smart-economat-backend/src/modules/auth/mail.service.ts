@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
+import { I18nHelper } from '../../common/helpers/i18n.helper';
 
 const PASSWORD_RESET_HTML = `<!DOCTYPE html>
 <html lang="es">
@@ -187,7 +188,7 @@ export class MailService {
     } catch (error) {
       this.logger.error('Fallo SMTP al enviar correo de recuperación', error);
       throw new InternalServerErrorException(
-        'No se pudo enviar el correo de recuperación'
+        I18nHelper.getError('EMAIL_SEND_FAILED')
       );
     }
   }

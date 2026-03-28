@@ -25,9 +25,6 @@ describe('SortableFields decorator', () => {
     expect(() =>
       validateSortableField('password', ['createdAt', 'updatedAt'])
     ).toThrow(BadRequestException);
-    expect(() =>
-      validateSortableField('password', ['createdAt', 'updatedAt'])
-    ).toThrow('Campo de ordenación inválido');
   });
 
   it('transforma page y limit a números usando PaginationQueryDto', () => {

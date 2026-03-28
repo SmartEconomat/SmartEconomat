@@ -32,9 +32,7 @@ export function calculateCheckDigit(digits: string): number {
  */
 export function generateEan13(prefix = '200'): string {
   if (!/^\d+$/.test(prefix) || prefix.length > 12) {
-    throw new Error(
-      'Prefix must contain only digits and be at most 12 characters long'
-    );
+    throw new Error(I18nHelper.getError('INVALID_EAN13_PREFIX'));
   }
 
   const remainingLength = 12 - prefix.length;

@@ -3,6 +3,7 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import type { Response } from 'express';
 import PDFDocument from 'pdfkit';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { Pedido } from '../../pedido/pedido.entity/pedido.entity';
 import { Incidencia } from '../../incidencia/incidencia.entity/incidencia.entity';
 import { Recepcion } from '../recepcion.entity/recepcion.entity';
@@ -752,7 +753,7 @@ export class PdfReportService {
     });
 
     if (!recepcion) {
-      throw new BadRequestException('No se encontró la recepción indicada.');
+      throw new BadRequestException(I18nHelper.getError('RECEPTION_NOT_FOUND'));
     }
 
     await this.buildRecepcionPdf(recepcion, res);

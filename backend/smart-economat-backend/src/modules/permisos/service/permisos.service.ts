@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Permiso } from '../permiso.entity/permiso.entity';
 import { CreatePermisoDto } from '../dto/create-permiso.dto';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { UpdatePermisoDto } from '../dto/update-permiso.dto';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
@@ -113,7 +114,9 @@ export class PermisosService {
     const permiso = await this.permisoRepo.findOne({ where: { id } });
 
     if (!permiso) {
-      throw new NotFoundException(`Permiso con ID "${id}" no encontrado`);
+      throw new NotFoundException(
+        I18nHelper.getError('PERMISSION_NOT_FOUND', { id })
+      );
     }
 
     return permiso;

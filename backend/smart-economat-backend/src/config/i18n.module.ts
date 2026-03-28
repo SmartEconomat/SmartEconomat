@@ -15,9 +15,9 @@ import * as path from 'path';
  * - **Idioma por defecto:** Español ('es').
  * - **Ubicación de archivos:** `src/i18n/` (dev) o `dist/i18n/` (prod).
  * - **Resolvers:**
- *   1. Query param: `?lang=en`
+ *   1. Query param: `?lang=es` (por defecto)
  *   2. Header estándar: `Accept-Language`
- *   3. Header personalizado: `x-custom-lang`
+ *   3. Header personalizado: `x-lang`
  *
  * @module I18nConfigModule
  */
@@ -53,7 +53,7 @@ console.log(`[i18n] Cargando traducciones desde: ${i18nPath}`);
       resolvers: [
         { use: QueryResolver, options: ['lang'] },
         AcceptLanguageResolver,
-        new HeaderResolver(['x-custom-lang']),
+        new HeaderResolver(['x-lang']),
       ],
     }),
   ],
