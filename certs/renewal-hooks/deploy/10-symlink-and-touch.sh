@@ -19,8 +19,10 @@ if [ -z "$LIVE_DIR" ] || [ ! -d "$LIVE_DIR" ]; then
   exit 0
 fi
 
-ln -sf "$LIVE_DIR/fullchain.pem" "$TARGET_DIR/fullchain.pem"
-ln -sf "$LIVE_DIR/privkey.pem"   "$TARGET_DIR/privkey.pem"
+DOMAIN_NAME=$(basename "$LIVE_DIR")
+
+ln -sf "live/$DOMAIN_NAME/fullchain.pem" "$TARGET_DIR/fullchain.pem"
+ln -sf "live/$DOMAIN_NAME/privkey.pem"   "$TARGET_DIR/privkey.pem"
 
 # Touch marker to notify watchers in other containers (e.g., Nginx sidecar)
 touch "$TARGET_DIR/.reloaded"

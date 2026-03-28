@@ -10,7 +10,7 @@ env:
   NODE_VERSION: '22.13.1'
   APP_NAME: SmartEconomat
   ARCHIVE_NAME: SmartEconomat_AI_Upload.zip
-  REMOTE_BASE_DIR: /home/psych
+  REMOTE_BASE_DIR: /root
 
 jobs:
   build-and-test:
@@ -56,16 +56,6 @@ jobs:
       - name: Checkout del codigo
         uses: actions/checkout@v4
 
-      - name: Validar secrets SSH requeridos
-        env:
-          SERVER_PORT: ${{ secrets.SERVER_PORT }}
-          DEPLOY_SSH_KEY: ${{ secrets.SmartEconomat_DO }}
-        run: |
-          set -e
-          [ -n "$DEPLOY_SSH_KEY" ] || { echo "Falta secret SmartEconomat_DO"; exit 1; }
-          [ -n "$SERVER_PORT" ] || { echo "SERVER_PORT no definido, se usara 22 por defecto"; }
-          echo "$DEPLOY_SSH_KEY" | grep -q "BEGIN .*PRIVATE KEY" || { echo "SmartEconomat_DO no parece una clave privada SSH valida"; exit 1; }
-
       - name: Crear paquete de despliegue
         run: |
           rm -f "${{ env.ARCHIVE_NAME }}"
@@ -83,10 +73,9 @@ jobs:
       - name: Subir paquete al servidor
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: 159.89.96.187
-          username: root
-          key: ${{ secrets.SmartEconomat_DO }}
-          passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SMARTECONOMAT_DO }}
           port: ${{ secrets.SERVER_PORT || 22 }}
           source: ${{ env.ARCHIVE_NAME }}
           target: ${{ env.REMOTE_BASE_DIR }}
@@ -118,15 +107,21 @@ jobs:
           ACME_DIRECTORY_URL: ${{ secrets.ACME_DIRECTORY_URL }}
           ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
         with:
-          host: 159.89.96.187
-          username: root
-          key: ${{ secrets.SmartEconomat_DO }}
-          passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SMARTECONOMAT_DO }}
           port: ${{ secrets.SERVER_PORT || 22 }}
           timeout: 60s
           envs: APP_NAME,ARCHIVE_NAME,REMOTE_BASE_DIR,NODE_ENV,DOMAIN,BACKEND_API_URL,FRONTEND_API_URL,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,DB_HOST,DB_PORT,DB_USERNAME,DB_PASSWORD,DB_DATABASE,JWT_SECRET,JWT_EXPIRATION,VITE_API_PROXY_TARGET,SENTRY_DSN,VITE_SENTRY_DSN,ACME_DIRECTORY_URL,ACME_EMAIL
           script: |
             set -e
+            # Instalar unzip si no existe (necesario para el primer despliegue)
+            if ! command -v unzip &> /dev/null; then
+              echo "Instalando unzip..."
+              sudo DEBIAN_FRONTEND=noninteractive apt-get update -y
+              sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" unzip
+            fi
+
             ARCHIVE_PATH="$REMOTE_BASE_DIR/$ARCHIVE_NAME"
             HELPER_DIR=$(mktemp -d)
 
@@ -135,9 +130,9 @@ jobs:
               exit 1
             fi
 
-            unzip -q "$ARCHIVE_PATH" scripts/remote_deploy.sh -d "$HELPER_DIR"
-            chmod +x "$HELPER_DIR/scripts/remote_deploy.sh"
-            "$HELPER_DIR/scripts/remote_deploy.sh"
+            unzip -q "$ARCHIVE_PATH" scripts/deploy.sh -d "$HELPER_DIR"
+            chmod +x "$HELPER_DIR/scripts/deploy.sh"
+            "$HELPER_DIR/scripts/deploy.sh"
             rm -rf "$HELPER_DIR"
 
   notify:
