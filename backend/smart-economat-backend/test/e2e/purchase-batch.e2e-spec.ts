@@ -1,7 +1,7 @@
 import { getTestApp } from '../setup/test-app';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { DataSource } from 'typeorm';
+import { DataSource, In } from 'typeorm';
 import { loginAndGetToken, generateUniqueName } from '../utils/test-helpers';
 import { Pedido } from '../../src/modules/pedido/pedido.entity/pedido.entity';
 import { PedidoDraft } from '../../src/modules/pedido-draft/pedido-draft.entity/pedido-draft.entity';
@@ -100,11 +100,15 @@ describe('PurchaseBatchController (e2e)', () => {
     const draftCount = await dataSource.getRepository(PedidoDraft).count();
     expect(draftCount).toBe(0);
 
-    const batchId = res.body.data.id;
-    const pedidos = await dataSource
-      .getRepository(Pedido)
-      .find({ where: { batchId } });
+    const pedidoIds = (res.body.data.pedidos as { id: string }[]).map(
+      (p) => p.id
+    );
+    const pedidos = await dataSource.getRepository(Pedido).find({
+      where: { id: In(pedidoIds) },
+    });
     expect(pedidos).toHaveLength(2);
+    const batchIds = new Set(pedidos.map((p) => p.batchId));
+    expect(batchIds.size).toBe(1);
   });
 
   it('GET /purchase-batches - Debería listar los lotes', async () => {
