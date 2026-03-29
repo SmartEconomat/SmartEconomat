@@ -1,0 +1,1722 @@
+[
+  {
+    "method": "GET",
+    "route": "",
+    "fullPath": "/api/v1",
+    "controllerFile": "src/app.controller.ts",
+    "permissions": "-",
+    "handlerName": "getHello"
+  },
+  {
+    "method": "GET",
+    "route": "admin/permissions",
+    "fullPath": "/api/v1/admin/permissions",
+    "controllerFile": "src/modules/admin/controller/admin.controller.ts",
+    "permissions": "permissions:usuarios:listar | roles:rolUsuario.ADMINISTRADOR",
+    "handlerName": "getPermissions"
+  },
+  {
+    "method": "POST",
+    "route": "admin/profesores",
+    "fullPath": "/api/v1/admin/profesores",
+    "controllerFile": "src/modules/admin/controller/admin.controller.ts",
+    "permissions": "permissions:usuarios:listar,usuarios:listar | roles:rolUsuario.ADMINISTRADOR",
+    "handlerName": "createProfesor"
+  },
+  {
+    "method": "GET",
+    "route": "admin/roles",
+    "fullPath": "/api/v1/admin/roles",
+    "controllerFile": "src/modules/admin/controller/admin.controller.ts",
+    "permissions": "-",
+    "handlerName": "getRoles"
+  },
+  {
+    "method": "PATCH",
+    "route": "admin/users/:id/activate",
+    "fullPath": "/api/v1/admin/users/:id/activate",
+    "controllerFile": "src/modules/admin/controller/admin.controller.ts",
+    "permissions": "permissions:usuarios:listar,usuarios:listar,usuarios:crear,usuarios:editar | roles:rolUsuario.ADMINISTRADOR",
+    "handlerName": "activateUser"
+  },
+  {
+    "method": "POST",
+    "route": "admin/users/:id/force-reset",
+    "fullPath": "/api/v1/admin/users/:id/force-reset",
+    "controllerFile": "src/modules/admin/controller/admin.controller.ts",
+    "permissions": "permissions:usuarios:listar,usuarios:crear,usuarios:editar,usuarios:activar_desactivar | roles:rolUsuario.ADMINISTRADOR",
+    "handlerName": "forcePasswordReset"
+  },
+  {
+    "method": "PATCH",
+    "route": "admin/users/:id/role",
+    "fullPath": "/api/v1/admin/users/:id/role",
+    "controllerFile": "src/modules/admin/controller/admin.controller.ts",
+    "permissions": "permissions:usuarios:listar,usuarios:listar,usuarios:crear | roles:rolUsuario.ADMINISTRADOR",
+    "handlerName": "updateUserRole"
+  },
+  {
+    "method": "GET",
+    "route": "albaranes",
+    "fullPath": "/api/v1/albaranes",
+    "controllerFile": "src/modules/albaran/controller/albaran.controller.ts",
+    "permissions": "permissions:albaranes:ver",
+    "handlerName": "findAll"
+  },
+  {
+    "method": "POST",
+    "route": "albaranes",
+    "fullPath": "/api/v1/albaranes",
+    "controllerFile": "src/modules/albaran/controller/albaran.controller.ts",
+    "permissions": "-",
+    "handlerName": "create"
+  },
+  {
+    "method": "DELETE",
+    "route": "albaranes/:id",
+    "fullPath": "/api/v1/albaranes/:id",
+    "controllerFile": "src/modules/albaran/controller/albaran.controller.ts",
+    "permissions": "permissions:albaranes:listar,albaranes:ver,albaranes:editar",
+    "handlerName": "remove"
+  },
+  {
+    "method": "GET",
+    "route": "albaranes/:id",
+    "fullPath": "/api/v1/albaranes/:id",
+    "controllerFile": "src/modules/albaran/controller/albaran.controller.ts",
+    "permissions": "permissions:albaranes:ver,albaranes:listar",
+    "handlerName": "findOne"
+  },
+  {
+    "method": "PATCH",
+    "route": "albaranes/:id",
+    "fullPath": "/api/v1/albaranes/:id",
+    "controllerFile": "src/modules/albaran/controller/albaran.controller.ts",
+    "permissions": "permissions:albaranes:ver,albaranes:listar,albaranes:ver",
+    "handlerName": "update"
+  },
+  {
+    "method": "GET",
+    "route": "albaranes/documento/:filename",
+    "fullPath": "/api/v1/albaranes/documento/:filename",
+    "controllerFile": "src/modules/albaran/controller/albaran.controller.ts",
+    "permissions": "-",
+    "handlerName": "serveDocumento"
+  },
+  {
+    "method": "POST",
+    "route": "albaranes/upload-documento",
+    "fullPath": "/api/v1/albaranes/upload-documento",
+    "controllerFile": "src/modules/albaran/controller/albaran.controller.ts",
+    "permissions": "permissions:albaranes:crear",
+    "handlerName": "uploadDocumento"
+  },
+  {
+    "method": "GET",
+    "route": "alertas/caducidad",
+    "fullPath": "/api/v1/alertas/caducidad",
+    "controllerFile": "src/modules/inventario/controller/alerta.controller.ts",
+    "permissions": "-",
+    "handlerName": "alertasCaducidad"
+  },
+  {
+    "method": "GET",
+    "route": "alertas/stock",
+    "fullPath": "/api/v1/alertas/stock",
+    "controllerFile": "src/modules/inventario/controller/alerta.controller.ts",
+    "permissions": "permissions:inventario:ver",
+    "handlerName": "alertasStock"
+  },
+  {
+    "method": "GET",
+    "route": "alumnos/aulas",
+    "fullPath": "/api/v1/alumnos/aulas",
+    "controllerFile": "src/modules/alumno/controller/alumno.controller.ts",
+    "permissions": "-",
+    "handlerName": "getAulas"
+  },
+  {
+    "method": "GET",
+    "route": "alumnos/aulas/:aula/clases",
+    "fullPath": "/api/v1/alumnos/aulas/:aula/clases",
+    "controllerFile": "src/modules/alumno/controller/alumno.controller.ts",
+    "permissions": "-",
+    "handlerName": "getClasesByAula"
+  },
+  {
+    "method": "GET",
+    "route": "alumnos/aulas/:aula/clases/:clase/profesores",
+    "fullPath": "/api/v1/alumnos/aulas/:aula/clases/:clase/profesores",
+    "controllerFile": "src/modules/alumno/controller/alumno.controller.ts",
+    "permissions": "-",
+    "handlerName": "getProfesoresBySlot"
+  },
+  {
+    "method": "PATCH",
+    "route": "alumnos/change-profesor",
+    "fullPath": "/api/v1/alumnos/change-profesor",
+    "controllerFile": "src/modules/alumno/controller/alumno.controller.ts",
+    "permissions": "-",
+    "handlerName": "changeProfesor"
+  },
+  {
+    "method": "POST",
+    "route": "alumnos/register",
+    "fullPath": "/api/v1/alumnos/register",
+    "controllerFile": "src/modules/alumno/controller/alumno.controller.ts",
+    "permissions": "-",
+    "handlerName": "register"
+  },
+  {
+    "method": "GET",
+    "route": "alumnos/slots/:codigoClase",
+    "fullPath": "/api/v1/alumnos/slots/:codigoClase",
+    "controllerFile": "src/modules/alumno/controller/alumno.controller.ts",
+    "permissions": "-",
+    "handlerName": "getSlotByCode"
+  },
+  {
+    "method": "GET",
+    "route": "archivos",
+    "fullPath": "/api/v1/archivos",
+    "controllerFile": "src/modules/archivo/controller/archivo.controller.ts",
+    "permissions": "permissions:archivos:subir",
+    "handlerName": "findAll"
+  },
+  {
+    "method": "DELETE",
+    "route": "archivos/:id",
+    "fullPath": "/api/v1/archivos/:id",
+    "controllerFile": "src/modules/archivo/controller/archivo.controller.ts",
+    "permissions": "permissions:archivos:ver,archivos:ver",
+    "handlerName": "remove"
+  },
+  {
+    "method": "GET",
+    "route": "archivos/:id",
+    "fullPath": "/api/v1/archivos/:id",
+    "controllerFile": "src/modules/archivo/controller/archivo.controller.ts",
+    "permissions": "permissions:archivos:listar",
+    "handlerName": "findOne"
+  },
+  {
+    "method": "GET",
+    "route": "archivos/content/:filename",
+    "fullPath": "/api/v1/archivos/content/:filename",
+    "controllerFile": "src/modules/archivo/controller/archivo.controller.ts",
+    "permissions": "permissions:archivos:listar,archivos:ver",
+    "handlerName": "getFileContent"
+  },
+  {
+    "method": "POST",
+    "route": "archivos/upload",
+    "fullPath": "/api/v1/archivos/upload",
+    "controllerFile": "src/modules/archivo/controller/archivo.controller.ts",
+    "permissions": "-",
+    "handlerName": "uploadFile"
+  },
+  {
+    "method": "PATCH",
+    "route": "auth/change-password",
+    "fullPath": "/api/v1/auth/change-password",
+    "controllerFile": "src/modules/auth/controller/auth.controller.ts",
+    "permissions": "-",
+    "handlerName": "changePassword"
+  },
+  {
+    "method": "POST",
+    "route": "auth/forgot-password",
+    "fullPath": "/api/v1/auth/forgot-password",
+    "controllerFile": "src/modules/auth/controller/auth.controller.ts",
+    "permissions": "-",
+    "handlerName": "forgotPassword"
+  },
+  {
+    "method": "POST",
+    "route": "auth/login",
+    "fullPath": "/api/v1/auth/login",
+    "controllerFile": "src/modules/auth/controller/auth.controller.ts",
+    "permissions": "-",
+    "handlerName": "login"
+  },
+  {
+    "method": "POST",
+    "route": "auth/logout",
+    "fullPath": "/api/v1/auth/logout",
+    "controllerFile": "src/modules/auth/controller/auth.controller.ts",
+    "permissions": "-",
+    "handlerName": "logout"
+  },
+  {
+    "method": "GET",
+    "route": "auth/profile",
+    "fullPath": "/api/v1/auth/profile",
+    "controllerFile": "src/modules/auth/controller/auth.controller.ts",
+    "permissions": "-",
+    "handlerName": "getProfile"
+  },
+  {
+    "method": "POST",
+    "route": "auth/register",
+    "fullPath": "/api/v1/auth/register",
+    "controllerFile": "src/modules/auth/controller/auth.controller.ts",
+    "permissions": "-",
+    "handlerName": "register"
+  },
+  {
+    "method": "POST",
+    "route": "auth/reset-password",
+    "fullPath": "/api/v1/auth/reset-password",
+    "controllerFile": "src/modules/auth/controller/auth.controller.ts",
+    "permissions": "-",
+    "handlerName": "resetPassword"
+  },
+  {
+    "method": "GET",
+    "route": "dashboard/stats",
+    "fullPath": "/api/v1/dashboard/stats",
+    "controllerFile": "src/modules/dashboard/controller/dashboard.controller.ts",
+    "permissions": "-",
+    "handlerName": "getStats"
+  },
+  {
+    "method": "GET",
+    "route": "export/albaranes/pdf",
+    "fullPath": "/api/v1/export/albaranes/pdf",
+    "controllerFile": "src/modules/export/controller/export.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "exportAlbaranesPdf"
+  },
+  {
+    "method": "GET",
+    "route": "export/albaranes/xlsx",
+    "fullPath": "/api/v1/export/albaranes/xlsx",
+    "controllerFile": "src/modules/export/controller/export.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "exportAlbaranes"
+  },
+  {
+    "method": "GET",
+    "route": "export/incidencias/xlsx",
+    "fullPath": "/api/v1/export/incidencias/xlsx",
+    "controllerFile": "src/modules/export/controller/export.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "exportIncidencias"
+  },
+  {
+    "method": "GET",
+    "route": "export/inventario/pdf",
+    "fullPath": "/api/v1/export/inventario/pdf",
+    "controllerFile": "src/modules/export/controller/export.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR",
+    "handlerName": "exportInventarioPdf"
+  },
+  {
+    "method": "GET",
+    "route": "export/inventario/xlsx",
+    "fullPath": "/api/v1/export/inventario/xlsx",
+    "controllerFile": "src/modules/export/controller/export.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "exportInventario"
+  },
+  {
+    "method": "GET",
+    "route": "export/movimientos/xlsx",
+    "fullPath": "/api/v1/export/movimientos/xlsx",
+    "controllerFile": "src/modules/export/controller/export.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "exportMovimientos"
+  },
+  {
+    "method": "GET",
+    "route": "export/pedidos/pdf",
+    "fullPath": "/api/v1/export/pedidos/pdf",
+    "controllerFile": "src/modules/export/controller/export.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "exportPedidosPdf"
+  },
+  {
+    "method": "GET",
+    "route": "export/pedidos/xlsx",
+    "fullPath": "/api/v1/export/pedidos/xlsx",
+    "controllerFile": "src/modules/export/controller/export.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "exportPedidos"
+  },
+  {
+    "method": "GET",
+    "route": "export/productos/pdf",
+    "fullPath": "/api/v1/export/productos/pdf",
+    "controllerFile": "src/modules/export/controller/export.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "exportProductosPdf"
+  },
+  {
+    "method": "GET",
+    "route": "export/productos/xlsx",
+    "fullPath": "/api/v1/export/productos/xlsx",
+    "controllerFile": "src/modules/export/controller/export.controller.ts",
+    "permissions": "-",
+    "handlerName": "exportProductos"
+  },
+  {
+    "method": "GET",
+    "route": "export/proveedores/pdf",
+    "fullPath": "/api/v1/export/proveedores/pdf",
+    "controllerFile": "src/modules/export/controller/export.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "exportProveedoresPdf"
+  },
+  {
+    "method": "GET",
+    "route": "export/proveedores/xlsx",
+    "fullPath": "/api/v1/export/proveedores/xlsx",
+    "controllerFile": "src/modules/export/controller/export.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "exportProveedores"
+  },
+  {
+    "method": "GET",
+    "route": "export/recepciones/xlsx",
+    "fullPath": "/api/v1/export/recepciones/xlsx",
+    "controllerFile": "src/modules/export/controller/export.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "exportRecepciones"
+  },
+  {
+    "method": "GET",
+    "route": "export/recetas/pdf",
+    "fullPath": "/api/v1/export/recetas/pdf",
+    "controllerFile": "src/modules/export/controller/export.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "exportRecetasPdf"
+  },
+  {
+    "method": "GET",
+    "route": "export/recetas/xlsx",
+    "fullPath": "/api/v1/export/recetas/xlsx",
+    "controllerFile": "src/modules/export/controller/export.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "exportRecetas"
+  },
+  {
+    "method": "GET",
+    "route": "export/ubicaciones/xlsx",
+    "fullPath": "/api/v1/export/ubicaciones/xlsx",
+    "controllerFile": "src/modules/export/controller/export.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "exportUbicaciones"
+  },
+  {
+    "method": "GET",
+    "route": "export/usuarios/xlsx",
+    "fullPath": "/api/v1/export/usuarios/xlsx",
+    "controllerFile": "src/modules/export/controller/export.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "exportUsuarios"
+  },
+  {
+    "method": "GET",
+    "route": "historial-precio",
+    "fullPath": "/api/v1/historial-precio",
+    "controllerFile": "src/modules/producto/controller/historial-precio.controller.ts",
+    "permissions": "permissions:productos:editar",
+    "handlerName": "findAll"
+  },
+  {
+    "method": "POST",
+    "route": "historial-precio",
+    "fullPath": "/api/v1/historial-precio",
+    "controllerFile": "src/modules/producto/controller/historial-precio.controller.ts",
+    "permissions": "-",
+    "handlerName": "create"
+  },
+  {
+    "method": "DELETE",
+    "route": "historial-precio/:id",
+    "fullPath": "/api/v1/historial-precio/:id",
+    "controllerFile": "src/modules/producto/controller/historial-precio.controller.ts",
+    "permissions": "permissions:productos:editar,productos:ver,productos:ver,productos:editar",
+    "handlerName": "remove"
+  },
+  {
+    "method": "GET",
+    "route": "historial-precio/:id",
+    "fullPath": "/api/v1/historial-precio/:id",
+    "controllerFile": "src/modules/producto/controller/historial-precio.controller.ts",
+    "permissions": "permissions:productos:editar,productos:ver",
+    "handlerName": "findOne"
+  },
+  {
+    "method": "PATCH",
+    "route": "historial-precio/:id",
+    "fullPath": "/api/v1/historial-precio/:id",
+    "controllerFile": "src/modules/producto/controller/historial-precio.controller.ts",
+    "permissions": "permissions:productos:editar,productos:ver,productos:ver",
+    "handlerName": "update"
+  },
+  {
+    "method": "GET",
+    "route": "incidencias",
+    "fullPath": "/api/v1/incidencias",
+    "controllerFile": "src/modules/incidencia/controller/incidencia.controller.ts",
+    "permissions": "permissions:incidencias:crear",
+    "handlerName": "findAll"
+  },
+  {
+    "method": "POST",
+    "route": "incidencias",
+    "fullPath": "/api/v1/incidencias",
+    "controllerFile": "src/modules/incidencia/controller/incidencia.controller.ts",
+    "permissions": "-",
+    "handlerName": "create"
+  },
+  {
+    "method": "GET",
+    "route": "incidencias-resueltas",
+    "fullPath": "/api/v1/incidencias-resueltas",
+    "controllerFile": "src/modules/incidencia/controller/incidencia-resuelta.controller.ts",
+    "permissions": "permissions:incidencias:crear",
+    "handlerName": "findAll"
+  },
+  {
+    "method": "POST",
+    "route": "incidencias-resueltas",
+    "fullPath": "/api/v1/incidencias-resueltas",
+    "controllerFile": "src/modules/incidencia/controller/incidencia-resuelta.controller.ts",
+    "permissions": "-",
+    "handlerName": "create"
+  },
+  {
+    "method": "DELETE",
+    "route": "incidencias-resueltas/:id",
+    "fullPath": "/api/v1/incidencias-resueltas/:id",
+    "controllerFile": "src/modules/incidencia/controller/incidencia-resuelta.controller.ts",
+    "permissions": "permissions:incidencias:crear,incidencias:listar,incidencias:ver,incidencias:editar",
+    "handlerName": "remove"
+  },
+  {
+    "method": "GET",
+    "route": "incidencias-resueltas/:id",
+    "fullPath": "/api/v1/incidencias-resueltas/:id",
+    "controllerFile": "src/modules/incidencia/controller/incidencia-resuelta.controller.ts",
+    "permissions": "permissions:incidencias:crear,incidencias:listar",
+    "handlerName": "findOne"
+  },
+  {
+    "method": "PATCH",
+    "route": "incidencias-resueltas/:id",
+    "fullPath": "/api/v1/incidencias-resueltas/:id",
+    "controllerFile": "src/modules/incidencia/controller/incidencia-resuelta.controller.ts",
+    "permissions": "permissions:incidencias:crear,incidencias:listar,incidencias:ver",
+    "handlerName": "update"
+  },
+  {
+    "method": "DELETE",
+    "route": "incidencias/:id",
+    "fullPath": "/api/v1/incidencias/:id",
+    "controllerFile": "src/modules/incidencia/controller/incidencia.controller.ts",
+    "permissions": "permissions:incidencias:crear,incidencias:listar,incidencias:ver,incidencias:editar",
+    "handlerName": "remove"
+  },
+  {
+    "method": "GET",
+    "route": "incidencias/:id",
+    "fullPath": "/api/v1/incidencias/:id",
+    "controllerFile": "src/modules/incidencia/controller/incidencia.controller.ts",
+    "permissions": "permissions:incidencias:crear,incidencias:listar",
+    "handlerName": "findOne"
+  },
+  {
+    "method": "PATCH",
+    "route": "incidencias/:id",
+    "fullPath": "/api/v1/incidencias/:id",
+    "controllerFile": "src/modules/incidencia/controller/incidencia.controller.ts",
+    "permissions": "permissions:incidencias:crear,incidencias:listar,incidencias:ver",
+    "handlerName": "update"
+  },
+  {
+    "method": "PATCH",
+    "route": "incidencias/:id/resolver",
+    "fullPath": "/api/v1/incidencias/:id/resolver",
+    "controllerFile": "src/modules/incidencia/controller/incidencia.controller.ts",
+    "permissions": "permissions:incidencias:listar,incidencias:ver,incidencias:editar,incidencias:eliminar",
+    "handlerName": "resolver"
+  },
+  {
+    "method": "POST",
+    "route": "incidencias/:id/resolver",
+    "fullPath": "/api/v1/incidencias/:id/resolver",
+    "controllerFile": "src/modules/incidencia/controller/incidencia.controller.ts",
+    "permissions": "permissions:incidencias:editar,incidencias:eliminar,incidencias:resolver,incidencias:crear",
+    "handlerName": "resolverTransaccional"
+  },
+  {
+    "method": "POST",
+    "route": "incidencias/reportar",
+    "fullPath": "/api/v1/incidencias/reportar",
+    "controllerFile": "src/modules/incidencia/controller/incidencia.controller.ts",
+    "permissions": "permissions:incidencias:ver,incidencias:editar,incidencias:eliminar,incidencias:resolver",
+    "handlerName": "reportar"
+  },
+  {
+    "method": "GET",
+    "route": "inventario",
+    "fullPath": "/api/v1/inventario",
+    "controllerFile": "src/modules/inventario/controller/inventario.controller.ts",
+    "permissions": "permissions:inventario:crear",
+    "handlerName": "findAll"
+  },
+  {
+    "method": "POST",
+    "route": "inventario",
+    "fullPath": "/api/v1/inventario",
+    "controllerFile": "src/modules/inventario/controller/inventario.controller.ts",
+    "permissions": "-",
+    "handlerName": "create"
+  },
+  {
+    "method": "DELETE",
+    "route": "inventario/:id",
+    "fullPath": "/api/v1/inventario/:id",
+    "controllerFile": "src/modules/inventario/controller/inventario.controller.ts",
+    "permissions": "permissions:inventario:ver,inventario:editar",
+    "handlerName": "remove"
+  },
+  {
+    "method": "GET",
+    "route": "inventario/:id",
+    "fullPath": "/api/v1/inventario/:id",
+    "controllerFile": "src/modules/inventario/controller/inventario.controller.ts",
+    "permissions": "permissions:inventario:listar,inventario:ajustar_stock",
+    "handlerName": "findOne"
+  },
+  {
+    "method": "PATCH",
+    "route": "inventario/:id",
+    "fullPath": "/api/v1/inventario/:id",
+    "controllerFile": "src/modules/inventario/controller/inventario.controller.ts",
+    "permissions": "permissions:inventario:ajustar_stock,inventario:ver",
+    "handlerName": "update"
+  },
+  {
+    "method": "POST",
+    "route": "inventario/ajustes-manuales",
+    "fullPath": "/api/v1/inventario/ajustes-manuales",
+    "controllerFile": "src/modules/inventario/controller/inventario.controller.ts",
+    "permissions": "permissions:inventario:crear,inventario:listar,inventario:listar",
+    "handlerName": "ajustarManual"
+  },
+  {
+    "method": "GET",
+    "route": "inventario/stock",
+    "fullPath": "/api/v1/inventario/stock",
+    "controllerFile": "src/modules/inventario/controller/inventario.controller.ts",
+    "permissions": "permissions:inventario:crear,inventario:listar",
+    "handlerName": "queryStock"
+  },
+  {
+    "method": "GET",
+    "route": "merma",
+    "fullPath": "/api/v1/merma",
+    "controllerFile": "src/modules/merma/controller/merma.controller.ts",
+    "permissions": "permissions:merma:crear,merma:stats",
+    "handlerName": "findAll"
+  },
+  {
+    "method": "POST",
+    "route": "merma",
+    "fullPath": "/api/v1/merma",
+    "controllerFile": "src/modules/merma/controller/merma.controller.ts",
+    "permissions": "-",
+    "handlerName": "create"
+  },
+  {
+    "method": "GET",
+    "route": "merma/:id",
+    "fullPath": "/api/v1/merma/:id",
+    "controllerFile": "src/modules/merma/controller/merma.controller.ts",
+    "permissions": "permissions:merma:crear,merma:stats,merma:listar",
+    "handlerName": "findOne"
+  },
+  {
+    "method": "GET",
+    "route": "merma/stats",
+    "fullPath": "/api/v1/merma/stats",
+    "controllerFile": "src/modules/merma/controller/merma.controller.ts",
+    "permissions": "permissions:merma:crear",
+    "handlerName": "getStats"
+  },
+  {
+    "method": "GET",
+    "route": "movimientos",
+    "fullPath": "/api/v1/movimientos",
+    "controllerFile": "src/modules/movimiento/controller/movimiento.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "findAll"
+  },
+  {
+    "method": "POST",
+    "route": "movimientos",
+    "fullPath": "/api/v1/movimientos",
+    "controllerFile": "src/modules/movimiento/controller/movimiento.controller.ts",
+    "permissions": "-",
+    "handlerName": "create"
+  },
+  {
+    "method": "DELETE",
+    "route": "movimientos/:id",
+    "fullPath": "/api/v1/movimientos/:id",
+    "controllerFile": "src/modules/movimiento/controller/movimiento.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR,rolUsuario.ALUMNO",
+    "handlerName": "remove"
+  },
+  {
+    "method": "GET",
+    "route": "movimientos/:id",
+    "fullPath": "/api/v1/movimientos/:id",
+    "controllerFile": "src/modules/movimiento/controller/movimiento.controller.ts",
+    "permissions": "-",
+    "handlerName": "findOne"
+  },
+  {
+    "method": "PATCH",
+    "route": "movimientos/:id",
+    "fullPath": "/api/v1/movimientos/:id",
+    "controllerFile": "src/modules/movimiento/controller/movimiento.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR,rolUsuario.ALUMNO",
+    "handlerName": "update"
+  },
+  {
+    "method": "GET",
+    "route": "movimientos/historial",
+    "fullPath": "/api/v1/movimientos/historial",
+    "controllerFile": "src/modules/movimiento/controller/movimiento.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "getMovimientoHistory"
+  },
+  {
+    "method": "GET",
+    "route": "pedido-usuarios",
+    "fullPath": "/api/v1/pedido-usuarios",
+    "controllerFile": "src/modules/pedido/controller/pedido-usuario.controller.ts",
+    "permissions": "permissions:pedidos:crear",
+    "handlerName": "findAll"
+  },
+  {
+    "method": "POST",
+    "route": "pedido-usuarios",
+    "fullPath": "/api/v1/pedido-usuarios",
+    "controllerFile": "src/modules/pedido/controller/pedido-usuario.controller.ts",
+    "permissions": "-",
+    "handlerName": "create"
+  },
+  {
+    "method": "GET",
+    "route": "pedido-usuarios/:id",
+    "fullPath": "/api/v1/pedido-usuarios/:id",
+    "controllerFile": "src/modules/pedido/controller/pedido-usuario.controller.ts",
+    "permissions": "permissions:pedidos:crear,pedidos:listar",
+    "handlerName": "findOne"
+  },
+  {
+    "method": "PATCH",
+    "route": "pedido-usuarios/:id",
+    "fullPath": "/api/v1/pedido-usuarios/:id",
+    "controllerFile": "src/modules/pedido/controller/pedido-usuario.controller.ts",
+    "permissions": "permissions:pedidos:crear,pedidos:listar,pedidos:ver",
+    "handlerName": "update"
+  },
+  {
+    "method": "PATCH",
+    "route": "pedido-usuarios/:id/aceptar",
+    "fullPath": "/api/v1/pedido-usuarios/:id/aceptar",
+    "controllerFile": "src/modules/pedido/controller/pedido-usuario.controller.ts",
+    "permissions": "permissions:pedidos:crear,pedidos:listar,pedidos:ver,pedidos:editar",
+    "handlerName": "accept"
+  },
+  {
+    "method": "PATCH",
+    "route": "pedido-usuarios/:id/cancelar",
+    "fullPath": "/api/v1/pedido-usuarios/:id/cancelar",
+    "controllerFile": "src/modules/pedido/controller/pedido-usuario.controller.ts",
+    "permissions": "permissions:pedidos:listar,pedidos:ver,pedidos:editar,pedidos:editar",
+    "handlerName": "cancel"
+  },
+  {
+    "method": "GET",
+    "route": "pedido-usuarios/:id/pdf",
+    "fullPath": "/api/v1/pedido-usuarios/:id/pdf",
+    "controllerFile": "src/modules/pedido/controller/pedido-usuario.controller.ts",
+    "permissions": "permissions:pedidos:ver,pedidos:editar,pedidos:editar,pedidos:cancelar",
+    "handlerName": "generatePdf"
+  },
+  {
+    "method": "DELETE",
+    "route": "pedido/draft",
+    "fullPath": "/api/v1/pedido/draft",
+    "controllerFile": "src/modules/pedido-draft/controller/pedido-draft.controller.ts",
+    "permissions": "-",
+    "handlerName": "clearDraft"
+  },
+  {
+    "method": "GET",
+    "route": "pedido/draft",
+    "fullPath": "/api/v1/pedido/draft",
+    "controllerFile": "src/modules/pedido-draft/controller/pedido-draft.controller.ts",
+    "permissions": "-",
+    "handlerName": "getLatestDraft"
+  },
+  {
+    "method": "POST",
+    "route": "pedido/draft",
+    "fullPath": "/api/v1/pedido/draft",
+    "controllerFile": "src/modules/pedido-draft/controller/pedido-draft.controller.ts",
+    "permissions": "-",
+    "handlerName": "saveDraft"
+  },
+  {
+    "method": "POST",
+    "route": "pedido/draft/finalize",
+    "fullPath": "/api/v1/pedido/draft/finalize",
+    "controllerFile": "src/modules/pedido-draft/controller/pedido-draft.controller.ts",
+    "permissions": "-",
+    "handlerName": "finalizeOrder"
+  },
+  {
+    "method": "GET",
+    "route": "pedidos",
+    "fullPath": "/api/v1/pedidos",
+    "controllerFile": "src/modules/pedido/controller/pedido.controller.ts",
+    "permissions": "permissions:pedidos:crear",
+    "handlerName": "findAll"
+  },
+  {
+    "method": "POST",
+    "route": "pedidos",
+    "fullPath": "/api/v1/pedidos",
+    "controllerFile": "src/modules/pedido/controller/pedido.controller.ts",
+    "permissions": "-",
+    "handlerName": "create"
+  },
+  {
+    "method": "DELETE",
+    "route": "pedidos/:id",
+    "fullPath": "/api/v1/pedidos/:id",
+    "controllerFile": "src/modules/pedido/controller/pedido.controller.ts",
+    "permissions": "permissions:pedidos:listar,pedidos:crear,pedidos:ver,pedidos:editar",
+    "handlerName": "remove"
+  },
+  {
+    "method": "GET",
+    "route": "pedidos/:id",
+    "fullPath": "/api/v1/pedidos/:id",
+    "controllerFile": "src/modules/pedido/controller/pedido.controller.ts",
+    "permissions": "permissions:pedidos:crear,pedidos:listar,pedidos:crear",
+    "handlerName": "findOne"
+  },
+  {
+    "method": "PATCH",
+    "route": "pedidos/:id",
+    "fullPath": "/api/v1/pedidos/:id",
+    "controllerFile": "src/modules/pedido/controller/pedido.controller.ts",
+    "permissions": "permissions:pedidos:crear,pedidos:listar,pedidos:crear,pedidos:ver",
+    "handlerName": "update"
+  },
+  {
+    "method": "PATCH",
+    "route": "pedidos/:id/aceptar",
+    "fullPath": "/api/v1/pedidos/:id/aceptar",
+    "controllerFile": "src/modules/pedido/controller/pedido.controller.ts",
+    "permissions": "permissions:pedidos:ver,pedidos:editar,pedidos:eliminar,pedidos:editar,pedidos:cancelar",
+    "handlerName": "aceptarPedido"
+  },
+  {
+    "method": "PATCH",
+    "route": "pedidos/:id/cancelar",
+    "fullPath": "/api/v1/pedidos/:id/cancelar",
+    "controllerFile": "src/modules/pedido/controller/pedido.controller.ts",
+    "permissions": "permissions:pedidos:crear,pedidos:ver,pedidos:editar,pedidos:eliminar,pedidos:editar",
+    "handlerName": "cancelarPedido"
+  },
+  {
+    "method": "PATCH",
+    "route": "pedidos/:id/fecha-entrega",
+    "fullPath": "/api/v1/pedidos/:id/fecha-entrega",
+    "controllerFile": "src/modules/pedido/controller/pedido.controller.ts",
+    "permissions": "permissions:pedidos:crear,pedidos:ver,pedidos:editar,pedidos:eliminar",
+    "handlerName": "updateFechaEntrega"
+  },
+  {
+    "method": "POST",
+    "route": "pedidos/from-recipes",
+    "fullPath": "/api/v1/pedidos/from-recipes",
+    "controllerFile": "src/modules/pedido/controller/pedido.controller.ts",
+    "permissions": "permissions:pedidos:crear,pedidos:listar",
+    "handlerName": "createFromRecipes"
+  },
+  {
+    "method": "GET",
+    "route": "preparaciones",
+    "fullPath": "/api/v1/preparaciones",
+    "controllerFile": "src/modules/preparacion/controller/preparacion.controller.ts",
+    "permissions": "-",
+    "handlerName": "findAll"
+  },
+  {
+    "method": "POST",
+    "route": "preparaciones",
+    "fullPath": "/api/v1/preparaciones",
+    "controllerFile": "src/modules/preparacion/controller/preparacion.controller.ts",
+    "permissions": "-",
+    "handlerName": "create"
+  },
+  {
+    "method": "DELETE",
+    "route": "preparaciones/:id",
+    "fullPath": "/api/v1/preparaciones/:id",
+    "controllerFile": "src/modules/preparacion/controller/preparacion.controller.ts",
+    "permissions": "-",
+    "handlerName": "remove"
+  },
+  {
+    "method": "GET",
+    "route": "preparaciones/:id",
+    "fullPath": "/api/v1/preparaciones/:id",
+    "controllerFile": "src/modules/preparacion/controller/preparacion.controller.ts",
+    "permissions": "-",
+    "handlerName": "findOne"
+  },
+  {
+    "method": "PATCH",
+    "route": "preparaciones/:id/cancelar",
+    "fullPath": "/api/v1/preparaciones/:id/cancelar",
+    "controllerFile": "src/modules/preparacion/controller/preparacion.controller.ts",
+    "permissions": "-",
+    "handlerName": "cancelar"
+  },
+  {
+    "method": "PATCH",
+    "route": "preparaciones/:id/finalizar",
+    "fullPath": "/api/v1/preparaciones/:id/finalizar",
+    "controllerFile": "src/modules/preparacion/controller/preparacion.controller.ts",
+    "permissions": "-",
+    "handlerName": "finalizar"
+  },
+  {
+    "method": "PATCH",
+    "route": "preparaciones/:id/iniciar",
+    "fullPath": "/api/v1/preparaciones/:id/iniciar",
+    "controllerFile": "src/modules/preparacion/controller/preparacion.controller.ts",
+    "permissions": "-",
+    "handlerName": "iniciar"
+  },
+  {
+    "method": "GET",
+    "route": "produccion",
+    "fullPath": "/api/v1/produccion",
+    "controllerFile": "src/modules/receta/controller/produccion.controller.ts",
+    "permissions": "permissions:recetas:cocinar,recetas:cocinar",
+    "handlerName": "findAll"
+  },
+  {
+    "method": "GET",
+    "route": "produccion/:id",
+    "fullPath": "/api/v1/produccion/:id",
+    "controllerFile": "src/modules/receta/controller/produccion.controller.ts",
+    "permissions": "permissions:recetas:cocinar,recetas:listar,recetas:cocinar",
+    "handlerName": "findOne"
+  },
+  {
+    "method": "POST",
+    "route": "produccion/ejecutar",
+    "fullPath": "/api/v1/produccion/ejecutar",
+    "controllerFile": "src/modules/receta/controller/produccion.controller.ts",
+    "permissions": "-",
+    "handlerName": "ejecutarProduccion"
+  },
+  {
+    "method": "PATCH",
+    "route": "produccion/lote/:id/consumir",
+    "fullPath": "/api/v1/produccion/lote/:id/consumir",
+    "controllerFile": "src/modules/receta/controller/produccion.controller.ts",
+    "permissions": "permissions:recetas:cocinar,recetas:listar",
+    "handlerName": "consumirPorciones"
+  },
+  {
+    "method": "POST",
+    "route": "produccion/validar",
+    "fullPath": "/api/v1/produccion/validar",
+    "controllerFile": "src/modules/receta/controller/produccion.controller.ts",
+    "permissions": "permissions:recetas:cocinar",
+    "handlerName": "validarStock"
+  },
+  {
+    "method": "GET",
+    "route": "producto-alergenos",
+    "fullPath": "/api/v1/producto-alergenos",
+    "controllerFile": "src/modules/producto/controller/producto-alergeno.controller.ts",
+    "permissions": "permissions:productos:editar",
+    "handlerName": "findAll"
+  },
+  {
+    "method": "POST",
+    "route": "producto-alergenos",
+    "fullPath": "/api/v1/producto-alergenos",
+    "controllerFile": "src/modules/producto/controller/producto-alergeno.controller.ts",
+    "permissions": "-",
+    "handlerName": "create"
+  },
+  {
+    "method": "GET",
+    "route": "producto-alergenos/:id",
+    "fullPath": "/api/v1/producto-alergenos/:id",
+    "controllerFile": "src/modules/producto/controller/producto-alergeno.controller.ts",
+    "permissions": "permissions:productos:ver",
+    "handlerName": "findOne"
+  },
+  {
+    "method": "PATCH",
+    "route": "producto-alergenos/:id",
+    "fullPath": "/api/v1/producto-alergenos/:id",
+    "controllerFile": "src/modules/producto/controller/producto-alergeno.controller.ts",
+    "permissions": "permissions:productos:ver,productos:ver",
+    "handlerName": "update"
+  },
+  {
+    "method": "DELETE",
+    "route": "producto-alergenos/:idProducto/:alergeno",
+    "fullPath": "/api/v1/producto-alergenos/:idProducto/:alergeno",
+    "controllerFile": "src/modules/producto/controller/producto-alergeno.controller.ts",
+    "permissions": "permissions:productos:editar",
+    "handlerName": "remove"
+  },
+  {
+    "method": "GET",
+    "route": "producto-proveedor/:id/historial",
+    "fullPath": "/api/v1/producto-proveedor/:id/historial",
+    "controllerFile": "src/modules/producto/controller/producto-proveedor.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "getHistorial"
+  },
+  {
+    "method": "PATCH",
+    "route": "producto-proveedor/:id/merma",
+    "fullPath": "/api/v1/producto-proveedor/:id/merma",
+    "controllerFile": "src/modules/producto/controller/producto-proveedor.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "updateMerma"
+  },
+  {
+    "method": "PATCH",
+    "route": "producto-proveedor/:id/precio",
+    "fullPath": "/api/v1/producto-proveedor/:id/precio",
+    "controllerFile": "src/modules/producto/controller/producto-proveedor.controller.ts",
+    "permissions": "-",
+    "handlerName": "updatePrecio"
+  },
+  {
+    "method": "GET",
+    "route": "producto-proveedor/comparar/:productoId",
+    "fullPath": "/api/v1/producto-proveedor/comparar/:productoId",
+    "controllerFile": "src/modules/producto/controller/producto-proveedor.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "compararProveedores"
+  },
+  {
+    "method": "GET",
+    "route": "producto-proveedor/search",
+    "fullPath": "/api/v1/producto-proveedor/search",
+    "controllerFile": "src/modules/producto/controller/producto-proveedor.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "search"
+  },
+  {
+    "method": "GET",
+    "route": "productos",
+    "fullPath": "/api/v1/productos",
+    "controllerFile": "src/modules/producto/controller/producto.controller.ts",
+    "permissions": "permissions:productos:crear",
+    "handlerName": "findAll"
+  },
+  {
+    "method": "POST",
+    "route": "productos",
+    "fullPath": "/api/v1/productos",
+    "controllerFile": "src/modules/producto/controller/producto.controller.ts",
+    "permissions": "permissions:productos:generar_ean13",
+    "handlerName": "create"
+  },
+  {
+    "method": "DELETE",
+    "route": "productos/:id",
+    "fullPath": "/api/v1/productos/:id",
+    "controllerFile": "src/modules/producto/controller/producto.controller.ts",
+    "permissions": "permissions:productos:ver,productos:editar",
+    "handlerName": "remove"
+  },
+  {
+    "method": "GET",
+    "route": "productos/:id",
+    "fullPath": "/api/v1/productos/:id",
+    "controllerFile": "src/modules/producto/controller/producto.controller.ts",
+    "permissions": "permissions:productos:listar",
+    "handlerName": "findOne"
+  },
+  {
+    "method": "PATCH",
+    "route": "productos/:id",
+    "fullPath": "/api/v1/productos/:id",
+    "controllerFile": "src/modules/producto/controller/producto.controller.ts",
+    "permissions": "permissions:productos:listar,productos:ver",
+    "handlerName": "update"
+  },
+  {
+    "method": "GET",
+    "route": "productos/:id/historial-precios",
+    "fullPath": "/api/v1/productos/:id/historial-precios",
+    "controllerFile": "src/modules/producto/controller/producto.controller.ts",
+    "permissions": "permissions:productos:editar,productos:eliminar",
+    "handlerName": "getHistorialPrecios"
+  },
+  {
+    "method": "GET",
+    "route": "productos/:id/pmp",
+    "fullPath": "/api/v1/productos/:id/pmp",
+    "controllerFile": "src/modules/producto/controller/producto.controller.ts",
+    "permissions": "permissions:productos:eliminar,productos:ver",
+    "handlerName": "getPmp"
+  },
+  {
+    "method": "GET",
+    "route": "productos/generar-ean13",
+    "fullPath": "/api/v1/productos/generar-ean13",
+    "controllerFile": "src/modules/producto/controller/producto.controller.ts",
+    "permissions": "-",
+    "handlerName": "generarEan13"
+  },
+  {
+    "method": "POST",
+    "route": "profesores/admin-slots",
+    "fullPath": "/api/v1/profesores/admin-slots",
+    "controllerFile": "src/modules/profesor/controller/profesor.controller.ts",
+    "permissions": "permissions:profesor:gestionar_slots",
+    "handlerName": "adminCreateSlot"
+  },
+  {
+    "method": "DELETE",
+    "route": "profesores/admin-slots/:id",
+    "fullPath": "/api/v1/profesores/admin-slots/:id",
+    "controllerFile": "src/modules/profesor/controller/profesor.controller.ts",
+    "permissions": "permissions:profesor:gestionar_slots,usuarios:listar,usuarios:listar,usuarios:listar,profesor:gestionar_slots,profesor:gestionar_slots",
+    "handlerName": "adminDeleteSlot"
+  },
+  {
+    "method": "PATCH",
+    "route": "profesores/admin-slots/:id",
+    "fullPath": "/api/v1/profesores/admin-slots/:id",
+    "controllerFile": "src/modules/profesor/controller/profesor.controller.ts",
+    "permissions": "permissions:profesor:gestionar_slots,usuarios:listar,profesor:gestionar_slots,usuarios:listar,usuarios:listar",
+    "handlerName": "adminUpdateSlot"
+  },
+  {
+    "method": "GET",
+    "route": "profesores/all-profesores",
+    "fullPath": "/api/v1/profesores/all-profesores",
+    "controllerFile": "src/modules/profesor/controller/profesor.controller.ts",
+    "permissions": "permissions:profesor:gestionar_slots,usuarios:listar,profesor:gestionar_slots,usuarios:listar",
+    "handlerName": "getAllProfesores"
+  },
+  {
+    "method": "GET",
+    "route": "profesores/all-slots",
+    "fullPath": "/api/v1/profesores/all-slots",
+    "controllerFile": "src/modules/profesor/controller/profesor.controller.ts",
+    "permissions": "permissions:profesor:gestionar_slots,usuarios:listar,profesor:gestionar_slots",
+    "handlerName": "getAllSlots"
+  },
+  {
+    "method": "GET",
+    "route": "profesores/alumnos",
+    "fullPath": "/api/v1/profesores/alumnos",
+    "controllerFile": "src/modules/profesor/controller/profesor.controller.ts",
+    "permissions": "permissions:usuarios:listar,profesor:gestionar_slots,profesor:gestionar_slots,usuarios:listar,profesor:gestionar_alumnos",
+    "handlerName": "getAlumnos"
+  },
+  {
+    "method": "PATCH",
+    "route": "profesores/alumnos/:id/activate",
+    "fullPath": "/api/v1/profesores/alumnos/:id/activate",
+    "controllerFile": "src/modules/profesor/controller/profesor.controller.ts",
+    "permissions": "permissions:usuarios:listar,usuarios:listar,usuarios:listar,profesor:gestionar_slots,profesor:gestionar_slots,usuarios:listar",
+    "handlerName": "activateAlumno"
+  },
+  {
+    "method": "POST",
+    "route": "profesores/alumnos/:id/force-reset",
+    "fullPath": "/api/v1/profesores/alumnos/:id/force-reset",
+    "controllerFile": "src/modules/profesor/controller/profesor.controller.ts",
+    "permissions": "permissions:profesor:gestionar_slots,profesor:gestionar_slots,usuarios:listar,profesor:gestionar_alumnos,profesor:ver_alumnos",
+    "handlerName": "forcePasswordReset"
+  },
+  {
+    "method": "POST",
+    "route": "profesores/register",
+    "fullPath": "/api/v1/profesores/register",
+    "controllerFile": "src/modules/profesor/controller/profesor.controller.ts",
+    "permissions": "-",
+    "handlerName": "register"
+  },
+  {
+    "method": "GET",
+    "route": "profesores/slots",
+    "fullPath": "/api/v1/profesores/slots",
+    "controllerFile": "src/modules/profesor/controller/profesor.controller.ts",
+    "permissions": "permissions:profesor:gestionar_slots,usuarios:listar",
+    "handlerName": "getSlots"
+  },
+  {
+    "method": "POST",
+    "route": "profesores/slots",
+    "fullPath": "/api/v1/profesores/slots",
+    "controllerFile": "src/modules/profesor/controller/profesor.controller.ts",
+    "permissions": "-",
+    "handlerName": "createSlot"
+  },
+  {
+    "method": "DELETE",
+    "route": "profesores/slots/:id",
+    "fullPath": "/api/v1/profesores/slots/:id",
+    "controllerFile": "src/modules/profesor/controller/profesor.controller.ts",
+    "permissions": "permissions:usuarios:listar,profesor:gestionar_slots,usuarios:listar,usuarios:listar,usuarios:listar,profesor:gestionar_slots",
+    "handlerName": "deleteSlot"
+  },
+  {
+    "method": "PATCH",
+    "route": "profesores/slots/:id",
+    "fullPath": "/api/v1/profesores/slots/:id",
+    "controllerFile": "src/modules/profesor/controller/profesor.controller.ts",
+    "permissions": "permissions:profesor:gestionar_slots,usuarios:listar,profesor:gestionar_slots,usuarios:listar,usuarios:listar,usuarios:listar",
+    "handlerName": "updateSlot"
+  },
+  {
+    "method": "GET",
+    "route": "proveedor",
+    "fullPath": "/api/v1/proveedor",
+    "controllerFile": "src/modules/proveedor/controller/proveedor.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "findAll"
+  },
+  {
+    "method": "POST",
+    "route": "proveedor",
+    "fullPath": "/api/v1/proveedor",
+    "controllerFile": "src/modules/proveedor/controller/proveedor.controller.ts",
+    "permissions": "-",
+    "handlerName": "create"
+  },
+  {
+    "method": "DELETE",
+    "route": "proveedor/:id",
+    "fullPath": "/api/v1/proveedor/:id",
+    "controllerFile": "src/modules/proveedor/controller/proveedor.controller.ts",
+    "permissions": "permissions:proveedores:listar | roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "remove"
+  },
+  {
+    "method": "GET",
+    "route": "proveedor/:id",
+    "fullPath": "/api/v1/proveedor/:id",
+    "controllerFile": "src/modules/proveedor/controller/proveedor.controller.ts",
+    "permissions": "permissions:proveedores:listar | roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "findOne"
+  },
+  {
+    "method": "PATCH",
+    "route": "proveedor/:id",
+    "fullPath": "/api/v1/proveedor/:id",
+    "controllerFile": "src/modules/proveedor/controller/proveedor.controller.ts",
+    "permissions": "permissions:proveedores:listar | roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "update"
+  },
+  {
+    "method": "GET",
+    "route": "purchase-batches",
+    "fullPath": "/api/v1/purchase-batches",
+    "controllerFile": "src/modules/pedido/controller/purchase-batch.controller.ts",
+    "permissions": "permissions:pedidos:crear,pedidos:crear,pedidos:crear",
+    "handlerName": "findAll"
+  },
+  {
+    "method": "POST",
+    "route": "purchase-batches",
+    "fullPath": "/api/v1/purchase-batches",
+    "controllerFile": "src/modules/pedido/controller/purchase-batch.controller.ts",
+    "permissions": "-",
+    "handlerName": "create"
+  },
+  {
+    "method": "GET",
+    "route": "purchase-batches/:id",
+    "fullPath": "/api/v1/purchase-batches/:id",
+    "controllerFile": "src/modules/pedido/controller/purchase-batch.controller.ts",
+    "permissions": "permissions:pedidos:crear,pedidos:crear,pedidos:listar,pedidos:crear",
+    "handlerName": "findOne"
+  },
+  {
+    "method": "PATCH",
+    "route": "purchase-batches/:id",
+    "fullPath": "/api/v1/purchase-batches/:id",
+    "controllerFile": "src/modules/pedido/controller/purchase-batch.controller.ts",
+    "permissions": "permissions:pedidos:crear,pedidos:listar,pedidos:crear,pedidos:ver",
+    "handlerName": "update"
+  },
+  {
+    "method": "PATCH",
+    "route": "purchase-batches/:id/aceptar",
+    "fullPath": "/api/v1/purchase-batches/:id/aceptar",
+    "controllerFile": "src/modules/pedido/controller/purchase-batch.controller.ts",
+    "permissions": "permissions:pedidos:crear,pedidos:listar,pedidos:crear,pedidos:ver,pedidos:editar",
+    "handlerName": "accept"
+  },
+  {
+    "method": "PATCH",
+    "route": "purchase-batches/:id/cancelar",
+    "fullPath": "/api/v1/purchase-batches/:id/cancelar",
+    "controllerFile": "src/modules/pedido/controller/purchase-batch.controller.ts",
+    "permissions": "permissions:pedidos:listar,pedidos:crear,pedidos:ver,pedidos:editar,pedidos:editar",
+    "handlerName": "cancel"
+  },
+  {
+    "method": "GET",
+    "route": "purchase-batches/:id/pdf",
+    "fullPath": "/api/v1/purchase-batches/:id/pdf",
+    "controllerFile": "src/modules/pedido/controller/purchase-batch.controller.ts",
+    "permissions": "permissions:pedidos:listar,pedidos:crear,pedidos:ver,pedidos:editar,pedidos:editar,pedidos:cancelar",
+    "handlerName": "generatePdf"
+  },
+  {
+    "method": "POST",
+    "route": "purchase-batches/consolidate",
+    "fullPath": "/api/v1/purchase-batches/consolidate",
+    "controllerFile": "src/modules/pedido/controller/purchase-batch.controller.ts",
+    "permissions": "permissions:pedidos:crear,pedidos:crear,pedidos:crear,pedidos:listar",
+    "handlerName": "consolidate"
+  },
+  {
+    "method": "POST",
+    "route": "purchase-batches/from-missing-stock",
+    "fullPath": "/api/v1/purchase-batches/from-missing-stock",
+    "controllerFile": "src/modules/pedido/controller/purchase-batch.controller.ts",
+    "permissions": "permissions:pedidos:crear",
+    "handlerName": "createFromMissingStock"
+  },
+  {
+    "method": "POST",
+    "route": "purchase-batches/from-recipes",
+    "fullPath": "/api/v1/purchase-batches/from-recipes",
+    "controllerFile": "src/modules/pedido/controller/purchase-batch.controller.ts",
+    "permissions": "permissions:pedidos:crear,pedidos:crear",
+    "handlerName": "createFromRecipes"
+  },
+  {
+    "method": "GET",
+    "route": "recepcion-productos",
+    "fullPath": "/api/v1/recepcion-productos",
+    "controllerFile": "src/modules/recepcion/controller/recepcion-producto.controller.ts",
+    "permissions": "permissions:recepciones:editar",
+    "handlerName": "findAll"
+  },
+  {
+    "method": "POST",
+    "route": "recepcion-productos",
+    "fullPath": "/api/v1/recepcion-productos",
+    "controllerFile": "src/modules/recepcion/controller/recepcion-producto.controller.ts",
+    "permissions": "-",
+    "handlerName": "create"
+  },
+  {
+    "method": "DELETE",
+    "route": "recepcion-productos/:id",
+    "fullPath": "/api/v1/recepcion-productos/:id",
+    "controllerFile": "src/modules/recepcion/controller/recepcion-producto.controller.ts",
+    "permissions": "permissions:recepciones:editar,recepciones:listar,recepciones:ver,recepciones:editar",
+    "handlerName": "remove"
+  },
+  {
+    "method": "GET",
+    "route": "recepcion-productos/:id",
+    "fullPath": "/api/v1/recepcion-productos/:id",
+    "controllerFile": "src/modules/recepcion/controller/recepcion-producto.controller.ts",
+    "permissions": "permissions:recepciones:editar,recepciones:listar",
+    "handlerName": "findOne"
+  },
+  {
+    "method": "PATCH",
+    "route": "recepcion-productos/:id",
+    "fullPath": "/api/v1/recepcion-productos/:id",
+    "controllerFile": "src/modules/recepcion/controller/recepcion-producto.controller.ts",
+    "permissions": "permissions:recepciones:editar,recepciones:listar,recepciones:ver",
+    "handlerName": "update"
+  },
+  {
+    "method": "DELETE",
+    "route": "recepcion/draft",
+    "fullPath": "/api/v1/recepcion/draft",
+    "controllerFile": "src/modules/recepcion-draft/controller/recepcion-draft.controller.ts",
+    "permissions": "-",
+    "handlerName": "clearDraft"
+  },
+  {
+    "method": "GET",
+    "route": "recepcion/draft",
+    "fullPath": "/api/v1/recepcion/draft",
+    "controllerFile": "src/modules/recepcion-draft/controller/recepcion-draft.controller.ts",
+    "permissions": "-",
+    "handlerName": "getLatestDraft"
+  },
+  {
+    "method": "POST",
+    "route": "recepcion/draft",
+    "fullPath": "/api/v1/recepcion/draft",
+    "controllerFile": "src/modules/recepcion-draft/controller/recepcion-draft.controller.ts",
+    "permissions": "-",
+    "handlerName": "saveDraft"
+  },
+  {
+    "method": "GET",
+    "route": "recepciones",
+    "fullPath": "/api/v1/recepciones",
+    "controllerFile": "src/modules/recepcion/controller/recepcion.controller.ts",
+    "permissions": "roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "findAll"
+  },
+  {
+    "method": "POST",
+    "route": "recepciones",
+    "fullPath": "/api/v1/recepciones",
+    "controllerFile": "src/modules/recepcion/controller/recepcion.controller.ts",
+    "permissions": "-",
+    "handlerName": "create"
+  },
+  {
+    "method": "DELETE",
+    "route": "recepciones/:id",
+    "fullPath": "/api/v1/recepciones/:id",
+    "controllerFile": "src/modules/recepcion/controller/recepcion.controller.ts",
+    "permissions": "permissions:recepciones:listar | roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "remove"
+  },
+  {
+    "method": "GET",
+    "route": "recepciones/:id",
+    "fullPath": "/api/v1/recepciones/:id",
+    "controllerFile": "src/modules/recepcion/controller/recepcion.controller.ts",
+    "permissions": "permissions:recepciones:listar,recepciones:listar | roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "findOne"
+  },
+  {
+    "method": "PATCH",
+    "route": "recepciones/:id",
+    "fullPath": "/api/v1/recepciones/:id",
+    "controllerFile": "src/modules/recepcion/controller/recepcion.controller.ts",
+    "permissions": "permissions:recepciones:listar,recepciones:listar | roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "update"
+  },
+  {
+    "method": "GET",
+    "route": "recepciones/reporte-pdf",
+    "fullPath": "/api/v1/recepciones/reporte-pdf",
+    "controllerFile": "src/modules/recepcion/controller/recepcion.controller.ts",
+    "permissions": "permissions:recepciones:listar | roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "reportePdf"
+  },
+  {
+    "method": "GET",
+    "route": "recetas",
+    "fullPath": "/api/v1/recetas",
+    "controllerFile": "src/modules/receta/controller/receta.controller.ts",
+    "permissions": "permissions:recetas:crear,recetas:duplicar",
+    "handlerName": "findAll"
+  },
+  {
+    "method": "POST",
+    "route": "recetas",
+    "fullPath": "/api/v1/recetas",
+    "controllerFile": "src/modules/receta/controller/receta.controller.ts",
+    "permissions": "-",
+    "handlerName": "create"
+  },
+  {
+    "method": "DELETE",
+    "route": "recetas/:id",
+    "fullPath": "/api/v1/recetas/:id",
+    "controllerFile": "src/modules/receta/controller/receta.controller.ts",
+    "permissions": "permissions:recetas:ver,recetas:editar | roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "remove"
+  },
+  {
+    "method": "GET",
+    "route": "recetas/:id",
+    "fullPath": "/api/v1/recetas/:id",
+    "controllerFile": "src/modules/receta/controller/receta.controller.ts",
+    "permissions": "permissions:recetas:crear,recetas:duplicar,recetas:listar",
+    "handlerName": "findOne"
+  },
+  {
+    "method": "PATCH",
+    "route": "recetas/:id",
+    "fullPath": "/api/v1/recetas/:id",
+    "controllerFile": "src/modules/receta/controller/receta.controller.ts",
+    "permissions": "permissions:recetas:ver | roles:rolUsuario.ADMINISTRADOR,rolUsuario.PROFESOR",
+    "handlerName": "update"
+  },
+  {
+    "method": "POST",
+    "route": "recetas/:id/cocinar",
+    "fullPath": "/api/v1/recetas/:id/cocinar",
+    "controllerFile": "src/modules/receta/controller/receta.controller.ts",
+    "permissions": "permissions:recetas:ver,recetas:ver,recetas:ver",
+    "handlerName": "cocinar"
+  },
+  {
+    "method": "GET",
+    "route": "recetas/:id/detalle",
+    "fullPath": "/api/v1/recetas/:id/detalle",
+    "controllerFile": "src/modules/receta/controller/receta.controller.ts",
+    "permissions": "permissions:recetas:crear,recetas:duplicar,recetas:listar,recetas:ver",
+    "handlerName": "getDetalle"
+  },
+  {
+    "method": "GET",
+    "route": "recetas/:id/escandallo",
+    "fullPath": "/api/v1/recetas/:id/escandallo",
+    "controllerFile": "src/modules/receta/controller/receta.controller.ts",
+    "permissions": "permissions:recetas:duplicar,recetas:listar,recetas:ver,recetas:ver",
+    "handlerName": "calcularEscandallo"
+  },
+  {
+    "method": "GET",
+    "route": "recetas/:id/pdf",
+    "fullPath": "/api/v1/recetas/:id/pdf",
+    "controllerFile": "src/modules/receta/controller/receta.controller.ts",
+    "permissions": "permissions:recetas:cocinar,recetas:ver",
+    "handlerName": "exportSinglePdf"
+  },
+  {
+    "method": "POST",
+    "route": "recetas/:id/recalcular-costes",
+    "fullPath": "/api/v1/recetas/:id/recalcular-costes",
+    "controllerFile": "src/modules/receta/controller/receta.controller.ts",
+    "permissions": "permissions:recetas:ver,recetas:ver",
+    "handlerName": "recalcularCostes"
+  },
+  {
+    "method": "POST",
+    "route": "recetas/duplicate",
+    "fullPath": "/api/v1/recetas/duplicate",
+    "controllerFile": "src/modules/receta/controller/receta.controller.ts",
+    "permissions": "permissions:recetas:crear",
+    "handlerName": "duplicate"
+  },
+  {
+    "method": "GET",
+    "route": "recetas/export/pdf",
+    "fullPath": "/api/v1/recetas/export/pdf",
+    "controllerFile": "src/modules/receta/controller/receta.controller.ts",
+    "permissions": "permissions:recetas:ver,recetas:ver,recetas:cocinar",
+    "handlerName": "exportMultiplePdf"
+  },
+  {
+    "method": "GET",
+    "route": "ubicacion",
+    "fullPath": "/api/v1/ubicacion",
+    "controllerFile": "src/modules/ubicacion/controller/ubicacion.controller.ts",
+    "permissions": "permissions:ubicaciones:crear",
+    "handlerName": "?"
+  },
+  {
+    "method": "POST",
+    "route": "ubicacion",
+    "fullPath": "/api/v1/ubicacion",
+    "controllerFile": "src/modules/ubicacion/controller/ubicacion.controller.ts",
+    "permissions": "-",
+    "handlerName": "?"
+  },
+  {
+    "method": "DELETE",
+    "route": "ubicacion/:id",
+    "fullPath": "/api/v1/ubicacion/:id",
+    "controllerFile": "src/modules/ubicacion/controller/ubicacion.controller.ts",
+    "permissions": "permissions:ubicaciones:crear,ubicaciones:listar,ubicaciones:ver,ubicaciones:editar",
+    "handlerName": "?"
+  },
+  {
+    "method": "GET",
+    "route": "ubicacion/:id",
+    "fullPath": "/api/v1/ubicacion/:id",
+    "controllerFile": "src/modules/ubicacion/controller/ubicacion.controller.ts",
+    "permissions": "permissions:ubicaciones:crear,ubicaciones:listar",
+    "handlerName": "?"
+  },
+  {
+    "method": "PATCH",
+    "route": "ubicacion/:id",
+    "fullPath": "/api/v1/ubicacion/:id",
+    "controllerFile": "src/modules/ubicacion/controller/ubicacion.controller.ts",
+    "permissions": "permissions:ubicaciones:crear,ubicaciones:listar,ubicaciones:ver",
+    "handlerName": "?"
+  },
+  {
+    "method": "POST",
+    "route": "ubicacion/:id/restore",
+    "fullPath": "/api/v1/ubicacion/:id/restore",
+    "controllerFile": "src/modules/ubicacion/controller/ubicacion.controller.ts",
+    "permissions": "permissions:ubicaciones:listar,ubicaciones:ver,ubicaciones:editar,ubicaciones:eliminar",
+    "handlerName": "restore"
+  },
+  {
+    "method": "GET",
+    "route": "usuarios",
+    "fullPath": "/api/v1/usuarios",
+    "controllerFile": "src/modules/usuario/controller/usuario.controller.ts",
+    "permissions": "permissions:usuarios:crear,usuarios:crear | roles:rolUsuario.ADMINISTRADOR",
+    "handlerName": "findAll"
+  },
+  {
+    "method": "POST",
+    "route": "usuarios",
+    "fullPath": "/api/v1/usuarios",
+    "controllerFile": "src/modules/usuario/controller/usuario.controller.ts",
+    "permissions": "-",
+    "handlerName": "create"
+  },
+  {
+    "method": "DELETE",
+    "route": "usuarios/:id",
+    "fullPath": "/api/v1/usuarios/:id",
+    "controllerFile": "src/modules/usuario/controller/usuario.controller.ts",
+    "permissions": "permissions:usuarios:editar,usuarios:editar,usuarios:editar,usuarios:editar,usuarios:editar | roles:rolUsuario.ADMINISTRADOR",
+    "handlerName": "remove"
+  },
+  {
+    "method": "GET",
+    "route": "usuarios/:id",
+    "fullPath": "/api/v1/usuarios/:id",
+    "controllerFile": "src/modules/usuario/controller/usuario.controller.ts",
+    "permissions": "permissions:usuarios:crear,usuarios:listar,usuarios:listar",
+    "handlerName": "findOne"
+  },
+  {
+    "method": "PATCH",
+    "route": "usuarios/:id",
+    "fullPath": "/api/v1/usuarios/:id",
+    "controllerFile": "src/modules/usuario/controller/usuario.controller.ts",
+    "permissions": "permissions:usuarios:listar,usuarios:listar,usuarios:ver",
+    "handlerName": "update"
+  },
+  {
+    "method": "PATCH",
+    "route": "usuarios/:id/activar",
+    "fullPath": "/api/v1/usuarios/:id/activar",
+    "controllerFile": "src/modules/usuario/controller/usuario.controller.ts",
+    "permissions": "permissions:usuarios:listar,usuarios:listar,usuarios:ver,usuarios:editar,usuarios:editar | roles:rolUsuario.ADMINISTRADOR",
+    "handlerName": "updateStatus"
+  },
+  {
+    "method": "PATCH",
+    "route": "usuarios/:id/admin",
+    "fullPath": "/api/v1/usuarios/:id/admin",
+    "controllerFile": "src/modules/usuario/controller/usuario.controller.ts",
+    "permissions": "permissions:usuarios:listar,usuarios:listar,usuarios:ver,usuarios:editar",
+    "handlerName": "updateAdmin"
+  },
+  {
+    "method": "PATCH",
+    "route": "usuarios/:id/password",
+    "fullPath": "/api/v1/usuarios/:id/password",
+    "controllerFile": "src/modules/usuario/controller/usuario.controller.ts",
+    "permissions": "permissions:usuarios:listar,usuarios:ver,usuarios:editar,usuarios:editar,usuarios:editar,usuarios:editar | roles:rolUsuario.ADMINISTRADOR",
+    "handlerName": "updatePassword"
+  },
+  {
+    "method": "DELETE",
+    "route": "usuarios/:id/permisos-adicionales/:permisoId",
+    "fullPath": "/api/v1/usuarios/:id/permisos-adicionales/:permisoId",
+    "controllerFile": "src/modules/usuario/controller/usuario.controller.ts",
+    "permissions": "permissions:usuarios:editar,usuarios:editar,usuarios:editar,usuarios:eliminar,usuarios:editar",
+    "handlerName": "removeAdditionalPermission"
+  },
+  {
+    "method": "POST",
+    "route": "usuarios/:id/permisos-adicionales/:permisoId",
+    "fullPath": "/api/v1/usuarios/:id/permisos-adicionales/:permisoId",
+    "controllerFile": "src/modules/usuario/controller/usuario.controller.ts",
+    "permissions": "permissions:usuarios:editar,usuarios:editar,usuarios:editar,usuarios:editar,usuarios:eliminar | roles:rolUsuario.ADMINISTRADOR",
+    "handlerName": "addAdditionalPermission"
+  },
+  {
+    "method": "DELETE",
+    "route": "usuarios/:id/permisos-excluidos/:permisoId",
+    "fullPath": "/api/v1/usuarios/:id/permisos-excluidos/:permisoId",
+    "controllerFile": "src/modules/usuario/controller/usuario.controller.ts",
+    "permissions": "permissions:usuarios:eliminar,usuarios:editar,usuarios:editar,usuarios:editar",
+    "handlerName": "removeExcludedPermission"
+  },
+  {
+    "method": "POST",
+    "route": "usuarios/:id/permisos-excluidos/:permisoId",
+    "fullPath": "/api/v1/usuarios/:id/permisos-excluidos/:permisoId",
+    "controllerFile": "src/modules/usuario/controller/usuario.controller.ts",
+    "permissions": "permissions:usuarios:editar,usuarios:editar,usuarios:eliminar,usuarios:editar,usuarios:editar",
+    "handlerName": "addExcludedPermission"
+  },
+  {
+    "method": "PATCH",
+    "route": "usuarios/:id/rol",
+    "fullPath": "/api/v1/usuarios/:id/rol",
+    "controllerFile": "src/modules/usuario/controller/usuario.controller.ts",
+    "permissions": "permissions:usuarios:listar,usuarios:ver,usuarios:editar,usuarios:editar,usuarios:editar | roles:rolUsuario.ADMINISTRADOR",
+    "handlerName": "updateRol"
+  },
+  {
+    "method": "POST",
+    "route": "usuarios/admin",
+    "fullPath": "/api/v1/usuarios/admin",
+    "controllerFile": "src/modules/usuario/controller/usuario.controller.ts",
+    "permissions": "permissions:usuarios:crear",
+    "handlerName": "createAdmin"
+  },
+  {
+    "method": "GET",
+    "route": "usuarios/minimos",
+    "fullPath": "/api/v1/usuarios/minimos",
+    "controllerFile": "src/modules/usuario/controller/usuario.controller.ts",
+    "permissions": "permissions:usuarios:crear,usuarios:listar | roles:rolUsuario.ADMINISTRADOR",
+    "handlerName": "findAllMinimal"
+  },
+  {
+    "method": "GET",
+    "route": "usuarios/perfil",
+    "fullPath": "/api/v1/usuarios/perfil",
+    "controllerFile": "src/modules/usuario/controller/usuario.controller.ts",
+    "permissions": "permissions:usuarios:crear,usuarios:crear | roles:rolUsuario.ADMINISTRADOR",
+    "handlerName": "getPerfil"
+  },
+  {
+    "method": "PATCH",
+    "route": "usuarios/perfil",
+    "fullPath": "/api/v1/usuarios/perfil",
+    "controllerFile": "src/modules/usuario/controller/usuario.controller.ts",
+    "permissions": "permissions:usuarios:crear,usuarios:crear | roles:rolUsuario.ADMINISTRADOR",
+    "handlerName": "updatePerfil"
+  },
+  {
+    "method": "PATCH",
+    "route": "usuarios/perfil/password",
+    "fullPath": "/api/v1/usuarios/perfil/password",
+    "controllerFile": "src/modules/usuario/controller/usuario.controller.ts",
+    "permissions": "permissions:usuarios:crear,usuarios:crear | roles:rolUsuario.ADMINISTRADOR",
+    "handlerName": "changePassword"
+  }
+]
