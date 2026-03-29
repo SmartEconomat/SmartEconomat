@@ -18,9 +18,6 @@ COPY --from=builder /app/src/i18n ./dist/i18n
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 
-# Install git for git config commands in logger
-RUN apk add --no-cache git
-
 # Create user for security
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 

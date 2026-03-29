@@ -18,6 +18,11 @@
 | `ClassSerializerInterceptor` | Respeta decoradores de serialización (`@Exclude`, etc.) |
 | `TransformInterceptor` | Homogeneiza estructura de respuesta API |
 
+### Middlewares
+| Componente | Función |
+|---|---|
+| `CsrfMiddleware` | Protección CSRF mediante Double Submit Cookie |
+
 ## Configuración global en `AppModule`
 
 ### Guards
