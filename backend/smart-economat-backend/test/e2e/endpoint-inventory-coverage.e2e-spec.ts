@@ -274,8 +274,12 @@ describe('Endpoint inventory coverage (e2e)', () => {
       const created = await request(app.getHttpServer())
         .post('/api/v1/incidencias-resueltas')
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ idIncidencia: inc[0].id, idUsuarioResolutor: adminId });
-      expect([201, 400, 409, 500]).toContain(created.status);
+        .send({
+          idIncidencia: inc[0].id,
+          idUsuarioResolutor: adminId,
+          tipoResolucion: 'aceptada',
+        });
+      expect([201, 409]).toContain(created.status);
       if (created.status !== 201) return;
       const irid = created.body.data.id;
       await request(app.getHttpServer())
