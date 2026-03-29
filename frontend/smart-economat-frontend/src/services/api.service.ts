@@ -141,6 +141,16 @@ export async function parseApiResponse<T>(
   return payload as ApiResponse<T>;
 }
 
+/**
+ * Helper para obtener el valor de una cookie por nombre.
+ */
+function getCookie(name: string): string | null {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+  return null;
+}
+
 // ─── Helpers de fetch ───────────────────────────────────────────────────────
 
 /**
@@ -152,11 +162,15 @@ export async function baseFetch(
 ): Promise<Response> {
   const headers = new Headers(options.headers);
 
-  // Añadir token JWT si está disponible
-  const token = localStorage.getItem('token');
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
+  // Protección CSRF: Añadir token desde la cookie si existe
+  const csrfToken = getCookie('XSRF-TOKEN');
+  if (csrfToken) {
+    headers.set('X-XSRF-TOKEN', csrfToken);
   }
+
+  // Nota: Ya no se adjunta el token desde localStorage por seguridad (XSS).
+  // El backend utiliza la cookie 'access_token' (httpOnly) gestionada automáticamente
+  // por el navegador gracias a credentials: 'include'.
 
   // Añadir Content-Type si corresponde
   if (

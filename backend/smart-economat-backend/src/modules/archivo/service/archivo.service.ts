@@ -276,10 +276,9 @@ export class ArchivoService {
     return Math.max(1, Math.min(100, normalized));
   }
 
-  private loadEsmModule<T>(specifier: string): Promise<T> {
-    const importer = globalThis.eval as unknown as (code: string) => Promise<T>;
-
-    return importer(`import(${JSON.stringify(specifier)})`);
+  private async loadEsmModule<T>(specifier: string): Promise<T> {
+    const module = await import(specifier);
+    return module.default || module;
   }
 
   async findAll(filterDto: FileListFilterDto): Promise<PaginatedFiles> {

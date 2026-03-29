@@ -103,6 +103,7 @@ Este bloque agrupa la documentación completa y detallada del backend NestJS + T
 | [Login y Registro](security/login-registro.md) | Flujos de acceso, validación de CIAL y Slots |
 | [Auth sistema educativo](security/auth-sistema-educativo.md) | Vinculación profesor-alumno y ciclo de vida |
 | [RBAC detallado](security/rbac.md) | Matriz técnica completa de permisos |
+| [Protección CSRF](security/csrf-protection.md) | Implementación de Double Submit Cookie para seguridad de peticiones |
 
 ## Módulos funcionales
 

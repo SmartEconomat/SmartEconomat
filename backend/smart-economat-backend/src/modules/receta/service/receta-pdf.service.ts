@@ -701,10 +701,9 @@ export class RecetaPdfService {
     return filename ? filename : null;
   }
 
-  private loadEsmModule<T>(specifier: string): Promise<T> {
-    const importer = globalThis.eval as unknown as (code: string) => Promise<T>;
-
-    return importer(`import(${JSON.stringify(specifier)})`);
+  private async loadEsmModule<T>(specifier: string): Promise<T> {
+    const module = await import(specifier);
+    return module.default || module;
   }
 
   private drawPanel(

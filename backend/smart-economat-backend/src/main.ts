@@ -8,6 +8,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import cookieParser from 'cookie-parser';
 import { useContainer } from 'class-validator';
+import { NormalizeDataPipe } from './common/pipes/normalize-data.pipe';
 
 import helmet from 'helmet';
 
@@ -32,6 +33,7 @@ async function bootstrap() {
   SwaggerModule.setup('docs', app, document);
 
   app.useGlobalPipes(
+    new NormalizeDataPipe(),
     new I18nValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
