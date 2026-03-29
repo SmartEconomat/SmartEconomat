@@ -131,7 +131,7 @@ export class RecepcionService {
   async remove(id: string): Promise<void> {
     const recepcion = await this.recepcionRepository.findOne({
       where: { id },
-      relations: ['recepcionesPedido', 'recepcionesProducto'],
+      relations: ['recepcionesPedidos', 'recepcionProductos'],
     });
 
     if (!recepcion) {

@@ -12,9 +12,8 @@ export class CreateIncidenciaDto {
   })
   recepcionId: string;
 
-  @IsOptional()
   @IsUUID('7')
-  pedidoId?: string;
+  pedidoId!: string;
 
   @IsOptional()
   @Transform((params) => TrimStringTransformer.transform(params))
@@ -30,13 +29,15 @@ export class CreateIncidenciaResuelaDto {
   })
   idIncidencia!: string;
 
-  @IsOptional()
-  @IsUUID('7')
-  idUsuarioResolutor?: string;
+  @IsUUID('7', {
+    message: i18nValidationMessage(
+      'validation.EL_ID_DEL_USUARIO_DEBE_SER_UN_UUID_V_LID'
+    ),
+  })
+  idUsuarioResolutor!: string;
 
-  @IsOptional()
   @IsEnum(TipoResolucion)
-  tipoResolucion?: TipoResolucion;
+  tipoResolucion: TipoResolucion;
 
   @IsOptional()
   @Transform((params) => TrimStringTransformer.transform(params))

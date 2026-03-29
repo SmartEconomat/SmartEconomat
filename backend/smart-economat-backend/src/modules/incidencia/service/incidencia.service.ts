@@ -36,7 +36,7 @@ export class IncidenciaService {
   async create(dto: CreateIncidenciaDto): Promise<Incidencia> {
     const incidencia = this.incidenciaRepository.create({
       recepcion: { id: dto.recepcionId } as any,
-      ...(dto.pedidoId ? { pedido: { id: dto.pedidoId } as any } : {}),
+      pedido: { id: dto.pedidoId } as any,
       observacionesRecepcion: dto.observacionesRecepcion,
     });
 

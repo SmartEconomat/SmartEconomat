@@ -208,6 +208,7 @@ describe('Frontend Integration Contracts (e2e)', () => {
       .set('Authorization', `Bearer ${profesorToken}`)
       .send({
         recepcionId,
+        pedidoId: pedido.id,
         observacionesRecepcion: `Incidencia ${searchMarker}`,
       })
       .expect(201);
