@@ -448,8 +448,10 @@ const Recetas: React.FC = () => {
       if (formData.imagen instanceof File) {
         try {
           finalPathImg = await uploadFile(formData.imagen);
-        } catch {
-          throw new Error('Hubo un error al subir la imagen de la receta.');
+        } catch (err) {
+          throw err instanceof Error
+            ? err
+            : new Error('Hubo un error al subir la imagen de la receta.');
         }
       } else if (
         typeof formData.imagen === 'string' &&
