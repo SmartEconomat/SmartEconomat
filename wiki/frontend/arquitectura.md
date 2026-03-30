@@ -58,6 +58,7 @@ La feature de pedidos es ahora uno de los módulos más compuestos del frontend 
 - `src/features/pedidos/hooks/usePedidosData.ts` decide qué endpoint cargar según la pestaña.
 - `src/features/pedidos/hooks/usePedidoActions.ts` separa acciones de negocio (`PedidoUsuario`) y acciones de compras (`PurchaseBatch`).
 - `src/services/pedido.service.ts` centraliza el mapping entre contratos backend y filas visibles.
+- La referencia técnica completa del módulo vive en `wiki/modules/pedido/README.md`.
 
 ### Convención de UI
 
