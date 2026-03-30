@@ -15,7 +15,6 @@ import {
   TextField,
   Autocomplete,
   CircularProgress,
-  Tooltip,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -498,8 +497,12 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
           <Table size="small">
             <TableHead sx={{ bgcolor: 'action.hover' }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold' }}>Producto</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', width: 220 }}>
+                <TableCell
+                  sx={{ fontWeight: 'bold', width: '35%', minWidth: 250 }}
+                >
+                  Producto
+                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold', width: 180 }}>
                   Proveedor
                 </TableCell>
                 <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
@@ -572,6 +575,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                         </Typography>
                       ) : (
                         <Autocomplete
+                          fullWidth
                           options={productOptions}
                           getOptionKey={(option) => option.key}
                           getOptionLabel={(option) =>
@@ -790,8 +794,12 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
             <Table size="small">
               <TableHead sx={{ bgcolor: 'action.hover' }}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Producto</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', width: 220 }}>
+                  <TableCell
+                    sx={{ fontWeight: 'bold', width: '35%', minWidth: 250 }}
+                  >
+                    Producto
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', width: 180 }}>
                     Proveedor
                   </TableCell>
                   <TableCell sx={{ fontWeight: 'bold', width: 120 }}>

@@ -311,6 +311,17 @@ export class PedidoUsuarioService {
     });
   }
 
+  async restore(id: string): Promise<PedidoUsuario> {
+    return this.changePendingAggregateStatus(
+      id,
+      (pedido) => {
+        pedido.estado = EstadoPedido.PENDIENTE;
+        pedido.motivoCancelacion = undefined;
+      },
+      true
+    );
+  }
+
   async syncPedidoUsuarioStatus(
     pedidoUsuarioId: string,
     manager?: EntityManager
@@ -339,7 +350,8 @@ export class PedidoUsuarioService {
 
   private async changePendingAggregateStatus(
     id: string,
-    mutatePedido: (pedido: Pedido) => Promise<void> | void
+    mutatePedido: (pedido: Pedido) => Promise<void> | void,
+    force = false
   ): Promise<PedidoUsuario> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -355,7 +367,9 @@ export class PedidoUsuarioService {
         throw new NotFoundException(`Pedido de usuario #${id} no encontrado`);
       }
 
-      this.assertEditable(pedidoUsuario);
+      if (!force) {
+        this.assertEditable(pedidoUsuario);
+      }
 
       const hasRecepciones = (pedidoUsuario.pedidos || []).some(
         (pedido) => (pedido.recepcionesPedido || []).length > 0

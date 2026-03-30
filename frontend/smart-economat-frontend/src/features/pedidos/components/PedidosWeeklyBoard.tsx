@@ -49,7 +49,6 @@ interface PedidosWeeklyBoardProps {
   isConsolidating?: boolean;
   onConsolidateWeek?: (pedidoIds: string[], weekLabel: string) => Promise<void>;
   enableSelection?: boolean;
-  infoMessage?: string;
   emptyMessage?: string;
   warningMessage?: string;
 }
@@ -102,7 +101,6 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
   isConsolidating = false,
   onConsolidateWeek,
   enableSelection = true,
-  infoMessage = 'Vista operativa para revisar los pedidos pendientes agrupados por semana y por usuario antes de consolidarlos por proveedor.',
   emptyMessage = 'No hay pedidos pendientes que coincidan con los filtros actuales.',
   warningMessage = 'Se muestran los primeros {count} pedidos. Si necesitas trabajar con más volumen en una sola vista, el siguiente paso lógico es añadir paginación o filtro de semana específico.',
 }) => {
@@ -175,6 +173,12 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
 
   const getSelectablePedidoIds = (pedido: Pedido): string[] =>
     isPendingPedido(pedido) ? getAggregatedPedidoSourceIds(pedido) : [];
+
+  const getSelectableUserIds = (user: WeeklyUserGroup): string[] =>
+    user.visiblePedidos.flatMap((pedido) => getSelectablePedidoIds(pedido));
+
+  const getSelectableWeekIds = (group: WeeklyGroup): string[] =>
+    group.users.flatMap((user) => getSelectableUserIds(user));
 
   const hasSelectablePedidos = (group: WeeklyGroup): boolean =>
     group.users.some((user) => user.visiblePedidos.some(isPendingPedido));
@@ -253,8 +257,6 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
 
   return (
     <Stack spacing={3}>
-      <Alert severity="info">{infoMessage}</Alert>
-
       {isLoading && (
         <Paper variant="outlined" sx={{ p: 2 }}>
           <DataTable columns={weeklyColumns} data={[]} isLoading hideTopBar />
@@ -273,38 +275,73 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
 
       {!isLoading &&
         groupedData.map((group) => (
-          <Accordion key={group.weekKey} defaultExpanded disableGutters>
+          <Accordion key={group.weekKey} disableGutters>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Box
                 sx={{
                   width: '100%',
                   display: 'flex',
-                  justifyContent: 'space-between',
                   alignItems: { xs: 'flex-start', md: 'center' },
-                  flexDirection: { xs: 'column', md: 'row' },
-                  gap: 1.5,
+                  flexDirection: 'row',
+                  gap: 1,
                 }}
               >
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                    {group.label}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {group.users.length} usuario(s) ·{' '}
-                    {group.users.reduce(
-                      (sum, user) => sum + user.visiblePedidos.length,
-                      0
-                    )}{' '}
-                    pedido(s)
-                  </Typography>
-                </Box>
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-                  <Chip
-                    color="primary"
-                    variant="outlined"
-                    label={`Total estimado ${formatCurrency(group.totalAmount)}`}
+                {enableSelection && (
+                  <Checkbox
+                    size="small"
+                    checked={(() => {
+                      const ids = getSelectableWeekIds(group);
+                      return (
+                        ids.length > 0 &&
+                        ids.every((id) => selectedPedidoIds.includes(id))
+                      );
+                    })()}
+                    indeterminate={(() => {
+                      const ids = getSelectableWeekIds(group);
+                      const selectedCount = ids.filter((id) =>
+                        selectedPedidoIds.includes(id)
+                      ).length;
+                      return selectedCount > 0 && selectedCount < ids.length;
+                    })()}
+                    disabled={getSelectableWeekIds(group).length === 0}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      toggleUserSelection(getSelectableWeekIds(group));
+                    }}
                   />
-                </Stack>
+                )}
+                <Box
+                  sx={{
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: { xs: 'flex-start', md: 'center' },
+                    flexDirection: { xs: 'column', md: 'row' },
+                    gap: 1.5,
+                  }}
+                >
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                      {group.label}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {group.users.length} usuario(s) ·{' '}
+                      {group.users.reduce(
+                        (sum, user) => sum + user.visiblePedidos.length,
+                        0
+                      )}{' '}
+                      pedido(s)
+                    </Typography>
+                  </Box>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                    <Chip
+                      color="primary"
+                      variant="outlined"
+                      label={`Total estimado ${formatCurrency(group.totalAmount)}`}
+                    />
+                  </Stack>
+                </Box>
               </Box>
             </AccordionSummary>
             <AccordionDetails>
@@ -339,7 +376,7 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
                         );
                       }}
                     >
-                      Consolidar semana
+                      Consolidar compra semanal
                     </Button>
                   </Box>
                 )}
@@ -347,7 +384,6 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
                 {group.users.map((user) => (
                   <Accordion
                     key={user.userId}
-                    defaultExpanded
                     disableGutters
                     sx={{
                       border: 1,
@@ -362,29 +398,68 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
                         sx={{
                           width: '100%',
                           display: 'flex',
-                          justifyContent: 'space-between',
                           alignItems: { xs: 'flex-start', md: 'center' },
-                          flexDirection: { xs: 'column', md: 'row' },
+                          flexDirection: 'row',
                           gap: 1,
                         }}
                       >
-                        <Box>
-                          <Typography
-                            variant="subtitle1"
-                            sx={{ fontWeight: 700 }}
-                          >
-                            {user.userName}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {user.visiblePedidos.length} pedido(s) ·{' '}
-                            {formatCurrency(
-                              user.pedidos.reduce(
-                                (sum, pedido) =>
-                                  sum + Number(pedido.costeTotal || 0),
-                                0
-                              )
-                            )}
-                          </Typography>
+                        {enableSelection && (
+                          <Checkbox
+                            size="small"
+                            checked={(() => {
+                              const ids = getSelectableUserIds(user);
+                              return (
+                                ids.length > 0 &&
+                                ids.every((id) =>
+                                  selectedPedidoIds.includes(id)
+                                )
+                              );
+                            })()}
+                            indeterminate={(() => {
+                              const ids = getSelectableUserIds(user);
+                              const selectedCount = ids.filter((id) =>
+                                selectedPedidoIds.includes(id)
+                              ).length;
+                              return (
+                                selectedCount > 0 && selectedCount < ids.length
+                              );
+                            })()}
+                            disabled={getSelectableUserIds(user).length === 0}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              toggleUserSelection(getSelectableUserIds(user));
+                            }}
+                          />
+                        )}
+                        <Box
+                          sx={{
+                            width: '100%',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: { xs: 'flex-start', md: 'center' },
+                            flexDirection: { xs: 'column', md: 'row' },
+                            gap: 1,
+                          }}
+                        >
+                          <Box>
+                            <Typography
+                              variant="subtitle1"
+                              sx={{ fontWeight: 700 }}
+                            >
+                              {user.userName}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {user.visiblePedidos.length} pedido(s) ·{' '}
+                              {formatCurrency(
+                                user.pedidos.reduce(
+                                  (sum, pedido) =>
+                                    sum + Number(pedido.costeTotal || 0),
+                                  0
+                                )
+                              )}
+                            </Typography>
+                          </Box>
                         </Box>
                       </Box>
                     </AccordionSummary>

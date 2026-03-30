@@ -249,9 +249,35 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                   }}
                   InputProps={{
                     'aria-label': searchPlaceholder,
+                    startAdornment: onScanBarcode && (
+                      <InputAdornment position="start">
+                        <Tooltip title="Escanear con cámara">
+                          <IconButton
+                            size="small"
+                            onClick={onScanBarcode}
+                            aria-label="Escanear código"
+                            color="primary"
+                            sx={{
+                              '&:hover': {
+                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                borderRadius: 1,
+                              },
+                              p: 0.5,
+                              ml: -0.5,
+                            }}
+                          >
+                            <BarcodeIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </InputAdornment>
+                    ),
                     endAdornment: (
                       <InputAdornment position="end">
-                        <Stack direction="row" spacing={0.5}>
+                        <Stack
+                          direction="row"
+                          spacing={0.5}
+                          alignItems="center"
+                        >
                           {searchValue && (
                             <IconButton
                               size="small"
@@ -260,18 +286,6 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                             >
                               <ClearIcon fontSize="small" />
                             </IconButton>
-                          )}
-                          {onScanBarcode && (
-                            <Tooltip title="Escanear con cámara">
-                              <IconButton
-                                size="small"
-                                onClick={onScanBarcode}
-                                aria-label="Escanear código"
-                                color="primary"
-                              >
-                                <BarcodeIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
                           )}
                           <SearchIcon
                             fontSize="small"

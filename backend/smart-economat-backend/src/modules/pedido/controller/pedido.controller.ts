@@ -116,4 +116,10 @@ export class PedidoController {
   aceptarPedido(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Pedido> {
     return this.pedidoService.aceptarPedido(id);
   }
+
+  @Patch(':id/restaurar')
+  @RequirePermissions('pedidos:restaurar')
+  restaurarPedido(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Pedido> {
+    return this.pedidoService.restaurarPedido(id);
+  }
 }
