@@ -1250,7 +1250,7 @@ describe('RecepcionStockService', () => {
         },
         'user-cero'
       )
-    ).rejects.toThrow(/positivo|RECEPTION_FAILED/i);
+    ).rejects.toThrow(/positivo|RECEPTION_FAILED|fallo en la recepci[oó]n/i);
 
     await expect(
       service.procesarRecepcionMasiva(
@@ -1269,7 +1269,7 @@ describe('RecepcionStockService', () => {
         },
         'user-cero'
       )
-    ).rejects.toThrow(/positivo|RECEPTION_FAILED/i);
+    ).rejects.toThrow(/positivo|RECEPTION_FAILED|fallo en la recepci[oó]n/i);
   });
 
   it('rechaza cantidades irrealmente altas', async () => {

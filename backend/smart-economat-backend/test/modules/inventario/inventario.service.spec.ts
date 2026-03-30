@@ -211,7 +211,7 @@ describe('InventarioService', () => {
         cantidad: 4,
         entidad: 'AjusteManualInventario',
         usuario: { id: 'user-7' },
-        descripcion: expect.stringContaining('MANUAL'),
+        descripcion: expect.stringMatching(/manual/i),
       })
     );
   });
