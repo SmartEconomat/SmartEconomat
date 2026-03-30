@@ -86,12 +86,6 @@ const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
 
   return (
     <Stack spacing={3}>
-      <Alert severity="info">
-        Vista de compras consolidadas por proveedor, agrupadas por la semana de
-        creación. Desde aquí puedes revisar los lotes y comenzar la recepción de
-        mercancía.
-      </Alert>
-
       {isLoading && (
         <Paper variant="outlined" sx={{ p: 2 }}>
           <DataTable columns={columns} data={[]} isLoading hideTopBar />
@@ -104,7 +98,7 @@ const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
 
       {!isLoading &&
         groupedData.map((group) => (
-          <Accordion key={group.weekKey} defaultExpanded disableGutters>
+          <Accordion key={group.weekKey} disableGutters>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Box
                 sx={{

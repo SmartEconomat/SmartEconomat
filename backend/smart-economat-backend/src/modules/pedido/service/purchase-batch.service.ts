@@ -677,6 +677,50 @@ export class PurchaseBatchService {
     }
   }
 
+  async restoreBatchOrder(id: string): Promise<PurchaseBatch> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const batch = await queryRunner.manager.findOne(PurchaseBatch, {
+        where: { id },
+        relations: ['pedidos'],
+      });
+
+      if (!batch) {
+        throw new NotFoundException(`Pedido #${id} no encontrado`);
+      }
+
+      for (const pedido of batch.pedidos) {
+        if (pedido.estado === EstadoPedido.CANCELADO) {
+          pedido.estado = EstadoPedido.PENDIENTE;
+          pedido.motivoCancelacion = undefined;
+          await queryRunner.manager.save(Pedido, pedido);
+        }
+      }
+
+      await this.syncBatchStatus(batch.id, queryRunner.manager);
+      await queryRunner.commitTransaction();
+
+      return this.findOne(batch.id);
+    } catch (error: any) {
+      await queryRunner.rollbackTransaction();
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException ||
+        error instanceof ConflictException
+      ) {
+        throw error;
+      }
+      throw new ConflictException(
+        `Error al restaurar el pedido: ${error.message}`
+      );
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
   async findOne(id: string): Promise<PurchaseBatch> {
     const batch = await this.dataSource.getRepository(PurchaseBatch).findOne({
       where: { id },

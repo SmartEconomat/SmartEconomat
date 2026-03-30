@@ -14,11 +14,13 @@ export interface PedidoFormValues extends Record<string, unknown> {
   batchId?: string;
   isBatchAggregate?: boolean;
   aggregateType?: 'pedido_usuario';
-  numeroGlobal?: string;
+  numeroGlobal?: string | number;
   proveedorId?: string;
   observaciones?: string;
   pedidoProductos?: unknown[];
   estado?: string;
+  usuarioSolicitante?: string;
+  fechaPedido?: string;
 }
 
 export interface PedidoPermissions {
@@ -27,6 +29,7 @@ export interface PedidoPermissions {
   canDelete: boolean;
   canCancel: boolean;
   canApprove: boolean;
+  canRestore: boolean;
 }
 
 export interface PedidosPaginationState {
@@ -48,6 +51,7 @@ export interface PedidoActionHandlers {
   onDelete: (pedido: Pedido) => void;
   onApprove: (pedido: Pedido) => void;
   onCancel: (pedido: Pedido) => void;
+  onRestore: (pedido: Pedido) => void;
   onViewDelivery: (pedido: Pedido) => void;
 }
 

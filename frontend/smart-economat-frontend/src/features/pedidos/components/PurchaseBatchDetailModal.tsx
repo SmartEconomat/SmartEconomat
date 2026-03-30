@@ -5,6 +5,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import PrintOutlinedIcon from '@mui/icons-material/PrintOutlined';
+import RestoreIcon from '@mui/icons-material/Restore';
 import DetailModal from '../../../components/ui/DetailModal';
 import BatchPedidoLineasViewer from '../../../components/ui/BatchPedidoLineasViewer';
 import {
@@ -20,17 +21,20 @@ import {
 } from '../../../services/pedido.types';
 import { useToast } from '../../../store/toast.hooks';
 import { formatPedidoId } from '../utils/pedidoFormatters';
+import EditIcon from '@mui/icons-material/Edit';
 
 interface PurchaseBatchDetailModalProps {
   batch: PurchaseBatch | PedidoUsuario | null;
   canEdit?: boolean;
   canApprove?: boolean;
   canCancel?: boolean;
+  canRestore?: boolean;
   mode?: 'batch' | 'pedido';
   onClose: () => void;
   onEdit?: (batch: PurchaseBatch | PedidoUsuario) => void;
   onApprove?: (batch: PurchaseBatch | PedidoUsuario) => void;
   onCancel?: (batch: PurchaseBatch | PedidoUsuario) => void;
+  onRestore?: (batch: PurchaseBatch | PedidoUsuario) => void;
   onRecepcion?: (batch: PurchaseBatch) => void;
 }
 
@@ -39,11 +43,13 @@ const PurchaseBatchDetailModal: React.FC<PurchaseBatchDetailModalProps> = ({
   canEdit = false,
   canApprove = false,
   canCancel = false,
+  canRestore = false,
   mode = 'batch',
   onClose,
   onEdit,
   onApprove,
   onCancel,
+  onRestore,
   onRecepcion,
 }) => {
   const toast = useToast();
@@ -134,7 +140,7 @@ const PurchaseBatchDetailModal: React.FC<PurchaseBatchDetailModalProps> = ({
                 onClick={() => void handlePrintPdf()}
                 disabled={isPrintingPdf || isDownloadingPdf}
               >
-                {isPrintingPdf ? 'Preparando impresión...' : 'Imprimir PDF'}
+                {isPrintingPdf ? 'Preparando impresión...' : 'Imprimir'}
               </Button>
             </Stack>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
@@ -148,7 +154,7 @@ const PurchaseBatchDetailModal: React.FC<PurchaseBatchDetailModalProps> = ({
                     startIcon={<CheckIcon />}
                     onClick={() => onApprove(batch)}
                   >
-                    Aprobar pedido
+                    Aprobar
                   </Button>
                 )}
               {mode === 'pedido' &&
@@ -161,7 +167,19 @@ const PurchaseBatchDetailModal: React.FC<PurchaseBatchDetailModalProps> = ({
                     startIcon={<CancelIcon />}
                     onClick={() => onCancel(batch)}
                   >
-                    Cancelar pedido
+                    Cancelar
+                  </Button>
+                )}
+              {canRestore &&
+                onRestore &&
+                String(batch.estado) === EstadoPedido.CANCELADO && (
+                  <Button
+                    variant="outlined"
+                    color="info"
+                    startIcon={<RestoreIcon />}
+                    onClick={() => onRestore(batch)}
+                  >
+                    Revertir
                   </Button>
                 )}
               {canEdit &&
@@ -171,9 +189,10 @@ const PurchaseBatchDetailModal: React.FC<PurchaseBatchDetailModalProps> = ({
                     variant="contained"
                     color="primary"
                     disableElevation
+                    startIcon={<EditIcon />}
                     onClick={() => onEdit(batch)}
                   >
-                    Editar pedido
+                    Editar
                   </Button>
                 )}
               {mode === 'batch' && onRecepcion && (

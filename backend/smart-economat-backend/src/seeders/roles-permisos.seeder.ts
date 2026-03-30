@@ -174,6 +174,13 @@ const PERMISOS_BASE = [
   },
 
   {
+    codigo: 'pedidos:restaurar',
+    nombre: 'Restaurar pedido',
+    modulo: 'pedidos',
+    accion: 'restaurar',
+    descripcion: 'Restaurar pedidos cancelados a estado pendiente',
+  },
+  {
     codigo: 'inventario:listar',
     nombre: 'Listar inventario',
     modulo: 'inventario',

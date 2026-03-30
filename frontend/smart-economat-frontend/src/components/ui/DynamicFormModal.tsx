@@ -522,48 +522,69 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
               required={required}
               disabled={disabled}
               InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    {onOFFSearch && (
-                      <Tooltip title="Buscar en OpenFoodFacts">
-                        <span>
-                          <IconButton
-                            edge="end"
-                            disabled={disabled || isOFFSearching || !value}
-                            onClick={async () => {
-                              if (!value || isOFFSearching) return;
-                              setIsOFFSearching(true);
-                              setShowOFFResults(false);
-                              const results = await onOFFSearch(String(value));
-                              setIsOFFSearching(false);
-                              if (results.length === 1) {
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  ...results[0],
-                                }));
-                              } else if (results.length > 1) {
-                                setOffResults(results);
-                                setShowOFFResults(true);
-                              }
-                            }}
-                          >
-                            {isOFFSearching ? (
-                              <CircularProgress size={20} />
-                            ) : (
-                              <SearchIcon fontSize="small" />
-                            )}
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                    )}
+                startAdornment: (
+                  <InputAdornment position="start">
                     <Tooltip title="Escanear con cámara">
                       <IconButton
-                        edge="end"
+                        size="small"
                         onClick={() => setActiveBarcodeField(name)}
                         disabled={disabled}
+                        color="primary"
+                        sx={{
+                          '&:hover': {
+                            bgcolor: 'rgba(216, 27, 96, 0.1)',
+                            borderRadius: 1,
+                          },
+                          p: 0.5,
+                          ml: -0.5,
+                        }}
                       >
                         <BarcodeIcon />
                       </IconButton>
+                    </Tooltip>
+                  </InputAdornment>
+                ),
+                endAdornment: onOFFSearch && (
+                  <InputAdornment position="end">
+                    <Tooltip title="Buscar en OpenFoodFacts">
+                      <span>
+                        <IconButton
+                          size="small"
+                          disabled={disabled || isOFFSearching || !value}
+                          onClick={async () => {
+                            if (!value || isOFFSearching) return;
+                            setIsOFFSearching(true);
+                            setShowOFFResults(false);
+                            const results = await onOFFSearch(String(value));
+                            setIsOFFSearching(false);
+                            if (results.length === 1) {
+                              setFormData((prev) => ({
+                                ...prev,
+                                ...results[0],
+                              }));
+                            } else if (results.length > 1) {
+                              setOffResults(results);
+                              setShowOFFResults(true);
+                            }
+                          }}
+                          sx={{
+                            bgcolor: 'primary.main',
+                            color: 'white',
+                            '&:hover': {
+                              bgcolor: 'primary.dark',
+                            },
+                            borderRadius: 1,
+                            p: 0.5,
+                            mr: -0.5,
+                          }}
+                        >
+                          {isOFFSearching ? (
+                            <CircularProgress size={20} />
+                          ) : (
+                            <SearchIcon fontSize="small" />
+                          )}
+                        </IconButton>
+                      </span>
                     </Tooltip>
                   </InputAdornment>
                 ),

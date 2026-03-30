@@ -19,7 +19,7 @@ import {
   downloadReportePedidosPdf,
   downloadReporteIncidenciasPdf,
 } from '../../services/recepcion.service';
-import { fetchProveedores } from '../../services/proveedor.service';
+import { fetchProveedoresConPedidos } from '../../services/proveedor.service';
 import { Proveedor } from '../../services/proveedor.types';
 import { useToast } from '../../store/toast.hooks';
 
@@ -50,6 +50,7 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
   const [soloNoResueltas, setSoloNoResueltas] = useState(false);
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isLoadingProveedores, setIsLoadingProveedores] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -63,10 +64,23 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
       setFieldErrors({});
       return;
     }
-    fetchProveedores(1, 100)
-      .then((res) => setProveedores(res.data))
-      .catch(() => {});
-  }, [isOpen]);
+    setIsLoadingProveedores(true);
+    fetchProveedoresConPedidos()
+      .then((res: Proveedor[]) => {
+        console.log(
+          'ReporteSelectorModal - fetched providers with orders:',
+          res
+        );
+        setProveedores(res || []);
+      })
+      .catch((err: Error) => {
+        console.error('Error fetching proveedores for report:', err);
+        toast.error('No se pudieron cargar los proveedores para el reporte.');
+      })
+      .finally(() => {
+        setIsLoadingProveedores(false);
+      });
+  }, [isOpen, toast]);
 
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
@@ -155,8 +169,20 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
             value={proveedorId}
             onChange={(e) => setProveedorId(e.target.value as string)}
             label="Proveedor (opcional)"
+            disabled={isLoadingProveedores}
           >
             <MenuItem value="">Todos los proveedores</MenuItem>
+            {isLoadingProveedores && (
+              <MenuItem disabled value="_loading">
+                <CircularProgress size={16} sx={{ mr: 1 }} />
+                Cargando proveedores...
+              </MenuItem>
+            )}
+            {!isLoadingProveedores && proveedores.length === 0 && (
+              <MenuItem disabled value="_empty">
+                No se encontraron proveedores
+              </MenuItem>
+            )}
             {proveedores.map((p) => (
               <MenuItem key={p.id} value={p.id}>
                 {p.nombre}

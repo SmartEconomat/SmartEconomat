@@ -107,6 +107,12 @@ export class PedidoUsuarioController {
     return this.pedidoUsuarioService.cancel(id, dto);
   }
 
+  @Patch(':id/restaurar')
+  @RequirePermissions('pedidos:restaurar')
+  restore(@Param('id', ParseUUIDv7Pipe) id: string) {
+    return this.pedidoUsuarioService.restore(id);
+  }
+
   @Get(':id/pdf')
   @RequirePermissions('pedidos:ver')
   async generatePdf(

@@ -16,7 +16,7 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({
     (
       message: string,
       type: 'success' | 'error' | 'info' | 'warning',
-      duration = 3000,
+      duration = 6000,
       options?: { productCategory?: CategoriaProducto }
     ) => {
       const id = Math.random().toString(36).substring(2, 9);

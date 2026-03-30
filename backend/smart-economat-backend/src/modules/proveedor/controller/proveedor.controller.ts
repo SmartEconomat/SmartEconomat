@@ -57,6 +57,12 @@ export class ProveedorController {
     return this.proveedorService.findAll(query, userRole);
   }
 
+  @Get('con-pedidos')
+  @RequirePermissions('proveedores:listar')
+  findWithOrders(): Promise<Proveedor[]> {
+    return this.proveedorService.findWithOrders();
+  }
+
   @Get(':id')
   @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
   findOne(
