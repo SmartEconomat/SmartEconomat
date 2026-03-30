@@ -43,9 +43,9 @@ import { DistribucionModule } from './modules/distribucion/distribucion.module';
     EventEmitterModule.forRoot(),
     CacheModule.register({ isGlobal: true, ttl: 300000, max: 100 }),
     ThrottlerModule.forRoot([
-      { name: 'auth', ttl: 60000, limit: 100 },
-      { name: 'write', ttl: 60000, limit: 200 },
-      { name: 'read', ttl: 60000, limit: 1000 },
+      { name: 'auth', ttl: 60000, limit: 500 },
+      { name: 'write', ttl: 60000, limit: 1000 },
+      { name: 'read', ttl: 60000, limit: 5000 },
     ]),
     SentryModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),

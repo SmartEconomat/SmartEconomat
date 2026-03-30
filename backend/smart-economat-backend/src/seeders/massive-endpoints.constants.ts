@@ -1,0 +1,81 @@
+export type MassiveEndpointMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
+
+export interface MassiveEndpointDefinition {
+  method: MassiveEndpointMethod;
+  path: string;
+}
+
+export const MASSIVE_ENDPOINT_DEFINITIONS: readonly MassiveEndpointDefinition[] =
+  [
+    { method: 'POST', path: '/api/v1/admin/profesores' },
+    { method: 'PATCH', path: '/api/v1/admin/users/:id/role' },
+    { method: 'POST', path: '/api/v1/albaranes' },
+    { method: 'PATCH', path: '/api/v1/albaranes/:id' },
+    { method: 'POST', path: '/api/v1/alumnos/register' },
+    { method: 'POST', path: '/api/v1/historial-precio' },
+    { method: 'PATCH', path: '/api/v1/historial-precio/:id' },
+    { method: 'POST', path: '/api/v1/inventario' },
+    { method: 'PATCH', path: '/api/v1/inventario/:id' },
+    { method: 'POST', path: '/api/v1/inventario/ajustes-manuales' },
+    { method: 'POST', path: '/api/v1/merma' },
+    { method: 'POST', path: '/api/v1/movimientos' },
+    { method: 'PATCH', path: '/api/v1/movimientos/:id' },
+    { method: 'POST', path: '/api/v1/pedido-usuarios' },
+    { method: 'PATCH', path: '/api/v1/pedido-usuarios/:id/aceptar' },
+    { method: 'PATCH', path: '/api/v1/pedido-usuarios/:id/cancelar' },
+    { method: 'POST', path: '/api/v1/pedido/draft' },
+    { method: 'POST', path: '/api/v1/pedido/draft/finalize' },
+    { method: 'POST', path: '/api/v1/pedidos' },
+    { method: 'PATCH', path: '/api/v1/pedidos/:id/aceptar' },
+    { method: 'PATCH', path: '/api/v1/pedidos/:id/cancelar' },
+    { method: 'POST', path: '/api/v1/producto-alergenos' },
+    { method: 'PATCH', path: '/api/v1/producto-alergenos/:id' },
+    {
+      method: 'DELETE',
+      path: '/api/v1/producto-alergenos/:idProducto/:alergeno',
+    },
+    { method: 'PATCH', path: '/api/v1/producto-proveedor/:id/merma' },
+    { method: 'PATCH', path: '/api/v1/producto-proveedor/:id/precio' },
+    { method: 'POST', path: '/api/v1/productos' },
+    { method: 'PATCH', path: '/api/v1/productos/:id' },
+    { method: 'POST', path: '/api/v1/profesores/admin-slots' },
+    { method: 'PATCH', path: '/api/v1/profesores/admin-slots/:id' },
+    { method: 'POST', path: '/api/v1/profesores/register' },
+    { method: 'POST', path: '/api/v1/profesores/slots' },
+    { method: 'PATCH', path: '/api/v1/profesores/slots/:id' },
+    { method: 'POST', path: '/api/v1/proveedor' },
+    { method: 'PATCH', path: '/api/v1/proveedor/:id' },
+    { method: 'POST', path: '/api/v1/purchase-batches' },
+    { method: 'POST', path: '/api/v1/recetas' },
+    { method: 'PATCH', path: '/api/v1/recetas/:id' },
+    { method: 'POST', path: '/api/v1/recetas/:id/cocinar' },
+    { method: 'POST', path: '/api/v1/recetas/:id/recalcular-costes' },
+    { method: 'POST', path: '/api/v1/recetas/duplicate' },
+    { method: 'POST', path: '/api/v1/ubicacion' },
+    { method: 'PATCH', path: '/api/v1/ubicacion/:id' },
+    { method: 'POST', path: '/api/v1/ubicacion/:id/restore' },
+    { method: 'POST', path: '/api/v1/usuarios' },
+    { method: 'PATCH', path: '/api/v1/usuarios/:id' },
+    { method: 'PATCH', path: '/api/v1/usuarios/:id/admin' },
+    { method: 'PATCH', path: '/api/v1/usuarios/:id/password' },
+    {
+      method: 'POST',
+      path: '/api/v1/usuarios/:id/permisos-adicionales/:permisoId',
+    },
+    {
+      method: 'DELETE',
+      path: '/api/v1/usuarios/:id/permisos-adicionales/:permisoId',
+    },
+    {
+      method: 'POST',
+      path: '/api/v1/usuarios/:id/permisos-excluidos/:permisoId',
+    },
+    {
+      method: 'DELETE',
+      path: '/api/v1/usuarios/:id/permisos-excluidos/:permisoId',
+    },
+    { method: 'PATCH', path: '/api/v1/usuarios/:id/rol' },
+    { method: 'POST', path: '/api/v1/usuarios/admin' },
+    { method: 'PATCH', path: '/api/v1/usuarios/perfil' },
+    { method: 'PATCH', path: '/api/v1/usuarios/perfil/password' },
+  ];

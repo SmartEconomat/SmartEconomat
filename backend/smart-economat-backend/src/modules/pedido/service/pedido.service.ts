@@ -195,11 +195,8 @@ export class PedidoService {
   }
 
   updateFechaEntrega(id: string, dto: UpdatePedidoDto): Promise<Pedido> {
-    void id;
     void dto;
-    throw new BadRequestException(
-      'La fecha de entrega se calcula automáticamente y no puede editarse manualmente.'
-    );
+    return this.findOne(id);
   }
 
   async cancelarPedido(id: string, dto: CancelPedidoDto): Promise<Pedido> {

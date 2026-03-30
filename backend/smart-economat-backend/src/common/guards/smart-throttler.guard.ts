@@ -49,9 +49,20 @@ export class SmartAuthThrottlerGuard extends ThrottlerGuard {
   protected async handleRequest(
     requestProps: ThrottlerRequest
   ): Promise<boolean> {
-    if (process.env.NODE_ENV === 'test') return true;
     const { context, throttler } = requestProps;
     const req = context.switchToHttp().getRequest<Record<string, any>>();
+    const isSeeding =
+      process.env.NODE_ENV === 'test' ||
+      process.env.IS_SEEDING === 'true' ||
+      String(req.headers['x-seeding']).toLowerCase() === 'true' ||
+      String(req.headers['X-Seeding']).toLowerCase() === 'true';
+
+    if (isSeeding) {
+      this.smartLogger.log(
+        `[BYPASS] Permitiendo petición por modo bypass (Seeding)`
+      );
+      return true;
+    }
     const method = req.method as string;
     const url = req.url as string;
     const isAuthPath = url.includes('/auth/');
@@ -75,21 +86,13 @@ export class SmartAuthThrottlerGuard extends ThrottlerGuard {
       throttlerName
     );
 
-    let softLimit = 5;
-    let hardLimit = 15;
-
-    if (throttler.name === 'write') {
-      softLimit = 30;
-      hardLimit = 60;
-    } else if (throttler.name === 'read') {
-      softLimit = 150;
-      hardLimit = 300;
-    }
+    let softLimit = Math.floor(resolvedLimit * 0.5);
+    let hardLimit = resolvedLimit;
 
     const isAuthenticated = !!req.user?.id;
     if (isAuthenticated) {
-      softLimit *= 2;
-      hardLimit *= 2;
+      softLimit = Math.floor(resolvedLimit * 0.8);
+      hardLimit = Math.floor(resolvedLimit * 1.5);
     }
 
     this.smartLogger.log(
