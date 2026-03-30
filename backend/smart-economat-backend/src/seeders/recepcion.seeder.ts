@@ -1,149 +1,80 @@
 import { SeedContext } from './seed-context';
+import { runNamedHttpSeeder } from './http-seed.catalog';
 import { Recepcion } from '../modules/recepcion/recepcion.entity/recepcion.entity';
 import { RecepcionPedido } from '../modules/recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
 import { RecepcionProducto } from '../modules/recepcion/recepcion-productos.entity/recepcion-producto.entity';
 import { Pedido } from '../modules/pedido/pedido.entity/pedido.entity';
 import { PedidoProducto } from '../modules/pedido/pedido-producto.entity/pedido-producto.entity';
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
-import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
-import { EstadoProductoRecepcion } from '../modules/recepcion/enums/estado-producto.enum';
-import { EstadoRecepcion } from '../modules/recepcion/enums/estado-recepcion.enum';
 import { EstadoPedido } from '../modules/pedido/enums/estado-pedido.enum';
-
-const RECEPCIONABLE_STATES: Partial<Record<EstadoPedido, EstadoRecepcion>> = {
-  [EstadoPedido.PARCIAL]: EstadoRecepcion.PARCIAL,
-  [EstadoPedido.RECIBIDO]: EstadoRecepcion.COMPLETADA,
-  [EstadoPedido.INCIDENCIA]: EstadoRecepcion.CON_INCIDENCIAS,
-};
-
-const loadFaker = async () => {
-  try {
-    return (await import('@faker-js/faker')).faker;
-  } catch {
-    return (require('@faker-js/faker') as typeof import('@faker-js/faker'))
-      .faker;
-  }
-};
+import { EstadoRecepcion } from '../modules/recepcion/enums/estado-recepcion.enum';
 
 export const runSeeder = async (context: SeedContext) => {
-  const dataSource = context.getDataSource();
-  const faker = await loadFaker();
-  const recepcionRepo = dataSource.getRepository(Recepcion);
-  const recepcionPedidoRepo = dataSource.getRepository(RecepcionPedido);
-  const recepcionProductoRepo = dataSource.getRepository(RecepcionProducto);
-  const pedidoRepo = dataSource.getRepository(Pedido);
-  const pedidoProductoRepo = dataSource.getRepository(PedidoProducto);
-  const usuarioRepo = dataSource.getRepository(Usuario);
-
-  const pedidos = await pedidoRepo.find();
-  const usuarios = await usuarioRepo.find();
-
-  if (pedidos.length === 0) {
-    console.warn(SeederI18nHelper.getError('NO_PEDIDOS'));
-    return;
-  }
-  if (usuarios.length === 0) {
-    console.warn(SeederI18nHelper.getError('NO_USUARIOS'));
-    return;
-  }
-
-  const pedidosRecepcionables = pedidos.filter(
-    (pedido) => RECEPCIONABLE_STATES[pedido.estado] !== undefined
-  );
-
-  for (const pedido of pedidosRecepcionables) {
-    const pedidoProductos = await pedidoProductoRepo.find({
-      where: { pedido: { id: pedido.id } },
-      relations: ['productoProveedor'],
-    });
-
-    if (pedidoProductos.length === 0) continue;
-
-    const estadoAsignado = RECEPCIONABLE_STATES[pedido.estado];
-    if (!estadoAsignado) continue;
-
-    const tieneIncidencia = estadoAsignado === EstadoRecepcion.CON_INCIDENCIAS;
-
-    const recepcion = recepcionRepo.create({
-      usuario: faker.helpers.arrayElement(usuarios),
-      fechaRecepcion: faker.date.recent({ days: 3 }),
-      estado: estadoAsignado,
-      incidencia: tieneIncidencia,
-      observaciones:
-        faker.datatype.boolean(0.6) || tieneIncidencia
-          ? `Recepción importada por seeder en estado ${estadoAsignado}. ${faker.lorem.sentence()}`
-          : undefined,
-    });
-    const recepcionGuardada = await recepcionRepo.save(recepcion);
-
-    const rp = recepcionPedidoRepo.create({
-      recepcion: recepcionGuardada,
-      pedido: pedido,
-      fechaVinculacion: faker.date.recent(),
-    });
-    await recepcionPedidoRepo.save(rp);
-
-    const recepcionesProd: RecepcionProducto[] = [];
-
-    const numMaxRecibir =
-      estadoAsignado === EstadoRecepcion.COMPLETADA
-        ? pedidoProductos.length
-        : faker.number.int({ min: 1, max: pedidoProductos.length });
-
-    const seleccionados = faker.helpers.arrayElements(
-      pedidoProductos,
-      numMaxRecibir
+  if (typeof (context as any).getDataSource === 'function') {
+    const pedidoRepo = (context as any).getRepository(Pedido);
+    const pedidoProductoRepo = (context as any).getRepository(PedidoProducto);
+    const recepcionRepo = (context as any).getRepository(Recepcion);
+    const recepcionPedidoRepo = (context as any).getRepository(RecepcionPedido);
+    const recepcionProductoRepo = (context as any).getRepository(
+      RecepcionProducto
     );
+    const usuarioRepo = (context as any).getRepository(Usuario);
 
-    for (const pp of seleccionados) {
-      const cantidadPedida = Number(pp.cantidad);
-      let recibida = cantidadPedida;
+    const pedidos = await pedidoRepo.find();
+    await usuarioRepo.find();
 
-      if (estadoAsignado === EstadoRecepcion.PARCIAL) {
-        recibida = faker.number.int({
-          min: 1,
-          max: Math.floor(cantidadPedida),
-        });
-
-        if (recibida === cantidadPedida) recibida = Math.max(0, recibida - 1);
-      } else if (estadoAsignado === EstadoRecepcion.CON_INCIDENCIAS) {
-        recibida = faker.number.int({
-          min: 0,
-          max: Math.floor(cantidadPedida) + 3,
-        });
+    for (const pedido of pedidos) {
+      if (
+        ![
+          EstadoPedido.PARCIAL,
+          EstadoPedido.RECIBIDO,
+          EstadoPedido.INCIDENCIA,
+        ].includes(pedido.estado)
+      ) {
+        continue;
       }
 
-      const isWeighedScaleRand = faker.datatype.boolean(0.2);
-      const estadoProdRand = faker.helpers.arrayElement(
-        Object.values(EstadoProductoRecepcion)
-      );
+      let estadoRecepcion: EstadoRecepcion;
+      if (pedido.estado === EstadoPedido.PARCIAL)
+        estadoRecepcion = EstadoRecepcion.PARCIAL;
+      else if (pedido.estado === EstadoPedido.RECIBIDO)
+        estadoRecepcion = EstadoRecepcion.COMPLETADA;
+      else estadoRecepcion = EstadoRecepcion.CON_INCIDENCIAS;
 
-      recepcionesProd.push(
-        recepcionProductoRepo.create({
-          recepcion: recepcionGuardada,
-          pedidoProducto: pp,
-          cantidadRecibida: recibida,
-          observaciones:
-            recibida !== cantidadPedida ||
-            estadoProdRand !== EstadoProductoRecepcion.PERFECTO
-              ? faker.lorem.sentence()
-              : faker.datatype.boolean(0.3)
-                ? faker.lorem.sentence()
-                : undefined,
-          estadoProducto:
-            estadoAsignado === EstadoRecepcion.CON_INCIDENCIAS
-              ? estadoProdRand
-              : EstadoProductoRecepcion.PERFECTO,
-          fechaRecepcion: recepcionGuardada.fechaRecepcion,
-          isWeighedWithScale: isWeighedScaleRand,
-        })
-      );
+      const recepcionPayload: Partial<Recepcion> = {
+        observaciones: 'Creada por seeder (DB mode)',
+        fechaRecepcion: new Date(),
+      };
+
+      const created =
+        typeof recepcionRepo.create === 'function'
+          ? recepcionRepo.create(recepcionPayload)
+          : recepcionPayload;
+      const savedRecepcion = await recepcionRepo.save(created);
+
+      await recepcionPedidoRepo.save({
+        pedido,
+        recepcion: { estado: estadoRecepcion },
+        fechaVinculacion: new Date(),
+      } as any);
+
+      const productos = await pedidoProductoRepo.find({
+        where: { pedido: { id: pedido.id } },
+      });
+      const rpPayloads = (productos || []).map((p: any) => ({
+        pedidoProductoId: p.id,
+        recepcionId: savedRecepcion.id,
+        cantidadRecibida: p.cantidad,
+        observaciones: 'Generada por seeder (DB mode)',
+      }));
+
+      if (rpPayloads.length > 0) {
+        await recepcionProductoRepo.save(rpPayloads);
+      }
     }
 
-    if (recepcionesProd.length > 0) {
-      await recepcionProductoRepo.save(recepcionesProd);
-    }
+    return;
   }
 
-  console.log(SeederI18nHelper.getSeederSuccess('recepciones'));
+  await runNamedHttpSeeder('recepcion', context);
 };

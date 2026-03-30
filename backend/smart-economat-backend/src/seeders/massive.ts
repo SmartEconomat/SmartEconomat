@@ -1,247 +1,487 @@
-import 'reflect-metadata';
-import { join } from 'path';
-import * as dotenv from 'dotenv';
-import { NestFactory } from '@nestjs/core';
-import { useContainer } from 'class-validator';
-import { dataSource, runAllSeeders } from './seed';
-import { AppModule } from '../app.module';
+import { appendFileSync, writeFileSync } from 'node:fs';
+import { randomUUID } from 'node:crypto';
+import { resolve } from 'node:path';
+import { createSeedContext } from './seed';
 import { SeedContext } from './seed-context';
-import { Proveedor } from '../modules/proveedor/proveedor.entity/proveedor.entity';
-import { Producto } from '../modules/producto/producto.entity/producto.entity';
-import { Inventario } from '../modules/inventario/inventario.entity/inventario.entity';
-import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
-import { HistorialPrecio } from '../modules/producto/historial-precio-proveedor.entity/historial.entity';
+import { MASSIVE_ENDPOINT_DEFINITIONS } from './massive-endpoints.constants';
+import { MASSIVE_ENDPOINT_DEFINITIONS_ADDITIONAL } from './massive-endpoints.additional';
 import {
-  UnidadMedida,
-  TipoProducto,
-} from '../modules/producto/enums/producto.enums';
-import { ProveedorService } from '../modules/proveedor/service/proveedor.service';
-import { ProductoService } from '../modules/producto/service/producto.service';
-import { InventarioService } from '../modules/inventario/service/inventario.service';
-import { UbicacionService } from '../modules/ubicacion/service/ubicacion.service';
-import { Ubicacion } from '../modules/ubicacion/ubicacion.entity/ubicacion.entity';
-import { CreateProveedorDto } from '../modules/proveedor/dto/create-proveedor.dto';
-import { CreateProductoDto } from '../modules/producto/dto/create-producto.dto';
-import { CreateInventarioItemDto } from '../modules/inventario/dto/create-InventarioItem.dto';
-import { CreateUbicacionDto } from '../modules/ubicacion/dto/create-ubicacion.dto';
-import { CreateMovimientoManualDto } from '../modules/inventario/dto/create-movimiento-manual.dto';
-import { TipoMovimientoManual } from '../modules/movimiento/enums/movimiento.enums';
+  ADMIN_FOCUS_ENDPOINT_KEYS,
+  API_PREFIX,
+  DEFAULT_TARGET_SUCCESS_PER_ENDPOINT,
+  DOMAIN_ORDER,
+  ENDPOINT_BATCH_CONCURRENCY,
+  HARD_MAX_TOTAL_DURATION_MS,
+  MAX_ATTEMPTS_PER_ENDPOINT,
+  MAX_SUCCESS_PER_ENDPOINT,
+  METHOD_PRIORITY,
+  MIN_SUCCESS_PER_ENDPOINT,
+  MIN_REQUIRED_PRODUCT_IDS,
+  SEED_GLOBAL_CONFIG,
+  SOFT_MAX_TOTAL_DURATION_MS,
+} from './massive.config';
+import {
+  createEnumCoverage,
+  ensureEnumCoverageComplete,
+  getStateArray,
+  getTargetSuccessForEndpoint,
+  normalizePath,
+} from './massive.helpers';
+import { Endpoint, EnumCoverage, HttpMethod } from './massive.types';
+import {
+  ensureAdminRouteActors,
+  ensureRoleActors,
+  executeEndpointRequest,
+  refreshStateAfterOperation,
+  warmCollections,
+} from './massive.runtime';
 
-dotenv.config({ path: join(__dirname, '../../../../.env') });
+const COVERAGE_LOG_FILE = resolve(__dirname, './logs/seed-http-coverage.txt');
+const REQUEST_LOG_FILE = resolve(__dirname, './logs/seed-massive-requests.log');
+const TRACE_LOG_FILE = resolve(__dirname, './logs/seed-massive-trace.txt');
 
-async function createMassiveContext(): Promise<SeedContext> {
-  const app = await NestFactory.createApplicationContext(AppModule, {
-    logger: ['error', 'warn'],
+function trace(message: string): void {
+  appendFileSync(
+    TRACE_LOG_FILE,
+    `[${new Date().toISOString()}] ${message}\n`,
+    'utf8'
+  );
+}
+
+function logRequestLine(payload: Record<string, unknown>): void {
+  appendFileSync(REQUEST_LOG_FILE, `${JSON.stringify(payload)}\n`, 'utf8');
+}
+
+function normalizeEndpointPath(rawPath: string): string {
+  let path = rawPath.trim();
+  path = path.replace(/^https?:\/\/[^/]+/i, '');
+  if (!path.startsWith('/')) {
+    path = `/${path}`;
+  }
+
+  if (path === API_PREFIX || path === `${API_PREFIX}/`) {
+    return '/';
+  }
+
+  if (path.startsWith(`${API_PREFIX}/`)) {
+    path = path.slice(API_PREFIX.length);
+  }
+
+  path = path.replace(/\{([^}]+)\}/g, ':$1');
+  return normalizePath(path);
+}
+
+function discoverEndpointsFromConstants(): Endpoint[] {
+  const baseEndpoints: Endpoint[] = MASSIVE_ENDPOINT_DEFINITIONS.map(
+    (entry) => ({
+      method: entry.method as HttpMethod,
+      path: normalizeEndpointPath(entry.path),
+      source: 'massive-endpoints.constants.ts',
+    })
+  );
+
+  const additionalEndpoints: Endpoint[] =
+    MASSIVE_ENDPOINT_DEFINITIONS_ADDITIONAL.map((entry) => ({
+      method: entry.method as HttpMethod,
+      path: normalizeEndpointPath(entry.path),
+      source: 'massive-endpoints.additional.ts',
+    }));
+
+  const all = [...baseEndpoints, ...additionalEndpoints];
+
+  const dedup = new Map<string, Endpoint>();
+  for (const endpoint of all) {
+    dedup.set(`${endpoint.method} ${endpoint.path}`, endpoint);
+  }
+
+  const isRelevantSeedEndpoint = (endpoint: Endpoint): boolean =>
+    ['POST', 'PATCH', 'PUT', 'DELETE'].includes(endpoint.method);
+
+  const allEndpoints = [...dedup.values()].filter(isRelevantSeedEndpoint);
+
+  const onlyDomainRaw = process.env.SEED_ONLY_DOMAIN || '';
+  if (onlyDomainRaw && onlyDomainRaw.trim().length > 0) {
+    const prefixes = onlyDomainRaw
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .map((p) => (p.startsWith('/') ? p : `/${p}`));
+
+    const filtered = allEndpoints.filter((ep) =>
+      prefixes.some(
+        (pref) => ep.path === pref || ep.path.startsWith(`${pref}/`)
+      )
+    );
+
+    if (filtered.length === 0) {
+      throw new Error(
+        `[seed-massive] SEED_ONLY_DOMAIN=${onlyDomainRaw} no coincide con endpoints descubiertos.`
+      );
+    }
+
+    return filtered;
+  }
+
+  if (allEndpoints.length === 0) {
+    throw new Error(
+      '[seed-massive] MASSIVE_ENDPOINT_DEFINITIONS no contiene endpoints válidos.'
+    );
+  }
+
+  return allEndpoints;
+}
+
+function discoverEndpoints(): Endpoint[] {
+  return discoverEndpointsFromConstants();
+}
+
+async function discoverEndpointsGuaranteed(
+  context: SeedContext
+): Promise<Endpoint[]> {
+  void context;
+  await Promise.resolve();
+  return discoverEndpointsFromConstants();
+}
+
+function getDomainRank(path: string): number {
+  const idx = DOMAIN_ORDER.findIndex(
+    (prefix) => path === prefix || path.startsWith(`${prefix}/`)
+  );
+  return idx === -1 ? DOMAIN_ORDER.length + 1 : idx;
+}
+
+function getActionRank(method: HttpMethod, path: string): number {
+  if (method === 'PATCH' && path.endsWith('/iniciar')) return 1;
+  if (method === 'PATCH' && path.endsWith('/aceptar')) return 2;
+  if (method === 'PATCH' && path.endsWith('/finalizar')) return 3;
+  if (method === 'PATCH' && path.endsWith('/cancelar')) return 4;
+  if (method === 'PATCH' && path.endsWith('/resolver')) return 5;
+  if (method === 'POST' && path.endsWith('/resolver')) return 6;
+  if (method === 'DELETE') return 9;
+  return 7;
+}
+
+function getEndpointBatchLimit(key: string, fallback: number): number {
+  if (key.startsWith('POST /auth/') || key.startsWith('PATCH /auth/')) {
+    return 1;
+  }
+
+  if (
+    key === 'POST /productos' ||
+    key === 'PATCH /productos/:id' ||
+    key === 'POST /producto-alergenos'
+  ) {
+    return 1;
+  }
+
+  if (
+    key.startsWith('POST /pedido-') ||
+    key.startsWith('PATCH /pedido-') ||
+    key.startsWith('POST /pedido/') ||
+    key.startsWith('POST /pedidos') ||
+    key.startsWith('PATCH /pedidos') ||
+    key.startsWith('POST /purchase-batches') ||
+    key.startsWith('PATCH /purchase-batches') ||
+    key.startsWith('POST /recepcion') ||
+    key.startsWith('PATCH /recepcion') ||
+    key.startsWith('POST /recepciones') ||
+    key.startsWith('PATCH /recepciones')
+  ) {
+    return 1;
+  }
+
+  return fallback;
+}
+
+function writeCoverageSummary(
+  endpoints: Endpoint[],
+  successByEndpoint: Map<string, number>,
+  attemptsByEndpoint: Map<string, number>,
+  lastErrorsByEndpoint: Map<string, string>,
+  elapsedMs: number,
+  coverage: EnumCoverage
+): void {
+  const rows = endpoints
+    .map((endpoint) => {
+      const key = `${endpoint.method} ${endpoint.path}`;
+      return {
+        key,
+        target: getTargetSuccessForEndpoint(key),
+        success: successByEndpoint.get(key) || 0,
+        attempts: attemptsByEndpoint.get(key) || 0,
+        lastError: lastErrorsByEndpoint.get(key) || 'none',
+      };
+    })
+    .sort((a, b) => a.key.localeCompare(b.key));
+
+  const enumRows = Object.entries(coverage)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, values]) => `${key}=${[...values].sort().join(',')}`);
+
+  const content = [
+    `timestamp=${new Date().toISOString()}`,
+    `endpoints=${endpoints.length}`,
+    `minSuccessPerEndpoint=${MIN_SUCCESS_PER_ENDPOINT}`,
+    `maxSuccessPerEndpoint=${MAX_SUCCESS_PER_ENDPOINT}`,
+    `elapsedMs=${elapsedMs}`,
+    ...rows.map(
+      (row) =>
+        `${row.key}\ttarget=${row.target}\tsuccess=${row.success}\tattempts=${row.attempts}\tlastError=${row.lastError}`
+    ),
+    'enumCoverage:',
+    ...enumRows,
+  ].join('\n');
+
+  writeFileSync(COVERAGE_LOG_FILE, `${content}\n`, 'utf8');
+}
+
+function assertRequiredAdminEndpointUsage(
+  endpoints: Endpoint[],
+  successByEndpoint: Map<string, number>
+): void {
+  const discoveredKeys = new Set(
+    endpoints.map((endpoint) => `${endpoint.method} ${endpoint.path}`)
+  );
+
+  const missingAdminDefinitions = [...ADMIN_FOCUS_ENDPOINT_KEYS].filter(
+    (key) => !discoveredKeys.has(key)
+  );
+
+  if (missingAdminDefinitions.length > 0) {
+    throw new Error(
+      `[seed-massive] Faltan rutas admin obligatorias en el catálogo: ${missingAdminDefinitions.join(', ')}`
+    );
+  }
+
+  const adminRoutesWithoutUsage = [...ADMIN_FOCUS_ENDPOINT_KEYS].filter(
+    (key) => (successByEndpoint.get(key) || 0) < 1
+  );
+
+  if (adminRoutesWithoutUsage.length > 0) {
+    throw new Error(
+      `[seed-massive] Rutas admin obligatorias sin uso efectivo: ${adminRoutesWithoutUsage.join(', ')}`
+    );
+  }
+}
+
+async function runMassiveSeeder(): Promise<void> {
+  writeFileSync(
+    REQUEST_LOG_FILE,
+    `# seed-massive request log ${new Date().toISOString()}\n`,
+    'utf8'
+  );
+  writeFileSync(
+    TRACE_LOG_FILE,
+    `# seed-massive trace ${new Date().toISOString()}\n`,
+    'utf8'
+  );
+
+  const context = await createSeedContext({
+    maxConcurrency: SEED_GLOBAL_CONFIG.concurrency,
   });
 
-  useContainer(app.select(AppModule), { fallbackOnErrors: true });
-
-  return new SeedContext(app, dataSource);
-}
-
-async function runMegaMassiveSeeder() {
-  const providerCount = Number(process.env.MASSIVE_PROVIDER_COUNT || 10);
-  const productCount = Number(process.env.MASSIVE_PRODUCT_COUNT || 50);
-  const movementCount = Number(process.env.MASSIVE_MOVEMENT_COUNT || 500);
-
-  if (!dataSource.isInitialized) {
-    await dataSource.initialize();
-  }
-
-  console.log('🚀 Iniciando seeder masivo alineado con lógica de negocio...');
-  const startTime = Date.now();
-
-  await runAllSeeders();
-
-  const context = await createMassiveContext();
-
   try {
-    const { faker } = await import('@faker-js/faker');
-    const proveedorService = context.get<ProveedorService>(ProveedorService);
-    const productoService = context.get<ProductoService>(ProductoService);
-    const inventarioService = context.get<InventarioService>(InventarioService);
-    const ubicacionService = context.get<UbicacionService>(UbicacionService);
-    const actorId = await context.getSeedActorUserId();
+    const seedRunTag = randomUUID().slice(0, 8);
+    context.set('seedRunTag', seedRunTag);
+    context.set('seedMultiplier', SEED_GLOBAL_CONFIG.multiplier);
+    context.set('seedGlobalConfig', SEED_GLOBAL_CONFIG);
+    trace('start');
+    console.log(
+      `[seed-massive] multiplier=${SEED_GLOBAL_CONFIG.multiplier} targetPorEndpoint=${DEFAULT_TARGET_SUCCESS_PER_ENDPOINT} rango=${MIN_SUCCESS_PER_ENDPOINT}-${MAX_SUCCESS_PER_ENDPOINT} minProducts=${MIN_REQUIRED_PRODUCT_IDS} concurrency=${SEED_GLOBAL_CONFIG.concurrency} (modo estricto, fail-fast)`
+    );
+    trace('strict_mode_enabled');
 
-    let ubicacionMasiva = await context.findOne(Ubicacion, {
-      where: { nombre: 'Almacén Masivo Seed' } as any,
-    });
+    const startedAt = Date.now();
 
-    if (!ubicacionMasiva) {
-      ubicacionMasiva = await ubicacionService.create(
-        await context.validateDto(CreateUbicacionDto, {
-          nombre: 'Almacén Masivo Seed',
-          descripcion:
-            'Ubicación creada por el seeder masivo mediante servicios',
-        })
-      );
-    }
+    await ensureRoleActors(context);
+    await ensureAdminRouteActors(context);
+    context.setAccessToken(
+      context.getState<string>('seedTokenAdmin') || context.getAccessToken()
+    );
+    await warmCollections(context);
+    trace('actors_and_warmup_done');
 
-    for (let i = 0; i < providerCount; i++) {
-      const nif = `MASSEED${String(i + 1).padStart(3, '0')}`;
-      const existing = await context.findOne(Proveedor, {
-        where: { nif } as any,
-      });
-      if (existing) {
-        continue;
+    const endpoints = (await discoverEndpointsGuaranteed(context)).sort(
+      (a, b) => {
+        if (a.method === 'DELETE' && b.method !== 'DELETE') return 1;
+        if (a.method !== 'DELETE' && b.method === 'DELETE') return -1;
+
+        const domainCmp = getDomainRank(a.path) - getDomainRank(b.path);
+        if (domainCmp !== 0) return domainCmp;
+        const methodCmp = METHOD_PRIORITY[a.method] - METHOD_PRIORITY[b.method];
+        if (methodCmp !== 0) return methodCmp;
+        const actionCmp =
+          getActionRank(a.method, a.path) - getActionRank(b.method, b.path);
+        if (actionCmp !== 0) return actionCmp;
+        return a.path.localeCompare(b.path);
       }
+    );
 
-      await proveedorService.create(
-        await context.validateDto(CreateProveedorDto, {
-          nombre: `Proveedor Masivo ${i + 1}`,
-          email: `massive.provider.${i + 1}@smarteconomat.test`,
-          direccion: faker.location.streetAddress(),
-          nif,
-          telefono: faker.phone.number().slice(0, 20),
-        })
+    console.log(
+      `[seed-massive] Endpoints desde massive-endpoints.constants.ts: ${endpoints.length}`
+    );
+    trace(`endpoints=${endpoints.length}`);
+
+    const coverage = createEnumCoverage();
+    const successByEndpoint = new Map<string, number>();
+    const attemptsByEndpoint = new Map<string, number>();
+    const lastErrorsByEndpoint = new Map<string, string>();
+    const endpointBatchConcurrency = Math.max(
+      1,
+      Math.min(ENDPOINT_BATCH_CONCURRENCY, SEED_GLOBAL_CONFIG.concurrency)
+    );
+
+    for (const endpoint of endpoints) {
+      const key = `${endpoint.method} ${endpoint.path}`;
+      const target = getTargetSuccessForEndpoint(key);
+      const endpointBatchLimit = getEndpointBatchLimit(
+        key,
+        endpointBatchConcurrency
       );
-    }
+      successByEndpoint.set(key, 0);
+      attemptsByEndpoint.set(key, 0);
 
-    const proveedores = await context.find(Proveedor, {
-      order: { createdAt: 'ASC' } as any,
-    });
+      let success = 0;
+      let attempts = 0;
 
-    for (let i = 0; i < productCount; i++) {
-      const barcode = String(9500000000000 + i);
-      const existing = await context.findOne(Producto, {
-        where: { codigoBarras: barcode } as any,
-      });
-      if (existing) {
-        continue;
-      }
+      while (success < target && attempts < MAX_ATTEMPTS_PER_ENDPOINT) {
+        const elapsed = Date.now() - startedAt;
+        if (elapsed > HARD_MAX_TOTAL_DURATION_MS) {
+          throw new Error(
+            `[seed-massive] Timeout global duro alcanzado (${elapsed}ms > ${HARD_MAX_TOTAL_DURATION_MS}ms)`
+          );
+        }
 
-      const proveedor = proveedores[i % proveedores.length];
-      const producto = await productoService.create(
-        await context.validateDto(CreateProductoDto, {
-          nombre: `Producto Masivo ${i + 1}`,
-          marca: 'Massive Seed',
-          descripcion: 'Producto generado por flujo masivo de seeding',
-          unidad: UnidadMedida.KG,
-          tipo: TipoProducto.OTRO,
-          contenido: 1,
-          codigoBarras: barcode,
-          proveedores: [
-            {
-              proveedorId: proveedor.id,
-              precioUnitario: Number((5 + (i % 30)).toFixed(2)),
-              marcaEspecifica: 'Massive Seed',
-              codigoBarras: barcode,
-            },
-          ],
-        }),
-        actorId
-      );
-
-      const productoProveedor = producto.proveedores?.[0];
-      if (!productoProveedor) {
-        continue;
-      }
-
-      const existingInventory = await context.findOne(Inventario, {
-        where: { productoProveedor: { id: productoProveedor.id } } as any,
-      });
-      if (!existingInventory) {
-        await inventarioService.create(
-          await context.validateDto(CreateInventarioItemDto, {
-            productoProveedorId: productoProveedor.id,
-            cantidadActual: 100,
-            cantidadMinima: 10,
-            cantidadMaxima: 250,
-            ubicacionId: ubicacionMasiva.id,
-          }),
-          actorId
+        const remainingSuccess = target - success;
+        const remainingAttempts = MAX_ATTEMPTS_PER_ENDPOINT - attempts;
+        const batchSize = Math.max(
+          1,
+          Math.min(endpointBatchLimit, remainingSuccess, remainingAttempts)
         );
 
-        const numHistoriales = faker.number.int({ min: 2, max: 4 });
-        const basePrecio = productoProveedor.precioUnitario || 10;
-        let sumaPonderada = 0;
-        let totalCantidad = 0;
-        let ultimoPrecio = basePrecio;
+        const startIteration = attempts;
+        const batchResults = await Promise.all(
+          Array.from({ length: batchSize }, (_, batchIdx) =>
+            executeEndpointRequest(
+              context,
+              endpoint,
+              startIteration + batchIdx,
+              coverage
+            )
+          )
+        );
 
-        for (let h = 0; h < numHistoriales; h++) {
-          const variacion = faker.number.float({ min: -0.1, max: 0.1 });
-          const precioH = parseFloat((basePrecio * (1 + variacion)).toFixed(2));
-          const cantidadH = faker.number.int({ min: 10, max: 50 });
+        for (const result of batchResults) {
+          attempts++;
+          attemptsByEndpoint.set(key, attempts);
 
-          await context
-            .getDataSource()
-            .getRepository(HistorialPrecio)
-            .save({
-              productoProveedorId: productoProveedor.id,
-              precio: precioH,
-              cantidad: cantidadH,
-              documentoOrigen: `MAS-SEED-ALB-${faker.string.alphanumeric(6).toUpperCase()}`,
-              fecha: faker.date.recent({ days: 60 }),
-            });
+          if (result.ok && result.countAsSuccess !== false) {
+            success++;
+            successByEndpoint.set(key, success);
+            await refreshStateAfterOperation(context, result);
+          } else {
+            lastErrorsByEndpoint.set(key, result.error || 'Error desconocido');
+          }
 
-          sumaPonderada += precioH * cantidadH;
-          totalCantidad += cantidadH;
-          ultimoPrecio = precioH;
-        }
+          logRequestLine({
+            timestamp: new Date().toISOString(),
+            endpoint: endpoint.path,
+            method: endpoint.method,
+            resolvedPath: result.resolvedPath,
+            payload: result.payload,
+            status: result.statusCode ?? 'N/A',
+            resourceId: result.resourceId || null,
+            successCounter: success,
+            target,
+            attempt: attempts,
+            ok: result.ok,
+            error: result.error || null,
+          });
 
-        productoProveedor.pmp =
-          totalCantidad > 0
-            ? Number((sumaPonderada / totalCantidad).toFixed(4))
-            : ultimoPrecio;
-        productoProveedor.precioUnitario = ultimoPrecio;
-        await context
-          .getDataSource()
-          .getRepository(ProductoProveedor)
-          .save(productoProveedor);
-
-        const productoBase = await context.findOne(Producto, {
-          where: { id: producto.id },
-          relations: ['proveedores'],
-        });
-        if (productoBase && productoBase.proveedores.length > 0) {
-          const sumPmp = productoBase.proveedores.reduce(
-            (s, p) => s + Number(p.pmp || 0),
-            0
-          );
-          productoBase.pmp = Number(
-            (sumPmp / productoBase.proveedores.length).toFixed(4)
-          );
-          await context
-            .getDataSource()
-            .getRepository(Producto)
-            .save(productoBase);
+          if (success >= target) {
+            break;
+          }
         }
       }
-    }
 
-    const inventarios = await context.find(Inventario, {
-      relations: ['productoProveedor', 'productoProveedor.producto'],
-      take: Math.max(50, movementCount),
-    });
+      if (success < target) {
+        const lastError = lastErrorsByEndpoint.get(key) || 'sin detalle';
+        throw new Error(
+          `[seed-massive] Endpoint no alcanzó objetivo ${key}. success=${success}, target=${target}, attempts=${attempts}, lastError=${lastError}`
+        );
+      }
 
-    for (let i = 0; i < movementCount; i++) {
-      const inventario = inventarios[i % inventarios.length];
-      const isEntrada = i % 3 === 0;
-
-      await inventarioService.ajustarManual(
-        await context.validateDto(CreateMovimientoManualDto, {
-          inventarioId: inventario.id,
-          tipo: isEntrada
-            ? TipoMovimientoManual.ENTRADA
-            : TipoMovimientoManual.SALIDA_AJUSTE,
-          ajuste: isEntrada ? 2 : -1,
-          motivo: `MASSIVE-SEED-${i + 1}`,
-          observaciones: `Movimiento masivo ${i + 1} para ${inventario.productoProveedor?.producto?.nombre || inventario.id}`,
-        }),
-        actorId
+      console.log(
+        `[seed-massive] ${key} -> ok ${success}/${target} (attempts=${attempts})`
       );
     }
 
-    const totalTime = (Date.now() - startTime) / 1000;
-    console.log(
-      `✅ Seeder masivo completado en ${totalTime.toFixed(2)}s usando lógica de negocio`
-    );
-  } finally {
-    await context.close();
-    if (dataSource.isInitialized) {
-      await dataSource.destroy();
+    const elapsedFinal = Date.now() - startedAt;
+
+    assertRequiredAdminEndpointUsage(endpoints, successByEndpoint);
+
+    const missingEnumCoverage = ensureEnumCoverageComplete(coverage);
+    if (missingEnumCoverage.length > 0) {
+      throw new Error(
+        `[seed-massive] Cobertura de enums incompleta: ${missingEnumCoverage.join(', ')}`
+      );
     }
+
+    const productoIds = getStateArray(context, 'productoIds');
+    if (productoIds.length < MIN_REQUIRED_PRODUCT_IDS) {
+      throw new Error(
+        `[seed-massive] Requisito incumplido: productos distintos capturados=${productoIds.length} (<${MIN_REQUIRED_PRODUCT_IDS})`
+      );
+    }
+
+    const uncovered = endpoints.filter((endpoint) => {
+      const key = `${endpoint.method} ${endpoint.path}`;
+      return (
+        (successByEndpoint.get(key) || 0) < getTargetSuccessForEndpoint(key)
+      );
+    });
+
+    if (uncovered.length > 0) {
+      const details = uncovered
+        .map((endpoint) => {
+          const key = `${endpoint.method} ${endpoint.path}`;
+          return `${key} success=${successByEndpoint.get(key) || 0} attempts=${attemptsByEndpoint.get(key) || 0}`;
+        })
+        .join('; ');
+      throw new Error(`[seed-massive] Endpoints sin cubrir: ${details}`);
+    }
+
+    writeCoverageSummary(
+      endpoints,
+      successByEndpoint,
+      attemptsByEndpoint,
+      lastErrorsByEndpoint,
+      elapsedFinal,
+      coverage
+    );
+
+    if (elapsedFinal > SOFT_MAX_TOTAL_DURATION_MS) {
+      console.warn(
+        `[seed-massive] Advertencia: tiempo sobre objetivo blando (${elapsedFinal}ms > ${SOFT_MAX_TOTAL_DURATION_MS}ms)`
+      );
+    }
+
+    console.log(
+      `[seed-massive] OK: ${endpoints.length} endpoints cubiertos con ${MIN_SUCCESS_PER_ENDPOINT}-${MAX_SUCCESS_PER_ENDPOINT} éxitos por endpoint (elapsed=${elapsedFinal}ms)`
+    );
+    trace('ok');
+  } finally {
+    trace('closing_context');
+    await context.close();
+    trace('finished');
   }
 }
 
-void runMegaMassiveSeeder();
+if (require.main === module) {
+  void runMassiveSeeder().catch((error) => {
+    console.error('[seed-massive] Ejecucion fallida:', error);
+    process.exit(1);
+  });
+}
+
+export { runMassiveSeeder, discoverEndpoints, discoverEndpointsGuaranteed };

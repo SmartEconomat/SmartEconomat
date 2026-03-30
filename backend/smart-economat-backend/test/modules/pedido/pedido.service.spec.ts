@@ -310,10 +310,18 @@ describe('PedidoService', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
-  it('updateFechaEntrega bloquea la edición manual', () => {
-    expect(() => service.updateFechaEntrega('pedido-8', {} as any)).toThrow(
-      BadRequestException
-    );
+  it('updateFechaEntrega es idempotente y devuelve el pedido', async () => {
+    mockPedidoRepository.findOneWithRelations.mockResolvedValue({
+      id: 'pedido-8',
+      estado: EstadoPedido.PENDIENTE,
+    });
+
+    await expect(
+      service.updateFechaEntrega('pedido-8', {} as any)
+    ).resolves.toEqual({
+      id: 'pedido-8',
+      estado: EstadoPedido.PENDIENTE,
+    });
   });
 
   it('remove rechaza pedidos que no estén pendientes o cancelados', async () => {
