@@ -1,6 +1,8 @@
 import React, { useState, ReactNode, useEffect } from 'react';
 import { eventBus, AUTH_EVENTS } from '../utils/eventBus';
-import { authService } from '../services/authService';
+import { authService } from '../services/auth.service';
+import { tokenManager } from '../utils/token.manager';
+
 import { useAppDispatch } from '../store/hooks';
 import {
   setPermissions,
@@ -12,8 +14,9 @@ import type { User } from './types';
 const clearLegacySessionStorage = () => {
   localStorage.removeItem('user');
   localStorage.removeItem('token');
-  localStorage.removeItem('sm_has_session');
+  tokenManager.clearToken();
 };
+
 
 const isPublicAuthPath = (pathname: string) =>
   pathname === '/login' ||
@@ -48,6 +51,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         setIsSessionVerified(true);
         setIsAuthResolved(true);
         localStorage.setItem('sm_has_session', 'true');
+
         return refreshedUser;
       })
       .catch(() => {
@@ -75,6 +79,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     setIsSessionVerified(false);
     setIsAuthResolved(true);
     localStorage.removeItem('sm_has_session');
+    tokenManager.clearToken();
     try {
       await authService.logout();
     } catch {

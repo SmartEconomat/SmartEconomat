@@ -61,7 +61,7 @@ describe('DashboardService', () => {
     );
   });
 
-  it('getStats calcula valorTotal, stock bajo y últimos 5 movimientos', async () => {
+  it('getStats calcula valorTotal, stock bajo y últimos 7 movimientos', async () => {
     inventoryValueQb.getRawOne.mockResolvedValue({ valorTotal: '123.50' });
     lowStockQb.getCount.mockResolvedValue(2);
     mockInventarioRepo.count
@@ -82,6 +82,14 @@ describe('DashboardService', () => {
     ]);
 
     const result = await service.getStats();
+
+    expect(mockMovimientoRepo.find).toHaveBeenCalledWith({
+      take: 7,
+      order: {
+        createdAt: 'DESC',
+      },
+      relations: ['usuario'],
+    });
 
     expect(mockPedidoRepo.count).toHaveBeenNthCalledWith(1, {
       where: {

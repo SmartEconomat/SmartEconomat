@@ -3,7 +3,7 @@ import { IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
 import { Alergeno } from '../../enums/producto.enums';
 
 export class CreateProductoAlergenoDto {
-  @IsUUID('7', {
+  @IsUUID('all', {
     message: i18nValidationMessage(
       'validation.EL_ID_DEL_PRODUCTO_DEBE_SER_UN_UUID_V_LI'
     ),

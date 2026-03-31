@@ -40,7 +40,7 @@ export class UsuarioController {
   }
 
   @Post('admin')
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @Roles(rolUsuario.ADMIN)
   @RequirePermissions('usuarios:crear')
   createAdmin(@Body() dto: AdminCreateUsuarioDto) {
     return this.usuarioService.createAdmin(dto);
@@ -106,7 +106,7 @@ export class UsuarioController {
   }
 
   @Patch(':id/admin')
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @Roles(rolUsuario.ADMIN)
   @RequirePermissions('usuarios:editar')
   updateAdmin(
     @Param('id', ParseUUIDPipe) id: string,

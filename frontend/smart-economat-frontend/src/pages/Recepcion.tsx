@@ -105,6 +105,21 @@ const defaultDraft = (): RecepcionDraft => ({
   enviando: false,
 });
 
+const hasRecoverableDraftContent = (draft: RecepcionDraft): boolean => {
+  const hasSelectedPedidos = draft.pedidosSeleccionados.length > 0;
+  const hasSpontaneousProducts = draft.productosEspontaneos.length > 0;
+  const hasHeaderData =
+    draft.nAlbaran.trim().length > 0 || draft.observaciones.trim().length > 0;
+  const hasProgressedStep = draft.paso !== 'SELECCION_PEDIDOS';
+
+  return (
+    hasSelectedPedidos ||
+    hasSpontaneousProducts ||
+    hasHeaderData ||
+    hasProgressedStep
+  );
+};
+
 const getScaleHeaderChipConfig = (
   isScaleSupported: boolean,
   isScaleConnected: boolean,
@@ -163,6 +178,7 @@ const Recepcion: React.FC = () => {
   const [openModal, setOpenModal] = useState(false);
   const [expandedPanel, setExpandedPanel] = useState<string | false>(false);
   const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
+  const [isRecoveryDialogOpen, setIsRecoveryDialogOpen] = useState(false);
 
   // Báscula Modal State
   const [weightModalOpen, setWeightModalOpen] = useState(false);
@@ -182,6 +198,7 @@ const Recepcion: React.FC = () => {
   const scaleManuallyDisabledRef = useRef(false);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const promptedRecoveryFingerprintRef = useRef<string | null>(null);
 
   const {
     clearDraft: clearRemoteDraft,
@@ -211,6 +228,28 @@ const Recepcion: React.FC = () => {
   useEffect(() => {
     draftRef.current = draft;
   }, [draft]);
+
+  useEffect(() => {
+    if (!isReady) {
+      return;
+    }
+
+    const hasRemoteDraftMetadata =
+      draft.serverVersion != null || Boolean(draft.serverUpdatedAt);
+
+    if (!hasRemoteDraftMetadata || !hasRecoverableDraftContent(draft)) {
+      return;
+    }
+
+    const fingerprint = `${draft.serverVersion ?? 'none'}:${draft.serverUpdatedAt ?? 'none'}`;
+
+    if (promptedRecoveryFingerprintRef.current === fingerprint) {
+      return;
+    }
+
+    promptedRecoveryFingerprintRef.current = fingerprint;
+    setIsRecoveryDialogOpen(true);
+  }, [draft, isReady]);
 
   useEffect(() => {
     if (activeStep === 1 && searchInputRef.current) {
@@ -1107,6 +1146,15 @@ const Recepcion: React.FC = () => {
     await loadPedidos();
   };
 
+  const handleRecoverDraft = () => {
+    setIsRecoveryDialogOpen(false);
+  };
+
+  const handleDiscardRecoveredDraft = () => {
+    setIsRecoveryDialogOpen(false);
+    void resetWizard();
+  };
+
   const handleNext = () => {
     if (activeStep === 0 && draft.pedidosSeleccionados.length === 0) return;
     if (activeStep === 2) {
@@ -1424,6 +1472,41 @@ const Recepcion: React.FC = () => {
         remoteDraft={conflict?.remoteDraft}
         onUseRemote={useRemoteDraft}
         onKeepLocal={keepLocalDraft}
+      />
+
+      <ConfirmDialog
+        isOpen={isRecoveryDialogOpen}
+        onClose={handleRecoverDraft}
+        onConfirm={handleRecoverDraft}
+        title="Recuperar recepción pendiente"
+        message={
+          <>
+            Has dejado una recepción a medias. ¿Deseas recuperarla y continuar
+            donde lo dejaste?
+            <br />
+            <br />
+            Última actualización:{' '}
+            <strong>
+              {(() => {
+                const updatedAt = draft.serverUpdatedAt ?? draft.modificadoEn;
+                if (!updatedAt) {
+                  return 'desconocida';
+                }
+
+                const parsed = new Date(updatedAt);
+                if (Number.isNaN(parsed.getTime())) {
+                  return 'desconocida';
+                }
+
+                return parsed.toLocaleString('es-ES');
+              })()}
+            </strong>
+          </>
+        }
+        confirmText="Sí, recuperar"
+        cancelText="No, descartar"
+        confirmColor="primary"
+        onCancel={handleDiscardRecoveredDraft}
       />
 
       <ConfirmDialog

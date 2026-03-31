@@ -8,11 +8,11 @@ export class CreatePedidoLineDto {
     format: 'uuid',
   })
   @IsOptional()
-  @IsUUID('7')
+  @IsUUID('all')
   id?: string;
 
   @ApiProperty({ description: 'ID del Producto Proveedor', format: 'uuid' })
-  @IsUUID('7', {
+  @IsUUID('all', {
     message: i18nValidationMessage(
       'validation.EL_ID_DEL_PRODUCTOPROVEEDOR_DEBE_SER_UN'
     ),

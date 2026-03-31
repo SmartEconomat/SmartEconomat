@@ -60,7 +60,6 @@ export class RecepcionService {
   ): Promise<PaginatedResponseDto<Recepcion>> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
       userRole?.toUpperCase() === 'SUPER_ADMIN';
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 50);
@@ -81,7 +80,6 @@ export class RecepcionService {
   async findOne(id: string, userRole?: string): Promise<Recepcion> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
       userRole?.toUpperCase() === 'SUPER_ADMIN';
 
     const recepcion = await this.recepcionRepository.findOne({

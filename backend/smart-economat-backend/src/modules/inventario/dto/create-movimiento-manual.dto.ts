@@ -16,7 +16,7 @@ export class CreateMovimientoManualDto {
   @ApiProperty({
     description: 'UUID v7 del registro de inventario a ajustar',
   })
-  @IsUUID('7')
+  @IsUUID('all')
   @IsNotEmpty()
   inventarioId!: string;
 

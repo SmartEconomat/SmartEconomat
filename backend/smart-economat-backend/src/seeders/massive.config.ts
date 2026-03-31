@@ -255,7 +255,6 @@ export const ALERGEN_VALUES = [
 ] as const;
 export const USER_ROLES = [
   'SUPER_ADMIN',
-  'ADMINISTRADOR',
   'ADMIN',
   'PROFESOR',
   'ALUMNO',

@@ -260,6 +260,7 @@ export class RecepcionStockService {
             productoProveedor: ppRef.productoProveedor,
             cantidadActual: cantidad,
             cantidadMinima: 10,
+            cantidadMaxima: Math.max(10, Number(cantidad) * 2),
             fechaEntrada: new Date(),
             ubicacion: defaultUbicacion,
             fechaCaducidad: linea.fechaCaducidad
@@ -555,25 +556,43 @@ export class RecepcionStockService {
 
       if (dto.productosNuevos && dto.productosNuevos.length > 0) {
         for (const pNew of dto.productosNuevos) {
-          const prod = queryRunner.manager.create(Producto, {
-            nombre: pNew.nombre,
-            marca: pNew.marca,
-            unidad: pNew.unidad as any,
-            tipo: pNew.tipo as any,
-            codigoBarras: pNew.codigoBarras,
-            contenido: pNew.contenido,
-            pmp: 0,
-          });
-          const savedProd = await queryRunner.manager.save(prod);
+          let savedProd: Producto | null = null;
+          if (pNew.codigoBarras) {
+            savedProd = await queryRunner.manager.findOne(Producto, {
+              where: { codigoBarras: pNew.codigoBarras },
+            });
+          }
 
-          const pp = queryRunner.manager.create(ProductoProveedor, {
-            producto: savedProd,
-            proveedor: defaultProvider as any,
-            marca: pNew.marca,
-            codigoBarras: pNew.codigoBarras,
-            pmp: 0,
+          if (!savedProd) {
+            const prod = queryRunner.manager.create(Producto, {
+              nombre: pNew.nombre,
+              marca: pNew.marca,
+              unidad: pNew.unidad as any,
+              tipo: pNew.tipo as any,
+              codigoBarras: pNew.codigoBarras,
+              contenido: pNew.contenido,
+              pmp: 0,
+            });
+            savedProd = await queryRunner.manager.save(prod);
+          }
+
+          let savedPP = await queryRunner.manager.findOne(ProductoProveedor, {
+            where: {
+              productoId: savedProd.id,
+              proveedorId: defaultProvider?.id,
+            },
           });
-          const savedPP = await queryRunner.manager.save(pp);
+
+          if (!savedPP) {
+            const pp = queryRunner.manager.create(ProductoProveedor, {
+              producto: savedProd,
+              proveedor: defaultProvider as any,
+              marca: pNew.marca,
+              codigoBarras: pNew.codigoBarras,
+              pmp: 0,
+            });
+            savedPP = await queryRunner.manager.save(pp);
+          }
 
           productosCreados.push({
             id: savedProd.id,
@@ -586,6 +605,7 @@ export class RecepcionStockService {
               productoProveedor: savedPP,
               cantidadActual: pNew.cantidadRecibida,
               cantidadMinima: 10,
+              cantidadMaxima: Math.max(10, Number(pNew.cantidadRecibida) * 2),
               fechaEntrada: new Date(),
               ubicacion: defaultUbicacion,
               fechaCaducidad: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
@@ -793,6 +813,7 @@ export class RecepcionStockService {
             productoProveedor: ppRef.productoProveedor as any,
             cantidadActual: linea.cantidadRecibida,
             cantidadMinima: 10,
+            cantidadMaxima: Math.max(10, Number(linea.cantidadRecibida) * 2),
             fechaEntrada: new Date(),
             ubicacion: defaultUbicacion,
             fechaCaducidad: linea.fechaCaducidad
@@ -1135,11 +1156,16 @@ export class RecepcionStockService {
       if (!isNaN(lastSeq)) {
         sequence = lastSeq + 1;
       } else {
-        sequence = Math.floor(Math.random() * 1000000);
+        sequence = Math.floor(Math.random() * 100000);
       }
     }
 
     const paddedSeq = sequence.toString().padStart(5, '0');
-    return `${prefix}${paddedSeq}`;
+
+    const randomSuffix = Math.random()
+      .toString(36)
+      .substring(2, 7)
+      .toUpperCase();
+    return `${prefix}${paddedSeq}-${randomSuffix}`;
   }
 }

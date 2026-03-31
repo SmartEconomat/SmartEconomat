@@ -27,7 +27,7 @@ import ChangePasswordForm from '../features/profile/components/ChangePasswordFor
 
 import { useAuth } from '../store/auth.hooks';
 import { useToast } from '../store/toast.hooks';
-import { authService as authSvc } from '../services/authService';
+import { authService } from '../services/auth.service';
 import { getRoleColor } from '../utils/theme/roleColors';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -130,7 +130,7 @@ const Perfil: React.FC = () => {
 
     try {
       if (profileData.username !== (user?.username || user?.name)) {
-        await authSvc.updateProfile({ username: profileData.username });
+        await authService.updateProfile({ username: profileData.username });
       }
 
       if (passwordData.newPassword) {
@@ -138,10 +138,10 @@ const Perfil: React.FC = () => {
           throw new Error('Las contraseñas no coinciden.');
         }
 
-        await authSvc.changePassword(
-          passwordData.currentPassword,
-          passwordData.newPassword
-        );
+        await authService.changePassword({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        });
 
         setPasswordData({
           currentPassword: '',

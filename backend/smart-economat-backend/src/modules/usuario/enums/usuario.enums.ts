@@ -1,6 +1,5 @@
 export enum rolUsuario {
   SUPER_ADMIN = 'SUPER_ADMIN',
-  ADMINISTRADOR = 'ADMINISTRADOR',
   ADMIN = 'ADMIN',
   PROFESOR = 'PROFESOR',
   ALUMNO = 'ALUMNO',

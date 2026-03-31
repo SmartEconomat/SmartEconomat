@@ -35,10 +35,10 @@ describe('usuarioService', () => {
         username: 'new_username',
         nombre: 'Nuevo Nombre',
         email: 'test@example.com',
-        rol: 'Profesor',
+        rol: 'PROFESOR',
         estado: 'Activo',
         roleId: 'some-role-id',
-        roleName: 'Profesor',
+        roleName: 'PROFESOR',
         permisosAdicionalesIds: ['p1', 'p2'],
         permisosExcluidosIds: ['p3'],
         fecha_registro: '2021-01-01',
@@ -95,7 +95,7 @@ describe('usuarioService', () => {
         username: 'new_user',
         nombre: 'Nombre Nuevo',
         email: 'new@example.com',
-        rol: 'Alumno',
+        rol: 'ALUMNO',
         estado: 'Inactivo',
       };
 

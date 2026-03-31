@@ -40,15 +40,12 @@ export class AdminService {
   private isAdminRole(role?: string) {
     if (!role) return false;
     const normalized = role.toUpperCase();
-    return (
-      normalized === (rolUsuario.ADMINISTRADOR as string) ||
-      normalized === (rolUsuario.SUPER_ADMIN as string) ||
-      normalized === 'ADMIN'
-    );
+    return normalized === 'ADMIN' || normalized === 'SUPER_ADMIN';
   }
 
   private isSuperAdmin(role?: string) {
-    return role?.toUpperCase() === rolUsuario.SUPER_ADMIN;
+    const normalized = role?.toUpperCase();
+    return normalized === 'SUPER_ADMIN';
   }
 
   private async ensureNotDemotingAdmin(
@@ -95,11 +92,10 @@ export class AdminService {
     nextActive: boolean
   ) {
     const isCurrentlyActiveAdmin =
-      user.rol === rolUsuario.ADMINISTRADOR &&
+      this.isAdminRole(user.rol) &&
       user.status === UserStatus.ACTIVE &&
       user.activo;
-    const willRemainActiveAdmin =
-      nextRole === rolUsuario.ADMINISTRADOR && nextActive;
+    const willRemainActiveAdmin = this.isAdminRole(nextRole) && nextActive;
 
     if (!isCurrentlyActiveAdmin || willRemainActiveAdmin) {
       return;
@@ -107,7 +103,7 @@ export class AdminService {
 
     const activeAdmins = await this.usuarioRepo.count({
       where: {
-        rol: rolUsuario.ADMINISTRADOR,
+        rol: rolUsuario.ADMIN,
         status: UserStatus.ACTIVE,
         activo: true,
       },
@@ -236,17 +232,11 @@ export class AdminService {
 
     let legacyRole = rolUsuario.ALUMNO;
     const normalized = role.nombre.trim().toUpperCase();
-    if (
-      normalized === (rolUsuario.ADMINISTRADOR as string) ||
-      normalized === 'ADMIN'
-    ) {
-      legacyRole = rolUsuario.ADMINISTRADOR;
-    } else if (
-      normalized === (rolUsuario.PROFESOR as string) ||
-      normalized === 'PROFESOR'
-    ) {
+    if (normalized === 'ADMIN') {
+      legacyRole = rolUsuario.ADMIN;
+    } else if (normalized === 'PROFESOR') {
       legacyRole = rolUsuario.PROFESOR;
-    } else if (normalized === (rolUsuario.SUPER_ADMIN as string)) {
+    } else if (normalized === 'SUPER_ADMIN') {
       legacyRole = rolUsuario.SUPER_ADMIN;
     }
 

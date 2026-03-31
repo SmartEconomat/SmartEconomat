@@ -1,4 +1,6 @@
 import { baseFetch, ApiResponse, parseApiResponse } from './api.service';
+import { tokenManager } from '../utils/token.manager';
+
 
 export interface LoginRequest {
   email: string;
@@ -8,6 +10,26 @@ export interface LoginRequest {
 export interface LoginResponse {
   access_token: string;
   requirePasswordChange?: boolean;
+}
+
+export interface CurrentUserResponse {
+  id: string;
+  username?: string;
+  nombre?: string;
+  name?: string;
+  email: string;
+  rol?: string;
+  role?: string;
+  permisos?: string[];
+}
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  rol: string;
+  username?: string;
+  permisos: string[];
 }
 
 export interface RegisterAlumnoRequest {
@@ -54,7 +76,38 @@ export const authService = {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    return await parseApiResponse(response, 'Usuario o contraseña inválidos.');
+    const result = await parseApiResponse<LoginResponse>(
+      response,
+      'Usuario o contraseña inválidos.'
+    );
+
+    if (result.success && result.data?.access_token) {
+      tokenManager.setToken(result.data.access_token);
+      localStorage.setItem('token', result.data.access_token);
+    }
+
+    return result;
+  },
+
+  async getCurrentUser(): Promise<User> {
+    const response = await baseFetch('/usuarios/perfil');
+    const result = await parseApiResponse<CurrentUserResponse>(
+      response,
+      'No se pudo obtener la información del usuario'
+    );
+
+    return {
+      id: result.data.id,
+      name:
+        result.data.nombre ||
+        result.data.name ||
+        result.data.username ||
+        result.data.email,
+      email: result.data.email,
+      rol: result.data.rol || result.data.role || 'usuario',
+      username: result.data.username,
+      permisos: result.data.permisos || [],
+    };
   },
 
   async registerAlumno(
@@ -163,5 +216,26 @@ export const authService = {
       response,
       'No se pudo cambiar la contraseña.'
     );
+  },
+
+  async updateProfile(data: {
+    username: string;
+    email?: string;
+  }): Promise<void> {
+    const response = await baseFetch('/usuarios/perfil', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    await parseApiResponse(response, 'Error al actualizar el perfil');
+  },
+
+  async logout(): Promise<void> {
+    const response = await baseFetch('/auth/logout', {
+      method: 'POST',
+    });
+    localStorage.removeItem('token');
+    await parseApiResponse(response, 'Error al cerrar la sesión');
   },
 };

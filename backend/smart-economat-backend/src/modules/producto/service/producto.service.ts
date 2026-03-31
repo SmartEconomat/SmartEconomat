@@ -110,7 +110,6 @@ export class ProductoService {
   ): Promise<PaginatedResponseDto<Producto>> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
       userRole?.toUpperCase() === 'SUPER_ADMIN';
     const page = query.page ?? 1;
     const {
@@ -256,8 +255,9 @@ export class ProductoService {
           await this.validateProveedorPayload(manager, proveedores);
         }
 
-        manager.merge(Producto, producto, rest);
-        await manager.save(Producto, producto);
+        await manager.update(Producto, id, rest);
+
+        Object.assign(producto, rest);
 
         if (normalizedAlergenos !== undefined) {
           await this.replaceAlergenosWithManager(
@@ -359,8 +359,14 @@ export class ProductoService {
           divisorPP
         : nuevoPrecio;
 
-    pp.pmp = Number(nuevoPmpPP.toFixed(4));
-    await em.save(ProductoProveedor, pp);
+    const finalPmp = Number(nuevoPmpPP.toFixed(4));
+
+    await em.update(
+      ProductoProveedor,
+      { id: productoProveedorId },
+      { pmp: finalPmp }
+    );
+    pp.pmp = finalPmp;
 
     if (pp.producto) {
       await this.recalcularPmpProducto(pp.producto.id, em);
@@ -421,7 +427,7 @@ export class ProductoService {
             )
           : 0;
 
-    await em.save(Producto, producto);
+    await em.update(Producto, { id: productoId }, { pmp: producto.pmp });
   }
 
   async getHistorialPrecios(
@@ -592,7 +598,16 @@ export class ProductoService {
           toUpdate.precioUnitario = p.precioUnitario ?? toUpdate.precioUnitario;
           toUpdate.marca = p.marcaEspecifica ?? toUpdate.marca;
           toUpdate.codigoBarras = p.codigoBarras ?? toUpdate.codigoBarras;
-          await manager.save(toUpdate);
+
+          await manager.update(
+            ProductoProveedor,
+            { id: toUpdate.id },
+            {
+              precioUnitario: toUpdate.precioUnitario,
+              marca: toUpdate.marca,
+              codigoBarras: toUpdate.codigoBarras,
+            }
+          );
         }
       }
     }

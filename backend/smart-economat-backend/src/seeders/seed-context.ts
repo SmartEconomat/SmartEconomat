@@ -1,6 +1,17 @@
 import { execSync } from 'node:child_process';
 import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import AppDataSource from '../config/typeorm.config';
+import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
+import { rolUsuario, UserStatus } from '../modules/usuario/enums/usuario.enums';
+import {
+  computeSeedBackoffMs,
+  hasDataEnvelope,
+  HttpSeedRequestError,
+  parseSeedResponseBody,
+  parseSeedRetryAfterMs,
+  seedSafeStringify,
+} from './seed-context.http-utils';
 
 type SeedCredential = {
   email: string;
@@ -20,28 +31,13 @@ export type SeedContextConfig = {
   authCandidates?: SeedCredential[];
 };
 
-export class HttpSeedRequestError extends Error {
-  constructor(
-    public readonly status: number,
-    message: string,
-    public readonly retriable: boolean,
-    public readonly retryAfterMs?: number
-  ) {
-    super(message);
-    this.name = 'HttpSeedRequestError';
-  }
-}
-
-function hasDataEnvelope(value: unknown): value is { data: unknown } {
-  return !!value && typeof value === 'object' && 'data' in value;
-}
+export { HttpSeedRequestError } from './seed-context.http-utils';
 
 export class SeedContext {
   private static readonly DEFAULT_API_BASE_URL = 'http://localhost:3000/api/v1';
   private static readonly DEFAULT_REQUEST_DELAY_MS = 0;
-  private static readonly DEFAULT_REQUEST_TIMEOUT_MS = 12000;
+  private static readonly DEFAULT_REQUEST_TIMEOUT_MS = 60000;
   private static readonly DEFAULT_MAX_CONCURRENCY = 32;
-  private static readonly DEFAULT_MAX_RETRIES = 4;
   private static readonly DEFAULT_BACKOFF_BASE_MS = 250;
   private static readonly DEFAULT_BACKOFF_MAX_MS = 6000;
   private static readonly DEFAULT_DOCKER_COMPOSE_FILE =
@@ -109,6 +105,7 @@ export class SeedContext {
   private dockerComposeFile: string;
   private dockerServices: string[];
   private authCandidates: SeedCredential[];
+  private bootstrapAdminAttempted = false;
 
   private requestDelayMs: number;
   private requestTimeoutMs: number;
@@ -171,10 +168,7 @@ export class SeedContext {
       config.maxConcurrency,
       SeedContext.DEFAULT_MAX_CONCURRENCY
     );
-    this.maxRetries = this.ensureNonNegativeInt(
-      config.maxRetries,
-      SeedContext.DEFAULT_MAX_RETRIES
-    );
+    this.maxRetries = 0;
     this.backoffBaseMs = this.ensureNonNegativeInt(
       config.backoffBaseMs,
       SeedContext.DEFAULT_BACKOFF_BASE_MS
@@ -202,6 +196,11 @@ export class SeedContext {
   }
 
   ensureDockerInfra(): Promise<void> {
+    const isDocker = require('node:fs').existsSync('/.dockerenv');
+    if (isDocker) {
+      console.log('[seed] Ejecutando en Docker, omitiendo ensureDockerInfra');
+      return Promise.resolve();
+    }
     const composeFile = resolve(__dirname, this.dockerComposeFile);
     const services = this.dockerServices.join(' ');
     execSync(`docker compose -f ${composeFile} up -d ${services}`, {
@@ -222,9 +221,7 @@ export class SeedContext {
         if (res.status >= 200) {
           return;
         }
-      } catch {
-        // Ignorar fallo de conexión durante la espera del backend
-      }
+      } catch {}
 
       await new Promise((resolveDelay) => setTimeout(resolveDelay, delayMs));
     }
@@ -274,9 +271,116 @@ export class SeedContext {
       }
     }
 
+    await this.ensureBootstrapAdminCredentials();
+
+    for (const current of this.authCandidates) {
+      try {
+        const response = await this.request<{ access_token: string }>(
+          '/auth/login',
+          {
+            method: 'POST',
+            body: current,
+            auth: false,
+          }
+        );
+
+        const token =
+          response?.access_token ||
+          (response as any)?.token ||
+          (response as any)?.accessToken;
+
+        if (!token) {
+          continue;
+        }
+
+        this.token = token;
+        this.store.set('seedAdminLoginEmail', current.email);
+        this.store.set('seedAdminCurrentPassword', current.password);
+        return;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
     throw lastError instanceof Error
       ? lastError
       : new Error('[seed] No fue posible autenticarse para ejecutar seeders');
+  }
+
+  private async ensureBootstrapAdminCredentials(): Promise<void> {
+    if (this.bootstrapAdminAttempted) {
+      return;
+    }
+    this.bootstrapAdminAttempted = true;
+
+    const email =
+      process.env.SEED_BOOTSTRAP_ADMIN_EMAIL?.trim() ||
+      'admin@smarteconomat.com';
+    const username =
+      process.env.SEED_BOOTSTRAP_ADMIN_USERNAME?.trim() || 'admin';
+    const password =
+      process.env.SEED_BOOTSTRAP_ADMIN_PASSWORD?.trim() || 'SmartEconomat2026!';
+
+    try {
+      if (!AppDataSource.isInitialized) {
+        await AppDataSource.initialize();
+      }
+
+      const repo = AppDataSource.getRepository(Usuario);
+      const existing = await repo
+        .createQueryBuilder('usuario')
+        .addSelect('usuario.password')
+        .where('(usuario.email = :email OR usuario.username = :username)', {
+          email,
+          username,
+        })
+        .getOne();
+
+      if (existing) {
+        existing.email = existing.email || email;
+        existing.username = existing.username || username;
+        existing.password = password;
+        existing.rol = rolUsuario.SUPER_ADMIN;
+        existing.status = UserStatus.ACTIVE;
+        existing.activo = true;
+        existing.mustChangePassword = false;
+        await repo.save(existing);
+      } else {
+        const created = repo.create({
+          nombre: 'Seeder Bootstrap Admin',
+          username,
+          email,
+          password,
+          rol: rolUsuario.SUPER_ADMIN,
+          status: UserStatus.ACTIVE,
+          activo: true,
+          mustChangePassword: false,
+        });
+        await repo.save(created);
+      }
+
+      const bootstrapCandidates: SeedCredential[] = [
+        { email, password },
+        { email: username, password },
+      ];
+
+      this.authCandidates = [
+        ...bootstrapCandidates,
+        ...this.authCandidates.filter(
+          (candidate) =>
+            !bootstrapCandidates.some(
+              (bootstrap) =>
+                bootstrap.email === candidate.email &&
+                bootstrap.password === candidate.password
+            )
+        ),
+      ];
+    } catch (error) {
+      const message = String(error instanceof Error ? error.message : error);
+      throw new Error(
+        `[seed] No se pudo bootstrapear credenciales admin para seeding: ${message}`
+      );
+    }
   }
 
   getAccessToken(): string {
@@ -708,35 +812,11 @@ export class SeedContext {
   private async parseResponseBody(
     response: Response
   ): Promise<Record<string, unknown> | string | null> {
-    const contentType = response.headers.get('content-type') || '';
-
-    if (!contentType) {
-      return null;
-    }
-
-    if (contentType.includes('application/json')) {
-      const text = await response.text();
-      return text ? (JSON.parse(text) as Record<string, unknown>) : null;
-    }
-
-    if (
-      contentType.includes('application/pdf') ||
-      contentType.includes(
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      )
-    ) {
-      const buffer = await response.arrayBuffer();
-      return { raw: `binary:${buffer.byteLength}` };
-    }
-
-    const text = await response.text();
-    return text || null;
+    return parseSeedResponseBody(response);
   }
 
   private computeBackoffMs(attempt: number): number {
-    const exponential = this.backoffBaseMs * 2 ** attempt;
-    const jitter = Math.floor(Math.random() * this.backoffBaseMs);
-    return Math.min(this.backoffMaxMs, exponential + jitter);
+    return computeSeedBackoffMs(this.backoffBaseMs, this.backoffMaxMs, attempt);
   }
 
   private async fetchWithTimeout(
@@ -760,21 +840,7 @@ export class SeedContext {
   }
 
   private parseRetryAfterMs(headerValue: string | null): number | undefined {
-    if (!headerValue) {
-      return undefined;
-    }
-
-    const seconds = Number(headerValue);
-    if (!Number.isNaN(seconds) && Number.isFinite(seconds)) {
-      return Math.max(0, Math.floor(seconds * 1000));
-    }
-
-    const targetTime = Date.parse(headerValue);
-    if (Number.isNaN(targetTime)) {
-      return undefined;
-    }
-
-    return Math.max(0, targetTime - Date.now());
+    return parseSeedRetryAfterMs(headerValue);
   }
 
   private async acquireSlot(): Promise<void> {
@@ -823,19 +889,6 @@ export class SeedContext {
   }
 
   private safeStringify(value: unknown): string {
-    if (value === undefined) {
-      return 'undefined';
-    }
-
-    if (typeof value === 'string') {
-      return value;
-    }
-
-    try {
-      const json = JSON.stringify(value);
-      return json ?? '[unserializable]';
-    } catch {
-      return '[unserializable]';
-    }
+    return seedSafeStringify(value);
   }
 }

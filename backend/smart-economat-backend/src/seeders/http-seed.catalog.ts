@@ -14,6 +14,26 @@ function getVolumeMultiplier(context: SeedContext): number {
 
 const DEFAULT_SEED_PASSWORD = 'SmartEconomat2026!';
 
+const LIST_ENDPOINTS_WITH_PAGE = new Set([
+  '/usuarios',
+  '/proveedor',
+  '/productos',
+  '/ubicacion',
+  '/inventario',
+  '/pedido-usuarios',
+  '/pedidos',
+  '/recepciones',
+  '/recepcion-productos',
+  '/albaranes',
+  '/incidencias',
+  '/incidencias-resueltas',
+  '/movimientos',
+  '/recetas',
+  '/preparaciones',
+  '/merma',
+  '/archivos',
+]);
+
 function listFromResponse(input: any): any[] {
   if (Array.isArray(input)) return input;
   if (Array.isArray(input?.items)) return input.items;
@@ -40,19 +60,17 @@ async function saveListIds(
   endpoint: string,
   stateKey: string
 ): Promise<any[]> {
-  let list = await safe(`listar ${endpoint} paginado`, () =>
-    context.getJson<any>(`${endpoint}?limit=25&page=1`)
+  const listPath = LIST_ENDPOINTS_WITH_PAGE.has(endpoint)
+    ? `${endpoint}?limit=25&page=1`
+    : endpoint === '/producto-proveedor/search'
+      ? `${endpoint}?q=seed&limit=25&offset=0`
+      : endpoint === '/historial-precio'
+        ? `${endpoint}?order=DESC`
+        : endpoint;
+
+  const list = await safe(`listar ${endpoint}`, () =>
+    context.getJson<any>(listPath)
   );
-
-  if (!list) {
-    list = await safe(`listar ${endpoint} simple`, () =>
-      context.getJson<any>(endpoint)
-    );
-  }
-
-  if (!list) {
-    return [];
-  }
 
   const items = listFromResponse(list);
   for (const item of items) {
@@ -61,32 +79,12 @@ async function saveListIds(
   return items;
 }
 
-async function safe<T>(label: string, fn: () => Promise<T>): Promise<T | null> {
+async function safe<T>(label: string, fn: () => Promise<T>): Promise<T> {
   try {
     return await fn();
   } catch (error) {
     const message = String(error instanceof Error ? error.message : error);
-    const lower = message.toLowerCase();
-    const isListRead = label.toLowerCase().startsWith('listar');
-    if (
-      message.includes('403') ||
-      message.includes('404') ||
-      message.includes('401') ||
-      message.includes('429') ||
-      (isListRead &&
-        (message.includes('400') || lower.includes('bad request'))) ||
-      message.includes('409') ||
-      lower.includes('duplicate') ||
-      lower.includes('already exists') ||
-      lower.includes('already registered') ||
-      lower.includes('ya está registrado') ||
-      lower.includes('duplica') ||
-      lower.includes('duplicate_entry')
-    ) {
-      console.warn(`[seed] ${label} omitido: ${message}`);
-      return null;
-    }
-    throw error;
+    throw new Error(`[seed] ${label} fallo: ${message}`);
   }
 }
 
@@ -98,12 +96,8 @@ async function rolesPermisosTask(context: SeedContext): Promise<void> {
     context.getJson<any[]>('/admin/permissions')
   );
 
-  context.set('roles', roles || []);
-  context.set('permisos', permisos || []);
-
-  if (!Array.isArray(roles) || roles.length === 0) {
-    console.warn('[seed] No se encontraron roles en /admin/roles');
-  }
+  context.set('roles', roles);
+  context.set('permisos', permisos);
 
   const roleIds = listFromResponse(roles)
     .map((r: any) => r?.id)
@@ -131,7 +125,7 @@ async function usuariosTask(context: SeedContext): Promise<void> {
       username: 'admin',
       email: 'admin@smarteconomat.com',
       password: DEFAULT_SEED_PASSWORD,
-      rol: 'ADMINISTRADOR',
+      rol: 'ADMIN',
     },
   ];
 
@@ -141,16 +135,13 @@ async function usuariosTask(context: SeedContext): Promise<void> {
       username: `seed_user_${i}`,
       email: `seed.user.${i}@smarteconomat.local`,
       password: DEFAULT_SEED_PASSWORD,
-      rol: i % 3 === 0 ? 'PROFESOR' : 'ADMINISTRADOR',
+      rol: i % 3 === 0 ? 'PROFESOR' : 'ADMIN',
     });
   }
 
   const list = await safe('listar usuarios', () =>
     context.getJson<any>('/usuarios?limit=25&page=1')
   );
-  if (!list) {
-    return;
-  }
   const users = Array.isArray(list?.items)
     ? list.items
     : Array.isArray(list?.data?.items)
@@ -167,19 +158,9 @@ async function usuariosTask(context: SeedContext): Promise<void> {
       continue;
     }
 
-    try {
-      const created = await context.postJson<any>('/usuarios/admin', user);
-      context.set(`usuario:${user.username}`, created?.id);
-      pushId(context, 'usuarioIds', created?.id);
-    } catch (error) {
-      const message = String(error instanceof Error ? error.message : error);
-      if (
-        !message.includes('409') &&
-        !message.toLowerCase().includes('already')
-      ) {
-        throw error;
-      }
-    }
+    const created = await context.postJson<any>('/usuarios/admin', user);
+    context.set(`usuario:${user.username}`, created?.id);
+    pushId(context, 'usuarioIds', created?.id);
   }
 
   const profesores = await saveListIds(
@@ -193,20 +174,13 @@ async function usuariosTask(context: SeedContext): Promise<void> {
   );
 
   if (!profExists) {
-    try {
-      const created = await context.postJson<any>('/admin/profesores', {
-        username: 'profesor1',
-        email: 'profesor1@smarteconomat.com',
-        password: DEFAULT_SEED_PASSWORD,
-        cial: 'CIAL-11111',
-      });
-      pushId(context, 'usuarioIds', created?.id);
-    } catch (error) {
-      const message = String(error instanceof Error ? error.message : error);
-      if (!message.includes('409')) {
-        throw error;
-      }
-    }
+    const created = await context.postJson<any>('/admin/profesores', {
+      username: 'profesor1',
+      email: 'profesor1@smarteconomat.com',
+      password: DEFAULT_SEED_PASSWORD,
+      cial: 'CIAL-11111',
+    });
+    pushId(context, 'usuarioIds', created?.id);
   }
 
   await saveListIds(context, '/usuarios', 'usuarioIds');
@@ -241,50 +215,40 @@ async function usuariosTask(context: SeedContext): Promise<void> {
   const seedProfesor = desiredUsers.find((user) => user.rol === 'PROFESOR');
 
   if (seedProfesor) {
-    let profesorToken: string | null = null;
-    try {
-      profesorToken = await context.loginWithCredentials({
-        email: seedProfesor.email,
-        password: seedProfesor.password,
-      });
-    } catch (error) {
-      const message = String(error instanceof Error ? error.message : error);
-      console.warn(
-        `[seed] login profesor ${seedProfesor.email} omitido: ${message}`
-      );
+    const profesorToken = await context.loginWithCredentials({
+      email: seedProfesor.email,
+      password: seedProfesor.password,
+    });
+
+    if (!profesorToken) {
+      context.setAccessToken(adminToken);
+      throw new Error('[seed] Login profesor semilla sin token');
     }
 
-    if (profesorToken) {
-      try {
-        await saveListIds(context, '/profesores/slots', 'profesorSlotIds');
-        await saveListIds(context, '/profesores/alumnos', 'alumnoIds');
+    try {
+      await saveListIds(context, '/profesores/slots', 'profesorSlotIds');
+      await saveListIds(context, '/profesores/alumnos', 'alumnoIds');
 
-        const alumnoIds = context.getState<string[]>('alumnoIds') || [];
-        if (alumnoIds.length > 0) {
-          const aid = alumnoIds[0];
-          await safe(`profesor activar alumno ${aid}`, () =>
-            context.patchJson(`/profesores/alumnos/${aid}/activate`, {})
-          );
-          await safe(`profesor force reset alumno ${aid}`, () =>
-            context.postJson(`/profesores/alumnos/${aid}/force-reset`, {})
-          );
-        }
-
-        const slotIds = context.getState<string[]>('profesorSlotIds') || [];
-        if (slotIds.length > 0) {
-          const sid = slotIds[0];
-          await safe(`borrar slot profesor ${sid}`, () =>
-            context.deleteJson(`/profesores/slots/${sid}`)
-          );
-        }
-      } finally {
-        context.setAccessToken(adminToken);
+      const alumnoIds = context.getState<string[]>('alumnoIds') || [];
+      if (alumnoIds.length > 0) {
+        const aid = alumnoIds[0];
+        await safe(`profesor activar alumno ${aid}`, () =>
+          context.patchJson(`/profesores/alumnos/${aid}/activate`, {})
+        );
+        await safe(`profesor force reset alumno ${aid}`, () =>
+          context.postJson(`/profesores/alumnos/${aid}/force-reset`, {})
+        );
       }
-    } else {
+
+      const slotIds = context.getState<string[]>('profesorSlotIds') || [];
+      if (slotIds.length > 0) {
+        const sid = slotIds[0];
+        await safe(`borrar slot profesor ${sid}`, () =>
+          context.deleteJson(`/profesores/slots/${sid}`)
+        );
+      }
+    } finally {
       context.setAccessToken(adminToken);
-      console.warn(
-        '[seed] No se pudo autenticar profesor semilla para listar /profesores/slots y /profesores/alumnos'
-      );
     }
   }
 }
@@ -346,9 +310,6 @@ async function proveedorTask(context: SeedContext): Promise<void> {
   const list = await safe('listar proveedor', () =>
     context.getJson<any>('/proveedor?limit=50&page=1')
   );
-  if (!list) {
-    return;
-  }
   const items = Array.isArray(list?.items)
     ? list.items
     : Array.isArray(list?.data?.items)
@@ -365,9 +326,6 @@ async function proveedorTask(context: SeedContext): Promise<void> {
     const created = await safe(`crear proveedor ${proveedor.nif}`, () =>
       context.postJson<any>('/proveedor', proveedor)
     );
-    if (!created) {
-      continue;
-    }
     context.set(`proveedor:${proveedor.nif}`, created?.id);
     pushId(context, 'proveedorIds', created?.id);
   }
@@ -396,9 +354,6 @@ async function productoTask(context: SeedContext): Promise<void> {
   const list = await safe('listar productos', () =>
     context.getJson<any>('/productos?limit=50&page=1')
   );
-  if (!list) {
-    return;
-  }
   const items = Array.isArray(list?.items)
     ? list.items
     : Array.isArray(list?.data?.items)
@@ -446,9 +401,6 @@ async function productoTask(context: SeedContext): Promise<void> {
 
     let batchHits = 0;
     for (const created of createdBatch) {
-      if (!created) {
-        continue;
-      }
       batchHits++;
       pushId(context, 'productoIds', created?.id);
     }
@@ -651,20 +603,12 @@ async function pedidoTask(context: SeedContext): Promise<void> {
     );
 
     if (recetaIdsForPedido.length > 0) {
-      try {
-        await safe(`pedido from recipes ${i}`, () =>
-          context.postJson('/pedidos/from-recipes', {
-            recetaIds: recetaIdsForPedido,
-            observaciones: 'Generado por seeder HTTP',
-          })
-        );
-      } catch (err) {
-        console.warn(
-          `[seed] pedido from recipes omitido: ${String(
-            err instanceof Error ? err.message : err
-          )}`
-        );
-      }
+      await safe(`pedido from recipes ${i}`, () =>
+        context.postJson('/pedidos/from-recipes', {
+          recetaIds: recetaIdsForPedido,
+          observaciones: 'Generado por seeder HTTP',
+        })
+      );
     }
 
     const pendingPedidoIds = (
@@ -684,20 +628,12 @@ async function pedidoTask(context: SeedContext): Promise<void> {
 
     if (Object.keys(consolidateBody).length > 0) {
       consolidateBody.observaciones = faker.lorem.sentence();
-      try {
-        await safe(`purchase batch consolidate ${i}`, () =>
-          context.postJson('/purchase-batches/consolidate', consolidateBody)
-        );
-      } catch (err) {
-        console.warn(
-          `[seed] purchase batch consolidate omitido: ${String(
-            err instanceof Error ? err.message : err
-          )}`
-        );
-      }
+      await safe(`purchase batch consolidate ${i}`, () =>
+        context.postJson('/purchase-batches/consolidate', consolidateBody)
+      );
     } else {
-      console.warn(
-        '[seed] purchase batch consolidate omitido: no hay pedidos pendientes'
+      throw new Error(
+        '[seed] purchase batch consolidate requiere pedidos pendientes para ejecutarse en modo estricto'
       );
     }
   }
@@ -970,7 +906,9 @@ async function recetaTask(context: SeedContext): Promise<void> {
   const sourceId = recetaIds[0];
 
   if (!sourceId) {
-    return;
+    throw new Error(
+      '[seed] recetaTask requiere al menos una receta base para duplicación en modo estricto'
+    );
   }
 
   for (let i = 0; i < 10 * volumeMultiplier; i++) {

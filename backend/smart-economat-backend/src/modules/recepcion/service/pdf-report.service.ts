@@ -745,9 +745,8 @@ export class PdfReportService {
       where: { id: recepcionId },
       relations: [
         'usuario',
-        'recepcionesPedidos',
-        'recepcionesPedidos.pedido',
         'recepcionesPedidos.pedido.proveedor',
+        'recepcionProductos.pedidoProducto.productoProveedor.producto',
         'recepcionProductos.pedidoProducto.productoProveedor.producto',
         'recepcionProductos.incidencia',
       ],

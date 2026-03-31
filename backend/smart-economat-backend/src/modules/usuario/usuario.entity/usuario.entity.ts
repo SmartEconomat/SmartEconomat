@@ -81,7 +81,7 @@ export class Usuario extends BaseEntity {
   @OneToOne(() => Alumno, (alumno) => alumno.user)
   alumno?: Relation<Alumno>;
 
-  @ManyToMany(() => Rol, (rol) => rol.usuarios)
+  @ManyToMany(() => Rol, (rol) => rol.usuarios, { cascade: true })
   @JoinTable({
     name: 'usuario_rol',
     joinColumn: { name: 'usuario_id', referencedColumnName: 'id' },

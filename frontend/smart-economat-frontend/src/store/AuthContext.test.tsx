@@ -5,9 +5,9 @@ import { Provider } from 'react-redux';
 import { store } from './index';
 import { AuthProvider } from './AuthContext';
 import { useAuth } from './auth.hooks';
-import { authService } from '../services/authService';
+import { authService } from '../services/auth.service';
 
-vi.mock('../services/authService', () => ({
+vi.mock('../services/auth.service', () => ({
   authService: {
     getCurrentUser: vi.fn(),
     logout: vi.fn().mockResolvedValue(undefined),

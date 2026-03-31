@@ -6,7 +6,7 @@ export class AssignRoleToUserDto {
     description: 'docs.ID_DEL_USUARIO_AL_QUE_SE_ASIGNAR_EL_ROL',
     example: 'uuid-usuario',
   })
-  @IsUUID('7')
+  @IsUUID('all')
   @IsNotEmpty()
   usuarioId!: string;
 
@@ -14,7 +14,7 @@ export class AssignRoleToUserDto {
     description: 'docs.ID_DEL_ROL_A_ASIGNAR',
     example: 'uuid-rol',
   })
-  @IsUUID('7')
+  @IsUUID('all')
   @IsNotEmpty()
   rolId!: string;
 

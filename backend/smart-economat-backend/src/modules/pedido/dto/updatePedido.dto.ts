@@ -19,7 +19,7 @@ export class UpdatePedidoDto {
     format: 'uuid',
   })
   @IsOptional()
-  @IsUUID('7', {
+  @IsUUID('all', {
     message: i18nValidationMessage(
       'validation.EL_ID_DEL_PROVEEDOR_DEBE_SER_UN_UUID_V_L'
     ),
