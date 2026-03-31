@@ -596,6 +596,49 @@ export async function cancelPedidoUsuario(
   return body.data;
 }
 
+export async function restaurarPedido(id: string): Promise<Pedido> {
+  const response = await baseFetch(`/pedidos/${id}/restaurar`, {
+    method: 'PATCH',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error al restaurar pedido: ${response.status}`);
+  }
+
+  const body = (await response.json()) as ApiResponse<Pedido>;
+  return body.data;
+}
+
+export async function restaurarPedidoUsuario(
+  id: string
+): Promise<PedidoUsuario> {
+  const response = await baseFetch(`/pedido-usuarios/${id}/restaurar`, {
+    method: 'PATCH',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error al restaurar pedido de usuario: ${response.status}`);
+  }
+
+  const body = (await response.json()) as ApiResponse<PedidoUsuario>;
+  return body.data;
+}
+
+export async function restaurarPurchaseBatch(
+  id: string
+): Promise<PurchaseBatch> {
+  const response = await baseFetch(`/purchase-batches/${id}/restaurar`, {
+    method: 'PATCH',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error al restaurar lote: ${response.status}`);
+  }
+
+  const body = (await response.json()) as ApiResponse<PurchaseBatch>;
+  return body.data;
+}
+
 function getPedidoPdfPath(id: string): string {
   const params = new URLSearchParams({
     tipo: 'pedido',

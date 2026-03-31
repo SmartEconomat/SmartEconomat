@@ -13,11 +13,11 @@ export default function ToastContainer() {
       spacing={1.5}
       sx={{
         position: 'fixed',
-        bottom: 24,
-        left: '50%',
-        transform: 'translateX(-50%)',
+        top: { xs: 16, sm: 24 },
+        right: { xs: '50%', sm: 24 },
+        transform: { xs: 'translateX(50%)', sm: 'none' },
         zIndex: 9999,
-        width: { xs: 'calc(100% - 48px)', sm: TOAST_WIDTH },
+        width: { xs: 'calc(100% - 32px)', sm: TOAST_WIDTH },
         maxWidth: TOAST_WIDTH,
         alignItems: 'stretch',
       }}
@@ -26,7 +26,7 @@ export default function ToastContainer() {
         <Snackbar
           key={toast.id}
           open={true}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
           sx={{ position: 'relative', width: 'auto' }}
         >
           <Alert

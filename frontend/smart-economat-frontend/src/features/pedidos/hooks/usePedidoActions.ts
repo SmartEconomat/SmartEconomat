@@ -11,6 +11,9 @@ import {
   fetchPedidoUsuarioById,
   updatePedidoUsuario,
   updatePedido,
+  restaurarPedido,
+  restaurarPedidoUsuario,
+  restaurarPurchaseBatch,
 } from '../../../services/pedido.service';
 import { saveRecepcionDraft } from '../../../services/recepcionDraft.service';
 import { ApiError, deleteResource } from '../../../services/api.service';
@@ -330,6 +333,46 @@ export function usePedidoActions({
     [navigate, toast]
   );
 
+  const restorePedidoById = useCallback(
+    async (id: string) => {
+      setIsSaving(true);
+      try {
+        await restaurarPedido(id);
+        toast.success('Pedido restaurado correctamente.');
+        await reload();
+      } catch (err: unknown) {
+        toast.error(
+          err instanceof Error ? err.message : 'Error al restaurar el pedido.'
+        );
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [reload, toast]
+  );
+
+  const restorePurchaseBatchById = useCallback(
+    async (id: string, isPedidoUsuario = false) => {
+      setIsSaving(true);
+      try {
+        if (isPedidoUsuario) {
+          await restaurarPedidoUsuario(id);
+        } else {
+          await restaurarPurchaseBatch(id);
+        }
+        toast.success('Pedido restaurado correctamente.');
+        await reload();
+      } catch (err: unknown) {
+        toast.error(
+          err instanceof Error ? err.message : 'Error al restaurar el pedido.'
+        );
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [reload, toast]
+  );
+
   return {
     savePedido,
     deletePedidoById,
@@ -337,9 +380,12 @@ export function usePedidoActions({
     approvePurchaseBatchById,
     cancelPedidoById,
     cancelPurchaseBatchById,
+    setIsConsolidatingBatch,
     fetchBatchDetail,
     consolidatePedidosByIds,
     startRecepcionFromBatch,
+    restorePedidoById,
+    restorePurchaseBatchById,
     isSaving,
     isDeleting,
     isAceptando,

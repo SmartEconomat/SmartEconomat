@@ -3,6 +3,24 @@ import PageToolbar from '../../../components/ui/PageToolbar';
 import { PedidoDraftRecord } from '../../../services/pedidoDraft.service';
 import { PedidosViewMode } from '../types/pedidos-ui.types';
 
+interface ExtraAction {
+  label: string;
+  onClick: () => void;
+  icon?: React.ReactNode;
+  id?: string;
+  disabled?: boolean;
+  isLoading?: boolean;
+  color?:
+    | 'primary'
+    | 'secondary'
+    | 'error'
+    | 'info'
+    | 'success'
+    | 'warning'
+    | 'inherit';
+  variant?: 'text' | 'outlined' | 'contained';
+}
+
 interface PedidosPageHeaderProps {
   canCreate: boolean;
   draft: PedidoDraftRecord | null;
@@ -15,7 +33,7 @@ interface PedidosPageHeaderProps {
   onViewModeChange: (mode: PedidosViewMode) => void;
   onCreateClick: () => void;
   onContinueDraftClick: () => void;
-  extraActions?: any[];
+  extraActions?: ExtraAction[];
 }
 
 const PedidosPageHeader: React.FC<PedidosPageHeaderProps> = ({

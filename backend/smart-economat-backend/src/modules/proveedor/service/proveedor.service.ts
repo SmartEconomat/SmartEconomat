@@ -151,4 +151,14 @@ export class ProveedorService {
 
     await this.proveedorRepository.softDelete(id);
   }
+
+  async findWithOrders(): Promise<Proveedor[]> {
+    return await this.proveedorRepository
+      .createQueryBuilder('proveedor')
+      .innerJoin('proveedor.pedidos', 'pedido')
+      .select(['proveedor.id', 'proveedor.nombre'])
+      .distinct(true)
+      .orderBy('proveedor.nombre', 'ASC')
+      .getMany();
+  }
 }

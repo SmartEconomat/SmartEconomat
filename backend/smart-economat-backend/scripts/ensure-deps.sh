@@ -25,7 +25,7 @@ if [ ! -d node_modules ] || [ ! -f node_modules/.bin/nest ] || [ "$CURRENT_HASH"
   echo "📦 Sincronizando dependencias del backend usando $MANIFEST_FILE..."
   # Forzamos npm install para asegurar compatibilidad en dev
   npm install
-  mkdir -p "$MARKER_DIR"
+  mkdir -p "$(dirname "$MARKER_FILE")"
   printf '%s' "$CURRENT_HASH" > "$MARKER_FILE"
 else
 
