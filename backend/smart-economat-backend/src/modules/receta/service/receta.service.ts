@@ -238,7 +238,7 @@ export class RecetaService {
         .createQueryBuilder(Inventario, 'inv')
         .innerJoinAndSelect('inv.productoProveedor', 'pp')
         .innerJoinAndSelect('pp.producto', 'prod')
-        .where('pp.producto_id IN (:...productoIds)', { productoIds })
+        .where('pp.productoId IN (:...productoIds)', { productoIds })
         .andWhere('inv.cantidad_actual > 0')
         .orderBy('inv.fecha_caducidad', 'ASC', 'NULLS LAST')
         .addOrderBy('inv.fecha_entrada', 'ASC')

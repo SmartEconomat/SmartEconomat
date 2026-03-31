@@ -40,14 +40,12 @@ export class IncidenciaResuelaService {
       );
     }
 
-    incidencia.resolver(dto.idUsuarioResolutor ?? '', dto.observaciones);
+    incidencia.resolver(dto.idUsuarioResolutor, dto.observaciones);
     await this.incidenciaRepository.save(incidencia);
 
     const resolucion = this.incidenciaResuelaRepository.create({
       incidencia: { id: dto.idIncidencia } as Incidencia,
-      usuarioResolutor: dto.idUsuarioResolutor
-        ? ({ id: dto.idUsuarioResolutor } as any)
-        : null,
+      usuarioResolutor: { id: dto.idUsuarioResolutor } as any,
       tipoResolucion: dto.tipoResolucion,
       fechaResolucion: new Date(),
       observaciones: dto.observaciones,

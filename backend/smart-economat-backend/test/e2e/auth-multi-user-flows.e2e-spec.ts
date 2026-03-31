@@ -149,7 +149,7 @@ describe('Auth multi-user flows (e2e)', () => {
     expect(profesorBLogin.body.data.access_token).toBeDefined();
 
     await request(app.getHttpServer())
-      .post('/api/v1/auth/change-password')
+      .patch('/api/v1/auth/change-password')
       .set('Authorization', `Bearer ${profesorALogin.body.data.access_token}`)
       .send({
         currentPassword: 'PasswordIncorrecta123!',
@@ -158,7 +158,7 @@ describe('Auth multi-user flows (e2e)', () => {
       .expect(400);
 
     await request(app.getHttpServer())
-      .post('/api/v1/auth/change-password')
+      .patch('/api/v1/auth/change-password')
       .set('Authorization', `Bearer ${profesorALogin.body.data.access_token}`)
       .send({
         currentPassword: profesorA.password,
@@ -262,7 +262,7 @@ describe('Auth multi-user flows (e2e)', () => {
     expect(alumnoBLogin.body.data.access_token).toBeDefined();
 
     await request(app.getHttpServer())
-      .post('/api/v1/auth/change-password')
+      .patch('/api/v1/auth/change-password')
       .set('Authorization', `Bearer ${alumnoALogin.body.data.access_token}`)
       .send({
         currentPassword: 'Incorrecta123!',
@@ -271,7 +271,7 @@ describe('Auth multi-user flows (e2e)', () => {
       .expect(400);
 
     await request(app.getHttpServer())
-      .post('/api/v1/auth/change-password')
+      .patch('/api/v1/auth/change-password')
       .set('Authorization', `Bearer ${alumnoALogin.body.data.access_token}`)
       .send({
         currentPassword: 'Password123!',
