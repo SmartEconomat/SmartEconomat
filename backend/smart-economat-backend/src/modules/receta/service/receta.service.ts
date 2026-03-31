@@ -18,10 +18,11 @@ import {
   IngredienteCostoDto,
   RecetaCostResponseDto,
 } from '../dto/receta-cost-response.dto';
+import { RecetaPreviewCostDto } from '../dto/receta-preview-cost.dto';
+import { Producto } from '../../producto/producto.entity/producto.entity';
 import { Inventario } from '../../inventario/inventario.entity/inventario.entity';
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
 import { TipoMovimiento } from '../../movimiento/enums/movimiento.enums';
-import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
@@ -152,45 +153,87 @@ export class RecetaService {
       };
     }
 
-    const productoIds = receta.ingredientes.map((i) => i.producto.id);
+    const itemsDto = receta.ingredientes.map((ing) => ({
+      productoId: ing.producto.id,
+      cantidad: ing.cantidad,
+      unidad: ing.unidad,
+      mermaAplicada: ing.mermaAplicada,
+      proveedorFavoritoId: ing.proveedorFavoritoId,
+    }));
 
-    const productosProveedores = await this.dataSource
-      .getRepository(ProductoProveedor)
-      .createQueryBuilder('pp')
-      .innerJoinAndSelect('pp.producto', 'producto')
-      .leftJoinAndSelect('pp.historialPrecios', 'historial')
-      .where('producto.id IN (:...productoIds)', { productoIds })
+    const result = await this.calculatePreviewCost({
+      ingredientes: itemsDto,
+      rendimiento: receta.rendimiento || undefined,
+    });
+
+    return {
+      ...result,
+      recetaId: receta.id,
+      recetaNombre: receta.nombre,
+    };
+  }
+
+  async calculatePreviewCost(
+    dto: RecetaPreviewCostDto
+  ): Promise<RecetaCostResponseDto> {
+    const { ingredientes, rendimiento: rendimientoDto } = dto;
+
+    if (!ingredientes || ingredientes.length === 0) {
+      return {
+        recetaId: '',
+        recetaNombre: 'Preview',
+        costoTotal: 0,
+        desglosePorIngrediente: [],
+      };
+    }
+
+    const productoIds = ingredientes.map((i) => i.productoId);
+
+    const productos = await this.dataSource
+      .getRepository(Producto)
+      .createQueryBuilder('p')
+      .leftJoinAndSelect('p.proveedores', 'pp')
+      .leftJoinAndSelect('pp.proveedor', 'proveedor')
+      .where('p.id IN (:...productoIds)', { productoIds })
       .getMany();
 
-    const ppMap = new Map<string, ProductoProveedor[]>();
-    for (const pp of productosProveedores) {
-      const pid = pp.producto.id;
-      if (!ppMap.has(pid)) ppMap.set(pid, []);
-      ppMap.get(pid)!.push(pp);
+    const productosMap = new Map<string, Producto>();
+    for (const p of productos) {
+      productosMap.set(p.id, p);
     }
 
     let costoTotal = 0;
     const desglosePorIngrediente: IngredienteCostoDto[] = [];
 
-    for (const ing of receta.ingredientes) {
-      const pps = ppMap.get(ing.producto.id) ?? [];
+    for (const ing of ingredientes) {
+      const producto = productosMap.get(ing.productoId);
+      if (!producto) continue;
 
-      const precios = pps
-        .map((pp) => pp.precioUnitario)
-        .filter((p): p is number => p !== null && p !== undefined && p > 0);
+      let precioUnitario = 0;
 
-      let precioUnitario: number;
+      if (ing.proveedorFavoritoId) {
+        const favPP = producto.proveedores?.find(
+          (pp) => pp.proveedorId === ing.proveedorFavoritoId
+        );
+        if (favPP && (favPP.precioUnitario ?? 0) > 0) {
+          precioUnitario = favPP.precioUnitario!;
+        }
+      }
 
-      if (precios.length > 0) {
-        precioUnitario =
-          precios.reduce((sum, p) => sum + p, 0) / precios.length;
-      } else {
-        const allHistorial = pps
-          .flatMap((pp) => pp.historialPrecios ?? [])
-          .sort(
-            (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
-          );
-        precioUnitario = allHistorial.length > 0 ? allHistorial[0].precio : 0;
+      if (precioUnitario === 0 && (producto.pmp ?? 0) > 0) {
+        precioUnitario = producto.pmp;
+      }
+
+      if (precioUnitario === 0 && producto.proveedores?.length) {
+        const preciosValidos = producto.proveedores
+          .map((pp) => pp.precioUnitario)
+          .filter((p): p is number => (p ?? 0) > 0);
+
+        if (preciosValidos.length > 0) {
+          precioUnitario =
+            preciosValidos.reduce((sum, p) => sum + p, 0) /
+            preciosValidos.length;
+        }
       }
 
       const merma = Number(ing.mermaAplicada ?? 0) / 100;
@@ -201,8 +244,8 @@ export class RecetaService {
       costoTotal += costoIngrediente;
 
       desglosePorIngrediente.push({
-        productoId: ing.producto.id,
-        productoNombre: ing.producto.nombre,
+        productoId: producto.id,
+        productoNombre: producto.nombre,
         cantidad: ing.cantidad,
         cantidadReal,
         unidad: ing.unidad,
@@ -211,10 +254,15 @@ export class RecetaService {
       });
     }
 
+    const rendimiento = rendimientoDto || 1;
+    const costoUnitarioEstimado =
+      rendimiento > 0 ? costoTotal / rendimiento : costoTotal;
+
     return {
-      recetaId: receta.id,
-      recetaNombre: receta.nombre,
+      recetaId: '',
+      recetaNombre: 'Preview',
       costoTotal,
+      costoUnitarioEstimado,
       desglosePorIngrediente,
     };
   }

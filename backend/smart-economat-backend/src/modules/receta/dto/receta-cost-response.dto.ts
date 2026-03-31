@@ -34,6 +34,9 @@ export class RecetaCostResponseDto {
   @ApiProperty()
   costoTotal!: number;
 
+  @ApiProperty({ description: 'Coste por unidad de rendimiento' })
+  costoUnitarioEstimado?: number;
+
   @ApiProperty({ type: [IngredienteCostoDto] })
   desglosePorIngrediente!: IngredienteCostoDto[];
 }

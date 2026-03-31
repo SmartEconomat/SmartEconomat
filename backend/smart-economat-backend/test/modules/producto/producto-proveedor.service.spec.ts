@@ -10,11 +10,18 @@ describe('ProductoProveedorService', () => {
     },
   };
 
+  const mockEventEmitter = {
+    emit: jest.fn(),
+  };
+
   let service: ProductoProveedorService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new ProductoProveedorService(mockDataSource as any);
+    service = new ProductoProveedorService(
+      mockDataSource as any,
+      mockEventEmitter as any
+    );
   });
 
   it('updatePrecio rechaza cuando el precio no cambia', async () => {
