@@ -40,7 +40,7 @@ export class ProductoProveedorController {
   ) {}
 
   @Patch(':id/precio')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
@@ -70,7 +70,7 @@ export class ProductoProveedorController {
   }
 
   @Patch(':id/merma')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Actualizar la merma esperada de un producto-proveedor',
@@ -97,7 +97,7 @@ export class ProductoProveedorController {
   }
 
   @Get('search')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Buscar relaciones producto-proveedor (autocomplete)',
@@ -107,7 +107,7 @@ export class ProductoProveedorController {
   }
 
   @Get('comparar/:productoId')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
@@ -136,7 +136,7 @@ export class ProductoProveedorController {
   }
 
   @Get(':id/historial')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   @ApiOperation({
     summary: 'Obtener el historial de precios de un producto proveedor',
   })

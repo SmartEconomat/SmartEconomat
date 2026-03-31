@@ -40,7 +40,7 @@ export class CreatePreparacionDto {
     format: 'uuid',
   })
   @IsOptional()
-  @IsUUID('7')
+  @IsUUID('all')
   ubicacionDestinoId?: string;
 
   @ApiPropertyOptional({

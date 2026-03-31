@@ -121,6 +121,29 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
   const theme = useTheme();
   const [isExpanded, setIsExpanded] = React.useState(true);
 
+  const handleScanBarcodeClick = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    const trigger = event.currentTarget;
+    trigger.blur();
+
+    if (typeof document !== 'undefined') {
+      const activeElement = document.activeElement;
+      if (activeElement instanceof HTMLElement) {
+        activeElement.blur();
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.requestAnimationFrame(() => {
+        onScanBarcode?.();
+      });
+      return;
+    }
+
+    onScanBarcode?.();
+  };
+
   const hasFiltersOrSearch = onSearchChange || filters;
 
   return (
@@ -304,6 +327,18 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                             >
                               <ClearIcon fontSize="small" />
                             </IconButton>
+                          )}
+                          {onScanBarcode && (
+                            <Tooltip title="Escanear con cámara">
+                              <IconButton
+                                size="small"
+                                onClick={handleScanBarcodeClick}
+                                aria-label="Escanear código"
+                                color="primary"
+                              >
+                                <BarcodeIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
                           )}
                           <SearchIcon
                             fontSize="small"

@@ -20,6 +20,11 @@ import {
 } from '../services/producto.service';
 import { createPedido, CreatePedidoPayload } from '../services/pedido.service';
 import { createReceta } from '../services/receta.service';
+import {
+  searchByBarcode,
+  searchByName,
+  OFFProduct,
+} from '../services/openfoodfacts.service';
 import { fetchProveedores } from '../services/proveedor.service';
 import { Proveedor } from '../services/proveedor.types';
 import { Receta } from '../services/receta.types';
@@ -85,6 +90,7 @@ interface QuickRecipePayload {
 
 interface QuickActionFormData {
   contenido?: number | string;
+  codigoBarras?: string;
   alergenos?: string[];
   proveedorId?: string;
   fechaEntrega?: string;
@@ -306,6 +312,20 @@ const AVAILABLE_METRICS: MetricDefinition[] = [
   { id: 'notificaciones', label: 'Notificaciones' },
 ];
 
+function mapOFFToQuickProductForm(
+  product: OFFProduct
+): Record<string, unknown> {
+  return {
+    nombre: product.name,
+    marca: product.brand ?? '',
+    descripcion: product.description ?? '',
+    unidad: product.uom ?? '',
+    contenido: product.quantity ?? '',
+    alergenos: product.allergens ?? [],
+    imagen: product.imageUrl ?? '',
+  };
+}
+
 // ─── Home ─────────────────────────────────────────────────────────────────────
 
 const Home: React.FC = () => {
@@ -343,6 +363,51 @@ const Home: React.FC = () => {
   >(null);
   const [isSavingQuickAction, setIsSavingQuickAction] = useState(false);
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
+
+  const handleQuickProductBarcodeFetch = useCallback(
+    async (code: string) => {
+      const normalizedCode = code.trim();
+      if (!normalizedCode) return;
+
+      try {
+        const product = await searchByBarcode(normalizedCode);
+        if (product) {
+          toast.success(
+            'Producto encontrado por código de barras. Datos autocompletados.'
+          );
+          return mapOFFToQuickProductForm(product);
+        }
+
+        toast.info(
+          'No se encontró el producto para ese código de barras. Completa los campos manualmente.'
+        );
+      } catch {
+        toast.error(
+          'No se pudo consultar el código de barras en este momento.'
+        );
+      }
+    },
+    [toast]
+  );
+
+  const handleQuickProductOFFSearch = useCallback(
+    async (value: string): Promise<Array<Record<string, unknown>>> => {
+      const normalized = value.trim();
+      if (!normalized) {
+        return [];
+      }
+
+      const isBarcode = /^\d+$/.test(normalized);
+      if (isBarcode) {
+        const product = await searchByBarcode(normalized);
+        return product ? [mapOFFToQuickProductForm(product)] : [];
+      }
+
+      const products = await searchByName(normalized);
+      return products.map(mapOFFToQuickProductForm);
+    },
+    []
+  );
 
   // Summary Modal state
   const [summaryModal, setSummaryModal] = useState<{
@@ -427,7 +492,7 @@ const Home: React.FC = () => {
     if (quickActionTask === 'order') {
       const loadProveedores = async () => {
         try {
-          const resp = await fetchProveedores(1, 100);
+          const resp = await fetchProveedores(1, 50);
           setProveedores(resp.data);
         } catch (err) {
           console.error('Error loading proveedores for quick action', err);
@@ -441,8 +506,15 @@ const Home: React.FC = () => {
     setIsSavingQuickAction(true);
     try {
       if (quickActionTask === 'product') {
+        const normalizedBarcode =
+          typeof formData.codigoBarras === 'string' &&
+          formData.codigoBarras.trim().length > 0
+            ? formData.codigoBarras.trim()
+            : undefined;
+
         const payload: ProductoMutationPayload = {
           ...formData,
+          codigoBarras: normalizedBarcode,
           contenido: Number(formData.contenido),
           alergenos: Array.isArray(formData.alergenos)
             ? formData.alergenos
@@ -451,17 +523,44 @@ const Home: React.FC = () => {
         await createProducto(payload);
         toast.success('Producto añadido correctamente.');
       } else if (quickActionTask === 'order') {
-        const payload: CreatePedidoPayload = {
-          proveedorId: String(formData.proveedorId ?? ''),
-          lineas: Array.isArray(formData.pedidoProductos)
-            ? formData.pedidoProductos.map((linea) => ({
-                productoProveedorId:
+        const proveedorId =
+          typeof formData.proveedorId === 'string'
+            ? formData.proveedorId.trim()
+            : '';
+
+        const lineas = Array.isArray(formData.pedidoProductos)
+          ? formData.pedidoProductos
+              .map((linea) => ({
+                productoProveedorId: (
                   linea.productoProveedorId ||
                   linea.id_producto_proveedor ||
-                  '',
+                  ''
+                ).trim(),
                 cantidad: Number(linea.cantidad),
               }))
-            : [],
+              .filter(
+                (linea) =>
+                  Boolean(linea.productoProveedorId) &&
+                  Number.isFinite(linea.cantidad) &&
+                  linea.cantidad > 0
+              )
+          : [];
+
+        if (!proveedorId) {
+          throw new Error(
+            'Selecciona un proveedor válido para crear el pedido.'
+          );
+        }
+
+        if (lineas.length === 0) {
+          throw new Error(
+            'Añade al menos una línea válida con producto-proveedor y cantidad mayor que 0.'
+          );
+        }
+
+        const payload: CreatePedidoPayload = {
+          proveedorId,
+          lineas,
         };
         await createPedido(payload);
         toast.success('Pedido creado correctamente.');
@@ -961,6 +1060,8 @@ const Home: React.FC = () => {
         initialData={{}}
         onSubmit={handleSaveQuickAction}
         isSubmitting={isSavingQuickAction}
+        onBarcodeFetch={handleQuickProductBarcodeFetch}
+        onOFFSearch={handleQuickProductOFFSearch}
       />
 
       <DynamicFormModal

@@ -350,10 +350,7 @@ export class ArchivoService {
   async remove(id: string, user: Usuario): Promise<void> {
     const archivo = await this.findOne(id);
 
-    if (
-      archivo.usuario?.id !== user.id &&
-      user.rol !== rolUsuario.ADMINISTRADOR
-    ) {
+    if (archivo.usuario?.id !== user.id && user.rol !== rolUsuario.ADMIN) {
       throw new ForbiddenException(
         I18nHelper.getError('FILE_DELETE_FORBIDDEN')
       );

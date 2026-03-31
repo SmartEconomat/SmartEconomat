@@ -3,7 +3,7 @@ import { IsUUID, IsNumber, Min, IsOptional, IsDate } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateHistorialPrecioDto {
-  @IsUUID('7', {
+  @IsUUID('all', {
     message: i18nValidationMessage(
       'validation.EL_ID_DEL_PRODUCTO_PROVEEDOR_DEBE_SER_UN_1'
     ),

@@ -20,7 +20,7 @@ import { TipoMovimiento } from '../enums/movimiento.enums';
  * - Filtrado por tipo de movimiento y rango de fechas
  */
 export class MovimientoHistoryDto {
-  @IsUUID('7', {
+  @IsUUID('all', {
     message: i18nValidationMessage(
       'validation.EL_ID_DE_LA_ENTIDAD_DEBE_SER_UN_UUID_V_L'
     ),
@@ -28,7 +28,7 @@ export class MovimientoHistoryDto {
   @IsOptional()
   entityId?: string;
 
-  @IsUUID('7', {
+  @IsUUID('all', {
     message: i18nValidationMessage(
       'validation.EL_ID_DEL_USUARIO_DEBE_SER_UN_UUID_V_LID'
     ),

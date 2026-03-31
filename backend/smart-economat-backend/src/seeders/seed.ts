@@ -41,7 +41,11 @@ export const dataSource = {
 async function initializeHttpSeedContext(
   config: SeedContextConfig = {}
 ): Promise<SeedContext> {
-  const context = new SeedContext(config);
+  process.env.IS_SEEDING = 'true';
+  const context = new SeedContext({
+    ...config,
+    maxRetries: 0,
+  });
 
   await context.ensureDockerInfra();
   await context.waitForBackend();
@@ -50,12 +54,7 @@ async function initializeHttpSeedContext(
   return context;
 }
 
-async function runSeedersWithContext(
-  context: SeedContext,
-  options?: { continueOnError?: boolean }
-): Promise<void> {
-  const continueOnError = options?.continueOnError ?? false;
-
+async function runSeedersWithContext(context: SeedContext): Promise<void> {
   for (const name of seedersInOrder) {
     const fileTs = `${name}.ts`;
     const fileJs = `${name}.js`;
@@ -67,8 +66,7 @@ async function runSeedersWithContext(
         : null;
 
     if (!filePath) {
-      console.warn(`Seeder file not found for: ${name}`);
-      continue;
+      throw new Error(`[seed] Seeder file not found for: ${name}`);
     }
 
     const seederPath = join(__dirname, filePath);
@@ -77,18 +75,7 @@ async function runSeedersWithContext(
       console.log(
         SeederI18nHelper.getSeederMessage('running', { file: filePath })
       );
-      try {
-        await seeder.runSeeder(context);
-      } catch (error) {
-        if (!continueOnError) {
-          throw error;
-        }
-        console.warn(
-          `[seed] Seeder ${filePath} falló y se omite en modo tolerante: ${String(
-            error instanceof Error ? error.message : error
-          )}`
-        );
-      }
+      await seeder.runSeeder(context);
     }
   }
 }

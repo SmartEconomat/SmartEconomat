@@ -82,7 +82,9 @@ export function agregarInventarioPorProducto(
     }
   }
 
-  const result = Array.from(map.values());
+  const result = Array.from(map.values()).filter(
+    (row) => row.cantidadTotal > 0
+  );
   result.forEach((r) => {
     r.bajoStock = r.cantidadTotal < r.cantidadMinima;
   });

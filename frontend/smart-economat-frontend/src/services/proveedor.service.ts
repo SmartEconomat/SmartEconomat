@@ -1,6 +1,8 @@
 import { Proveedor } from './proveedor.types';
 import { baseFetch, ApiResponse, PaginatedData } from './api.service';
 
+const PROVEEDORES_MAX_LIMIT = 50;
+
 function normalizeSortableValue(value: unknown): string | number | boolean {
   if (value === null || value === undefined) return '';
   if (
@@ -20,9 +22,13 @@ export async function fetchProveedores(
   sortBy?: string,
   sortOrder?: 'asc' | 'desc'
 ): Promise<PaginatedData<Proveedor>> {
+  const normalizedLimit = Math.min(
+    Math.max(1, Math.trunc(limit)),
+    PROVEEDORES_MAX_LIMIT
+  );
   const params = new URLSearchParams({
     page: page.toString(),
-    limit: limit.toString(),
+    limit: normalizedLimit.toString(),
   });
   if (search) params.append('searchTerm', search);
 

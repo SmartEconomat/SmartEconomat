@@ -16,7 +16,6 @@ export class IncidenciaRepository extends Repository<Incidencia> {
   ): Promise<Incidencia | null> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
       userRole?.toUpperCase() === 'SUPER_ADMIN';
 
     return this.findOne({
@@ -45,7 +44,6 @@ export class IncidenciaRepository extends Repository<Incidencia> {
   ): Promise<PaginatedResponseDto<Incidencia>> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
       userRole?.toUpperCase() === 'SUPER_ADMIN';
 
     const page = query.page ?? 1;

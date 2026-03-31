@@ -76,7 +76,7 @@ describe('ProtectedRoute', () => {
       id: 'user-2',
       name: 'Limited User',
       email: 'limited@example.com',
-      rol: 'ADMIN',
+      rol: 'PROFESOR',
       permisos: ['productos:listar'],
     };
 

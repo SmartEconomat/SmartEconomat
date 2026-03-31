@@ -4,13 +4,13 @@ import { Transform } from 'class-transformer';
 
 export class InventoryQueryDto {
   @IsOptional()
-  @IsUUID('7', {
+  @IsUUID('all', {
     message: i18nValidationMessage('validation.PRODUCTO_ID_UUIDV7_INVALIDO'),
   })
   productoId?: string;
 
   @IsOptional()
-  @IsUUID('7', {
+  @IsUUID('all', {
     message: i18nValidationMessage('validation.UBICACION_ID_UUIDV7_INVALIDO'),
   })
   ubicacionId?: string;

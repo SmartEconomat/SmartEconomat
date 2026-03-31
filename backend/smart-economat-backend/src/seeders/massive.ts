@@ -1,4 +1,11 @@
-import { appendFileSync, writeFileSync } from 'node:fs';
+import {
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  writeFileSync,
+} from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
 import { createSeedContext } from './seed';
@@ -71,6 +78,96 @@ function normalizeEndpointPath(rawPath: string): string {
   return normalizePath(path);
 }
 
+function walkControllerFiles(dirPath: string, files: string[]): void {
+  const entries = readdirSync(dirPath, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = resolve(dirPath, entry.name);
+    if (entry.isDirectory()) {
+      walkControllerFiles(fullPath, files);
+      continue;
+    }
+
+    if (entry.isFile() && /controller\.(ts|js)$/.test(entry.name)) {
+      files.push(fullPath);
+    }
+  }
+}
+
+function extractDecoratorPathArg(rawArgs: string): string {
+  const match = rawArgs.match(/['"`]([^'"`]*)['"`]/);
+  if (!match) {
+    return '';
+  }
+  return match[1].trim();
+}
+
+function buildEndpointPath(controllerPath: string, routePath: string): string {
+  const segments = [controllerPath, routePath]
+    .map((segment) => segment.trim())
+    .filter((segment) => segment.length > 0)
+    .map((segment) => segment.replace(/^\/+|\/+$/g, ''))
+    .filter((segment) => segment.length > 0);
+
+  const joined = segments.length > 0 ? `/${segments.join('/')}` : '/';
+  return normalizeEndpointPath(`${API_PREFIX}${joined}`);
+}
+
+function discoverEndpointsFromControllers(): Endpoint[] {
+  const moduleRoots = [
+    resolve(__dirname, '../modules'),
+    resolve(__dirname, '../../src/modules'),
+  ].filter((candidate) => existsSync(candidate));
+
+  const controllerFiles: string[] = [];
+  for (const root of moduleRoots) {
+    walkControllerFiles(root, controllerFiles);
+  }
+
+  const methodRegex = /@(Get|Post|Patch|Put|Delete)\s*\(([^)]*)\)/g;
+  const controllerRegex = /@Controller\s*\(([^)]*)\)/;
+
+  const discovered: Endpoint[] = [];
+
+  for (const filePath of controllerFiles) {
+    const source = readFileSync(filePath, 'utf8');
+    const controllerMatch = source.match(controllerRegex);
+    if (!controllerMatch) {
+      continue;
+    }
+
+    const controllerPath = extractDecoratorPathArg(controllerMatch[1]);
+
+    let match: RegExpExecArray | null;
+    while ((match = methodRegex.exec(source)) !== null) {
+      const decorator = match[1] as 'Get' | 'Post' | 'Patch' | 'Put' | 'Delete';
+      const routePath = extractDecoratorPathArg(match[2] || '');
+
+      const methodByDecorator: Record<typeof decorator, HttpMethod> = {
+        Get: 'GET',
+        Post: 'POST',
+        Patch: 'PATCH',
+        Put: 'PUT',
+        Delete: 'DELETE',
+      };
+
+      discovered.push({
+        method: methodByDecorator[decorator],
+        path: buildEndpointPath(controllerPath, routePath),
+        source: 'controller-discovery',
+      });
+    }
+  }
+
+  // Global AppController root endpoint.
+  discovered.push({
+    method: 'GET',
+    path: '/',
+    source: 'app-controller',
+  });
+
+  return discovered;
+}
+
 function discoverEndpointsFromConstants(): Endpoint[] {
   const baseEndpoints: Endpoint[] = MASSIVE_ENDPOINT_DEFINITIONS.map(
     (entry) => ({
@@ -87,17 +184,35 @@ function discoverEndpointsFromConstants(): Endpoint[] {
       source: 'massive-endpoints.additional.ts',
     }));
 
-  const all = [...baseEndpoints, ...additionalEndpoints];
+  const controllerDiscoveredEndpoints = discoverEndpointsFromControllers();
+  const all = [
+    ...baseEndpoints,
+    ...additionalEndpoints,
+    ...controllerDiscoveredEndpoints,
+  ];
 
   const dedup = new Map<string, Endpoint>();
   for (const endpoint of all) {
     dedup.set(`${endpoint.method} ${endpoint.path}`, endpoint);
   }
 
-  const isRelevantSeedEndpoint = (endpoint: Endpoint): boolean =>
-    ['POST', 'PATCH', 'PUT', 'DELETE'].includes(endpoint.method);
+  const allEndpoints = [...dedup.values()];
 
-  const allEndpoints = [...dedup.values()].filter(isRelevantSeedEndpoint);
+  const movimientosGetOnlyRaw =
+    process.env.SEED_MOVIMIENTOS_GET_ONLY || process.env.SEED_MOVIMIENTOS_GET;
+  const movimientosGetOnly = ['1', 'true', 'yes', 'si', 'on'].includes(
+    (movimientosGetOnlyRaw || '').trim().toLowerCase()
+  );
+
+  const filteredEndpoints = movimientosGetOnly
+    ? allEndpoints.filter((endpoint) => {
+        if (!endpoint.path.startsWith('/movimientos')) {
+          return true;
+        }
+
+        return endpoint.method === 'GET';
+      })
+    : allEndpoints;
 
   const onlyDomainRaw = process.env.SEED_ONLY_DOMAIN || '';
   if (onlyDomainRaw && onlyDomainRaw.trim().length > 0) {
@@ -107,7 +222,7 @@ function discoverEndpointsFromConstants(): Endpoint[] {
       .filter(Boolean)
       .map((p) => (p.startsWith('/') ? p : `/${p}`));
 
-    const filtered = allEndpoints.filter((ep) =>
+    const filtered = filteredEndpoints.filter((ep) =>
       prefixes.some(
         (pref) => ep.path === pref || ep.path.startsWith(`${pref}/`)
       )
@@ -122,13 +237,13 @@ function discoverEndpointsFromConstants(): Endpoint[] {
     return filtered;
   }
 
-  if (allEndpoints.length === 0) {
+  if (filteredEndpoints.length === 0) {
     throw new Error(
-      '[seed-massive] MASSIVE_ENDPOINT_DEFINITIONS no contiene endpoints válidos.'
+      '[seed-massive] No se pudieron descubrir endpoints válidos del backend.'
     );
   }
 
-  return allEndpoints;
+  return filteredEndpoints;
 }
 
 function discoverEndpoints(): Endpoint[] {
@@ -157,6 +272,13 @@ function getActionRank(method: HttpMethod, path: string): number {
   if (method === 'PATCH' && path.endsWith('/cancelar')) return 4;
   if (method === 'PATCH' && path.endsWith('/resolver')) return 5;
   if (method === 'POST' && path.endsWith('/resolver')) return 6;
+  if (
+    method === 'DELETE' &&
+    /^\/usuarios\/:id\/permisos-(adicionales|excluidos)\/:permisoId$/.test(path)
+  ) {
+    return 8;
+  }
+  if (method === 'DELETE' && path === '/usuarios/:id') return 10;
   if (method === 'DELETE') return 9;
   return 7;
 }
@@ -170,6 +292,21 @@ function getEndpointBatchLimit(key: string, fallback: number): number {
     key === 'POST /productos' ||
     key === 'PATCH /productos/:id' ||
     key === 'POST /producto-alergenos'
+  ) {
+    return 1;
+  }
+
+  if (key === 'POST /produccion/ejecutar') {
+    return 1;
+  }
+
+  if (key === 'DELETE /inventario/:id' || key === 'DELETE /recepciones/:id') {
+    return 1;
+  }
+
+  if (
+    key.startsWith('POST /preparaciones') ||
+    key.startsWith('PATCH /preparaciones')
   ) {
     return 1;
   }
@@ -265,6 +402,9 @@ function assertRequiredAdminEndpointUsage(
 }
 
 async function runMassiveSeeder(): Promise<void> {
+  const logsDir = resolve(__dirname, './logs');
+  mkdirSync(logsDir, { recursive: true });
+
   writeFileSync(
     REQUEST_LOG_FILE,
     `# seed-massive request log ${new Date().toISOString()}\n`,
@@ -317,9 +457,7 @@ async function runMassiveSeeder(): Promise<void> {
       }
     );
 
-    console.log(
-      `[seed-massive] Endpoints desde massive-endpoints.constants.ts: ${endpoints.length}`
-    );
+    console.log(`[seed-massive] Endpoints descubiertos: ${endpoints.length}`);
     trace(`endpoints=${endpoints.length}`);
 
     const coverage = createEnumCoverage();
@@ -381,6 +519,9 @@ async function runMassiveSeeder(): Promise<void> {
             await refreshStateAfterOperation(context, result);
           } else {
             lastErrorsByEndpoint.set(key, result.error || 'Error desconocido');
+            throw new Error(
+              `[seed-massive] ${key} fallo en intento ${attempts}: ${result.error || `status=${result.statusCode ?? 'N/A'}`}`
+            );
           }
 
           logRequestLine({

@@ -26,7 +26,10 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Spinner from './Spinner';
 import StatusChip from './StatusChip';
-import { fetchProductos } from '../../services/producto.service';
+import {
+  fetchAllProductos,
+  fetchProductos,
+} from '../../services/producto.service';
 import { fetchPedidos } from '../../services/pedido.service';
 import { fetchProveedores } from '../../services/proveedor.service';
 import { Producto } from '../../services/producto.types';
@@ -94,6 +97,32 @@ const estadoReclamacionLabel: Record<EstadoReclamacion, string> = {
   ABONADO: 'Abonado',
   REENVIADO: 'Reenviado',
 };
+
+const decimalFormatter = new Intl.NumberFormat('es-ES', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+function normalizeNumericValue(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  return null;
+}
+
+function formatDecimalOrFallback(value: unknown, fallback = 'N/D'): string {
+  const normalized = normalizeNumericValue(value);
+  if (normalized == null) return fallback;
+  return decimalFormatter.format(normalized);
+}
+
+function formatCompactId(value: string | null | undefined): string {
+  if (!value) {
+    return 'N/D';
+  }
+
+  return value.substring(0, 8);
+}
 
 const SummaryModal: React.FC<SummaryModalProps> = ({
   isOpen,
@@ -209,11 +238,16 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       } else if (type === 'incidencias') {
         result = await fetchAllIncidencias();
       } else if (type === 'stock') {
-        const res = await fetchProductos(1, 100);
-        result = (res.data as SummaryProducto[]).filter(
-          (producto) =>
-            (producto.stockActual || 0) <= (producto.stockMinimo || 0)
-        );
+        const productos = await fetchAllProductos();
+        result = (productos as SummaryProducto[]).filter((producto) => {
+          const stockActual = normalizeNumericValue(producto.stockActual);
+          const stockMinimo = normalizeNumericValue(producto.stockMinimo);
+          return (
+            stockActual != null &&
+            stockMinimo != null &&
+            stockActual <= stockMinimo
+          );
+        });
       } else if (type === 'proveedores') {
         const res = await fetchProveedores(1, 50);
         result = res.data;
@@ -275,6 +309,17 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
   const renderItem = (item: SummaryItem) => {
     if ((type === 'productos' || type === 'stock') && isSummaryProducto(item)) {
+      const stockActual = normalizeNumericValue(item.stockActual);
+      const stockMinimo = normalizeNumericValue(item.stockMinimo);
+      const stockLabel =
+        stockActual != null
+          ? `${formatDecimalOrFallback(stockActual)} ${item.unidad || 'und'}`
+          : 'N/D';
+      const isLowStock =
+        stockActual != null &&
+        stockMinimo != null &&
+        stockActual <= stockMinimo;
+
       return (
         <ListItem key={item.id} sx={{ px: 0 }}>
           <ListItemIcon>
@@ -288,20 +333,18 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                   {item.categoria?.nombre || 'Sin categoría'}
                 </Typography>
                 <Chip
-                  label={`${item.stockActual || 0} ${item.unidad || 'und'}`}
+                  label={stockLabel}
                   size="small"
                   variant="outlined"
-                  color={
-                    (item.stockActual || 0) <= (item.stockMinimo || 0)
-                      ? 'error'
-                      : 'default'
-                  }
+                  color={isLowStock ? 'error' : 'default'}
                 />
               </Stack>
             }
           />
           <Typography variant="body2" fontWeight={600}>
-            {item.precioVenta ? `${item.precioVenta}€` : '-'}
+            {item.precioVenta != null
+              ? `${formatDecimalOrFallback(item.precioVenta, '-')}€`
+              : '-'}
           </Typography>
         </ListItem>
       );
@@ -333,6 +376,8 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
     if (type === 'incidencias' && isIncidencia(item)) {
       const isExpanded = expandedIncidenciaId === item.id;
+      const pedidoLabel = formatCompactId(item.pedidoId);
+      const lineas = Array.isArray(item.lineas) ? item.lineas : [];
 
       return (
         <Paper
@@ -354,7 +399,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             >
               <Box>
                 <Typography variant="subtitle1" fontWeight={700}>
-                  Pedido #{item.pedidoId.substring(0, 8)}
+                  Pedido #{pedidoLabel}
                 </Typography>
                 <Stack
                   direction="row"
@@ -375,7 +420,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                   <Chip
                     size="small"
                     variant="outlined"
-                    label={`${item.lineas.length} línea${item.lineas.length !== 1 ? 's' : ''}`}
+                    label={`${lineas.length} línea${lineas.length !== 1 ? 's' : ''}`}
                   />
                 </Stack>
               </Box>
@@ -423,7 +468,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                     Detalle de la incidencia
                   </Typography>
                   <Stack spacing={1}>
-                    {item.lineas.map((linea) => (
+                    {lineas.map((linea) => (
                       <Paper
                         key={linea.id}
                         variant="outlined"

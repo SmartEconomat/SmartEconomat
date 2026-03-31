@@ -262,10 +262,16 @@ export class PedidoUsuarioService {
         });
       }
 
+      const nuevaFechaEntrega = this.calculateFechaEntrega();
       existing.observaciones = dto.observaciones;
-      existing.fechaEntrega = this.calculateFechaEntrega();
-      existing.costeTotal = 0;
-      await queryRunner.manager.save(PedidoUsuario, existing);
+      existing.fechaEntrega = nuevaFechaEntrega;
+      existing.lineas = [];
+      existing.pedidos = [];
+
+      await queryRunner.manager.update(PedidoUsuario, existing.id, {
+        observaciones: dto.observaciones,
+        fechaEntrega: nuevaFechaEntrega,
+      });
 
       await this.persistAggregateLinesAndPedidos(
         queryRunner.manager,
@@ -556,7 +562,9 @@ export class PedidoUsuarioService {
     }
 
     pedidoUsuario.costeTotal = Number(costeTotal.toFixed(4));
-    await manager.save(PedidoUsuario, pedidoUsuario);
+    await manager.update(PedidoUsuario, pedidoUsuario.id, {
+      costeTotal: pedidoUsuario.costeTotal,
+    });
 
     for (const [proveedorId, lineas] of lineasPorProveedor.entries()) {
       const createPedidoDto: CreatePedidoDto = {

@@ -75,8 +75,10 @@ export class UsuarioRepository {
       const normalized = query.rol.toUpperCase();
       let backendRol: rolUsuario;
 
-      if (normalized === 'ADMINISTRADOR' || normalized === 'ADMIN') {
-        backendRol = rolUsuario.ADMINISTRADOR;
+      if (normalized === 'SUPER_ADMIN') {
+        backendRol = rolUsuario.SUPER_ADMIN;
+      } else if (normalized === 'ADMIN') {
+        backendRol = rolUsuario.ADMIN;
       } else if (normalized === 'PROFESOR') {
         backendRol = rolUsuario.PROFESOR;
       } else if (normalized === 'ALUMNO') {
@@ -194,6 +196,15 @@ export class UsuarioRepository {
 
     if (data.activo !== undefined && data.status === undefined) {
       data.status = data.activo ? UserStatus.ACTIVE : UserStatus.INACTIVE;
+    }
+
+    if (data.status !== undefined && data.activo !== undefined) {
+      if (
+        (data.status === UserStatus.ACTIVE && !data.activo) ||
+        (data.status !== UserStatus.ACTIVE && data.activo)
+      ) {
+        data.activo = data.status === UserStatus.ACTIVE;
+      }
     }
 
     if (data.rol !== undefined && data.roles === undefined) {

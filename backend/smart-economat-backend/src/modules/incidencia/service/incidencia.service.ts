@@ -64,7 +64,13 @@ export class IncidenciaService {
   }
 
   async update(id: string, dto: UpdateIncidenciaDto): Promise<Incidencia> {
-    const incidencia = await this.findOne(id);
+    const incidencia = await this.incidenciaRepository.findOne({
+      where: { id },
+    });
+
+    if (!incidencia) {
+      throw new NotFoundException(I18nHelper.getError('INCIDENCIA_NOT_FOUND'));
+    }
 
     if (incidencia.estaResuelta()) {
       throw new BadRequestException(
@@ -72,13 +78,25 @@ export class IncidenciaService {
       );
     }
 
-    this.incidenciaRepository.merge(incidencia, {
-      ...(dto.recepcionId ? { recepcion: { id: dto.recepcionId } as any } : {}),
-      ...(dto.pedidoId ? { pedido: { id: dto.pedidoId } as any } : {}),
-      observacionesRecepcion: dto.observacionesRecepcion,
-    });
+    const payload: Partial<Incidencia> = {};
 
-    return this.incidenciaRepository.save(incidencia);
+    if (dto.recepcionId !== undefined) {
+      payload.recepcionId = dto.recepcionId;
+    }
+
+    if (dto.pedidoId !== undefined) {
+      payload.pedidoId = dto.pedidoId;
+    }
+
+    if (dto.observacionesRecepcion !== undefined) {
+      payload.observacionesRecepcion = dto.observacionesRecepcion;
+    }
+
+    if (Object.keys(payload).length > 0) {
+      await this.incidenciaRepository.update(id, payload);
+    }
+
+    return this.findOne(id);
   }
 
   async remove(id: string): Promise<void> {

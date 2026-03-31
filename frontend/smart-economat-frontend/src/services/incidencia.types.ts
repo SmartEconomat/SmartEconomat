@@ -26,7 +26,7 @@ export interface IncidenciaLinea {
 export interface Incidencia {
   id: string;
   recepcionId: string;
-  pedidoId: string;
+  pedidoId: string | null;
   proveedorNombre: string;
   observacionesRecepcion?: string;
   observacionesResolucion?: string;

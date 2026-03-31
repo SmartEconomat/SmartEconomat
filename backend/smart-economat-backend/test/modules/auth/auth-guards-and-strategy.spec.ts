@@ -232,7 +232,7 @@ describe('Auth guards and strategy', () => {
       findOne: jest.fn().mockResolvedValue({
         id: 'user-4',
         username: 'admin',
-        rol: rolUsuario.ADMINISTRADOR,
+        rol: rolUsuario.ADMIN,
         status: UserStatus.ACTIVE,
       }),
     };
@@ -245,7 +245,7 @@ describe('Auth guards and strategy', () => {
     const result = await strategy.validate({
       sub: 'user-4',
       username: 'admin',
-      role: rolUsuario.ADMINISTRADOR,
+      role: rolUsuario.ADMIN,
     });
 
     expect(usuarioRepo.findOne).toHaveBeenCalledWith({
@@ -254,7 +254,7 @@ describe('Auth guards and strategy', () => {
     expect(result).toEqual({
       id: 'user-4',
       username: 'admin',
-      rol: rolUsuario.ADMINISTRADOR,
+      rol: rolUsuario.ADMIN,
     });
   });
 

@@ -28,7 +28,7 @@ import { SelectOption } from '../ui/Select';
 import { mermaSchema } from '../../utils/schemas';
 import { createMerma } from '../../services/merma.service';
 import { MotivoMerma } from '../../services/merma.types';
-import { fetchProductosPaginated } from '../../services/producto.service';
+import { fetchAllProductos } from '../../services/producto.service';
 
 interface InventoryDetailModalProps {
   open: boolean;
@@ -107,9 +107,9 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
 
   const handleOpenMerma = async () => {
     if (productosOptions.length === 0) {
-      const resp = await fetchProductosPaginated({ limit: 1000 });
+      const productos = await fetchAllProductos();
       setProductosOptions(
-        resp.data.map((p) => ({ value: p.id, label: p.nombre }))
+        productos.map((p) => ({ value: p.id, label: p.nombre }))
       );
     }
     setIsMermaModalOpen(true);

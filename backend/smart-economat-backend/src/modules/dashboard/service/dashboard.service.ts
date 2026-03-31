@@ -13,6 +13,7 @@ import { DashboardStatsDto } from '../dto/dashboard-stats.dto';
 @Injectable()
 export class DashboardService {
   private readonly logger = new Logger(DashboardService.name);
+  private static readonly MOVIMIENTOS_RECIENTES_LIMITE = 7;
 
   constructor(
     @InjectRepository(Inventario)
@@ -147,7 +148,7 @@ export class DashboardService {
     const totalProveedores = await this.proveedorRepository.count();
 
     const movimientosRecientes = await this.movimientoRepository.find({
-      take: 5,
+      take: DashboardService.MOVIMIENTOS_RECIENTES_LIMITE,
       order: {
         createdAt: 'DESC',
       },

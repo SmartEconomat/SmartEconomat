@@ -810,6 +810,7 @@ export class ExportService {
   ): SelectQueryBuilder<Usuario> {
     const qb = this.dataSource
       .createQueryBuilder(Usuario, 'usuario')
+      .leftJoinAndSelect('usuario.profesor', 'profesor')
       .select([
         'usuario.id',
         'usuario.nombre',
@@ -817,9 +818,9 @@ export class ExportService {
         'usuario.email',
         'usuario.rol',
         'usuario.activo',
-        'usuario.cialProfesor',
-        'usuario.aula',
         'usuario.createdAt',
+        'profesor.id',
+        'profesor.cial',
       ]);
 
     if (query.searchTerm) {

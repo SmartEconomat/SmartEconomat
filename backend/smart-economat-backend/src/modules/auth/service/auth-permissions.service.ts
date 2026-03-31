@@ -129,6 +129,14 @@ export class AuthPermissionsService {
 
     const codigosExcluidos = excluidos.map((p) => p.codigo);
 
+    if (usuario.rol === 'SUPER_ADMIN') {
+      const todosLosPermisos = await this.permisoRepo.find({
+        where: { activo: true },
+        select: ['codigo'],
+      });
+      return todosLosPermisos.map((p) => p.codigo);
+    }
+
     const result = resolveSherlockEffectivePermissions({
       role: usuario.rol,
       rolePermissions: codigosBase,

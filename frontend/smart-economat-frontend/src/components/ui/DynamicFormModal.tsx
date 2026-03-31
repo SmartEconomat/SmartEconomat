@@ -57,6 +57,7 @@ export interface DynamicField {
   label: string;
   type?: FieldType;
   required?: boolean;
+  autoFocus?: boolean;
   options?: SelectOption[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   defaultValue?: any;
@@ -129,6 +130,9 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   const [activeBarcodeField, setActiveBarcodeField] = useState<string | null>(
     null
   );
+  const [isBarcodeFetching, setIsBarcodeFetching] = useState<
+    Record<string, boolean>
+  >({});
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [offResults, setOffResults] = useState<Array<Record<string, any>>>([]);
   const [showOFFResults, setShowOFFResults] = useState(false);
@@ -159,6 +163,30 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
     []
   );
 
+  const handleBarcodeFetch = useCallback(
+    async (fieldName: string, code: string, skipIfInitialValue = false) => {
+      const normalizedCode = code.trim();
+      if (!normalizedCode || !onBarcodeFetch) {
+        return;
+      }
+
+      if (skipIfInitialValue && normalizedCode === initialData?.[fieldName]) {
+        return;
+      }
+
+      setIsBarcodeFetching((prev) => ({ ...prev, [fieldName]: true }));
+      try {
+        const newData = await onBarcodeFetch(normalizedCode);
+        if (newData) {
+          updateFormData((prev) => ({ ...prev, ...newData }));
+        }
+      } finally {
+        setIsBarcodeFetching((prev) => ({ ...prev, [fieldName]: false }));
+      }
+    },
+    [initialData, onBarcodeFetch, updateFormData]
+  );
+
   useEffect(() => {
     if (isOpen) {
       const dataToSet = { ...initialData };
@@ -176,6 +204,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
       setFormData(dataToSet);
       setShowOFFResults(false);
       setOffResults([]);
+      setIsBarcodeFetching({});
       if (onValuesChange) onValuesChange(dataToSet);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -375,6 +404,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
       label,
       type = 'text',
       required,
+      autoFocus,
       options,
       disabled,
       multiple,
@@ -425,6 +455,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
             value={value ?? ''}
             onChange={handleNumberChange}
             required={required}
+            autoFocus={autoFocus}
             disabled={disabled}
             inputProps={{ step: 'any', inputMode: 'decimal' }}
           />
@@ -463,6 +494,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
             value={value ?? ''}
             onChange={handleTextChange}
             required={required}
+            autoFocus={autoFocus}
             disabled={disabled}
             multiline
             rows={4}
@@ -521,7 +553,9 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
           />
         );
 
-      case 'barcode':
+      case 'barcode': {
+        const isFetchingBarcodeData = Boolean(isBarcodeFetching[name]);
+
         return (
           <Box key={name} sx={{ position: 'relative' }}>
             <Input
@@ -530,34 +564,69 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
               type="text"
               value={value ?? ''}
               onChange={handleTextChange}
+              autoFocus={autoFocus}
               onBlur={async (e) => {
-                const code = (e.target as HTMLInputElement).value;
-                if (code && onBarcodeFetch && code !== initialData?.[name]) {
-                  const newData = await onBarcodeFetch(code);
-                  if (newData) {
-                    setFormData((prev) => ({ ...prev, ...newData }));
-                  }
-                }
+                await handleBarcodeFetch(
+                  name,
+                  (e.target as HTMLInputElement).value,
+                  true
+                );
               }}
               required={required}
               disabled={disabled}
               InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
+                endAdornment: (
+                  <InputAdornment position="end">
+                    {isFetchingBarcodeData && (
+                      <CircularProgress size={20} sx={{ mr: 0.5 }} />
+                    )}
+                    {onOFFSearch && (
+                      <Tooltip title="Buscar en OpenFoodFacts">
+                        <span>
+                          <IconButton
+                            edge="end"
+                            disabled={
+                              disabled ||
+                              isOFFSearching ||
+                              !value ||
+                              isFetchingBarcodeData
+                            }
+                            onClick={async () => {
+                              if (
+                                !value ||
+                                isOFFSearching ||
+                                isFetchingBarcodeData
+                              )
+                                return;
+                              setIsOFFSearching(true);
+                              setShowOFFResults(false);
+                              const results = await onOFFSearch(String(value));
+                              setIsOFFSearching(false);
+                              if (results.length === 1) {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  ...results[0],
+                                }));
+                              } else if (results.length > 1) {
+                                setOffResults(results);
+                                setShowOFFResults(true);
+                              }
+                            }}
+                          >
+                            {isOFFSearching ? (
+                              <CircularProgress size={20} />
+                            ) : (
+                              <SearchIcon fontSize="small" />
+                            )}
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                    )}
                     <Tooltip title="Escanear con cámara">
                       <IconButton
                         size="small"
                         onClick={() => setActiveBarcodeField(name)}
-                        disabled={disabled}
-                        color="primary"
-                        sx={{
-                          '&:hover': {
-                            bgcolor: 'rgba(216, 27, 96, 0.1)',
-                            borderRadius: 1,
-                          },
-                          p: 0.5,
-                          ml: -0.5,
-                        }}
+                        disabled={disabled || isFetchingBarcodeData}
                       >
                         <BarcodeIcon />
                       </IconButton>
@@ -654,20 +723,16 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
               open={activeBarcodeField === name}
               onClose={() => setActiveBarcodeField(null)}
               onScan={async (code) => {
-                setFormData((prev) => ({ ...prev, [name]: code }));
+                updateFormData((prev) => ({ ...prev, [name]: code }));
                 setErrors((prev) => ({ ...prev, [name]: '' }));
                 setActiveBarcodeField(null);
-                if (onBarcodeFetch) {
-                  const newData = await onBarcodeFetch(code);
-                  if (newData) {
-                    setFormData((prev) => ({ ...prev, ...newData }));
-                  }
-                }
+                await handleBarcodeFetch(name, code);
               }}
               title={`Escanear ${label}`}
             />
           </Box>
         );
+      }
 
       case 'text':
       default:
@@ -680,6 +745,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
             value={value ?? ''}
             onChange={handleTextChange}
             required={required}
+            autoFocus={autoFocus}
             disabled={disabled}
           />
         );

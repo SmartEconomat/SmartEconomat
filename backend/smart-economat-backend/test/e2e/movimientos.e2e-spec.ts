@@ -44,7 +44,7 @@ describe('MovimientoController (e2e)', () => {
   describe('Listado General', () => {
     /**
      * @test Debe listar todos los movimientos registrados.
-     * @roles ADMINISTRADOR, PROFESOR, ALUMNO
+     * @roles ADMIN, PROFESOR, ALUMNO
      */
     it('GET /movimientos - Debe listar movimientos (200)', async () => {
       const response = await request(app.getHttpServer() as string)
@@ -191,7 +191,7 @@ describe('MovimientoController (e2e)', () => {
     });
 
     /**
-     * @test Solo ADMINISTRADOR y PROFESOR pueden acceder
+     * @test Solo ADMIN y PROFESOR pueden acceder
      */
     it('GET /movimientos/historial - Sin autorización debe fallar (403)', async () => {
       const response = await request(app.getHttpServer() as string)
@@ -254,7 +254,7 @@ describe('MovimientoController (e2e)', () => {
     });
 
     /**
-     * @test Solo ADMINISTRADOR puede eliminar
+     * @test Solo ADMIN puede eliminar
      */
     it('DELETE /movimientos/:id - Solo administrador puede eliminar (403 para profesor)', async () => {
       if (testMovimientoId) {
