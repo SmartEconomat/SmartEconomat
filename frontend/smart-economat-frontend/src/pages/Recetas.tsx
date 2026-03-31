@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Box,
   Paper,
@@ -43,6 +43,7 @@ import {
   createReceta,
   updateReceta,
   exportRecipesPdf,
+  calculatePreviewCost,
 } from '../services/receta.service';
 import {
   deleteResource,
@@ -354,7 +355,21 @@ const Recetas: React.FC = () => {
   const [stockValidation, setStockValidation] =
     useState<StockValidationResult | null>(null);
   const [isValidatingStock, setIsValidatingStock] = useState(false);
+  const [formValueUpdates, setFormValueUpdates] = useState<
+    Record<string, unknown>
+  >({});
+  const lastCalculationRef = useRef<string>('');
+  const calculationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const toast = useToast();
+
+  useEffect(() => {
+    if (!itemToEdit) {
+      setFormValueUpdates({});
+      lastCalculationRef.current = '';
+      if (calculationTimerRef.current)
+        clearTimeout(calculationTimerRef.current);
+    }
+  }, [itemToEdit]);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -736,6 +751,63 @@ const Recetas: React.FC = () => {
       setIsCooking(false);
     }
   };
+
+  const handleFormValuesChange = useCallback(
+    (formData: Record<string, unknown>) => {
+      const ingredientes =
+        (formData.ingredientes as Array<{
+          productoId?: string;
+          producto?: { id: string };
+          cantidad?: string | number;
+          unidad?: string;
+          mermaAplicada?: string | number;
+          proveedorFavoritoId?: string;
+        }>) || [];
+      const rendimiento = Number(formData.rendimiento) || 1;
+
+      // Filtrar ingredientes válidos para evitar llamadas innecesarias
+      const validIngredientes = ingredientes
+        .map((ing) => ({
+          productoId: ing.productoId || ing.producto?.id,
+          cantidad: Number(ing.cantidad),
+          unidad: ing.unidad,
+          mermaAplicada: Number(ing.mermaAplicada ?? 0),
+          proveedorFavoritoId: ing.proveedorFavoritoId,
+        }))
+        .filter((ing) => ing.productoId && ing.cantidad > 0);
+
+      const currentKey = JSON.stringify({
+        ingredientes: validIngredientes,
+        rendimiento,
+      });
+      if (currentKey === lastCalculationRef.current) return;
+      lastCalculationRef.current = currentKey;
+
+      if (calculationTimerRef.current)
+        clearTimeout(calculationTimerRef.current);
+
+      if (validIngredientes.length === 0) {
+        setFormValueUpdates({ costeUnitarioEstimado: 0 });
+        return;
+      }
+
+      calculationTimerRef.current = setTimeout(async () => {
+        try {
+          const result = await calculatePreviewCost({
+            ingredientes: validIngredientes,
+            rendimiento: rendimiento > 0 ? rendimiento : 1,
+          });
+
+          setFormValueUpdates({
+            costeUnitarioEstimado: result.costoUnitarioEstimado,
+          });
+        } catch (err) {
+          console.error('Error recalculando costes:', err);
+        }
+      }, 600);
+    },
+    []
+  );
 
   const columns: Column<Receta>[] = [
     {
@@ -1300,11 +1372,7 @@ const Recetas: React.FC = () => {
         <DynamicFormModal
           isOpen={!!itemToEdit}
           onClose={() => setItemToEdit(null)}
-          title={
-            itemToEdit?.id
-              ? `Editar: ${itemToEdit.nombre || ''}`
-              : 'Nueva Receta'
-          }
+          title={itemToEdit?.id ? 'Editar Receta' : 'Nueva Receta'}
           size="lg"
           fields={recetaSchema}
           initialData={itemToEdit || {}}
@@ -1316,6 +1384,8 @@ const Recetas: React.FC = () => {
               ? '¿Estás seguro de que deseas guardar los cambios realizados en esta receta?'
               : '¿Estás seguro de que deseas añadir esta nueva receta al sistema?'
           }
+          onValuesChange={handleFormValuesChange}
+          valueUpdates={formValueUpdates}
         />
 
         <DetailModal

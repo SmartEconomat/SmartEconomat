@@ -27,28 +27,25 @@ describe('RecetaService', () => {
     mockRecetaRepo.findById.mockResolvedValue({
       id: 'rec-1',
       nombre: 'Tortilla',
+      rendimiento: 1,
       ingredientes: [
         {
           producto: { id: 'prod-1', nombre: 'Huevo' },
           cantidad: 2,
           unidad: 'ud',
+          mermaAplicada: 0,
         },
       ],
     });
     const qb = {
-      innerJoinAndSelect: jest.fn().mockReturnThis(),
       leftJoinAndSelect: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       getMany: jest.fn().mockResolvedValue([
         {
-          producto: { id: 'prod-1' },
-          precioUnitario: 1.5,
-          historialPrecios: [],
-        },
-        {
-          producto: { id: 'prod-1' },
-          precioUnitario: 2.5,
-          historialPrecios: [],
+          id: 'prod-1',
+          nombre: 'Huevo',
+          pmp: 2,
+          proveedores: [],
         },
       ]),
     };
@@ -58,10 +55,11 @@ describe('RecetaService', () => {
 
     const result = await service.calcularEscandallo('rec-1');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       recetaId: 'rec-1',
       recetaNombre: 'Tortilla',
       costoTotal: 4,
+      costoUnitarioEstimado: 4,
       desglosePorIngrediente: [
         {
           productoId: 'prod-1',

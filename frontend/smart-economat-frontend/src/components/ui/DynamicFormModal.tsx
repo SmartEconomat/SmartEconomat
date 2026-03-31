@@ -81,6 +81,7 @@ export interface DynamicFormModalProps extends Omit<ModalProps, 'children'> {
   onOFFSearch?: (value: string) => Promise<Array<Record<string, any>>>;
   confirmationMessage?: React.ReactNode;
   onValuesChange?: (data: Record<string, unknown>) => void;
+  valueUpdates?: Record<string, unknown>;
 }
 
 const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
@@ -100,6 +101,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   onOFFSearch,
   confirmationMessage,
   onValuesChange,
+  valueUpdates,
 }) => {
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const formDataRef = useRef<Record<string, unknown>>({});
@@ -159,6 +161,23 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialData, fields]);
+
+  // Handle external value updates (e.g., from real-time calculations)
+  useEffect(() => {
+    if (isOpen && valueUpdates && Object.keys(valueUpdates).length > 0) {
+      updateFormData((prev) => {
+        const next = { ...prev };
+        let changed = false;
+        Object.keys(valueUpdates).forEach((key) => {
+          if (next[key] !== valueUpdates[key]) {
+            next[key] = valueUpdates[key];
+            changed = true;
+          }
+        });
+        return changed ? next : prev;
+      });
+    }
+  }, [isOpen, valueUpdates, updateFormData]);
 
   useEffect(() => {
     if (isOpen && onValuesChange) {
