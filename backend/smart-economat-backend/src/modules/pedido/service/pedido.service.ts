@@ -223,6 +223,20 @@ export class PedidoService {
     return await this.pedidoRepository.save(pedido);
   }
 
+  async restaurarPedido(id: string): Promise<Pedido> {
+    const pedido = await this.findOne(id);
+
+    if (pedido.estado !== EstadoPedido.CANCELADO) {
+      throw new BadRequestException(
+        'Solo se pueden restaurar los pedidos que estén en estado cancelado.'
+      );
+    }
+
+    pedido.estado = EstadoPedido.PENDIENTE;
+    pedido.motivoCancelacion = undefined;
+    return await this.pedidoRepository.save(pedido);
+  }
+
   async aceptarPedido(id: string): Promise<Pedido> {
     const pedido = await this.findOne(id);
     if (pedido.estado !== EstadoPedido.PENDIENTE) {

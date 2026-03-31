@@ -1,11 +1,12 @@
 import React from 'react';
-import { IconButton, Stack, Tooltip, Chip, Typography } from '@mui/material';
+import { IconButton, Stack, Tooltip } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CheckIcon from '@mui/icons-material/Check';
 import CancelIcon from '@mui/icons-material/Cancel';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
+import RestoreIcon from '@mui/icons-material/Restore';
 import { Column } from '../../../components/ui/DataTable';
 import StatusChip from '../../../components/ui/StatusChip';
 import {
@@ -101,12 +102,12 @@ export const renderPedidoActions = (
   isAggregatedBatchPedido(row) ? (
     <Stack direction="row" spacing={1} justifyContent="center">
       {permissions.canApprove && row.estado === EstadoPedido.PENDIENTE && (
-        <Tooltip title="Aprobar pedido">
+        <Tooltip title="Aprobar">
           <IconButton
             color="success"
             onClick={() => handlers.onApprove(row)}
             size="small"
-            aria-label="Aprobar pedido"
+            aria-label="Aprobar"
           >
             <CheckIcon fontSize="small" />
           </IconButton>
@@ -114,12 +115,12 @@ export const renderPedidoActions = (
       )}
 
       {permissions.canCancel && row.estado === EstadoPedido.PENDIENTE && (
-        <Tooltip title="Cancelar pedido">
+        <Tooltip title="Cancelar">
           <IconButton
             color="warning"
             onClick={() => handlers.onCancel(row)}
             size="small"
-            aria-label="Cancelar pedido"
+            aria-label="Cancelar"
           >
             <CancelIcon fontSize="small" />
           </IconButton>
@@ -127,25 +128,29 @@ export const renderPedidoActions = (
       )}
 
       {permissions.canEdit && row.estado === EstadoPedido.PENDIENTE && (
-        <Tooltip title="Editar pedido">
+        <Tooltip title="Editar">
           <IconButton
             color="secondary"
             onClick={() => handlers.onEdit(row)}
             size="small"
-            aria-label="Editar pedido"
+            aria-label="Editar"
           >
             <EditIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       )}
 
-      {row.estado !== EstadoPedido.PENDIENTE && (
-        <Chip
-          size="small"
-          color="default"
-          variant="outlined"
-          label={<Typography variant="caption">Pedido</Typography>}
-        />
+      {permissions.canRestore && row.estado === EstadoPedido.CANCELADO && (
+        <Tooltip title="Revertir">
+          <IconButton
+            color="info"
+            onClick={() => handlers.onRestore(row)}
+            size="small"
+            aria-label="Revertir"
+          >
+            <RestoreIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       )}
     </Stack>
   ) : (
@@ -217,13 +222,17 @@ export const renderPedidoActions = (
         </Tooltip>
       )}
 
-      {row.estado !== EstadoPedido.PENDIENTE && (
-        <Chip
-          size="small"
-          color="default"
-          variant="outlined"
-          label={<Typography variant="caption">Solo lectura</Typography>}
-        />
+      {permissions.canRestore && row.estado === EstadoPedido.CANCELADO && (
+        <Tooltip title="Revertir">
+          <IconButton
+            color="info"
+            onClick={() => handlers.onRestore(row)}
+            size="small"
+            aria-label="Revertir"
+          >
+            <RestoreIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       )}
     </Stack>
   );

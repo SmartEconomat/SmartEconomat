@@ -132,6 +132,12 @@ export class PurchaseBatchController {
     return this.batchService.cancelBatchOrder(id, dto);
   }
 
+  @Patch(':id/restaurar')
+  @RequirePermissions('pedidos:restaurar')
+  restore(@Param('id', ParseUUIDv7Pipe) id: string) {
+    return this.batchService.restoreBatchOrder(id);
+  }
+
   @Get(':id/pdf')
   @RequirePermissions('pedidos:ver')
   async generatePdf(

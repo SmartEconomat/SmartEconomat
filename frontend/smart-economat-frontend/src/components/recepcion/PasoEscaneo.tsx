@@ -141,17 +141,29 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
             onKeyPress={(e) => e.key === 'Enter' && onSearch()}
             placeholder="EAN-13 o ID de bulto..."
             InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
+              startAdornment: (
+                <InputAdornment position="start">
                   <Tooltip title="Escanear con cámara">
                     <IconButton
                       onClick={() => setScannerOpen(true)}
                       size="small"
                       color="primary"
+                      sx={{
+                        '&:hover': {
+                          bgcolor: 'rgba(216, 27, 96, 0.1)',
+                          borderRadius: 1,
+                        },
+                        p: 0.5,
+                        ml: -0.5,
+                      }}
                     >
                       <BarcodeIcon />
                     </IconButton>
                   </Tooltip>
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
                   {searching ? (
                     <CircularProgress size={20} sx={{ mr: 1 }} />
                   ) : (

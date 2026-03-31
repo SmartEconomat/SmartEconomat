@@ -33,6 +33,10 @@ Demostrando que:
 - 💻 Commits: **98** (13.67%)
 - 🔀 PRs Fusionados: **21**
 
+### 🥈 Sergio
+- 💻 Commits: **105** (13.13%)
+- 🔀 PRs Fusionados: **21**
+
 ### 🥈 Maurizio
 - 💻 Commits: **75** (7.33%)
 - 🔀 PRs Fusionados: **8**

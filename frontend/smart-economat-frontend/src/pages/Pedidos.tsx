@@ -18,6 +18,7 @@ import {
   PurchaseBatch,
 } from '../services/pedido.types';
 import { useAuth, usePermission } from '../store/auth.hooks';
+import { useToast } from '../store/toast.hooks';
 import { usePedidoDraft } from '../hooks/usePedidoDraft';
 import ReporteSelectorModal from '../components/ui/ReporteSelectorModal';
 
@@ -47,6 +48,7 @@ import { getPedidoSchema } from '../features/pedidos/utils/pedidoSchema';
 interface PedidoActionTarget {
   id: string;
   isBatchAggregate: boolean;
+  aggregateType?: 'pedido_usuario' | 'purchase_batch';
   proveedorNombre?: string;
   fechaPedido?: string;
   numeroGlobal?: string | number;
@@ -80,6 +82,9 @@ const Pedidos: React.FC = () => {
   );
   const [itemToViewDeliveryDate, setItemToViewDeliveryDate] =
     useState<Pedido | null>(null);
+  const [itemToRestore, setItemToRestore] = useState<PedidoActionTarget | null>(
+    null
+  );
   const [isRecoveryOpen, setIsRecoveryOpen] = useState(false);
   const [isReporteOpen, setIsReporteOpen] = useState(false);
   const [isNewPedidoWarningOpen, setIsNewPedidoWarningOpen] = useState(false);
@@ -100,9 +105,19 @@ const Pedidos: React.FC = () => {
   const canEdit = usePermission('pedidos:editar');
   const canDelete = usePermission('pedidos:eliminar');
   const canCreate = usePermission('pedidos:crear');
+  const canRestore = usePermission('pedidos:restaurar');
+
+  const toast = useToast();
   const permissions: PedidoPermissions = useMemo(
-    () => buildPedidoPermissions(canCreate, canEdit, canDelete),
-    [canCreate, canDelete, canEdit]
+    () =>
+      buildPedidoPermissions(
+        canCreate,
+        canEdit,
+        canDelete,
+        canRestore,
+        user?.rol
+      ),
+    [canCreate, canDelete, canEdit, canRestore, user]
   );
 
   const {
@@ -186,6 +201,8 @@ const Pedidos: React.FC = () => {
     fetchBatchDetail,
     consolidatePedidosByIds,
     startRecepcionFromBatch,
+    restorePedidoById,
+    restorePurchaseBatchById,
     isSaving,
     isDeleting,
     isAceptando,
@@ -202,7 +219,10 @@ const Pedidos: React.FC = () => {
     },
   });
 
-  const pedidoSchema = useMemo(() => getPedidoSchema(itemToEdit), [itemToEdit]);
+  const pedidoSchema = useMemo(
+    () => (itemToEdit ? getPedidoSchema(itemToEdit) : []),
+    [itemToEdit]
+  );
 
   useEffect(() => {
     void loadDraft();
@@ -300,6 +320,14 @@ const Pedidos: React.FC = () => {
     return {
       ...row,
       proveedorId: row.proveedor?.id,
+      usuarioSolicitante:
+        row.usuario?.nombre ||
+        row.usuario?.username ||
+        row.usuario?.email ||
+        '',
+      fechaPedido: row.fechaPedido
+        ? dayjs(row.fechaPedido).format('YYYY-MM-DD')
+        : dayjs().format('YYYY-MM-DD'),
       pedidoProductos:
         row.pedidoProductos?.map((pedidoProducto) => ({
           id: pedidoProducto.id,
@@ -323,6 +351,17 @@ const Pedidos: React.FC = () => {
         aggregateType:
           'aggregateType' in batch ? batch.aggregateType : 'pedido_usuario',
         numeroGlobal: 'numeroGlobal' in batch ? batch.numeroGlobal : undefined,
+        usuarioSolicitante:
+          batch.usuario?.nombre ||
+          batch.usuario?.username ||
+          batch.usuario?.email ||
+          '',
+        fechaPedido:
+          'createdAt' in batch && batch.createdAt
+            ? dayjs(batch.createdAt).format('YYYY-MM-DD')
+            : 'fechaPedido' in batch && batch.fechaPedido
+              ? dayjs(batch.fechaPedido).format('YYYY-MM-DD')
+              : dayjs().format('YYYY-MM-DD'),
         estado: isEditable ? EstadoPedido.PENDIENTE : EstadoPedido.EN_PROCESO,
         observaciones: sanitizePedidoObservation(batch.observaciones),
         pedidoProductos:
@@ -343,9 +382,12 @@ const Pedidos: React.FC = () => {
   );
 
   const openNewPedidoForm = useCallback(() => {
-    setItemToEdit({});
+    setItemToEdit({
+      usuarioSolicitante: user?.name || user?.email || '',
+      fechaPedido: dayjs().format('YYYY-MM-DD'),
+    });
     hasPromptedRef.current = true;
-  }, []);
+  }, [user]);
 
   const handleCreateClick = useCallback(() => {
     if (draft) {
@@ -358,11 +400,17 @@ const Pedidos: React.FC = () => {
 
   const handleRecoverDraft = useCallback(() => {
     if (draft) {
-      setItemToEdit(draft.payload as PedidoFormValues);
+      const payload = draft.payload as PedidoFormValues;
+      setItemToEdit({
+        ...payload,
+        usuarioSolicitante:
+          payload.usuarioSolicitante || user?.name || user?.email || '',
+        fechaPedido: payload.fechaPedido || dayjs().format('YYYY-MM-DD'),
+      });
     }
     setIsRecoveryOpen(false);
     setIsNewPedidoWarningOpen(false);
-  }, [draft]);
+  }, [draft, user]);
 
   const handleDiscardDraft = useCallback(() => {
     void discardDraft();
@@ -412,6 +460,47 @@ const Pedidos: React.FC = () => {
     [cancelPedidoById, cancelPurchaseBatchById, itemToCancelar]
   );
 
+  const handleCancelClick = useCallback((pedido: Pedido) => {
+    setItemToCancelar({
+      id: pedido.id,
+      isBatchAggregate: isAggregatedBatchPedido(pedido),
+      aggregateType: pedido.aggregateType,
+      proveedorNombre: pedido.proveedor?.nombre,
+      fechaPedido: pedido.fechaPedido,
+      numeroGlobal: pedido.numeroGlobal,
+    });
+  }, []);
+
+  const handleRestoreClick = useCallback((pedido: Pedido) => {
+    setItemToRestore({
+      id: pedido.id,
+      isBatchAggregate: isAggregatedBatchPedido(pedido),
+      aggregateType: pedido.aggregateType,
+      proveedorNombre: pedido.proveedor?.nombre,
+      fechaPedido: pedido.fechaPedido,
+      numeroGlobal: pedido.numeroGlobal,
+    });
+  }, []);
+
+  const handleRestoreConfirm = useCallback(async () => {
+    if (!itemToRestore) return;
+
+    try {
+      if (itemToRestore.isBatchAggregate) {
+        await restorePurchaseBatchById(
+          itemToRestore.id,
+          itemToRestore.aggregateType === 'pedido_usuario'
+        );
+      } else {
+        await restorePedidoById(itemToRestore.id);
+      }
+      setItemToRestore(null);
+    } catch {
+      toast.error('Ocurrió un error al intentar restaurar el pedido.');
+      return;
+    }
+  }, [restorePedidoById, restorePurchaseBatchById, itemToRestore, toast]);
+
   const handleViewBatch = useCallback(
     async (
       batch: PurchaseBatch | PedidoUsuario,
@@ -458,6 +547,8 @@ const Pedidos: React.FC = () => {
       return {
         id: batch.id,
         isBatchAggregate: true,
+        aggregateType:
+          'aggregateType' in batch ? batch.aggregateType : 'purchase_batch',
         proveedorNombre:
           providerNames.length > 0 ? providerNames.join(', ') : 'Pedido',
         fechaPedido: 'createdAt' in batch ? batch.createdAt : batch.fechaPedido,
@@ -475,6 +566,13 @@ const Pedidos: React.FC = () => {
       );
     },
     [consolidatePedidosByIds]
+  );
+
+  const handleBatchRestoreClick = useCallback(
+    (batch: PurchaseBatch | PedidoUsuario) => {
+      setItemToRestore(buildBatchActionTarget(batch));
+    },
+    [buildBatchActionTarget]
   );
 
   const handlers = useMemo(
@@ -503,47 +601,29 @@ const Pedidos: React.FC = () => {
         setItemToDelete(pedido);
       },
       onApprove: (pedido: Pedido) => {
-        if (isAggregatedBatchPedido(pedido)) {
-          setItemToAceptar({
-            id: pedido.id,
-            isBatchAggregate: true,
-            proveedorNombre: pedido.proveedor?.nombre,
-            fechaPedido: pedido.fechaPedido,
-            numeroGlobal: pedido.numeroGlobal,
-          });
-          return;
-        }
         setItemToAceptar({
           id: pedido.id,
-          isBatchAggregate: false,
+          isBatchAggregate: isAggregatedBatchPedido(pedido),
+          aggregateType: pedido.aggregateType,
           proveedorNombre: pedido.proveedor?.nombre,
           fechaPedido: pedido.fechaPedido,
           numeroGlobal: pedido.numeroGlobal,
         });
       },
-      onCancel: (pedido: Pedido) => {
-        if (isAggregatedBatchPedido(pedido)) {
-          setItemToCancelar({
-            id: pedido.id,
-            isBatchAggregate: true,
-            proveedorNombre: pedido.proveedor?.nombre,
-            fechaPedido: pedido.fechaPedido,
-          });
-          return;
-        }
-        setItemToCancelar({
-          id: pedido.id,
-          isBatchAggregate: false,
-          proveedorNombre: pedido.proveedor?.nombre,
-          fechaPedido: pedido.fechaPedido,
-        });
-      },
+      onCancel: (pedido: Pedido) => handleCancelClick(pedido),
+      onRestore: (pedido: Pedido) => handleRestoreClick(pedido),
       onViewDelivery: (pedido: Pedido) => {
         if (isAggregatedBatchPedido(pedido)) return;
         setItemToViewDeliveryDate(pedido);
       },
     }),
-    [buildEditData, handleOpenBatchEditor, handleViewBatch]
+    [
+      buildEditData,
+      handleOpenBatchEditor,
+      handleViewBatch,
+      handleCancelClick,
+      handleRestoreClick,
+    ]
   );
 
   return (
@@ -664,250 +744,303 @@ const Pedidos: React.FC = () => {
           />
         )}
 
-        <ConfirmDialog
-          isOpen={!!itemToDelete}
-          onClose={() => !isDeleting && setItemToDelete(null)}
-          onConfirm={() => void handleDeleteConfirm()}
-          title="Eliminar pedido"
-          message={
-            <>
-              ¿Estás seguro de que deseas eliminar el pedido del{' '}
-              <strong>
-                {itemToDelete?.fechaPedido
-                  ? dayjs(itemToDelete.fechaPedido).format('DD/MM/YYYY')
-                  : ''}
-              </strong>
-              ? Esta acción no se puede deshacer.
-            </>
-          }
-          confirmText="Sí, eliminar"
-          cancelText="Cancelar"
-          isLoading={isDeleting}
-        />
+        {itemToDelete && (
+          <ConfirmDialog
+            isOpen
+            onClose={() => !isDeleting && setItemToDelete(null)}
+            onConfirm={() => void handleDeleteConfirm()}
+            title="Eliminar pedido"
+            message={
+              <>
+                ¿Estás seguro de que deseas eliminar el pedido del{' '}
+                <strong>
+                  {itemToDelete.fechaPedido
+                    ? dayjs(itemToDelete.fechaPedido).format('DD/MM/YYYY')
+                    : ''}
+                </strong>
+                ? Esta acción no se puede deshacer.
+              </>
+            }
+            confirmText="Sí, eliminar"
+            cancelText="Cancelar"
+            isLoading={isDeleting}
+          />
+        )}
 
-        <ConfirmDialog
-          isOpen={!!itemToAceptar}
-          onClose={() => !isAceptando && setItemToAceptar(null)}
-          onConfirm={() => void handleAceptarConfirm()}
-          title="Aprobar Pedido"
-          message={
-            <>
-              {itemToAceptar?.isBatchAggregate ? (
-                <>
-                  ¿Estás seguro de que deseas aprobar el pedido{' '}
-                  <strong>
-                    {itemToAceptar?.numeroGlobal
-                      ? `#${itemToAceptar.numeroGlobal} `
-                      : ''}
-                  </strong>
-                  ({formatPedidoId(itemToAceptar?.id)}) ? Este se tramitará como
-                  compra única y pasará a estar en <strong>En Proceso</strong>.
-                </>
-              ) : (
-                <>
-                  ¿Estás seguro de que deseas aprobar el pedido{' '}
-                  <strong>
-                    {itemToAceptar?.numeroGlobal
-                      ? `#${itemToAceptar.numeroGlobal} `
-                      : ''}
-                    ({formatPedidoId(itemToAceptar?.id)})
-                  </strong>{' '}
-                  al proveedor <strong>{itemToAceptar?.proveedorNombre}</strong>
-                  ? Pasará a estar "En Proceso" y se considerará tramitado.
-                </>
-              )}
-            </>
-          }
-          confirmText="Sí, Aprobar"
-          cancelText="Cancelar"
-          isLoading={isAceptando}
-          confirmColor="success"
-        />
+        {itemToAceptar && (
+          <ConfirmDialog
+            isOpen
+            onClose={() => !isAceptando && setItemToAceptar(null)}
+            onConfirm={() => void handleAceptarConfirm()}
+            title="Aprobar Pedido"
+            message={
+              <>
+                {itemToAceptar.isBatchAggregate ? (
+                  <>
+                    ¿Estás seguro de que deseas aprobar el pedido{' '}
+                    <strong>
+                      {itemToAceptar.numeroGlobal
+                        ? `#${itemToAceptar.numeroGlobal} `
+                        : ''}
+                    </strong>
+                    ({formatPedidoId(itemToAceptar.id)}) ? Este se tramitará
+                    como compra única y pasará a estar en{' '}
+                    <strong>En Proceso</strong>.
+                  </>
+                ) : (
+                  <>
+                    ¿Estás seguro de que deseas aprobar el pedido{' '}
+                    <strong>
+                      {itemToAceptar.numeroGlobal
+                        ? `#${itemToAceptar.numeroGlobal} `
+                        : ''}
+                      ({formatPedidoId(itemToAceptar.id)})
+                    </strong>{' '}
+                    al proveedor{' '}
+                    <strong>{itemToAceptar.proveedorNombre}</strong>? Pasará a
+                    estar "En Proceso" y se considerará tramitado.
+                  </>
+                )}
+              </>
+            }
+            confirmText="Sí, Aprobar"
+            cancelText="Cancelar"
+            isLoading={isAceptando}
+            confirmColor="success"
+          />
+        )}
 
-        <DynamicFormModal
-          isOpen={!!itemToCancelar}
-          onClose={() => !isCancelando && setItemToCancelar(null)}
-          title={
-            itemToCancelar?.isBatchAggregate
-              ? `Cancelar Pedido : ${formatPedidoId(itemToCancelar?.id)}`
-              : `Cancelar Pedido: ${itemToCancelar?.proveedorNombre || ''}`
-          }
-          size="sm"
-          fields={[
-            {
-              name: 'motivoCancelacion',
-              label: 'Motivo de Cancelación (Opcional)',
-              type: 'text',
-              width: 12,
-              required: false,
-            },
-          ]}
-          initialData={{ motivoCancelacion: '' }}
-          onSubmit={handleCancelarSubmit}
-          isSubmitting={isCancelando}
-          requireConfirmation={false}
-        />
+        {itemToCancelar && (
+          <DynamicFormModal
+            isOpen
+            onClose={() => !isCancelando && setItemToCancelar(null)}
+            title={
+              itemToCancelar.isBatchAggregate
+                ? `Cancelar Pedido : ${formatPedidoId(itemToCancelar.id)}`
+                : `Cancelar Pedido: ${itemToCancelar.proveedorNombre || ''}`
+            }
+            size="sm"
+            fields={[
+              {
+                name: 'motivoCancelacion',
+                label: 'Motivo de Cancelación (Opcional)',
+                type: 'text',
+                width: 12,
+                required: false,
+              },
+            ]}
+            initialData={{ motivoCancelacion: '' }}
+            onSubmit={handleCancelarSubmit}
+            isSubmitting={isCancelando}
+            requireConfirmation={false}
+          />
+        )}
 
-        <DynamicFormModal
-          isOpen={!!itemToEdit}
-          onClose={handleCloseModal}
-          title={
-            itemToEdit?.isBatchAggregate
-              ? itemToEdit.estado === EstadoPedido.PENDIENTE
-                ? `Editar Pedido ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)}`
-                : `Detalles del Pedido ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)} (Solo lectura)`
-              : itemToEdit?.id
+        {itemToEdit && (
+          <DynamicFormModal
+            isOpen
+            onClose={handleCloseModal}
+            title={
+              itemToEdit.isBatchAggregate
                 ? itemToEdit.estado === EstadoPedido.PENDIENTE
-                  ? 'Editar Pedido'
-                  : 'Detalles del Pedido (Solo lectura)'
-                : 'Crear Nuevo Pedido'
-          }
-          size="lg"
-          fields={pedidoSchema}
-          initialData={itemToEdit || {}}
-          onSubmit={
-            itemToEdit?.estado && itemToEdit.estado !== EstadoPedido.PENDIENTE
-              ? () => setItemToEdit(null)
-              : handleSave
-          }
-          isSubmitting={isSaving}
-          onValuesChange={handleValuesChange}
-          requireConfirmation={
-            itemToEdit?.estado === EstadoPedido.PENDIENTE || !itemToEdit?.id
-          }
-          submitLabel={
-            itemToEdit?.estado && itemToEdit.estado !== EstadoPedido.PENDIENTE
-              ? 'Cerrar'
-              : 'Guardar'
-          }
-          cancelLabel={
-            itemToEdit?.estado && itemToEdit.estado !== EstadoPedido.PENDIENTE
-              ? ''
-              : 'Cancelar'
-          }
-          confirmationMessage={
-            itemToEdit?.id
-              ? itemToEdit.isBatchAggregate
-                ? '¿Estás seguro de que deseas guardar los cambios en este pedido?'
-                : '¿Estás seguro de que deseas guardar los cambios en este pedido?'
-              : '¿Estás seguro de que deseas registrar este nuevo pedido?'
-          }
-        />
+                  ? `Editar Pedido ${itemToEdit.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit.batchId || itemToEdit.id)}`
+                  : `Detalles del Pedido ${itemToEdit.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit.batchId || itemToEdit.id)} (Solo lectura)`
+                : itemToEdit.id
+                  ? itemToEdit.estado === EstadoPedido.PENDIENTE
+                    ? 'Editar Pedido'
+                    : 'Detalles del Pedido (Solo lectura)'
+                  : 'Crear Nuevo Pedido'
+            }
+            size="lg"
+            fields={pedidoSchema}
+            initialData={itemToEdit}
+            onSubmit={
+              itemToEdit.estado && itemToEdit.estado !== EstadoPedido.PENDIENTE
+                ? () => setItemToEdit(null)
+                : handleSave
+            }
+            isSubmitting={isSaving}
+            onValuesChange={handleValuesChange}
+            requireConfirmation={
+              itemToEdit.estado === EstadoPedido.PENDIENTE || !itemToEdit.id
+            }
+            submitLabel={
+              itemToEdit.estado && itemToEdit.estado !== EstadoPedido.PENDIENTE
+                ? 'Cerrar'
+                : 'Guardar'
+            }
+            cancelLabel={
+              itemToEdit.estado && itemToEdit.estado !== EstadoPedido.PENDIENTE
+                ? ''
+                : 'Cancelar'
+            }
+            confirmationMessage={
+              itemToEdit.id
+                ? itemToEdit.isBatchAggregate
+                  ? '¿Estás seguro de que deseas guardar los cambios en este pedido?'
+                  : '¿Estás seguro de que deseas guardar los cambios en este pedido?'
+                : '¿Estás seguro de que deseas registrar este nuevo pedido?'
+            }
+          />
+        )}
 
-        <PurchaseBatchDetailModal
-          batch={itemToViewBatch}
-          canEdit={permissions.canEdit}
-          canApprove={permissions.canApprove}
-          canCancel={permissions.canCancel}
-          mode={batchViewMode}
-          onClose={() => setItemToViewBatch(null)}
-          onEdit={handleEditBatch}
-          onApprove={(batch) => {
-            setItemToViewBatch(null);
-            setItemToAceptar(buildBatchActionTarget(batch));
-          }}
-          onCancel={(batch) => {
-            setItemToViewBatch(null);
-            setItemToCancelar(buildBatchActionTarget(batch));
-          }}
-          onRecepcion={(batch) => {
-            setItemToViewBatch(null);
-            void startRecepcionFromBatch(batch);
-          }}
-        />
+        {itemToViewBatch && (
+          <PurchaseBatchDetailModal
+            batch={itemToViewBatch}
+            canEdit={permissions.canEdit}
+            canApprove={permissions.canApprove}
+            canCancel={permissions.canCancel}
+            canRestore={permissions.canRestore}
+            mode={batchViewMode}
+            onClose={() => setItemToViewBatch(null)}
+            onEdit={handleEditBatch}
+            onApprove={(batch) => {
+              setItemToViewBatch(null);
+              setItemToAceptar(buildBatchActionTarget(batch));
+            }}
+            onCancel={(batch) => {
+              setItemToViewBatch(null);
+              setItemToCancelar(buildBatchActionTarget(batch));
+            }}
+            onRestore={(batch) => {
+              setItemToViewBatch(null);
+              handleBatchRestoreClick(batch);
+            }}
+            onRecepcion={(batch) => {
+              setItemToViewBatch(null);
+              void startRecepcionFromBatch(batch);
+            }}
+          />
+        )}
 
-        <PedidoDetailDrawer
-          pedido={itemToViewDetails}
-          canEdit={permissions.canEdit}
-          onClose={() => setItemToViewDetails(null)}
-          onEdit={(pedido) => {
-            setItemToViewDetails(null);
-            setItemToEdit(buildEditData(pedido));
-          }}
-        />
+        {itemToViewDetails && (
+          <PedidoDetailDrawer
+            pedido={itemToViewDetails}
+            canEdit={permissions.canEdit}
+            canRestore={permissions.canRestore}
+            onClose={() => setItemToViewDetails(null)}
+            onEdit={(pedido) => {
+              setItemToViewDetails(null);
+              setItemToEdit(buildEditData(pedido));
+            }}
+            onRestore={(pedido) => {
+              setItemToViewDetails(null);
+              handlers.onRestore(pedido);
+            }}
+          />
+        )}
 
-        <PedidoDeliveryDateDialog
-          pedido={itemToViewDeliveryDate}
-          onClose={() => setItemToViewDeliveryDate(null)}
-        />
+        {itemToViewDeliveryDate && (
+          <PedidoDeliveryDateDialog
+            pedido={itemToViewDeliveryDate}
+            onClose={() => setItemToViewDeliveryDate(null)}
+          />
+        )}
 
-        <ReporteSelectorModal
-          isOpen={isReporteOpen}
-          onClose={() => setIsReporteOpen(false)}
-          tipo="pedido"
-        />
+        {isReporteOpen && (
+          <ReporteSelectorModal
+            isOpen
+            onClose={() => setIsReporteOpen(false)}
+            tipo="pedido"
+          />
+        )}
 
-        <ConfirmDialog
-          isOpen={isRecoveryOpen}
-          onClose={() => setIsRecoveryOpen(false)}
-          onConfirm={handleRecoverDraft}
-          title="Recuperar Pedido Pendiente"
-          message={
-            <>
-              Tienes un pedido que no llegaste a finalizar el día{' '}
-              <strong>
-                {dayjs(draft?.updatedAt).isValid()
-                  ? dayjs(draft?.updatedAt).format('DD/MM/YYYY')
-                  : '...'}
-              </strong>{' '}
-              a las{' '}
-              <strong>
-                {dayjs(draft?.updatedAt).isValid()
-                  ? dayjs(draft?.updatedAt).format('HH:mm')
-                  : '...'}
-              </strong>
-              .
-              <br />
-              <br />
-              ¿Deseas recuperarlo y continuar donde lo dejaste?
-            </>
-          }
-          confirmText="Sí, Recuperar"
-          cancelText="No, Descartar"
-          confirmColor="primary"
-          onCancel={handleDiscardDraft}
-        />
+        {isRecoveryOpen && (
+          <ConfirmDialog
+            isOpen
+            onClose={() => setIsRecoveryOpen(false)}
+            onConfirm={handleRecoverDraft}
+            title="Recuperar Pedido Pendiente"
+            message={
+              <>
+                Tienes un pedido que no llegaste a finalizar el día{' '}
+                <strong>
+                  {dayjs(draft?.updatedAt).isValid()
+                    ? dayjs(draft?.updatedAt).format('DD/MM/YYYY')
+                    : '...'}
+                </strong>{' '}
+                a las{' '}
+                <strong>
+                  {dayjs(draft?.updatedAt).isValid()
+                    ? dayjs(draft?.updatedAt).format('HH:mm')
+                    : '...'}
+                </strong>
+                .
+                <br />
+                <br />
+                ¿Deseas recuperarlo y continuar donde lo dejaste?
+              </>
+            }
+            confirmText="Sí, Recuperar"
+            cancelText="No, Descartar"
+            confirmColor="primary"
+            onCancel={handleDiscardDraft}
+          />
+        )}
 
-        <ConfirmDialog
-          isOpen={isNewPedidoWarningOpen}
-          onClose={() => setIsNewPedidoWarningOpen(false)}
-          onConfirm={() => {
-            setIsNewPedidoWarningOpen(false);
-            openNewPedidoForm();
-          }}
-          title="Ya tienes un pedido pendiente"
-          message={
-            <>
-              Ya existe un borrador de pedido guardado del día{' '}
-              <strong>
-                {dayjs(draft?.updatedAt).isValid()
-                  ? dayjs(draft?.updatedAt).format('DD/MM/YYYY')
-                  : '...'}
-              </strong>
-              . Si empiezas uno nuevo y se guarda, el borrador pendiente se
-              reemplazará.
-              <br />
-              <br />
-              ¿Qué quieres hacer?
-            </>
-          }
-          confirmText="Crear nuevo pedido"
-          cancelText="Continuar borrador"
-          confirmColor="warning"
-          onCancel={handleRecoverDraft}
-        />
+        {isNewPedidoWarningOpen && (
+          <ConfirmDialog
+            isOpen
+            onClose={() => setIsNewPedidoWarningOpen(false)}
+            onConfirm={() => {
+              setIsNewPedidoWarningOpen(false);
+              openNewPedidoForm();
+            }}
+            title="Ya tienes un pedido pendiente"
+            message={
+              <>
+                Ya existe un borrador de pedido guardado del día{' '}
+                <strong>
+                  {dayjs(draft?.updatedAt).isValid()
+                    ? dayjs(draft?.updatedAt).format('DD/MM/YYYY')
+                    : '...'}
+                </strong>
+                . Si empiezas uno nuevo y se guarda, el borrador pendiente se
+                reemplazará.
+                <br />
+                <br />
+                ¿Qué quieres hacer?
+              </>
+            }
+            confirmText="Crear nuevo pedido"
+            cancelText="Continuar borrador"
+            confirmColor="warning"
+            onCancel={handleRecoverDraft}
+          />
+        )}
 
-        <ConfirmDialog
-          isOpen={isDraftCloseConfirmOpen}
-          onClose={() => setIsDraftCloseConfirmOpen(false)}
-          onConfirm={handleSaveDraftAndClose}
-          title="¿Qué quieres hacer con este pedido?"
-          message="Si lo guardas en borrador, podrás retomarlo más tarde. Si cancelas ahora, se descartará el pedido pendiente."
-          confirmText="Guardar en borrador"
-          cancelText="Cancelar pedido"
-          confirmColor="primary"
-          onCancel={handleDiscardDraftAndClose}
-        />
+        {isDraftCloseConfirmOpen && (
+          <ConfirmDialog
+            isOpen
+            onClose={() => setIsDraftCloseConfirmOpen(false)}
+            onConfirm={handleSaveDraftAndClose}
+            title="¿Qué quieres hacer con este pedido?"
+            message="Si lo guardas en borrador, podrás retomarlo más tarde. Si cancelas ahora, se descartará el pedido pendiente."
+            confirmText="Guardar en borrador"
+            cancelText="Cancelar pedido"
+            confirmColor="primary"
+            onCancel={handleDiscardDraftAndClose}
+          />
+        )}
+
+        {itemToRestore && (
+          <ConfirmDialog
+            isOpen
+            onClose={() => !isSaving && setItemToRestore(null)}
+            onConfirm={() => void handleRestoreConfirm()}
+            title="Restaurar pedido"
+            message={`¿Estás seguro de que deseas restaurar el pedido ${formatPedidoId(
+              itemToRestore.numeroGlobal?.toString() || itemToRestore.id
+            )}${
+              itemToRestore.proveedorNombre
+                ? ` de ${itemToRestore.proveedorNombre}`
+                : ''
+            }? El estado volverá a ser PENDIENTE.`}
+            confirmText="Restaurar"
+            confirmColor="primary"
+            isLoading={isSaving}
+          />
+        )}
       </Paper>
     </Box>
   );

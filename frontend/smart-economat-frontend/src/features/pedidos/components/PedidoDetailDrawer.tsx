@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import PrintOutlinedIcon from '@mui/icons-material/PrintOutlined';
+import RestoreIcon from '@mui/icons-material/Restore';
 import DetailModal, { DetailSection } from '../../../components/ui/DetailModal';
 import StatusChip from '../../../components/ui/StatusChip';
 import {
@@ -31,19 +32,24 @@ import {
   getPedidoCreatorName,
   getPedidoProviderName,
 } from '../utils/pedidoFormatters';
+import EditIcon from '@mui/icons-material/Edit';
 
 interface PedidoDetailDrawerProps {
   pedido: Pedido | null;
   canEdit: boolean;
+  canRestore: boolean;
   onClose: () => void;
   onEdit: (pedido: Pedido) => void;
+  onRestore: (pedido: Pedido) => void;
 }
 
 const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
   pedido,
   canEdit,
+  canRestore,
   onClose,
   onEdit,
+  onRestore,
 }) => {
   const toast = useToast();
   const [isDownloadingPdf, setIsDownloadingPdf] = React.useState(false);
@@ -250,8 +256,21 @@ const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
                 color="primary"
                 disableElevation
                 onClick={() => onEdit(pedido)}
+                startIcon={<EditIcon />}
               >
-                Editar pedido
+                Editar
+              </Button>
+            )}
+
+            {canRestore && pedido.estado === EstadoPedido.CANCELADO && (
+              <Button
+                variant="contained"
+                color="info"
+                disableElevation
+                startIcon={<RestoreIcon />}
+                onClick={() => onRestore(pedido)}
+              >
+                Revertir
               </Button>
             )}
           </Box>

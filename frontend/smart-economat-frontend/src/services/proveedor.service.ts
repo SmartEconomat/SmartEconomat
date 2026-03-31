@@ -108,3 +108,14 @@ export async function updateProveedor(
   const body = (await response.json()) as ApiResponse<Proveedor>;
   return body.data;
 }
+
+export async function fetchProveedoresConPedidos(): Promise<Proveedor[]> {
+  const response = await baseFetch('/proveedor/con-pedidos');
+  if (!response.ok) {
+    throw new Error(
+      `Error al obtener proveedores con pedidos: ${response.status} ${response.statusText}`
+    );
+  }
+  const body = (await response.json()) as ApiResponse<Proveedor[]>;
+  return body.data;
+}

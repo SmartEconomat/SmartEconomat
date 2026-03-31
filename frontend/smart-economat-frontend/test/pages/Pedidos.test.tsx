@@ -18,11 +18,40 @@ import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
 // Mocking hooks and components
-vi.mock('../../src/hooks/usePedidoDraft');
-vi.mock('../../src/store/auth.hooks');
-vi.mock('../../src/services/pedido.service');
-vi.mock('../../src/services/proveedor.service');
-vi.mock('../../src/services/productoProveedor.service');
+vi.mock('../../src/hooks/usePedidoDraft', () => ({
+  usePedidoDraft: vi.fn(),
+}));
+vi.mock('../../src/store/auth.hooks', () => ({
+  useAuth: vi.fn(),
+  usePermission: vi.fn(),
+  useAnyPermission: vi.fn(),
+}));
+vi.mock('../../src/services/pedido.service', () => ({
+  fetchPedidos: vi.fn(),
+  fetchPedidoUsuarios: vi.fn(),
+  fetchPurchaseBatches: vi.fn(),
+  mapPedidoUsuarioToPedidoRow: vi.fn((pedidoUsuario) => pedidoUsuario),
+  aceptarPedidoUsuario: vi.fn(),
+  aceptarPedido: vi.fn(),
+  cancelPedidoUsuario: vi.fn(),
+  cancelPedido: vi.fn(),
+  consolidatePurchaseBatch: vi.fn(),
+  createPedido: vi.fn(),
+  createPedidoUsuario: vi.fn(),
+  fetchPurchaseBatchById: vi.fn(),
+  fetchPedidoUsuarioById: vi.fn(),
+  updatePedidoUsuario: vi.fn(),
+  updatePedido: vi.fn(),
+  restaurarPedido: vi.fn(),
+  restaurarPedidoUsuario: vi.fn(),
+  restaurarPurchaseBatch: vi.fn(),
+}));
+vi.mock('../../src/services/proveedor.service', () => ({
+  fetchProveedores: vi.fn(),
+}));
+vi.mock('../../src/services/productoProveedor.service', () => ({
+  searchProductoProveedor: vi.fn(),
+}));
 vi.mock('../../src/store/toast.hooks', () => ({
   useToast: () => ({
     success: vi.fn(),
@@ -48,17 +77,18 @@ describe('Pedidos Page - Recovery Modal Bug', () => {
     } as unknown as ReturnType<typeof authHooks.useAuth>);
 
     // Default mock for data fetching
-    vi.mocked(pedidoService.fetchPedidos).mockResolvedValue({
+    vi.mocked(pedidoService.fetchPedidoUsuarios).mockResolvedValue({
       data: [],
       total: 0,
       totalPages: 0,
       page: 1,
-      limit: 10,
+      limit: 50,
     } as unknown as ReturnType<
-      typeof pedidoService.fetchPedidos
+      typeof pedidoService.fetchPedidoUsuarios
     > extends Promise<infer R>
       ? R
       : never);
+    vi.mocked(pedidoService.fetchPurchaseBatches).mockResolvedValue([]);
     vi.mocked(proveedorService.fetchProveedores).mockResolvedValue({
       data: [],
       total: 0,
@@ -86,30 +116,40 @@ describe('Pedidos Page - Recovery Modal Bug', () => {
     const [draft, setDraft] = React.useState<PedidoDraftRecord | null>(null);
     const isLoadingDraft = false;
 
+    const loadDraft = React.useCallback(() => {
+      mockLoadDraft();
+      return Promise.resolve();
+    }, []);
+
+    const saveDraft = React.useCallback((payload: Record<string, unknown>) => {
+      mockSaveDraft(payload);
+      setDraft({
+        id: 'new-draft',
+        userId: 'user-1',
+        version: 1,
+        payload,
+        updatedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        expiresAt: null,
+        source: 'redis',
+      });
+    }, []);
+
+    const mockedDraftHook = React.useMemo(
+      () =>
+        ({
+          draft,
+          loadDraft,
+          saveDraft,
+          discardDraft: mockDiscardDraft,
+          isLoadingDraft,
+          flushSave: mockFlushSave,
+        }) as unknown as ReturnType<typeof pedidoDraftHook.usePedidoDraft>,
+      [draft, isLoadingDraft, loadDraft, saveDraft]
+    );
+
     // Override the mock to return our local state
-    vi.mocked(pedidoDraftHook.usePedidoDraft).mockReturnValue({
-      draft,
-      loadDraft: () => {
-        mockLoadDraft();
-        return Promise.resolve();
-      },
-      saveDraft: (payload: Record<string, unknown>) => {
-        mockSaveDraft(payload);
-        setDraft({
-          id: 'new-draft',
-          userId: 'user-1',
-          version: 1,
-          payload,
-          updatedAt: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
-          expiresAt: null,
-          source: 'redis',
-        });
-      },
-      discardDraft: mockDiscardDraft,
-      isLoadingDraft,
-      flushSave: mockFlushSave,
-    } as unknown as ReturnType<typeof pedidoDraftHook.usePedidoDraft>);
+    vi.mocked(pedidoDraftHook.usePedidoDraft).mockReturnValue(mockedDraftHook);
 
     return (
       <MemoryRouter>
