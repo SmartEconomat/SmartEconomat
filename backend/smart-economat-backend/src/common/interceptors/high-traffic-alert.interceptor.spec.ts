@@ -4,13 +4,25 @@ import { of } from 'rxjs';
 
 describe('HighTrafficAlertInterceptor', () => {
   let interceptor: HighTrafficAlertInterceptor;
+  let prevNodeEnv: string | undefined;
+  let prevJestWorker: string | undefined;
 
   beforeEach(() => {
+    prevNodeEnv = process.env.NODE_ENV;
+    prevJestWorker = process.env.JEST_WORKER_ID;
+    process.env.NODE_ENV = 'production';
+    delete process.env.JEST_WORKER_ID;
     interceptor = new HighTrafficAlertInterceptor();
     jest.useFakeTimers();
   });
 
   afterEach(() => {
+    process.env.NODE_ENV = prevNodeEnv;
+    if (prevJestWorker !== undefined) {
+      process.env.JEST_WORKER_ID = prevJestWorker;
+    } else {
+      delete process.env.JEST_WORKER_ID;
+    }
     jest.useRealTimers();
   });
 

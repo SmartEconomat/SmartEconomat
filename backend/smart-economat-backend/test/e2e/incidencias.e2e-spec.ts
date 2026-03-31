@@ -16,6 +16,7 @@ describe('IncidenciaController (e2e)', () => {
   let adminUserId: string;
   let testIncidenciaId: string;
   let recepcionId: string;
+  let pedidoId: string;
 
   beforeAll(async () => {
     app = await getTestApp();
@@ -47,6 +48,9 @@ describe('IncidenciaController (e2e)', () => {
   });
 
   beforeEach(async () => {
+    recepcionId = '';
+    pedidoId = '';
+
     const provRes = await request(app.getHttpServer() as string)
       .post('/api/v1/proveedor')
       .set('Authorization', `Bearer ${adminToken}`)
@@ -97,7 +101,7 @@ describe('IncidenciaController (e2e)', () => {
           ],
         });
       expect(pedidoRes.status).toBe(201);
-      const pedidoId = pedidoRes.body.data?.id;
+      pedidoId = pedidoRes.body.data?.id;
 
       let pedidoProductoId: string | undefined;
       if (pedidoId) {
@@ -127,12 +131,13 @@ describe('IncidenciaController (e2e)', () => {
       }
     }
 
-    if (recepcionId) {
+    if (recepcionId && pedidoId) {
       const incRes = await request(app.getHttpServer() as string)
         .post('/api/v1/incidencias')
         .set('Authorization', `Bearer ${profesorToken}`)
         .send({
-          recepcionId: recepcionId,
+          recepcionId,
+          pedidoId,
           observacionesRecepcion: 'Incidencia Base E2E',
         });
       expect(incRes.status).toBe(201);
@@ -150,7 +155,8 @@ describe('IncidenciaController (e2e)', () => {
         .post('/api/v1/incidencias')
         .set('Authorization', `Bearer ${profesorToken}`)
         .send({
-          recepcionId: recepcionId,
+          recepcionId,
+          pedidoId,
           observacionesRecepcion: 'Falta un bulto en la caja 2',
         });
 
@@ -233,7 +239,8 @@ describe('IncidenciaController (e2e)', () => {
         .post('/api/v1/incidencias')
         .set('Authorization', `Bearer ${profesorToken}`)
         .send({
-          recepcionId: recepcionId,
+          recepcionId,
+          pedidoId,
           observacionesRecepcion: 'Incidencia para borrar',
         });
 

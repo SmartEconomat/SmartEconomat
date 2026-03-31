@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
@@ -28,6 +29,8 @@ import {
 
 @Injectable()
 export class ProduccionService {
+  private readonly logger = new Logger(ProduccionService.name);
+
   constructor(
     private readonly recetaRepository: RecetaRepository,
     private readonly dataSource: DataSource
@@ -80,18 +83,15 @@ export class ProduccionService {
 
       const productoIds = receta.ingredientes.map((i) => i.producto.id);
 
-      console.log('DEBUG: recetaId', receta.id);
-      console.log('DEBUG: productoElaboradoId', productoElaboradoId);
-      console.log(
-        'DEBUG: productoProveedorResultado',
-        !!productoProveedorResultado
+      this.logger.log(
+        `Ejecutando producción: recetaId=${receta.id}, productoElaboradoId=${productoElaboradoId}, proveedorResultado=${!!productoProveedorResultado}`
       );
 
       const inventarios = await manager
         .createQueryBuilder(Inventario, 'inv')
         .innerJoinAndSelect('inv.productoProveedor', 'pp')
         .innerJoinAndSelect('pp.producto', 'prod')
-        .where('pp.producto_id IN (:...productoIds)', { productoIds })
+        .where('pp.productoId IN (:...productoIds)', { productoIds })
         .andWhere('inv.cantidad_actual > 0')
         .orderBy('inv.fecha_caducidad', 'ASC', 'NULLS LAST')
         .addOrderBy('inv.fecha_entrada', 'ASC')
@@ -138,8 +138,8 @@ export class ProduccionService {
         for (const inv of invsProducto) {
           if (remainingToDeductInIngredientUnit <= 0) break;
 
-          console.log(
-            `DEBUG: ing="${ing.producto.nombre}" req=${cantidadRequerida} invId=${inv.id} stock=${inv.cantidadActual} unit=${inv.productoProveedor.producto.unidad}`
+          this.logger.debug(
+            `Consumiendo: ing="${ing.producto.nombre}" requerido=${cantidadRequerida} invId=${inv.id} stock=${inv.cantidadActual} unidad=${inv.productoProveedor.producto.unidad}`
           );
           const invUnit = inv.productoProveedor.producto.unidad;
           const disponibleInIngredientUnit =
@@ -153,8 +153,8 @@ export class ProduccionService {
           const factor = this.conversionFactor(ing.unidad, invUnit);
           const descontarInInventoryUnit = descontarInIngredientUnit * factor;
 
-          console.log(
-            `DEBUG: disponibleInIngUnit=${disponibleInIngredientUnit} descontarInIngUnit=${descontarInIngredientUnit} factor=${factor} descontarInInvUnit=${descontarInInventoryUnit}`
+          this.logger.debug(
+            `Descuento: disponible=${disponibleInIngredientUnit} descontar=${descontarInIngredientUnit} factor=${factor} descontarInvUnit=${descontarInInventoryUnit}`
           );
 
           inv.ajustarCantidad(-descontarInInventoryUnit);
@@ -167,8 +167,8 @@ export class ProduccionService {
 
           const costAdd = precioUnitario * descontarInInventoryUnit;
           costeTotalReal += costAdd;
-          console.log(
-            `DEBUG: precio=${precioUnitario} costAdd=${costAdd} totalNow=${costeTotalReal}`
+          this.logger.debug(
+            `Coste: precio=${precioUnitario} costAdd=${costAdd} totalAcumulado=${costeTotalReal}`
           );
 
           consumos.push({
@@ -180,7 +180,9 @@ export class ProduccionService {
         }
       }
 
-      console.log('DEBUG: Final costeTotalReal', costeTotalReal);
+      this.logger.log(
+        `Producción completada: costeTotalReal=${costeTotalReal}`
+      );
       await manager.save(Inventario, inventarios);
 
       let fechaCaducidad: Date | null = null;

@@ -44,7 +44,7 @@ export class MermaService {
         .createQueryBuilder(Inventario, 'inv')
         .innerJoinAndSelect('inv.productoProveedor', 'pp')
         .innerJoinAndSelect('pp.producto', 'prod')
-        .where('pp.producto_id = :productoId', { productoId: dto.productoId })
+        .where('pp.productoId = :productoId', { productoId: dto.productoId })
         .andWhere('inv.cantidad_actual > 0')
         .orderBy('inv.fecha_caducidad', 'ASC', 'NULLS LAST')
         .addOrderBy('inv.fecha_entrada', 'ASC')
