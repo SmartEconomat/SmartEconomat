@@ -31,6 +31,7 @@ import type { Response } from 'express';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { Public } from '../../../common/decorators/public.decorator';
 
 @ApiTags('Archivos')
 @ApiBearerAuth()
@@ -98,7 +99,7 @@ export class ArchivoController {
   }
 
   @Get('content/:filename')
-  @RequirePermissions('archivos:ver')
+  @Public()
   @ApiOperation({ summary: 'Servir el contenido de un archivo subido' })
   getFileContent(@Param('filename') filename: string, @Res() res: Response) {
     const filePath = this.archivoService.getFileContent(filename);

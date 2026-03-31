@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from 'react';
 import { Box, Stack } from '@mui/material';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
@@ -314,6 +320,29 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   const imageFields = formFields.filter((f) => f.type === 'image');
   const mainImageField = imageFields[0];
   const nonImageFields = formFields.filter((f) => f.type !== 'image');
+
+  const imageFieldName = mainImageField?.name;
+  const imageRawValue = useMemo(
+    () => (imageFieldName !== undefined ? formData[imageFieldName] : undefined),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      imageFieldName,
+      imageFieldName !== undefined ? formData[imageFieldName] : undefined,
+    ]
+  );
+  const [imageBlobUrl, setImageBlobUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!(imageRawValue instanceof File)) {
+      setImageBlobUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(imageRawValue);
+    setImageBlobUrl(url);
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [imageRawValue]);
 
   const bottomFields = nonImageFields.filter((f) => f.position === 'bottom');
   const rightFields = nonImageFields.filter(
@@ -632,7 +661,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
               const value = formData[name];
               const previewUrl =
                 value instanceof File
-                  ? URL.createObjectURL(value)
+                  ? imageBlobUrl
                   : typeof value === 'string'
                     ? resolveStoredFileUrl(value)
                     : null;
