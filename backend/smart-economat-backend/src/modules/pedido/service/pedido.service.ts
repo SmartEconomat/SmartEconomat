@@ -105,21 +105,23 @@ export class PedidoService {
   }
 
   async update(id: string, updatePedidoDto: UpdatePedidoDto): Promise<Pedido> {
-    const pedido = await this.findOne(id);
-
-    if (updatePedidoDto.proveedorId) {
-      pedido.proveedor = { id: updatePedidoDto.proveedorId } as any;
-    }
-
-    if (updatePedidoDto.observaciones !== undefined) {
-      pedido.observaciones = updatePedidoDto.observaciones;
-    }
+    await this.findOne(id);
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
+      const pedidoUpdateData: Partial<Pedido> = {};
+
+      if (updatePedidoDto.proveedorId) {
+        pedidoUpdateData.proveedorId = updatePedidoDto.proveedorId;
+      }
+
+      if (updatePedidoDto.observaciones !== undefined) {
+        pedidoUpdateData.observaciones = updatePedidoDto.observaciones;
+      }
+
       if (updatePedidoDto.lineas !== undefined) {
         if (updatePedidoDto.lineas.length === 0) {
           throw new BadRequestException(
@@ -159,24 +161,27 @@ export class PedidoService {
           nuevoCosteTotal += costeLinea;
 
           lineasActualizadas.push({
-            pedido: { id: pedido.id },
+            pedido: { id },
             productoProveedor: { id: productoProveedor.id },
             cantidad: linea.cantidad,
             precioUnitario: precioVigente,
           });
         }
 
-        pedido.costeTotal = nuevoCosteTotal;
+        pedidoUpdateData.costeTotal = nuevoCosteTotal;
 
         for (const linea of lineasActualizadas) {
           await queryRunner.manager.save(PedidoProducto, linea);
         }
       }
 
-      const savedPedido = await queryRunner.manager.save(Pedido, pedido);
+      if (Object.keys(pedidoUpdateData).length > 0) {
+        await queryRunner.manager.update(Pedido, { id }, pedidoUpdateData);
+      }
+
       await queryRunner.commitTransaction();
 
-      return await this.findOne(savedPedido.id);
+      return await this.findOne(id);
     } catch (error: any) {
       await queryRunner.rollbackTransaction();
       if (

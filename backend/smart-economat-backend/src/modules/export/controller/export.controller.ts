@@ -27,7 +27,7 @@ export class ExportController {
   constructor(private readonly exportService: ExportService) {}
 
   @Get('productos/xlsx')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   async exportProductos(
     @Query() query: ExportProductoFilterDto,
     @Res() res: Response
@@ -41,7 +41,7 @@ export class ExportController {
   }
 
   @Get('pedidos/xlsx')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   async exportPedidos(
     @Query() query: ExportPedidoFilterDto,
     @Res() res: Response
@@ -52,7 +52,7 @@ export class ExportController {
   }
 
   @Get('proveedores/xlsx')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   async exportProveedores(
     @Query() query: ExportProveedorFilterDto,
     @Res() res: Response
@@ -66,7 +66,7 @@ export class ExportController {
   }
 
   @Get('albaranes/xlsx')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   async exportAlbaranes(
     @Query() query: ExportAlbaranFilterDto,
     @Res() res: Response
@@ -80,7 +80,7 @@ export class ExportController {
   }
 
   @Get('incidencias/xlsx')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   async exportIncidencias(
     @Query() query: ExportIncidenciaFilterDto,
     @Res() res: Response
@@ -94,7 +94,7 @@ export class ExportController {
   }
 
   @Get('inventario/xlsx')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   async exportInventario(
     @Query() query: ExportInventarioFilterDto,
     @Res() res: Response
@@ -108,7 +108,7 @@ export class ExportController {
   }
 
   @Get('movimientos/xlsx')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   async exportMovimientos(
     @Query() query: ExportMovimientoFilterDto,
     @Res() res: Response
@@ -122,7 +122,7 @@ export class ExportController {
   }
 
   @Get('recepciones/xlsx')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   async exportRecepciones(
     @Query() query: ExportRecepcionFilterDto,
     @Res() res: Response
@@ -136,7 +136,7 @@ export class ExportController {
   }
 
   @Get('recetas/xlsx')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   async exportRecetas(
     @Query() query: ExportRecetaFilterDto,
     @Res() res: Response
@@ -147,7 +147,7 @@ export class ExportController {
   }
 
   @Get('ubicaciones/xlsx')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   async exportUbicaciones(
     @Query() query: ExportUbicacionFilterDto,
     @Res() res: Response
@@ -161,7 +161,7 @@ export class ExportController {
   }
 
   @Get('usuarios/xlsx')
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @Roles(rolUsuario.ADMIN)
   async exportUsuarios(
     @Query() query: ExportUsuarioFilterDto,
     @Res() res: Response
@@ -175,7 +175,7 @@ export class ExportController {
   }
 
   @Get('productos/pdf')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   async exportProductosPdf(
     @Query() query: ExportProductoFilterDto,
     @Res() res: Response
@@ -189,7 +189,7 @@ export class ExportController {
   }
 
   @Get('proveedores/pdf')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   async exportProveedoresPdf(
     @Query() query: ExportProveedorFilterDto,
     @Res() res: Response
@@ -203,7 +203,7 @@ export class ExportController {
   }
 
   @Get('inventario/pdf')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   async exportInventarioPdf(
     @Query() query: ExportInventarioFilterDto,
     @Res() res: Response
@@ -217,7 +217,7 @@ export class ExportController {
   }
 
   @Get('pedidos/pdf')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   async exportPedidosPdf(
     @Query() query: ExportPedidoFilterDto,
     @Res() res: Response
@@ -228,7 +228,7 @@ export class ExportController {
   }
 
   @Get('albaranes/pdf')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   async exportAlbaranesPdf(
     @Query() query: ExportAlbaranFilterDto,
     @Res() res: Response
@@ -242,7 +242,7 @@ export class ExportController {
   }
 
   @Get('recetas/pdf')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   async exportRecetasPdf(
     @Query() query: ExportRecetaFilterDto,
     @Res() res: Response

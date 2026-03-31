@@ -43,6 +43,24 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   confirmVariant = 'contained',
   isLoading = false,
 }) => {
+  const releaseFocusedElement = () => {
+    if (typeof document === 'undefined') return;
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLElement) {
+      activeElement.blur();
+    }
+  };
+
+  const handleCancel = () => {
+    releaseFocusedElement();
+    (onCancel || onClose)();
+  };
+
+  const handleConfirm = () => {
+    releaseFocusedElement();
+    onConfirm();
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
       <Box sx={{ pb: 3 }}>
@@ -59,7 +77,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
         {cancelText && (
           <Button
-            onClick={onCancel || onClose}
+            onClick={handleCancel}
             color={cancelColor}
             variant={cancelVariant}
           >
@@ -67,7 +85,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           </Button>
         )}
         <Button
-          onClick={onConfirm}
+          onClick={handleConfirm}
           color={confirmColor}
           variant={confirmVariant}
           disableElevation

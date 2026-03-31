@@ -28,7 +28,7 @@ export class GeneratePedidoFromRecetasDto {
       'validation.NO_SE_PERMITEN_RECETAS_DUPLICADAS'
     ),
   })
-  @IsUUID('7', {
+  @IsUUID('all', {
     each: true,
     message: i18nValidationMessage(
       'validation.EL_ID_DE_LA_RECETA_DEBE_SER_UN_UUID_V_LIDO'

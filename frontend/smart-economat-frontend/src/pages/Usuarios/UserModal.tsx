@@ -69,7 +69,7 @@ const UserModal: React.FC<UserModalProps> = ({
     username: '',
     nombre: '',
     email: '',
-    rol: 'Alumno',
+    rol: 'ALUMNO',
     estado: 'Inactivo',
     roleId: '',
     slotId: '',
@@ -271,11 +271,7 @@ const UserModal: React.FC<UserModalProps> = ({
 
   const isAdminRole = (role?: string) => {
     const normalized = role?.toUpperCase() || '';
-    return (
-      normalized === 'ADMIN' ||
-      normalized === 'ADMINISTRADOR' ||
-      normalized === 'SUPER_ADMIN'
-    );
+    return normalized === 'ADMIN' || normalized === 'SUPER_ADMIN';
   };
 
   const isLastAdmin = () => {
@@ -293,7 +289,7 @@ const UserModal: React.FC<UserModalProps> = ({
     if (!formData.roleId.trim()) newErrors.roleId = 'Debes seleccionar un rol';
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (formData.rol !== 'Alumno') {
+    if (formData.rol !== 'ALUMNO') {
       if (!formData.email.trim()) {
         newErrors.email = 'El correo es obligatorio';
       } else if (!emailRegex.test(formData.email)) {
@@ -441,7 +437,7 @@ const UserModal: React.FC<UserModalProps> = ({
               helperText={errors.nombre}
               disabled={isSaving}
             />
-            {formData.rol !== 'Alumno' && (
+            {formData.rol !== 'ALUMNO' && (
               <InputField
                 id="user-email"
                 fullWidth

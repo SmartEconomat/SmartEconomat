@@ -50,7 +50,12 @@ export const productoSchema: DynamicField[] = [
       { value: CategoriaProducto.OTRO, label: 'Otro' },
     ],
   },
-  { name: 'codigoBarras', label: 'Código de Barras' },
+  {
+    name: 'codigoBarras',
+    label: 'Código de Barras',
+    type: 'barcode',
+    autoFocus: true,
+  },
   {
     name: 'imagen',
     label: 'Cargar Imagen',

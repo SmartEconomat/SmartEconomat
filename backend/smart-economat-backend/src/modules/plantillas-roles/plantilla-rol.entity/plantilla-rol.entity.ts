@@ -17,7 +17,7 @@ import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
 export class PlantillaRol extends BaseEntity {
   /**
    * Nombre único de la plantilla
-   * Ejemplo: "SUPER_ADMIN", "ADMINISTRADOR", "GESTOR"
+   * Ejemplo: "SUPER_ADMIN", "ADMIN", "PROFESOR", "ALUMNO"
    */
   @Column({ type: 'varchar', length: 100, unique: true })
   nombre!: string;

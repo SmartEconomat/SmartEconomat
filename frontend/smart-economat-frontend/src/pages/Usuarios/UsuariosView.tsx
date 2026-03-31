@@ -489,10 +489,12 @@ const UsuariosView: React.FC = () => {
       if (!currentUser) return false;
       const currentRol = currentUser.rol.toUpperCase();
       if (targetUser.id.toString() === currentUser.id.toString()) return false;
-      if (currentRol === 'ADMIN' || currentRol === 'ADMINISTRADOR') {
+      if (currentRol === 'ADMIN' || currentRol === 'SUPER_ADMIN') {
         return true;
       }
-      if (currentRol === 'PROFESOR') return targetUser.rol === 'Alumno';
+      if (currentRol === 'PROFESOR') {
+        return targetUser.rol.toUpperCase() === 'ALUMNO';
+      }
       return false;
     },
     [currentUser]

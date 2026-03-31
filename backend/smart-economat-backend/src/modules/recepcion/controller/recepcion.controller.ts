@@ -42,7 +42,7 @@ export class RecepcionController {
   ) {}
 
   @Post()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.CREATED)
   create(
     @Body() dto: CreateRecepcionDto,
@@ -79,7 +79,7 @@ export class RecepcionController {
   }
 
   @Get(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   findOne(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Req() req: { user?: { rol?: string } }
@@ -89,7 +89,7 @@ export class RecepcionController {
   }
 
   @Patch(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   update(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: UpdateRecepcionDto
@@ -98,7 +98,7 @@ export class RecepcionController {
   }
 
   @Delete(':id')
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @Roles(rolUsuario.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.recepcionService.remove(id);

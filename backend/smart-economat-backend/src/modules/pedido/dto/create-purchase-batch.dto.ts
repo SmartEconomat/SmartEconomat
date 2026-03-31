@@ -56,7 +56,7 @@ export class ConsolidatePurchaseBatchDto {
       'validation.DEBES_SELECCIONAR_AL_MENOS_UN_PEDIDO'
     ),
   })
-  @IsUUID('7', { each: true })
+  @IsUUID('all', { each: true })
   @Type(() => String)
   pedidoIds!: string[];
 
@@ -68,7 +68,7 @@ export class ConsolidatePurchaseBatchDto {
   })
   @IsOptional()
   @IsArray()
-  @IsUUID('7', { each: true })
+  @IsUUID('all', { each: true })
   @Type(() => String)
   pedidoUsuarioIds?: string[];
 

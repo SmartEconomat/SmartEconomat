@@ -1,10 +1,129 @@
 import { eventBus, AUTH_EVENTS } from '../utils/eventBus';
+import { tokenManager } from '../utils/token.manager';
 
 /**
  * Servicio API genérico y reutilizable con manejo global de errores.
  */
 
 const API_BASE = '/api/v1';
+
+type InvalidIdField = {
+  path: string;
+  value: unknown;
+};
+
+const INVALID_ID_TOKENS = new Set(['null', 'undefined', 'nan']);
+
+function isMutationMethod(method: string): boolean {
+  return method === 'POST' || method === 'PUT' || method === 'PATCH';
+}
+
+function isIdLikeKey(key: string): boolean {
+  const normalized = key.toLowerCase();
+  return (
+    normalized === 'id' ||
+    normalized.endsWith('id') ||
+    normalized.endsWith('_id')
+  );
+}
+
+function isInvalidIdValue(value: unknown): boolean {
+  if (value === null || value === undefined) return true;
+  if (typeof value !== 'string') return false;
+
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return true;
+  return INVALID_ID_TOKENS.has(normalized);
+}
+
+function collectInvalidIdFields(
+  value: unknown,
+  currentPath = 'body'
+): InvalidIdField[] {
+  if (Array.isArray(value)) {
+    return value.flatMap((entry, index) =>
+      collectInvalidIdFields(entry, `${currentPath}[${index}]`)
+    );
+  }
+
+  if (!value || typeof value !== 'object') {
+    return [];
+  }
+
+  return Object.entries(value as Record<string, unknown>).flatMap(
+    ([key, entryValue]) => {
+      const nextPath = `${currentPath}.${key}`;
+      const invalidCurrentField =
+        isIdLikeKey(key) && isInvalidIdValue(entryValue)
+          ? [{ path: nextPath, value: entryValue }]
+          : [];
+
+      return [
+        ...invalidCurrentField,
+        ...collectInvalidIdFields(entryValue, nextPath),
+      ];
+    }
+  );
+}
+
+function extractInvalidIdFieldsFromBody(
+  body: BodyInit | null | undefined,
+  contentTypeHeader: string | null
+): InvalidIdField[] {
+  if (!body || body instanceof FormData) {
+    return [];
+  }
+
+  if (typeof body !== 'string') {
+    return [];
+  }
+
+  const normalizedContentType = (contentTypeHeader || '').toLowerCase();
+  const shouldParseAsJson =
+    normalizedContentType.includes('application/json') ||
+    body.trim().startsWith('{') ||
+    body.trim().startsWith('[');
+
+  if (!shouldParseAsJson) {
+    return [];
+  }
+
+  const parsedBody = JSON.parse(body) as unknown;
+  return collectInvalidIdFields(parsedBody);
+}
+
+function extractInvalidIdPathSegments(path: string): string[] {
+  const [rawPath] = path.split('?');
+  const segments = rawPath.split('/').filter(Boolean);
+
+  return segments.filter((segment) => {
+    const normalized = segment.trim().toLowerCase();
+    return (
+      !normalized ||
+      INVALID_ID_TOKENS.has(normalized) ||
+      normalized.startsWith(':')
+    );
+  });
+}
+
+function extractInvalidIdQueryParams(path: string): string[] {
+  const queryIndex = path.indexOf('?');
+  if (queryIndex < 0) {
+    return [];
+  }
+
+  const query = path.slice(queryIndex + 1);
+  const params = new URLSearchParams(query);
+  const invalidParams: string[] = [];
+
+  params.forEach((value, key) => {
+    if (isIdLikeKey(key) && isInvalidIdValue(value)) {
+      invalidParams.push(key);
+    }
+  });
+
+  return invalidParams;
+}
 
 export function resolveStoredFileUrl(filePath?: string | null): string {
   if (!filePath) return '';
@@ -141,16 +260,6 @@ export async function parseApiResponse<T>(
   return payload as ApiResponse<T>;
 }
 
-/**
- * Helper para obtener el valor de una cookie por nombre.
- */
-function getCookie(name: string): string | null {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
-  return null;
-}
-
 // ─── Helpers de fetch ───────────────────────────────────────────────────────
 
 /**
@@ -160,17 +269,51 @@ export async function baseFetch(
   path: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const headers = new Headers(options.headers);
+  const normalizedPath = String(path || '').trim();
+  const [pathWithoutQuery] = normalizedPath.split('?');
 
-  // Protección CSRF: Añadir token desde la cookie si existe
-  const csrfToken = getCookie('XSRF-TOKEN');
-  if (csrfToken) {
-    headers.set('X-XSRF-TOKEN', csrfToken);
+  if (!normalizedPath.startsWith('/')) {
+    throw new ApiError(
+      `Ruta de API inválida: "${path}". Debe comenzar por "/".`,
+      400,
+      { path }
+    );
   }
 
-  // Nota: Ya no se adjunta el token desde localStorage por seguridad (XSS).
-  // El backend utiliza la cookie 'access_token' (httpOnly) gestionada automáticamente
-  // por el navegador gracias a credentials: 'include'.
+  if (pathWithoutQuery.length > 1 && pathWithoutQuery.endsWith('/')) {
+    throw new ApiError(
+      'Solicitud cancelada: la ruta termina con "/" y puede contener un id vacío.',
+      400,
+      { path: normalizedPath }
+    );
+  }
+
+  const invalidPathSegments = extractInvalidIdPathSegments(normalizedPath);
+  if (invalidPathSegments.length > 0) {
+    throw new ApiError(
+      'Solicitud cancelada: se detectaron ids inválidos en la ruta.',
+      400,
+      { path: normalizedPath, invalidPathSegments }
+    );
+  }
+
+  const invalidIdQueryParams = extractInvalidIdQueryParams(normalizedPath);
+  if (invalidIdQueryParams.length > 0) {
+    throw new ApiError(
+      'Solicitud cancelada: se detectaron ids inválidos en la query.',
+      400,
+      { path: normalizedPath, invalidIdQueryParams }
+    );
+  }
+
+  const headers = new Headers(options.headers);
+  const method = (options.method || 'GET').toUpperCase();
+
+  // Añadir token JWT si está disponible (desde memoria)
+  const token = tokenManager.getToken();
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
 
   // Añadir Content-Type si corresponde
   if (
@@ -181,7 +324,25 @@ export async function baseFetch(
     headers.set('Content-Type', 'application/json');
   }
 
-  const response = await fetch(`${API_BASE}${path}`, {
+  if (isMutationMethod(method)) {
+    const invalidBodyIdFields = extractInvalidIdFieldsFromBody(
+      options.body,
+      headers.get('Content-Type')
+    );
+
+    if (invalidBodyIdFields.length > 0) {
+      throw new ApiError(
+        'Solicitud cancelada: se detectaron ids nulos/vacíos en el body.',
+        400,
+        {
+          path: normalizedPath,
+          invalidBodyIdFields,
+        }
+      );
+    }
+  }
+
+  const response = await fetch(`${API_BASE}${normalizedPath}`, {
     ...options,
     headers,
     credentials: 'include',

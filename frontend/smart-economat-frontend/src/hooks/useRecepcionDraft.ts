@@ -59,7 +59,7 @@ function extractRemoteDraft(error: ApiError): RecepcionDraftEnvelope | null {
 
 export function useRecepcionDraft({
   activeStep,
-  debounceMs = 6000,
+  debounceMs = 2000,
   defaultDraft,
   setActiveStep,
 }: UseRecepcionDraftOptions) {
@@ -72,6 +72,8 @@ export function useRecepcionDraft({
   const draftRef = useRef(draft);
   const activeStepRef = useRef(activeStep);
   const skipAutoSaveRef = useRef(false);
+  const pendingSyncTimerRef = useRef<number | null>(null);
+  const isSyncingRef = useRef(false);
 
   useEffect(() => {
     draftRef.current = draft;
@@ -89,7 +91,12 @@ export function useRecepcionDraft({
         return null;
       }
 
+      if (isSyncingRef.current) {
+        return null;
+      }
+
       const candidateDraft = overrideDraft ?? draftRef.current;
+      isSyncingRef.current = true;
       setSyncStatus('saving');
       setSyncError(null);
 
@@ -121,10 +128,24 @@ export function useRecepcionDraft({
         setSyncError(message);
         setSyncStatus('error');
         return null;
+      } finally {
+        isSyncingRef.current = false;
       }
     },
     []
   );
+
+  const persistCurrentDraftSilently = useCallback(async () => {
+    if (activeStepRef.current >= 3) {
+      return;
+    }
+
+    try {
+      await saveRecepcionDraft(draftRef.current);
+    } catch {
+      // El guardado silencioso en salida no debe interrumpir navegación.
+    }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -179,14 +200,58 @@ export function useRecepcionDraft({
       return;
     }
 
-    const timer = window.setTimeout(() => {
+    if (pendingSyncTimerRef.current != null) {
+      return;
+    }
+
+    pendingSyncTimerRef.current = window.setTimeout(() => {
+      pendingSyncTimerRef.current = null;
       void syncDraft();
     }, debounceMs);
+  }, [activeStep, debounceMs, draft, isReady, syncDraft]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (
+        typeof document !== 'undefined' &&
+        document.visibilityState === 'hidden'
+      ) {
+        void persistCurrentDraftSilently();
+      }
+    };
+
+    const handlePageHide = () => {
+      void persistCurrentDraftSilently();
+    };
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('pagehide', handlePageHide);
+    }
 
     return () => {
-      window.clearTimeout(timer);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener(
+          'visibilitychange',
+          handleVisibilityChange
+        );
+      }
+
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('pagehide', handlePageHide);
+      }
+
+      if (pendingSyncTimerRef.current != null) {
+        window.clearTimeout(pendingSyncTimerRef.current);
+        pendingSyncTimerRef.current = null;
+      }
+
+      void persistCurrentDraftSilently();
     };
-  }, [activeStep, debounceMs, draft, isReady, syncDraft]);
+  }, [persistCurrentDraftSilently]);
 
   const clearDraft = useCallback(async () => {
     try {

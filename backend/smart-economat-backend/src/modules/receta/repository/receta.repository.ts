@@ -122,7 +122,6 @@ export class RecetaRepository {
   ): Promise<PaginatedResponseDto<Receta>> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
       userRole?.toUpperCase() === 'SUPER_ADMIN';
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 50);
@@ -168,7 +167,6 @@ export class RecetaRepository {
   async findById(id: string, userRole?: string): Promise<Receta | null> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
       userRole?.toUpperCase() === 'SUPER_ADMIN';
 
     const receta = await this.recetaRepo.findOne({

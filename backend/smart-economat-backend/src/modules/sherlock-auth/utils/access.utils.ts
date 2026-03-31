@@ -1,8 +1,4 @@
-export const SHERLOCK_AUTH_ROLE_ALIASES = [
-  'ADMIN',
-  'ADMINISTRADOR',
-  'SUPER_ADMIN',
-] as const;
+export const SHERLOCK_AUTH_ROLE_ALIASES = ['ADMIN', 'SUPER_ADMIN'] as const;
 
 export type SherlockAuthRoleAlias = (typeof SHERLOCK_AUTH_ROLE_ALIASES)[number];
 

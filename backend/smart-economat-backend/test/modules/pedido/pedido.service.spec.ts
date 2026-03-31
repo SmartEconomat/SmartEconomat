@@ -31,16 +31,22 @@ describe('PedidoService', () => {
     syncBatchStatus: jest.fn(),
   };
 
+  const mockPedidoUsuarioService = {
+    syncPedidoUsuarioStatus: jest.fn(),
+  };
+
   let service: PedidoService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
+    mockConfigService.get.mockReturnValue(48);
     service = new PedidoService(
       mockPedidoRepository as any,
       mockMovimientoHelper as any,
       mockDataSource as any,
       mockConfigService as any,
-      mockPurchaseBatchService as any
+      mockPurchaseBatchService as any,
+      mockPedidoUsuarioService as any
     );
   });
 
@@ -54,6 +60,7 @@ describe('PedidoService', () => {
         })),
       save: jest.fn(),
       delete: jest.fn(),
+      update: jest.fn().mockResolvedValue({ affected: 1 }),
     };
 
     const queryRunner = {

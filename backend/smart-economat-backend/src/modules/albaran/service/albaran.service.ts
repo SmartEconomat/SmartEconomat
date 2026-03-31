@@ -104,7 +104,6 @@ export class AlbaranService {
   ): Promise<PaginatedResponseDto<Albaran>> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
       userRole?.toUpperCase() === 'SUPER_ADMIN';
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 50);
@@ -186,7 +185,6 @@ export class AlbaranService {
     try {
       let albaran = await queryRunner.manager.findOne(Albaran, {
         where: { nAlbaran: dto.numeroReferencia },
-        relations: ['albaranPedidoRecepcion'],
         lock: { mode: 'pessimistic_write' },
       });
 

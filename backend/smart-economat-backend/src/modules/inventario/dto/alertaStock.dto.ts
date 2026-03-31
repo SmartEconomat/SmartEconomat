@@ -2,7 +2,7 @@ import { i18nValidationMessage } from 'nestjs-i18n';
 import { IsUUID, IsNumber, Min, IsNotEmpty } from 'class-validator';
 
 export class AlertaStockDTO {
-  @IsUUID('7', {
+  @IsUUID('all', {
     message: i18nValidationMessage('validation.EL_ID_DEBE_SER_UN_UUID_V_LIDO'),
   })
   @IsNotEmpty({

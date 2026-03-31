@@ -26,7 +26,7 @@
     "migration:run": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d src/config/typeorm.config.ts",
     "schema:drop": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js schema:drop -d src/config/typeorm.config.ts",
     "schema:sync": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js schema:sync -d src/config/typeorm.config.ts",
-    "db:reset": "npm run schema:drop && npm run schema:sync && npm run seed",
+    "db:reset": "npm run schema:drop && npm run schema:sync",
     "generate:erd": "ts-node tools/scripts/generate-erd.ts",
     "log-user-info": "ts-node scripts/log-user-info.ts",
     "prepare": "node -e \"const fs=require('fs');const cp=require('child_process');const path=require('path');const candidates=[path.resolve('/project_root'),path.resolve(process.cwd(),'../..'),process.cwd()];const repoRoot=candidates.find((dir)=>fs.existsSync(path.join(dir,'.git'))&&fs.existsSync(path.join(dir,'.husky')));if(repoRoot){cp.execSync('npx husky '+path.join(repoRoot,'.husky'),{stdio:'inherit'});}else{console.log('⏭️ Husky omitido: repositorio git no disponible');}\""

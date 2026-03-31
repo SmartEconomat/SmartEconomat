@@ -62,7 +62,7 @@ export class CreateMovimientoDto {
   })
   descripcion?: string;
 
-  @IsUUID('7', {
+  @IsUUID('all', {
     message: i18nValidationMessage(
       'validation.EL_ID_DEL_INVENTARIO_DEBE_SER_UN_UUID_V'
     ),
@@ -70,7 +70,7 @@ export class CreateMovimientoDto {
   @IsOptional()
   inventario?: string;
 
-  @IsUUID('7', {
+  @IsUUID('all', {
     message: i18nValidationMessage(
       'validation.EL_ID_DE_LA_ENTIDAD_DEBE_SER_UN_UUID_V_L'
     ),
@@ -78,7 +78,7 @@ export class CreateMovimientoDto {
   @IsOptional()
   productoProveedor?: string;
 
-  @IsUUID('7', {
+  @IsUUID('all', {
     message: i18nValidationMessage(
       'validation.EL_ID_DEL_USUARIO_DEBE_SER_UN_UUID_V_LID'
     ),

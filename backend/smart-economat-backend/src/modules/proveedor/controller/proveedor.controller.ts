@@ -31,7 +31,7 @@ export class ProveedorController {
   constructor(private readonly proveedorService: ProveedorService) {}
 
   @Post()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateProveedorDto): Promise<Proveedor> {
     return this.proveedorService.create(dto);
@@ -64,7 +64,7 @@ export class ProveedorController {
   }
 
   @Get(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() req: { user?: { rol?: string } }
@@ -74,7 +74,7 @@ export class ProveedorController {
   }
 
   @Patch(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateProveedorDto
@@ -83,7 +83,7 @@ export class ProveedorController {
   }
 
   @Delete(':id')
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @Roles(rolUsuario.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.proveedorService.remove(id);

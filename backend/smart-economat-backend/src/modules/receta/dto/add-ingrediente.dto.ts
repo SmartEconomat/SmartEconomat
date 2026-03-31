@@ -12,7 +12,7 @@ import { UnidadIngrediente } from '../enums/receta.enums';
 import { StringToNumberTransformer } from '../../../common/transformers/string-to-number.transformer';
 
 export class AddIngredienteDto {
-  @IsUUID('7')
+  @IsUUID('all')
   productoId!: string;
 
   @Transform((params) => StringToNumberTransformer.transform(params))
@@ -38,6 +38,6 @@ export class AddIngredienteDto {
     description: 'ID del proveedor favorito para este ingrediente',
   })
   @IsOptional()
-  @IsUUID('7')
+  @IsUUID('all')
   proveedorFavoritoId?: string;
 }

@@ -12,7 +12,6 @@ import { randomUUID } from 'node:crypto';
 import { QueryFailedError } from 'typeorm';
 import { ApiResponse } from '../interfaces/api-response.interface';
 import { APP_VERSION } from '../helpers/app-version.helper';
-import { I18nContext } from 'nestjs-i18n';
 import { I18nHelper } from '../helpers/i18n.helper';
 
 /**
@@ -129,11 +128,27 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   }
 
   private translateIfNeeded(value: unknown): string {
-    if (!value) return '';
+    if (value === null || value === undefined) return '';
+
     if (typeof value !== 'string') {
-      return typeof value === 'object' && value !== null
-        ? JSON.stringify(value)
-        : String(value);
+      if (
+        typeof value === 'number' ||
+        typeof value === 'boolean' ||
+        typeof value === 'bigint'
+      ) {
+        return value.toString();
+      }
+
+      if (typeof value === 'symbol') {
+        return value.description || value.toString();
+      }
+
+      try {
+        const serialized = JSON.stringify(value);
+        return serialized ?? '[unserializable]';
+      } catch {
+        return '[unserializable]';
+      }
     }
 
     const v = value.trim();
@@ -159,7 +174,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
       return v;
     } catch (err) {
-      this.logger.warn(`i18n.translate failed for key "${v}": ${err}`);
+      const errMessage = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`i18n.translate failed for key "${v}": ${errMessage}`);
       return v;
     }
   }

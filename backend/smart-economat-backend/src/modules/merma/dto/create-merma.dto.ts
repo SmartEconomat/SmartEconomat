@@ -13,7 +13,7 @@ import { MotivoMerma } from '../enums/merma.enums';
 
 export class CreateMermaDto {
   @ApiProperty({ description: 'UUID del producto al que se registra la merma' })
-  @IsUUID('7')
+  @IsUUID('all')
   productoId!: string;
 
   @ApiProperty({

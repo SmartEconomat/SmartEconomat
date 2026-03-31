@@ -12,7 +12,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class CreatePlantillaDto {
   @ApiProperty({
     description: 'docs.NOMBRE_NICO_DE_LA_PLANTILLA',
-    example: 'GESTOR',
+    example: 'ADMIN',
   })
   @IsString()
   @IsNotEmpty()

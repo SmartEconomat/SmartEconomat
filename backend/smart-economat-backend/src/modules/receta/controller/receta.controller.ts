@@ -165,7 +165,7 @@ export class RecetaController {
   }
 
   @Post(':id/recalcular-costes')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Recalcular y guardar el coste unitario estimado de la receta',

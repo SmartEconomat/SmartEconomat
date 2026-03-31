@@ -6,6 +6,8 @@ import {
 import { baseFetch, ApiResponse, PaginatedData } from './api.service';
 
 const PRODUCTOS_CACHE_TTL_MS = 1000;
+const PRODUCTOS_MAX_LIMIT = 50;
+const PRODUCTOS_DEFAULT_LIMIT = 20;
 
 const productosRequestCache = new Map<
   string,
@@ -35,11 +37,27 @@ export interface ProductoMutationPayload {
   proveedores?: ProductoProveedorPayload[];
 }
 
+function normalizePage(page?: number): number | undefined {
+  if (page == null || Number.isNaN(page)) return undefined;
+  return Math.max(1, Math.trunc(page));
+}
+
+function normalizeLimit(limit?: number): number | undefined {
+  if (limit == null || Number.isNaN(limit)) return undefined;
+  const normalized = Math.max(1, Math.trunc(limit));
+  return Math.min(normalized, PRODUCTOS_MAX_LIMIT);
+}
+
 function buildProductosQueryString(params?: ProductosQueryParams): string {
-  if (!params) return '?limit=500';
+  if (!params) return `?limit=${PRODUCTOS_MAX_LIMIT}`;
+
   const search = new URLSearchParams();
-  if (params.page != null) search.set('page', String(params.page));
-  if (params.limit != null) search.set('limit', String(params.limit));
+
+  const normalizedPage = normalizePage(params.page);
+  const normalizedLimit = normalizeLimit(params.limit);
+
+  if (normalizedPage != null) search.set('page', String(normalizedPage));
+  if (normalizedLimit != null) search.set('limit', String(normalizedLimit));
   if (params.searchTerm?.trim())
     search.set('searchTerm', params.searchTerm.trim());
   if (params.codigoBarras?.trim())
@@ -49,8 +67,9 @@ function buildProductosQueryString(params?: ProductosQueryParams): string {
     search.set('categorias', params.categorias.join(','));
   if (params.alergenos?.length)
     search.set('alergenos', params.alergenos.join(','));
+
   const qs = search.toString();
-  return qs ? `?${qs}` : '?limit=500';
+  return qs ? `?${qs}` : `?limit=${PRODUCTOS_MAX_LIMIT}`;
 }
 
 function clearExpiredProductosCache() {
@@ -124,17 +143,46 @@ export async function fetchProductos(
 
 export type ProductosPaginatedResult = PaginatedData<Producto>;
 
+export async function fetchAllProductos(
+  params?: Omit<ProductosQueryParams, 'page' | 'limit'>
+): Promise<Producto[]> {
+  const firstPage = await fetchProductosPaginated({
+    ...params,
+    page: 1,
+    limit: PRODUCTOS_MAX_LIMIT,
+  });
+
+  if (firstPage.totalPages <= 1) {
+    return firstPage.data;
+  }
+
+  const remainingPages = await Promise.all(
+    Array.from({ length: firstPage.totalPages - 1 }, (_, index) =>
+      fetchProductosPaginated({
+        ...params,
+        page: index + 2,
+        limit: PRODUCTOS_MAX_LIMIT,
+      })
+    )
+  );
+
+  return [firstPage.data, ...remainingPages.map((page) => page.data)].flat();
+}
+
 export async function fetchProductosPaginated(
   params?: ProductosQueryParams
 ): Promise<ProductosPaginatedResult> {
-  const query = buildProductosQueryString({ limit: 20, ...params });
+  const query = buildProductosQueryString({
+    limit: PRODUCTOS_DEFAULT_LIMIT,
+    ...params,
+  });
   const inner = await requestProductos(query);
   if (!inner || !Array.isArray(inner.data)) {
     return {
       data: [],
       total: 0,
       page: 1,
-      limit: 20,
+      limit: PRODUCTOS_DEFAULT_LIMIT,
       totalPages: 1,
     };
   }
@@ -142,7 +190,7 @@ export async function fetchProductosPaginated(
     data: inner.data,
     total: inner.total ?? inner.data.length,
     page: inner.page ?? 1,
-    limit: inner.limit ?? 20,
+    limit: inner.limit ?? PRODUCTOS_DEFAULT_LIMIT,
     totalPages: inner.totalPages ?? 1,
   };
 }
