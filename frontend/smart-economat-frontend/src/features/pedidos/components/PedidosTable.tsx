@@ -29,9 +29,9 @@ interface PedidosTableProps {
   onPageChange: (page: number) => void;
   onPageSizeChange: (pageSize: number) => void;
   onCreateClick: () => void;
+  hideCreator?: boolean;
+  currentUserId?: string;
 }
-
-const columns = buildPedidoColumns();
 
 const PedidosTable: React.FC<PedidosTableProps> = ({
   data,
@@ -45,19 +45,107 @@ const PedidosTable: React.FC<PedidosTableProps> = ({
   onPageChange,
   onPageSizeChange,
   onCreateClick,
+  hideCreator = false,
+  currentUserId,
 }) => {
+  const [sortConfig, setSortConfig] = React.useState<{
+    key: string;
+    direction: 'asc' | 'desc';
+  } | null>(null);
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (
+      sortConfig &&
+      sortConfig.key === key &&
+      sortConfig.direction === 'asc'
+    ) {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const columns = React.useMemo(
+    () => buildPedidoColumns({ hideCreator }),
+    [hideCreator]
+  );
+
+  const sortedData = React.useMemo(() => {
+    if (!sortConfig) return data;
+
+    return [...data].sort((a, b) => {
+      const { key, direction } = sortConfig;
+      let valA: string | number | boolean | null | undefined;
+      let valB: string | number | boolean | null | undefined;
+
+      switch (key) {
+        case 'pedidoId':
+          valA = a.numeroGlobal || a.id;
+          valB = b.numeroGlobal || b.id;
+          break;
+        case 'fechaPedido':
+          valA = a.fechaPedido ? new Date(a.fechaPedido).getTime() : 0;
+          valB = b.fechaPedido ? new Date(b.fechaPedido).getTime() : 0;
+          break;
+        case 'fechaEntrega':
+          valA = a.fechaEntrega ? new Date(a.fechaEntrega).getTime() : 0;
+          valB = b.fechaEntrega ? new Date(b.fechaEntrega).getTime() : 0;
+          break;
+        case 'costeTotal':
+          valA = a.costeTotal || 0;
+          valB = b.costeTotal || 0;
+          break;
+        case 'estado':
+          valA = String(a.estado).toLowerCase();
+          valB = String(b.estado).toLowerCase();
+          break;
+        case 'usuario':
+          valA = (a.usuario?.nombre || a.usuario?.username || '').toLowerCase();
+          valB = (b.usuario?.nombre || b.usuario?.username || '').toLowerCase();
+          break;
+        default: {
+          const aMap = a as unknown as Record<
+            string,
+            string | number | boolean | null | undefined
+          >;
+          const bMap = b as unknown as Record<
+            string,
+            string | number | boolean | null | undefined
+          >;
+          valA = aMap[key];
+          valB = bMap[key];
+        }
+      }
+
+      if (valA === undefined || valA === null)
+        return direction === 'asc' ? -1 : 1;
+      if (valB === undefined || valB === null)
+        return direction === 'asc' ? 1 : -1;
+      if (valA < valB) return direction === 'asc' ? -1 : 1;
+      if (valA > valB) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [data, sortConfig]);
+
   return (
     <DataTable
       columns={columns}
-      data={data}
+      data={sortedData}
       isLoading={isLoading}
       hideTopBar
       viewMode={viewMode}
       defaultViewMode={viewMode}
+      sortConfig={sortConfig || undefined}
+      onSort={handleSort}
       renderGridItem={(row) => (
         <PedidoCard
           pedido={row}
-          actions={renderPedidoActions(row, permissions, handlers)}
+          actions={renderPedidoActions(
+            row,
+            permissions,
+            handlers,
+            currentUserId
+          )}
           onRowClick={handlers.onView}
         />
       )}
@@ -98,7 +186,9 @@ const PedidosTable: React.FC<PedidosTableProps> = ({
           ? `Ver detalle del pedido ${formatPedidoListNumber(row)}`
           : `Ver detalle del pedido ${formatPedidoListNumber(row)}`
       }
-      renderActions={(row) => renderPedidoActions(row, permissions, handlers)}
+      renderActions={(row) =>
+        renderPedidoActions(row, permissions, handlers, currentUserId)
+      }
     />
   );
 };

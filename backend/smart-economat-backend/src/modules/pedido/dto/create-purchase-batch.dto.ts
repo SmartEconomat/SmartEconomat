@@ -35,6 +35,14 @@ export class CreatePurchaseBatchDto {
   @IsOptional()
   @IsString()
   observaciones?: string;
+
+  @ApiPropertyOptional({
+    description: 'ID de la ubicación donde se sugiere entregar el pedido',
+    required: false,
+  })
+  @IsOptional()
+  @IsUUID('7')
+  ubicacionEntregaSugeridaId?: string;
 }
 
 export class ConsolidatePurchaseBatchDto {
@@ -71,6 +79,14 @@ export class ConsolidatePurchaseBatchDto {
   @IsOptional()
   @IsString()
   observaciones?: string;
+
+  @ApiPropertyOptional({
+    description: 'ID de la ubicación donde se sugiere entregar el pedido',
+    required: false,
+  })
+  @IsOptional()
+  @IsUUID('7')
+  ubicacionEntregaSugeridaId?: string;
 }
 
 export class UpdatePurchaseBatchDto extends CreatePurchaseBatchDto {}

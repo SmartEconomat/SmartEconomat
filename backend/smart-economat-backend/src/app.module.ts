@@ -36,6 +36,7 @@ import { AlbaranModule } from './modules/albaran/albaran.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { PedidoDraftModule } from './modules/pedido-draft/pedido-draft.module';
 import { RecepcionDraftModule } from './modules/recepcion-draft/recepcion-draft.module';
+import { DistribucionModule } from './modules/distribucion/distribucion.module';
 
 @Module({
   imports: [
@@ -97,6 +98,7 @@ import { RecepcionDraftModule } from './modules/recepcion-draft/recepcion-draft.
     DashboardModule,
     PedidoDraftModule,
     RecepcionDraftModule,
+    DistribucionModule,
   ],
   controllers: [AppController],
   providers: [

@@ -148,10 +148,13 @@ export class UsuarioRepository {
       relations: [
         'roles',
         'profesor',
+        'profesor.slots',
+        'profesor.slots.ubicacion',
         'permisosAdicionales',
         'permisosExcluidos',
         'alumno',
         'alumno.slot',
+        'alumno.slot.ubicacion',
         'alumno.profesor',
         'alumno.profesor.user',
       ],

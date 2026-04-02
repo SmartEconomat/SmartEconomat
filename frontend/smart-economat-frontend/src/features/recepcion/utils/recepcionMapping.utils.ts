@@ -4,6 +4,7 @@ import {
   EstadoVisualProducto,
 } from '../../../services/recepcion.types';
 import {
+  EstadoPedido,
   Pedido,
   PedidoProducto,
   PurchaseBatch,
@@ -24,6 +25,9 @@ export const mapPedidoToDraftLines = (pedido: Pedido): LineaDraft[] =>
     codigoBarras: pp.productoProveedor?.producto?.codigoBarras,
     nombreProducto: pp.productoProveedor?.producto?.nombre || 'Producto',
     cantidadPedida: Number(pp.cantidad),
+    cantidadYaRecibida: Number(
+      (pp as unknown as { cantidadRecibida?: number }).cantidadRecibida || 0
+    ),
     cantidadAlbaran: '',
     cantidadRecibida: 0,
     isWeighedWithScale: false,
@@ -47,12 +51,17 @@ export const mapPurchaseBatchToRecepcionDraft = (
     serverUpdatedAt: null,
     observaciones: batch.observaciones || '',
     nAlbaran: '',
-    pedidosSeleccionados: (batch.pedidos || []).map((pedido) => ({
-      id: pedido.id,
-      descripcion: `Pedido ${pedido.id.substring(0, 8)} - ${pedido.proveedor?.nombre}`,
-      proveedor: pedido.proveedor?.nombre || 'Desconocido',
-      lineas: mapPedidoToDraftLines(pedido),
-    })),
+    pedidosSeleccionados: (batch.pedidos || [])
+      .filter((pedido) => pedido.estado !== EstadoPedido.CANCELADO)
+      .map((pedido) => ({
+        id: pedido.id,
+        descripcion: `Pedido ${pedido.id.substring(0, 8)} - ${
+          pedido.proveedor?.nombre
+        }`,
+        proveedor: pedido.proveedor?.nombre || 'Desconocido',
+        estadoPedido: pedido.estado,
+        lineas: mapPedidoToDraftLines(pedido),
+      })),
     productosEspontaneos: [],
     paso: 'ESCANEO_LOTE',
     erroresPorLinea: {},

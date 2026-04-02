@@ -15,43 +15,50 @@ import { PedidoUsuario } from '../../../src/modules/pedido/pedido-usuario.entity
 describe('PurchaseBatchService', () => {
   let service: PurchaseBatchService;
 
-  const mockQueryRunner = {
-    connect: jest.fn(),
-    startTransaction: jest.fn(),
-    commitTransaction: jest.fn(),
-    rollbackTransaction: jest.fn(),
-    release: jest.fn(),
-    manager: {
-      create: jest.fn(),
-      save: jest.fn(),
-      insert: jest.fn(),
-      find: jest.fn(),
-      findOne: jest.fn(),
-    },
-  };
-
-  const mockDataSource = {
-    createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
-    getRepository: jest.fn().mockReturnValue({
-      find: jest.fn(),
-      findOne: jest.fn(),
-      save: jest.fn(),
-    }),
-  };
-
-  const mockConfigService = {
-    get: jest.fn().mockReturnValue(48),
-  };
-
-  const mockMovimientoHelper = {
-    trackPedidoCreation: jest.fn(),
-  };
-
-  const mockProduccionService = {
-    validarMultiple: jest.fn(),
-  };
+  let mockQueryRunner: any;
+  let mockDataSource: any;
+  let mockConfigService: any;
+  let mockMovimientoHelper: any;
+  let mockProduccionService: any;
 
   beforeEach(async () => {
+    mockQueryRunner = {
+      connect: jest.fn(),
+      startTransaction: jest.fn(),
+      commitTransaction: jest.fn(),
+      rollbackTransaction: jest.fn(),
+      release: jest.fn(),
+      manager: {
+        create: jest.fn(),
+        save: jest.fn(),
+        insert: jest.fn(),
+        find: jest.fn(),
+        findOne: jest.fn(),
+        count: jest.fn(),
+      },
+    };
+
+    mockDataSource = {
+      createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
+      getRepository: jest.fn().mockReturnValue({
+        find: jest.fn(),
+        findOne: jest.fn(),
+        save: jest.fn(),
+      }),
+    };
+
+    mockConfigService = {
+      get: jest.fn().mockReturnValue(48),
+    };
+
+    mockMovimientoHelper = {
+      trackPedidoCreation: jest.fn(),
+    };
+
+    mockProduccionService = {
+      validarMultiple: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PurchaseBatchService,

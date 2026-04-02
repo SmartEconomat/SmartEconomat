@@ -5,12 +5,14 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
-import { Box, Alert, Chip, Paper, Stack } from '@mui/material';
+import { Box, Alert, Paper } from '@mui/material';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import DynamicFormModal from '../components/ui/DynamicFormModal';
 import { ModalCloseReason } from '../components/ui/Modal';
+import { SelectOption } from '../components/ui/Select';
 import {
   EstadoPedido,
   Pedido,
@@ -36,7 +38,6 @@ import { usePedidoActions } from '../features/pedidos/hooks/usePedidoActions';
 import { usePedidosData } from '../features/pedidos/hooks/usePedidosData';
 import { usePedidosFilters } from '../features/pedidos/hooks/usePedidosFilters';
 import {
-  MisPedidosStatusFilter,
   PedidoFormValues,
   PedidoPermissions,
 } from '../features/pedidos/types/pedidos-ui.types';
@@ -44,14 +45,20 @@ import { buildPedidoPermissions } from '../features/pedidos/utils/pedidoPermissi
 import { isAggregatedBatchPedido } from '../features/pedidos/utils/pedidoOwnOrders';
 import { formatPedidoId } from '../features/pedidos/utils/pedidoFormatters';
 import { getPedidoSchema } from '../features/pedidos/utils/pedidoSchema';
+import MisPedidosStatusTabs from '../features/pedidos/components/MisPedidosStatusTabs';
 
 interface PedidoActionTarget {
   id: string;
   isBatchAggregate: boolean;
   aggregateType?: 'pedido_usuario' | 'purchase_batch';
   proveedorNombre?: string;
+  usuarioNombre?: string;
   fechaPedido?: string;
   numeroGlobal?: string | number;
+  proveedor?: {
+    id: string;
+    nombre: string;
+  };
 }
 
 const sanitizePedidoObservation = (observaciones?: string) => {
@@ -92,6 +99,7 @@ const Pedidos: React.FC = () => {
   const hasPromptedRef = useRef(false);
   const latestValsRef = useRef<Record<string, unknown>>({});
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const {
     draft,
@@ -106,6 +114,7 @@ const Pedidos: React.FC = () => {
   const canDelete = usePermission('pedidos:eliminar');
   const canCreate = usePermission('pedidos:crear');
   const canRestore = usePermission('pedidos:restaurar');
+  const canViewDistribucion = usePermission('distribuciones:listar');
 
   const toast = useToast();
   const permissions: PedidoPermissions = useMemo(
@@ -152,15 +161,6 @@ const Pedidos: React.FC = () => {
     misPedidosStatus,
   });
 
-  const misPedidosStatusOptions = useMemo(
-    () => [
-      { value: 'pendientes' as MisPedidosStatusFilter, label: 'Pendientes' },
-      { value: 'en_proceso' as MisPedidosStatusFilter, label: 'En proceso' },
-      { value: 'finalizados' as MisPedidosStatusFilter, label: 'Finalizados' },
-    ],
-    []
-  );
-
   const ownOrdersData = useMemo(() => {
     if (!isOwnOrdersTab) return data;
 
@@ -192,10 +192,11 @@ const Pedidos: React.FC = () => {
       ? ownOrdersTotalItems
       : totalItems;
 
+  // Acciones disponibles para cada pedido
   const {
     savePedido,
     deletePedidoById,
-    approvePurchaseBatchById,
+    deletePedidoUsuarioById,
     cancelPedidoById,
     cancelPurchaseBatchById,
     fetchBatchDetail,
@@ -203,6 +204,7 @@ const Pedidos: React.FC = () => {
     startRecepcionFromBatch,
     restorePedidoById,
     restorePurchaseBatchById,
+    onTramitar,
     isSaving,
     isDeleting,
     isAceptando,
@@ -219,9 +221,39 @@ const Pedidos: React.FC = () => {
     },
   });
 
+  const ubicacionOptions = useMemo<SelectOption[]>(() => {
+    if (!user) return [];
+    const options: SelectOption[] = [];
+
+    // Alumno: tiene un único slot con una ubicación
+    if (user.alumno?.slot?.ubicacion) {
+      options.push({
+        value: user.alumno.slot.ubicacion.id,
+        label: `${user.alumno.slot.aula} - ${user.alumno.slot.ubicacion.nombre}`,
+      });
+    }
+
+    // Profesor: puede tener múltiples slots con ubicaciones
+    if (user.profesor?.slots) {
+      user.profesor.slots.forEach((slot) => {
+        if (slot.ubicacion) {
+          // Evitar duplicados si hay varios slots en la misma ubicación
+          if (!options.some((o) => o.value === slot.ubicacion!.id)) {
+            options.push({
+              value: slot.ubicacion!.id,
+              label: `${slot.aula} - ${slot.ubicacion!.nombre}`,
+            });
+          }
+        }
+      });
+    }
+
+    return options;
+  }, [user]);
+
   const pedidoSchema = useMemo(
-    () => (itemToEdit ? getPedidoSchema(itemToEdit) : []),
-    [itemToEdit]
+    () => (itemToEdit ? getPedidoSchema(itemToEdit, ubicacionOptions) : []),
+    [itemToEdit, ubicacionOptions]
   );
 
   useEffect(() => {
@@ -337,6 +369,8 @@ const Pedidos: React.FC = () => {
           precioUnitario: pedidoProducto.precioUnitario,
           observaciones: pedidoProducto.observaciones,
         })) || [],
+      ubicacionEntregaSugeridaId:
+        row.ubicacionEntregaSugeridaId || row.ubicacionEntregaSugerida?.id,
     };
   }, []);
 
@@ -376,6 +410,9 @@ const Pedidos: React.FC = () => {
               observaciones: pedidoProducto.observaciones,
             }))
           ) || [],
+        ubicacionEntregaSugeridaId:
+          batch.ubicacionEntregaSugeridaId ||
+          batch.ubicacionEntregaSugerida?.id,
       };
     },
     []
@@ -427,23 +464,31 @@ const Pedidos: React.FC = () => {
 
   const handleDeleteConfirm = useCallback(async () => {
     if (!itemToDelete) return;
-    await deletePedidoById(itemToDelete.id);
+    if (isAggregatedBatchPedido(itemToDelete)) {
+      await deletePedidoUsuarioById(itemToDelete.id);
+    } else {
+      await deletePedidoById(itemToDelete.id);
+    }
     setItemToDelete(null);
-  }, [deletePedidoById, itemToDelete]);
+  }, [deletePedidoById, deletePedidoUsuarioById, itemToDelete]);
 
   const handleAceptarConfirm = useCallback(async () => {
     if (!itemToAceptar) return;
     if (itemToAceptar.isBatchAggregate) {
-      await approvePurchaseBatchById(itemToAceptar.id);
-    } else {
-      // Al aprobar un pedido individual, lo consolidamos (se une a la lista de compra de la semana)
+      // Al aprobar un pedido agregado de usuario, generamos su lote de compra de forma automática
       await consolidatePedidosByIds(
         [itemToAceptar.id],
-        `Lote generado al aprobar pedido individual de ${itemToAceptar.proveedorNombre}`
+        `Lote generado al aprobar pedido de ${itemToAceptar.usuarioNombre || itemToAceptar.proveedor?.nombre}`
+      );
+    } else {
+      // Al aprobar un pedido individual de inventario, lo consolidamos (se une a la lista de compra de la semana)
+      await consolidatePedidosByIds(
+        [itemToAceptar.id],
+        `Lote generado al aprobar pedido individual de ${itemToAceptar.proveedor?.nombre}`
       );
     }
     setItemToAceptar(null);
-  }, [consolidatePedidosByIds, approvePurchaseBatchById, itemToAceptar]);
+  }, [consolidatePedidosByIds, itemToAceptar]);
 
   const handleCancelarSubmit = useCallback(
     async (formData: Record<string, unknown>) => {
@@ -544,15 +589,24 @@ const Pedidos: React.FC = () => {
         )
       );
 
+      const isPedidoUsuario = 'usuario' in batch;
+
       return {
         id: batch.id,
         isBatchAggregate: true,
         aggregateType:
           'aggregateType' in batch ? batch.aggregateType : 'purchase_batch',
+        usuarioNombre: isPedidoUsuario
+          ? (batch as PedidoUsuario).usuario?.nombre
+          : undefined,
         proveedorNombre:
           providerNames.length > 0 ? providerNames.join(', ') : 'Pedido',
         fechaPedido: 'createdAt' in batch ? batch.createdAt : batch.fechaPedido,
         numeroGlobal: 'numeroGlobal' in batch ? batch.numeroGlobal : undefined,
+        proveedor:
+          batch.pedidos && batch.pedidos.length === 1
+            ? batch.pedidos[0].proveedor
+            : undefined,
       };
     },
     []
@@ -597,7 +651,6 @@ const Pedidos: React.FC = () => {
         setItemToEdit(buildEditData(pedido));
       },
       onDelete: (pedido: Pedido) => {
-        if (isAggregatedBatchPedido(pedido)) return;
         setItemToDelete(pedido);
       },
       onApprove: (pedido: Pedido) => {
@@ -615,6 +668,9 @@ const Pedidos: React.FC = () => {
       onViewDelivery: (pedido: Pedido) => {
         if (isAggregatedBatchPedido(pedido)) return;
         setItemToViewDeliveryDate(pedido);
+      },
+      onConfirmReceipt: (pedido: Pedido) => {
+        void handlers.onConfirmReceipt(pedido);
       },
     }),
     [
@@ -679,29 +735,13 @@ const Pedidos: React.FC = () => {
         />
 
         {isOwnOrdersTab && (
-          <Stack
-            direction="row"
-            spacing={1}
-            sx={{ mb: 3, flexWrap: 'wrap', rowGap: 1 }}
-          >
-            {misPedidosStatusOptions.map((option) => (
-              <Chip
-                key={option.value}
-                label={option.label}
-                clickable
-                color={
-                  misPedidosStatus === option.value ? 'primary' : 'default'
-                }
-                variant={
-                  misPedidosStatus === option.value ? 'filled' : 'outlined'
-                }
-                onClick={() => {
-                  setMisPedidosStatus(option.value);
-                  setPage(1);
-                }}
-              />
-            ))}
-          </Stack>
+          <MisPedidosStatusTabs
+            value={misPedidosStatus}
+            onChange={(newValue) => {
+              setMisPedidosStatus(newValue);
+              setPage(1);
+            }}
+          />
         )}
 
         {isBatchTab ? (
@@ -712,6 +752,13 @@ const Pedidos: React.FC = () => {
             handlers={{
               onView: (batch) => void handleViewBatch(batch, 'batch'),
               onRecepcion: (batch) => void startRecepcionFromBatch(batch),
+              onTramitar: (batch) => void onTramitar(batch),
+              onDistribucion: (batch) => {
+                navigate('/distribucion');
+                toast.success(
+                  `Abriendo distribución para la compra ${formatPedidoId(batch.id)}.`
+                );
+              },
             }}
           />
         ) : isWeeklyTab ? (
@@ -724,6 +771,7 @@ const Pedidos: React.FC = () => {
             totalItems={totalItems}
             isConsolidating={isConsolidatingBatch}
             onConsolidateWeek={handleConsolidateWeek}
+            currentUserId={user?.id}
           />
         ) : (
           <PedidosTable
@@ -741,6 +789,8 @@ const Pedidos: React.FC = () => {
               setPage(1);
             }}
             onCreateClick={handleCreateClick}
+            hideCreator={isOwnOrdersTab}
+            currentUserId={user?.id}
           />
         )}
 
@@ -891,6 +941,7 @@ const Pedidos: React.FC = () => {
             canApprove={permissions.canApprove}
             canCancel={permissions.canCancel}
             canRestore={permissions.canRestore}
+            canDistribucion={canViewDistribucion}
             mode={batchViewMode}
             onClose={() => setItemToViewBatch(null)}
             onEdit={handleEditBatch}
@@ -909,6 +960,17 @@ const Pedidos: React.FC = () => {
             onRecepcion={(batch) => {
               setItemToViewBatch(null);
               void startRecepcionFromBatch(batch);
+            }}
+            onTramitar={(batch) => {
+              setItemToViewBatch(null);
+              void onTramitar(batch);
+            }}
+            onDistribucion={(batch) => {
+              setItemToViewBatch(null);
+              navigate('/distribucion');
+              toast.success(
+                `Abriendo distribución para la compra ${formatPedidoId(batch.id)}.`
+              );
             }}
           />
         )}

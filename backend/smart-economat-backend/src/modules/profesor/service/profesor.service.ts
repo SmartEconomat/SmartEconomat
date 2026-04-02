@@ -1,5 +1,6 @@
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -17,6 +18,7 @@ import { randomBytes } from 'node:crypto';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { Alumno } from '../../alumno/alumno.entity/alumno.entity';
 import { Rol } from '../../roles/rol.entity/rol.entity';
+import { Ubicacion } from '../../ubicacion/ubicacion.entity/ubicacion.entity';
 
 @Injectable()
 export class ProfesorService {
@@ -25,8 +27,26 @@ export class ProfesorService {
     private readonly profesorRepo: Repository<Profesor>,
     @InjectRepository(AlumnoSlot)
     private readonly slotRepo: Repository<AlumnoSlot>,
+    @InjectRepository(Ubicacion)
+    private readonly ubicacionRepo: Repository<Ubicacion>,
     private readonly dataSource: DataSource
   ) {}
+
+  private async resolveUbicacion(
+    ubicacionId?: string
+  ): Promise<Ubicacion | null> {
+    if (!ubicacionId) return null;
+
+    const ubicacion = await this.ubicacionRepo.findOne({
+      where: { id: ubicacionId },
+    });
+
+    if (!ubicacion) {
+      throw new NotFoundException('Ubicación no encontrada');
+    }
+
+    return ubicacion;
+  }
 
   async register(dto: CreateProfesorDto) {
     return this.dataSource.transaction(async (manager) => {
@@ -109,6 +129,7 @@ export class ProfesorService {
     }
 
     const codigoSlot = `AL-${randomBytes(3).toString('hex').toUpperCase()}`;
+    const ubicacion = await this.resolveUbicacion(dto.ubicacionId);
 
     const slot = this.slotRepo.create({
       profesor,
@@ -116,6 +137,7 @@ export class ProfesorService {
       numeroClase: dto.numeroClase,
       capacidad: dto.capacidad ?? 1,
       codigoSlot,
+      ...(ubicacion ? { ubicacion } : {}),
     });
 
     return this.slotRepo.save(slot);
@@ -142,6 +164,7 @@ export class ProfesorService {
     }
 
     const codigoSlot = `AL-${randomBytes(3).toString('hex').toUpperCase()}`;
+    const ubicacion = await this.resolveUbicacion(dto.ubicacionId);
 
     const slot = this.slotRepo.create({
       profesor,
@@ -149,6 +172,7 @@ export class ProfesorService {
       numeroClase: dto.numeroClase,
       capacidad: dto.capacidad ?? 1,
       codigoSlot,
+      ...(ubicacion ? { ubicacion } : {}),
     });
 
     return this.slotRepo.save(slot);
@@ -188,7 +212,14 @@ export class ProfesorService {
       }
     }
 
-    Object.assign(slot, dto);
+    const ubicacion = await this.resolveUbicacion(dto.ubicacionId);
+
+    Object.assign(slot, {
+      ...dto,
+      ...(dto.ubicacionId !== undefined
+        ? { ubicacion: ubicacion ?? null, ubicacionId: dto.ubicacionId ?? null }
+        : {}),
+    });
     return this.slotRepo.save(slot);
   }
 
@@ -204,7 +235,7 @@ export class ProfesorService {
 
     return this.slotRepo.find({
       where: { profesor: { id: profesor.id } },
-      relations: ['alumnos', 'alumnos.user'],
+      relations: ['alumnos', 'alumnos.user', 'ubicacion'],
       order: { aula: 'ASC', numeroClase: 'ASC' },
     });
   }
@@ -288,6 +319,10 @@ export class ProfesorService {
   }
 
   async forcePasswordReset(profesorUserId: string, alumnoId: string) {
+    if (!alumnoId || alumnoId === 'undefined') {
+      throw new BadRequestException('ID de alumno no válido');
+    }
+
     const profesor = await this.profesorRepo.findOne({
       where: { user: { id: profesorUserId } },
     });
@@ -331,7 +366,7 @@ export class ProfesorService {
 
   async getAllSlots() {
     return this.slotRepo.find({
-      relations: ['profesor', 'profesor.user', 'alumnos'],
+      relations: ['profesor', 'profesor.user', 'alumnos', 'ubicacion'],
       order: { aula: 'ASC', numeroClase: 'ASC' },
     });
   }
@@ -368,6 +403,11 @@ export class ProfesorService {
     if (dto.aula !== undefined) slot.aula = dto.aula;
     if (dto.numeroClase !== undefined) slot.numeroClase = dto.numeroClase;
     if (dto.capacidad !== undefined) slot.capacidad = dto.capacidad;
+    if (dto.ubicacionId !== undefined) {
+      const ubicacion = await this.resolveUbicacion(dto.ubicacionId);
+      slot.ubicacion = ubicacion ?? undefined;
+      slot.ubicacionId = dto.ubicacionId;
+    }
 
     if (dto.profesorId && dto.profesorId !== slot.profesor?.id) {
       const newProfesor = await this.profesorRepo.findOne({
@@ -402,6 +442,9 @@ export class ProfesorService {
       aula: nextAula,
       numeroClase: nextClase,
       capacidad: dto.capacidad !== undefined ? dto.capacidad : slot.capacidad,
+      ...(dto.ubicacionId !== undefined
+        ? { ubicacionId: dto.ubicacionId ?? null }
+        : {}),
     });
 
     return this.slotRepo.save(slot);

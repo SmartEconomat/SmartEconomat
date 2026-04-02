@@ -440,15 +440,20 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
           <Box
             sx={{
               display: 'inline-flex',
-              p: 1.5,
+              p: 2,
+              px: 3,
               bgcolor: 'background.paper',
-              color: 'primary.main',
+              color: 'secondary.main',
               border: '2px solid',
-              borderColor: 'primary.main',
+              borderColor: 'secondary.main',
               borderRadius: 2,
+              boxShadow: '0 2px 8px rgba(216, 27, 96, 0.1)',
             }}
           >
-            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 800, letterSpacing: -0.5 }}
+            >
               {mode === 'pedido' ? 'TOTAL: ' : 'TOTAL COMPRA: '}
               {totalBatch.toFixed(2)} €
             </Typography>

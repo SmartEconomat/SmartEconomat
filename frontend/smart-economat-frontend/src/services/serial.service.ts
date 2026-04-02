@@ -84,7 +84,7 @@ export class SerialService {
       );
     }
 
-    // Convertimos datos binarios a texto 
+    // Convertimos datos binarios a texto
     if (!this.reader) {
       const decoder = new TextDecoderStream();
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -193,7 +193,10 @@ export class SerialService {
         }
       } catch (error: unknown) {
         if (this.readingLoopActive) {
-          console.error('Error leyenda báscula:', error);
+          console.error('Error leyendo báscula:', error);
+          if (onError && error instanceof Error) {
+            onError(error);
+          }
           await delay(200);
         }
       }

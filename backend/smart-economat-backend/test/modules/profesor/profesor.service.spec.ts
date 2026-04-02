@@ -20,9 +20,31 @@ describe('ProfesorService', () => {
     save: jest.fn(),
   };
 
+  const mockUbicacionRepo = {
+    findOne: jest.fn(),
+  };
+
   const mockDataSource = {
-    transaction: jest.fn(),
-    getRepository: jest.fn(),
+    transaction: jest
+      .fn()
+      .mockImplementation((cb) => cb(mockDataSource.mockManager)),
+    getRepository: jest
+      .fn()
+      .mockImplementation((_entity) =>
+        mockDataSource.mockManager.getRepository(_entity)
+      ),
+    mockManager: {
+      findOne: jest.fn(),
+      save: jest.fn(),
+      create: jest.fn(),
+      count: jest.fn(),
+      getRepository: jest.fn().mockReturnValue({
+        find: jest.fn(),
+        findOne: jest.fn(),
+        save: jest.fn(),
+        count: jest.fn(),
+      }),
+    },
   };
 
   let service: ProfesorService;
@@ -32,6 +54,7 @@ describe('ProfesorService', () => {
     service = new ProfesorService(
       mockProfesorRepo as any,
       mockSlotRepo as any,
+      mockUbicacionRepo as any,
       mockDataSource as any
     );
   });
@@ -167,7 +190,7 @@ describe('ProfesorService', () => {
         },
       ]),
     };
-    mockDataSource.getRepository.mockReturnValue(alumnoRepo);
+    mockDataSource.mockManager.getRepository.mockReturnValue(alumnoRepo);
 
     const result = await service.getAlumnos('user-prof-1');
 

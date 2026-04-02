@@ -20,6 +20,7 @@ Autenticación principal: JWT (Bearer) y cookie `access_token`.
 | AuthController | `/auth` | `POST /register`, `POST /login`, `POST /logout`, `GET /profile`, `PATCH /change-password`, `POST /forgot-password`, `POST /reset-password` |
 | UsuarioController | `/usuarios` | CRUD + perfil + password + rol + permisos adicionales/excluidos |
 | PedidoController | `/pedidos` | CRUD + `POST /from-recipes` + `PATCH /:id/fecha-entrega` + `PATCH /:id/cancelar` + `PATCH /:id/aceptar` |
+| PedidoUsuarioController | `/pedido-usuarios` | Listar agregados + detalle + aceptar/cancelar/restaurar + PDF + DELETE |
 | PurchaseBatchController | `/purchase-batches` | CRUD de lotes de compra |
 | PedidoDraftController | `/pedido/draft` | `POST`, `GET`, `DELETE` |
 | RecepcionController | `/recepciones` | CRUD + `GET /reporte-pdf` |
@@ -31,6 +32,7 @@ Autenticación principal: JWT (Bearer) y cookie `access_token`.
 | HistorialPrecioController | `/historial-precio` | CRUD de históricos de precio |
 | ProveedorController | `/proveedor` | CRUD |
 | InventarioController | `/inventario` | CRUD + `GET /stock` + `POST /ajustes-manuales` |
+| DistribucionController | `/distribuciones` | Listar distribuibles + CRUD de distribuciones + confirmar/cancelar |
 | AlertaController | `/alertas` | endpoints de alertas de inventario |
 | MovimientoController | `/movimientos` | CRUD/listados de movimientos |
 | MermaController | `/merma` | CRUD + estadísticas |
@@ -97,6 +99,19 @@ Autenticación principal: JWT (Bearer) y cookie `access_token`.
 | PATCH | `/pedidos/:id/aceptar` | - | `Pedido` | 200 |
 | DELETE | `/pedidos/:id` | - | - | 204 |
 
+### Pedido Usuarios
+| Método | Ruta | DTO input | DTO output/response | Status |
+|---|---|---|---|---|
+| POST | `/pedido-usuarios` | `CreatePedidoUsuarioDto` | `PedidoUsuario` | 201 |
+| GET | `/pedido-usuarios` | `PaginationQueryDto` | `PaginatedResponseDto<PedidoUsuario>` | 200 |
+| GET | `/pedido-usuarios/:id` | - | `PedidoUsuario` | 200 |
+| PATCH | `/pedido-usuarios/:id` | `UpdatePedidoUsuarioDto` | `PedidoUsuario` | 200 |
+| PATCH | `/pedido-usuarios/:id/aceptar` | - | `PedidoUsuario` | 200 |
+| PATCH | `/pedido-usuarios/:id/cancelar` | - | `PedidoUsuario` | 200 |
+| PATCH | `/pedido-usuarios/:id/restaurar` | - | `PedidoUsuario` | 200 |
+| GET | `/pedido-usuarios/:id/pdf` | - | stream PDF | 200 |
+| DELETE | `/pedido-usuarios/:id` | - | - | 204 |
+
 ### Recepciones
 | Método | Ruta | DTO input | DTO output/response | Status |
 |---|---|---|---|---|
@@ -117,6 +132,16 @@ Autenticación principal: JWT (Bearer) y cookie `access_token`.
 | GET | `/inventario/:id` | - | `Inventario` | 200 |
 | PATCH | `/inventario/:id` | `UpdateInventarioDto` | `Inventario` | 200 |
 | DELETE | `/inventario/:id` | - | - | 204 |
+
+### Distribuciones
+| Método | Ruta | DTO input | DTO output/response | Status |
+|---|---|---|---|---|
+| GET | `/distribuciones` | `PaginationQueryDto` | `PaginatedResponseDto<Distribucion>` | 200 |
+| GET | `/distribuciones/disponibles` | `PaginationQueryDto` | `DistribucionDisponibleDto[]` | 200 |
+| GET | `/distribuciones/:id` | - | `Distribucion` | 200 |
+| POST | `/distribuciones` | `CreateDistribucionDto` | `Distribucion` | 201 |
+| PATCH | `/distribuciones/:id/confirmar` | - | `Distribucion` | 200 |
+| PATCH | `/distribuciones/:id/cancelar` | `CancelDistribucionDto` | `Distribucion` | 200 |
 
 ## Ejemplos cURL
 

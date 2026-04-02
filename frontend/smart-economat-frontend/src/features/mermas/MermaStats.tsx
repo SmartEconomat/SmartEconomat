@@ -10,8 +10,7 @@ import {
   CardContent,
 } from '@mui/material';
 import { MermaStats, MotivoMerma } from '../../services/merma.types';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import InventoryIcon from '@mui/icons-material/Inventory';
+import BrokenImageOutlinedIcon from '@mui/icons-material/BrokenImageOutlined';
 
 interface MermaStatsProps {
   stats: MermaStats | null;
@@ -59,7 +58,7 @@ const MermaStatsView: React.FC<MermaStatsProps> = ({ stats, isLoading }) => {
                   bgcolor="error.light"
                   color="white"
                 >
-                  <WarningAmberIcon />
+                  <BrokenImageOutlinedIcon />
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary">
@@ -90,7 +89,7 @@ const MermaStatsView: React.FC<MermaStatsProps> = ({ stats, isLoading }) => {
                   bgcolor="warning.light"
                   color="white"
                 >
-                  <InventoryIcon />
+                  <BrokenImageOutlinedIcon />
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary">

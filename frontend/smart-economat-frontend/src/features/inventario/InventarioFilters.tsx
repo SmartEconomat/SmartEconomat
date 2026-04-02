@@ -180,7 +180,6 @@ const InventarioFilters: React.FC<InventarioFiltersProps> = ({
                 key={key}
                 {...tagProps}
                 size="small"
-                icon={<PlaceIcon sx={{ fontSize: 13 }} />}
                 label={option.nombre}
                 sx={{ height: 24, borderRadius: 1 }}
               />

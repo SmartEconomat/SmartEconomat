@@ -87,6 +87,8 @@ const mapBackendToFrontend = (user: Record<string, unknown>): Usuario => {
     fecha_registro: (user.createdAt as string) || new Date().toISOString(),
     permisosAdicionales: (user.permisosAdicionales as Permiso[]) || [],
     permisosExcluidos: (user.permisosExcluidos as Permiso[]) || [],
+    slotId: user.slotId as string | undefined,
+    ubicacionId: user.ubicacionId as string | undefined,
   };
 };
 
@@ -228,7 +230,6 @@ export const usuarioService = {
     data: ActualizarUsuarioDTO
   ): Promise<ApiResponse<Usuario>> {
     const payload = mapFrontendToBackend(data, true);
-    delete payload.roleId;
     delete payload.roleName;
     try {
       const response = await baseFetch(`/usuarios/${id}`, {
