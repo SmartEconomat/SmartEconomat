@@ -88,6 +88,7 @@ export const consolidateOwnPedidos = (pedidos: Pedido[]): Pedido[] => {
         estado: mapPedidoEstadoToBatchEstado(aggregatedEstado),
         observaciones: firstPedido.observaciones,
         usuario: firstPedido.usuario,
+        isAprobado: aggregatedEstado !== EstadoPedido.PENDIENTE,
         pedidos: batchPedidos,
       };
 

@@ -18,8 +18,15 @@ const calculateEstado = (rec: number, ped: number): LineaDraft['estado'] => {
   return 'Exceso';
 };
 
-export const mapPedidoToDraftLines = (pedido: Pedido): LineaDraft[] =>
-  (pedido.pedidoProductos || []).map((pp: PedidoProducto) => ({
+export const mapPedidoToDraftLines = (pedido: Pedido): LineaDraft[] => {
+  const lineas = pedido.pedidoProductos || [];
+  if (lineas.length === 0) {
+    console.warn(
+      `[mapPedidoToDraftLines] El pedido ${pedido.id} no tiene lineas de producto.`
+    );
+  }
+
+  return lineas.map((pp: PedidoProducto) => ({
     pedidoProductoId: pp.id,
     idProducto: pp.productoProveedor?.producto?.id,
     codigoBarras: pp.productoProveedor?.producto?.codigoBarras,
@@ -37,6 +44,7 @@ export const mapPedidoToDraftLines = (pedido: Pedido): LineaDraft[] =>
     estado: calculateEstado(0, Number(pp.cantidad)),
     unidad: pp.productoProveedor?.producto?.unidad || UnidadMedida.UNIDAD,
   }));
+};
 
 export const mapPurchaseBatchToRecepcionDraft = (
   batch: PurchaseBatch

@@ -43,7 +43,10 @@ export const getNextBatchAction = (
       icon: AssignmentTurnedInIcon,
       color: 'info',
       action: 'tramitar',
-      tooltip: 'Marcar como pedido al proveedor',
+      disabled: !batch.isAprobado,
+      tooltip: !batch.isAprobado
+        ? 'El lote debe ser aprobado antes de tramitarlo'
+        : 'Marcar como pedido al proveedor',
     };
   }
 

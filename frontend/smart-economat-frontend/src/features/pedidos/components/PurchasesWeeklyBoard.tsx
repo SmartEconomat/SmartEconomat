@@ -32,6 +32,10 @@ interface PurchasesWeeklyBoardProps {
   isLoading: boolean;
   viewMode: PedidosViewMode;
   handlers: PurchaseBatchActionHandlers;
+  selectable?: boolean;
+  selectedIds?: string[];
+  onSelectionChange?: (ids: string[]) => void;
+  rightHeaderAction?: React.ReactNode;
   emptyMessage?: string;
 }
 
@@ -58,6 +62,9 @@ interface WeeklyBatchTableProps {
   columns: Column<PurchaseBatch>[];
   viewMode: PedidosViewMode;
   handlers: PurchaseBatchActionHandlers;
+  selectable?: boolean;
+  selectedIds?: string[];
+  onSelectionChange?: (ids: string[]) => void;
 }
 
 const WeeklyBatchTable: React.FC<WeeklyBatchTableProps> = ({
@@ -65,6 +72,9 @@ const WeeklyBatchTable: React.FC<WeeklyBatchTableProps> = ({
   columns,
   viewMode,
   handlers,
+  selectable,
+  selectedIds,
+  onSelectionChange,
 }) => {
   const [sortConfig, setSortConfig] = React.useState<{
     key: string;
@@ -160,6 +170,10 @@ const WeeklyBatchTable: React.FC<WeeklyBatchTableProps> = ({
       getRowAriaLabel={(row) =>
         `Abrir detalle de la compra ${row.id.substring(0, 8)}`
       }
+      selectable={selectable}
+      selectedIds={selectedIds}
+      onSelectionChange={onSelectionChange}
+      uniqueKey="id"
       renderActions={(row) => renderBatchActions(row, handlers)}
     />
   );
@@ -170,6 +184,9 @@ const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
   isLoading,
   viewMode,
   handlers,
+  selectable,
+  selectedIds,
+  onSelectionChange,
   emptyMessage = 'No hay compras registradas para los filtros actuales.',
 }) => {
   const columns = useMemo(() => buildBatchColumns(), []);
@@ -249,6 +266,9 @@ const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
                 columns={columns}
                 viewMode={viewMode}
                 handlers={handlers}
+                selectable={selectable}
+                selectedIds={selectedIds}
+                onSelectionChange={onSelectionChange}
               />
             </AccordionDetails>
           </Accordion>

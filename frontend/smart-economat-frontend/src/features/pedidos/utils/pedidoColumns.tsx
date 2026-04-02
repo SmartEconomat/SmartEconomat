@@ -122,10 +122,7 @@ export const renderPedidoActions = (
 ): React.ReactNode => {
   const isOwner = !!currentUserId && row.usuario?.id === currentUserId;
   const canDelete =
-    permissions.canDelete ||
-    (isOwner &&
-      (row.estado === EstadoPedido.PENDIENTE ||
-        row.estado === EstadoPedido.CANCELADO));
+    permissions.canDelete || (isOwner && row.estado === EstadoPedido.PENDIENTE);
 
   return isAggregatedBatchPedido(row) ? (
     <Stack direction="row" spacing={1} justifyContent="center">
@@ -168,20 +165,18 @@ export const renderPedidoActions = (
         </Tooltip>
       )}
 
-      {canDelete &&
-        (row.estado === EstadoPedido.PENDIENTE ||
-          row.estado === EstadoPedido.CANCELADO) && (
-          <Tooltip title="Eliminar">
-            <IconButton
-              color="error"
-              onClick={() => handlers.onDelete(row)}
-              size="small"
-              aria-label="Eliminar"
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        )}
+      {canDelete && row.estado === EstadoPedido.PENDIENTE && (
+        <Tooltip title="Eliminar">
+          <IconButton
+            color="error"
+            onClick={() => handlers.onDelete(row)}
+            size="small"
+            aria-label="Eliminar"
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
 
       {permissions.canRestore && row.estado === EstadoPedido.CANCELADO && (
         <Tooltip title="Revertir">
@@ -237,20 +232,18 @@ export const renderPedidoActions = (
         </Tooltip>
       )}
 
-      {canDelete &&
-        (row.estado === EstadoPedido.PENDIENTE ||
-          row.estado === EstadoPedido.CANCELADO) && (
-          <Tooltip title="Eliminar pedido">
-            <IconButton
-              color="error"
-              onClick={() => handlers.onDelete(row)}
-              size="small"
-              aria-label="Eliminar"
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        )}
+      {canDelete && row.estado === EstadoPedido.PENDIENTE && (
+        <Tooltip title="Eliminar pedido">
+          <IconButton
+            color="error"
+            onClick={() => handlers.onDelete(row)}
+            size="small"
+            aria-label="Eliminar"
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
 
       {permissions.canEdit && row.estado === EstadoPedido.PENDIENTE && (
         <Tooltip title="Editar pedido">

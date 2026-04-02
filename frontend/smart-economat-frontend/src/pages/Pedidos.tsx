@@ -7,8 +7,10 @@ import React, {
 } from 'react';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
-import { Box, Alert, Paper } from '@mui/material';
+import { Box, Alert, Paper, Button, Typography } from '@mui/material';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import CheckIcon from '@mui/icons-material/Check';
+import LinkIcon from '@mui/icons-material/Link';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import DynamicFormModal from '../components/ui/DynamicFormModal';
 import { ModalCloseReason } from '../components/ui/Modal';
@@ -84,6 +86,9 @@ const Pedidos: React.FC = () => {
   const [batchViewMode, setBatchViewMode] = useState<'batch' | 'pedido'>(
     'batch'
   );
+  const [selectedPedidoIds, setSelectedPedidoIds] = useState<string[]>([]);
+  const [selectedBatchIds, setSelectedBatchIds] = useState<string[]>([]);
+  const [isBulkApproving, setIsBulkApproving] = useState(false);
   const [itemToViewDetails, setItemToViewDetails] = useState<Pedido | null>(
     null
   );
@@ -205,6 +210,7 @@ const Pedidos: React.FC = () => {
     restorePedidoById,
     restorePurchaseBatchById,
     onTramitar,
+    onApproveBatch: onApproveBatchHook,
     isSaving,
     isDeleting,
     isAceptando,
@@ -426,6 +432,47 @@ const Pedidos: React.FC = () => {
     hasPromptedRef.current = true;
   }, [user]);
 
+  const handleConsolidateSelected = useCallback(async () => {
+    if (selectedPedidoIds.length === 0) return;
+
+    try {
+      await consolidatePedidosByIds(
+        selectedPedidoIds,
+        `Consolidación manual de ${selectedPedidoIds.length} pedidos`
+      );
+      setSelectedPedidoIds([]);
+      toast.success(
+        `${selectedPedidoIds.length} pedidos consolidados correctamente.`
+      );
+    } catch (error) {
+      console.error('Error al consolidar pedidos seleccionados:', error);
+    }
+  }, [selectedPedidoIds, consolidatePedidosByIds, toast]);
+
+  const handleApproveSelectedBatches = useCallback(async () => {
+    if (selectedBatchIds.length === 0) return;
+
+    setIsBulkApproving(true);
+    let successCount = 0;
+    try {
+      for (const id of selectedBatchIds) {
+        try {
+          // Detectamos si estamos en la pestaña de mis pedidos para usar el endpoint correcto
+          const isUserBatch = isOwnOrdersTab;
+          await onApproveBatchHook(id, isUserBatch);
+          successCount++;
+        } catch (e) {
+          console.error(`Error aprobando lote ${id}:`, e);
+        }
+      }
+      setSelectedBatchIds([]);
+      toast.success(`${successCount} lotes aprobados correctamente.`);
+      void reload();
+    } finally {
+      setIsBulkApproving(false);
+    }
+  }, [selectedBatchIds, onApproveBatchHook, reload, toast]);
+
   const handleCreateClick = useCallback(() => {
     if (draft) {
       setIsNewPedidoWarningOpen(true);
@@ -474,21 +521,38 @@ const Pedidos: React.FC = () => {
 
   const handleAceptarConfirm = useCallback(async () => {
     if (!itemToAceptar) return;
-    if (itemToAceptar.isBatchAggregate) {
-      // Al aprobar un pedido agregado de usuario, generamos su lote de compra de forma automática
-      await consolidatePedidosByIds(
-        [itemToAceptar.id],
-        `Lote generado al aprobar pedido de ${itemToAceptar.usuarioNombre || itemToAceptar.proveedor?.nombre}`
-      );
+
+    if (itemToAceptar.aggregateType === 'purchase_batch') {
+      // Si ya es un lote de compra, lo aprobamos
+      await onApproveBatchHook(itemToAceptar.id);
     } else {
-      // Al aprobar un pedido individual de inventario, lo consolidamos (se une a la lista de compra de la semana)
-      await consolidatePedidosByIds(
+      // Al aprobar un pedido (usuario o inventario), lo consolidamos
+      // Pasamos true para evitar que se abra el modal de detalle automáticamente (skipCallback)
+      const batch = await consolidatePedidosByIds(
         [itemToAceptar.id],
-        `Lote generado al aprobar pedido individual de ${itemToAceptar.proveedor?.nombre}`
+        `Lote generado al aprobar pedido de ${itemToAceptar.usuarioNombre || itemToAceptar.proveedorNombre || itemToAceptar.proveedor?.nombre}`,
+        permissions.canApprove
       );
+
+      // Si el usuario tiene permisos para aprobar, lo hacemos de una vez para evitar el doble paso
+      if (batch && permissions.canApprove) {
+        try {
+          await onApproveBatchHook(batch.id);
+          // No necesitamos cerrar el modal (setItemToViewBatch(null)) porque NO se abrió gracias al skipCallback
+        } catch (e) {
+          console.error('Error aprobando automáticamente el lote generado:', e);
+          // Si falla la aprobación automática, entonces SÍ abrimos el modal para que el usuario lo vea/intente manual
+          setItemToViewBatch(batch);
+        }
+      }
     }
     setItemToAceptar(null);
-  }, [consolidatePedidosByIds, itemToAceptar]);
+  }, [
+    consolidatePedidosByIds,
+    itemToAceptar,
+    onApproveBatchHook,
+    permissions.canApprove,
+  ]);
 
   const handleCancelarSubmit = useCallback(
     async (formData: Record<string, unknown>) => {
@@ -589,13 +653,17 @@ const Pedidos: React.FC = () => {
         )
       );
 
-      const isPedidoUsuario = 'usuario' in batch;
+      const isPedidoUsuario = 'usuario' in batch && 'numeroGlobal' in batch;
 
       return {
         id: batch.id,
         isBatchAggregate: true,
         aggregateType:
-          'aggregateType' in batch ? batch.aggregateType : 'purchase_batch',
+          'aggregateType' in batch
+            ? (batch as Pedido).aggregateType
+            : isPedidoUsuario
+              ? 'pedido_usuario'
+              : 'purchase_batch',
         usuarioNombre: isPedidoUsuario
           ? (batch as PedidoUsuario).usuario?.nombre
           : undefined,
@@ -657,7 +725,9 @@ const Pedidos: React.FC = () => {
         setItemToAceptar({
           id: pedido.id,
           isBatchAggregate: isAggregatedBatchPedido(pedido),
-          aggregateType: pedido.aggregateType,
+          aggregateType:
+            pedido.aggregateType ||
+            (isAggregatedBatchPedido(pedido) ? 'pedido_usuario' : undefined),
           proveedorNombre: pedido.proveedor?.nombre,
           fechaPedido: pedido.fechaPedido,
           numeroGlobal: pedido.numeroGlobal,
@@ -760,6 +830,23 @@ const Pedidos: React.FC = () => {
                 );
               },
             }}
+            selectable
+            selectedIds={selectedBatchIds}
+            onSelectionChange={setSelectedBatchIds}
+            rightHeaderAction={
+              selectedBatchIds.length > 0 && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="small"
+                  startIcon={<CheckIcon />}
+                  onClick={handleApproveSelectedBatches}
+                  disabled={isBulkApproving}
+                >
+                  Aprobar ({selectedBatchIds.length})
+                </Button>
+              )
+            }
           />
         ) : isWeeklyTab ? (
           <PedidosWeeklyBoard
@@ -791,7 +878,50 @@ const Pedidos: React.FC = () => {
             onCreateClick={handleCreateClick}
             hideCreator={isOwnOrdersTab}
             currentUserId={user?.id}
+            selectable={!isOwnOrdersTab && permissions.canConsolidate}
+            selectedIds={selectedPedidoIds}
+            onSelectionChange={setSelectedPedidoIds}
           />
+        )}
+
+        {/* Botón flotante para consolidar selección (aparece si hay selección) */}
+        {!isOwnOrdersTab && selectedPedidoIds.length > 0 && (
+          <Box
+            sx={{
+              position: 'fixed',
+              bottom: 80,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 1000,
+              boxShadow: 4,
+              borderRadius: 2,
+              bgcolor: 'background.paper',
+              p: 1.5,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+            }}
+          >
+            <Typography variant="subtitle2">
+              {selectedPedidoIds.length} pedidos seleccionados
+            </Typography>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<LinkIcon />}
+              onClick={handleConsolidateSelected}
+              disabled={isConsolidatingBatch}
+            >
+              Consolidar Selección
+            </Button>
+            <Button
+              variant="text"
+              size="small"
+              onClick={() => setSelectedPedidoIds([])}
+            >
+              Cancelar
+            </Button>
+          </Box>
         )}
 
         {itemToDelete && (
@@ -909,7 +1039,7 @@ const Pedidos: React.FC = () => {
                 ? () => setItemToEdit(null)
                 : handleSave
             }
-            isSubmitting={isSaving}
+            isSubmitting={isSaving || isAceptando}
             onValuesChange={handleValuesChange}
             requireConfirmation={
               itemToEdit.estado === EstadoPedido.PENDIENTE || !itemToEdit.id
@@ -919,11 +1049,7 @@ const Pedidos: React.FC = () => {
                 ? 'Cerrar'
                 : 'Guardar'
             }
-            cancelLabel={
-              itemToEdit.estado && itemToEdit.estado !== EstadoPedido.PENDIENTE
-                ? ''
-                : 'Cancelar'
-            }
+            cancelLabel=""
             confirmationMessage={
               itemToEdit.id
                 ? itemToEdit.isBatchAggregate
@@ -938,32 +1064,18 @@ const Pedidos: React.FC = () => {
           <PurchaseBatchDetailModal
             batch={itemToViewBatch}
             canEdit={permissions.canEdit}
-            canApprove={permissions.canApprove}
-            canCancel={permissions.canCancel}
             canRestore={permissions.canRestore}
             canDistribucion={canViewDistribucion}
             mode={batchViewMode}
             onClose={() => setItemToViewBatch(null)}
             onEdit={handleEditBatch}
-            onApprove={(batch) => {
-              setItemToViewBatch(null);
-              setItemToAceptar(buildBatchActionTarget(batch));
-            }}
-            onCancel={(batch) => {
-              setItemToViewBatch(null);
-              setItemToCancelar(buildBatchActionTarget(batch));
-            }}
             onRestore={(batch) => {
               setItemToViewBatch(null);
               handleBatchRestoreClick(batch);
             }}
-            onRecepcion={(batch) => {
+            onRecepcion={(batch: PurchaseBatch) => {
               setItemToViewBatch(null);
               void startRecepcionFromBatch(batch);
-            }}
-            onTramitar={(batch) => {
-              setItemToViewBatch(null);
-              void onTramitar(batch);
             }}
             onDistribucion={(batch) => {
               setItemToViewBatch(null);
@@ -971,6 +1083,10 @@ const Pedidos: React.FC = () => {
               toast.success(
                 `Abriendo distribución para la compra ${formatPedidoId(batch.id)}.`
               );
+            }}
+            onTramitar={(batch) => {
+              setItemToViewBatch(null);
+              void onTramitar(batch);
             }}
           />
         )}

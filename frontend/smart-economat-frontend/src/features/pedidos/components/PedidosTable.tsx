@@ -31,6 +31,9 @@ interface PedidosTableProps {
   onCreateClick: () => void;
   hideCreator?: boolean;
   currentUserId?: string;
+  selectable?: boolean;
+  selectedIds?: string[];
+  onSelectionChange?: (ids: string[]) => void;
 }
 
 const PedidosTable: React.FC<PedidosTableProps> = ({
@@ -47,6 +50,9 @@ const PedidosTable: React.FC<PedidosTableProps> = ({
   onCreateClick,
   hideCreator = false,
   currentUserId,
+  selectable = false,
+  selectedIds = [],
+  onSelectionChange,
 }) => {
   const [sortConfig, setSortConfig] = React.useState<{
     key: string;
@@ -137,6 +143,10 @@ const PedidosTable: React.FC<PedidosTableProps> = ({
       defaultViewMode={viewMode}
       sortConfig={sortConfig || undefined}
       onSort={handleSort}
+      selectable={selectable}
+      selectedIds={selectedIds}
+      onSelectionChange={onSelectionChange}
+      uniqueKey="id"
       renderGridItem={(row) => (
         <PedidoCard
           pedido={row}

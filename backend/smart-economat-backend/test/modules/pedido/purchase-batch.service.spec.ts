@@ -157,7 +157,7 @@ describe('PurchaseBatchService', () => {
   });
 
   describe('consolidateExistingOrders', () => {
-    it('debería consolidar y dejar los pedidos en proceso automáticamente', async () => {
+    it('debería consolidar los pedidos de forma automática', async () => {
       const dto = { pedidoIds: ['pu-1', 'pu-2'], observaciones: 'Semana 12' };
       const pedidosInternos = [
         {
@@ -192,6 +192,7 @@ describe('PurchaseBatchService', () => {
       const createdBatch = {
         id: 'batch-1',
         estado: EstadoLote.PENDIENTE,
+        isAprobado: true,
         observaciones: dto.observaciones,
       };
 
@@ -213,7 +214,7 @@ describe('PurchaseBatchService', () => {
         expect.objectContaining({
           id: 'pedido-1',
           batchId: 'batch-1',
-          estado: EstadoPedido.EN_PROCESO,
+          estado: EstadoPedido.PENDIENTE,
         })
       );
       expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(
@@ -221,7 +222,7 @@ describe('PurchaseBatchService', () => {
         expect.objectContaining({
           id: 'pedido-2',
           batchId: 'batch-1',
-          estado: EstadoPedido.EN_PROCESO,
+          estado: EstadoPedido.PENDIENTE,
         })
       );
       expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(
