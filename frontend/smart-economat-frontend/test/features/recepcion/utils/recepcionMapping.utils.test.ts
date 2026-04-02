@@ -58,6 +58,7 @@ describe('recepcionMapping.utils', () => {
       createdAt: new Date().toISOString(),
       observaciones: 'Test',
       pedidos: [mockPedido],
+      isAprobado: false,
     });
 
     expect(draft.pedidosSeleccionados).toHaveLength(1);

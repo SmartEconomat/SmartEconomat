@@ -125,7 +125,7 @@ export class PurchaseBatchController {
   @Patch(':id/aceptar')
   @RequirePermissions('pedidos:editar')
   accept(@Param('id', ParseUUIDv7Pipe) id: string) {
-    return this.batchService.acceptBatchOrder(id);
+    return this.batchService.approveBatchOrder(id);
   }
 
   @Patch(':id/cancelar')

@@ -58,6 +58,7 @@ export interface Pedido {
   fechaEntrega?: string;
   costeTotal: number;
   estado: EstadoPedido;
+  isAprobado?: boolean;
   observaciones?: string;
   motivoCancelacion?: string;
   motivoIncidencia?: string;
@@ -97,6 +98,7 @@ export interface PurchaseBatch {
   id: string;
   createdAt: string;
   estado: EstadoLote;
+  isAprobado: boolean;
   observaciones?: string;
   usuario?: UsuarioBasico;
   pedidos?: Pedido[];

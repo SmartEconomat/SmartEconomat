@@ -30,6 +30,7 @@ export interface PedidoPermissions {
   canCancel: boolean;
   canApprove: boolean;
   canRestore: boolean;
+  canConsolidate: boolean;
 }
 
 export interface PedidosPaginationState {
