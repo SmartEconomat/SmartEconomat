@@ -5,6 +5,30 @@ export interface User {
   rol: string;
   username?: string;
   permisos?: string[];
+  slotId?: string;
+  ubicacionId?: string;
+  alumno?: {
+    id: string;
+    slot?: {
+      id: string;
+      aula: string;
+      ubicacion?: {
+        id: string;
+        nombre: string;
+      };
+    };
+  };
+  profesor?: {
+    id: string;
+    slots?: Array<{
+      id: string;
+      aula: string;
+      ubicacion?: {
+        id: string;
+        nombre: string;
+      };
+    }>;
+  };
 }
 
 export interface AuthContextType {

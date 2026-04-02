@@ -1,10 +1,13 @@
 import { baseFetch, ApiResponse } from './api.service';
+import type { Ubicacion } from './ubicacion.types';
 
 export interface AlumnoSlot {
   id: string;
   aula: string;
   numeroClase: number;
   capacidad: number;
+  ubicacionId?: string;
+  ubicacion?: Ubicacion;
   codigoSlot?: string;
   profesor?: {
     id: string;
@@ -45,6 +48,7 @@ export const profesorService = {
     aula: string;
     numeroClase: number;
     capacidad: number;
+    ubicacionId?: string;
   }): Promise<ApiResponse<AlumnoSlot> & { status: number }> {
     const response = await baseFetch('/profesores/slots', {
       method: 'POST',
@@ -218,6 +222,7 @@ export const profesorService = {
     numeroClase: number;
     capacidad: number;
     profesorId: string;
+    ubicacionId?: string;
   }): Promise<ApiResponse<AlumnoSlot> & { status: number }> {
     const response = await baseFetch('/profesores/admin-slots', {
       method: 'POST',

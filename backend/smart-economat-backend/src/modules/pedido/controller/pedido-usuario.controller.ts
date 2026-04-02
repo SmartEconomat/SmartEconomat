@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -16,11 +17,14 @@ import {
 import type { Response } from 'express';
 
 type PedidoUsuarioRequest = {
-  user: { id: string };
+  user: { id: string; rol?: string };
   url: string;
 };
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
-import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import {
+  RequirePermissions,
+  RequireAnyPermission,
+} from '../../../common/decorators/require-permissions.decorator';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -144,5 +148,15 @@ export class PedidoUsuarioController {
     reportQuery.pedidoUsuarioId = id;
     reportQuery.tipo = TipoReportePdf.PEDIDO;
     await this.pdfReportService.generateReport(reportQuery, res);
+  }
+
+  @Delete(':id')
+  @RequireAnyPermission('pedidos:eliminar', 'pedidos:listar')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(
+    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Req() req: PedidoUsuarioRequest
+  ) {
+    return this.pedidoUsuarioService.remove(id, req.user);
   }
 }

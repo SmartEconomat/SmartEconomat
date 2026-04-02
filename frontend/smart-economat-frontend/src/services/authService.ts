@@ -39,6 +39,10 @@ export const authService = {
       rol: result.data.rol || result.data.role || 'usuario',
       username: result.data.username,
       permisos: result.data.permisos || [],
+      // @ts-expect-error - Permitir que las relaciones pasen desde el backend sin DTO completo todavía
+      alumno: result.data.alumno,
+      // @ts-expect-error - Permitir que las relaciones pasen desde el backend sin DTO completo todavía
+      profesor: result.data.profesor,
     };
   },
 

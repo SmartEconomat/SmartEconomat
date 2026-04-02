@@ -19,6 +19,8 @@ export interface Usuario {
   roleName?: string;
   permisosAdicionales?: Permiso[];
   permisosExcluidos?: Permiso[];
+  slotId?: string | null;
+  ubicacionId?: string | null;
 }
 
 export interface RolOption {
@@ -37,6 +39,8 @@ export interface ActualizarUsuarioDTO extends Partial<CrearUsuarioDTO> {
   roleId?: string;
   permisosAdicionalesIds?: string[];
   permisosExcluidosIds?: string[];
+  slotId?: string | null;
+  ubicacionId?: string | null;
 }
 
 export interface ApiResponse<T> {

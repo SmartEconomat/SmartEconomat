@@ -15,6 +15,8 @@ import {
   Tooltip,
   SelectChangeEvent,
   Stack,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import { Autocomplete, CircularProgress } from '@mui/material';
 import DataTable, { Column } from '../components/ui/DataTable';
@@ -33,7 +35,8 @@ import type { Ubicacion } from '../services/ubicacion.types';
 import UbicacionesModal from '../components/inventario/UbicacionesModal';
 import InventoryDetailModal from '../components/inventario/InventoryDetailModal';
 import { useToast } from '../store/toast.hooks';
-import { usePermission } from '../store/auth.hooks';
+import { useAuth, usePermission } from '../store/auth.hooks';
+import { profesorService } from '../services/profesor.service';
 import {
   searchProductoProveedor,
   type ProductoProveedorOption,
@@ -98,6 +101,19 @@ const Inventario: React.FC = () => {
   const [isSearchScannerOpen, setIsSearchScannerOpen] = useState(false);
 
   const toast = useToast();
+  const { user } = useAuth();
+  const isAdmin =
+    user?.rol?.toUpperCase() === 'ADMINISTRADOR' ||
+    user?.rol?.toUpperCase() === 'SUPER_ADMIN' ||
+    user?.rol?.toUpperCase() === 'ADMIN';
+  const canSeeGeneral =
+    isAdmin || user?.permisos?.includes('inventario:ver_general');
+
+  const [tabIndex, setTabIndex] = useState(isAdmin ? 1 : 0);
+  const [assignedLocations, setAssignedLocations] = useState<
+    { id: string; nombre: string }[]
+  >([]);
+  const [isLocationsLoading, setIsLocationsLoading] = useState(false);
 
   const loadUbicaciones = useCallback(async () => {
     try {
@@ -112,25 +128,48 @@ const Inventario: React.FC = () => {
     }
   }, [toast, ubicacionId]);
 
+  const loadAssignedLocations = useCallback(async () => {
+    if (!user) return;
+    setIsLocationsLoading(true);
+    try {
+      // Si es profesor o tiene slots asignados
+      const response = await profesorService.getSlots();
+      const profLocations =
+        response.status === 200 && response.data
+          ? (response.data
+              .map((slot) => ({
+                id: slot.ubicacionId,
+                nombre:
+                  slot.ubicacion?.nombre ||
+                  slot.aula ||
+                  'Ubicación desconocida',
+              }))
+              .filter((loc) => !!loc.id) as { id: string; nombre: string }[])
+          : [];
+
+      // También incluimos la ubicación directa del perfil del usuario si existe
+      if (user.ubicacionId) {
+        const fullList = await UbicacionService.findAll();
+        const profileLoc = fullList.find((l) => l.id === user.ubicacionId);
+        if (profileLoc && !profLocations.some((l) => l.id === profileLoc.id)) {
+          profLocations.push({ id: profileLoc.id, nombre: profileLoc.nombre });
+        }
+      }
+
+      setAssignedLocations(profLocations);
+    } catch (err) {
+      console.error('Error al cargar ubicaciones asignadas:', err);
+    } finally {
+      setIsLocationsLoading(false);
+    }
+  }, [user]);
+
   useEffect(() => {
-    setIsLoading(true);
-    setError(null);
-    fetchInventario()
-      .then((items) => {
-        setRawItems(items);
-        const agregado = agregarInventarioPorProducto(items);
-        setData(agregado);
-        setTotalItems(agregado.length);
-      })
-      .catch((err: unknown) => {
-        const message =
-          err instanceof Error
-            ? err.message
-            : 'Error desconocido al cargar inventario.';
-        setError(message);
-      })
-      .finally(() => setIsLoading(false));
-  }, []);
+    void loadUbicaciones();
+    void loadAssignedLocations();
+  }, [loadUbicaciones, loadAssignedLocations]);
+
+  // Eliminado el useEffect inicial redundante que ya maneja reloadInventario con tabIndex
 
   // Autocomplete remoto: NO cargamos el catálogo completo (escala a millones).
   useEffect(() => {
@@ -174,13 +213,23 @@ const Inventario: React.FC = () => {
     setIsCreateOpen(false);
   };
 
-  const reloadInventario = async () => {
+  const reloadInventario = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
       const items = await fetchInventario();
       setRawItems(items);
-      const agregado = agregarInventarioPorProducto(items);
+      const itemsToGroup =
+        tabIndex === 0
+          ? items.filter((item) => {
+              const uId = item.ubicacion?.id;
+              return uId
+                ? assignedLocations.some((loc) => loc.id === uId)
+                : false;
+            })
+          : items;
+
+      const agregado = agregarInventarioPorProducto(itemsToGroup);
       setData(agregado);
       setTotalItems(agregado.length);
     } catch (err: unknown) {
@@ -192,7 +241,11 @@ const Inventario: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [tabIndex, assignedLocations]);
+
+  useEffect(() => {
+    void reloadInventario();
+  }, [tabIndex, assignedLocations, canSeeGeneral, reloadInventario]);
 
   const handleCreateInventario = async () => {
     if (!productoProveedorValue?.id) {
@@ -488,6 +541,20 @@ const Inventario: React.FC = () => {
         title="Escanear Producto para Buscar"
       />
 
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs
+          value={tabIndex}
+          onChange={(_, v) => {
+            setTabIndex(v);
+            setPage(1);
+          }}
+          aria-label="inventory tabs"
+        >
+          <Tab label="Mis Ubicaciones" />
+          {canSeeGeneral && <Tab label="Inventario General" />}
+        </Tabs>
+      </Box>
+
       <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -498,7 +565,7 @@ const Inventario: React.FC = () => {
         <DataTable
           columns={columns}
           data={filteredData.slice((page - 1) * pageSize, page * pageSize)}
-          isLoading={isLoading}
+          isLoading={isLoading || isLocationsLoading}
           hideTopBar
           emptyStateMessage={
             <Box sx={{ py: 4, textAlign: 'center' }}>
@@ -510,14 +577,20 @@ const Inventario: React.FC = () => {
                 filters.categorias.length > 0 ||
                 filters.ubicaciones.length > 0
                   ? 'No hay productos que coincidan con tu búsqueda o filtros'
-                  : 'No hay stock en inventario'}
+                  : tabIndex === 0
+                    ? assignedLocations.length === 0
+                      ? 'No tienes ubicaciones asignadas'
+                      : `No hay stock en ${assignedLocations.map((l) => l.nombre).join(', ')}`
+                    : 'No hay stock en inventario'}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                 {searchTerm.trim() ||
                 filters.categorias.length > 0 ||
                 filters.ubicaciones.length > 0
                   ? 'Prueba con otros términos o limpia los filtros.'
-                  : 'Registra recepciones o crea entradas de inventario para ver el stock.'}
+                  : tabIndex === 0 && assignedLocations.length === 0
+                    ? 'Contacta con tu profesor o administrador para que te asigne un slot.'
+                    : 'Registra recepciones o crea entradas de inventario para ver el stock.'}
               </Typography>
             </Box>
           }

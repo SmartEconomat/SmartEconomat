@@ -53,9 +53,12 @@ export interface PedidoActionHandlers {
   onCancel: (pedido: Pedido) => void;
   onRestore: (pedido: Pedido) => void;
   onViewDelivery: (pedido: Pedido) => void;
+  onConfirmReceipt: (pedido: Pedido) => void;
 }
 
 export interface PurchaseBatchActionHandlers {
   onView: (batch: PurchaseBatch) => void;
   onRecepcion: (batch: PurchaseBatch) => void;
+  onTramitar: (batch: PurchaseBatch) => void;
+  onDistribucion?: (batch: PurchaseBatch) => void;
 }

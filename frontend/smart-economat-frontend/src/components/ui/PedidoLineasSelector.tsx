@@ -508,7 +508,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                 <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
                   Cantidad
                 </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
+                <TableCell sx={{ fontWeight: 'bold', width: 140 }}>
                   Precio Unid.
                 </TableCell>
                 <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
@@ -562,7 +562,9 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                     key={uniqueKey}
                     sx={{
                       '& > td': {
-                        verticalAlign: 'top',
+                        verticalAlign: 'bottom',
+                        padding: '12px 8px',
+                        height: '64px', // Altura fija para estabilizar el grid
                       },
                     }}
                   >
@@ -689,6 +691,9 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                             );
                           }}
                           variant="standard"
+                          InputProps={{
+                            sx: { '& input': { pb: '4px' } },
+                          }}
                           inputProps={{
                             min: quantityMin,
                             step: quantityStep,
@@ -700,7 +705,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                           helperText={
                             focusedQuantityKey === uniqueKey
                               ? quantityFocusMessage
-                              : ' '
+                              : undefined
                           }
                           onFocus={() => setFocusedQuantityKey(uniqueKey)}
                           onBlur={() =>
@@ -721,30 +726,40 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                         <TextField
                           type="number"
                           value={line.precioUnitario || ''}
-                          onChange={(e) =>
-                            handleUpdateLine(
-                              originalIndex,
-                              'precioUnitario',
-                              Number(e.target.value)
-                            )
-                          }
                           variant="standard"
+                          InputProps={{
+                            readOnly: true,
+                            sx: {
+                              '& input': { pr: 1, pb: '4px' },
+                            },
+                          }}
                           inputProps={{ step: '0.01' }}
                           size="small"
                         />
                       )}
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" sx={{ my: 1 }}>
-                        {(
+                      <TextField
+                        variant="standard"
+                        fullWidth
+                        value={`${(
                           Number(line.cantidad || 0) *
                           Number(line.precioUnitario || 0)
-                        ).toFixed(2)}{' '}
-                        €
-                      </Typography>
+                        ).toFixed(2)} €`}
+                        InputProps={{
+                          readOnly: true,
+                          disableUnderline: false,
+                          sx: {
+                            '& input': { pb: '4px' },
+                          },
+                        }}
+                        size="small"
+                      />
                     </TableCell>
                     {!disabled && (
-                      <TableCell sx={{ width: 32, minWidth: 32, px: 0.5 }}>
+                      <TableCell
+                        sx={{ width: 32, minWidth: 32, px: 0.5, pb: 2.2 }}
+                      >
                         <IconButton
                           size="small"
                           color="error"

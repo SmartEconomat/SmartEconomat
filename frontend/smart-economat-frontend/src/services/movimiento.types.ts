@@ -4,6 +4,8 @@ export enum TipoMovimiento {
   AJUSTE = 'ajuste',
   PEDIDO = 'pedido',
   ENTRADA_COMPRA = 'entrada_compra',
+  SALIDA_DISTRIBUCION = 'salida_distribucion',
+  ENTRADA_DISTRIBUCION = 'entrada_distribucion',
   SALIDA_ELABORACION = 'salida_elaboracion',
 }
 

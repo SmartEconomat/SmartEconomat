@@ -1,3 +1,5 @@
+import { Distribucion } from './distribucion.types';
+
 export enum EstadoPedido {
   PENDIENTE = 'pendiente',
   EN_PROCESO = 'en_proceso',
@@ -66,8 +68,14 @@ export interface Pedido {
   };
   pedidoProductos?: PedidoProducto[];
   pedidos?: Pedido[];
+  distribuciones?: Distribucion[];
   batchId?: string;
   batch?: PurchaseBatch;
+  ubicacionEntregaSugeridaId?: string;
+  ubicacionEntregaSugerida?: {
+    id: string;
+    nombre: string;
+  };
 }
 
 export interface PedidoUsuarioLinea {
@@ -92,4 +100,9 @@ export interface PurchaseBatch {
   observaciones?: string;
   usuario?: UsuarioBasico;
   pedidos?: Pedido[];
+  ubicacionEntregaSugeridaId?: string;
+  ubicacionEntregaSugerida?: {
+    id: string;
+    nombre: string;
+  };
 }
