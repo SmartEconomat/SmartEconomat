@@ -54,6 +54,7 @@ export const getStatusColor = (
     case 'completed':
     case 'delivered':
     case 'entregado':
+    case 'en_almacen':
     case 'approved':
     case 'recibido':
     case 'fácil':
@@ -97,8 +98,9 @@ export const getStatusColor = (
 const statusTranslations: Record<string, string> = {
   success: 'Éxito',
   completed: 'Completado',
-  delivered: 'Entregado',
-  entregado: 'Entregado',
+  delivered: 'En almacén',
+  entregado: 'En almacén',
+  en_almacen: 'En almacén',
   approved: 'Aprobado',
   error: 'Error',
   failed: 'Fallido',
