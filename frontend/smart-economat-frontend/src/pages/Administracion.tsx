@@ -336,7 +336,7 @@ const Administracion: React.FC = () => {
         });
         toast.success('Aula/Clase añadida con éxito');
       } else {
-        toast.error(res.message);
+        toast.error(res.message || 'Error al crear la clase');
       }
     } catch {
       toast.error('Error al crear la clase');
@@ -378,7 +378,7 @@ const Administracion: React.FC = () => {
         setSlots((prev) => prev.map((s) => (s.id === id ? res.data : s)));
         toast.success('Ubicación actualizada');
       } else {
-        toast.error(res.message);
+        toast.error(res.message || 'Error al actualizar');
       }
     } catch {
       toast.error('Error al actualizar');
@@ -402,7 +402,7 @@ const Administracion: React.FC = () => {
         if (allSlotsRes.success) setAllSlots(allSlotsRes.data);
         toast.success('Aula actualizada correctamente');
       } else {
-        toast.error(res.message);
+        toast.error(res.message || 'Error al actualizar el aula');
       }
     } catch {
       toast.error('Error al actualizar el aula');

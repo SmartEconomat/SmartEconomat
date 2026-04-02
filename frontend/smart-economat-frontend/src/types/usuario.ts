@@ -44,6 +44,7 @@ export interface ActualizarUsuarioDTO extends Partial<CrearUsuarioDTO> {
 }
 
 export interface ApiResponse<T> {
+  success?: boolean;
   data: T;
   message?: string;
   status: number;

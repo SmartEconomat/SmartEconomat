@@ -1,14 +1,18 @@
-import { baseFetch, ApiResponse } from './api.service';
-import type { Ubicacion } from './ubicacion.types';
+import { ApiResponse } from '../types/usuario';
+import { baseFetch } from './api.service';
 
 export interface AlumnoSlot {
   id: string;
   aula: string;
   numeroClase: number;
   capacidad: number;
-  ubicacionId?: string;
-  ubicacion?: Ubicacion;
   codigoSlot?: string;
+  profesorId?: string;
+  ubicacionId?: string;
+  ubicacion?: {
+    id: string;
+    nombre: string;
+  };
   profesor?: {
     id: string;
     user?: { id: string; username: string; nombre?: string; email?: string };
@@ -26,30 +30,57 @@ export interface Alumno {
 export interface ProfesorInfo {
   id: string;
   userId?: string;
-  username?: string;
+  username: string;
   nombre?: string;
   email?: string;
 }
 
 export const profesorService = {
   /**
-   * Obtiene los slots (aula y clase) creados por el profesor actual.
+   * Obtiene la lista de alumnos asignados a las aulas del profesor actual.
    */
-  async getSlots(): Promise<ApiResponse<AlumnoSlot[]> & { status: number }> {
-    const response = await baseFetch('/profesores/slots', { method: 'GET' });
-    const data = await response.json();
-    return { ...data, status: response.status };
+  async getAlumnos(): Promise<ApiResponse<Alumno[]>> {
+    const response = await baseFetch('/profesores/alumnos');
+    const result = await response.json();
+    return { ...result, status: response.status };
   },
 
   /**
-   * Crea un nuevo slot con capacidad de alumnos.
+   * Obtiene la lista de aulas (slots) del profesor actual.
+   */
+  async getSlots(): Promise<ApiResponse<AlumnoSlot[]>> {
+    const response = await baseFetch('/profesores/slots');
+    const result = await response.json();
+    return { ...result, status: response.status };
+  },
+
+  /**
+   * Obtiene TODAS las aulas del sistema. Solo para administradores.
+   */
+  async getAllSlots(): Promise<ApiResponse<AlumnoSlot[]>> {
+    const response = await baseFetch('/profesores/all-slots');
+    const result = await response.json();
+    return { ...result, status: response.status };
+  },
+
+  /**
+   * Obtiene la lista de todos los profesores. Solo para administradores.
+   */
+  async getAllProfesores(): Promise<ApiResponse<ProfesorInfo[]>> {
+    const response = await baseFetch('/profesores/all-profesores');
+    const result = await response.json();
+    return { ...result, status: response.status };
+  },
+
+  /**
+   * Crea una nueva aula para el profesor actual.
    */
   async createSlot(data: {
     aula: string;
     numeroClase: number;
     capacidad: number;
     ubicacionId?: string;
-  }): Promise<ApiResponse<AlumnoSlot> & { status: number }> {
+  }): Promise<ApiResponse<AlumnoSlot>> {
     const response = await baseFetch('/profesores/slots', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -59,163 +90,7 @@ export const profesorService = {
   },
 
   /**
-   * Elimina un slot.
-   */
-  async deleteSlot(
-    slotId: string
-  ): Promise<ApiResponse<void> & { status: number }> {
-    const response = await baseFetch(`/profesores/slots/${slotId}`, {
-      method: 'DELETE',
-    });
-    const data = await response.json();
-    return { ...data, status: response.status };
-  },
-
-  /**
-   * Actualiza un slot (aula, clase o capacidad).
-   */
-  async updateSlot(
-    slotId: string,
-    data: Partial<Omit<AlumnoSlot, 'id' | 'codigoSlot'>>
-  ): Promise<ApiResponse<AlumnoSlot> & { status: number }> {
-    const response = await baseFetch(`/profesores/slots/${slotId}`, {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    });
-    const result = await response.json();
-    return { ...result, status: response.status };
-  },
-
-  /**
-   * Obtiene la lista de alumnos vinculados al profesor.
-   */
-  async getAlumnos(): Promise<ApiResponse<Alumno[]> & { status: number }> {
-    const response = await baseFetch('/profesores/alumnos', { method: 'GET' });
-    const data = await response.json();
-    return { ...data, status: response.status };
-  },
-
-  /**
-   * Activa a un alumno.
-   */
-  async activateAlumno(
-    alumnoId: string
-  ): Promise<ApiResponse<Alumno> & { status: number }> {
-    const response = await baseFetch(
-      `/profesores/alumnos/${alumnoId}/activate`,
-      {
-        method: 'PATCH',
-      }
-    );
-    const data = await response.json();
-    return { ...data, status: response.status };
-  },
-
-  /**
-   * Fuerza el restablecimiento de contraseña de un alumno.
-   */
-  async forcePasswordReset(alumnoId: string): Promise<
-    ApiResponse<{ message: string; provisionalPassword?: string }> & {
-      status: number;
-    }
-  > {
-    const response = await baseFetch(
-      `/profesores/alumnos/${alumnoId}/force-reset`,
-      {
-        method: 'POST',
-      }
-    );
-    const data = await response.json();
-    return { ...data, status: response.status };
-  },
-
-  /**
-   * Elimina/Desvincula a un alumno.
-   */
-  async removeStudent(
-    alumnoId: string
-  ): Promise<ApiResponse<void> & { status: number }> {
-    const response = await baseFetch(`/profesores/alumnos/${alumnoId}`, {
-      method: 'DELETE',
-    });
-    const data = await response.json();
-    return { ...data, status: response.status };
-  },
-
-  /**
-   * Actualiza los permisos de un alumno.
-   */
-  async updateStudentPermissions(
-    alumnoId: string,
-    permissions: string[]
-  ): Promise<ApiResponse<void> & { status: number }> {
-    const response = await baseFetch(
-      `/profesores/alumnos/${alumnoId}/permissions`,
-      {
-        method: 'PATCH',
-        body: JSON.stringify({ permissions }),
-      }
-    );
-    const data = await response.json();
-    return { ...data, status: response.status };
-  },
-
-  /**
-   * Obtiene todos los slots del sistema (solo para administradores).
-   */
-  async getAllSlots(): Promise<ApiResponse<AlumnoSlot[]> & { status: number }> {
-    const response = await baseFetch('/profesores/all-slots', {
-      method: 'GET',
-    });
-    const data = await response.json();
-    return { ...data, status: response.status };
-  },
-
-  /**
-   * Obtiene todos los profesores (solo para administradores, para el selector).
-   */
-  async getAllProfesores(): Promise<
-    ApiResponse<ProfesorInfo[]> & { status: number }
-  > {
-    const response = await baseFetch('/profesores/all-profesores', {
-      method: 'GET',
-    });
-    const data = await response.json();
-    return { ...data, status: response.status };
-  },
-
-  /**
-   * Actualiza cualquier slot como administrador (puede reasignar el profesor).
-   */
-  async adminUpdateSlot(
-    slotId: string,
-    data: Partial<Omit<AlumnoSlot, 'id' | 'codigoSlot'>> & {
-      profesorId?: string;
-    }
-  ): Promise<ApiResponse<AlumnoSlot> & { status: number }> {
-    const response = await baseFetch(`/profesores/admin-slots/${slotId}`, {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    });
-    const result = await response.json();
-    return { ...result, status: response.status };
-  },
-
-  /**
-   * Elimina un slot como administrador.
-   */
-  async adminDeleteSlot(
-    slotId: string
-  ): Promise<ApiResponse<void> & { status: number }> {
-    const response = await baseFetch(`/profesores/admin-slots/${slotId}`, {
-      method: 'DELETE',
-    });
-    const data = await response.json();
-    return { ...data, status: response.status };
-  },
-
-  /**
-   * Crea un nuevo slot como administrador para un profesor específico.
+   * Crea una nueva aula asignada a un profesor específico. Solo administradores.
    */
   async adminCreateSlot(data: {
     aula: string;
@@ -223,10 +98,107 @@ export const profesorService = {
     capacidad: number;
     profesorId: string;
     ubicacionId?: string;
-  }): Promise<ApiResponse<AlumnoSlot> & { status: number }> {
-    const response = await baseFetch('/profesores/admin-slots', {
+  }): Promise<ApiResponse<AlumnoSlot>> {
+    const response = await baseFetch('/profesores/admin/slots', {
       method: 'POST',
       body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    return { ...result, status: response.status };
+  },
+
+  /**
+   * Actualiza los datos de un aula propia.
+   */
+  async updateSlot(
+    id: string,
+    data: Partial<Omit<AlumnoSlot, 'id' | 'codigoSlot'>>
+  ): Promise<ApiResponse<AlumnoSlot>> {
+    const response = await baseFetch(`/profesores/slots/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    return { ...result, status: response.status };
+  },
+
+  /**
+   * Actualiza los datos de cualquier aula. Solo administradores.
+   */
+  async adminUpdateSlot(
+    id: string,
+    data: Partial<Omit<AlumnoSlot, 'id' | 'codigoSlot'>> & {
+      profesorId?: string;
+    }
+  ): Promise<ApiResponse<AlumnoSlot>> {
+    const response = await baseFetch(`/profesores/admin/slots/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    return { ...result, status: response.status };
+  },
+
+  /**
+   * Elimina un aula propia.
+   */
+  async deleteSlot(id: string): Promise<ApiResponse<void>> {
+    const response = await baseFetch(`/profesores/slots/${id}`, {
+      method: 'DELETE',
+    });
+    const result = await response.json();
+    return { ...result, status: response.status };
+  },
+
+  /**
+   * Elimina cualquier aula. Solo administradores.
+   */
+  async adminDeleteSlot(id: string): Promise<ApiResponse<void>> {
+    const response = await baseFetch(`/profesores/admin/slots/${id}`, {
+      method: 'DELETE',
+    });
+    const result = await response.json();
+    return { ...result, status: response.status };
+  },
+
+  /**
+   * Cambia el estado de activación de un alumno.
+   */
+  async activateAlumno(
+    alumnoId: string
+  ): Promise<ApiResponse<{ status: string; message: string }>> {
+    const response = await baseFetch(
+      `/profesores/alumnos/${alumnoId}/activate`,
+      {
+        method: 'PATCH',
+      }
+    );
+    const result = await response.json();
+    return { ...result, status: response.status };
+  },
+
+  /**
+   * Fuerza el restablecimiento de contraseña de un profesor. Solo administradores.
+   */
+  async forcePasswordReset(
+    alumnoId: string
+  ): Promise<ApiResponse<{ message: string; provisionalPassword?: string }>> {
+    const response = await baseFetch(
+      `/profesores/force-reset/alumno/${alumnoId}`,
+      {
+        method: 'PATCH',
+      }
+    );
+    const result = await response.json();
+    return { ...result, status: response.status };
+  },
+
+  /**
+   * Elimina un alumno del slot asignado.
+   */
+  async removeStudent(id: string): Promise<ApiResponse<void>> {
+    const response = await baseFetch(`/profesores/alumnos/${id}`, {
+      method: 'DELETE',
     });
     const result = await response.json();
     return { ...result, status: response.status };

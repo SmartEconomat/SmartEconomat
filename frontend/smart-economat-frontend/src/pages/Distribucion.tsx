@@ -203,7 +203,7 @@ const DistribucionPage: React.FC = () => {
 
     if (userRole === 'PROFESOR') {
       const response = await profesorService.getSlots();
-      if (!response.success) {
+      if (response.status < 200 || response.status >= 300) {
         throw new Error(
           response.message || 'No se pudieron cargar las aulas del profesor.'
         );
@@ -212,7 +212,7 @@ const DistribucionPage: React.FC = () => {
       const ubicacionIds = Array.from(
         new Set(
           response.data
-            .map((slot) => slot.ubicacionId ?? slot.ubicacion?.id)
+            .map((slot) => slot.ubicacionId)
             .filter((ubicacionId): ubicacionId is string => !!ubicacionId)
         )
       );
