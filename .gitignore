@@ -79,3 +79,8 @@ deploy_key.pub
 /uploads/
 /certs/*
 !/certs/renewal-hooks/
+
+.agent
+.agent*
+.agents/*
+.agent/

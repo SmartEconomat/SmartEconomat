@@ -60,6 +60,14 @@ La feature de pedidos es ahora uno de los módulos más compuestos del frontend 
 - `src/services/pedido.service.ts` centraliza el mapping entre contratos backend y filas visibles.
 - La referencia técnica completa del módulo vive en `wiki/modules/pedido/README.md`.
 
+## Próxima feature: distribución interna
+
+La siguiente evolución funcional prevista conecta pedidos recepcionados con consumo por aula.
+
+- La referencia técnica de la propuesta vive en `wiki/modules/distribucion/README.md`.
+- La idea base es no crear otro inventario paralelo, sino reutilizar `Inventario` + `Ubicacion`.
+- Cada aula podrá resolverse como una ubicación operativa para recibir distribución y servir de contexto de consumo en preparaciones.
+
 ### Convención de UI
 
 - **Mis Pedidos** y la vista semanal trabajan con `PedidoUsuario`.

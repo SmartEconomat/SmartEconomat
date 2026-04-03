@@ -41,7 +41,9 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
   return (
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>
-        {isAutoFilled ? 'Añadir Producto Encontrado' : 'Añadir Producto Desconocido'}
+        {isAutoFilled
+          ? 'Añadir Producto Encontrado'
+          : 'Añadir Producto Desconocido'}
       </DialogTitle>
       <DialogContent dividers>
         <Typography variant="body2" sx={{ mb: 2 }}>

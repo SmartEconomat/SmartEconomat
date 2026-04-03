@@ -1,79 +1,35 @@
-import { SetMetadata } from '@nestjs/common';
+import { SetMetadata, applyDecorators } from '@nestjs/common';
 
 export const PERMISSIONS_KEY = 'permissions';
 export const PERMISSIONS_MODE_KEY = 'permissions_mode';
 
-export const RequirePermissions = (...permissions: string[]) => {
-  return (
-    target: object,
-    propertyKey?: string | symbol,
-    descriptor?: TypedPropertyDescriptor<unknown>
-  ) => {
-    if (propertyKey) {
-      SetMetadata(PERMISSIONS_KEY, permissions)(
-        target,
-        propertyKey,
-        descriptor!
-      );
-      SetMetadata(PERMISSIONS_MODE_KEY, 'all')(
-        target,
-        propertyKey,
-        descriptor!
-      );
-      return;
-    }
+/**
+ * Decorador para exigir uno o varios permisos específicos.
+ * Se utiliza applyDecorators para asegurar que múltiples metadatos se registren
+ * correctamente y sean detectables por Reflector.getAllAndOverride.
+ *
+ * @param permissions Lista de códigos de permiso (ej. 'productos:crear')
+ */
+export const RequirePermissions = (...permissions: string[]) =>
+  applyDecorators(
+    SetMetadata(PERMISSIONS_KEY, permissions),
+    SetMetadata(PERMISSIONS_MODE_KEY, 'all')
+  );
 
-    SetMetadata(
-      PERMISSIONS_KEY,
-      permissions
-    )(target as (...args: unknown[]) => unknown);
-    SetMetadata(
-      PERMISSIONS_MODE_KEY,
-      'all'
-    )(target as (...args: unknown[]) => unknown);
-  };
-};
+/**
+ * Decorador para exigir al menos uno de los permisos listados.
+ */
+export const RequireAnyPermission = (...permissions: string[]) =>
+  applyDecorators(
+    SetMetadata(PERMISSIONS_KEY, permissions),
+    SetMetadata(PERMISSIONS_MODE_KEY, 'any')
+  );
 
-export const RequireAnyPermission = (...permissions: string[]) => {
-  return (
-    target: object,
-    propertyKey?: string | symbol,
-    descriptor?: TypedPropertyDescriptor<unknown>
-  ) => {
-    if (propertyKey) {
-      SetMetadata(PERMISSIONS_KEY, permissions)(
-        target,
-        propertyKey,
-        descriptor!
-      );
-      SetMetadata(PERMISSIONS_MODE_KEY, 'any')(
-        target,
-        propertyKey,
-        descriptor!
-      );
-      return;
-    }
-
-    SetMetadata(
-      PERMISSIONS_KEY,
-      permissions
-    )(target as (...args: unknown[]) => unknown);
-    SetMetadata(
-      PERMISSIONS_MODE_KEY,
-      'any'
-    )(target as (...args: unknown[]) => unknown);
-  };
-};
-
-export const ControllerPermissions = (...permissions: string[]) => {
-  return (target: object) => {
-    SetMetadata(
-      PERMISSIONS_KEY,
-      permissions
-    )(target as (...args: unknown[]) => unknown);
-    SetMetadata(
-      PERMISSIONS_MODE_KEY,
-      'all'
-    )(target as (...args: unknown[]) => unknown);
-  };
-};
+/**
+ * Decorador de clase para definir permisos base requeridos en todo el controlador.
+ */
+export const ControllerPermissions = (...permissions: string[]) =>
+  applyDecorators(
+    SetMetadata(PERMISSIONS_KEY, permissions),
+    SetMetadata(PERMISSIONS_MODE_KEY, 'all')
+  );

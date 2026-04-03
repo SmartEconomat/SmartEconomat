@@ -189,10 +189,17 @@ export function useRecepcionDraft({
   }, [activeStep, debounceMs, draft, isReady, syncDraft]);
 
   const clearDraft = useCallback(async () => {
-    await deleteRecepcionDraft();
+    try {
+      await deleteRecepcionDraft();
+    } catch (error) {
+      setSyncError(
+        error instanceof Error
+          ? error.message
+          : 'No se pudo eliminar el borrador remoto de recepción.'
+      );
+    }
     skipAutoSaveRef.current = true;
     setConflict(null);
-    setSyncError(null);
     setSyncStatus('idle');
     setDraft(defaultDraft());
   }, [defaultDraft]);

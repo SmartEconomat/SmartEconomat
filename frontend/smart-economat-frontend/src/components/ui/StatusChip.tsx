@@ -40,7 +40,7 @@ const CATEGORIA_VALUES = new Set<string>(Object.values(CategoriaProducto));
 const isCategoriaProducto = (status: string): status is CategoriaProducto =>
   CATEGORIA_VALUES.has(status.toLowerCase());
 
-const getStatusColor = (
+export const getStatusColor = (
   status: string
 ): 'success' | 'error' | 'warning' | 'info' | 'default' => {
   if (!status) return 'default';
@@ -54,12 +54,15 @@ const getStatusColor = (
     case 'completed':
     case 'delivered':
     case 'entregado':
+    case 'en_almacen':
     case 'approved':
     case 'recibido':
     case 'fácil':
     case 'entrada':
     case 'entrada_compra':
+    case 'entrada_distribucion':
     case 'completado':
+    case 'entregada':
       return 'success';
     case 'error':
     case 'failed':
@@ -68,18 +71,20 @@ const getStatusColor = (
     case 'rejected':
     case 'difícil':
     case 'salida':
+    case 'salida_distribucion':
     case 'salida_elaboracion':
       return 'error';
     case 'warning':
-    case 'in_progress':
-    case 'en_proceso':
     case 'review':
     case 'media':
     case 'ajuste':
-    case 'parcial':
-      return 'warning';
-    case 'pending':
     case 'pendiente':
+    case 'preparada':
+    case 'preparado':
+      return 'warning';
+    case 'in_progress':
+    case 'en_proceso':
+    case 'parcial':
     case 'info':
     case 'active':
     case 'archived':
@@ -93,8 +98,9 @@ const getStatusColor = (
 const statusTranslations: Record<string, string> = {
   success: 'Éxito',
   completed: 'Completado',
-  delivered: 'Entregado',
-  entregado: 'Entregado',
+  delivered: 'En almacén',
+  entregado: 'En almacén',
+  en_almacen: 'En almacén',
   approved: 'Aprobado',
   error: 'Error',
   failed: 'Fallido',
@@ -121,9 +127,14 @@ const statusTranslations: Record<string, string> = {
   ajuste: 'Ajuste',
   pedido: 'Pedido',
   entrada_compra: 'Entrada compra',
+  entrada_distribucion: 'Entrada distribución',
+  salida_distribucion: 'Salida distribución',
   salida_elaboracion: 'Salida elaboración',
-  parcial: 'Parcial',
+  parcial: 'Tramitado',
   completado: 'Completado',
+  preparada: 'Por recoger',
+  preparado: 'Por recoger',
+  entregada: 'Entregada',
 };
 
 const categoriaTranslations: Record<CategoriaProducto, string> = {

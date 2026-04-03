@@ -1,8 +1,10 @@
 import { DynamicField } from '../../../components/ui/DynamicFormModal';
 import { EstadoPedido } from '../../../services/pedido.types';
+import { SelectOption } from '../../../components/ui/Select';
 
 export const getPedidoSchema = (
-  row: Record<string, unknown> | null
+  row: Record<string, unknown> | null,
+  ubicacionOptions: SelectOption[] = []
 ): DynamicField[] => {
   const fields: DynamicField[] = [];
 
@@ -42,6 +44,18 @@ export const getPedidoSchema = (
 
   // Si no hay row o no tiene ID, es un nuevo pedido
   if (!row?.id) {
+    if (ubicacionOptions.length > 0) {
+      fields.push({
+        name: 'ubicacionEntregaSugeridaId',
+        label: 'Ubicación de Entrega Sugerida',
+        type: 'select',
+        options: ubicacionOptions,
+        width: 12,
+        required: true,
+        position: 'bottom',
+      });
+    }
+
     fields.push(
       {
         name: 'pedidoProductos',
@@ -76,6 +90,19 @@ export const getPedidoSchema = (
       type: 'textarea',
       disabled: true,
       position: 'bottom',
+    });
+  }
+
+  if (ubicacionOptions.length > 0) {
+    fields.push({
+      name: 'ubicacionEntregaSugeridaId',
+      label: 'Ubicación de Entrega Sugerida',
+      type: 'select',
+      options: ubicacionOptions,
+      width: 12,
+      required: true,
+      position: 'bottom',
+      disabled: Boolean(row.estado && row.estado !== EstadoPedido.PENDIENTE),
     });
   }
 

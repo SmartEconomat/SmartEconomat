@@ -12,6 +12,8 @@ import MenuBookIconOption from '@mui/icons-material/MenuBookOutlined';
 import RestaurantIconOption from '@mui/icons-material/RestaurantOutlined';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
+import CallSplitIcon from '@mui/icons-material/CallSplit';
+import BrokenImageOutlinedIcon from '@mui/icons-material/BrokenImageOutlined';
 
 // Lazy load components
 const Home = React.lazy(() => import('../../pages/Home'));
@@ -26,6 +28,7 @@ const Proveedores = React.lazy(() => import('../../pages/Proveedores'));
 const Recetas = React.lazy(() => import('../../pages/Recetas'));
 const Preparaciones = React.lazy(() => import('../../pages/Preparaciones'));
 const Mermas = React.lazy(() => import('../../pages/Mermas'));
+const Distribucion = React.lazy(() => import('../../pages/Distribucion'));
 
 const Perfil = React.lazy(() => import('../../pages/Perfil'));
 const Administracion = React.lazy(() => import('../../pages/Administracion'));
@@ -34,6 +37,7 @@ export interface MenuItem {
   path: string;
   title: string;
   description: string;
+  group: 'inicio' | 'catalogo' | 'operaciones' | 'control' | 'gestion';
   icon?: React.ReactNode;
   component: React.ComponentType<Record<string, unknown>>;
   showInMenu: boolean;
@@ -47,6 +51,7 @@ export const menuItems: MenuItem[] = [
     path: '/',
     title: 'Inicio',
     description: 'Ver resumen general y métricas del economato',
+    group: 'inicio',
     icon: <HomeIconOption />,
     component: Home,
     showInMenu: true,
@@ -56,6 +61,7 @@ export const menuItems: MenuItem[] = [
     path: '/productos',
     title: 'Productos',
     description: 'Gestionar catálogo de productos y precios',
+    group: 'catalogo',
     icon: <CategoryIconOption />,
     component: Productos,
     showInMenu: true,
@@ -65,6 +71,7 @@ export const menuItems: MenuItem[] = [
     path: '/proveedores',
     title: 'Proveedores',
     description: 'Gestionar información de proveedores externos',
+    group: 'catalogo',
     icon: <LocalShippingIconOption />,
     component: Proveedores,
     showInMenu: true,
@@ -74,6 +81,7 @@ export const menuItems: MenuItem[] = [
     path: '/recetas',
     title: 'Recetas',
     description: 'Catálogo de recetas y escandallos',
+    group: 'catalogo',
     icon: <MenuBookIconOption />,
     component: Recetas,
     showInMenu: true,
@@ -83,6 +91,7 @@ export const menuItems: MenuItem[] = [
     path: '/pedidos',
     title: 'Pedidos',
     description: 'Administrar pedidos de usuarios y proveedores',
+    group: 'operaciones',
     icon: <ShoppingCartIconOption />,
     component: Pedidos,
     showInMenu: true,
@@ -92,15 +101,38 @@ export const menuItems: MenuItem[] = [
     path: '/recepciones',
     title: 'Recepción',
     description: 'Registrar entrada de mercancía al almacén',
+    group: 'operaciones',
     icon: <LoginIconOption />,
     component: Recepcion,
     showInMenu: true,
     permiso: 'recepciones:listar',
   },
   {
+    path: '/distribucion',
+    title: 'Distribución',
+    description:
+      'Distribuir stock recepcionado hacia aulas y destinos internos',
+    group: 'operaciones',
+    icon: <CallSplitIcon />,
+    component: Distribucion,
+    showInMenu: true,
+    permiso: 'distribuciones:listar',
+  },
+  {
+    path: '/preparaciones',
+    title: 'Preparaciones',
+    description: 'Historial de producción de recetas',
+    group: 'operaciones',
+    icon: <RestaurantIconOption />,
+    component: Preparaciones,
+    showInMenu: true,
+    permiso: 'recetas:listar',
+  },
+  {
     path: '/albaranes',
     title: 'Albaranes',
     description: 'Gestionar y digitalizar albaranes de recepción',
+    group: 'operaciones',
     icon: <AssignmentOutlinedIcon />,
     component: Albaranes,
     showInMenu: true,
@@ -110,6 +142,7 @@ export const menuItems: MenuItem[] = [
     path: '/inventario',
     title: 'Inventario',
     description: 'Controlar stock y realizar ajustes de inventario',
+    group: 'control',
     icon: <InventoryIconOption />,
     component: Inventario,
     showInMenu: true,
@@ -119,42 +152,37 @@ export const menuItems: MenuItem[] = [
     path: '/movimientos',
     title: 'Movimientos',
     description: 'Consultar historial de movimientos de stock',
+    group: 'control',
     icon: <SwapHorizIconOption />,
     component: Movimientos,
     showInMenu: true,
     permiso: 'movimientos:listar',
   },
   {
-    path: '/preparaciones',
-    title: 'Preparaciones',
-    description: 'Historial de producción de recetas',
-    icon: <RestaurantIconOption />,
-    component: Preparaciones,
+    path: '/mermas',
+    title: 'Mermas',
+    description: 'Gestión de pérdidas y roturas de productos',
+    group: 'control',
+    icon: <BrokenImageOutlinedIcon />,
+    component: Mermas,
     showInMenu: true,
-    permiso: 'recetas:listar',
+    permiso: 'merma:listar',
   },
   {
     path: '/incidencias',
     title: 'Incidencias',
     description: 'Reportar y gestionar problemas o devoluciones',
+    group: 'control',
     icon: <ReportProblemIconOption />,
     component: Incidencias,
     showInMenu: true,
     permiso: 'incidencias:listar',
   },
   {
-    path: '/mermas',
-    title: 'Mermas',
-    description: 'Gestión de pérdidas y roturas de productos',
-    icon: <ReportProblemIconOption />,
-    component: Mermas,
-    showInMenu: true,
-    permiso: 'merma:listar',
-  },
-  {
     path: '/administracion',
     title: 'Administración',
     description: 'Gestión de clases, alumnos y configuración académica',
+    group: 'gestion',
     icon: <AdminPanelSettingsIcon />,
     component: Administracion,
     showInMenu: true,
@@ -169,6 +197,7 @@ export const menuItems: MenuItem[] = [
     path: '/perfil',
     title: 'Mi Perfil',
     description: 'Configurar datos personales y seguridad',
+    group: 'gestion',
     icon: <PersonIconOption />,
     component: Perfil,
     showInMenu: false,

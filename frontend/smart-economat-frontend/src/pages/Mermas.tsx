@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, Paper } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import BrokenImageOutlinedIcon from '@mui/icons-material/BrokenImageOutlined';
 import PageToolbar from '../components/ui/PageToolbar';
 import { MermasTable, MermaStats } from '../features/mermas';
 import {
@@ -114,6 +115,7 @@ const MermasPage: React.FC = () => {
     <Box>
       <PageToolbar
         title="Gestión de Mermas"
+        icon={<BrokenImageOutlinedIcon />}
         totalItems={total}
         totalItemsLabel="registros"
         primaryAction={{

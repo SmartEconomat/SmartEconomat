@@ -373,6 +373,9 @@ const UsuariosView: React.FC = () => {
         const updatePayload: ActualizarUsuarioDTO = {
           username: payload.username,
           email: payload.email,
+          nombre: payload.nombre,
+          slotId: payload.slotId,
+          ubicacionId: payload.ubicacionId,
         };
         const previousRoleId = userToEdit.roleId || '';
         const previousStatus = userToEdit.estado;
@@ -396,7 +399,10 @@ const UsuariosView: React.FC = () => {
           JSON.stringify(previousExcluidos) !== JSON.stringify(nextExcluidos);
         const profileChanged =
           updatePayload.username !== userToEdit.username ||
-          (updatePayload.email ?? '') !== (userToEdit.email ?? '');
+          (updatePayload.email ?? '') !== (userToEdit.email ?? '') ||
+          updatePayload.nombre !== userToEdit.nombre ||
+          updatePayload.slotId !== userToEdit.slotId ||
+          updatePayload.ubicacionId !== userToEdit.ubicacionId;
 
         if (profileChanged) {
           await usuarioService.actualizarUsuario(userToEdit.id, updatePayload);

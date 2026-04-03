@@ -12,6 +12,7 @@ import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
+import { Ubicacion } from '../../ubicacion/ubicacion.entity/ubicacion.entity';
 import { EstadoPedidoUsuario } from '../enums/estado-pedido-usuario.enum';
 import { Pedido } from '../pedido.entity/pedido.entity';
 import { PedidoUsuarioLinea } from '../pedido-usuario-linea.entity/pedido-usuario-linea.entity';
@@ -60,12 +61,22 @@ export class PedidoUsuario extends BaseEntity {
   })
   estado!: EstadoPedidoUsuario;
 
+  @Column({ name: 'ubicacion_entrega_sugerida_id', nullable: true })
+  ubicacionEntregaSugeridaId?: string;
+
   @ManyToOne(() => Usuario, {
     nullable: true,
     onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'usuario_id' })
   usuario?: Relation<Usuario>;
+
+  @ManyToOne(() => Ubicacion, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'ubicacion_entrega_sugerida_id' })
+  ubicacionEntregaSugerida?: Relation<Ubicacion>;
 
   @OneToMany(() => PedidoUsuarioLinea, (linea) => linea.pedidoUsuario, {
     cascade: true,

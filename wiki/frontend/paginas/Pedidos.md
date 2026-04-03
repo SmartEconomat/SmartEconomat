@@ -16,8 +16,8 @@ La pantalla no trabaja solo con una tabla; actúa como orquestador de filtros, b
 
 ## Piezas principales
 
-- **`PedidosPageHeader`**: búsqueda, acciones, conteo y selector de vista.
 - **`PedidosTabs`**: tabs `Mis Pedidos`, `Pedidos`, `Compras`.
+- **`MisPedidosStatusTabs`**: selector segmentado (pill-style) para filtrar "Mis Pedidos" por estado (Pendientes, En proceso, Finalizados) con iconos intuitivos.
 - **`PedidosTable`**: lista/tablero básico para la pestaña personal.
 - **`PedidosWeeklyBoard`**: agrupación por semana y usuario con selección para consolidar.
 - **`PurchasesWeeklyBoard`**: agrupación semanal de lotes de compra.
@@ -41,10 +41,10 @@ La pantalla no trabaja solo con una tabla; actúa como orquestador de filtros, b
 
 - Carga `PedidoUsuario` del usuario autenticado.
 - Si hay varias páginas en backend, `usePedidosData()` las consume y unifica en cliente para mostrar una sola vista.
-- Aplica filtro visual local por estado:
-	- `pendientes` → `PENDIENTE`
-	- `en_proceso` → `EN_PROCESO` o `PARCIAL`
-	- `finalizados` → `ENTREGADO` o `CANCELADO`
+- Utiliza **`MisPedidosStatusTabs`** para filtrar visualmente por estado:
+	- ⏳ `pendientes` → `PENDIENTE`
+	- 🔄 `en_proceso` → `EN_PROCESO` o `PARCIAL`
+	- ✅ `finalizados` → `ENTREGADO` o `CANCELADO`
 
 ### Pedidos
 

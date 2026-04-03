@@ -37,6 +37,12 @@ export class PurchaseBatch extends BaseEntity {
   usuario?: Relation<Usuario>;
 
   /**
+   * Indica si el lote ha sido aprobado por un responsable.
+   */
+  @Column({ default: false, name: 'is_aprobado' })
+  isAprobado: boolean;
+
+  /**
    * Observaciones generales para el lote.
    */
   @Column({ type: 'text', nullable: true, name: 'observaciones' })

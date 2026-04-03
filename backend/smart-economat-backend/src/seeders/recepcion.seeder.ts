@@ -1,5 +1,4 @@
 import { SeedContext } from './seed-context';
-import { faker } from '@faker-js/faker';
 import { Recepcion } from '../modules/recepcion/recepcion.entity/recepcion.entity';
 import { RecepcionPedido } from '../modules/recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
 import { RecepcionProducto } from '../modules/recepcion/recepcion-productos.entity/recepcion-producto.entity';

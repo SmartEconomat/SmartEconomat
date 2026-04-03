@@ -47,7 +47,8 @@ export class NormalizeDataPipe implements PipeTransform<unknown> {
         value as Record<string, unknown>,
         {
           enableImplicitConversion: true,
-          excludeExtraneousValues: true,
+
+          excludeExtraneousValues: false,
         }
       );
 

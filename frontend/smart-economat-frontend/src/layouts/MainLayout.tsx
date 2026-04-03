@@ -16,7 +16,7 @@ import {
   Typography,
   Avatar,
   Menu,
-  MenuItem,
+  MenuItem as MuiMenuItem,
   useTheme,
   Theme,
   CSSObject,
@@ -31,6 +31,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import PersonIcon from '@mui/icons-material/PersonOutlined';
 import LogoutIcon from '@mui/icons-material/LogoutOutlined';
 import { menuItems } from '../utils/config/menuConfig';
+import type { MenuItem as MenuConfigItem } from '../utils/config/menuConfig';
 import { useAuth } from '../store/auth.hooks';
 import { hasAnyPermission, hasPermission } from '../utils/auth/permissionUtils';
 import { useThemeContext } from '../store/theme.hooks';
@@ -167,6 +168,30 @@ export default function MainLayout() {
     navigate('/login');
   };
 
+  const visibleMenuItems = menuItems
+    .filter((item) => item.showInMenu)
+    .filter((item) => {
+      if (item.permiso) {
+        return hasPermission(user, item.permiso);
+      }
+      if (item.anyPermissions && item.anyPermissions.length > 0) {
+        return hasAnyPermission(user, item.anyPermissions);
+      }
+      if (item.roles) {
+        const userRole = user?.rol?.toUpperCase() || '';
+        return item.roles.map((role) => role.toUpperCase()).includes(userRole);
+      }
+      return true;
+    });
+
+  const groupLabels: Record<MenuConfigItem['group'], string> = {
+    inicio: 'Inicio',
+    catalogo: 'Catálogo',
+    operaciones: 'Operaciones',
+    control: 'Control',
+    gestion: 'Gestión',
+  };
+
   const drawerContent = (
     <>
       <DrawerHeader sx={{ justifyContent: open ? 'center' : 'center', px: 1 }}>
@@ -213,70 +238,79 @@ export default function MainLayout() {
       </DrawerHeader>
       <Divider />
       <List aria-label="Navegación principal">
-        {menuItems
-          .filter((item) => item.showInMenu)
-          .filter((item) => {
-            // Si el item tiene un requisito de permiso específico, verificarlo usando la utilidad
-            if (item.permiso) {
-              return hasPermission(user, item.permiso);
-            }
-            if (item.anyPermissions && item.anyPermissions.length > 0) {
-              return hasAnyPermission(user, item.anyPermissions);
-            }
-            // Si no tiene permiso pero sí roles (fallback legado)
-            if (item.roles) {
-              const userRole = user?.rol?.toUpperCase() || '';
-              return item.roles
-                .map((role) => role.toUpperCase())
-                .includes(userRole);
-            }
-            // Si no tiene restricciones, mostrar
-            return true;
-          })
-          .map((item) => (
-            <ListItem key={item.path} disablePadding sx={{ display: 'block' }}>
-              <Tooltip
-                title={getTooltipContent(
-                  open,
-                  isLearningMode,
-                  item.title,
-                  item.description
-                )}
-                describeChild
-              >
-                <ListItemButton
+        {visibleMenuItems.map((item, index) => {
+          const previousGroup =
+            index > 0 ? visibleMenuItems[index - 1].group : null;
+          const showNewGroup = index === 0 || previousGroup !== item.group;
+
+          return (
+            <React.Fragment key={item.path}>
+              {index > 0 && showNewGroup && (
+                <Divider sx={{ my: open ? 1.5 : 1 }} />
+              )}
+
+              {open && showNewGroup && item.group !== 'inicio' && (
+                <Typography
+                  variant="overline"
                   sx={{
-                    minHeight: 48,
-                    justifyContent: open ? 'initial' : 'center',
+                    display: 'block',
                     px: 2.5,
-                  }}
-                  selected={location.pathname === item.path}
-                  onClick={() => {
-                    navigate(item.path);
-                    if (isMobile) setOpen(false);
+                    pt: index === 0 ? 1 : 0,
+                    pb: 0.5,
+                    color: 'text.secondary',
+                    letterSpacing: '0.08em',
+                    fontWeight: 700,
                   }}
                 >
-                  <ListItemIcon
+                  {groupLabels[item.group]}
+                </Typography>
+              )}
+
+              <ListItem disablePadding sx={{ display: 'block' }}>
+                <Tooltip
+                  title={getTooltipContent(
+                    open,
+                    isLearningMode,
+                    item.title,
+                    item.description
+                  )}
+                  describeChild
+                >
+                  <ListItemButton
                     sx={{
-                      minWidth: 0,
-                      mr: open ? 3 : 'auto',
-                      justifyContent: 'center',
-                      color:
-                        location.pathname === item.path
-                          ? 'primary.main'
-                          : 'inherit',
+                      minHeight: 48,
+                      justifyContent: open ? 'initial' : 'center',
+                      px: 2.5,
+                    }}
+                    selected={location.pathname === item.path}
+                    onClick={() => {
+                      navigate(item.path);
+                      if (isMobile) setOpen(false);
                     }}
                   >
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={item.title}
-                    sx={{ opacity: open ? 1 : 0 }}
-                  />
-                </ListItemButton>
-              </Tooltip>
-            </ListItem>
-          ))}
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 0,
+                        mr: open ? 3 : 'auto',
+                        justifyContent: 'center',
+                        color:
+                          location.pathname === item.path
+                            ? 'primary.main'
+                            : 'inherit',
+                      }}
+                    >
+                      {item.icon}
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={item.title}
+                      sx={{ opacity: open ? 1 : 0 }}
+                    />
+                  </ListItemButton>
+                </Tooltip>
+              </ListItem>
+            </React.Fragment>
+          );
+        })}
       </List>
       <Box sx={{ marginTop: 'auto' }}>
         <Divider />
@@ -358,7 +392,7 @@ export default function MainLayout() {
               open={Boolean(userMenuAnchor)}
               onClose={handleUserMenuClose}
             >
-              <MenuItem
+              <MuiMenuItem
                 onClick={() => {
                   handleUserMenuClose();
                   navigate('/perfil');
@@ -368,14 +402,14 @@ export default function MainLayout() {
                   <PersonIcon fontSize="small" />
                 </ListItemIcon>
                 <Typography textAlign="center">Mi Perfil</Typography>
-              </MenuItem>
+              </MuiMenuItem>
               <Divider />
-              <MenuItem onClick={handleLogout}>
+              <MuiMenuItem onClick={handleLogout}>
                 <ListItemIcon>
                   <LogoutIcon fontSize="small" />
                 </ListItemIcon>
                 <Typography textAlign="center">Cerrar Sesión</Typography>
-              </MenuItem>
+              </MuiMenuItem>
             </Menu>
           </Box>
         </Toolbar>
