@@ -32,6 +32,11 @@ if (!isDocker && dbHost === 'db') {
 const finalHost = dbHost;
 
 const isTestEnv = process.env.NODE_ENV === 'test';
+const isMigrationCliCommand = process.argv.some((arg) =>
+  /^migration:(run|revert|show)$/u.test(arg)
+);
+const synchronizeEnabled =
+  process.env.DB_SYNC === 'true' && !isMigrationCliCommand;
 
 export const dbConfig: DataSourceOptions = {
   type: 'postgres',
@@ -46,9 +51,7 @@ export const dbConfig: DataSourceOptions = {
   database: isTestEnv
     ? 'test'
     : process.env.DB_DATABASE || process.env.POSTGRES_DB || 'smart_economat',
-  synchronize:
-    process.env.DB_SYNC === 'true' ||
-    (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test'),
+  synchronize: synchronizeEnabled,
   logging: false,
   entities: [join(__dirname, '../**/*.entity.{ts,js}')],
   migrations: [join(__dirname, '../migrations/*.{ts,js}')],

@@ -334,7 +334,7 @@ Nginx en producción aplica: `X-Frame-Options`, `X-Content-Type-Options`, `Stric
 | `redis` | ✅ | ✅ | Redis 7-alpine con AOF persistence |
 | `backend` | ✅ | ✅ | NestJS. Dev: watch mode. Prod: multi-stage `node dist/main.js` |
 | `frontend` | ✅ | ✅ | Dev: Vite dev server. Prod: Nginx multi-stage con SSL |
-| `certbot` | ❌ | ✅ | Renovación automática Let's Encrypt |
+| `tls` | ❌ | ✅ | Certificados TLS gestionados por `scripts/deploy.sh` (autofirmado por defecto) |
 
 ### Dockerfiles multi-stage (producción)
 
@@ -350,7 +350,7 @@ Nginx en producción aplica: `X-Frame-Options`, `X-Content-Type-Options`, `Stric
 ### Redes Docker
 
 - **Dev**: `smarteconomat-dev-network` (bridge, todos los servicios)
-- **Prod**: `backend-network` (db + redis + backend) + `frontend-network` (backend + frontend + certbot)
+- **Prod**: `backend-network` (db + redis + backend) + `frontend-network` (backend + frontend)
 
 ---
 

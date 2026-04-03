@@ -4,11 +4,9 @@ import { join } from 'node:path';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 import { Seeder } from './interfaces/seeder.interface';
 import { SeedContext, SeedContextConfig } from './seed-context';
+import { assertDevelopmentSeedEnvironment } from './seed-environment.guard';
 
-if (process.env.NODE_ENV === 'production') {
-  console.error('No se permite ejecutar seeders en producción');
-  process.exit(1);
-}
+assertDevelopmentSeedEnvironment('seed');
 
 const seedersInOrder = [
   'roles-permisos.seeder',

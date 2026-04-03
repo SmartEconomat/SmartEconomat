@@ -72,11 +72,11 @@ interface LineaRecepcionConCantidad {
   cantidadRecibida: number;
 }
 
-const PEDIDO_RECEPCION_ESTADOS_PERMITIDOS = [
+const PEDIDO_RECEPCION_ESTADOS_PERMITIDOS: readonly EstadoPedido[] = [
   EstadoPedido.PENDIENTE_DE_APROBACION,
   EstadoPedido.POR_RECEPCIONAR,
   EstadoPedido.PARCIAL,
-] as const;
+];
 
 interface PedidoActualizado {
   id: string;

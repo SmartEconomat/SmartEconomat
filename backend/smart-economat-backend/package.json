@@ -22,7 +22,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config ./test/jest-e2e.json --runInBand test/e2e/all.e2e-spec.ts",
     "test:e2e:file": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config ./test/jest-e2e.json --runInBand",
-    "seed": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.cli.ts",
+    "seed": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.cli.ts",
     "migration:run": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d src/config/typeorm.config.ts",
     "schema:drop": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js schema:drop -d src/config/typeorm.config.ts",
     "schema:sync": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js schema:sync -d src/config/typeorm.config.ts",

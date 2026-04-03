@@ -70,8 +70,10 @@ Estas variables son relevantes cuando se usa [scripts/deploy.sh](../../scripts/d
 
 | Variable | Uso |
 | --- | --- |
-| `ACME_DIRECTORY_URL` | Endpoint ACME para emisión o renovación de certificados |
-| `ACME_EMAIL` | Email de registro para Certbot |
+| `TLS_PROVIDER` | Modo TLS en despliegue (`selfsigned` por defecto, `letsencrypt` opcional para DigitalOcean) |
+| `TLS_SELF_SIGNED_DAYS` | Días de validez del certificado autofirmado |
+| `LETSENCRYPT_EMAIL` | Email para emisión Let's Encrypt (solo si `TLS_PROVIDER=letsencrypt`) |
+| `LETSENCRYPT_DIRECTORY_URL` | Endpoint ACME de Let's Encrypt (`https://acme-v02.api.letsencrypt.org/directory` o staging) |
 | `DOMAIN` | Dominio para certificados y enlaces públicos |
 | `BACKEND_API_URL` | URL que se escribe en `.env.prod` |
 | `FRONTEND_API_URL` | URL que se escribe en `.env.prod` |

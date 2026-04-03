@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
@@ -68,22 +68,17 @@ const MIGRATION_PROVIDER_NAME =
   'Proveedor catalogo economato migracion 20260402';
 const MIGRATION_LOCATION_NAME =
   'Ubicacion inventario economato migracion 20260402';
-const CATALOGO_JSON_PATH = resolve(
-  process.cwd(),
-  'src/seeders/datos-base-economato/catalogo.productos-normalizados.json'
-);
-const INVENTARIO_JSON_PATH = resolve(
-  process.cwd(),
-  'src/seeders/datos-base-economato/inventario-articulos.productos-normalizados.json'
-);
+const SEED_DATASET_DIR = 'seeders/datos-base-economato';
+const CATALOGO_JSON_FILE = 'catalogo.productos-normalizados.json';
+const INVENTARIO_JSON_FILE = 'inventario-articulos.productos-normalizados.json';
 
 export class SeedCatalogoEconomatoProductosReales1775100000000 implements MigrationInterface {
   public name = 'SeedCatalogoEconomatoProductosReales1775100000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     const productos = [
-      ...this.loadSeedProducts(CATALOGO_JSON_PATH, 'catalogo'),
-      ...this.loadSeedProducts(INVENTARIO_JSON_PATH, 'inventario'),
+      ...this.loadSeedProducts(CATALOGO_JSON_FILE, 'catalogo'),
+      ...this.loadSeedProducts(INVENTARIO_JSON_FILE, 'inventario'),
     ];
 
     if (productos.length === 0) {
@@ -306,9 +301,17 @@ export class SeedCatalogoEconomatoProductosReales1775100000000 implements Migrat
   }
 
   private loadSeedProducts(
-    filePath: string,
+    fileName: string,
     source: SeedSource
   ): NormalizedSeedProduct[] {
+    const filePath = this.resolveSeedDatasetPath(fileName);
+    if (!filePath) {
+      console.warn(
+        `${MIGRATION_TAG} Archivo de seed no encontrado (${fileName}). Se omite dataset ${source}.`
+      );
+      return [];
+    }
+
     const parsed = this.readCatalogFile(filePath);
     const rows = Array.isArray(parsed.productos) ? parsed.productos : [];
 
@@ -321,6 +324,35 @@ export class SeedCatalogoEconomatoProductosReales1775100000000 implements Migrat
     }
 
     return normalized;
+  }
+
+  private resolveSeedDatasetPath(fileName: string): string | null {
+    const normalizedFileName = fileName.trim();
+    if (!normalizedFileName) {
+      return null;
+    }
+
+    const candidates = [
+      resolve(process.cwd(), 'src', SEED_DATASET_DIR, normalizedFileName),
+      resolve(process.cwd(), 'dist', SEED_DATASET_DIR, normalizedFileName),
+      resolve(__dirname, '..', SEED_DATASET_DIR, normalizedFileName),
+      resolve(
+        __dirname,
+        '..',
+        '..',
+        'src',
+        SEED_DATASET_DIR,
+        normalizedFileName
+      ),
+    ];
+
+    for (const candidate of candidates) {
+      if (existsSync(candidate)) {
+        return candidate;
+      }
+    }
+
+    return null;
   }
 
   private readCatalogFile(filePath: string): SeedCatalogFile {
@@ -462,7 +494,12 @@ export class SeedCatalogoEconomatoProductosReales1775100000000 implements Migrat
       return fallback;
     }
 
-    return this.enforceNumericBounds(parsed, precision, scale);
+    const normalized = this.enforceNumericBounds(parsed, precision, scale);
+    if (normalized <= 0) {
+      return fallback;
+    }
+
+    return normalized;
   }
 
   private normalizePositiveNumberOrNull(
@@ -475,7 +512,12 @@ export class SeedCatalogoEconomatoProductosReales1775100000000 implements Migrat
       return null;
     }
 
-    return this.enforceNumericBounds(parsed, precision, scale);
+    const normalized = this.enforceNumericBounds(parsed, precision, scale);
+    if (normalized <= 0) {
+      return null;
+    }
+
+    return normalized;
   }
 
   private normalizeFiniteNumber(value: unknown): number | null {

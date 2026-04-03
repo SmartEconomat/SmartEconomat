@@ -16,7 +16,7 @@ npm run seed
 npm run db:reset
 ```
 
-> **Seguridad:** Los seeders están bloqueados en producción (`NODE_ENV=production`). El script verifica el entorno antes de ejecutarse.
+> **Seguridad:** Los seeders solo se permiten en desarrollo (`NODE_ENV=development`). Si el entorno no es desarrollo o la base de datos tiene perfil de producción (ej. nombre con `prod`), la ejecución se bloquea.
 
 ---
 
