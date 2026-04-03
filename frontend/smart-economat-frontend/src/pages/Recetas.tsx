@@ -756,6 +756,17 @@ const Recetas: React.FC = () => {
 
   const handleFormValuesChange = useCallback(
     (formData: Record<string, unknown>) => {
+      type PreviewIngredient = Parameters<
+        typeof calculatePreviewCost
+      >[0]['ingredientes'][number];
+      type PreviewIngredientCandidate = {
+        productoId: string | undefined;
+        cantidad: number;
+        unidad: string | undefined;
+        mermaAplicada: number;
+        proveedorFavoritoId: string | undefined;
+      };
+
       const ingredientes =
         (formData.ingredientes as Array<{
           productoId?: string;
@@ -768,15 +779,39 @@ const Recetas: React.FC = () => {
       const rendimiento = Number(formData.rendimiento) || 1;
 
       // Filtrar ingredientes válidos para evitar llamadas innecesarias
-      const validIngredientes = ingredientes
-        .map((ing) => ({
-          productoId: ing.productoId || ing.producto?.id,
+      const normalizedIngredientes: PreviewIngredientCandidate[] =
+        ingredientes.map((ing) => ({
+          productoId: ing.productoId?.trim() || ing.producto?.id,
           cantidad: Number(ing.cantidad),
-          unidad: ing.unidad,
+          unidad: ing.unidad?.trim(),
           mermaAplicada: Number(ing.mermaAplicada ?? 0),
-          proveedorFavoritoId: ing.proveedorFavoritoId,
-        }))
-        .filter((ing) => ing.productoId && ing.cantidad > 0);
+          proveedorFavoritoId: ing.proveedorFavoritoId?.trim() || undefined,
+        }));
+
+      const validIngredientes: PreviewIngredient[] = normalizedIngredientes
+        .filter(
+          (
+            ing
+          ): ing is PreviewIngredientCandidate & {
+            productoId: string;
+            unidad: string;
+          } =>
+            typeof ing.productoId === 'string' &&
+            ing.productoId.length > 0 &&
+            Number.isFinite(ing.cantidad) &&
+            ing.cantidad > 0 &&
+            typeof ing.unidad === 'string' &&
+            ing.unidad.length > 0
+        )
+        .map((ing) => ({
+          productoId: ing.productoId,
+          cantidad: ing.cantidad,
+          unidad: ing.unidad,
+          mermaAplicada: ing.mermaAplicada,
+          ...(ing.proveedorFavoritoId
+            ? { proveedorFavoritoId: ing.proveedorFavoritoId }
+            : {}),
+        }));
 
       const currentKey = JSON.stringify({
         ingredientes: validIngredientes,
