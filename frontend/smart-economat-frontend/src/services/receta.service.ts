@@ -10,16 +10,25 @@ interface ApiResponse<T> {
   data: T;
 }
 
+const BACKEND_MAX_PAGE_LIMIT = 50;
+
 export async function fetchRecetas(
   page: number = 1,
   limit: number = 100,
   search: string = ''
 ): Promise<PaginatedData<Receta>> {
+  const safePage = Math.max(1, Number.isFinite(page) ? Math.trunc(page) : 1);
+  const safeLimit = Math.min(
+    Math.max(1, Number.isFinite(limit) ? Math.trunc(limit) : 1),
+    BACKEND_MAX_PAGE_LIMIT
+  );
+  const safeSearch = search.trim();
+
   const query = new URLSearchParams({
-    page: page.toString(),
-    limit: limit.toString(),
+    page: safePage.toString(),
+    limit: safeLimit.toString(),
   });
-  if (search) query.append('searchTerm', search);
+  if (safeSearch) query.append('searchTerm', safeSearch);
 
   const response = await baseFetch(`/recetas?${query.toString()}`);
   if (!response.ok) {
