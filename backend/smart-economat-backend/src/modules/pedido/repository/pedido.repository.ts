@@ -1,11 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Brackets, DataSource, Repository } from 'typeorm';
-import { Pedido, EstadoPedido } from '../pedido.entity/pedido.entity';
+import { Pedido } from '../pedido.entity/pedido.entity';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
-
-const UUID_SEARCH_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 @Injectable()
 export class PedidoRepository extends Repository<Pedido> {
