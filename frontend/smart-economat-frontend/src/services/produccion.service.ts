@@ -1,5 +1,13 @@
-import { baseFetch, PaginatedData } from './api.service';
+import { baseFetch, PaginatedData, parseApiResponse } from './api.service';
+import {
+  normalizeLimitParam,
+  normalizePageParam,
+  toOptionalTrimmedString,
+} from './api.utils';
 import { Receta } from './receta.types';
+
+const PRODUCCION_DEFAULT_LIMIT = 20;
+const PRODUCCION_MAX_LIMIT = 50;
 
 export interface ProduccionLote {
   id: string;
@@ -35,20 +43,28 @@ export interface ConsumirProduccionDto {
 
 export async function fetchProducciones(
   page: number = 1,
-  limit: number = 20,
+  limit: number = PRODUCCION_DEFAULT_LIMIT,
   estado?: string
 ): Promise<PaginatedData<ProduccionLote>> {
+  const normalizedPage = normalizePageParam(page);
+  const normalizedLimit = normalizeLimitParam(
+    limit,
+    PRODUCCION_DEFAULT_LIMIT,
+    PRODUCCION_MAX_LIMIT
+  );
+  const normalizedEstado = toOptionalTrimmedString(estado);
+
   const query = new URLSearchParams({
-    page: page.toString(),
-    limit: limit.toString(),
+    page: String(normalizedPage),
+    limit: String(normalizedLimit),
   });
-  if (estado) query.append('estado', estado);
+  if (normalizedEstado) query.append('estado', normalizedEstado);
 
   const response = await baseFetch(`/produccion?${query.toString()}`);
-  if (!response.ok) {
-    throw new Error(`Error al obtener producciones: ${response.status}`);
-  }
-  const body = await response.json();
+  const body = await parseApiResponse<PaginatedData<ProduccionLote>>(
+    response,
+    'Error al obtener producciones'
+  );
   return body.data;
 }
 
@@ -57,16 +73,13 @@ export async function ejecutarProduccion(
 ): Promise<ProduccionLote> {
   const response = await baseFetch('/produccion/ejecutar', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(dto),
   });
 
-  if (!response.ok) {
-    const errorBody = await response.json().catch(() => ({}));
-    throw new Error(errorBody.message || 'Error al ejecutar producción');
-  }
-
-  const body = await response.json();
+  const body = await parseApiResponse<ProduccionLote>(
+    response,
+    'Error al ejecutar produccion'
+  );
   return body.data;
 }
 
@@ -76,16 +89,13 @@ export async function consumirPorciones(
 ): Promise<ProduccionLote> {
   const response = await baseFetch(`/produccion/lote/${id}/consumir`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(dto),
   });
 
-  if (!response.ok) {
-    const errorBody = await response.json().catch(() => ({}));
-    throw new Error(errorBody.message || 'Error al consumir porciones');
-  }
-
-  const body = await response.json();
+  const body = await parseApiResponse<ProduccionLote>(
+    response,
+    'Error al consumir porciones'
+  );
   return body.data;
 }
 export interface ValidarStockDto {
@@ -112,14 +122,12 @@ export async function validarStock(
 ): Promise<StockValidationResult> {
   const response = await baseFetch('/produccion/validar', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(dto),
   });
 
-  if (!response.ok) {
-    throw new Error('Error al validar stock');
-  }
-
-  const body = await response.json();
+  const body = await parseApiResponse<StockValidationResult>(
+    response,
+    'Error al validar stock'
+  );
   return body.data;
 }

@@ -4,6 +4,7 @@ import { DataSource } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { MovimientoHelper } from '../../../src/common/helpers/movimiento.helper';
 import { ProductoAlergeno } from '../../../src/modules/producto/producto-alergeno.entity/producto-alergeno.entity';
+import { HistorialPrecio } from '../../../src/modules/producto/historial-precio-proveedor.entity/historial.entity';
 import { Producto } from '../../../src/modules/producto/producto.entity/producto.entity';
 import { ProductoProveedor } from '../../../src/modules/producto/producto-proveedor.entity/producto-proveedor.entity';
 import {
@@ -40,6 +41,7 @@ function createManagerMock(overrides: Record<string, unknown> = {}) {
 
       return Promise.resolve(maybeEntity ?? targetOrEntity);
     }),
+    update: jest.fn().mockResolvedValue(undefined),
     find: jest.fn().mockResolvedValue([]),
     findOne: jest.fn(),
     count: jest.fn().mockResolvedValue(0),
@@ -168,6 +170,7 @@ describe('ProductoService - Alta compleja', () => {
 
         return Promise.resolve(maybeEntity ?? targetOrEntity);
       }),
+      update: jest.fn().mockResolvedValue(undefined),
       find: jest.fn().mockResolvedValue([]),
       findOne: jest.fn().mockResolvedValue(finalProduct),
       createQueryBuilder: jest.fn().mockReturnValue(deleteQueryBuilder),
@@ -416,6 +419,35 @@ describe('ProductoService - Alta compleja', () => {
     ).rejects.toThrow(/precio unitario/i);
   });
 
+  it('rechaza la alta compleja cuando el precio unitario es 0', async () => {
+    mockProductoRepository.existsByCodigoBarras.mockResolvedValue(false);
+    mockDataSource.transaction.mockImplementation((callback) =>
+      Promise.resolve(
+        callback({
+          getRepository: jest.fn(),
+        })
+      )
+    );
+
+    await expect(
+      service.create(
+        {
+          nombre: 'Leche',
+          unidad: UnidadMedida.L,
+          contenido: 1,
+          codigoBarras: '4006381333931',
+          proveedores: [
+            {
+              proveedorId: '01954a87-0778-74d4-bb32-55b12044579f',
+              precioUnitario: 0,
+            },
+          ],
+        },
+        'user-1'
+      )
+    ).rejects.toThrow(/mayor que 0/i);
+  });
+
   it('acepta la alta compleja cuando el código de barras del proveedor es alfanumérico', async () => {
     mockProductoRepository.existsByCodigoBarras.mockResolvedValue(false);
     const finalProduct = {
@@ -446,7 +478,13 @@ describe('ProductoService - Alta compleja', () => {
                 ]),
             }),
             create: jest.fn((_: unknown, payload: unknown) => payload),
-            save: jest.fn().mockResolvedValueOnce(finalProduct),
+            save: jest.fn((targetOrEntity: unknown, maybeEntity?: unknown) => {
+              if (targetOrEntity === Producto && maybeEntity) {
+                return Promise.resolve(finalProduct);
+              }
+
+              return Promise.resolve(maybeEntity ?? targetOrEntity);
+            }),
             findOne: jest.fn().mockResolvedValue(finalProduct),
           })
         )
@@ -534,6 +572,7 @@ describe('ProductoService - Alta compleja', () => {
     } as unknown as Producto;
 
     const deleteQueryBuilder = createDeleteQueryBuilderMock();
+    let productoFindOneCalls = 0;
     const manager = {
       getRepository: jest.fn().mockReturnValue({
         find: jest
@@ -543,10 +582,20 @@ describe('ProductoService - Alta compleja', () => {
             { id: '01954a87-0778-74d4-bb32-55b1204457bf' },
           ]),
       }),
-      findOne: jest
-        .fn()
-        .mockResolvedValueOnce(existingProduct)
-        .mockResolvedValueOnce(updatedProduct),
+      findOne: jest.fn((entity: unknown) => {
+        if (entity === Producto) {
+          productoFindOneCalls += 1;
+          return Promise.resolve(
+            productoFindOneCalls === 1 ? existingProduct : updatedProduct
+          );
+        }
+
+        if (entity === HistorialPrecio) {
+          return Promise.resolve({ precio: 1.8 });
+        }
+
+        return Promise.resolve(null);
+      }),
       count: jest.fn().mockResolvedValue(0),
       merge: jest.fn(
         (
@@ -558,6 +607,7 @@ describe('ProductoService - Alta compleja', () => {
       save: jest.fn((targetOrEntity: unknown, maybeEntity?: unknown) =>
         Promise.resolve(maybeEntity ?? targetOrEntity)
       ),
+      update: jest.fn().mockResolvedValue(undefined),
       create: jest.fn((_: unknown, payload: unknown) => payload),
       createQueryBuilder: jest.fn().mockReturnValue(deleteQueryBuilder),
       find: jest.fn().mockResolvedValue(existingRelations),

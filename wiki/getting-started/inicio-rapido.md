@@ -1,68 +1,46 @@
-# Guía de Inicio Rápido
+# Inicio rápido
 
-Instrucciones para clonar, configurar y ejecutar SmartEconomat en un entorno de desarrollo local.
+Esta guía permite levantar SmartEconomat en local con la menor fricción posible. La opción recomendada es Docker Compose, porque ya incorpora PostgreSQL con la extensión UUID v7 personalizada, Redis, backend y frontend.
 
----
+## Requisitos
 
-## Requisitos Previos
+| Herramienta | Versión mínima recomendada |
+| --- | --- |
+| Node.js | `22.2.0` |
+| npm | `10` |
+| Docker Engine | `24+` |
+| Docker Compose | `v2` |
+| Git | versión reciente |
 
-| Herramienta | Versión mínima | Verificar |
-|-------------|---------------|-----------|
-| **Node.js** | 20+ | `node -v` |
-| **npm** | 10+ | `npm -v` |
-| **Docker** | 24+ | `docker -v` |
-| **Docker Compose** | 2.20+ | `docker compose version` |
-| **Git** | 2.40+ | `git --version` |
-
-**Editor recomendado:** VS Code con las extensiones ESLint, Prettier y Docker.
-
----
-
-## 1. Clonar el Repositorio
+## 1. Clonar el repositorio
 
 ```bash
 git clone <url-del-repositorio> SmartEconomat
 cd SmartEconomat
 ```
 
----
-
-## 2. Configurar Variables de Entorno
-
-Copiar el archivo de ejemplo y ajustar los valores:
+## 2. Preparar variables de entorno
 
 ```bash
 cp .env.example .env.dev
 ```
 
-Editar `.env.dev` con los valores adecuados:
+Valores mínimos recomendados para desarrollo:
 
 ```env
-# Base de datos
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_DB=smart_economat
-DB_PORT=5432
-
-# Backend
+NODE_ENV=development
 BACKEND_PORT=3000
 BACKEND_API_URL=http://localhost:3000
-
-# Frontend
 FRONTEND_PORT=5173
-FRONTEND_API_URL=http://localhost:3000
-
-# Entorno
-NODE_ENV=development
+FRONTEND_API_URL=http://localhost:5173
+DB_PORT=5432
+JWT_SECRET=changeme
+JWT_EXPIRATION=7d
 ```
 
-> **Nota:** En desarrollo, `DB_SYNC=true` se activa automáticamente cuando `NODE_ENV` no es `production`. Esto sincroniza el esquema de la base de datos con las entidades de TypeORM.
+Si usas Docker Compose no necesitas tocar `DB_HOST`: el backend se conecta al servicio `db` dentro de la red interna.
 
----
-
-## 3. Levantar el Proyecto con Docker (Recomendado)
-
-Este es el método más sencillo. Levanta PostgreSQL, el backend y el frontend con un solo comando:
+## 3. Arrancar con Docker Compose
 
 ```bash
 docker compose -f docker-compose.dev.yml up --build
@@ -70,183 +48,100 @@ docker compose -f docker-compose.dev.yml up --build
 
 Servicios disponibles tras el arranque:
 
-| Servicio | URL | Descripción |
-|----------|-----|-------------|
-| **Frontend** | `http://localhost:5173` | Aplicación React (Vite dev server) |
-| **Backend API** | `http://localhost:3000/api/v1` | API REST NestJS |
-| **Swagger (Docs)** | `http://localhost:3000/docs` | Documentación interactiva de la API |
-| **PostgreSQL** | `localhost:5432` | Base de datos (acceder con un cliente como DBeaver) |
+| Servicio | URL o puerto | Notas |
+| --- | --- | --- |
+| Frontend | `http://localhost:5173` | Vite en modo desarrollo |
+| Backend API | `http://localhost:3000/api/v1` | NestJS con recarga |
+| Swagger | `http://localhost:3000/docs` | Documentación interactiva local |
+| PostgreSQL | `localhost:5432` | Imagen con extensión UUID v7 |
+| Redis | red interna Docker | Soporte de caché y runtime |
 
-### Comandos Docker útiles
+Comandos útiles:
 
 ```bash
-# Levantar en segundo plano
 docker compose -f docker-compose.dev.yml up -d
-
-# Ver logs del backend
 docker compose -f docker-compose.dev.yml logs -f backend
-
-# Detener todos los servicios
 docker compose -f docker-compose.dev.yml down
-
-# Reconstruir un servicio específico
-docker compose -f docker-compose.dev.yml up --build backend
 ```
 
----
+## 4. Cargar datos de prueba
 
-## 4. Ejecución Local sin Docker (Alternativa)
+Con el backend levantado:
 
-Si prefieres ejecutar los servicios de forma nativa:
-
-### 4.1. Base de Datos
-
-Asegúrate de tener PostgreSQL instalado y ejecutándose. Crea la base de datos:
-
-```sql
-CREATE DATABASE smart_economat;
+```bash
+docker compose -f docker-compose.dev.yml exec backend npm run seed
 ```
 
-> La extensión UUID v7 personalizada debe compilarse e instalarse manualmente desde `database/pg_uuidv7/`. Consulta [architecture/uuid-v7.md](../architecture/uuid-v7.md) para más detalles.
+Si necesitas reiniciar el esquema y volver a sembrar:
 
-### 4.2. Backend
+```bash
+docker compose -f docker-compose.dev.yml exec backend sh -c "npm run db:reset && npm run seed"
+```
+
+`npm run db:reset` solo hace `schema:drop` + `schema:sync`; el seed debe ejecutarse aparte.
+
+## 5. Alternativa sin Docker
+
+Usa esta opción solo si quieres ejecutar backend y frontend de forma nativa.
+
+### Base de datos
+
+- Instala PostgreSQL localmente.
+- Crea la base de datos indicada en tus variables de entorno.
+- Si no usas la imagen del proyecto, tendrás que resolver por tu cuenta la disponibilidad de la extensión UUID v7 o adaptar el entorno para desarrollo.
+
+### Backend
 
 ```bash
 cd backend/smart-economat-backend
-
-# Instalar dependencias
+cp ../../.env.example .env
 npm install
-
-# Iniciar en modo desarrollo (hot-reload con SWC)
+npm run schema:sync
+npm run seed
 npm run start:dev
 ```
 
-### 4.3. Frontend
+### Frontend
 
 ```bash
 cd frontend/smart-economat-frontend
-
-# Instalar dependencias
 npm install
-
-# Iniciar dev server
-npm run dev
+npm run dev -- --host
 ```
 
----
+## 6. Verificación mínima
 
-## 5. Poblar la Base de Datos (Seeders)
+1. Abrir `http://localhost:5173`.
+2. Comprobar que `http://localhost:3000/api/v1` responde.
+3. Abrir `http://localhost:3000/docs`.
+4. Validar que puedes iniciar sesión con un usuario generado por seed.
 
-Una vez que el backend esté en ejecución y conectado a la base de datos:
+## 7. Scripts habituales
 
-```bash
-cd backend/smart-economat-backend
+### Backend
 
-# Ejecutar todos los seeders en orden
-npm run seed
-```
-
-Esto creará datos de ejemplo: usuarios, productos, proveedores, inventario, pedidos, recetas, etc.
-
-Para un reset completo de la base de datos y datos:
-
-```bash
-npm run db:reset
-```
-
-> Ver [Documentación de Seeders](../development/seeders.md) para detalles sobre cada seeder.
-
-### Credenciales de Desarrollo
-
-Tras ejecutar los seeders, puedes iniciar sesión con:
-
-| Rol | Email | Contraseña |
-|-----|-------|------------|
-| **Administrador** | *(creado por seeder)* | `SmartEconomat2026!` |
-
-> Consulta los logs del seeder para ver los usuarios creados exactos.
-
----
-
-## 6. Scripts Disponibles
-
-### Backend (`backend/smart-economat-backend/`)
-
-| Comando | Descripción |
-|---------|-------------|
-| `npm run start:dev` | Desarrollo con hot-reload (SWC) |
-| `npm run start:debug` | Modo debug con inspector |
-| `npm run build` | Compilar TypeScript a JavaScript |
-| `npm run start:prod` | Ejecutar build compilado |
-| `npm run test` | Ejecutar tests unitarios |
-| `npm run test:e2e` | Ejecutar tests E2E |
-| `npm run test:cov` | Generar reporte de cobertura |
-| `npm run seed` | Poblar la base de datos |
-| `npm run db:reset` | Drop + Sync + Seed completo |
-| `npm run lint` | Linting con auto-fix |
-| `npm run format` | Formatear código con Prettier |
-| `npm run generate:erd` | Generar diagrama ER |
-
-### Frontend (`frontend/smart-economat-frontend/`)
-
-| Comando | Descripción |
-|---------|-------------|
-| `npm run dev` | Dev server con Vite |
+| Comando | Uso |
+| --- | --- |
+| `npm run start:dev` | Servidor NestJS en desarrollo |
 | `npm run build` | Build de producción |
-| `npm run preview` | Previsualizar build |
+| `npm run test` | Unit tests |
+| `npm run test:e2e` | E2E principal |
+| `npm run seed` | Ejecuta seeders |
+| `npm run db:reset` | Drop + sync del esquema sin seed |
+
+### Frontend
+
+| Comando | Uso |
+| --- | --- |
+| `npm run dev` | Servidor Vite |
+| `npm run build` | Build de producción |
+| `npm run test` | Suite Vitest |
 | `npm run lint` | Linting |
 
----
+## Siguientes lecturas recomendadas
 
-## 7. Estructura del Proyecto
-
-```
-SmartEconomat/
-├── backend/
-│   ├── Dockerfile.dev              # Dockerfile de desarrollo
-│   ├── Dockerfile.prod             # Dockerfile de producción
-│   └── smart-economat-backend/     # Proyecto NestJS
-│       ├── src/
-│       │   ├── modules/            # 20 módulos de negocio
-│       │   ├── common/             # Decoradores, filtros, pipes, DTOs
-│       │   ├── config/             # Configuración de BD e i18n
-│       │   ├── seeders/            # 12 seeders de datos
-│       │   ├── i18n/               # Traducciones (es, en)
-│       │   └── migrations/         # Migraciones TypeORM
-│       └── test/                   # Tests E2E (23+ archivos)
-├── frontend/
-│   ├── Dockerfile.dev
-│   ├── Dockerfile.prod
-│   └── smart-economat-frontend/    # Proyecto React + Vite
-│       └── src/
-├── database/
-│   └── pg_uuidv7/                  # Extensión PostgreSQL UUID v7
-├── docker-compose.dev.yml          # Compose para desarrollo
-├── docker-compose.prod.yml         # Compose para producción
-├── .env.example                    # Variables de entorno de ejemplo
-└── wiki/                           # Documentación del proyecto
-```
-
----
-
-## 8. Despliegue en Producción
-
-```bash
-docker compose -f docker-compose.prod.yml up --build -d
-```
-
-En producción:
-- El backend ejecuta `npm run start:prod` (código compilado)
-- El frontend se sirve con **Nginx** como servidor estático y proxy inverso
-- La base de datos usa un volumen persistente
-
-Consulta [Errores Comunes y Soluciones](errores/README.md) para problemas frecuentes en despliegue.
-
----
-
-## Siguientes Pasos
-
-- [Arquitectura del Backend](../architecture/backend.md) — Entender la estructura del servidor
-- [Referencia Rápida Backend](../development/backend-quick-reference.md) — Cheatsheet para desarrollo
-- [API Completa](../reference/api.md) — Explorar todos los endpoints
-- [Guía de TypeORM](../development/typeorm.md) — Trabajar con la base de datos
+- [Arquitectura backend](../architecture/backend.md)
+- [Arquitectura frontend](../architecture/frontend.md)
+- [Referencia de API](../reference/api.md)
+- [Seeders](../development/seeders.md)
+- [Troubleshooting](../operations/troubleshooting/README.md)

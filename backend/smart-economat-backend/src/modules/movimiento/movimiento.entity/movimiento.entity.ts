@@ -1,5 +1,4 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index, Check } from 'typeorm';
-import { Exclude } from 'class-transformer';
 import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
@@ -63,7 +62,6 @@ export class Movimiento extends BaseEntity {
    * Usuario que realizó (o autorizó) el movimiento.
    * @type {Usuario | null}
    */
-  @Exclude()
   @ManyToOne(() => Usuario, (usuario) => usuario.movimientos, {
     nullable: true,
     onDelete: 'SET NULL',

@@ -43,21 +43,11 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   confirmVariant = 'contained',
   isLoading = false,
 }) => {
-  const releaseFocusedElement = () => {
-    if (typeof document === 'undefined') return;
-    const activeElement = document.activeElement;
-    if (activeElement instanceof HTMLElement) {
-      activeElement.blur();
-    }
-  };
-
   const handleCancel = () => {
-    releaseFocusedElement();
     (onCancel || onClose)();
   };
 
   const handleConfirm = () => {
-    releaseFocusedElement();
     onConfirm();
   };
 

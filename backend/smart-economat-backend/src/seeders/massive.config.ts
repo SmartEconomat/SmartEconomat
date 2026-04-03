@@ -18,7 +18,7 @@ function readPositiveInt(name: string, fallback: number): number {
 
 const BASE_MIN_REQUESTS = 10;
 const BASE_MAX_REQUESTS = 30;
-const BASE_MIN_PRODUCTS = 50;
+const BASE_MIN_PRODUCTS = 30;
 const BASE_CONCURRENCY = readPositiveInt('SEED_BASE_CONCURRENCY', 32);
 
 export const SEED_MULTIPLIER = readPositiveInt('SEED_MULTIPLIER', 1);
@@ -127,7 +127,6 @@ export const SPECIAL_TARGETS = new Map<string, number>([
   ['DELETE /preparaciones/:id', 2],
   ['DELETE /movimientos/:id', 2],
   ['DELETE /pedidos/:id', 2],
-  ['DELETE /recepciones/:id', 2],
   ['DELETE /usuarios/:id', 2],
   ['DELETE /incidencias/:id', 2],
   ['DELETE /inventario/:id', 2],

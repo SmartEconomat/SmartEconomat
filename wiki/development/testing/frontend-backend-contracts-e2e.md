@@ -14,7 +14,7 @@ El foco no es probar todo el dominio, sino asegurar que los payloads y query par
 
 ## Archivo principal
 
-- [backend/smart-economat-backend/test/e2e/frontend-integration-contracts.e2e-spec.ts](../../backend/smart-economat-backend/test/e2e/frontend-integration-contracts.e2e-spec.ts)
+- [backend/smart-economat-backend/test/e2e/frontend-integration-contracts.e2e-spec.ts](../../../backend/smart-economat-backend/test/e2e/frontend-integration-contracts.e2e-spec.ts)
 
 ## Cobertura actual
 
@@ -71,7 +71,7 @@ Ese orden facilita entender cómo se encadenan los datos necesarios para probar 
 
 ## Ejecución
 
-Desde [backend/smart-economat-backend](../../backend/smart-economat-backend):
+Desde [backend/smart-economat-backend](../../../backend/smart-economat-backend):
 
 - suite específica:
   - `npm run test:e2e:file -- test/e2e/frontend-integration-contracts.e2e-spec.ts`
@@ -87,7 +87,7 @@ Esta suite depende de la infraestructura E2E documentada en:
 
 Además, los tests E2E usan la misma validación global que producción en:
 
-- [backend/smart-economat-backend/test/setup/test-app.ts](../../backend/smart-economat-backend/test/setup/test-app.ts)
+- [backend/smart-economat-backend/test/setup/test-app.ts](../../../backend/smart-economat-backend/test/setup/test-app.ts)
 
 Esto es importante porque evita falsos positivos: si producción rechaza propiedades extra o usa conversión implícita, la suite E2E debe comportarse igual.
 

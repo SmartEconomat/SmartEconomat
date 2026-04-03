@@ -1,0 +1,3 @@
+- En frontend Pedidos, la pestaña "Mis pedidos" debe consumir la paginación real de `GET /pedido-usuarios`.
+- No volver a forzar `page=1`, `limit=50`, ni descargar páginas restantes para fusionarlas en cliente.
+- El backend ya soporta `estado` con CSV (`entregado,cancelado`) y `limit <= 50`; usar ese filtro en vez de filtrar todo el dataset completo en frontend.

@@ -1,4 +1,9 @@
-import { Pedido, PedidoUsuario, PurchaseBatch } from './pedido.types';
+import {
+  Pedido,
+  PedidoUsuario,
+  PedidoUsuarioRow,
+  PurchaseBatch,
+} from './pedido.types';
 import {
   baseFetch,
   downloadFile,
@@ -44,7 +49,7 @@ export interface CreatePedidoFromRecetasPayload {
 }
 
 export interface ConsolidatePurchaseBatchPayload {
-  pedidoIds: string[];
+  pedidoUsuarioIds: string[];
   observaciones?: string;
   ubicacionEntregaSugeridaId?: string;
 }
@@ -95,12 +100,12 @@ const buildProviderSummary = (pedidoUsuario: PedidoUsuario): string => {
   return `${providerNames.length} proveedores`;
 };
 
-export const mapPedidoUsuarioToPedidoRow = (
+export const mapPedidoUsuarioToVisibleRow = (
   pedidoUsuario: PedidoUsuario
-): PedidoUsuario => ({
+): PedidoUsuarioRow => ({
   ...pedidoUsuario,
+  entityType: 'pedido_usuario',
   pedidoUsuarioId: pedidoUsuario.id,
-  aggregateType: 'pedido_usuario',
   proveedor: {
     id: pedidoUsuario.id,
     nombre: buildProviderSummary(pedidoUsuario),
@@ -299,17 +304,17 @@ export async function createPurchaseBatch(
   return body.data;
 }
 
-export async function createMissingStockBatch(
+export async function createPedidoUsuarioFromMissingStock(
   payload: CreateMissingStockBatchPayload
-): Promise<PurchaseBatch> {
-  const response = await baseFetch('/purchase-batches/from-missing-stock', {
+): Promise<PedidoUsuario> {
+  const response = await baseFetch('/pedido-usuarios/from-missing-stock', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
-    let errorMessage = `Error al crear pedidos de faltantes: ${response.status}`;
+    let errorMessage = `Error al crear pedido por faltantes: ${response.status}`;
     try {
       const errorDetail = (await response.json()) as { message?: string };
       if (errorDetail?.message) errorMessage = errorDetail.message;
@@ -319,7 +324,7 @@ export async function createMissingStockBatch(
     throw new Error(errorMessage);
   }
 
-  const body = (await response.json()) as ApiResponse<PurchaseBatch>;
+  const body = (await response.json()) as ApiResponse<PedidoUsuario>;
   return body.data;
 }
 
@@ -371,17 +376,17 @@ export async function createPedidoFromRecetas(
   return body.data;
 }
 
-export async function createPurchaseBatchFromRecetas(
+export async function createPedidoUsuarioFromRecetas(
   payload: CreatePedidoFromRecetasPayload
-): Promise<PurchaseBatch> {
-  const response = await baseFetch('/purchase-batches/from-recipes', {
+): Promise<PedidoUsuario> {
+  const response = await baseFetch('/pedido-usuarios/from-recipes', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
-    let errorMessage = `Error al crear lote desde recetas: ${response.status}`;
+    let errorMessage = `Error al crear pedido desde recetas: ${response.status}`;
     try {
       const errorDetail = (await response.json()) as { message?: string };
       if (errorDetail?.message) errorMessage = errorDetail.message;
@@ -391,7 +396,7 @@ export async function createPurchaseBatchFromRecetas(
     throw new Error(errorMessage);
   }
 
-  const body = (await response.json()) as ApiResponse<PurchaseBatch>;
+  const body = (await response.json()) as ApiResponse<PedidoUsuario>;
   return body.data;
 }
 

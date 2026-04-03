@@ -85,7 +85,7 @@ describe('PedidoRepository', () => {
         page: 1,
         limit: 10,
         searchTerm: 'pe',
-        estado: 'pendiente',
+        estado: 'pendiente_de_aprobacion',
       },
       true
     );

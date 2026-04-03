@@ -17,6 +17,7 @@ import {
   SelectChangeEvent,
 } from '@mui/material';
 import { Pedido, EstadoPedido } from '../../services/pedido.types';
+import { formatPedidoListNumber } from '../../features/pedidos/utils/pedidoFormatters';
 
 interface PasoSeleccionPedidosProps {
   loadingPedidos: boolean;
@@ -122,13 +123,13 @@ const PasoSeleccionPedidos: React.FC<PasoSeleccionPedidosProps> = ({
                     checked={pedidosSeleccionadosIds.includes(pedido.id)}
                   />
                   <ListItemText
-                    primary={`${pedido.proveedor?.nombre} - Ref: ${pedido.id.substring(0, 8)}`}
+                    primary={`${pedido.proveedor?.nombre} - Pedido ${formatPedidoListNumber(pedido)}`}
                     secondary={`Fecha: ${new Date(pedido.fechaPedido).toLocaleDateString()} | Estado: ${pedido.estado}`}
                   />
                   <Chip
                     label={pedido.estado}
                     color={
-                      pedido.estado === EstadoPedido.PENDIENTE
+                      pedido.estado === EstadoPedido.POR_RECEPCIONAR
                         ? 'primary'
                         : 'warning'
                     }

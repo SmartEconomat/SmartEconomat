@@ -1,4 +1,9 @@
 import { SeedContext } from './seed-context';
+import { EstadoPedido } from '../modules/pedido/enums/estado-pedido.enum';
+import { EstadoPedidoUsuario } from '../modules/pedido/enums/estado-pedido-usuario.enum';
+import { EstadoLote } from '../modules/pedido/enums/estado-lote.enum';
+import { UnidadMedida } from '../modules/producto/enums/producto.enums';
+import { UnidadIngrediente } from '../modules/receta/enums/receta.enums';
 import {
   extractFilename,
   isRecord,
@@ -11,6 +16,10 @@ export function collectStateFromResponse(
   resolvedPath: string,
   response: unknown
 ): void {
+  const roleIdByName =
+    context.getState<Record<string, string>>('seedRoleIdByName') || {};
+  let hasRoleIdByNameUpdates = false;
+
   const entities = toEntityArray(response);
   const profesorByAulaClaseMatch = resolvedPath.match(
     /^\/alumnos\/aulas\/([^/]+)\/clases\/([^/]+)\/profesores$/
@@ -46,10 +55,91 @@ export function collectStateFromResponse(
     );
   };
 
+  const isPedidoUsuarioEntity = (entity: Record<string, unknown>): boolean => {
+    if (typeof entity.id !== 'string') {
+      return false;
+    }
+
+    return (
+      typeof entity.numeroGlobal === 'string' &&
+      typeof entity.fechaPedido === 'string'
+    );
+  };
+
+  const isProductoEntity = (entity: Record<string, unknown>): boolean => {
+    if (typeof entity.id !== 'string') {
+      return false;
+    }
+
+    return (
+      typeof entity.nombre === 'string' &&
+      (typeof entity.contenido === 'number' ||
+        typeof entity.contenido === 'string' ||
+        typeof entity.pmp === 'number' ||
+        typeof entity.pmp === 'string')
+    );
+  };
+
+  const isRecetaEntity = (entity: Record<string, unknown>): boolean => {
+    if (typeof entity.id !== 'string') {
+      return false;
+    }
+
+    return (
+      typeof entity.nombre === 'string' &&
+      typeof entity.instrucciones === 'string' &&
+      typeof entity.tiempoEstimadoMinutos === 'number'
+    );
+  };
+
+  const isIncidenciaEntity = (entity: Record<string, unknown>): boolean => {
+    if (typeof entity.id !== 'string') {
+      return false;
+    }
+
+    if (typeof entity.recepcionId !== 'string') {
+      return false;
+    }
+
+    return typeof entity.incidenciaId !== 'string';
+  };
+
+  const activePedidoIds = entities
+    .filter((entity) => isPedidoEntity(entity))
+    .map((entity) => entity.id)
+    .filter((id): id is string => typeof id === 'string' && id.length > 0);
+
+  const activePendingPedidoIds = entities
+    .filter(
+      (entity) =>
+        isPedidoEntity(entity) &&
+        entity.estado === EstadoPedido.PENDIENTE_DE_APROBACION
+    )
+    .map((entity) => entity.id)
+    .filter((id): id is string => typeof id === 'string' && id.length > 0);
+
+  const activeReceivablePedidoIds = entities
+    .filter(
+      (entity) =>
+        isPedidoEntity(entity) && entity.estado === EstadoPedido.POR_RECEPCIONAR
+    )
+    .map((entity) => entity.id)
+    .filter((id): id is string => typeof id === 'string' && id.length > 0);
+
+  if (resolvedPath === '/pedidos') {
+    context.set('pedidoListIds', activePedidoIds);
+    context.set('pedidoPendingListIds', activePendingPedidoIds);
+    context.set('pedidoReceivableListIds', activeReceivablePedidoIds);
+  }
+
   const productoProveedorPrecioById =
     context.getState<Record<string, number>>('productoProveedorPrecioById') ||
     {};
+  const productoUnidadById =
+    context.getState<Record<string, UnidadIngrediente>>('productoUnidadById') ||
+    {};
   let hasProductoProveedorPriceUpdates = false;
+  let hasProductoUnidadUpdates = false;
 
   const parsePrice = (value: unknown): number | null => {
     if (typeof value === 'number' && Number.isFinite(value)) {
@@ -87,11 +177,63 @@ export function collectStateFromResponse(
     hasProductoProveedorPriceUpdates = true;
   };
 
+  const toUnidadIngrediente = (
+    value: unknown
+  ): UnidadIngrediente | undefined => {
+    switch (value) {
+      case UnidadMedida.KG:
+        return UnidadIngrediente.KILOGRAMO;
+      case UnidadMedida.G:
+        return UnidadIngrediente.GRAMO;
+      case UnidadMedida.L:
+        return UnidadIngrediente.LITRO;
+      case UnidadMedida.ML:
+        return UnidadIngrediente.MILILITRO;
+      case UnidadMedida.UNIDAD:
+      case UnidadMedida.PAQ:
+        return UnidadIngrediente.PIEZA;
+      default:
+        return undefined;
+    }
+  };
+
+  const rememberProductoUnidad = (
+    idValue: unknown,
+    unidadValue: unknown
+  ): void => {
+    if (typeof idValue !== 'string' || idValue.trim().length === 0) {
+      return;
+    }
+
+    const unidadIngrediente = toUnidadIngrediente(unidadValue);
+    if (!unidadIngrediente) {
+      return;
+    }
+
+    if (productoUnidadById[idValue] === unidadIngrediente) {
+      return;
+    }
+
+    productoUnidadById[idValue] = unidadIngrediente;
+    hasProductoUnidadUpdates = true;
+  };
+
   for (const entity of entities) {
     const id = entity.id;
 
-    if (resolvedPath.startsWith('/admin/roles'))
+    if (resolvedPath.startsWith('/admin/roles')) {
       pushStateValue(context, 'roleIds', id);
+      if (typeof id === 'string' && typeof entity.nombre === 'string') {
+        const normalizedRoleName = entity.nombre.trim().toUpperCase();
+        if (
+          normalizedRoleName.length > 0 &&
+          roleIdByName[normalizedRoleName] !== id
+        ) {
+          roleIdByName[normalizedRoleName] = id;
+          hasRoleIdByNameUpdates = true;
+        }
+      }
+    }
     if (resolvedPath.startsWith('/admin/permissions'))
       pushStateValue(context, 'permissionIds', id);
 
@@ -99,8 +241,11 @@ export function collectStateFromResponse(
       pushStateValue(context, 'usuarioIds', id);
     if (resolvedPath.startsWith('/proveedor'))
       pushStateValue(context, 'proveedorIds', id);
-    if (resolvedPath.startsWith('/productos'))
+    if (resolvedPath.startsWith('/productos') && isProductoEntity(entity)) {
       pushStateValue(context, 'productoIds', id);
+      pushStateValue(context, 'seedCapturedProductoIds', id);
+      rememberProductoUnidad(entity.id, entity.unidad);
+    }
     if (resolvedPath.startsWith('/producto-proveedor'))
       pushStateValue(context, 'productoProveedorIds', id);
     if (resolvedPath.startsWith('/producto-proveedor')) {
@@ -108,6 +253,16 @@ export function collectStateFromResponse(
         entity.id,
         entity.precioUnitario || entity.precio || entity.nuevoPrecio
       );
+      if (
+        typeof entity.id === 'string' &&
+        typeof entity.productoId === 'string'
+      ) {
+        pushStateValue(
+          context,
+          'productoProveedorToProductoPairs',
+          `${entity.id}|${entity.productoId}`
+        );
+      }
     }
     if (resolvedPath.startsWith('/historial-precio')) {
       rememberProductoProveedorPrice(entity.productoProveedorId, entity.precio);
@@ -121,6 +276,13 @@ export function collectStateFromResponse(
         'productoProveedorToProveedorPairs',
         `${entity.id}|${entity.proveedorId}`
       );
+      if (typeof entity.productoId === 'string') {
+        pushStateValue(
+          context,
+          'productoToProveedorPairs',
+          `${entity.productoId}|${entity.proveedorId}`
+        );
+      }
     }
     if (typeof entity.id === 'string' && typeof entity.pedidoId === 'string') {
       pushStateValue(
@@ -146,7 +308,10 @@ export function collectStateFromResponse(
       pushStateValue(context, 'ubicacionIds', id);
     if (resolvedPath.startsWith('/inventario'))
       pushStateValue(context, 'inventarioIds', id);
-    if (resolvedPath.startsWith('/pedido-usuarios'))
+    if (
+      resolvedPath.startsWith('/pedido-usuarios') &&
+      isPedidoUsuarioEntity(entity)
+    )
       pushStateValue(context, 'pedidoUsuarioIds', id);
     if (
       resolvedPath.startsWith('/purchase-batches') &&
@@ -155,7 +320,6 @@ export function collectStateFromResponse(
       pushStateValue(context, 'purchaseBatchIds', id);
     if (resolvedPath.startsWith('/pedidos') && isPedidoEntity(entity)) {
       pushStateValue(context, 'pedidoIds', id);
-      pushStateValue(context, 'pedidoReceivableIds', id);
     }
     if (resolvedPath.startsWith('/recepciones'))
       pushStateValue(context, 'recepcionIds', id);
@@ -165,11 +329,15 @@ export function collectStateFromResponse(
       pushStateValue(context, 'albaranIds', id);
     if (resolvedPath.startsWith('/incidencias-resueltas'))
       pushStateValue(context, 'incidenciaResueltaIds', id);
-    if (resolvedPath.startsWith('/incidencias'))
+    if (
+      resolvedPath.startsWith('/incidencias') &&
+      !resolvedPath.startsWith('/incidencias-resueltas') &&
+      isIncidenciaEntity(entity)
+    )
       pushStateValue(context, 'incidenciaIds', id);
     if (resolvedPath.startsWith('/movimientos'))
       pushStateValue(context, 'movimientoIds', id);
-    if (resolvedPath.startsWith('/recetas'))
+    if (resolvedPath.startsWith('/recetas') && isRecetaEntity(entity))
       pushStateValue(context, 'recetaIds', id);
     if (resolvedPath.startsWith('/preparaciones'))
       pushStateValue(context, 'preparacionIds', id);
@@ -242,11 +410,18 @@ export function collectStateFromResponse(
 
     if (typeof entity.id === 'string' && Array.isArray(entity.alergenos)) {
       for (const item of entity.alergenos) {
-        if (typeof item === 'string' && item.trim().length > 0) {
+        const alergenoValue =
+          typeof item === 'string'
+            ? item.trim()
+            : isRecord(item) && typeof item.alergeno === 'string'
+              ? item.alergeno.trim()
+              : '';
+
+        if (alergenoValue.length > 0) {
           pushStateValue(
             context,
             'productoAlergenoPairs',
-            `${entity.id}|${item}`
+            `${entity.id}|${alergenoValue}`
           );
         }
       }
@@ -267,6 +442,18 @@ export function collectStateFromResponse(
               'productoProveedorToProveedorPairs',
               `${pp.id}|${pp.proveedorId}`
             );
+            if (typeof entity.id === 'string') {
+              pushStateValue(
+                context,
+                'productoProveedorToProductoPairs',
+                `${pp.id}|${entity.id}`
+              );
+              pushStateValue(
+                context,
+                'productoToProveedorPairs',
+                `${entity.id}|${pp.proveedorId}`
+              );
+            }
           }
           pushStateValue(context, 'productoConProveedorIds', entity.id);
         }
@@ -311,20 +498,50 @@ export function collectStateFromResponse(
 
     const estado = entity.estado;
     if (typeof estado === 'string' && typeof entity.id === 'string') {
+      const pedidoEstado = (Object.values(EstadoPedido) as string[]).find(
+        (value) => value === estado
+      ) as EstadoPedido | undefined;
+
       if (resolvedPath.startsWith('/pedidos') && isPedidoEntity(entity)) {
-        if (estado === 'pendiente')
+        if (pedidoEstado === EstadoPedido.PENDIENTE_DE_APROBACION) {
           pushStateValue(context, 'pedidoPendienteIds', entity.id);
+        } else {
+          removeStateValue(context, 'pedidoPendienteIds', entity.id);
+        }
+
+        if (pedidoEstado === EstadoPedido.POR_RECEPCIONAR) {
+          pushStateValue(context, 'pedidoReceivableIds', entity.id);
+        } else {
+          removeStateValue(context, 'pedidoReceivableIds', entity.id);
+        }
       }
-      if (resolvedPath.startsWith('/pedido-usuarios')) {
-        if (estado === 'pendiente')
+      if (
+        resolvedPath.startsWith('/pedido-usuarios') &&
+        isPedidoUsuarioEntity(entity)
+      ) {
+        const pedidoUsuarioEstado = (
+          Object.values(EstadoPedidoUsuario) as string[]
+        ).find((value) => value === estado) as EstadoPedidoUsuario | undefined;
+
+        if (pedidoUsuarioEstado === EstadoPedidoUsuario.PENDIENTE) {
           pushStateValue(context, 'pedidoUsuarioPendienteIds', entity.id);
+        } else {
+          removeStateValue(context, 'pedidoUsuarioPendienteIds', entity.id);
+        }
       }
       if (
         resolvedPath.startsWith('/purchase-batches') &&
         isPurchaseBatchEntity(entity)
       ) {
-        if (estado === 'pendiente')
+        const batchEstado = (Object.values(EstadoLote) as string[]).find(
+          (value) => value === estado
+        ) as EstadoLote | undefined;
+
+        if (batchEstado === EstadoLote.PENDIENTE) {
           pushStateValue(context, 'purchaseBatchPendienteIds', entity.id);
+        } else {
+          removeStateValue(context, 'purchaseBatchPendienteIds', entity.id);
+        }
       }
       if (resolvedPath.startsWith('/preparaciones')) {
         if (estado === 'PENDIENTE')
@@ -336,8 +553,10 @@ export function collectStateFromResponse(
 
     if (
       resolvedPath.startsWith('/incidencias') &&
-      typeof entity.id === 'string'
+      !resolvedPath.startsWith('/incidencias-resueltas') &&
+      isIncidenciaEntity(entity)
     ) {
+      const incidenciaId = entity.id as string;
       const hasFechaResolucion =
         (typeof entity.fechaResolucion === 'string' &&
           entity.fechaResolucion.trim().length > 0) ||
@@ -353,9 +572,9 @@ export function collectStateFromResponse(
           entity.usuarioResolutor.id.trim().length > 0);
 
       if (incidenciaYaResuelta) {
-        removeStateValue(context, 'incidenciaPendienteIds', entity.id);
+        removeStateValue(context, 'incidenciaPendienteIds', incidenciaId);
       } else {
-        pushStateValue(context, 'incidenciaPendienteIds', entity.id);
+        pushStateValue(context, 'incidenciaPendienteIds', incidenciaId);
       }
     }
 
@@ -418,5 +637,13 @@ export function collectStateFromResponse(
 
   if (hasProductoProveedorPriceUpdates) {
     context.set('productoProveedorPrecioById', productoProveedorPrecioById);
+  }
+
+  if (hasProductoUnidadUpdates) {
+    context.set('productoUnidadById', productoUnidadById);
+  }
+
+  if (hasRoleIdByNameUpdates) {
+    context.set('seedRoleIdByName', roleIdByName);
   }
 }

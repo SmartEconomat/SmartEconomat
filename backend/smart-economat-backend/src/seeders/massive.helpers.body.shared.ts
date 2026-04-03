@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import { SeedContext } from './seed-context';
 import { Endpoint, EnumCoverage } from './massive.types';
 import {
@@ -19,6 +18,7 @@ import {
 } from './massive.config';
 import { markEnum } from './massive.helpers.common';
 import { pickRequiredStateValue, pickStateValue } from './massive.state';
+import { buildSeedSuffix } from './deterministic.seed-data';
 
 export type BuildBodyEnv = {
   context: SeedContext;
@@ -72,7 +72,7 @@ export function createBuildBodyEnv(
   const runTag = context.getState<string>('seedRunTag') || 'seed';
   const uniqueCursor = context.getState<number>('seedUniqueSuffixCursor') || 0;
   context.set('seedUniqueSuffixCursor', uniqueCursor + 1);
-  const suffix = `${runTag}_${iteration}_${uniqueCursor}_${randomUUID().slice(0, 8)}`;
+  const suffix = buildSeedSuffix(runTag, iteration, uniqueCursor);
 
   const roleValue = USER_ROLES[iteration % USER_ROLES.length];
   const statusValue = USER_STATUSES[iteration % USER_STATUSES.length];

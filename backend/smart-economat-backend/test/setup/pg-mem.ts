@@ -59,6 +59,25 @@ export function initPgMem(): { db: IMemoryDb; pg: any } {
   const db = newDb({
     autoCreateForeignKeyIndices: true,
   });
+  const createdEnumTypes = new Set<string>();
+
+  db.public.interceptQueries((sql) => {
+    const match = sql.match(
+      /^CREATE TYPE "([^"]+)"\."([^"]+)" AS ENUM\((.*)\)$/i
+    );
+
+    if (!match) {
+      return null;
+    }
+
+    const enumKey = `${match[1]}.${match[2]}`;
+    if (createdEnumTypes.has(enumKey)) {
+      return [];
+    }
+
+    createdEnumTypes.add(enumKey);
+    return null;
+  });
 
   db.public.registerFunction({
     name: 'current_database',
@@ -103,9 +122,11 @@ export async function getTestDataSource(): Promise<DataSource> {
     return ds;
   }
 
-  throw new Error(
-    'DataSource no inicializado. Debe llamarse después de inicializar pg-mem y ejecutar seeders.'
-  );
+  const { initTestDataSource } = require('./seed-test-database') as {
+    initTestDataSource: () => Promise<DataSource>;
+  };
+
+  return initTestDataSource();
 }
 
 /**
@@ -114,6 +135,13 @@ export async function getTestDataSource(): Promise<DataSource> {
  */
 export function setTestDataSource(dataSource: DataSource): void {
   g.__TEST_DATASOURCE__ = dataSource;
+}
+
+/**
+ * Devuelve el DataSource actual del worker si ya fue creado.
+ */
+export function peekTestDataSource(): DataSource | null {
+  return g.__TEST_DATASOURCE__ || null;
 }
 
 /**
@@ -204,6 +232,8 @@ export function cleanupPgMem(): void {
   g.__PG_MEM_DB__ = null;
   g.__PG_MEM_PG__ = null;
   g.__TEST_DATASOURCE__ = null;
+  g.__TEST_DATASOURCE_INIT_PROMISE__ = null;
+  g.__TEST_SEED_PROMISE__ = null;
   g.__SEED_SNAPSHOT__ = null;
   g.__FILE_SNAPSHOT__ = null;
   g.__SEEDED__ = false;

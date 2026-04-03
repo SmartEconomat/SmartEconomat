@@ -12,7 +12,6 @@ describe('IncidenciaService', () => {
     merge: jest.fn(),
     remove: jest.fn(),
   };
-  const mockIncidenciaResueltaRepo = {};
   const mockRecepcionRepo = {
     findOne: jest.fn(),
     save: jest.fn(),
@@ -23,6 +22,9 @@ describe('IncidenciaService', () => {
   const mockMovimientoHelper = {
     createMovimiento: jest.fn(),
   };
+  const mockPedidoService = {
+    handleStatusTransition: jest.fn(),
+  };
 
   let service: IncidenciaService;
 
@@ -30,10 +32,10 @@ describe('IncidenciaService', () => {
     jest.clearAllMocks();
     service = new IncidenciaService(
       mockIncidenciaRepo as any,
-      mockIncidenciaResueltaRepo as any,
       mockRecepcionRepo as any,
       mockDataSource as any,
-      mockMovimientoHelper as any
+      mockMovimientoHelper as any,
+      mockPedidoService as any
     );
   });
 
@@ -59,13 +61,20 @@ describe('IncidenciaService', () => {
 
   it('resolverIncidencia marca fecha y usuario resolutor', async () => {
     const incidencia = {
+      id: 'inc-3',
+      pedidoId: null,
+      lineas: [],
       resolver: jest.fn(),
       estaResuelta: () => false,
     };
-    jest.spyOn(service, 'findOne').mockResolvedValue(incidencia as any);
-    mockIncidenciaRepo.save.mockImplementation((value: unknown) =>
-      Promise.resolve(value)
-    );
+    const manager = {
+      findOne: jest
+        .fn()
+        .mockResolvedValueOnce(incidencia)
+        .mockResolvedValueOnce(incidencia),
+      save: jest.fn().mockResolvedValue(undefined),
+    };
+    mockDataSource.transaction.mockImplementation((cb) => cb(manager));
 
     await service.resolverIncidencia('inc-3', {
       usuarioId: 'user-1',
@@ -78,6 +87,7 @@ describe('IncidenciaService', () => {
   it('resolverIncidenciaTransaccional con DEVOLUCION crea movimiento de salida ajuste', async () => {
     const incidencia = {
       id: 'inc-4',
+      pedidoId: null,
       resolver: jest.fn(),
       estaResuelta: () => false,
     };

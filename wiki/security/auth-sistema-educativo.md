@@ -1,45 +1,102 @@
-# 🎓 Autenticación y Sistema Educativo
+# Auth del sistema educativo
 
-Este documento detalla la lógica de vinculación profesor-alumno y los procesos de registro adaptados al entorno educativo de SmartEconomat.
+Este documento cubre los flujos específicos del dominio educativo: registro de profesores y alumnos, gestión de slots, activación y recuperación de credenciales en contexto de aula.
 
-## 📝 Registro de Usuarios
+## Modelo funcional
 
-El sistema ofrece un formulario de registro dual (`RegisterForm.tsx`) donde el usuario elige su rol antes de completar los datos.
+El sistema combina un usuario base con perfiles de profesor o alumno:
 
-### 1. Registro de Alumnos
-Los alumnos se registran de forma autónoma pero vinculada.
-- **Identificación**: Username y Password únicos. No se requiere email obligatoriamente para agilizar el registro en el aula.
-- **Vinculación por Código**: Deben introducir un **Código de Clase** (Slot) generado previamente por un profesor.
-- **Validación en Tiempo Real**: El sistema valida el código antes del envío, confirmando al alumno en qué aula y con qué profesor se está registrando.
-- **Estado Inicial**: `INACTIVE`. El alumno no puede iniciar sesión hasta que su profesor lo active desde el panel de gestión.
+- `usuario` concentra credenciales, estado y rol principal.
+- `profesor` añade el identificador `cial`.
+- `alumno` se vincula a un `alumno_slot`.
+- `alumno_slot` representa la clase o grupo gestionado por un profesor.
 
-### 2. Registro de Profesores
-- **Identificación**: Username, Email, Password y **CIAL** (identificador oficial).
-- **Validación Institucional**: Las cuentas de profesor son creadas como `INACTIVE` y requieren que un **Administrador** verifique su CIAL y active la cuenta.
-- **Capacidad**: Una vez activo, el profesor puede generar sus propios "Slots" para permitir el registro de sus alumnos.
+## Registro público
 
----
+## Alta de alumnos
 
-## 🕒 Ciclo de Vida y Activación
+- Endpoint: `POST /api/v1/alumnos/register`
+- Requisitos mínimos: `username`, `password` y un mecanismo válido de vinculación.
 
-Para mantener el orden y la seguridad, el sistema sigue este flujo de estados:
+La vinculación puede resolverse por:
 
-1.  **Registro**: El usuario crea la cuenta (Estado: `INACTIVE`).
-2.  **Validación**:
-    - **Alumnos**: El Profesor asignado los activa desde la pestaña "Alumnos" (Gestión por Acordeones).
-    - **Profesores**: Un Administrador los activa desde la vista de "Usuarios".
-3.  **Acceso**: Solo tras la activación el usuario puede realizar el **Login**.
+- `codigoClase`, o
+- `aula + numeroClase + cialProfesor`
 
----
+Endpoints públicos de apoyo:
 
-## 🔑 Gestión de Credenciales Educativas
+- `GET /api/v1/alumnos/slots/:codigoClase`
+- `GET /api/v1/alumnos/aulas`
+- `GET /api/v1/alumnos/aulas/:aula/clases`
+- `GET /api/v1/alumnos/aulas/:aula/clases/:clase/profesores`
 
-- **Reset de Alumnos**: Los profesores tienen la potestad de resetear la contraseña de sus propios alumnos en un solo click, generando una clave temporal para solucionar olvidos recurrentes en el aula.
-- **Cambio Forzado**: Al resetear una clave, se puede marcar como cambio obligatorio en el siguiente inicio de sesión para asegurar que el alumno mantenga su privacidad.
+El alumno queda inactivo hasta ser activado por su profesor.
 
----
+## Alta de profesores
 
-## 🔗 Relacionado
-- [Login y Registro (Seguridad)](./login-registro.md)
-- [Gestión de Usuarios (UI)](../frontend/gestion-usuarios.md)
-- [Permisos por Rol](../roles_y_permisos.md)
+- Endpoint: `POST /api/v1/profesores/register`
+- Requiere `username`, `password`, `email` y `cial`
+
+El profesor también nace inactivo y necesita activación desde administración.
+
+## Activación de cuentas
+
+## Activación de alumnos
+
+- Endpoint: `PATCH /api/v1/profesores/alumnos/:id/activate`
+- Requiere permiso `profesor:gestionar_alumnos`
+
+El profesor solo puede activar alumnos bajo su ámbito docente.
+
+## Activación de profesores
+
+La activación de profesores se realiza desde los flujos de administración de usuarios, por ejemplo mediante:
+
+- `PATCH /api/v1/admin/users/:id/activate`
+
+## Gestión de slots
+
+Endpoints principales del profesor:
+
+- `POST /api/v1/profesores/slots`
+- `GET /api/v1/profesores/slots`
+- `PATCH /api/v1/profesores/slots/:id`
+- `DELETE /api/v1/profesores/slots/:id`
+- `GET /api/v1/profesores/alumnos`
+- `POST /api/v1/profesores/alumnos/:id/force-reset`
+
+Endpoints administrativos complementarios:
+
+- `POST /api/v1/profesores/admin-slots`
+- `PATCH /api/v1/profesores/admin-slots/:id`
+- `DELETE /api/v1/profesores/admin-slots/:id`
+- `GET /api/v1/profesores/all-slots`
+- `GET /api/v1/profesores/all-profesores`
+
+## Recuperación de credenciales en aula
+
+El flujo estándar de `forgot-password` no siempre sirve a alumnos, porque no necesariamente disponen de email operativo. Por eso existe el reset docente:
+
+- `POST /api/v1/profesores/alumnos/:id/force-reset`
+
+Este flujo permite entregar una contraseña provisional y forzar su cambio posterior.
+
+## Cambio de profesor
+
+- Endpoint: `PATCH /api/v1/alumnos/change-profesor`
+- Permiso requerido: `alumno:cambiar_profesor`
+
+Es un flujo específico del alumno autenticado para cambiar su asignación docente bajo las reglas del backend.
+
+## Reglas que conviene recordar
+
+- Todas las cuentas educativas nacen inactivas.
+- La activación del alumno pertenece al profesor; la del profesor pertenece a administración.
+- El `codigoClase` es la vía más directa para el alta de alumno, pero no la única soportada por el DTO.
+- El login posterior de profesores y alumnos sigue el flujo general descrito en [login-registro.md](login-registro.md).
+
+## Relacionado
+
+- [Login y registro](login-registro.md)
+- [Roles y permisos](roles-y-permisos.md)
+- [Servicio `profesorService`](../frontend/servicios/profesor.service.md)

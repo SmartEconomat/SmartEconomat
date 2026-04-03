@@ -57,6 +57,7 @@ export class PedidoUsuario extends BaseEntity {
   @Column({
     type: 'enum',
     enum: EstadoPedidoUsuario,
+    enumName: 'estado_pedido_usuario',
     default: EstadoPedidoUsuario.PENDIENTE,
   })
   estado!: EstadoPedidoUsuario;

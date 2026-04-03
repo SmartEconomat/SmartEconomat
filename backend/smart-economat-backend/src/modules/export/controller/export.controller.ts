@@ -241,6 +241,20 @@ export class ExportController {
     await this.exportService.streamAlbaranesToPdf(query, res);
   }
 
+  @Get('incidencias/pdf')
+  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  async exportIncidenciasPdf(
+    @Query() query: ExportIncidenciaFilterDto,
+    @Res() res: Response
+  ): Promise<void> {
+    res.setHeader('Content-Type', PDF_MIME);
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="incidencias.pdf"'
+    );
+    await this.exportService.streamIncidenciasToPdf(query, res);
+  }
+
   @Get('recetas/pdf')
   @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   async exportRecetasPdf(

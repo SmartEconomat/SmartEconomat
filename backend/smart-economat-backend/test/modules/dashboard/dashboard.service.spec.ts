@@ -114,7 +114,7 @@ describe('DashboardService', () => {
     });
   });
 
-  it('getStats filtra pedidos pendientes por PENDIENTE, EN_PROCESO e INCIDENCIA', async () => {
+  it('getStats filtra pedidos pendientes por PENDIENTE_DE_APROBACION, POR_RECEPCIONAR, PARCIAL e INCIDENCIA', async () => {
     inventoryValueQb.getRawOne.mockResolvedValue({ valorTotal: '0' });
     lowStockQb.getCount.mockResolvedValue(0);
     mockInventarioRepo.count.mockResolvedValue(0);
@@ -132,8 +132,9 @@ describe('DashboardService', () => {
       where: {
         estado: expect.objectContaining({
           _value: [
-            EstadoPedido.PENDIENTE,
-            EstadoPedido.EN_PROCESO,
+            EstadoPedido.PENDIENTE_DE_APROBACION,
+            EstadoPedido.POR_RECEPCIONAR,
+            EstadoPedido.PARCIAL,
             EstadoPedido.INCIDENCIA,
           ],
         }),

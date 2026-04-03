@@ -6,7 +6,6 @@ import {
   readdirSync,
   writeFileSync,
 } from 'node:fs';
-import { randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
 import { createSeedContext } from './seed';
 import { SeedContext } from './seed-context';
@@ -42,15 +41,22 @@ import {
   refreshStateAfterOperation,
   warmCollections,
 } from './massive.runtime';
+import { buildSeedRunTag, seedDateIso } from './deterministic.seed-data';
 
 const COVERAGE_LOG_FILE = resolve(__dirname, './logs/seed-http-coverage.txt');
 const REQUEST_LOG_FILE = resolve(__dirname, './logs/seed-massive-requests.log');
 const TRACE_LOG_FILE = resolve(__dirname, './logs/seed-massive-trace.txt');
+let traceLineCursor = 0;
+let requestLogCursor = 0;
+
+function elapsedMsFrom(startedAtNs: bigint): number {
+  return Number((process.hrtime.bigint() - startedAtNs) / 1_000_000n);
+}
 
 function trace(message: string): void {
   appendFileSync(
     TRACE_LOG_FILE,
-    `[${new Date().toISOString()}] ${message}\n`,
+    `[${seedDateIso(0, traceLineCursor++)}] ${message}\n`,
     'utf8'
   );
 }
@@ -300,13 +306,23 @@ function getEndpointBatchLimit(key: string, fallback: number): number {
     return 1;
   }
 
-  if (key === 'DELETE /inventario/:id' || key === 'DELETE /recepciones/:id') {
+  if (key === 'DELETE /inventario/:id') {
     return 1;
   }
 
   if (
     key.startsWith('POST /preparaciones') ||
     key.startsWith('PATCH /preparaciones')
+  ) {
+    return 1;
+  }
+
+  if (
+    key.startsWith('POST /incidencias') ||
+    key.startsWith('PATCH /incidencias') ||
+    key.startsWith('DELETE /incidencias') ||
+    key.startsWith('POST /incidencias-resueltas') ||
+    key.startsWith('DELETE /incidencias-resueltas')
   ) {
     return 1;
   }
@@ -356,7 +372,7 @@ function writeCoverageSummary(
     .map(([key, values]) => `${key}=${[...values].sort().join(',')}`);
 
   const content = [
-    `timestamp=${new Date().toISOString()}`,
+    `timestamp=${seedDateIso(0)}`,
     `endpoints=${endpoints.length}`,
     `minSuccessPerEndpoint=${MIN_SUCCESS_PER_ENDPOINT}`,
     `maxSuccessPerEndpoint=${MAX_SUCCESS_PER_ENDPOINT}`,
@@ -407,12 +423,12 @@ async function runMassiveSeeder(): Promise<void> {
 
   writeFileSync(
     REQUEST_LOG_FILE,
-    `# seed-massive request log ${new Date().toISOString()}\n`,
+    `# seed-massive request log ${seedDateIso(0)}\n`,
     'utf8'
   );
   writeFileSync(
     TRACE_LOG_FILE,
-    `# seed-massive trace ${new Date().toISOString()}\n`,
+    `# seed-massive trace ${seedDateIso(0)}\n`,
     'utf8'
   );
 
@@ -421,7 +437,11 @@ async function runMassiveSeeder(): Promise<void> {
   });
 
   try {
-    const seedRunTag = randomUUID().slice(0, 8);
+    const explicitRunTag = (process.env.SEED_RUN_TAG || '').trim();
+    const seedRunTag =
+      explicitRunTag.length > 0
+        ? explicitRunTag
+        : `${buildSeedRunTag(SEED_GLOBAL_CONFIG.multiplier)}-${Date.now().toString(36)}`;
     context.set('seedRunTag', seedRunTag);
     context.set('seedMultiplier', SEED_GLOBAL_CONFIG.multiplier);
     context.set('seedGlobalConfig', SEED_GLOBAL_CONFIG);
@@ -431,7 +451,7 @@ async function runMassiveSeeder(): Promise<void> {
     );
     trace('strict_mode_enabled');
 
-    const startedAt = Date.now();
+    const startedAtNs = process.hrtime.bigint();
 
     await ensureRoleActors(context);
     await ensureAdminRouteActors(context);
@@ -483,7 +503,7 @@ async function runMassiveSeeder(): Promise<void> {
       let attempts = 0;
 
       while (success < target && attempts < MAX_ATTEMPTS_PER_ENDPOINT) {
-        const elapsed = Date.now() - startedAt;
+        const elapsed = elapsedMsFrom(startedAtNs);
         if (elapsed > HARD_MAX_TOTAL_DURATION_MS) {
           throw new Error(
             `[seed-massive] Timeout global duro alcanzado (${elapsed}ms > ${HARD_MAX_TOTAL_DURATION_MS}ms)`
@@ -525,7 +545,7 @@ async function runMassiveSeeder(): Promise<void> {
           }
 
           logRequestLine({
-            timestamp: new Date().toISOString(),
+            timestamp: seedDateIso(0, requestLogCursor++),
             endpoint: endpoint.path,
             method: endpoint.method,
             resolvedPath: result.resolvedPath,
@@ -557,7 +577,7 @@ async function runMassiveSeeder(): Promise<void> {
       );
     }
 
-    const elapsedFinal = Date.now() - startedAt;
+    const elapsedFinal = elapsedMsFrom(startedAtNs);
 
     assertRequiredAdminEndpointUsage(endpoints, successByEndpoint);
 
@@ -568,10 +588,12 @@ async function runMassiveSeeder(): Promise<void> {
       );
     }
 
-    const productoIds = getStateArray(context, 'productoIds');
-    if (productoIds.length < MIN_REQUIRED_PRODUCT_IDS) {
+    const capturedProductoIds = Array.from(
+      new Set(getStateArray(context, 'seedCapturedProductoIds'))
+    );
+    if (capturedProductoIds.length < MIN_REQUIRED_PRODUCT_IDS) {
       throw new Error(
-        `[seed-massive] Requisito incumplido: productos distintos capturados=${productoIds.length} (<${MIN_REQUIRED_PRODUCT_IDS})`
+        `[seed-massive] Requisito incumplido: productos distintos capturados=${capturedProductoIds.length} (<${MIN_REQUIRED_PRODUCT_IDS})`
       );
     }
 

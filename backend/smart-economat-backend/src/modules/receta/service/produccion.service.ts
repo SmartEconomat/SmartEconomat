@@ -27,6 +27,9 @@ import {
   TipoConsumoProduccion,
 } from '../dto/consumir-produccion.dto';
 
+const CONSUMPTION_FLOAT_TOLERANCE = 0.000001;
+const CONSUMPTION_PORTION_STEP = 0.5;
+
 @Injectable()
 export class ProduccionService {
   private readonly logger = new Logger(ProduccionService.name);
@@ -324,17 +327,79 @@ export class ProduccionService {
     const limit = Math.min(query.limit ?? 20, 50);
     const sortBy = query.sortBy ?? 'fechaProduccion';
     const order = query.order ?? 'DESC';
-    const estado = query.estado as EstadoLote;
+    const estado = (query.estado || '').trim().toLowerCase();
+    const estadoLote = Object.values(EstadoLote).find(
+      (value) => String(value) === estado
+    );
+    const repository = this.dataSource.getRepository(ProduccionLote);
+    const allowedSortColumns = new Set([
+      'fechaProduccion',
+      'cantidadProducida',
+      'costeTotalReal',
+      'porcionesProducidas',
+      'porcionesRestantes',
+      'estado',
+      'createdAt',
+      'updatedAt',
+    ]);
+    const safeSortBy = allowedSortColumns.has(sortBy)
+      ? sortBy
+      : 'fechaProduccion';
+    const queryBuilder = repository
+      .createQueryBuilder('lote')
+      .withDeleted()
+      .leftJoinAndSelect('lote.receta', 'receta')
+      .leftJoinAndSelect('lote.usuario', 'usuario')
+      .andWhere('lote.deleted_at IS NULL');
 
-    const [data, total] = await this.dataSource
-      .getRepository(ProduccionLote)
-      .findAndCount({
-        where: estado ? { estado } : {},
-        relations: ['receta', 'usuario'],
-        order: { [sortBy]: order },
-        skip: (page - 1) * limit,
-        take: limit,
+    if (estado === 'consumido') {
+      queryBuilder.where(
+        'lote.porciones_restantes < lote.porciones_producidas'
+      );
+    } else if (estado === 'sin_consumo') {
+      queryBuilder
+        .where('lote.estado = :estadoDisponible', {
+          estadoDisponible: EstadoLote.DISPONIBLE,
+        })
+        .andWhere('lote.porciones_restantes >= lote.porciones_producidas');
+    } else if (estadoLote) {
+      queryBuilder.where('lote.estado = :estado', {
+        estado: estadoLote,
       });
+    }
+
+    const [data, total] = await queryBuilder
+      .orderBy(`lote.${safeSortBy}`, order)
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    if (data.length > 0) {
+      const recetaIds = Array.from(
+        new Set(data.map((lote) => lote.recetaId).filter(Boolean))
+      );
+
+      if (recetaIds.length > 0) {
+        const recetasConIngredientes = await this.dataSource
+          .getRepository(Receta)
+          .find({
+            where: { id: In(recetaIds) },
+            relations: ['ingredientes', 'ingredientes.producto'],
+            withDeleted: true,
+          });
+
+        const recetasMap = new Map(
+          recetasConIngredientes.map((receta) => [receta.id, receta])
+        );
+
+        data.forEach((lote) => {
+          const recetaConIngredientes = recetasMap.get(lote.recetaId);
+          if (recetaConIngredientes) {
+            lote.receta = recetaConIngredientes;
+          }
+        });
+      }
+    }
 
     return {
       data,
@@ -369,6 +434,7 @@ export class ProduccionService {
 
       const receta = await manager.findOne(Receta, {
         where: { id: lote.recetaId },
+        withDeleted: true,
       });
 
       if (!receta) {
@@ -437,16 +503,32 @@ export class ProduccionService {
       );
     }
 
-    return dto.valor / cantidadPorRacion;
+    const cantidadPorPaso = cantidadPorRacion * CONSUMPTION_PORTION_STEP;
+    const pasosExactos = dto.valor / cantidadPorPaso;
+    const pasosRedondeados = Math.round(pasosExactos);
+
+    if (
+      Math.abs(pasosExactos - pasosRedondeados) > CONSUMPTION_FLOAT_TOLERANCE
+    ) {
+      const unidadResultado = recipe.unidadResultado?.trim() || 'unidad';
+      const cantidadFormateada = Number(cantidadPorPaso.toFixed(3));
+
+      throw new BadRequestException(
+        `La cantidad a consumir debe ser múltiplo de ${cantidadFormateada} ${unidadResultado}.`
+      );
+    }
+
+    return Number((pasosRedondeados * CONSUMPTION_PORTION_STEP).toFixed(3));
   }
 
   async findOne(id: string): Promise<ProduccionLote> {
     const lote = await this.dataSource.getRepository(ProduccionLote).findOne({
       where: { id },
       relations: ['receta', 'usuario'],
+      withDeleted: true,
     });
 
-    if (!lote) {
+    if (!lote || lote.deletedAt) {
       throw new NotFoundException(I18nHelper.getError('LOTE_NO_ENCONTRADO'));
     }
 

@@ -1,0 +1,5 @@
+- `POST /recepciones` sigue siendo el contrato canónico para flujos reales y exige `pedidos` vía `RecepcionStockService.procesarRecepcion(dto)`; no sirve para precrear recepciones huérfanas eliminables para el seed.
+- `DELETE /recepciones/:id` en el seeder masivo debe consumir `seedCreatedDeletableRecepcionIds`; reutilizar `recepcionIds` genéricos reintroduce 400 por relaciones asociadas.
+- `ensureDeletableRecepcionResource` se resuelve creando una `Recepcion` mínima por repositorio/AppDataSource solo para cobertura del DELETE; no usar este patrón como sustituto del flujo funcional HTTP.
+- `refreshStateAfterOperation` debe limpiar la recepcion eliminada tanto de `recepcionIds` como de `seedCreatedDeletableRecepcionIds`.
+- El resto del bloque viable ya migrado y validado: OFF pool por `/proveedor` + `/productos`, merma por `GET /inventario/stock?consolidado=true`, activación por `PATCH /admin/users/:id/activate`, producto-alérgeno por `GET/POST /producto-alergenos`.

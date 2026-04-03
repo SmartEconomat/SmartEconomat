@@ -169,7 +169,65 @@ describe('RecetaToPedidoService', () => {
         { recetaIds: ['receta-1', 'receta-2'] },
         'user-1'
       )
-    ).rejects.toBeInstanceOf(BadRequestException);
+    ).rejects.toThrow(/un pedido solo puede pertenecer a un proveedor/i);
+  });
+
+  it('buildBatchOrderFromRecetas reparte la compra entre varios proveedores cuando hace falta', async () => {
+    mockRecetaRepository.findById
+      .mockResolvedValueOnce({
+        id: 'receta-1',
+        nombre: 'Receta A',
+        ingredientes: [
+          {
+            productoId: 'prod-1',
+            cantidad: 1,
+            mermaAplicada: 0,
+            unidad: 'KILOGRAMO',
+            producto: { id: 'prod-1', nombre: 'Harina', deletedAt: null },
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        id: 'receta-2',
+        nombre: 'Receta B',
+        ingredientes: [
+          {
+            productoId: 'prod-2',
+            cantidad: 2,
+            mermaAplicada: 0,
+            unidad: 'KILOGRAMO',
+            producto: { id: 'prod-2', nombre: 'Azúcar', deletedAt: null },
+          },
+        ],
+      });
+
+    mockProductoProveedorRepository.find.mockResolvedValue([
+      {
+        id: 'pp-1',
+        productoId: 'prod-1',
+        proveedorId: 'prov-1',
+        precioUnitario: 2,
+      },
+      {
+        id: 'pp-2',
+        productoId: 'prod-2',
+        proveedorId: 'prov-2',
+        precioUnitario: 3,
+      },
+    ]);
+
+    await expect(
+      service.buildBatchOrderFromRecetas({
+        recetaIds: ['receta-1', 'receta-2'],
+        observaciones: 'Compra agrupada',
+      })
+    ).resolves.toEqual({
+      observaciones: 'Compra agrupada',
+      lineas: [
+        { productoProveedorId: 'pp-1', cantidad: 1 },
+        { productoProveedorId: 'pp-2', cantidad: 2 },
+      ],
+    });
   });
 
   it('rechaza si alguna receta contiene productos inactivos', async () => {
@@ -352,6 +410,9 @@ describe('RecetaToPedidoService', () => {
       expect.stringContaining(
         'Pedido pedido-1 generado desde recetas [receta-1]'
       )
+    );
+    expect(loggerSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Proveedor del pedido: prov-1')
     );
     expect(loggerSpy).toHaveBeenCalledWith(
       expect.stringContaining('Observaciones: Origen cocina')

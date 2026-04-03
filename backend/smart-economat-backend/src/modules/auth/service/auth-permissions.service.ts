@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
+import { rolUsuario } from '../../usuario/enums/usuario.enums';
 import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
 import { resolveSherlockEffectivePermissions } from '../../sherlock-auth/utils/access.utils';
 
@@ -129,7 +130,7 @@ export class AuthPermissionsService {
 
     const codigosExcluidos = excluidos.map((p) => p.codigo);
 
-    if (usuario.rol === 'SUPER_ADMIN') {
+    if (usuario.rol === rolUsuario.SUPER_ADMIN) {
       const todosLosPermisos = await this.permisoRepo.find({
         where: { activo: true },
         select: ['codigo'],

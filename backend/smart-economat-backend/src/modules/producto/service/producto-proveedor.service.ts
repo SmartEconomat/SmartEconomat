@@ -2,10 +2,9 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
-import { DataSource } from 'typeorm';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { ProductoPrecioActualizadoEvent } from '../events/producto-precio-actualizado.event';
+import { DataSource, EntityManager } from 'typeorm';
 import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
 import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.entity';
 import { UpdatePrecioProductoDto } from '../dto/update-precio-producto.dto';
@@ -36,16 +35,40 @@ export interface ComparacionProveedoresResponse {
 
 @Injectable()
 export class ProductoProveedorService {
-  constructor(
-    private readonly dataSource: DataSource,
-    private readonly eventEmitter: EventEmitter2
-  ) {}
+  constructor(private readonly dataSource: DataSource) {}
+
+  private validatePrecioMayorQueCero(precio: number): void {
+    if (precio <= 0) {
+      throw new BadRequestException(
+        I18nHelper.getError('PRICE_MUST_BE_GREATER_THAN_ZERO')
+      );
+    }
+  }
+
+  private async getLatestPrecioFromHistorial(
+    manager: EntityManager,
+    productoProveedorId: string
+  ): Promise<number> {
+    const latestHistorial = await manager.findOne(HistorialPrecio, {
+      where: { productoProveedorId },
+      order: { fecha: 'DESC', createdAt: 'DESC' },
+    });
+
+    if (!latestHistorial) {
+      throw new NotFoundException(
+        I18nHelper.getError('HISTORIAL_PRECIO_NOT_FOUND')
+      );
+    }
+
+    return latestHistorial.precio;
+  }
 
   async updatePrecio(
     idProductoProveedor: string,
     updatePrecioDto: UpdatePrecioProductoDto
   ): Promise<ProductoProveedor> {
     const { nuevoPrecio } = updatePrecioDto;
+    this.validatePrecioMayorQueCero(nuevoPrecio);
 
     return await this.dataSource.transaction(async (manager) => {
       const productoProveedor = await manager.findOne(ProductoProveedor, {
@@ -62,29 +85,18 @@ export class ProductoProveedorService {
         throw new ConflictException(I18nHelper.getError('PRICE_NOT_CHANGED'));
       }
 
-      const previousPrice = productoProveedor.precioUnitario;
+      const historial = manager.create(HistorialPrecio, {
+        productoProveedor,
+        productoProveedorId: productoProveedor.id,
+        precio: nuevoPrecio,
+        fecha: new Date(),
+      });
+      await manager.save(HistorialPrecio, historial);
 
-      if (previousPrice !== undefined && previousPrice !== null) {
-        const historial = new HistorialPrecio();
-        historial.productoProveedor = productoProveedor;
-        historial.precio = previousPrice;
-        await manager.save(HistorialPrecio, historial);
-      }
+      productoProveedor.precioUnitario =
+        await this.getLatestPrecioFromHistorial(manager, productoProveedor.id);
 
-      productoProveedor.precioUnitario = nuevoPrecio;
-      const saved = await manager.save(ProductoProveedor, productoProveedor);
-
-      this.eventEmitter.emit(
-        'producto.precio.actualizado',
-        new ProductoPrecioActualizadoEvent(
-          saved.productoId,
-          saved.proveedorId,
-          nuevoPrecio,
-          previousPrice ?? undefined
-        )
-      );
-
-      return saved;
+      return await manager.save(ProductoProveedor, productoProveedor);
     });
   }
 

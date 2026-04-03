@@ -17,7 +17,6 @@ const clearLegacySessionStorage = () => {
   tokenManager.clearToken();
 };
 
-
 const isPublicAuthPath = (pathname: string) =>
   pathname === '/login' ||
   pathname === '/reset-password' ||

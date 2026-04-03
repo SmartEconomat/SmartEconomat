@@ -18,29 +18,65 @@ export class HistorialPrecioService {
     private readonly dataSource: DataSource
   ) {}
 
-  async create(dto: CreateHistorialPrecioDto): Promise<HistorialPrecio> {
-    const productoProveedor = await this.dataSource.manager.findOne(
-      ProductoProveedor,
-      { where: { id: dto.productoProveedorId } }
-    );
-
-    if (!productoProveedor) {
-      throw new NotFoundException(
-        I18nHelper.getError('PRODUCT_PROVIDER_NOT_FOUND')
+  private validatePrecioMayorQueCero(precio: number): void {
+    if (precio <= 0) {
+      throw new BadRequestException(
+        I18nHelper.getError('PRICE_MUST_BE_GREATER_THAN_ZERO')
       );
     }
+  }
 
-    if (dto.precio < 0) {
-      throw new BadRequestException(I18nHelper.getError('PRECIO_NO_NEGATIVO'));
-    }
-
-    const historial = this.historialPrecioRepository.create({
-      productoProveedor,
-      precio: dto.precio,
-      ...(dto.fecha ? { fecha: dto.fecha } : {}),
+  private async syncPrecioActualDesdeHistorial(
+    productoProveedorId: string,
+    manager = this.dataSource.manager
+  ): Promise<void> {
+    const latestHistorial = await manager.findOne(HistorialPrecio, {
+      where: { productoProveedorId },
+      order: { fecha: 'DESC', createdAt: 'DESC' },
     });
 
-    return this.historialPrecioRepository.save(historial);
+    if (latestHistorial) {
+      await manager.update(
+        ProductoProveedor,
+        { id: productoProveedorId },
+        { precioUnitario: latestHistorial.precio }
+      );
+      return;
+    }
+
+    await manager
+      .createQueryBuilder()
+      .update(ProductoProveedor)
+      .set({ precioUnitario: () => 'NULL' })
+      .where('id = :productoProveedorId', { productoProveedorId })
+      .execute();
+  }
+
+  async create(dto: CreateHistorialPrecioDto): Promise<HistorialPrecio> {
+    return this.dataSource.transaction(async (manager) => {
+      const productoProveedor = await manager.findOne(ProductoProveedor, {
+        where: { id: dto.productoProveedorId },
+      });
+
+      if (!productoProveedor) {
+        throw new NotFoundException(
+          I18nHelper.getError('PRODUCT_PROVIDER_NOT_FOUND')
+        );
+      }
+
+      this.validatePrecioMayorQueCero(dto.precio);
+
+      const historial = manager.create(HistorialPrecio, {
+        productoProveedor,
+        precio: dto.precio,
+        ...(dto.fecha ? { fecha: dto.fecha } : {}),
+      });
+
+      const savedHistorial = await manager.save(HistorialPrecio, historial);
+      await this.syncPrecioActualDesdeHistorial(productoProveedor.id, manager);
+
+      return savedHistorial;
+    });
   }
 
   async findAll(order: 'ASC' | 'DESC' = 'DESC'): Promise<HistorialPrecio[]> {
@@ -64,44 +100,80 @@ export class HistorialPrecioService {
     id: string,
     dto: UpdateHistorialPrecioDto
   ): Promise<HistorialPrecio> {
-    const historial = await this.findOne(id);
+    return this.dataSource.transaction(async (manager) => {
+      const historial = await manager.findOne(HistorialPrecio, {
+        where: { id },
+      });
 
-    if (dto.productoProveedorId) {
-      const productoProveedor = await this.dataSource.manager.findOne(
-        ProductoProveedor,
-        { where: { id: dto.productoProveedorId } }
+      if (!historial) {
+        throw new NotFoundException(
+          I18nHelper.getError('HISTORIAL_PRECIO_NOT_FOUND')
+        );
+      }
+
+      const previousProductoProveedorId = historial.productoProveedorId;
+
+      if (dto.productoProveedorId) {
+        const productoProveedor = await manager.findOne(ProductoProveedor, {
+          where: { id: dto.productoProveedorId },
+        });
+
+        if (!productoProveedor) {
+          throw new NotFoundException(
+            I18nHelper.getError('PRODUCT_PROVIDER_NOT_FOUND')
+          );
+        }
+
+        historial.productoProveedor = productoProveedor;
+        historial.productoProveedorId = productoProveedor.id;
+      }
+
+      if (dto.precio !== undefined) {
+        if (dto.precio === null) {
+          throw new BadRequestException(I18nHelper.getError('INVALID_DATA'));
+        }
+
+        this.validatePrecioMayorQueCero(dto.precio);
+        historial.precio = dto.precio;
+      }
+
+      if (dto.fecha !== undefined) {
+        historial.fecha = dto.fecha;
+      }
+
+      const savedHistorial = await manager.save(HistorialPrecio, historial);
+
+      await this.syncPrecioActualDesdeHistorial(
+        savedHistorial.productoProveedorId,
+        manager
       );
 
-      if (!productoProveedor) {
-        throw new NotFoundException(
-          I18nHelper.getError('PRODUCT_PROVIDER_NOT_FOUND')
+      if (previousProductoProveedorId !== savedHistorial.productoProveedorId) {
+        await this.syncPrecioActualDesdeHistorial(
+          previousProductoProveedorId,
+          manager
         );
       }
 
-      historial.productoProveedor = productoProveedor;
-    }
-
-    if (dto.precio !== undefined) {
-      if ((dto.precio as any) === null) {
-        throw new BadRequestException(I18nHelper.getError('INVALID_DATA'));
-      }
-      if (dto.precio < 0) {
-        throw new BadRequestException(
-          I18nHelper.getError('PRECIO_NO_NEGATIVO')
-        );
-      }
-      historial.precio = dto.precio;
-    }
-
-    if (dto.fecha !== undefined) {
-      historial.fecha = dto.fecha;
-    }
-
-    return this.historialPrecioRepository.save(historial);
+      return savedHistorial;
+    });
   }
 
   async remove(id: string): Promise<void> {
-    const historial = await this.findOne(id);
-    await this.historialPrecioRepository.softRemove(historial);
+    await this.dataSource.transaction(async (manager) => {
+      const historial = await manager.findOne(HistorialPrecio, {
+        where: { id },
+      });
+
+      if (!historial) {
+        throw new NotFoundException(
+          I18nHelper.getError('HISTORIAL_PRECIO_NOT_FOUND')
+        );
+      }
+
+      const productoProveedorId = historial.productoProveedorId;
+      await manager.softRemove(HistorialPrecio, historial);
+      await this.syncPrecioActualDesdeHistorial(productoProveedorId, manager);
+    });
   }
 }

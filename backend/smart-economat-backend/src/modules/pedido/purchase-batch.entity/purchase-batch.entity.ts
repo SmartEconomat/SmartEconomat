@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
-import { EstadoLote } from '../enums/estado-lote.enum';
+import { ESTADO_LOTE_DB_VALUES, EstadoLote } from '../enums/estado-lote.enum';
 import { EstadoPedido } from '../enums/estado-pedido.enum';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { Pedido } from '../pedido.entity/pedido.entity';
@@ -16,7 +16,8 @@ import { Pedido } from '../pedido.entity/pedido.entity';
 /**
  * Entidad PurchaseBatch (Lote de Compra)
  *
- * Agrupa múltiples pedidos creados en una misma operación para su trazabilidad conjunta.
+ * Representa una compra agrupada que puede incluir varios pedidos del mismo día,
+ * siempre manteniendo un único proveedor por pedido.
  */
 @Entity({ name: 'purchase_batch' })
 @Index(['estado'])
@@ -53,7 +54,8 @@ export class PurchaseBatch extends BaseEntity {
    */
   @Column({
     type: 'enum',
-    enum: EstadoLote,
+    enum: ESTADO_LOTE_DB_VALUES,
+    enumName: 'purchase_batch_estado_enum',
     default: EstadoLote.PENDIENTE,
   })
   estado!: EstadoLote;
@@ -75,23 +77,38 @@ export class PurchaseBatch extends BaseEntity {
    * @returns {EstadoLote} - El estado calculado.
    */
   static calcularEstadoLote(pedidos: Pedido[]): EstadoLote {
-    if (!pedidos || pedidos.length === 0) return EstadoLote.PENDIENTE;
-
-    const estados = pedidos.map((p) => p.estado);
-
-    if (estados.every((e) => e === EstadoPedido.PENDIENTE)) {
+    if (!pedidos || pedidos.length === 0) {
       return EstadoLote.PENDIENTE;
     }
 
-    const estadosFinales = [
-      EstadoPedido.RECIBIDO,
+    const estados = pedidos.map((p) => p.estado);
+    const estadosFinales = new Set<EstadoPedido>([
+      EstadoPedido.RECEPCIONADO,
       EstadoPedido.CANCELADO,
-      EstadoPedido.INCIDENCIA,
-    ];
-    if (estados.every((e) => estadosFinales.includes(e))) {
+    ]);
+
+    if (estados.every((estado) => estado === EstadoPedido.CANCELADO)) {
+      return EstadoLote.CANCELADO;
+    }
+
+    if (estados.some((estado) => estado === EstadoPedido.INCIDENCIA)) {
+      return EstadoLote.INCIDENCIA;
+    }
+
+    if (estados.every((estado) => estadosFinales.has(estado))) {
       return EstadoLote.COMPLETADO;
     }
 
-    return EstadoLote.PARCIAL;
+    if (
+      estados.some(
+        (estado) =>
+          estado === EstadoPedido.PARCIAL ||
+          estado === EstadoPedido.RECEPCIONADO
+      )
+    ) {
+      return EstadoLote.PARCIAL;
+    }
+
+    return EstadoLote.PENDIENTE;
   }
 }

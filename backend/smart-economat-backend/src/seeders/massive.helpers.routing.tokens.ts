@@ -1,5 +1,5 @@
 import { SeedContext } from './seed-context';
-import { Endpoint } from './massive.types';
+import { Endpoint, HttpMethod } from './massive.types';
 import {
   ADMIN_FOCUS_ENDPOINT_KEYS,
   DEFAULT_TARGET_SUCCESS_PER_ENDPOINT,
@@ -10,6 +10,33 @@ import {
   SPECIAL_TARGETS,
 } from './massive.config';
 import { getStateArray } from './massive.state';
+
+const SHARED_READER_PREFIXES = [
+  '/dashboard',
+  '/productos',
+  '/recetas',
+  '/proveedor',
+  '/inventario/alertas',
+  '/merma',
+] as const;
+
+const PROFESOR_OPERATION_PREFIXES = [
+  '/pedidos',
+  '/pedido-usuarios',
+  '/purchase-batches',
+  '/recepciones',
+  '/recepcion-productos',
+  '/incidencias',
+  '/incidencias-resueltas',
+  '/albaranes',
+  '/preparaciones',
+  '/produccion',
+  '/archivos',
+] as const;
+
+function matchesAnyPrefix(path: string, prefixes: readonly string[]): boolean {
+  return prefixes.some((prefix) => path.startsWith(prefix));
+}
 
 export function isPublicPath(path: string): boolean {
   return PUBLIC_PATH_PREFIXES.some((prefix) =>
@@ -36,7 +63,11 @@ export function isAdminFocusEndpoint(endpoint: Endpoint): boolean {
   return ADMIN_FOCUS_ENDPOINT_KEYS.has(`${endpoint.method} ${endpoint.path}`);
 }
 
-export function chooseTokenForPath(context: SeedContext, path: string): string {
+export function chooseTokenForPath(
+  context: SeedContext,
+  path: string,
+  method?: HttpMethod
+): string {
   const superAdminToken =
     context.getState<string>('seedTokenSuperAdmin') ||
     context.getState<string>('seedTokenAdmin') ||
@@ -77,6 +108,54 @@ export function chooseTokenForPath(context: SeedContext, path: string): string {
     return values[cursor % values.length] || fallback;
   };
 
+  const adminPool = [superAdminToken, ...adminTokens].filter((token) =>
+    Boolean(token)
+  );
+  const profesorPool = [
+    ...profesorTokens,
+    context.getState<string>('seedTokenProfesor') || '',
+  ].filter((token) => Boolean(token));
+  const alumnoPool = [
+    ...alumnoTokens,
+    context.getState<string>('seedTokenAlumno') || '',
+  ].filter((token) => Boolean(token));
+  const readerPool = [...alumnoPool, ...profesorPool, ...adminPool].filter(
+    (token) => Boolean(token)
+  );
+  const operationalPool = [...profesorPool, ...adminPool].filter((token) =>
+    Boolean(token)
+  );
+  const adminFallbackToken = adminPool[0] || superAdminToken;
+
+  const pickAdminPool = (): string =>
+    pickFromPool(adminPool, 'seedTokenCursorAdminPool', adminFallbackToken);
+  const pickRealAdminPool = (): string =>
+    pickFromPool(
+      adminTokens,
+      'seedTokenCursorRealAdminPool',
+      adminFallbackToken
+    );
+  const pickProfesorPool = (): string =>
+    pickFromPool(
+      profesorPool,
+      'seedTokenCursorProfesorPool',
+      adminFallbackToken
+    );
+  const pickAlumnoPool = (): string =>
+    pickFromPool(
+      alumnoPool,
+      'seedTokenCursorAlumno',
+      requireToken('seedTokenAlumno')
+    );
+  const pickReaderPool = (): string =>
+    pickFromPool(readerPool, 'seedTokenCursorReaderPool', adminFallbackToken);
+  const pickOperationalPool = (): string =>
+    pickFromPool(
+      operationalPool,
+      'seedTokenCursorOperationalPool',
+      adminFallbackToken
+    );
+
   if (
     path === '/auth/change-password' ||
     path === '/usuarios/perfil/password'
@@ -84,43 +163,112 @@ export function chooseTokenForPath(context: SeedContext, path: string): string {
     return requireToken('seedTokenPasswordActor');
   }
 
-  if (
-    path === '/profesores/slots' ||
-    path.startsWith('/profesores/slots/') ||
-    path === '/profesores/alumnos' ||
-    path.startsWith('/profesores/alumnos/')
-  ) {
-    return requireToken('seedTokenProfesor');
+  if (path.startsWith('/profesores/slots/')) {
+    if (method === 'PATCH') {
+      return (
+        context.getState<string>('seedTokenProfesor') || adminFallbackToken
+      );
+    }
+
+    const segments = path.split('/');
+    const slotId = segments[3] || '';
+    const mapJson = context.getState<string>('seedSlotToProfesorIndex') || '{}';
+    const slotOwnerMap: Record<string, number> = JSON.parse(mapJson);
+    const pIdx = slotOwnerMap[slotId];
+    if (pIdx !== undefined) {
+      const token = context.getState<string>(
+        `seedProfesorTokenByIndex:${pIdx}`
+      );
+      if (token) {
+        return token;
+      }
+    }
+    return context.getState<string>('seedTokenProfesor') || adminFallbackToken;
   }
 
-  if (path === '/alumnos/change-profesor') {
-    return pickFromPool(
-      alumnoTokens,
-      'seedTokenCursorAlumno',
-      requireToken('seedTokenAlumno')
-    );
+  if (path === '/profesores/slots') {
+    return pickProfesorPool();
+  }
+
+  if (path.startsWith('/profesores/alumnos/')) {
+    const segments = path.split('/');
+    const alumnoId = segments[3] || '';
+    const mapJson =
+      context.getState<string>('seedAlumnoToProfesorIndex') || '{}';
+    const alumnoOwnerMap: Record<string, number> = JSON.parse(mapJson);
+    const pIdx = alumnoOwnerMap[alumnoId];
+    if (pIdx !== undefined) {
+      const token = context.getState<string>(
+        `seedProfesorTokenByIndex:${pIdx}`
+      );
+      if (token) return token;
+    }
+    return context.getState<string>('seedTokenProfesor') || adminFallbackToken;
+  }
+
+  if (path === '/profesores/alumnos') {
+    return pickProfesorPool();
+  }
+
+  if (
+    path === '/alumnos/change-profesor' ||
+    (method === 'PATCH' && path.startsWith('/alumnos/'))
+  ) {
+    return pickAlumnoPool();
   }
 
   if (path === '/auth/profile' || path.startsWith('/usuarios/perfil')) {
-    const rolePool = [
-      superAdminToken,
-      ...adminTokens,
-      ...profesorTokens,
-      ...alumnoTokens,
-    ].filter((token) => Boolean(token));
-    return pickFromPool(rolePool, 'seedTokenCursorRolePool', superAdminToken);
+    return pickReaderPool();
   }
 
   if (path.startsWith('/admin')) {
-    const adminPool = [superAdminToken, ...adminTokens].filter((token) =>
-      Boolean(token)
-    );
-    return pickFromPool(adminPool, 'seedTokenCursorAdminPool', superAdminToken);
+    return pickAdminPool();
   }
 
   if (path.startsWith('/usuarios')) {
-    return superAdminToken;
+    return pickAdminPool();
   }
 
-  return superAdminToken;
+  if (path === '/archivos/upload') {
+    return pickRealAdminPool();
+  }
+
+  if (method === 'DELETE' && path.startsWith('/archivos/')) {
+    return pickRealAdminPool();
+  }
+
+  if (path === '/productos/generar-ean13') {
+    return pickAdminPool();
+  }
+
+  if (path === '/merma/stats' || path === '/merma/kpis') {
+    return pickOperationalPool();
+  }
+
+  if (method === 'GET' && path.startsWith('/proveedor/')) {
+    return pickOperationalPool();
+  }
+
+  if (
+    method === 'GET' &&
+    (matchesAnyPrefix(path, SHARED_READER_PREFIXES) ||
+      path === '/auth/profile' ||
+      path.startsWith('/usuarios/perfil'))
+  ) {
+    return pickReaderPool();
+  }
+
+  if (
+    path === '/incidencias/reportar' ||
+    matchesAnyPrefix(path, PROFESOR_OPERATION_PREFIXES) ||
+    path.startsWith('/profesores/slots') ||
+    path.endsWith('/cocinar')
+  ) {
+    if (method === 'DELETE') {
+      return pickAdminPool();
+    }
+    return pickOperationalPool();
+  }
+
+  return pickAdminPool();
 }

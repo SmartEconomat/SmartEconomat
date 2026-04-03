@@ -1,6 +1,3 @@
-import AppDataSource from '../config/typeorm.config';
-import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
-import { UserStatus } from '../modules/usuario/enums/usuario.enums';
 import { SeedContext } from './seed-context';
 import { collectStateFromResponse } from './massive.helpers.state-collection';
 import {
@@ -90,28 +87,12 @@ export async function activateUserByIdentity(
   adminToken: string,
   identity: { email?: string; username?: string }
 ): Promise<string> {
-  const activateUserInRepository = async (userId: string): Promise<void> => {
-    if (!AppDataSource.isInitialized) {
-      await AppDataSource.initialize();
-    }
-
-    await AppDataSource.getRepository(Usuario).update(
-      { id: userId } as any,
-      {
-        status: UserStatus.ACTIVE,
-        activo: true,
-        mustChangePassword: false,
-      } as any
-    );
-  };
-
-  context.setAccessToken(adminToken);
-
   for (let page = 1; page <= 8; page++) {
     const usersResponse = await context.requestJson<unknown>(
       `/usuarios?limit=50&page=${page}&sortBy=createdAt&order=DESC`,
       {
         method: 'GET',
+        tokenOverride: adminToken,
       }
     );
 
@@ -122,7 +103,13 @@ export async function activateUserByIdentity(
       continue;
     }
 
-    await activateUserInRepository(userId);
+    await context.requestJson<unknown>(`/admin/users/${userId}/activate`, {
+      method: 'PATCH',
+      body: {
+        active: true,
+      },
+      tokenOverride: adminToken,
+    });
 
     return userId;
   }

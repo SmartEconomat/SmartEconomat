@@ -1,4 +1,3 @@
-import { faker } from '@faker-js/faker';
 import { buildBodyAuthUsers } from './massive.helpers.body.auth-users';
 import { buildBodyCatalogProducts } from './massive.helpers.body.catalog';
 import {
@@ -9,6 +8,10 @@ import { buildBodyInventoryAndProduction } from './massive.helpers.body.inventor
 import { buildBodyOrdersAndReception } from './massive.helpers.body.orders';
 import { SeedContext } from './seed-context';
 import { Endpoint, EnumCoverage } from './massive.types';
+import {
+  DETERMINISTIC_SHORT_NOTES,
+  pickDeterministic,
+} from './deterministic.seed-data';
 
 export function buildBody(
   context: SeedContext,
@@ -31,8 +34,12 @@ export function buildBody(
   }
 
   return {
-    nombre: `Seed ${env.suffix}`,
-    descripcion: faker.lorem.sentence(),
+    nombre: `Registro seed ${env.suffix}`,
+    descripcion: pickDeterministic(
+      DETERMINISTIC_SHORT_NOTES,
+      env.iteration,
+      'fallback-description'
+    ),
   };
 }
 

@@ -54,7 +54,7 @@ vi.mock('../../src/services/produccion.service', () => ({
 vi.mock('../../src/services/pedido.service', () => ({
   createPedido: vi.fn(),
   createPedidoFromRecetas: vi.fn(),
-  createPurchaseBatchFromRecetas: vi.fn(),
+  createPedidoUsuarioFromRecetas: vi.fn(),
 }));
 vi.mock('../../src/services/ubicacion.service', () => ({
   UbicacionService: {
@@ -123,8 +123,9 @@ describe('Recetas toolbar batch actions', () => {
       page: 1,
       limit: 10,
     });
-    vi.mocked(pedidoService.createPurchaseBatchFromRecetas).mockResolvedValue({
-      id: 'batch-1',
+    vi.mocked(pedidoService.createPedidoUsuarioFromRecetas).mockResolvedValue({
+      id: 'pedido-usuario-1',
+      numeroGlobal: '42',
     } as never);
   });
 
@@ -186,7 +187,7 @@ describe('Recetas toolbar batch actions', () => {
     fireEvent.click(createOrderButton);
 
     await waitFor(() => {
-      expect(pedidoService.createPurchaseBatchFromRecetas).toHaveBeenCalledWith(
+      expect(pedidoService.createPedidoUsuarioFromRecetas).toHaveBeenCalledWith(
         {
           recetaIds: ['receta-1', 'receta-2'],
           observaciones: 'Pedido generado desde recetas: Arroz, Pasta',
@@ -195,7 +196,7 @@ describe('Recetas toolbar batch actions', () => {
     });
 
     expect(toastSuccess).toHaveBeenCalledWith(
-      'Lote batch-1 generado correctamente desde 2 recetas.'
+      'Pedido #42 generado correctamente desde 2 recetas.'
     );
   });
 });

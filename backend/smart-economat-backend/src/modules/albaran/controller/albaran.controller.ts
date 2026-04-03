@@ -169,7 +169,7 @@ export class AlbaranController {
     @Req() req: { user?: { rol?: string } }
   ): Promise<Albaran> {
     const userRole = req.user?.rol;
-    return this.albaranService.findOne(id, userRole);
+    return this.albaranService.findOne(id, userRole, true);
   }
 
   @Patch(':id')

@@ -5,7 +5,10 @@ import { EstadoPedido } from '../../modules/pedido/enums/estado-pedido.enum';
 import { RecepcionPedido } from '../../modules/recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
 
 export const INVALID_RECEPTION_ORDER_STATES = [
-  EstadoPedido.PENDIENTE,
+  EstadoPedido.PENDIENTE_DE_APROBACION,
+  EstadoPedido.PARCIAL,
+  EstadoPedido.RECEPCIONADO,
+  EstadoPedido.INCIDENCIA,
   EstadoPedido.CANCELADO,
 ] as const;
 
@@ -49,6 +52,8 @@ export async function findInvalidReceptionLinks(
     pedidoId: item.pedidoId,
     recepcionId: item.recepcionId,
     recepcionPedidoId: item.id,
-    estado: pedidoEstadoMap.get(item.pedidoId) ?? EstadoPedido.PENDIENTE,
+    estado:
+      pedidoEstadoMap.get(item.pedidoId) ??
+      EstadoPedido.PENDIENTE_DE_APROBACION,
   }));
 }

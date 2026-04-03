@@ -36,7 +36,7 @@ import { AlbaranModule } from './modules/albaran/albaran.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { PedidoDraftModule } from './modules/pedido-draft/pedido-draft.module';
 import { RecepcionDraftModule } from './modules/recepcion-draft/recepcion-draft.module';
-import { DistribucionModule } from './modules/distribucion/distribucion.module';
+import { OpenfoodfactsModule } from './modules/openfoodfacts/openfoodfacts.module';
 
 @Module({
   imports: [
@@ -98,7 +98,7 @@ import { DistribucionModule } from './modules/distribucion/distribucion.module';
     DashboardModule,
     PedidoDraftModule,
     RecepcionDraftModule,
-    DistribucionModule,
+    OpenfoodfactsModule,
   ],
   controllers: [AppController],
   providers: [

@@ -64,8 +64,74 @@ export function pickIdForRoute(
     }
     return pick('profesorAdminSlotIds');
   }
-  if (path.startsWith('/profesores/slots')) return pick('profesorSlotIds');
-  if (path.startsWith('/profesores/alumnos')) return pick('alumnoIds');
+  if (path.startsWith('/profesores/slots')) {
+    if (method === 'PATCH') {
+      const fixedProfesorSlotId =
+        context.getState<string>('seedFixedProfesorSlotId') || '';
+      if (fixedProfesorSlotId) {
+        return fixedProfesorSlotId;
+      }
+    }
+
+    const profesorCount =
+      context.getState<number>('seedProfesorActorCount') || 1;
+    const cursor = context.getState<number>('seedProfesorSlotCursor') || 0;
+    context.set('seedProfesorSlotCursor', cursor + 1);
+    const pIdx = cursor % profesorCount;
+
+    const ownedIdsJson =
+      context.getState<string>(`seedProfesorOwnedSlotIds:${pIdx}`) || '[]';
+    const ownedIds: string[] = JSON.parse(ownedIdsJson);
+
+    if (consume) {
+      const deletableProfesorSlotIds = getStateArray(
+        context,
+        'seedCreatedDeletableProfesorSlotIds'
+      );
+      const ownedDeletableIds = ownedIds.filter((id) =>
+        deletableProfesorSlotIds.includes(id)
+      );
+
+      if (ownedDeletableIds.length > 0) {
+        return ownedDeletableIds[iteration % ownedDeletableIds.length] || '';
+      }
+
+      if (deletableProfesorSlotIds.length > 0) {
+        return consumeRequiredStateValue(
+          context,
+          'seedCreatedDeletableProfesorSlotIds'
+        );
+      }
+    }
+
+    if (ownedIds.length > 0) {
+      return ownedIds[iteration % ownedIds.length] || '';
+    }
+
+    return pick('profesorSlotIds');
+  }
+  if (path.startsWith('/profesores/alumnos')) {
+    const profesorCount =
+      context.getState<number>('seedProfesorActorCount') || 1;
+    const cursor = context.getState<number>('seedProfesorAlumnoCursor') || 0;
+    context.set('seedProfesorAlumnoCursor', cursor + 1);
+    const pIdx = cursor % profesorCount;
+
+    const ownedIdsJson =
+      context.getState<string>(`seedProfesorOwnedAlumnoIds:${pIdx}`) || '[]';
+    const ownedIds: string[] = JSON.parse(ownedIdsJson);
+    const fixedAlumnoId = context.getState<string>('seedFixedAlumnoId') || '';
+    const mutableOwnedIds = ownedIds.filter((id) => id !== fixedAlumnoId);
+
+    if (mutableOwnedIds.length > 0) {
+      return mutableOwnedIds[iteration % mutableOwnedIds.length] || '';
+    }
+    if (ownedIds.length > 0) {
+      return ownedIds[iteration % ownedIds.length] || '';
+    }
+
+    return pick('alumnoIds');
+  }
   if (path.startsWith('/proveedor')) {
     if (consume) {
       const deletableProveedorIds = getStateArray(
@@ -90,6 +156,19 @@ export function pickIdForRoute(
     return pick('proveedorIds');
   }
   if (path.startsWith('/productos')) {
+    if (consume) {
+      const deletableProductoIds = getStateArray(
+        context,
+        'seedCreatedDeletableProductoIds'
+      );
+      if (deletableProductoIds.length > 0) {
+        return consumeRequiredStateValue(
+          context,
+          'seedCreatedDeletableProductoIds'
+        );
+      }
+    }
+
     const createdProductoIds = getStateArray(context, 'seedCreatedProductoIds');
     if (createdProductoIds.length > 0) {
       return createdProductoIds[iteration % createdProductoIds.length];
@@ -249,12 +328,38 @@ export function pickIdForRoute(
     return pick('purchaseBatchIds');
   }
   if (path.startsWith('/pedidos')) {
+    const preparedPendings = getStateArray(
+      context,
+      'seedPreparedPedidoPendienteIds'
+    );
     const createdPendings = getStateArray(
       context,
       'seedCreatedPedidoPendienteIds'
     );
 
+    if (method === 'GET' && /^\/pedidos\/[^/]+$/.test(path)) {
+      const listedPedidoIds = getStateArray(context, 'pedidoListIds');
+      if (listedPedidoIds.length > 0) {
+        return (
+          listedPedidoIds[iteration % listedPedidoIds.length] ||
+          pick('pedidoIds')
+        );
+      }
+      return pick('pedidoIds');
+    }
+
     if (method === 'DELETE') {
+      const deletablePedidoIds = getStateArray(
+        context,
+        'seedCreatedDeletablePedidoIds'
+      );
+      if (deletablePedidoIds.length > 0) {
+        return consumeRequiredStateValue(
+          context,
+          'seedCreatedDeletablePedidoIds'
+        );
+      }
+
       const pendingPedidos = getStateArray(context, 'pedidoPendienteIds');
       if (pendingPedidos.length > 0) {
         return consumeRequiredStateValue(context, 'pedidoPendienteIds');
@@ -273,6 +378,23 @@ export function pickIdForRoute(
     }
 
     if (path.endsWith('/aceptar')) {
+      if (preparedPendings.length > 0) {
+        return consumeRequiredStateValue(
+          context,
+          'seedPreparedPedidoPendienteIds'
+        );
+      }
+      const listedPendingPedidoIds = getStateArray(
+        context,
+        'pedidoPendingListIds'
+      );
+      if (listedPendingPedidoIds.length > 0) {
+        return consumeRequiredStateValue(context, 'pedidoPendingListIds');
+      }
+      const pendingPedidoIds = getStateArray(context, 'pedidoPendienteIds');
+      if (pendingPedidoIds.length > 0) {
+        return consumeRequiredStateValue(context, 'pedidoPendienteIds');
+      }
       if (createdPendings.length > 0) {
         return consumeRequiredStateValue(
           context,
@@ -282,6 +404,23 @@ export function pickIdForRoute(
       return consumeRequiredStateValue(context, 'pedidoPendienteIds');
     }
     if (path.endsWith('/cancelar')) {
+      if (preparedPendings.length > 0) {
+        return consumeRequiredStateValue(
+          context,
+          'seedPreparedPedidoPendienteIds'
+        );
+      }
+      const listedPendingPedidoIds = getStateArray(
+        context,
+        'pedidoPendingListIds'
+      );
+      if (listedPendingPedidoIds.length > 0) {
+        return consumeRequiredStateValue(context, 'pedidoPendingListIds');
+      }
+      const pendingPedidoIds = getStateArray(context, 'pedidoPendienteIds');
+      if (pendingPedidoIds.length > 0) {
+        return consumeRequiredStateValue(context, 'pedidoPendienteIds');
+      }
       if (createdPendings.length > 0) {
         return consumeRequiredStateValue(
           context,
@@ -291,10 +430,35 @@ export function pickIdForRoute(
       return consumeRequiredStateValue(context, 'pedidoPendienteIds');
     }
     if (path.endsWith('/fecha-entrega')) {
+      if (preparedPendings.length > 0) {
+        return preparedPendings[iteration % preparedPendings.length];
+      }
+      const listedPendingPedidoIds = getStateArray(
+        context,
+        'pedidoPendingListIds'
+      );
+      if (listedPendingPedidoIds.length > 0) {
+        return listedPendingPedidoIds[
+          iteration % listedPendingPedidoIds.length
+        ];
+      }
       if (createdPendings.length > 0) {
         return createdPendings[iteration % createdPendings.length];
       }
       return pick('pedidoIds');
+    }
+
+    if (method === 'PATCH' && /^\/pedidos\/[^/]+$/.test(path)) {
+      if (preparedPendings.length > 0) {
+        return preparedPendings[iteration % preparedPendings.length];
+      }
+      const listedPedidoIds = getStateArray(context, 'pedidoListIds');
+      if (listedPedidoIds.length > 0) {
+        return (
+          listedPedidoIds[iteration % listedPedidoIds.length] ||
+          pick('pedidoIds')
+        );
+      }
     }
 
     if (createdPendings.length > 0) {
@@ -352,7 +516,7 @@ export function pickIdForRoute(
       if (pendingIncidenciaId) {
         return pendingIncidenciaId;
       }
-      return pick('incidenciaIds');
+      return consumeRequiredStateValue(context, 'incidenciaPendienteIds');
     }
 
     if (method === 'PATCH' || method === 'DELETE') {
@@ -379,6 +543,14 @@ export function pickIdForRoute(
     return pick('recetaIds');
   }
   if (path.startsWith('/produccion/lote')) {
+    if (path.endsWith('/consumir')) {
+      const consumirTargetId = context.getState<string>(
+        'seedConsumirTargetLoteId'
+      );
+      if (consumirTargetId) {
+        return consumirTargetId;
+      }
+    }
     const createdLoteIds = getStateArray(
       context,
       'seedCreatedProduccionLoteIds'

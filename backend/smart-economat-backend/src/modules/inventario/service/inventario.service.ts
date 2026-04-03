@@ -267,15 +267,21 @@ export class InventarioService {
       throw new NotFoundException(I18nHelper.getError('INVENTARIO_NOT_FOUND'));
     }
 
+    const productoProveedorId =
+      inventario.productoProveedor?.id ?? inventario.productoProveedorId;
+    const productoNombre =
+      inventario.productoProveedor?.producto?.nombre ||
+      `productoProveedor:${productoProveedorId ?? 'desconocido'}`;
+
     await this.movimientoHelper.trackInventarioMovimiento(
       userId,
       id,
       TipoMovimiento.SALIDA,
       inventario.cantidadActual,
-      inventario.productoProveedor.id,
+      productoProveedorId,
       'Inventario',
       id,
-      `Eliminación de inventario: ${inventario.productoProveedor.producto.nombre}`
+      `Eliminación de inventario: ${productoNombre}`
     );
   }
 
@@ -290,11 +296,15 @@ export class InventarioService {
   }
 
   async obtenerAlertasStock(): Promise<AlertaStockDTO[]> {
-    const productos = await this.inventarioRepository.findStockBajo();
-    return productos.map((p) => ({
-      id: p.id,
-      cantidadActual: p.cantidadActual,
-      cantidadMinima: p.cantidadMinima,
+    const items = await this.inventarioRepository.findStockBajo();
+    return items.map((item) => ({
+      id: item.id,
+      cantidadActual: item.cantidadActual,
+      cantidadMinima: item.cantidadMinima,
+      nombreProducto: item.productoProveedor?.producto?.nombre ?? 'Sin nombre',
+      unidad: item.productoProveedor?.producto?.unidad,
+      proveedorNombre: item.productoProveedor?.proveedor?.nombre,
+      ubicacionNombre: item.ubicacion?.nombre,
     }));
   }
 

@@ -186,7 +186,7 @@ export const menuItems: MenuItem[] = [
     icon: <AdminPanelSettingsIcon />,
     component: Administracion,
     showInMenu: true,
-    roles: ['PROFESOR', 'ADMIN', 'SUPER_ADMIN'],
+    roles: ['PROFESOR', 'ADMIN', 'ADMINISTRADOR', 'SUPER_ADMIN'],
     anyPermissions: [
       'usuarios:listar',
       'profesor:gestionar_slots',

@@ -1,89 +1,69 @@
-# 🪝 Hooks de Permisos - Frontend
+# Hooks de permisos en frontend
 
-Para gestionar la visibilidad y el acceso en la interfaz de usuario de forma reactiva, el sistema utiliza hooks personalizados que encapsulan la lógica de verificación de permisos.
+Los hooks de permisos encapsulan la lógica de visibilidad y acceso del cliente. No sustituyen la autorización del backend, pero mantienen la UI alineada con la sesión real.
 
-## 📋 Hooks Disponibles
+## Ubicación real
 
-Los hooks se encuentran definidos en `src/store/auth.hooks.ts`.
+- Reexport público: `src/store/auth.hooks.ts`
+- Implementación: `src/sherlock-auth/hooks.ts`
+- Utilidades auxiliares: `src/sherlock-auth/permissions.ts`
 
-### 1. `usePermission`
-Verifica si el usuario autenticado tiene un permiso específico.
+## Hooks disponibles
 
-**Firma:**
-```typescript
-const hasAccess = usePermission(permiso: string | undefined): boolean;
+## `usePermission`
+
+```ts
+const allowed = usePermission('productos:editar');
+const allowedAll = usePermission(['usuarios:editar', 'usuarios:listar']);
 ```
 
-**Ejemplo de uso:**
-```tsx
-import { usePermission } from '../store/auth.hooks';
+Comportamiento:
 
-const Componente = () => {
-  const canEdit = usePermission('productos:editar');
+- si recibe un string, comprueba ese permiso
+- si recibe un array, aplica lógica AND
+- si el permiso es `undefined` o el array está vacío, devuelve `true`
+- si el usuario tiene rol elevado (`ADMIN` o `SUPER_ADMIN`), devuelve `true`
 
-  return (
-    <div>
-      {canEdit && <button>Editar Producto</button>}
-    </div>
-  );
-};
+## `useAnyPermission`
+
+```ts
+const canAccess = useAnyPermission([
+  'usuarios:listar',
+  'profesor:gestionar_slots',
+]);
 ```
 
-### 2. `useAnyPermission`
-Verifica si el usuario tiene **al menos uno** de los permisos indicados (lógica OR).
+Comportamiento:
 
-**Firma:**
-```typescript
-const hasAccess = useAnyPermission(permisos: string[]): boolean;
-```
+- aplica lógica OR sobre el array recibido
+- para roles elevados también devuelve `true`
 
-**Ejemplo de uso:**
-```tsx
-const canManage = useAnyPermission(['inventario:ajustar_stock', 'inventario:gestionar_ubicaciones']);
-```
+## Origen de los permisos
 
----
+El cliente no recalcula permisos por su cuenta. El flujo real es:
 
-## ⚙️ Funcionamiento Interno
+1. `AuthContext` verifica la sesión con `GET /api/v1/usuarios/perfil`
+2. el backend devuelve el usuario con `permisos`
+3. la store genera un mapa `{ permiso: true }`
+4. los hooks consumen ese mapa sin lanzar fetches adicionales
 
-1. **Contexto de Autenticación**: Los hooks utilizan `useAuth()` para obtener el objeto `user` actual del `AuthContext`.
-2. **Memorización**: Utilizan `useMemo` para evitar re-cálculos innecesarios a menos que el usuario o el permiso cambien.
-3. **Utilidades Base**: Delegan la lógica real a `hasPermission` y `hasAnyPermission` en `src/utils/auth/permissionUtils.ts`.
-4. **Resiliencia**: Si el usuario no está autenticado o el permiso es `undefined`, el hook devuelve `false` (o `true` si el permiso es `undefined/null` dependiendo de la configuración, usualmente `false` para seguridad).
+## Roles elevados
 
-### Origen de `user.permisos`
+El frontend replica la misma noción de roles elevados que el backend Sherlock:
 
-Desde el endurecimiento de auth de marzo de 2026, `user.permisos` no se toma como un valor confiable solo por existir en `localStorage`.
+- `ADMIN`
+- `SUPER_ADMIN`
 
-- `AuthContext` arranca la aplicación consultando `GET /api/v1/usuarios/perfil` con cookie de sesión.
-- Solo tras esa verificación marca `isSessionVerified = true` y expone los permisos reales devueltos por backend.
+Esto evita inconsistencias entre la visibilidad de UI y el acceso real a rutas protegidas por permisos.
 
-Por eso estos hooks **no disparan fetches por render**, pero tampoco dependen de permisos manipulados sin control: consumen el último perfil confirmado por servidor.
+## Buenas prácticas
 
----
+- Usar permisos, no nombres de rol, para mostrar u ocultar acciones puntuales.
+- Usar `useAnyPermission` cuando una pantalla admita varios permisos equivalentes.
+- Llamar a `refreshUser()` si el usuario actual cambia de rol o permisos durante la sesión.
+- No asumir que ocultar un botón protege el endpoint.
 
-## 🚀 Mejores Prácticas
+## Relacionado
 
-1. **No usar `hasPermission` directamente**: En componentes funcionales, siempre prefiere los hooks para asegurar que la UI se actualice si los permisos cambian (por ejemplo, tras un refresco de token).
-2. **Granularidad**: Usa permisos específicos en lugar de roles (ej. `productos:crear` en lugar de `PROFESOR`).
-3. **No confiar solo en ocultar UI**: ocultar botones con hooks mejora UX, pero la protección real de navegación debe quedarse en `ProtectedRoute`.
-4. **Guardias de Ruta**: el proyecto ya protege rutas privadas desde `AppRouter` con `ProtectedRoute`, soportando tanto un permiso único (`requiredPermission`) como escenarios de “cualquiera de estos permisos” (`requiredAnyPermissions`). Si un caso especial necesita una redirección adicional dentro de la página, puedes complementarlo con `useNavigate`:
-
-```tsx
-const canAccess = usePermission('admin:acceso');
-const navigate = useNavigate();
-
-useEffect(() => {
-  if (canAccess === false) {
-    navigate('/');
-  }
-}, [canAccess, navigate]);
-```
-
-5. **Refrescos de sesión**: si una operación administrativa cambia permisos del usuario autenticado, invoca `refreshUser()` para resincronizar `user.permisos` con backend.
-
----
-
-## 🔗 Relacionado
-- [Sistema RBAC (Backend)](../security/rbac.md)
-- [Gestión de Usuarios](./gestion-usuarios.md)
+- [RBAC técnico](../security/rbac.md)
+- [Gestión de usuarios](gestion-usuarios.md)

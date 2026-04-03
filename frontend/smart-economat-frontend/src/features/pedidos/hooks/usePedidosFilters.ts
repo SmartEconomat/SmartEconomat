@@ -15,7 +15,7 @@ const isPedidosViewMode = (value: unknown): value is PedidosViewMode =>
 const isMisPedidosStatusFilter = (
   value: unknown
 ): value is MisPedidosStatusFilter =>
-  value === 'pendientes' || value === 'en_proceso' || value === 'finalizados';
+  value === 'pendientes' || value === 'activos' || value === 'finalizados';
 
 export function usePedidosFilters() {
   const [searchParams, setSearchParams] = useSearchParams();

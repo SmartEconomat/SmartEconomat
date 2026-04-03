@@ -24,7 +24,6 @@ export const extractPedidoLines = (
       const current = line as {
         id?: string;
         productoProveedorId?: string;
-        id_producto_proveedor?: string;
         proveedorId?: string;
         cantidad?: number | string;
         productoProveedor?: {
@@ -33,11 +32,7 @@ export const extractPedidoLines = (
         };
       };
 
-      const productoProveedorId = (
-        current.productoProveedorId ||
-        current.id_producto_proveedor ||
-        ''
-      ).trim();
+      const productoProveedorId = (current.productoProveedorId || '').trim();
       const proveedorId = (
         current.proveedorId ||
         current.productoProveedor?.proveedor?.id ||

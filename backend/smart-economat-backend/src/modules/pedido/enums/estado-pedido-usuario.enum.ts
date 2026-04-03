@@ -1,6 +1,11 @@
 export enum EstadoPedidoUsuario {
+  BORRADOR = 'borrador',
+
   PENDIENTE = 'pendiente',
-  EN_PROCESO = 'en_proceso',
-  ENTREGADO = 'entregado',
+
+  APROBADO = 'aprobado',
+
   CANCELADO = 'cancelado',
+
+  CONSOLIDADO = 'consolidado',
 }

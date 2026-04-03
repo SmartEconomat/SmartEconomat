@@ -20,7 +20,6 @@ import {
 } from '../dto/create-purchase-batch.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
-import { PedidoDraftService } from '../../pedido-draft/service/pedido-draft.service';
 import { PdfReportService } from '../../recepcion/service/pdf-report.service';
 import {
   RecepcionReportePdfDto,
@@ -44,7 +43,6 @@ type PurchaseBatchRequest = {
 export class PurchaseBatchController {
   constructor(
     private readonly batchService: PurchaseBatchService,
-    private readonly pedidoDraftService: PedidoDraftService,
     private readonly pdfReportService: PdfReportService,
     private readonly recetaToPedidoService: RecetaToPedidoService
   ) {}
@@ -58,7 +56,7 @@ export class PurchaseBatchController {
   ) {
     const userId = req.user.id;
 
-    return this.pedidoDraftService.saveAndFinalize(userId, dto);
+    return this.batchService.createBatchOrder(dto, userId);
   }
 
   @Post('from-missing-stock')
@@ -84,7 +82,7 @@ export class PurchaseBatchController {
     const batchDto =
       await this.recetaToPedidoService.buildBatchOrderFromRecetas(dto);
 
-    return this.pedidoDraftService.saveAndFinalize(userId, batchDto);
+    return this.batchService.createBatchOrder(batchDto, userId);
   }
 
   @Get()

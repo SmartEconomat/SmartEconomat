@@ -88,9 +88,10 @@ export class IncidenciaController {
   @RequirePermissions('incidencias:resolver')
   resolver(
     @Param('id', ParseUUIDv7Pipe) id: string,
-    @Body() dto: ResolverIncidenciaDto
+    @Body() dto: ResolverIncidenciaDto,
+    @GetUser('id') usuarioId: string
   ): Promise<Incidencia> {
-    return this.incidenciaService.resolverIncidencia(id, dto);
+    return this.incidenciaService.resolverIncidencia(id, dto, usuarioId);
   }
 
   @Post('reportar')

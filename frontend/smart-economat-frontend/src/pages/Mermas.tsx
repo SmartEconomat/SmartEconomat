@@ -20,6 +20,17 @@ import { mermaSchema } from '../utils/schemas';
 import { useToast } from '../store/toast.hooks';
 import { fetchAllProductos } from '../services/producto.service';
 
+const formatProductoMedidaLabel = (
+  contenido?: number,
+  unidad?: string
+): string | null => {
+  if (!contenido || !Number.isFinite(contenido) || !unidad) {
+    return null;
+  }
+
+  return `${contenido} ${unidad}`;
+};
+
 const MermasPage: React.FC = () => {
   const [mermas, setMermas] = useState<Merma[]>([]);
   const [stats, setStats] = useState<IMermaStats | null>(null);
@@ -78,7 +89,9 @@ const MermasPage: React.FC = () => {
       setProductos(
         productosResponse.map((p) => ({
           value: p.id as string,
-          label: p.nombre,
+          label: formatProductoMedidaLabel(p.contenido, p.unidad)
+            ? `${p.nombre} · ${formatProductoMedidaLabel(p.contenido, p.unidad)} por unidad`
+            : p.nombre,
         }))
       );
     });

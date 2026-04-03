@@ -1,6 +1,8 @@
 import { DataSource } from 'typeorm';
+import { dbConfig } from '../../src/config/database.config';
 import {
   initPgMem,
+  peekTestDataSource,
   takeSnapshot,
   setSeedSnapshot,
   setTestDataSource,
@@ -9,6 +11,14 @@ import {
   getSeedSnapshot,
   restoreSnapshot,
 } from './pg-mem';
+import { seedTestBaseline } from './test-seed-baseline';
+
+type TestSetupGlobal = typeof globalThis & {
+  __TEST_DATASOURCE_INIT_PROMISE__?: Promise<DataSource> | null;
+  __TEST_SEED_PROMISE__?: Promise<DataSource> | null;
+};
+
+const g = global as TestSetupGlobal;
 
 /**
  * @file seed-test-database.ts
@@ -29,25 +39,36 @@ import {
  * Debe llamarse ANTES de crear la app NestJS.
  */
 export async function initTestDataSource(): Promise<DataSource> {
-  const seedSnapshot = getSeedSnapshot();
-  if (seedSnapshot && isSeeded()) {
-    restoreSnapshot(seedSnapshot);
-    const { dataSource } = require('../../src/seeders/seed');
-    return dataSource;
+  const existingDataSource = peekTestDataSource();
+  if (existingDataSource?.isInitialized) {
+    return existingDataSource;
   }
 
-  initPgMem();
+  if (g.__TEST_DATASOURCE_INIT_PROMISE__) {
+    return g.__TEST_DATASOURCE_INIT_PROMISE__;
+  }
 
-  const { dataSource } = require('../../src/seeders/seed') as {
-    dataSource: DataSource;
-  };
+  g.__TEST_DATASOURCE_INIT_PROMISE__ = (async () => {
+    initPgMem();
 
-  if (!dataSource.isInitialized) {
+    const dataSource = new DataSource({
+      ...dbConfig,
+      synchronize: true,
+      dropSchema: false,
+      logging: false,
+    });
+
     await dataSource.initialize();
-  }
+    setTestDataSource(dataSource);
 
-  setTestDataSource(dataSource);
-  return dataSource;
+    return dataSource;
+  })();
+
+  try {
+    return await g.__TEST_DATASOURCE_INIT_PROMISE__;
+  } finally {
+    g.__TEST_DATASOURCE_INIT_PROMISE__ = null;
+  }
 }
 
 /**
@@ -57,22 +78,35 @@ export async function initTestDataSource(): Promise<DataSource> {
 export async function runTestSeeders(): Promise<DataSource> {
   const seedSnapshot = getSeedSnapshot();
   if (seedSnapshot && isSeeded()) {
-    const { dataSource } = require('../../src/seeders/seed');
-    return dataSource;
+    return getSeededDataSource();
   }
 
-  const { dataSource, runAllSeeders } = require('../../src/seeders/seed') as {
-    dataSource: DataSource;
-    runAllSeeders: () => Promise<void>;
-  };
+  if (g.__TEST_SEED_PROMISE__) {
+    return g.__TEST_SEED_PROMISE__;
+  }
 
-  await runAllSeeders();
-  markAsSeeded();
+  g.__TEST_SEED_PROMISE__ = (async () => {
+    const dataSource = await initTestDataSource();
 
-  const backup = takeSnapshot();
-  setSeedSnapshot(backup);
+    const currentSeedSnapshot = getSeedSnapshot();
+    if (currentSeedSnapshot && isSeeded()) {
+      return dataSource;
+    }
 
-  return dataSource;
+    await seedTestBaseline(dataSource);
+    markAsSeeded();
+
+    const backup = takeSnapshot();
+    setSeedSnapshot(backup);
+
+    return dataSource;
+  })();
+
+  try {
+    return await g.__TEST_SEED_PROMISE__;
+  } finally {
+    g.__TEST_SEED_PROMISE__ = null;
+  }
 }
 
 /**
@@ -111,7 +145,7 @@ export function restoreToSeedState(): void {
  * Obtiene el DataSource de TypeORM para uso en tests.
  */
 export function getSeededDataSource(): DataSource {
-  const { dataSource } = require('../../src/seeders/seed');
+  const dataSource = peekTestDataSource();
 
   if (!dataSource || !dataSource.isInitialized) {
     throw new Error(
