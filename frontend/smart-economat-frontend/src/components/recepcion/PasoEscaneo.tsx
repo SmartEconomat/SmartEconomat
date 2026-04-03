@@ -555,7 +555,10 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                             value={
                               l.estadoVisual || EstadoVisualProducto.OPTIMO
                             }
-                            MenuProps={{ disableScrollLock: true, disablePortal: true }}
+                            MenuProps={{
+                              disableScrollLock: true,
+                              disablePortal: true,
+                            }}
                             onChange={(e) =>
                               onUpdateLinea(
                                 pIdx,
@@ -790,7 +793,10 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                       <FormControl size="small" fullWidth>
                         <Select
                           value={l.estadoVisual || EstadoVisualProducto.OPTIMO}
-                          MenuProps={{ disableScrollLock: true, disablePortal: true }}
+                          MenuProps={{
+                            disableScrollLock: true,
+                            disablePortal: true,
+                          }}
                           onChange={(e) =>
                             onUpdateLinea(
                               null,

@@ -31,6 +31,8 @@ import { useBreakpoints } from '../../utils/useBreakpoints';
 export interface PageToolbarProps {
   /** Título de la sección */
   title?: string;
+  /** Icono opcional al lado del título */
+  icon?: React.ReactNode;
   /** Valor del campo de búsqueda */
   searchValue?: string;
   /** Callback cuando cambia la búsqueda */
@@ -98,6 +100,7 @@ export interface PageToolbarProps {
  */
 const PageToolbar: React.FC<PageToolbarProps> = ({
   title,
+  icon,
   searchValue,
   onSearchChange,
   searchPlaceholder = 'Buscar...',
@@ -154,6 +157,21 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
             }}
           >
             <Box display="flex" alignItems="center" gap={1.5}>
+              {icon && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'primary.main',
+                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                    p: 1,
+                    borderRadius: 1.5,
+                  }}
+                >
+                  {icon}
+                </Box>
+              )}
               <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
                 {title}
               </Typography>

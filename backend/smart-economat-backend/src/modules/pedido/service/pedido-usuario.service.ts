@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -26,6 +27,7 @@ import { ProductoProveedor } from '../../producto/producto-proveedor.entity/prod
 import { RecepcionProducto } from '../../recepcion/recepcion-productos.entity/recepcion-producto.entity';
 import { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
 import { IncidenciaLinea } from '../../incidencia/incidencia-linea.entity/incidencia-linea.entity';
+import { isSherlockElevatedRole } from '../../sherlock-auth/utils/access.utils';
 
 type PendingAggregateLine = {
   productoProveedorId: string;
@@ -322,6 +324,58 @@ export class PedidoUsuarioService {
     );
   }
 
+  async remove(id: string, user: { id: string; rol?: string }): Promise<void> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const pedidoUsuario = await queryRunner.manager.findOne(PedidoUsuario, {
+        where: { id },
+        relations: ['pedidos', 'lineas'],
+      });
+
+      if (!pedidoUsuario) {
+        throw new NotFoundException(`Pedido de usuario #${id} no encontrado`);
+      }
+
+      const isElevated = isSherlockElevatedRole(user.rol);
+      if (!isElevated && pedidoUsuario.usuarioId !== user.id) {
+        throw new ForbiddenException(
+          'No tienes permisos para eliminar este pedido porque no eres el propietario.'
+        );
+      }
+
+      this.assertEditable(pedidoUsuario);
+
+      pedidoUsuario.deletedBy = user.id;
+
+      if (pedidoUsuario.pedidos?.length) {
+        for (const pedido of pedidoUsuario.pedidos) {
+          pedido.deletedBy = user.id;
+          await queryRunner.manager.softRemove(Pedido, pedido);
+        }
+      }
+
+      await queryRunner.manager.softRemove(PedidoUsuario, pedidoUsuario);
+
+      await queryRunner.commitTransaction();
+    } catch (error: any) {
+      await queryRunner.rollbackTransaction();
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+      throw new ConflictException(
+        `Error al eliminar el pedido de usuario: ${error.message}`
+      );
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
   async syncPedidoUsuarioStatus(
     pedidoUsuarioId: string,
     manager?: EntityManager
@@ -415,6 +469,7 @@ export class PedidoUsuarioService {
     const pedidoUsuario = manager.create(PedidoUsuario, {
       usuarioId: userId,
       observaciones: dto.observaciones,
+      ubicacionEntregaSugeridaId: dto.ubicacionEntregaSugeridaId,
       fechaEntrega: this.calculateFechaEntrega(),
       estado: EstadoPedidoUsuario.PENDIENTE,
       costeTotal: 0,

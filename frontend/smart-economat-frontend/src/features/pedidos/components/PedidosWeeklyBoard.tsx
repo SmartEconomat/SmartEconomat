@@ -51,6 +51,7 @@ interface PedidosWeeklyBoardProps {
   enableSelection?: boolean;
   emptyMessage?: string;
   warningMessage?: string;
+  currentUserId?: string;
 }
 
 interface WeeklyUserGroup {
@@ -66,10 +67,6 @@ interface WeeklyGroup {
   totalAmount: number;
   users: WeeklyUserGroup[];
 }
-
-const weeklyColumns = buildPedidoColumns().filter(
-  (column) => column.id !== 'usuario'
-);
 
 const getWeekRangeLabel = (referenceDate?: string): string => {
   if (!referenceDate || !dayjs(referenceDate).isValid()) {
@@ -91,6 +88,158 @@ const getPedidoUserName = (pedido: Pedido): string =>
 const isPendingPedido = (pedido: Pedido): boolean =>
   pedido.estado === EstadoPedido.PENDIENTE;
 
+const weeklyColumns = buildPedidoColumns().filter(
+  (column) => column.id !== 'usuario'
+);
+
+interface WeeklyPedidoTableProps {
+  pedidos: Pedido[];
+  columns: Column<Pedido>[];
+  viewMode: PedidosViewMode;
+  permissions: PedidoPermissions;
+  handlers: PedidoActionHandlers;
+  selectedPedidoIds: string[];
+  toggleUserSelection: (pedidoIds: string[]) => void;
+  currentUserId?: string;
+}
+
+const WeeklyPedidoTable: React.FC<WeeklyPedidoTableProps> = ({
+  pedidos,
+  columns,
+  viewMode,
+  permissions,
+  handlers,
+  selectedPedidoIds,
+  toggleUserSelection,
+  currentUserId,
+}) => {
+  const [sortConfig, setSortConfig] = React.useState<{
+    key: string;
+    direction: 'asc' | 'desc';
+  } | null>(null);
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (
+      sortConfig &&
+      sortConfig.key === key &&
+      sortConfig.direction === 'asc'
+    ) {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedPedidos = React.useMemo(() => {
+    if (!sortConfig) return pedidos;
+
+    return [...pedidos].sort((a, b) => {
+      const { key, direction } = sortConfig;
+      let valA: string | number | boolean | null | undefined;
+      let valB: string | number | boolean | null | undefined;
+
+      switch (key) {
+        case 'pedidoId':
+          valA = a.numeroGlobal || a.id;
+          valB = b.numeroGlobal || b.id;
+          break;
+        case 'fechaPedido':
+          valA = a.fechaPedido ? new Date(a.fechaPedido).getTime() : 0;
+          valB = b.fechaPedido ? new Date(b.fechaPedido).getTime() : 0;
+          break;
+        case 'fechaEntrega':
+          valA = a.fechaEntrega ? new Date(a.fechaEntrega).getTime() : 0;
+          valB = b.fechaEntrega ? new Date(b.fechaEntrega).getTime() : 0;
+          break;
+        case 'costeTotal':
+          valA = a.costeTotal || 0;
+          valB = b.costeTotal || 0;
+          break;
+        case 'estado':
+          valA = String(a.estado).toLowerCase();
+          valB = String(b.estado).toLowerCase();
+          break;
+        default: {
+          const aMap = a as unknown as Record<
+            string,
+            string | number | boolean | null | undefined
+          >;
+          const bMap = b as unknown as Record<
+            string,
+            string | number | boolean | null | undefined
+          >;
+          valA = aMap[key];
+          valB = bMap[key];
+        }
+      }
+
+      if (valA === undefined || valA === null)
+        return direction === 'asc' ? -1 : 1;
+      if (valB === undefined || valB === null)
+        return direction === 'asc' ? 1 : -1;
+      if (valA < valB) return direction === 'asc' ? -1 : 1;
+      if (valA > valB) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [pedidos, sortConfig]);
+
+  return (
+    <DataTable
+      columns={columns}
+      data={sortedPedidos}
+      isLoading={false}
+      hideTopBar
+      viewMode={viewMode}
+      sortConfig={sortConfig || undefined}
+      onSort={handleSort}
+      renderGridItem={(row) => {
+        const pedidoIds = getAggregatedPedidoSourceIds(row);
+        const isSelectable = isPendingPedido(row) && pedidoIds.length > 0;
+        const allSelected =
+          isSelectable &&
+          pedidoIds.every((id) => selectedPedidoIds.includes(id));
+        const someSelected =
+          isSelectable &&
+          pedidoIds.some((id) => selectedPedidoIds.includes(id));
+
+        return (
+          <PedidoCard
+            pedido={row}
+            actions={renderPedidoActions(
+              row,
+              permissions,
+              handlers,
+              currentUserId
+            )}
+            onRowClick={handlers.onView}
+            selectionProps={
+              isSelectable
+                ? {
+                    checked: allSelected,
+                    indeterminate: someSelected && !allSelected,
+                    onChange: (e) => {
+                      e.stopPropagation();
+                      toggleUserSelection(pedidoIds);
+                    },
+                  }
+                : undefined
+            }
+          />
+        );
+      }}
+      onRowClick={handlers.onView}
+      getRowAriaLabel={(pedido) =>
+        isAggregatedBatchPedido(pedido)
+          ? `Ver detalle del pedido ${formatPedidoListNumber(pedido)}`
+          : `Ver detalle del pedido de ${pedido.proveedor?.nombre || 'proveedor desconocido'}`
+      }
+      renderActions={(pedido) =>
+        renderPedidoActions(pedido, permissions, handlers, currentUserId)
+      }
+    />
+  );
+};
+
 const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
   data,
   isLoading,
@@ -103,6 +252,7 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
   enableSelection = true,
   emptyMessage = 'No hay pedidos pendientes que coincidan con los filtros actuales.',
   warningMessage = 'Se muestran los primeros {count} pedidos. Si necesitas trabajar con más volumen en una sola vista, el siguiente paso lógico es añadir paginación o filtro de semana específico.',
+  currentUserId,
 }) => {
   const [selectedPedidoIds, setSelectedPedidoIds] = useState<string[]>([]);
 
@@ -464,65 +614,19 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
                       </Box>
                     </AccordionSummary>
                     <AccordionDetails>
-                      <DataTable
+                      <WeeklyPedidoTable
+                        pedidos={user.visiblePedidos}
                         columns={buildColumns(
                           user.visiblePedidos.flatMap((pedido) =>
                             getAggregatedPedidoSourceIds(pedido)
                           )
                         )}
-                        data={user.visiblePedidos}
-                        isLoading={false}
-                        hideTopBar
                         viewMode={viewMode}
-                        renderGridItem={(row) => {
-                          const pedidoIds = getAggregatedPedidoSourceIds(row);
-                          const isSelectable =
-                            isPendingPedido(row) && pedidoIds.length > 0;
-                          const allSelected =
-                            isSelectable &&
-                            pedidoIds.every((id) =>
-                              selectedPedidoIds.includes(id)
-                            );
-                          const someSelected =
-                            isSelectable &&
-                            pedidoIds.some((id) =>
-                              selectedPedidoIds.includes(id)
-                            );
-
-                          return (
-                            <PedidoCard
-                              pedido={row}
-                              actions={renderPedidoActions(
-                                row,
-                                permissions,
-                                handlers
-                              )}
-                              onRowClick={handlers.onView}
-                              selectionProps={
-                                isSelectable
-                                  ? {
-                                      checked: allSelected,
-                                      indeterminate:
-                                        someSelected && !allSelected,
-                                      onChange: (e) => {
-                                        e.stopPropagation();
-                                        toggleUserSelection(pedidoIds);
-                                      },
-                                    }
-                                  : undefined
-                              }
-                            />
-                          );
-                        }}
-                        onRowClick={handlers.onView}
-                        getRowAriaLabel={(pedido) =>
-                          isAggregatedBatchPedido(pedido)
-                            ? `Ver detalle del pedido ${formatPedidoListNumber(pedido)}`
-                            : `Ver detalle del pedido de ${pedido.proveedor?.nombre || 'proveedor desconocido'}`
-                        }
-                        renderActions={(pedido) =>
-                          renderPedidoActions(pedido, permissions, handlers)
-                        }
+                        permissions={permissions}
+                        handlers={handlers}
+                        selectedPedidoIds={selectedPedidoIds}
+                        toggleUserSelection={toggleUserSelection}
+                        currentUserId={currentUserId}
                       />
                     </AccordionDetails>
                   </Accordion>

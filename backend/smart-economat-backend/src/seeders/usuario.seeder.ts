@@ -38,11 +38,22 @@ export const runSeeder = async (context: SeedContext) => {
       return role;
     };
 
+    const TEST_UUIDS = {
+      ADMIN: '019d4bf6-248f-757c-9e06-177233b26101',
+      SUPER_ADMIN: '019d4bf6-248f-757c-9e06-177233b26102',
+      PROFESOR1: '019d4bf6-248f-757c-9e06-177233b26103',
+      PROFESOR2: '019d4bf6-248f-757c-9e06-177233b26104',
+      PROFESOR3: '019d4bf6-248f-757c-9e06-177233b26105',
+    };
+
+    const isTest = process.env.NODE_ENV === 'test';
+
     let adminUser = await manager.findOne(Usuario, {
       where: { username: 'admin' },
     });
     if (!adminUser) {
       adminUser = manager.create(Usuario, {
+        id: isTest ? TEST_UUIDS.ADMIN : undefined,
         nombre: 'Administrador Principal',
         username: 'admin',
         password: defaultPassword,
@@ -52,18 +63,7 @@ export const runSeeder = async (context: SeedContext) => {
         activo: true,
         roles: [getSeedRole(rolUsuario.ADMINISTRADOR)],
         mustChangePassword: false,
-        passwordResetToken: null,
-        passwordResetExpires: null,
       });
-      await manager.save(adminUser);
-    } else {
-      adminUser.nombre = 'Administrador Principal';
-      adminUser.rol = rolUsuario.ADMINISTRADOR;
-      adminUser.status = UserStatus.ACTIVE;
-      adminUser.activo = true;
-      adminUser.roles = [getSeedRole(rolUsuario.ADMINISTRADOR)];
-      adminUser.mustChangePassword = false;
-      adminUser.password = defaultPassword;
       await manager.save(adminUser);
     }
 
@@ -73,6 +73,7 @@ export const runSeeder = async (context: SeedContext) => {
     if (!superAdminUser) {
       const superAdminPassword = 'SmartEconomat2026*';
       superAdminUser = manager.create(Usuario, {
+        id: isTest ? TEST_UUIDS.SUPER_ADMIN : undefined,
         nombre: 'Super Administrador',
         username: 'superAdmin',
         password: superAdminPassword,
@@ -82,41 +83,31 @@ export const runSeeder = async (context: SeedContext) => {
         activo: true,
         roles: [getSeedRole(rolUsuario.SUPER_ADMIN)],
         mustChangePassword: true,
-        passwordResetToken: null,
-        passwordResetExpires: null,
       });
-      await manager.save(superAdminUser);
-    } else {
-      superAdminUser.nombre = 'Super Administrador';
-      superAdminUser.rol = rolUsuario.SUPER_ADMIN;
-      superAdminUser.roles = [getSeedRole(rolUsuario.SUPER_ADMIN)];
       await manager.save(superAdminUser);
     }
 
     const professorsToCreate = [
       {
+        id: isTest ? TEST_UUIDS.PROFESOR1 : undefined,
         nombre: 'Profesor Uno (Cocina Básica)',
         username: 'profesor1',
         email: 'profesor1@smarteconomat.com',
         cial: 'CIAL-11111',
       },
       {
+        id: isTest ? TEST_UUIDS.PROFESOR2 : undefined,
         nombre: 'Profesora Dos (Pastelería)',
         username: 'profesor2',
         email: 'profesor2@smarteconomat.com',
         cial: 'CIAL-22222',
       },
       {
+        id: isTest ? TEST_UUIDS.PROFESOR3 : undefined,
         nombre: 'Profesor Tres (Teoría Nutricional)',
         username: 'profesor3',
         email: 'profesor3@smarteconomat.com',
         cial: 'CIAL-33333',
-      },
-      {
-        nombre: 'Profesora Cuatro (Corte y Preparación)',
-        username: 'profesor4',
-        email: 'profesor4@smarteconomat.com',
-        cial: 'CIAL-44444',
       },
     ];
 
@@ -124,8 +115,6 @@ export const runSeeder = async (context: SeedContext) => {
       'Aula 101 - Informática',
       'Aula 102 - Cocina Práctica',
       'Aula 201 - Nutrición',
-      'Taller Múltiple Panadería',
-      'Laboratorio Ciencias Alimentarias',
     ];
 
     for (const profData of professorsToCreate) {
@@ -138,6 +127,7 @@ export const runSeeder = async (context: SeedContext) => {
 
       if (!profUser) {
         profUser = manager.create(Usuario, {
+          id: profData.id,
           nombre: profData.nombre,
           username: profData.username,
           password: defaultPassword,
@@ -169,7 +159,8 @@ export const runSeeder = async (context: SeedContext) => {
       if (!profEntity) continue;
 
       for (const aulaName of aulas) {
-        const numSlots = process.env.NODE_ENV === 'test' ? 1 : 5;
+        const isTest = process.env.NODE_ENV === 'test';
+        const numSlots = isTest ? 1 : 5;
         for (let i = 1; i <= numSlots; i++) {
           const numeroClase = i;
 
@@ -195,22 +186,35 @@ export const runSeeder = async (context: SeedContext) => {
 
           if (slot.alumnos && slot.alumnos.length > 0) continue;
 
-          const firstName = faker.person.firstName();
-          const lastName = faker.person.lastName();
-          const username =
-            faker.internet.username({ firstName, lastName }).toLowerCase() +
-            faker.number.int(999);
-          const studentEmail = faker.internet
-            .email({ firstName, lastName })
-            .toLowerCase();
+          let firstName, lastName, username, studentEmail, statusValue;
 
-          const statusValue =
-            process.env.NODE_ENV === 'test'
-              ? UserStatus.ACTIVE
-              : faker.helpers.arrayElement([
-                  UserStatus.ACTIVE,
-                  UserStatus.INACTIVE,
-                ]);
+          if (isTest) {
+            firstName = 'AlumnoTest';
+            lastName = `${profData.username}_${i}`;
+            username = `alumno_test_${profData.username}_${i}`.toLowerCase();
+            studentEmail = `${username}@smarteconomat.com`;
+            statusValue = UserStatus.ACTIVE;
+          } else {
+            firstName = faker.person.firstName();
+            lastName = faker.person.lastName();
+            username =
+              faker.internet.username({ firstName, lastName }).toLowerCase() +
+              faker.number.int(999);
+            studentEmail = faker.internet
+              .email({ firstName, lastName })
+              .toLowerCase();
+            statusValue = faker.helpers.arrayElement([
+              UserStatus.ACTIVE,
+              UserStatus.INACTIVE,
+            ]);
+          }
+
+          const existingStudent = await manager.findOne(Usuario, {
+            where: { username },
+          });
+
+          if (existingStudent) continue;
+
           const studentUser = manager.create(Usuario, {
             nombre: `${firstName} ${lastName}`,
             username,
@@ -220,9 +224,7 @@ export const runSeeder = async (context: SeedContext) => {
             status: statusValue,
             activo: statusValue === UserStatus.ACTIVE,
             roles: [getSeedRole(rolUsuario.ALUMNO)],
-            mustChangePassword: faker.datatype.boolean(),
-            passwordResetToken: null,
-            passwordResetExpires: null,
+            mustChangePassword: !isTest && faker.datatype.boolean(),
           });
           await manager.save(studentUser);
 

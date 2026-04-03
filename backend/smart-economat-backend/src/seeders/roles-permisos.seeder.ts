@@ -702,6 +702,41 @@ const PERMISOS_BASE = [
     descripcion: 'Restaurar ubicaciones eliminadas',
   },
   {
+    codigo: 'distribuciones:listar',
+    nombre: 'Listar distribuciones',
+    modulo: 'distribuciones',
+    accion: 'listar',
+    descripcion: 'Ver listado de distribuciones internas',
+  },
+  {
+    codigo: 'distribuciones:ver',
+    nombre: 'Ver distribución',
+    modulo: 'distribuciones',
+    accion: 'ver',
+    descripcion: 'Ver detalle de una distribución interna',
+  },
+  {
+    codigo: 'distribuciones:crear',
+    nombre: 'Crear distribución',
+    modulo: 'distribuciones',
+    accion: 'crear',
+    descripcion: 'Preparar una distribución desde el almacén general',
+  },
+  {
+    codigo: 'distribuciones:confirmar',
+    nombre: 'Confirmar distribución',
+    modulo: 'distribuciones',
+    accion: 'confirmar',
+    descripcion: 'Confirmar y ejecutar una distribución interna',
+  },
+  {
+    codigo: 'distribuciones:cancelar',
+    nombre: 'Cancelar distribución',
+    modulo: 'distribuciones',
+    accion: 'cancelar',
+    descripcion: 'Cancelar una distribución no confirmada',
+  },
+  {
     codigo: 'alumno:cambiar_profesor',
     nombre: 'Cambiar profesor',
     modulo: 'alumno',
@@ -780,6 +815,7 @@ export async function seedRolesPermisos(context: SeedContext): Promise<void> {
         'profesor',
         'albaranes',
         'ubicaciones',
+        'distribuciones',
       ].includes(p.modulo) && !p.accion.includes('eliminar')
   );
   const permisosAlumno = todosPermisos.filter(

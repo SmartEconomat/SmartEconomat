@@ -99,9 +99,11 @@ const Movimientos: React.FC = () => {
     switch (tipo) {
       case TipoMovimiento.ENTRADA:
       case TipoMovimiento.ENTRADA_COMPRA:
+      case TipoMovimiento.ENTRADA_DISTRIBUCION:
         return <ArrowUpwardIcon sx={{ fontSize: 16 }} />;
       case TipoMovimiento.SALIDA:
       case TipoMovimiento.SALIDA_ELABORACION:
+      case TipoMovimiento.SALIDA_DISTRIBUCION:
         return <ArrowDownwardIcon sx={{ fontSize: 16 }} />;
       case TipoMovimiento.AJUSTE:
         return <ConstructionIcon sx={{ fontSize: 16 }} />;
@@ -158,7 +160,8 @@ const Movimientos: React.FC = () => {
         render: (row: Movimiento) => {
           const isNegative =
             row.tipo === TipoMovimiento.SALIDA ||
-            row.tipo === TipoMovimiento.SALIDA_ELABORACION;
+            row.tipo === TipoMovimiento.SALIDA_ELABORACION ||
+            row.tipo === TipoMovimiento.SALIDA_DISTRIBUCION;
           return (
             <Typography
               variant="body2"

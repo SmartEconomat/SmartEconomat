@@ -17,8 +17,11 @@ import {
   FormGroup,
   Grid,
   Divider,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import AddCircleIcon from '@mui/icons-material/AddCircleOutline';
 import {
   Usuario,
   CrearUsuarioDTO,
@@ -26,10 +29,18 @@ import {
   RolOption,
   Permiso,
 } from '../../types/usuario';
-import { useToast } from '../../store/toast.hooks';
 import SelectField from '../../components/ui/SelectField';
 import InputField from '../../components/ui/InputField';
 import { usuarioService } from '../../services/usuarioService';
+import {
+  profesorService,
+  AlumnoSlot,
+  ProfesorInfo,
+} from '../../services/profesor.service';
+import { UbicacionService } from '../../services/ubicacion.service';
+import { Ubicacion } from '../../services/ubicacion.types';
+import QuickLocationDialog from '../../components/inventario/QuickLocationDialog';
+import QuickSlotDialog from '../../features/profile/components/QuickSlotDialog';
 
 export interface UserModalProps {
   open: boolean;
@@ -42,8 +53,6 @@ export interface UserModalProps {
   usuariosList: Usuario[];
   roleOptions: RolOption[];
 }
-
-// Ya no se requiere getRoleLabel puesto que usamos los nombres de la base de datos directamente.
 
 const UserModal: React.FC<UserModalProps> = ({
   open,
@@ -63,7 +72,17 @@ const UserModal: React.FC<UserModalProps> = ({
     rol: 'Alumno',
     estado: 'Inactivo',
     roleId: '',
+    slotId: '',
+    ubicacionId: '',
   });
+
+  const [allSlots, setAllSlots] = useState<AlumnoSlot[]>([]);
+  const [allUbicaciones, setAllUbicaciones] = useState<Ubicacion[]>([]);
+  const [allProfesores, setAllProfesores] = useState<ProfesorInfo[]>([]);
+  const [isLoadingExtras, setIsLoadingExtras] = useState(false);
+
+  const [openSlotDialog, setOpenSlotDialog] = useState(false);
+  const [openLocDialog, setOpenLocDialog] = useState(false);
 
   const [availablePermissions, setAvailablePermissions] = useState<Permiso[]>(
     []
@@ -72,25 +91,37 @@ const UserModal: React.FC<UserModalProps> = ({
   const [isLoadingPermissions, setIsLoadingPermissions] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const toast = useToast();
 
   useEffect(() => {
     const fetchPerms = async () => {
       setIsLoadingPermissions(true);
+      setIsLoadingExtras(true);
       try {
-        const resp = await usuarioService.getPermissions();
+        const [resp, slotsResp, locsResp, profsResp] = await Promise.all([
+          usuarioService.getPermissions(),
+          profesorService.getAllSlots(),
+          UbicacionService.findAll(),
+          profesorService.getAllProfesores(),
+        ]);
         setAvailablePermissions(resp.data);
+        if (slotsResp.success) setAllSlots(slotsResp.data);
+        setAllUbicaciones(locsResp);
+        if (profsResp.success) setAllProfesores(profsResp.data);
       } catch (err) {
-        console.error('Error fetching permissions', err);
+        console.error('Error fetching data', err);
       } finally {
         setIsLoadingPermissions(false);
+        setIsLoadingExtras(false);
       }
     };
     if (open) fetchPerms();
   }, [open]);
 
   const shouldShowSkeleton =
-    isLoadingContent || isLoadingRoles || isLoadingPermissions;
+    isLoadingContent ||
+    isLoadingRoles ||
+    isLoadingPermissions ||
+    isLoadingExtras;
 
   const renderFieldSkeleton = (width: string = '100%') => (
     <Box width={width}>
@@ -170,6 +201,8 @@ const UserModal: React.FC<UserModalProps> = ({
           rol: userToEdit.rol,
           estado: userToEdit.estado,
           roleId: userToEdit.roleId || '',
+          slotId: userToEdit.slotId || '',
+          ubicacionId: userToEdit.ubicacionId || '',
         });
 
         const rolePerms =
@@ -180,7 +213,6 @@ const UserModal: React.FC<UserModalProps> = ({
         const excludedIds =
           userToEdit.permisosExcluidos?.map((p) => p.id) || [];
 
-        // Total = (Role + Adicionales) - Excluidos
         const totalIds = Array.from(
           new Set([...rolePermIds, ...additionalIds])
         ).filter((id) => !excludedIds.includes(id));
@@ -194,6 +226,8 @@ const UserModal: React.FC<UserModalProps> = ({
           rol: defaultRole?.nombre || 'ALUMNO',
           estado: 'Inactivo',
           roleId: defaultRole?.id || '',
+          slotId: '',
+          ubicacionId: '',
         });
         setSelectedPermissions(defaultRole?.permisos?.map((p) => p.id) || []);
       }
@@ -205,12 +239,20 @@ const UserModal: React.FC<UserModalProps> = ({
     (field: keyof typeof formData) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const nextValue = e.target.value;
+      if (field === 'slotId' && nextValue === 'CREATE_NEW_SLOT') {
+        setOpenSlotDialog(true);
+        return;
+      }
+      if (field === 'ubicacionId' && nextValue === 'CREATE_NEW_LOC') {
+        setOpenLocDialog(true);
+        return;
+      }
+
       setFormData((prev) => {
         if (field === 'roleId') {
           const selectedRole = roleOptions.find(
             (role) => role.id === nextValue
           );
-          // Al cambiar de rol, marcamos por defecto los permisos de ese rol
           setSelectedPermissions(
             selectedRole?.permisos?.map((p) => p.id) || []
           );
@@ -220,7 +262,6 @@ const UserModal: React.FC<UserModalProps> = ({
             rol: selectedRole?.nombre || 'ALUMNO',
           };
         }
-
         return { ...prev, [field]: nextValue };
       });
       if (errors[field]) {
@@ -239,13 +280,9 @@ const UserModal: React.FC<UserModalProps> = ({
 
   const isLastAdmin = () => {
     if (!userToEdit || !isAdminRole(userToEdit.rol)) return false;
-
-    // Count how many administrators currently exist
     const adminCount = usuariosList.filter(
       (u) => isAdminRole(u.rol) && u.estado === 'Activo'
     ).length;
-
-    // If we only have 1 active admin (this one), they cannot change their role or status to Inactive
     return adminCount <= 1;
   };
 
@@ -267,16 +304,9 @@ const UserModal: React.FC<UserModalProps> = ({
     if (isLastAdmin()) {
       if (!isAdminRole(formData.rol)) {
         newErrors.rol = 'No puedes quitar el último administrador activo.';
-        toast.error(
-          'Operación denegada. El sistema debe retener al menos un Administrador activo.'
-        );
       }
       if (formData.estado === 'Inactivo') {
         newErrors.estado = 'No puedes desactivar el último administrador.';
-        if (!newErrors.rol)
-          toast.error(
-            'Operación denegada. El sistema debe retener al menos un Administrador activo.'
-          );
       }
     }
 
@@ -288,13 +318,9 @@ const UserModal: React.FC<UserModalProps> = ({
     if (validate()) {
       const currentRole = roleOptions.find((r) => r.id === formData.roleId);
       const rolePermIds = currentRole?.permisos?.map((p) => p.id) || [];
-
-      // Adicionales: Están en selected pero NO en el rol base
       const adicionales = selectedPermissions.filter(
         (id) => !rolePermIds.includes(id)
       );
-
-      // Excluidos: Están en el rol base pero NO en selected
       const excluidos = rolePermIds.filter(
         (id) => !selectedPermissions.includes(id)
       );
@@ -303,6 +329,8 @@ const UserModal: React.FC<UserModalProps> = ({
         ...formData,
         permisosAdicionalesIds: adicionales,
         permisosExcluidosIds: excluidos,
+        slotId: formData.slotId || null,
+        ubicacionId: formData.ubicacionId || null,
       } as CrearUsuarioDTO | ActualizarUsuarioDTO);
     }
   };
@@ -346,7 +374,6 @@ const UserModal: React.FC<UserModalProps> = ({
             {renderFieldSkeleton()}
             {renderFieldSkeleton()}
             {renderFieldSkeleton()}
-
             <Box display="flex" gap={2} flexWrap="wrap">
               <Box flex={1} minWidth="200px">
                 {renderFieldSkeleton()}
@@ -376,9 +403,7 @@ const UserModal: React.FC<UserModalProps> = ({
                 />
               </Box>
             </Box>
-
             <Divider sx={{ my: 1 }} />
-
             <Box>
               <Skeleton
                 variant="text"
@@ -387,7 +412,6 @@ const UserModal: React.FC<UserModalProps> = ({
                 animation="wave"
               />
             </Box>
-
             <Box sx={{ maxHeight: 300, overflowY: 'auto', pr: 1 }}>
               {renderPermissionAccordionSkeleton(1)}
               {renderPermissionAccordionSkeleton(2, true)}
@@ -471,7 +495,6 @@ const UserModal: React.FC<UserModalProps> = ({
                   }
                 />
               </Box>
-
               {isEditMode && (
                 <Box
                   display="flex"
@@ -500,14 +523,8 @@ const UserModal: React.FC<UserModalProps> = ({
                       ? 'CUENTA ACTIVA'
                       : 'CUENTA SUSPENDIDA'}
                   </Button>
-                  {errors.estado && (
-                    <Typography variant="caption" color="error">
-                      {errors.estado}
-                    </Typography>
-                  )}
                 </Box>
               )}
-
               {!isEditMode && (
                 <Box flex={1} minWidth="200px">
                   <SelectField
@@ -516,8 +533,6 @@ const UserModal: React.FC<UserModalProps> = ({
                     label="Estado Inicial"
                     value={formData.estado}
                     onChange={handleChange('estado')}
-                    error={!!errors.estado}
-                    helperText={errors.estado}
                     disabled={isSaving}
                     options={[
                       { value: 'Activo', label: 'Activo' },
@@ -528,11 +543,112 @@ const UserModal: React.FC<UserModalProps> = ({
               )}
             </Box>
 
+            {/* Asignación de Aula y Ubicación */}
+            <Box display="flex" gap={2} flexWrap="wrap" sx={{ mt: 1 }}>
+              <Box
+                flex={1}
+                minWidth="240px"
+                display="flex"
+                alignItems="flex-start"
+                gap={1}
+              >
+                <Box flex={1}>
+                  <SelectField
+                    fullWidth
+                    id="user-slot-select"
+                    label="Aula / Slot Asignado"
+                    value={formData.slotId || ''}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        slotId: e.target.value,
+                      }))
+                    }
+                    disabled={isSaving}
+                    options={[
+                      { value: '', label: 'Sin Aula' },
+                      ...allSlots.map((s) => ({
+                        value: s.id,
+                        label: `${s.aula} - Clase ${s.numeroClase} (${s.profesor?.user?.username || 'Propio'})`,
+                      })),
+                      {
+                        value: 'CREATE_NEW_SLOT',
+                        label: (
+                          <Typography
+                            variant="button"
+                            color="primary"
+                            sx={{ fontWeight: 'bold' }}
+                          >
+                            + CREAR NUEVA AULA
+                          </Typography>
+                        ),
+                      },
+                    ]}
+                  />
+                </Box>
+                <Tooltip title="Crear nueva Aula">
+                  <IconButton
+                    color="primary"
+                    sx={{ mt: 1 }}
+                    onClick={() => setOpenSlotDialog(true)}
+                  >
+                    <AddCircleIcon />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+
+              <Box
+                flex={1}
+                minWidth="240px"
+                display="flex"
+                alignItems="flex-start"
+                gap={1}
+              >
+                <Box flex={1}>
+                  <SelectField
+                    fullWidth
+                    id="user-ubicacion-select"
+                    label="Ubicación Almacén"
+                    value={formData.ubicacionId || ''}
+                    onChange={handleChange('ubicacionId')}
+                    disabled={isSaving}
+                    options={[
+                      { value: '', label: 'Sin Ubicación' },
+                      ...allUbicaciones.map((u) => ({
+                        value: u.id,
+                        label: u.nombre,
+                      })),
+                      {
+                        value: 'CREATE_NEW_LOC',
+                        label: (
+                          <Typography
+                            variant="button"
+                            color="primary"
+                            sx={{ fontWeight: 'bold' }}
+                          >
+                            + CREAR NUEVA UBICACIÓN
+                          </Typography>
+                        ),
+                      },
+                    ]}
+                  />
+                </Box>
+                <Tooltip title="Crear nueva Ubicación">
+                  <IconButton
+                    color="primary"
+                    sx={{ mt: 1 }}
+                    onClick={() => setOpenLocDialog(true)}
+                  >
+                    <AddCircleIcon />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </Box>
+
             <Divider sx={{ my: 1 }} />
             <Typography variant="subtitle2" color="primary" gutterBottom>
               Permisos Individuales Adicionales
             </Typography>
-
             <Box sx={{ maxHeight: 300, overflowY: 'auto', pr: 1 }}>
               {Object.entries(groupedPermissions).map(([module, perms]) => (
                 <Accordion
@@ -552,7 +668,7 @@ const UserModal: React.FC<UserModalProps> = ({
                   <AccordionDetails sx={{ py: 0 }}>
                     <FormGroup>
                       <Grid container spacing={1}>
-                        {perms.map((p) => (
+                        {(perms as Permiso[]).map((p) => (
                           <Grid size={{ xs: 12, sm: 6 }} key={p.id}>
                             <FormControlLabel
                               control={
@@ -586,21 +702,7 @@ const UserModal: React.FC<UserModalProps> = ({
         <Button
           onClick={handleSave}
           variant="contained"
-          color="primary"
           disabled={isSaving || shouldShowSkeleton}
-          sx={{
-            px: 4,
-            borderRadius: 2,
-            color: 'common.white',
-            '& .MuiCircularProgress-root': {
-              color: 'common.white',
-            },
-            '&.Mui-disabled': {
-              color: 'common.white',
-              bgcolor: 'primary.main',
-              opacity: 0.82,
-            },
-          }}
           startIcon={
             isSaving ? <CircularProgress size={20} color="inherit" /> : null
           }
@@ -608,6 +710,25 @@ const UserModal: React.FC<UserModalProps> = ({
           {isSaving ? 'Guardando...' : 'Guardar'}
         </Button>
       </DialogActions>
+
+      <QuickSlotDialog
+        open={openSlotDialog}
+        onClose={() => setOpenSlotDialog(false)}
+        profesores={allProfesores}
+        ubicaciones={allUbicaciones}
+        onSuccess={(newSlot) => {
+          setAllSlots((prev) => [...prev, newSlot]);
+          setFormData((prev) => ({ ...prev, slotId: newSlot.id }));
+        }}
+      />
+      <QuickLocationDialog
+        open={openLocDialog}
+        onClose={() => setOpenLocDialog(false)}
+        onSuccess={(newLoc) => {
+          setAllUbicaciones((prev) => [...prev, newLoc]);
+          setFormData((prev) => ({ ...prev, ubicacionId: newLoc.id }));
+        }}
+      />
     </Dialog>
   );
 };

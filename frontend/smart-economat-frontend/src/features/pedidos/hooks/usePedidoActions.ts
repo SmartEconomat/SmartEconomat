@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import {
   aceptarPedidoUsuario,
   aceptarPedido,
+  aceptarPurchaseBatch,
   cancelPedidoUsuario,
   cancelPedido,
   consolidatePurchaseBatch,
@@ -14,12 +15,20 @@ import {
   restaurarPedido,
   restaurarPedidoUsuario,
   restaurarPurchaseBatch,
+  tramitarPurchaseBatch,
+  deletePedidoUsuario,
 } from '../../../services/pedido.service';
+import { confirmDistribucion } from '../../../services/distribucion.service';
 import { saveRecepcionDraft } from '../../../services/recepcionDraft.service';
 import { ApiError, deleteResource } from '../../../services/api.service';
 import { useNavigate } from 'react-router-dom';
 import { mapPurchaseBatchToRecepcionDraft } from '../../recepcion/utils/recepcionMapping.utils';
-import { PedidoUsuario, PurchaseBatch } from '../../../services/pedido.types';
+import {
+  Pedido,
+  PedidoUsuario,
+  PurchaseBatch,
+} from '../../../services/pedido.types';
+import { Distribucion } from '../../../services/distribucion.types';
 import { useToast } from '../../../store/toast.hooks';
 import { PedidoFormValues } from '../types/pedidos-ui.types';
 import {
@@ -183,6 +192,26 @@ export function usePedidoActions({
     [onPedidoDeleted, reload, toast]
   );
 
+  const deletePedidoUsuarioById = useCallback(
+    async (id: string) => {
+      setIsDeleting(true);
+      try {
+        await deletePedidoUsuario(id);
+        onPedidoDeleted?.(id);
+        toast.success('Pedido eliminado correctamente.');
+        await reload();
+      } catch (err: unknown) {
+        toast.error(
+          err instanceof Error ? err.message : 'Error al eliminar el pedido.'
+        );
+        throw err;
+      } finally {
+        setIsDeleting(false);
+      }
+    },
+    [onPedidoDeleted, reload, toast]
+  );
+
   const approvePedidoById = useCallback(
     async (id: string) => {
       setIsAceptando(true);
@@ -202,6 +231,47 @@ export function usePedidoActions({
     [reload, toast]
   );
 
+  const approveBatchGeneric = useCallback(
+    async (
+      batch: PurchaseBatch | PedidoUsuario | string,
+      isUserBatchOverride?: boolean
+    ) => {
+      let id: string;
+      let isUserBatch = !!isUserBatchOverride;
+
+      if (typeof batch === 'string') {
+        id = batch;
+      } else {
+        id = batch.id;
+        if (isUserBatchOverride === undefined) {
+          isUserBatch =
+            ('aggregateType' in batch &&
+              batch.aggregateType === 'pedido_usuario') ||
+            ('usuario' in batch && !!batch.usuario);
+        }
+      }
+
+      setIsAceptando(true);
+      try {
+        if (isUserBatch) {
+          await aceptarPedidoUsuario(id);
+        } else {
+          await aceptarPurchaseBatch(id);
+        }
+        toast.success('El lote ha sido aprobado correctamente.');
+        await reload();
+      } catch (err: unknown) {
+        toast.error(
+          err instanceof Error ? err.message : 'Error al aprobar el lote.'
+        );
+        throw err;
+      } finally {
+        setIsAceptando(false);
+      }
+    },
+    [reload, toast]
+  );
+
   const approvePurchaseBatchById = useCallback(
     async (id: string) => {
       setIsAceptando(true);
@@ -212,6 +282,25 @@ export function usePedidoActions({
       } catch (err: unknown) {
         toast.error(
           err instanceof Error ? err.message : 'Error al aprobar el pedido.'
+        );
+        throw err;
+      } finally {
+        setIsAceptando(false);
+      }
+    },
+    [reload, toast]
+  );
+
+  const tramitarPurchaseBatchById = useCallback(
+    async (id: string) => {
+      setIsAceptando(true);
+      try {
+        await tramitarPurchaseBatch(id);
+        toast.success('El lote ha sido marcado como "Pedido a Proveedor".');
+        await reload();
+      } catch (err: unknown) {
+        toast.error(
+          err instanceof Error ? err.message : 'Error al tramitar el lote.'
         );
         throw err;
       } finally {
@@ -288,7 +377,11 @@ export function usePedidoActions({
   );
 
   const consolidatePedidosByIds = useCallback(
-    async (pedidoIds: string[], observaciones?: string) => {
+    async (
+      pedidoIds: string[],
+      observaciones?: string,
+      skipCallback = false
+    ) => {
       setIsConsolidatingBatch(true);
       try {
         const batch = await consolidatePurchaseBatch({
@@ -296,7 +389,9 @@ export function usePedidoActions({
           observaciones,
         });
         toast.success('Se ha generado el lote semanal correctamente.');
-        onBatchCreated?.(batch);
+        if (!skipCallback) {
+          onBatchCreated?.(batch);
+        }
         await reload();
         return batch;
       } catch (err: unknown) {
@@ -314,9 +409,17 @@ export function usePedidoActions({
   );
 
   const startRecepcionFromBatch = useCallback(
-    async (batch: PurchaseBatch) => {
+    async (batch: PurchaseBatch | PedidoUsuario) => {
       try {
-        const draft = mapPurchaseBatchToRecepcionDraft(batch);
+        // Aseguramos tener el detalle completo (con lineas) antes de mapear
+        const fullBatch = await fetchBatchDetail(
+          batch.id,
+          'aggregateType' in batch ? batch.aggregateType : undefined
+        );
+
+        const draft = mapPurchaseBatchToRecepcionDraft(
+          fullBatch as PurchaseBatch
+        );
         await saveRecepcionDraft(draft);
         navigate('/recepcion');
         toast.success(
@@ -373,9 +476,39 @@ export function usePedidoActions({
     [reload, toast]
   );
 
+  const confirmReceipt = useCallback(
+    async (pedido: Pedido) => {
+      const distribucionPendiente = pedido.distribuciones?.find(
+        (d: Distribucion) => d.estado === 'preparada'
+      );
+
+      if (!distribucionPendiente) {
+        toast.error('No se encontró una entrega pendiente de recoger.');
+        return;
+      }
+
+      setIsAceptando(true);
+      try {
+        await confirmDistribucion(distribucionPendiente.id);
+        toast.success('Recepción confirmada correctamente.');
+        await reload();
+      } catch (err: unknown) {
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : 'Error al confirmar la recepción.'
+        );
+      } finally {
+        setIsAceptando(false);
+      }
+    },
+    [reload, toast]
+  );
+
   return {
     savePedido,
     deletePedidoById,
+    deletePedidoUsuarioById,
     approvePedidoById,
     approvePurchaseBatchById,
     cancelPedidoById,
@@ -386,6 +519,9 @@ export function usePedidoActions({
     startRecepcionFromBatch,
     restorePedidoById,
     restorePurchaseBatchById,
+    onConfirmReceipt: confirmReceipt,
+    onTramitar: (batch: PurchaseBatch) => tramitarPurchaseBatchById(batch.id),
+    onApproveBatch: approveBatchGeneric,
     isSaving,
     isDeleting,
     isAceptando,

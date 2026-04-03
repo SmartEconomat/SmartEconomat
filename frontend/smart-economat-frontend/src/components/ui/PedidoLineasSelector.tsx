@@ -498,20 +498,28 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
             <TableHead sx={{ bgcolor: 'action.hover' }}>
               <TableRow>
                 <TableCell
-                  sx={{ fontWeight: 'bold', width: '35%', minWidth: 250 }}
+                  sx={{ fontWeight: 'bold', width: '30%', minWidth: 200 }}
                 >
                   Producto
                 </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', width: 180 }}>
+                <TableCell
+                  sx={{ fontWeight: 'bold', width: 220, minWidth: 150 }}
+                >
                   Proveedor
                 </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
+                <TableCell
+                  sx={{ fontWeight: 'bold', width: 100, minWidth: 80 }}
+                >
                   Cantidad
                 </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
+                <TableCell
+                  sx={{ fontWeight: 'bold', width: 160, minWidth: 140 }}
+                >
                   Precio Unid.
                 </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
+                <TableCell
+                  sx={{ fontWeight: 'bold', width: 140, minWidth: 120 }}
+                >
                   Subtotal
                 </TableCell>
                 {!disabled && (
@@ -562,7 +570,10 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                     key={uniqueKey}
                     sx={{
                       '& > td': {
-                        verticalAlign: 'top',
+                        verticalAlign: 'middle', // Más equilibrado para wrapping
+                        padding: '12px 8px',
+                        height: 'auto', // Permitir crecimiento
+                        minHeight: '64px',
                       },
                     }}
                   >
@@ -593,7 +604,14 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                           disabled={disabled}
                           renderOption={(props, option) => {
                             return (
-                              <li {...props} key={option.key}>
+                              <li
+                                {...props}
+                                key={option.key}
+                                style={{
+                                  whiteSpace: 'normal',
+                                  wordBreak: 'break-word',
+                                }}
+                              >
                                 {option.proveedores.length > 1
                                   ? `${option.nombreProducto} (${option.proveedores.length} proveedores)`
                                   : option.nombreProducto}
@@ -605,6 +623,12 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                               {...params}
                               variant="standard"
                               placeholder={disabled ? '' : 'Buscar producto...'}
+                              sx={{
+                                '& .MuiInputBase-root': {
+                                  flexWrap: 'wrap',
+                                  minHeight: '40px',
+                                },
+                              }}
                             />
                           )}
                           size="small"
@@ -648,9 +672,18 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                             Selecciona proveedor
                           </MenuItem>
                           {providerOptions.map((provider) => (
-                            <MenuItem key={provider.id} value={provider.id}>
+                            <MenuItem
+                              key={provider.id}
+                              value={provider.id}
+                              sx={{
+                                whiteSpace: 'normal',
+                                wordBreak: 'break-word',
+                                py: 1,
+                              }}
+                            >
+                              {provider.nombreProducto} -{' '}
                               {provider.nombreProveedor}
-                              {provider.marca ? ` - ${provider.marca}` : ''}
+                              {provider.marca ? ` (${provider.marca})` : ''}
                             </MenuItem>
                           ))}
                         </TextField>
@@ -689,6 +722,9 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                             );
                           }}
                           variant="standard"
+                          InputProps={{
+                            sx: { '& input': { pb: '4px' } },
+                          }}
                           inputProps={{
                             min: quantityMin,
                             step: quantityStep,
@@ -700,7 +736,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                           helperText={
                             focusedQuantityKey === uniqueKey
                               ? quantityFocusMessage
-                              : ' '
+                              : undefined
                           }
                           onFocus={() => setFocusedQuantityKey(uniqueKey)}
                           onBlur={() =>
@@ -721,30 +757,40 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                         <TextField
                           type="number"
                           value={line.precioUnitario || ''}
-                          onChange={(e) =>
-                            handleUpdateLine(
-                              originalIndex,
-                              'precioUnitario',
-                              Number(e.target.value)
-                            )
-                          }
                           variant="standard"
+                          InputProps={{
+                            readOnly: true,
+                            sx: {
+                              '& input': { textAlign: 'right', pb: '4px' },
+                            },
+                          }}
                           inputProps={{ step: '0.01' }}
                           size="small"
                         />
                       )}
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" sx={{ my: 1 }}>
-                        {(
+                      <TextField
+                        variant="standard"
+                        fullWidth
+                        value={`${(
                           Number(line.cantidad || 0) *
                           Number(line.precioUnitario || 0)
-                        ).toFixed(2)}{' '}
-                        €
-                      </Typography>
+                        ).toFixed(2)} €`}
+                        InputProps={{
+                          readOnly: true,
+                          disableUnderline: false,
+                          sx: {
+                            '& input': { textAlign: 'right', pb: '4px' },
+                          },
+                        }}
+                        size="small"
+                      />
                     </TableCell>
                     {!disabled && (
-                      <TableCell sx={{ width: 32, minWidth: 32, px: 0.5 }}>
+                      <TableCell
+                        sx={{ width: 32, minWidth: 32, px: 0.5, pb: 2.2 }}
+                      >
                         <IconButton
                           size="small"
                           color="error"

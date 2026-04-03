@@ -88,6 +88,16 @@ export interface DynamicFormModalProps extends Omit<ModalProps, 'children'> {
   confirmationMessage?: React.ReactNode;
   onValuesChange?: (data: Record<string, unknown>) => void;
   valueUpdates?: Record<string, unknown>;
+  secondarySubmitLabel?: string;
+  onSecondarySubmit?: (data: Record<string, unknown>) => void | Promise<void>;
+  secondarySubmitColor?:
+    | 'primary'
+    | 'secondary'
+    | 'success'
+    | 'warning'
+    | 'info'
+    | 'error'
+    | 'inherit';
 }
 
 const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
@@ -108,6 +118,9 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   confirmationMessage,
   onValuesChange,
   valueUpdates,
+  secondarySubmitLabel,
+  onSecondarySubmit,
+  secondarySubmitColor = 'success',
 }) => {
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const formDataRef = useRef<Record<string, unknown>>({});
@@ -276,6 +289,13 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   const handleConfirmSubmit = async () => {
     setIsConfirmOpen(false);
     await onSubmit(formDataRef.current);
+  };
+
+  const handleSecondarySubmit = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (onSecondarySubmit) {
+      await onSecondarySubmit(formDataRef.current);
+    }
   };
 
   const handleCancel = () => {
@@ -796,6 +816,18 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
               sx={{ mt: 0, mb: 0 }}
             >
               {cancelLabel}
+            </Button>
+          )}
+          {secondarySubmitLabel && onSecondarySubmit && (
+            <Button
+              onClick={handleSecondarySubmit}
+              isLoading={isSubmitting}
+              variant="outlined"
+              color={secondarySubmitColor}
+              fullWidth={false}
+              sx={{ mt: 0, mb: 0 }}
+            >
+              {secondarySubmitLabel}
             </Button>
           )}
           <Button

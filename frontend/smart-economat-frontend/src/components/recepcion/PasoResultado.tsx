@@ -8,9 +8,12 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import FiberNewIcon from '@mui/icons-material/FiberNew';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import DownloadIcon from '@mui/icons-material/Download';
+import MoveToInboxOutlinedIcon from '@mui/icons-material/MoveToInboxOutlined';
+import { useNavigate } from 'react-router-dom';
 import { RecepcionResultado } from '../../services/recepcion.types';
 import { downloadFile } from '../../services/api.service';
 import DetailModal, { DetailType } from './DetailModal';
+import { usePermission } from '../../store/auth.hooks';
 
 interface PasoResultadoProps {
   resultado: RecepcionResultado | null;
@@ -21,6 +24,8 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
   resultado,
   onResetWizard,
 }) => {
+  const navigate = useNavigate();
+  const canViewDistribucion = usePermission('distribuciones:listar');
   const [openDetailModal, setOpenDetailModal] =
     React.useState<DetailType>(null);
   const [downloading, setDownloading] = React.useState(false);
@@ -230,6 +235,18 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
         >
           {downloading ? 'Descargando...' : 'Descargar Detalles (PDF)'}
         </Button>
+
+        {canViewDistribucion && (
+          <Button
+            variant="outlined"
+            color="secondary"
+            size="large"
+            startIcon={<MoveToInboxOutlinedIcon />}
+            onClick={() => navigate('/distribucion')}
+          >
+            Distribuir ahora
+          </Button>
+        )}
 
         <Button variant="outlined" onClick={onResetWizard} size="large">
           Finalizar y Volver

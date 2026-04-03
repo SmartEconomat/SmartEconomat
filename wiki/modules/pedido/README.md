@@ -109,8 +109,9 @@ Es un lote de compra administrativa.
 | `PATCH` | `/pedido-usuarios/:id` | Editar agregado pendiente |
 | `PATCH` | `/pedido-usuarios/:id/aceptar` | Aprobar agregado |
 | `PATCH` | `/pedido-usuarios/:id/cancelar` | Cancelar agregado |
-| `PATCH` | `/pedido-usuarios/:id/restaurar` | Restaurar agregado |
+| `PATCH | `/pedido-usuarios/:id/restaurar` | Restaurar agregado |
 | `GET` | `/pedido-usuarios/:id/pdf` | PDF del pedido visible |
+| `DELETE` | `/pedido-usuarios/:id` | Borrado lógico (soft delete) del agregado si es dueño o admin |
 
 #### `purchase-batches`
 
@@ -145,6 +146,15 @@ Es un lote de compra administrativa.
 - Un `PedidoUsuario` solo se edita si está en `PENDIENTE` y todos sus `Pedido` hijos siguen pendientes.
 - Un `PurchaseBatch` solo se edita si todos sus `Pedido` hijos siguen pendientes.
 - Las líneas con referencias en `RecepcionProducto` o `IncidenciaLinea` no pueden borrarse.
+
+#### Reglas de eliminación (Autonomía del usuario)
+
+- Los **Alumnos** y **Profesores** pueden eliminar sus propios pedidos (`PedidoUsuario`).
+- Requisitos para eliminación propia:
+    - El pedido debe estar en estado `PENDIENTE`.
+    - El usuario debe ser el propietario del pedido.
+    - Se requiere el permiso `pedidos:listar` (no es necesario `pedidos:eliminar` para el borrado propio controlado).
+- El borrado es **lógico (soft delete)**: se marca con `deletedAt` y `deletedBy` para auditoría, pero desaparece de la vista del usuario.
 
 #### Reglas de agregación por proveedor
 
@@ -184,7 +194,7 @@ Responsabilidades:
 
 `PedidosTabs.tsx` define tres vistas:
 
-- **Mis Pedidos** (`tabIndex = 0`): lista del `PedidoUsuario` del usuario actual.
+- **Mis Pedidos** (`tabIndex = 0`): lista del `PedidoUsuario` del usuario actual. Incluye un selector de estado segmentado (`MisPedidosStatusTabs`) con iconos para Pendientes, En proceso y Finalizados.
 - **Pedidos** (`tabIndex = 1`): agrupación semanal de pedidos visibles para operación.
 - **Compras** (`tabIndex = 2`): lotes `PurchaseBatch`.
 

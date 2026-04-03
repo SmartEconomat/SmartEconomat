@@ -25,6 +25,8 @@ import SchoolIcon from '@mui/icons-material/SchoolOutlined';
 import PeopleIcon from '@mui/icons-material/PeopleOutlined';
 
 import ProfessorSlotsManager from '../features/profile/components/ProfessorSlotsManager';
+import { UbicacionService } from '../services/ubicacion.service';
+import type { Ubicacion } from '../services/ubicacion.types';
 import ProfessorStudentList from '../features/profile/components/ProfessorStudentList';
 import UsuariosView from './Usuarios/UsuariosView';
 
@@ -107,11 +109,13 @@ const Administracion: React.FC = () => {
   const [slots, setSlots] = useState<AlumnoSlot[]>([]);
   const [allSlots, setAllSlots] = useState<AlumnoSlot[]>([]);
   const [allProfesores, setAllProfesores] = useState<ProfesorInfo[]>([]);
+  const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
   const [newSlot, setNewSlot] = useState({
     aula: '',
     numeroClase: '',
     capacidad: '',
     profesorId: '',
+    ubicacionId: '',
   });
   const [students, setStudents] = useState<Alumno[]>([]);
   const [loadedTabs, setLoadedTabs] = useState<
@@ -190,6 +194,8 @@ const Administracion: React.FC = () => {
         isAdmin ? profesorService.getAllProfesores() : Promise.resolve(null),
       ]);
 
+      const ubicacionesRes = await UbicacionService.findAll();
+
       if (slotsRes?.success) {
         setSlots(slotsRes.data);
       }
@@ -201,6 +207,8 @@ const Administracion: React.FC = () => {
       if (profesoresRes?.success) {
         setAllProfesores(profesoresRes.data);
       }
+
+      setUbicaciones(ubicacionesRes);
 
       setLoadedTabs((prev) => ({ ...prev, slots: true }));
     } catch (loadError) {
@@ -283,13 +291,31 @@ const Administracion: React.FC = () => {
         aula: newSlot.aula.trim(),
         numeroClase: Number(newSlot.numeroClase),
         capacidad: Number(newSlot.capacidad),
+        ubicacionId: newSlot.ubicacionId || undefined,
       };
 
+      let targetProfesorId = newSlot.profesorId;
+
+      // Si es admin y elige "-- Mío (Propio) --" (vacío), buscamos si tiene perfil de profesor
+      if (isAdmin && !targetProfesorId) {
+        const myProfile = allProfesores.find((p) => p.userId === user?.id);
+        if (myProfile) {
+          targetProfesorId = myProfile.id;
+        } else if (!isPureProfesor) {
+          // Si no es "puro profesor" y no tiene perfil, el backend fallará con PROFESSOR_PROFILE_NOT_FOUND
+          toast.error(
+            'No tienes un perfil de profesor vinculado. Selecciona un profesor de la lista o asegúrate de tener un perfil de profesor creado.'
+          );
+          setIsSaving(false);
+          return;
+        }
+      }
+
       const res =
-        isAdmin && newSlot.profesorId
+        isAdmin && targetProfesorId
           ? await profesorService.adminCreateSlot({
               ...data,
-              profesorId: newSlot.profesorId,
+              profesorId: targetProfesorId,
             })
           : await profesorService.createSlot(data);
 
@@ -306,10 +332,11 @@ const Administracion: React.FC = () => {
           numeroClase: '',
           capacidad: '',
           profesorId: '',
+          ubicacionId: '',
         });
         toast.success('Aula/Clase añadida con éxito');
       } else {
-        toast.error(res.message);
+        toast.error(res.message || 'Error al crear la clase');
       }
     } catch {
       toast.error('Error al crear la clase');
@@ -351,7 +378,7 @@ const Administracion: React.FC = () => {
         setSlots((prev) => prev.map((s) => (s.id === id ? res.data : s)));
         toast.success('Ubicación actualizada');
       } else {
-        toast.error(res.message);
+        toast.error(res.message || 'Error al actualizar');
       }
     } catch {
       toast.error('Error al actualizar');
@@ -375,7 +402,7 @@ const Administracion: React.FC = () => {
         if (allSlotsRes.success) setAllSlots(allSlotsRes.data);
         toast.success('Aula actualizada correctamente');
       } else {
-        toast.error(res.message);
+        toast.error(res.message || 'Error al actualizar el aula');
       }
     } catch {
       toast.error('Error al actualizar el aula');
@@ -522,6 +549,7 @@ const Administracion: React.FC = () => {
                 slots={slots}
                 allSlots={allSlots}
                 allProfesores={allProfesores}
+                ubicaciones={ubicaciones}
                 isLoading={loadingTab === 'slots'}
                 isSaving={isSaving}
                 newSlot={newSlot}
@@ -530,6 +558,7 @@ const Administracion: React.FC = () => {
                 onDeleteSlot={handleDeleteSlot}
                 onUpdateSlot={handleUpdateSlot}
                 onAdminUpdateSlot={handleAdminUpdateSlot}
+                onRefreshUbicaciones={loadSlotsTabData}
               />
 
               <Divider />

@@ -27,6 +27,7 @@ export interface CreatePedidoPayload {
 export interface CreatePurchaseBatchPayload {
   observaciones?: string;
   lineas: PedidoLinePayload[];
+  ubicacionEntregaSugeridaId?: string;
 }
 
 export interface CreateMissingStockBatchPayload {
@@ -45,6 +46,7 @@ export interface CreatePedidoFromRecetasPayload {
 export interface ConsolidatePurchaseBatchPayload {
   pedidoIds: string[];
   observaciones?: string;
+  ubicacionEntregaSugeridaId?: string;
 }
 
 export interface UpdatePurchaseBatchPayload {
@@ -543,6 +545,29 @@ export async function aceptarPedidoUsuario(id: string): Promise<PedidoUsuario> {
   return body.data;
 }
 
+export async function tramitarPurchaseBatch(
+  id: string
+): Promise<PurchaseBatch> {
+  const response = await baseFetch(`/purchase-batches/${id}/tramitar`, {
+    method: 'PATCH',
+  });
+
+  if (!response.ok) {
+    let errorDetail: { message?: string } = {};
+    try {
+      errorDetail = await response.json();
+    } catch {
+      // ignore
+    }
+    throw new Error(
+      errorDetail?.message || `Error al tramitar pedido: ${response.status}`
+    );
+  }
+
+  const body = (await response.json()) as ApiResponse<PurchaseBatch>;
+  return body.data;
+}
+
 export async function cancelPurchaseBatch(
   id: string,
   payload: CancelPedidoPayload
@@ -622,6 +647,23 @@ export async function restaurarPedidoUsuario(
 
   const body = (await response.json()) as ApiResponse<PedidoUsuario>;
   return body.data;
+}
+
+export async function deletePedidoUsuario(id: string): Promise<void> {
+  const response = await baseFetch(`/pedido-usuarios/${id}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    let errorMessage = `Error al eliminar pedido de usuario: ${response.status}`;
+    try {
+      const errorDetail = (await response.json()) as { message?: string };
+      if (errorDetail?.message) errorMessage = errorDetail.message;
+    } catch {
+      // ignore
+    }
+    throw new Error(errorMessage);
+  }
 }
 
 export async function restaurarPurchaseBatch(

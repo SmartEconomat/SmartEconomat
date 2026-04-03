@@ -285,12 +285,13 @@ export class PurchaseBatchService {
         usuarioId: userId,
         observaciones: dto.observaciones,
         estado: EstadoLote.PENDIENTE,
+        isAprobado: true,
       });
       const savedBatch = await queryRunner.manager.save(PurchaseBatch, batch);
 
       for (const pedido of pedidos) {
         pedido.batchId = savedBatch.id;
-        pedido.estado = EstadoPedido.EN_PROCESO;
+        pedido.estado = EstadoPedido.PENDIENTE;
         await queryRunner.manager.save(Pedido, pedido);
       }
 
@@ -557,6 +558,12 @@ export class PurchaseBatchService {
         throw new NotFoundException(`Pedido #${id} no encontrado`);
       }
 
+      if (!batch.isAprobado) {
+        throw new BadRequestException(
+          'El lote debe ser aprobado antes de poder ser tramitado.'
+        );
+      }
+
       if (!batch.pedidos.length) {
         throw new BadRequestException(
           'El pedido no contiene pedidos internos para tramitar.'
@@ -596,6 +603,33 @@ export class PurchaseBatchService {
       throw new ConflictException(
         `Error al aprobar el pedido: ${error.message}`
       );
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async approveBatchOrder(id: string): Promise<PurchaseBatch> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const batch = await queryRunner.manager.findOne(PurchaseBatch, {
+        where: { id },
+      });
+
+      if (!batch) {
+        throw new NotFoundException(`Lote #${id} no encontrado`);
+      }
+
+      batch.isAprobado = true;
+      await queryRunner.manager.save(PurchaseBatch, batch);
+
+      await queryRunner.commitTransaction();
+      return this.findOne(batch.id);
+    } catch (error: any) {
+      await queryRunner.rollbackTransaction();
+      throw error;
     } finally {
       await queryRunner.release();
     }

@@ -98,8 +98,13 @@ export class PurchaseBatchController {
   @HttpCode(HttpStatus.CREATED)
   consolidate(@Body() dto: ConsolidatePurchaseBatchDto, @Request() req: any) {
     const userId = req.user.id as string;
-
     return this.batchService.consolidateExistingOrders(dto, userId);
+  }
+
+  @Patch(':id/tramitar')
+  @RequirePermissions('pedidos:editar')
+  markAsProcessed(@Param('id', ParseUUIDv7Pipe) id: string) {
+    return this.batchService.acceptBatchOrder(id);
   }
 
   @Get(':id')
@@ -120,7 +125,7 @@ export class PurchaseBatchController {
   @Patch(':id/aceptar')
   @RequirePermissions('pedidos:editar')
   accept(@Param('id', ParseUUIDv7Pipe) id: string) {
-    return this.batchService.acceptBatchOrder(id);
+    return this.batchService.approveBatchOrder(id);
   }
 
   @Patch(':id/cancelar')
