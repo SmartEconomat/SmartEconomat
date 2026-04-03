@@ -24,6 +24,7 @@ import { PedidoStatusTrigger } from '../enums/pedido-status-trigger.enum';
 import { PurchaseBatchService } from './purchase-batch.service';
 import { PedidoUsuarioService } from './pedido-usuario.service';
 import { forwardRef, Inject } from '@nestjs/common';
+import { reserveNextPedidoProveedorNumero } from '../utils/pedido-numero.util';
 
 @Injectable()
 export class PedidoService {
@@ -55,6 +56,9 @@ export class PedidoService {
         userId,
         estadoInicial,
         () => this.calculateFechaEntrega()
+      );
+      built.pedido.numeroGlobal = await reserveNextPedidoProveedorNumero(
+        queryRunner.manager
       );
 
       const savedPedido = await queryRunner.manager.save(Pedido, built.pedido);
@@ -207,7 +211,7 @@ export class PedidoService {
   async cancelarPedido(id: string, dto: CancelPedidoDto): Promise<Pedido> {
     const pedido = await this.findOne(id);
 
-    if (pedido.estado !== EstadoPedido.PENDIENTE) {
+    if (pedido.estado !== EstadoPedido.PENDIENTE_DE_APROBACION) {
       throw new BadRequestException(
         'Solo se pueden cancelar los pedidos que estén en estado pendiente.'
       );
@@ -241,7 +245,7 @@ export class PedidoService {
 
   async aceptarPedido(id: string): Promise<Pedido> {
     const pedido = await this.findOne(id);
-    if (pedido.estado !== EstadoPedido.PENDIENTE) {
+    if (pedido.estado !== EstadoPedido.PENDIENTE_DE_APROBACION) {
       throw new BadRequestException(
         'Solo los pedidos pendientes pueden ser aceptados.'
       );
@@ -295,7 +299,7 @@ export class PedidoService {
     const pedido = await this.findOne(id);
 
     if (
-      pedido.estado !== EstadoPedido.PENDIENTE &&
+      pedido.estado !== EstadoPedido.PENDIENTE_DE_APROBACION &&
       pedido.estado !== EstadoPedido.CANCELADO
     ) {
       throw new BadRequestException(
@@ -316,17 +320,17 @@ export class PedidoService {
   }
 
   private getInitialStatus(): EstadoPedido {
-    return EstadoPedido.PENDIENTE;
+    return EstadoPedido.PENDIENTE_DE_APROBACION;
   }
 
   private resolveStatusFromTrigger(trigger: PedidoStatusTrigger): EstadoPedido {
     switch (trigger) {
       case PedidoStatusTrigger.ACEPTAR:
-        return EstadoPedido.EN_PROCESO;
+        return EstadoPedido.POR_RECEPCIONAR;
       case PedidoStatusTrigger.RECEPCION_PARCIAL:
         return EstadoPedido.PARCIAL;
       case PedidoStatusTrigger.RECEPCION_TOTAL:
-        return EstadoPedido.RECIBIDO;
+        return EstadoPedido.RECEPCIONADO;
       case PedidoStatusTrigger.INCIDENCIA:
         return EstadoPedido.INCIDENCIA;
       default:

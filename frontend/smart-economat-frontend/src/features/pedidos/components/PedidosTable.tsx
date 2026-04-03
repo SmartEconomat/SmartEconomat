@@ -3,7 +3,7 @@ import { Box, Button, Typography } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import DataTable from '../../../components/ui/DataTable';
-import { Pedido } from '../../../services/pedido.types';
+import { PedidoListItem } from '../../../services/pedido.types';
 import {
   PedidoActionHandlers,
   PedidoPermissions,
@@ -14,11 +14,10 @@ import {
   renderPedidoActions,
 } from '../utils/pedidoColumns';
 import { formatPedidoListNumber } from '../utils/pedidoFormatters';
-import { isAggregatedBatchPedido } from '../utils/pedidoOwnOrders';
 import PedidoCard from './PedidoCard';
 
 interface PedidosTableProps {
-  data: Pedido[];
+  data: PedidoListItem[];
   isLoading: boolean;
   page: number;
   pageSize: number;
@@ -192,9 +191,7 @@ const PedidosTable: React.FC<PedidosTableProps> = ({
       }}
       onRowClick={handlers.onView}
       getRowAriaLabel={(row) =>
-        isAggregatedBatchPedido(row)
-          ? `Ver detalle del pedido ${formatPedidoListNumber(row)}`
-          : `Ver detalle del pedido ${formatPedidoListNumber(row)}`
+        `Ver detalle del pedido ${formatPedidoListNumber(row)}`
       }
       renderActions={(row) =>
         renderPedidoActions(row, permissions, handlers, currentUserId)

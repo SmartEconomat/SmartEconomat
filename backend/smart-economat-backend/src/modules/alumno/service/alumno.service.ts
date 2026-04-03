@@ -170,6 +170,7 @@ export class AlumnoService {
       const alumno = manager.create(Alumno, {
         user,
         slot,
+        profesor: slot.profesor,
       });
       await manager.save(alumno);
 
@@ -279,6 +280,7 @@ export class AlumnoService {
         );
 
       alumno.slot = nuevoSlot;
+      alumno.profesor = nuevoProfesor;
       await manager.save(alumno);
 
       return {

@@ -4,6 +4,7 @@ import { ExportColumn } from './producto-export.mapper';
 const IVA_RATE = 0.21;
 
 export const PEDIDO_COLUMNS: ExportColumn[] = [
+  { header: 'Nº Pedido', key: 'numeroPedido', width: 14 },
   { header: 'ID', key: 'id', width: 38 },
   { header: 'Estado', key: 'estado', width: 12 },
   { header: 'Proveedor', key: 'proveedor', width: 25 },
@@ -29,6 +30,7 @@ export function mapPedidoToExcelRow(pedido: Pedido): Record<string, unknown> {
   const total = subtotal + impuestos;
 
   return {
+    numeroPedido: pedido.numeroGlobal ?? '',
     id: pedido.id,
     estado: pedido.estado,
     proveedor: pedido.proveedor?.nombre ?? '',

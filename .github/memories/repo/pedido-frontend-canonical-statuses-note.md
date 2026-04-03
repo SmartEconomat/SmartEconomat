@@ -1,0 +1,3 @@
+- Frontend pedido contract uses canonical enums only: EstadoPedido = pendiente_de_aprobacion, por_recepcionar, recepcionado, incidencia, cancelado, parcial; EstadoLote = pendiente, parcial, completado, incidencia, cancelado.
+- Do not reintroduce old symbolic states like EstadoPedido.PENDIENTE, EN_PROCESO, ENTREGADO in frontend code.
+- Pedidos page and related hooks/components compile with these canonical enums after replacing stale filters and editability checks.

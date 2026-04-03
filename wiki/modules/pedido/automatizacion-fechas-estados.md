@@ -55,20 +55,20 @@ La transición de estados se centraliza en `PedidoService.handleStatusTransition
 
 Triggers soportados:
 
-- `RECEPCION_PARCIAL` → `EN_PROCESO`
-- `RECEPCION_TOTAL` → `RECIBIDO`
+- `RECEPCION_PARCIAL` → `PARCIAL`
+- `RECEPCION_TOTAL` → `RECEPCIONADO`
 
 Estado inicial del pedido interno:
 
-- Todo pedido nuevo nace en `PENDIENTE`
+- Todo pedido nuevo nace en `PENDIENTE_DE_APROBACION`
 
 ### 4. Estados del agregado `PedidoUsuario`
 
 El backend recalcula el estado visible del agregado en función de sus pedidos internos:
 
-- `pendiente`: todos los pedidos internos siguen pendientes.
-- `en_proceso`: existe actividad en curso (`en_proceso`, `parcial`, `recibido`, `incidencia`).
-- `entregado`: todos los pedidos internos han finalizado de forma compatible (`recibido` o `cancelado`).
+- `pendiente_de_aprobacion`: todos los pedidos internos siguen pendientes.
+- `por_recepcionar`: existe actividad en curso (`por_recepcionar`, `parcial`, `recepcionado`, `incidencia`).
+- `recepcionado`: todos los pedidos internos han finalizado de forma compatible (`recepcionado` o `cancelado`).
 - `cancelado`: todos los pedidos internos han sido cancelados.
 
 ### 5. Recepciones y cambio automático de estado
@@ -117,5 +117,5 @@ Se han actualizado pruebas para cubrir:
 - autogeneración de `fechaEntrega`
 - rechazo de payloads legacy con `fechaEntrega`
 - sincronización `Pedido` → `PedidoUsuario`
-- transición automática `PENDIENTE -> EN_PROCESO -> RECIBIDO` en pedidos internos
+- transición automática `PENDIENTE_DE_APROBACION -> POR_RECEPCIONAR -> RECEPCIONADO` en pedidos internos
 - bloqueo de cancelación tras inicio de recepción

@@ -269,9 +269,9 @@
 | U-PED-01 | Crear pedido calcula costeTotal correctamente | `PedidoService.create()` | Verificar sum(cantidad * precioUnitario) | Sí |
 | U-PED-02 | Crear pedido con ProductoProveedor de otro proveedor | `PedidoService.create()` | Debe rechazar líneas que no pertenecen al proveedor del pedido | Sí |
 | U-PED-03 | Crear pedido con ProductoProveedor sin precioUnitario | `PedidoService.create()` | Debe lanzar ConflictException | Sí |
-| U-PED-04 | Cancelar pedido en estado EN_PROCESO | `PedidoService.cancelarPedido()` | Debe lanzar BadRequestException (solo PENDIENTE/CANCELADO) | Sí |
-| U-PED-05 | Cancelar pedido en estado RECIBIDO | `PedidoService.cancelarPedido()` | Debe lanzar BadRequestException | Sí |
-| U-PED-06 | Eliminar pedido en estado RECIBIDO | `PedidoService.remove()` | Debe lanzar BadRequestException (solo PENDIENTE/CANCELADO) | Sí |
+| U-PED-04 | Cancelar pedido en estado POR_RECEPCIONAR | `PedidoService.cancelarPedido()` | Debe lanzar BadRequestException (solo PENDIENTE_DE_APROBACION/CANCELADO) | Sí |
+| U-PED-05 | Cancelar pedido en estado RECEPCIONADO | `PedidoService.cancelarPedido()` | Debe lanzar BadRequestException | Sí |
+| U-PED-06 | Eliminar pedido en estado RECEPCIONADO | `PedidoService.remove()` | Debe lanzar BadRequestException (solo PENDIENTE_DE_APROBACION/CANCELADO) | Sí |
 | U-PED-07 | Update con líneas vacías | `PedidoService.update()` | Debe lanzar BadRequestException (mínimo 1 línea) | Sí |
 | U-PED-08 | Update recalcula costeTotal | `PedidoService.update()` | Verificar recálculo tras modificar líneas | Sí |
 | U-PED-09 | Transacción atómica en create | `PedidoService.create()` | Verificar rollback si falla una línea | No |
@@ -297,7 +297,7 @@
 | U-REC-07 | procesarRecepcion determina estado CON_INCIDENCIAS | `RecepcionStockService.procesarRecepcion()` | Cuando hay discrepancias | No |
 | U-REC-08 | procesarRecepcionMasiva transacción ACID | `RecepcionStockService.procesarRecepcionMasiva()` | Verificar atomicidad: todo o nada | No |
 | U-REC-09 | procesarRecepcionMasiva crea albarán automático | `RecepcionStockService.procesarRecepcionMasiva()` | Verificar creación de Albaran si nAlbaran proporcionado | No |
-| U-REC-10 | procesarRecepcionMasiva actualiza estado pedido | `RecepcionStockService.procesarRecepcionMasiva()` | Verificar transición PENDIENTE→EN_PROCESO/RECIBIDO | No |
+| U-REC-10 | procesarRecepcionMasiva actualiza estado pedido | `RecepcionStockService.procesarRecepcionMasiva()` | Verificar transición POR_RECEPCIONAR→PARCIAL/RECEPCIONADO | No |
 | U-REC-11 | remove con recepciones dependientes | `RecepcionService.remove()` | Verificar validación de registros dependientes | No |
 
 ### 16. Módulo: `albaran`
@@ -372,7 +372,7 @@
 |---|-------------|-----------------|--------|----------------|
 | U-DASH-01 | getStats calcula valorTotal del inventario | `DashboardService.getStats()` | Verificar sum(cantidadActual * precioUnitario) | No |
 | U-DASH-02 | getStats cuenta itemsBajoStock correctamente | `DashboardService.getStats()` | Verificar criterio cantidadActual < cantidadMinima | No |
-| U-DASH-03 | getStats cuenta pedidos pendientes por estado | `DashboardService.getStats()` | Verificar filtro por PENDIENTE + EN_PROCESO + INCIDENCIA | No |
+| U-DASH-03 | getStats cuenta pedidos pendientes por estado | `DashboardService.getStats()` | Verificar filtro por PENDIENTE_DE_APROBACION + POR_RECEPCIONAR + INCIDENCIA | No |
 | U-DASH-04 | getStats cuenta alertas de caducidad 7 días | `DashboardService.getStats()` | Verificar ventana temporal | No |
 | U-DASH-05 | getStats cuenta productos creados este mes | `DashboardService.getStats()` | Verificar filtro por mes calendario actual | No |
 | U-DASH-06 | getStats últimos 5 movimientos | `DashboardService.getStats()` | Verificar orden DESC y límite 5 | No |
@@ -458,7 +458,7 @@
 |---|-------------|---------------------|--------|----------------|
 | I-FLUJO-01 | Flujo completo: Crear pedido → Recibir → Verificar inventario → Verificar movimientos | Pedido, Recepción, Inventario, Movimiento | Flujo de negocio principal del sistema sin testear end-to-end con datos reales | No |
 | I-FLUJO-02 | Recepción parcial actualiza estado pedido a PARCIAL | Pedido, Recepción | Verificar transición de estado del pedido | No |
-| I-FLUJO-03 | Recepción completa actualiza estado pedido a RECIBIDO | Pedido, Recepción | Verificar transición de estado del pedido | No |
+| I-FLUJO-03 | Recepción completa actualiza estado pedido a RECEPCIONADO | Pedido, Recepción | Verificar transición de estado del pedido | No |
 | I-FLUJO-04 | Recepción con discrepancia crea incidencia y actualiza estado pedido a INCIDENCIA | Pedido, Recepción, Incidencia | Verificar auto-generación y transición | No |
 
 ### 4. Recepción → Incidencia → Resolución
@@ -598,8 +598,8 @@
 | E2E-PED-02 | Crear pedido con producto sin precio retorna error | `POST /pedidos` | Verificar ConflictException por precioUnitario=null | No |
 | E2E-PED-03 | Obtener detalle de pedido con todas las relaciones | `GET /pedidos/:id` | Verificar carga de usuario, proveedor, líneas con productos | No |
 | E2E-PED-04 | Actualizar líneas del pedido recalcula costeTotal | `PATCH /pedidos/:id` | Verificar recálculo automático | No |
-| E2E-PED-05 | Cancelar pedido en estado EN_PROCESO retorna error | `PATCH /pedidos/:id/cancelar` | Verificar restricción de transición de estado | No |
-| E2E-PED-06 | Eliminar pedido en estado RECIBIDO retorna error | `DELETE /pedidos/:id` | Verificar restricción de estado | No |
+| E2E-PED-05 | Cancelar pedido en estado POR_RECEPCIONAR retorna error | `PATCH /pedidos/:id/cancelar` | Verificar restricción de transición de estado | No |
+| E2E-PED-06 | Eliminar pedido en estado RECEPCIONADO retorna error | `DELETE /pedidos/:id` | Verificar restricción de estado | No |
 | E2E-PED-07 | Crear pedido con 0 líneas retorna error | `POST /pedidos` | Verificar validación mínima de líneas | No |
 
 ### 12. Módulo: `recepcion`
@@ -613,7 +613,7 @@
 | E2E-REC-05 | Recepción determina estado COMPLETADA | `POST /recepcion` | Cuando todo coincide → estado correcto | No |
 | E2E-REC-06 | Recepción determina estado PARCIAL | `POST /recepcion` | Cuando faltan cantidades | No |
 | E2E-REC-07 | Recepción crea albarán automáticamente | `POST /recepcion` | Cuando se proporciona nAlbaran | No |
-| E2E-REC-08 | Recepción actualiza estado del pedido | `POST /recepcion` | Verificar transición PENDIENTE → EN_PROCESO / RECIBIDO | No |
+| E2E-REC-08 | Recepción actualiza estado del pedido | `POST /recepcion` | Verificar transición POR_RECEPCIONAR → PARCIAL / RECEPCIONADO | No |
 | E2E-REC-09 | Listar recepciones paginadas | `GET /recepcion` | Solo testa errores actualmente | No |
 | E2E-REC-10 | Obtener detalle de recepción con productos | `GET /recepcion/:id` | Verificar carga de relaciones | No |
 | E2E-REC-11 | CRUD de recepcion-productos | `/recepcion-productos` | No existe test para el sub-controlador | No |

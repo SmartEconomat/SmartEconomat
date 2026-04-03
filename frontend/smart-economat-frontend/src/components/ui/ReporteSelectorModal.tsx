@@ -18,28 +18,39 @@ import DatePicker from './DatePicker';
 import {
   downloadReportePedidosPdf,
   downloadReporteIncidenciasPdf,
+  downloadReporteIncidenciasExcel,
 } from '../../services/recepcion.service';
 import { fetchProveedoresConPedidos } from '../../services/proveedor.service';
 import { Proveedor } from '../../services/proveedor.types';
 import { useToast } from '../../store/toast.hooks';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 
 export type TipoReportePdf = 'pedido' | 'incidencias';
+export type ReporteFormato = 'pdf' | 'excel';
 
 interface ReporteSelectorModalProps {
   isOpen: boolean;
   onClose: () => void;
   tipo: TipoReportePdf;
+  formato?: ReporteFormato;
 }
 
-const TITLES: Record<TipoReportePdf, string> = {
-  pedido: 'Reporte de Pedidos (PDF)',
-  incidencias: 'Reporte de Incidencias (PDF)',
+const TITLES: Record<TipoReportePdf, Record<ReporteFormato, string>> = {
+  pedido: {
+    pdf: 'Reporte de Pedidos (PDF)',
+    excel: 'Reporte de Pedidos (PDF)',
+  },
+  incidencias: {
+    pdf: 'Reporte de Incidencias (PDF)',
+    excel: 'Reporte de Incidencias (Excel)',
+  },
 };
 
 const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
   isOpen,
   onClose,
   tipo,
+  formato = 'pdf',
 }) => {
   const toast = useToast();
   const [startDate, setStartDate] = useState('');
@@ -52,6 +63,8 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
   const [isDownloading, setIsDownloading] = useState(false);
   const [isLoadingProveedores, setIsLoadingProveedores] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const isExcelMode = tipo === 'incidencias' && formato === 'excel';
 
   useEffect(() => {
     if (!isOpen) {
@@ -105,6 +118,13 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
           incluirCancelados,
           paginaPorProveedor,
         });
+      } else if (isExcelMode) {
+        await downloadReporteIncidenciasExcel({
+          startDate,
+          endDate,
+          proveedorId: proveedorId || undefined,
+          soloNoResueltas,
+        });
       } else {
         await downloadReporteIncidenciasPdf({
           startDate,
@@ -113,11 +133,19 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
           soloNoResueltas,
         });
       }
-      toast.success('Reporte generado correctamente.');
+      toast.success(
+        isExcelMode
+          ? 'Excel generado correctamente.'
+          : 'Reporte generado correctamente.'
+      );
       onClose();
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Error al generar el reporte.';
+        err instanceof Error
+          ? err.message
+          : isExcelMode
+            ? 'Error al generar el Excel.'
+            : 'Error al generar el reporte.';
       toast.error(message);
     } finally {
       setIsDownloading(false);
@@ -129,7 +157,12 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title={TITLES[tipo]} size="sm">
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={TITLES[tipo][formato]}
+      size="sm"
+    >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
         <DatePicker
           label="Fecha de inicio"
@@ -253,10 +286,13 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
             Cancelar
           </Button>
           <Button
-            variant="contained"
+            variant={isExcelMode ? 'outlined' : 'contained'}
+            color={isExcelMode ? 'success' : 'error'}
             startIcon={
               isDownloading ? (
                 <CircularProgress size={18} color="inherit" />
+              ) : isExcelMode ? (
+                <FileDownloadOutlinedIcon />
               ) : (
                 <PictureAsPdfIcon />
               )
@@ -264,7 +300,11 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
             onClick={() => void handleGenerate()}
             disabled={isDownloading}
           >
-            {isDownloading ? 'Generando...' : 'Generar PDF'}
+            {isDownloading
+              ? 'Generando...'
+              : isExcelMode
+                ? 'Generar Excel'
+                : 'Generar PDF'}
           </Button>
         </Box>
       </Box>

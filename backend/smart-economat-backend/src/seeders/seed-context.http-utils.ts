@@ -1,3 +1,5 @@
+import { SEED_REFERENCE_DATE } from './deterministic.seed-data';
+
 export class HttpSeedRequestError extends Error {
   constructor(
     public readonly status: number,
@@ -48,7 +50,8 @@ export function computeSeedBackoffMs(
   attempt: number
 ): number {
   const exponential = backoffBaseMs * 2 ** attempt;
-  const jitter = Math.floor(Math.random() * backoffBaseMs);
+  const safeBase = Math.max(1, backoffBaseMs);
+  const jitter = (attempt * 97) % safeBase;
   return Math.min(backoffMaxMs, exponential + jitter);
 }
 
@@ -69,7 +72,7 @@ export function parseSeedRetryAfterMs(
     return undefined;
   }
 
-  return Math.max(0, targetTime - Date.now());
+  return Math.max(0, targetTime - SEED_REFERENCE_DATE.getTime());
 }
 
 export function seedSafeStringify(value: unknown): string {

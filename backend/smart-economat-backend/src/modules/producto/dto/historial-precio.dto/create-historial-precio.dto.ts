@@ -18,10 +18,8 @@ export class CreateHistorialPrecioDto {
       ),
     }
   )
-  @Min(0, {
-    message: i18nValidationMessage(
-      'validation.EL_PRECIO_NO_PUEDE_SER_NEGATIVO'
-    ),
+  @Min(0.01, {
+    message: i18nValidationMessage('validation.EL_PRECIO_DEBE_SER_MAYOR_QUE_0'),
   })
   precio!: number;
 

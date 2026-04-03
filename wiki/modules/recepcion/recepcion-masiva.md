@@ -1,8 +1,8 @@
-# Documentación: Sistema de Recepción Masiva y Garantía Transaccional (ACID)
+# Recepción masiva y garantía transaccional
 
 Este documento detalla la arquitectura técnica y el flujo de trabajo del sistema de recepción masiva del SmartEconomat, diseñado para gestionar volúmenes de datos de gran escala (cientos o miles de productos) con total integridad.
 
-## 1. Arquitectura del Backend (ACID & Batching)
+## 1. Arquitectura del backend
 
 La lógica reside en el `RecepcionStockService` y utiliza un patrón de transacción única para garantizar que la base de datos nunca quede en un estado inconsistente.
 
@@ -21,7 +21,7 @@ La lógica reside en el `RecepcionStockService` y utiliza un patrón de transacc
 7. **Commit**: Si todas las operaciones tienen éxito, se hace persistente el cambio.
 8. **Rollback**: Si ocurre CUALQUIER error (fallo de red, dato corrupto, error de base de datos) durante el procesamiento de los miles de productos, la transacción se revierte al punto inicial como si nada hubiera pasado.
 
-## 2. Front-end: Resiliencia y Experiencia de Usuario
+## 2. Frontend: resiliencia y experiencia de usuario
 
 El wizard de recepción en React ha sido blindado para evitar la pérdida de trabajo del operario.
 
@@ -44,5 +44,3 @@ El wizard de recepción en React ha sido blindado para evitar la pérdida de tra
   - `OPTIMO`: El stock se suma al inventario físico.
   - `ROTO` / `DEFECTUOSO`: No se suma al stock disponible, pero genera automáticamente una `Incidencia` para reclamación al proveedor.
 
----
-*SmartEconomat Wiki - Marzo 2026*

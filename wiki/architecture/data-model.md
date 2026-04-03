@@ -200,7 +200,7 @@ Agregado principal de negocio. Es el pedido que aparece en “Mis pedidos” y e
 | **fechaPedido** | timestamptz | `Date` | Fecha de creación del agregado. |
 | **fechaEntrega** | timestamptz | `Date \| null` | Fecha estimada calculada por backend. |
 | **costeTotal** | numeric(14,4) | `number` | Coste total agregado de todas las líneas/proveedores. |
-| **estado** | enum | `EstadoPedidoUsuario` | `pendiente`, `en_proceso`, `entregado`, `cancelado`. |
+| **estado** | enum | `EstadoPedido` | `pendiente_de_aprobacion`, `por_recepcionar`, `recepcionado`, `incidencia`, `cancelado`, `parcial`. |
 | **observaciones** | text | `string \| null` | Notas generales del pedido de negocio. |
 
 ### PedidoUsuarioLinea
@@ -226,7 +226,7 @@ Pedido interno operativo realizado a un proveedor.
 | **fechaPedido** | timestamptz | `Date` | Fecha de emisión (default: NOW). |
 | **fechaEntrega** | timestamptz | `Date \| null` | Fecha prevista de llegada o real. |
 | **costeTotal** | numeric(14,4)| `number` | Coste calculado (Check >= 0). |
-| **estado** | enum | `EstadoPedido` | `pendiente`, `en_proceso`, `recibido`, `incidencia`, `cancelado`, `parcial`. |
+| **estado** | enum | `EstadoPedido` | `pendiente_de_aprobacion`, `por_recepcionar`, `recepcionado`, `incidencia`, `cancelado`, `parcial`. |
 | **motivoCancelacion**| text | `string \| null` | Obligatorio si el estado es 'cancelado'. |
 
 ### 9. PedidoProducto
@@ -250,6 +250,8 @@ Lote administrativo de compra que agrupa varios `Pedido` internos ya existentes.
 | **estado** | enum | `EstadoLote` | Estado de la compra consolidada. |
 | **observaciones** | text | `string \| null` | Notas globales de la compra. |
 | **pedidos** | relación | `Pedido[]` | Pedidos internos asociados al lote. |
+
+`EstadoLote` se deriva automaticamente desde los `Pedido` asociados con esta prioridad: `cancelado` si todos estan cancelados, `incidencia` si alguno esta en incidencia, `completado` si todos estan recepcionados o cancelados, `parcial` si ya hay recepcion iniciada pero el lote no ha cerrado, y `pendiente` si aun no hay ninguna recepcion iniciada.
 
 ---
 

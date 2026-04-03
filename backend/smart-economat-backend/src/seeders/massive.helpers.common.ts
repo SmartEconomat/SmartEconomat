@@ -99,6 +99,90 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
+function hasSoftDeleteMarker(value: unknown): boolean {
+  if (value === null || value === undefined) {
+    return false;
+  }
+
+  if (value instanceof Date) {
+    return !Number.isNaN(value.getTime());
+  }
+
+  if (typeof value === 'string') {
+    return value.trim().length > 0;
+  }
+
+  return true;
+}
+
+export function isSoftDeletedEntity(entity: Record<string, unknown>): boolean {
+  return (
+    hasSoftDeleteMarker(entity.deletedAt) ||
+    hasSoftDeleteMarker(entity.deleted_at) ||
+    hasSoftDeleteMarker(entity.deletedBy) ||
+    hasSoftDeleteMarker(entity.deleted_by)
+  );
+}
+
+export function extractActiveEntityIds(
+  entities: Array<Record<string, unknown>>
+): string[] {
+  return Array.from(
+    new Set(
+      entities
+        .filter((entity) => !isSoftDeletedEntity(entity))
+        .map((entity) =>
+          typeof entity.id === 'string' ? entity.id.trim() : ''
+        )
+        .filter((id): id is string => id.length > 0)
+    )
+  );
+}
+
+export function listFromResponse(
+  response: unknown
+): Array<Record<string, unknown>> {
+  const asRecordArray = (
+    value: unknown
+  ): Array<Record<string, unknown>> | null => {
+    if (!Array.isArray(value)) {
+      return null;
+    }
+
+    return value.filter(isRecord);
+  };
+
+  const directArray = asRecordArray(response);
+  if (directArray) {
+    return directArray;
+  }
+
+  if (!isRecord(response)) {
+    return [];
+  }
+
+  for (const key of ['data', 'items', 'rows', 'results']) {
+    const directCandidate = asRecordArray(response[key]);
+    if (directCandidate) {
+      return directCandidate;
+    }
+
+    const nestedValue = response[key];
+    if (!isRecord(nestedValue)) {
+      continue;
+    }
+
+    for (const nestedKey of ['data', 'items', 'rows', 'results']) {
+      const nestedCandidate = asRecordArray(nestedValue[nestedKey]);
+      if (nestedCandidate) {
+        return nestedCandidate;
+      }
+    }
+  }
+
+  return [response];
+}
+
 export function toEntityArray(
   response: unknown
 ): Array<Record<string, unknown>> {

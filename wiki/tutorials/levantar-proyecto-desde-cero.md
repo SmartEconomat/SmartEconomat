@@ -1,33 +1,38 @@
-# Tutorial: Levantar el backend desde cero
+# Tutorial: levantar el backend desde cero
 
 ## Objetivo
-Levantar el backend NestJS + TypeORM en entorno local con base de datos lista, datos semilla y API operativa.
 
-## Audiencia
-Desarrolladores que se incorporan al proyecto y no han ejecutado el backend antes.
+Dejar el backend NestJS operativo en local, conectado a PostgreSQL y con datos semilla listos para probar la API.
 
 ## Resultado esperado
-Al finalizar, podrás:
-- Levantar la API en `/api/v1`.
-- Acceder a Swagger en `/docs`.
-- Validar conexión a PostgreSQL.
-- Cargar datos de seed para pruebas.
+
+Al terminar tendrás:
+
+- API disponible en `http://localhost:3000/api/v1`
+- Swagger local en `http://localhost:3000/docs`
+- Base de datos inicializada y poblada con seeders
 
 ## Prerrequisitos
-- Node.js >= 22.2.0
-- npm
-- Docker Desktop (recomendado para PostgreSQL)
-- Git
 
-## Paso 1. Clonar el repositorio
+- Node.js `>=22.2.0`
+- npm
+- Docker Compose para levantar PostgreSQL y Redis de forma sencilla
+
+## Paso 1. Clonar y situarte en el backend
+
 ```bash
-git clone <url-del-repo>
+git clone <url-del-repositorio> SmartEconomat
 cd SmartEconomat/backend/smart-economat-backend
 ```
 
-## Paso 2. Configurar variables de entorno
-1. Crea un `.env` en la raíz del backend.
-2. Define al menos:
+## Paso 2. Preparar variables de entorno del backend
+
+```bash
+cp ../../.env.example .env
+```
+
+Revisa al menos estas variables dentro de `.env`:
+
 ```env
 NODE_ENV=development
 BACKEND_PORT=3000
@@ -36,72 +41,82 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_USERNAME=postgres
 DB_PASSWORD=postgres
-DB_DATABASE=smart_economat
-DB_SYNC=true
-JWT_SECRET=change-me
+DB_DATABASE=app_db
+JWT_SECRET=changeme
 JWT_EXPIRATION=7d
-SENTRY_DSN=
 ```
 
-## Paso 3. Levantar PostgreSQL
-### Opción A: Docker Compose (recomendada)
-Desde la raíz del repo:
+## Paso 3. Levantar base de datos y Redis
+
+Desde la raíz del repositorio:
+
 ```bash
-docker compose -f docker-compose.dev.yml up -d db
+docker compose -f docker-compose.dev.yml up -d db redis
 ```
 
-### Opción B: PostgreSQL local
-Asegúrate de crear la base `smart_economat` y de que las credenciales coincidan con `.env`.
+Esto evita tener que instalar PostgreSQL manualmente y garantiza la imagen preparada para UUID v7.
 
 ## Paso 4. Instalar dependencias del backend
+
 ```bash
 npm install
 ```
 
 ## Paso 5. Inicializar esquema y datos
-### Flujo rápido recomendado en desarrollo
+
+Flujo recomendado cuando partes de cero:
+
 ```bash
 npm run db:reset
+npm run seed
 ```
-Este comando ejecuta:
-1. `schema:drop`
-2. `schema:sync`
-3. `seed`
 
-### Alternativa
+`npm run db:reset` solo ejecuta `schema:drop` y `schema:sync`; el seed debe invocarse de forma explícita.
+
+Si no necesitas borrar el esquema, basta con:
+
 ```bash
 npm run schema:sync
 npm run seed
 ```
 
-## Paso 6. Iniciar servidor en modo desarrollo
+## Paso 6. Iniciar el servidor
+
 ```bash
 npm run start:dev
 ```
 
-## Paso 7. Verificar funcionamiento
-- Health base: `GET http://localhost:3000/api/v1`
-- Swagger: `http://localhost:3000/docs`
-- CORS: comprobar origen frontend permitido
+## Paso 7. Validar el arranque
 
-## Paso 8. Ejecutar pruebas
+- `GET http://localhost:3000/api/v1`
+- `http://localhost:3000/docs`
+- Login con un usuario creado por seed
+
+## Paso 8. Comprobaciones opcionales
+
 ```bash
 npm run test
 npm run test:e2e
 ```
 
-## Paso 9. Problemas comunes y solución
-### Error de conexión a DB
-- Verifica `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`.
-- Confirma que el contenedor `db` está activo.
+## Problemas frecuentes
 
-### Error de JWT
-- Asegura valor no vacío en `JWT_SECRET`.
+### El backend no conecta con la base de datos
 
-### Seed bloqueado en producción
-- El seeder no debe ejecutarse con `NODE_ENV=production`.
+- Verifica `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD` y `DB_DATABASE`.
+- Comprueba que el contenedor `db` está levantado.
+
+### Fallan los correos de recuperación
+
+- Revisa `MAIL_HOST`, `MAIL_USER`, `MAIL_PASS` y `MAIL_FROM`.
+- Si no configuras SMTP, el backend opera en modo simulación y escribe el intento en logs.
+
+### Swagger no abre
+
+- Asegúrate de que `npm run start:dev` está corriendo y de abrir `http://localhost:3000/docs`.
 
 ## Siguientes pasos
-- [Cómo crear una entidad y relaciones](../how-to/crear-entidad-y-relaciones.md)
-- [Cómo generar y aplicar migraciones](../how-to/generar-y-aplicar-migracion.md)
+
+- [Crear entidad y relaciones](../how-to/crear-entidad-y-relaciones.md)
+- [Generar y aplicar migraciones](../how-to/generar-y-aplicar-migracion.md)
 - [Referencia de endpoints](../reference/endpoints.md)

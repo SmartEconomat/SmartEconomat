@@ -6,6 +6,7 @@ import { AppModule } from '../../src/app.module';
 import { TransformInterceptor } from '../../src/common/interceptors/transform.interceptor';
 import { GlobalExceptionFilter } from '../../src/common/filters/global-exception.filter';
 import { useContainer } from 'class-validator';
+import { runTestSeeders } from './seed-test-database';
 
 /**
  * @file test-app.ts
@@ -43,6 +44,8 @@ export async function getTestApp(
   if (g.__TEST_APP__) {
     return g.__TEST_APP__ as INestApplication;
   }
+
+  await runTestSeeders();
 
   const moduleFixture = await Test.createTestingModule({
     imports: [AppModule],

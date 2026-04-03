@@ -120,9 +120,7 @@ export class RecetaRepository {
     query: PaginationQueryDto,
     userRole?: string
   ): Promise<PaginatedResponseDto<Receta>> {
-    const isAdmin =
-      userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'SUPER_ADMIN';
+    void userRole;
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 50);
     let sortBy = query.sortBy ?? 'nombre';
@@ -145,7 +143,7 @@ export class RecetaRepository {
       order: { [sortBy]: order },
       skip: (page - 1) * limit,
       take: limit,
-      withDeleted: isAdmin,
+      withDeleted: false,
     });
 
     return {
@@ -466,8 +464,8 @@ export class RecetaRepository {
     const pp = manager.create(ProductoProveedor, {
       productoId,
       proveedorId: internalProvider.id,
-      precioUnitario: 0,
       marca: 'Interna',
+      precioUnitario: 0.01,
     });
     await manager.save(ProductoProveedor, pp);
   }

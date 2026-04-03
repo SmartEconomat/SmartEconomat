@@ -1,7 +1,9 @@
 import { CreateRecepcionDto, RecepcionResultado } from './recepcion.types';
+import dayjs from 'dayjs';
 import {
   baseFetch,
   ApiResponse,
+  downloadFile,
   unwrapList,
   openPdfInNewTab,
 } from './api.service';
@@ -21,6 +23,19 @@ export interface ReporteIncidenciasPdfParams {
   soloNoResueltas?: boolean;
 }
 
+export interface ReporteIncidenciasExcelParams {
+  startDate: string;
+  endDate: string;
+  proveedorId?: string;
+  soloNoResueltas?: boolean;
+}
+
+const toLocalStartOfDayIso = (date: string): string =>
+  dayjs(date).startOf('day').toISOString();
+
+const toLocalEndOfDayIso = (date: string): string =>
+  dayjs(date).endOf('day').toISOString();
+
 export async function downloadReportePedidosPdf(
   params: ReportePedidosPdfParams
 ): Promise<void> {
@@ -36,12 +51,32 @@ export async function downloadReportePedidosPdf(
 export async function downloadReporteIncidenciasPdf(
   params: ReporteIncidenciasPdfParams
 ): Promise<void> {
-  const query = new URLSearchParams({ tipo: 'incidencias' });
-  query.set('startDate', params.startDate);
-  query.set('endDate', params.endDate);
+  const query = new URLSearchParams();
+  query.set('startDate', toLocalStartOfDayIso(params.startDate));
+  query.set('endDate', toLocalEndOfDayIso(params.endDate));
   if (params.proveedorId) query.set('proveedorId', params.proveedorId);
-  if (params.soloNoResueltas) query.set('soloNoResueltas', 'true');
-  await openPdfInNewTab(`/recepciones/reporte-pdf?${query.toString()}`);
+  if (params.soloNoResueltas) {
+    query.set('soloNoResueltas', 'true');
+    query.set('resuelta', 'false');
+  }
+  await openPdfInNewTab(`/export/incidencias/pdf?${query.toString()}`);
+}
+
+export async function downloadReporteIncidenciasExcel(
+  params: ReporteIncidenciasExcelParams
+): Promise<void> {
+  const query = new URLSearchParams();
+  query.set('startDate', toLocalStartOfDayIso(params.startDate));
+  query.set('endDate', toLocalEndOfDayIso(params.endDate));
+  if (params.proveedorId) query.set('proveedorId', params.proveedorId);
+  if (params.soloNoResueltas) {
+    query.set('soloNoResueltas', 'true');
+    query.set('resuelta', 'false');
+  }
+  await downloadFile(
+    `/export/incidencias/xlsx?${query.toString()}`,
+    'incidencias.xlsx'
+  );
 }
 
 /**

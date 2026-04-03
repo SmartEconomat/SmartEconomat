@@ -1,4 +1,4 @@
-# 🚀 Normalización de Datos - Quick Reference
+# Normalización de datos: referencia rápida
 
 ## Uso Rápido
 
@@ -94,14 +94,14 @@ export class MiDto {
 ## Orden Correcto de Decoradores
 
 ```typescript
-// ✅ CORRECTO - Transform antes que Validate
+// Correcto: transformar antes de validar
 @Transform(TrimStringTransformer.transform)
 @IsString()
 @IsNotEmpty()
 @MaxLength(100)
 nombre: string;
 
-// ❌ INCORRECTO - Validate antes que Transform
+// Incorrecto: validar antes de transformar
 @IsString()
 @Transform(TrimStringTransformer.transform)  // ❌ Demasiado tarde
 nombre: string;

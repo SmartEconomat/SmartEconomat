@@ -2,6 +2,7 @@ import { getTestApp } from '../setup/test-app';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { EstadoPedido } from '../../src/modules/pedido/enums/estado-pedido.enum';
+import { EstadoPedidoUsuario } from '../../src/modules/pedido/enums/estado-pedido-usuario.enum';
 import { generateUniqueName } from '../utils/test-helpers';
 
 describe('PedidoController (e2e)', () => {
@@ -10,7 +11,9 @@ describe('PedidoController (e2e)', () => {
   let app: INestApplication;
   let adminToken: string;
   let proveedorId: string;
+  let productoId: string;
   let productoProveedorId: string;
+  let ubicacionId: string;
 
   beforeAll(async () => {
     app = await getTestApp();
@@ -50,11 +53,19 @@ describe('PedidoController (e2e)', () => {
       .get(`/api/v1/productos/${prodRes.body.data.id}`)
       .set('Authorization', `Bearer ${adminToken}`);
 
+    productoId = prodRes.body.data.id;
+
     const relations =
       prodDetail.body.data.productoProveedores ||
       prodDetail.body.data.proveedores ||
       [];
     productoProveedorId = relations[0].id;
+
+    const ubiRes = await request(app.getHttpServer() as string)
+      .post('/api/v1/ubicacion')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ nombre: `Ubi Pedido ${Date.now()}` });
+    ubicacionId = ubiRes.body.data.id;
   });
 
   describe('Ciclo de Vida del Pedido', () => {
@@ -102,7 +113,10 @@ describe('PedidoController (e2e)', () => {
         });
 
       expect(response.status).toBe(201);
-      expect(response.body.data.estado).toBe(EstadoPedido.PENDIENTE);
+      expect(response.body.data.numeroGlobal).toBeDefined();
+      expect(response.body.data.estado).toBe(
+        EstadoPedido.PENDIENTE_DE_APROBACION
+      );
       expect(Number(response.body.data.costeTotal)).toBe(52.5);
       const diffMs =
         new Date(response.body.data.fechaEntrega).getTime() - Date.now();
@@ -194,7 +208,7 @@ describe('PedidoController (e2e)', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('INVALID_SORT_FIELD');
+      expect(response.body.message).toContain('Campo de ordenación inválido');
       expect(response.body.data).toBeNull();
     });
 
@@ -231,6 +245,11 @@ describe('PedidoController (e2e)', () => {
 
     it('E2E-PED-21-CAN-BLOCK: No cancela un pedido si ya comenzó la recepción', async () => {
       const pedido = await createPedido();
+
+      await request(app.getHttpServer() as string)
+        .patch(`/api/v1/pedidos/${pedido.id}/aceptar`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
 
       await request(app.getHttpServer() as string)
         .post('/api/v1/recepciones')
@@ -300,7 +319,26 @@ describe('PedidoController (e2e)', () => {
       return recetaRes.body.data.id as string;
     }
 
-    it('E2E-PED-18-FROM-RECIPES-OK: Consolida varias recetas en un único pedido', async () => {
+    async function createInventario(
+      productoProveedorIdParam: string,
+      cantidadActual: number,
+      cantidadMinima = 0
+    ) {
+      const inventarioRes = await request(app.getHttpServer() as string)
+        .post('/api/v1/inventario')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          productoProveedorId: productoProveedorIdParam,
+          ubicacionId,
+          cantidadActual,
+          cantidadMinima,
+        });
+
+      expect(inventarioRes.status).toBe(201);
+      return inventarioRes.body.data;
+    }
+
+    it('E2E-PED-18-FROM-RECIPES-OK: Genera un pedido de un único proveedor desde recetas', async () => {
       const productoId = await createProductoConProveedor(
         proveedorId,
         generateUniqueName('Harina receta pedido'),
@@ -319,11 +357,14 @@ describe('PedidoController (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           recetaIds: [recetaAId, recetaBId],
+          proveedorId,
           observaciones: 'Pedido consolidado desde E2E',
         });
 
       expect(response.status).toBe(201);
-      expect(response.body.data.estado).toBe(EstadoPedido.PENDIENTE);
+      expect(response.body.data.estado).toBe(
+        EstadoPedido.PENDIENTE_DE_APROBACION
+      );
       expect(response.body.data.proveedor?.id).toBe(proveedorId);
       expect(response.body.data.pedidoProductos).toHaveLength(1);
       expect(Number(response.body.data.pedidoProductos[0].cantidad)).toBe(3);
@@ -351,7 +392,7 @@ describe('PedidoController (e2e)', () => {
       expect(response.body.success).toBe(false);
     });
 
-    it('E2E-PED-20-FROM-RECIPES-400: Falla si no existe proveedor común', async () => {
+    it('E2E-PED-20-FROM-RECIPES-400: Falla si las recetas requieren varios proveedores y no se indica uno', async () => {
       const proveedorAltRes = await request(app.getHttpServer() as string)
         .post('/api/v1/proveedor')
         .set('Authorization', `Bearer ${adminToken}`)
@@ -393,8 +434,177 @@ describe('PedidoController (e2e)', () => {
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
       expect(response.body.message).toContain(
-        'No existe un proveedor común activo'
+        'Un pedido solo puede pertenecer a un proveedor'
       );
+    });
+
+    it('E2E-PED-22-PU-FROM-RECIPES-OK: Genera un pedido visible agrupado por proveedor desde recetas', async () => {
+      const proveedorAltRes = await request(app.getHttpServer() as string)
+        .post('/api/v1/proveedor')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          nombre: generateUniqueName('Proveedor visible recetas'),
+          nif: `B${Math.floor(Math.random() * 100000000)}`,
+          email: `prov_visible_${Date.now()}@example.com`,
+        });
+      expect(proveedorAltRes.status).toBe(201);
+      const proveedorAltId = proveedorAltRes.body.data.id as string;
+
+      const productoAId = await createProductoConProveedor(
+        proveedorId,
+        generateUniqueName('Producto visible receta A'),
+        2
+      );
+      const productoBId = await createProductoConProveedor(
+        proveedorAltId,
+        generateUniqueName('Producto visible receta B'),
+        5
+      );
+
+      const recetaAId = await createReceta(
+        generateUniqueName('Receta visible A'),
+        [{ productoId: productoAId, cantidad: 1, unidad: 'kg' }]
+      );
+      const recetaBId = await createReceta(
+        generateUniqueName('Receta visible B'),
+        [{ productoId: productoBId, cantidad: 1, unidad: 'kg' }]
+      );
+
+      const response = await request(app.getHttpServer() as string)
+        .post('/api/v1/pedido-usuarios/from-recipes')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          recetaIds: [recetaAId, recetaBId],
+          observaciones: 'Pedido visible desde recetas',
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.data.numeroGlobal).toBeDefined();
+      expect(response.body.data.estado).toBe(EstadoPedidoUsuario.PENDIENTE);
+      expect(response.body.data.pedidos).toHaveLength(2);
+
+      const proveedores = new Set(
+        response.body.data.pedidos.map(
+          (pedido: { proveedor?: { id?: string } }) => pedido.proveedor?.id
+        )
+      );
+
+      expect(proveedores).toEqual(new Set([proveedorId, proveedorAltId]));
+    });
+
+    it('E2E-PED-23-PU-FROM-MISSING-STOCK-OK: Genera un pedido visible desde faltantes reales de inventario', async () => {
+      await createInventario(productoProveedorId, 1, 0);
+
+      const recetaFaltanteId = await createReceta(
+        generateUniqueName('Receta faltante visible'),
+        [{ productoId, cantidad: 4, unidad: 'kg' }]
+      );
+
+      const response = await request(app.getHttpServer() as string)
+        .post('/api/v1/pedido-usuarios/from-missing-stock')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          items: [{ recetaId: recetaFaltanteId, cantidad: 1 }],
+          observaciones: 'Pedido visible por faltantes',
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.data.estado).toBe(EstadoPedidoUsuario.PENDIENTE);
+      expect(response.body.data.numeroGlobal).toBeDefined();
+      expect(response.body.data.lineas).toHaveLength(1);
+      expect(response.body.data.lineas[0].productoProveedorId).toBe(
+        productoProveedorId
+      );
+      expect(Number(response.body.data.lineas[0].cantidad)).toBeGreaterThan(0);
+      expect(response.body.data.pedidos).toHaveLength(1);
+      expect(response.body.data.pedidos[0].proveedor?.id).toBe(proveedorId);
+    });
+
+    it('E2E-PED-24-PU-APPROVE-NUMBERS-OK: Mantiene el número del pedido visible y asigna números independientes a cada pedido proveedor', async () => {
+      const proveedorAltRes = await request(app.getHttpServer() as string)
+        .post('/api/v1/proveedor')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          nombre: generateUniqueName('Proveedor aprobación visible'),
+          nif: `B${Math.floor(Math.random() * 100000000)}`,
+          email: `prov_visible_approve_${Date.now()}@example.com`,
+        });
+      expect(proveedorAltRes.status).toBe(201);
+      const proveedorAltId = proveedorAltRes.body.data.id as string;
+
+      const productoAltId = await createProductoConProveedor(
+        proveedorAltId,
+        generateUniqueName('Producto proveedor alternativo aprobación'),
+        7
+      );
+
+      const productoAltDetail = await request(app.getHttpServer() as string)
+        .get(`/api/v1/productos/${productoAltId}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      const productoProveedorAltId = (productoAltDetail.body.data
+        .productoProveedores ||
+        productoAltDetail.body.data.proveedores ||
+        [])[0].id as string;
+
+      const pedidoUsuarioResponse = await request(app.getHttpServer() as string)
+        .post('/api/v1/pedido-usuarios')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          observaciones: 'Pedido visible multi-proveedor para aprobación',
+          lineas: [
+            {
+              productoProveedorId,
+              cantidad: 2,
+            },
+            {
+              productoProveedorId: productoProveedorAltId,
+              cantidad: 3,
+            },
+          ],
+        });
+
+      expect(pedidoUsuarioResponse.status).toBe(201);
+      const pedidoUsuarioId = pedidoUsuarioResponse.body.data.id as string;
+      const numeroPedidoUsuario = String(
+        pedidoUsuarioResponse.body.data.numeroGlobal
+      );
+
+      const approvalResponse = await request(app.getHttpServer() as string)
+        .patch(`/api/v1/pedido-usuarios/${pedidoUsuarioId}/aceptar`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send();
+
+      expect(approvalResponse.status).toBe(200);
+      expect(String(approvalResponse.body.data.numeroGlobal)).toBe(
+        numeroPedidoUsuario
+      );
+      expect(approvalResponse.body.data.estado).toBe(
+        EstadoPedidoUsuario.APROBADO
+      );
+      expect(approvalResponse.body.data.pedidos).toHaveLength(2);
+
+      const numerosPedidoProveedor = approvalResponse.body.data.pedidos.map(
+        (pedido: { numeroGlobal: string; proveedor?: { id?: string } }) => ({
+          numeroGlobal: String(pedido.numeroGlobal),
+          proveedorId: pedido.proveedor?.id,
+        })
+      );
+
+      expect(
+        numerosPedidoProveedor.every(
+          (pedido) =>
+            Boolean(pedido.numeroGlobal) &&
+            pedido.numeroGlobal !== numeroPedidoUsuario
+        )
+      ).toBe(true);
+      expect(
+        new Set(numerosPedidoProveedor.map((pedido) => pedido.numeroGlobal))
+          .size
+      ).toBe(2);
+      expect(
+        new Set(numerosPedidoProveedor.map((pedido) => pedido.proveedorId))
+      ).toEqual(new Set([proveedorId, proveedorAltId]));
     });
   });
 });

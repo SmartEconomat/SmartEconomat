@@ -1,18 +1,85 @@
 import { Proveedor } from './proveedor.types';
 import { baseFetch, ApiResponse, PaginatedData } from './api.service';
+import { normalizeLimitParam, normalizePageParam } from './api.utils';
 
 const PROVEEDORES_MAX_LIMIT = 50;
 
-function normalizeSortableValue(value: unknown): string | number | boolean {
-  if (value === null || value === undefined) return '';
-  if (
-    typeof value === 'string' ||
-    typeof value === 'number' ||
-    typeof value === 'boolean'
-  ) {
-    return value;
+type ProviderSortOrder = 'asc' | 'desc' | 'ASC' | 'DESC';
+
+export interface ProveedorPayloadFields {
+  nombre?: string;
+  contacto?: string;
+  telefono?: string;
+  email?: string;
+  direccion?: string;
+  nif?: string;
+}
+
+export type CreateProveedorPayload = Required<
+  Pick<ProveedorPayloadFields, 'nombre'>
+> &
+  Omit<ProveedorPayloadFields, 'nombre'>;
+
+export type UpdateProveedorPayload = ProveedorPayloadFields;
+
+function normalizeProveedorField(value: unknown): string | undefined {
+  if (value == null) {
+    return undefined;
   }
-  return String(value);
+
+  return String(value).trim();
+}
+
+function assertProveedorMaxLength(
+  fieldName: string,
+  value: string | undefined,
+  maxLength: number
+): void {
+  if (value !== undefined && value.length > maxLength) {
+    throw new Error(
+      `El campo ${fieldName} no puede superar ${maxLength} caracteres.`
+    );
+  }
+}
+
+function sanitizeProveedorPayload(
+  proveedor: ProveedorPayloadFields,
+  requireNombre: boolean
+): ProveedorPayloadFields {
+  const normalizedPayload: ProveedorPayloadFields = {
+    nombre: normalizeProveedorField(proveedor.nombre),
+    contacto: normalizeProveedorField(proveedor.contacto),
+    telefono: normalizeProveedorField(proveedor.telefono),
+    email: normalizeProveedorField(proveedor.email)?.toLowerCase(),
+    direccion: normalizeProveedorField(proveedor.direccion),
+    nif: normalizeProveedorField(proveedor.nif),
+  };
+
+  if (normalizedPayload.nombre !== undefined && !normalizedPayload.nombre) {
+    throw new Error('El nombre del proveedor no puede estar vacio.');
+  }
+
+  if (requireNombre && !normalizedPayload.nombre) {
+    throw new Error('El nombre del proveedor es obligatorio.');
+  }
+
+  assertProveedorMaxLength('nombre', normalizedPayload.nombre, 100);
+  assertProveedorMaxLength('contacto', normalizedPayload.contacto, 100);
+  assertProveedorMaxLength('telefono', normalizedPayload.telefono, 50);
+  assertProveedorMaxLength('email', normalizedPayload.email, 255);
+  assertProveedorMaxLength('nif', normalizedPayload.nif, 20);
+
+  return normalizedPayload;
+}
+
+function normalizeProviderSortOrder(
+  value?: ProviderSortOrder
+): 'ASC' | 'DESC' | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  return String(value).toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
 }
 
 export async function fetchProveedores(
@@ -20,17 +87,19 @@ export async function fetchProveedores(
   limit: number = 10,
   search: string = '',
   sortBy?: string,
-  sortOrder?: 'asc' | 'desc'
+  sortOrder?: ProviderSortOrder
 ): Promise<PaginatedData<Proveedor>> {
-  const normalizedLimit = Math.min(
-    Math.max(1, Math.trunc(limit)),
-    PROVEEDORES_MAX_LIMIT
-  );
+  const normalizedPage = normalizePageParam(page);
+  const normalizedLimit = normalizeLimitParam(limit, 10, PROVEEDORES_MAX_LIMIT);
   const params = new URLSearchParams({
-    page: page.toString(),
+    page: normalizedPage.toString(),
     limit: normalizedLimit.toString(),
   });
   if (search) params.append('searchTerm', search);
+  if (sortBy?.trim()) params.append('sortBy', sortBy.trim());
+
+  const normalizedOrder = normalizeProviderSortOrder(sortOrder);
+  if (normalizedOrder) params.append('order', normalizedOrder);
 
   const response = await baseFetch(`/proveedor?${params.toString()}`);
   if (!response.ok) {
@@ -39,52 +108,17 @@ export async function fetchProveedores(
     );
   }
   const body = (await response.json()) as ApiResponse<PaginatedData<Proveedor>>;
-  const data = body.data.data;
-
-  if (sortBy) {
-    data.sort((a, b) => {
-      const aRecord = a as unknown as Record<string, unknown>;
-      const bRecord = b as unknown as Record<string, unknown>;
-      const aValue = normalizeSortableValue(aRecord[sortBy]);
-      const bValue = normalizeSortableValue(bRecord[sortBy]);
-
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortOrder === 'desc'
-          ? bValue.localeCompare(aValue, undefined, {
-              numeric: true,
-              sensitivity: 'base',
-            })
-          : aValue.localeCompare(bValue, undefined, {
-              numeric: true,
-              sensitivity: 'base',
-            });
-      }
-
-      if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
-        return sortOrder === 'desc'
-          ? Number(bValue) - Number(aValue)
-          : Number(aValue) - Number(bValue);
-      }
-
-      if (aValue < bValue) return sortOrder === 'desc' ? 1 : -1;
-      if (aValue > bValue) return sortOrder === 'desc' ? -1 : 1;
-      return 0;
-    });
-  }
-
-  return {
-    ...body.data,
-    data: data,
-  };
+  return body.data;
 }
 
 export async function createProveedor(
-  proveedor: Partial<Proveedor>
+  proveedor: CreateProveedorPayload
 ): Promise<Proveedor> {
+  const payload = sanitizeProveedorPayload(proveedor, true);
   const response = await baseFetch('/proveedor', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(proveedor),
+    body: JSON.stringify(payload),
   });
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({}));
@@ -98,12 +132,13 @@ export async function createProveedor(
 
 export async function updateProveedor(
   id: string,
-  proveedor: Partial<Proveedor>
+  proveedor: UpdateProveedorPayload
 ): Promise<Proveedor> {
+  const payload = sanitizeProveedorPayload(proveedor, false);
   const response = await baseFetch(`/proveedor/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(proveedor),
+    body: JSON.stringify(payload),
   });
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({}));

@@ -1,4 +1,3 @@
-import { faker } from '@faker-js/faker';
 import {
   ALT_SEED_PASSWORD,
   DEFAULT_ADMIN_EMAIL,
@@ -6,6 +5,75 @@ import {
 } from './massive.config';
 import { getRequiredStateString, getStateArray } from './massive.state';
 import { BuildBodyEnv } from './massive.helpers.body.shared';
+import {
+  DETERMINISTIC_PERSON_NAMES,
+  deterministicCode,
+  deterministicInt,
+  pickDeterministic,
+} from './deterministic.seed-data';
+
+function parseAdminRoleTargetUserId(resolvedPath: string): string {
+  const match = resolvedPath.match(/^\/admin\/users\/([^/]+)\/role$/);
+  return match?.[1] || '';
+}
+
+export function buildAdminUserRoleBody(
+  env: BuildBodyEnv
+): Record<string, unknown> {
+  const { context, iteration, resolvedPath } = env;
+  const targetUserId = parseAdminRoleTargetUserId(resolvedPath);
+  const availableRoleIds = getStateArray(context, 'roleIds').filter(Boolean);
+  const availablePermissionIds = getStateArray(context, 'permissionIds').filter(
+    Boolean
+  );
+  const currentRoleIdByUserId =
+    context.getState<Record<string, string>>('seedAdminUserRoleIdByUserId') ||
+    {};
+  const currentAdditionalPermissionIdsByUserId =
+    context.getState<Record<string, string[]>>(
+      'seedAdminUserAdditionalPermissionIdsByUserId'
+    ) || {};
+
+  const currentRoleId = targetUserId ? currentRoleIdByUserId[targetUserId] : '';
+  const currentAdditionalPermissionIds = targetUserId
+    ? currentAdditionalPermissionIdsByUserId[targetUserId] || []
+    : [];
+
+  const preferredRoleId = env.roleId || env.pickRequired('roleIds');
+  const candidateRoleIds = availableRoleIds.filter(
+    (roleId) => roleId !== currentRoleId
+  );
+
+  const roleId =
+    preferredRoleId && preferredRoleId !== currentRoleId
+      ? preferredRoleId
+      : candidateRoleIds.length > 0
+        ? candidateRoleIds[iteration % candidateRoleIds.length] ||
+          preferredRoleId
+        : preferredRoleId;
+
+  const preferredPermissionId =
+    env.permissionId ||
+    availablePermissionIds[iteration % (availablePermissionIds.length || 1)] ||
+    '';
+  const candidatePermissionIds = availablePermissionIds.filter(
+    (permissionId) => !currentAdditionalPermissionIds.includes(permissionId)
+  );
+  const nextPermissionId =
+    preferredPermissionId &&
+    !currentAdditionalPermissionIds.includes(preferredPermissionId)
+      ? preferredPermissionId
+      : candidatePermissionIds.length > 0
+        ? candidatePermissionIds[iteration % candidatePermissionIds.length] ||
+          ''
+        : '';
+
+  return {
+    roleId,
+    permisosAdicionalesIds: nextPermissionId ? [nextPermissionId] : [],
+    permisosExcluidosIds: [],
+  };
+}
 
 export function buildBodyAuthUsers(
   env: BuildBodyEnv
@@ -23,15 +91,31 @@ export function buildBodyAuthUsers(
     pickRequired,
   } = env;
 
-  if (
-    resolvedPath === '/admin/profesores' ||
-    resolvedPath === '/profesores/register'
-  ) {
+  if (resolvedPath === '/admin/profesores') {
     return {
-      username: `prof_${suffix}`,
-      email: `prof.${suffix}@smarteconomat.local`,
+      username: `admin_prof_${suffix}`,
+      email: `admin.prof.${suffix}@smarteconomat.local`,
       password: DEFAULT_SEED_PASSWORD,
-      cial: `CIAL${faker.string.numeric(6)}`,
+      cial: deterministicCode(
+        'CIALA',
+        iteration,
+        6,
+        `admin-profesor-cial-${suffix}`
+      ),
+    };
+  }
+
+  if (resolvedPath === '/profesores/register') {
+    return {
+      username: `register_prof_${suffix}`,
+      email: `register.prof.${suffix}@smarteconomat.local`,
+      password: DEFAULT_SEED_PASSWORD,
+      cial: deterministicCode(
+        'CIALR',
+        iteration,
+        6,
+        `register-profesor-cial-${suffix}`
+      ),
     };
   }
 
@@ -40,21 +124,7 @@ export function buildBodyAuthUsers(
   }
 
   if (templatePath === '/admin/users/:id/role') {
-    const requiredRoleId = env.roleId || pickRequired('roleIds');
-    const selectedPermissionId =
-      env.permissionId ||
-      context.getState<string[]>('permissionIds')?.[
-        iteration % (context.getState<string[]>('permissionIds')?.length || 1)
-      ] ||
-      '';
-
-    return {
-      roleId: requiredRoleId,
-      permisosAdicionalesIds: selectedPermissionId
-        ? [selectedPermissionId]
-        : [],
-      permisosExcluidosIds: [],
-    };
+    return buildAdminUserRoleBody(env);
   }
 
   if (resolvedPath === '/auth/register') {
@@ -183,8 +253,10 @@ export function buildBodyAuthUsers(
     return {
       aula: `Aula-S-${suffix}`.slice(0, 50),
       numeroClase:
-        40000 + slotCursor + faker.number.int({ min: 0, max: 20000 }),
-      capacidad: faker.number.int({ min: 15, max: 40 }),
+        40000 +
+        slotCursor +
+        deterministicInt(0, 20000, slotCursor, 'prof-slot-numero-clase'),
+      capacidad: deterministicInt(15, 40, slotCursor, 'prof-slot-capacidad'),
       ...(resolvedPath === '/profesores/admin-slots'
         ? { profesorId: pickRequired('profesorIds') }
         : {}),
@@ -196,7 +268,7 @@ export function buildBodyAuthUsers(
     templatePath === '/profesores/admin-slots/:id'
   ) {
     return {
-      capacidad: faker.number.int({ min: 10, max: 45 }),
+      capacidad: deterministicInt(10, 45, iteration, 'prof-slot-update'),
     };
   }
 
@@ -217,21 +289,46 @@ export function buildBodyAuthUsers(
   }
 
   if (resolvedPath === '/usuarios/perfil') {
-    return { nombre: faker.person.fullName() };
+    return {
+      nombre: pickDeterministic(
+        DETERMINISTIC_PERSON_NAMES,
+        iteration,
+        'perfil-nombre'
+      ),
+    };
   }
 
   if (templatePath === '/usuarios/:id' && endpoint.method === 'PATCH') {
-    return { nombre: faker.person.fullName() };
+    return {
+      nombre: pickDeterministic(
+        DETERMINISTIC_PERSON_NAMES,
+        iteration + 1,
+        'usuario-patch-nombre'
+      ),
+    };
   }
 
   if (resolvedPath.startsWith('/usuarios/admin')) {
     return {
-      nombre: faker.person.fullName(),
+      nombre: pickDeterministic(
+        DETERMINISTIC_PERSON_NAMES,
+        iteration,
+        'admin-usuario-nombre'
+      ),
       username: `admin_${suffix}`,
       email: `admin.${suffix}@smarteconomat.local`,
       password: DEFAULT_SEED_PASSWORD,
       rol: roleValue,
-      ...(roleValue === 'PROFESOR' ? { cial: `CIAL-${suffix}` } : {}),
+      ...(roleValue === 'PROFESOR'
+        ? {
+            cial: deterministicCode(
+              'CIAL',
+              iteration,
+              6,
+              `admin-user-cial-${suffix}`
+            ),
+          }
+        : {}),
     };
   }
 
@@ -256,7 +353,11 @@ export function buildBodyAuthUsers(
       username: `user_${suffix}`,
       email: `user.${suffix}@smarteconomat.local`,
       password: DEFAULT_SEED_PASSWORD,
-      nombre: faker.person.fullName(),
+      nombre: pickDeterministic(
+        DETERMINISTIC_PERSON_NAMES,
+        iteration,
+        'usuario-create-nombre'
+      ),
       rol: roleValue,
       status: statusValue,
     };

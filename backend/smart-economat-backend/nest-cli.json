@@ -7,6 +7,6 @@
     "builder": "swc",
     "typeCheck": true,
     "assets": ["i18n/**/*"],
-    "watchAssets": true
+    "watchAssets": false
   }
 }

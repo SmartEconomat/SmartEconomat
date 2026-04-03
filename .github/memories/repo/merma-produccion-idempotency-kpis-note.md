@@ -1,0 +1,6 @@
+- Merma backend ahora soporta tipología operativa `TipoMerma` (recepcion, produccion, caducidad, rotura, inventario) y mantiene compatibilidad con `MotivoMerma`.
+- `MermaService` aplica idempotencia por `idempotencyKey` en creación de merma (incluye fallback ante unique violation) para evitar dobles descuentos por reintentos.
+- Nuevo endpoint `POST /api/v1/merma/produccion/reportar` valida que el producto pertenezca a la receta del `ProduccionLote` antes de registrar merma.
+- El flujo de merma sigue siendo transaccional: bloqueo pessimistic_write sobre inventario FEFO + ajuste de stock + movimientos `TipoMovimiento.MERMA` + evento merma en la misma transacción.
+- Nuevo endpoint `GET /api/v1/merma/kpis` entrega base analítica auditable: total perdido, cantidad de referencia (entradas/resultados), porcentaje de merma, agregados por tipo y contexto.
+- Frontend `Preparaciones` expone modal para reportar merma de ingrediente desde lote disponible, consumiendo el endpoint de producción.

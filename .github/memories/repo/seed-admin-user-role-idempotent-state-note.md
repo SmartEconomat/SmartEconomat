@@ -1,0 +1,4 @@
+- Seeder masivo HTTP: para evitar 409 en PATCH /admin/users/:id/role se añadió estado local por usuario objetivo (`seedAdminUserRoleIdByUserId`, `seedAdminUserAdditionalPermissionIdsByUserId`, `seedAdminUserExcludedPermissionIdsByUserId`) y selección de payload idempotente.
+- `collectStateFromResponse` ahora mantiene `seedRoleIdByName` a partir de `/admin/roles`; `ensureAdminRouteActors` inicializa usuarios objetivo con rol ALUMNO real usando ese mapa.
+- `refreshStateAfterOperation` sincroniza estado tras PATCH admin role exitoso y limpia/reconstruye pares `usuarioPermisoAdicionalPairs`/`usuarioPermisoExcluidoPairs` para ese usuario.
+- Tests añadidos: `massive.helpers.body.auth-users.spec.ts` (evita reutilizar rol/permiso actual) y caso nuevo en `massive.runtime.state-refresh.spec.ts` (actualiza estado admin role+permisos).

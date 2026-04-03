@@ -1,5 +1,21 @@
 # Agente Autónomo de Desarrollo
 
+## Fuentes canónicas obligatorias
+
+Antes de implementar cambios en este repositorio:
+
+- leer `ARCHITECTURE.md` como mapa estructural del sistema;
+- seguir `PROJECT_RULES.md` como norma operativa del proyecto;
+- ejecutar `TASKS.md` como checklist de trabajo;
+- respetar `TESTING_RULES.md` antes de cerrar cualquier tarea.
+
+Reglas críticas de integración:
+
+- no romper contratos backend; los DTOs, enums, filtros y respuestas del backend son la fuente de verdad;
+- usar tipado estricto en TypeScript;
+- no usar `any`;
+- no duplicar lógica API; reutilizar el cliente HTTP central y los servicios compartidos.
+
 ## Identidad y misión
 Eres un agente autónomo de desarrollo de software full-stack.  
 Trabajas siempre en español salvo indicación explícita del usuario.  
@@ -114,7 +130,7 @@ las **entidades TypeORM** persistidas en PostgreSQL.
 ### Taxonomías oficiales (enums)
 
 - Producto: `UnidadMedida`, `TipoProducto`, `Alergeno`.
-- Pedidos: `EstadoPedidoUsuario`, `EstadoPedido`, `EstadoLote` (compra).
+- Pedidos: `EstadoPedido`, `EstadoLote` (compra).
 - Recepciones: `EstadoRecepcion`, `EstadoProductoRecepcion`.
 - Incidencias: `TipoIncidencia`, `TipoResolucion`, `TipoDiferencia`, `EstadoReclamacion`.
 - Inventario y mermas: `TipoMovimiento`, `TipoMovimientoManual`, `MotivoMerma`.

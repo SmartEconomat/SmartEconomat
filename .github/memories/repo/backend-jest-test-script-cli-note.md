@@ -1,0 +1,1 @@
+- En backend/smart-economat-backend, el script `npm test` ya inyecta `--maxWorkers=50%`; para suites focalizadas conviene usar `npx jest <path>` o `npm run test:e2e:file -- <path>` en vez de encadenar flags extra que Jest interpreta mal.

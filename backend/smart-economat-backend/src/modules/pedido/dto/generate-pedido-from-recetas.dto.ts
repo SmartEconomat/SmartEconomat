@@ -13,7 +13,8 @@ import { TrimStringTransformer } from '../../../common/transformers/trim-string.
 
 export class GeneratePedidoFromRecetasDto {
   @ApiProperty({
-    description: 'IDs de las recetas a consolidar en un único pedido',
+    description:
+      'IDs de las recetas cuyas necesidades se convertirán en líneas de compra',
     type: [String],
     format: 'uuid',
   })
@@ -35,6 +36,19 @@ export class GeneratePedidoFromRecetasDto {
     ),
   })
   recetaIds!: string[];
+
+  @ApiPropertyOptional({
+    description:
+      'ID del proveedor cuando se quiere generar un único pedido. Si se omite en una compra agrupada, el backend repartirá las líneas por proveedor.',
+    format: 'uuid',
+  })
+  @IsOptional()
+  @IsUUID('all', {
+    message: i18nValidationMessage(
+      'validation.EL_ID_DEL_PROVEEDOR_DEBE_SER_UN_UUID_V_L'
+    ),
+  })
+  proveedorId?: string;
 
   @ApiPropertyOptional({
     description: 'Observaciones opcionales sobre el origen del pedido',

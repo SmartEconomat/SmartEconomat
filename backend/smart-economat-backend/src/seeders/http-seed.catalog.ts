@@ -1,8 +1,77 @@
 import { SeedContext } from './seed-context';
-import { faker } from '@faker-js/faker';
 import { SEED_GLOBAL_CONFIG } from './massive.config';
+import {
+  fetchOpenFoodFactsProducts,
+  offProductToCreateProductoPayload,
+  uploadOpenFoodFactsProductImage,
+} from './openfoodfacts.seed';
+import { extractActiveEntityIds } from './massive.helpers.common';
+import {
+  DETERMINISTIC_PERSON_NAMES,
+  DETERMINISTIC_PROVIDER_PROFILES,
+  DETERMINISTIC_SHORT_NOTES,
+  buildSeedRunTag,
+  deterministicBool,
+  deterministicCode,
+  deterministicInt,
+  pickDeterministic,
+  seedDateIso,
+} from './deterministic.seed-data';
+import {
+  TipoProducto,
+  UnidadMedida,
+} from '../modules/producto/enums/producto.enums';
 
 type SeederTask = (context: SeedContext) => Promise<void>;
+type SeedRecord = Record<string, unknown>;
+type SeedEntity = SeedRecord & { id?: string };
+type SeedUserEntity = SeedEntity & { email?: string };
+type SeedProfesorEntity = SeedEntity & { user?: SeedRecord };
+type SeedProveedorEntity = SeedEntity & { nif?: string };
+type SeedProductoEntity = SeedEntity & { codigoBarras?: string };
+type SeedUbicacionEntity = SeedEntity & { nombre?: string };
+type SeedAulaEntity = SeedRecord & { aula?: string };
+type SeedClaseEntity = SeedRecord & { numeroClase?: number };
+type SeedProduccionLoteEntity = SeedEntity & {
+  porcionesRestantes?: number;
+};
+
+function isSeedRecord(value: unknown): value is SeedRecord {
+  return typeof value === 'object' && value !== null;
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function getStringField(record: SeedRecord, key: string): string | undefined {
+  const value = record[key];
+  return isNonEmptyString(value) ? value : undefined;
+}
+
+function getNestedStringField(
+  record: SeedRecord,
+  parentKey: string,
+  childKey: string
+): string | undefined {
+  const nestedValue = record[parentKey];
+  if (!isSeedRecord(nestedValue)) {
+    return undefined;
+  }
+
+  return getStringField(nestedValue, childKey);
+}
+
+function getNumberField(record: SeedRecord, key: string): number | undefined {
+  const value = record[key];
+  return typeof value === 'number' && Number.isFinite(value)
+    ? value
+    : undefined;
+}
+
+function getEntityId(entity: SeedRecord): string | undefined {
+  return getStringField(entity, 'id');
+}
 
 function getVolumeMultiplier(context: SeedContext): number {
   const fromState = context.getState<number>('seedMultiplier');
@@ -34,11 +103,29 @@ const LIST_ENDPOINTS_WITH_PAGE = new Set([
   '/archivos',
 ]);
 
-function listFromResponse(input: any): any[] {
-  if (Array.isArray(input)) return input;
-  if (Array.isArray(input?.items)) return input.items;
-  if (Array.isArray(input?.data?.items)) return input.data.items;
-  if (Array.isArray(input?.data)) return input.data;
+function listFromResponse<T extends SeedRecord = SeedRecord>(
+  input: unknown
+): T[] {
+  if (Array.isArray(input)) {
+    return input.filter(isSeedRecord) as T[];
+  }
+
+  if (!isSeedRecord(input)) {
+    return [];
+  }
+
+  if (Array.isArray(input.items)) {
+    return input.items.filter(isSeedRecord) as T[];
+  }
+
+  if (Array.isArray(input.data)) {
+    return input.data.filter(isSeedRecord) as T[];
+  }
+
+  if (isSeedRecord(input.data) && Array.isArray(input.data.items)) {
+    return input.data.items.filter(isSeedRecord) as T[];
+  }
+
   return [];
 }
 
@@ -59,7 +146,7 @@ async function saveListIds(
   context: SeedContext,
   endpoint: string,
   stateKey: string
-): Promise<any[]> {
+): Promise<SeedEntity[]> {
   const listPath = LIST_ENDPOINTS_WITH_PAGE.has(endpoint)
     ? `${endpoint}?limit=25&page=1`
     : endpoint === '/producto-proveedor/search'
@@ -69,12 +156,17 @@ async function saveListIds(
         : endpoint;
 
   const list = await safe(`listar ${endpoint}`, () =>
-    context.getJson<any>(listPath)
+    context.getJson<unknown>(listPath)
   );
 
   const items = listFromResponse(list);
+  if (endpoint === '/proveedor') {
+    context.set(stateKey, extractActiveEntityIds(items));
+    return items;
+  }
+
   for (const item of items) {
-    pushId(context, stateKey, item?.id);
+    pushId(context, stateKey, getEntityId(item));
   }
   return items;
 }
@@ -90,23 +182,23 @@ async function safe<T>(label: string, fn: () => Promise<T>): Promise<T> {
 
 async function rolesPermisosTask(context: SeedContext): Promise<void> {
   const roles = await safe('roles', () =>
-    context.getJson<any[]>('/admin/roles')
+    context.getJson<unknown>('/admin/roles')
   );
   const permisos = await safe('permisos', () =>
-    context.getJson<any[]>('/admin/permissions')
+    context.getJson<unknown>('/admin/permissions')
   );
 
   context.set('roles', roles);
   context.set('permisos', permisos);
 
   const roleIds = listFromResponse(roles)
-    .map((r: any) => r?.id)
-    .filter(Boolean);
+    .map((role) => getEntityId(role))
+    .filter(isNonEmptyString);
   context.set('roleIds', roleIds);
 
   const permissionIds = listFromResponse(permisos)
-    .map((p: any) => p?.id)
-    .filter(Boolean);
+    .map((permission) => getEntityId(permission))
+    .filter(isNonEmptyString);
   context.set('permissionIds', permissionIds);
 }
 
@@ -127,11 +219,18 @@ async function usuariosTask(context: SeedContext): Promise<void> {
       password: DEFAULT_SEED_PASSWORD,
       rol: 'ADMIN',
     },
+    {
+      nombre: 'Profesor Seed Principal',
+      username: 'profesor',
+      email: 'profesor@smarteconomat.com',
+      password: DEFAULT_SEED_PASSWORD,
+      rol: 'PROFESOR',
+    },
   ];
 
   for (let i = 0; i < 8 * volumeMultiplier; i++) {
     desiredUsers.push({
-      nombre: faker.person.fullName(),
+      nombre: pickDeterministic(DETERMINISTIC_PERSON_NAMES, i, 'http-usuario'),
       username: `seed_user_${i}`,
       email: `seed.user.${i}@smarteconomat.local`,
       password: DEFAULT_SEED_PASSWORD,
@@ -140,52 +239,159 @@ async function usuariosTask(context: SeedContext): Promise<void> {
   }
 
   const list = await safe('listar usuarios', () =>
-    context.getJson<any>('/usuarios?limit=25&page=1')
+    context.getJson<unknown>('/usuarios?limit=25&page=1')
   );
-  const users = Array.isArray(list?.items)
-    ? list.items
-    : Array.isArray(list?.data?.items)
-      ? list.data.items
-      : Array.isArray(list)
-        ? list
-        : [];
+  const users = listFromResponse<SeedUserEntity>(list);
 
   for (const user of desiredUsers) {
-    const already = users.find((u: any) => u?.email === user.email);
+    const already = users.find(
+      (seedUser) => getStringField(seedUser, 'email') === user.email
+    );
+    const alreadyId = already ? getEntityId(already) : undefined;
     if (already) {
-      context.set(`usuario:${user.username}`, already.id);
-      pushId(context, 'usuarioIds', already.id);
+      context.set(`usuario:${user.username}`, alreadyId);
+      pushId(context, 'usuarioIds', alreadyId);
       continue;
     }
 
-    const created = await context.postJson<any>('/usuarios/admin', user);
-    context.set(`usuario:${user.username}`, created?.id);
-    pushId(context, 'usuarioIds', created?.id);
+    const created = await context.postJson<SeedEntity>('/usuarios/admin', user);
+    const createdId = getEntityId(created);
+    context.set(`usuario:${user.username}`, createdId);
+    pushId(context, 'usuarioIds', createdId);
   }
 
-  const profesores = await saveListIds(
+  const profesores = (await saveListIds(
     context,
     '/profesores/all-profesores',
     'profesorIds'
-  );
+  )) as SeedProfesorEntity[];
 
   const profExists = profesores.some(
-    (p: any) => p?.user?.email === 'profesor1@smarteconomat.com'
+    (profesor) =>
+      getNestedStringField(profesor, 'user', 'email') ===
+      'profesor1@smarteconomat.com'
   );
 
   if (!profExists) {
-    const created = await context.postJson<any>('/admin/profesores', {
+    const created = await context.postJson<SeedEntity>('/admin/profesores', {
       username: 'profesor1',
       email: 'profesor1@smarteconomat.com',
       password: DEFAULT_SEED_PASSWORD,
       cial: 'CIAL-11111',
     });
-    pushId(context, 'usuarioIds', created?.id);
+    pushId(context, 'usuarioIds', getEntityId(created));
   }
 
   await saveListIds(context, '/usuarios', 'usuarioIds');
   await saveListIds(context, '/profesores/all-profesores', 'profesorIds');
   await saveListIds(context, '/profesores/all-slots', 'profesorSlotIds');
+
+  const profesoresActualizados = listFromResponse<SeedProfesorEntity>(
+    await safe('listar profesores actualizados', () =>
+      context.getJson<unknown>('/profesores/all-profesores')
+    )
+  );
+  const profesorPrincipal = profesoresActualizados.find(
+    (profesor) =>
+      getNestedStringField(profesor, 'user', 'username') === 'profesor' ||
+      getNestedStringField(profesor, 'user', 'email') ===
+        'profesor@smarteconomat.com'
+  );
+  const profesorPrincipalId = profesorPrincipal
+    ? getEntityId(profesorPrincipal)
+    : undefined;
+
+  if (!profesorPrincipalId) {
+    throw new Error(
+      '[seed] No se encontro el profesor fijo requerido para crear el alumno conocido'
+    );
+  }
+
+  try {
+    await safe('crear slot fijo profesor', () =>
+      context.postJson<SeedEntity>('/profesores/admin-slots', {
+        aula: 'Aula Seed Principal',
+        numeroClase: 2026,
+        capacidad: 30,
+        profesorId: profesorPrincipalId,
+      })
+    );
+  } catch (error) {
+    const message = String(error instanceof Error ? error.message : error);
+    const normalizedMessage = message.toLowerCase();
+    if (
+      !normalizedMessage.includes('duplicate') &&
+      !normalizedMessage.includes('duplicada') &&
+      !normalizedMessage.includes('ya existe')
+    ) {
+      throw error;
+    }
+  }
+
+  try {
+    const createdAlumno = await safe('crear alumno conocido', () =>
+      context.postJson<SeedEntity>('/usuarios/admin', {
+        nombre: 'Alumno Seed',
+        username: 'alumno',
+        email: 'alumno@smarteconomat.com',
+        password: DEFAULT_SEED_PASSWORD,
+        rol: 'ALUMNO',
+        aula: 'Aula Seed Principal',
+      })
+    );
+    pushId(context, 'usuarioIds', getEntityId(createdAlumno));
+  } catch (error) {
+    const message = String(error instanceof Error ? error.message : error);
+    const normalizedMessage = message.toLowerCase();
+    if (
+      !normalizedMessage.includes('already exists') &&
+      !normalizedMessage.includes('ya existe') &&
+      !normalizedMessage.includes('taken')
+    ) {
+      throw error;
+    }
+  }
+
+  const usuariosMinimos = listFromResponse<SeedUserEntity>(
+    await safe('listar usuarios minimos actualizados', () =>
+      context.getJson<unknown>('/usuarios/minimos')
+    )
+  );
+  const alumnoConocido = usuariosMinimos.find(
+    (usuario) =>
+      getStringField(usuario, 'username') === 'alumno' ||
+      getStringField(usuario, 'email') === 'alumno@smarteconomat.com'
+  );
+  const alumnoConocidoId = alumnoConocido
+    ? getEntityId(alumnoConocido)
+    : undefined;
+
+  if (alumnoConocidoId) {
+    await safe(`activar alumno conocido ${alumnoConocidoId}`, () =>
+      context.patchJson(`/admin/users/${alumnoConocidoId}/activate`, {
+        active: true,
+      })
+    );
+  }
+
+  const adminToken = context.getAccessToken();
+
+  try {
+    await context.loginWithCredentials({
+      email: 'alumno@smarteconomat.com',
+      password: DEFAULT_SEED_PASSWORD,
+    });
+
+    await safe('asociar alumno conocido a profesor fijo', () =>
+      context.patchJson('/alumnos/change-profesor', {
+        cialNuevoProfesor: 'CIAL-SEED-2026',
+        nuevaAula: 'Aula Seed Principal',
+        nuevoNumeroClase: 2026,
+      })
+    );
+  } finally {
+    context.setAccessToken(adminToken);
+  }
 
   const usuarioIds = context.getState<string[]>('usuarioIds') || [];
   if (usuarioIds.length > 0) {
@@ -211,7 +417,6 @@ async function usuariosTask(context: SeedContext): Promise<void> {
   await safe('get self profile', () => context.getJson('/usuarios/perfil'));
   await safe('get auth profile', () => context.getJson('/auth/profile'));
 
-  const adminToken = context.getAccessToken();
   const seedProfesor = desiredUsers.find((user) => user.rol === 'PROFESOR');
 
   if (seedProfesor) {
@@ -255,19 +460,21 @@ async function usuariosTask(context: SeedContext): Promise<void> {
 
 async function profesorAlumnoTask(context: SeedContext): Promise<void> {
   await safe('listar aulas', () => context.getJson('/alumnos/aulas'));
-  const aulas = await safe('get json aulas', () =>
-    context.getJson<any[]>('/alumnos/aulas')
+  const aulasResponse = await safe('get json aulas', () =>
+    context.getJson<unknown>('/alumnos/aulas')
   );
-  if (Array.isArray(aulas) && aulas.length > 0) {
+  const aulas = listFromResponse<SeedAulaEntity>(aulasResponse);
+  if (aulas.length > 0) {
     const aula = aulas[0]?.aula;
     if (aula) {
       await safe(`listar clases aula ${aula}`, () =>
         context.getJson(`/alumnos/aulas/${aula}/clases`)
       );
-      const clases = await safe(`get json clases aula ${aula}`, () =>
-        context.getJson<any[]>(`/alumnos/aulas/${aula}/clases`)
+      const clasesResponse = await safe(`get json clases aula ${aula}`, () =>
+        context.getJson<unknown>(`/alumnos/aulas/${aula}/clases`)
       );
-      if (Array.isArray(clases) && clases.length > 0) {
+      const clases = listFromResponse<SeedClaseEntity>(clasesResponse);
+      if (clases.length > 0) {
         const clase = clases[0]?.numeroClase;
         if (clase !== undefined) {
           await safe(`listar profesores aula ${aula} clase ${clase}`, () =>
@@ -278,11 +485,14 @@ async function profesorAlumnoTask(context: SeedContext): Promise<void> {
     }
   }
 
-  await safe('change profesor alumno', () =>
-    context.patchJson('/alumnos/change-profesor', {
-      nuevoProfesorId: faker.string.uuid(),
-    })
-  );
+  const profesorIds = context.getState<string[]>('profesorIds') || [];
+  if (profesorIds.length > 0) {
+    await safe('change profesor alumno', () =>
+      context.patchJson('/alumnos/change-profesor', {
+        nuevoProfesorId: profesorIds[0],
+      })
+    );
+  }
 
   await saveListIds(context, '/profesores/admin-slots', 'profesorAdminSlotIds');
   const adminSlots = context.getState<string[]>('profesorAdminSlotIds') || [];
@@ -295,39 +505,47 @@ async function profesorAlumnoTask(context: SeedContext): Promise<void> {
 
 async function proveedorTask(context: SeedContext): Promise<void> {
   const volumeMultiplier = getVolumeMultiplier(context);
-  const runTag = faker.string.alphanumeric(6).toUpperCase();
+  const runTag = buildSeedRunTag(volumeMultiplier).toUpperCase();
   const desired = Array.from({ length: 15 * volumeMultiplier }).map(
-    (_, idx) => ({
-      nombre: `Proveedor Semilla ${runTag}-${idx}`,
-      contacto: faker.person.fullName(),
-      telefono: `+34${faker.string.numeric(9)}`,
-      email: `proveedor.seed.${runTag}.${idx}@smarteconomat.local`,
-      direccion: faker.location.streetAddress(),
-      nif: `S${runTag}${String(idx).padStart(3, '0')}`,
-    })
+    (_, idx) => {
+      const profile = pickDeterministic(
+        DETERMINISTIC_PROVIDER_PROFILES,
+        idx,
+        'http-proveedor-profile'
+      );
+      return {
+        nombre: `${profile.nombre} ${runTag}-${String(idx + 1).padStart(2, '0')}`,
+        contacto: profile.contacto,
+        telefono: profile.telefono,
+        email: `proveedor.seed.${String(idx).padStart(3, '0')}@smarteconomat.local`,
+        direccion: profile.direccion,
+        nif: deterministicCode('B', idx + 10_000, 8, 'http-proveedor-nif'),
+      };
+    }
   );
 
   const list = await safe('listar proveedor', () =>
-    context.getJson<any>('/proveedor?limit=50&page=1')
+    context.getJson<unknown>('/proveedor?limit=50&page=1')
   );
-  const items = Array.isArray(list?.items)
-    ? list.items
-    : Array.isArray(list?.data?.items)
-      ? list.data.items
-      : [];
+  const items = listFromResponse<SeedProveedorEntity>(list);
 
   for (const proveedor of desired) {
-    const exists = items.find((p: any) => p?.nif === proveedor.nif);
+    const exists = items.find(
+      (currentProveedor) =>
+        getStringField(currentProveedor, 'nif') === proveedor.nif
+    );
+    const existingId = exists ? getEntityId(exists) : undefined;
     if (exists) {
-      context.set(`proveedor:${proveedor.nif}`, exists.id);
+      context.set(`proveedor:${proveedor.nif}`, existingId);
       continue;
     }
 
     const created = await safe(`crear proveedor ${proveedor.nif}`, () =>
-      context.postJson<any>('/proveedor', proveedor)
+      context.postJson<SeedEntity>('/proveedor', proveedor)
     );
-    context.set(`proveedor:${proveedor.nif}`, created?.id);
-    pushId(context, 'proveedorIds', created?.id);
+    const createdId = getEntityId(created);
+    context.set(`proveedor:${proveedor.nif}`, createdId);
+    pushId(context, 'proveedorIds', createdId);
   }
 
   await saveListIds(context, '/proveedor', 'proveedorIds');
@@ -347,45 +565,62 @@ async function proveedorTask(context: SeedContext): Promise<void> {
 async function productoTask(context: SeedContext): Promise<void> {
   const volumeMultiplier = getVolumeMultiplier(context);
   await saveListIds(context, '/proveedor', 'proveedorIds');
-  const runTag = faker.string.alphanumeric(7).toUpperCase();
   const maxToCreate = 16 * volumeMultiplier;
   const batchSize = 4;
+  const proveedorIds = context.getState<string[]>('proveedorIds') || [];
+  const defaultProveedorId = proveedorIds[0];
 
   const list = await safe('listar productos', () =>
-    context.getJson<any>('/productos?limit=50&page=1')
+    context.getJson<unknown>('/productos?limit=50&page=1')
   );
-  const items = Array.isArray(list?.items)
-    ? list.items
-    : Array.isArray(list?.data?.items)
-      ? list.data.items
-      : [];
+  const items = listFromResponse<SeedProductoEntity>(list);
 
   const existingCodes = new Set(
-    items.map((p: any) => p?.codigoBarras).filter(Boolean)
+    items
+      .map((product) => getStringField(product, 'codigoBarras'))
+      .filter(isNonEmptyString)
   );
+
+  let offProducts = await safe('obtener productos OpenFoodFacts', () =>
+    fetchOpenFoodFactsProducts({ pageSize: 50 })
+  );
+
+  offProducts = offProducts.filter((product) => !!product?.code);
 
   const candidates: Array<{ code: string; payload: Record<string, unknown> }> =
     [];
-  for (let i = 0; i < maxToCreate; i++) {
-    const targetCode = `SEED-${runTag}-${String(i).padStart(4, '0')}`;
-    if (existingCodes.has(targetCode)) {
+  for (const offProduct of offProducts) {
+    if (candidates.length >= maxToCreate) {
+      break;
+    }
+
+    const targetCode = (offProduct.code || '').trim();
+    if (!targetCode || existingCodes.has(targetCode)) {
+      continue;
+    }
+
+    await uploadOpenFoodFactsProductImage(context, offProduct);
+
+    const payload = offProductToCreateProductoPayload(
+      offProduct,
+      defaultProveedorId
+    );
+    if (!payload) {
       continue;
     }
 
     candidates.push({
       code: targetCode,
-      payload: {
-        nombre: faker.commerce.productName(),
-        marca: faker.company.name(),
-        descripcion: faker.commerce.productDescription(),
-        unidad: i % 2 === 0 ? 'KG' : 'UNIDAD',
-        tipo: i % 3 === 0 ? 'cereal' : i % 3 === 1 ? 'verdura' : 'lacteo',
-        codigoBarras: targetCode,
-        contenido: Number(
-          faker.number.float({ min: 0.1, max: 25, fractionDigits: 2 })
-        ),
-      },
+      payload,
     });
+
+    existingCodes.add(targetCode);
+  }
+
+  if (candidates.length === 0) {
+    console.warn(
+      '[seed] productoTask no encontro candidatos validos en OpenFoodFacts para crear productos nuevos'
+    );
   }
 
   let consecutiveMisses = 0;
@@ -394,7 +629,7 @@ async function productoTask(context: SeedContext): Promise<void> {
     const createdBatch = await Promise.all(
       batch.map((candidate) =>
         safe(`crear producto semilla ${candidate.code}`, () =>
-          context.postJson<any>('/productos', candidate.payload)
+          context.postJson<SeedEntity>('/productos', candidate.payload)
         )
       )
     );
@@ -402,7 +637,7 @@ async function productoTask(context: SeedContext): Promise<void> {
     let batchHits = 0;
     for (const created of createdBatch) {
       batchHits++;
-      pushId(context, 'productoIds', created?.id);
+      pushId(context, 'productoIds', getEntityId(created));
     }
 
     if (batchHits === 0) {
@@ -427,6 +662,20 @@ async function productoTask(context: SeedContext): Promise<void> {
   );
 
   const productoIds = context.getState<string[]>('productoIds') || [];
+  const deletableProducto = await safe(
+    'crear producto eliminable dedicado',
+    () =>
+      context.postJson<SeedEntity>('/productos', {
+        nombre: `Producto eliminable ${buildSeedRunTag(volumeMultiplier)}`,
+        unidad: UnidadMedida.UNIDAD,
+        tipo: TipoProducto.OTRO,
+        contenido: 1,
+      })
+  );
+  const deletableProductoId = deletableProducto
+    ? getEntityId(deletableProducto)
+    : undefined;
+
   if (productoIds.length > 0) {
     const pid = productoIds[0];
     await safe(`get producto ${pid}`, () =>
@@ -438,8 +687,11 @@ async function productoTask(context: SeedContext): Promise<void> {
     await safe(`get historial precios producto ${pid}`, () =>
       context.getJson(`/productos/${pid}/historial-precios`)
     );
-    await safe(`delete producto ${pid}`, () =>
-      context.deleteJson(`/productos/${pid}`)
+  }
+
+  if (deletableProductoId) {
+    await safe(`delete producto ${deletableProductoId}`, () =>
+      context.deleteJson(`/productos/${deletableProductoId}`)
     );
   }
 
@@ -467,9 +719,15 @@ async function productoTask(context: SeedContext): Promise<void> {
 
 async function ubicacionTask(context: SeedContext): Promise<void> {
   const volumeMultiplier = getVolumeMultiplier(context);
-  const current = await saveListIds(context, '/ubicacion', 'ubicacionIds');
+  const current = (await saveListIds(
+    context,
+    '/ubicacion',
+    'ubicacionIds'
+  )) as SeedUbicacionEntity[];
   const existingNames = new Set(
-    current.map((x: any) => x?.nombre).filter(Boolean)
+    current
+      .map((ubicacion) => getStringField(ubicacion, 'nombre'))
+      .filter(isNonEmptyString)
   );
 
   for (let i = 0; i < 20 * volumeMultiplier; i++) {
@@ -479,14 +737,14 @@ async function ubicacionTask(context: SeedContext): Promise<void> {
     }
 
     const created = await safe(`crear ubicacion ${nombre}`, () =>
-      context.postJson<any>('/ubicacion', {
+      context.postJson<SeedEntity>('/ubicacion', {
         nombre,
         descripcion: `Ubicacion automatica ${i}`,
         activo: true,
       })
     );
 
-    pushId(context, 'ubicacionIds', created?.id);
+    pushId(context, 'ubicacionIds', getEntityId(created));
   }
 
   await saveListIds(context, '/ubicacion', 'ubicacionIds');
@@ -526,9 +784,9 @@ async function inventarioTask(context: SeedContext): Promise<void> {
       context.postJson('/inventario', {
         productoProveedorId: productoProveedorIds[i],
         ubicacionId: ubicacionIds[i],
-        cantidadActual: faker.number.int({ min: 10, max: 500 }),
-        cantidadMinima: faker.number.int({ min: 2, max: 25 }),
-        cantidadMaxima: faker.number.int({ min: 300, max: 800 }),
+        cantidadActual: deterministicInt(10, 500, i, 'http-inventario-actual'),
+        cantidadMinima: deterministicInt(2, 25, i, 'http-inventario-minima'),
+        cantidadMaxima: deterministicInt(300, 800, i, 'http-inventario-maxima'),
       })
     );
   }
@@ -548,21 +806,26 @@ async function inventarioTask(context: SeedContext): Promise<void> {
   }
 
   const inventarioIds = context.getState<string[]>('inventarioIds') || [];
-  for (const id of inventarioIds.slice(0, 12)) {
-    const tipoAjuste = faker.helpers.arrayElement([
-      'entrada',
-      'ajuste',
-      'salida_ajuste',
-    ]);
+  for (const [index, id] of inventarioIds.slice(0, 12).entries()) {
+    const tipoAjuste = pickDeterministic(
+      ['entrada', 'ajuste', 'salida_ajuste'] as const,
+      index,
+      'http-ajuste-tipo'
+    );
 
     let ajusteValue = 1;
     if (tipoAjuste === 'salida_ajuste') {
-      ajusteValue = -Math.abs(faker.number.int({ min: 1, max: 8 }));
+      ajusteValue = -deterministicInt(1, 8, index, 'http-ajuste-salida');
     } else if (tipoAjuste === 'ajuste') {
-      const v = faker.number.int({ min: -5, max: 8 });
-      ajusteValue = v === 0 ? (Math.random() < 0.5 ? -1 : 1) : v;
+      const v = deterministicInt(-5, 8, index, 'http-ajuste-general');
+      ajusteValue =
+        v === 0
+          ? deterministicBool(index, 'http-ajuste-cero-signo')
+            ? -1
+            : 1
+          : v;
     } else {
-      ajusteValue = Math.abs(faker.number.int({ min: 1, max: 8 }));
+      ajusteValue = deterministicInt(1, 8, index, 'http-ajuste-entrada');
     }
 
     await safe(`ajuste inventario ${id}`, () =>
@@ -596,7 +859,11 @@ async function pedidoTask(context: SeedContext): Promise<void> {
       context.postJson('/pedido/draft', {
         payload: {
           nombre: `Borrador Pedido ${i}`,
-          nota: faker.lorem.sentence(),
+          nota: pickDeterministic(
+            DETERMINISTIC_SHORT_NOTES,
+            i,
+            'http-pedido-draft-nota'
+          ),
           lineas: [],
         },
       })
@@ -611,9 +878,6 @@ async function pedidoTask(context: SeedContext): Promise<void> {
       );
     }
 
-    const pendingPedidoIds = (
-      context.getState<string[]>('pedidoPendienteIds') || []
-    ).slice(0, 5);
     const pendingPedidoUsuarioIds = (
       context.getState<string[]>('pedidoUsuarioPendienteIds') ||
       context.getState<string[]>('pedidoUsuarioIds') ||
@@ -621,13 +885,15 @@ async function pedidoTask(context: SeedContext): Promise<void> {
     ).slice(0, 5);
 
     const consolidateBody: Record<string, unknown> = {};
-    if (pendingPedidoIds.length > 0)
-      consolidateBody.pedidoIds = pendingPedidoIds;
     if (pendingPedidoUsuarioIds.length > 0)
       consolidateBody.pedidoUsuarioIds = pendingPedidoUsuarioIds;
 
     if (Object.keys(consolidateBody).length > 0) {
-      consolidateBody.observaciones = faker.lorem.sentence();
+      consolidateBody.observaciones = pickDeterministic(
+        DETERMINISTIC_SHORT_NOTES,
+        i,
+        'http-purchase-batch-observacion'
+      );
       await safe(`purchase batch consolidate ${i}`, () =>
         context.postJson('/purchase-batches/consolidate', consolidateBody)
       );
@@ -689,7 +955,7 @@ async function pedidoTask(context: SeedContext): Promise<void> {
     );
     await safe(`PATCH pedido fecha-entrega ${pedid}`, () =>
       context.patchJson(`/pedidos/${pedid}/fecha-entrega`, {
-        fechaEntrega: new Date(),
+        fechaEntrega: seedDateIso(7),
       })
     );
     await safe(`delete pedido ${pedid}`, () =>
@@ -700,11 +966,16 @@ async function pedidoTask(context: SeedContext): Promise<void> {
   await safe('get pedido draft', () => context.getJson('/pedido/draft'));
   await safe('delete pedido draft', () => context.deleteJson('/pedido/draft'));
 
-  await safe('purchase batches from missing stock', () =>
-    context.postJson('/purchase-batches/from-missing-stock', {})
+  await safe('pedido-usuarios from missing stock', () =>
+    context.postJson('/pedido-usuarios/from-missing-stock', {
+      items: (context.getState<string[]>('recetaIds') || [])
+        .slice(0, 2)
+        .map((recetaId) => ({ recetaId, cantidad: 1 })),
+      observaciones: 'Seed desde faltantes',
+    })
   );
-  await safe('purchase batches from recipes', () =>
-    context.postJson('/purchase-batches/from-recipes', {
+  await safe('pedido-usuarios from recipes', () =>
+    context.postJson('/pedido-usuarios/from-recipes', {
       recetaIds: context.getState<string[]>('recetaIds')?.slice(0, 2) || [],
       observaciones: 'Seed from recipes',
     })
@@ -720,7 +991,11 @@ async function recepcionTask(context: SeedContext): Promise<void> {
       context.postJson('/recepcion/draft', {
         payload: {
           nombre: `Borrador Recepcion ${i}`,
-          nota: faker.lorem.sentence(),
+          nota: pickDeterministic(
+            DETERMINISTIC_SHORT_NOTES,
+            i,
+            'http-recepcion-draft-nota'
+          ),
         },
       })
     );
@@ -728,6 +1003,11 @@ async function recepcionTask(context: SeedContext): Promise<void> {
 
   await saveListIds(context, '/recepciones', 'recepcionIds');
   await saveListIds(context, '/recepcion-productos', 'recepcionProductoIds');
+  await saveListIds(
+    context,
+    '/producto-proveedor/search',
+    'productoProveedorIds'
+  );
 
   await safe('get recepcion draft', () => context.getJson('/recepcion/draft'));
   await safe('delete recepcion draft', () =>
@@ -742,9 +1022,6 @@ async function recepcionTask(context: SeedContext): Promise<void> {
     );
     await safe(`PATCH recepcion ${rid}`, () =>
       context.patchJson(`/recepciones/${rid}`, { nota: 'Updated' })
-    );
-    await safe(`delete recepcion ${rid}`, () =>
-      context.deleteJson(`/recepciones/${rid}`)
     );
   }
 
@@ -762,13 +1039,17 @@ async function recepcionTask(context: SeedContext): Promise<void> {
     );
   }
 
-  await safe('crear recepcion-producto manual', () =>
-    context.postJson('/recepcion-productos', {
-      recepcionId: recIds[0],
-      productoProveedorId: faker.string.uuid(),
-      cantidad: 1,
-    })
-  );
+  const productoProveedorIds =
+    context.getState<string[]>('productoProveedorIds') || [];
+  if (recIds[0] && productoProveedorIds[0]) {
+    await safe('crear recepcion-producto manual', () =>
+      context.postJson('/recepcion-productos', {
+        recepcionId: recIds[0],
+        productoProveedorId: productoProveedorIds[0],
+        cantidad: 1,
+      })
+    );
+  }
 
   await safe('reporte recepciones', () =>
     context.getJson('/recepciones/reporte-pdf')
@@ -793,7 +1074,7 @@ async function albaranTask(context: SeedContext): Promise<void> {
 
   await safe('crear albaran (sin documento)', () =>
     context.postJson('/albaranes', {
-      nAlbaran: `ALB-SEED-${Date.now()}`,
+      nAlbaran: deterministicCode('ALB-SEED-', 1, 6, 'http-albaran'),
     })
   );
 
@@ -871,13 +1152,11 @@ async function incidenciaTask(context: SeedContext): Promise<void> {
     await safe(`incidencia reportar ${i}`, () =>
       context.postJson('/incidencias/reportar', {
         recepcionId,
-        tipo: faker.helpers.arrayElement([
-          'rotura',
-          'caducado',
-          'falta_producto',
-          'exceso_producto',
-          'otro',
-        ]),
+        tipo: pickDeterministic(
+          ['rotura', 'caducado', 'falta_producto', 'exceso_producto', 'otro'],
+          i,
+          'http-incidencia-tipo'
+        ),
       })
     );
   }
@@ -915,7 +1194,7 @@ async function recetaTask(context: SeedContext): Promise<void> {
     await safe(`duplicar receta ${i}`, () =>
       context.postJson('/recetas/duplicate', {
         sourceId,
-        newName: `Receta duplicada seed ${i} ${faker.string.alphanumeric(4)}`,
+        newName: `Receta duplicada seed ${deterministicCode('R', i, 4, 'http-receta-duplicate')}`,
       })
     );
   }
@@ -962,9 +1241,12 @@ async function preparacionTaskEnhanced(context: SeedContext): Promise<void> {
     );
   }
 
-  await safe('POST preparaciones dummy', () =>
-    context.postJson('/preparaciones', { recetaId: faker.string.uuid() })
-  );
+  const recetaIds = context.getState<string[]>('recetaIds') || [];
+  if (recetaIds.length > 0) {
+    await safe('POST preparaciones dummy', () =>
+      context.postJson('/preparaciones', { recetaId: recetaIds[0] })
+    );
+  }
 }
 
 async function produccionTask(context: SeedContext): Promise<void> {
@@ -979,12 +1261,20 @@ async function produccionTask(context: SeedContext): Promise<void> {
   const lotIds = context.getState<string[]>('produccionLoteIds') || [];
   if (lotIds.length > 0) {
     const lid = lotIds[0];
-    await safe(`get produccion ${lid}`, () =>
-      context.getJson(`/produccion/${lid}`)
+    const lote = await safe(`get produccion ${lid}`, () =>
+      context.getJson<SeedProduccionLoteEntity>(`/produccion/${lid}`)
     );
-    await safe(`PATCH consumir lote ${lid}`, () =>
-      context.patchJson(`/produccion/lote/${lid}/consumir`, {})
-    );
+
+    const porcionesRestantes = getNumberField(lote, 'porcionesRestantes') ?? 0;
+    if (porcionesRestantes >= 1) {
+      const valor = Math.min(Math.floor(porcionesRestantes), 5);
+      await safe(`PATCH consumir lote ${lid}`, () =>
+        context.patchJson(`/produccion/lote/${lid}/consumir`, {
+          tipo: 'raciones',
+          valor,
+        })
+      );
+    }
   }
 }
 

@@ -14,6 +14,10 @@ import PageToolbar from '../components/ui/PageToolbar';
 import MovimientoFilters, {
   MovimientoFiltersState,
 } from '../features/movimientos/MovimientoFilters';
+import {
+  getMovimientoUsuarioDisplayName,
+  getMovimientoUsuarioInitial,
+} from '../features/movimientos/movimiento-formatters';
 import { Movimiento, TipoMovimiento } from '../services/movimiento.types';
 import { fetchMovimientos } from '../services/movimiento.service';
 import StatusChip from '../components/ui/StatusChip';
@@ -206,29 +210,31 @@ const Movimientos: React.FC = () => {
       {
         id: 'usuario',
         label: 'Usuario',
-        render: (row: Movimiento) => (
-          <Box display="flex" alignItems="center" gap={1}>
-            <Box
-              sx={{
-                width: 24,
-                height: 24,
-                borderRadius: '50%',
-                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                color: 'primary.main',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.7rem',
-                fontWeight: 700,
-              }}
-            >
-              {row.usuario?.nombre?.charAt(0) || 'U'}
+        render: (row: Movimiento) => {
+          const displayName = getMovimientoUsuarioDisplayName(row.usuario);
+
+          return (
+            <Box display="flex" alignItems="center" gap={1}>
+              <Box
+                sx={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: '50%',
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  color: 'primary.main',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                }}
+              >
+                {getMovimientoUsuarioInitial(row.usuario)}
+              </Box>
+              <Typography variant="body2">{displayName}</Typography>
             </Box>
-            <Typography variant="body2">
-              {row.usuario?.nombre || '—'}
-            </Typography>
-          </Box>
-        ),
+          );
+        },
         responsiveDisplay: { xs: 'none', sm: 'table-cell' },
       },
     ],
@@ -286,7 +292,10 @@ const Movimientos: React.FC = () => {
               '—',
             fullWidth: true,
           },
-          { label: 'Usuario', value: itemToView.usuario?.nombre || '—' },
+          {
+            label: 'Usuario',
+            value: getMovimientoUsuarioDisplayName(itemToView.usuario),
+          },
         ],
       },
       {

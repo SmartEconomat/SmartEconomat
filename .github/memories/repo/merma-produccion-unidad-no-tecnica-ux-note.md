@@ -1,0 +1,7 @@
+- Fecha: 2026-04-02
+- Problema: en merma de producción el campo `Cantidad perdida` no indicaba claramente la medida del ingrediente para usuarios no técnicos.
+- Fix frontend Preparaciones: se añadió mapeo de unidad amigable por ingrediente (`g`, `kg`, `ml`, `l`, `pieza`, `cda`, `cdta`) y el label/helper del input ahora son dinámicos según ingrediente seleccionado.
+- Caso no técnico cubierto: para `pieza` se muestra guía explícita de manojos (`1 manojo = 1 unidad`).
+- Mejora adicional: el selector de ingrediente en merma de producción muestra también la unidad de registro.
+- Coherencia global: en formularios de merma general se cambió el label a lenguaje claro y se añadieron opciones de producto con medida (`contenido + unidad`) en `Mermas` e `InventoryDetailModal`.
+- Archivos clave: `src/pages/Preparaciones.tsx`, `src/pages/Mermas.tsx`, `src/components/inventario/InventoryDetailModal.tsx`, `src/utils/schemas.ts`.

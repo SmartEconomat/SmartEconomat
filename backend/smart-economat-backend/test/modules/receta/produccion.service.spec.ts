@@ -198,6 +198,98 @@ describe('ProduccionService', () => {
         } satisfies ConsumirProduccionDto)
       ).rejects.toThrow(BadRequestException);
     });
+
+    it('debe permitir consumo por cantidad cuando es multiplo exacto del tamano de racion', async () => {
+      const mockReceta = {
+        id: 'receta-1',
+        tamanioRacion: 0.5,
+        unidadResultado: 'kg',
+      };
+      const mockLote = {
+        id: 'lote-1',
+        recetaId: 'receta-1',
+        porcionesRestantes: 10,
+        estado: EstadoLote.DISPONIBLE,
+      };
+
+      manager.findOne
+        .mockResolvedValueOnce(mockLote)
+        .mockResolvedValueOnce(mockReceta)
+        .mockResolvedValueOnce({
+          ...mockLote,
+          receta: mockReceta,
+          porcionesRestantes: 7,
+          estado: EstadoLote.DISPONIBLE,
+        });
+      manager.save.mockImplementation((_, entity) => entity);
+
+      const result = await service.consumirPorciones('lote-1', {
+        tipo: TipoConsumoProduccion.CANTIDAD,
+        valor: 1.5,
+      } satisfies ConsumirProduccionDto);
+
+      expect(result.porcionesRestantes).toBe(7);
+      expect(result.estado).toBe(EstadoLote.DISPONIBLE);
+      expect(manager.save).toHaveBeenCalled();
+    });
+
+    it('debe rechazar consumo por cantidad cuando no es multiplo exacto del tamano de racion', async () => {
+      const mockReceta = {
+        id: 'receta-1',
+        tamanioRacion: 0.5,
+        unidadResultado: 'kg',
+      };
+      const mockLote = {
+        id: 'lote-1',
+        recetaId: 'receta-1',
+        porcionesRestantes: 10,
+        estado: EstadoLote.DISPONIBLE,
+      };
+
+      manager.findOne
+        .mockResolvedValueOnce(mockLote)
+        .mockResolvedValueOnce(mockReceta);
+
+      await expect(
+        service.consumirPorciones('lote-1', {
+          tipo: TipoConsumoProduccion.CANTIDAD,
+          valor: 1.2,
+        } satisfies ConsumirProduccionDto)
+      ).rejects.toThrow('La cantidad a consumir debe ser múltiplo de 0.25 kg.');
+    });
+
+    it('debe permitir consumir una cantidad equivalente a media racion acumulada', async () => {
+      const mockReceta = {
+        id: 'receta-1',
+        tamanioRacion: 0.17,
+        unidadResultado: 'kg',
+      };
+      const mockLote = {
+        id: 'lote-1',
+        recetaId: 'receta-1',
+        porcionesRestantes: 8.5,
+        estado: EstadoLote.DISPONIBLE,
+      };
+
+      manager.findOne
+        .mockResolvedValueOnce(mockLote)
+        .mockResolvedValueOnce(mockReceta)
+        .mockResolvedValueOnce({
+          ...mockLote,
+          receta: mockReceta,
+          porcionesRestantes: 0,
+          estado: EstadoLote.AGOTADO,
+        });
+      manager.save.mockImplementation((_, entity) => entity);
+
+      const result = await service.consumirPorciones('lote-1', {
+        tipo: TipoConsumoProduccion.CANTIDAD,
+        valor: 1.445,
+      } satisfies ConsumirProduccionDto);
+
+      expect(result.porcionesRestantes).toBe(0);
+      expect(result.estado).toBe(EstadoLote.AGOTADO);
+    });
   });
 
   describe('validarMultiple', () => {

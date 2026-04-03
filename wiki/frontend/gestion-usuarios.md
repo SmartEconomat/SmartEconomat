@@ -1,51 +1,53 @@
-# 👥 Gestión de Usuarios - Frontend
+# Gestión de usuarios en frontend
 
-La administración de usuarios en SmartEconomat se ha consolidado en una única vista centralizada para mejorar la experiencia de usuario y la mantenibilidad del código.
+La administración de usuarios se concentra en una única vista: `UsuariosView`. Este documento resume su comportamiento funcional y la relación con los servicios de backend.
 
-## 🏗️ Arquitectura de la Vista
+## Arquitectura actual
 
-La funcionalidad está implementada en `src/pages/Usuarios/UsuariosView.tsx`. Esta vista reemplaza a las antiguas páginas `Usuarios.tsx` y `AdminPanel.tsx`.
+- Vista principal: `src/pages/Usuarios/UsuariosView.tsx`
+- Modal de edición y alta: `src/pages/Usuarios/UserModal.tsx`
+- Servicio de datos: `src/services/usuarioService.ts`
 
-### Consolidación
-- **Tabs/Acordeones**: Los usuarios se agrupan por tipo (Administradores, Profesores, Alumnos) para una navegación más clara.
-- **Paginación Independiente**: Cada grupo mantiene su propia paginación y estado de carga, permitiendo gestionar grandes volúmenes de datos por rol sin interferencias.
-- **Buscador Universal**: Un único campo de búsqueda que filtra en tiempo real sobre todos los grupos con un sistema de *debounce* de 500ms.
+La vista sustituye a implementaciones anteriores separadas y organiza el contenido por rol usando acordeones independientes.
 
----
+## Cómo se presenta la información
 
-## 🛠️ Funcionalidades Principales
+- Tres grupos principales: administradores, profesores y alumnos.
+- Cada grupo mantiene paginación propia.
+- El buscador usa debounce y filtra todos los grupos.
+- La página puede abrirse con filtros de notificación usando query params como `estado` y `focus`.
 
-### 1. Gestión de Roles y Permisos
-A diferencia del sistema anterior basado en enums, ahora es posible:
-- Asignar múltiples roles a un usuario.
-- Ver y editar permisos individuales (checklists) desde el `UserModal`.
-- Los permisos por defecto se marcan automáticamente al seleccionar un rol de plantilla.
+## Operaciones disponibles
 
-### 2. Acciones Rápidas
-Cada fila en las tablas de usuarios ofrece:
-- **Editar**: Abre el modal de edición de perfil y permisos.
-- **Cambiar Contraseña**: Genera una nueva contraseña temporal segura.
-- **Activar/Desactivar**: Cambia el estado `activo` del usuario sin eliminarlo.
-- **Borrado Lógico**: Elimina el usuario de la vista principal (recuperable mediante Soft Delete).
+- alta de usuario
+- edición de username y email
+- cambio de rol principal y overrides de permisos
+- activación o suspensión
+- borrado
+- reset de contraseña temporal
 
-### 3. Seguridad Reactiva
-La vista utiliza los hooks `usePermission` para habilitar o deshabilitar acciones:
-- `usuarios:crear`: Habilita el botón de "Añadir Usuario".
-- `usuarios:editar`: Habilita el botón de edición.
-- `usuarios:eliminar`: Habilita el botón de borrado.
+## Qué ocurre al guardar
 
----
+La edición puede desencadenar varias llamadas coordinadas:
 
-## 📂 Estructura de Archivos Relacionada
+- `PATCH /usuarios/:id` para perfil básico
+- `PATCH /admin/users/:id/role` para rol y permisos adicionales/excluidos
+- `PATCH /admin/users/:id/activate` para activación
 
-- `src/pages/Usuarios/UsuariosView.tsx`: Vista principal y lógica de datos.
-- `src/pages/Usuarios/UserModal.tsx`: Formulario dinámico para creación/edición.
-- `src/types/usuario.ts`: Definiciones de interfaces y tipos de datos.
-- `src/services/usuarioService.ts`: Comunicación con los endpoints `/usuarios` y `/admin`.
+Si el usuario editado es el propio usuario autenticado, la vista intenta refrescar la sesión para evitar inconsistencias de permisos.
 
----
+## Reglas de seguridad visibles en UI
 
-## 🔗 Relacionado
-- [Hooks de Permisos](./hooks-permisos.md)
-- [Sistema RBAC (Backend)](../security/rbac.md)
-- [Soft Delete Global](../architecture/soft-delete.md)
+- Las acciones dependen de `usePermission`.
+- No se puede resetear la contraseña de uno mismo desde la acción rápida.
+- El modal protege el caso del último administrador activo para evitar dejar el sistema sin administración operativa.
+
+## Contraseña temporal
+
+El reset desde la vista genera una contraseña fuerte temporal y la muestra una única vez en un diálogo de confirmación. El backend recibe esa contraseña ya generada desde cliente.
+
+## Relacionado
+
+- [Página Usuarios](paginas/Usuarios.md)
+- [Servicio `usuarioService`](servicios/usuarioService.md)
+- [Hooks de permisos](hooks-permisos.md)

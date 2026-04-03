@@ -25,6 +25,7 @@ import {
   createProveedor,
   updateProveedor,
 } from '../services/proveedor.service';
+import type { CreateProveedorPayload } from '../services/proveedor.service';
 import { deleteResource } from '../services/api.service';
 import { useToast } from '../store/toast.hooks';
 import { usePermission } from '../store/auth.hooks';
@@ -114,7 +115,7 @@ const Proveedores: React.FC = () => {
   const handleSave = async (formData: Record<string, unknown>) => {
     setIsSaving(true);
     try {
-      const payload: Partial<Proveedor> = {
+      const payload: CreateProveedorPayload = {
         nombre: formData.nombre as string,
         contacto: formData.contacto as string,
         telefono: formData.telefono as string,

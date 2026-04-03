@@ -3,6 +3,7 @@ import { ProductoService } from '../../../src/modules/producto/service/producto.
 import { ProductoRepository } from '../../../src/modules/producto/repository/producto.repository';
 import { ProductoProveedor } from '../../../src/modules/producto/producto-proveedor.entity/producto-proveedor.entity';
 import { ProductoAlergeno } from '../../../src/modules/producto/producto-alergeno.entity/producto-alergeno.entity';
+import { Producto } from '../../../src/modules/producto/producto.entity/producto.entity';
 import { MovimientoHelper } from '../../../src/common/helpers/movimiento.helper';
 import { DataSource } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -174,5 +175,61 @@ describe('ProductoService', () => {
         'user-1'
       )
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('debe calcular PMP ponderado con stock previo y nueva recepción', async () => {
+    const em = {
+      findOne: jest.fn().mockResolvedValue({
+        id: 'pp-1',
+        pmp: 4,
+        producto: { id: 'prod-1' },
+      }),
+      find: jest
+        .fn()
+        .mockResolvedValue([{ cantidadActual: 10 }, { cantidadActual: 15 }]),
+      update: jest.fn().mockResolvedValue(undefined),
+    };
+
+    const recalculateSpy = jest
+      .spyOn(service as any, 'recalcularPmpProducto')
+      .mockResolvedValue(undefined);
+
+    const pmp = await service.actualizarPMP('pp-1', 5, 6, em as any);
+
+    expect(pmp).toBe(4.4);
+    expect(em.update).toHaveBeenCalledWith(
+      ProductoProveedor,
+      { id: 'pp-1' },
+      { pmp: 4.4 }
+    );
+    expect(recalculateSpy).toHaveBeenCalledWith('prod-1', em);
+  });
+
+  it('debe conservar el último PMP del producto si el stock total es 0', async () => {
+    const producto = {
+      id: 'prod-1',
+      pmp: 4.5,
+      proveedores: [
+        { id: 'pp-1', pmp: 3 },
+        { id: 'pp-2', pmp: 7 },
+      ],
+    };
+
+    const em = {
+      findOne: jest.fn().mockResolvedValue(producto),
+      find: jest.fn().mockResolvedValue([
+        { productoProveedorId: 'pp-1', cantidadActual: 0 },
+        { productoProveedorId: 'pp-2', cantidadActual: 0 },
+      ]),
+      update: jest.fn().mockResolvedValue(undefined),
+    };
+
+    await (service as any).recalcularPmpProducto('prod-1', em);
+
+    expect(em.update).toHaveBeenCalledWith(
+      Producto,
+      { id: 'prod-1' },
+      { pmp: 4.5 }
+    );
   });
 });

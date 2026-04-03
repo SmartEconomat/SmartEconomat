@@ -1,20 +1,33 @@
-# Arquitectura de SmartEconomat
+# Índice de arquitectura
 
-Bienvenido a la documentación de arquitectura del proyecto **SmartEconomat**. Esta documentación está estructurada siguiendo el **Framework Diátaxis**, orientada a facilitar la consulta según tus necesidades:
+Este índice reúne los documentos canónicos de arquitectura del proyecto. La navegación parte de aquí cuando se necesita entender cómo está organizado SmartEconomat y por qué se tomaron ciertas decisiones técnicas.
 
-## 📖 Referencia (Reference)
-*Descripciones técnicas detalladas de la "maquinaria". Orientado a la información.*
+## Vista general
 
-- [**Backend (NestJS + TypeORM)**](./reference/backend.md): Estructura en capas, módulos, ciclo de vida de peticiones y configuración de la API.
-- [**Frontend (React + Vite)**](./reference/frontend.md): Arquitectura de la interfaz de usuario, gestión de estado y convenciones del cliente.
-- [**Modelo de Datos**](./reference/data-model.md): Listado exhaustivo de todas las entidades de base de datos, relaciones y campos.
+- [Backend](backend.md): visión arquitectónica del servidor NestJS.
+- [Frontend](frontend.md): organización del cliente React y su modelo de sesión.
+- [Modelo de datos](data-model.md): entidades, relaciones y agregados principales.
 
-## 🧠 Explicación (Explanation)
-*Aclaración profunda sobre temas concretos. Orientado a la comprensión.*
+## Estructura y componentes
 
-- [**Decisiones Arquitectónicas y Patrones**](./explanation/decisiones-arquitectonicas.md): Por qué estructuramos el código así, qué trade-offs asumimos y patrones clave (Repository, DI).
-- [**Implementación de UUID v7**](./explanation/uuid-v7.md): Análisis detallado sobre la generación y ventajas de usar IDs ordenables temporalmente.
-- [**Soft Delete Global**](./explanation/soft-delete.md): Cómo funciona la retención de registros borrados lógicamente en todo el sistema.
+- [Estructura del backend](backend-structure.md): mapa de carpetas del backend.
+- [NestJS + TypeORM](backend-nestjs-typeorm.md): stack y patrones de la capa servidor.
+- [UI de inventario](ui-inventario.md): particularidades de la interfaz del módulo de inventario.
+- [Referencia backend](reference/backend.md): resumen estructurado del backend para consulta rápida.
 
----
-*Para modificar esta documentación, mantén la separación entre el "Qué es" (Referencia) y el "Por qué es así" (Explicación).*
+## Decisiones técnicas
+
+- [Patrones y trade-offs](patrones-y-tradeoffs.md): decisiones de diseño, acoplamientos y costes asumidos.
+- [UUID v7](uuid-v7.md): motivo y alcance del uso de UUID v7.
+- [Soft delete](soft-delete.md): política de borrado lógico y efectos en dominio y operación.
+
+## Diagramas y apoyo visual
+
+- [Diagrama de arquitectura backend](../diagrams/arquitectura-backend.md)
+- [Visión general del proyecto](../overview.md)
+
+## Relacionado
+
+- [Referencia de API](../reference/api.md)
+- [Variables de entorno](../reference/variables-entorno.md)
+- [Guía de despliegue](../DEPLOYMENT.md)

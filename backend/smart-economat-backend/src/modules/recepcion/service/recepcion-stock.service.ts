@@ -68,6 +68,16 @@ interface IncidenciaGenerada {
   datosOriginales: { productos: LineaIncidencia[] };
 }
 
+interface LineaRecepcionConCantidad {
+  cantidadRecibida: number;
+}
+
+const PEDIDO_RECEPCION_ESTADOS_PERMITIDOS = [
+  EstadoPedido.PENDIENTE_DE_APROBACION,
+  EstadoPedido.POR_RECEPCIONAR,
+  EstadoPedido.PARCIAL,
+] as const;
+
 interface PedidoActualizado {
   id: string;
   estadoAnterior: string;
@@ -116,11 +126,7 @@ export class RecepcionStockService {
       throw new NotFoundException(I18nHelper.getError('ORDER_NOT_FOUND'));
     }
 
-    if (
-      pedido.estado !== EstadoPedido.PENDIENTE &&
-      pedido.estado !== EstadoPedido.EN_PROCESO &&
-      pedido.estado !== EstadoPedido.PARCIAL
-    ) {
+    if (!PEDIDO_RECEPCION_ESTADOS_PERMITIDOS.includes(pedido.estado)) {
       throw new BadRequestException(
         I18nHelper.getError('ORDER_NOT_RECEPTABLE')
       );
@@ -302,7 +308,13 @@ export class RecepcionStockService {
         movimientosGenerados = batchMovimientos.length;
 
         for (const item of lineasConInventario) {
-          const precioUnitario = Number(item.ppRef.precioUnitario) || 0;
+          const precioUnitario = Number(item.ppRef.precioUnitario);
+          if (!Number.isFinite(precioUnitario) || precioUnitario <= 0) {
+            throw new BadRequestException(
+              I18nHelper.getError('PRICE_MUST_BE_GREATER_THAN_ZERO')
+            );
+          }
+
           const cantidadRecibida = Number(item.linea.cantidadRecibida);
 
           const historial = queryRunner.manager.create(HistorialPrecio, {
@@ -327,41 +339,20 @@ export class RecepcionStockService {
         }
       }
 
-      const lineasIncidencia: LineaIncidencia[] = [];
+      const lineasIncidencia = this.buildLineasIncidenciaCantidad(
+        ppArr,
+        detallesRecibidos
+      );
 
       for (const pp of ppArr) {
-        const cantPedida = Number(pp.cantidad);
         const lineasRecibidas = detallesRecibidos.get(pp.id) || [];
 
-        let subCantOptima = 0;
         let subCantRotaDefectuosa = 0;
 
         for (const lr of lineasRecibidas) {
-          if (lr.estadoVisual === EstadoVisualProducto.OPTIMO) {
-            subCantOptima += Number(lr.cantidadRecibida);
-          } else {
+          if (lr.estadoVisual !== EstadoVisualProducto.OPTIMO) {
             subCantRotaDefectuosa += Number(lr.cantidadRecibida);
           }
-        }
-
-        const cantRecibidaTotal = subCantOptima + subCantRotaDefectuosa;
-        const difNumerica = cantRecibidaTotal - cantPedida;
-
-        if (difNumerica !== 0) {
-          lineasIncidencia.push({
-            idPedidoProducto: pp.id,
-            nombreProducto:
-              pp.productoProveedor?.producto?.nombre || 'Producto',
-            cantidadPedida: cantPedida,
-            cantidadRecibida: cantRecibidaTotal,
-            diferencia: difNumerica,
-            tipo:
-              cantRecibidaTotal === 0
-                ? 'NO_ENTREGADO'
-                : difNumerica < 0
-                  ? 'FALTA'
-                  : 'EXCESO',
-          });
         }
 
         if (subCantRotaDefectuosa > 0) {
@@ -375,7 +366,7 @@ export class RecepcionStockService {
             idPedidoProducto: pp.id,
             nombreProducto:
               pp.productoProveedor?.producto?.nombre || 'Producto',
-            cantidadPedida: cantPedida,
+            cantidadPedida: Number(pp.cantidad),
             cantidadRecibida: subCantRotaDefectuosa,
             diferencia: -subCantRotaDefectuosa,
             tipo: 'DEFECTUOSO',
@@ -499,10 +490,7 @@ export class RecepcionStockService {
     }
 
     const pedidosInvalidos = pedidosArr.filter(
-      (p) =>
-        p.estado !== EstadoPedido.PENDIENTE &&
-        p.estado !== EstadoPedido.EN_PROCESO &&
-        p.estado !== EstadoPedido.PARCIAL
+      (p) => !PEDIDO_RECEPCION_ESTADOS_PERMITIDOS.includes(p.estado)
     );
     if (pedidosInvalidos.length > 0) {
       const invalidIds = pedidosInvalidos.map((p) => p.id);
@@ -589,6 +577,8 @@ export class RecepcionStockService {
               proveedor: defaultProvider as any,
               marca: pNew.marca,
               codigoBarras: pNew.codigoBarras,
+
+              precioUnitario: 0.01,
               pmp: 0,
             });
             savedPP = await queryRunner.manager.save(pp);
@@ -836,7 +826,13 @@ export class RecepcionStockService {
           });
           movimientosGenerados++;
 
-          const precioUnitario = Number(ppRef.precioUnitario) || 0;
+          const precioUnitario = Number(ppRef.precioUnitario);
+          if (!Number.isFinite(precioUnitario) || precioUnitario <= 0) {
+            throw new BadRequestException(
+              I18nHelper.getError('PRICE_MUST_BE_GREATER_THAN_ZERO')
+            );
+          }
+
           const cantidadRecibida = Number(linea.cantidadRecibida);
 
           const historial = queryRunner.manager.create(HistorialPrecio, {
@@ -863,34 +859,10 @@ export class RecepcionStockService {
 
       for (const p of pedidosArr) {
         const ppArr = p.pedidoProductos as unknown as PedidoProducto[];
-        const lineasIncidencia: LineaIncidencia[] = [];
-
-        for (const pp of ppArr) {
-          const lineasRecibidas = detallesRecibidos.get(pp.id) || [];
-          const cantPedida = Number(pp.cantidad);
-
-          let subCantComputable = 0;
-
-          for (const lr of lineasRecibidas) {
-            if (permiteComputarComoRecibido(lr.estadoProducto)) {
-              subCantComputable += Number(lr.cantidadRecibida);
-            }
-          }
-
-          const exceso = Math.max(0, subCantComputable - cantPedida);
-
-          if (exceso > 0) {
-            lineasIncidencia.push({
-              idPedidoProducto: pp.id,
-              nombreProducto:
-                pp.productoProveedor?.producto?.nombre || 'Producto',
-              cantidadPedida: cantPedida,
-              cantidadRecibida: subCantComputable,
-              diferencia: exceso,
-              tipo: 'EXCESO',
-            });
-          }
-        }
+        const lineasIncidencia = this.buildLineasIncidenciaCantidad(
+          ppArr,
+          detallesRecibidos
+        );
 
         if (lineasIncidencia.length > 0) {
           recepcionEstadoEnum = EstadoRecepcion.CON_INCIDENCIAS;
@@ -1010,6 +982,46 @@ export class RecepcionStockService {
       default:
         return TipoDiferencia.FALTANTE;
     }
+  }
+
+  private buildLineasIncidenciaCantidad<
+    TLinea extends LineaRecepcionConCantidad,
+  >(
+    pedidoProductos: PedidoProducto[],
+    detallesRecibidos: Map<string, TLinea[]>
+  ): LineaIncidencia[] {
+    const lineasIncidencia: LineaIncidencia[] = [];
+
+    for (const pedidoProducto of pedidoProductos) {
+      const lineasRecibidas = detallesRecibidos.get(pedidoProducto.id) || [];
+      const cantidadPedida = Number(pedidoProducto.cantidad);
+      const cantidadRecibidaTotal = lineasRecibidas.reduce(
+        (total, linea) => total + Number(linea.cantidadRecibida),
+        0
+      );
+      const diferencia = cantidadRecibidaTotal - cantidadPedida;
+
+      if (diferencia === 0) {
+        continue;
+      }
+
+      lineasIncidencia.push({
+        idPedidoProducto: pedidoProducto.id,
+        nombreProducto:
+          pedidoProducto.productoProveedor?.producto?.nombre || 'Producto',
+        cantidadPedida,
+        cantidadRecibida: cantidadRecibidaTotal,
+        diferencia,
+        tipo:
+          cantidadRecibidaTotal === 0
+            ? 'NO_ENTREGADO'
+            : diferencia < 0
+              ? 'FALTA'
+              : 'EXCESO',
+      });
+    }
+
+    return lineasIncidencia;
   }
 
   private toIncidenciaGenerada(

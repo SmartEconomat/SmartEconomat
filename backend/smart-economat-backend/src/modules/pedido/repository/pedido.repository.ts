@@ -21,6 +21,8 @@ export class PedidoRepository extends Repository<Pedido> {
             'pedidoProductos.productoProveedor.producto',
             'pedidoProductos.productoProveedor.proveedor',
             'recepcionesPedido',
+            'batch',
+            'pedidoUsuario',
           ]
         : [],
       order: {
@@ -54,6 +56,7 @@ export class PedidoRepository extends Repository<Pedido> {
       queryBuilder
         .leftJoinAndSelect('pedido.usuario', 'usuario')
         .leftJoinAndSelect('pedido.proveedor', 'proveedor')
+        .leftJoinAndSelect('pedido.pedidoUsuario', 'pedidoUsuario')
         .leftJoinAndSelect('pedido.pedidoProductos', 'pedidoProductos')
         .leftJoinAndSelect(
           'pedidoProductos.productoProveedor',
@@ -64,11 +67,13 @@ export class PedidoRepository extends Repository<Pedido> {
           'productoProveedor.proveedor',
           'productoProveedorProveedor'
         )
-        .leftJoinAndSelect('pedido.recepcionesPedido', 'recepcionesPedido');
+        .leftJoinAndSelect('pedido.recepcionesPedido', 'recepcionesPedido')
+        .leftJoinAndSelect('pedido.batch', 'batch');
     } else {
       queryBuilder
         .leftJoin('pedido.usuario', 'usuario')
-        .leftJoin('pedido.proveedor', 'proveedor');
+        .leftJoin('pedido.proveedor', 'proveedor')
+        .leftJoin('pedido.pedidoUsuario', 'pedidoUsuario');
     }
 
     if (query.estado) {
@@ -116,7 +121,16 @@ export class PedidoRepository extends Repository<Pedido> {
       queryBuilder.andWhere(
         new Brackets((subQuery) => {
           subQuery
-            .where('CAST(pedido.id AS text) ILIKE :searchTerm', {
+            .where('CAST(pedido.numeroGlobal AS text) ILIKE :searchTerm', {
+              searchTerm: searchTermValue,
+            })
+            .orWhere(
+              'CAST(pedidoUsuario.numeroGlobal AS text) ILIKE :searchTerm',
+              {
+                searchTerm: searchTermValue,
+              }
+            )
+            .orWhere('CAST(pedido.id AS text) ILIKE :searchTerm', {
               searchTerm: searchTermValue,
             })
             .orWhere('CAST(pedido.estado AS text) ILIKE :searchTerm', {
@@ -169,6 +183,8 @@ export class PedidoRepository extends Repository<Pedido> {
             'pedidoProductos.productoProveedor.producto',
             'pedidoProductos.productoProveedor.proveedor',
             'recepcionesPedido',
+            'batch',
+            'pedidoUsuario',
           ]
         : [],
     });

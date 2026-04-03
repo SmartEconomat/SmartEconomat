@@ -96,7 +96,7 @@ La arquitectura del sistema se basa en un modelo cliente-servidor con una API RE
 
 - **Sistema operativo:** Windows (compatible con Linux/macOS)
 - **Editor recomendado:** VS Code con extensiones ESLint, Prettier, Docker
-- **Entorno de ejecución:** Node.js 20+
+- **Entorno de ejecución:** Node.js 22.2.0+
 - **Control de dependencias:** npm
 - **Despliegue:** Contenedores Docker con Docker Compose
 
@@ -126,8 +126,8 @@ El diseño modular del sistema (20 módulos independientes) permite la escalabil
 | Recurso | Ubicación |
 |---------|-----------|
 | Diagrama ER | [assets/resources/diagram-ER.drawio](../assets/resources/diagram-ER.drawio) |
-| Entidades y Relaciones | [backend/entidades_relaciones.md](backend/entidades_relaciones.md) |
-| Casos de Uso | [use-cases/use-cases.md](use-cases/use-cases.md) |
+| Entidades y Relaciones | [architecture/data-model.md](../architecture/data-model.md) |
+| Casos de Uso | [planning/use-cases/use-cases.md](../planning/use-cases/use-cases.md) |
 | Colección Postman | [reference/postman/SmartEconomat_Postman_Collection.json](../reference/postman/SmartEconomat_Postman_Collection.json) |
 
 ---

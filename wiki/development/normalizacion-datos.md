@@ -1,12 +1,12 @@
-# 📋 Guía de Normalización de Datos
+# Guía de normalización de datos
 
-## 🎯 Objetivo
+## Objetivo
 
 Implementar la normalización **absoluta de todos los datos recibidos desde el frontend** en cualquier endpoint del backend, siguiendo la arquitectura y flujos existentes, con cambios mínimos y reutilizando lógica actual.
 
 ---
 
-## 📌 Principios de Normalización
+## Principios de normalización
 
 ### ¿Qué es la Normalización?
 
@@ -21,7 +21,7 @@ La normalización es el proceso de transformar los datos recibidos del frontend 
 
 ---
 
-## 🏗️ Arquitectura de Normalización
+## Arquitectura de normalización
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -64,7 +64,7 @@ La normalización es el proceso de transformar los datos recibidos del frontend 
 
 ---
 
-## 🛠️ Componentes de Normalización
+## Componentes de normalización
 
 ### 1. Transformers (`src/common/transformers/`)
 
@@ -168,7 +168,7 @@ app.useGlobalPipes(
 
 ---
 
-## 📝 Convenciones de Normalización por Tipo de Dato
+## Convenciones de normalización por tipo de dato
 
 ### Strings
 
@@ -250,7 +250,7 @@ alergenos: Alergeno[];
 
 ---
 
-## 🔄 Flujo Completo de Normalización
+## Flujo completo de normalización
 
 ### Ejemplo: Crear Usuario
 
@@ -282,11 +282,11 @@ alergenos: Alergeno[];
 
 ```typescript
 // class-validator verifica:
-// - username: string, no vacío, max 100 chars ✅
-// - email: email válido, max 255 chars ✅
-// - password: strong password ✅
-// - rol: enum válido ✅
-// - status: enum válido ✅
+// - username: string, no vacío, max 100 chars
+// - email: email válido, max 255 chars
+// - password: strong password
+// - rol: enum válido
+// - status: enum válido
 ```
 
 #### 4. En el Servicio
@@ -302,7 +302,7 @@ async create(dto: CreateUsuarioDto) {
 
 ---
 
-## 📚 Ejemplos por Módulo
+## Ejemplos por módulo
 
 ### Módulo Usuario
 
@@ -398,9 +398,9 @@ export class CreateRecepcionDto {
 
 ---
 
-## ⚠️ Errores Comunes a Evitar
+## Errores comunes a evitar
 
-### ❌ INCORRECTO - Sin normalización
+### Incorrecto: sin normalización
 
 ```typescript
 export class CreateUsuarioDto {
@@ -409,7 +409,7 @@ export class CreateUsuarioDto {
 }
 ```
 
-### ✅ CORRECTO - Con normalización
+### Correcto: con normalización
 
 ```typescript
 export class CreateUsuarioDto {
@@ -419,49 +419,49 @@ export class CreateUsuarioDto {
 }
 ```
 
-### ❌ INCORRECTO - Validación antes de transformación
+### Incorrecto: validación antes de la transformación
 
 ```typescript
 // El orden de los decoradores importa
 @IsEmail()
-@Transform(LowercaseStringTransformer.transform)  // ❌ Demasiado tarde
+@Transform(LowercaseStringTransformer.transform)  // Demasiado tarde
 email: string;
 ```
 
-### ✅ CORRECTO - Transformación antes de validación
+### Correcto: transformación antes de la validación
 
 ```typescript
 // Primero transformar, luego validar
 @Transform(LowercaseStringTransformer.transform)
-@IsEmail()  // ✅ Valida el email ya transformado
+@IsEmail()  // Valida el email ya transformado
 email: string;
 ```
 
-### ❌ INCORRECTO - Sin Type para números/fechas
+### Incorrecto: sin `@Type` para números o fechas
 
 ```typescript
 @IsNumber()
-precio: number;  // ❌ Puede fallar si viene como string
+precio: number;  // Puede fallar si viene como string
 
 @IsDate()
-fecha: Date;  // ❌ Puede fallar si viene como string ISO
+fecha: Date;  // Puede fallar si viene como string ISO
 ```
 
-### ✅ CORRECTO - Con Type para conversión
+### Correcto: con `@Type` para conversión
 
 ```typescript
 @Type(() => Number)
 @IsNumber()
-precio: number;  // ✅ Convierte string a number
+precio: number;  // Convierte string a number
 
 @Type(() => Date)
 @IsDate()
-fecha: Date;  // ✅ Convierte string ISO a Date
+fecha: Date;  // Convierte string ISO a Date
 ```
 
 ---
 
-## 🔧 Configuración Global
+## Configuración global
 
 ### main.ts
 
@@ -482,22 +482,22 @@ app.useGlobalPipes(
 
 ---
 
-## 📖 Mejores Prácticas
+## Mejores prácticas
 
-### 1. **Siempre usar @Transform antes de @Is***
+### 1. Usar `@Transform` antes de `@Is*`
 
 ```typescript
-// ✅ CORRECTO
+// Correcto
 @Transform(TrimStringTransformer.transform)
 @IsString()
 @IsNotEmpty()
 nombre: string;
 ```
 
-### 2. **Usar @Type para números y fechas**
+### 2. Usar `@Type` para números y fechas
 
 ```typescript
-// ✅ CORRECTO
+// Correcto
 @Type(() => Number)
 @IsNumber()
 precio: number;
@@ -507,10 +507,10 @@ precio: number;
 fecha: Date;
 ```
 
-### 3. **Normalizar strings anidados en objetos**
+### 3. Normalizar strings anidados en objetos
 
 ```typescript
-// ✅ CORRECTO - Objetos anidados también normalizados
+// Correcto: los objetos anidados también se normalizan
 export class RecepcionLineDto {
   @Transform(TrimStringTransformer.transform)
   @IsString()
@@ -524,10 +524,10 @@ export class CreateRecepcionDto {
 }
 ```
 
-### 4. **Documentar con Swagger**
+### 4. Documentar con Swagger
 
 ```typescript
-// ✅ CORRECTO - Documentación clara
+// Correcto: documentación clara
 @ApiProperty({
   description: 'Nombre del producto (sin espacios extra)',
   example: 'Tomate Frito',
@@ -537,10 +537,10 @@ export class CreateRecepcionDto {
 nombre: string;
 ```
 
-### 5. **Usar i18n para mensajes de error**
+### 5. Usar i18n para mensajes de error
 
 ```typescript
-// ✅ CORRECTO - Mensajes en español/inglés
+// Correcto: mensajes localizables
 @IsString({
   message: i18nValidationMessage('validation.EL_NOMBRE_DEBE_SER_UNA_CADENA'),
 })
@@ -549,7 +549,7 @@ nombre: string;
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ### Test Unitarios de DTOs
 
@@ -578,7 +578,7 @@ describe('CreateUsuarioDto', () => {
 
 ---
 
-## 📊 Checklist de Normalización
+## Checklist de normalización
 
 Al crear o actualizar un DTO, verifica:
 
@@ -595,7 +595,7 @@ Al crear o actualizar un DTO, verifica:
 
 ---
 
-## 🚀 Migración de DTOs Existentes
+## Migración de DTOs existentes
 
 Para actualizar DTOs existentes con normalización:
 
@@ -634,7 +634,7 @@ export class CreateProductoDto {
 
 ---
 
-## 📞 Soporte
+## Soporte
 
 Para dudas o problemas con la normalización:
 
@@ -644,7 +644,7 @@ Para dudas o problemas con la normalización:
 
 ---
 
-## 📝 Resumen
+## Resumen
 
 | Componente | Ubicación | Propósito |
 |------------|-----------|-----------|

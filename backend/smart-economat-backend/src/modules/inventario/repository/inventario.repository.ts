@@ -32,6 +32,7 @@ export class InventarioRepository extends Repository<Inventario> {
       .leftJoinAndSelect('inventario.productoProveedor', 'productoProveedor')
       .leftJoinAndSelect('productoProveedor.producto', 'producto')
       .leftJoinAndSelect('productoProveedor.proveedor', 'proveedor')
+      .leftJoinAndSelect('inventario.ubicacion', 'ubicacion')
       .getMany();
   }
 
