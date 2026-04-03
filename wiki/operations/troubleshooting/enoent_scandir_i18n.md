@@ -14,10 +14,10 @@ Esto ocurre porque, aunque hayas configurado los `assets` en tu `nest-cli.json` 
 Para resolverlo de manera completamente fiable sin depender de que los *bundlers* de TypeScript cumplan la directiva de copia, la mejor práctica en despliegues es copiar de forma manual y explícita la carpeta `src/i18n/` en la misma etapa final tu `Dockerfile.prod`, asegurando que llegue íntegra a `dist/`:
 
 ```dockerfile
-# Se copia la carpeta compilada por lo general
+# Se copia la carpeta compilada
 COPY --from=builder /app/dist ./dist
 
-# ¡PARCHE INYECTADO!: Se copia explícitamente el directorio entero de traducciones JSON al dist
+# Se copia explícitamente el directorio de traducciones JSON al dist
 COPY --from=builder /app/src/i18n ./dist/i18n
 ```
 

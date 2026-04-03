@@ -1,7 +1,6 @@
 import { baseFetch, ApiResponse, parseApiResponse } from './api.service';
 import { tokenManager } from '../utils/token.manager';
 
-
 export interface LoginRequest {
   email: string;
   password: string;

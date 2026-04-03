@@ -1,49 +1,74 @@
-import { Receta } from './receta.types';
-import { baseFetch } from './api.service';
+import { Receta, RecetaPayload } from './receta.types';
+import { baseFetch, PaginatedData, parseApiResponse } from './api.service';
+import {
+  normalizeLimitParam,
+  normalizePageParam,
+  toOptionalTrimmedString,
+} from './api.utils';
 import { DownloadOptions, DownloadService } from './download.service';
 
-import { PaginatedData } from './api.service';
+const RECETAS_DEFAULT_LIMIT = 20;
+const RECETAS_MAX_LIMIT = 50;
 
-interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
+type RecetaSortOrder = 'asc' | 'desc' | 'ASC' | 'DESC';
+
+function normalizeRecetaSortOrder(
+  value?: RecetaSortOrder
+): 'ASC' | 'DESC' | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  return String(value).toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
 }
 
 const BACKEND_MAX_PAGE_LIMIT = 50;
 
 export async function fetchRecetas(
   page: number = 1,
-  limit: number = 100,
-  search: string = ''
+  limit: number = RECETAS_DEFAULT_LIMIT,
+  search: string = '',
+  sortBy?: string,
+  sortOrder?: RecetaSortOrder
 ): Promise<PaginatedData<Receta>> {
-  const safePage = Math.max(1, Number.isFinite(page) ? Math.trunc(page) : 1);
-  const safeLimit = Math.min(
-    Math.max(1, Number.isFinite(limit) ? Math.trunc(limit) : 1),
-    BACKEND_MAX_PAGE_LIMIT
+  const normalizedPage = normalizePageParam(page);
+  const normalizedLimit = normalizeLimitParam(
+    limit,
+    RECETAS_DEFAULT_LIMIT,
+    RECETAS_MAX_LIMIT
   );
-  const safeSearch = search.trim();
+  const normalizedSearch = toOptionalTrimmedString(search);
+  const normalizedSortBy = toOptionalTrimmedString(sortBy);
+  const normalizedOrder = normalizeRecetaSortOrder(sortOrder);
 
   const query = new URLSearchParams({
-    page: safePage.toString(),
-    limit: safeLimit.toString(),
+    page: String(normalizedPage),
+    limit: String(normalizedLimit),
   });
-  if (safeSearch) query.append('searchTerm', safeSearch);
+
+  if (normalizedSearch) {
+    query.append('searchTerm', normalizedSearch);
+  }
+
+  if (normalizedSortBy) {
+    query.append('sortBy', normalizedSortBy);
+  }
+
+  if (normalizedOrder) {
+    query.append('order', normalizedOrder);
+  }
 
   const response = await baseFetch(`/recetas?${query.toString()}`);
-  if (!response.ok) {
-    throw new Error(
-      `Error al obtener recetas: ${response.status} ${response.statusText}`
-    );
-  }
-  const body = (await response.json()) as ApiResponse<PaginatedData<Receta>>;
+  const body = await parseApiResponse<PaginatedData<Receta>>(
+    response,
+    'Error al obtener recetas'
+  );
   return body.data;
 }
 
 export async function createReceta(
-  receta: Partial<Receta> & { imagen?: File }
+  receta: RecetaPayload & { imagen?: File }
 ): Promise<Receta> {
-  // Excluir 'imagen' del payload (ya se subió por separado)
   const payload = Object.fromEntries(
     Object.entries(receta).filter(([key]) => key !== 'imagen')
   );
@@ -51,27 +76,19 @@ export async function createReceta(
   const response = await baseFetch('/recetas', {
     method: 'POST',
     body: JSON.stringify(payload),
-    headers: {
-      'Content-Type': 'application/json',
-    },
   });
-  if (!response.ok) {
-    const errorBody = (await response.json().catch(() => ({}))) as {
-      message?: string;
-    };
-    throw new Error(
-      errorBody.message || `Error al crear receta: ${response.status}`
-    );
-  }
-  const body = (await response.json()) as ApiResponse<Receta>;
-  return body.data ?? (body as unknown as Receta);
+
+  const body = await parseApiResponse<Receta>(
+    response,
+    'Error al crear receta'
+  );
+  return body.data;
 }
 
 export async function updateReceta(
   id: string,
-  receta: Partial<Receta> & { imagen?: File }
+  receta: RecetaPayload & { imagen?: File }
 ): Promise<Receta> {
-  // Excluir 'imagen' del payload (ya se subió por separado)
   const payload = Object.fromEntries(
     Object.entries(receta).filter(([key]) => key !== 'imagen')
   );
@@ -79,21 +96,15 @@ export async function updateReceta(
   const response = await baseFetch(`/recetas/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(payload),
-    headers: {
-      'Content-Type': 'application/json',
-    },
   });
-  if (!response.ok) {
-    const errorBody = (await response.json().catch(() => ({}))) as {
-      message?: string;
-    };
-    throw new Error(
-      errorBody.message || `Error al actualizar receta: ${response.status}`
-    );
-  }
-  const body = (await response.json()) as ApiResponse<Receta>;
-  return body.data ?? (body as unknown as Receta);
+
+  const body = await parseApiResponse<Receta>(
+    response,
+    'Error al actualizar receta'
+  );
+  return body.data;
 }
+
 type RecetaDetalleApiData = {
   receta: Receta;
   detalleIngredientes: Array<{
@@ -111,10 +122,10 @@ export async function getRecetaDetalle(
   id: string
 ): Promise<RecetaDetalleApiData> {
   const response = await baseFetch(`/recetas/${id}/detalle`);
-  if (!response.ok) {
-    throw new Error(`Error al obtener detalle: ${response.status}`);
-  }
-  const body = (await response.json()) as ApiResponse<RecetaDetalleApiData>;
+  const body = await parseApiResponse<RecetaDetalleApiData>(
+    response,
+    'Error al obtener detalle de la receta'
+  );
   return body.data;
 }
 

@@ -42,12 +42,10 @@ async function initializeHttpSeedContext(
   config: SeedContextConfig = {}
 ): Promise<SeedContext> {
   process.env.IS_SEEDING = 'true';
-  const context = new SeedContext({
-    ...config,
-    maxRetries: 0,
-  });
+  const context = new SeedContext(config);
 
   await context.ensureDockerInfra();
+  await context.ensureDatabaseCompatibility();
   await context.waitForBackend();
   await context.login();
 

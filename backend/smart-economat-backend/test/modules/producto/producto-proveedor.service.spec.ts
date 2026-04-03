@@ -1,4 +1,8 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { ProductoProveedorService } from '../../../src/modules/producto/service/producto-proveedor.service';
 
 describe('ProductoProveedorService', () => {
@@ -36,10 +40,14 @@ describe('ProductoProveedorService', () => {
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
-  it('updatePrecio crea historial con el precio anterior y persiste el nuevo', async () => {
+  it('updatePrecio registra el precio nuevo en historial y persiste el vigente', async () => {
     const productoProveedor = { id: 'pp-2', precioUnitario: 12 };
     const manager = {
-      findOne: jest.fn().mockResolvedValue(productoProveedor),
+      findOne: jest
+        .fn()
+        .mockResolvedValueOnce(productoProveedor)
+        .mockResolvedValueOnce({ precio: 15 }),
+      create: jest.fn((_: unknown, payload: unknown) => payload),
       save: jest
         .fn()
         .mockResolvedValueOnce(undefined)
@@ -52,8 +60,16 @@ describe('ProductoProveedorService', () => {
     } as any);
 
     expect(manager.save.mock.calls[0][0].name).toBe('HistorialPrecio');
-    expect(manager.save.mock.calls[0][1]).toMatchObject({ precio: 12 });
+    expect(manager.save.mock.calls[0][1]).toMatchObject({ precio: 15 });
     expect(result).toEqual({ id: 'pp-2', precioUnitario: 15 });
+  });
+
+  it('updatePrecio rechaza precios en 0', async () => {
+    await expect(
+      service.updatePrecio('pp-1', { nuevoPrecio: 0 } as any)
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(mockDataSource.transaction).not.toHaveBeenCalled();
   });
 
   it('search devuelve estructura de autocomplete por nombre, marca o barcode', async () => {

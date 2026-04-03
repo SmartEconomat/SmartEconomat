@@ -52,6 +52,7 @@ describe('PedidoService', () => {
 
   function createQueryRunner() {
     const manager = {
+      query: jest.fn().mockResolvedValue([{ max: '1999' }]),
       findOne: jest.fn(),
       create: jest
         .fn()
@@ -95,6 +96,7 @@ describe('PedidoService', () => {
       .mockImplementationOnce((_entity: unknown, pedido: Partial<Pedido>) =>
         Promise.resolve({
           id: 'pedido-1',
+          numeroGlobal: '2001',
           ...pedido,
         })
       )
@@ -104,8 +106,9 @@ describe('PedidoService', () => {
 
     mockPedidoRepository.findOneWithRelations.mockResolvedValue({
       id: 'pedido-1',
+      numeroGlobal: '2001',
       costeTotal: 8.6,
-      estado: EstadoPedido.PENDIENTE,
+      estado: EstadoPedido.PENDIENTE_DE_APROBACION,
     });
 
     const result = await service.create(
@@ -124,7 +127,7 @@ describe('PedidoService', () => {
     expect(queryRunner.manager.save).toHaveBeenCalledWith(
       Pedido,
       expect.objectContaining({
-        estado: EstadoPedido.PENDIENTE,
+        estado: EstadoPedido.PENDIENTE_DE_APROBACION,
         costeTotal: 8.6,
         observaciones: 'Entrega semanal',
         fechaEntrega: expect.any(Date),
@@ -137,8 +140,9 @@ describe('PedidoService', () => {
     );
     expect(result).toEqual({
       id: 'pedido-1',
+      numeroGlobal: '2001',
       costeTotal: 8.6,
-      estado: EstadoPedido.PENDIENTE,
+      estado: EstadoPedido.PENDIENTE_DE_APROBACION,
     });
 
     const pedidoGuardado = queryRunner.manager.save.mock.calls[0][1] as Pedido;
@@ -193,7 +197,7 @@ describe('PedidoService', () => {
     const queryRunner = createQueryRunner();
     mockPedidoRepository.findOneWithRelations.mockResolvedValue({
       id: 'pedido-2',
-      estado: EstadoPedido.PENDIENTE,
+      estado: EstadoPedido.PENDIENTE_DE_APROBACION,
     });
 
     await expect(
@@ -207,7 +211,7 @@ describe('PedidoService', () => {
     const queryRunner = createQueryRunner();
     const pedido = {
       id: 'pedido-3',
-      estado: EstadoPedido.PENDIENTE,
+      estado: EstadoPedido.PENDIENTE_DE_APROBACION,
       costeTotal: 0,
     } as Pedido;
 
@@ -215,7 +219,7 @@ describe('PedidoService', () => {
       .mockResolvedValueOnce(pedido)
       .mockResolvedValueOnce({
         id: 'pedido-3',
-        estado: EstadoPedido.PENDIENTE,
+        estado: EstadoPedido.PENDIENTE_DE_APROBACION,
         costeTotal: 14,
       });
 
@@ -237,31 +241,33 @@ describe('PedidoService', () => {
     expect(queryRunner.commitTransaction).toHaveBeenCalled();
     expect(result).toEqual({
       id: 'pedido-3',
-      estado: EstadoPedido.PENDIENTE,
+      estado: EstadoPedido.PENDIENTE_DE_APROBACION,
       costeTotal: 14,
     });
   });
 
-  it.each([EstadoPedido.EN_PROCESO, EstadoPedido.RECIBIDO])(
-    'cancelarPedido rechaza el estado %s',
-    async (estado) => {
-      mockPedidoRepository.findOneWithRelations.mockResolvedValue({
-        id: 'pedido-4',
-        estado,
-      });
+  it.each([
+    EstadoPedido.POR_RECEPCIONAR,
+    EstadoPedido.PARCIAL,
+    EstadoPedido.INCIDENCIA,
+    EstadoPedido.RECEPCIONADO,
+  ])('cancelarPedido rechaza el estado %s', async (estado) => {
+    mockPedidoRepository.findOneWithRelations.mockResolvedValue({
+      id: 'pedido-4',
+      estado,
+    });
 
-      await expect(
-        service.cancelarPedido('pedido-4', {
-          motivoCancelacion: 'No procede',
-        } as any)
-      ).rejects.toBeInstanceOf(BadRequestException);
-    }
-  );
+    await expect(
+      service.cancelarPedido('pedido-4', {
+        motivoCancelacion: 'No procede',
+      } as any)
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
 
   it('cancelarPedido rechaza pedidos con recepción iniciada aunque sigan pendientes', async () => {
     mockPedidoRepository.findOneWithRelations.mockResolvedValue({
       id: 'pedido-4b',
-      estado: EstadoPedido.PENDIENTE,
+      estado: EstadoPedido.PENDIENTE_DE_APROBACION,
       recepcionesPedido: [{ id: 'rec-ped-1' }],
     });
 
@@ -272,10 +278,10 @@ describe('PedidoService', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
-  it('handleStatusTransition pasa a EN_PROCESO con recepción parcial', async () => {
+  it('handleStatusTransition pasa a PARCIAL con recepción parcial', async () => {
     mockPedidoRepository.findOneBy = jest.fn().mockResolvedValue({
       id: 'pedido-6',
-      estado: EstadoPedido.PENDIENTE,
+      estado: EstadoPedido.PENDIENTE_DE_APROBACION,
     });
     mockPedidoRepository.save.mockImplementation((pedido: Pedido) =>
       Promise.resolve(pedido)
@@ -289,10 +295,10 @@ describe('PedidoService', () => {
     expect(result.estado).toBe(EstadoPedido.PARCIAL);
   });
 
-  it('handleStatusTransition pasa a RECIBIDO con recepción total', async () => {
+  it('handleStatusTransition pasa a RECEPCIONADO con recepción total', async () => {
     mockPedidoRepository.findOneBy = jest.fn().mockResolvedValue({
       id: 'pedido-7',
-      estado: EstadoPedido.EN_PROCESO,
+      estado: EstadoPedido.PARCIAL,
     });
     mockPedidoRepository.save.mockImplementation((pedido: Pedido) =>
       Promise.resolve(pedido)
@@ -303,13 +309,13 @@ describe('PedidoService', () => {
       PedidoStatusTrigger.RECEPCION_TOTAL
     );
 
-    expect(result.estado).toBe(EstadoPedido.RECIBIDO);
+    expect(result.estado).toBe(EstadoPedido.RECEPCIONADO);
   });
 
   it('handleStatusTransition rechaza disparadores no soportados', async () => {
     mockPedidoRepository.findOneBy = jest.fn().mockResolvedValue({
       id: 'pedido-7b',
-      estado: EstadoPedido.PENDIENTE,
+      estado: EstadoPedido.PENDIENTE_DE_APROBACION,
     });
 
     await expect(
@@ -320,21 +326,21 @@ describe('PedidoService', () => {
   it('updateFechaEntrega es idempotente y devuelve el pedido', async () => {
     mockPedidoRepository.findOneWithRelations.mockResolvedValue({
       id: 'pedido-8',
-      estado: EstadoPedido.PENDIENTE,
+      estado: EstadoPedido.PENDIENTE_DE_APROBACION,
     });
 
     await expect(
       service.updateFechaEntrega('pedido-8', {} as any)
     ).resolves.toEqual({
       id: 'pedido-8',
-      estado: EstadoPedido.PENDIENTE,
+      estado: EstadoPedido.PENDIENTE_DE_APROBACION,
     });
   });
 
   it('remove rechaza pedidos que no estén pendientes o cancelados', async () => {
     mockPedidoRepository.findOneWithRelations.mockResolvedValue({
       id: 'pedido-5',
-      estado: EstadoPedido.RECIBIDO,
+      estado: EstadoPedido.RECEPCIONADO,
     });
 
     await expect(service.remove('pedido-5')).rejects.toBeInstanceOf(

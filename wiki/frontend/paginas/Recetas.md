@@ -1,40 +1,68 @@
-# Página: Recetas
+# Página Recetas
 
-> **Ubicación:** `src/pages/Recetas.tsx`
+## Ubicación real
+
+`src/pages/Recetas.tsx`
 
 ## Propósito
 
-La página de Recetas es el núcleo de la gestión de producción. Permite definir la composición de platos, calcular escandallos y gestionar la elaboración. Utiliza un diseño híbrido con soporte para vista de cuadrícula (mosaico) para una visualización rápida de los platos con sus imágenes.
+La pantalla de recetas cubre el ciclo operativo de definición, visualización y preparación de recetas, además de varias acciones de lote ligadas a producción y compras.
 
-## Componentes Utilizados
+## Composición actual
 
-- **[PageToolbar](../componentes/PageToolbar.md)**: Incluye el buscador de recetas, el Chip de total de recetas, el botón para crear nuevas preparaciones y las acciones visibles de lote para `Preparar` y `Exportar PDF`. Incluye el selector de modo de vista (Lista/Grid).
-- **[DataTable](../componentes/DataTable.md)**: Muestra las recetas de forma tabular o en cuadrícula según la selección del usuario.
-- **[DynamicFormModal](../componentes/DynamicFormModal.md)**: Formulario especializado para la creación y edición de escandallos de recetas.
-- **[ConfirmDialog](../componentes/ConfirmDialog.md)**: Confirmación para la eliminación de recetas.
-- **[RecetaIngredientesSelector](../componentes/RecetaIngredientesSelector.md)**: Selector avanzado de ingredientes con carga paginada completa de productos y proveedores favoritos.
+- `PageToolbar` para búsqueda y acciones globales
+- `DataTable` para listado y selección múltiple
+- `RecetaFormModal` para alta y edición
+- `DetailModal` para detalle funcional
+- `ConfirmDialog` para borrado
+- `RecipeCarousel` como apoyo visual en la cabecera de la vista
 
-## Funcionalidades Clave
+La página ya no depende de `DynamicFormModal` para editar recetas.
 
-- **Sincronización de Vista**: El modo de vista (Lista/Grid) se sincroniza entre la cabecera y la tabla.
-- **Gestión de Escandallos**: Definición de ingredientes por receta con cálculo de costes.
-- **Resumen Visual**: En modo cuadrícula, cada receta se muestra con su imagen y datos clave de producción.
-- **Acciones visibles por selección**: Cuando el usuario selecciona una o varias recetas, la barra superior mantiene visibles y juntas las acciones `Preparar` y `Exportar PDF`.
-- **Soporte decimal**: Los campos `rendimiento`, `raciones` y `tamanioRacion` aceptan decimales, incluyendo entrada con coma (`2,5`).
+## Funcionalidades principales
 
-## Acciones de Lote
+## Gestión básica
 
-- **Preparar varias recetas**: El botón `Preparar` aparece en la cabecera, al lado de `Exportar PDF`, y se habilita cuando hay recetas seleccionadas.
-- **Exportación masiva**: `Exportar PDF` reutiliza la misma selección activa de recetas.
-- **Comportamiento esperado**:
-	- sin selección: ambos botones permanecen visibles pero deshabilitados;
-	- con selección: ambos muestran el número de recetas seleccionadas.
+- listar recetas con paginación
+- buscar por texto
+- crear, editar y eliminar
+- abrir detalle con ingredientes y metadatos
 
-## Estructura de Datos (Columnas)
+## Selección múltiple y acciones de lote
 
-| Columna | ID | Tipo | Descripción |
-| :--- | :--- | :--- | :--- |
-| Nombre | `nombre` | Texto | Nombre del plato o elaboración. |
-| Categoría | `categoria` | Chip | Clasificación culinaria. |
-| Coste | `coste` | Numérico | Cálculo del escandallos (oculto en móvil). |
-| Tiempo | `tiempo` | Numérico | Tiempo estimado de preparación (oculto en móvil). |
+La vista mantiene `selectedIds` y habilita varias operaciones sobre la selección:
+
+- `Preparar`
+- `Exportar PDF`
+- `Crear pedido`
+
+Si no hay selección, las acciones permanecen visibles pero deshabilitadas.
+
+## Preparación y validación de stock
+
+Antes de producir, la pantalla puede:
+
+- validar stock disponible
+- proponer la creación de un lote de compra para faltantes
+- ejecutar producción real cuando hay disponibilidad o la operación queda confirmada
+
+## Exportación
+
+La exportación a PDF permite incluir o excluir imagen por receta antes de generar el documento.
+
+## Integración con pedidos
+
+La pantalla puede derivar recetas seleccionadas a un pedido o batch de compra cuando faltan ingredientes o se quiere planificar aprovisionamiento.
+
+## Permisos habituales
+
+- `recetas:crear`
+- `recetas:editar`
+- `recetas:eliminar`
+- permisos de producción y pedidos según la acción lanzada
+
+## Relacionado
+
+- [Módulo de pedidos desde recetas](../../modules/pedido/pedidos-desde-recetas.md)
+- [Referencia de API](../../reference/api.md)
+- [RecetaIngredientesSelector](../componentes/RecetaIngredientesSelector.md)

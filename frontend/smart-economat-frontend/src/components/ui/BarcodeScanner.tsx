@@ -524,7 +524,6 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     <Dialog
       open={open}
       onClose={handleClose}
-      disablePortal
       maxWidth="sm"
       fullWidth
       PaperProps={{

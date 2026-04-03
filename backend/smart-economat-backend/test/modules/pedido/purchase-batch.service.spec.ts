@@ -15,11 +15,42 @@ import { PedidoUsuario } from '../../../src/modules/pedido/pedido-usuario.entity
 describe('PurchaseBatchService', () => {
   let service: PurchaseBatchService;
 
-  let mockQueryRunner: any;
-  let mockDataSource: any;
-  let mockConfigService: any;
-  let mockMovimientoHelper: any;
-  let mockProduccionService: any;
+  const mockQueryRunner = {
+    connect: jest.fn(),
+    startTransaction: jest.fn(),
+    commitTransaction: jest.fn(),
+    rollbackTransaction: jest.fn(),
+    release: jest.fn(),
+    manager: {
+      query: jest.fn().mockResolvedValue([{ max: '1999' }]),
+      create: jest.fn(),
+      save: jest.fn(),
+      insert: jest.fn(),
+      find: jest.fn(),
+      findOne: jest.fn(),
+    },
+  };
+
+  const mockDataSource = {
+    createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
+    getRepository: jest.fn().mockReturnValue({
+      find: jest.fn(),
+      findOne: jest.fn(),
+      save: jest.fn(),
+    }),
+  };
+
+  const mockConfigService = {
+    get: jest.fn().mockReturnValue(48),
+  };
+
+  const mockMovimientoHelper = {
+    trackPedidoCreation: jest.fn(),
+  };
+
+  const mockProduccionService = {
+    validarMultiple: jest.fn(),
+  };
 
   beforeEach(async () => {
     mockQueryRunner = {
@@ -135,7 +166,7 @@ describe('PurchaseBatchService', () => {
       const mockBatch = {
         id: 'batch-1',
         estado: EstadoLote.PENDIENTE,
-        pedidos: [{ estado: 'RECIBIDO' }],
+        pedidos: [{ estado: EstadoPedido.RECEPCIONADO }],
       };
 
       mockDataSource.getRepository().findOne.mockResolvedValue(mockBatch);
@@ -157,19 +188,22 @@ describe('PurchaseBatchService', () => {
   });
 
   describe('consolidateExistingOrders', () => {
-    it('debería consolidar los pedidos de forma automática', async () => {
-      const dto = { pedidoIds: ['pu-1', 'pu-2'], observaciones: 'Semana 12' };
+    it('debería consolidar y dejar los pedidos por recepcionar automáticamente', async () => {
+      const dto = {
+        pedidoUsuarioIds: ['pu-1', 'pu-2'],
+        observaciones: 'Semana 12',
+      };
       const pedidosInternos = [
         {
           id: 'pedido-1',
-          estado: EstadoPedido.PENDIENTE,
+          estado: EstadoPedido.PENDIENTE_DE_APROBACION,
           proveedor: { id: 'prov-1', nombre: 'Proveedor 1' },
           usuario: { id: 'user-1', nombre: 'Ana' },
           pedidoProductos: [],
         },
         {
           id: 'pedido-2',
-          estado: EstadoPedido.PENDIENTE,
+          estado: EstadoPedido.PENDIENTE_DE_APROBACION,
           proveedor: { id: 'prov-2', nombre: 'Proveedor 2' },
           usuario: { id: 'user-1', nombre: 'Ana' },
           pedidoProductos: [],
@@ -214,7 +248,7 @@ describe('PurchaseBatchService', () => {
         expect.objectContaining({
           id: 'pedido-1',
           batchId: 'batch-1',
-          estado: EstadoPedido.PENDIENTE,
+          estado: EstadoPedido.POR_RECEPCIONAR,
         })
       );
       expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(
@@ -222,23 +256,66 @@ describe('PurchaseBatchService', () => {
         expect.objectContaining({
           id: 'pedido-2',
           batchId: 'batch-1',
-          estado: EstadoPedido.PENDIENTE,
+          estado: EstadoPedido.POR_RECEPCIONAR,
         })
       );
       expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(
         PedidoUsuario,
         expect.objectContaining({
           id: 'pu-1',
-          estado: EstadoPedidoUsuario.EN_PROCESO,
+          estado: EstadoPedidoUsuario.CONSOLIDADO,
         })
       );
       expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(
         PedidoUsuario,
         expect.objectContaining({
           id: 'pu-2',
-          estado: EstadoPedidoUsuario.EN_PROCESO,
+          estado: EstadoPedidoUsuario.CONSOLIDADO,
         })
       );
+    });
+  });
+
+  describe('buildPedidoUsuarioDtoFromMissingStock', () => {
+    it('agrupa faltantes por producto-proveedor y devuelve un DTO reutilizable por pedido_usuario', async () => {
+      mockProduccionService.validarMultiple.mockResolvedValue({
+        ingredients: [
+          {
+            isEnough: false,
+            requerido: 5,
+            disponible: 2,
+            cheapestProveedorId: 'prov-1',
+            cheapestProductoProveedorId: 'pp-1',
+          },
+          {
+            isEnough: false,
+            requerido: 4,
+            disponible: 1,
+            cheapestProveedorId: 'prov-1',
+            cheapestProductoProveedorId: 'pp-1',
+          },
+          {
+            isEnough: false,
+            requerido: 3,
+            disponible: 1,
+            cheapestProveedorId: 'prov-2',
+            cheapestProductoProveedorId: 'pp-2',
+          },
+        ],
+      });
+
+      await expect(
+        service.buildPedidoUsuarioDtoFromMissingStock({
+          observaciones: 'Faltantes cocina',
+          items: [],
+        })
+      ).resolves.toEqual({
+        observaciones: 'Faltantes cocina',
+        lineas: [
+          { productoProveedorId: 'pp-1', cantidad: 6 },
+          { productoProveedorId: 'pp-2', cantidad: 2 },
+        ],
+      });
     });
   });
 });

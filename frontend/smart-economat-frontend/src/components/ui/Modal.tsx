@@ -43,9 +43,8 @@ const Modal = ({
     <Dialog
       open={isOpen}
       onClose={(_, reason) => onClose(reason)}
-      // Dialog de MUI gestiona el focus trap ANTES de aplicar
-      // aria-hidden al resto del DOM, evitando el warning de accesibilidad.
       scroll="paper"
+      closeAfterTransition
       fullScreen={size === 'full'}
       PaperProps={{
         sx: {
@@ -58,7 +57,6 @@ const Modal = ({
         },
       }}
       aria-labelledby={title ? 'modal-title' : undefined}
-      // Transición suave
       transitionDuration={225}
     >
       {/* Header */}

@@ -1,0 +1,4 @@
+- Eliminar aliases legacy en frontend/backend: ADMINISTRADOR y SUPERADMIN.
+- Fuente de verdad de roles en frontend/backend: PROFESOR, ADMIN, SUPER_ADMIN, ALUMNO.
+- Roles elevados para bypass de permisos: ADMIN y SUPER_ADMIN (sin aliases).
+- Mantener enum/backend, hooks/frontend y seeders alineados con el mismo set canónico.

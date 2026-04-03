@@ -1,4 +1,4 @@
-# 📦 Inventario — Documentación del módulo
+# Inventario
 
 ## Documentos
 

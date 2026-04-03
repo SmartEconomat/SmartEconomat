@@ -36,7 +36,7 @@ import {
   getProductoByBarcode,
   searchProductosByName,
 } from '../services/producto.service';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { usePermission } from '../store/auth.hooks';
 import {
   CategoriaProducto,
@@ -56,6 +56,7 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import RecepcionDraftConflictDialog from '../components/recepcion/RecepcionDraftConflictDialog';
 import { useRecepcionDraft } from '../hooks/useRecepcionDraft';
 import { delay, serialService } from '../services/serial.service';
+import { formatPedidoListNumber } from '../features/pedidos/utils/pedidoFormatters';
 
 const calculateEstado = (rec: number, ped: number): LineaDraft['estado'] => {
   if (rec === 0) return 'No entregado';
@@ -105,19 +106,8 @@ const defaultDraft = (): RecepcionDraft => ({
   enviando: false,
 });
 
-const hasRecoverableDraftContent = (draft: RecepcionDraft): boolean => {
-  const hasSelectedPedidos = draft.pedidosSeleccionados.length > 0;
-  const hasSpontaneousProducts = draft.productosEspontaneos.length > 0;
-  const hasHeaderData =
-    draft.nAlbaran.trim().length > 0 || draft.observaciones.trim().length > 0;
-  const hasProgressedStep = draft.paso !== 'SELECCION_PEDIDOS';
-
-  return (
-    hasSelectedPedidos ||
-    hasSpontaneousProducts ||
-    hasHeaderData ||
-    hasProgressedStep
-  );
+type RecepcionLocationState = {
+  autoResumeRecepcionDraft?: boolean;
 };
 
 const getScaleHeaderChipConfig = (
@@ -198,20 +188,29 @@ const Recepcion: React.FC = () => {
   const scaleManuallyDisabledRef = useRef(false);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const promptedRecoveryFingerprintRef = useRef<string | null>(null);
+  const recoveryHandledRef = useRef(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const canCreate = usePermission('recepciones:crear');
+  const shouldAutoResumeDraft = Boolean(
+    (location.state as RecepcionLocationState | null)?.autoResumeRecepcionDraft
+  );
 
   const {
+    applyPendingRecoveryDraft,
     clearDraft: clearRemoteDraft,
     conflict,
     draft,
     isReady,
     keepLocalDraft,
+    pendingRecoveryDraft,
     setDraft,
     syncError,
     syncStatus,
     useRemoteDraft,
   } = useRecepcionDraft({
     activeStep,
+    autoResume: shouldAutoResumeDraft,
     defaultDraft,
     setActiveStep,
   });
@@ -230,30 +229,19 @@ const Recepcion: React.FC = () => {
   }, [draft]);
 
   useEffect(() => {
-    if (!isReady) {
+    if (!isReady || recoveryHandledRef.current || !pendingRecoveryDraft) {
       return;
     }
 
-    const hasRemoteDraftMetadata =
-      draft.serverVersion != null || Boolean(draft.serverUpdatedAt);
-
-    if (!hasRemoteDraftMetadata || !hasRecoverableDraftContent(draft)) {
-      return;
-    }
-
-    const fingerprint = `${draft.serverVersion ?? 'none'}:${draft.serverUpdatedAt ?? 'none'}`;
-
-    if (promptedRecoveryFingerprintRef.current === fingerprint) {
-      return;
-    }
-
-    promptedRecoveryFingerprintRef.current = fingerprint;
+    recoveryHandledRef.current = true;
     setIsRecoveryDialogOpen(true);
-  }, [draft, isReady]);
+  }, [isReady, pendingRecoveryDraft]);
 
   useEffect(() => {
     if (activeStep === 1 && searchInputRef.current) {
-      searchInputRef.current.focus();
+      // Diferir el focus al siguiente frame para que el DOM esté estable
+      // y el focus trap de cualquier modal/dialog previo se haya resuelto.
+      requestAnimationFrame(() => searchInputRef.current?.focus());
     }
   }, [activeStep]);
 
@@ -394,8 +382,6 @@ const Recepcion: React.FC = () => {
   // Data
   const [pedidosDisponibles, setPedidosDisponibles] = useState<Pedido[]>([]);
   const [loadingPedidos, setLoadingPedidos] = useState(false);
-  const navigate = useNavigate();
-  const canCreate = usePermission('recepciones:crear');
 
   useEffect(() => {
     if (canCreate === false) {
@@ -416,11 +402,7 @@ const Recepcion: React.FC = () => {
         1,
         50,
         '',
-        [
-          EstadoPedido.PENDIENTE,
-          EstadoPedido.EN_PROCESO,
-          EstadoPedido.PARCIAL,
-        ].join(',')
+        [EstadoPedido.POR_RECEPCIONAR].join(',')
       );
       setPedidosDisponibles(resp.data as Pedido[]);
     } catch {
@@ -453,7 +435,7 @@ const Recepcion: React.FC = () => {
   // Helper para crear el objeto del pedido en el draft
   const createDraftPedido = (pedido: Pedido) => ({
     id: pedido.id,
-    descripcion: `Pedido ${pedido.id.substring(0, 8)} - ${pedido.proveedor?.nombre}`,
+    descripcion: `Pedido ${formatPedidoListNumber(pedido)} - ${pedido.proveedor?.nombre}`,
     proveedor: pedido.proveedor?.nombre || 'Desconocido',
     estadoPedido: pedido.estado,
     lineas: mapPedidoToDraft(pedido),
@@ -638,7 +620,7 @@ const Recepcion: React.FC = () => {
       setSearching(false);
       setSearchQuery('');
       if (searchInputRef.current) {
-        searchInputRef.current.focus();
+        requestAnimationFrame(() => searchInputRef.current?.focus());
       }
     }
   };
@@ -1147,11 +1129,13 @@ const Recepcion: React.FC = () => {
   };
 
   const handleRecoverDraft = () => {
+    applyPendingRecoveryDraft();
     setIsRecoveryDialogOpen(false);
   };
 
   const handleDiscardRecoveredDraft = () => {
     setIsRecoveryDialogOpen(false);
+    recoveryHandledRef.current = true;
     void resetWizard();
   };
 
@@ -1475,7 +1459,7 @@ const Recepcion: React.FC = () => {
       />
 
       <ConfirmDialog
-        isOpen={isRecoveryDialogOpen}
+        isOpen={isRecoveryDialogOpen && !!pendingRecoveryDraft}
         onClose={handleRecoverDraft}
         onConfirm={handleRecoverDraft}
         title="Recuperar recepción pendiente"
@@ -1488,7 +1472,10 @@ const Recepcion: React.FC = () => {
             Última actualización:{' '}
             <strong>
               {(() => {
-                const updatedAt = draft.serverUpdatedAt ?? draft.modificadoEn;
+                const updatedAt =
+                  pendingRecoveryDraft?.updatedAt ??
+                  draft.serverUpdatedAt ??
+                  draft.modificadoEn;
                 if (!updatedAt) {
                   return 'desconocida';
                 }

@@ -26,17 +26,17 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import DataTable, { Column } from '../components/ui/DataTable';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
-import DynamicFormModal, {
-  DynamicField,
-} from '../components/ui/DynamicFormModal';
 import DetailModal, { DetailSection } from '../components/ui/DetailModal';
+import RecetaFormModal from '../features/recetas/RecetaFormModal';
+import {
+  buildRecetaPayload,
+  mapRecetaToFormData,
+} from '../features/recetas/recetaForm.helpers';
 import RecetaAlergenos from '../components/ui/RecetaAlergenos';
 import {
   Receta,
-  DificultadReceta,
-  TiempoReceta,
   RecetaIngrediente,
-  UnidadIngrediente,
+  RecetaPayload,
 } from '../services/receta.types';
 import {
   fetchRecetas,
@@ -45,19 +45,15 @@ import {
   exportRecipesPdf,
   calculatePreviewCost,
 } from '../services/receta.service';
-import {
-  deleteResource,
-  resolveStoredFileUrl,
-  uploadFile,
-} from '../services/api.service';
+import { deleteResource, resolveStoredFileUrl } from '../services/api.service';
 import {
   ejecutarProduccion,
   validarStock,
   StockValidationResult,
 } from '../services/produccion.service';
 import {
-  createMissingStockBatch,
-  createPurchaseBatchFromRecetas,
+  createPedidoUsuarioFromMissingStock,
+  createPedidoUsuarioFromRecetas,
 } from '../services/pedido.service';
 import { UbicacionService } from '../services/ubicacion.service';
 import { Ubicacion } from '../services/ubicacion.types';
@@ -84,101 +80,10 @@ import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
 import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import ShoppingCartCheckoutOutlinedIcon from '@mui/icons-material/ShoppingCartCheckoutOutlined';
 import { parseLocalizedNumber } from '../utils/numberUtils';
 import { DownloadService } from '../services/download.service';
-
-const recetaSchema: DynamicField[] = [
-  { name: 'nombre', label: 'Nombre de la Receta', required: true, width: 12 },
-  {
-    name: 'tiempoPreparacion',
-    label: 'Tiempo de preparación',
-    type: 'select',
-    required: true,
-    width: 6,
-    options: [
-      { value: TiempoReceta.MIN_10, label: '10 min' },
-      { value: TiempoReceta.MIN_20, label: '20 min' },
-      { value: TiempoReceta.MIN_30, label: '30 min' },
-      { value: TiempoReceta.MIN_45, label: '45 min' },
-      { value: TiempoReceta.MIN_60, label: '60 min' },
-    ],
-  },
-  {
-    name: 'dificultad',
-    label: 'Dificultad',
-    type: 'select',
-    required: true,
-    width: 6,
-    options: [
-      { value: DificultadReceta.FACIL, label: 'Fácil' },
-      { value: DificultadReceta.MEDIA, label: 'Media' },
-      { value: DificultadReceta.DIFICIL, label: 'Difícil' },
-    ],
-  },
-  {
-    name: 'instrucciones',
-    label: 'Instrucciones de elaboración',
-    type: 'textarea',
-    required: true,
-    width: 12,
-  },
-  {
-    name: 'rendimiento',
-    label: 'Rendimiento estimado',
-    type: 'number',
-    width: 6,
-  },
-  {
-    name: 'unidadResultado',
-    label: 'Unidad',
-    type: 'select',
-    width: 6,
-    options: Object.values(UnidadIngrediente).map((u) => ({
-      value: u as string,
-      label: u as string,
-    })),
-  },
-  {
-    name: 'diasCaducidad',
-    label: 'Días de caducidad',
-    type: 'number',
-    width: 3,
-  },
-  {
-    name: 'costeUnitarioEstimado',
-    label: 'Coste est. (info)',
-    type: 'number',
-    width: 3,
-    disabled: true,
-  },
-  {
-    name: 'raciones',
-    label: 'Raciones (base)',
-    type: 'number',
-    width: 3,
-  },
-  {
-    name: 'tamanioRacion',
-    label: 'Tamaño ración',
-    type: 'number',
-    width: 3,
-  },
-  {
-    name: 'ingredientes',
-    label: 'Ingredientes de la receta',
-    type: 'recipeIngredients',
-    position: 'bottom',
-  },
-  {
-    name: 'imagen',
-    label: 'Imagen de la receta',
-    type: 'image',
-    required: false,
-    width: 12,
-    position: 'left',
-  },
-];
 
 const RecetaIngredientesView: React.FC<{
   ingredientes?: RecetaIngrediente[];
@@ -258,6 +163,71 @@ const RecetaIngredientesView: React.FC<{
 const getRecipeImageUrl = (receta?: Receta | null): string =>
   resolveStoredFileUrl(receta?.pathImgOptimized || receta?.pathImg || '');
 
+const TIEMPO_FRANJAS_MINUTOS = [10, 20, 30, 45, 60] as const;
+
+function extractRecetaMinutes(receta?: Receta | null): number | null {
+  const rawMinutes = receta?.tiempoEstimadoMinutos;
+  if (
+    typeof rawMinutes === 'number' &&
+    Number.isFinite(rawMinutes) &&
+    rawMinutes > 0
+  ) {
+    return rawMinutes;
+  }
+
+  const parsedFromLabel = Number.parseInt(
+    String(receta?.tiempoPreparacion ?? '').match(/\d+/)?.[0] ?? '',
+    10
+  );
+
+  return Number.isFinite(parsedFromLabel) && parsedFromLabel > 0
+    ? parsedFromLabel
+    : null;
+}
+
+function getTiempoPreparacionLabel(receta?: Receta | null): string | undefined {
+  const legacyLabel = receta?.tiempoPreparacion?.trim();
+  if (legacyLabel) {
+    return legacyLabel;
+  }
+
+  const minutes = extractRecetaMinutes(receta);
+  return typeof minutes === 'number' ? `${minutes} min` : undefined;
+}
+
+function getFranjaTiempoLabel(receta?: Receta | null): string | undefined {
+  const legacySlot = receta?.tiempo?.trim();
+  if (legacySlot) {
+    return legacySlot;
+  }
+
+  const minutes = extractRecetaMinutes(receta);
+  if (typeof minutes !== 'number') {
+    return undefined;
+  }
+
+  const closest = TIEMPO_FRANJAS_MINUTOS.reduce((prev, current) =>
+    Math.abs(current - minutes) < Math.abs(prev - minutes) ? current : prev
+  );
+
+  return `${closest} min`;
+}
+
+function getCosteUnitarioEstimadoLabel(
+  coste: Receta['costeUnitarioEstimado']
+): string | undefined {
+  if (coste == null) {
+    return undefined;
+  }
+
+  const parsed = Number(coste);
+  if (!Number.isFinite(parsed)) {
+    return undefined;
+  }
+
+  return `${parsed.toFixed(4)}€`;
+}
+
 const RecipeImagePreview: React.FC<{
   receta?: Receta | null;
   height?: number;
@@ -326,6 +296,8 @@ const Recetas: React.FC = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<string | undefined>('nombre');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [data, setData] = useState<Receta[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -375,7 +347,13 @@ const Recetas: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const recetasData = await fetchRecetas(page, pageSize, searchTerm);
+      const recetasData = await fetchRecetas(
+        page,
+        pageSize,
+        searchTerm,
+        sortBy,
+        sortOrder
+      );
       setData(recetasData.data);
       setTotalPages(recetasData.totalPages);
       setTotalItems(recetasData.total || recetasData.data.length);
@@ -388,7 +366,7 @@ const Recetas: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, searchTerm]);
+  }, [page, pageSize, searchTerm, sortBy, sortOrder]);
 
   useEffect(() => {
     loadData();
@@ -416,86 +394,13 @@ const Recetas: React.FC = () => {
   const handleSave = async (formData: Record<string, unknown>) => {
     setIsSaving(true);
     try {
-      const normalizeIngredients = (
-        ings: Array<{
-          productoId?: string;
-          producto?: { id: string };
-          cantidad: number | string;
-          unidad: string;
-          mermaAplicada?: number | string;
-          proveedorFavoritoId?: string;
-        }>
-      ) => {
-        return ings
-          .map((ing) => ({
-            productoId: ing.productoId || ing.producto?.id,
-            cantidad: Number(ing.cantidad),
-            unidad: ing.unidad,
-            mermaAplicada: Number(ing.mermaAplicada ?? 0),
-            proveedorFavoritoId: ing.proveedorFavoritoId || undefined,
-          }))
-          .filter((ing) => ing.productoId && ing.cantidad > 0);
-      };
+      const payload = await buildRecetaPayload(formData);
 
-      // Extraer minutos del valor seleccionado de tiempo (ej: TiempoReceta.MIN_30 -> 30)
-      const getMinutesFromValue = (value: string): number => {
-        const match = value?.match(/\d+/);
-        return match ? parseInt(match[0]) : 30;
-      };
-
-      // Procesar imagen: subir y obtener URL igual que en Productos
-      let finalPathImg: string | undefined = undefined;
-      if (formData.imagen instanceof File) {
-        try {
-          finalPathImg = await uploadFile(formData.imagen);
-        } catch (err) {
-          throw err instanceof Error
-            ? err
-            : new Error('Hubo un error al subir la imagen de la receta.');
-        }
-      } else if (
-        typeof formData.imagen === 'string' &&
-        formData.imagen.trim()
-      ) {
-        finalPathImg = formData.imagen.trim();
-      }
-
-      const payload = {
-        nombre: formData.nombre,
-        instrucciones: formData.instrucciones,
-        tiempoEstimadoMinutos: getMinutesFromValue(
-          formData.tiempoPreparacion as string
-        ),
-        dificultad: formData.dificultad,
-        rendimiento:
-          parseLocalizedNumber(
-            formData.rendimiento as string | number | null | undefined
-          ) ?? null,
-        unidadResultado: formData.unidadResultado || null,
-        diasCaducidad: formData.diasCaducidad
-          ? Number(formData.diasCaducidad)
-          : null,
-        raciones:
-          parseLocalizedNumber(
-            formData.raciones as string | number | null | undefined
-          ) ?? 1,
-        tamanioRacion:
-          parseLocalizedNumber(
-            formData.tamanioRacion as string | number | null | undefined
-          ) ?? null,
-        ingredientes: normalizeIngredients(
-          Array.isArray(formData.ingredientes) ? formData.ingredientes : []
-        ),
-        ...(finalPathImg && { pathImg: finalPathImg }),
-      };
       if (formData.id) {
-        await updateReceta(
-          String(formData.id),
-          payload as unknown as Partial<Receta>
-        );
+        await updateReceta(String(formData.id), payload as RecetaPayload);
         toast.success('Receta actualizada correctamente.');
       } else {
-        await createReceta(payload as unknown as Partial<Receta>);
+        await createReceta(payload as RecetaPayload);
         toast.success('Receta creada correctamente.');
       }
       await loadData();
@@ -510,23 +415,7 @@ const Recetas: React.FC = () => {
   };
 
   const handleEditClick = (row: Receta) => {
-    // Mapear tiempoEstimadoMinutos a la franja de tiempo más cercana
-    let tiempoPreparacion = TiempoReceta.MIN_30;
-    const mins = row.tiempoEstimadoMinutos;
-    if (mins <= 10) tiempoPreparacion = TiempoReceta.MIN_10;
-    else if (mins <= 20) tiempoPreparacion = TiempoReceta.MIN_20;
-    else if (mins <= 30) tiempoPreparacion = TiempoReceta.MIN_30;
-    else if (mins <= 45) tiempoPreparacion = TiempoReceta.MIN_45;
-    else tiempoPreparacion = TiempoReceta.MIN_60;
-
-    // Rellenar campo imagen con la url existente
-    const imagen = resolveStoredFileUrl(
-      row.pathImgOptimized || row.pathImg || ''
-    );
-    setItemToEdit({ ...row, tiempoPreparacion, imagen } as unknown as Record<
-      string,
-      unknown
-    >);
+    setItemToEdit(mapRecetaToFormData(row));
   };
 
   const openExportDialog = (ids: string[]) => {
@@ -664,12 +553,14 @@ const Recetas: React.FC = () => {
     return () => clearTimeout(timer);
   }, [cookData.items, isCookModalOpen]);
 
+  const missingIngredients =
+    stockValidation?.ingredients.filter((ing) => !ing.isEnough) ?? [];
+  const hasMissingIngredients = missingIngredients.length > 0;
+
   const handleCreateMissingOrder = async () => {
     if (!stockValidation) return;
 
-    const missing = stockValidation.ingredients.filter((ing) => !ing.isEnough);
-
-    if (missing.length === 0) {
+    if (!hasMissingIngredients) {
       toast.error(
         'No se encontraron proveedores válidos para los ingredientes faltantes.'
       );
@@ -678,7 +569,7 @@ const Recetas: React.FC = () => {
 
     setIsCooking(true);
     try {
-      const batch = await createMissingStockBatch({
+      const pedidoUsuario = await createPedidoUsuarioFromMissingStock({
         observaciones: `Pedido automático por falta de stock para: ${cookData.items.map((it) => it.receta.nombre).join(', ')}`,
         items: cookData.items.map((item) => ({
           recetaId: item.receta.id,
@@ -686,11 +577,11 @@ const Recetas: React.FC = () => {
         })),
       });
 
-      const totalPedidos = batch.pedidos?.length ?? 0;
+      const totalPedidos = pedidoUsuario.pedidos?.length ?? 0;
       toast.success(
         totalPedidos > 0
-          ? `Se han generado ${totalPedidos} pedidos para cubrir los faltantes.`
-          : 'Se ha generado un lote de pedidos para cubrir los faltantes.'
+          ? `Se ha generado el pedido #${pedidoUsuario.numeroGlobal} con ${totalPedidos} pedido${totalPedidos === 1 ? '' : 's'} interno${totalPedidos === 1 ? '' : 's'} para cubrir los faltantes.`
+          : `Se ha generado el pedido #${pedidoUsuario.numeroGlobal} para cubrir los faltantes.`
       );
       setIsCookModalOpen(false);
     } catch (err: unknown) {
@@ -850,6 +741,7 @@ const Recetas: React.FC = () => {
     {
       id: 'nombre',
       label: 'Nombre',
+      sortable: true,
       minWidth: 380,
       cellSx: { py: 2, pr: 4 },
       render: (row) => (
@@ -912,18 +804,16 @@ const Recetas: React.FC = () => {
       headerSx: { px: 4 },
       cellSx: { whiteSpace: 'nowrap', px: 4 },
       hideOnMobile: true,
+      sortable: true,
     },
     {
       id: 'tiempoPreparacion',
       label: 'Tiempo',
       width: 200,
       headerSx: { px: 4 },
+      sortable: true,
       render: (row) => {
-        const tiempoLabel =
-          row.tiempoPreparacion ||
-          (typeof row.tiempoEstimadoMinutos === 'number'
-            ? `${row.tiempoEstimadoMinutos} min`
-            : null);
+        const tiempoLabel = getTiempoPreparacionLabel(row);
 
         return tiempoLabel ? (
           <Box
@@ -937,7 +827,9 @@ const Recetas: React.FC = () => {
             <AccessTimeOutlinedIcon fontSize="inherit" sx={{ opacity: 0.6 }} />
             {tiempoLabel}
           </Box>
-        ) : null;
+        ) : (
+          <span>—</span>
+        );
       },
       cellSx: { px: 4 },
     },
@@ -952,6 +844,12 @@ const Recetas: React.FC = () => {
       hideOnMobile: true,
     },
   ];
+
+  const handleSort = (key: string | keyof Receta) => {
+    const isAsc = sortBy === key && sortOrder === 'asc';
+    setSortOrder(isAsc ? 'desc' : 'asc');
+    setSortBy(key as string);
+  };
 
   const canEdit = usePermission('recetas:editar');
   const canDelete = usePermission('recetas:eliminar');
@@ -973,7 +871,7 @@ const Recetas: React.FC = () => {
 
       setIsCooking(true);
       try {
-        const batch = await createPurchaseBatchFromRecetas({
+        const pedidoUsuario = await createPedidoUsuarioFromRecetas({
           recetaIds,
           observaciones: `Pedido generado desde recetas: ${recetas
             .map((receta) => receta.nombre)
@@ -981,7 +879,7 @@ const Recetas: React.FC = () => {
         });
 
         toast.success(
-          `Lote ${batch.id} generado correctamente desde ${recetaIds.length} receta${recetaIds.length === 1 ? '' : 's'}.`
+          `Pedido #${pedidoUsuario.numeroGlobal} generado correctamente desde ${recetaIds.length} receta${recetaIds.length === 1 ? '' : 's'}.`
         );
         setItemToView(null);
       } catch (err: unknown) {
@@ -1098,10 +996,13 @@ const Recetas: React.FC = () => {
                 />
               ) : undefined,
             },
-            { label: 'Franja de tiempo', value: itemToView.tiempo },
+            {
+              label: 'Franja de tiempo',
+              value: getFranjaTiempoLabel(itemToView),
+            },
             {
               label: 'Tiempo de preparación',
-              value: itemToView.tiempoPreparacion,
+              value: getTiempoPreparacionLabel(itemToView),
             },
           ],
         },
@@ -1128,9 +1029,9 @@ const Recetas: React.FC = () => {
             { label: 'Días de Caducidad', value: itemToView.diasCaducidad },
             {
               label: 'Coste Est. por unidad',
-              value: itemToView.costeUnitarioEstimado
-                ? `${Number(itemToView.costeUnitarioEstimado).toFixed(4)}€`
-                : undefined,
+              value: getCosteUnitarioEstimadoLabel(
+                itemToView.costeUnitarioEstimado
+              ),
             },
             { label: 'Raciones (base)', value: itemToView.raciones },
             {
@@ -1169,6 +1070,7 @@ const Recetas: React.FC = () => {
         searchId="search-recetas"
         totalItems={totalItems}
         totalItemsLabel="recetas"
+        viewMode={viewMode}
         primaryAction={
           canCreate
             ? {
@@ -1222,6 +1124,20 @@ const Recetas: React.FC = () => {
                 },
               ]
             : []),
+          ...(canExportPdf
+            ? [
+                {
+                  label: 'Exportar Excel',
+                  icon: <FileDownloadOutlinedIcon />,
+                  onClick: () => {
+                    void handleExportExcel();
+                  },
+                  id: 'btn-exportar-excel-recetas',
+                  color: 'success' as const,
+                  variant: 'outlined' as const,
+                },
+              ]
+            : []),
           ...(canCreateOrders
             ? [
                 {
@@ -1260,22 +1176,15 @@ const Recetas: React.FC = () => {
           data={data}
           isLoading={isLoading}
           actionsWidth={300}
-          hideTopBar={false}
+          hideTopBar={true}
           actionsAlign="center"
           viewMode={viewMode}
           defaultViewMode={viewMode}
+          onSort={handleSort}
+          sortConfig={{ key: sortBy || '', direction: sortOrder }}
           selectable={canCook || canExportPdf || canCreateOrders}
           selectedIds={selectedIds}
           onSelectionChange={setSelectedIds}
-          exportHandlers={{
-            onExportPdf: () => {
-              const ids =
-                selectedIds.length > 0 ? selectedIds : data.map((r) => r.id);
-              openExportDialog(ids);
-            },
-            onExportExcel: handleExportExcel,
-            exportLabel: 'recetas filtradas',
-          }}
           emptyStateMessage={
             <Box sx={{ py: 4, textAlign: 'center' }}>
               <MenuBookOutlinedIcon
@@ -1349,10 +1258,10 @@ const Recetas: React.FC = () => {
                       variant="outlined"
                     />
                   )}
-                  {receta.tiempoPreparacion && (
+                  {getTiempoPreparacionLabel(receta) && (
                     <Chip
                       icon={<AccessTimeOutlinedIcon />}
-                      label={receta.tiempoPreparacion}
+                      label={getTiempoPreparacionLabel(receta)}
                       size="small"
                       variant="outlined"
                     />
@@ -1406,23 +1315,12 @@ const Recetas: React.FC = () => {
           isLoading={isDeleting}
         />
 
-        <DynamicFormModal
+        <RecetaFormModal
           isOpen={!!itemToEdit}
           onClose={() => setItemToEdit(null)}
-          title={itemToEdit?.id ? 'Editar Receta' : 'Nueva Receta'}
-          size="lg"
-          fields={recetaSchema}
           initialData={itemToEdit || {}}
           onSubmit={handleSave}
           isSubmitting={isSaving}
-          requireConfirmation={true}
-          confirmationMessage={
-            itemToEdit?.id
-              ? '¿Estás seguro de que deseas guardar los cambios realizados en esta receta?'
-              : '¿Estás seguro de que deseas añadir esta nueva receta al sistema?'
-          }
-          onValuesChange={handleFormValuesChange}
-          valueUpdates={formValueUpdates}
         />
 
         <DetailModal
@@ -1838,8 +1736,7 @@ const Recetas: React.FC = () => {
                       )}
                     </Box>
 
-                    {stockValidation &&
-                    stockValidation.ingredients.some((ing) => !ing.isEnough) ? (
+                    {hasMissingIngredients ? (
                       <Alert
                         severity="error"
                         variant="standard"
@@ -1859,29 +1756,27 @@ const Recetas: React.FC = () => {
                           component="ul"
                           sx={{ m: 0, pl: 2, fontSize: '0.75rem', mb: 1.5 }}
                         >
-                          {stockValidation.ingredients
-                            .filter((ing) => !ing.isEnough)
-                            .map((ing) => (
-                              <li key={ing.productoId}>
-                                <b>{ing.nombre}</b>: Faltan{' '}
-                                {Number(
-                                  (ing.requerido - ing.disponible).toFixed(3)
-                                )}{' '}
-                                {ing.unidad}
-                                {ing.cheapestProveedorNombre && (
-                                  <Typography
-                                    variant="caption"
-                                    sx={{
-                                      display: 'block',
-                                      fontStyle: 'italic',
-                                      opacity: 0.7,
-                                    }}
-                                  >
-                                    (Prov: {ing.cheapestProveedorNombre})
-                                  </Typography>
-                                )}
-                              </li>
-                            ))}
+                          {missingIngredients.map((ing) => (
+                            <li key={ing.productoId}>
+                              <b>{ing.nombre}</b>: Faltan{' '}
+                              {Number(
+                                (ing.requerido - ing.disponible).toFixed(3)
+                              )}{' '}
+                              {ing.unidad}
+                              {ing.cheapestProveedorNombre && (
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    display: 'block',
+                                    fontStyle: 'italic',
+                                    opacity: 0.7,
+                                  }}
+                                >
+                                  (Prov: {ing.cheapestProveedorNombre})
+                                </Typography>
+                              )}
+                            </li>
+                          ))}
                         </Box>
                         <Button
                           variant="contained"
@@ -1928,18 +1823,13 @@ const Recetas: React.FC = () => {
             </Button>
             <Button
               variant="contained"
-              color={
-                stockValidation?.ingredients.some((ing) => !ing.isEnough)
-                  ? 'error'
-                  : 'success'
-              }
+              color={hasMissingIngredients ? 'error' : 'success'}
               onClick={() => void handleConfirmCook()}
               disabled={
                 isCooking ||
                 !cookData.ubicacionId ||
                 cookData.items.some((i) => i.cantidad <= 0) ||
-                (stockValidation?.ingredients.some((ing) => !ing.isEnough) ??
-                  false)
+                hasMissingIngredients
               }
               size="large"
               sx={{
@@ -1961,6 +1851,23 @@ const Recetas: React.FC = () => {
                 ? 'Iniciar Producción de Lote'
                 : 'Iniciar Preparación'}
             </Button>
+            {hasMissingIngredients && (
+              <Button
+                variant="contained"
+                color="warning"
+                onClick={() => void handleCreateMissingOrder()}
+                disabled={isCooking}
+                size="large"
+                sx={{
+                  px: 5,
+                  py: 1.2,
+                  fontWeight: 800,
+                  borderRadius: 2,
+                }}
+              >
+                Crear pedido de faltantes
+              </Button>
+            )}
           </DialogActions>
         </Dialog>
       </Paper>

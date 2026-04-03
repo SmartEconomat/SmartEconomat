@@ -29,6 +29,7 @@ import {
   formatCurrency,
   formatPedidoDate,
   formatPedidoId,
+  formatPedidoListNumber,
   getPedidoCreatorName,
   getPedidoProviderName,
 } from '../utils/pedidoFormatters';
@@ -215,7 +216,11 @@ const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
       isOpen={!!pedido}
       onClose={onClose}
       title="Detalle del pedido"
-      subtitle={pedido ? `ID ${formatPedidoId(pedido.id)}` : undefined}
+      subtitle={
+        pedido
+          ? `Pedido #${formatPedidoListNumber(pedido)} · ID ${formatPedidoId(pedido.id)}`
+          : undefined
+      }
       size="lg"
       actions={
         pedido ? (
@@ -250,29 +255,17 @@ const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
               </Button>
             </Stack>
 
-            {canEdit && pedido.estado === EstadoPedido.PENDIENTE && (
-              <Button
-                variant="contained"
-                color="primary"
-                disableElevation
-                onClick={() => onEdit(pedido)}
-                startIcon={<EditIcon />}
-              >
-                Editar
-              </Button>
-            )}
-
-            {canRestore && pedido.estado === EstadoPedido.CANCELADO && (
-              <Button
-                variant="contained"
-                color="info"
-                disableElevation
-                startIcon={<RestoreIcon />}
-                onClick={() => onRestore(pedido)}
-              >
-                Revertir
-              </Button>
-            )}
+            {canEdit &&
+              pedido.estado === EstadoPedido.PENDIENTE_DE_APROBACION && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  disableElevation
+                  onClick={() => onEdit(pedido)}
+                >
+                  Editar pedido
+                </Button>
+              )}
           </Box>
         ) : undefined
       }

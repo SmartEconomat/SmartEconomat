@@ -1,0 +1,4 @@
+- GitHub Copilot workspace instructions current guidance: use `.github/copilot-instructions.md` or `AGENTS.md`, not both as active global instruction sources.
+- In SmartEconomat both existed; implemented fix is keep `.github/copilot-instructions.md` active and rename `AGENTS.md` to `AGENTS_LEGACY.md` so it leaves Copilot discovery without losing content.
+- `.github/instructions/*.instructions.md` should use frontmatter with at least `description`; add `applyTo` for area-specific attachment.
+- Preferencia operativa del proyecto: registrar memoria persistente en alcance de repositorio (local al proyecto), evitando memoria global de usuario salvo petición explícita.

@@ -1,0 +1,6 @@
+- Fecha: 2026-04-02
+- Problema: en Inventario no aparecia icono de bajo stock y la campana no generaba aviso de bajo stock.
+- Causa raiz frontend: `agregarInventarioPorProducto` recalculaba `bajoStock` con comparacion agregada (`cantidadTotal < cantidadMinima`) y filtraba `cantidadTotal > 0`, ocultando casos reales.
+- Fix aplicado: mantener `bajoStock` por OR entre lotes (`existing.bajoStock || loteBajoStock`) y conservar filas con `cantidadTotal = 0` cuando `bajoStock=true`.
+- Campana: `notifications.service` ahora combina `/inventario` + `/alertas/stock`; crea notificacion `low-stock-products` y usa fallback al inventario si falla `/alertas/stock`.
+- Cobertura: tests nuevos en `src/services/inventario.service.test.ts` y `src/services/notifications.service.test.ts`.

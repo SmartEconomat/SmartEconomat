@@ -56,7 +56,8 @@ export const getStatusColor = (
     case 'entregado':
     case 'en_almacen':
     case 'approved':
-    case 'recibido':
+    case 'aprobado':
+    case 'recepcionado':
     case 'fácil':
     case 'entrada':
     case 'entrada_compra':
@@ -69,22 +70,21 @@ export const getStatusColor = (
     case 'cancelled':
     case 'cancelado':
     case 'rejected':
+    case 'incidencia':
     case 'difícil':
     case 'salida':
     case 'salida_distribucion':
     case 'salida_elaboracion':
       return 'error';
     case 'warning':
+    case 'in_progress':
+    case 'por_recepcionar':
     case 'review':
     case 'media':
     case 'ajuste':
     case 'pendiente':
-    case 'preparada':
-    case 'preparado':
-      return 'warning';
-    case 'in_progress':
-    case 'en_proceso':
-    case 'parcial':
+    case 'pendiente_de_aprobacion':
+    case 'consolidado':
     case 'info':
     case 'active':
     case 'archived':
@@ -98,21 +98,23 @@ export const getStatusColor = (
 const statusTranslations: Record<string, string> = {
   success: 'Éxito',
   completed: 'Completado',
-  delivered: 'En almacén',
-  entregado: 'En almacén',
-  en_almacen: 'En almacén',
+  delivered: 'Entregado',
+  recepcionado: 'Recepcionado',
   approved: 'Aprobado',
+  aprobado: 'Aprobado',
   error: 'Error',
   failed: 'Fallido',
   cancelled: 'Cancelado',
   cancelado: 'Cancelado',
+  incidencia: 'Incidencia',
   rejected: 'Rechazado',
   warning: 'Advertencia',
   pending: 'Pendiente',
   pendiente: 'Pendiente',
+  pendiente_de_aprobacion: 'Pendiente de aprobacion',
+  consolidado: 'Consolidado',
   in_progress: 'En progreso',
-  en_proceso: 'En proceso',
-  recibido: 'Recibido',
+  por_recepcionar: 'Por recepcionar',
   review: 'En revisión',
   info: 'Info',
   active: 'Activo',

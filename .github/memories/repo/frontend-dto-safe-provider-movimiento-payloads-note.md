@@ -1,0 +1,5 @@
+- Frontend: evitar servicios con payloads genericos tipo Partial<Entidad> cuando el backend usa DTOs con whitelist/forbidNonWhitelisted.
+- Se corrigio en proveedor.service y movimiento.service tipando payloads Create/Update y saneando campos antes de JSON.stringify.
+- Proveedor: permitir solo nombre/contacto/telefono/email/direccion/nif; trim, lowercase email y longitudes segun DTO.
+- Movimiento: normalizar page/limit <= 50, usar order, validar cantidad entera >= 0 y trim de entidadTipo/entidadId/descripcion.
+- Antes de crear nuevos servicios frontend, comparar siempre con Create/Update DTO backend y no reutilizar tipos de entidad completos como payload wire.

@@ -11,8 +11,9 @@ export enum TipoMovimiento {
 
 export interface UsuarioBasico {
   id: string;
-  nombre: string;
-  email: string;
+  nombre?: string | null;
+  username?: string | null;
+  email?: string | null;
 }
 
 export interface Movimiento {

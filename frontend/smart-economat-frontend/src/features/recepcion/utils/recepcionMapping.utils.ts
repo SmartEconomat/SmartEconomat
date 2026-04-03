@@ -10,6 +10,8 @@ import {
   PurchaseBatch,
 } from '../../../services/pedido.types';
 import { UnidadMedida } from '../../../services/producto.types';
+import { getReceivableBatchPedidos } from '../../../services/pedidoBatch.utils';
+import { formatPedidoListNumber } from '../../pedidos/utils/pedidoFormatters';
 
 const calculateEstado = (rec: number, ped: number): LineaDraft['estado'] => {
   if (rec === 0) return 'No entregado';
@@ -50,6 +52,7 @@ export const mapPurchaseBatchToRecepcionDraft = (
   batch: PurchaseBatch
 ): RecepcionDraft => {
   const now = new Date().toISOString();
+  const receivablePedidos = getReceivableBatchPedidos(batch);
 
   return {
     version: 2,
@@ -59,17 +62,12 @@ export const mapPurchaseBatchToRecepcionDraft = (
     serverUpdatedAt: null,
     observaciones: batch.observaciones || '',
     nAlbaran: '',
-    pedidosSeleccionados: (batch.pedidos || [])
-      .filter((pedido) => pedido.estado !== EstadoPedido.CANCELADO)
-      .map((pedido) => ({
-        id: pedido.id,
-        descripcion: `Pedido ${pedido.id.substring(0, 8)} - ${
-          pedido.proveedor?.nombre
-        }`,
-        proveedor: pedido.proveedor?.nombre || 'Desconocido',
-        estadoPedido: pedido.estado,
-        lineas: mapPedidoToDraftLines(pedido),
-      })),
+    pedidosSeleccionados: receivablePedidos.map((pedido) => ({
+      id: pedido.id,
+      descripcion: `Pedido ${formatPedidoListNumber(pedido)} - ${pedido.proveedor?.nombre}`,
+      proveedor: pedido.proveedor?.nombre || 'Desconocido',
+      lineas: mapPedidoToDraftLines(pedido),
+    })),
     productosEspontaneos: [],
     paso: 'ESCANEO_LOTE',
     erroresPorLinea: {},

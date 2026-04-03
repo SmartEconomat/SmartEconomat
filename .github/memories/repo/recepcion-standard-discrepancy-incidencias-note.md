@@ -1,0 +1,2 @@
+- `RecepcionStockService.procesarRecepcion()` debe generar incidencias de cantidad igual que la recepción masiva: si una línea queda corta o no se entrega, hay que crear `FALTA`/`NO_ENTREGADO` aunque no exista exceso.
+- La divergencia vino de duplicar la lógica: la ruta estándar solo calculaba `EXCESO` al final y dejaba fuera faltantes/omisiones; extraer `buildLineasIncidenciaCantidad()` evita reintroducir esa asimetría.

@@ -125,6 +125,8 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const formDataRef = useRef<Record<string, unknown>>({});
+  const onValuesChangeRef = useRef(onValuesChange);
+  onValuesChangeRef.current = onValuesChange;
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [activeBarcodeField, setActiveBarcodeField] = useState<string | null>(
@@ -188,27 +190,26 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   );
 
   useEffect(() => {
-    if (isOpen) {
-      const dataToSet = { ...initialData };
-      fields.forEach((field) => {
-        if (dataToSet[field.name] === undefined) {
-          dataToSet[field.name] =
-            field.defaultValue !== undefined
-              ? field.defaultValue
-              : field.type === 'boolean'
-                ? false
-                : '';
-        }
-      });
-      formDataRef.current = dataToSet;
-      setFormData(dataToSet);
-      setShowOFFResults(false);
-      setOffResults([]);
-      setIsBarcodeFetching({});
-      if (onValuesChange) onValuesChange(dataToSet);
-    }
+    if (!isOpen) return;
+    const dataToSet = { ...initialData };
+    fields.forEach((field) => {
+      if (dataToSet[field.name] === undefined) {
+        dataToSet[field.name] =
+          field.defaultValue !== undefined
+            ? field.defaultValue
+            : field.type === 'boolean'
+              ? false
+              : '';
+      }
+    });
+    formDataRef.current = dataToSet;
+    setFormData(dataToSet);
+    setShowOFFResults(false);
+    setOffResults([]);
+    setIsBarcodeFetching({});
+    if (onValuesChangeRef.current) onValuesChangeRef.current(dataToSet);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, initialData, fields]);
+  }, [isOpen]);
 
   // Handle external value updates (e.g., from real-time calculations)
   useEffect(() => {
@@ -228,10 +229,10 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   }, [isOpen, valueUpdates, updateFormData]);
 
   useEffect(() => {
-    if (isOpen && onValuesChange) {
-      onValuesChange(formData);
+    if (isOpen && onValuesChangeRef.current) {
+      onValuesChangeRef.current(formData);
     }
-  }, [formData, isOpen, onValuesChange]);
+  }, [formData, isOpen]);
 
   const handleTextChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -546,12 +547,27 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
         );
 
       case 'batchViewer':
-        return (
-          <BatchPedidoLineasViewer
-            key={name}
-            batch={formData[name] as PurchaseBatch | PedidoUsuario}
-          />
-        );
+        return (() => {
+          const batch = formData[name] as PurchaseBatch | PedidoUsuario;
+
+          if ('numeroGlobal' in batch) {
+            return (
+              <BatchPedidoLineasViewer
+                key={name}
+                batch={batch}
+                entityType="pedido_usuario"
+              />
+            );
+          }
+
+          return (
+            <BatchPedidoLineasViewer
+              key={name}
+              batch={batch}
+              entityType="purchase_batch"
+            />
+          );
+        })();
 
       case 'barcode': {
         const isFetchingBarcodeData = Boolean(isBarcodeFetching[name]);
@@ -759,7 +775,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
       title={title}
       size={size || 'md'}
     >
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
         {/* Image at the top - full width */}
         {mainImageField && (
           <Box sx={{ width: '100%', mb: 3 }}>

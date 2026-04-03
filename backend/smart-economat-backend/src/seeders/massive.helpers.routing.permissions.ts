@@ -71,6 +71,20 @@ export function resolveAlergenoDeletePath(
     return null;
   }
 
+  const deletablePair = consumeStateValue(
+    context,
+    'seedCreatedDeletableProductoAlergenoPairs',
+    ''
+  );
+  if (deletablePair) {
+    const [idProducto, alergeno] = deletablePair.split('|');
+    if (idProducto && alergeno) {
+      return path
+        .replace(':idProducto', idProducto)
+        .replace(':alergeno', alergeno);
+    }
+  }
+
   const pair = consumeStateValue(context, 'productoAlergenoPairs', '');
   if (pair) {
     const [idProducto, alergeno] = pair.split('|');

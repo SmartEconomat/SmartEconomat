@@ -193,10 +193,12 @@ export class SerialService {
         }
       } catch (error: unknown) {
         if (this.readingLoopActive) {
-          console.error('Error leyendo báscula:', error);
-          if (onError && error instanceof Error) {
-            onError(error);
-          }
+          console.error('Error leyenda báscula:', error);
+          onError?.(
+            error instanceof Error
+              ? error
+              : new Error('Error leyendo datos de la báscula.')
+          );
           await delay(200);
         }
       }

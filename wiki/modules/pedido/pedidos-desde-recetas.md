@@ -78,7 +78,7 @@ Una vez consolidado el conjunto de líneas:
 
 - Se llama internamente a `PedidoService.create()`.
 - El pedido queda vinculado al usuario autenticado extraído del JWT.
-- El estado inicial es `PENDIENTE`.
+- El estado inicial es `PENDIENTE_DE_APROBACION`.
 
 ### 6.1 Alcance del flujo
 
@@ -100,19 +100,19 @@ El origen del pedido se registra en logs del backend, incluyendo:
 
 ### DTO
 
-- [backend/smart-economat-backend/src/modules/pedido/dto/generate-pedido-from-recetas.dto.ts](backend/smart-economat-backend/src/modules/pedido/dto/generate-pedido-from-recetas.dto.ts)
+- [backend/smart-economat-backend/src/modules/pedido/dto/generate-pedido-from-recetas.dto.ts](../../../backend/smart-economat-backend/src/modules/pedido/dto/generate-pedido-from-recetas.dto.ts)
 
 ### Servicio principal
 
-- [backend/smart-economat-backend/src/modules/pedido/service/receta-to-pedido.service.ts](backend/smart-economat-backend/src/modules/pedido/service/receta-to-pedido.service.ts)
+- [backend/smart-economat-backend/src/modules/pedido/service/receta-to-pedido.service.ts](../../../backend/smart-economat-backend/src/modules/pedido/service/receta-to-pedido.service.ts)
 
 ### Controlador
 
-- [backend/smart-economat-backend/src/modules/pedido/controller/pedido.controller.ts](backend/smart-economat-backend/src/modules/pedido/controller/pedido.controller.ts)
+- [backend/smart-economat-backend/src/modules/pedido/controller/pedido.controller.ts](../../../backend/smart-economat-backend/src/modules/pedido/controller/pedido.controller.ts)
 
 ### Módulo
 
-- [backend/smart-economat-backend/src/modules/pedido/pedido.module.ts](backend/smart-economat-backend/src/modules/pedido/pedido.module.ts)
+- [backend/smart-economat-backend/src/modules/pedido/pedido.module.ts](../../../backend/smart-economat-backend/src/modules/pedido/pedido.module.ts)
 
 ---
 
@@ -134,7 +134,7 @@ Cubren:
 
 Archivo:
 
-- [backend/smart-economat-backend/test/modules/pedido/receta-to-pedido.service.spec.ts](backend/smart-economat-backend/test/modules/pedido/receta-to-pedido.service.spec.ts)
+- [backend/smart-economat-backend/test/modules/pedido/receta-to-pedido.service.spec.ts](../../../backend/smart-economat-backend/test/modules/pedido/receta-to-pedido.service.spec.ts)
 
 ### E2E
 
@@ -146,7 +146,7 @@ Cubren:
 
 Archivo:
 
-- [backend/smart-economat-backend/test/e2e/pedidos.e2e-spec.ts](backend/smart-economat-backend/test/e2e/pedidos.e2e-spec.ts)
+- [backend/smart-economat-backend/test/e2e/pedidos.e2e-spec.ts](../../../backend/smart-economat-backend/test/e2e/pedidos.e2e-spec.ts)
 
 ---
 

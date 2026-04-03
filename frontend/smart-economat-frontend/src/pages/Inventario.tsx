@@ -59,11 +59,11 @@ import {
 import { searchByBarcode } from '../services/openfoodfacts.service';
 
 import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined';
-import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import SettingsIcon from '@mui/icons-material/Settings';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import SyncAltIcon from '@mui/icons-material/SyncAlt';
+import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 
 import PageToolbar from '../components/ui/PageToolbar';
 import BarcodeScanner from '../components/ui/BarcodeScanner';
@@ -74,6 +74,46 @@ import InventarioFilters, {
 const initialFilters: InventarioFiltersState = {
   categorias: [],
   ubicaciones: [],
+};
+
+const MEASURABLE_STOCK_UNITS = new Set<UnidadMedida>([
+  UnidadMedida.KG,
+  UnidadMedida.G,
+  UnidadMedida.L,
+  UnidadMedida.ML,
+]);
+
+const formatStockUnits = (value: number): string =>
+  `${(Number(value) || 0).toFixed(2)} uds`;
+
+const formatEquivalentAmount = (value: number, unit: UnidadMedida): string => {
+  if (unit === UnidadMedida.ML && Math.abs(value) >= 1000) {
+    return `${(value / 1000).toFixed(2)} ${UnidadMedida.L}`;
+  }
+
+  if (unit === UnidadMedida.G && Math.abs(value) >= 1000) {
+    return `${(value / 1000).toFixed(2)} ${UnidadMedida.KG}`;
+  }
+
+  return `${value.toFixed(2)} ${unit}`;
+};
+
+const formatEquivalentByConstruction = (
+  cantidadUnidades: number,
+  contenidoPorUnidad?: number,
+  unidad?: string
+): string | null => {
+  const normalizedUnit = normalizeUnidadMedida(unidad);
+  if (!normalizedUnit || !MEASURABLE_STOCK_UNITS.has(normalizedUnit)) {
+    return null;
+  }
+
+  if (!contenidoPorUnidad || !Number.isFinite(contenidoPorUnidad)) {
+    return null;
+  }
+
+  const totalContenido = cantidadUnidades * contenidoPorUnidad;
+  return `≈ ${formatEquivalentAmount(totalContenido, normalizedUnit)}`;
 };
 
 interface ProductoFormProveedor {
@@ -319,16 +359,7 @@ const Inventario: React.FC = () => {
   };
 
   const handleOpenSearchScanner = useCallback(() => {
-    if (typeof document !== 'undefined') {
-      const activeElement = document.activeElement;
-      if (activeElement instanceof HTMLElement) {
-        activeElement.blur();
-      }
-    }
-
-    window.requestAnimationFrame(() => {
-      setIsSearchScannerOpen(true);
-    });
+    setIsSearchScannerOpen(true);
   }, []);
 
   const handleCloseCreate = () => {
@@ -946,19 +977,51 @@ const Inventario: React.FC = () => {
       id: 'cantidadTotal',
       label: 'Stock Total',
       align: 'right',
-      render: (row) =>
-        row.unidad
-          ? `${Number(row.cantidadTotal).toFixed(2)} ${row.unidad}`
-          : String(row.cantidadTotal),
+      render: (row) => {
+        const equivalente = formatEquivalentByConstruction(
+          row.cantidadTotal,
+          row.contenidoPorUnidad,
+          row.unidad
+        );
+
+        return (
+          <Box sx={{ textAlign: 'right' }}>
+            <Typography variant="body2" fontWeight={500}>
+              {formatStockUnits(row.cantidadTotal)}
+            </Typography>
+            {equivalente ? (
+              <Typography variant="caption" color="text.secondary">
+                {equivalente}
+              </Typography>
+            ) : null}
+          </Box>
+        );
+      },
     },
     {
       id: 'cantidadMinima',
       label: 'Mínimo',
       align: 'right',
-      render: (row) =>
-        row.unidad
-          ? `${Number(row.cantidadMinima).toFixed(2)} ${row.unidad}`
-          : String(row.cantidadMinima),
+      render: (row) => {
+        const equivalente = formatEquivalentByConstruction(
+          row.cantidadMinima,
+          row.contenidoPorUnidad,
+          row.unidad
+        );
+
+        return (
+          <Box sx={{ textAlign: 'right' }}>
+            <Typography variant="body2" fontWeight={500}>
+              {formatStockUnits(row.cantidadMinima)}
+            </Typography>
+            {equivalente ? (
+              <Typography variant="caption" color="text.secondary">
+                {equivalente}
+              </Typography>
+            ) : null}
+          </Box>
+        );
+      },
       hideOnMobile: true,
     },
     {
@@ -1010,7 +1073,7 @@ const Inventario: React.FC = () => {
             </IconButton>
           </Tooltip>
           {canAjustar && (
-            <Tooltip title="Auditar / Conciliar Stock">
+            <Tooltip title="Auditar stock por ajuste (+/-)">
               <IconButton
                 size="small"
                 color="secondary"

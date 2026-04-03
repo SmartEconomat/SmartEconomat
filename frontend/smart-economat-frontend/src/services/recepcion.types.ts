@@ -1,12 +1,9 @@
 import { ProductoNuevoDto } from './producto.types';
 
 export enum EstadoRecepcion {
-  PENDIENTE = 'PENDIENTE',
-  EN_PROCESO = 'EN_PROCESO',
   PARCIAL = 'PARCIAL',
   COMPLETADA = 'COMPLETADA',
   CON_INCIDENCIAS = 'CON_INCIDENCIAS',
-  CANCELADA = 'CANCELADA',
 }
 
 export enum EstadoVisualProducto {

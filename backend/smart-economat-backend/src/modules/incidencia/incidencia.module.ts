@@ -7,6 +7,7 @@ import { IncidenciaRepository } from './repository/incidencia.repository';
 import { IncidenciaResuelaRepository } from './repository/incidencia-resuelta.repository';
 import { Recepcion } from '../recepcion/recepcion.entity/recepcion.entity';
 import { MovimientoModule } from '../movimiento/movimiento.module';
+import { PedidoModule } from '../pedido/pedido.module';
 import { IncidenciaService } from './service/incidencia.service';
 import { IncidenciaResuelaService } from './service/incidencia-resuelta.service';
 import { IncidenciaController } from './controller/incidencia.controller';
@@ -21,6 +22,7 @@ import { IncidenciaResuelaController } from './controller/incidencia-resuelta.co
       Recepcion,
     ]),
     MovimientoModule,
+    PedidoModule,
   ],
   controllers: [IncidenciaController, IncidenciaResuelaController],
   providers: [

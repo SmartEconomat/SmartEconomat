@@ -4,7 +4,7 @@ Guía de resolución de errores frecuentes encontrados durante el desarrollo y d
 
 ---
 
-## Índice de Errores
+## Índice de errores
 
 | Error | Entorno | Documento |
 |-------|---------|-----------|
@@ -15,7 +15,7 @@ Guía de resolución de errores frecuentes encontrados durante el desarrollo y d
 
 ---
 
-## Resumen Rápido
+## Resumen rápido
 
 ### EACCES: mkdir './uploads'
 

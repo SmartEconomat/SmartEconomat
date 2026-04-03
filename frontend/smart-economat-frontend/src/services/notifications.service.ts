@@ -1,5 +1,6 @@
-import { fetchInventario } from './inventario.service';
+import { fetchAlertasStock, fetchInventario } from './inventario.service';
 import { usuarioService } from './usuarioService';
+import type { AlertaStock, InventarioItem } from './inventario.types';
 import type { Usuario } from '../types/usuario';
 
 export type NotificationPriority = 'urgent' | 'pending';
@@ -40,6 +41,34 @@ const normalizeDate = (value?: string | null): Date | null => {
   if (!value) return null;
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const normalizeUniqueNames = (names: string[]): string[] =>
+  Array.from(
+    new Set(names.map((name) => name.trim()).filter((name) => name.length > 0))
+  );
+
+const getLowStockNamesFromAlertas = (alertas: AlertaStock[]): string[] =>
+  normalizeUniqueNames(alertas.map((alerta) => alerta.nombreProducto));
+
+const getLowStockNamesFromInventario = (items: InventarioItem[]): string[] => {
+  const lowStockProducts = new Map<string, string>();
+
+  items.forEach((item) => {
+    const product = item.productoProveedor?.producto;
+    if (!product?.id || !product.nombre) {
+      return;
+    }
+
+    const cantidadActual = Number(item.cantidadActual) || 0;
+    const cantidadMinima = Number(item.cantidadMinima) || 0;
+
+    if (cantidadActual < cantidadMinima) {
+      lowStockProducts.set(product.id, product.nombre);
+    }
+  });
+
+  return Array.from(lowStockProducts.values());
 };
 
 async function getPendingUsersNotification(): Promise<AppNotification | null> {
@@ -89,7 +118,31 @@ const buildPendingUserPreview = (user: Usuario): string => {
 };
 
 async function getInventoryNotifications(): Promise<AppNotification[]> {
-  const items = await fetchInventario();
+  const [inventarioResult, alertasStockResult] = await Promise.allSettled([
+    fetchInventario(),
+    fetchAlertasStock(),
+  ]);
+
+  const items =
+    inventarioResult.status === 'fulfilled' ? inventarioResult.value : [];
+  if (inventarioResult.status === 'rejected') {
+    console.error(
+      'Error loading inventory notifications from /inventario',
+      inventarioResult.reason
+    );
+  }
+
+  let lowStockNames: string[];
+  if (alertasStockResult.status === 'fulfilled') {
+    lowStockNames = getLowStockNamesFromAlertas(alertasStockResult.value);
+  } else {
+    console.error(
+      'Error loading low-stock notifications from /alertas/stock',
+      alertasStockResult.reason
+    );
+    lowStockNames = getLowStockNamesFromInventario(items);
+  }
+
   const now = new Date();
   const endDate = new Date(now);
   endDate.setDate(endDate.getDate() + EXPIRING_SOON_DAYS);
@@ -116,6 +169,22 @@ async function getInventoryNotifications(): Promise<AppNotification[]> {
   });
 
   const notifications: AppNotification[] = [];
+  if (lowStockNames.length > 0) {
+    notifications.push({
+      id: 'low-stock-products',
+      title: 'Productos bajo minimo',
+      description:
+        lowStockNames.length === 1
+          ? `Revisa ${buildProductPreview(lowStockNames)}. Hay 1 producto por debajo del stock minimo.`
+          : `Revisa ${buildProductPreview(lowStockNames)}. Hay ${lowStockNames.length} productos por debajo del stock minimo.`,
+      priority: 'urgent',
+      count: lowStockNames.length,
+      actionLabel: 'Revisar inventario',
+      actionPath: '/inventario',
+      details: lowStockNames.slice(0, 5),
+    });
+  }
+
   const expiredNames = Array.from(expiredProducts.values());
   const expiringNames = Array.from(expiringProducts.values()).filter(
     (name) => !expiredNames.includes(name)

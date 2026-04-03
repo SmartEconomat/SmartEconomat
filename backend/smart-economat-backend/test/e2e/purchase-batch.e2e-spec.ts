@@ -95,7 +95,13 @@ describe('PurchaseBatchController (e2e)', () => {
 
     expect(res.status).toBe(201);
     expect(res.body.data.id).toBeDefined();
+    expect(res.body.data.estado).toBe('pendiente');
     expect(res.body.data.pedidos).toHaveLength(2);
+    expect(
+      res.body.data.pedidos.every(
+        (pedido: { estado: string }) => pedido.estado === 'por_recepcionar'
+      )
+    ).toBe(true);
 
     const draftCount = await dataSource.getRepository(PedidoDraft).count();
     expect(draftCount).toBe(0);
@@ -121,27 +127,41 @@ describe('PurchaseBatchController (e2e)', () => {
   });
 
   it('POST /purchase-batches/from-recipes - Debería crear un lote a partir de recetas', async () => {
-    const proveedor = await createProveedor();
+    const proveedorA = await createProveedor();
+    const proveedorB = await createProveedor();
 
-    const productoRes = await request(app.getHttpServer())
+    const productoARes = await request(app.getHttpServer())
       .post('/api/v1/productos')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
-        nombre: generateUniqueName('Prod Batch Receta'),
+        nombre: generateUniqueName('Prod Batch Receta A'),
         tipo: 'cereal',
         unidad: 'KG',
         contenido: 1,
-        proveedores: [{ proveedorId: proveedor.id, precioUnitario: 4 }],
+        proveedores: [{ proveedorId: proveedorA.id, precioUnitario: 4 }],
       });
 
-    expect(productoRes.status).toBe(201);
-    const productoId = productoRes.body.data.id as string;
+    const productoBRes = await request(app.getHttpServer())
+      .post('/api/v1/productos')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        nombre: generateUniqueName('Prod Batch Receta B'),
+        tipo: 'cereal',
+        unidad: 'KG',
+        contenido: 1,
+        proveedores: [{ proveedorId: proveedorB.id, precioUnitario: 6 }],
+      });
+
+    expect(productoARes.status).toBe(201);
+    expect(productoBRes.status).toBe(201);
+    const productoAId = productoARes.body.data.id as string;
+    const productoBId = productoBRes.body.data.id as string;
 
     const recetaAId = await createReceta(generateUniqueName('Receta Batch A'), [
-      { productoId, cantidad: 2, unidad: 'kg' },
+      { productoId: productoAId, cantidad: 2, unidad: 'kg' },
     ]);
     const recetaBId = await createReceta(generateUniqueName('Receta Batch B'), [
-      { productoId, cantidad: 1, unidad: 'kg' },
+      { productoId: productoBId, cantidad: 1, unidad: 'kg' },
     ]);
 
     const res = await request(app.getHttpServer())
@@ -154,11 +174,60 @@ describe('PurchaseBatchController (e2e)', () => {
 
     expect(res.status).toBe(201);
     expect(res.body.data.id).toBeDefined();
-    expect(res.body.data.pedidos).toHaveLength(1);
-    expect(res.body.data.pedidos[0].pedidoProductos).toHaveLength(1);
-    expect(Number(res.body.data.pedidos[0].pedidoProductos[0].cantidad)).toBe(
-      3
+    expect(res.body.data.estado).toBe('pendiente');
+    expect(res.body.data.pedidos).toHaveLength(2);
+    expect(
+      res.body.data.pedidos.every(
+        (pedido: { estado: string }) => pedido.estado === 'por_recepcionar'
+      )
+    ).toBe(true);
+
+    const proveedores = new Set(
+      res.body.data.pedidos.map(
+        (pedido: { proveedor?: { id?: string } }) => pedido.proveedor?.id
+      )
     );
-    expect(Number(res.body.data.pedidos[0].costeTotal)).toBe(12);
+
+    expect(proveedores).toEqual(new Set([proveedorA.id, proveedorB.id]));
+    expect(
+      res.body.data.pedidos.every(
+        (pedido: { pedidoProductos: Array<unknown> }) =>
+          pedido.pedidoProductos.length === 1
+      )
+    ).toBe(true);
+  });
+
+  it('PATCH /purchase-batches/:id/cancelar - Debería derivar CANCELADO cuando todos los pedidos se cancelan', async () => {
+    const prov1 = await createProveedor();
+    const prov2 = await createProveedor();
+    const pp1 = await createProductoConProveedor(prov1.id);
+    const pp2 = await createProductoConProveedor(prov2.id);
+
+    const createRes = await request(app.getHttpServer())
+      .post('/api/v1/purchase-batches')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        observaciones: 'Lote cancelable E2E',
+        lineas: [
+          { productoProveedorId: pp1, cantidad: 5 },
+          { productoProveedorId: pp2, cantidad: 8 },
+        ],
+      });
+
+    expect(createRes.status).toBe(201);
+
+    const batchId = createRes.body.data.id as string;
+    const cancelRes = await request(app.getHttpServer())
+      .patch(`/api/v1/purchase-batches/${batchId}/cancelar`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ motivoCancelacion: 'Cancelacion de prueba E2E' });
+
+    expect(cancelRes.status).toBe(200);
+    expect(cancelRes.body.data.estado).toBe('cancelado');
+    expect(
+      cancelRes.body.data.pedidos.every(
+        (pedido: { estado: string }) => pedido.estado === 'cancelado'
+      )
+    ).toBe(true);
   });
 });

@@ -35,6 +35,8 @@ import {
   RecepcionReportePdfDto,
   TipoReportePdf,
 } from '../../recepcion/dto/recepcion-reporte-pdf.dto';
+import { CreateMissingStockBatchDto } from '../dto/create-missing-stock-batch.dto';
+import { GeneratePedidoFromRecetasDto } from '../dto/generate-pedido-from-recetas.dto';
 import {
   CancelPedidoUsuarioDto,
   CreatePedidoUsuarioDto,
@@ -43,7 +45,9 @@ import {
   UpdatePedidoUsuarioDto,
 } from '../dto/pedido-usuario.dto';
 import { PedidoUsuario } from '../pedido-usuario.entity/pedido-usuario.entity';
+import { PurchaseBatchService } from '../service/purchase-batch.service';
 import { PedidoUsuarioService } from '../service/pedido-usuario.service';
+import { RecetaToPedidoService } from '../service/receta-to-pedido.service';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('pedido-usuarios')
@@ -51,7 +55,9 @@ export class PedidoUsuarioController {
   constructor(
     private readonly pedidoUsuarioService: PedidoUsuarioService,
     private readonly pedidoDraftService: PedidoDraftService,
-    private readonly pdfReportService: PdfReportService
+    private readonly pdfReportService: PdfReportService,
+    private readonly purchaseBatchService: PurchaseBatchService,
+    private readonly recetaToPedidoService: RecetaToPedidoService
   ) {}
 
   @Post()
@@ -62,6 +68,34 @@ export class PedidoUsuarioController {
     @Req() req: PedidoUsuarioRequest
   ) {
     return this.pedidoDraftService.saveAndFinalize(req.user.id, dto);
+  }
+
+  @Post('from-missing-stock')
+  @RequirePermissions('pedidos:crear')
+  @HttpCode(HttpStatus.CREATED)
+  async createFromMissingStock(
+    @Body() dto: CreateMissingStockBatchDto,
+    @Req() req: PedidoUsuarioRequest
+  ): Promise<PedidoUsuario> {
+    const pedidoUsuarioDto =
+      await this.purchaseBatchService.buildPedidoUsuarioDtoFromMissingStock(
+        dto
+      );
+
+    return this.pedidoUsuarioService.create(pedidoUsuarioDto, req.user.id);
+  }
+
+  @Post('from-recipes')
+  @RequirePermissions('pedidos:crear')
+  @HttpCode(HttpStatus.CREATED)
+  async createFromRecipes(
+    @Body() dto: GeneratePedidoFromRecetasDto,
+    @Req() req: PedidoUsuarioRequest
+  ): Promise<PedidoUsuario> {
+    const pedidoUsuarioDto =
+      await this.recetaToPedidoService.buildBatchOrderFromRecetas(dto);
+
+    return this.pedidoUsuarioService.create(pedidoUsuarioDto, req.user.id);
   }
 
   @Get()
@@ -98,8 +132,11 @@ export class PedidoUsuarioController {
 
   @Patch(':id/aceptar')
   @RequirePermissions('pedidos:editar')
-  accept(@Param('id', ParseUUIDv7Pipe) id: string) {
-    return this.pedidoUsuarioService.accept(id);
+  accept(
+    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Req() req: PedidoUsuarioRequest
+  ) {
+    return this.pedidoUsuarioService.accept(id, req.user.id);
   }
 
   @Patch(':id/cancelar')

@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { Pedido, PurchaseBatch } from '../../../services/pedido.types';
+import { PedidoListItem, PurchaseBatch } from '../../../services/pedido.types';
 
 const WEEKLY_BATCH_PREFIX = /^Lote semanal generado desde/i;
 
@@ -27,20 +27,42 @@ export const formatPedidoId = (id?: string): string => {
 };
 
 export const formatPedidoListNumber = (
-  pedido: Pick<Pedido, 'id' | 'numeroGlobal'>
+  pedido: Pick<PedidoListItem, 'id' | 'numeroGlobal'> & {
+    pedidoUsuario?: {
+      numeroGlobal?: string | number;
+    };
+    batchId?: string;
+    batch?: {
+      id?: string;
+    };
+  }
 ): string => {
   if (pedido.numeroGlobal) {
     return String(pedido.numeroGlobal);
   }
 
+  if (pedido.pedidoUsuario?.numeroGlobal) {
+    return String(pedido.pedidoUsuario.numeroGlobal);
+  }
+
+  if (pedido.batchId) {
+    return formatPedidoId(pedido.batchId);
+  }
+
+  if (pedido.batch?.id) {
+    return formatPedidoId(pedido.batch.id);
+  }
+
   return formatPedidoId(pedido.id);
 };
 
-export const getPedidoCreatorName = (pedido: Pedido): string =>
-  pedido.usuario?.nombre || pedido.usuario?.username || '—';
+export const getPedidoCreatorName = (
+  pedido: Pick<PedidoListItem, 'usuario'>
+): string => pedido.usuario?.nombre || pedido.usuario?.username || '—';
 
-export const getPedidoProviderName = (pedido: Pedido): string =>
-  pedido.proveedor?.nombre || '—';
+export const getPedidoProviderName = (
+  pedido: Pick<PedidoListItem, 'proveedor'>
+): string => pedido.proveedor?.nombre || '—';
 
 export const getBatchProvidersSummary = (batch: PurchaseBatch): string => {
   const uniqueProviders = Array.from(

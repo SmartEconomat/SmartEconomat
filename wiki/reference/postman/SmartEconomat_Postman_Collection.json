@@ -385,7 +385,7 @@
               "options": { "raw": { "language": "json" } }
             },
             "url": "{{base_url}}/pedidos",
-            "description": "Crea un pedido con estado inicial `PENDIENTE`. `fechaEntrega` se calcula automáticamente en backend con el offset configurado y el payload solo admite `proveedorId`, `lineas` y `observaciones`."
+            "description": "Crea un pedido con estado inicial `PENDIENTE_DE_APROBACION`. `fechaEntrega` se calcula automáticamente en backend con el offset configurado y el payload solo admite `proveedorId`, `lineas` y `observaciones`."
           }
         },
         {

@@ -1,4 +1,12 @@
-import { IsOptional, IsBoolean, IsInt, Min, Max } from 'class-validator';
+import {
+  IsOptional,
+  IsBoolean,
+  IsInt,
+  Min,
+  Max,
+  IsDateString,
+  IsUUID,
+} from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 
 export class ExportIncidenciaFilterDto {
@@ -10,6 +18,27 @@ export class ExportIncidenciaFilterDto {
     return value as boolean | undefined;
   })
   resuelta?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value as boolean | undefined;
+  })
+  soloNoResueltas?: boolean;
+
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  endDate?: string;
+
+  @IsOptional()
+  @IsUUID('all')
+  proveedorId?: string;
 
   @IsOptional()
   @Type(() => Number)

@@ -9,6 +9,8 @@ const PRODUCTOS_CACHE_TTL_MS = 1000;
 const PRODUCTOS_MAX_LIMIT = 50;
 const PRODUCTOS_DEFAULT_LIMIT = 20;
 
+type ProductSortOrder = 'asc' | 'desc' | 'ASC' | 'DESC';
+
 const productosRequestCache = new Map<
   string,
   {
@@ -48,6 +50,16 @@ function normalizeLimit(limit?: number): number | undefined {
   return Math.min(normalized, PRODUCTOS_MAX_LIMIT);
 }
 
+function normalizeProductSortOrder(
+  value?: ProductSortOrder
+): 'ASC' | 'DESC' | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  return String(value).toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+}
+
 function buildProductosQueryString(params?: ProductosQueryParams): string {
   if (!params) return `?limit=${PRODUCTOS_MAX_LIMIT}`;
 
@@ -67,6 +79,10 @@ function buildProductosQueryString(params?: ProductosQueryParams): string {
     search.set('categorias', params.categorias.join(','));
   if (params.alergenos?.length)
     search.set('alergenos', params.alergenos.join(','));
+  if (params.sortBy?.trim()) search.set('sortBy', params.sortBy.trim());
+
+  const normalizedOrder = normalizeProductSortOrder(params.order);
+  if (normalizedOrder) search.set('order', normalizedOrder);
 
   const qs = search.toString();
   return qs ? `?${qs}` : `?limit=${PRODUCTOS_MAX_LIMIT}`;
@@ -128,13 +144,17 @@ export async function fetchProductos(
   page: number = 1,
   limit: number = 10,
   search: string = '',
-  categorias: string[] = []
+  categorias: string[] = [],
+  sortBy?: string,
+  sortOrder?: ProductSortOrder
 ): Promise<PaginatedData<Producto>> {
   const query = buildProductosQueryString({
     page,
     limit,
     searchTerm: search,
     categorias: categorias.length > 0 ? categorias : undefined,
+    sortBy,
+    order: sortOrder,
   });
   return requestProductos(query);
 }

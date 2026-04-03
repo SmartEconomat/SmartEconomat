@@ -47,7 +47,8 @@ export class CreatePurchaseBatchDto {
 
 export class ConsolidatePurchaseBatchDto {
   @ApiProperty({
-    description: 'IDs de pedidos pendientes que se consolidarán en un lote',
+    description:
+      'IDs de pedidos de usuario pendientes que se consolidarán en un lote de compra',
     type: [String],
   })
   @IsArray()
@@ -58,19 +59,7 @@ export class ConsolidatePurchaseBatchDto {
   })
   @IsUUID('all', { each: true })
   @Type(() => String)
-  pedidoIds!: string[];
-
-  @ApiPropertyOptional({
-    description:
-      'IDs de pedidos de usuario pendientes que se consolidarán en un lote de compra',
-    type: [String],
-    required: false,
-  })
-  @IsOptional()
-  @IsArray()
-  @IsUUID('all', { each: true })
-  @Type(() => String)
-  pedidoUsuarioIds?: string[];
+  pedidoUsuarioIds!: string[];
 
   @ApiPropertyOptional({
     description: 'Observaciones generales para el lote consolidado',

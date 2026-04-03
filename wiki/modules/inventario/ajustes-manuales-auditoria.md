@@ -44,7 +44,7 @@ Permitir regularizaciones manuales de stock para cubrir roturas internas, mermas
 
 ## 3. DTO y validaciones
 
-Archivo: [backend/smart-economat-backend/src/modules/inventario/dto/create-movimiento-manual.dto.ts](backend/smart-economat-backend/src/modules/inventario/dto/create-movimiento-manual.dto.ts)
+Archivo: [backend/smart-economat-backend/src/modules/inventario/dto/create-movimiento-manual.dto.ts](../../../backend/smart-economat-backend/src/modules/inventario/dto/create-movimiento-manual.dto.ts)
 
 ### Campos
 
@@ -58,7 +58,7 @@ Archivo: [backend/smart-economat-backend/src/modules/inventario/dto/create-movim
 
 ### Enum utilizado
 
-Archivo: [backend/smart-economat-backend/src/modules/movimiento/enums/movimiento.enums.ts](backend/smart-economat-backend/src/modules/movimiento/enums/movimiento.enums.ts)
+Archivo: [backend/smart-economat-backend/src/modules/movimiento/enums/movimiento.enums.ts](../../../backend/smart-economat-backend/src/modules/movimiento/enums/movimiento.enums.ts)
 
 ```ts
 TipoMovimientoManual = {
@@ -72,7 +72,7 @@ TipoMovimientoManual = {
 
 ## 4. Reglas de negocio
 
-Implementadas en [backend/smart-economat-backend/src/modules/inventario/service/inventario.service.ts](backend/smart-economat-backend/src/modules/inventario/service/inventario.service.ts).
+Implementadas en [backend/smart-economat-backend/src/modules/inventario/service/inventario.service.ts](../../../backend/smart-economat-backend/src/modules/inventario/service/inventario.service.ts).
 
 ### Reglas funcionales
 
@@ -160,7 +160,7 @@ Ajuste manual de inventario: <producto> (<stock_anterior> -> <stock_actual>) | M
 
 #### Servicio
 
-Archivo: [backend/smart-economat-backend/test/modules/inventario/inventario.service.spec.ts](backend/smart-economat-backend/test/modules/inventario/inventario.service.spec.ts)
+Archivo: [backend/smart-economat-backend/test/modules/inventario/inventario.service.spec.ts](../../../backend/smart-economat-backend/test/modules/inventario/inventario.service.spec.ts)
 
 Casos cubiertos:
 
@@ -175,7 +175,7 @@ Casos cubiertos:
 
 #### Controlador
 
-Archivo: [backend/smart-economat-backend/test/modules/inventario/inventario.controller.spec.ts](backend/smart-economat-backend/test/modules/inventario/inventario.controller.spec.ts)
+Archivo: [backend/smart-economat-backend/test/modules/inventario/inventario.controller.spec.ts](../../../backend/smart-economat-backend/test/modules/inventario/inventario.controller.spec.ts)
 
 Casos cubiertos:
 
@@ -184,7 +184,7 @@ Casos cubiertos:
 
 #### DTO
 
-Archivo: [backend/smart-economat-backend/test/modules/inventario/create-movimiento-manual.dto.spec.ts](backend/smart-economat-backend/test/modules/inventario/create-movimiento-manual.dto.spec.ts)
+Archivo: [backend/smart-economat-backend/test/modules/inventario/create-movimiento-manual.dto.spec.ts](../../../backend/smart-economat-backend/test/modules/inventario/create-movimiento-manual.dto.spec.ts)
 
 Casos cubiertos:
 
@@ -197,7 +197,7 @@ Casos cubiertos:
 
 ### E2E
 
-Archivo: [backend/smart-economat-backend/test/e2e/inventario.e2e-spec.ts](backend/smart-economat-backend/test/e2e/inventario.e2e-spec.ts)
+Archivo: [backend/smart-economat-backend/test/e2e/inventario.e2e-spec.ts](../../../backend/smart-economat-backend/test/e2e/inventario.e2e-spec.ts)
 
 Casos cubiertos:
 
@@ -212,14 +212,14 @@ Casos cubiertos:
 
 ## 9. Archivos modificados
 
-- [backend/smart-economat-backend/src/modules/inventario/controller/inventario.controller.ts](backend/smart-economat-backend/src/modules/inventario/controller/inventario.controller.ts)
-- [backend/smart-economat-backend/src/modules/inventario/service/inventario.service.ts](backend/smart-economat-backend/src/modules/inventario/service/inventario.service.ts)
-- [backend/smart-economat-backend/src/modules/inventario/dto/create-movimiento-manual.dto.ts](backend/smart-economat-backend/src/modules/inventario/dto/create-movimiento-manual.dto.ts)
-- [backend/smart-economat-backend/src/modules/movimiento/enums/movimiento.enums.ts](backend/smart-economat-backend/src/modules/movimiento/enums/movimiento.enums.ts)
-- [backend/smart-economat-backend/test/modules/inventario/inventario.service.spec.ts](backend/smart-economat-backend/test/modules/inventario/inventario.service.spec.ts)
-- [backend/smart-economat-backend/test/modules/inventario/inventario.controller.spec.ts](backend/smart-economat-backend/test/modules/inventario/inventario.controller.spec.ts)
-- [backend/smart-economat-backend/test/modules/inventario/create-movimiento-manual.dto.spec.ts](backend/smart-economat-backend/test/modules/inventario/create-movimiento-manual.dto.spec.ts)
-- [backend/smart-economat-backend/test/e2e/inventario.e2e-spec.ts](backend/smart-economat-backend/test/e2e/inventario.e2e-spec.ts)
+- [backend/smart-economat-backend/src/modules/inventario/controller/inventario.controller.ts](../../../backend/smart-economat-backend/src/modules/inventario/controller/inventario.controller.ts)
+- [backend/smart-economat-backend/src/modules/inventario/service/inventario.service.ts](../../../backend/smart-economat-backend/src/modules/inventario/service/inventario.service.ts)
+- [backend/smart-economat-backend/src/modules/inventario/dto/create-movimiento-manual.dto.ts](../../../backend/smart-economat-backend/src/modules/inventario/dto/create-movimiento-manual.dto.ts)
+- [backend/smart-economat-backend/src/modules/movimiento/enums/movimiento.enums.ts](../../../backend/smart-economat-backend/src/modules/movimiento/enums/movimiento.enums.ts)
+- [backend/smart-economat-backend/test/modules/inventario/inventario.service.spec.ts](../../../backend/smart-economat-backend/test/modules/inventario/inventario.service.spec.ts)
+- [backend/smart-economat-backend/test/modules/inventario/inventario.controller.spec.ts](../../../backend/smart-economat-backend/test/modules/inventario/inventario.controller.spec.ts)
+- [backend/smart-economat-backend/test/modules/inventario/create-movimiento-manual.dto.spec.ts](../../../backend/smart-economat-backend/test/modules/inventario/create-movimiento-manual.dto.spec.ts)
+- [backend/smart-economat-backend/test/e2e/inventario.e2e-spec.ts](../../../backend/smart-economat-backend/test/e2e/inventario.e2e-spec.ts)
 
 ---
 

@@ -1,5 +1,21 @@
 import { baseFetch, ApiResponse, unwrapList } from './api.service';
-import type { InventarioItem, InventarioPorProducto } from './inventario.types';
+import type {
+  AlertaStock,
+  CreateAjusteManualInventarioPayload,
+  InventarioItem,
+  InventarioPorProducto,
+} from './inventario.types';
+
+export async function fetchAlertasStock(): Promise<AlertaStock[]> {
+  const response = await baseFetch('/alertas/stock');
+  if (!response.ok) {
+    throw new Error(
+      `Error al obtener alertas de stock: ${response.status} ${response.statusText}`
+    );
+  }
+  const body = (await response.json()) as ApiResponse<unknown>;
+  return unwrapList<AlertaStock>(body.data);
+}
 
 export async function fetchInventario(): Promise<InventarioItem[]> {
   const response = await baseFetch('/inventario');
@@ -26,6 +42,7 @@ export function agregarInventarioPorProducto(
       id: string;
       nombre: string;
       unidad?: string;
+      contenido?: number;
       tipo?: string;
       codigoBarras?: string;
     };
@@ -46,6 +63,11 @@ export function agregarInventarioPorProducto(
     const nombre = producto.nombre ?? '';
     const codigoBarras = producto.codigoBarras;
     const unidad = producto.unidad;
+    const contenidoPorUnidadRaw = Number(producto.contenido);
+    const contenidoPorUnidad =
+      Number.isFinite(contenidoPorUnidadRaw) && contenidoPorUnidadRaw > 0
+        ? contenidoPorUnidadRaw
+        : undefined;
     const tipo = producto.tipo;
 
     const cantidadActual =
@@ -59,6 +81,11 @@ export function agregarInventarioPorProducto(
     if (existing) {
       existing.cantidadTotal += cantidadActual;
       existing.cantidadMinima += cantidadMinima;
+      existing.bajoStock =
+        existing.bajoStock || cantidadActual < cantidadMinima;
+      if (!existing.contenidoPorUnidad && contenidoPorUnidad) {
+        existing.contenidoPorUnidad = contenidoPorUnidad;
+      }
       if (proveedorNombre && !existing.proveedores.includes(proveedorNombre)) {
         existing.proveedores.push(proveedorNombre);
       }
@@ -71,6 +98,7 @@ export function agregarInventarioPorProducto(
         productoId,
         nombre,
         unidad,
+        contenidoPorUnidad,
         tipo,
         cantidadTotal: cantidadActual,
         cantidadMinima,
@@ -83,11 +111,8 @@ export function agregarInventarioPorProducto(
   }
 
   const result = Array.from(map.values()).filter(
-    (row) => row.cantidadTotal > 0
+    (row) => row.cantidadTotal > 0 || row.bajoStock
   );
-  result.forEach((r) => {
-    r.bajoStock = r.cantidadTotal < r.cantidadMinima;
-  });
   return result.sort((a, b) => a.nombre.localeCompare(b.nombre));
 }
 
@@ -135,6 +160,27 @@ export async function updateInventarioItem(
     throw new Error(
       errorBody.message ||
         `Error al actualizar el inventario: ${response.status}`
+    );
+  }
+
+  const body = (await response.json()) as ApiResponse<InventarioItem>;
+  return body.data;
+}
+
+export async function createAjusteManualInventario(
+  payload: CreateAjusteManualInventarioPayload
+): Promise<InventarioItem> {
+  const response = await baseFetch('/inventario/ajustes-manuales', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    throw new Error(
+      errorBody.message ||
+        `Error al registrar el ajuste manual: ${response.status}`
     );
   }
 

@@ -16,15 +16,14 @@ La pantalla no trabaja solo con una tabla; actúa como orquestador de filtros, b
 
 ## Piezas principales
 
-- **`PedidosTabs`**: tabs `Mis Pedidos`, `Pedidos`, `Compras`.
-- **`MisPedidosStatusTabs`**: selector segmentado (pill-style) para filtrar "Mis Pedidos" por estado (Pendientes, En proceso, Finalizados) con iconos intuitivos.
-- **`PedidosTable`**: lista/tablero básico para la pestaña personal.
-- **`PedidosWeeklyBoard`**: agrupación por semana y usuario con selección para consolidar.
-- **`PurchasesWeeklyBoard`**: agrupación semanal de lotes de compra.
-- **`DynamicFormModal`**: alta/edición con líneas `orderLines` y observaciones.
-- **`PedidoDetailDrawer`**: detalle del pedido interno con PDF/impresión.
-- **`PurchaseBatchDetailModal`**: detalle reutilizable de `PedidoUsuario` o `PurchaseBatch`.
-- **`PedidoDraftBanner`** y modales de recuperación: UX de borradores persistidos.
+- **[PageToolbar](../componentes/PageToolbar.md)**: Encabezado con búsqueda de pedidos, Chip de conteo ("X pedidos registrados") y filtros rápidos. Incluye el selector de modo de vista (Lista/Grid).
+- **[DataTable](../componentes/DataTable.md)**: Muestra los pedidos de forma tabular con soporte para visualización responsiva.
+- **[StatusChip](../componentes/StatusChip.md)**: Indica el estado actual del pedido (`PENDIENTE_DE_APROBACION`, `POR_RECEPCIONAR`, `PARCIAL`, `RECEPCIONADO`, `INCIDENCIA`, `CANCELADO`).
+- **[DynamicFormModal](../componentes/DynamicFormModal.md)**: Formulario avanzado para la gestión de líneas de pedido y selección de proveedores.
+- **[ConfirmDialog](../componentes/ConfirmDialog.md)**: Validación para la cancelación de pedidos.
+- **`PedidosWeeklyBoard`**: Vista agrupada por semana y usuario para revisar pedidos pendientes antes de consolidarlos.
+- **`PurchaseBatchDetailModal`**: Modal reutilizable para detalle de `PurchaseBatch` y `PedidoUsuario`.
+- **`BatchPedidoLineasViewer`**: Visor de líneas y pedidos internos, con soporte PDF según el modo.
 
 ## Hooks y utilidades clave
 
@@ -86,15 +85,14 @@ La pantalla no trabaja solo con una tabla; actúa como orquestador de filtros, b
 | Fecha Pedido | `fechaPedido` | Fecha | Fecha de emisión de la orden. |
 | Fecha Entrega | `fechaEntrega` | Fecha | Fecha prevista de llegada (oculto en móvil). |
 | Coste Total | `costeTotal` | Moneda | Importe acumulado de la compra. |
-| Estado | `estado` | Chip | Estado logístico (Pendiente, Parcial, Recibido, etc.). |
+| Estado | `estado` | Chip | Estado logístico (`pendiente_de_aprobacion`, `por_recepcionar`, `parcial`, `recepcionado`, `incidencia`, `cancelado`). |
 | Creado Por | `usuario` | Texto | Nombre del comprador (oculto en móvil). |
 
 ## Acciones UI por estado
 
-- `PENDIENTE`: puede aprobarse, cancelarse, editarse o, según el caso, consolidarse.
-- `CANCELADO`: puede restaurarse si el usuario tiene permiso/rol.
-- `EN_PROCESO` / `PARCIAL`: se muestran como seguimiento, sin edición de líneas.
-- `INCIDENCIA`: el detalle muestra motivo, pero el flujo de resolución se gestiona fuera de esta página.
+- `pendientes`: aplica filtro de `PENDIENTE_DE_APROBACION`.
+- `activos`: aplica filtro de `POR_RECEPCIONAR` y `PARCIAL`.
+- `finalizados`: aplica filtro de `RECEPCIONADO` y `CANCELADO`.
 
 ## Contratos relacionados
 

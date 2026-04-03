@@ -9,6 +9,14 @@ export enum MotivoMerma {
   OTROS = 'otros',
 }
 
+export enum TipoMerma {
+  RECEPCION = 'recepcion',
+  PRODUCCION = 'produccion',
+  CADUCIDAD = 'caducidad',
+  ROTURA = 'rotura',
+  INVENTARIO = 'inventario',
+}
+
 export interface Merma {
   id: string;
   productoId: string;
@@ -17,6 +25,11 @@ export interface Merma {
   usuario?: Usuario;
   cantidad: number;
   motivo: MotivoMerma;
+  tipo?: TipoMerma;
+  origenEntidad?: string;
+  origenId?: string;
+  referenciaId?: string;
+  idempotencyKey?: string;
   notas?: string;
   createdAt: string;
   updatedAt: string;
@@ -26,7 +39,21 @@ export interface CreateMermaPayload {
   productoId: string;
   cantidad: number;
   motivo: MotivoMerma;
+  tipo?: TipoMerma;
+  origenEntidad?: string;
+  origenId?: string;
+  referenciaId?: string;
+  idempotencyKey?: string;
   notas?: string;
+}
+
+export interface CreateMermaProduccionPayload {
+  produccionLoteId: string;
+  productoId: string;
+  cantidad: number;
+  motivo?: MotivoMerma;
+  notas?: string;
+  idempotencyKey?: string;
 }
 
 export interface MermaStats {

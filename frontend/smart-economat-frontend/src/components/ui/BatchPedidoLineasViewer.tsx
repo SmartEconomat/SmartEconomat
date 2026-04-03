@@ -39,8 +39,10 @@ interface BatchProviderGroup {
 }
 
 interface InvolvedPedidoSummary {
-  numero?: string;
+  numeroPedidoProveedor?: string;
+  numeroPedidoUsuario?: string;
   id: string;
+  proveedor?: string;
   usuario?: string;
   fecha: string;
   estado: EstadoPedido;
@@ -50,24 +52,32 @@ interface AggregatedProductGroup {
   pp: NonNullable<Pedido['pedidoProductos']>[number];
   totalCantidad: number;
   usuarios: Set<string>;
-  numerosGlobales: Set<string>;
+  numerosPedidoUsuario: Set<string>;
 }
 
-interface BatchPedidoLineasViewerProps {
-  batch: PurchaseBatch | PedidoUsuario;
-  mode?: 'batch' | 'pedido';
-  showPdfActions?: boolean;
-}
+type BatchPedidoLineasViewerProps =
+  | {
+      batch: PurchaseBatch;
+      entityType: 'purchase_batch';
+      showPdfActions?: boolean;
+    }
+  | {
+      batch: PedidoUsuario;
+      entityType: 'pedido_usuario';
+      showPdfActions?: boolean;
+    };
 
 const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
   batch,
-  mode = 'batch',
+  entityType,
   showPdfActions = true,
 }) => {
   const toast = useToast();
   const [incluirCancelados, setIncluirCancelados] = React.useState(true);
   const [paginaPorProveedor, setPaginaPorProveedor] = React.useState(false);
   const [isDownloading, setIsDownloading] = React.useState(false);
+  const pedidoUsuarioNumeroGlobal =
+    entityType === 'pedido_usuario' ? batch.numeroGlobal : undefined;
 
   const handleDownloadPdf = async () => {
     setIsDownloading(true);
@@ -78,8 +88,8 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
 
     try {
       await downloadFile(
-        `${mode === 'pedido' ? `/pedido-usuarios/${batch.id}/pdf` : `/purchase-batches/${batch.id}/pdf`}?${params.toString()}`,
-        `${mode === 'pedido' ? 'pedido' : 'reporte-lote'}-${batch.id.slice(0, 8)}.pdf`
+        `${entityType === 'pedido_usuario' ? `/pedido-usuarios/${batch.id}/pdf` : `/purchase-batches/${batch.id}/pdf`}?${params.toString()}`,
+        `${entityType === 'pedido_usuario' ? 'pedido' : 'reporte-lote'}-${batch.id.slice(0, 8)}.pdf`
       );
     } catch (err: unknown) {
       toast.error(
@@ -107,24 +117,18 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
   }, [batch.pedidos, incluirCancelados]);
 
   const involvedPedidos = React.useMemo(() => {
-    const seen = new Set<string>();
-    const list: InvolvedPedidoSummary[] = [];
-
-    batch.pedidos?.forEach((p) => {
+    return (batch.pedidos ?? []).map((p) => {
       const pedido = p as PedidoWithAggregate;
-      const id = pedido.pedidoUsuario?.id || pedido.id;
-      if (!seen.has(id)) {
-        seen.add(id);
-        list.push({
-          numero: pedido.pedidoUsuario?.numeroGlobal || pedido.numeroGlobal,
-          id,
-          usuario: pedido.usuario?.nombre,
-          fecha: pedido.fechaPedido,
-          estado: pedido.estado,
-        });
-      }
+      return {
+        numeroPedidoProveedor: pedido.numeroGlobal,
+        numeroPedidoUsuario: pedido.pedidoUsuario?.numeroGlobal,
+        id: pedido.id,
+        proveedor: pedido.proveedor?.nombre,
+        usuario: pedido.usuario?.nombre,
+        fecha: pedido.fechaPedido,
+        estado: pedido.estado,
+      } satisfies InvolvedPedidoSummary;
     });
-    return list;
   }, [batch.pedidos]);
 
   const groupedProductsByProvider = React.useMemo(() => {
@@ -139,7 +143,7 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
               pp,
               totalCantidad: 0,
               usuarios: new Set(),
-              numerosGlobales: new Set(),
+              numerosPedidoUsuario: new Set(),
             };
           }
           productMap[key].totalCantidad += Number(pp.cantidad || 0);
@@ -147,10 +151,11 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
             productMap[key].usuarios.add(pedido.usuario.nombre);
           }
           const numero =
-            (pedido as PedidoWithAggregate).pedidoUsuario?.numeroGlobal ||
-            pedido.numeroGlobal;
+            entityType === 'pedido_usuario'
+              ? pedidoUsuarioNumeroGlobal
+              : (pedido as PedidoWithAggregate).pedidoUsuario?.numeroGlobal;
           if (numero) {
-            productMap[key].numerosGlobales.add(String(numero));
+            productMap[key].numerosPedidoUsuario.add(String(numero));
           }
         });
       });
@@ -160,13 +165,13 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
         productosAgrupados: Object.values(productMap),
       };
     });
-  }, [groupedByProvider]);
+  }, [entityType, groupedByProvider, pedidoUsuarioNumeroGlobal]);
 
   if (!batch || !batch.pedidos || batch.pedidos.length === 0) {
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
         <Typography color="text.secondary">
-          {mode === 'pedido'
+          {entityType === 'pedido_usuario'
             ? 'No hay líneas asociadas a este pedido.'
             : 'No hay pedidos en este lote.'}
         </Typography>
@@ -290,14 +295,15 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
                       <Typography variant="caption" sx={{ fontWeight: 500 }}>
                         {Array.from(item.usuarios).join(', ') || '—'}
                       </Typography>
-                      {item.numerosGlobales.size > 0 && (
+                      {item.numerosPedidoUsuario.size > 0 && (
                         <Typography
                           variant="caption"
                           color="text.secondary"
                           display="block"
                           sx={{ fontSize: '0.7rem' }}
                         >
-                          Nº: {Array.from(item.numerosGlobales).join(', ')}
+                          Pedido usuario:{' '}
+                          {Array.from(item.numerosPedidoUsuario).join(', ')}
                         </Typography>
                       )}
                     </TableCell>
@@ -322,7 +328,7 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
 
       <Divider sx={{ my: 4 }} />
 
-      {mode === 'batch' && involvedPedidos.length > 0 && (
+      {entityType === 'purchase_batch' && involvedPedidos.length > 0 && (
         <Box sx={{ mb: 4 }}>
           <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
             Pedidos involucrados en la compra
@@ -332,8 +338,12 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
               <TableHead sx={{ bgcolor: 'grey.50' }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 'bold' }}>
-                    Nº de Pedido
+                    Nº pedido proveedor
                   </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    Pedido usuario origen
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Proveedor</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Usuario</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Fecha</TableCell>
                   <TableCell align="center" sx={{ fontWeight: 'bold' }}>
@@ -346,9 +356,17 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
                   <TableRow key={p.id}>
                     <TableCell>
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {p.numero ? `#${p.numero}` : formatPedidoId(p.id)}
+                        {p.numeroPedidoProveedor
+                          ? `#${p.numeroPedidoProveedor}`
+                          : formatPedidoId(p.id)}
                       </Typography>
                     </TableCell>
+                    <TableCell>
+                      {p.numeroPedidoUsuario
+                        ? `#${p.numeroPedidoUsuario}`
+                        : '—'}
+                    </TableCell>
+                    <TableCell>{p.proveedor || '—'}</TableCell>
                     <TableCell>{p.usuario || '—'}</TableCell>
                     <TableCell>
                       {new Date(p.fecha).toLocaleDateString('es-ES')}
@@ -450,11 +468,8 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
               boxShadow: '0 2px 8px rgba(216, 27, 96, 0.1)',
             }}
           >
-            <Typography
-              variant="h5"
-              sx={{ fontWeight: 800, letterSpacing: -0.5 }}
-            >
-              {mode === 'pedido' ? 'TOTAL: ' : 'TOTAL COMPRA: '}
+            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+              {entityType === 'pedido_usuario' ? 'TOTAL: ' : 'TOTAL COMPRA: '}
               {totalBatch.toFixed(2)} €
             </Typography>
           </Box>

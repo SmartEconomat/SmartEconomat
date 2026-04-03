@@ -76,7 +76,7 @@ El frontend de pedidos ya no trabaja con un único tipo de entidad para todos lo
 ### Convención visual actual
 - En listas se muestra `numeroGlobal` sin prefijo, bajo la columna **N de pedido**.
 - El UUID abreviado queda como identificador técnico para contextos de depuración o fallback.
-- Los chips de estado aceptan estados de negocio en español: `pendiente`, `en_proceso`, `entregado`, `cancelado`, `recibido`.
+- Los chips de estado aceptan estados de negocio del `EstadoPedido`: `pendiente_de_aprobacion`, `por_recepcionar`, `parcial`, `recepcionado`, `incidencia`, `cancelado`.
 
 ## Gestión de Estado (`src/store`)
 Utilizamos Context API para el estado global:

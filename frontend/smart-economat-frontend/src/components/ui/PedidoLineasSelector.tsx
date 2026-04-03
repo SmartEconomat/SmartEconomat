@@ -603,15 +603,18 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                           }
                           disabled={disabled}
                           renderOption={(props, option) => {
+                            const listItemProps = {
+                              ...props,
+                            } as React.HTMLAttributes<HTMLLIElement> & {
+                              keepMounted?: boolean;
+                              key?: React.Key;
+                            };
+
+                            delete listItemProps.keepMounted;
+                            delete listItemProps.key;
+
                             return (
-                              <li
-                                {...props}
-                                key={option.key}
-                                style={{
-                                  whiteSpace: 'normal',
-                                  wordBreak: 'break-word',
-                                }}
-                              >
+                              <li {...listItemProps} key={option.key}>
                                 {option.proveedores.length > 1
                                   ? `${option.nombreProducto} (${option.proveedores.length} proveedores)`
                                   : option.nombreProducto}

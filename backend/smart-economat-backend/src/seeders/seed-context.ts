@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process';
-import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import AppDataSource from '../config/typeorm.config';
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
@@ -12,6 +12,7 @@ import {
   parseSeedRetryAfterMs,
   seedSafeStringify,
 } from './seed-context.http-utils';
+import { seedDateIso } from './deterministic.seed-data';
 
 type SeedCredential = {
   email: string;
@@ -38,28 +39,14 @@ export class SeedContext {
   private static readonly DEFAULT_REQUEST_DELAY_MS = 0;
   private static readonly DEFAULT_REQUEST_TIMEOUT_MS = 60000;
   private static readonly DEFAULT_MAX_CONCURRENCY = 32;
+  private static readonly DEFAULT_MAX_RETRIES = 2;
   private static readonly DEFAULT_BACKOFF_BASE_MS = 250;
   private static readonly DEFAULT_BACKOFF_MAX_MS = 6000;
   private static readonly DEFAULT_DOCKER_COMPOSE_FILE =
     '../../../../docker-compose.dev.yml';
   private static readonly DEFAULT_DOCKER_SERVICES = ['db', 'redis', 'backend'];
+  private static readonly BACKEND_WAIT_LOG_EVERY_ATTEMPTS = 5;
   private static readonly DEFAULT_AUTH_CANDIDATES: SeedCredential[] = [
-    {
-      email: 'admin@smarteconomat.com',
-      password: 'SmartEconomat2026!',
-    },
-    {
-      email: 'admin@smarteconomat.com',
-      password: 'SmartEconomat123!',
-    },
-    {
-      email: 'admin',
-      password: 'SmartEconomat2026!',
-    },
-    {
-      email: 'admin',
-      password: 'SmartEconomat123!',
-    },
     {
       email: 'superadmin@smarteconomat.com',
       password: 'SmartEconomat2026!',
@@ -80,6 +67,22 @@ export class SeedContext {
       email: 'superAdmin',
       password: 'SmartEconomat2026*',
     },
+    {
+      email: 'admin@smarteconomat.com',
+      password: 'SmartEconomat2026!',
+    },
+    {
+      email: 'admin@smarteconomat.com',
+      password: 'SmartEconomat123!',
+    },
+    {
+      email: 'admin',
+      password: 'SmartEconomat2026!',
+    },
+    {
+      email: 'admin',
+      password: 'SmartEconomat123!',
+    },
   ];
 
   constructor(config: SeedContextConfig = {}) {
@@ -90,7 +93,7 @@ export class SeedContext {
     this.logFilePath = resolve(logsDir, 'seed-http-log.txt');
     writeFileSync(
       this.logFilePath,
-      `=== SEED HTTP LOG START ${new Date().toISOString()} ===\n`,
+      `=== SEED HTTP LOG START ${this.nextLogTimestamp()} ===\n`,
       'utf8'
     );
   }
@@ -102,6 +105,7 @@ export class SeedContext {
   private inFlight = 0;
   private readonly queue: Array<() => void> = [];
   private readonly logFilePath: string;
+  private logEventCursor = 0;
   private dockerComposeFile: string;
   private dockerServices: string[];
   private authCandidates: SeedCredential[];
@@ -168,7 +172,10 @@ export class SeedContext {
       config.maxConcurrency,
       SeedContext.DEFAULT_MAX_CONCURRENCY
     );
-    this.maxRetries = 0;
+    this.maxRetries = this.ensureNonNegativeInt(
+      config.maxRetries,
+      SeedContext.DEFAULT_MAX_RETRIES
+    );
     this.backoffBaseMs = this.ensureNonNegativeInt(
       config.backoffBaseMs,
       SeedContext.DEFAULT_BACKOFF_BASE_MS
@@ -195,21 +202,80 @@ export class SeedContext {
         : SeedContext.DEFAULT_AUTH_CANDIDATES;
   }
 
-  ensureDockerInfra(): Promise<void> {
-    const isDocker = require('node:fs').existsSync('/.dockerenv');
+  async ensureDockerInfra(): Promise<void> {
+    const isDocker = existsSync('/.dockerenv');
     if (isDocker) {
       console.log('[seed] Ejecutando en Docker, omitiendo ensureDockerInfra');
-      return Promise.resolve();
+      return;
     }
+
     const composeFile = resolve(__dirname, this.dockerComposeFile);
+
+    try {
+      const runningServicesRaw = execSync(
+        `docker compose -f "${composeFile}" ps --services --filter status=running`,
+        {
+          stdio: ['ignore', 'pipe', 'pipe'],
+          encoding: 'utf8',
+        }
+      );
+
+      const runningServices = new Set(
+        runningServicesRaw
+          .split('\n')
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0)
+      );
+
+      if (
+        this.dockerServices.every((service) => runningServices.has(service))
+      ) {
+        console.log(
+          `[seed] Infra Docker ya levantada (${this.dockerServices.join(', ')}), omitiendo docker compose up`
+        );
+        return;
+      }
+
+      const requiredDockerServices = this.dockerServices.filter(
+        (service) => service !== 'backend'
+      );
+
+      if (
+        this.dockerServices.includes('backend') &&
+        requiredDockerServices.every((service) => runningServices.has(service))
+      ) {
+        try {
+          const backendResponse = await this.fetchWithTimeout(
+            `${this.apiBaseUrl}/auth/login`,
+            {
+              method: 'OPTIONS',
+            }
+          );
+
+          if (backendResponse.status >= 200) {
+            console.log(
+              `[seed] Infra Docker base levantada (${requiredDockerServices.join(', ')}) y backend local accesible, omitiendo docker compose up del backend`
+            );
+            return;
+          }
+        } catch (error) {
+          void error;
+        }
+      }
+    } catch (error) {
+      void error;
+    }
+
     const services = this.dockerServices.join(' ');
-    execSync(`docker compose -f ${composeFile} up -d ${services}`, {
+    execSync(`docker compose -f "${composeFile}" up -d ${services}`, {
       stdio: 'inherit',
     });
-    return Promise.resolve();
   }
 
   async waitForBackend(retries = 60, delayMs = 2000): Promise<void> {
+    let lastStatusCode: number | undefined;
+    let lastErrorMessage = '';
+
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
         const res = await this.fetchWithTimeout(
@@ -218,17 +284,92 @@ export class SeedContext {
             method: 'OPTIONS',
           }
         );
+        lastStatusCode = res.status;
         if (res.status >= 200) {
           return;
         }
-      } catch {}
+      } catch {
+        lastErrorMessage = 'sin respuesta HTTP';
+      }
+
+      if (
+        attempt === 1 ||
+        attempt === retries ||
+        attempt % SeedContext.BACKEND_WAIT_LOG_EVERY_ATTEMPTS === 0
+      ) {
+        const detail =
+          typeof lastStatusCode === 'number'
+            ? `status=${lastStatusCode}`
+            : `error=${lastErrorMessage || 'sin detalle'}`;
+        console.log(
+          `[seed] Esperando backend (${attempt}/${retries}) en ${this.apiBaseUrl} (${detail})`
+        );
+      }
 
       await new Promise((resolveDelay) => setTimeout(resolveDelay, delayMs));
     }
 
+    const composeFile = resolve(__dirname, this.dockerComposeFile);
+    const lastDetail =
+      typeof lastStatusCode === 'number'
+        ? `status=${lastStatusCode}`
+        : `error=${lastErrorMessage || 'sin detalle'}`;
+
     throw new Error(
-      `[seed] Backend no disponible en ${this.apiBaseUrl} tras ${retries} intentos`
+      `[seed] Backend no disponible en ${this.apiBaseUrl} tras ${retries} intentos. Ultimo resultado: ${lastDetail}. Revisa logs con: docker compose -f "${composeFile}" logs --tail=120 backend`
     );
+  }
+
+  async ensureDatabaseCompatibility(): Promise<void> {
+    await Promise.resolve();
+    const isDocker = existsSync('/.dockerenv');
+    if (isDocker || !this.dockerServices.includes('db')) {
+      return;
+    }
+
+    const composeFile = resolve(__dirname, this.dockerComposeFile);
+    const dbUser =
+      process.env.POSTGRES_USER || process.env.DB_USERNAME || 'postgres';
+    const dbName =
+      process.env.POSTGRES_DB ||
+      process.env.DB_DATABASE ||
+      process.env.DB_NAME ||
+      'smart_economat';
+
+    const countCommand =
+      `docker compose -f "${composeFile}" exec -T db ` +
+      `psql -U "${dbUser}" -d "${dbName}" -t -A ` +
+      `-c "SELECT COUNT(*)::int FROM producto_proveedor WHERE precio_unitario IS NOT NULL AND precio_unitario <= 0;"`;
+
+    const normalizeCommand =
+      `docker compose -f "${composeFile}" exec -T db ` +
+      `psql -U "${dbUser}" -d "${dbName}" -c ` +
+      `"UPDATE producto_proveedor SET precio_unitario = NULL WHERE precio_unitario IS NOT NULL AND precio_unitario <= 0;"`;
+
+    try {
+      const rawCount = execSync(countCommand, {
+        stdio: ['ignore', 'pipe', 'pipe'],
+        encoding: 'utf8',
+      })
+        .trim()
+        .replace(/\s+/g, '');
+      const invalidCount = Number.parseInt(rawCount, 10);
+
+      if (!Number.isFinite(invalidCount) || invalidCount <= 0) {
+        return;
+      }
+
+      execSync(normalizeCommand, {
+        stdio: ['ignore', 'pipe', 'pipe'],
+        encoding: 'utf8',
+      });
+
+      console.warn(
+        `[seed] Normalizados ${invalidCount} registros legacy en producto_proveedor (precio_unitario <= 0) para permitir arranque del backend.`
+      );
+    } catch (error) {
+      void error;
+    }
   }
 
   async login(): Promise<void> {
@@ -315,9 +456,9 @@ export class SeedContext {
 
     const email =
       process.env.SEED_BOOTSTRAP_ADMIN_EMAIL?.trim() ||
-      'admin@smarteconomat.com';
+      'superadmin@smarteconomat.com';
     const username =
-      process.env.SEED_BOOTSTRAP_ADMIN_USERNAME?.trim() || 'admin';
+      process.env.SEED_BOOTSTRAP_ADMIN_USERNAME?.trim() || 'superadmin';
     const password =
       process.env.SEED_BOOTSTRAP_ADMIN_PASSWORD?.trim() || 'SmartEconomat2026!';
 
@@ -492,7 +633,8 @@ export class SeedContext {
 
   async postMultipart<T>(
     path: string,
-    form: Record<string, string | Blob>
+    form: Record<string, string | Blob>,
+    tokenOverride?: string
   ): Promise<T> {
     return this.withConcurrency(async () => {
       let lastError: unknown;
@@ -515,8 +657,9 @@ export class SeedContext {
           Accept: 'application/json',
           'X-Seeding': 'true',
         };
-        if (this.token) {
-          headers.Authorization = `Bearer ${this.token}`;
+        const activeToken = tokenOverride || this.token;
+        if (activeToken) {
+          headers.Authorization = `Bearer ${activeToken}`;
         }
 
         try {
@@ -620,7 +763,7 @@ export class SeedContext {
   }
 
   close(): Promise<void> {
-    this.logRaw(`=== SEED HTTP LOG END ${new Date().toISOString()} ===\n\n`);
+    this.logRaw(`=== SEED HTTP LOG END ${this.nextLogTimestamp()} ===\n\n`);
     return Promise.resolve();
   }
 
@@ -878,7 +1021,7 @@ export class SeedContext {
     error?: string;
   }): void {
     const lines = [
-      `[${new Date().toISOString()}] ${event.method} ${event.path}`,
+      `[${this.nextLogTimestamp()}] ${event.method} ${event.path}`,
       `payload: ${this.safeStringify(event.payload)}`,
       `status: ${event.statusCode ?? 'N/A'}`,
       `response: ${this.safeStringify(event.responseBody)}`,
@@ -890,5 +1033,11 @@ export class SeedContext {
 
   private safeStringify(value: unknown): string {
     return seedSafeStringify(value);
+  }
+
+  private nextLogTimestamp(): string {
+    const timestamp = seedDateIso(0, this.logEventCursor);
+    this.logEventCursor += 1;
+    return timestamp;
   }
 }

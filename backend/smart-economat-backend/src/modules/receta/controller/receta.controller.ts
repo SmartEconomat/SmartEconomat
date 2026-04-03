@@ -65,6 +65,8 @@ export class RecetaController {
     @SortableFields([
       'nombre',
       'tiempoEstimadoMinutos',
+      'tiempo',
+      'tiempoPreparacion',
       'dificultad',
       'rendimiento',
       'costeUnitarioEstimado',

@@ -61,7 +61,7 @@ export class Recepcion extends BaseEntity {
    *
    * - COMPLETADA:      Todas las cantidades recibidas coinciden con lo pedido.
    * - PARCIAL:         Al menos un ítem recibido con cantidad inferior a la pedida.
-   *                    El pedido vinculado permanece EN_PROCESO.
+   *                    El pedido vinculado permanece PARCIAL.
    * - CON_INCIDENCIAS: Al menos un ítem con diferencia (exceso, falta, cantidad=0).
    *                    Se generan registros en `incidencia` automáticamente.
    *

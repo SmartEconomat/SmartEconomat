@@ -121,26 +121,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
   const theme = useTheme();
   const [isExpanded, setIsExpanded] = React.useState(true);
 
-  const handleScanBarcodeClick = (
-    event: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    const trigger = event.currentTarget;
-    trigger.blur();
-
-    if (typeof document !== 'undefined') {
-      const activeElement = document.activeElement;
-      if (activeElement instanceof HTMLElement) {
-        activeElement.blur();
-      }
-    }
-
-    if (typeof window !== 'undefined') {
-      window.requestAnimationFrame(() => {
-        onScanBarcode?.();
-      });
-      return;
-    }
-
+  const handleScanBarcodeClick = () => {
     onScanBarcode?.();
   };
 

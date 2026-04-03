@@ -1,6 +1,12 @@
 import { DynamicField } from '../../../components/ui/DynamicFormModal';
-import { EstadoPedido } from '../../../services/pedido.types';
-import { SelectOption } from '../../../components/ui/Select';
+import {
+  EstadoPedido,
+  EstadoPedidoUsuario,
+} from '../../../services/pedido.types';
+
+const isEditablePedidoStatus = (estado?: unknown): boolean =>
+  estado === EstadoPedido.PENDIENTE_DE_APROBACION ||
+  estado === EstadoPedidoUsuario.PENDIENTE;
 
 export const getPedidoSchema = (
   row: Record<string, unknown> | null,
@@ -111,7 +117,7 @@ export const getPedidoSchema = (
     label: 'Detalle de Productos',
     type: 'orderLines',
     position: 'bottom',
-    disabled: Boolean(row.estado && row.estado !== EstadoPedido.PENDIENTE),
+    disabled: Boolean(row.estado && !isEditablePedidoStatus(row.estado)),
   });
 
   fields.push({
@@ -119,7 +125,7 @@ export const getPedidoSchema = (
     label: 'Observaciones Generales',
     type: 'textarea',
     position: 'bottom',
-    disabled: Boolean(row.estado && row.estado !== EstadoPedido.PENDIENTE),
+    disabled: Boolean(row.estado && !isEditablePedidoStatus(row.estado)),
   });
 
   return fields;

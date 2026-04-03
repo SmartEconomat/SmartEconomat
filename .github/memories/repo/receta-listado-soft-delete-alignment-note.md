@@ -1,0 +1,3 @@
+- Problema detectado: listado de recetas podía exponer soft-deleted (según rol) mientras producción/preparación buscaba receta activa y devolvía "Receta no encontrada".
+- Regla aplicada: en findAllPaginated de receta usar withDeleted=false para alinear visibilidad con acciones operativas.
+- Cobertura: test de repositorio que verifica withDeleted=false incluso para ADMIN en listado paginado.

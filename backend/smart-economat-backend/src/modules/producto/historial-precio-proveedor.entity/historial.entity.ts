@@ -17,7 +17,7 @@ import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveed
 @Entity({ name: 'historial_precio' })
 @Index(['productoProveedorId'])
 @Index(['fecha'])
-@Check(`"precio" >= 0`)
+@Check(`"precio" > 0`)
 export class HistorialPrecio extends BaseEntity {
   @Column({ name: 'producto_proveedor_id' })
   productoProveedorId!: string;
@@ -35,7 +35,7 @@ export class HistorialPrecio extends BaseEntity {
 
   /**
    * Precio registrado en ese momento histórico.
-   * Constraint: >= 0.
+   * Constraint: > 0.
    * @type {number}
    */
   @Column({

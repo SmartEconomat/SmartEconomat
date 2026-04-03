@@ -1,150 +1,104 @@
-# SmartEconomat — Wiki del Proyecto
+# Wiki oficial de SmartEconomat
 
-Documentación técnica y funcional del proyecto SmartEconomat, reorganizada por áreas para reducir duplicidad y facilitar el mantenimiento.
+Esta wiki es la referencia técnica y funcional del proyecto. Cada tema debe tener una única fuente canónica; los documentos legacy o de compatibilidad se conservan solo para no romper rutas históricas y siempre deben redirigir a la versión vigente.
 
-**Stack principal:** NestJS 11 · React 19 · TypeORM · PostgreSQL · Docker · JWT
+## Acceso rápido
 
----
+| Tema | Documento canónico | Cuándo usarlo |
+| --- | --- | --- |
+| Inicio | [getting-started/inicio-rapido.md](getting-started/inicio-rapido.md) | Levantar el entorno local con Docker o de forma nativa |
+| Arquitectura | [architecture/index.md](architecture/index.md) | Entender backend, frontend, modelo de datos y decisiones técnicas |
+| Seguridad | [security/login-registro.md](security/login-registro.md) | Revisar auth, sesión, registro y cambio de contraseña |
+| RBAC | [security/rbac.md](security/rbac.md) | Ver el diseño técnico de roles, permisos y guards |
+| API | [reference/api.md](reference/api.md) | Consultar contrato HTTP, paginación y convenciones de integración |
+| Backend transversal | [reference/pipes-guards-interceptors-globales.md](reference/pipes-guards-interceptors-globales.md) | Consultar interceptores, helpers, pipes, decorators, filters, transformers y middlewares |
+| Frontend | [frontend/README.md](frontend/README.md) | Navegar por páginas, componentes y servicios del cliente |
+| Despliegue | [DEPLOYMENT.md](DEPLOYMENT.md) | Preparar y operar producción con Docker Compose |
+| Operación | [operations/troubleshooting/README.md](operations/troubleshooting/README.md) | Resolver incidencias frecuentes |
 
-## Documentación Backend (Diátaxis)
+## Mapa de la documentación
 
-Este bloque agrupa la documentación completa y detallada del backend NestJS + TypeORM bajo los cuatro cuadrantes Diátaxis.
-
-### Índice principal
-
-| Sección | Documento |
-|---|---|
-| Overview | [Visión general backend](overview.md) |
-| Arquitectura | [Arquitectura NestJS + TypeORM](architecture/backend-nestjs-typeorm.md) |
-| Patrones | [Patrones y trade-offs](architecture/patrones-y-tradeoffs.md) |
-| Tutorial | [Levantar proyecto desde cero](tutorials/levantar-proyecto-desde-cero.md) |
-| How-to | [Crear entidad y relaciones](how-to/crear-entidad-y-relaciones.md) |
-| How-to | [Generar y aplicar migración](how-to/generar-y-aplicar-migracion.md) |
-| How-to | [Añadir módulo/controller/service/DTOs](how-to/anadir-modulo-controller-service-dtos.md) |
-| How-to | [Endpoint con validación y errores](how-to/endpoint-con-validacion-y-errores.md) |
-| How-to | [Usar transacciones seguras](how-to/usar-transacciones-seguras.md) |
-| How-to | [Añadir logging estructurado](how-to/anadir-logging-estructurado.md) |
-| How-to | [Configurar producción con Docker](how-to/configurar-produccion-docker.md) |
-| How-to | [Implementar soft-delete](how-to/implementar-soft-delete.md) |
-| How-to | [Relaciones many-to-many y one-to-many](how-to/relaciones-many-to-many-y-one-to-many.md) |
-| Explanation | [Flujo completo de una request](explanation/flujo-completo-request.md) |
-| Explanation | [Elección de patrones y trade-offs](explanation/patrones-eleccion-y-tradeoffs.md) |
-| Explanation | [Seguridad, performance y escalabilidad](explanation/seguridad-performance-escalabilidad.md) |
-| Reference | [Módulos y responsabilidades](reference/modulos-y-responsabilidades.md) |
-| Reference | [Entidades TypeORM](reference/entidades.md) |
-| Reference | [Endpoints](reference/endpoints.md) |
-| Reference | [TypeORM, DataSource y seeders](reference/typeorm-y-datasource.md) |
-| Reference | [Variables de entorno](reference/variables-entorno.md) |
-| Reference | [Pipes, guards, interceptors y filters](reference/pipes-guards-interceptors-globales.md) |
-| Diagramas | [Arquitectura backend (Mermaid)](diagrams/arquitectura-backend.md) |
-
----
-
-## Estructura recomendada
-
-| Área | Contenido |
-|------|-----------|
+| Ruta | Contenido principal |
+| --- | --- |
 | [getting-started/](getting-started/) | Puesta en marcha, requisitos y dependencias |
-| [architecture/](architecture/) | Arquitectura backend/frontend, modelo de datos y UUID v7 |
-| [development/](development/) | Convenciones, TypeORM, normalización, seeders, testing |
-| [security/](security/) | Roles, permisos y autenticación |
-| [modules/](modules/) | Documentación específica de módulos de negocio |
-| [frontend/](frontend/) | Documentación de UI, páginas, componentes y servicios |
-| [reference/](reference/) | API, Postman y referencias operativas |
-| [operations/](operations/) | Troubleshooting y documentación operativa |
-| [audits/](audits/) | Auditorías backend y frontend |
-| [planning/](planning/) | Casos de uso, mejoras propuestas y registro de reuniones |
+| [architecture/](architecture/) | Backend, frontend, modelo de datos, UUID v7 y soft delete |
+| [development/](development/) | Convenciones, TypeORM, normalización, seeders y testing |
+| [security/](security/) | Login, registro, RBAC, roles y permisos |
+| [modules/](modules/) | Documentación funcional por módulo de negocio |
+| [frontend/](frontend/) | Arquitectura UI, páginas, componentes y servicios |
+| [reference/](reference/) | API, endpoints, variables de entorno y Postman |
+| [operations/](operations/) | Troubleshooting y operación de despliegues |
+| [audits/](audits/) | Revisiones de arquitectura, seguridad y recomendaciones |
+| [planning/](planning/) | Casos de uso, mejoras y material de planificación |
 | [assets/](assets/) | Diagramas, imágenes y recursos auxiliares |
-| [archive/](archive/) | Material legado o histórico |
+| [archive/](archive/) | Documentación histórica y legado |
 
----
+## Documentos recomendados por área
 
-## Primeros pasos
+### Arquitectura
 
-| Documento | Descripción |
-|-----------|-------------|
-| [Inicio rápido](getting-started/inicio-rapido.md) | Cómo clonar, configurar y ejecutar el proyecto |
-| [Requisitos técnicos](getting-started/requisitos-tecnicos.md) | Requisitos funcionales y no funcionales |
-| [Dependencias](getting-started/dependencias.md) | Dependencias clave y justificación de uso |
+| Documento | Alcance |
+| --- | --- |
+| [architecture/backend.md](architecture/backend.md) | Capas, módulos y flujo del backend NestJS |
+| [architecture/frontend.md](architecture/frontend.md) | Organización del cliente React y su modelo de sesión |
+| [architecture/data-model.md](architecture/data-model.md) | Entidades y relaciones del dominio |
+| [architecture/patrones-y-tradeoffs.md](architecture/patrones-y-tradeoffs.md) | Decisiones técnicas y compromisos del diseño |
+| [architecture/backend-structure.md](architecture/backend-structure.md) | Mapa de carpetas del backend |
 
-## Arquitectura
+### Desarrollo
 
-| Documento | Descripción |
-|-----------|-------------|
-| [Arquitectura backend](architecture/backend.md) | Capas, patrones y organización del servidor NestJS |
-| [Arquitectura frontend](architecture/frontend.md) | Estructura React, estado y composición |
-| [Estructura backend](architecture/backend-structure.md) | Mapa de carpetas del backend |
-| [Modelo de datos](architecture/data-model.md) | Entidades y relaciones principales |
-| [UUID v7](architecture/uuid-v7.md) | Implementación de UUID v7 en BD y aplicación |
-| [UI inventario](architecture/ui-inventario.md) | Arquitectura de la interfaz de inventario |
-| [Soft Delete](architecture/soft-delete.md) | Sistema de borrado lógico global |
+| Documento | Alcance |
+| --- | --- |
+| [development/convenciones.md](development/convenciones.md) | Convenciones de nombres, DTOs y estilo |
+| [development/typeorm.md](development/typeorm.md) | Entidades, relaciones, migraciones y repositorios |
+| [development/seeders.md](development/seeders.md) | Seeders disponibles y su propósito |
+| [development/testing/README.md](development/testing/README.md) | Infraestructura y ejecución de tests |
+| [development/backend-quick-reference.md](development/backend-quick-reference.md) | Cheatsheet operativo del backend |
 
-## Desarrollo
+### Seguridad
 
-| Documento | Descripción |
-|-----------|-------------|
-| [Convenciones](development/convenciones.md) | Estilo, nombres y prácticas de código |
-| [Trabajo en equipo](development/trabajo-en-equipo.md) | Flujo de ramas, commits y coordinación |
-| [TypeORM](development/typeorm.md) | Entidades, relaciones, migraciones y repositorios |
-| [Normalización de datos](development/normalizacion-datos.md) | Reglas y arquitectura de normalización |
-| [Normalización rápida](development/normalizacion-quick-reference.md) | Cheatsheet de normalización |
-| [Referencia rápida backend](development/backend-quick-reference.md) | Cheatsheet backend |
-| [Seeders](development/seeders.md) | Datos de desarrollo y seeders |
-| [Testing](development/testing/README.md) | Sistema de tests y guías de uso |
-| [Contratos frontend-backend E2E](development/testing/frontend-backend-contracts-e2e.md) | Suite E2E que valida payloads y filtros corregidos entre frontend y backend |
-| [Análisis de rendimiento de tests](development/testing-performance-analysis.md) | Análisis del rendimiento de la infraestructura de testing |
+| Documento | Alcance |
+| --- | --- |
+| [security/login-registro.md](security/login-registro.md) | Flujo de acceso, cookie de sesión y recuperación de contraseña |
+| [security/auth-sistema-educativo.md](security/auth-sistema-educativo.md) | Registro, slots y activación del módulo educativo |
+| [security/roles-y-permisos.md](security/roles-y-permisos.md) | Vista funcional de capacidades por rol |
+| [security/permisos-dinamicos.md](security/permisos-dinamicos.md) | Resolución de permisos en runtime y uso desde frontend |
+| [security/rbac.md](security/rbac.md) | Detalle técnico de decorators, guards y fuentes de permisos |
 
-## Seguridad
+### Referencia y operación
 
-| Documento | Descripción |
-|-----------|-------------|
-| [Roles y permisos](security/roles-y-permisos.md) | Jerarquía de accesos y matriz de capacidades |
-| [Permisos dinámicos](security/permisos-dinamicos.md) | Sistema RBAC (153 permisos), lógica y hooks |
-| [Login y Registro](security/login-registro.md) | Flujos de acceso, validación de CIAL y Slots |
-| [Auth sistema educativo](security/auth-sistema-educativo.md) | Vinculación profesor-alumno y ciclo de vida |
-| [RBAC detallado](security/rbac.md) | Matriz técnica completa de permisos |
-| [Protección CSRF](security/csrf-protection.md) | Implementación de Double Submit Cookie para seguridad de peticiones |
+| Documento | Alcance |
+| --- | --- |
+| [reference/api.md](reference/api.md) | Contrato API canónico y convenciones de integración |
+| [reference/endpoints.md](reference/endpoints.md) | Inventario de controladores y rutas principales |
+| [reference/pipes-guards-interceptors-globales.md](reference/pipes-guards-interceptors-globales.md) | Referencia de componentes transversales backend |
+| [reference/variables-entorno.md](reference/variables-entorno.md) | Variables soportadas en local y producción |
+| [operations/troubleshooting/README.md](operations/troubleshooting/README.md) | Errores frecuentes y soluciones verificadas |
+| [audits/README.md](audits/README.md) | Índice de auditorías y hallazgos |
 
-## Módulos funcionales
-
-| Documento | Descripción |
-|-----------|-------------|
-| [Alta compleja de producto](modules/producto/alta-compleja-producto-maestro-proveedores.md) | Caso de uso de creación transaccional de producto maestro con alérgenos y proveedores |
-| [Producción y raciones](modules/produccion/produccion-y-raciones.md) | Gestión de transformación de ingredientes, raciones producidas vs restantes y costes reales |
-| [Módulo de pedidos](modules/pedido/README.md) | Visión funcional del nuevo modelo `PedidoUsuario` + pedidos internos + compras consolidadas |
-| [Automatización de pedidos](modules/pedido/automatizacion-fechas-estados.md) | Estados, fechas automáticas y sincronización entre agregados y pedidos internos |
-| [Pedidos desde recetas](modules/pedido/pedidos-desde-recetas.md) | Consolidación de ingredientes de múltiples recetas en un pedido único |
-| [Edición y selección de líneas](modules/pedido/edicion-y-seleccion-lineas.md) | Selector avanzado de líneas de pedido con soporte multi-proveedor y autocompletado |
-| [Recepción](modules/recepcion/README.md) | Visión general del módulo de recepción |
-| [Recepción masiva](modules/recepcion/recepcion-masiva.md) | Flujo batch y garantías ACID |
-| [Arquitectura UI de recepción](modules/recepcion/arquitectura-ui.md) | Diseño de la interfaz del módulo |
-
-## Frontend
-
-| Documento | Descripción |
-|-----------|-------------|
-| [Índice frontend](frontend/README.md) | Punto de entrada a la documentación de UI |
-| [Arquitectura UI](frontend/arquitectura.md) | Arquitectura de la interfaz |
-| [useBreakpoints](frontend/useBreakpoints.md) | Hook responsive centralizado |
-| [Hooks de Permisos](frontend/hooks-permisos.md) | Gestión reactiva de autorizaciones |
-| [Gestión de Usuarios](frontend/gestion-usuarios.md) | Vista consolidada de administración |
-
-## Referencia y operación
-
-| Documento | Descripción |
-|-----------|-------------|
-| [API](reference/api.md) | Referencia de endpoints, DTOs y autenticación |
-| [Troubleshooting](operations/troubleshooting/README.md) | Problemas frecuentes y soluciones |
-| [Auditoría backend](audits/backend-unused-endpoints.md) | Auditoría técnica disponible del backend |
-| [Casos de uso](planning/use-cases/use-cases.md) | Casos de uso funcionales |
-| [Mejoras propuestas](planning/improvements/) | Propuestas de evolución del producto |
-
-## Recursos
+## Recursos útiles
 
 | Recurso | Ubicación |
-|---------|-----------|
-| Diagrama ER | [assets/resources/diagram-ER.drawio](assets/resources/diagram-ER.drawio) |
+| --- | --- |
 | Colección Postman | [reference/postman/SmartEconomat_Postman_Collection.json](reference/postman/SmartEconomat_Postman_Collection.json) |
-| Imágenes | [assets/images/](assets/images/) |
+| Diagrama ER | [assets/resources/diagram-ER.drawio](assets/resources/diagram-ER.drawio) |
 | Registro de reuniones | [planning/registro-reuniones.md](planning/registro-reuniones.md) |
-| Documentos legacy | [archive/legacy-docx/README.md](archive/legacy-docx/README.md) |
+| Diagramas Mermaid | [diagrams/arquitectura-backend.md](diagrams/arquitectura-backend.md) |
+| Legado documental | [archive/legacy-docx/README.md](archive/legacy-docx/README.md) |
+
+## Documentación legacy y compatibilidad
+
+Los siguientes documentos se conservan para no romper enlaces antiguos, pero no son la fuente activa de mantenimiento:
+
+- [sistema-educativo-auth.md](sistema-educativo-auth.md) redirige a [security/auth-sistema-educativo.md](security/auth-sistema-educativo.md).
+- [paquetes_y_dependencias.md](paquetes_y_dependencias.md) redirige a [getting-started/dependencias.md](getting-started/dependencias.md).
+- [arquitectura_ui_inventario.md](arquitectura_ui_inventario.md) redirige a [architecture/ui-inventario.md](architecture/ui-inventario.md).
+- [errores/](errores/) queda como alias legacy de [operations/troubleshooting/](operations/troubleshooting/).
+- [por_corregir/](por_corregir/) conserva notas de backlog históricas y no debe usarse como referencia vigente.
+
+## Criterio editorial
+
+- Cada tema debe tener un documento canónico claramente identificable.
+- Los documentos deben describir el comportamiento real del código, no el deseado ni el histórico.
+- Las guías operativas deben citar archivos, scripts y rutas existentes en el repositorio actual.
+- Cuando un documento quede obsoleto, debe convertirse en redirección corta o moverse a [archive/](archive/).

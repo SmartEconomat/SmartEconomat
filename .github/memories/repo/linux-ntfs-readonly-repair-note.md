@@ -1,0 +1,8 @@
+- Síntoma: discos NTFS (`/dev/sda1`, `/dev/sdb2`) montan en `ro` y Nautilus muestra error de permisos al pegar.
+- Diagnóstico: `journalctl -k` muestra `ntfs3: volume is dirty and "force" flag is not set!`.
+- Fix sin `sudo` interactivo: usar DBus UDisks2 con `busctl`:
+  - `busctl --system --allow-interactive-authorization=yes call ... Filesystem Unmount a{sv} 1 force b true`
+  - `busctl --system --allow-interactive-authorization=yes call ... Filesystem Repair a{sv} 0`
+  - luego `udisksctl mount -b /dev/sdXN`.
+- Verificar: `findmnt` debe mostrar `rw` y `touch` en el punto de montaje debe funcionar.
+- Variante: aunque el disco esté en `rw`, una carpeta NTFS concreta puede venir con modo `555`; corregir con `chmod u+rwx <ruta>` y validar con `touch`/`cp`.

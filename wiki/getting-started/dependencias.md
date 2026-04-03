@@ -1,10 +1,10 @@
-# 📦 Gestión de Paquetes y Dependencias
+# Gestión de paquetes y dependencias
 
 Este documento detalla las librerías principales utilizadas en **SmartEconomat**, justificando su elección según los requisitos de rendimiento, seguridad y arquitectura del proyecto.
 
 ---
 
-## 🚀 Núcleo de Rendimiento
+## Núcleo de rendimiento
 
 | Paquete | Propósito / Razón |
 | :--- | :--- |
@@ -14,7 +14,7 @@ Este documento detalla las librerías principales utilizadas en **SmartEconomat*
 
 ---
 
-## 🛠️ Base de Datos y Persistencia
+## Base de datos y persistencia
 
 | Paquete | Propósito / Razón |
 | :--- | :--- |
@@ -24,7 +24,7 @@ Este documento detalla las librerías principales utilizadas en **SmartEconomat*
 
 ---
 
-## 🔐 Seguridad y Autenticación
+## Seguridad y autenticación
 
 | Paquete | Propósito / Razón |
 | :--- | :--- |
@@ -34,7 +34,7 @@ Este documento detalla las librerías principales utilizadas en **SmartEconomat*
 
 ---
 
-## 📐 Validación y Estándares
+## Validación y estándares
 
 | Paquete | Propósito / Razón |
 | :--- | :--- |
@@ -44,7 +44,7 @@ Este documento detalla las librerías principales utilizadas en **SmartEconomat*
 
 ---
 
-## 📝 Documentación y Utilidades
+## Documentación y utilidades
 
 | Paquete | Propósito / Razón |
 | :--- | :--- |
@@ -54,7 +54,7 @@ Este documento detalla las librerías principales utilizadas en **SmartEconomat*
 
 ---
 
-## 🧪 Calidad de Código (Dev)
+## Calidad de código
 
 | Paquete | Propósito / Razón |
 | :--- | :--- |
@@ -65,7 +65,7 @@ Este documento detalla las librerías principales utilizadas en **SmartEconomat*
 
 ---
 
-## 🎓 Módulos Educativos
+## Módulos educativos
 
 | Paquete | Propósito / Razón |
 | :--- | :--- |

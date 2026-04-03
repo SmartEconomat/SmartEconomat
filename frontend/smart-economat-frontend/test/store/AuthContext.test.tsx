@@ -4,9 +4,9 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import React from 'react';
 import { AuthProvider } from '../../src/store/AuthContext';
 import { useAuth } from '../../src/store/auth.hooks';
-import { authService } from '../../src/services/authService';
+import { authService } from '../../src/services/auth.service';
 
-vi.mock('../../src/services/authService', () => ({
+vi.mock('../../src/services/auth.service', () => ({
   authService: {
     getCurrentUser: vi.fn(),
     logout: vi.fn().mockResolvedValue(undefined),

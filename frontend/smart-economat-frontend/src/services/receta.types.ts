@@ -26,6 +26,7 @@ export enum UnidadIngrediente {
 
 export interface RecetaIngrediente {
   id: string;
+  productoId?: string;
   cantidad: number;
   unidad: UnidadIngrediente;
   mermaAplicada?: number;
@@ -33,12 +34,20 @@ export interface RecetaIngrediente {
   proveedorFavorito?: {
     id: string;
     nombre: string;
-  };
+  } | null;
   producto?: {
     id: string;
     nombre: string;
     alergenos?: ProductoAlergeno[];
-  };
+  } | null;
+}
+
+export interface RecetaIngredientePayload {
+  productoId: string;
+  cantidad: number;
+  unidad: UnidadIngrediente;
+  mermaAplicada?: number;
+  proveedorFavoritoId?: string;
 }
 
 export interface Receta {
@@ -61,3 +70,7 @@ export interface Receta {
   raciones?: number;
   tamanioRacion?: number;
 }
+
+export type RecetaPayload = Omit<Partial<Receta>, 'ingredientes'> & {
+  ingredientes?: RecetaIngredientePayload[];
+};

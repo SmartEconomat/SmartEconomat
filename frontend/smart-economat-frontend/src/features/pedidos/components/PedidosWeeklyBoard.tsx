@@ -16,7 +16,10 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DataTable, { Column } from '../../../components/ui/DataTable';
-import { EstadoPedido, Pedido } from '../../../services/pedido.types';
+import {
+  isPendingPedidoUsuarioStatus,
+  PedidoListItem,
+} from '../../../services/pedido.types';
 import {
   PedidoActionHandlers,
   PedidoPermissions,
@@ -31,23 +34,22 @@ import {
   formatCurrency,
   formatPedidoListNumber,
 } from '../utils/pedidoFormatters';
-import {
-  consolidateOwnPedidos,
-  getAggregatedPedidoSourceIds,
-  isAggregatedBatchPedido,
-} from '../utils/pedidoOwnOrders';
+import { getPedidoUsuarioSelectionIds } from '../utils/pedidoOwnOrders';
 
 dayjs.extend(isoWeek);
 
 interface PedidosWeeklyBoardProps {
-  data: Pedido[];
+  data: PedidoListItem[];
   isLoading: boolean;
   permissions: PedidoPermissions;
   viewMode: PedidosViewMode;
   handlers: PedidoActionHandlers;
   totalItems: number;
   isConsolidating?: boolean;
-  onConsolidateWeek?: (pedidoIds: string[], weekLabel: string) => Promise<void>;
+  onConsolidateWeek?: (
+    pedidoUsuarioIds: string[],
+    weekLabel: string
+  ) => Promise<void>;
   enableSelection?: boolean;
   emptyMessage?: string;
   warningMessage?: string;
@@ -57,8 +59,8 @@ interface PedidosWeeklyBoardProps {
 interface WeeklyUserGroup {
   userId: string;
   userName: string;
-  pedidos: Pedido[];
-  visiblePedidos: Pedido[];
+  pedidos: PedidoListItem[];
+  visiblePedidos: PedidoListItem[];
 }
 
 interface WeeklyGroup {
@@ -79,14 +81,14 @@ const getWeekRangeLabel = (referenceDate?: string): string => {
   return `Semana ${start.format('DD/MM')} - ${end.format('DD/MM')}`;
 };
 
-const getPedidoUserName = (pedido: Pedido): string =>
+const getPedidoUserName = (pedido: PedidoListItem): string =>
   pedido.usuario?.nombre ||
   pedido.usuario?.username ||
   pedido.usuario?.email ||
   'Usuario sin identificar';
 
-const isPendingPedido = (pedido: Pedido): boolean =>
-  pedido.estado === EstadoPedido.PENDIENTE;
+const isPendingPedido = (pedido: PedidoListItem): boolean =>
+  isPendingPedidoUsuarioStatus(String(pedido.estado));
 
 const weeklyColumns = buildPedidoColumns().filter(
   (column) => column.id !== 'usuario'
@@ -254,7 +256,9 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
   warningMessage = 'Se muestran los primeros {count} pedidos. Si necesitas trabajar con más volumen en una sola vista, el siguiente paso lógico es añadir paginación o filtro de semana específico.',
   currentUserId,
 }) => {
-  const [selectedPedidoIds, setSelectedPedidoIds] = useState<string[]>([]);
+  const [selectedPedidoUsuarioIds, setSelectedPedidoUsuarioIds] = useState<
+    string[]
+  >([]);
 
   const groupedData = useMemo<WeeklyGroup[]>(() => {
     const groups = new Map<string, WeeklyGroup>();
@@ -300,7 +304,7 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
         users: group.users
           .map((user) => ({
             ...user,
-            visiblePedidos: consolidateOwnPedidos(user.pedidos),
+            visiblePedidos: user.pedidos,
           }))
           .sort((left, right) =>
             left.userName.localeCompare(right.userName, 'es')
@@ -309,20 +313,22 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
       .sort((left, right) => right.weekKey.localeCompare(left.weekKey));
   }, [data]);
 
-  const toggleUserSelection = (pedidoIds: string[]) => {
-    const allSelected = pedidoIds.every((id) => selectedPedidoIds.includes(id));
+  const toggleUserSelection = (pedidoUsuarioIds: string[]) => {
+    const allSelected = pedidoUsuarioIds.every((id) =>
+      selectedPedidoUsuarioIds.includes(id)
+    );
 
-    setSelectedPedidoIds((current) => {
+    setSelectedPedidoUsuarioIds((current) => {
       if (allSelected) {
-        return current.filter((id) => !pedidoIds.includes(id));
+        return current.filter((id) => !pedidoUsuarioIds.includes(id));
       }
 
-      return Array.from(new Set([...current, ...pedidoIds]));
+      return Array.from(new Set([...current, ...pedidoUsuarioIds]));
     });
   };
 
-  const getSelectablePedidoIds = (pedido: Pedido): string[] =>
-    isPendingPedido(pedido) ? getAggregatedPedidoSourceIds(pedido) : [];
+  const getSelectablePedidoUsuarioIds = (pedido: PedidoListItem): string[] =>
+    isPendingPedido(pedido) ? getPedidoUsuarioSelectionIds(pedido) : [];
 
   const getSelectableUserIds = (user: WeeklyUserGroup): string[] =>
     user.visiblePedidos.flatMap((pedido) => getSelectablePedidoIds(pedido));
@@ -334,25 +340,31 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
     group.users.some((user) => user.visiblePedidos.some(isPendingPedido));
 
   const buildSelectableColumns = (
-    pedidoIdsInScope: string[]
-  ): Column<Pedido>[] => [
+    pedidoUsuarioIdsInScope: string[]
+  ): Column<PedidoListItem>[] => [
     {
       id: 'selection',
       label: (
         <Checkbox
           size="small"
           checked={
-            pedidoIdsInScope.length > 0 &&
-            pedidoIdsInScope.every((id) => selectedPedidoIds.includes(id))
+            pedidoUsuarioIdsInScope.length > 0 &&
+            pedidoUsuarioIdsInScope.every((id) =>
+              selectedPedidoUsuarioIds.includes(id)
+            )
           }
           indeterminate={
-            pedidoIdsInScope.some((id) => selectedPedidoIds.includes(id)) &&
-            !pedidoIdsInScope.every((id) => selectedPedidoIds.includes(id))
+            pedidoUsuarioIdsInScope.some((id) =>
+              selectedPedidoUsuarioIds.includes(id)
+            ) &&
+            !pedidoUsuarioIdsInScope.every((id) =>
+              selectedPedidoUsuarioIds.includes(id)
+            )
           }
           onClick={(event) => event.stopPropagation()}
           onChange={(event) => {
             event.stopPropagation();
-            toggleUserSelection(pedidoIdsInScope);
+            toggleUserSelection(pedidoUsuarioIdsInScope);
           }}
           inputProps={{
             'aria-label': 'Seleccionar pedidos del usuario',
@@ -362,13 +374,13 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
       align: 'center',
       render: (pedido) =>
         (() => {
-          const pedidoIds = getSelectablePedidoIds(pedido);
-          const isSelectable = pedidoIds.length > 0;
-          const allSelected = pedidoIds.every((id) =>
-            selectedPedidoIds.includes(id)
+          const pedidoUsuarioIds = getSelectablePedidoUsuarioIds(pedido);
+          const isSelectable = pedidoUsuarioIds.length > 0;
+          const allSelected = pedidoUsuarioIds.every((id) =>
+            selectedPedidoUsuarioIds.includes(id)
           );
-          const someSelected = pedidoIds.some((id) =>
-            selectedPedidoIds.includes(id)
+          const someSelected = pedidoUsuarioIds.some((id) =>
+            selectedPedidoUsuarioIds.includes(id)
           );
 
           return (
@@ -383,7 +395,7 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
                 if (!isSelectable) {
                   return;
                 }
-                toggleUserSelection(pedidoIds);
+                toggleUserSelection(pedidoUsuarioIds);
               }}
               inputProps={{
                 'aria-label': `Seleccionar pedido ${pedido.id}`,
@@ -395,15 +407,21 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
     ...weeklyColumns,
   ];
 
-  const buildColumns = (pedidoIdsInScope: string[]): Column<Pedido>[] =>
-    enableSelection ? buildSelectableColumns(pedidoIdsInScope) : weeklyColumns;
+  const buildColumns = (
+    pedidoUsuarioIdsInScope: string[]
+  ): Column<PedidoListItem>[] =>
+    enableSelection
+      ? buildSelectableColumns(pedidoUsuarioIdsInScope)
+      : weeklyColumns;
 
-  const selectedWeekPedidoIds = (group: WeeklyGroup): string[] =>
+  const selectedWeekPedidoUsuarioIds = (group: WeeklyGroup): string[] =>
     group.users
       .flatMap((user) =>
-        user.visiblePedidos.flatMap((pedido) => getSelectablePedidoIds(pedido))
+        user.visiblePedidos.flatMap((pedido) =>
+          getSelectablePedidoUsuarioIds(pedido)
+        )
       )
-      .filter((id) => selectedPedidoIds.includes(id));
+      .filter((id) => selectedPedidoUsuarioIds.includes(id));
 
   return (
     <Stack spacing={3}>
@@ -510,20 +528,22 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
                       variant="contained"
                       disabled={
                         isConsolidating ||
-                        selectedWeekPedidoIds(group).length === 0
+                        selectedWeekPedidoUsuarioIds(group).length === 0
                       }
                       onClick={() => {
-                        const weekPedidoIds = selectedWeekPedidoIds(group);
+                        const weekPedidoUsuarioIds =
+                          selectedWeekPedidoUsuarioIds(group);
 
-                        void onConsolidateWeek(weekPedidoIds, group.label).then(
-                          () => {
-                            setSelectedPedidoIds((current) =>
-                              current.filter(
-                                (id) => !weekPedidoIds.includes(id)
-                              )
-                            );
-                          }
-                        );
+                        void onConsolidateWeek(
+                          weekPedidoUsuarioIds,
+                          group.label
+                        ).then(() => {
+                          setSelectedPedidoUsuarioIds((current) =>
+                            current.filter(
+                              (id) => !weekPedidoUsuarioIds.includes(id)
+                            )
+                          );
+                        });
                       }}
                     >
                       Consolidar compra semanal
@@ -618,15 +638,58 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
                         pedidos={user.visiblePedidos}
                         columns={buildColumns(
                           user.visiblePedidos.flatMap((pedido) =>
-                            getAggregatedPedidoSourceIds(pedido)
+                            getSelectablePedidoUsuarioIds(pedido)
                           )
                         )}
                         viewMode={viewMode}
-                        permissions={permissions}
-                        handlers={handlers}
-                        selectedPedidoIds={selectedPedidoIds}
-                        toggleUserSelection={toggleUserSelection}
-                        currentUserId={currentUserId}
+                        renderGridItem={(row) => {
+                          const pedidoUsuarioIds =
+                            getSelectablePedidoUsuarioIds(row);
+                          const isSelectable =
+                            isPendingPedido(row) && pedidoUsuarioIds.length > 0;
+                          const allSelected =
+                            isSelectable &&
+                            pedidoUsuarioIds.every((id) =>
+                              selectedPedidoUsuarioIds.includes(id)
+                            );
+                          const someSelected =
+                            isSelectable &&
+                            pedidoUsuarioIds.some((id) =>
+                              selectedPedidoUsuarioIds.includes(id)
+                            );
+
+                          return (
+                            <PedidoCard
+                              pedido={row}
+                              actions={renderPedidoActions(
+                                row,
+                                permissions,
+                                handlers
+                              )}
+                              onRowClick={handlers.onView}
+                              selectionProps={
+                                isSelectable
+                                  ? {
+                                      checked: allSelected,
+                                      indeterminate:
+                                        someSelected && !allSelected,
+                                      onChange: (e) => {
+                                        e.stopPropagation();
+                                        toggleUserSelection(pedidoUsuarioIds);
+                                      },
+                                    }
+                                  : undefined
+                              }
+                            />
+                          );
+                        }}
+                        onRowClick={handlers.onView}
+                        getRowAriaLabel={(pedido) =>
+                          `Ver detalle del pedido ${formatPedidoListNumber(pedido)}`
+                        }
+                        renderActions={(pedido) =>
+                          renderPedidoActions(pedido, permissions, handlers)
+                        }
                       />
                     </AccordionDetails>
                   </Accordion>

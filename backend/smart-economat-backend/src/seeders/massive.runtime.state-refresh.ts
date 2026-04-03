@@ -1,6 +1,6 @@
-import { faker } from '@faker-js/faker';
 import * as crypto from 'crypto';
 import AppDataSource from '../config/typeorm.config';
+import { EstadoLote } from '../modules/pedido/enums/estado-lote.enum';
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
 import { SeedContext } from './seed-context';
 import { RequestResult } from './massive.types';
@@ -11,6 +11,43 @@ import {
   removeStateValue,
   toEntityArray,
 } from './massive.helpers';
+import { deterministicToken, seedDateIso } from './deterministic.seed-data';
+
+function removePairsForUser(
+  context: SeedContext,
+  key: string,
+  userId: string
+): void {
+  const pairs = getStateArray(context, key);
+  for (const pair of pairs) {
+    if (pair.startsWith(`${userId}|`)) {
+      removeStateValue(context, key, pair);
+    }
+  }
+}
+
+function removePairsContainingId(
+  context: SeedContext,
+  key: string,
+  targetId: string
+): void {
+  const pairs = getStateArray(context, key);
+  for (const pair of pairs) {
+    const parts = pair.split('|');
+    if (parts.includes(targetId)) {
+      removeStateValue(context, key, pair);
+    }
+  }
+}
+
+function buildResetPasswordSeedUpdate(
+  resetPasswordOtp: string
+): Partial<Usuario> {
+  return {
+    resetPasswordOtp,
+    resetPasswordOtpExpires: new Date(seedDateIso(3650)),
+  };
+}
 
 export async function refreshStateAfterOperation(
   context: SeedContext,
@@ -75,6 +112,12 @@ export async function refreshStateAfterOperation(
           typeof proveedor.proveedorId === 'string'
             ? proveedor.proveedorId
             : '';
+        const productoId =
+          typeof entity.id === 'string'
+            ? entity.id
+            : typeof entity.productoId === 'string'
+              ? entity.productoId
+              : '';
 
         if (!productoProveedorId || !proveedorId) {
           continue;
@@ -90,6 +133,18 @@ export async function refreshStateAfterOperation(
           'seedCreatedProductoProveedorToProveedorPairs',
           `${productoProveedorId}|${proveedorId}`
         );
+        if (productoId) {
+          pushStateValue(
+            context,
+            'seedCreatedProductoProveedorToProductoPairs',
+            `${productoProveedorId}|${productoId}`
+          );
+          pushStateValue(
+            context,
+            'seedCreatedProductoToProveedorPairs',
+            `${productoId}|${proveedorId}`
+          );
+        }
       }
     }
   }
@@ -108,11 +163,6 @@ export async function refreshStateAfterOperation(
     result.resourceId
   ) {
     pushStateValue(context, 'seedCreatedPedidoPendienteIds', result.resourceId);
-    pushStateValue(
-      context,
-      'seedCreatedPedidoReceivableIds',
-      result.resourceId
-    );
   }
 
   if (
@@ -133,11 +183,19 @@ export async function refreshStateAfterOperation(
     result.endpoint.method === 'POST' &&
     result.resourceId
   ) {
-    pushStateValue(
-      context,
-      'seedCreatedPurchaseBatchPendienteIds',
-      result.resourceId
+    const createdBatchIsPending = toEntityArray(result.response).some(
+      (entity) =>
+        entity.id === result.resourceId &&
+        entity.estado === EstadoLote.PENDIENTE
     );
+
+    if (createdBatchIsPending) {
+      pushStateValue(
+        context,
+        'seedCreatedPurchaseBatchPendienteIds',
+        result.resourceId
+      );
+    }
   }
 
   if (
@@ -146,6 +204,17 @@ export async function refreshStateAfterOperation(
     result.resourceId
   ) {
     pushStateValue(context, 'seedCreatedProduccionLoteIds', result.resourceId);
+  }
+
+  if (
+    path.startsWith('/produccion/lote/') &&
+    path.endsWith('/consumir') &&
+    result.endpoint.method === 'PATCH' &&
+    result.ok
+  ) {
+    const body = result.response as Record<string, unknown> | undefined;
+    const remaining = Number(body?.porcionesRestantes ?? 0);
+    context.set('consumirMaxPorciones', remaining);
   }
 
   if (
@@ -203,11 +272,130 @@ export async function refreshStateAfterOperation(
     }
   }
 
+  if (
+    result.endpoint.method === 'PATCH' &&
+    /^\/admin\/users\/[^/]+\/role$/.test(path)
+  ) {
+    const userId = path.split('/')[3] || '';
+    const payload =
+      result.payload && typeof result.payload === 'object'
+        ? (result.payload as Record<string, unknown>)
+        : null;
+    const roleId = typeof payload?.roleId === 'string' ? payload.roleId : '';
+    const additionalPermissionIds = Array.isArray(
+      payload?.permisosAdicionalesIds
+    )
+      ? payload.permisosAdicionalesIds.filter(
+          (permissionId): permissionId is string =>
+            typeof permissionId === 'string' && permissionId.trim().length > 0
+        )
+      : [];
+    const excludedPermissionIds = Array.isArray(payload?.permisosExcluidosIds)
+      ? payload.permisosExcluidosIds.filter(
+          (permissionId): permissionId is string =>
+            typeof permissionId === 'string' && permissionId.trim().length > 0
+        )
+      : [];
+
+    if (userId) {
+      const roleIdByUserId =
+        context.getState<Record<string, string>>(
+          'seedAdminUserRoleIdByUserId'
+        ) || {};
+      const additionalPermissionIdsByUserId =
+        context.getState<Record<string, string[]>>(
+          'seedAdminUserAdditionalPermissionIdsByUserId'
+        ) || {};
+      const excludedPermissionIdsByUserId =
+        context.getState<Record<string, string[]>>(
+          'seedAdminUserExcludedPermissionIdsByUserId'
+        ) || {};
+
+      if (roleId) {
+        roleIdByUserId[userId] = roleId;
+        context.set('seedAdminUserRoleIdByUserId', roleIdByUserId);
+      }
+
+      additionalPermissionIdsByUserId[userId] = additionalPermissionIds;
+      excludedPermissionIdsByUserId[userId] = excludedPermissionIds;
+      context.set(
+        'seedAdminUserAdditionalPermissionIdsByUserId',
+        additionalPermissionIdsByUserId
+      );
+      context.set(
+        'seedAdminUserExcludedPermissionIdsByUserId',
+        excludedPermissionIdsByUserId
+      );
+
+      removePairsForUser(context, 'usuarioPermisoAdicionalPairs', userId);
+      removePairsForUser(context, 'usuarioPermisoExcluidoPairs', userId);
+
+      for (const permissionId of additionalPermissionIds) {
+        pushStateValue(
+          context,
+          'usuarioPermisoAdicionalPairs',
+          `${userId}|${permissionId}`
+        );
+      }
+
+      for (const permissionId of excludedPermissionIds) {
+        pushStateValue(
+          context,
+          'usuarioPermisoExcluidoPairs',
+          `${userId}|${permissionId}`
+        );
+      }
+    }
+  }
+
+  if (path.startsWith('/producto-alergenos/')) {
+    const match = path.match(/^\/producto-alergenos\/([^/]+)\/([^/]+)$/);
+    if (match) {
+      const pair = `${match[1]}|${match[2]}`;
+      if (result.endpoint.method === 'POST') {
+        pushStateValue(context, 'productoAlergenoPairs', pair);
+      }
+      if (result.endpoint.method === 'DELETE') {
+        removeStateValue(context, 'productoAlergenoPairs', pair);
+        removeStateValue(
+          context,
+          'seedCreatedDeletableProductoAlergenoPairs',
+          pair
+        );
+      }
+    }
+  }
+
   if (result.endpoint.method === 'DELETE' && /^\/usuarios\/[^/]+$/.test(path)) {
     const deletedUserId = path.split('/')[2] || '';
     if (deletedUserId) {
       removeStateValue(context, 'usuarioIds', deletedUserId);
       removeStateValue(context, 'seedMutableUserIds', deletedUserId);
+      const roleIdByUserId =
+        context.getState<Record<string, string>>(
+          'seedAdminUserRoleIdByUserId'
+        ) || {};
+      const additionalPermissionIdsByUserId =
+        context.getState<Record<string, string[]>>(
+          'seedAdminUserAdditionalPermissionIdsByUserId'
+        ) || {};
+      const excludedPermissionIdsByUserId =
+        context.getState<Record<string, string[]>>(
+          'seedAdminUserExcludedPermissionIdsByUserId'
+        ) || {};
+
+      delete roleIdByUserId[deletedUserId];
+      delete additionalPermissionIdsByUserId[deletedUserId];
+      delete excludedPermissionIdsByUserId[deletedUserId];
+      context.set('seedAdminUserRoleIdByUserId', roleIdByUserId);
+      context.set(
+        'seedAdminUserAdditionalPermissionIdsByUserId',
+        additionalPermissionIdsByUserId
+      );
+      context.set(
+        'seedAdminUserExcludedPermissionIdsByUserId',
+        excludedPermissionIdsByUserId
+      );
 
       const additionalPairs = getStateArray(
         context,
@@ -233,6 +421,22 @@ export async function refreshStateAfterOperation(
 
   if (
     result.endpoint.method === 'DELETE' &&
+    /^\/proveedor\/[^/]+$/.test(path)
+  ) {
+    const deletedProveedorId = path.split('/')[2] || '';
+    if (deletedProveedorId) {
+      removeStateValue(context, 'proveedorIds', deletedProveedorId);
+      removeStateValue(context, 'seedCreatedProveedorIds', deletedProveedorId);
+      removeStateValue(
+        context,
+        'seedCreatedDeletableProveedorIds',
+        deletedProveedorId
+      );
+    }
+  }
+
+  if (
+    result.endpoint.method === 'DELETE' &&
     /^\/inventario\/[^/]+$/.test(path)
   ) {
     const deletedInventarioId = path.split('/')[2] || '';
@@ -247,6 +451,166 @@ export async function refreshStateAfterOperation(
         context,
         'seedCreatedDeletableInventarioIds',
         deletedInventarioId
+      );
+    }
+  }
+
+  if (
+    result.endpoint.method === 'DELETE' &&
+    /^\/productos\/[^/]+$/.test(path)
+  ) {
+    const deletedProductoId = path.split('/')[2] || '';
+    if (deletedProductoId) {
+      removeStateValue(context, 'productoIds', deletedProductoId);
+      removeStateValue(context, 'seedCreatedProductoIds', deletedProductoId);
+      removeStateValue(
+        context,
+        'seedCreatedDeletableProductoIds',
+        deletedProductoId
+      );
+      removeStateValue(context, 'productoConProveedorIds', deletedProductoId);
+
+      removePairsContainingId(
+        context,
+        'productoAlergenoPairs',
+        deletedProductoId
+      );
+    }
+  }
+
+  if (
+    result.endpoint.method === 'DELETE' &&
+    /^\/profesores\/slots\/[^/]+$/.test(path)
+  ) {
+    const deletedProfesorSlotId = path.split('/')[3] || '';
+    if (deletedProfesorSlotId) {
+      removeStateValue(context, 'profesorSlotIds', deletedProfesorSlotId);
+      removeStateValue(
+        context,
+        'seedCreatedDeletableProfesorSlotIds',
+        deletedProfesorSlotId
+      );
+    }
+  }
+
+  if (result.endpoint.method === 'DELETE' && /^\/pedidos\/[^/]+$/.test(path)) {
+    const deletedPedidoId = path.split('/')[2] || '';
+    if (deletedPedidoId) {
+      removeStateValue(
+        context,
+        'seedCreatedDeletablePedidoIds',
+        deletedPedidoId
+      );
+      removeStateValue(context, 'pedidoIds', deletedPedidoId);
+      removeStateValue(context, 'pedidoListIds', deletedPedidoId);
+      removeStateValue(context, 'pedidoPendingListIds', deletedPedidoId);
+      removeStateValue(context, 'pedidoReceivableListIds', deletedPedidoId);
+      removeStateValue(
+        context,
+        'seedPreparedPedidoPendienteIds',
+        deletedPedidoId
+      );
+      removeStateValue(context, 'pedidoPendienteIds', deletedPedidoId);
+      removeStateValue(
+        context,
+        'seedCreatedPedidoPendienteIds',
+        deletedPedidoId
+      );
+      removeStateValue(context, 'pedidoReceivableIds', deletedPedidoId);
+      removeStateValue(
+        context,
+        'seedCreatedPedidoReceivableIds',
+        deletedPedidoId
+      );
+
+      removePairsContainingId(
+        context,
+        'pedidoUsuarioToPedidoPairs',
+        deletedPedidoId
+      );
+      removePairsContainingId(
+        context,
+        'pedidoProductoToPedidoPairs',
+        deletedPedidoId
+      );
+      removePairsContainingId(
+        context,
+        'pedidoProductoToPedidoPairsFresh',
+        deletedPedidoId
+      );
+    }
+  }
+
+  if (result.endpoint.method === 'DELETE' && /^\/recetas\/[^/]+$/.test(path)) {
+    const deletedRecetaId = path.split('/')[2] || '';
+    if (deletedRecetaId) {
+      removeStateValue(context, 'recetaIds', deletedRecetaId);
+      removeStateValue(context, 'seedCreatedRecetaIds', deletedRecetaId);
+    }
+  }
+
+  if (
+    result.endpoint.method === 'DELETE' &&
+    /^\/movimientos\/[^/]+$/.test(path)
+  ) {
+    const deletedMovimientoId = path.split('/')[2] || '';
+    if (deletedMovimientoId) {
+      removeStateValue(context, 'movimientoIds', deletedMovimientoId);
+    }
+  }
+
+  if (
+    result.endpoint.method === 'DELETE' &&
+    /^\/albaranes\/[^/]+$/.test(path)
+  ) {
+    const deletedAlbaranId = path.split('/')[2] || '';
+    if (deletedAlbaranId) {
+      removeStateValue(context, 'albaranIds', deletedAlbaranId);
+    }
+  }
+
+  if (
+    result.endpoint.method === 'DELETE' &&
+    /^\/incidencias\/[^/]+$/.test(path)
+  ) {
+    const deletedIncidenciaId = path.split('/')[2] || '';
+    if (deletedIncidenciaId) {
+      removeStateValue(context, 'incidenciaIds', deletedIncidenciaId);
+      removeStateValue(context, 'incidenciaPendienteIds', deletedIncidenciaId);
+    }
+  }
+
+  if (
+    result.endpoint.method === 'DELETE' &&
+    /^\/preparaciones\/[^/]+$/.test(path)
+  ) {
+    const deletedPreparacionId = path.split('/')[2] || '';
+    if (deletedPreparacionId) {
+      removeStateValue(context, 'preparacionIds', deletedPreparacionId);
+      removeStateValue(
+        context,
+        'preparacionPendienteIds',
+        deletedPreparacionId
+      );
+      removeStateValue(
+        context,
+        'seedCreatedPreparacionPendienteIds',
+        deletedPreparacionId
+      );
+      removeStateValue(
+        context,
+        'preparacionEnProcesoIds',
+        deletedPreparacionId
+      );
+      removeStateValue(
+        context,
+        'seedCreatedPreparacionEnProcesoIds',
+        deletedPreparacionId
+      );
+      removeStateValue(
+        context,
+        'seedCreatedPreparacionIds',
+        deletedPreparacionId
       );
     }
   }
@@ -318,22 +682,46 @@ export async function refreshStateAfterOperation(
     path === '/purchase-batches/consolidate' &&
     result.endpoint.method === 'POST'
   ) {
+    context.set('seedConsolidatePedidoUsuarioIds', []);
+
     const payload =
       result.payload && typeof result.payload === 'object'
         ? (result.payload as Record<string, unknown>)
         : null;
 
-    const pedidoIds = Array.isArray(payload?.pedidoIds)
-      ? (payload?.pedidoIds as unknown[])
-      : [];
     const pedidoUsuarioIds = Array.isArray(payload?.pedidoUsuarioIds)
       ? (payload?.pedidoUsuarioIds as unknown[])
       : [];
 
-    for (const id of pedidoIds) {
+    const pedidoUsuarioToPedidoPairs = getStateArray(
+      context,
+      'pedidoUsuarioToPedidoPairs'
+    )
+      .map((pair) => pair.split('|'))
+      .filter(
+        (parts) =>
+          parts.length === 2 &&
+          typeof parts[0] === 'string' &&
+          parts[0].length > 0 &&
+          typeof parts[1] === 'string' &&
+          parts[1].length > 0
+      );
+
+    const consolidatedPedidoIds = new Set<string>();
+
+    for (const id of pedidoUsuarioIds) {
       if (typeof id !== 'string' || id.trim().length === 0) {
         continue;
       }
+
+      for (const [pedidoUsuarioId, pedidoId] of pedidoUsuarioToPedidoPairs) {
+        if (pedidoUsuarioId === id) {
+          consolidatedPedidoIds.add(pedidoId);
+        }
+      }
+    }
+
+    for (const id of consolidatedPedidoIds) {
       removeStateValue(context, 'pedidoPendienteIds', id);
       removeStateValue(context, 'seedCreatedPedidoPendienteIds', id);
     }
@@ -347,18 +735,52 @@ export async function refreshStateAfterOperation(
     }
   }
 
+  if (path === '/recepciones' && result.endpoint.method === 'POST') {
+    const payload =
+      result.payload && typeof result.payload === 'object'
+        ? (result.payload as Record<string, unknown>)
+        : null;
+    const pedidosPayload = Array.isArray(payload?.pedidos)
+      ? (payload.pedidos as Array<Record<string, unknown>>)
+      : [];
+
+    for (const pedidoEntry of pedidosPayload) {
+      const pedidoId =
+        typeof pedidoEntry?.pedidoId === 'string' ? pedidoEntry.pedidoId : '';
+
+      if (!pedidoId) {
+        continue;
+      }
+
+      removeStateValue(context, 'pedidoReceivableIds', pedidoId);
+      removeStateValue(context, 'seedCreatedPedidoReceivableIds', pedidoId);
+
+      if (context.getState<string>('seedRecepcionPedidoId') === pedidoId) {
+        context.set('seedRecepcionPedidoId', '');
+      }
+    }
+  }
+
   if (path.startsWith('/pedidos/') && path.endsWith('/aceptar')) {
     const id = path.split('/')[2];
     if (id) {
+      removeStateValue(context, 'seedPreparedPedidoPendienteIds', id);
+      removeStateValue(context, 'pedidoPendingListIds', id);
       removeStateValue(context, 'pedidoPendienteIds', id);
       removeStateValue(context, 'seedCreatedPedidoPendienteIds', id);
+      pushStateValue(context, 'pedidoReceivableListIds', id);
+      pushStateValue(context, 'pedidoReceivableIds', id);
+      pushStateValue(context, 'seedCreatedPedidoReceivableIds', id);
     }
   }
   if (path.startsWith('/pedidos/') && path.endsWith('/cancelar')) {
     const id = path.split('/')[2];
     if (id) {
+      removeStateValue(context, 'seedPreparedPedidoPendienteIds', id);
+      removeStateValue(context, 'pedidoPendingListIds', id);
       removeStateValue(context, 'pedidoPendienteIds', id);
       removeStateValue(context, 'seedCreatedPedidoPendienteIds', id);
+      removeStateValue(context, 'pedidoReceivableListIds', id);
       removeStateValue(context, 'pedidoReceivableIds', id);
       removeStateValue(context, 'seedCreatedPedidoReceivableIds', id);
     }
@@ -395,7 +817,7 @@ export async function refreshStateAfterOperation(
   }
 
   if (path === '/auth/forgot-password') {
-    const rawToken = `seed_token_${faker.string.alphanumeric(10)}`;
+    const rawToken = deterministicToken('seed_token', 1, 'forgot-password');
     const hashedTokenValue = crypto
       .createHash('sha256')
       .update(rawToken)
@@ -404,10 +826,10 @@ export async function refreshStateAfterOperation(
     const actorUserId = context.getState<string>('seedResetActorUserId');
     if (actorUserId) {
       const userRepo = AppDataSource.getRepository(Usuario);
-      await userRepo.update(actorUserId, {
-        resetPasswordOtp: hashedTokenValue,
-        resetPasswordOtpExpires: new Date(Date.now() + 3600000),
-      } as any);
+      await userRepo.update(
+        actorUserId,
+        buildResetPasswordSeedUpdate(hashedTokenValue)
+      );
       context.set('seedResetPasswordToken', rawToken);
       console.log(
         `[seed-massive] Re-seeded seedResetPasswordToken to ${rawToken} after forgot-password`
@@ -436,7 +858,7 @@ export async function refreshStateAfterOperation(
   }
 
   if (path === '/auth/reset-password') {
-    const rawToken = `seed_token_${faker.string.alphanumeric(10)}`;
+    const rawToken = deterministicToken('seed_token', 2, 'reset-password');
     const hashedTokenValue = crypto
       .createHash('sha256')
       .update(rawToken)
@@ -445,10 +867,10 @@ export async function refreshStateAfterOperation(
     const actorUserId = context.getState<string>('seedResetActorUserId');
     if (actorUserId) {
       const userRepo = AppDataSource.getRepository(Usuario);
-      await userRepo.update(actorUserId, {
-        resetPasswordOtp: hashedTokenValue,
-        resetPasswordOtpExpires: new Date(Date.now() + 3600000),
-      } as any);
+      await userRepo.update(
+        actorUserId,
+        buildResetPasswordSeedUpdate(hashedTokenValue)
+      );
       context.set('seedResetPasswordToken', rawToken);
       console.log(
         `[seed-massive] Re-seeded seedResetPasswordToken to ${rawToken} after reset-password`

@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import { Pedido } from '../../../services/pedido.types';
+import { PedidoListItem } from '../../../services/pedido.types';
 import StatusChip from '../../../components/ui/StatusChip';
 import {
   formatPedidoDate,
@@ -23,9 +23,9 @@ import {
 } from '../utils/pedidoFormatters';
 
 interface PedidoCardProps {
-  pedido: Pedido;
+  pedido: PedidoListItem;
   actions?: ReactNode;
-  onRowClick?: (pedido: Pedido) => void;
+  onRowClick?: (pedido: PedidoListItem) => void;
   selectionProps?: {
     checked: boolean;
     indeterminate?: boolean;

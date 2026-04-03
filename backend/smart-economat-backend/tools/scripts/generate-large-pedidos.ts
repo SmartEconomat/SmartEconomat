@@ -106,7 +106,7 @@ async function generateLargePedidos() {
         usuario: usuarioAleatorio,
         proveedor: proveedor,
         fechaPedido: faker.date.recent({ days: 30 }),
-        estado: EstadoPedido.PENDIENTE,
+        estado: EstadoPedido.PENDIENTE_DE_APROBACION,
         costeTotal: 0,
       });
 

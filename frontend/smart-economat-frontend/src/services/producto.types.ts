@@ -65,6 +65,7 @@ export interface ProductoAlergeno {
 
 export interface ProductoProveedor {
   id: string;
+  proveedorId?: string;
   nombre?: string;
   marca?: string;
   codigoBarras?: string;
@@ -124,4 +125,6 @@ export interface ProductosQueryParams {
   tipo?: CategoriaProducto;
   categorias?: string[];
   alergenos?: string[];
+  sortBy?: string;
+  order?: 'ASC' | 'DESC' | 'asc' | 'desc';
 }

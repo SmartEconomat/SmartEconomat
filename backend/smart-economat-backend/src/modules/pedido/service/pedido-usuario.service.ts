@@ -18,16 +18,17 @@ import {
   PedidoUsuarioQueryDto,
   UpdatePedidoUsuarioDto,
 } from '../dto/pedido-usuario.dto';
+import { EstadoPedidoUsuario } from '../enums/estado-pedido-usuario.enum';
 import { CreatePedidoDto } from '../dto/create-pedido.dto';
 import { EstadoPedido } from '../enums/estado-pedido.enum';
-import { EstadoPedidoUsuario } from '../enums/estado-pedido-usuario.enum';
 import { PedidoProducto } from '../pedido-producto.entity/pedido-producto.entity';
 import { Pedido } from '../pedido.entity/pedido.entity';
 import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
 import { RecepcionProducto } from '../../recepcion/recepcion-productos.entity/recepcion-producto.entity';
 import { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
 import { IncidenciaLinea } from '../../incidencia/incidencia-linea.entity/incidencia-linea.entity';
-import { isSherlockElevatedRole } from '../../sherlock-auth/utils/access.utils';
+import { PurchaseBatchService } from './purchase-batch.service';
+import { reserveNextPedidoProveedorNumero } from '../utils/pedido-numero.util';
 
 type PendingAggregateLine = {
   productoProveedorId: string;
@@ -41,7 +42,8 @@ export class PedidoUsuarioService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly configService: ConfigService,
-    private readonly movimientoHelper: MovimientoHelper
+    private readonly movimientoHelper: MovimientoHelper,
+    private readonly purchaseBatchService: PurchaseBatchService
   ) {}
 
   async create(
@@ -108,6 +110,7 @@ export class PedidoUsuarioService {
       .leftJoinAndSelect('lineaProductoProveedor.producto', 'lineaProducto')
       .leftJoinAndSelect('lineaProductoProveedor.proveedor', 'lineaProveedor')
       .leftJoinAndSelect('pedidoUsuario.pedidos', 'pedidos')
+      .leftJoinAndSelect('pedidos.batch', 'batch')
       .leftJoinAndSelect('pedidos.proveedor', 'proveedor')
       .leftJoinAndSelect('pedidos.pedidoProductos', 'pedidoProductos')
       .leftJoinAndSelect(
@@ -193,6 +196,7 @@ export class PedidoUsuarioService {
           'lineas.productoProveedor.producto',
           'lineas.productoProveedor.proveedor',
           'pedidos',
+          'pedidos.batch',
           'pedidos.proveedor',
           'pedidos.pedidoProductos',
           'pedidos.pedidoProductos.productoProveedor',
@@ -301,10 +305,9 @@ export class PedidoUsuarioService {
     }
   }
 
-  async accept(id: string): Promise<PedidoUsuario> {
-    return this.changePendingAggregateStatus(id, (pedido) => {
-      pedido.estado = EstadoPedido.EN_PROCESO;
-    });
+  async accept(id: string, userId: string): Promise<PedidoUsuario> {
+    await this.purchaseBatchService.approvePedidoUsuario(id, userId);
+    return this.findOne(id);
   }
 
   async cancel(
@@ -399,8 +402,9 @@ export class PedidoUsuarioService {
       return;
     }
 
-    const nuevoEstado = this.calculateAggregateStatus(
-      pedidoUsuario.pedidos || []
+    const nuevoEstado = await this.calculateAggregateStatus(
+      pedidoUsuario,
+      manager
     );
     if (pedidoUsuario.estado !== nuevoEstado) {
       pedidoUsuario.estado = nuevoEstado;
@@ -580,12 +584,15 @@ export class PedidoUsuarioService {
         manager,
         createPedidoDto,
         userId,
-        EstadoPedido.PENDIENTE,
+        EstadoPedido.PENDIENTE_DE_APROBACION,
         () => this.calculateFechaEntrega()
       );
 
+      built.pedido.numeroGlobal =
+        await reserveNextPedidoProveedorNumero(manager);
       built.pedido.pedidoUsuarioId = pedidoUsuario.id;
       built.pedido.fechaPedido = pedidoUsuario.fechaPedido;
+      built.pedido.fechaEntrega = pedidoUsuario.fechaEntrega;
       built.pedido.observaciones = dto.observaciones;
       const savedPedido = await manager.save(Pedido, built.pedido);
 
@@ -621,7 +628,12 @@ export class PedidoUsuarioService {
     }
   }
 
-  private calculateAggregateStatus(pedidos: Pedido[]): EstadoPedidoUsuario {
+  private async calculateAggregateStatus(
+    pedidoUsuario: PedidoUsuario,
+    manager?: EntityManager
+  ): Promise<EstadoPedidoUsuario> {
+    const pedidos = pedidoUsuario.pedidos || [];
+
     if (pedidos.length === 0) {
       return EstadoPedidoUsuario.PENDIENTE;
     }
@@ -630,28 +642,46 @@ export class PedidoUsuarioService {
       return EstadoPedidoUsuario.CANCELADO;
     }
 
-    if (
-      pedidos.every((pedido) =>
-        [EstadoPedido.RECIBIDO, EstadoPedido.CANCELADO].includes(pedido.estado)
+    const batchIds = Array.from(
+      new Set(
+        pedidos
+          .map((pedido) => pedido.batchId)
+          .filter((batchId): batchId is string => Boolean(batchId))
       )
-    ) {
-      return EstadoPedidoUsuario.ENTREGADO;
+    );
+
+    if (batchIds.length === 0) {
+      return EstadoPedidoUsuario.PENDIENTE;
     }
 
-    if (
-      pedidos.some((pedido) =>
-        [
-          EstadoPedido.EN_PROCESO,
-          EstadoPedido.PARCIAL,
-          EstadoPedido.RECIBIDO,
-          EstadoPedido.INCIDENCIA,
-        ].includes(pedido.estado)
-      )
-    ) {
-      return EstadoPedidoUsuario.EN_PROCESO;
+    if (pedidoUsuario.estado === EstadoPedidoUsuario.CONSOLIDADO) {
+      return EstadoPedidoUsuario.CONSOLIDADO;
     }
 
-    return EstadoPedidoUsuario.PENDIENTE;
+    if (pedidoUsuario.estado === EstadoPedidoUsuario.APROBADO) {
+      return EstadoPedidoUsuario.APROBADO;
+    }
+
+    if (batchIds.length > 1) {
+      return EstadoPedidoUsuario.CONSOLIDADO;
+    }
+
+    const pedidoRepo = manager
+      ? manager.getRepository(Pedido)
+      : this.dataSource.getRepository(Pedido);
+    const pedidosDelLote = await pedidoRepo.find({
+      where: { batchId: batchIds[0] },
+      select: ['pedidoUsuarioId'],
+    });
+    const pedidoUsuarioIds = new Set(
+      pedidosDelLote
+        .map((pedido) => pedido.pedidoUsuarioId)
+        .filter((value): value is string => Boolean(value))
+    );
+
+    return pedidoUsuarioIds.size > 1
+      ? EstadoPedidoUsuario.CONSOLIDADO
+      : EstadoPedidoUsuario.APROBADO;
   }
 
   private async hasLinkedReferences(
@@ -693,7 +723,7 @@ export class PedidoUsuarioService {
     }
 
     const invalidChild = (pedidoUsuario.pedidos || []).find(
-      (pedido) => pedido.estado !== EstadoPedido.PENDIENTE
+      (pedido) => pedido.estado !== EstadoPedido.PENDIENTE_DE_APROBACION
     );
     if (invalidChild) {
       throw new BadRequestException(

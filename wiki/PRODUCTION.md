@@ -1,53 +1,54 @@
-# Guía de Despliegue en Producción - SmartEconomat
+# Escenario productivo en Linux/Azure
 
-Este documento detalla los pasos para desplegar la aplicación en la máquina virtual de Azure con SSL habilitado.
+Este documento complementa [DEPLOYMENT.md](DEPLOYMENT.md) con un escenario concreto: una VM Linux en Azure usando `nip.io` para pruebas o validaciones previas a disponer de un dominio definitivo.
 
-## 1. Preparación en la VM
+## Cuándo usar este escenario
 
-1. Asegúrate de tener **Docker** y **Docker Compose** instalados en la VM.
-2. Clona el repositorio en la VM (o transfiere los archivos modificados).
-3. Asegúrate de que los puertos **80** y **443** están abiertos en el Firewall de Azure (Ya verificado: están abiertos).
+- Validación rápida de un despliegue HTTPS sin dominio corporativo.
+- Entornos de demo, QA o preproducción temporal.
+- Migraciones donde todavía no existe DNS definitivo.
 
-## 2. Configuración de Variables de Entorno
+No es la opción recomendada para un entorno estable de producción a largo plazo.
 
-El archivo `.env.prod` ya ha sido configurado con la IP pública de la VM utilizando `nip.io`:
-- `DOMAIN=48.220.49.43.nip.io`
-- `BACKEND_API_URL=https://api.48.220.49.43.nip.io`
-- `FRONTEND_API_URL=https://48.220.49.43.nip.io`
+## Configuración mínima de `.env.prod`
 
-**IMPORTANTE**: Cambia las contraseñas de la base de datos (`DB_PASSWORD`) en `.env.prod` antes de arrancar.
+Ejemplo con IP pública `48.220.49.43`:
 
-## 3. Generación del Certificado SSL
-
-Hemos incluido un script para automatizar la obtención de certificados de Let's Encrypt:
-
-```bash
-chmod +x scripts/generate-certs.sh
-sudo ./scripts/generate-certs.sh
+```env
+DOMAIN=48.220.49.43.nip.io
+BACKEND_API_URL=https://api.48.220.49.43.nip.io
+FRONTEND_API_URL=https://48.220.49.43.nip.io
 ```
 
-*Nota: Durante la ejecución del script, ningún otro servicio (como Nginx) debe estar ocupando el puerto 80.*
+Además deben definirse las variables habituales de base de datos, JWT y ACME.
 
-## 4. Despliegue con Docker Compose
+## Pasos recomendados
 
-Una vez que los certificados estén en la carpeta `./certs`, puedes arrancar la aplicación:
+1. Preparar la VM con Docker y puertos `80` y `443` abiertos.
+2. Copiar el repositorio o el artefacto de despliegue.
+3. Crear `.env.prod` con el dominio `nip.io` correspondiente a la IP pública.
+4. Arrancar el stack con:
 
 ```bash
-docker-compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 ```
 
-### Servicios incluidos:
-- **db**: Base de datos PostgreSQL.
-- **redis**: Cache y colas.
-- **backend**: API NestJS (puerto 3000 interno).
-- **frontend**: Cliente React + Nginx (puertos 80 y 443 externos).
+5. Verificar la emisión de certificados en los logs del servicio `certbot`.
 
-## 5. Verificación
+## Limitaciones importantes del stack actual
 
-Accede a:
-- Frontend: `https://48.220.49.43.nip.io`
-- API / Docs: `https://api.48.220.49.43.nip.io/docs`
+- `api.<domain>` resuelve al mismo Nginx del frontend; no existe un virtual host independiente para API.
+- El proxy actual solo publica `/api/` hacia el backend.
+- Swagger no queda accesible en `https://api.<domain>/docs` ni en `https://api.<domain>/api/v1/docs` con la configuración actual.
 
-## Notas Adicionales
-- La configuración de Nginx en `frontend/smart-economat-frontend/nginx.conf` ya está preparada para redirigir todo el tráfico HTTP a HTTPS.
-- El backend confía en el proxy inverso para manejar el protocolo seguro.
+Si necesitas un subdominio de API completamente separado o publicar Swagger en producción, hay que ampliar `nginx.conf` o introducir un proxy dedicado.
+
+## Verificación rápida
+
+- Frontend: `https://<DOMAIN>`
+- API: `https://<DOMAIN>/api/v1/...`
+- Certificados: revisar `docker compose -f docker-compose.prod.yml logs -f certbot`
+
+## Recomendación final
+
+Usa este escenario para validación operativa. Para un entorno oficial, conviene migrar a un dominio real y revisar explícitamente cómo se quiere exponer el backend, la API y la documentación Swagger.

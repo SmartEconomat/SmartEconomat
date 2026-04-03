@@ -1,128 +1,149 @@
 import { eventBus, AUTH_EVENTS } from '../utils/eventBus';
-import { tokenManager } from '../utils/token.manager';
 
 /**
  * Servicio API genérico y reutilizable con manejo global de errores.
  */
 
 const API_BASE = '/api/v1';
-
-type InvalidIdField = {
-  path: string;
-  value: unknown;
-};
-
-const INVALID_ID_TOKENS = new Set(['null', 'undefined', 'nan']);
-
-function isMutationMethod(method: string): boolean {
-  return method === 'POST' || method === 'PUT' || method === 'PATCH';
-}
+const INVALID_ID_TOKENS = new Set(['', 'undefined', 'null', 'nan']);
 
 function isIdLikeKey(key: string): boolean {
-  const normalized = key.toLowerCase();
+  return /^(id|.*Id|.*Ids|.*_id|.*_ids)$/.test(key);
+}
+
+function isInvalidIdToken(value: string): boolean {
+  const normalizedValue = value.trim().toLowerCase();
   return (
-    normalized === 'id' ||
-    normalized.endsWith('id') ||
-    normalized.endsWith('_id')
+    INVALID_ID_TOKENS.has(normalizedValue) || normalizedValue.startsWith(':')
   );
 }
 
-function isInvalidIdValue(value: unknown): boolean {
-  if (value === null || value === undefined) return true;
-  if (typeof value !== 'string') return false;
+function parseJsonBody(body: BodyInit | null | undefined): unknown | null {
+  if (!body || typeof body !== 'string') {
+    return null;
+  }
 
-  const normalized = value.trim().toLowerCase();
-  if (!normalized) return true;
-  return INVALID_ID_TOKENS.has(normalized);
+  try {
+    return JSON.parse(body);
+  } catch {
+    return null;
+  }
 }
 
-function collectInvalidIdFields(
+function findInvalidIdInValue(
   value: unknown,
-  currentPath = 'body'
-): InvalidIdField[] {
+  location: string = 'body'
+): string | null {
   if (Array.isArray(value)) {
-    return value.flatMap((entry, index) =>
-      collectInvalidIdFields(entry, `${currentPath}[${index}]`)
-    );
+    for (let index = 0; index < value.length; index += 1) {
+      const item = value[index];
+      const nestedLocation = `${location}[${index}]`;
+      const nestedIssue = findInvalidIdInValue(item, nestedLocation);
+      if (nestedIssue) {
+        return nestedIssue;
+      }
+    }
+
+    return null;
   }
 
   if (!value || typeof value !== 'object') {
-    return [];
+    return null;
   }
 
-  return Object.entries(value as Record<string, unknown>).flatMap(
-    ([key, entryValue]) => {
-      const nextPath = `${currentPath}.${key}`;
-      const invalidCurrentField =
-        isIdLikeKey(key) && isInvalidIdValue(entryValue)
-          ? [{ path: nextPath, value: entryValue }]
-          : [];
+  for (const [key, nestedValue] of Object.entries(value)) {
+    const nextLocation = `${location}.${key}`;
 
-      return [
-        ...invalidCurrentField,
-        ...collectInvalidIdFields(entryValue, nextPath),
-      ];
+    if (isIdLikeKey(key)) {
+      if (Array.isArray(nestedValue)) {
+        for (let index = 0; index < nestedValue.length; index += 1) {
+          const item = nestedValue[index];
+          if (
+            item == null ||
+            (typeof item === 'number' && Number.isNaN(item)) ||
+            (typeof item === 'string' && isInvalidIdToken(item))
+          ) {
+            return `${nextLocation}[${index}]`;
+          }
+        }
+      } else if (
+        nestedValue == null ||
+        (typeof nestedValue === 'number' && Number.isNaN(nestedValue)) ||
+        (typeof nestedValue === 'string' && isInvalidIdToken(nestedValue))
+      ) {
+        return nextLocation;
+      }
     }
-  );
-}
 
-function extractInvalidIdFieldsFromBody(
-  body: BodyInit | null | undefined,
-  contentTypeHeader: string | null
-): InvalidIdField[] {
-  if (!body || body instanceof FormData) {
-    return [];
-  }
-
-  if (typeof body !== 'string') {
-    return [];
-  }
-
-  const normalizedContentType = (contentTypeHeader || '').toLowerCase();
-  const shouldParseAsJson =
-    normalizedContentType.includes('application/json') ||
-    body.trim().startsWith('{') ||
-    body.trim().startsWith('[');
-
-  if (!shouldParseAsJson) {
-    return [];
-  }
-
-  const parsedBody = JSON.parse(body) as unknown;
-  return collectInvalidIdFields(parsedBody);
-}
-
-function extractInvalidIdPathSegments(path: string): string[] {
-  const [rawPath] = path.split('?');
-  const segments = rawPath.split('/').filter(Boolean);
-
-  return segments.filter((segment) => {
-    const normalized = segment.trim().toLowerCase();
-    return (
-      !normalized ||
-      INVALID_ID_TOKENS.has(normalized) ||
-      normalized.startsWith(':')
-    );
-  });
-}
-
-function extractInvalidIdQueryParams(path: string): string[] {
-  const queryIndex = path.indexOf('?');
-  if (queryIndex < 0) {
-    return [];
-  }
-
-  const query = path.slice(queryIndex + 1);
-  const params = new URLSearchParams(query);
-  const invalidParams: string[] = [];
-
-  params.forEach((value, key) => {
-    if (isIdLikeKey(key) && isInvalidIdValue(value)) {
-      invalidParams.push(key);
+    const nestedIssue = findInvalidIdInValue(nestedValue, nextLocation);
+    if (nestedIssue) {
+      return nestedIssue;
     }
-  });
+  }
 
-  return invalidParams;
+  return null;
+}
+
+function findInvalidIdInPath(path: string): string | null {
+  const [pathname, rawQuery = ''] = path.split('?');
+  const pathSegments = pathname.split('/');
+
+  for (let index = 1; index < pathSegments.length; index += 1) {
+    const segment = decodeURIComponent(pathSegments[index] || '').trim();
+    const nextSegment = pathSegments[index + 1];
+
+    if (!segment) {
+      if (nextSegment) {
+        return `path segment ${index}`;
+      }
+      continue;
+    }
+
+    if (isInvalidIdToken(segment)) {
+      return `path segment ${index}`;
+    }
+  }
+
+  const queryParams = new URLSearchParams(rawQuery);
+  for (const [key, value] of Array.from(queryParams.entries())) {
+    if (!isIdLikeKey(key)) {
+      continue;
+    }
+
+    if (key.endsWith('Ids') || key.endsWith('_ids')) {
+      const ids = value.split(',');
+      for (let index = 0; index < ids.length; index += 1) {
+        const item = ids[index];
+        if (isInvalidIdToken(item)) {
+          return `query.${key}[${index}]`;
+        }
+      }
+      continue;
+    }
+
+    if (isInvalidIdToken(value)) {
+      return `query.${key}`;
+    }
+  }
+
+  return null;
+}
+
+function getRequestContractIssue(
+  path: string,
+  body: BodyInit | null | undefined
+): string | null {
+  const pathIssue = findInvalidIdInPath(path);
+  if (pathIssue) {
+    return pathIssue;
+  }
+
+  const jsonBody = parseJsonBody(body);
+  if (!jsonBody) {
+    return null;
+  }
+
+  return findInvalidIdInValue(jsonBody);
 }
 
 export function resolveStoredFileUrl(filePath?: string | null): string {
@@ -279,50 +300,21 @@ export async function baseFetch(
   path: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const normalizedPath = String(path || '').trim();
-  const [pathWithoutQuery] = normalizedPath.split('?');
-
-  if (!normalizedPath.startsWith('/')) {
+  const requestContractIssue = getRequestContractIssue(path, options.body);
+  if (requestContractIssue) {
     throw new ApiError(
-      `Ruta de API inválida: "${path}". Debe comenzar por "/".`,
+      `Solicitud inválida antes de enviar al backend: id vacío o no resuelto en ${requestContractIssue}.`,
       400,
-      { path }
-    );
-  }
-
-  if (pathWithoutQuery.length > 1 && pathWithoutQuery.endsWith('/')) {
-    throw new ApiError(
-      'Solicitud cancelada: la ruta termina con "/" y puede contener un id vacío.',
-      400,
-      { path: normalizedPath }
-    );
-  }
-
-  const invalidPathSegments = extractInvalidIdPathSegments(normalizedPath);
-  if (invalidPathSegments.length > 0) {
-    throw new ApiError(
-      'Solicitud cancelada: se detectaron ids inválidos en la ruta.',
-      400,
-      { path: normalizedPath, invalidPathSegments }
-    );
-  }
-
-  const invalidIdQueryParams = extractInvalidIdQueryParams(normalizedPath);
-  if (invalidIdQueryParams.length > 0) {
-    throw new ApiError(
-      'Solicitud cancelada: se detectaron ids inválidos en la query.',
-      400,
-      { path: normalizedPath, invalidIdQueryParams }
+      { path, issue: requestContractIssue }
     );
   }
 
   const headers = new Headers(options.headers);
-  const method = (options.method || 'GET').toUpperCase();
 
-  // Añadir token JWT si está disponible (desde memoria)
-  const token = tokenManager.getToken();
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
+  // Protección CSRF: Añadir token desde la cookie si existe
+  const csrfToken = getCookie('XSRF-TOKEN');
+  if (csrfToken) {
+    headers.set('X-XSRF-TOKEN', csrfToken);
   }
 
   // Nota: Ya no se adjunta el token desde localStorage por seguridad (XSS).
@@ -338,25 +330,7 @@ export async function baseFetch(
     headers.set('Content-Type', 'application/json');
   }
 
-  if (isMutationMethod(method)) {
-    const invalidBodyIdFields = extractInvalidIdFieldsFromBody(
-      options.body,
-      headers.get('Content-Type')
-    );
-
-    if (invalidBodyIdFields.length > 0) {
-      throw new ApiError(
-        'Solicitud cancelada: se detectaron ids nulos/vacíos en el body.',
-        400,
-        {
-          path: normalizedPath,
-          invalidBodyIdFields,
-        }
-      );
-    }
-  }
-
-  const response = await fetch(`${API_BASE}${normalizedPath}`, {
+  const response = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers,
     credentials: 'include',
