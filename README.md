@@ -108,6 +108,8 @@ Para poblar la base de datos con datos iniciales o de prueba:
   npm run db:reset
   ```
 
+> **Seguridad:** `npm run seed` solo se permite en entorno de desarrollo. Si `NODE_ENV` no es `development` o la base de datos parece de producción (por ejemplo, nombre con `prod`), la ejecución se bloquea automáticamente.
+
 ### Documentación de la API
 
 Para una guía detallada de todos los endpoints, controladores y casos de uso, consulta el archivo:

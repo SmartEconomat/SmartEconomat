@@ -75,14 +75,14 @@ deploy_key.pub
 
 **/uploads/
 
-# SSL certs & prod volumes (Except renewal hooks)
+# TLS certs, keys and prod volumes
+*.pem
+*.key
+*.crt
+*.csr
+/certs
+/ssl
+/certificates
 /certs-data/
 /certs-webroot/
 /uploads/
-/certs/*
-!/certs/renewal-hooks/
-
-.agent
-.agent*
-.agents/*
-.agent/

@@ -20,7 +20,7 @@ BACKEND_API_URL=https://api.48.220.49.43.nip.io
 FRONTEND_API_URL=https://48.220.49.43.nip.io
 ```
 
-Además deben definirse las variables habituales de base de datos, JWT y ACME.
+Además deben definirse las variables habituales de base de datos, JWT y TLS (`TLS_PROVIDER`, `TLS_SELF_SIGNED_DAYS` y, opcionalmente para DigitalOcean, `LETSENCRYPT_EMAIL` y `LETSENCRYPT_DIRECTORY_URL`).
 
 ## Pasos recomendados
 
@@ -33,7 +33,7 @@ Además deben definirse las variables habituales de base de datos, JWT y ACME.
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 ```
 
-5. Verificar la emisión de certificados en los logs del servicio `certbot`.
+5. Verificar que existen `certs/fullchain.pem` y `certs/privkey.pem` y que Nginx inicia en HTTPS.
 
 ## Limitaciones importantes del stack actual
 
@@ -47,7 +47,7 @@ Si necesitas un subdominio de API completamente separado o publicar Swagger en p
 
 - Frontend: `https://<DOMAIN>`
 - API: `https://<DOMAIN>/api/v1/...`
-- Certificados: revisar `docker compose -f docker-compose.prod.yml logs -f certbot`
+- Certificados: revisar `docker compose -f docker-compose.prod.yml logs -f frontend` y confirmar symlinks en `certs/`
 
 ## Recomendación final
 

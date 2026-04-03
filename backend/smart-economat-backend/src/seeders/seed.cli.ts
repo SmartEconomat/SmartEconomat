@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { assertDevelopmentSeedEnvironment } from './seed-environment.guard';
 
 function parsePositionalMultiplier(argv: string[]): number {
   const raw = argv[2];
@@ -18,6 +19,8 @@ function parsePositionalMultiplier(argv: string[]): number {
 }
 
 async function run(): Promise<void> {
+  assertDevelopmentSeedEnvironment('seed-cli');
+
   const multiplier = parsePositionalMultiplier(process.argv);
   process.env.SEED_MULTIPLIER = String(multiplier);
   process.env.IS_SEEDING = 'true';

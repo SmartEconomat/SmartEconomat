@@ -5,9 +5,10 @@ Esta es la guía canónica de despliegue para SmartEconomat. Describe el comport
 ## Alcance
 
 - Host recomendado: Linux con Docker Engine y Docker Compose disponibles.
-- Stack de producción: PostgreSQL, Redis, backend NestJS, frontend Nginx y Certbot.
+- Stack de producción: PostgreSQL, Redis, backend NestJS y frontend Nginx con TLS local.
 - Despliegue automatizado disponible mediante [scripts/deploy.sh](../scripts/deploy.sh).
 - Casos específicos: [PRODUCTION.md](PRODUCTION.md) para un escenario Linux/Azure con `nip.io`, y [Windows-Deployment.md](Windows-Deployment.md) para hosts Windows con contenedores Linux.
+- Gestión TLS detallada: [security/self-signed-tls.md](security/self-signed-tls.md).
 
 ## Arquitectura de runtime
 
@@ -17,15 +18,15 @@ Esta es la guía canónica de despliegue para SmartEconomat. Describe el comport
 | `redis` | Caché y soporte de runtime | Interna | AOF activado |
 | `backend` | API NestJS | Interna | No publica el puerto `3000` al host en el compose de producción |
 | `frontend` | Nginx + frontend compilado | `80`, `443` y `5173:80` | Proxy inverso solo para `/api/` |
-| `certbot` | Emisión y renovación Let's Encrypt | Interna | Usa `webroot` compartido con Nginx |
 
 ## Requisitos previos
 
 - Docker Engine operativo.
 - `docker compose` o `docker-compose` accesible en el host.
 - Puertos `80` y `443` abiertos en firewall o security group.
-- Dominio apuntando al host si se van a emitir certificados reales.
+- Dominio apuntando al host cuando se use `TLS_PROVIDER=letsencrypt`.
 - Permiso de escritura sobre `.env.prod`, `certs/`, `certs-data/`, `certs-webroot/` y `uploads/`.
+- `openssl` disponible en host (instalado automáticamente por `scripts/deploy.sh`).
 
 ## Variables mínimas para `.env.prod`
 
@@ -40,8 +41,10 @@ Esta es la guía canónica de despliegue para SmartEconomat. Describe el comport
 | `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE` | Configuración efectiva de TypeORM |
 | `JWT_SECRET` | Secreto de firma JWT |
 | `JWT_EXPIRATION` | Expiración del token |
-| `ACME_DIRECTORY_URL` | Endpoint ACME de Let's Encrypt o staging |
-| `ACME_EMAIL` | Email usado para Certbot |
+| `TLS_PROVIDER` | Proveedor TLS del script (`selfsigned` por defecto, `letsencrypt` opcional) |
+| `TLS_SELF_SIGNED_DAYS` | Días de validez del certificado autofirmado |
+| `LETSENCRYPT_EMAIL` | Email para registro en Let's Encrypt (solo si `TLS_PROVIDER=letsencrypt`) |
+| `LETSENCRYPT_DIRECTORY_URL` | Endpoint ACME de Let's Encrypt (`prod` o `staging`, solo para deploy script) |
 
 Variables opcionales frecuentes: `SENTRY_DSN`, `VITE_SENTRY_DSN`, `VITE_API_PROXY_TARGET`.
 
@@ -52,7 +55,7 @@ El script [scripts/deploy.sh](../scripts/deploy.sh) realiza estas acciones:
 1. Instala dependencias del host si faltan (`zip`, `unzip`, `curl`, `ufw`, Docker).
 2. Descomprime el paquete de aplicación y restaura `certs`, `certs-data`, `certs-webroot` y `uploads` si existían.
 3. Configura `.env.prod` con los valores exportados en el shell.
-4. Emite o renueva certificados SSL.
+4. Genera certificados TLS autofirmados (o usa Let's Encrypt si `TLS_PROVIDER=letsencrypt`).
 5. Arranca `docker-compose.prod.yml`.
 6. Ejecuta `node dist/seeders/seed.js reset` dentro del backend.
 
@@ -83,11 +86,15 @@ Si el host usa `docker-compose` clásico:
 docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 ```
 
-### 3. Certificados SSL
+### 3. Certificados TLS
 
-El servicio `certbot` intenta emitir certificados para `DOMAIN` y `api.DOMAIN` usando `webroot`. Nginx sirve `/.well-known/acme-challenge/` desde `certs-webroot/`.
+Por defecto, `scripts/deploy.sh` genera un certificado autofirmado local para `DOMAIN` y `api.DOMAIN` y crea symlinks estables en `certs/fullchain.pem` y `certs/privkey.pem`.
+
+Si el despliegue es DigitalOcean y se desea certificado público, el mismo script puede operar en modo `TLS_PROVIDER=letsencrypt`.
 
 Si ya existen certificados en `certs/live/<domain>/`, Nginx usa los symlinks estables `certs/fullchain.pem` y `certs/privkey.pem`.
+
+Para el flujo completo de generación, renovación, rutas y requisitos, consulta [security/self-signed-tls.md](security/self-signed-tls.md).
 
 ## Proxy, HTTPS y Swagger
 
@@ -141,6 +148,6 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T db \
 
 1. Comprobar que el frontend responde en `https://<DOMAIN>`.
 2. Verificar que las llamadas a `/api/` devuelven JSON y no `index.html`.
-3. Confirmar que `certbot` ha creado o renovado certificados válidos.
+3. Confirmar que existen `certs/fullchain.pem` y `certs/privkey.pem` apuntando a la línea activa.
 4. Revisar logs de `backend`, `db` y `frontend` tras el arranque inicial.
 5. Si se necesita Swagger en producción, planificar una regla adicional de proxy antes de anunciar esa URL como pública.

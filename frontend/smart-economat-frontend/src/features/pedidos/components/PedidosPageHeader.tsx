@@ -1,5 +1,7 @@
 import React from 'react';
-import PageToolbar from '../../../components/ui/PageToolbar';
+import PageToolbar, {
+  type PageToolbarProps,
+} from '../../../components/ui/PageToolbar';
 import { PedidoDraftRecord } from '../../../services/pedidoDraft.service';
 import { PedidosViewMode } from '../types/pedidos-ui.types';
 
@@ -33,7 +35,7 @@ interface PedidosPageHeaderProps {
   onViewModeChange: (mode: PedidosViewMode) => void;
   onCreateClick: () => void;
   onContinueDraftClick: () => void;
-  extraActions?: ExtraAction[];
+  extraActions?: PageToolbarProps['extraActions'];
 }
 
 const PedidosPageHeader: React.FC<PedidosPageHeaderProps> = ({
