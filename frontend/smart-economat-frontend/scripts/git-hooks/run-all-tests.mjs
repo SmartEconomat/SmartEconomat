@@ -44,10 +44,15 @@ function filterRedundantScripts(scripts) {
 function runScript(scriptName, index, total) {
   console.log(`  - [${index}/${total}] npm run ${scriptName}`);
 
+  const testEnv = {
+    ...process.env,
+    NODE_ENV: 'test',
+  };
+
   const result = spawnSync('npm', ['run', scriptName], {
     cwd: frontendRoot,
     stdio: 'inherit',
-    env: process.env,
+    env: testEnv,
     shell: true,
   });
 

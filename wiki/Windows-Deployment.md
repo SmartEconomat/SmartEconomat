@@ -41,7 +41,7 @@ El script [scripts/deploy.sh](../scripts/deploy.sh) es bash/Linux-centric. Si qu
 ## Consideraciones operativas
 
 - Los certificados y volúmenes deben permanecer en el árbol del proyecto dentro de WSL.
-- Nginx, Certbot y el backend siguen funcionando como contenedores Linux estándar.
+- Nginx y el backend siguen funcionando como contenedores Linux estándar; los certificados TLS se gestionan desde `scripts/deploy.sh`.
 - Swagger no queda publicado en producción por defecto con el `nginx.conf` actual, igual que en Linux.
 
 ## Mantenimiento básico
