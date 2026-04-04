@@ -24,7 +24,6 @@ import {
   RecepcionDraft,
   EstadoVisualProducto,
 } from '../../services/recepcion.types';
-import { EstadoPedido } from '../../services/pedido.types';
 
 interface PasoRevisionProps {
   draft: RecepcionDraft;
@@ -118,17 +117,14 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                       Exp.
                     </TableCell>
                     <TableCell align="right" sx={{ width: '8%' }}>
-                      Prev.
-                    </TableCell>
-                    <TableCell align="right" sx={{ width: '8%' }}>
                       Alb.
                     </TableCell>
                     <TableCell align="right" sx={{ width: '10%' }}>
                       Real
                     </TableCell>
                     <TableCell sx={{ width: '12%' }}>Origen peso</TableCell>
-                    <TableCell sx={{ width: '15%' }}>Estado Físico</TableCell>
-                    <TableCell sx={{ width: '18%' }}>Notas</TableCell>
+                    <TableCell sx={{ width: '16%' }}>Estado Físico</TableCell>
+                    <TableCell sx={{ width: '20%' }}>Notas</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -175,12 +171,6 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                         <TableCell align="right">{l.cantidadPedida}</TableCell>
                         <TableCell
                           align="right"
-                          sx={{ color: 'text.secondary' }}
-                        >
-                          {l.cantidadYaRecibida || 0}
-                        </TableCell>
-                        <TableCell
-                          align="right"
                           sx={{
                             color: l.cantidadAlbaran
                               ? 'inherit'
@@ -221,13 +211,7 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                           <FormControl size="small" fullWidth>
                             <Select
                               value={l.estadoVisual}
-                              MenuProps={{
-                                disableScrollLock: true,
-                                disablePortal: true,
-                              }}
-                              disabled={
-                                p.estadoPedido === EstadoPedido.RECIBIDO
-                              }
+                              MenuProps={{ disableScrollLock: true }}
                               onChange={(e) =>
                                 onUpdateLinea(
                                   pIdx,
@@ -273,9 +257,6 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                                 error={isMissingNote}
                                 size="small"
                                 fullWidth
-                                disabled={
-                                  p.estadoPedido === EstadoPedido.RECIBIDO
-                                }
                                 value={l.observaciones}
                                 onChange={(e) => {
                                   onUpdateLinea(
@@ -383,10 +364,7 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                       <FormControl size="small" fullWidth>
                         <Select
                           value={l.estadoVisual || EstadoVisualProducto.OPTIMO}
-                          MenuProps={{
-                            disableScrollLock: true,
-                            disablePortal: true,
-                          }}
+                          MenuProps={{ disableScrollLock: true }}
                           onChange={(e) =>
                             onUpdateLinea(
                               null,

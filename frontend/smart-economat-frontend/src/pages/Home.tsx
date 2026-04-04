@@ -241,9 +241,6 @@ function tipoActividadLabel(mov: DashboardMovimiento): string {
     ajuste: 'Se ha realizado un ajuste de inventario',
     pedido: 'Se ha registrado un pedido',
     entrada_compra: 'Se ha registrado una recepción de compra',
-    entrada_distribucion:
-      'Se ha registrado una entrada por distribución interna',
-    salida_distribucion: 'Se ha registrado una salida por distribución interna',
   };
   const base = labels[mov.tipo] ?? `Se ha registrado actividad (${mov.tipo})`;
   if (mov.productoNombre) return `${base}: ${mov.productoNombre}`;
@@ -260,14 +257,6 @@ const TIPO_ACTIVIDAD_CONFIG: Record<
   ajuste: { color: 'warning', icon: <SwapHorizIcon fontSize="small" /> },
   pedido: { color: 'info', icon: <ShoppingCartIcon fontSize="small" /> },
   entrada_compra: { color: 'secondary', icon: <LoginIcon fontSize="small" /> },
-  entrada_distribucion: {
-    color: 'success',
-    icon: <InventoryIcon fontSize="small" />,
-  },
-  salida_distribucion: {
-    color: 'warning',
-    icon: <SwapHorizIcon fontSize="small" />,
-  },
 };
 
 function getActividadIcon(tipo: string): React.ReactNode {

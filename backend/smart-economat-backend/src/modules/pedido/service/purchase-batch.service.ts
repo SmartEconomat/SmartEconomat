@@ -555,6 +555,98 @@ export class PurchaseBatchService {
     }
   }
 
+  async approveBatchOrder(id: string): Promise<PurchaseBatch> {
+    return this.acceptBatchOrder(id);
+  }
+
+  async restoreBatchOrder(id: string): Promise<PurchaseBatch> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const batch = await queryRunner.manager.findOne(PurchaseBatch, {
+        where: { id },
+        relations: [
+          'pedidos',
+          'pedidos.recepcionesPedido',
+          'pedidos.pedidoUsuario',
+        ],
+      });
+
+      if (!batch) {
+        throw new NotFoundException(`Pedido #${id} no encontrado`);
+      }
+
+      if (!batch.pedidos.length) {
+        throw new BadRequestException(
+          'El pedido no contiene pedidos internos para restaurar.'
+        );
+      }
+
+      const invalidPedido = batch.pedidos.find(
+        (pedido) => pedido.estado !== EstadoPedido.CANCELADO
+      );
+
+      if (invalidPedido) {
+        throw new BadRequestException(
+          'Solo se pueden restaurar lotes cuyos pedidos internos estén cancelados.'
+        );
+      }
+
+      const pedidoConRecepciones = batch.pedidos.find(
+        (pedido) =>
+          pedido.recepcionesPedido && pedido.recepcionesPedido.length > 0
+      );
+
+      if (pedidoConRecepciones) {
+        throw new BadRequestException(
+          'No se puede restaurar un pedido que ya tenga recepciones registradas.'
+        );
+      }
+
+      for (const pedido of batch.pedidos) {
+        pedido.estado = EstadoPedido.PENDIENTE_DE_APROBACION;
+        pedido.motivoCancelacion = undefined;
+        await queryRunner.manager.save(Pedido, pedido);
+      }
+
+      const touchedPedidoUsuarios = new Set(
+        batch.pedidos
+          .map((pedido) => pedido.pedidoUsuario)
+          .filter((pedidoUsuario): pedidoUsuario is PedidoUsuario =>
+            Boolean(pedidoUsuario)
+          )
+      );
+
+      for (const pedidoUsuario of touchedPedidoUsuarios) {
+        pedidoUsuario.estado = EstadoPedidoUsuario.PENDIENTE;
+        await queryRunner.manager.save(PedidoUsuario, pedidoUsuario);
+      }
+
+      await this.syncBatchStatus(batch.id, queryRunner.manager);
+      await queryRunner.commitTransaction();
+
+      return this.findOne(batch.id);
+    } catch (error: any) {
+      await queryRunner.rollbackTransaction();
+
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException ||
+        error instanceof ConflictException
+      ) {
+        throw error;
+      }
+
+      throw new ConflictException(
+        `Error al restaurar el pedido: ${error.message}`
+      );
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
   async cancelBatchOrder(
     id: string,
     dto: CancelPurchaseBatchDto

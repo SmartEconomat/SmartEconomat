@@ -1,20 +1,40 @@
-import { Distribucion } from './distribucion.types';
-
 export enum EstadoPedido {
-  PENDIENTE = 'pendiente',
-  EN_PROCESO = 'en_proceso',
-  ENTREGADO = 'entregado',
-  RECIBIDO = 'recibido',
+  PENDIENTE_DE_APROBACION = 'pendiente_de_aprobacion',
+  POR_RECEPCIONAR = 'por_recepcionar',
+  RECEPCIONADO = 'recepcionado',
   INCIDENCIA = 'incidencia',
   CANCELADO = 'cancelado',
   PARCIAL = 'parcial',
 }
 
+export enum EstadoPedidoUsuario {
+  BORRADOR = 'borrador',
+  PENDIENTE = 'pendiente',
+  APROBADO = 'aprobado',
+  CANCELADO = 'cancelado',
+  CONSOLIDADO = 'consolidado',
+}
+
+export const isPendingPedidoUsuarioStatus = (estado?: string): boolean =>
+  estado === EstadoPedidoUsuario.PENDIENTE;
+
+export const isActivePedidoUsuarioStatus = (estado?: string): boolean =>
+  estado === EstadoPedidoUsuario.APROBADO ||
+  estado === EstadoPedidoUsuario.CONSOLIDADO;
+
+export const isFinishedPedidoUsuarioStatus = (estado?: string): boolean =>
+  estado === EstadoPedidoUsuario.CANCELADO;
+
 export enum EstadoLote {
   PENDIENTE = 'pendiente',
   PARCIAL = 'parcial',
   COMPLETADO = 'completado',
+  INCIDENCIA = 'incidencia',
+  CANCELADO = 'cancelado',
 }
+
+export type PedidoEntityType = 'pedido' | 'pedido_usuario' | 'purchase_batch';
+export type PedidoDetailEntityType = Exclude<PedidoEntityType, 'pedido'>;
 
 export interface UsuarioBasico {
   id: string;
@@ -25,8 +45,7 @@ export interface UsuarioBasico {
 
 export interface PedidoProducto {
   id: string;
-  id_producto_proveedor: string;
-  productoProveedorId?: string;
+  productoProveedorId: string;
   hasLinkedMovements?: boolean;
   cantidad: number;
   precioUnitario: number;
@@ -49,34 +68,38 @@ export interface PedidoProducto {
   };
 }
 
-export interface Pedido {
+export interface PedidoVisibleRef {
   id: string;
-  pedidoUsuarioId?: string;
-  numeroGlobal?: string;
-  aggregateType?: 'pedido_usuario';
+  numeroGlobal: string;
+  estado: EstadoPedidoUsuario;
+  fechaPedido?: string;
+  usuario?: UsuarioBasico;
+}
+
+interface PedidoBase<TEstado extends string> {
+  id: string;
   fechaPedido: string;
   fechaEntrega?: string;
   costeTotal: number;
-  estado: EstadoPedido;
-  isAprobado?: boolean;
+  estado: TEstado;
   observaciones?: string;
   motivoCancelacion?: string;
   motivoIncidencia?: string;
   usuario?: UsuarioBasico;
+}
+
+export interface Pedido extends PedidoBase<EstadoPedido> {
+  entityType?: 'pedido';
+  pedidoUsuarioId?: string;
+  pedidoUsuario?: PedidoVisibleRef;
+  numeroGlobal?: string;
   proveedor?: {
     id: string;
     nombre: string;
   };
   pedidoProductos?: PedidoProducto[];
-  pedidos?: Pedido[];
-  distribuciones?: Distribucion[];
   batchId?: string;
   batch?: PurchaseBatch;
-  ubicacionEntregaSugeridaId?: string;
-  ubicacionEntregaSugerida?: {
-    id: string;
-    nombre: string;
-  };
 }
 
 export interface PedidoUsuarioLinea {
@@ -88,23 +111,41 @@ export interface PedidoUsuarioLinea {
   productoProveedor?: PedidoProducto['productoProveedor'];
 }
 
-export interface PedidoUsuario extends Pedido {
+export interface PedidoUsuario extends PedidoBase<EstadoPedidoUsuario> {
+  entityType?: 'pedido_usuario';
   numeroGlobal: string;
   lineas?: PedidoUsuarioLinea[];
   pedidos?: Pedido[];
 }
 
-export interface PurchaseBatch {
-  id: string;
-  createdAt: string;
-  estado: EstadoLote;
-  isAprobado: boolean;
-  observaciones?: string;
-  usuario?: UsuarioBasico;
-  pedidos?: Pedido[];
-  ubicacionEntregaSugeridaId?: string;
-  ubicacionEntregaSugerida?: {
+export interface PedidoUsuarioRow extends PedidoUsuario {
+  entityType: 'pedido_usuario';
+  pedidoUsuarioId: string;
+  proveedor: {
     id: string;
     nombre: string;
   };
+  pedidoProductos: PedidoProducto[];
 }
+
+export interface PurchaseBatch {
+  entityType?: 'purchase_batch';
+  id: string;
+  createdAt: string;
+  estado: EstadoLote;
+  observaciones?: string;
+  usuario?: UsuarioBasico;
+  pedidos?: Pedido[];
+}
+
+export type PedidoListItem = Pedido | PedidoUsuarioRow;
+
+export type PedidoBatchDetail =
+  | {
+      entityType: 'pedido_usuario';
+      data: PedidoUsuario;
+    }
+  | {
+      entityType: 'purchase_batch';
+      data: PurchaseBatch;
+    };

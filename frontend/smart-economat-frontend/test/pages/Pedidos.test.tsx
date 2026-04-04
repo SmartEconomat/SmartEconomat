@@ -30,7 +30,7 @@ vi.mock('../../src/services/pedido.service', () => ({
   fetchPedidos: vi.fn(),
   fetchPedidoUsuarios: vi.fn(),
   fetchPurchaseBatches: vi.fn(),
-  mapPedidoUsuarioToPedidoRow: vi.fn((pedidoUsuario) => pedidoUsuario),
+  mapPedidoUsuarioToVisibleRow: vi.fn((pedidoUsuario) => pedidoUsuario),
   aceptarPedidoUsuario: vi.fn(),
   aceptarPedido: vi.fn(),
   cancelPedidoUsuario: vi.fn(),
@@ -57,6 +57,126 @@ vi.mock('../../src/store/toast.hooks', () => ({
     success: vi.fn(),
     error: vi.fn(),
   }),
+}));
+vi.mock('../../src/components/ui/ConfirmDialog', () => ({
+  default: ({
+    isOpen,
+    title,
+    onConfirm,
+    onCancel,
+  }: {
+    isOpen?: boolean;
+    title?: string;
+    onConfirm?: () => void;
+    onCancel?: () => void;
+  }) =>
+    isOpen ? (
+      <div>
+        <h2>{title}</h2>
+        <button onClick={() => onConfirm?.()}>confirm</button>
+        <button onClick={() => onCancel?.()}>cancel</button>
+      </div>
+    ) : null,
+}));
+vi.mock('../../src/components/ui/DynamicFormModal', () => ({
+  default: ({ isOpen }: { isOpen?: boolean }) =>
+    isOpen ? <div>dynamic-form-open</div> : null,
+}));
+vi.mock('../../src/features/pedidos/components/PedidosPageHeader', () => ({
+  default: ({
+    onCreateClick,
+    onContinueDraftClick,
+    draft,
+  }: {
+    onCreateClick: () => void;
+    onContinueDraftClick: () => void;
+    draft: PedidoDraftRecord | null;
+  }) => (
+    <div>
+      <button onClick={onCreateClick}>Nuevo Pedido</button>
+      {draft ? (
+        <button onClick={onContinueDraftClick}>Continuar Pedido</button>
+      ) : null}
+    </div>
+  ),
+}));
+vi.mock('../../src/features/pedidos/components/PedidosTabs', () => ({
+  default: () => <div>pedidos-tabs</div>,
+}));
+vi.mock('../../src/features/pedidos/components/PedidosTable', () => ({
+  default: () => <div>pedidos-table</div>,
+}));
+vi.mock('../../src/features/pedidos/components/PedidosWeeklyBoard', () => ({
+  default: () => <div>pedidos-weekly-board</div>,
+}));
+vi.mock('../../src/features/pedidos/components/PurchasesWeeklyBoard', () => ({
+  default: () => <div>purchases-weekly-board</div>,
+}));
+vi.mock(
+  '../../src/features/pedidos/components/PurchaseBatchDetailModal',
+  () => ({
+    default: () => <div>purchase-batch-detail-modal</div>,
+  })
+);
+vi.mock('../../src/features/pedidos/components/PedidoDetailDrawer', () => ({
+  default: () => <div>pedido-detail-drawer</div>,
+}));
+vi.mock(
+  '../../src/features/pedidos/components/PedidoDeliveryDateDialog',
+  () => ({
+    default: () => <div>pedido-delivery-date-dialog</div>,
+  })
+);
+vi.mock('../../src/components/ui/ReporteSelectorModal', () => ({
+  default: () => <div>reporte-selector-modal</div>,
+}));
+vi.mock('../../src/features/pedidos/components/PedidoDraftBanner', () => ({
+  default: () => <div>pedido-draft-banner</div>,
+}));
+vi.mock('../../src/features/pedidos/hooks/usePedidosFilters', () => ({
+  usePedidosFilters: vi.fn(() => ({
+    searchTerm: '',
+    setSearchTerm: vi.fn(),
+    viewMode: 'table',
+    setViewMode: vi.fn(),
+    tabIndex: 0,
+    setTabIndex: vi.fn(),
+    misPedidosStatus: 'pendientes',
+    setMisPedidosStatus: vi.fn(),
+    isWeeklyTab: false,
+    isBatchTab: false,
+    isOwnOrdersTab: true,
+  })),
+}));
+vi.mock('../../src/features/pedidos/hooks/usePedidosData', () => ({
+  usePedidosData: vi.fn(() => ({
+    data: [],
+    batches: [],
+    isLoading: false,
+    error: null,
+    totalPages: 1,
+    totalItems: 0,
+    reload: vi.fn(),
+    setData: vi.fn(),
+  })),
+}));
+vi.mock('../../src/features/pedidos/hooks/usePedidoActions', () => ({
+  usePedidoActions: vi.fn(() => ({
+    savePedido: vi.fn(),
+    deletePedidoById: vi.fn(),
+    approvePedidoById: vi.fn(),
+    approvePurchaseBatchById: vi.fn(),
+    cancelPedidoById: vi.fn(),
+    cancelPurchaseBatchById: vi.fn(),
+    fetchBatchDetail: vi.fn(),
+    consolidatePedidosByIds: vi.fn(),
+    startRecepcionFromBatch: vi.fn(),
+    isSaving: false,
+    isDeleting: false,
+    isAceptando: false,
+    isCancelando: false,
+    isConsolidatingBatch: false,
+  })),
 }));
 
 describe('Pedidos Page - Recovery Modal Bug', () => {

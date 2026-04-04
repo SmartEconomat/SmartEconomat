@@ -37,6 +37,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { PedidoDraftModule } from './modules/pedido-draft/pedido-draft.module';
 import { RecepcionDraftModule } from './modules/recepcion-draft/recepcion-draft.module';
 import { OpenfoodfactsModule } from './modules/openfoodfacts/openfoodfacts.module';
+import { DistribucionModule } from './modules/distribucion/distribucion.module';
 
 @Module({
   imports: [
@@ -99,6 +100,7 @@ import { OpenfoodfactsModule } from './modules/openfoodfacts/openfoodfacts.modul
     PedidoDraftModule,
     RecepcionDraftModule,
     OpenfoodfactsModule,
+    DistribucionModule,
   ],
   controllers: [AppController],
   providers: [

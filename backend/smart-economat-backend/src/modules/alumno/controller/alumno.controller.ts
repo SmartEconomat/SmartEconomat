@@ -10,12 +10,12 @@ import {
 import { Public } from '../../../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
-import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { AlumnoService } from '../service/alumno.service';
 import { RegisterAlumnoDto } from '../dto/register-alumno.dto';
 import { ChangeProfesorDto } from '../dto/change-profesor.dto';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { rolUsuario } from '../../usuario/enums/usuario.enums';
 @Controller('alumnos')
 export class AlumnoController {
   constructor(private readonly alumnoService: AlumnoService) {}
@@ -57,9 +57,10 @@ export class AlumnoController {
   @UseGuards(JwtAuthGuard, PermisosGuard)
   @RequirePermissions('alumno:cambiar_profesor')
   async changeProfesor(
-    @GetUser() user: Usuario,
+    @GetUser('id') userId: string,
+    @GetUser('rol') userRole: rolUsuario,
     @Body() dto: ChangeProfesorDto
   ) {
-    return this.alumnoService.changeProfesor(user.id, user.id, user.rol, dto);
+    return this.alumnoService.changeProfesor(userId, userId, userRole, dto);
   }
 }

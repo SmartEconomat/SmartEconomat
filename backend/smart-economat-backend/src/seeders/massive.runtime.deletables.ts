@@ -22,6 +22,14 @@ import {
 import { getStateArray, pushStateValue } from './massive.state';
 import { seedDateIso } from './deterministic.seed-data';
 
+function isConflictStatusError(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null || !('status' in error)) {
+    return false;
+  }
+
+  return (error as { status?: unknown }).status === 409;
+}
+
 async function ensureRepositoryReady(): Promise<void> {
   if (!AppDataSource.isInitialized) {
     await AppDataSource.initialize();
@@ -109,7 +117,7 @@ export async function ensureDeletableProfesorSlotResource(
     source: 'precreate-profesor-slot-delete',
   };
 
-  const createBody = buildBody(
+  const createBodyBase = buildBody(
     context,
     createEndpoint,
     '/profesores/slots',
@@ -117,59 +125,81 @@ export async function ensureDeletableProfesorSlotResource(
     coverage
   );
 
-  createBody.aula = `Aula Delete Profesor ${String(iteration + 1).padStart(4, '0')}`;
-  createBody.numeroClase = 95000 + (iteration % 1000);
-  createBody.capacidad = 1;
-
   const profesorToken = chooseTokenForPath(context, '/profesores/slots');
 
-  try {
-    const response = await context.requestJson<unknown>('/profesores/slots', {
-      method: 'POST',
-      body: createBody,
-      auth: true,
-      tokenOverride: profesorToken,
-    });
+  const uniqueSeed = Date.now() % 100000;
+  const maxAttempts = 8;
 
-    collectStateFromResponse(context, '/profesores/slots', response);
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const variant = uniqueSeed + iteration + attempt;
+    const createBody: Record<string, unknown> = {
+      ...createBodyBase,
+      aula: `Aula Delete Profesor ${String(variant).padStart(6, '0')}`,
+      numeroClase: 95000 + (variant % 4000),
+      capacidad: 1,
+    };
 
-    const slotId = extractResourceId(response);
-    if (!slotId) {
-      throw new Error(
-        '[seed-massive] No se recibió ID al precrear slot de profesor eliminable'
-      );
-    }
+    try {
+      const response = await context.requestJson<unknown>('/profesores/slots', {
+        method: 'POST',
+        body: createBody,
+        auth: true,
+        tokenOverride: profesorToken,
+      });
 
-    pushStateValue(context, 'seedCreatedDeletableProfesorSlotIds', slotId);
-    pushStateValue(context, 'profesorSlotIds', slotId);
+      collectStateFromResponse(context, '/profesores/slots', response);
 
-    const tokenIndexMapJson =
-      context.getState<string>('seedProfesorIndexByToken') || '{}';
-    const tokenIndexMap: Record<string, number> = JSON.parse(tokenIndexMapJson);
-    const profesorIndex = tokenIndexMap[profesorToken];
-
-    if (profesorIndex !== undefined) {
-      const slotOwnerMapJson =
-        context.getState<string>('seedSlotToProfesorIndex') || '{}';
-      const slotOwnerMap: Record<string, number> = JSON.parse(slotOwnerMapJson);
-      slotOwnerMap[slotId] = profesorIndex;
-      context.set('seedSlotToProfesorIndex', JSON.stringify(slotOwnerMap));
-
-      const ownedIdsJson =
-        context.getState<string>(`seedProfesorOwnedSlotIds:${profesorIndex}`) ||
-        '[]';
-      const ownedIds: string[] = JSON.parse(ownedIdsJson);
-      if (!ownedIds.includes(slotId)) {
-        ownedIds.push(slotId);
-        context.set(
-          `seedProfesorOwnedSlotIds:${profesorIndex}`,
-          JSON.stringify(ownedIds)
+      const slotId = extractResourceId(response);
+      if (!slotId) {
+        throw new Error(
+          '[seed-massive] No se recibió ID al precrear slot de profesor eliminable'
         );
       }
+
+      pushStateValue(context, 'seedCreatedDeletableProfesorSlotIds', slotId);
+      pushStateValue(context, 'profesorSlotIds', slotId);
+
+      const tokenIndexMapJson =
+        context.getState<string>('seedProfesorIndexByToken') || '{}';
+      const tokenIndexMap: Record<string, number> =
+        JSON.parse(tokenIndexMapJson);
+      const profesorIndex = tokenIndexMap[profesorToken];
+
+      if (profesorIndex !== undefined) {
+        const slotOwnerMapJson =
+          context.getState<string>('seedSlotToProfesorIndex') || '{}';
+        const slotOwnerMap: Record<string, number> =
+          JSON.parse(slotOwnerMapJson);
+        slotOwnerMap[slotId] = profesorIndex;
+        context.set('seedSlotToProfesorIndex', JSON.stringify(slotOwnerMap));
+
+        const ownedIdsJson =
+          context.getState<string>(
+            `seedProfesorOwnedSlotIds:${profesorIndex}`
+          ) || '[]';
+        const ownedIds: string[] = JSON.parse(ownedIdsJson);
+        if (!ownedIds.includes(slotId)) {
+          ownedIds.push(slotId);
+          context.set(
+            `seedProfesorOwnedSlotIds:${profesorIndex}`,
+            JSON.stringify(ownedIds)
+          );
+        }
+      }
+
+      return;
+    } catch (error) {
+      if (isConflictStatusError(error) && attempt < maxAttempts - 1) {
+        continue;
+      }
+
+      throw error;
     }
-  } finally {
-    void 0;
   }
+
+  throw new Error(
+    '[seed-massive] No se pudo precrear slot de profesor eliminable tras reintentos por conflicto'
+  );
 }
 
 export async function ensureDeletableProveedorResource(
@@ -191,7 +221,7 @@ export async function ensureDeletableProveedorResource(
     source: 'precreate-proveedor-delete',
   };
 
-  const createBody = buildBody(
+  const createBodyBase = buildBody(
     context,
     createEndpoint,
     '/proveedor',
@@ -199,35 +229,60 @@ export async function ensureDeletableProveedorResource(
     coverage
   );
 
-  const proveedorDeleteSuffix = String(iteration + 1).padStart(4, '0');
-  createBody.nombre = `Proveedor eliminable seed ${proveedorDeleteSuffix}`;
-  createBody.contacto = 'Responsable Eliminaciones Seed';
-  createBody.telefono = `+3494${String(1000000 + iteration).slice(-7)}`;
-  createBody.email = `proveedor.eliminable.${proveedorDeleteSuffix}@smarteconomat.local`;
-  createBody.direccion = `Plataforma logistica seed ${proveedorDeleteSuffix}, Valencia`;
-  createBody.nif = `DEL${String(700000 + iteration).padStart(6, '0')}`;
-
   const previousToken = context.getAccessToken();
   context.setAccessToken(chooseTokenForPath(context, '/proveedor'));
+  const uniqueSeed = Date.now() % 100000;
+  const maxAttempts = 8;
 
   try {
-    const response = await context.requestJson<unknown>('/proveedor', {
-      method: 'POST',
-      body: createBody,
-      auth: true,
-    });
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const variant = uniqueSeed + iteration + attempt;
+      const proveedorDeleteSuffix = String(variant).padStart(6, '0');
+      const createBody: Record<string, unknown> = {
+        ...createBodyBase,
+        nombre: `Proveedor eliminable seed ${proveedorDeleteSuffix}`,
+        contacto: 'Responsable Eliminaciones Seed',
+        telefono: `+3494${String(1000000 + (variant % 9000000)).slice(-7)}`,
+        email: `proveedor.eliminable.${proveedorDeleteSuffix}@smarteconomat.local`,
+        direccion: `Plataforma logistica seed ${proveedorDeleteSuffix}, Valencia`,
+        nif: `DEL${String(700000 + (variant % 900000)).padStart(6, '0')}`,
+      };
 
-    collectStateFromResponse(context, '/proveedor', response);
+      try {
+        const response = await context.requestJson<unknown>('/proveedor', {
+          method: 'POST',
+          body: createBody,
+          auth: true,
+        });
 
-    const proveedorId = extractResourceId(response);
-    if (!proveedorId) {
-      throw new Error(
-        '[seed-massive] No se recibió ID al precrear proveedor eliminable'
-      );
+        collectStateFromResponse(context, '/proveedor', response);
+
+        const proveedorId = extractResourceId(response);
+        if (!proveedorId) {
+          throw new Error(
+            '[seed-massive] No se recibió ID al precrear proveedor eliminable'
+          );
+        }
+
+        pushStateValue(
+          context,
+          'seedCreatedDeletableProveedorIds',
+          proveedorId
+        );
+        pushStateValue(context, 'proveedorIds', proveedorId);
+        return;
+      } catch (error) {
+        if (isConflictStatusError(error) && attempt < maxAttempts - 1) {
+          continue;
+        }
+
+        throw error;
+      }
     }
 
-    pushStateValue(context, 'seedCreatedDeletableProveedorIds', proveedorId);
-    pushStateValue(context, 'proveedorIds', proveedorId);
+    throw new Error(
+      '[seed-massive] No se pudo precrear proveedor eliminable tras reintentos por conflicto'
+    );
   } finally {
     context.setAccessToken(previousToken);
   }

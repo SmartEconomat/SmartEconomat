@@ -50,6 +50,11 @@ export const mapPurchaseBatchToRecepcionDraft = (
   batch: PurchaseBatch
 ): RecepcionDraft => {
   const now = new Date().toISOString();
+  const receivableStatuses = new Set<string>([
+    EstadoPedido.POR_RECEPCIONAR,
+    EstadoPedido.PARCIAL,
+    EstadoPedido.INCIDENCIA,
+  ]);
 
   return {
     version: 2,
@@ -60,10 +65,10 @@ export const mapPurchaseBatchToRecepcionDraft = (
     observaciones: batch.observaciones || '',
     nAlbaran: '',
     pedidosSeleccionados: (batch.pedidos || [])
-      .filter((pedido) => pedido.estado !== EstadoPedido.CANCELADO)
+      .filter((pedido) => receivableStatuses.has(String(pedido.estado)))
       .map((pedido) => ({
         id: pedido.id,
-        descripcion: `Pedido ${pedido.id.substring(0, 8)} - ${
+        descripcion: `Pedido ${pedido.numeroGlobal || pedido.id.substring(0, 8)} - ${
           pedido.proveedor?.nombre
         }`,
         proveedor: pedido.proveedor?.nombre || 'Desconocido',
