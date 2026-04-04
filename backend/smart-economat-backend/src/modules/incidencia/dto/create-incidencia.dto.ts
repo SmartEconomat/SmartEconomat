@@ -30,13 +30,11 @@ export class CreateIncidenciaResuelaDto {
   })
   idIncidencia!: string;
 
-  @IsOptional()
   @IsUUID('all')
-  idUsuarioResolutor?: string;
+  idUsuarioResolutor!: string;
 
-  @IsOptional()
   @IsEnum(TipoResolucion)
-  tipoResolucion?: TipoResolucion;
+  tipoResolucion!: TipoResolucion;
 
   @IsOptional()
   @Transform((params) => TrimStringTransformer.transform(params))

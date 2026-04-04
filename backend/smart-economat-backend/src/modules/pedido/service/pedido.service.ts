@@ -238,7 +238,7 @@ export class PedidoService {
       );
     }
 
-    pedido.estado = EstadoPedido.PENDIENTE;
+    pedido.estado = EstadoPedido.PENDIENTE_DE_APROBACION;
     pedido.motivoCancelacion = undefined;
     return await this.pedidoRepository.save(pedido);
   }

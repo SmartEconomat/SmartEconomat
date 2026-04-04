@@ -16,7 +16,6 @@ import {
 } from '@mui/material';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import PrintOutlinedIcon from '@mui/icons-material/PrintOutlined';
-import RestoreIcon from '@mui/icons-material/Restore';
 import DetailModal, { DetailSection } from '../../../components/ui/DetailModal';
 import StatusChip from '../../../components/ui/StatusChip';
 import {
@@ -29,27 +28,23 @@ import {
   formatCurrency,
   formatPedidoDate,
   formatPedidoId,
+  formatPedidoListNumber,
   getPedidoCreatorName,
   getPedidoProviderName,
 } from '../utils/pedidoFormatters';
-import EditIcon from '@mui/icons-material/Edit';
 
 interface PedidoDetailDrawerProps {
   pedido: Pedido | null;
   canEdit: boolean;
-  canRestore: boolean;
   onClose: () => void;
   onEdit: (pedido: Pedido) => void;
-  onRestore: (pedido: Pedido) => void;
 }
 
 const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
   pedido,
   canEdit,
-  canRestore,
   onClose,
   onEdit,
-  onRestore,
 }) => {
   const toast = useToast();
   const [isDownloadingPdf, setIsDownloadingPdf] = React.useState(false);
@@ -215,7 +210,11 @@ const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
       isOpen={!!pedido}
       onClose={onClose}
       title="Detalle del pedido"
-      subtitle={pedido ? `ID ${formatPedidoId(pedido.id)}` : undefined}
+      subtitle={
+        pedido
+          ? `Pedido #${formatPedidoListNumber(pedido)} · ID ${formatPedidoId(pedido.id)}`
+          : undefined
+      }
       size="lg"
       actions={
         pedido ? (
@@ -250,29 +249,17 @@ const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
               </Button>
             </Stack>
 
-            {canEdit && pedido.estado === EstadoPedido.PENDIENTE && (
-              <Button
-                variant="contained"
-                color="primary"
-                disableElevation
-                onClick={() => onEdit(pedido)}
-                startIcon={<EditIcon />}
-              >
-                Editar
-              </Button>
-            )}
-
-            {canRestore && pedido.estado === EstadoPedido.CANCELADO && (
-              <Button
-                variant="contained"
-                color="info"
-                disableElevation
-                startIcon={<RestoreIcon />}
-                onClick={() => onRestore(pedido)}
-              >
-                Revertir
-              </Button>
-            )}
+            {canEdit &&
+              pedido.estado === EstadoPedido.PENDIENTE_DE_APROBACION && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  disableElevation
+                  onClick={() => onEdit(pedido)}
+                >
+                  Editar pedido
+                </Button>
+              )}
           </Box>
         ) : undefined
       }

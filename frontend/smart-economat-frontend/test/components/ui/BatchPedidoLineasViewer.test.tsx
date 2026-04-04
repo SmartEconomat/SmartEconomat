@@ -69,7 +69,7 @@ describe('BatchPedidoLineasViewer', () => {
     render(
       <BatchPedidoLineasViewer
         batch={mockBatch as unknown as PurchaseBatch}
-        entityType="purchase_batch"
+        mode="batch"
       />
     );
 
@@ -82,7 +82,7 @@ describe('BatchPedidoLineasViewer', () => {
     render(
       <BatchPedidoLineasViewer
         batch={mockBatch as unknown as PurchaseBatch}
-        entityType="purchase_batch"
+        mode="batch"
       />
     );
 
@@ -101,7 +101,7 @@ describe('BatchPedidoLineasViewer', () => {
     render(
       <BatchPedidoLineasViewer
         batch={mockBatch as unknown as PurchaseBatch}
-        entityType="purchase_batch"
+        mode="batch"
       />
     );
 
@@ -129,12 +129,7 @@ describe('BatchPedidoLineasViewer', () => {
       pedidos: mockBatch.pedidos,
     } satisfies PedidoUsuario;
 
-    render(
-      <BatchPedidoLineasViewer
-        batch={pedidoVisible}
-        entityType="pedido_usuario"
-      />
-    );
+    render(<BatchPedidoLineasViewer batch={pedidoVisible} mode="pedido" />);
 
     expect(screen.getByText('TOTAL: 150.00 €')).toBeDefined();
 

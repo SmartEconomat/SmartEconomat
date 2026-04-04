@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -28,6 +29,7 @@ import { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepci
 import { IncidenciaLinea } from '../../incidencia/incidencia-linea.entity/incidencia-linea.entity';
 import { PurchaseBatchService } from './purchase-batch.service';
 import { reserveNextPedidoProveedorNumero } from '../utils/pedido-numero.util';
+import { isSherlockElevatedRole } from '../../sherlock-auth/utils/access.utils';
 
 type PendingAggregateLine = {
   productoProveedorId: string;
@@ -321,6 +323,74 @@ export class PedidoUsuarioService {
     });
   }
 
+  async restore(id: string): Promise<PedidoUsuario> {
+    return this.changePendingAggregateStatus(
+      id,
+      (pedido) => {
+        if (pedido.estado !== EstadoPedido.CANCELADO) {
+          throw new BadRequestException(
+            'Solo se pueden restaurar los pedidos que estén en estado cancelado.'
+          );
+        }
+        pedido.estado = EstadoPedido.PENDIENTE_DE_APROBACION;
+        pedido.motivoCancelacion = undefined;
+      },
+      true
+    );
+  }
+
+  async remove(id: string, user: { id: string; rol?: string }): Promise<void> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const pedidoUsuario = await queryRunner.manager.findOne(PedidoUsuario, {
+        where: { id },
+        relations: ['pedidos', 'lineas'],
+      });
+
+      if (!pedidoUsuario) {
+        throw new NotFoundException(`Pedido de usuario #${id} no encontrado`);
+      }
+
+      const isElevated = isSherlockElevatedRole(user.rol);
+      if (!isElevated && pedidoUsuario.usuarioId !== user.id) {
+        throw new ForbiddenException(
+          'No tienes permisos para eliminar este pedido porque no eres el propietario.'
+        );
+      }
+
+      this.assertEditable(pedidoUsuario);
+
+      pedidoUsuario.deletedBy = user.id;
+
+      if (pedidoUsuario.pedidos?.length) {
+        for (const pedido of pedidoUsuario.pedidos) {
+          pedido.deletedBy = user.id;
+          await queryRunner.manager.softRemove(Pedido, pedido);
+        }
+      }
+
+      await queryRunner.manager.softRemove(PedidoUsuario, pedidoUsuario);
+      await queryRunner.commitTransaction();
+    } catch (error: any) {
+      await queryRunner.rollbackTransaction();
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException ||
+        error instanceof ForbiddenException
+      ) {
+        throw error;
+      }
+      throw new ConflictException(
+        `Error al eliminar el pedido de usuario: ${error.message}`
+      );
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
   async syncPedidoUsuarioStatus(
     pedidoUsuarioId: string,
     manager?: EntityManager
@@ -350,7 +420,8 @@ export class PedidoUsuarioService {
 
   private async changePendingAggregateStatus(
     id: string,
-    mutatePedido: (pedido: Pedido) => Promise<void> | void
+    mutatePedido: (pedido: Pedido) => Promise<void> | void,
+    force = false
   ): Promise<PedidoUsuario> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -366,7 +437,9 @@ export class PedidoUsuarioService {
         throw new NotFoundException(`Pedido de usuario #${id} no encontrado`);
       }
 
-      this.assertEditable(pedidoUsuario);
+      if (!force) {
+        this.assertEditable(pedidoUsuario);
+      }
 
       const hasRecepciones = (pedidoUsuario.pedidos || []).some(
         (pedido) => (pedido.recepcionesPedido || []).length > 0

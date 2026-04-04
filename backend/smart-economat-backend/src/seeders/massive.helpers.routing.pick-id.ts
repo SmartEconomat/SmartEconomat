@@ -223,6 +223,50 @@ export function pickIdForRoute(
     return pick('inventarioIds');
   }
   if (path.startsWith('/pedido-usuarios')) {
+    if (path.endsWith('/restaurar')) {
+      const pendientesCreados = getStateArray(
+        context,
+        'seedCreatedPedidoUsuarioPendienteIds'
+      );
+      if (pendientesCreados.length > 0) {
+        return (
+          pendientesCreados[iteration % pendientesCreados.length] ||
+          pendientesCreados[0] ||
+          ''
+        );
+      }
+
+      const pendientes = getStateArray(context, 'pedidoUsuarioPendienteIds');
+      if (pendientes.length > 0) {
+        return pendientes[iteration % pendientes.length] || pendientes[0] || '';
+      }
+
+      const lastCanceladoId =
+        context.getState<string>('seedLastPedidoUsuarioCanceladoId') || '';
+      if (lastCanceladoId) {
+        return lastCanceladoId;
+      }
+
+      const cancelados = getStateArray(context, 'pedidoUsuarioCanceladoIds');
+      if (cancelados.length > 0) {
+        return cancelados[iteration % cancelados.length] || cancelados[0] || '';
+      }
+
+      const createdPedidoUsuarioIds = getStateArray(
+        context,
+        'seedCreatedPedidoUsuarioIds'
+      );
+      if (createdPedidoUsuarioIds.length > 0) {
+        return (
+          createdPedidoUsuarioIds[iteration % createdPedidoUsuarioIds.length] ||
+          createdPedidoUsuarioIds[0] ||
+          ''
+        );
+      }
+
+      return pick('pedidoUsuarioIds');
+    }
+
     if (path.endsWith('/aceptar')) {
       const createdPendings = getStateArray(
         context,
@@ -265,6 +309,25 @@ export function pickIdForRoute(
       );
     }
 
+    if (method === 'DELETE') {
+      const createdPendings = getStateArray(
+        context,
+        'seedCreatedPedidoUsuarioPendienteIds'
+      );
+
+      if (createdPendings.length > 0) {
+        return consumeRequiredStateValue(
+          context,
+          'seedCreatedPedidoUsuarioPendienteIds'
+        );
+      }
+
+      const pendientes = getStateArray(context, 'pedidoUsuarioPendienteIds');
+      if (pendientes.length > 0) {
+        return consumeRequiredStateValue(context, 'pedidoUsuarioPendienteIds');
+      }
+    }
+
     const createdPedidoUsuarioIds = getStateArray(
       context,
       'seedCreatedPedidoUsuarioIds'
@@ -278,6 +341,27 @@ export function pickIdForRoute(
     return pick('pedidoUsuarioIds');
   }
   if (path.startsWith('/purchase-batches')) {
+    if (path.endsWith('/restaurar')) {
+      const cancelados = getStateArray(context, 'purchaseBatchCanceladoIds');
+      if (cancelados.length > 0) {
+        return cancelados[iteration % cancelados.length] || cancelados[0] || '';
+      }
+
+      const createdBatchIds = getStateArray(
+        context,
+        'seedCreatedPurchaseBatchIds'
+      );
+      if (createdBatchIds.length > 0) {
+        return (
+          createdBatchIds[iteration % createdBatchIds.length] ||
+          createdBatchIds[0] ||
+          ''
+        );
+      }
+
+      return pick('purchaseBatchIds');
+    }
+
     if (method === 'PATCH' && /^\/purchase-batches\/[^/]+$/.test(path)) {
       const createdPendings = getStateArray(
         context,
@@ -312,6 +396,19 @@ export function pickIdForRoute(
       }
       return consumeRequiredStateValue(context, 'purchaseBatchPendienteIds');
     }
+    if (path.endsWith('/tramitar')) {
+      const createdPendings = getStateArray(
+        context,
+        'seedCreatedPurchaseBatchPendienteIds'
+      );
+      if (createdPendings.length > 0) {
+        return consumeRequiredStateValue(
+          context,
+          'seedCreatedPurchaseBatchPendienteIds'
+        );
+      }
+      return consumeRequiredStateValue(context, 'purchaseBatchPendienteIds');
+    }
     if (path.endsWith('/cancelar')) {
       const createdPendings = getStateArray(
         context,
@@ -328,6 +425,20 @@ export function pickIdForRoute(
     return pick('purchaseBatchIds');
   }
   if (path.startsWith('/pedidos')) {
+    if (path.endsWith('/restaurar')) {
+      const cancelados = getStateArray(context, 'pedidoCanceladoIds');
+      if (cancelados.length > 0) {
+        return cancelados[iteration % cancelados.length] || cancelados[0] || '';
+      }
+
+      const listedPedidoIds = getStateArray(context, 'pedidoListIds');
+      if (listedPedidoIds.length > 0) {
+        return listedPedidoIds[iteration % listedPedidoIds.length] || '';
+      }
+
+      return pick('pedidoIds');
+    }
+
     const preparedPendings = getStateArray(
       context,
       'seedPreparedPedidoPendienteIds'
@@ -622,6 +733,66 @@ export function pickIdForRoute(
     }
 
     return pick('preparacionIds');
+  }
+  if (path.startsWith('/distribuciones')) {
+    const distribucionesPreparadas = getStateArray(
+      context,
+      'distribucionPreparadaIds'
+    );
+
+    if (path.endsWith('/confirmar')) {
+      if (distribucionesPreparadas.length > 0) {
+        return (
+          distribucionesPreparadas[
+            iteration % distribucionesPreparadas.length
+          ] ||
+          distribucionesPreparadas[0] ||
+          ''
+        );
+      }
+
+      throw new Error(
+        '[seed-massive] No hay distribuciones preparadas disponibles para confirmar'
+      );
+    }
+
+    if (path.endsWith('/cancelar')) {
+      if (distribucionesPreparadas.length > 0) {
+        return (
+          distribucionesPreparadas[
+            iteration % distribucionesPreparadas.length
+          ] ||
+          distribucionesPreparadas[0] ||
+          ''
+        );
+      }
+
+      throw new Error(
+        '[seed-massive] No hay distribuciones preparadas disponibles para cancelar'
+      );
+    }
+
+    if (method === 'PATCH' && distribucionesPreparadas.length > 0) {
+      return (
+        distribucionesPreparadas[iteration % distribucionesPreparadas.length] ||
+        distribucionesPreparadas[0] ||
+        ''
+      );
+    }
+
+    const distribucionesCreadas = getStateArray(
+      context,
+      'seedCreatedDistribucionIds'
+    );
+    if (distribucionesCreadas.length > 0) {
+      return (
+        distribucionesCreadas[iteration % distribucionesCreadas.length] ||
+        distribucionesCreadas[0] ||
+        ''
+      );
+    }
+
+    return pick('distribucionIds');
   }
   if (path.startsWith('/merma')) return pick('mermaIds');
   if (path.startsWith('/archivos')) return pick('archivoIds');

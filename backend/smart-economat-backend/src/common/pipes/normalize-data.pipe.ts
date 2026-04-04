@@ -37,8 +37,20 @@ export class NormalizeDataPipe implements PipeTransform<unknown> {
     value: unknown,
     metadata: ArgumentMetadata
   ): Promise<unknown> {
+    if (metadata.type === 'custom') {
+      return value;
+    }
+
     if (!value || typeof value !== 'object') {
       return value;
+    }
+
+    if (
+      !metadata.metatype ||
+      metadata.metatype === Object ||
+      metadata.metatype === Array
+    ) {
+      return this.normalizeObject(value);
     }
 
     if (metadata.metatype) {

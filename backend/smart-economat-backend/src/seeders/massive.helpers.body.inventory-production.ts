@@ -273,6 +273,19 @@ export function buildBodyInventoryAndProduction(
     };
   }
 
+  if (resolvedPath === '/recetas/calculate-preview') {
+    return {
+      ingredientes: buildRecetaIngredientes(env),
+      rendimiento: deterministicFloat(
+        1,
+        8,
+        2,
+        iteration,
+        'receta-preview-rendimiento'
+      ),
+    };
+  }
+
   if (templatePath === '/recetas/:id' && endpoint.method === 'PATCH') {
     const recetaTemplate = getRecetaRealista(iteration + 2);
     const raciones = recetaTemplate.raciones;

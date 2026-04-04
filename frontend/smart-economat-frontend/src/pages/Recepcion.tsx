@@ -13,7 +13,6 @@ import {
   Snackbar,
   Backdrop,
   Box,
-  SelectChangeEvent,
 } from '@mui/material';
 import { Theme } from '@mui/material/styles';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -419,9 +418,6 @@ const Recepcion: React.FC = () => {
       codigoBarras: pp.productoProveedor?.producto?.codigoBarras,
       nombreProducto: pp.productoProveedor?.producto?.nombre || 'Producto',
       cantidadPedida: Number(pp.cantidad),
-      cantidadYaRecibida: Number(
-        (pp as unknown as { cantidadRecibida?: number }).cantidadRecibida || 0
-      ),
       cantidadAlbaran: '',
       cantidadRecibida: 0,
       isWeighedWithScale: false,
@@ -437,7 +433,6 @@ const Recepcion: React.FC = () => {
     id: pedido.id,
     descripcion: `Pedido ${formatPedidoListNumber(pedido)} - ${pedido.proveedor?.nombre}`,
     proveedor: pedido.proveedor?.nombre || 'Desconocido',
-    estadoPedido: pedido.estado,
     lineas: mapPedidoToDraft(pedido),
   });
 
@@ -457,7 +452,8 @@ const Recepcion: React.FC = () => {
     setDraft((prevDraft) => ({ ...prevDraft, pedidosSeleccionados: [] }));
   };
 
-  const handleSelectProvider = (e: SelectChangeEvent<unknown>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleSelectProvider = (e: any) => {
     const providerName = e.target.value as string;
     if (!providerName) return;
 
@@ -476,7 +472,8 @@ const Recepcion: React.FC = () => {
     setDraft({ ...draft, pedidosSeleccionados: newDraftPedidos });
   };
 
-  const handleDeselectProvider = (e: SelectChangeEvent<unknown>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleDeselectProvider = (e: any) => {
     const providerName = e.target.value as string;
     if (!providerName) return;
 
@@ -731,7 +728,6 @@ const Recepcion: React.FC = () => {
             nombreProducto: prod.nombre,
             unidad: prod.unidad || 'uds',
             cantidadPedida: 0,
-            cantidadYaRecibida: 0,
             cantidadAlbaran: '',
             cantidadRecibida: isWeightUnit(prod.unidad) ? 0 : 1,
             isWeighedWithScale: false,
@@ -1005,11 +1001,7 @@ const Recepcion: React.FC = () => {
       const res = await createRecepcion(payload);
       setResultado(res);
       setActiveStep(3);
-      try {
-        await clearRemoteDraft();
-      } catch {
-        // La recepción ya fue confirmada en servidor; no bloqueamos el resultado
-      }
+      await clearRemoteDraft();
     } catch (err: unknown) {
       let errorMessage = '';
       if (isErrorWithMessage(err)) {
@@ -1023,21 +1015,6 @@ const Recepcion: React.FC = () => {
         setActiveStep(0);
         setError(
           `Error crítico: El pedido que intentabas recepcionar ya no existe o fue procesado. El borrador remoto obsoleto ha sido eliminado por seguridad. Por favor, selecciona nuevamente los pedidos a recepcionar.`
-        );
-      } else if (
-        errorMessage.includes('ORDER_NOT_RECEPTABLE') ||
-        errorMessage.includes(
-          'pedido no se encuentra en un estado válido para ser recepcionado'
-        ) ||
-        errorMessage.includes(
-          'El pedido no se encuentra en un estado válido para ser recepcionado'
-        )
-      ) {
-        await clearRemoteDraft();
-        await loadPedidos();
-        setActiveStep(0);
-        setError(
-          'La recepción ya se había procesado o alguno de los pedidos del borrador cambió de estado. He limpiado el borrador obsoleto; vuelve a seleccionar los pedidos recepcionables y continúa.'
         );
       } else {
         setError(
@@ -1192,7 +1169,6 @@ const Recepcion: React.FC = () => {
       nombreProducto: modalData.nombre,
       unidad: modalData.unidad,
       cantidadPedida: 0,
-      cantidadYaRecibida: 0,
       cantidadAlbaran: '',
       cantidadRecibida: isWeight ? 0 : 1, // Start at 0 for weighable items until weighed
       isWeighedWithScale: false,
@@ -1412,7 +1388,7 @@ const Recepcion: React.FC = () => {
                 {activeStep === 2
                   ? isSubmitting
                     ? 'Procesando...'
-                    : 'Finalizar y Recibir Pedido'
+                    : 'Finalizar Recepción'
                   : 'Siguiente'}
               </Button>
             </Box>

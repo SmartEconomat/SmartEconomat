@@ -241,6 +241,13 @@ export function chooseTokenForPath(
     return pickAdminPool();
   }
 
+  if (
+    method === 'PATCH' &&
+    (path.includes('/restaurar') || path.includes('/restore'))
+  ) {
+    return pickAdminPool();
+  }
+
   if (path === '/merma/stats' || path === '/merma/kpis') {
     return pickOperationalPool();
   }

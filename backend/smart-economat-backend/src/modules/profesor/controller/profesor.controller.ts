@@ -12,6 +12,8 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ProfesorService } from '../service/profesor.service';
 import { CreateSlotDto } from '../dto/create-slot.dto';
 import { UpdateSlotDto } from '../dto/update-slot.dto';
+import { AdminCreateSlotDto } from '../dto/admin-create-slot.dto';
+import { AdminUpdateSlotDto } from '../dto/admin-update-slot.dto';
 import { CreateProfesorDto } from '../dto/create-profesor.dto';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
@@ -37,7 +39,7 @@ export class ProfesorController {
 
   @Post('admin-slots')
   @RequirePermissions('usuarios:listar')
-  async adminCreateSlot(@Body() dto: CreateSlotDto & { profesorId: string }) {
+  async adminCreateSlot(@Body() dto: AdminCreateSlotDto) {
     return this.profesorService.adminCreateSlot(dto);
   }
 
@@ -63,7 +65,7 @@ export class ProfesorController {
   @RequirePermissions('usuarios:listar')
   async adminUpdateSlot(
     @Param('id') slotId: string,
-    @Body() dto: UpdateSlotDto & { profesorId?: string }
+    @Body() dto: AdminUpdateSlotDto
   ) {
     return this.profesorService.adminUpdateSlot(slotId, dto);
   }

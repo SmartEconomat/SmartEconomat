@@ -63,7 +63,6 @@ export interface LineaDraft {
   nombreProducto: string;
   unidad: string;
   cantidadPedida: number; // 0 si no venía en ningún pedido
-  cantidadYaRecibida: number; // Nuevo: lo que ya se recibió en anteriores entregas
 
   // ── Producto nuevo (pendiente de crear en BD) ──────
   productoNuevo?: {
@@ -110,7 +109,6 @@ export interface PedidoDraft {
   lineas: LineaDraft[];
   nAlbaran?: string;
   observaciones?: string;
-  estadoPedido?: string;
 }
 
 export interface RecepcionDraft {

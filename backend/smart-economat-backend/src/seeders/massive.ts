@@ -306,6 +306,14 @@ function getEndpointBatchLimit(key: string, fallback: number): number {
     return 1;
   }
 
+  if (key.startsWith('POST /distribuciones')) {
+    return 1;
+  }
+
+  if (key.startsWith('PATCH /distribuciones')) {
+    return 1;
+  }
+
   if (key === 'DELETE /inventario/:id') {
     return 1;
   }

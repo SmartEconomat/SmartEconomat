@@ -12,7 +12,7 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import LayersIcon from '@mui/icons-material/Layers';
 import { Pedido, PurchaseBatch } from '../../../services/pedido.types';
-import StatusChip, { getStatusColor } from '../../../components/ui/StatusChip';
+import StatusChip from '../../../components/ui/StatusChip';
 import {
   formatPedidoDate,
   formatCurrency,
@@ -47,30 +47,12 @@ const PurchaseBatchCard: React.FC<PurchaseBatchCardProps> = ({
         position: 'relative',
         transition: 'all 0.2s ease-in-out',
         cursor: isSelectable ? 'pointer' : 'default',
-        borderLeft: (theme) => {
-          const resolvedStatus = getStatusColor(String(batch.estado));
-          const color =
-            resolvedStatus === 'default'
-              ? theme.palette.primary.main
-              : theme.palette[
-                  resolvedStatus as 'success' | 'error' | 'warning' | 'info'
-                ].main;
-          return `4px solid ${color}`;
-        },
+        borderLeft: (theme) => `4px solid ${theme.palette.primary.main}`,
         '&:hover': isSelectable
-          ? (theme) => {
-              const resolvedStatus = getStatusColor(String(batch.estado));
-              const color =
-                resolvedStatus === 'default'
-                  ? theme.palette.primary.main
-                  : theme.palette[
-                      resolvedStatus as 'success' | 'error' | 'warning' | 'info'
-                    ].main;
-              return {
-                borderColor: color,
-                boxShadow: `0 0 0 1px ${color}`,
-                transform: 'translateY(-2px)',
-              };
+          ? {
+              borderColor: 'primary.main',
+              boxShadow: (theme) => `0 0 0 1px ${theme.palette.primary.main}`,
+              transform: 'translateY(-2px)',
             }
           : {},
       }}

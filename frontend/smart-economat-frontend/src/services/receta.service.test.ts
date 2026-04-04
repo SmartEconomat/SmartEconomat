@@ -17,6 +17,7 @@ describe('receta.service', () => {
   });
 
   it('ajusta el limit al maximo permitido por backend y recorta la busqueda', async () => {
+    const mockResponse = { ok: true, status: 200 } as Response;
     const mockPayload = {
       success: true,
       message: 'ok',
@@ -28,13 +29,11 @@ describe('receta.service', () => {
         totalPages: 1,
       },
     };
-    const mockResponse = {
-      ok: true,
-      status: 200,
-      json: vi.fn().mockResolvedValue(mockPayload),
-    } as unknown as Response;
 
     vi.mocked(apiService.baseFetch).mockResolvedValue(mockResponse);
+    vi.mocked(apiService.parseApiResponse).mockResolvedValue(
+      mockPayload as Awaited<ReturnType<typeof apiService.parseApiResponse>>
+    );
 
     await expect(fetchRecetas(1, 100, '  arroz  ')).resolves.toEqual(
       mockPayload.data
@@ -44,7 +43,8 @@ describe('receta.service', () => {
     );
   });
 
-  it('serializa pagina y limite sin ordenacion server-side', async () => {
+  it('serializa sortBy y order para ordenacion server-side', async () => {
+    const mockResponse = { ok: true, status: 200 } as Response;
     const mockPayload = {
       success: true,
       message: 'ok',
@@ -56,18 +56,16 @@ describe('receta.service', () => {
         totalPages: 1,
       },
     };
-    const mockResponse = {
-      ok: true,
-      status: 200,
-      json: vi.fn().mockResolvedValue(mockPayload),
-    } as unknown as Response;
 
     vi.mocked(apiService.baseFetch).mockResolvedValue(mockResponse);
+    vi.mocked(apiService.parseApiResponse).mockResolvedValue(
+      mockPayload as Awaited<ReturnType<typeof apiService.parseApiResponse>>
+    );
 
-    await fetchRecetas(1, 10, '');
+    await fetchRecetas(1, 10, '', 'dificultad', 'desc');
 
     expect(apiService.baseFetch).toHaveBeenCalledWith(
-      '/recetas?page=1&limit=10'
+      '/recetas?page=1&limit=10&sortBy=dificultad&order=DESC'
     );
   });
 });

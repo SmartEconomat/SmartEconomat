@@ -1426,6 +1426,541 @@ async function ensureIncidenciaForResolver(
   }
 }
 
+function buildDistribucionLineasDesdeDisponible(
+  disponible: Record<string, unknown>,
+  iteration: number
+): Array<Record<string, unknown>> {
+  const lineasRaw = Array.isArray(disponible.lineas) ? disponible.lineas : [];
+  const lineas: Array<Record<string, unknown>> = [];
+
+  for (const [index, lineaRaw] of lineasRaw.entries()) {
+    if (!isRecord(lineaRaw)) {
+      continue;
+    }
+
+    const pedidoUsuarioLineaId = toTrimmedSeedString(
+      lineaRaw.pedidoUsuarioLineaId
+    );
+    const cantidadPendiente = toSeedFiniteNumber(lineaRaw.cantidadPendiente);
+
+    if (!pedidoUsuarioLineaId || !Number.isFinite(cantidadPendiente)) {
+      continue;
+    }
+
+    if (cantidadPendiente < 0.001) {
+      continue;
+    }
+
+    const cantidadBase = Math.min(
+      cantidadPendiente,
+      1 + ((iteration + index) % 2)
+    );
+    const cantidad = Number(Math.max(0.001, cantidadBase).toFixed(3));
+
+    if (!Number.isFinite(cantidad) || cantidad < 0.001) {
+      continue;
+    }
+
+    lineas.push({
+      pedidoUsuarioLineaId,
+      cantidad,
+      observaciones: 'Preparado por seed masivo',
+    });
+
+    if (lineas.length >= 4) {
+      break;
+    }
+  }
+
+  return lineas;
+}
+
+function resolveDistribucionDestinoDesdeDisponible(
+  disponible: Record<string, unknown>
+): {
+  ubicacionDestinoId?: string;
+  alumnoSlotId?: string;
+} {
+  const ubicacionSugerida = isRecord(disponible.ubicacionDestinoSugerida)
+    ? disponible.ubicacionDestinoSugerida
+    : undefined;
+  const alumnoSlot = isRecord(disponible.alumnoSlot)
+    ? disponible.alumnoSlot
+    : undefined;
+
+  const ubicacionesUsuario = Array.isArray(disponible.ubicacionesUsuario)
+    ? disponible.ubicacionesUsuario
+    : [];
+
+  const primeraUbicacionUsuario = ubicacionesUsuario.find(
+    (ubicacion) =>
+      isRecord(ubicacion) && toTrimmedSeedString(ubicacion.id).length > 0
+  ) as Record<string, unknown> | undefined;
+
+  const ubicacionDestinoId =
+    toTrimmedSeedString(ubicacionSugerida?.id) ||
+    toTrimmedSeedString(alumnoSlot?.ubicacionId) ||
+    toTrimmedSeedString(primeraUbicacionUsuario?.id);
+  const alumnoSlotId = toTrimmedSeedString(alumnoSlot?.id);
+
+  return {
+    ...(ubicacionDestinoId ? { ubicacionDestinoId } : {}),
+    ...(alumnoSlotId ? { alumnoSlotId } : {}),
+  };
+}
+
+function findPedidoIdsForPedidoUsuario(
+  context: SeedContext,
+  pedidoUsuarioId: string
+): string[] {
+  const pairs = getStateArray(context, 'pedidoUsuarioToPedidoPairs');
+  return pairs
+    .map((pair) => pair.split('|'))
+    .filter(
+      (parts) =>
+        parts.length === 2 &&
+        parts[0] === pedidoUsuarioId &&
+        typeof parts[1] === 'string' &&
+        parts[1].length > 0
+    )
+    .map((parts) => parts[1]);
+}
+
+function findPedidoProductoIdForPedido(
+  context: SeedContext,
+  pedidoId: string,
+  iteration: number
+): string {
+  const pairs = [
+    ...getStateArray(context, 'pedidoProductoToPedidoPairsFresh'),
+    ...getStateArray(context, 'pedidoProductoToPedidoPairs'),
+  ];
+
+  const pedidoProductoIds = pairs
+    .map((pair) => pair.split('|'))
+    .filter(
+      (parts) =>
+        parts.length === 2 &&
+        parts[1] === pedidoId &&
+        typeof parts[0] === 'string' &&
+        parts[0].length > 0
+    )
+    .map((parts) => parts[0]);
+
+  if (pedidoProductoIds.length === 0) {
+    return '';
+  }
+
+  return pedidoProductoIds[iteration % pedidoProductoIds.length] || '';
+}
+
+async function ensureDistribucionDisponibilidadBootstrap(
+  context: SeedContext,
+  iteration: number,
+  coverage: EnumCoverage,
+  tokenOverride?: string
+): Promise<void> {
+  const createPedidoUsuarioEndpoint: Endpoint = {
+    method: 'POST',
+    path: '/pedido-usuarios',
+    source: 'precreate-distribucion-pedido-usuario',
+  };
+
+  const pedidoUsuarioBody = buildBody(
+    context,
+    createPedidoUsuarioEndpoint,
+    '/pedido-usuarios',
+    iteration,
+    coverage
+  );
+
+  const pedidoUsuarioResponse = await context.requestJson<unknown>(
+    '/pedido-usuarios',
+    {
+      method: 'POST',
+      body: pedidoUsuarioBody,
+      auth: true,
+      tokenOverride,
+    }
+  );
+
+  collectStateFromResponse(context, '/pedido-usuarios', pedidoUsuarioResponse);
+
+  const pedidoUsuarioId = extractResourceId(pedidoUsuarioResponse);
+  if (!pedidoUsuarioId) {
+    throw new Error(
+      '[seed-massive] No se pudo precrear pedido-usuario para bootstrap de distribuciones'
+    );
+  }
+
+  pushStateValue(context, 'seedCreatedPedidoUsuarioIds', pedidoUsuarioId);
+  pushStateValue(context, 'pedidoUsuarioIds', pedidoUsuarioId);
+  pushStateValue(context, 'pedidoUsuarioPendienteIds', pedidoUsuarioId);
+  rememberPedidoUsuarioChildPedidos(
+    context,
+    pedidoUsuarioId,
+    pedidoUsuarioResponse
+  );
+
+  const aceptarResponse = await context.requestJson<unknown>(
+    `/pedido-usuarios/${pedidoUsuarioId}/aceptar`,
+    {
+      method: 'PATCH',
+      body: {},
+      auth: true,
+      tokenOverride,
+    }
+  );
+
+  collectStateFromResponse(
+    context,
+    `/pedido-usuarios/${pedidoUsuarioId}/aceptar`,
+    aceptarResponse
+  );
+  rememberPedidoUsuarioChildPedidos(context, pedidoUsuarioId, aceptarResponse);
+
+  const pedidoIds = findPedidoIdsForPedidoUsuario(context, pedidoUsuarioId);
+  if (pedidoIds.length === 0) {
+    throw new Error(
+      '[seed-massive] No se generaron pedidos asociados al pedido-usuario bootstrap para distribuciones'
+    );
+  }
+
+  const pedidoId = pedidoIds[0];
+
+  try {
+    const aceptarPedidoResponse = await context.requestJson<unknown>(
+      `/pedidos/${pedidoId}/aceptar`,
+      {
+        method: 'PATCH',
+        body: {},
+        auth: true,
+        tokenOverride,
+      }
+    );
+    collectStateFromResponse(
+      context,
+      `/pedidos/${pedidoId}/aceptar`,
+      aceptarPedidoResponse
+    );
+  } catch (error) {
+    void error;
+  }
+
+  let pedidoProductoId = findPedidoProductoIdForPedido(
+    context,
+    pedidoId,
+    iteration
+  );
+
+  if (!pedidoProductoId) {
+    const pedidoDetalleResponse = await context.requestJson<unknown>(
+      `/pedidos/${pedidoId}`,
+      {
+        method: 'GET',
+        auth: true,
+        tokenOverride,
+      }
+    );
+
+    collectStateFromResponse(
+      context,
+      `/pedidos/${pedidoId}`,
+      pedidoDetalleResponse
+    );
+    pedidoProductoId = findPedidoProductoIdForPedido(
+      context,
+      pedidoId,
+      iteration
+    );
+  }
+
+  if (!pedidoProductoId) {
+    throw new Error(
+      '[seed-massive] No se pudo resolver pedidoProductoId para bootstrap de distribuciones'
+    );
+  }
+
+  const albaranRef = `ALB-DIST-${String(iteration + 1).padStart(6, '0')}`;
+  const usuarioId =
+    pickStateValue(context, 'seedKnownAdminUserId', iteration, '') ||
+    pickStateValue(context, 'usuarioIds', iteration, '');
+
+  const recepcionBody: Record<string, unknown> = {
+    pedidos: [
+      {
+        pedidoId,
+        nAlbaran: albaranRef,
+        observaciones: 'Recepción bootstrap para habilitar distribución',
+      },
+    ],
+    nAlbaran: albaranRef,
+    fechaRecepcion: seedDateIso(0),
+    observaciones: 'Recepción bootstrap para habilitar distribución',
+    productos: [
+      {
+        pedidoProductoId,
+        cantidadRecibida: 1,
+        cantidadAlbaran: 1,
+        estadoVisual: 'OPTIMO',
+        estadoProducto: 'PERFECTO',
+        observaciones: 'Línea de recepción bootstrap',
+        isWeighedWithScale: false,
+      },
+    ],
+    productosNuevos: [],
+  };
+
+  if (usuarioId) {
+    recepcionBody.usuarioId = usuarioId;
+  }
+
+  const recepcionResponse = await context.requestJson<unknown>('/recepciones', {
+    method: 'POST',
+    body: recepcionBody,
+    auth: true,
+    tokenOverride,
+  });
+
+  collectStateFromResponse(context, '/recepciones', recepcionResponse);
+}
+
+async function buildDistribucionCreateBody(
+  context: SeedContext,
+  iteration: number,
+  coverage: EnumCoverage,
+  tokenOverride?: string
+): Promise<Record<string, unknown>> {
+  const fetchDisponibles = async (): Promise<
+    Array<Record<string, unknown>>
+  > => {
+    const disponiblesResponse = await context.requestJson<unknown>(
+      buildPaginatedListPath('/distribuciones/disponibles', 1, 50),
+      {
+        method: 'GET',
+        auth: true,
+        tokenOverride,
+      }
+    );
+
+    collectStateFromResponse(
+      context,
+      '/distribuciones/disponibles',
+      disponiblesResponse
+    );
+
+    return listFromResponse(disponiblesResponse);
+  };
+
+  let disponibles = await fetchDisponibles();
+  if (disponibles.length === 0) {
+    await ensureDistribucionDisponibilidadBootstrap(
+      context,
+      iteration,
+      coverage,
+      tokenOverride
+    );
+    disponibles = await fetchDisponibles();
+  }
+
+  if (disponibles.length === 0) {
+    throw new Error(
+      '[seed-massive] No hay pedidos de usuario distribuibles en /distribuciones/disponibles'
+    );
+  }
+
+  for (let offset = 0; offset < disponibles.length; offset++) {
+    const candidato = disponibles[(iteration + offset) % disponibles.length];
+    if (!candidato) {
+      continue;
+    }
+
+    const pedidoUsuarioId = toTrimmedSeedString(candidato.pedidoUsuarioId);
+    if (!pedidoUsuarioId) {
+      continue;
+    }
+
+    const lineas = buildDistribucionLineasDesdeDisponible(candidato, iteration);
+    if (lineas.length === 0) {
+      continue;
+    }
+
+    const destino = resolveDistribucionDestinoDesdeDisponible(candidato);
+    const fallbackUbicacionDestinoId =
+      context.getState<string>('seedDefaultUbicacionId') ||
+      pickStateValue(context, 'ubicacionIds', iteration + offset, '');
+    const ubicacionDestinoId =
+      destino.ubicacionDestinoId || fallbackUbicacionDestinoId;
+
+    if (!ubicacionDestinoId && !destino.alumnoSlotId) {
+      continue;
+    }
+
+    const ubicacionOrigenId =
+      context.getState<string>('seedDefaultUbicacionId') ||
+      pickStateValue(context, 'ubicacionIds', iteration, '');
+
+    return {
+      pedidoUsuarioId,
+      ...(ubicacionOrigenId ? { ubicacionOrigenId } : {}),
+      ...(ubicacionDestinoId ? { ubicacionDestinoId } : {}),
+      ...(destino.alumnoSlotId ? { alumnoSlotId: destino.alumnoSlotId } : {}),
+      observaciones: `Distribución automática seed #${iteration + 1}`,
+      lineas,
+    };
+  }
+
+  throw new Error(
+    '[seed-massive] No se encontró candidato distribuible con lineas pendientes y destino válido'
+  );
+}
+
+async function ensurePreparedDistribucionForAction(
+  context: SeedContext,
+  iteration: number,
+  coverage: EnumCoverage
+): Promise<void> {
+  const preparedIds = getStateArray(context, 'distribucionPreparadaIds');
+  if (preparedIds.length > 0) {
+    return;
+  }
+
+  const token = chooseTokenForPath(context, '/distribuciones', 'POST');
+  const body = await buildDistribucionCreateBody(
+    context,
+    iteration,
+    coverage,
+    token
+  );
+
+  const response = await context.requestJson<unknown>('/distribuciones', {
+    method: 'POST',
+    body,
+    auth: true,
+    tokenOverride: token,
+  });
+
+  collectStateFromResponse(context, '/distribuciones', response);
+
+  const distribucionId = extractResourceId(response);
+  if (distribucionId) {
+    pushStateValue(context, 'seedCreatedDistribucionIds', distribucionId);
+    pushStateValue(context, 'distribucionIds', distribucionId);
+    pushStateValue(context, 'distribucionPreparadaIds', distribucionId);
+  }
+
+  if (getStateArray(context, 'distribucionPreparadaIds').length === 0) {
+    throw new Error(
+      '[seed-massive] No se pudo precrear una distribución preparada para operar con PATCH'
+    );
+  }
+}
+
+async function ensureDistribucionOriginStockForConfirm(
+  context: SeedContext,
+  distribucionId: string,
+  iteration: number,
+  tokenOverride?: string
+): Promise<void> {
+  const alreadyPrepared = getStateArray(
+    context,
+    'seedDistribucionStockReadyIds'
+  );
+  if (alreadyPrepared.includes(distribucionId)) {
+    return;
+  }
+
+  const detailResponse = await context.requestJson<unknown>(
+    `/distribuciones/${distribucionId}`,
+    {
+      method: 'GET',
+      auth: true,
+      tokenOverride,
+    }
+  );
+
+  collectStateFromResponse(
+    context,
+    `/distribuciones/${distribucionId}`,
+    detailResponse
+  );
+
+  const distribucion =
+    listFromResponse(detailResponse).find(
+      (entity) => entity.id === distribucionId
+    ) || listFromResponse(detailResponse)[0];
+
+  if (!distribucion) {
+    return;
+  }
+
+  const ubicacionOrigenFromRelation = isRecord(distribucion.ubicacionOrigen)
+    ? toTrimmedSeedString(distribucion.ubicacionOrigen.id)
+    : '';
+  const ubicacionOrigenId =
+    toTrimmedSeedString(distribucion.ubicacionOrigenId) ||
+    ubicacionOrigenFromRelation ||
+    context.getState<string>('seedDefaultUbicacionId') ||
+    pickStateValue(context, 'ubicacionIds', iteration, '');
+
+  if (!ubicacionOrigenId || !Array.isArray(distribucion.lineas)) {
+    return;
+  }
+
+  const inventoryToken = chooseTokenForPath(context, '/inventario', 'POST');
+  let lineIndex = 0;
+
+  for (const lineaRaw of distribucion.lineas) {
+    if (!isRecord(lineaRaw)) {
+      continue;
+    }
+
+    const productoProveedorId =
+      toTrimmedSeedString(lineaRaw.productoProveedorId) ||
+      (isRecord(lineaRaw.productoProveedor)
+        ? toTrimmedSeedString(lineaRaw.productoProveedor.id)
+        : '');
+
+    const cantidadADistribuir = toSeedFiniteNumber(
+      lineaRaw.cantidadADistribuir ?? lineaRaw.cantidadEntregada
+    );
+
+    if (
+      !productoProveedorId ||
+      !Number.isFinite(cantidadADistribuir) ||
+      cantidadADistribuir < 0.001
+    ) {
+      continue;
+    }
+
+    const cantidadObjetivo = Number(
+      Math.max(cantidadADistribuir + 1, cantidadADistribuir * 2, 1).toFixed(3)
+    );
+
+    const inventarioResponse = await context.requestJson<unknown>(
+      '/inventario',
+      {
+        method: 'POST',
+        body: {
+          productoProveedorId,
+          ubicacionId: ubicacionOrigenId,
+          cantidadActual: cantidadObjetivo,
+          cantidadMinima: 1,
+          cantidadMaxima: Number((cantidadObjetivo * 2).toFixed(3)),
+          fechaCaducidad: seedDateIso(iteration + 90 + lineIndex),
+        },
+        auth: true,
+        tokenOverride: inventoryToken,
+      }
+    );
+
+    collectStateFromResponse(context, '/inventario', inventarioResponse);
+    lineIndex++;
+  }
+
+  pushStateValue(context, 'seedDistribucionStockReadyIds', distribucionId);
+}
+
 export async function executeAdminFocusEndpointRequest(
   context: SeedContext,
   endpoint: Endpoint,
@@ -1542,7 +2077,10 @@ export async function executeEndpointRequest(
     await ensurePendingPreparacionForCancel(context);
   }
 
-  if (endpoint.method === 'PATCH' && endpoint.path === '/pedido-usuarios/:id') {
+  if (
+    (endpoint.method === 'PATCH' || endpoint.method === 'DELETE') &&
+    endpoint.path === '/pedido-usuarios/:id'
+  ) {
     await ensurePendingPedidoUsuarioForUpdate(context, coverage, iteration);
   }
 
@@ -1560,7 +2098,8 @@ export async function executeEndpointRequest(
     endpoint.method === 'PATCH' &&
     (endpoint.path === '/purchase-batches/:id' ||
       endpoint.path === '/purchase-batches/:id/aceptar' ||
-      endpoint.path === '/purchase-batches/:id/cancelar')
+      endpoint.path === '/purchase-batches/:id/cancelar' ||
+      endpoint.path === '/purchase-batches/:id/tramitar')
   ) {
     await ensurePendingPurchaseBatchForUpdate(context, coverage, iteration);
   }
@@ -1570,6 +2109,14 @@ export async function executeEndpointRequest(
     (endpoint.method === 'POST' || endpoint.method === 'PATCH')
   ) {
     await ensureIncidenciaForResolver(context, coverage, iteration);
+  }
+
+  if (
+    endpoint.method === 'PATCH' &&
+    (endpoint.path === '/distribuciones/:id/confirmar' ||
+      endpoint.path === '/distribuciones/:id/cancelar')
+  ) {
+    await ensurePreparedDistribucionForAction(context, iteration, coverage);
   }
 
   if (
@@ -1700,6 +2247,21 @@ export async function executeEndpointRequest(
     }
 
     if (
+      endpoint.method === 'PATCH' &&
+      /^\/distribuciones\/[^/]+\/confirmar$/.test(resolvedPath)
+    ) {
+      const distribucionId = resolvedPath.split('/')[2] || '';
+      if (distribucionId) {
+        await ensureDistribucionOriginStockForConfirm(
+          context,
+          distribucionId,
+          iteration,
+          requestToken
+        );
+      }
+    }
+
+    if (
       endpoint.method === 'POST' &&
       resolvedPath === '/pedido/draft/finalize'
     ) {
@@ -1815,10 +2377,108 @@ export async function executeEndpointRequest(
       }
     }
 
-    requestPayload =
-      endpoint.method === 'GET' || endpoint.method === 'DELETE'
-        ? undefined
-        : buildBody(context, endpoint, resolvedPath, iteration, coverage);
+    if (
+      endpoint.method === 'PATCH' &&
+      /^\/pedido-usuarios\/[^/]+\/restaurar$/.test(resolvedPath)
+    ) {
+      const entityId = resolvedPath.split('/')[2] || '';
+      if (entityId) {
+        try {
+          const cancelResponse = await context.requestJson<unknown>(
+            `/pedido-usuarios/${entityId}/cancelar`,
+            {
+              method: 'PATCH',
+              body: { motivoCancelacion: 'Precondición seed restaurar' },
+              auth: requiresAuth,
+              tokenOverride: requestToken,
+            }
+          );
+          collectStateFromResponse(
+            context,
+            `/pedido-usuarios/${entityId}/cancelar`,
+            cancelResponse
+          );
+        } catch (error) {
+          void error;
+        }
+      }
+    }
+
+    if (
+      endpoint.method === 'PATCH' &&
+      /^\/purchase-batches\/[^/]+\/restaurar$/.test(resolvedPath)
+    ) {
+      const entityId = resolvedPath.split('/')[2] || '';
+      if (entityId) {
+        try {
+          const cancelResponse = await context.requestJson<unknown>(
+            `/purchase-batches/${entityId}/cancelar`,
+            {
+              method: 'PATCH',
+              body: { motivoCancelacion: 'Precondición seed restaurar' },
+              auth: requiresAuth,
+              tokenOverride: requestToken,
+            }
+          );
+          collectStateFromResponse(
+            context,
+            `/purchase-batches/${entityId}/cancelar`,
+            cancelResponse
+          );
+        } catch (error) {
+          void error;
+        }
+      }
+    }
+
+    if (
+      endpoint.method === 'PATCH' &&
+      /^\/pedidos\/[^/]+\/restaurar$/.test(resolvedPath)
+    ) {
+      const entityId = resolvedPath.split('/')[2] || '';
+      if (entityId) {
+        try {
+          const cancelResponse = await context.requestJson<unknown>(
+            `/pedidos/${entityId}/cancelar`,
+            {
+              method: 'PATCH',
+              body: { motivoCancelacion: 'Precondición seed restaurar' },
+              auth: requiresAuth,
+              tokenOverride: requestToken,
+            }
+          );
+          collectStateFromResponse(
+            context,
+            `/pedidos/${entityId}/cancelar`,
+            cancelResponse
+          );
+        } catch (error) {
+          void error;
+        }
+      }
+    }
+
+    if (endpoint.method === 'GET' || endpoint.method === 'DELETE') {
+      requestPayload = undefined;
+    } else if (
+      endpoint.method === 'POST' &&
+      resolvedPath === '/distribuciones'
+    ) {
+      requestPayload = await buildDistribucionCreateBody(
+        context,
+        iteration,
+        coverage,
+        requestToken
+      );
+    } else {
+      requestPayload = buildBody(
+        context,
+        endpoint,
+        resolvedPath,
+        iteration,
+        coverage
+      );
+    }
 
     if (
       endpoint.method === 'POST' &&
@@ -1937,6 +2597,13 @@ export async function executeEndpointRequest(
     });
 
     collectStateFromResponse(context, resolvedPath, response);
+
+    if (endpoint.method === 'POST' && resolvedPath === '/distribuciones') {
+      const distribucionId = extractResourceId(response);
+      if (distribucionId) {
+        pushStateValue(context, 'seedCreatedDistribucionIds', distribucionId);
+      }
+    }
 
     if (resolvedPath === '/profesores/slots') {
       rememberProfesorOwnedSlot(

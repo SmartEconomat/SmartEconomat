@@ -21,6 +21,65 @@ export function collectStateFromResponse(
   let hasRoleIdByNameUpdates = false;
 
   const entities = toEntityArray(response);
+  const pedidoUsuarioCancelarMatch = resolvedPath.match(
+    /^\/pedido-usuarios\/([^/]+)\/cancelar$/
+  );
+  const pedidoUsuarioRestaurarMatch = resolvedPath.match(
+    /^\/pedido-usuarios\/([^/]+)\/restaurar$/
+  );
+  const purchaseBatchCancelarMatch = resolvedPath.match(
+    /^\/purchase-batches\/([^/]+)\/cancelar$/
+  );
+  const purchaseBatchRestaurarMatch = resolvedPath.match(
+    /^\/purchase-batches\/([^/]+)\/restaurar$/
+  );
+  const pedidoCancelarMatch = resolvedPath.match(
+    /^\/pedidos\/([^/]+)\/cancelar$/
+  );
+  const pedidoRestaurarMatch = resolvedPath.match(
+    /^\/pedidos\/([^/]+)\/restaurar$/
+  );
+
+  if (pedidoUsuarioCancelarMatch?.[1]) {
+    const id = pedidoUsuarioCancelarMatch[1];
+    pushStateValue(context, 'pedidoUsuarioCanceladoIds', id);
+    removeStateValue(context, 'pedidoUsuarioPendienteIds', id);
+    context.set('seedLastPedidoUsuarioCanceladoId', id);
+  }
+
+  if (pedidoUsuarioRestaurarMatch?.[1]) {
+    const id = pedidoUsuarioRestaurarMatch[1];
+    removeStateValue(context, 'pedidoUsuarioCanceladoIds', id);
+    pushStateValue(context, 'pedidoUsuarioPendienteIds', id);
+    if (context.getState<string>('seedLastPedidoUsuarioCanceladoId') === id) {
+      context.set('seedLastPedidoUsuarioCanceladoId', '');
+    }
+  }
+
+  if (purchaseBatchCancelarMatch?.[1]) {
+    const id = purchaseBatchCancelarMatch[1];
+    pushStateValue(context, 'purchaseBatchCanceladoIds', id);
+    removeStateValue(context, 'purchaseBatchPendienteIds', id);
+  }
+
+  if (purchaseBatchRestaurarMatch?.[1]) {
+    const id = purchaseBatchRestaurarMatch[1];
+    removeStateValue(context, 'purchaseBatchCanceladoIds', id);
+    pushStateValue(context, 'purchaseBatchPendienteIds', id);
+  }
+
+  if (pedidoCancelarMatch?.[1]) {
+    const id = pedidoCancelarMatch[1];
+    pushStateValue(context, 'pedidoCanceladoIds', id);
+    removeStateValue(context, 'pedidoPendienteIds', id);
+  }
+
+  if (pedidoRestaurarMatch?.[1]) {
+    const id = pedidoRestaurarMatch[1];
+    removeStateValue(context, 'pedidoCanceladoIds', id);
+    pushStateValue(context, 'pedidoPendienteIds', id);
+  }
+
   const profesorByAulaClaseMatch = resolvedPath.match(
     /^\/alumnos\/aulas\/([^/]+)\/clases\/([^/]+)\/profesores$/
   );
@@ -102,6 +161,22 @@ export function collectStateFromResponse(
     }
 
     return typeof entity.incidenciaId !== 'string';
+  };
+
+  const isDistribucionEntity = (entity: Record<string, unknown>): boolean => {
+    if (typeof entity.id !== 'string') {
+      return false;
+    }
+
+    if (!Array.isArray(entity.lineas)) {
+      return false;
+    }
+
+    return (
+      typeof entity.pedidoUsuarioId === 'string' ||
+      (isRecord(entity.pedidoUsuario) &&
+        typeof entity.pedidoUsuario.id === 'string')
+    );
   };
 
   const activePedidoIds = entities
@@ -341,6 +416,11 @@ export function collectStateFromResponse(
       pushStateValue(context, 'recetaIds', id);
     if (resolvedPath.startsWith('/preparaciones'))
       pushStateValue(context, 'preparacionIds', id);
+    if (
+      resolvedPath.startsWith('/distribuciones') &&
+      isDistribucionEntity(entity)
+    )
+      pushStateValue(context, 'distribucionIds', id);
     if (resolvedPath.startsWith('/merma'))
       pushStateValue(context, 'mermaIds', id);
     if (resolvedPath.startsWith('/profesores/admin-slots'))
@@ -509,6 +589,12 @@ export function collectStateFromResponse(
           removeStateValue(context, 'pedidoPendienteIds', entity.id);
         }
 
+        if (pedidoEstado === EstadoPedido.CANCELADO) {
+          pushStateValue(context, 'pedidoCanceladoIds', entity.id);
+        } else {
+          removeStateValue(context, 'pedidoCanceladoIds', entity.id);
+        }
+
         if (pedidoEstado === EstadoPedido.POR_RECEPCIONAR) {
           pushStateValue(context, 'pedidoReceivableIds', entity.id);
         } else {
@@ -528,6 +614,12 @@ export function collectStateFromResponse(
         } else {
           removeStateValue(context, 'pedidoUsuarioPendienteIds', entity.id);
         }
+
+        if (pedidoUsuarioEstado === EstadoPedidoUsuario.CANCELADO) {
+          pushStateValue(context, 'pedidoUsuarioCanceladoIds', entity.id);
+        } else {
+          removeStateValue(context, 'pedidoUsuarioCanceladoIds', entity.id);
+        }
       }
       if (
         resolvedPath.startsWith('/purchase-batches') &&
@@ -542,12 +634,41 @@ export function collectStateFromResponse(
         } else {
           removeStateValue(context, 'purchaseBatchPendienteIds', entity.id);
         }
+
+        if (batchEstado === EstadoLote.CANCELADO) {
+          pushStateValue(context, 'purchaseBatchCanceladoIds', entity.id);
+        } else {
+          removeStateValue(context, 'purchaseBatchCanceladoIds', entity.id);
+        }
       }
       if (resolvedPath.startsWith('/preparaciones')) {
         if (estado === 'PENDIENTE')
           pushStateValue(context, 'preparacionPendienteIds', entity.id);
         if (estado === 'EN_PROCESO')
           pushStateValue(context, 'preparacionEnProcesoIds', entity.id);
+      }
+
+      if (
+        resolvedPath.startsWith('/distribuciones') &&
+        isDistribucionEntity(entity)
+      ) {
+        if (estado === 'PREPARADA' || estado === 'BORRADOR') {
+          pushStateValue(context, 'distribucionPreparadaIds', entity.id);
+        } else {
+          removeStateValue(context, 'distribucionPreparadaIds', entity.id);
+        }
+
+        if (estado === 'CANCELADA') {
+          pushStateValue(context, 'distribucionCanceladaIds', entity.id);
+        } else {
+          removeStateValue(context, 'distribucionCanceladaIds', entity.id);
+        }
+
+        if (estado === 'ENTREGADA' || estado === 'PARCIAL') {
+          pushStateValue(context, 'distribucionEntregadaIds', entity.id);
+        } else {
+          removeStateValue(context, 'distribucionEntregadaIds', entity.id);
+        }
       }
     }
 
