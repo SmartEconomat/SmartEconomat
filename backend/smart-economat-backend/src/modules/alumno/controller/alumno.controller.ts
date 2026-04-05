@@ -16,6 +16,7 @@ import { ChangeProfesorDto } from '../dto/change-profesor.dto';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 @Controller('alumnos')
 export class AlumnoController {
   constructor(private readonly alumnoService: AlumnoService) {}
@@ -55,7 +56,7 @@ export class AlumnoController {
 
   @Patch('change-profesor')
   @UseGuards(JwtAuthGuard, PermisosGuard)
-  @RequirePermissions('alumno:cambiar_profesor')
+  @RequirePermissions(PERMISSIONS.alumno.cambiar_profesor)
   async changeProfesor(
     @GetUser('id') userId: string,
     @GetUser('rol') userRole: rolUsuario,

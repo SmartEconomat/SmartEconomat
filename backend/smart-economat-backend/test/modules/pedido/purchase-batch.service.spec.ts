@@ -107,7 +107,10 @@ describe('PurchaseBatchService', () => {
       expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
       expect(mockQueryRunner.manager.create).toHaveBeenCalledWith(
         PurchaseBatch,
-        expect.any(Object)
+        expect.objectContaining({
+          numeroGlobal: expect.any(String),
+          referencia: expect.stringMatching(/^LC-/),
+        })
       );
       expect(mockQueryRunner.manager.insert).toHaveBeenCalled();
       expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
@@ -277,6 +280,37 @@ describe('PurchaseBatchService', () => {
           { productoProveedorId: 'pp-1', cantidad: 6 },
           { productoProveedorId: 'pp-2', cantidad: 2 },
         ],
+      });
+    });
+  });
+
+  describe('findAll', () => {
+    it('debería exponer identidad semántica de lote y pedido proveedor', async () => {
+      const mockBatch = {
+        id: 'batch-identity',
+        numeroGlobal: '100100',
+        referencia: 'LC-100100',
+        pedidos: [
+          {
+            id: 'pedido-1',
+            numeroGlobal: '200001',
+            pedidoUsuario: { numeroGlobal: '42' },
+          },
+        ],
+      };
+
+      mockDataSource.getRepository().find.mockResolvedValue([mockBatch]);
+
+      const result = await service.findAll();
+
+      expect(result[0]).toMatchObject({
+        numeroLote: '100100',
+        referenciaLote: 'LC-100100',
+      });
+      expect(result[0].pedidos?.[0]).toMatchObject({
+        numeroPedidoProveedor: '200001',
+        numeroPedidoVisible: '42',
+        referenciaPedidoVisible: 'PU-42',
       });
     });
   });

@@ -37,7 +37,7 @@ export const getNextBatchAction = (
   const estado = String(batch.estado);
 
   // 1. PENDIENTE -> Tramitar
-  if (estado === EstadoLote.PENDIENTE || estado === 'PENDIENTE') {
+  if (estado === EstadoLote.PENDIENTE) {
     return {
       label: 'Tramitar',
       icon: AssignmentTurnedInIcon,
@@ -47,12 +47,8 @@ export const getNextBatchAction = (
     };
   }
 
-  // 2. PARCIAL / TRAMITADO -> Recibir Mercancía
-  if (
-    estado === EstadoLote.PARCIAL ||
-    estado === 'TRAMITADO' ||
-    estado === 'PARCIAL'
-  ) {
+  // 2. PARCIAL -> Recibir Mercancía
+  if (estado === EstadoLote.PARCIAL) {
     return {
       label: 'Recibir Mercancía',
       icon: LoginOutlinedIcon,
@@ -62,12 +58,8 @@ export const getNextBatchAction = (
     };
   }
 
-  // 3. COMPLETADO / RECIBIDO -> Distribuir
-  if (
-    estado === EstadoLote.COMPLETADO ||
-    estado === 'COMPLETADO' ||
-    estado === 'RECIBIDO'
-  ) {
+  // 3. COMPLETADO -> Distribuir
+  if (estado === EstadoLote.COMPLETADO) {
     const canDistribute = options.hasPedidosDistribuibles ?? true;
     return {
       label: 'Distribuir productos a los usuarios',

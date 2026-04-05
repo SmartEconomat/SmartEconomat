@@ -27,6 +27,7 @@ export interface RolOption {
   id: string;
   nombre: string;
   descripcion?: string;
+  plantillaRolId?: string | null;
   permisos?: Permiso[];
 }
 

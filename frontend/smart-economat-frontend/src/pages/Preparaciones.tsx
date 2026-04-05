@@ -49,6 +49,19 @@ import {
 const formatAmount = (value?: number): string =>
   formatLocalizedNumber(value ?? 0, 3);
 
+const formatDateTime = (value?: string | null): string => {
+  if (!value) {
+    return '—';
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return '—';
+  }
+
+  return parsed.toLocaleString();
+};
+
 const RATION_STEP = 0.5;
 const CONSUMPTION_FLOAT_TOLERANCE = 0.000001;
 
@@ -554,9 +567,10 @@ const Preparaciones: React.FC = () => {
 
   const columns: Column<ProduccionLote>[] = [
     {
-      id: 'fechaProduccion',
-      label: 'Fecha',
-      render: (row) => new Date(row.fechaProduccion).toLocaleString(),
+      id: 'createdAt',
+      label: 'Fecha creación',
+      render: (row) => formatDateTime(row.createdAt || row.fechaProduccion),
+      hideOnMobile: true,
     },
     {
       id: 'receta',
@@ -581,6 +595,19 @@ const Preparaciones: React.FC = () => {
       render: (row) => row.usuario?.nombre ?? '—',
       hideOnMobile: true,
     },
+    ...(activeTab === 1
+      ? [
+          {
+            id: 'fechaAgotado' as const,
+            label: 'Fecha agotado',
+            render: (row: ProduccionLote) =>
+              row.estado === 'agotado'
+                ? formatDateTime(row.fechaAgotado || null)
+                : '—',
+            hideOnMobile: true,
+          },
+        ]
+      : []),
     ...(activeTab === 0
       ? [
           {
@@ -673,7 +700,20 @@ const Preparaciones: React.FC = () => {
             { label: 'Receta', value: itemToView.receta?.nombre },
             {
               label: 'Fecha de ejecución',
-              value: new Date(itemToView.fechaProduccion).toLocaleString(),
+              value: formatDateTime(itemToView.fechaProduccion),
+            },
+            {
+              label: 'Fecha de creación',
+              value: formatDateTime(
+                itemToView.createdAt || itemToView.fechaProduccion
+              ),
+            },
+            {
+              label: 'Fecha de agotado',
+              value:
+                itemToView.estado === 'agotado'
+                  ? formatDateTime(itemToView.fechaAgotado || null)
+                  : 'Aún disponible',
             },
             {
               label: 'Cantidad Producida',

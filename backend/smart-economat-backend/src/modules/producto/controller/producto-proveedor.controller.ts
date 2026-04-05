@@ -27,12 +27,12 @@ import { SearchProductoProveedorDto } from '../dto/search-producto-proveedor.dto
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/role.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
-import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 @ApiTags('Producto Proveedor')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('producto-proveedor')
 export class ProductoProveedorController {
   constructor(
@@ -40,7 +40,7 @@ export class ProductoProveedorController {
   ) {}
 
   @Patch(':id/precio')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.productos.editar)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
@@ -70,7 +70,7 @@ export class ProductoProveedorController {
   }
 
   @Patch(':id/merma')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.productos.editar)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Actualizar la merma esperada de un producto-proveedor',
@@ -97,7 +97,7 @@ export class ProductoProveedorController {
   }
 
   @Get('search')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.productos.listar)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Buscar relaciones producto-proveedor (autocomplete)',
@@ -107,7 +107,7 @@ export class ProductoProveedorController {
   }
 
   @Get('comparar/:productoId')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.productos.listar)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
@@ -136,7 +136,7 @@ export class ProductoProveedorController {
   }
 
   @Get(':id/historial')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.productos.listar)
   @ApiOperation({
     summary: 'Obtener el historial de precios de un producto proveedor',
   })

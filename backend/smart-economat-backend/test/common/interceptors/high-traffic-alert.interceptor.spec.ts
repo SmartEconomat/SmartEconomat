@@ -1,6 +1,6 @@
-import { HighTrafficAlertInterceptor } from './high-traffic-alert.interceptor';
 import { ExecutionContext, CallHandler } from '@nestjs/common';
 import { of } from 'rxjs';
+import { HighTrafficAlertInterceptor } from '../../../src/common/interceptors/high-traffic-alert.interceptor';
 
 describe('HighTrafficAlertInterceptor', () => {
   let interceptor: HighTrafficAlertInterceptor;
@@ -46,7 +46,7 @@ describe('HighTrafficAlertInterceptor', () => {
       handle: () => of(null),
     };
 
-    for (let i = 0; i < 100; i++) {
+    for (let index = 0; index < 100; index++) {
       interceptor.intercept(mockContext, mockHandler);
     }
 
@@ -73,13 +73,13 @@ describe('HighTrafficAlertInterceptor', () => {
       handle: () => of(null),
     };
 
-    for (let i = 0; i < 50; i++) {
+    for (let index = 0; index < 50; index++) {
       interceptor.intercept(mockContext, mockHandler);
     }
 
     jest.advanceTimersByTime(11000);
 
-    for (let i = 0; i < 60; i++) {
+    for (let index = 0; index < 60; index++) {
       interceptor.intercept(mockContext, mockHandler);
     }
 

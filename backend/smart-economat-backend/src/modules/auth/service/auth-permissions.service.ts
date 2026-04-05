@@ -5,9 +5,12 @@ import { Repository } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
-import { rolUsuario } from '../../usuario/enums/usuario.enums';
 import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
-import { resolveSherlockEffectivePermissions } from '../../sherlock-auth/utils/access.utils';
+import {
+  resolveSherlockEffectivePermissions,
+  getRolPrincipal,
+} from '../../sherlock-auth/utils/access.utils';
+import { SYSTEM_ROLES } from '../../../common/constants/system-roles.constants';
 
 /**
  * Servicio centralizado de gestión de permisos con caching agresivo.
@@ -81,9 +84,19 @@ export class AuthPermissionsService {
     const usuario = await this.usuarioRepo.findOne({
       where: { id: userId, activo: true },
       select: ['id', 'rol', 'activo'],
+      relations: ['roles'],
     });
 
     if (!usuario) return [];
+
+    const rolPrincipal = getRolPrincipal(usuario.roles, usuario.rol);
+    if (rolPrincipal === SYSTEM_ROLES.SUPER_ADMIN) {
+      const todosLosPermisos = await this.permisoRepo.find({
+        where: { activo: true },
+        select: ['codigo'],
+      });
+      return todosLosPermisos.map((p) => p.codigo);
+    }
 
     const permisosRoles = await this.permisoRepo
       .createQueryBuilder('permiso')
@@ -95,10 +108,13 @@ export class AuthPermissionsService {
       .select(['permiso.codigo'])
       .getMany();
 
-    const permisosPlantilla = await this.permisoRepo
+    const permisosPlantillaDinamica = await this.permisoRepo
       .createQueryBuilder('permiso')
       .innerJoin('permiso.plantillasRoles', 'plantilla')
-      .where('plantilla.nombre = :rolNombre', { rolNombre: usuario.rol })
+      .innerJoin('plantilla.roles', 'rolPlantilla')
+      .innerJoin('rolPlantilla.usuarios', 'usuarioPlantilla')
+      .where('usuarioPlantilla.id = :userId', { userId })
+      .andWhere('rolPlantilla.activo = :rolActivo', { rolActivo: true })
       .andWhere('plantilla.activo = :plantillaActivo', {
         plantillaActivo: true,
       })
@@ -108,7 +124,7 @@ export class AuthPermissionsService {
 
     const codigosBase = [
       ...permisosRoles.map((p) => p.codigo),
-      ...permisosPlantilla.map((p) => p.codigo),
+      ...permisosPlantillaDinamica.map((p) => p.codigo),
     ];
 
     const adicionales = await this.permisoRepo
@@ -130,16 +146,8 @@ export class AuthPermissionsService {
 
     const codigosExcluidos = excluidos.map((p) => p.codigo);
 
-    if (usuario.rol === rolUsuario.SUPER_ADMIN) {
-      const todosLosPermisos = await this.permisoRepo.find({
-        where: { activo: true },
-        select: ['codigo'],
-      });
-      return todosLosPermisos.map((p) => p.codigo);
-    }
-
     const result = resolveSherlockEffectivePermissions({
-      role: usuario.rol,
+      role: rolPrincipal,
       rolePermissions: codigosBase,
       directPermissions: codigosAdicionales,
       excludedPermissions: codigosExcluidos,

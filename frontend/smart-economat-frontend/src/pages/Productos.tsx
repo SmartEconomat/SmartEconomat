@@ -73,6 +73,7 @@ function buildExportQuery(filters: ProductFiltersState, searchTerm: string) {
 import { useToast } from '../store/toast.hooks';
 import StatusChip from '../components/ui/StatusChip';
 import { usePermission } from '../store/auth.hooks';
+import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 import ProductCard from '../features/productos/ProductCard';
 import ProductFilters, {
   ProductFiltersState,
@@ -148,9 +149,9 @@ const Productos: React.FC = () => {
     }
   };
 
-  const canEdit = usePermission('productos:editar');
-  const canDelete = usePermission('productos:eliminar');
-  const canCreate = usePermission('productos:crear');
+  const canEdit = usePermission(PERMISSIONS.productos.editar);
+  const canDelete = usePermission(PERMISSIONS.productos.eliminar);
+  const canCreate = usePermission(PERMISSIONS.productos.crear);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);

@@ -74,6 +74,8 @@ deploy_key
 deploy_key.pub
 
 **/uploads/
+**/qa-tests/
+**/test-results/
 
 # SSL certs & prod volumes (Except renewal hooks)
 /certs-data/
@@ -86,3 +88,59 @@ deploy_key.pub
 .agent*
 .agents/*
 .agent/
+
+
+# ================================
+# SSL / TLS Certificates
+# ================================
+*.pem
+*.key
+*.crt
+*.cer
+*.csr
+*.pfx
+*.p12
+*.der
+*.ca-bundle
+*.chain
+
+# Let's Encrypt / Buypass / ACME
+fullchain.pem
+privkey.pem
+chain.pem
+cert.pem
+
+# Cert directories
+certs/
+certificates/
+ssl/
+tls/
+https/
+acme/
+letsencrypt/
+buypass/
+
+# Docker mounted cert paths
+docker/certs/
+docker/ssl/
+nginx/certs/
+nginx/ssl/
+traefik/certs/
+caddy/certs/
+
+# Local dev certs
+localhost.pem
+localhost-key.pem
+dev.pem
+dev.key
+
+# mkcert
+*.pem
+*.key
+rootCA.pem
+rootCA-key.pem
+
+# Env files that may contain cert paths
+.env.ssl
+.env.cert
+.env.https

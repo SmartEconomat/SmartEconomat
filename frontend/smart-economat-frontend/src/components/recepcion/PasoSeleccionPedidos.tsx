@@ -123,8 +123,8 @@ const PasoSeleccionPedidos: React.FC<PasoSeleccionPedidosProps> = ({
                     checked={pedidosSeleccionadosIds.includes(pedido.id)}
                   />
                   <ListItemText
-                    primary={`${pedido.proveedor?.nombre} - Pedido ${formatPedidoListNumber(pedido)}`}
-                    secondary={`Fecha: ${new Date(pedido.fechaPedido).toLocaleDateString()} | Estado: ${pedido.estado}`}
+                    primary={`${pedido.proveedor?.nombre} - Pedido ${formatPedidoListNumber(pedido, 'pedido-proveedor')}`}
+                    secondary={`ID: ${pedido.id} | Fecha: ${new Date(pedido.fechaPedido).toLocaleDateString()} | Estado: ${pedido.estado}`}
                   />
                   <Chip
                     label={pedido.estado}

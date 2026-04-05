@@ -31,6 +31,7 @@ import { authService } from '../services/auth.service';
 import { getRoleColor } from '../utils/theme/roleColors';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
+import { SYSTEM_ROLES } from '../sherlock-auth/system-roles.constants';
 
 /**
  * Página de Perfil - Unificada como una Ficha de Usuario.
@@ -40,7 +41,7 @@ const Perfil: React.FC = () => {
   const toast = useToast();
 
   const userRole = user?.rol?.toUpperCase() || '';
-  const isAlumno = userRole === 'ALUMNO';
+  const isAlumno = userRole === SYSTEM_ROLES.ALUMNO;
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isLoading, setIsLoading] = useState(false);

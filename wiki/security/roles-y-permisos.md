@@ -2,6 +2,8 @@
 
 Este documento resume la vista funcional de acceso del sistema. La definición técnica exacta de guards, decoradores y resolución de permisos está en [rbac.md](rbac.md).
 
+Para el inventario completo de permisos, su función concreta y los roles que los traen por defecto, ver [catalogo-permisos.md](catalogo-permisos.md).
+
 ## Roles principales
 
 | Rol | Uso principal | Observaciones |
@@ -12,6 +14,8 @@ Este documento resume la vista funcional de acceso del sistema. La definición t
 | `ALUMNO` | Consulta y acciones educativas limitadas | Rol no elevado |
 
 En UI pueden mostrarse etiquetas como "Administrador", pero el valor técnico de rol actual es `ADMIN`.
+
+El catálogo actual incluye 88 permisos definidos en backend.
 
 ## Qué significa "rol elevado"
 

@@ -164,6 +164,11 @@ describe('Frontend Integration Contracts (e2e)', () => {
 
     const pedidoId = createResponse.body.data.id as string;
 
+    await request(app.getHttpServer())
+      .patch(`/api/v1/pedidos/${pedidoId}/aceptar`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+
     const detailResponse = await request(app.getHttpServer())
       .get(`/api/v1/pedidos/${pedidoId}`)
       .set('Authorization', `Bearer ${adminToken}`)

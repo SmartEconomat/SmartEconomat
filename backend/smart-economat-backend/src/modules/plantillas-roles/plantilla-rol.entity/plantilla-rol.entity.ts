@@ -7,9 +7,11 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
+  type Relation,
 } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
+import { Rol } from '../../roles/rol.entity/rol.entity';
 
 @Entity({ name: 'plantilla_rol' })
 @Index('idx_plantilla_nombre', ['nombre'])
@@ -56,13 +58,19 @@ export class PlantillaRol extends BaseEntity {
     onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'plantilla_padre_id' })
-  plantillaPadre?: PlantillaRol;
+  plantillaPadre?: Relation<PlantillaRol>;
 
   /**
    * Plantillas que heredan de esta (inversa)
    */
   @OneToMany(() => PlantillaRol, (plantilla) => plantilla.plantillaPadre)
-  plantillasHijas!: PlantillaRol[];
+  plantillasHijas!: Relation<PlantillaRol[]>;
+
+  /**
+   * Roles derivados que usan esta plantilla como base
+   */
+  @OneToMany(() => Rol, (rol) => rol.plantillaRol)
+  roles!: Relation<Rol[]>;
 
   /**
    * Relación ManyToMany con Permiso
@@ -76,5 +84,5 @@ export class PlantillaRol extends BaseEntity {
     joinColumn: { name: 'plantilla_rol_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'permiso_id', referencedColumnName: 'id' },
   })
-  permisos!: Permiso[];
+  permisos!: Relation<Permiso[]>;
 }

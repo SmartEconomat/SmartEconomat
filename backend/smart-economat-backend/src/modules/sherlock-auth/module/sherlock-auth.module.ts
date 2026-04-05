@@ -17,7 +17,6 @@ import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
 import { Rol } from '../../roles/rol.entity/rol.entity';
 import { PlantillaRol } from '../../plantillas-roles/plantilla-rol.entity/plantilla-rol.entity';
-import { PermisosModule } from '../../permisos/permisos.module';
 
 @Global()
 @Module({
@@ -37,7 +36,6 @@ import { PermisosModule } from '../../permisos/permisos.module';
       ttl: 300,
       max: 1000,
     }),
-    PermisosModule,
   ],
   controllers: [AuthController],
   providers: [

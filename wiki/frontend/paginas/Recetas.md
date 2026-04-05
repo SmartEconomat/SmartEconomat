@@ -64,5 +64,5 @@ La pantalla puede derivar recetas seleccionadas a un pedido o batch de compra cu
 ## Relacionado
 
 - [Módulo de pedidos desde recetas](../../modules/pedido/pedidos-desde-recetas.md)
-- [Referencia de API](../../reference/api.md)
+- [Referencia de API](../../reference/api/README.md)
 - [RecetaIngredientesSelector](../componentes/RecetaIngredientesSelector.md)

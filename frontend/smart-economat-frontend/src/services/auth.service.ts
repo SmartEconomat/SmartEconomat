@@ -1,5 +1,4 @@
 import { baseFetch, ApiResponse, parseApiResponse } from './api.service';
-import { tokenManager } from '../utils/token.manager';
 
 export interface LoginRequest {
   email: string;
@@ -80,16 +79,33 @@ export const authService = {
       'Usuario o contraseña inválidos.'
     );
 
-    if (result.success && result.data?.access_token) {
-      tokenManager.setToken(result.data.access_token);
-      localStorage.setItem('token', result.data.access_token);
-    }
-
     return result;
   },
 
   async getCurrentUser(): Promise<User> {
-    const response = await baseFetch('/usuarios/perfil');
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => {
+      controller.abort();
+    }, 10000);
+
+    let response: Response;
+
+    try {
+      response = await baseFetch('/usuarios/perfil', {
+        signal: controller.signal,
+      });
+    } catch (error: unknown) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        throw new Error(
+          'No se pudo validar la sesión a tiempo. Vuelve a intentarlo.'
+        );
+      }
+
+      throw error;
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
+
     const result = await parseApiResponse<CurrentUserResponse>(
       response,
       'No se pudo obtener la información del usuario'
@@ -234,7 +250,6 @@ export const authService = {
     const response = await baseFetch('/auth/logout', {
       method: 'POST',
     });
-    localStorage.removeItem('token');
     await parseApiResponse(response, 'Error al cerrar la sesión');
   },
 };

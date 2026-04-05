@@ -36,8 +36,12 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import IncidenciaFilters, {
   IncidenciaFiltersState,
 } from '../features/incidencias/IncidenciaFilters';
+import IncidenciasStatusTabs, {
+  IncidenciasResolucionTab,
+} from '../features/incidencias/IncidenciasStatusTabs';
 import ResolveIncidenciaModal from '../features/incidencias/ResolveIncidenciaModal';
 import { useAuth, usePermission } from '../store/auth.hooks';
+import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 import ReporteSelectorModal, {
   type ReporteFormato,
 } from '../components/ui/ReporteSelectorModal';
@@ -74,8 +78,9 @@ const Incidencias: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [resolucionTab, setResolucionTab] =
+    useState<IncidenciasResolucionTab>('por_resolver');
   const [filters, setFilters] = useState<IncidenciaFiltersState>({
-    resuelta: null,
     startDate: null,
     endDate: null,
   });
@@ -89,8 +94,8 @@ const Incidencias: React.FC = () => {
   const [isReporteOpen, setIsReporteOpen] = useState(false);
   const [reporteFormato, setReporteFormato] = useState<ReporteFormato>('pdf');
 
-  const canResolve = usePermission('incidencias:resolver');
-  const canDelete = usePermission('incidencias:eliminar');
+  const canResolve = usePermission(PERMISSIONS.incidencias.resolver);
+  const canDelete = usePermission(PERMISSIONS.incidencias.eliminar);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -100,7 +105,7 @@ const Incidencias: React.FC = () => {
         page,
         limit: pageSize,
         searchTerm: searchTerm || undefined,
-        resuelta: filters.resuelta !== null ? filters.resuelta : undefined,
+        resuelta: resolucionTab === 'resueltas',
         startDate: filters.startDate || undefined,
         endDate: filters.endDate || undefined,
       };
@@ -115,7 +120,7 @@ const Incidencias: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, searchTerm, filters]);
+  }, [page, pageSize, searchTerm, resolucionTab, filters]);
 
   useEffect(() => {
     loadData();
@@ -179,6 +184,11 @@ const Incidencias: React.FC = () => {
   const openReporteModal = (formato: ReporteFormato) => {
     setReporteFormato(formato);
     setIsReporteOpen(true);
+  };
+
+  const handleResolucionTabChange = (nextTab: IncidenciasResolucionTab) => {
+    setResolucionTab(nextTab);
+    setPage(1);
   };
 
   const columns: Column<Incidencia>[] = useMemo(
@@ -581,6 +591,11 @@ const Incidencias: React.FC = () => {
         }
       />
 
+      <IncidenciasStatusTabs
+        value={resolucionTab}
+        onChange={handleResolucionTabChange}
+      />
+
       <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
         {error && (
           <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
@@ -599,7 +614,9 @@ const Incidencias: React.FC = () => {
                 sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
               />
               <Typography variant="h6" color="text.secondary" gutterBottom>
-                No hay incidencias activas
+                {resolucionTab === 'resueltas'
+                  ? 'No hay incidencias resueltas'
+                  : 'No hay incidencias por resolver'}
               </Typography>
               <Typography
                 variant="body2"
@@ -608,7 +625,9 @@ const Incidencias: React.FC = () => {
               >
                 {searchTerm
                   ? 'No se encontraron incidencias que coincidan con tu búsqueda.'
-                  : '¡Excelente trabajo! No se han detectado discrepancias en las recepciones recientes.'}
+                  : resolucionTab === 'resueltas'
+                    ? 'Aún no se han registrado incidencias resueltas con los filtros aplicados.'
+                    : '¡Excelente trabajo! No se han detectado discrepancias pendientes en las recepciones recientes.'}
               </Typography>
             </Box>
           }

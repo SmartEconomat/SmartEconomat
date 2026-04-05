@@ -32,8 +32,17 @@ import { IncidenciaLinea } from '../../incidencia/incidencia-linea.entity/incide
 import { PedidoUsuario } from '../pedido-usuario.entity/pedido-usuario.entity';
 import { EstadoPedidoUsuario } from '../enums/estado-pedido-usuario.enum';
 import { reserveNextPedidoProveedorNumero } from '../utils/pedido-numero.util';
+import {
+  formatPurchaseBatchReferencia,
+  reserveNextPurchaseBatchNumero,
+} from '../utils/purchase-batch-numero.util';
 
 type BatchCreationMode = 'approve' | 'consolidate';
+type PedidoSemanticShape = Pedido & {
+  numeroPedidoProveedor?: string;
+  numeroPedidoVisible?: string;
+  referenciaPedidoVisible?: string;
+};
 
 @Injectable()
 export class PurchaseBatchService {
@@ -56,10 +65,17 @@ export class PurchaseBatchService {
     await queryRunner.startTransaction();
 
     try {
+      const numeroLote = await reserveNextPurchaseBatchNumero(
+        queryRunner.manager
+      );
+
       const batch = queryRunner.manager.create(PurchaseBatch, {
+        numeroGlobal: numeroLote,
+        referencia: formatPurchaseBatchReferencia(numeroLote),
         usuarioId: userId,
         observaciones: dto.observaciones,
         estado: EstadoLote.PENDIENTE,
+        modifiedBy: userId,
       });
       const savedBatch = await queryRunner.manager.save(PurchaseBatch, batch);
 
@@ -111,6 +127,7 @@ export class PurchaseBatchService {
           queryRunner.manager
         );
         built.pedido.batchId = savedBatch.id;
+        built.pedido.modifiedBy = userId;
 
         const savedPedido = await queryRunner.manager.save(
           Pedido,
@@ -124,6 +141,7 @@ export class PurchaseBatchService {
             cantidad: pp.cantidad,
             precioUnitario: pp.precioUnitario,
             observaciones: pp.observaciones,
+            modifiedBy: userId,
           });
         }
 
@@ -228,10 +246,17 @@ export class PurchaseBatchService {
   }
 
   async findAll(): Promise<PurchaseBatch[]> {
-    return this.dataSource.getRepository(PurchaseBatch).find({
-      relations: ['pedidos', 'pedidos.proveedor', 'usuario'],
+    const batches = await this.dataSource.getRepository(PurchaseBatch).find({
+      relations: [
+        'pedidos',
+        'pedidos.proveedor',
+        'pedidos.pedidoUsuario',
+        'usuario',
+      ],
       order: { createdAt: 'DESC' },
     });
+
+    return batches.map((batch) => this.decorateBatchIdentity(batch));
   }
 
   async consolidateExistingOrders(
@@ -262,7 +287,8 @@ export class PurchaseBatchService {
 
   async updateBatchOrder(
     id: string,
-    dto: UpdatePurchaseBatchDto
+    dto: UpdatePurchaseBatchDto,
+    userId?: string
   ): Promise<PurchaseBatch> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -320,6 +346,9 @@ export class PurchaseBatchService {
       const retainedLineIds = new Set<string>();
 
       batch.observaciones = dto.observaciones;
+      if (userId) {
+        batch.modifiedBy = userId;
+      }
       await queryRunner.manager.save(PurchaseBatch, batch);
 
       for (const linea of dto.lineas) {
@@ -351,6 +380,7 @@ export class PurchaseBatchService {
               observaciones: dto.observaciones,
               fechaEntrega: this.calculateFechaEntrega(),
               costeTotal: 0,
+              modifiedBy: userId,
             })
           );
 
@@ -381,6 +411,7 @@ export class PurchaseBatchService {
               cantidad: linea.cantidad,
               precioUnitario: precioVigente,
               observaciones: existingLine.observaciones,
+              modifiedBy: userId,
             }
           );
 
@@ -393,6 +424,7 @@ export class PurchaseBatchService {
           productoProveedorId: productProvider.id,
           cantidad: linea.cantidad,
           precioUnitario: precioVigente,
+          modifiedBy: userId,
         });
       }
 
@@ -441,6 +473,7 @@ export class PurchaseBatchService {
               {
                 observaciones: dto.observaciones,
                 costeTotal: 0,
+                modifiedBy: userId,
               }
             );
           } else {
@@ -463,11 +496,12 @@ export class PurchaseBatchService {
           {
             observaciones: dto.observaciones,
             costeTotal,
+            modifiedBy: userId,
           }
         );
       }
 
-      await this.syncBatchStatus(batch.id, queryRunner.manager);
+      await this.syncBatchStatus(batch.id, queryRunner.manager, userId);
       await queryRunner.commitTransaction();
 
       return this.findOne(batch.id);
@@ -490,7 +524,7 @@ export class PurchaseBatchService {
     }
   }
 
-  async acceptBatchOrder(id: string): Promise<PurchaseBatch> {
+  async acceptBatchOrder(id: string, userId?: string): Promise<PurchaseBatch> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -529,10 +563,13 @@ export class PurchaseBatchService {
         if (pedido.estado === EstadoPedido.PENDIENTE_DE_APROBACION) {
           pedido.estado = EstadoPedido.POR_RECEPCIONAR;
         }
+        if (userId) {
+          pedido.modifiedBy = userId;
+        }
         await queryRunner.manager.save(Pedido, pedido);
       }
 
-      await this.syncBatchStatus(batch.id, queryRunner.manager);
+      await this.syncBatchStatus(batch.id, queryRunner.manager, userId);
       await queryRunner.commitTransaction();
 
       return this.findOne(batch.id);
@@ -555,11 +592,11 @@ export class PurchaseBatchService {
     }
   }
 
-  async approveBatchOrder(id: string): Promise<PurchaseBatch> {
-    return this.acceptBatchOrder(id);
+  async approveBatchOrder(id: string, userId?: string): Promise<PurchaseBatch> {
+    return this.acceptBatchOrder(id, userId);
   }
 
-  async restoreBatchOrder(id: string): Promise<PurchaseBatch> {
+  async restoreBatchOrder(id: string, userId?: string): Promise<PurchaseBatch> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -608,6 +645,9 @@ export class PurchaseBatchService {
       for (const pedido of batch.pedidos) {
         pedido.estado = EstadoPedido.PENDIENTE_DE_APROBACION;
         pedido.motivoCancelacion = undefined;
+        if (userId) {
+          pedido.modifiedBy = userId;
+        }
         await queryRunner.manager.save(Pedido, pedido);
       }
 
@@ -621,10 +661,13 @@ export class PurchaseBatchService {
 
       for (const pedidoUsuario of touchedPedidoUsuarios) {
         pedidoUsuario.estado = EstadoPedidoUsuario.PENDIENTE;
+        if (userId) {
+          pedidoUsuario.modifiedBy = userId;
+        }
         await queryRunner.manager.save(PedidoUsuario, pedidoUsuario);
       }
 
-      await this.syncBatchStatus(batch.id, queryRunner.manager);
+      await this.syncBatchStatus(batch.id, queryRunner.manager, userId);
       await queryRunner.commitTransaction();
 
       return this.findOne(batch.id);
@@ -649,7 +692,8 @@ export class PurchaseBatchService {
 
   async cancelBatchOrder(
     id: string,
-    dto: CancelPurchaseBatchDto
+    dto: CancelPurchaseBatchDto,
+    userId?: string
   ): Promise<PurchaseBatch> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -705,6 +749,9 @@ export class PurchaseBatchService {
       for (const pedido of batch.pedidos) {
         pedido.estado = EstadoPedido.CANCELADO;
         pedido.motivoCancelacion = motivo;
+        if (userId) {
+          pedido.modifiedBy = userId;
+        }
         await queryRunner.manager.save(Pedido, pedido);
       }
 
@@ -718,10 +765,13 @@ export class PurchaseBatchService {
 
       for (const pedidoUsuario of touchedPedidoUsuarios) {
         pedidoUsuario.estado = EstadoPedidoUsuario.CANCELADO;
+        if (userId) {
+          pedidoUsuario.modifiedBy = userId;
+        }
         await queryRunner.manager.save(PedidoUsuario, pedidoUsuario);
       }
 
-      await this.syncBatchStatus(batch.id, queryRunner.manager);
+      await this.syncBatchStatus(batch.id, queryRunner.manager, userId);
       await queryRunner.commitTransaction();
 
       return this.findOne(batch.id);
@@ -765,7 +815,7 @@ export class PurchaseBatchService {
 
     await this.annotateLinkedMovements(batch.pedidos || []);
 
-    return batch;
+    return this.decorateBatchIdentity(batch);
   }
 
   /**
@@ -774,7 +824,8 @@ export class PurchaseBatchService {
    */
   async syncBatchStatus(
     batchId: string,
-    manager?: EntityManager
+    manager?: EntityManager,
+    actorId?: string
   ): Promise<void> {
     const repo = manager
       ? manager.getRepository(PurchaseBatch)
@@ -791,6 +842,9 @@ export class PurchaseBatchService {
 
     if (batch.estado !== nuevoEstado) {
       batch.estado = nuevoEstado;
+      if (actorId) {
+        batch.modifiedBy = actorId;
+      }
       await repo.save(batch);
     }
   }
@@ -926,15 +980,21 @@ export class PurchaseBatchService {
       }
 
       const batch = queryRunner.manager.create(PurchaseBatch, {
+        numeroGlobal: await reserveNextPurchaseBatchNumero(queryRunner.manager),
         usuarioId: userId,
         observaciones,
         estado: EstadoLote.PENDIENTE,
+        modifiedBy: userId,
       });
+
+      batch.referencia = formatPurchaseBatchReferencia(batch.numeroGlobal);
+
       const savedBatch = await queryRunner.manager.save(PurchaseBatch, batch);
 
       for (const pedido of pedidos) {
         pedido.batchId = savedBatch.id;
         pedido.estado = EstadoPedido.POR_RECEPCIONAR;
+        pedido.modifiedBy = userId;
         await queryRunner.manager.save(Pedido, pedido);
       }
 
@@ -945,10 +1005,11 @@ export class PurchaseBatchService {
 
       for (const pedidoUsuario of pedidosUsuario) {
         pedidoUsuario.estado = nextPedidoUsuarioEstado;
+        pedidoUsuario.modifiedBy = userId;
         await queryRunner.manager.save(PedidoUsuario, pedidoUsuario);
       }
 
-      await this.syncBatchStatus(savedBatch.id, queryRunner.manager);
+      await this.syncBatchStatus(savedBatch.id, queryRunner.manager, userId);
       await queryRunner.commitTransaction();
 
       return this.findOne(savedBatch.id);
@@ -968,5 +1029,23 @@ export class PurchaseBatchService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  private decorateBatchIdentity(batch: PurchaseBatch): PurchaseBatch {
+    batch.numeroLote = batch.numeroGlobal;
+    batch.referenciaLote = batch.referencia;
+
+    (batch.pedidos || []).forEach((pedido) => {
+      const semanticPedido = pedido as PedidoSemanticShape;
+      semanticPedido.numeroPedidoProveedor = pedido.numeroGlobal;
+
+      const numeroPedidoVisible = pedido.pedidoUsuario?.numeroGlobal;
+      if (numeroPedidoVisible) {
+        semanticPedido.numeroPedidoVisible = numeroPedidoVisible;
+        semanticPedido.referenciaPedidoVisible = `PU-${numeroPedidoVisible}`;
+      }
+    });
+
+    return batch;
   }
 }

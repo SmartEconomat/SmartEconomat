@@ -1,7 +1,6 @@
 import React, { useState, ReactNode, useEffect } from 'react';
 import { eventBus, AUTH_EVENTS } from '../utils/eventBus';
 import { authService } from '../services/auth.service';
-import { tokenManager } from '../utils/token.manager';
 
 import { useAppDispatch } from '../store/hooks';
 import {
@@ -11,10 +10,9 @@ import {
 import { AuthContext } from './context';
 import type { User } from './types';
 
-const clearLegacySessionStorage = () => {
+const clearPersistedSessionArtifacts = () => {
   localStorage.removeItem('user');
   localStorage.removeItem('token');
-  tokenManager.clearToken();
 };
 
 const isPublicAuthPath = (pathname: string) =>
@@ -54,7 +52,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         return refreshedUser;
       })
       .catch(() => {
-        clearLegacySessionStorage();
+        clearPersistedSessionArtifacts();
         setIsSessionVerified(false);
         setIsAuthResolved(true);
         localStorage.removeItem('sm_has_session');
@@ -74,11 +72,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const logout = React.useCallback(async () => {
     refreshPromiseRef.current = null;
-    clearLegacySessionStorage();
+    clearPersistedSessionArtifacts();
     setIsSessionVerified(false);
     setIsAuthResolved(true);
     localStorage.removeItem('sm_has_session');
-    tokenManager.clearToken();
     try {
       await authService.logout();
     } catch {
@@ -89,7 +86,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const login = React.useCallback(
     async (userData: User) => {
       refreshPromiseRef.current = null;
-      clearLegacySessionStorage();
+      clearPersistedSessionArtifacts();
       setUser(userData);
       setIsSessionVerified(true);
       localStorage.setItem('sm_has_session', 'true');

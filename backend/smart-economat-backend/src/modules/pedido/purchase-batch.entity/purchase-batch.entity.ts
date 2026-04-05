@@ -20,10 +20,22 @@ import { Pedido } from '../pedido.entity/pedido.entity';
  * siempre manteniendo un único proveedor por pedido.
  */
 @Entity({ name: 'purchase_batch' })
+@Index(['numeroGlobal'], { unique: true })
+@Index(['referencia'], { unique: true })
 @Index(['estado'])
 @Index(['createdAt'])
 @Index(['usuarioId'])
 export class PurchaseBatch extends BaseEntity {
+  @Column({ name: 'numero_global', type: 'bigint', unique: true })
+  numeroGlobal!: string;
+
+  @Column({ name: 'referencia', type: 'varchar', length: 32, unique: true })
+  referencia!: string;
+
+  numeroLote?: string;
+
+  referenciaLote?: string;
+
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
 

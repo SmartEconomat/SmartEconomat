@@ -249,7 +249,8 @@ export class RolesService {
    */
   async assignPermissions(
     rolId: string,
-    dto: AssignPermissionsDto
+    dto: AssignPermissionsDto,
+    actorUserId?: string
   ): Promise<Rol> {
     const rol = await this.findOne(rolId);
 
@@ -271,6 +272,13 @@ export class RolesService {
 
     rol.permisos = permisos;
     await this.rolRepo.save(rol);
+
+    if (actorUserId) {
+      await this.rolRepo.manager.query(
+        `UPDATE rol_permiso SET asignado_por = $1 WHERE rol_id = $2`,
+        [actorUserId, rolId]
+      );
+    }
 
     await this.invalidateCacheForRole(rolId);
 

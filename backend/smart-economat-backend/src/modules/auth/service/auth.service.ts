@@ -16,6 +16,7 @@ import { rolUsuario, UserStatus } from '../../usuario/enums/usuario.enums';
 import { MailService } from '../mail.service';
 import * as crypto from 'crypto';
 import { Rol } from '../../roles/rol.entity/rol.entity';
+import { getRolPrincipal } from '../../sherlock-auth/utils/access.utils';
 
 @Injectable()
 export class AuthService {
@@ -63,6 +64,7 @@ export class AuthService {
   async login(dto: LoginUserDto) {
     const usuario = await this.usuarioRepo
       .createQueryBuilder('usuario')
+      .leftJoinAndSelect('usuario.roles', 'roles')
       .where('(usuario.email = :email OR usuario.username = :email)', {
         email: dto.email,
       })
@@ -162,7 +164,7 @@ export class AuthService {
     const payload: JwtPayload = {
       sub: usuario.id,
       username: usuario.username,
-      role: usuario.rol,
+      role: getRolPrincipal(usuario.roles, usuario.rol),
     };
 
     return {

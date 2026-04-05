@@ -13,8 +13,11 @@ export interface ProduccionLote {
   id: string;
   recetaId: string;
   usuarioId: string;
+  createdAt?: string;
+  updatedAt?: string;
   cantidadProducida: number;
   fechaProduccion: string;
+  fechaAgotado?: string | null;
   fechaCaducidad?: string;
   costeTotalReal: number;
   receta?: Receta;

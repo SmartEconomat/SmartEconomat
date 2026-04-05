@@ -1,7 +1,6 @@
-import { rolUsuario } from '../../usuario/enums/usuario.enums';
-
 export interface JwtPayload {
   sub: string;
   username: string;
-  role: rolUsuario;
+  /** Nombre del rol principal (resuelto desde M:M roles). */
+  role: string;
 }

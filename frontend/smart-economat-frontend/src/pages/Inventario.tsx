@@ -51,6 +51,8 @@ import UbicacionesModal from '../components/inventario/UbicacionesModal';
 import InventoryDetailModal from '../components/inventario/InventoryDetailModal';
 import { useToast } from '../store/toast.hooks';
 import { useAuth, usePermission } from '../store/auth.hooks';
+import { isElevatedRole } from '../sherlock-auth/permissions';
+import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 import { profesorService } from '../services/profesor.service';
 import {
   searchProductoProveedor,
@@ -250,24 +252,19 @@ const Inventario: React.FC = () => {
 
   const toast = useToast();
   const { user } = useAuth();
-  const isAdmin =
-    user?.rol?.toUpperCase() === 'ADMINISTRADOR' ||
-    user?.rol?.toUpperCase() === 'SUPER_ADMIN' ||
-    user?.rol?.toUpperCase() === 'ADMIN';
+  const isAdmin = isElevatedRole(user?.rol);
   const canSeeGeneral =
-    isAdmin || user?.permisos?.includes('inventario:ver_general');
+    isAdmin || user?.permisos?.includes(PERMISSIONS.inventario.listar);
 
   const [tabIndex, setTabIndex] = useState(isAdmin ? 1 : 0);
   const [assignedLocations, setAssignedLocations] = useState<
     { id: string; nombre: string }[]
   >([]);
   const [isLocationsLoading, setIsLocationsLoading] = useState(false);
-  const canAjustar = usePermission('inventario:ajustar_stock');
-  const canCrear = usePermission('inventario:crear');
-  const canGestionarUbicaciones = usePermission(
-    'inventario:gestionar_ubicaciones'
-  );
-  const canCrearProducto = usePermission('productos:crear');
+  const canAjustar = usePermission(PERMISSIONS.inventario.ajustar_stock);
+  const canCrear = usePermission(PERMISSIONS.inventario.crear);
+  const canGestionarUbicaciones = usePermission(PERMISSIONS.ubicaciones.editar);
+  const canCrearProducto = usePermission(PERMISSIONS.productos.crear);
 
   const loadUbicaciones = useCallback(async (): Promise<Ubicacion[]> => {
     try {

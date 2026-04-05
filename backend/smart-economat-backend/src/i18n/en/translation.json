@@ -72,7 +72,7 @@
     "ORDER_CANNOT_BE_DELETED": "Only orders in PENDING or CANCELLED state can be deleted",
     "ORDER_NOT_CANCELLABLE": "Cannot cancel an order that has already been received or is in shipping process",
     "ORDER_NOT_FOUND": "Order not found",
-    "ORDER_NOT_RECEPTABLE": "The order is not in a valid state to be received (must be PENDIENTE_DE_APROBACION, POR_RECEPCIONAR, or PARCIAL)",
+    "ORDER_NOT_RECEPTABLE": "The order is not in a valid state to be received (must be POR_RECEPCIONAR)",
     "PEDIDO_PRODUCT_NOT_FOUND": "Order product not found",
     "PERMISO_NO_ENCONTRADO": "Permiso no encontrado",
     "PLANTILLA_PADRE_NO_ENCONTRADA": "Plantilla padre no encontrada",

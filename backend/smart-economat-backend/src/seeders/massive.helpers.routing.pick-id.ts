@@ -794,6 +794,97 @@ export function pickIdForRoute(
 
     return pick('distribucionIds');
   }
+  if (path.startsWith('/plantillas-roles')) {
+    const plantillaMutableIds = getStateArray(
+      context,
+      'plantillaRolMutableIds'
+    );
+    const plantillaRolIds = getStateArray(context, 'plantillaRolIds');
+
+    if (consume) {
+      if (plantillaMutableIds.length > 0) {
+        return consumeRequiredStateValue(context, 'plantillaRolMutableIds');
+      }
+
+      throw new Error(
+        '[seed-massive] No hay plantillas editables disponibles para rutas destructivas de /plantillas-roles'
+      );
+    }
+
+    if (plantillaMutableIds.length > 0) {
+      return (
+        plantillaMutableIds[iteration % plantillaMutableIds.length] ||
+        plantillaMutableIds[0] ||
+        ''
+      );
+    }
+
+    if (method === 'GET' && plantillaRolIds.length > 0) {
+      return (
+        plantillaRolIds[iteration % plantillaRolIds.length] ||
+        plantillaRolIds[0] ||
+        ''
+      );
+    }
+
+    throw new Error(
+      '[seed-massive] No hay plantillas disponibles en estado para resolver rutas /plantillas-roles/:id'
+    );
+  }
+  if (path.startsWith('/roles/users/')) {
+    return pick('usuarioIds');
+  }
+  if (path.startsWith('/roles')) {
+    const roleIds = getStateArray(context, 'roleIds');
+    const createdRoleIds = getStateArray(context, 'seedCreatedRoleIds');
+    const roleIdByName =
+      context.getState<Record<string, string>>('seedRoleIdByName') || {};
+    const systemRoleIds = new Set(
+      ['SUPER_ADMIN', 'ADMIN', 'PROFESOR', 'ALUMNO']
+        .map((roleName) => roleIdByName[roleName])
+        .filter(
+          (roleId): roleId is string =>
+            typeof roleId === 'string' && roleId.trim().length > 0
+        )
+    );
+    const mutableRoleIds = roleIds.filter((id) => !systemRoleIds.has(id));
+
+    if (method === 'GET') {
+      return pick('roleIds');
+    }
+
+    if (createdRoleIds.length > 0) {
+      return (
+        createdRoleIds[iteration % createdRoleIds.length] ||
+        createdRoleIds[0] ||
+        ''
+      );
+    }
+
+    if (mutableRoleIds.length > 0) {
+      if (consume) {
+        return (
+          consumeStateValue(context, 'roleMutableIds', '') ||
+          mutableRoleIds[iteration % mutableRoleIds.length] ||
+          mutableRoleIds[0] ||
+          ''
+        );
+      }
+
+      return (
+        mutableRoleIds[iteration % mutableRoleIds.length] ||
+        mutableRoleIds[0] ||
+        ''
+      );
+    }
+
+    throw new Error(
+      '[seed-massive] No hay roleIds mutables disponibles para rutas /roles de escritura'
+    );
+  }
+  if (path.startsWith('/permisos')) {
+    return pick('permissionIds');
+  }
   if (path.startsWith('/merma')) return pick('mermaIds');
   if (path.startsWith('/archivos')) return pick('archivoIds');
 

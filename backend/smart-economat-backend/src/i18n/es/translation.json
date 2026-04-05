@@ -75,7 +75,7 @@
     "ORDER_CANNOT_BE_DELETED": "Solo se pueden eliminar pedidos en estado PENDIENTE_DE_APROBACION o CANCELADO",
     "ORDER_NOT_CANCELLABLE": "No se puede cancelar un pedido que ya está por recepcionar, ha sido recepcionado o tiene una incidencia",
     "ORDER_NOT_FOUND": "Pedido no encontrado",
-    "ORDER_NOT_RECEPTABLE": "El pedido no se encuentra en un estado válido para ser recepcionado (debe estar PENDIENTE_DE_APROBACION, POR_RECEPCIONAR o PARCIAL)",
+    "ORDER_NOT_RECEPTABLE": "El pedido no se encuentra en un estado válido para ser recepcionado (debe estar POR_RECEPCIONAR)",
     "PEDIDO_PRODUCT_NOT_FOUND": "Producto del pedido no encontrado",
     "PERMISO_NO_ENCONTRADO": "Permiso no encontrado",
     "PLANTILLA_PADRE_NO_ENCONTRADA": "Plantilla padre no encontrada",

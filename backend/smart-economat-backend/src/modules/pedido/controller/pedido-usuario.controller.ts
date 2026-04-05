@@ -48,6 +48,7 @@ import { PedidoUsuario } from '../pedido-usuario.entity/pedido-usuario.entity';
 import { PurchaseBatchService } from '../service/purchase-batch.service';
 import { PedidoUsuarioService } from '../service/pedido-usuario.service';
 import { RecetaToPedidoService } from '../service/receta-to-pedido.service';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('pedido-usuarios')
@@ -61,7 +62,7 @@ export class PedidoUsuarioController {
   ) {}
 
   @Post()
-  @RequirePermissions('pedidos:crear')
+  @RequirePermissions(PERMISSIONS.pedidos.crear)
   @HttpCode(HttpStatus.CREATED)
   create(
     @Body() dto: CreatePedidoUsuarioDto,
@@ -71,7 +72,7 @@ export class PedidoUsuarioController {
   }
 
   @Post('from-missing-stock')
-  @RequirePermissions('pedidos:crear')
+  @RequirePermissions(PERMISSIONS.pedidos.crear)
   @HttpCode(HttpStatus.CREATED)
   async createFromMissingStock(
     @Body() dto: CreateMissingStockBatchDto,
@@ -86,7 +87,7 @@ export class PedidoUsuarioController {
   }
 
   @Post('from-recipes')
-  @RequirePermissions('pedidos:crear')
+  @RequirePermissions(PERMISSIONS.pedidos.crear)
   @HttpCode(HttpStatus.CREATED)
   async createFromRecipes(
     @Body() dto: GeneratePedidoFromRecetasDto,
@@ -99,7 +100,7 @@ export class PedidoUsuarioController {
   }
 
   @Get()
-  @RequirePermissions('pedidos:listar')
+  @RequirePermissions(PERMISSIONS.pedidos.listar)
   findAll(
     @SortableFields({
       fechaPedido: 'fechaPedido',
@@ -116,22 +117,23 @@ export class PedidoUsuarioController {
   }
 
   @Get(':id')
-  @RequirePermissions('pedidos:ver')
+  @RequirePermissions(PERMISSIONS.pedidos.ver)
   findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<PedidoUsuario> {
     return this.pedidoUsuarioService.findOne(id);
   }
 
   @Patch(':id')
-  @RequirePermissions('pedidos:editar')
+  @RequirePermissions(PERMISSIONS.pedidos.editar)
   update(
     @Param('id', ParseUUIDv7Pipe) id: string,
-    @Body() dto: UpdatePedidoUsuarioDto
+    @Body() dto: UpdatePedidoUsuarioDto,
+    @Req() req: PedidoUsuarioRequest
   ) {
-    return this.pedidoUsuarioService.update(id, dto);
+    return this.pedidoUsuarioService.update(id, dto, req.user.id);
   }
 
   @Patch(':id/aceptar')
-  @RequirePermissions('pedidos:editar')
+  @RequirePermissions(PERMISSIONS.pedidos.editar)
   accept(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Req() req: PedidoUsuarioRequest
@@ -140,22 +142,26 @@ export class PedidoUsuarioController {
   }
 
   @Patch(':id/cancelar')
-  @RequirePermissions('pedidos:cancelar')
+  @RequirePermissions(PERMISSIONS.pedidos.cancelar)
   cancel(
     @Param('id', ParseUUIDv7Pipe) id: string,
-    @Body() dto: CancelPedidoUsuarioDto
+    @Body() dto: CancelPedidoUsuarioDto,
+    @Req() req: PedidoUsuarioRequest
   ) {
-    return this.pedidoUsuarioService.cancel(id, dto);
+    return this.pedidoUsuarioService.cancel(id, dto, req.user.id);
   }
 
   @Patch(':id/restaurar')
-  @RequirePermissions('pedidos:restaurar')
-  restore(@Param('id', ParseUUIDv7Pipe) id: string) {
-    return this.pedidoUsuarioService.restore(id);
+  @RequirePermissions(PERMISSIONS.pedidos.restaurar)
+  restore(
+    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Req() req: PedidoUsuarioRequest
+  ) {
+    return this.pedidoUsuarioService.restore(id, req.user.id);
   }
 
   @Get(':id/pdf')
-  @RequirePermissions('pedidos:ver')
+  @RequirePermissions(PERMISSIONS.pedidos.ver)
   async generatePdf(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Query() _query: PedidoUsuarioPdfDto,
@@ -188,7 +194,10 @@ export class PedidoUsuarioController {
   }
 
   @Delete(':id')
-  @RequireAnyPermission('pedidos:eliminar', 'pedidos:listar')
+  @RequireAnyPermission(
+    PERMISSIONS.pedidos.eliminar,
+    PERMISSIONS.pedidos.listar
+  )
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(
     @Param('id', ParseUUIDv7Pipe) id: string,

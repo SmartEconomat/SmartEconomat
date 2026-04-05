@@ -145,19 +145,21 @@ describe('ProduccionController (e2e)', () => {
       const consumeRes = await request(app.getHttpServer() as string)
         .patch(`/api/v1/produccion/lote/${loteId}/consumir`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ porciones: 1.5 });
+        .send({ tipo: 'raciones', valor: 1.5 });
 
       expect(consumeRes.status).toBe(200);
       expect(Number(consumeRes.body.data.porcionesRestantes)).toBe(2.5);
+      expect(consumeRes.body.data.fechaAgotado ?? null).toBeNull();
 
       const consumeFinalRes = await request(app.getHttpServer() as string)
         .patch(`/api/v1/produccion/lote/${loteId}/consumir`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ porciones: 2.5 });
+        .send({ tipo: 'raciones', valor: 2.5 });
 
       expect(consumeFinalRes.status).toBe(200);
       expect(Number(consumeFinalRes.body.data.porcionesRestantes)).toBe(0);
       expect(consumeFinalRes.body.data.estado).toBe('agotado');
+      expect(consumeFinalRes.body.data.fechaAgotado).toBeTruthy();
     });
 
     it('Debe fallar si no hay stock suficiente', async () => {

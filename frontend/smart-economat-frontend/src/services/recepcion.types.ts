@@ -1,7 +1,6 @@
 import { ProductoNuevoDto } from './producto.types';
 
 export enum EstadoRecepcion {
-  PARCIAL = 'PARCIAL',
   COMPLETADA = 'COMPLETADA',
   CON_INCIDENCIAS = 'CON_INCIDENCIAS',
 }
@@ -85,6 +84,7 @@ export interface LineaDraft {
   estadoVisual: EstadoVisualProducto;
   fechaCaducidad?: string; // Formato YYYY-MM-DD
   observaciones: string;
+  intervenida?: boolean;
 
   // ── Estado visual ──────────────────────────────────
   estado:

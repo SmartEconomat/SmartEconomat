@@ -60,6 +60,7 @@ export class PedidoService {
       built.pedido.numeroGlobal = await reserveNextPedidoProveedorNumero(
         queryRunner.manager
       );
+      built.pedido.modifiedBy = userId;
 
       const savedPedido = await queryRunner.manager.save(Pedido, built.pedido);
 
@@ -67,6 +68,7 @@ export class PedidoService {
         await queryRunner.manager.save(PedidoProducto, {
           ...pp,
           pedido: { id: savedPedido.id },
+          modifiedBy: userId,
         });
       }
 
@@ -108,7 +110,11 @@ export class PedidoService {
     return pedido;
   }
 
-  async update(id: string, updatePedidoDto: UpdatePedidoDto): Promise<Pedido> {
+  async update(
+    id: string,
+    updatePedidoDto: UpdatePedidoDto,
+    userId?: string
+  ): Promise<Pedido> {
     await this.findOne(id);
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -124,6 +130,10 @@ export class PedidoService {
 
       if (updatePedidoDto.observaciones !== undefined) {
         pedidoUpdateData.observaciones = updatePedidoDto.observaciones;
+      }
+
+      if (userId) {
+        pedidoUpdateData.modifiedBy = userId;
       }
 
       if (updatePedidoDto.lineas !== undefined) {
@@ -169,6 +179,7 @@ export class PedidoService {
             productoProveedor: { id: productoProveedor.id },
             cantidad: linea.cantidad,
             precioUnitario: precioVigente,
+            modifiedBy: userId,
           });
         }
 
@@ -208,7 +219,11 @@ export class PedidoService {
     return this.findOne(id);
   }
 
-  async cancelarPedido(id: string, dto: CancelPedidoDto): Promise<Pedido> {
+  async cancelarPedido(
+    id: string,
+    dto: CancelPedidoDto,
+    userId?: string
+  ): Promise<Pedido> {
     const pedido = await this.findOne(id);
 
     if (pedido.estado !== EstadoPedido.PENDIENTE_DE_APROBACION) {
@@ -226,10 +241,13 @@ export class PedidoService {
     pedido.estado = EstadoPedido.CANCELADO;
     pedido.motivoCancelacion =
       dto.motivoCancelacion || 'Cancelado por el usuario';
+    if (userId) {
+      pedido.modifiedBy = userId;
+    }
     return await this.pedidoRepository.save(pedido);
   }
 
-  async restaurarPedido(id: string): Promise<Pedido> {
+  async restaurarPedido(id: string, userId?: string): Promise<Pedido> {
     const pedido = await this.findOne(id);
 
     if (pedido.estado !== EstadoPedido.CANCELADO) {
@@ -240,23 +258,32 @@ export class PedidoService {
 
     pedido.estado = EstadoPedido.PENDIENTE_DE_APROBACION;
     pedido.motivoCancelacion = undefined;
+    if (userId) {
+      pedido.modifiedBy = userId;
+    }
     return await this.pedidoRepository.save(pedido);
   }
 
-  async aceptarPedido(id: string): Promise<Pedido> {
+  async aceptarPedido(id: string, userId?: string): Promise<Pedido> {
     const pedido = await this.findOne(id);
     if (pedido.estado !== EstadoPedido.PENDIENTE_DE_APROBACION) {
       throw new BadRequestException(
         'Solo los pedidos pendientes pueden ser aceptados.'
       );
     }
-    return this.handleStatusTransition(id, PedidoStatusTrigger.ACEPTAR);
+    return this.handleStatusTransition(
+      id,
+      PedidoStatusTrigger.ACEPTAR,
+      undefined,
+      userId
+    );
   }
 
   async handleStatusTransition(
     pedidoId: string,
     trigger: PedidoStatusTrigger,
-    manager?: EntityManager
+    manager?: EntityManager,
+    actorId?: string
   ): Promise<Pedido> {
     const pedido = manager
       ? await manager.findOne(Pedido, { where: { id: pedidoId } })
@@ -273,6 +300,9 @@ export class PedidoService {
     }
 
     pedido.estado = this.resolveStatusFromTrigger(trigger);
+    if (actorId) {
+      pedido.modifiedBy = actorId;
+    }
 
     const savedPedido = manager
       ? await manager.save(Pedido, pedido)
@@ -281,14 +311,16 @@ export class PedidoService {
     if (savedPedido.batchId) {
       await this.purchaseBatchService.syncBatchStatus(
         savedPedido.batchId,
-        manager
+        manager,
+        actorId
       );
     }
 
     if (savedPedido.pedidoUsuarioId) {
       await this.pedidoUsuarioService.syncPedidoUsuarioStatus(
         savedPedido.pedidoUsuarioId,
-        manager
+        manager,
+        actorId
       );
     }
 

@@ -1,11 +1,18 @@
 import * as crypto from 'crypto';
+import Redis from 'ioredis';
 import { HttpSeedRequestError, SeedContext } from './seed-context';
 import { DEFAULT_SEED_PASSWORD } from './massive.config';
+import {
+  ADMIN_PERMISSION_CODES,
+  ADMIN_RESTRICTED_PERMISSION_CODES,
+} from '../common/constants/role-permission-sets.constants';
+import { getSystemRoleTemplateAliases } from '../common/constants/system-role-template.constants';
 import AppDataSource from '../config/typeorm.config';
 import { Rol } from '../modules/roles/rol.entity/rol.entity';
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
 import { rolUsuario, UserStatus } from '../modules/usuario/enums/usuario.enums';
 import { Permiso } from '../modules/permisos/permiso.entity/permiso.entity';
+import { PlantillaRol } from '../modules/plantillas-roles/plantilla-rol.entity/plantilla-rol.entity';
 import { Profesor } from '../modules/profesor/profesor.entity/profesor.entity';
 import { AlumnoSlot } from '../modules/profesor/profesor.entity/alumno-slot.entity';
 import { Alumno } from '../modules/alumno/alumno.entity/alumno.entity';
@@ -28,6 +35,37 @@ import {
   deterministicToken,
   seedDateIso,
 } from './deterministic.seed-data';
+
+/**
+ * Flush all user:permissions:* keys from Redis to avoid stale permission cache
+ * after direct DB permission assignments in the seed.
+ */
+async function flushPermissionCache(): Promise<void> {
+  const redisHost = process.env.REDIS_HOST || 'localhost';
+  const redisPort = parseInt(process.env.REDIS_PORT || '6379', 10);
+  const redis = new Redis({
+    host: redisHost,
+    port: redisPort,
+    lazyConnect: true,
+  });
+  try {
+    await redis.connect();
+    const keys = await redis.keys('user:permissions:*');
+    if (keys.length > 0) {
+      await redis.del(...keys);
+      console.log(
+        `[seed-massive] Flushed ${keys.length} permission cache keys from Redis`
+      );
+    }
+  } catch (error) {
+    console.warn(
+      '[seed-massive] Could not flush Redis permission cache:',
+      error
+    );
+  } finally {
+    redis.disconnect();
+  }
+}
 
 const FIXED_SEED_SUPERADMIN = {
   username: 'superadmin',
@@ -62,12 +100,53 @@ const FIXED_SEED_ALUMNO = {
   role: rolUsuario.ALUMNO,
 };
 
+const FIXED_SEED_ALUMNO_TRANSFER_ACTOR = {
+  username: 'seed_alumno_transfer_actor',
+  email: 'seed.alumno.transfer@smarteconomat.local',
+  password: DEFAULT_SEED_PASSWORD,
+  nombre: 'Alumno Transfer Actor',
+};
+
 const FIXED_SEED_PROFESOR_SLOT = {
   aula: 'Aula Seed Principal',
   numeroClase: 2026,
   capacidad: 999,
   codigoSlot: 'AL-SEED2026',
 };
+
+type SeedRoleTemplateConfig = {
+  role: rolUsuario;
+  nombre: string;
+  descripcion: string;
+  esEditable: boolean;
+};
+
+const SEED_ROLE_TEMPLATE_CONFIG: readonly SeedRoleTemplateConfig[] = [
+  {
+    role: rolUsuario.SUPER_ADMIN,
+    nombre: rolUsuario.SUPER_ADMIN,
+    descripcion: 'Plantilla de sistema con todos los permisos. No editable.',
+    esEditable: false,
+  },
+  {
+    role: rolUsuario.ADMIN,
+    nombre: rolUsuario.ADMIN,
+    descripcion: 'Plantilla con permisos máximos de administración.',
+    esEditable: false,
+  },
+  {
+    role: rolUsuario.PROFESOR,
+    nombre: rolUsuario.PROFESOR,
+    descripcion: 'Plantilla operativa para el rol de profesor.',
+    esEditable: true,
+  },
+  {
+    role: rolUsuario.ALUMNO,
+    nombre: rolUsuario.ALUMNO,
+    descripcion: 'Plantilla operativa para el rol de alumno.',
+    esEditable: true,
+  },
+];
 
 const SEED_PROFESOR_PERMISSION_CODES = [
   'profesor:gestionar_slots',
@@ -327,68 +406,60 @@ async function upsertSeedAlumnoViaRepository(params: {
   };
 }
 
-async function ensureUserAdditionalPermission(
+async function resolvePermissionIdsByCodes(
+  codes: readonly string[]
+): Promise<string[]> {
+  await ensureRepositoryReady();
+  const permisoRepo = AppDataSource.getRepository(Permiso);
+  const ids: string[] = [];
+  for (const code of codes) {
+    const permiso = await permisoRepo.findOne({ where: { codigo: code } });
+    if (permiso) {
+      ids.push(permiso.id);
+    }
+  }
+  return ids;
+}
+
+async function removeUserAdditionalPermissions(
   userId: string,
-  permisoCodigo: string
+  permissionCodes: readonly string[]
 ): Promise<void> {
   await ensureRepositoryReady();
 
-  const permisoRepo = AppDataSource.getRepository(Permiso);
   const userRepo = AppDataSource.getRepository(Usuario);
-
-  const permiso = await permisoRepo.findOne({
-    where: { codigo: permisoCodigo },
-  });
-  let ensuredPermiso = permiso;
-  if (!ensuredPermiso) {
-    const createdPermiso = permisoRepo.create({
-      codigo: permisoCodigo,
-      nombre: `Seed ${permisoCodigo}`,
-      descripcion: `Permiso bootstrap creado por seed masivo para habilitar ${permisoCodigo}`,
-      modulo: permisoCodigo.split(':')[0] || 'seed',
-      accion: permisoCodigo.split(':')[1] || 'accion',
-      activo: true,
-    });
-    ensuredPermiso = await permisoRepo.save(createdPermiso);
-  }
-
   const user = await userRepo.findOne({
-    where: { id: userId } as any,
-    relations: { permisosAdicionales: true } as any,
+    where: { id: userId },
+    relations: { permisosAdicionales: true },
   });
 
   if (!user) {
     throw new Error(
-      `[seed-massive] Usuario no encontrado para asignar permiso: ${userId}`
+      `[seed-massive] Usuario no encontrado para limpiar permisos: ${userId}`
     );
   }
 
-  const currentPermissions = Array.isArray((user as any).permisosAdicionales)
-    ? ((user as any).permisosAdicionales as Permiso[])
-    : [];
+  const blockedCodes = new Set(permissionCodes);
+  const currentPermissions = user.permisosAdicionales || [];
+  const nextPermissions = currentPermissions.filter(
+    (permiso) => !blockedCodes.has(permiso.codigo)
+  );
 
-  if (currentPermissions.some((item) => item.id === ensuredPermiso.id)) {
+  if (nextPermissions.length === currentPermissions.length) {
     return;
   }
 
-  (user as any).permisosAdicionales = [...currentPermissions, ensuredPermiso];
-  await userRepo.save(user as any);
-}
-
-async function ensureUserAdditionalPermissions(
-  userId: string,
-  permissionCodes: readonly string[]
-): Promise<void> {
-  for (const permissionCode of permissionCodes) {
-    await ensureUserAdditionalPermission(userId, permissionCode);
-  }
+  user.permisosAdicionales = nextPermissions;
+  await userRepo.save(user);
 }
 
 async function syncUserRoleViaAdminRoute(
   context: SeedContext,
   adminToken: string,
   userId: string,
-  roleName: rolUsuario
+  roleName: rolUsuario,
+  permisosAdicionalesIds: string[] = [],
+  permisosExcluidosIds: string[] = []
 ): Promise<void> {
   const roleIdByName =
     context.getState<Record<string, string>>('seedRoleIdByName') || {};
@@ -403,15 +474,32 @@ async function syncUserRoleViaAdminRoute(
     method: 'PATCH',
     body: {
       roleId,
-      permisosAdicionalesIds: [],
-      permisosExcluidosIds: [],
+      permisosAdicionalesIds,
+      permisosExcluidosIds,
     },
     tokenOverride: adminToken,
   });
 }
 
 async function ensureSeedRoleIds(context: SeedContext): Promise<void> {
-  if (getStateArray(context, 'roleIds').length > 0) {
+  const requiredSystemRoles: string[] = [
+    rolUsuario.SUPER_ADMIN,
+    rolUsuario.ADMIN,
+    rolUsuario.PROFESOR,
+    rolUsuario.ALUMNO,
+  ];
+
+  const cachedRoleIdByName =
+    context.getState<Record<string, string>>('seedRoleIdByName') || {};
+  const hasAllRequiredRolesCached =
+    getStateArray(context, 'roleIds').length > 0 &&
+    requiredSystemRoles.every((roleName) => {
+      const normalized = roleName.trim().toUpperCase();
+      const cachedId = cachedRoleIdByName[normalized];
+      return typeof cachedId === 'string' && cachedId.trim().length > 0;
+    });
+
+  if (hasAllRequiredRolesCached) {
     return;
   }
 
@@ -430,13 +518,6 @@ async function ensureSeedRoleIds(context: SeedContext): Promise<void> {
       roleIdByName[normalized] = role.id;
     }
   }
-
-  const requiredSystemRoles: string[] = [
-    rolUsuario.SUPER_ADMIN,
-    rolUsuario.ADMIN,
-    rolUsuario.PROFESOR,
-    rolUsuario.ALUMNO,
-  ];
 
   for (const roleName of requiredSystemRoles) {
     const normalized = roleName.trim().toUpperCase();
@@ -481,6 +562,155 @@ async function ensureSeedRoleIds(context: SeedContext): Promise<void> {
   }
 }
 
+async function ensureSeedRoleTemplates(context: SeedContext): Promise<void> {
+  await ensureRepositoryReady();
+
+  const roleRepo = AppDataSource.getRepository(Rol);
+  const plantillaRepo = AppDataSource.getRepository(PlantillaRol);
+  const permisoRepo = AppDataSource.getRepository(Permiso);
+
+  const roles = await roleRepo.find();
+
+  const roleByName = new Map<string, Rol>();
+  for (const role of roles) {
+    if (typeof role.nombre !== 'string') {
+      continue;
+    }
+
+    const normalizedName = role.nombre.trim().toUpperCase();
+    if (normalizedName.length > 0 && !roleByName.has(normalizedName)) {
+      roleByName.set(normalizedName, role);
+    }
+  }
+
+  const allPermisos = await permisoRepo.find({ where: { activo: true } });
+  const permisoByCode = new Map<string, Permiso>();
+  for (const p of allPermisos) {
+    permisoByCode.set(p.codigo, p);
+  }
+
+  const permissionCodesByRole: Record<string, readonly string[]> = {
+    [rolUsuario.ADMIN.toUpperCase()]: ADMIN_PERMISSION_CODES,
+    [rolUsuario.PROFESOR.toUpperCase()]: SEED_PROFESOR_PERMISSION_CODES,
+    [rolUsuario.ALUMNO.toUpperCase()]: SEED_ALUMNO_PERMISSION_CODES,
+  };
+
+  const collapseTemplateDuplicates = async (
+    keepTemplateId: string,
+    duplicateTemplateIds: string[]
+  ): Promise<void> => {
+    const uniqueDuplicateIds = [...new Set(duplicateTemplateIds)].filter(
+      (templateId) => templateId !== keepTemplateId
+    );
+
+    if (uniqueDuplicateIds.length === 0) {
+      return;
+    }
+
+    await AppDataSource.query(
+      `UPDATE "rol"
+       SET "plantilla_rol_id" = $1
+       WHERE "plantilla_rol_id" = ANY($2::uuid[])`,
+      [keepTemplateId, uniqueDuplicateIds]
+    );
+
+    await AppDataSource.query(
+      `UPDATE "plantilla_rol"
+       SET "plantilla_padre_id" = $1
+       WHERE "plantilla_padre_id" = ANY($2::uuid[])`,
+      [keepTemplateId, uniqueDuplicateIds]
+    );
+
+    await AppDataSource.query(
+      `DELETE FROM "plantilla_rol"
+       WHERE "id" = ANY($1::uuid[])`,
+      [uniqueDuplicateIds]
+    );
+  };
+
+  for (const templateConfig of SEED_ROLE_TEMPLATE_CONFIG) {
+    const roleName = templateConfig.role.trim().toUpperCase();
+    const role = roleByName.get(roleName);
+
+    if (!role) {
+      throw new Error(
+        `[seed-massive] No se encontró el rol ${templateConfig.role} para recargar plantillas base`
+      );
+    }
+
+    const templateAliases = getSystemRoleTemplateAliases(
+      templateConfig.role
+    ).map((name) => name.trim().toUpperCase());
+
+    const matchingTemplates = await plantillaRepo
+      .createQueryBuilder('plantilla')
+      .withDeleted()
+      .leftJoinAndSelect('plantilla.permisos', 'permiso')
+      .where('UPPER(plantilla.nombre) IN (:...aliases)', {
+        aliases: templateAliases,
+      })
+      .orderBy(
+        'CASE WHEN UPPER(plantilla.nombre) = UPPER(:canonicalName) THEN 0 ELSE 1 END',
+        'ASC'
+      )
+      .addOrderBy('plantilla.createdAt', 'ASC')
+      .setParameter('canonicalName', templateConfig.nombre)
+      .getMany();
+
+    const existingTemplate = matchingTemplates[0];
+
+    if (existingTemplate) {
+      await collapseTemplateDuplicates(
+        existingTemplate.id,
+        matchingTemplates.slice(1).map((template) => template.id)
+      );
+    }
+
+    const plantilla = existingTemplate || plantillaRepo.create();
+    plantilla.nombre = templateConfig.nombre;
+    plantilla.descripcion = templateConfig.descripcion;
+    plantilla.esEditable = templateConfig.esEditable;
+    plantilla.activo = true;
+
+    if ((plantilla as unknown as Record<string, unknown>).deletedAt) {
+      (plantilla as unknown as Record<string, unknown>).deletedAt = null;
+    }
+    Object.assign(plantilla, { plantillaPadreId: null });
+
+    const codes = permissionCodesByRole[roleName];
+    const resolvedPermissions = codes
+      ? codes
+          .map((code) => permisoByCode.get(code))
+          .filter((p): p is Permiso => p !== undefined)
+      : allPermisos;
+
+    const roleWithPermisos = await roleRepo.findOne({
+      where: { id: role.id },
+      relations: { permisos: true },
+    });
+
+    if (roleWithPermisos) {
+      roleWithPermisos.permisos = resolvedPermissions;
+      await roleRepo.save(roleWithPermisos);
+    }
+
+    if (codes) {
+      plantilla.permisos = resolvedPermissions;
+    } else {
+      plantilla.permisos = allPermisos;
+    }
+
+    const savedTemplate = await plantillaRepo.save(plantilla);
+
+    if (!role.plantillaRolId || role.plantillaRolId !== savedTemplate.id) {
+      role.plantillaRolId = savedTemplate.id;
+      await roleRepo.save(role);
+    }
+
+    pushStateValue(context, 'plantillaRolIds', savedTemplate.id);
+  }
+}
+
 export async function warmAdminState(context: SeedContext): Promise<void> {
   for (const path of ['/admin/roles', '/admin/permissions']) {
     const response = await context.requestJson<unknown>(path, {
@@ -515,6 +745,7 @@ export async function warmCollections(context: SeedContext): Promise<void> {
     { path: '/recetas?limit=50&page=1', method: 'GET' },
     { path: '/preparaciones?limit=50&page=1', method: 'GET' },
     { path: '/produccion?limit=50&page=1', method: 'GET' },
+    { path: '/plantillas-roles', method: 'GET' },
     { path: '/merma?limit=50&page=1', method: 'GET' },
     { path: '/archivos?limit=50&page=1', method: 'GET' },
   ];
@@ -633,6 +864,14 @@ function isHttpConflict(error: unknown): error is HttpSeedRequestError {
 
 export async function ensureRoleActors(context: SeedContext): Promise<void> {
   await warmAdminState(context);
+  await ensureSeedRoleTemplates(context);
+
+  const profesorPermIds = await resolvePermissionIdsByCodes(
+    SEED_PROFESOR_PERMISSION_CODES
+  );
+  const alumnoPermIds = await resolvePermissionIdsByCodes(
+    SEED_ALUMNO_PERMISSION_CODES
+  );
 
   const fixedSuperAdminUser = await upsertSeedUserViaRepository(
     FIXED_SEED_SUPERADMIN
@@ -656,6 +895,10 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
   );
 
   const fixedAdminUser = await upsertSeedUserViaRepository(FIXED_SEED_ADMIN);
+  await removeUserAdditionalPermissions(
+    fixedAdminUser.id,
+    ADMIN_RESTRICTED_PERMISSION_CODES
+  );
   await syncUserRoleViaAdminRoute(
     context,
     superAdminToken,
@@ -680,11 +923,8 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
     context,
     superAdminToken,
     fixedProfesor.user.id,
-    rolUsuario.PROFESOR
-  );
-  await ensureUserAdditionalPermissions(
-    fixedProfesor.user.id,
-    SEED_PROFESOR_PERMISSION_CODES
+    rolUsuario.PROFESOR,
+    profesorPermIds
   );
 
   const fixedProfesorSlot = await upsertAlumnoSlotViaRepository({
@@ -715,11 +955,8 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
     context,
     superAdminToken,
     fixedAlumno.user.id,
-    rolUsuario.ALUMNO
-  );
-  await ensureUserAdditionalPermissions(
-    fixedAlumno.user.id,
-    SEED_ALUMNO_PERMISSION_CODES
+    rolUsuario.ALUMNO,
+    alumnoPermIds
   );
 
   const fixedAlumnoToken = await context.loginWithCredentials(
@@ -730,6 +967,33 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
     {
       setActiveToken: false,
       sessionKey: 'alumno:0',
+    }
+  );
+
+  const transferAlumnoActor = await upsertSeedAlumnoViaRepository({
+    username: FIXED_SEED_ALUMNO_TRANSFER_ACTOR.username,
+    email: FIXED_SEED_ALUMNO_TRANSFER_ACTOR.email,
+    password: FIXED_SEED_ALUMNO_TRANSFER_ACTOR.password,
+    nombre: FIXED_SEED_ALUMNO_TRANSFER_ACTOR.nombre,
+    profesor: fixedProfesor.profesor,
+    slot: fixedProfesorSlot,
+  });
+
+  await syncUserRoleViaAdminRoute(
+    context,
+    superAdminToken,
+    transferAlumnoActor.user.id,
+    rolUsuario.SUPER_ADMIN
+  );
+
+  const transferAlumnoToken = await context.loginWithCredentials(
+    {
+      email: FIXED_SEED_ALUMNO_TRANSFER_ACTOR.email,
+      password: FIXED_SEED_ALUMNO_TRANSFER_ACTOR.password,
+    },
+    {
+      setActiveToken: false,
+      sessionKey: 'alumno-transfer:0',
     }
   );
 
@@ -753,15 +1017,21 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
   pushStateValue(context, 'seedClassCodes', fixedProfesorSlot.codigoSlot);
   pushStateValue(context, 'usuarioIds', fixedAlumno.user.id);
   pushStateValue(context, 'seedProtectedUserIds', fixedAlumno.user.id);
+  pushStateValue(context, 'usuarioIds', transferAlumnoActor.user.id);
+  pushStateValue(context, 'seedProtectedUserIds', transferAlumnoActor.user.id);
   pushStateValue(context, 'alumnoIds', fixedAlumno.alumno.id);
+  pushStateValue(context, 'alumnoIds', transferAlumnoActor.alumno.id);
   pushStateValue(context, 'seedAlumnoTokens', fixedAlumnoToken);
+  pushStateValue(context, 'seedAlumnoTokens', transferAlumnoToken);
   pushStateValue(context, 'seedAlumnoUserIds', fixedAlumno.user.id);
+  pushStateValue(context, 'seedAlumnoUserIds', transferAlumnoActor.user.id);
   context.set('seedFixedSuperAdminUserId', fixedSuperAdminUser.id);
   context.set('seedFixedAdminUserId', fixedAdminUser.id);
   context.set('seedFixedProfesorUserId', fixedProfesor.user.id);
   context.set('seedFixedProfesorSlotId', fixedProfesorSlot.id);
   context.set('seedFixedAlumnoId', fixedAlumno.alumno.id);
   context.set('seedFixedAlumnoUserId', fixedAlumno.user.id);
+  context.set('seedTokenAlumnoTransfer', transferAlumnoToken);
 
   const runTag =
     context.getState<string>('seedRunTag') ||
@@ -811,6 +1081,11 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
       nombre: `Seed Admin ${i}`,
     });
     const userId = adminUser.id;
+
+    await removeUserAdditionalPermissions(
+      userId,
+      ADMIN_RESTRICTED_PERMISSION_CODES
+    );
 
     const token = await context.loginWithCredentials(
       {
@@ -895,7 +1170,8 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
       context,
       superAdminToken,
       profesorUserId,
-      rolUsuario.PROFESOR
+      rolUsuario.PROFESOR,
+      profesorPermIds
     );
 
     await upsertSeedUserViaRepository({
@@ -905,11 +1181,6 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
       role: rolUsuario.PROFESOR,
       nombre: `Seed Profesor ${i}`,
     });
-
-    await ensureUserAdditionalPermissions(
-      profesorUserId,
-      SEED_PROFESOR_PERMISSION_CODES
-    );
 
     const profesorToken = await context.loginWithCredentials(
       {
@@ -1149,7 +1420,8 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
       context,
       superAdminToken,
       alumnoUserId,
-      rolUsuario.ALUMNO
+      rolUsuario.ALUMNO,
+      alumnoPermIds
     );
 
     await upsertSeedUserViaRepository({
@@ -1159,11 +1431,6 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
       role: rolUsuario.ALUMNO,
       nombre: `Seed Alumno ${i}`,
     });
-
-    await ensureUserAdditionalPermissions(
-      alumnoUserId,
-      SEED_ALUMNO_PERMISSION_CODES
-    );
 
     const alumnoToken = await context.loginWithCredentials(
       {
@@ -1186,7 +1453,10 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
     profesorAlumnoCount.set(profesorActor.profesorId, currentCount + 1);
   }
 
-  context.set('seedTokenAlumno', alumnoTokens[0] || '');
+  context.set(
+    'seedTokenAlumno',
+    alumnoTokens[alumnoTokens.length - 1] || alumnoTokens[0] || ''
+  );
 
   const profesoresSinAlumnos = profesorActors.filter(
     (profesorActor) =>
@@ -1198,27 +1468,46 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
     );
   }
 
+  await flushPermissionCache();
+
   const alumnoToProfesorIndex: Record<string, number> = {};
   const slotToProfesorIndex: Record<string, number> = {};
   const profesorIndexByToken: Record<string, number> = {};
+
+  const superAdminTokenForWarmup =
+    context.getState<string>('seedTokenSuperAdmin') ||
+    context.getState<string>('seedTokenAdmin') ||
+    context.getAccessToken();
+
+  const allSlotsResponse = await context.requestJson<unknown>(
+    '/profesores/all-slots',
+    {
+      method: 'GET',
+      tokenOverride: superAdminTokenForWarmup,
+    }
+  );
+  const allSlots = toEntityArray(allSlotsResponse);
+
+  const profesorIdToIdx = new Map<string, number>();
+  for (let pIdx = 0; pIdx < profesorActors.length; pIdx++) {
+    const prof = profesorActors[pIdx];
+    if (!prof) continue;
+    profesorIdToIdx.set(prof.profesorId, pIdx);
+    profesorIndexByToken[prof.token] = pIdx;
+    context.set(`seedProfesorTokenByIndex:${pIdx}`, prof.token);
+  }
 
   for (let pIdx = 0; pIdx < profesorActors.length; pIdx++) {
     const prof = profesorActors[pIdx];
     if (!prof) continue;
 
-    profesorIndexByToken[prof.token] = pIdx;
-    context.set(`seedProfesorTokenByIndex:${pIdx}`, prof.token);
-
-    const slotsResponse = await context.requestJson<unknown>(
-      '/profesores/slots',
-      {
-        method: 'GET',
-        tokenOverride: prof.token,
-      }
-    );
-
-    const ownedSlotIds = toEntityArray(slotsResponse)
-      .map((entity) => entity.id)
+    const ownedSlotIds = allSlots
+      .filter((slot) => {
+        const slotProfesorId =
+          (slot.profesor as Record<string, unknown>)?.id || slot.profesorId;
+        return slotProfesorId === prof.profesorId;
+      })
+      .map((slot) => slot.id)
       .filter((id): id is string => typeof id === 'string' && id.length > 0);
 
     context.set(
@@ -1231,18 +1520,19 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
       pushStateValue(context, 'profesorSlotIds', slotId);
     }
 
-    const alumnosResponse = await context.requestJson<unknown>(
-      '/profesores/alumnos',
-      {
-        method: 'GET',
-        tokenOverride: prof.token,
+    const ownedAlumnoIds: string[] = [];
+    for (const slot of allSlots) {
+      const slotProfesorId =
+        (slot.profesor as Record<string, unknown>)?.id || slot.profesorId;
+      if (slotProfesorId !== prof.profesorId) continue;
+      const slotAlumnos = Array.isArray(slot.alumnos) ? slot.alumnos : [];
+      for (const alumno of slotAlumnos) {
+        const aId = (alumno as Record<string, unknown>)?.id;
+        if (typeof aId === 'string' && aId.length > 0) {
+          ownedAlumnoIds.push(aId);
+        }
       }
-    );
-
-    const entities = toEntityArray(alumnosResponse);
-    const ownedAlumnoIds = entities
-      .map((e) => e.id)
-      .filter((id): id is string => typeof id === 'string' && id.length > 0);
+    }
 
     context.set(
       `seedProfesorOwnedAlumnoIds:${pIdx}`,

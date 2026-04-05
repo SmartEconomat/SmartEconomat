@@ -2,6 +2,7 @@ export interface Ubicacion {
   id: string;
   nombre: string;
   descripcion?: string;
+  deletedAt?: string | null;
 }
 
 export interface CreateUbicacionDto {

@@ -1,7 +1,7 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import * as bcrypt from 'bcrypt';
 import { MigrationInterface, QueryRunner } from 'typeorm';
+import { ALL_PERMISSION_CODES } from '../common/constants/permissions.constants';
+import { ADMIN_PERMISSION_CODES } from '../common/constants/role-permission-sets.constants';
 import { rolUsuario, UserStatus } from '../modules/usuario/enums/usuario.enums';
 
 type DefaultUserSeed = {
@@ -20,46 +20,9 @@ type PermissionSeed = {
 };
 
 const MIGRATION_TAG = '[MIGRACION_DEFAULT_ADMINS_20260403]';
-const SOURCE_ROOT = join(process.cwd(), 'src');
 const DEFAULT_TEMP_PASSWORD =
   process.env.SEED_DEFAULT_ADMIN_TEMP_PASSWORD?.trim() ||
   'SmartEconomatTemp2026!';
-
-const DECORATOR_MARKERS = [
-  'RequirePermissions',
-  'RequireAnyPermission',
-  'ControllerPermissions',
-];
-
-const PERMISSION_LITERAL_PATTERN = /['"`]([a-z0-9_:-]+:[a-z0-9_:-]+)['"`]/gi;
-
-const ESSENTIAL_PERMISSION_CODES = [
-  'usuarios:listar',
-  'usuarios:ver',
-  'usuarios:crear',
-  'usuarios:editar',
-  'usuarios:activar_desactivar',
-  'usuarios:resetear_password',
-  'productos:listar',
-  'productos:ver',
-  'productos:crear',
-  'productos:editar',
-  'proveedores:listar',
-  'proveedores:crear',
-  'pedidos:listar',
-  'pedidos:crear',
-  'recepciones:listar',
-  'recepciones:crear',
-  'movimientos:listar',
-  'movimientos:historial',
-  'inventario:listar',
-  'inventario:ver',
-  'dashboard:ver_estadisticas',
-  'profesor:gestionar_slots',
-  'profesor:gestionar_alumnos',
-  'profesor:ver_alumnos',
-  'alumno:cambiar_profesor',
-];
 
 const DEFAULT_USERS: readonly DefaultUserSeed[] = [
   {
@@ -80,14 +43,18 @@ export class SeedDefaultAdminAccounts1775200000000 implements MigrationInterface
   public name = 'SeedDefaultAdminAccounts1775200000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    const permissionCodes = this.collectPermissionCodesFromSource();
-    const permissionIds = await this.ensurePermissions(
+    const permissionCodes = [...ALL_PERMISSION_CODES].sort();
+    const permissionIdByCode = await this.ensurePermissions(
       queryRunner,
       permissionCodes
     );
     const roleIdByName = await this.ensureDefaultRoles(queryRunner);
 
-    await this.ensureRolePermissions(queryRunner, roleIdByName, permissionIds);
+    await this.ensureRolePermissions(
+      queryRunner,
+      roleIdByName,
+      permissionIdByCode
+    );
 
     const hashedTemporaryPassword = await bcrypt.hash(
       DEFAULT_TEMP_PASSWORD,
@@ -114,54 +81,8 @@ export class SeedDefaultAdminAccounts1775200000000 implements MigrationInterface
 
   public down(queryRunner: QueryRunner): Promise<void> {
     void queryRunner;
-    // No-op intencional: revertir esta migración puede romper usuarios operativos.
+
     return Promise.resolve();
-  }
-
-  private listTypeScriptFiles(rootDir: string): string[] {
-    if (!existsSync(rootDir)) {
-      return [];
-    }
-
-    return readdirSync(rootDir, { withFileTypes: true }).flatMap((entry) => {
-      const filePath = join(rootDir, entry.name);
-
-      if (entry.isDirectory()) {
-        if (
-          entry.name === 'node_modules' ||
-          entry.name === 'dist' ||
-          entry.name.startsWith('.')
-        ) {
-          return [];
-        }
-
-        return this.listTypeScriptFiles(filePath);
-      }
-
-      return entry.isFile() && entry.name.endsWith('.ts') ? [filePath] : [];
-    });
-  }
-
-  private collectPermissionCodesFromSource(): string[] {
-    const permissionCodes = new Set<string>(ESSENTIAL_PERMISSION_CODES);
-    const files = this.listTypeScriptFiles(SOURCE_ROOT);
-
-    for (const filePath of files) {
-      const content = readFileSync(filePath, 'utf8');
-
-      if (!DECORATOR_MARKERS.some((marker) => content.includes(marker))) {
-        continue;
-      }
-
-      for (const match of content.matchAll(PERMISSION_LITERAL_PATTERN)) {
-        const code = String(match[1] || '').trim();
-        if (code.includes(':')) {
-          permissionCodes.add(code);
-        }
-      }
-    }
-
-    return [...permissionCodes].sort();
   }
 
   private buildPermissionSeed(code: string): PermissionSeed | null {
@@ -195,8 +116,8 @@ export class SeedDefaultAdminAccounts1775200000000 implements MigrationInterface
   private async ensurePermissions(
     queryRunner: QueryRunner,
     codes: string[]
-  ): Promise<string[]> {
-    const permissionIds = new Set<string>();
+  ): Promise<Map<string, string>> {
+    const permissionIdByCode = new Map<string, string>();
 
     for (const code of codes) {
       const permissionSeed = this.buildPermissionSeed(code);
@@ -234,10 +155,10 @@ export class SeedDefaultAdminAccounts1775200000000 implements MigrationInterface
         );
       }
 
-      permissionIds.add(permissionId);
+      permissionIdByCode.set(permissionSeed.codigo, permissionId);
     }
 
-    return [...permissionIds];
+    return permissionIdByCode;
   }
 
   private async ensureDefaultRoles(
@@ -304,9 +225,14 @@ export class SeedDefaultAdminAccounts1775200000000 implements MigrationInterface
   private async ensureRolePermissions(
     queryRunner: QueryRunner,
     roleIdByName: Map<rolUsuario, string>,
-    permissionIds: string[]
+    permissionIdByCode: Map<string, string>
   ): Promise<void> {
-    for (const roleName of [rolUsuario.SUPER_ADMIN, rolUsuario.ADMIN]) {
+    const rolePermissions = new Map<rolUsuario, readonly string[]>([
+      [rolUsuario.SUPER_ADMIN, [...ALL_PERMISSION_CODES].sort()],
+      [rolUsuario.ADMIN, [...ADMIN_PERMISSION_CODES].sort()],
+    ]);
+
+    for (const [roleName, permissionCodes] of rolePermissions.entries()) {
       const roleId = roleIdByName.get(roleName);
       if (!roleId) {
         throw new Error(
@@ -314,7 +240,14 @@ export class SeedDefaultAdminAccounts1775200000000 implements MigrationInterface
         );
       }
 
-      for (const permissionId of permissionIds) {
+      for (const code of permissionCodes) {
+        const permissionId = permissionIdByCode.get(code);
+        if (!permissionId) {
+          throw new Error(
+            `${MIGRATION_TAG} No se pudo resolver el permiso ${code} para ${roleName}`
+          );
+        }
+
         await queryRunner.query(
           `INSERT INTO "rol_permiso" (
             "rol_id",

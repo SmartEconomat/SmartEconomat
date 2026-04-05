@@ -1,10 +1,10 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { PedidoDraftService } from './pedido-draft.service';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { PedidoDraft } from '../pedido-draft.entity/pedido-draft.entity';
-import { PEDIDO_DRAFT_REDIS } from '../constants/pedido-draft.constants';
-import { PedidoUsuarioService } from '../../pedido/service/pedido-usuario.service';
 import { ConflictException, NotFoundException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { PEDIDO_DRAFT_REDIS } from '../../../../src/modules/pedido-draft/constants/pedido-draft.constants';
+import { PedidoDraft } from '../../../../src/modules/pedido-draft/pedido-draft.entity/pedido-draft.entity';
+import { PedidoDraftService } from '../../../../src/modules/pedido-draft/service/pedido-draft.service';
+import { PedidoUsuarioService } from '../../../../src/modules/pedido/service/pedido-usuario.service';
 
 describe('PedidoDraftService', () => {
   let service: PedidoDraftService;

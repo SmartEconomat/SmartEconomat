@@ -29,6 +29,7 @@ import type { CreateProveedorPayload } from '../services/proveedor.service';
 import { deleteResource } from '../services/api.service';
 import { useToast } from '../store/toast.hooks';
 import { usePermission } from '../store/auth.hooks';
+import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import AddIcon from '@mui/icons-material/Add';
@@ -191,9 +192,9 @@ const Proveedores: React.FC = () => {
     }
   };
 
-  const canEdit = usePermission('proveedores:editar');
-  const canDelete = usePermission('proveedores:eliminar');
-  const canCreate = usePermission('proveedores:crear');
+  const canEdit = usePermission(PERMISSIONS.proveedores.editar);
+  const canDelete = usePermission(PERMISSIONS.proveedores.eliminar);
+  const canCreate = usePermission(PERMISSIONS.proveedores.crear);
 
   const columns: Column<Proveedor>[] = [
     { id: 'nombre', label: 'Nombre', sortable: true },

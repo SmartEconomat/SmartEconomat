@@ -80,6 +80,16 @@ describe('recepcionMapping.utils', () => {
           id: 'ped-999',
           estado: EstadoPedido.RECEPCIONADO,
         },
+        {
+          ...mockPedido,
+          id: 'ped-parcial',
+          estado: EstadoPedido.PARCIAL,
+        },
+        {
+          ...mockPedido,
+          id: 'ped-incidencia',
+          estado: EstadoPedido.INCIDENCIA,
+        },
       ],
     });
 
@@ -96,5 +106,26 @@ describe('recepcionMapping.utils', () => {
     });
 
     expect(draft.pedidosSeleccionados[0].descripcion).toContain('Pedido 42');
+  });
+
+  it('prioriza el numero de pedido proveedor en la descripción de recepción', () => {
+    const draft = mapPurchaseBatchToRecepcionDraft({
+      id: 'batch-9',
+      estado: EstadoLote.PENDIENTE,
+      createdAt: new Date().toISOString(),
+      pedidos: [
+        {
+          ...mockPedido,
+          id: 'ped-999',
+          numeroGlobal: undefined,
+          numeroPedidoProveedor: '200123',
+          numeroPedidoVisible: '77',
+        },
+      ],
+    });
+
+    expect(draft.pedidosSeleccionados[0].descripcion).toContain(
+      'Pedido 200123'
+    );
   });
 });

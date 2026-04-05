@@ -23,8 +23,10 @@ import {
   PedidoBatchDetail,
   PedidoDetailEntityType,
   PedidoListItem,
+  PurchaseBatch,
 } from '../services/pedido.types';
 import { useAuth, usePermission } from '../store/auth.hooks';
+import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 import { usePedidoDraft } from '../hooks/usePedidoDraft';
 import ReporteSelectorModal from '../components/ui/ReporteSelectorModal';
 
@@ -118,9 +120,9 @@ const Pedidos: React.FC = () => {
     flushSave,
   } = usePedidoDraft();
 
-  const canEdit = usePermission('pedidos:editar');
-  const canDelete = usePermission('pedidos:eliminar');
-  const canCreate = usePermission('pedidos:crear');
+  const canEdit = usePermission(PERMISSIONS.pedidos.editar);
+  const canDelete = usePermission(PERMISSIONS.pedidos.eliminar);
+  const canCreate = usePermission(PERMISSIONS.pedidos.crear);
   const permissions: PedidoPermissions = useMemo(
     () => buildPedidoPermissions(canCreate, canEdit, canDelete),
     [canCreate, canDelete, canEdit]
@@ -327,12 +329,17 @@ const Pedidos: React.FC = () => {
   const buildBatchEditData = useCallback(
     (detail: PedidoBatchDetail): PedidoFormValues => {
       const batch = detail.data;
+      const numeroBatch =
+        detail.entityType === 'pedido_usuario'
+          ? batch.numeroGlobal
+          : (batch as PurchaseBatch).numeroLote ||
+            (batch as PurchaseBatch).numeroGlobal;
 
       return {
         id: batch.id,
         batchId: batch.id,
         targetType: detail.entityType,
-        numeroGlobal: 'numeroGlobal' in batch ? batch.numeroGlobal : undefined,
+        numeroGlobal: numeroBatch,
         estado: String(batch.estado),
         observaciones: sanitizePedidoObservation(batch.observaciones),
         pedidoProductos:
@@ -461,7 +468,8 @@ const Pedidos: React.FC = () => {
           proveedorNombre:
             providerNames.length > 0 ? providerNames.join(', ') : 'Pedido',
           fechaPedido: detail.data.createdAt,
-          numeroGlobal: undefined,
+          numeroGlobal:
+            detail.data.numeroLote || detail.data.numeroGlobal || undefined,
         };
       }
 
@@ -741,8 +749,8 @@ const Pedidos: React.FC = () => {
           title={
             itemToEdit?.targetType === 'purchase_batch'
               ? isItemToEditEditable
-                ? `Editar Compra ${formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)}`
-                : `Detalles de la Compra ${formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)} (Solo lectura)`
+                ? `Editar Compra ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)}`
+                : `Detalles de la Compra ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)} (Solo lectura)`
               : itemToEdit?.targetType === 'pedido_usuario'
                 ? isItemToEditEditable
                   ? `Editar Pedido ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)}`

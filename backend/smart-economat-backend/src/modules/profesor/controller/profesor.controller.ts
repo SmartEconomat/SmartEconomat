@@ -19,6 +19,7 @@ import { RequirePermissions } from '../../../common/decorators/require-permissio
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
 import { Public } from '../../../common/decorators/public.decorator';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 @Controller('profesores')
 @UseGuards(JwtAuthGuard, PermisosGuard)
@@ -32,37 +33,37 @@ export class ProfesorController {
   }
 
   @Post('slots')
-  @RequirePermissions('profesor:gestionar_slots')
+  @RequirePermissions(PERMISSIONS.profesor.gestionar_slots)
   async createSlot(@GetUser('id') userId: string, @Body() dto: CreateSlotDto) {
     return this.profesorService.createSlot(userId, dto);
   }
 
   @Post('admin-slots')
-  @RequirePermissions('usuarios:listar')
+  @RequirePermissions(PERMISSIONS.usuarios.listar)
   async adminCreateSlot(@Body() dto: AdminCreateSlotDto) {
     return this.profesorService.adminCreateSlot(dto);
   }
 
   @Get('slots')
-  @RequirePermissions('profesor:gestionar_slots')
+  @RequirePermissions(PERMISSIONS.profesor.gestionar_slots)
   async getSlots(@GetUser('id') userId: string) {
     return this.profesorService.getSlots(userId);
   }
 
   @Get('all-slots')
-  @RequirePermissions('usuarios:listar')
+  @RequirePermissions(PERMISSIONS.usuarios.listar)
   async getAllSlots() {
     return this.profesorService.getAllSlots();
   }
 
   @Get('all-profesores')
-  @RequirePermissions('usuarios:listar')
+  @RequirePermissions(PERMISSIONS.usuarios.listar)
   async getAllProfesores() {
     return this.profesorService.getAllProfesores();
   }
 
   @Patch('admin-slots/:id')
-  @RequirePermissions('usuarios:listar')
+  @RequirePermissions(PERMISSIONS.usuarios.listar)
   async adminUpdateSlot(
     @Param('id') slotId: string,
     @Body() dto: AdminUpdateSlotDto
@@ -71,7 +72,7 @@ export class ProfesorController {
   }
 
   @Patch('slots/:id')
-  @RequirePermissions('profesor:gestionar_slots')
+  @RequirePermissions(PERMISSIONS.profesor.gestionar_slots)
   async updateSlot(
     @GetUser('id') userId: string,
     @Param('id') slotId: string,
@@ -81,19 +82,19 @@ export class ProfesorController {
   }
 
   @Delete('slots/:id')
-  @RequirePermissions('profesor:gestionar_slots')
+  @RequirePermissions(PERMISSIONS.profesor.gestionar_slots)
   async deleteSlot(@GetUser('id') userId: string, @Param('id') slotId: string) {
     return this.profesorService.deleteSlot(userId, slotId);
   }
 
   @Delete('admin-slots/:id')
-  @RequirePermissions('usuarios:listar')
+  @RequirePermissions(PERMISSIONS.usuarios.listar)
   async adminDeleteSlot(@Param('id') slotId: string) {
     return this.profesorService.adminDeleteSlot(slotId);
   }
 
   @Patch('alumnos/:id/activate')
-  @RequirePermissions('profesor:gestionar_alumnos')
+  @RequirePermissions(PERMISSIONS.profesor.gestionar_alumnos)
   async activateAlumno(
     @GetUser('id') profesorUserId: string,
     @Param('id') alumnoId: string
@@ -102,13 +103,13 @@ export class ProfesorController {
   }
 
   @Get('alumnos')
-  @RequirePermissions('profesor:ver_alumnos')
+  @RequirePermissions(PERMISSIONS.profesor.ver_alumnos)
   async getAlumnos(@GetUser('id') profesorUserId: string) {
     return this.profesorService.getAlumnos(profesorUserId);
   }
 
   @Post('alumnos/:id/force-reset')
-  @RequirePermissions('profesor:gestionar_alumnos')
+  @RequirePermissions(PERMISSIONS.profesor.gestionar_alumnos)
   async forcePasswordReset(
     @GetUser('id') profesorUserId: string,
     @Param('id') alumnoId: string

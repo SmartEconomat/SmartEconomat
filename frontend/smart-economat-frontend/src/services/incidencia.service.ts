@@ -138,7 +138,7 @@ function resolveEstadoIncidencia(
 
   const pendientes = lineas.filter((linea) => linea.cantidadPendiente > 0);
   if (pendientes.length === 0) {
-    return EstadoIncidencia.RESUELTA;
+    return EstadoIncidencia.EN_REVISION;
   }
 
   if (pendientes.length < lineas.length) {
@@ -262,10 +262,9 @@ function mapIncidencia(raw: RawIncidencia): Incidencia {
       : toOptionalText(raw.fechaResolucion);
 
   const observacionesResolucion = toOptionalText(raw.observacionesResolucion);
-  const resuelta =
-    Boolean(raw.resuelta) ||
-    Boolean(fechaResolucion) ||
-    (lineas.length > 0 && cantidadPendienteTotal === 0);
+  // Criterio canónico: una incidencia solo está resuelta si backend lo indica
+  // explícitamente o si existe fecha de resolución persistida.
+  const resuelta = Boolean(raw.resuelta) || Boolean(fechaResolucion);
 
   return {
     id: incidenciaId,

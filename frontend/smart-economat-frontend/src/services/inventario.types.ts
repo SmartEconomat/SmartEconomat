@@ -16,6 +16,7 @@ export interface AlertaStock {
  */
 export interface InventarioItem {
   id: string;
+  deletedAt?: string | null;
   cantidadActual: number;
   cantidadMinima: number;
   cantidadMaxima?: number | null;

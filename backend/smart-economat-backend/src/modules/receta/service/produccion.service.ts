@@ -334,6 +334,7 @@ export class ProduccionService {
     const repository = this.dataSource.getRepository(ProduccionLote);
     const allowedSortColumns = new Set([
       'fechaProduccion',
+      'fechaAgotado',
       'cantidadProducida',
       'costeTotalReal',
       'porcionesProducidas',
@@ -458,6 +459,9 @@ export class ProduccionService {
 
       if (nuevasRestantes <= 0) {
         lote.estado = EstadoLote.AGOTADO;
+        lote.fechaAgotado = new Date();
+      } else {
+        lote.fechaAgotado = null;
       }
 
       await manager.save(ProduccionLote, lote);

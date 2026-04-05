@@ -53,5 +53,5 @@ Esta sección documenta la arquitectura y las piezas principales del cliente Rea
 ## Relacionado
 
 - [Arquitectura frontend](../architecture/frontend.md)
-- [Referencia de API](../reference/api.md)
+- [Referencia de API](../reference/api/README.md)
 - [RBAC técnico](../security/rbac.md)

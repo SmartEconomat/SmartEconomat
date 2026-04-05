@@ -1,6 +1,6 @@
 # Login y registro
 
-Esta guía describe el comportamiento vigente de autenticación, sesión y alta de usuarios. Debe leerse como referencia funcional; el detalle de rutas y payloads vive en [reference/api.md](../reference/api.md).
+Esta guía describe el comportamiento vigente de autenticación, sesión y alta de usuarios. Debe leerse como referencia funcional; el detalle de rutas y payloads vive en [reference/api/README.md](../reference/api/README.md).
 
 ## Resumen operativo
 

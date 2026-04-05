@@ -1,6 +1,10 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { MigrationInterface, QueryRunner } from 'typeorm';
+import { ALL_PERMISSION_CODES } from '../common/constants/permissions.constants';
+import {
+  ADMIN_PERMISSION_CODES,
+  ADMIN_RESTRICTED_PERMISSION_CODES,
+} from '../common/constants/role-permission-sets.constants';
+import { getSystemRoleTemplateAliases } from '../common/constants/system-role-template.constants';
 import { rolUsuario } from '../modules/usuario/enums/usuario.enums';
 
 type PermissionSeed = {
@@ -17,19 +21,7 @@ type RoleTemplateSeed = {
   esEditable: boolean;
 };
 
-const MIGRATION_TAG = '[MIGRACION_SHERLOCK_AUTH_20260403]';
-const SOURCE_ROOT = join(process.cwd(), 'src');
-
-const DECORATOR_MARKERS = [
-  'RequirePermissions',
-  'RequireAnyPermission',
-  'ControllerPermissions',
-  'Permissions(',
-  'PermissionsAny(',
-  'PermissionsAll(',
-];
-
-const PERMISSION_LITERAL_PATTERN = /['"`]([a-z0-9_:-]+:[a-z0-9_:-]+)['"`]/gi;
+const MIGRATION_TAG = '[MIGRACION_SHERLOCK_AUTH]';
 
 const PROFESOR_PERMISSION_CODES = [
   'profesor:gestionar_slots',
@@ -87,36 +79,6 @@ const ALUMNO_PERMISSION_CODES = [
   'merma:ver',
 ] as const;
 
-const ESSENTIAL_PERMISSION_CODES = [
-  'usuarios:listar',
-  'usuarios:ver',
-  'usuarios:crear',
-  'usuarios:editar',
-  'usuarios:activar_desactivar',
-  'usuarios:resetear_password',
-  'productos:listar',
-  'productos:ver',
-  'productos:crear',
-  'productos:editar',
-  'proveedores:listar',
-  'proveedores:crear',
-  'pedidos:listar',
-  'pedidos:crear',
-  'recepciones:listar',
-  'recepciones:crear',
-  'movimientos:listar',
-  'movimientos:historial',
-  'inventario:listar',
-  'inventario:ver',
-  'dashboard:ver_estadisticas',
-  'profesor:gestionar_slots',
-  'profesor:gestionar_alumnos',
-  'profesor:ver_alumnos',
-  'alumno:cambiar_profesor',
-  ...PROFESOR_PERMISSION_CODES,
-  ...ALUMNO_PERMISSION_CODES,
-];
-
 const ROLE_TEMPLATE_SEEDS: readonly RoleTemplateSeed[] = [
   {
     role: rolUsuario.SUPER_ADMIN,
@@ -144,17 +106,25 @@ export class SherlockAuthMigration1775050000000 implements MigrationInterface {
   public name = 'sherlockAuthMigration1775050000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    const permissionCodes = this.collectPermissionCodesFromSource();
+    const permissionCodes = [...ALL_PERMISSION_CODES].sort();
     const permissionIdByCode = await this.ensurePermissions(
       queryRunner,
       permissionCodes
     );
+
+    await this.deactivateGhostPermissions(queryRunner, permissionCodes);
 
     const roleIdByName = await this.ensureSystemRoles(queryRunner);
     const templateIdByRole = await this.ensureRoleTemplates(queryRunner);
 
     const rolePermissionCodes =
       this.resolveRolePermissionCodes(permissionCodes);
+
+    await this.enforceAdminRestrictions(
+      queryRunner,
+      roleIdByName,
+      templateIdByRole
+    );
 
     await this.ensureRolePermissions(
       queryRunner,
@@ -171,56 +141,8 @@ export class SherlockAuthMigration1775050000000 implements MigrationInterface {
     );
   }
 
-  public down(queryRunner: QueryRunner): Promise<void> {
-    void queryRunner;
-    // No-op intencional: este bootstrap es fundacional para el control de acceso.
+  public down(): Promise<void> {
     return Promise.resolve();
-  }
-
-  private listTypeScriptFiles(rootDir: string): string[] {
-    if (!existsSync(rootDir)) {
-      return [];
-    }
-
-    return readdirSync(rootDir, { withFileTypes: true }).flatMap((entry) => {
-      const filePath = join(rootDir, entry.name);
-
-      if (entry.isDirectory()) {
-        if (
-          entry.name === 'node_modules' ||
-          entry.name === 'dist' ||
-          entry.name.startsWith('.')
-        ) {
-          return [];
-        }
-
-        return this.listTypeScriptFiles(filePath);
-      }
-
-      return entry.isFile() && entry.name.endsWith('.ts') ? [filePath] : [];
-    });
-  }
-
-  private collectPermissionCodesFromSource(): string[] {
-    const permissionCodes = new Set<string>(ESSENTIAL_PERMISSION_CODES);
-    const files = this.listTypeScriptFiles(SOURCE_ROOT);
-
-    for (const filePath of files) {
-      const content = readFileSync(filePath, 'utf8');
-
-      if (!DECORATOR_MARKERS.some((marker) => content.includes(marker))) {
-        continue;
-      }
-
-      for (const match of content.matchAll(PERMISSION_LITERAL_PATTERN)) {
-        const code = String(match[1] || '').trim();
-        if (code.includes(':')) {
-          permissionCodes.add(code);
-        }
-      }
-    }
-
-    return [...permissionCodes].sort();
   }
 
   private normalizeId(value: unknown): string | null {
@@ -306,6 +228,22 @@ export class SherlockAuthMigration1775050000000 implements MigrationInterface {
     return permissionIdByCode;
   }
 
+  /**
+   * Desactiva permisos fantasma que ya no existen en el catálogo
+   * (p.ej. `movimientos:historial`).
+   */
+  private async deactivateGhostPermissions(
+    queryRunner: QueryRunner,
+    activeCodes: string[]
+  ): Promise<void> {
+    await queryRunner.query(
+      `UPDATE "permiso" SET "activo" = FALSE
+       WHERE "codigo" = 'movimientos:historial'
+         AND "codigo" NOT IN (${activeCodes.map((_, i) => `$${i + 1}`).join(', ')})`,
+      activeCodes
+    );
+  }
+
   private async ensureSystemRoles(
     queryRunner: QueryRunner
   ): Promise<Map<rolUsuario, string>> {
@@ -378,16 +316,36 @@ export class SherlockAuthMigration1775050000000 implements MigrationInterface {
     const templateIdByRole = new Map<rolUsuario, string>();
 
     for (const seed of ROLE_TEMPLATE_SEEDS) {
+      const aliases = getSystemRoleTemplateAliases(seed.role).map((name) =>
+        name.trim().toUpperCase()
+      );
+
       const existingRows = (await queryRunner.query(
         `SELECT "id"
          FROM "plantilla_rol"
-         WHERE UPPER("nombre") = UPPER($1)
-         ORDER BY "created_at" ASC
-         LIMIT 1`,
-        [seed.role]
+         WHERE UPPER("nombre") = ANY($1::text[])
+         ORDER BY CASE
+                    WHEN UPPER("nombre") = UPPER($2) THEN 0
+                    ELSE 1
+                  END ASC,
+                  "created_at" ASC`,
+        [aliases, seed.role]
       )) as Array<{ id?: string }>;
 
       const existingTemplateId = this.normalizeId(existingRows[0]?.id);
+
+      const duplicateTemplateIds = existingRows
+        .slice(1)
+        .map((row) => this.normalizeId(row.id))
+        .filter((templateId): templateId is string => templateId !== null);
+
+      if (existingTemplateId && duplicateTemplateIds.length > 0) {
+        await this.collapseTemplateDuplicates(
+          queryRunner,
+          existingTemplateId,
+          duplicateTemplateIds
+        );
+      }
 
       if (existingTemplateId) {
         await queryRunner.query(
@@ -433,6 +391,40 @@ export class SherlockAuthMigration1775050000000 implements MigrationInterface {
     return templateIdByRole;
   }
 
+  private async collapseTemplateDuplicates(
+    queryRunner: QueryRunner,
+    keepTemplateId: string,
+    duplicateTemplateIds: string[]
+  ): Promise<void> {
+    const uniqueDuplicateIds = [...new Set(duplicateTemplateIds)].filter(
+      (templateId) => templateId !== keepTemplateId
+    );
+
+    if (uniqueDuplicateIds.length === 0) {
+      return;
+    }
+
+    await queryRunner.query(
+      `UPDATE "rol"
+       SET "plantilla_rol_id" = $1
+       WHERE "plantilla_rol_id" = ANY($2::uuid[])`,
+      [keepTemplateId, uniqueDuplicateIds]
+    );
+
+    await queryRunner.query(
+      `UPDATE "plantilla_rol"
+       SET "plantilla_padre_id" = $1
+       WHERE "plantilla_padre_id" = ANY($2::uuid[])`,
+      [keepTemplateId, uniqueDuplicateIds]
+    );
+
+    await queryRunner.query(
+      `DELETE FROM "plantilla_rol"
+       WHERE "id" = ANY($1::uuid[])`,
+      [uniqueDuplicateIds]
+    );
+  }
+
   private resolveRolePermissionCodes(
     allPermissionCodes: string[]
   ): Map<rolUsuario, string[]> {
@@ -440,10 +432,65 @@ export class SherlockAuthMigration1775050000000 implements MigrationInterface {
 
     return new Map<rolUsuario, string[]>([
       [rolUsuario.SUPER_ADMIN, all],
-      [rolUsuario.ADMIN, all],
+      [rolUsuario.ADMIN, [...ADMIN_PERMISSION_CODES].sort()],
       [rolUsuario.PROFESOR, [...new Set(PROFESOR_PERMISSION_CODES)].sort()],
       [rolUsuario.ALUMNO, [...new Set(ALUMNO_PERMISSION_CODES)].sort()],
     ]);
+  }
+
+  /**
+   * Elimina permisos restringidos (roles:crear, roles:eliminar,
+   * permisos:crear, permisos:eliminar) del rol ADMIN, su plantilla
+   * y de los permisos adicionales de usuarios ADMIN.
+   *
+   * SUPER_ADMIN y ADMIN no deben poder tener estos permisos editados
+   * desde la UI; esta migración los fuerza.
+   */
+  private async enforceAdminRestrictions(
+    queryRunner: QueryRunner,
+    roleIdByName: Map<rolUsuario, string>,
+    templateIdByRole: Map<rolUsuario, string>
+  ): Promise<void> {
+    const restrictedCodes = [...ADMIN_RESTRICTED_PERMISSION_CODES];
+
+    const adminRoleId = roleIdByName.get(rolUsuario.ADMIN);
+    if (adminRoleId) {
+      await queryRunner.query(
+        `DELETE FROM "rol_permiso"
+         WHERE "rol_id" = $1
+           AND "permiso_id" IN (
+             SELECT "id" FROM "permiso"
+             WHERE "codigo" = ANY($2)
+           )`,
+        [adminRoleId, restrictedCodes]
+      );
+    }
+
+    const adminTemplateId = templateIdByRole.get(rolUsuario.ADMIN);
+    if (adminTemplateId) {
+      await queryRunner.query(
+        `DELETE FROM "plantilla_rol_permiso"
+         WHERE "plantilla_rol_id" = $1
+           AND "permiso_id" IN (
+             SELECT "id" FROM "permiso"
+             WHERE "codigo" = ANY($2)
+           )`,
+        [adminTemplateId, restrictedCodes]
+      );
+    }
+
+    await queryRunner.query(
+      `DELETE FROM "usuario_permiso_adicional"
+       WHERE "usuario_id" IN (
+         SELECT "id" FROM "usuario"
+         WHERE UPPER("rol"::text) = UPPER($1)
+       )
+         AND "permiso_id" IN (
+           SELECT "id" FROM "permiso"
+           WHERE "codigo" = ANY($2)
+         )`,
+      [rolUsuario.ADMIN, restrictedCodes]
+    );
   }
 
   private async ensureRolePermissions(

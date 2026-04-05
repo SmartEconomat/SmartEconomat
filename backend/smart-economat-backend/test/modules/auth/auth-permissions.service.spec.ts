@@ -8,6 +8,7 @@ import { rolUsuario } from '../../../src/modules/usuario/enums/usuario.enums';
 
 describe('AuthPermissionsService', () => {
   let service: AuthPermissionsService;
+  let moduleRef: TestingModule;
 
   const mockUsuarioRepo = {
     findOne: jest.fn(),
@@ -25,9 +26,9 @@ describe('AuthPermissionsService', () => {
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
 
-    const module: TestingModule = await Test.createTestingModule({
+    moduleRef = await Test.createTestingModule({
       providers: [
         AuthPermissionsService,
         {
@@ -45,7 +46,11 @@ describe('AuthPermissionsService', () => {
       ],
     }).compile();
 
-    service = module.get<AuthPermissionsService>(AuthPermissionsService);
+    service = moduleRef.get<AuthPermissionsService>(AuthPermissionsService);
+  });
+
+  afterEach(async () => {
+    await moduleRef.close();
   });
 
   function createPermisoQueryBuilder(result: Array<{ codigo: string }>) {
@@ -100,24 +105,21 @@ describe('AuthPermissionsService', () => {
         ])
       )
       .mockReturnValueOnce(
-        createPermisoQueryBuilder([
-          { codigo: 'productos:listar' },
-          { codigo: 'pedidos:crear' },
-        ])
+        createPermisoQueryBuilder([{ codigo: 'productos:listar' }])
+      )
+      .mockReturnValueOnce(
+        createPermisoQueryBuilder([{ codigo: 'pedidos:crear' }])
       )
       .mockReturnValueOnce(
         createPermisoQueryBuilder([{ codigo: 'usuarios:ver' }])
-      )
-      .mockReturnValueOnce(
-        createPermisoQueryBuilder([{ codigo: 'productos:crear' }])
       );
 
     const result = await (service as any).loadUserPermissionsFromDB('user-3');
 
     expect(result).toEqual([
       'productos:listar',
+      'productos:crear',
       'pedidos:crear',
-      'usuarios:ver',
     ]);
   });
 

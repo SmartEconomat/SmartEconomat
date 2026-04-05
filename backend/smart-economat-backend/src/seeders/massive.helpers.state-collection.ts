@@ -10,6 +10,10 @@ import {
   toEntityArray,
 } from './massive.helpers.common';
 import { pushStateValue, removeStateValue } from './massive.state';
+import { SYSTEM_ROLE_TEMPLATE_PROTECTED_NAMES } from '../common/constants/system-role-template.constants';
+
+/** Base template names that must never be picked for destructive/mutating seed operations */
+const PROTECTED_PLANTILLA_NAMES = SYSTEM_ROLE_TEMPLATE_PROTECTED_NAMES;
 
 export function collectStateFromResponse(
   context: SeedContext,
@@ -95,11 +99,11 @@ export function collectStateFromResponse(
       return false;
     }
 
-    if (typeof entity.numeroGlobal === 'string') {
-      return false;
-    }
-
-    return Array.isArray(entity.pedidos);
+    return (
+      Array.isArray(entity.pedidos) ||
+      typeof entity.numeroGlobal === 'string' ||
+      typeof entity.numeroGlobal === 'number'
+    );
   };
 
   const isPedidoEntity = (entity: Record<string, unknown>): boolean => {
@@ -296,7 +300,10 @@ export function collectStateFromResponse(
   for (const entity of entities) {
     const id = entity.id;
 
-    if (resolvedPath.startsWith('/admin/roles')) {
+    if (
+      resolvedPath.startsWith('/admin/roles') ||
+      resolvedPath.startsWith('/roles')
+    ) {
       pushStateValue(context, 'roleIds', id);
       if (typeof id === 'string' && typeof entity.nombre === 'string') {
         const normalizedRoleName = entity.nombre.trim().toUpperCase();
@@ -432,6 +439,34 @@ export function collectStateFromResponse(
     if (resolvedPath.startsWith('/profesores/all-profesores')) {
       pushStateValue(context, 'profesorIds', id);
       pushStateValue(context, 'usuarioIds', entity.userId);
+    }
+
+    if (
+      resolvedPath.startsWith('/plantillas-roles') &&
+      typeof id === 'string'
+    ) {
+      pushStateValue(context, 'plantillaRolIds', id);
+
+      const nombreValue =
+        typeof entity.nombre === 'string'
+          ? entity.nombre
+          : typeof entity.name === 'string'
+            ? entity.name
+            : '';
+      const nombre = nombreValue.toUpperCase();
+      const isBaseTemplate = PROTECTED_PLANTILLA_NAMES.has(nombre);
+
+      const esEditable =
+        entity.esEditable === true ||
+        entity.es_editable === true ||
+        entity.esEditable === 'true' ||
+        entity.es_editable === 'true';
+
+      if (esEditable && !isBaseTemplate) {
+        pushStateValue(context, 'plantillaRolMutableIds', id);
+      } else {
+        removeStateValue(context, 'plantillaRolMutableIds', id);
+      }
     }
 
     pushStateValue(context, 'usuarioIds', entity.userId);

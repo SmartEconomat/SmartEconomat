@@ -93,6 +93,9 @@ export interface Pedido extends PedidoBase<EstadoPedido> {
   pedidoUsuarioId?: string;
   pedidoUsuario?: PedidoVisibleRef;
   numeroGlobal?: string;
+  numeroPedidoProveedor?: string;
+  numeroPedidoVisible?: string;
+  referenciaPedidoVisible?: string;
   proveedor?: {
     id: string;
     nombre: string;
@@ -131,6 +134,10 @@ export interface PedidoUsuarioRow extends PedidoUsuario {
 export interface PurchaseBatch {
   entityType?: 'purchase_batch';
   id: string;
+  numeroGlobal?: string;
+  referencia?: string;
+  numeroLote?: string;
+  referenciaLote?: string;
   createdAt: string;
   estado: EstadoLote;
   observaciones?: string;

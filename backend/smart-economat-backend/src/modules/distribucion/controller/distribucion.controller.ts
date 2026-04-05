@@ -19,6 +19,7 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { DistribucionService } from '../service/distribucion.service';
 import { CreateDistribucionDto } from '../dto/create-distribucion.dto';
 import { CancelDistribucionDto } from '../dto/cancel-distribucion.dto';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 @ApiTags('Distribuciones')
 @ApiBearerAuth()
@@ -28,7 +29,7 @@ export class DistribucionController {
   constructor(private readonly distribucionService: DistribucionService) {}
 
   @Get()
-  @RequirePermissions('distribuciones:listar')
+  @RequirePermissions(PERMISSIONS.distribuciones.listar)
   @ApiOperation({ summary: 'Listar distribuciones' })
   findAll(
     @Query() query: PaginationQueryDto,
@@ -38,14 +39,14 @@ export class DistribucionController {
   }
 
   @Get('disponibles')
-  @RequirePermissions('distribuciones:listar')
+  @RequirePermissions(PERMISSIONS.distribuciones.listar)
   @ApiOperation({ summary: 'Listar pedidos de usuario distribuibles' })
   findDisponibles(@Query() query: PaginationQueryDto) {
     return this.distribucionService.findDisponibles(query);
   }
 
   @Get(':id')
-  @RequirePermissions('distribuciones:ver')
+  @RequirePermissions(PERMISSIONS.distribuciones.ver)
   @ApiOperation({ summary: 'Ver detalle de distribución' })
   findOne(
     @Param('id', ParseUUIDv7Pipe) id: string,
@@ -55,14 +56,14 @@ export class DistribucionController {
   }
 
   @Post()
-  @RequirePermissions('distribuciones:crear')
+  @RequirePermissions(PERMISSIONS.distribuciones.crear)
   @ApiOperation({ summary: 'Preparar una distribución' })
   create(@Body() dto: CreateDistribucionDto, @GetUser('id') userId: string) {
     return this.distribucionService.create(dto, userId);
   }
 
   @Patch(':id/confirmar')
-  @RequirePermissions('distribuciones:confirmar')
+  @RequirePermissions(PERMISSIONS.distribuciones.confirmar)
   @ApiOperation({ summary: 'Confirmar una distribución y mover stock' })
   confirmar(
     @Param('id', ParseUUIDv7Pipe) id: string,
@@ -72,12 +73,13 @@ export class DistribucionController {
   }
 
   @Patch(':id/cancelar')
-  @RequirePermissions('distribuciones:cancelar')
+  @RequirePermissions(PERMISSIONS.distribuciones.cancelar)
   @ApiOperation({ summary: 'Cancelar una distribución no confirmada' })
   cancelar(
     @Param('id', ParseUUIDv7Pipe) id: string,
-    @Body() dto: CancelDistribucionDto
+    @Body() dto: CancelDistribucionDto,
+    @GetUser('id') userId: string
   ) {
-    return this.distribucionService.cancelar(id, dto);
+    return this.distribucionService.cancelar(id, dto, userId);
   }
 }

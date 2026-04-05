@@ -41,6 +41,7 @@ import { UbicacionService } from '../../services/ubicacion.service';
 import { Ubicacion } from '../../services/ubicacion.types';
 import QuickLocationDialog from '../../components/inventario/QuickLocationDialog';
 import QuickSlotDialog from '../../features/profile/components/QuickSlotDialog';
+import { isElevatedRole } from '../../sherlock-auth/permissions';
 
 export interface UserModalProps {
   open: boolean;
@@ -270,12 +271,7 @@ const UserModal: React.FC<UserModalProps> = ({
     };
 
   const isAdminRole = (role?: string) => {
-    const normalized = role?.toUpperCase() || '';
-    return (
-      normalized === 'ADMIN' ||
-      normalized === 'ADMINISTRADOR' ||
-      normalized === 'SUPER_ADMIN'
-    );
+    return isElevatedRole(role);
   };
 
   const isLastAdmin = () => {

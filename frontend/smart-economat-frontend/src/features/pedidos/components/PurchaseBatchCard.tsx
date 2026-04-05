@@ -14,6 +14,8 @@ import LayersIcon from '@mui/icons-material/Layers';
 import { Pedido, PurchaseBatch } from '../../../services/pedido.types';
 import StatusChip from '../../../components/ui/StatusChip';
 import {
+  formatBatchNumber,
+  formatBatchReference,
   formatPedidoDate,
   formatCurrency,
   getPedidoCreatorName,
@@ -70,7 +72,7 @@ const PurchaseBatchCard: React.FC<PurchaseBatchCardProps> = ({
               color="text.secondary"
               sx={{ lineHeight: 1, fontSize: '0.65rem' }}
             >
-              Lote de Compra
+              Lote #{formatBatchNumber(batch)}
             </Typography>
             <Typography
               variant="caption"
@@ -78,7 +80,7 @@ const PurchaseBatchCard: React.FC<PurchaseBatchCardProps> = ({
               display="block"
               sx={{ mt: 0.5 }}
             >
-              ID: {batch.id.split('-')[0]}
+              Ref: {formatBatchReference(batch)}
             </Typography>
           </Box>
           <StatusChip status={batch.estado} size="small" />
@@ -91,7 +93,7 @@ const PurchaseBatchCard: React.FC<PurchaseBatchCardProps> = ({
               variant="h6"
               sx={{ fontWeight: 'bold', lineHeight: 1.2 }}
             >
-              {pedidosCount} Pedidos Consolidados
+              {pedidosCount} Pedidos Proveedor
             </Typography>
           </Box>
         </Box>

@@ -11,6 +11,7 @@ import { DashboardService } from '../service/dashboard.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 @ApiTags('Dashboard')
 @ApiBearerAuth()
@@ -20,7 +21,7 @@ export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
   @Get('stats')
-  @RequirePermissions('dashboard:ver_estadisticas')
+  @RequirePermissions(PERMISSIONS.dashboard.ver_estadisticas)
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(60000)
   @ApiOperation({ summary: 'Get dashboard statistics (KPIs)' })

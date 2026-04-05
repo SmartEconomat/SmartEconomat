@@ -20,6 +20,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ApiQuery } from '@nestjs/swagger';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('historial-precio')
@@ -29,14 +30,14 @@ export class HistorialPrecioController {
   ) {}
 
   @Post()
-  @RequirePermissions('productos:editar')
+  @RequirePermissions(PERMISSIONS.productos.editar)
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateHistorialPrecioDto): Promise<HistorialPrecio> {
     return this.historialPrecioService.create(dto);
   }
 
   @Get()
-  @RequirePermissions('productos:ver')
+  @RequirePermissions(PERMISSIONS.productos.ver)
   @HttpCode(HttpStatus.OK)
   @ApiQuery({
     name: 'order',
@@ -51,14 +52,14 @@ export class HistorialPrecioController {
   }
 
   @Get(':id')
-  @RequirePermissions('productos:ver')
+  @RequirePermissions(PERMISSIONS.productos.ver)
   @HttpCode(HttpStatus.OK)
   findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<HistorialPrecio> {
     return this.historialPrecioService.findOne(id);
   }
 
   @Patch(':id')
-  @RequirePermissions('productos:editar')
+  @RequirePermissions(PERMISSIONS.productos.editar)
   @HttpCode(HttpStatus.OK)
   update(
     @Param('id', ParseUUIDv7Pipe) id: string,
@@ -68,7 +69,7 @@ export class HistorialPrecioController {
   }
 
   @Delete(':id')
-  @RequirePermissions('productos:eliminar')
+  @RequirePermissions(PERMISSIONS.productos.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.historialPrecioService.remove(id);

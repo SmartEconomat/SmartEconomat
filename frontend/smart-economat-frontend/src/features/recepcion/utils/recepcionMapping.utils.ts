@@ -10,6 +10,7 @@ import {
   PurchaseBatch,
 } from '../../../services/pedido.types';
 import { UnidadMedida } from '../../../services/producto.types';
+import { formatPedidoListNumber } from '../../pedidos/utils/pedidoFormatters';
 
 const calculateEstado = (rec: number, ped: number): LineaDraft['estado'] => {
   if (rec === 0) return 'No entregado';
@@ -41,6 +42,7 @@ export const mapPedidoToDraftLines = (pedido: Pedido): LineaDraft[] => {
     estadoVisual: EstadoVisualProducto.OPTIMO,
     fechaCaducidad: '',
     observaciones: '',
+    intervenida: false,
     estado: calculateEstado(0, Number(pp.cantidad)),
     unidad: pp.productoProveedor?.producto?.unidad || UnidadMedida.UNIDAD,
   }));
@@ -50,11 +52,7 @@ export const mapPurchaseBatchToRecepcionDraft = (
   batch: PurchaseBatch
 ): RecepcionDraft => {
   const now = new Date().toISOString();
-  const receivableStatuses = new Set<string>([
-    EstadoPedido.POR_RECEPCIONAR,
-    EstadoPedido.PARCIAL,
-    EstadoPedido.INCIDENCIA,
-  ]);
+  const receivableStatuses = new Set<string>([EstadoPedido.POR_RECEPCIONAR]);
 
   return {
     version: 2,
@@ -68,7 +66,7 @@ export const mapPurchaseBatchToRecepcionDraft = (
       .filter((pedido) => receivableStatuses.has(String(pedido.estado)))
       .map((pedido) => ({
         id: pedido.id,
-        descripcion: `Pedido ${pedido.numeroGlobal || pedido.id.substring(0, 8)} - ${
+        descripcion: `Pedido ${formatPedidoListNumber(pedido, 'pedido-proveedor')} - ${
           pedido.proveedor?.nombre
         }`,
         proveedor: pedido.proveedor?.nombre || 'Desconocido',

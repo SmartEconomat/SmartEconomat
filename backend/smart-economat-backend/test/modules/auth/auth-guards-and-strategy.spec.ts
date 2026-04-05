@@ -250,6 +250,7 @@ describe('Auth guards and strategy', () => {
 
     expect(usuarioRepo.findOne).toHaveBeenCalledWith({
       where: { id: 'user-4', status: UserStatus.ACTIVE },
+      relations: ['roles'],
     });
     expect(result).toEqual({
       id: 'user-4',

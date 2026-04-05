@@ -151,6 +151,7 @@ describe('ProduccionService', () => {
         recetaId: 'receta-1',
         porcionesRestantes: 5,
         estado: EstadoLote.DISPONIBLE,
+        fechaAgotado: null,
       };
 
       manager.findOne
@@ -161,6 +162,7 @@ describe('ProduccionService', () => {
           receta: mockReceta,
           porcionesRestantes: 0,
           estado: EstadoLote.AGOTADO,
+          fechaAgotado: new Date('2026-04-04T09:00:00.000Z'),
         });
       manager.save.mockImplementation((_, entity) => entity);
 
@@ -171,6 +173,13 @@ describe('ProduccionService', () => {
 
       expect(result.porcionesRestantes).toBe(0);
       expect(result.estado).toBe(EstadoLote.AGOTADO);
+      expect(manager.save).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          estado: EstadoLote.AGOTADO,
+          fechaAgotado: expect.any(Date),
+        })
+      );
       expect(manager.save).toHaveBeenCalled();
     });
 
@@ -210,6 +219,7 @@ describe('ProduccionService', () => {
         recetaId: 'receta-1',
         porcionesRestantes: 10,
         estado: EstadoLote.DISPONIBLE,
+        fechaAgotado: null,
       };
 
       manager.findOne
@@ -220,6 +230,7 @@ describe('ProduccionService', () => {
           receta: mockReceta,
           porcionesRestantes: 7,
           estado: EstadoLote.DISPONIBLE,
+          fechaAgotado: null,
         });
       manager.save.mockImplementation((_, entity) => entity);
 
@@ -230,6 +241,13 @@ describe('ProduccionService', () => {
 
       expect(result.porcionesRestantes).toBe(7);
       expect(result.estado).toBe(EstadoLote.DISPONIBLE);
+      expect(manager.save).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          estado: EstadoLote.DISPONIBLE,
+          fechaAgotado: null,
+        })
+      );
       expect(manager.save).toHaveBeenCalled();
     });
 

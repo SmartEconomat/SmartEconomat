@@ -200,6 +200,7 @@ describe('InventarioService', () => {
     };
 
     const queryBuilder = {
+      withDeleted: jest.fn().mockReturnThis(),
       innerJoinAndSelect: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       setLock: jest.fn().mockReturnThis(),
@@ -301,6 +302,7 @@ describe('InventarioService', () => {
 
   it('ajustarManual lanza NotFoundException si no existe el inventario', async () => {
     const queryBuilder = {
+      withDeleted: jest.fn().mockReturnThis(),
       innerJoinAndSelect: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       setLock: jest.fn().mockReturnThis(),
@@ -346,6 +348,7 @@ describe('InventarioService', () => {
     };
 
     const queryBuilder = {
+      withDeleted: jest.fn().mockReturnThis(),
       innerJoinAndSelect: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       setLock: jest.fn().mockReturnThis(),
@@ -373,5 +376,51 @@ describe('InventarioService', () => {
         'user-8'
       )
     ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('ajustarManual rechaza ajustes sobre inventario eliminado', async () => {
+    const inventarioEliminado = {
+      id: 'inv-deleted',
+      deletedAt: new Date('2026-04-04T10:00:00.000Z'),
+      cantidadActual: 8,
+      productoProveedor: {
+        id: 'pp-deleted',
+        producto: { nombre: 'Arroz' },
+      },
+      ajustarCantidad: jest.fn(),
+    };
+
+    const queryBuilder = {
+      withDeleted: jest.fn().mockReturnThis(),
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      setLock: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(inventarioEliminado),
+    };
+    const manager = {
+      createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
+      update: jest.fn(),
+      save: jest.fn(),
+      create: jest.fn(),
+    };
+
+    mockDataSource.transaction.mockImplementation((callback: any) =>
+      callback(manager)
+    );
+
+    await expect(
+      service.ajustarManual(
+        {
+          inventarioId: 'inv-deleted',
+          tipo: TipoMovimientoManual.AJUSTE,
+          ajuste: 2,
+          motivo: 'Regularización',
+        },
+        'user-deleted'
+      )
+    ).rejects.toBeInstanceOf(ConflictException);
+
+    expect(manager.update).not.toHaveBeenCalled();
+    expect(manager.save).not.toHaveBeenCalled();
   });
 });

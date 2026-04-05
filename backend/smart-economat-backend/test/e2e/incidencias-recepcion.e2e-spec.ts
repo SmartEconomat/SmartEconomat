@@ -78,6 +78,11 @@ describe('Incidencias en Recepción (e2e)', () => {
           lineas: [{ productoProveedorId, cantidad: 1 }],
         });
 
+      await request(app.getHttpServer() as string)
+        .patch(`/api/v1/pedidos/${pedidoRes.body.data.id}/aceptar`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
       const pedidoDetail = await request(app.getHttpServer() as string)
         .get(`/api/v1/pedidos/${pedidoRes.body.data.id}`)
         .set('Authorization', `Bearer ${adminToken}`);

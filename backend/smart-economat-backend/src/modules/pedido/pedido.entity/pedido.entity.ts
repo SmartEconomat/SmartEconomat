@@ -87,7 +87,7 @@ export class Pedido extends BaseEntity {
   proveedor?: Relation<Proveedor>;
 
   /**
-   * Lote de compra al que pertenece este pedido (opcional para legacy).
+   * Lote de compra al que pertenece este pedido.
    */
   @ManyToOne(() => PurchaseBatch, (batch) => batch.pedidos, {
     nullable: true,

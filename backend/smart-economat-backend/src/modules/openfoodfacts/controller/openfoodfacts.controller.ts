@@ -19,6 +19,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { OffProductResponseDto } from '../dto/off-product-response.dto';
 import { OpenFoodFactsService } from '../service/openfoodfacts.service';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 @ApiTags('OpenFoodFacts')
 @UseGuards(JwtAuthGuard, PermisosGuard)
@@ -28,11 +29,11 @@ export class OpenFoodFactsController {
 
   @Get('producto/:codigoBarras')
   @RequireAnyPermission(
-    'productos:listar',
-    'productos:ver',
-    'inventario:listar',
-    'recepciones:listar',
-    'recepciones:crear'
+    PERMISSIONS.productos.listar,
+    PERMISSIONS.productos.ver,
+    PERMISSIONS.inventario.listar,
+    PERMISSIONS.recepciones.listar,
+    PERMISSIONS.recepciones.crear
   )
   @ApiOperation({
     summary: 'Buscar un producto en OpenFoodFacts por código de barras',
@@ -64,11 +65,11 @@ export class OpenFoodFactsController {
 
   @Get('buscar')
   @RequireAnyPermission(
-    'productos:listar',
-    'productos:ver',
-    'inventario:listar',
-    'recepciones:listar',
-    'recepciones:crear'
+    PERMISSIONS.productos.listar,
+    PERMISSIONS.productos.ver,
+    PERMISSIONS.inventario.listar,
+    PERMISSIONS.recepciones.listar,
+    PERMISSIONS.recepciones.crear
   )
   @ApiOperation({
     summary: 'Buscar productos en OpenFoodFacts por nombre',

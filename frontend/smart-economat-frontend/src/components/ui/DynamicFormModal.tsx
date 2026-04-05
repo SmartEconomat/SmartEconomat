@@ -33,6 +33,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import { resolveStoredFileUrl } from '../../services/api.service';
 import { parseLocalizedNumber } from '../../utils/numberUtils';
 import { PedidoUsuario, PurchaseBatch } from '../../services/pedido.types';
@@ -81,10 +82,9 @@ export interface DynamicFormModalProps extends Omit<ModalProps, 'children'> {
   isSubmitting?: boolean;
   size?: ModalSize;
   requireConfirmation?: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onBarcodeFetch?: (code: string) => Promise<Record<string, any> | void>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onOFFSearch?: (value: string) => Promise<Array<Record<string, any>>>;
+  onBarcodeFetch?: (code: string) => Promise<Record<string, unknown> | void>;
+  onBarcodeGenerate?: () => Promise<string | void>;
+  onOFFSearch?: (value: string) => Promise<Array<Record<string, unknown>>>;
   confirmationMessage?: React.ReactNode;
   onValuesChange?: (data: Record<string, unknown>) => void;
   valueUpdates?: Record<string, unknown>;
@@ -114,6 +114,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   isSubmitting = false,
   requireConfirmation = false,
   onBarcodeFetch,
+  onBarcodeGenerate,
   onOFFSearch,
   confirmationMessage,
   onValuesChange,
@@ -129,10 +130,14 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   const [activeBarcodeField, setActiveBarcodeField] = useState<string | null>(
     null
   );
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [offResults, setOffResults] = useState<Array<Record<string, any>>>([]);
+  const [offResults, setOffResults] = useState<Array<Record<string, unknown>>>(
+    []
+  );
   const [showOFFResults, setShowOFFResults] = useState(false);
   const [isOFFSearching, setIsOFFSearching] = useState(false);
+  const [generatingBarcodeField, setGeneratingBarcodeField] = useState<
+    string | null
+  >(null);
 
   const selectedProveedorId =
     typeof formData.proveedorId === 'string'
@@ -238,6 +243,35 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   const handleAllergensChange = (name: string) => (newValue: string[]) => {
     updateFormData((prev) => ({ ...prev, [name]: newValue }));
   };
+
+  const handleBarcodeGenerate = useCallback(
+    async (fieldName: string) => {
+      if (!onBarcodeGenerate || generatingBarcodeField) {
+        return;
+      }
+
+      setGeneratingBarcodeField(fieldName);
+
+      try {
+        const code = await onBarcodeGenerate();
+
+        if (!code) {
+          return;
+        }
+
+        updateFormData((prev) => ({
+          ...prev,
+          [fieldName]: code,
+        }));
+        setErrors((prev) => ({ ...prev, [fieldName]: '' }));
+        setShowOFFResults(false);
+        setOffResults([]);
+      } finally {
+        setGeneratingBarcodeField(null);
+      }
+    },
+    [generatingBarcodeField, onBarcodeGenerate, updateFormData]
+  );
 
   const handleImageChange =
     (name: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -564,48 +598,83 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                     </Tooltip>
                   </InputAdornment>
                 ),
-                endAdornment: onOFFSearch && (
+                endAdornment: (onBarcodeGenerate || onOFFSearch) && (
                   <InputAdornment position="end">
-                    <Tooltip title="Buscar en OpenFoodFacts">
-                      <span>
-                        <IconButton
-                          size="small"
-                          disabled={disabled || isOFFSearching || !value}
-                          onClick={async () => {
-                            if (!value || isOFFSearching) return;
-                            setIsOFFSearching(true);
-                            setShowOFFResults(false);
-                            const results = await onOFFSearch(String(value));
-                            setIsOFFSearching(false);
-                            if (results.length === 1) {
-                              setFormData((prev) => ({
-                                ...prev,
-                                ...results[0],
-                              }));
-                            } else if (results.length > 1) {
-                              setOffResults(results);
-                              setShowOFFResults(true);
-                            }
-                          }}
-                          sx={{
-                            bgcolor: 'primary.main',
-                            color: 'white',
-                            '&:hover': {
-                              bgcolor: 'primary.dark',
-                            },
-                            borderRadius: 1,
-                            p: 0.5,
-                            mr: -0.5,
-                          }}
-                        >
-                          {isOFFSearching ? (
-                            <CircularProgress size={20} />
-                          ) : (
-                            <SearchIcon fontSize="small" />
-                          )}
-                        </IconButton>
-                      </span>
-                    </Tooltip>
+                    <Stack direction="row" spacing={0.5}>
+                      {onBarcodeGenerate && (
+                        <Tooltip title="Generar codigo EAN-13">
+                          <span>
+                            <IconButton
+                              size="small"
+                              disabled={
+                                disabled || Boolean(generatingBarcodeField)
+                              }
+                              onClick={() => {
+                                void handleBarcodeGenerate(name);
+                              }}
+                              sx={{
+                                bgcolor: 'success.main',
+                                color: 'common.white',
+                                '&:hover': {
+                                  bgcolor: 'success.dark',
+                                },
+                                borderRadius: 1,
+                                p: 0.5,
+                              }}
+                            >
+                              {generatingBarcodeField === name ? (
+                                <CircularProgress size={20} color="inherit" />
+                              ) : (
+                                <AutoFixHighOutlinedIcon fontSize="small" />
+                              )}
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      )}
+                      {onOFFSearch && (
+                        <Tooltip title="Buscar en OpenFoodFacts">
+                          <span>
+                            <IconButton
+                              size="small"
+                              disabled={disabled || isOFFSearching || !value}
+                              onClick={async () => {
+                                if (!value || isOFFSearching) return;
+                                setIsOFFSearching(true);
+                                setShowOFFResults(false);
+                                const results = await onOFFSearch(
+                                  String(value)
+                                );
+                                setIsOFFSearching(false);
+                                if (results.length === 1) {
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    ...results[0],
+                                  }));
+                                } else if (results.length > 1) {
+                                  setOffResults(results);
+                                  setShowOFFResults(true);
+                                }
+                              }}
+                              sx={{
+                                bgcolor: 'primary.main',
+                                color: 'white',
+                                '&:hover': {
+                                  bgcolor: 'primary.dark',
+                                },
+                                borderRadius: 1,
+                                p: 0.5,
+                              }}
+                            >
+                              {isOFFSearching ? (
+                                <CircularProgress size={20} />
+                              ) : (
+                                <SearchIcon fontSize="small" />
+                              )}
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      )}
+                    </Stack>
                   </InputAdornment>
                 ),
               }}

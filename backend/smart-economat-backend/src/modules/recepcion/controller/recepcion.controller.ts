@@ -22,17 +22,16 @@ import { Recepcion } from '../recepcion.entity/recepcion.entity';
 import { RecepcionService } from '../service/recepcion.service';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/role.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
-import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { RecepcionStockService } from '../service/recepcion-stock.service';
 import { RecepcionResultadoDto } from '../dto/recepcion-resultado.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PdfReportService } from '../service/pdf-report.service';
 import { RecepcionReportePdfDto } from '../dto/recepcion-reporte-pdf.dto';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('recepciones')
 export class RecepcionController {
   constructor(
@@ -42,7 +41,7 @@ export class RecepcionController {
   ) {}
 
   @Post()
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.recepciones.crear)
   @HttpCode(HttpStatus.CREATED)
   create(
     @Body() dto: CreateRecepcionDto,
@@ -54,7 +53,7 @@ export class RecepcionController {
   }
 
   @Get()
-  @RequirePermissions('recepciones:listar')
+  @RequirePermissions(PERMISSIONS.recepciones.listar)
   findAll(
     @SortableFields(['fechaRecepcion', 'estado', 'createdAt', 'updatedAt'])
     query: PaginationQueryDto,
@@ -65,7 +64,7 @@ export class RecepcionController {
   }
 
   @Get('reporte-pdf')
-  @RequirePermissions('recepciones:listar')
+  @RequirePermissions(PERMISSIONS.recepciones.listar)
   async reportePdf(
     @Query() filters: RecepcionReportePdfDto,
     @Res() res: Response
@@ -79,7 +78,7 @@ export class RecepcionController {
   }
 
   @Get(':id')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.recepciones.ver)
   findOne(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Req() req: { user?: { rol?: string } }
@@ -89,16 +88,17 @@ export class RecepcionController {
   }
 
   @Patch(':id')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.recepciones.editar)
   update(
     @Param('id', ParseUUIDv7Pipe) id: string,
-    @Body() dto: UpdateRecepcionDto
+    @Body() dto: UpdateRecepcionDto,
+    @Req() req: { user: { id: string } }
   ): Promise<Recepcion> {
-    return this.recepcionService.update(id, dto);
+    return this.recepcionService.update(id, dto, req.user.id);
   }
 
   @Delete(':id')
-  @Roles(rolUsuario.ADMIN)
+  @RequirePermissions(PERMISSIONS.recepciones.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.recepcionService.remove(id);

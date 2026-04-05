@@ -1,11 +1,11 @@
-import { EstadoProductoRecepcion } from '../enums/estado-producto.enum';
-import { EstadoVisualProducto } from '../enums/estado-visual.enum';
+import { EstadoProductoRecepcion } from '../../../../src/modules/recepcion/enums/estado-producto.enum';
+import { EstadoVisualProducto } from '../../../../src/modules/recepcion/enums/estado-visual.enum';
 import {
   esEstadoConIncidencia,
   permiteComputarComoRecibido,
   permiteIncrementarInventario,
   resolveEstadoProducto,
-} from './recepcion-producto-state.util';
+} from '../../../../src/modules/recepcion/utils/recepcion-producto-state.util';
 
 describe('recepcion-producto-state.util', () => {
   it('prioriza `estadoProducto` cuando viene informado', () => {

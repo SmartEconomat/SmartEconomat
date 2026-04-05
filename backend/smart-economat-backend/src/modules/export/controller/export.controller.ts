@@ -1,9 +1,9 @@
 import { Controller, Get, Query, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/role.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
-import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 import { ExportService } from '../service/export.service';
 import { ExportAlbaranFilterDto } from '../dto/export-albaran-filter.dto';
 import { ExportIncidenciaFilterDto } from '../dto/export-incidencia-filter.dto';
@@ -21,13 +21,13 @@ const XLSX_MIME =
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 const PDF_MIME = 'application/pdf';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('export')
 export class ExportController {
   constructor(private readonly exportService: ExportService) {}
 
   @Get('productos/xlsx')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.productos.listar)
   async exportProductos(
     @Query() query: ExportProductoFilterDto,
     @Res() res: Response
@@ -41,7 +41,7 @@ export class ExportController {
   }
 
   @Get('pedidos/xlsx')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.pedidos.listar)
   async exportPedidos(
     @Query() query: ExportPedidoFilterDto,
     @Res() res: Response
@@ -52,7 +52,7 @@ export class ExportController {
   }
 
   @Get('proveedores/xlsx')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.proveedores.listar)
   async exportProveedores(
     @Query() query: ExportProveedorFilterDto,
     @Res() res: Response
@@ -66,7 +66,7 @@ export class ExportController {
   }
 
   @Get('albaranes/xlsx')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.albaranes.listar)
   async exportAlbaranes(
     @Query() query: ExportAlbaranFilterDto,
     @Res() res: Response
@@ -80,7 +80,7 @@ export class ExportController {
   }
 
   @Get('incidencias/xlsx')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.incidencias.listar)
   async exportIncidencias(
     @Query() query: ExportIncidenciaFilterDto,
     @Res() res: Response
@@ -94,7 +94,7 @@ export class ExportController {
   }
 
   @Get('inventario/xlsx')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.inventario.listar)
   async exportInventario(
     @Query() query: ExportInventarioFilterDto,
     @Res() res: Response
@@ -108,7 +108,7 @@ export class ExportController {
   }
 
   @Get('movimientos/xlsx')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.movimientos.listar)
   async exportMovimientos(
     @Query() query: ExportMovimientoFilterDto,
     @Res() res: Response
@@ -122,7 +122,7 @@ export class ExportController {
   }
 
   @Get('recepciones/xlsx')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.recepciones.listar)
   async exportRecepciones(
     @Query() query: ExportRecepcionFilterDto,
     @Res() res: Response
@@ -136,7 +136,7 @@ export class ExportController {
   }
 
   @Get('recetas/xlsx')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.recetas.listar)
   async exportRecetas(
     @Query() query: ExportRecetaFilterDto,
     @Res() res: Response
@@ -147,7 +147,7 @@ export class ExportController {
   }
 
   @Get('ubicaciones/xlsx')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.ubicaciones.listar)
   async exportUbicaciones(
     @Query() query: ExportUbicacionFilterDto,
     @Res() res: Response
@@ -161,7 +161,7 @@ export class ExportController {
   }
 
   @Get('usuarios/xlsx')
-  @Roles(rolUsuario.ADMIN)
+  @RequirePermissions(PERMISSIONS.usuarios.listar)
   async exportUsuarios(
     @Query() query: ExportUsuarioFilterDto,
     @Res() res: Response
@@ -175,7 +175,7 @@ export class ExportController {
   }
 
   @Get('productos/pdf')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.productos.listar)
   async exportProductosPdf(
     @Query() query: ExportProductoFilterDto,
     @Res() res: Response
@@ -189,7 +189,7 @@ export class ExportController {
   }
 
   @Get('proveedores/pdf')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.proveedores.listar)
   async exportProveedoresPdf(
     @Query() query: ExportProveedorFilterDto,
     @Res() res: Response
@@ -203,7 +203,7 @@ export class ExportController {
   }
 
   @Get('inventario/pdf')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.inventario.listar)
   async exportInventarioPdf(
     @Query() query: ExportInventarioFilterDto,
     @Res() res: Response
@@ -217,7 +217,7 @@ export class ExportController {
   }
 
   @Get('pedidos/pdf')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.pedidos.listar)
   async exportPedidosPdf(
     @Query() query: ExportPedidoFilterDto,
     @Res() res: Response
@@ -228,7 +228,7 @@ export class ExportController {
   }
 
   @Get('albaranes/pdf')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.albaranes.listar)
   async exportAlbaranesPdf(
     @Query() query: ExportAlbaranFilterDto,
     @Res() res: Response
@@ -242,7 +242,7 @@ export class ExportController {
   }
 
   @Get('incidencias/pdf')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.incidencias.listar)
   async exportIncidenciasPdf(
     @Query() query: ExportIncidenciaFilterDto,
     @Res() res: Response
@@ -256,7 +256,7 @@ export class ExportController {
   }
 
   @Get('recetas/pdf')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.recetas.listar)
   async exportRecetasPdf(
     @Query() query: ExportRecetaFilterDto,
     @Res() res: Response

@@ -26,10 +26,15 @@ import StatusChip from './StatusChip';
 import { downloadFile } from '../../services/api.service';
 import { useToast } from '../../store/toast.hooks';
 import CircularProgress from '@mui/material/CircularProgress';
-import { formatPedidoId } from '../../features/pedidos/utils/pedidoFormatters';
+import {
+  formatPedidoId,
+  formatPedidoListNumber,
+} from '../../features/pedidos/utils/pedidoFormatters';
 
 type PedidoWithAggregate = Pedido & {
   pedidoUsuario?: Pick<PedidoUsuario, 'id' | 'numeroGlobal'>;
+  numeroPedidoVisible?: string;
+  referenciaPedidoVisible?: string;
 };
 
 interface BatchProviderGroup {
@@ -39,8 +44,10 @@ interface BatchProviderGroup {
 }
 
 interface InvolvedPedidoSummary {
-  numero?: string;
+  numeroPedidoProveedor?: string;
+  numeroPedidoVisible?: string;
   id: string;
+  proveedor?: string;
   usuario?: string;
   fecha: string;
   estado: EstadoPedido;
@@ -50,7 +57,8 @@ interface AggregatedProductGroup {
   pp: NonNullable<Pedido['pedidoProductos']>[number];
   totalCantidad: number;
   usuarios: Set<string>;
-  numerosGlobales: Set<string>;
+  numerosPedidoProveedor: Set<string>;
+  referenciasPedidoVisible: Set<string>;
 }
 
 interface BatchPedidoLineasViewerProps {
@@ -107,25 +115,31 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
   }, [batch.pedidos, incluirCancelados]);
 
   const involvedPedidos = React.useMemo(() => {
-    const seen = new Set<string>();
     const list: InvolvedPedidoSummary[] = [];
 
     batch.pedidos?.forEach((p) => {
+      if (!incluirCancelados && p.estado === EstadoPedido.CANCELADO) return;
+
       const pedido = p as PedidoWithAggregate;
-      const id = pedido.pedidoUsuario?.id || pedido.id;
-      if (!seen.has(id)) {
-        seen.add(id);
-        list.push({
-          numero: pedido.pedidoUsuario?.numeroGlobal || pedido.numeroGlobal,
-          id,
-          usuario: pedido.usuario?.nombre,
-          fecha: pedido.fechaPedido,
-          estado: pedido.estado,
-        });
-      }
+      const numeroPedidoVisible =
+        pedido.numeroPedidoVisible || pedido.pedidoUsuario?.numeroGlobal;
+
+      list.push({
+        numeroPedidoProveedor: formatPedidoListNumber(
+          pedido,
+          'pedido-proveedor'
+        ),
+        numeroPedidoVisible,
+        id: pedido.id,
+        proveedor: pedido.proveedor?.nombre,
+        usuario: pedido.usuario?.nombre,
+        fecha: pedido.fechaPedido,
+        estado: pedido.estado,
+      });
     });
+
     return list;
-  }, [batch.pedidos]);
+  }, [batch.pedidos, incluirCancelados]);
 
   const groupedProductsByProvider = React.useMemo(() => {
     return groupedByProvider.map((group) => {
@@ -139,18 +153,39 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
               pp,
               totalCantidad: 0,
               usuarios: new Set(),
-              numerosGlobales: new Set(),
+              numerosPedidoProveedor: new Set(),
+              referenciasPedidoVisible: new Set(),
             };
           }
           productMap[key].totalCantidad += Number(pp.cantidad || 0);
           if (pedido.usuario?.nombre) {
             productMap[key].usuarios.add(pedido.usuario.nombre);
           }
-          const numero =
-            (pedido as PedidoWithAggregate).pedidoUsuario?.numeroGlobal ||
-            pedido.numeroGlobal;
-          if (numero) {
-            productMap[key].numerosGlobales.add(String(numero));
+
+          const numeroPedidoProveedor = formatPedidoListNumber(
+            pedido,
+            'pedido-proveedor'
+          );
+
+          if (numeroPedidoProveedor) {
+            productMap[key].numerosPedidoProveedor.add(numeroPedidoProveedor);
+          }
+
+          const pedidoConReferencias = pedido as PedidoWithAggregate;
+          const referenciaPedidoVisible =
+            pedidoConReferencias.referenciaPedidoVisible ||
+            (pedidoConReferencias.numeroPedidoVisible ||
+            pedidoConReferencias.pedidoUsuario?.numeroGlobal
+              ? `PU-${String(
+                  pedidoConReferencias.numeroPedidoVisible ||
+                    pedidoConReferencias.pedidoUsuario?.numeroGlobal
+                )}`
+              : undefined);
+
+          if (referenciaPedidoVisible) {
+            productMap[key].referenciasPedidoVisible.add(
+              referenciaPedidoVisible
+            );
           }
         });
       });
@@ -290,14 +325,26 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
                       <Typography variant="caption" sx={{ fontWeight: 500 }}>
                         {Array.from(item.usuarios).join(', ') || '—'}
                       </Typography>
-                      {item.numerosGlobales.size > 0 && (
+                      {item.numerosPedidoProveedor.size > 0 && (
                         <Typography
                           variant="caption"
                           color="text.secondary"
                           display="block"
                           sx={{ fontSize: '0.7rem' }}
                         >
-                          Nº: {Array.from(item.numerosGlobales).join(', ')}
+                          Pedidos proveedor: #
+                          {Array.from(item.numerosPedidoProveedor).join(', #')}
+                        </Typography>
+                      )}
+                      {item.referenciasPedidoVisible.size > 0 && (
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          display="block"
+                          sx={{ fontSize: '0.7rem' }}
+                        >
+                          Ref. pedido visible:{' '}
+                          {Array.from(item.referenciasPedidoVisible).join(', ')}
                         </Typography>
                       )}
                     </TableCell>
@@ -332,7 +379,11 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
               <TableHead sx={{ bgcolor: 'grey.50' }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 'bold' }}>
-                    Nº de Pedido
+                    Nº Pedido Proveedor
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Proveedor</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    Ref. Pedido Visible
                   </TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Usuario</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Fecha</TableCell>
@@ -346,8 +397,16 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
                   <TableRow key={p.id}>
                     <TableCell>
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {p.numero ? `#${p.numero}` : formatPedidoId(p.id)}
+                        {p.numeroPedidoProveedor
+                          ? `#${p.numeroPedidoProveedor}`
+                          : formatPedidoId(p.id)}
                       </Typography>
+                    </TableCell>
+                    <TableCell>{p.proveedor || '—'}</TableCell>
+                    <TableCell>
+                      {p.numeroPedidoVisible
+                        ? `PU-${p.numeroPedidoVisible}`
+                        : '—'}
                     </TableCell>
                     <TableCell>{p.usuario || '—'}</TableCell>
                     <TableCell>

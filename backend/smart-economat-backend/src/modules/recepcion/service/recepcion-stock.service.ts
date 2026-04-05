@@ -73,9 +73,7 @@ interface LineaRecepcionConCantidad {
 }
 
 const PEDIDO_RECEPCION_ESTADOS_PERMITIDOS: readonly EstadoPedido[] = [
-  EstadoPedido.PENDIENTE_DE_APROBACION,
   EstadoPedido.POR_RECEPCIONAR,
-  EstadoPedido.PARCIAL,
 ];
 
 interface PedidoActualizado {
@@ -158,6 +156,7 @@ export class RecepcionStockService {
         fechaRecepcion: new Date(),
         observaciones: dto.observaciones,
         estado: EstadoRecepcion.COMPLETADA,
+        modifiedBy: userId,
       });
       const savedRecepcion = await queryRunner.manager.save(recepcion);
 
@@ -400,7 +399,8 @@ export class RecepcionStockService {
       const estadoPasado = pedido.estado;
       const finalState = await this.actualizarEstadoPedido(
         pedido.id,
-        queryRunner.manager
+        queryRunner.manager,
+        userId
       );
 
       await queryRunner.commitTransaction();
@@ -528,6 +528,7 @@ export class RecepcionStockService {
         fechaRecepcion: dto.fechaRecepcion || new Date(),
         observaciones: observacionesGlobales,
         estado: EstadoRecepcion.COMPLETADA,
+        modifiedBy: dto.usuarioId,
       });
       const savedRecepcion = await queryRunner.manager.save(recepcion);
 
@@ -891,7 +892,8 @@ export class RecepcionStockService {
         const estadoPasado = p.estado;
         const finalState = await this.actualizarEstadoPedido(
           p.id,
-          queryRunner.manager
+          queryRunner.manager,
+          dto.usuarioId
         );
         pedidosActualizadosFinal.push({
           id: p.id,
@@ -1058,7 +1060,8 @@ export class RecepcionStockService {
 
   private async actualizarEstadoPedido(
     pedidoId: string,
-    manager: EntityManager
+    manager: EntityManager,
+    actorId?: string
   ): Promise<EstadoPedido> {
     const pedido = await manager.findOne(Pedido, {
       where: { id: pedidoId },
@@ -1134,7 +1137,8 @@ export class RecepcionStockService {
     const updatedPedido = await this.pedidoService.handleStatusTransition(
       pedidoId,
       trigger,
-      manager
+      manager,
+      actorId
     );
     return updatedPedido.estado;
   }

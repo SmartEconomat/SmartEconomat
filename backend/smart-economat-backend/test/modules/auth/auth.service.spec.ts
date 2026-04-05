@@ -68,6 +68,7 @@ describe('AuthService', () => {
 
   function createLoginQueryBuilder(user: Usuario | null) {
     return {
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       addSelect: jest.fn().mockReturnThis(),
       getOne: jest.fn().mockResolvedValue(user),

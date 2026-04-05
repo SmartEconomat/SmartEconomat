@@ -342,6 +342,14 @@ export function usePedidoActions({
     async (batch: PurchaseBatch) => {
       try {
         const draft = mapPurchaseBatchToRecepcionDraft(batch);
+
+        if ((draft.pedidosSeleccionados || []).length === 0) {
+          toast.info(
+            'Esta compra no tiene pedidos por recepcionar. Gestiona los casos parciales o con incidencia desde Incidencias.'
+          );
+          return;
+        }
+
         await saveRecepcionDraft(draft);
         navigate('/recepciones', {
           state: {

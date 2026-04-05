@@ -11,7 +11,11 @@ import {
   searchByName,
   OFFProduct,
 } from '../../services/openfoodfacts.service';
+import { generateProductoEan13 } from '../../services/producto.service';
 import { getCategoryIcon } from './utils/getCategoryIcon';
+import { usePermission } from '../../store/auth.hooks';
+import { PERMISSIONS } from '../../sherlock-auth/permissions.constants';
+import { useToast } from '../../store/toast.hooks';
 
 // ── Base schema ────────────────────────────────────────────────────────
 
@@ -114,6 +118,8 @@ const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
 }) => {
   const isEditing = Boolean(initialData.id);
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
+  const canGenerateEan13 = usePermission(PERMISSIONS.productos.generar_ean13);
+  const toast = useToast();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -153,6 +159,19 @@ const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
     []
   );
 
+  const handleBarcodeGenerate = useCallback(async () => {
+    try {
+      return await generateProductoEan13();
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'No se pudo generar el codigo de barras.';
+      toast.error(message);
+      return undefined;
+    }
+  }, [toast]);
+
   return (
     <DynamicFormModal
       isOpen={isOpen}
@@ -170,6 +189,7 @@ const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
       isSubmitting={isSubmitting}
       requireConfirmation={true}
       onBarcodeFetch={handleBarcodeFetch}
+      onBarcodeGenerate={canGenerateEan13 ? handleBarcodeGenerate : undefined}
       onOFFSearch={handleOFFSearch}
       confirmationMessage={
         isEditing

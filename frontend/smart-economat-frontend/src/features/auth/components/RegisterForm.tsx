@@ -22,6 +22,7 @@ import {
   STRONG_PASSWORD_MESSAGE,
 } from '../../../utils/passwordValidation';
 import { getAuthErrorMessage } from '../../../utils/authErrorMessages';
+import { SYSTEM_ROLES } from '../../../sherlock-auth/system-roles.constants';
 
 interface RegisterFormProps {
   onToggleForm: () => void;
@@ -32,7 +33,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   onToggleForm,
   onRegisterSuccess,
 }) => {
-  const [role, setRole] = useState<'ALUMNO' | 'PROFESOR'>('ALUMNO');
+  const [role, setRole] = useState<'ALUMNO' | 'PROFESOR'>(SYSTEM_ROLES.ALUMNO);
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -63,7 +64,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     formData.cial.trim().length === 0;
 
   const isSubmitDisabled =
-    role === 'ALUMNO' ? isAlumnoSubmitDisabled : isProfesorSubmitDisabled;
+    role === SYSTEM_ROLES.ALUMNO
+      ? isAlumnoSubmitDisabled
+      : isProfesorSubmitDisabled;
 
   const slotReferenceMessage = slotReference
     ? `Te estás registrando en la clase ${slotReference.aula} - Clase ${slotReference.numeroClase} del profesor ${slotReference.profesor}.`
@@ -76,7 +79,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       : 'Escribe el código de la clase para confirmar que corresponde a tu grupo.';
 
   useEffect(() => {
-    if (role !== 'ALUMNO') {
+    if (role !== SYSTEM_ROLES.ALUMNO) {
       setSlotReference(null);
       setSlotLoadError('');
       setIsLoadingData(false);
@@ -154,7 +157,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     setErrorMsg('');
     setIsLoading(true);
 
-    const isAlumno = role === 'ALUMNO';
+    const isAlumno = role === SYSTEM_ROLES.ALUMNO;
 
     try {
       if (formData.password !== formData.confirmPassword) {
@@ -280,10 +283,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         sx={{ mb: 3 }}
         size="small"
       >
-        <ToggleButton value="ALUMNO" sx={{ px: 3 }}>
+        <ToggleButton value={SYSTEM_ROLES.ALUMNO} sx={{ px: 3 }}>
           Alumno
         </ToggleButton>
-        <ToggleButton value="PROFESOR" sx={{ px: 3 }}>
+        <ToggleButton value={SYSTEM_ROLES.PROFESOR} sx={{ px: 3 }}>
           Profesor
         </ToggleButton>
       </ToggleButtonGroup>
@@ -309,13 +312,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           required
         />
 
-        {role === 'ALUMNO' && slotReferenceMessage && (
+        {role === SYSTEM_ROLES.ALUMNO && slotReferenceMessage && (
           <Alert severity="info" sx={{ mb: 2 }}>
             {slotReferenceMessage}
           </Alert>
         )}
 
-        {role === 'PROFESOR' && (
+        {role === SYSTEM_ROLES.PROFESOR && (
           <Input
             label="Correo Electrónico"
             name="email"
@@ -326,7 +329,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           />
         )}
 
-        {role === 'ALUMNO' ? (
+        {role === SYSTEM_ROLES.ALUMNO ? (
           <>
             <Input
               label="Código de la clase"
@@ -410,7 +413,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           disabled={isSubmitDisabled}
           sx={{ mt: 0, mb: 0 }}
         >
-          Registrarse como {role === 'ALUMNO' ? 'Alumno' : 'Profesor'}
+          Registrarse como{' '}
+          {role === SYSTEM_ROLES.ALUMNO ? 'Alumno' : 'Profesor'}
         </Button>
 
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>

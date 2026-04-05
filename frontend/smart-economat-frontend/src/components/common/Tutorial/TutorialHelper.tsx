@@ -86,7 +86,7 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
     (tutorialConfig['default'] as RouteTutorialConfig);
 
   // Determinamos qué pasos mostrar:
-  // 1. Si se pasan steps por props (legacy/específico)
+  // 1. Si se pasan steps por props
   // 2. Si hay pasos específicos para el ROL en la config centralizada
   // 3. Pasos por defecto de la ruta
   let steps: TutorialStep[] = [];

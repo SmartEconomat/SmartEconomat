@@ -1,6 +1,5 @@
 import type { User } from './types';
-
-const SHERLOCK_AUTH_ROLE_ALIASES = ['ADMIN', 'SUPER_ADMIN'] as const;
+import { ELEVATED_ROLES } from './system-roles.constants';
 
 export const normalizeRole = (role?: string | null): string =>
   String(role ?? '')
@@ -9,9 +8,7 @@ export const normalizeRole = (role?: string | null): string =>
 
 export const isElevatedRole = (role?: string | null): boolean => {
   const normalized = normalizeRole(role);
-  return SHERLOCK_AUTH_ROLE_ALIASES.includes(
-    normalized as (typeof SHERLOCK_AUTH_ROLE_ALIASES)[number]
-  );
+  return ELEVATED_ROLES.includes(normalized);
 };
 
 export const buildPermissionsMap = (
