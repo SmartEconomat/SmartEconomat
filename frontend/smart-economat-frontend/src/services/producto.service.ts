@@ -297,3 +297,25 @@ export async function fetchHistorialPrecios(
   const body = (await response.json()) as ApiResponse<HistorialPrecio[]>;
   return body.data;
 }
+
+export async function generateProductoEan13(): Promise<string> {
+  const response = await baseFetch('/productos/generar-ean13');
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    throw new Error(
+      errorBody.message || `Error al generar codigo EAN-13: ${response.status}`
+    );
+  }
+
+  const body = (await response.json()) as ApiResponse<{
+    codigo_barras?: string;
+  }>;
+  const codigoBarras = body.data?.codigo_barras?.trim();
+
+  if (!codigoBarras) {
+    throw new Error('El backend no devolvio un codigo EAN-13 valido.');
+  }
+
+  return codigoBarras;
+}

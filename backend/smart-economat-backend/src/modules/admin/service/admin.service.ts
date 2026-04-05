@@ -18,6 +18,11 @@ import { Rol } from '../../roles/rol.entity/rol.entity';
 import { AuthPermissionsService } from '../../auth/service/auth-permissions.service';
 import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
 import { In } from 'typeorm';
+import { SYSTEM_ROLES } from '../../../common/constants/system-roles.constants';
+import {
+  isSherlockElevatedRole,
+  getRolPrincipal,
+} from '../../sherlock-auth/utils/access.utils';
 
 @Injectable()
 export class AdminService {
@@ -38,14 +43,12 @@ export class AdminService {
   ) {}
 
   private isAdminRole(role?: string) {
-    if (!role) return false;
-    const normalized = role.toUpperCase();
-    return normalized === 'ADMIN' || normalized === 'SUPER_ADMIN';
+    return isSherlockElevatedRole(role);
   }
 
   private isSuperAdmin(role?: string) {
-    const normalized = role?.toUpperCase();
-    return normalized === 'SUPER_ADMIN';
+    const normalized = role?.trim().toUpperCase();
+    return normalized === SYSTEM_ROLES.SUPER_ADMIN;
   }
 
   private async ensureNotDemotingAdmin(
@@ -64,10 +67,12 @@ export class AdminService {
 
     if (!actor || !target) return;
 
-    const actorIsSuper = this.isSuperAdmin(actor.rol);
-    const actorIsAdmin = this.isAdminRole(actor.rol);
-    const targetIsSuper = this.isSuperAdmin(target.rol);
-    const targetIsAdmin = this.isAdminRole(target.rol);
+    const actorRol = getRolPrincipal(actor.roles, actor.rol);
+    const targetRol = getRolPrincipal(target.roles, target.rol);
+    const actorIsSuper = this.isSuperAdmin(actorRol);
+    const actorIsAdmin = this.isAdminRole(actorRol);
+    const targetIsSuper = this.isSuperAdmin(targetRol);
+    const targetIsAdmin = this.isAdminRole(targetRol);
 
     if (targetIsSuper && !actorIsSuper) {
       throw new BadRequestException(
@@ -88,11 +93,12 @@ export class AdminService {
 
   private async ensureNotLastActiveAdmin(
     user: Usuario,
-    nextRole: rolUsuario,
+    nextRole: string,
     nextActive: boolean
   ) {
+    const currentRol = getRolPrincipal(user.roles, user.rol);
     const isCurrentlyActiveAdmin =
-      this.isAdminRole(user.rol) &&
+      this.isAdminRole(currentRol) &&
       user.status === UserStatus.ACTIVE &&
       user.activo;
     const willRemainActiveAdmin = this.isAdminRole(nextRole) && nextActive;
@@ -101,13 +107,15 @@ export class AdminService {
       return;
     }
 
-    const activeAdmins = await this.usuarioRepo.count({
-      where: {
-        rol: rolUsuario.ADMIN,
-        status: UserStatus.ACTIVE,
-        activo: true,
-      },
-    });
+    const activeAdmins = await this.usuarioRepo
+      .createQueryBuilder('usuario')
+      .innerJoin('usuario.roles', 'rol')
+      .where('rol.nombre IN (:...adminRoles)', {
+        adminRoles: [SYSTEM_ROLES.ADMIN, SYSTEM_ROLES.SUPER_ADMIN],
+      })
+      .andWhere('usuario.status = :status', { status: UserStatus.ACTIVE })
+      .andWhere('usuario.activo = :activo', { activo: true })
+      .getCount();
 
     if (activeAdmins <= 1) {
       throw new BadRequestException(
@@ -166,7 +174,7 @@ export class AdminService {
       const passwordHash = await bcrypt.hash(dto.password, 10);
       const profesorRole = this.rolRepo
         ? await manager.findOne(Rol, {
-            where: { nombre: rolUsuario.PROFESOR },
+            where: { nombre: SYSTEM_ROLES.PROFESOR },
           })
         : null;
 
@@ -230,17 +238,17 @@ export class AdminService {
 
     await this.ensureNotDemotingAdmin(actorUserId, userId, role.nombre);
 
-    let legacyRole = rolUsuario.ALUMNO;
+    let persistedRole = rolUsuario.ALUMNO;
     const normalized = role.nombre.trim().toUpperCase();
-    if (normalized === 'ADMIN') {
-      legacyRole = rolUsuario.ADMIN;
-    } else if (normalized === 'PROFESOR') {
-      legacyRole = rolUsuario.PROFESOR;
-    } else if (normalized === 'SUPER_ADMIN') {
-      legacyRole = rolUsuario.SUPER_ADMIN;
+    if (normalized === SYSTEM_ROLES.ADMIN) {
+      persistedRole = rolUsuario.ADMIN;
+    } else if (normalized === SYSTEM_ROLES.PROFESOR) {
+      persistedRole = rolUsuario.PROFESOR;
+    } else if (normalized === SYSTEM_ROLES.SUPER_ADMIN) {
+      persistedRole = rolUsuario.SUPER_ADMIN;
     }
 
-    user.rol = legacyRole;
+    user.rol = persistedRole;
     user.roles = [role];
 
     if (this.permisoRepo) {
@@ -281,7 +289,11 @@ export class AdminService {
 
     const nextActive = active ?? user.status !== UserStatus.ACTIVE;
 
-    await this.ensureNotLastActiveAdmin(user, user.rol, nextActive);
+    await this.ensureNotLastActiveAdmin(
+      user,
+      getRolPrincipal(user.roles, user.rol),
+      nextActive
+    );
 
     user.status = nextActive ? UserStatus.ACTIVE : UserStatus.INACTIVE;
     user.activo = nextActive;

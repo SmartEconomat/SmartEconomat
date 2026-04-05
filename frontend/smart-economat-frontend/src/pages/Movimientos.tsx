@@ -3,6 +3,7 @@ import {
   Box,
   Typography,
   Alert,
+  Button,
   useTheme,
   alpha,
   Tooltip,
@@ -30,7 +31,13 @@ import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import ConstructionIcon from '@mui/icons-material/Construction';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { usePermission } from '../store/auth.hooks'; // Original import path
-import { useNavigate } from 'react-router-dom'; // Added useNavigate import
+import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
+import { useLocation, useNavigate } from 'react-router-dom';
+
+type MovimientosLocationState = {
+  prefillSearchTerm?: string;
+  prefillTypes?: TipoMovimiento[];
+};
 
 const capitalize = (text: string) =>
   text.charAt(0).toUpperCase() + text.slice(1).replace(/_/g, ' ');
@@ -45,8 +52,9 @@ const getMovimientoNombreProducto = (row: Movimiento) => {
 
 const Movimientos: React.FC = () => {
   const theme = useTheme();
-  const canList = usePermission('movimientos:listar');
+  const canList = usePermission(PERMISSIONS.movimientos.listar);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (canList === false) {
@@ -67,6 +75,31 @@ const Movimientos: React.FC = () => {
     startDate: null,
     endDate: null,
   });
+
+  useEffect(() => {
+    const routeState = location.state as MovimientosLocationState | null;
+    if (!routeState) {
+      return;
+    }
+
+    const prefillSearchTerm = routeState.prefillSearchTerm?.trim();
+    if (prefillSearchTerm) {
+      setSearchTerm(prefillSearchTerm);
+    }
+
+    if (
+      Array.isArray(routeState.prefillTypes) &&
+      routeState.prefillTypes.length
+    ) {
+      setFilters((current) => ({
+        ...current,
+        types: routeState.prefillTypes || current.types,
+      }));
+    }
+
+    setPage(1);
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.pathname, location.state, navigate]);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -313,6 +346,33 @@ const Movimientos: React.FC = () => {
     ];
   }, [itemToView]);
 
+  const detailActions = useMemo(() => {
+    if (!itemToView?.entidadId) {
+      return null;
+    }
+
+    if (String(itemToView.entidad || '').toLowerCase() === 'distribucion') {
+      return (
+        <Button
+          variant="outlined"
+          onClick={() => {
+            navigate('/distribucion', {
+              state: {
+                prefillSearchTerm: itemToView.entidadId,
+                openDetailDistribucionId: itemToView.entidadId,
+              },
+            });
+            setItemToView(null);
+          }}
+        >
+          Ver Distribución
+        </Button>
+      );
+    }
+
+    return null;
+  }, [itemToView, navigate]);
+
   return (
     <Box>
       <PageToolbar
@@ -384,6 +444,7 @@ const Movimientos: React.FC = () => {
         subtitle={`ID: ${itemToView?.id || ''}`}
         size="md"
         sections={detailSections}
+        actions={detailActions}
       />
     </Box>
   );

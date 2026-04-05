@@ -38,6 +38,7 @@ export class RecepcionService {
       fechaRecepcion: dto.fechaRecepcion,
       observaciones: dto.observaciones,
       usuario,
+      modifiedBy: userId,
     });
 
     const savedRecepcion = await this.recepcionRepository.save(recepcion);
@@ -104,7 +105,11 @@ export class RecepcionService {
     return recepcion;
   }
 
-  async update(id: string, dto: UpdateRecepcionDto): Promise<Recepcion> {
+  async update(
+    id: string,
+    dto: UpdateRecepcionDto,
+    userId?: string
+  ): Promise<Recepcion> {
     const recepcion = await this.findOne(id);
 
     if (dto.usuarioId) {
@@ -122,6 +127,9 @@ export class RecepcionService {
     }
 
     this.recepcionRepository.merge(recepcion, dto);
+    if (userId) {
+      recepcion.modifiedBy = userId;
+    }
 
     return await this.recepcionRepository.save(recepcion);
   }

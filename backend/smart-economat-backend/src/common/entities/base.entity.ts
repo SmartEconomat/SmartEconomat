@@ -85,6 +85,19 @@ export abstract class BaseEntity {
   deletedBy?: string | null;
 
   /**
+   * Usuario que realizó la última modificación lógica del registro.
+   * - Nullable para compatibilidad con datos históricos.
+   * - Se debe actualizar explícitamente en servicios de dominio
+   *   cuando se apliquen cambios de estado o edición.
+   */
+  @Column({
+    type: 'uuid',
+    nullable: true,
+    name: 'modified_by',
+  })
+  modifiedBy?: string | null;
+
+  /**
    * Columna de versionado optimista
    * - Incrementada automáticamente en cada update
    * - TypeORM lanza OptimisticLockVersionMismatchError si hay conflicto

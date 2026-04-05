@@ -20,7 +20,11 @@ import {
   PurchaseBatch,
 } from '../../../services/pedido.types';
 import { useToast } from '../../../store/toast.hooks';
-import { formatPedidoId } from '../utils/pedidoFormatters';
+import {
+  formatBatchNumber,
+  formatBatchReference,
+  formatPedidoId,
+} from '../utils/pedidoFormatters';
 
 interface PurchaseBatchDetailModalProps {
   detail: PedidoBatchDetail | null;
@@ -112,7 +116,7 @@ const PurchaseBatchDetailModal: React.FC<PurchaseBatchDetailModalProps> = ({
             'numeroGlobal' in batch &&
             batch.numeroGlobal
             ? `Pedido #${batch.numeroGlobal}`
-            : `ID ${formatPedidoId(batch.id)}`
+            : `Lote #${formatBatchNumber(batch as PurchaseBatch)} · ${formatBatchReference(batch as PurchaseBatch) || `ID ${formatPedidoId(batch.id)}`}`
           : undefined
       }
       size="lg"

@@ -78,6 +78,12 @@ export function resolvePathParams(
       pickRequiredStateValue(context, 'permissionIds', iteration)
     );
   }
+  if (resolved.includes(':usuarioId')) {
+    resolved = resolved.replace(
+      ':usuarioId',
+      pickRequiredStateValue(context, 'usuarioIds', iteration)
+    );
+  }
   if (resolved.includes(':filename')) {
     const selectedFilename = resolved.startsWith('/albaranes/documento/')
       ? pickRequiredStateValue(context, 'albaranDocumentFilenames', iteration)

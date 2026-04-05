@@ -216,7 +216,7 @@ La especificación viva puede consultarse en `/docs` con la aplicación levantad
 
 ## Referencias relacionadas
 
-- [Referencia API](../../reference/api.md)
+- [Referencia API](../../reference/api/README.md)
 - [Modelo de datos](../../architecture/data-model.md)
 - [Página de Productos](../../frontend/paginas/Productos.md)
 - [Casos de uso](../../planning/use-cases/use-cases.md)

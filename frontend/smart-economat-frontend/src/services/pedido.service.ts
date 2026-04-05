@@ -98,20 +98,82 @@ const buildProviderSummary = (pedidoUsuario: PedidoUsuario): string => {
   return `${providerNames.length} proveedores`;
 };
 
+const formatBatchReferenceFromNumber = (
+  numero?: string | number
+): string | undefined => {
+  if (numero === undefined || numero === null) {
+    return undefined;
+  }
+
+  const numeroTexto = String(numero).trim();
+  if (!numeroTexto) {
+    return undefined;
+  }
+
+  return `LC-${numeroTexto.padStart(6, '0')}`;
+};
+
+const normalizePedido = (pedido: Pedido): Pedido => {
+  const numeroPedidoProveedor =
+    pedido.numeroPedidoProveedor || pedido.numeroGlobal;
+  const numeroPedidoVisible =
+    pedido.numeroPedidoVisible || pedido.pedidoUsuario?.numeroGlobal;
+  const referenciaPedidoVisible =
+    pedido.referenciaPedidoVisible ||
+    (numeroPedidoVisible ? `PU-${String(numeroPedidoVisible)}` : undefined);
+
+  return {
+    ...pedido,
+    numeroPedidoProveedor: numeroPedidoProveedor
+      ? String(numeroPedidoProveedor)
+      : undefined,
+    numeroPedidoVisible: numeroPedidoVisible
+      ? String(numeroPedidoVisible)
+      : undefined,
+    referenciaPedidoVisible,
+  };
+};
+
+const normalizePurchaseBatch = (batch: PurchaseBatch): PurchaseBatch => {
+  const numeroLote = batch.numeroLote || batch.numeroGlobal;
+
+  return {
+    ...batch,
+    numeroLote: numeroLote ? String(numeroLote) : undefined,
+    referenciaLote:
+      batch.referenciaLote ||
+      batch.referencia ||
+      formatBatchReferenceFromNumber(numeroLote),
+    pedidos: (batch.pedidos || []).map(normalizePedido),
+  };
+};
+
+const normalizePedidoUsuario = (
+  pedidoUsuario: PedidoUsuario
+): PedidoUsuario => ({
+  ...pedidoUsuario,
+  pedidos: (pedidoUsuario.pedidos || []).map(normalizePedido),
+});
+
 export const mapPedidoUsuarioToVisibleRow = (
   pedidoUsuario: PedidoUsuario
-): PedidoUsuarioRow => ({
-  ...pedidoUsuario,
-  entityType: 'pedido_usuario',
-  pedidoUsuarioId: pedidoUsuario.id,
-  proveedor: {
-    id: pedidoUsuario.id,
-    nombre: buildProviderSummary(pedidoUsuario),
-  },
-  pedidoProductos:
-    pedidoUsuario.pedidos?.flatMap((pedido) => pedido.pedidoProductos || []) ||
-    [],
-});
+): PedidoUsuarioRow => {
+  const normalizedPedidoUsuario = normalizePedidoUsuario(pedidoUsuario);
+
+  return {
+    ...normalizedPedidoUsuario,
+    entityType: 'pedido_usuario',
+    pedidoUsuarioId: normalizedPedidoUsuario.id,
+    proveedor: {
+      id: normalizedPedidoUsuario.id,
+      nombre: buildProviderSummary(normalizedPedidoUsuario),
+    },
+    pedidoProductos:
+      normalizedPedidoUsuario.pedidos?.flatMap(
+        (pedido) => pedido.pedidoProductos || []
+      ) || [],
+  };
+};
 
 export async function fetchPedidos(
   page: number = 1,
@@ -144,7 +206,10 @@ export async function fetchPedidos(
     );
   }
   const body = (await response.json()) as ApiResponse<PaginatedData<Pedido>>;
-  return body.data;
+  return {
+    ...body.data,
+    data: body.data.data.map(normalizePedido),
+  };
 }
 
 export async function fetchPedidoUsuarios(
@@ -179,7 +244,10 @@ export async function fetchPedidoUsuarios(
   const body = (await response.json()) as ApiResponse<
     PaginatedData<PedidoUsuario>
   >;
-  return body.data;
+  return {
+    ...body.data,
+    data: body.data.data.map(normalizePedidoUsuario),
+  };
 }
 
 export async function createPedido(
@@ -203,7 +271,7 @@ export async function createPedido(
   }
 
   const body = (await response.json()) as ApiResponse<Pedido>;
-  return body.data;
+  return normalizePedido(body.data);
 }
 
 export async function updatePedido(
@@ -228,7 +296,7 @@ export async function updatePedido(
   }
 
   const body = (await response.json()) as ApiResponse<Pedido>;
-  return body.data;
+  return normalizePedido(body.data);
 }
 
 export async function cancelPedido(
@@ -254,7 +322,7 @@ export async function cancelPedido(
   }
 
   const body = (await response.json()) as ApiResponse<Pedido>;
-  return body.data;
+  return normalizePedido(body.data);
 }
 
 export async function aceptarPedido(id: string): Promise<Pedido> {
@@ -275,7 +343,7 @@ export async function aceptarPedido(id: string): Promise<Pedido> {
   }
 
   const body = (await response.json()) as ApiResponse<Pedido>;
-  return body.data;
+  return normalizePedido(body.data);
 }
 
 export async function createPurchaseBatch(
@@ -299,7 +367,7 @@ export async function createPurchaseBatch(
   }
 
   const body = (await response.json()) as ApiResponse<PurchaseBatch>;
-  return body.data;
+  return normalizePurchaseBatch(body.data);
 }
 
 export async function createPedidoUsuarioFromMissingStock(
@@ -323,7 +391,7 @@ export async function createPedidoUsuarioFromMissingStock(
   }
 
   const body = (await response.json()) as ApiResponse<PedidoUsuario>;
-  return body.data;
+  return normalizePedidoUsuario(body.data);
 }
 
 export async function createPedidoUsuario(
@@ -347,7 +415,7 @@ export async function createPedidoUsuario(
   }
 
   const body = (await response.json()) as ApiResponse<PedidoUsuario>;
-  return body.data;
+  return normalizePedidoUsuario(body.data);
 }
 
 export async function createPedidoFromRecetas(
@@ -371,7 +439,7 @@ export async function createPedidoFromRecetas(
   }
 
   const body = (await response.json()) as ApiResponse<Pedido>;
-  return body.data;
+  return normalizePedido(body.data);
 }
 
 export async function createPedidoUsuarioFromRecetas(
@@ -395,7 +463,7 @@ export async function createPedidoUsuarioFromRecetas(
   }
 
   const body = (await response.json()) as ApiResponse<PedidoUsuario>;
-  return body.data;
+  return normalizePedidoUsuario(body.data);
 }
 
 export async function consolidatePurchaseBatch(
@@ -419,7 +487,7 @@ export async function consolidatePurchaseBatch(
   }
 
   const body = (await response.json()) as ApiResponse<PurchaseBatch>;
-  return body.data;
+  return normalizePurchaseBatch(body.data);
 }
 
 export async function fetchPurchaseBatches(): Promise<PurchaseBatch[]> {
@@ -428,7 +496,7 @@ export async function fetchPurchaseBatches(): Promise<PurchaseBatch[]> {
     throw new Error(`Error al obtener lotes: ${response.status}`);
   }
   const body = (await response.json()) as ApiResponse<PurchaseBatch[]>;
-  return body.data;
+  return body.data.map(normalizePurchaseBatch);
 }
 
 export async function fetchPedidoUsuarioById(
@@ -441,7 +509,7 @@ export async function fetchPedidoUsuarioById(
     );
   }
   const body = (await response.json()) as ApiResponse<PedidoUsuario>;
-  return body.data;
+  return normalizePedidoUsuario(body.data);
 }
 
 export async function fetchPurchaseBatchById(
@@ -452,7 +520,7 @@ export async function fetchPurchaseBatchById(
     throw new Error(`Error al obtener el detalle del lote: ${response.status}`);
   }
   const body = (await response.json()) as ApiResponse<PurchaseBatch>;
-  return body.data;
+  return normalizePurchaseBatch(body.data);
 }
 
 export async function updatePurchaseBatch(
@@ -477,7 +545,7 @@ export async function updatePurchaseBatch(
   }
 
   const body = (await response.json()) as ApiResponse<PurchaseBatch>;
-  return body.data;
+  return normalizePurchaseBatch(body.data);
 }
 
 export async function updatePedidoUsuario(
@@ -502,7 +570,7 @@ export async function updatePedidoUsuario(
   }
 
   const body = (await response.json()) as ApiResponse<PedidoUsuario>;
-  return body.data;
+  return normalizePedidoUsuario(body.data);
 }
 
 export async function aceptarPurchaseBatch(id: string): Promise<PurchaseBatch> {
@@ -523,7 +591,7 @@ export async function aceptarPurchaseBatch(id: string): Promise<PurchaseBatch> {
   }
 
   const body = (await response.json()) as ApiResponse<PurchaseBatch>;
-  return body.data;
+  return normalizePurchaseBatch(body.data);
 }
 
 export async function aceptarPedidoUsuario(id: string): Promise<PedidoUsuario> {
@@ -545,7 +613,7 @@ export async function aceptarPedidoUsuario(id: string): Promise<PedidoUsuario> {
   }
 
   const body = (await response.json()) as ApiResponse<PedidoUsuario>;
-  return body.data;
+  return normalizePedidoUsuario(body.data);
 }
 
 export async function cancelPurchaseBatch(
@@ -571,7 +639,7 @@ export async function cancelPurchaseBatch(
   }
 
   const body = (await response.json()) as ApiResponse<PurchaseBatch>;
-  return body.data;
+  return normalizePurchaseBatch(body.data);
 }
 
 export async function cancelPedidoUsuario(
@@ -598,7 +666,7 @@ export async function cancelPedidoUsuario(
   }
 
   const body = (await response.json()) as ApiResponse<PedidoUsuario>;
-  return body.data;
+  return normalizePedidoUsuario(body.data);
 }
 
 function getPedidoPdfPath(id: string): string {

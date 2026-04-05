@@ -18,6 +18,7 @@ import { GetUser } from '../../auth/decorators/get-user.decorator';
 import { UpdateAdminUserRoleDto } from '../dto/update-admin-user-role.dto';
 import { UpdateAdminUserActivationDto } from '../dto/update-admin-user-activation.dto';
 import { RolesGuard } from '../../auth/guards/role.guard';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard, PermisosGuard)
@@ -26,28 +27,28 @@ export class AdminController {
 
   @Get('roles')
   @Roles(rolUsuario.ADMIN)
-  @RequirePermissions('usuarios:listar')
+  @RequirePermissions(PERMISSIONS.usuarios.listar)
   async getRoles() {
     return this.adminService.getRoles();
   }
 
   @Get('permissions')
   @Roles(rolUsuario.ADMIN)
-  @RequirePermissions('usuarios:listar')
+  @RequirePermissions(PERMISSIONS.usuarios.listar)
   async getPermissions() {
     return this.adminService.getPermissions();
   }
 
   @Post('profesores')
   @Roles(rolUsuario.ADMIN)
-  @RequirePermissions('usuarios:crear')
+  @RequirePermissions(PERMISSIONS.usuarios.crear)
   async createProfesor(@Body() dto: CreateProfesorDto) {
     return this.adminService.createProfesor(dto);
   }
 
   @Patch('users/:id/role')
   @Roles(rolUsuario.ADMIN)
-  @RequirePermissions('usuarios:editar')
+  @RequirePermissions(PERMISSIONS.usuarios.editar)
   async updateUserRole(
     @GetUser('id') actorUserId: string,
     @Param('id') userId: string,
@@ -64,7 +65,7 @@ export class AdminController {
 
   @Patch('users/:id/activate')
   @Roles(rolUsuario.ADMIN)
-  @RequirePermissions('usuarios:activar_desactivar')
+  @RequirePermissions(PERMISSIONS.usuarios.activar_desactivar)
   async activateUser(
     @Param('id') userId: string,
     @Body() dto: UpdateAdminUserActivationDto
@@ -74,7 +75,7 @@ export class AdminController {
 
   @Post('users/:id/force-reset')
   @Roles(rolUsuario.ADMIN)
-  @RequirePermissions('usuarios:resetear_password')
+  @RequirePermissions(PERMISSIONS.usuarios.resetear_password)
   async forcePasswordReset(@Param('id') userId: string) {
     return this.adminService.forcePasswordReset(userId);
   }

@@ -11,6 +11,7 @@ import {
   IconButton,
 } from '@mui/material';
 import { useAuth, usePermission, useAnyPermission } from '../store/auth.hooks';
+import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 import { useNavigate } from 'react-router-dom';
 import DynamicFormModal from '../components/ui/DynamicFormModal';
 import RecetaFormModal from '../features/recetas/RecetaFormModal';
@@ -291,21 +292,23 @@ const Home: React.FC = () => {
   const toast = useToast();
 
   // Permissions from auth.hooks
-  const canViewDashboard = usePermission('dashboard:ver_estadisticas');
-  const canListProductos = usePermission('productos:listar');
-  const canListPedidos = usePermission('pedidos:listar');
-  const canListIncidencias = usePermission('incidencias:listar');
-  const canListProveedores = usePermission('proveedores:listar');
-  const canListInventario = usePermission('inventario:listar');
-  const canCreatePedido = usePermission('pedidos:crear');
-  const canCreateProducto = usePermission('productos:crear');
-  const canCreateRecepcion = usePermission('recepciones:crear');
-  const canCreateReceta = usePermission('recetas:crear');
+  const canViewDashboard = usePermission(
+    PERMISSIONS.dashboard.ver_estadisticas
+  );
+  const canListProductos = usePermission(PERMISSIONS.productos.listar);
+  const canListPedidos = usePermission(PERMISSIONS.pedidos.listar);
+  const canListIncidencias = usePermission(PERMISSIONS.incidencias.listar);
+  const canListProveedores = usePermission(PERMISSIONS.proveedores.listar);
+  const canListInventario = usePermission(PERMISSIONS.inventario.listar);
+  const canCreatePedido = usePermission(PERMISSIONS.pedidos.crear);
+  const canCreateProducto = usePermission(PERMISSIONS.productos.crear);
+  const canCreateRecepcion = usePermission(PERMISSIONS.recepciones.crear);
+  const canCreateReceta = usePermission(PERMISSIONS.recetas.crear);
 
-  const canListUsers = usePermission('usuarios:listar');
+  const canListUsers = usePermission(PERMISSIONS.usuarios.listar);
   const canReviewInventoryNotifications = useAnyPermission([
-    'inventario:listar',
-    'inventario:ver',
+    PERMISSIONS.inventario.listar,
+    PERMISSIONS.inventario.ver,
     'inventario:ver_alertas',
   ]);
 

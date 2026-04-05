@@ -50,13 +50,27 @@ export function supportsPagination(path: string): boolean {
 
 export function getTargetSuccessForEndpoint(key: string): number {
   const explicitTarget = SPECIAL_TARGETS.get(key);
+  const isRecepcionesOrDistribuciones =
+    key.includes('/recepciones') || key.includes('/distribuciones');
+
+  const scaleTargetForHeavyFlows = (target: number): number => {
+    if (!isRecepcionesOrDistribuciones) {
+      return target;
+    }
+
+    return Math.max(1, Math.ceil(target / 4));
+  };
+
   if (explicitTarget !== undefined) {
-    return Math.min(
+    const normalizedTarget = Math.min(
       MAX_SUCCESS_PER_ENDPOINT,
       Math.max(MIN_SUCCESS_PER_ENDPOINT, explicitTarget)
     );
+
+    return scaleTargetForHeavyFlows(normalizedTarget);
   }
-  return DEFAULT_TARGET_SUCCESS_PER_ENDPOINT;
+
+  return scaleTargetForHeavyFlows(DEFAULT_TARGET_SUCCESS_PER_ENDPOINT);
 }
 
 export function isAdminFocusEndpoint(endpoint: Endpoint): boolean {
@@ -119,22 +133,10 @@ export function chooseTokenForPath(
     ...alumnoTokens,
     context.getState<string>('seedTokenAlumno') || '',
   ].filter((token) => Boolean(token));
-  const readerPool = [...alumnoPool, ...profesorPool, ...adminPool].filter(
-    (token) => Boolean(token)
-  );
-  const operationalPool = [...profesorPool, ...adminPool].filter((token) =>
-    Boolean(token)
-  );
   const adminFallbackToken = adminPool[0] || superAdminToken;
 
-  const pickAdminPool = (): string =>
-    pickFromPool(adminPool, 'seedTokenCursorAdminPool', adminFallbackToken);
-  const pickRealAdminPool = (): string =>
-    pickFromPool(
-      adminTokens,
-      'seedTokenCursorRealAdminPool',
-      adminFallbackToken
-    );
+  const pickAdminPool = (): string => superAdminToken;
+  const pickRealAdminPool = (): string => superAdminToken;
   const pickProfesorPool = (): string =>
     pickFromPool(
       profesorPool,
@@ -147,14 +149,8 @@ export function chooseTokenForPath(
       'seedTokenCursorAlumno',
       requireToken('seedTokenAlumno')
     );
-  const pickReaderPool = (): string =>
-    pickFromPool(readerPool, 'seedTokenCursorReaderPool', adminFallbackToken);
-  const pickOperationalPool = (): string =>
-    pickFromPool(
-      operationalPool,
-      'seedTokenCursorOperationalPool',
-      adminFallbackToken
-    );
+  const pickReaderPool = (): string => superAdminToken;
+  const pickOperationalPool = (): string => superAdminToken;
 
   if (
     path === '/auth/change-password' ||
@@ -210,10 +206,14 @@ export function chooseTokenForPath(
     return pickProfesorPool();
   }
 
-  if (
-    path === '/alumnos/change-profesor' ||
-    (method === 'PATCH' && path.startsWith('/alumnos/'))
-  ) {
+  if (path === '/alumnos/change-profesor') {
+    return (
+      context.getState<string>('seedTokenAlumnoTransfer') ||
+      requireToken('seedTokenAlumno')
+    );
+  }
+
+  if (method === 'PATCH' && path.startsWith('/alumnos/')) {
     return pickAlumnoPool();
   }
 
@@ -238,6 +238,10 @@ export function chooseTokenForPath(
   }
 
   if (path === '/productos/generar-ean13') {
+    return pickAdminPool();
+  }
+
+  if (path === '/recepciones' && method === 'POST') {
     return pickAdminPool();
   }
 

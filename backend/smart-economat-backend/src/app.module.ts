@@ -13,6 +13,8 @@ import { DataSource } from 'typeorm';
 import { typeOrmConfig } from './config/database.config';
 
 import { PlantillasRolesModule } from './modules/plantillas-roles/plantillas-roles.module';
+import { RolesModule } from './modules/roles/roles.module';
+import { PermisosModule } from './modules/permisos/permisos.module';
 import { IsUniqueConstraint } from './common/decorators/is-unique.decorator';
 import { ExportModule } from './modules/export/export.module';
 import { MermaModule } from './modules/merma/merma.module';
@@ -78,6 +80,8 @@ import { DistribucionModule } from './modules/distribucion/distribucion.module';
       },
     }),
     PlantillasRolesModule,
+    RolesModule,
+    PermisosModule,
     ExportModule,
     MermaModule,
     UbicacionModule,

@@ -2,6 +2,7 @@ import type { SeedContext } from '../../src/seeders/seed-context';
 import { collectStateFromResponse } from '../../src/seeders/massive.helpers.state-collection';
 import { EstadoPedido } from '../../src/modules/pedido/enums/estado-pedido.enum';
 import { EstadoPedidoUsuario } from '../../src/modules/pedido/enums/estado-pedido-usuario.enum';
+import { EstadoLote } from '../../src/modules/pedido/enums/estado-lote.enum';
 
 describe('massive.helpers.state-collection', () => {
   function createContext(): SeedContext {
@@ -194,6 +195,29 @@ describe('massive.helpers.state-collection', () => {
     ]);
     expect(context.getState<string[]>('pedidoUsuarioPendienteIds')).toEqual([
       'pedido-usuario-1',
+    ]);
+  });
+
+  it('tracks purchase-batches even when numeroGlobal is a string', () => {
+    const context = createContext();
+
+    collectStateFromResponse(context, '/purchase-batches', {
+      data: [
+        {
+          id: 'purchase-batch-1',
+          numeroGlobal: '100001',
+          referencia: 'LC-100001',
+          estado: EstadoLote.PENDIENTE,
+          pedidos: [],
+        },
+      ],
+    });
+
+    expect(context.getState<string[]>('purchaseBatchIds')).toEqual([
+      'purchase-batch-1',
+    ]);
+    expect(context.getState<string[]>('purchaseBatchPendienteIds')).toEqual([
+      'purchase-batch-1',
     ]);
   });
 

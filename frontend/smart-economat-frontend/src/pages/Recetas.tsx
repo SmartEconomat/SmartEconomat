@@ -72,6 +72,7 @@ import RestaurantIcon from '@mui/icons-material/Restaurant';
 import { useToast } from '../store/toast.hooks';
 import StatusChip from '../components/ui/StatusChip';
 import { usePermission } from '../store/auth.hooks';
+import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 import RecipeCarousel from '../components/ui/RecipeCarousel';
 import PageToolbar from '../components/ui/PageToolbar';
 
@@ -174,32 +175,15 @@ function extractRecetaMinutes(receta?: Receta | null): number | null {
     return rawMinutes;
   }
 
-  const parsedFromLabel = Number.parseInt(
-    String(receta?.tiempoPreparacion ?? '').match(/\d+/)?.[0] ?? '',
-    10
-  );
-
-  return Number.isFinite(parsedFromLabel) && parsedFromLabel > 0
-    ? parsedFromLabel
-    : null;
+  return null;
 }
 
 function getTiempoPreparacionLabel(receta?: Receta | null): string | undefined {
-  const legacyLabel = receta?.tiempoPreparacion?.trim();
-  if (legacyLabel) {
-    return legacyLabel;
-  }
-
   const minutes = extractRecetaMinutes(receta);
   return typeof minutes === 'number' ? `${minutes} min` : undefined;
 }
 
 function getFranjaTiempoLabel(receta?: Receta | null): string | undefined {
-  const legacySlot = receta?.tiempo?.trim();
-  if (legacySlot) {
-    return legacySlot;
-  }
-
   const minutes = extractRecetaMinutes(receta);
   if (typeof minutes !== 'number') {
     return undefined;
@@ -744,12 +728,12 @@ const Recetas: React.FC = () => {
     setSortBy(key as string);
   };
 
-  const canEdit = usePermission('recetas:editar');
-  const canDelete = usePermission('recetas:eliminar');
-  const canCreate = usePermission('recetas:crear');
-  const canCook = usePermission('recetas:cocinar');
-  const canExportPdf = usePermission('recetas:ver');
-  const canCreateOrders = usePermission('pedidos:crear');
+  const canEdit = usePermission(PERMISSIONS.recetas.editar);
+  const canDelete = usePermission(PERMISSIONS.recetas.eliminar);
+  const canCreate = usePermission(PERMISSIONS.recetas.crear);
+  const canCook = usePermission(PERMISSIONS.recetas.cocinar);
+  const canExportPdf = usePermission(PERMISSIONS.recetas.ver);
+  const canCreateOrders = usePermission(PERMISSIONS.pedidos.crear);
 
   const handleCreateOrderFromRecipes = useCallback(
     async (recetas: Receta[]) => {

@@ -22,8 +22,25 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
   RecepcionDraft,
+  LineaDraft,
   EstadoVisualProducto,
 } from '../../services/recepcion.types';
+
+const hasDraftText = (value?: string): boolean =>
+  typeof value === 'string' && value.trim().length > 0;
+
+const hasCantidadAlbaran = (linea: LineaDraft): boolean =>
+  linea.cantidadAlbaran !== '' && linea.cantidadAlbaran != null;
+
+const isLineaVisibleEnRevision = (linea: LineaDraft): boolean =>
+  Boolean(
+    linea.intervenida ||
+    Number(linea.cantidadRecibida) > 0 ||
+    hasCantidadAlbaran(linea) ||
+    hasDraftText(linea.observaciones) ||
+    hasDraftText(linea.fechaCaducidad) ||
+    linea.estadoVisual !== EstadoVisualProducto.OPTIMO
+  );
 
 interface PasoRevisionProps {
   draft: RecepcionDraft;
@@ -129,9 +146,7 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                 </TableHead>
                 <TableBody>
                   {p.lineas.map((l, originalLIdx) => {
-                    const isVisible =
-                      Number(l.cantidadRecibida) > 0 ||
-                      l.estado === 'No entregado';
+                    const isVisible = isLineaVisibleEnRevision(l);
 
                     if (!isVisible) return null;
 

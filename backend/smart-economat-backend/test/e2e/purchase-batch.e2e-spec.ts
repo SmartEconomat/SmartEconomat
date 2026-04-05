@@ -95,8 +95,23 @@ describe('PurchaseBatchController (e2e)', () => {
 
     expect(res.status).toBe(201);
     expect(res.body.data.id).toBeDefined();
+    expect(res.body.data.numeroGlobal).toBeDefined();
+    expect(String(res.body.data.referencia || '')).toMatch(/^LC-/);
     expect(res.body.data.estado).toBe('pendiente');
     expect(res.body.data.pedidos).toHaveLength(2);
+    expect(
+      new Set(
+        res.body.data.pedidos.map(
+          (pedido: { numeroGlobal?: string }) => pedido.numeroGlobal
+        )
+      ).size
+    ).toBe(2);
+    expect(
+      res.body.data.pedidos.every(
+        (pedido: { numeroPedidoProveedor?: string; numeroGlobal?: string }) =>
+          pedido.numeroPedidoProveedor === pedido.numeroGlobal
+      )
+    ).toBe(true);
     expect(
       res.body.data.pedidos.every(
         (pedido: { estado: string }) => pedido.estado === 'por_recepcionar'
@@ -195,6 +210,49 @@ describe('PurchaseBatchController (e2e)', () => {
           pedido.pedidoProductos.length === 1
       )
     ).toBe(true);
+  });
+
+  it('POST /purchase-batches - Debería devolver los 4 pedidos proveedor reales en lote multi-proveedor', async () => {
+    const providers = await Promise.all([
+      createProveedor(),
+      createProveedor(),
+      createProveedor(),
+      createProveedor(),
+    ]);
+
+    const productProviders = await Promise.all(
+      providers.map((provider) => createProductoConProveedor(provider.id))
+    );
+
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/purchase-batches')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        observaciones: 'Lote multi proveedor de validación',
+        lineas: productProviders.map((productoProveedorId, index) => ({
+          productoProveedorId,
+          cantidad: index + 1,
+        })),
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.numeroGlobal).toBeDefined();
+    expect(String(res.body.data.referencia || '')).toMatch(/^LC-/);
+    expect(res.body.data.pedidos).toHaveLength(4);
+
+    const providerIds = new Set(
+      res.body.data.pedidos.map(
+        (pedido: { proveedor?: { id?: string } }) => pedido.proveedor?.id
+      )
+    );
+    expect(providerIds.size).toBe(4);
+
+    const providerNumbers = new Set(
+      res.body.data.pedidos.map(
+        (pedido: { numeroGlobal?: string }) => pedido.numeroGlobal
+      )
+    );
+    expect(providerNumbers.size).toBe(4);
   });
 
   it('PATCH /purchase-batches/:id/cancelar - Debería derivar CANCELADO cuando todos los pedidos se cancelan', async () => {

@@ -889,7 +889,7 @@ import { Usuario } from '../../../src/modules/usuario/usuario.entity/usuario.ent
 
 const createPedido = (
   id: string,
-  estado: EstadoPedido = EstadoPedido.PENDIENTE_DE_APROBACION,
+  estado: EstadoPedido = EstadoPedido.POR_RECEPCIONAR,
   lineas: Array<{ id: string; cantidad: number; nombre: string }>
 ) => ({
   id,
@@ -1072,6 +1072,87 @@ describe('RecepcionStockService', () => {
         { pedidoId: 'ped-1', productosRecibidos: [] } as any,
         'user-1'
       )
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rechaza pedidos en estado parcial o incidencia para recepcion masiva', async () => {
+    mockDataSource.manager.findOne
+      .mockResolvedValueOnce({ id: 'user-1' })
+      .mockResolvedValueOnce({
+        id: 'ped-parcial',
+        estado: EstadoPedido.PARCIAL,
+      });
+
+    await expect(
+      service.procesarRecepcionMasiva(
+        { pedidoId: 'ped-parcial', productosRecibidos: [] } as any,
+        'user-1'
+      )
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    mockDataSource.manager.findOne
+      .mockResolvedValueOnce({ id: 'user-1' })
+      .mockResolvedValueOnce({
+        id: 'ped-incidencia',
+        estado: EstadoPedido.INCIDENCIA,
+      });
+
+    await expect(
+      service.procesarRecepcionMasiva(
+        { pedidoId: 'ped-incidencia', productosRecibidos: [] } as any,
+        'user-1'
+      )
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rechaza pedidos en estado parcial o incidencia para recepcion normal', async () => {
+    mockDataSource.manager.findOne.mockImplementation((entity: unknown) => {
+      const name =
+        typeof entity === 'function' ? entity.name : (entity as any)?.name;
+      if (entity === Usuario || name === 'Usuario') {
+        return Promise.resolve({ id: 'user-estado' });
+      }
+      return Promise.resolve(null);
+    });
+
+    mockDataSource.manager.find.mockResolvedValueOnce([
+      createPedido('ped-parcial', EstadoPedido.PARCIAL, [
+        { id: 'pp-parcial', cantidad: 1, nombre: 'Harina' },
+      ]),
+    ]);
+
+    await expect(
+      service.procesarRecepcion({
+        usuarioId: 'user-estado',
+        pedidos: [{ pedidoId: 'ped-parcial' }],
+        productos: [
+          {
+            pedidoProductoId: 'pp-parcial',
+            cantidadRecibida: 1,
+            estadoVisual: EstadoVisualProducto.OPTIMO,
+          },
+        ],
+      } as any)
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    mockDataSource.manager.find.mockResolvedValueOnce([
+      createPedido('ped-incidencia', EstadoPedido.INCIDENCIA, [
+        { id: 'pp-incidencia', cantidad: 1, nombre: 'Azucar' },
+      ]),
+    ]);
+
+    await expect(
+      service.procesarRecepcion({
+        usuarioId: 'user-estado',
+        pedidos: [{ pedidoId: 'ped-incidencia' }],
+        productos: [
+          {
+            pedidoProductoId: 'pp-incidencia',
+            cantidadRecibida: 1,
+            estadoVisual: EstadoVisualProducto.OPTIMO,
+          },
+        ],
+      } as any)
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
@@ -1437,7 +1518,8 @@ describe('RecepcionStockService', () => {
     expect(mockPedidoService.handleStatusTransition).toHaveBeenCalledWith(
       'ped-2',
       PedidoStatusTrigger.RECEPCION_PARCIAL,
-      queryRunner.manager
+      queryRunner.manager,
+      undefined
     );
     expect(result).toBe(EstadoPedido.POR_RECEPCIONAR);
   });
@@ -1473,7 +1555,8 @@ describe('RecepcionStockService', () => {
     expect(mockPedidoService.handleStatusTransition).toHaveBeenCalledWith(
       'ped-4',
       PedidoStatusTrigger.RECEPCION_TOTAL,
-      queryRunner.manager
+      queryRunner.manager,
+      undefined
     );
     expect(result).toBe(EstadoPedido.RECEPCIONADO);
   });

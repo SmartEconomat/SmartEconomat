@@ -70,7 +70,7 @@ La página usa `usePermission` para decidir qué acciones mostrar, pero la prote
 
 ## Relacionado
 
-- [Servicio de API](../../reference/api.md)
+- [Servicio de API](../../reference/api/README.md)
 - [Alta compleja de producto](../../modules/producto/alta-compleja-producto-maestro-proveedores.md)
 - [ProductFilters](../componentes/ProductFilters.md)
 - [DataTable](../componentes/DataTable.md)

@@ -24,6 +24,7 @@ import { GetUser } from '../../auth/decorators/get-user.decorator';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 @ApiTags('Producción')
 @UseGuards(JwtAuthGuard, PermisosGuard)
@@ -32,7 +33,7 @@ export class ProduccionController {
   constructor(private readonly produccionService: ProduccionService) {}
 
   @Post('ejecutar')
-  @RequirePermissions('recetas:cocinar')
+  @RequirePermissions(PERMISSIONS.recetas.cocinar)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Ejecutar la producción de una receta y registrar el lote',
@@ -51,7 +52,7 @@ export class ProduccionController {
   }
 
   @Post('validar')
-  @RequirePermissions('recetas:cocinar')
+  @RequirePermissions(PERMISSIONS.recetas.cocinar)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Validar stock disponible para una o varias producciones',
@@ -61,7 +62,7 @@ export class ProduccionController {
   }
 
   @Get()
-  @RequirePermissions('recetas:listar')
+  @RequirePermissions(PERMISSIONS.recetas.listar)
   @ApiOperation({ summary: 'Listar todos los lotes de producción' })
   @ApiResponse({ status: 200, type: [ProduccionLote] })
   findAll(
@@ -79,7 +80,7 @@ export class ProduccionController {
   }
 
   @Patch('lote/:id/consumir')
-  @RequirePermissions('recetas:cocinar')
+  @RequirePermissions(PERMISSIONS.recetas.cocinar)
   @ApiOperation({
     summary: 'Consumir raciones o cantidad de un lote de producción',
   })
@@ -92,7 +93,7 @@ export class ProduccionController {
   }
 
   @Get(':id')
-  @RequirePermissions('recetas:ver')
+  @RequirePermissions(PERMISSIONS.recetas.ver)
   @ApiOperation({ summary: 'Obtener un lote de producción por ID' })
   @ApiParam({ name: 'id', description: 'docs.UUID_DEL_LOTE_DE_PRODUCCI_N' })
   @ApiResponse({ status: 200, type: ProduccionLote })

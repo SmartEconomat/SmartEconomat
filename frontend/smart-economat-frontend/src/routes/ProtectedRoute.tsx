@@ -4,6 +4,8 @@ import { useAuth } from '../store/auth.hooks';
 import { hasAnyPermission, hasPermission } from '../utils/auth/permissionUtils';
 import Spinner from '../components/ui/Spinner';
 
+const AUTHORIZED_FALLBACK_PATH = '/perfil';
+
 interface ProtectedRouteProps {
   children?: React.ReactNode;
   requiredPermission?: string;
@@ -19,6 +21,20 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     useAuth();
   const location = useLocation();
 
+  const renderUnauthorizedRedirect = () => {
+    if (location.pathname === AUTHORIZED_FALLBACK_PATH) {
+      return <Navigate to="/login" replace state={{ from: location }} />;
+    }
+
+    return (
+      <Navigate
+        to={AUTHORIZED_FALLBACK_PATH}
+        replace
+        state={{ from: location }}
+      />
+    );
+  };
+
   if (!isAuthResolved) {
     return <Spinner overlay="screen" size="lg" />;
   }
@@ -28,7 +44,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (requiredPermission && !hasPermission(user, requiredPermission)) {
-    return <Navigate to="/" replace />;
+    return renderUnauthorizedRedirect();
   }
 
   if (
@@ -36,7 +52,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     requiredAnyPermissions.length > 0 &&
     !hasAnyPermission(user, requiredAnyPermissions)
   ) {
-    return <Navigate to="/" replace />;
+    return renderUnauthorizedRedirect();
   }
 
   if (children) {

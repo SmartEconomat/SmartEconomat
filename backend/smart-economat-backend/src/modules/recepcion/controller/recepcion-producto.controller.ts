@@ -21,6 +21,7 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('recepcion-productos')
@@ -30,14 +31,14 @@ export class RecepcionProductoController {
   ) {}
 
   @Post()
-  @RequirePermissions('recepciones:editar')
+  @RequirePermissions(PERMISSIONS.recepciones.editar)
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateRecepcionProductoDto): Promise<RecepcionProducto> {
     return this.recepcionProductoService.create(dto);
   }
 
   @Get()
-  @RequirePermissions('recepciones:listar')
+  @RequirePermissions(PERMISSIONS.recepciones.listar)
   findAll(
     @SortableFields([
       'cantidadRecibida',
@@ -51,7 +52,7 @@ export class RecepcionProductoController {
   }
 
   @Get(':id')
-  @RequirePermissions('recepciones:ver')
+  @RequirePermissions(PERMISSIONS.recepciones.ver)
   findOne(
     @Param('id', ParseUUIDv7Pipe) id: string
   ): Promise<RecepcionProducto> {
@@ -59,7 +60,7 @@ export class RecepcionProductoController {
   }
 
   @Patch(':id')
-  @RequirePermissions('recepciones:editar')
+  @RequirePermissions(PERMISSIONS.recepciones.editar)
   update(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: UpdateRecepcionProductoDto
@@ -68,7 +69,7 @@ export class RecepcionProductoController {
   }
 
   @Delete(':id')
-  @RequirePermissions('recepciones:eliminar')
+  @RequirePermissions(PERMISSIONS.recepciones.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.recepcionProductoService.remove(id);

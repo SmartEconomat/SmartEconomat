@@ -43,7 +43,10 @@ import type { Ubicacion } from '../services/ubicacion.types';
 import { useAuth } from '../store/auth.hooks';
 import { useToast } from '../store/toast.hooks';
 import { usePermission } from '../store/auth.hooks';
-import { useNavigate } from 'react-router-dom';
+import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
+import { SYSTEM_ROLES } from '../sherlock-auth/system-roles.constants';
+import { TipoMovimiento } from '../services/movimiento.types';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 type DistribucionTab = 'disponibles' | 'historial';
 
@@ -74,6 +77,11 @@ type PerfilDistribucion = {
   } | null;
 };
 
+type DistribucionLocationState = {
+  prefillSearchTerm?: string;
+  openDetailDistribucionId?: string;
+};
+
 const collectUbicacionIdsFromPerfil = (
   perfil?: PerfilDistribucion | null
 ): string[] => {
@@ -101,12 +109,13 @@ const collectUbicacionIdsFromPerfil = (
 
 const DistribucionPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const toast = useToast();
-  const canList = usePermission('distribuciones:listar');
-  const canCreate = usePermission('distribuciones:crear');
-  const canConfirm = usePermission('distribuciones:confirmar');
-  const canCancel = usePermission('distribuciones:cancelar');
+  const canList = usePermission(PERMISSIONS.distribuciones.listar);
+  const canCreate = usePermission(PERMISSIONS.distribuciones.crear);
+  const canConfirm = usePermission(PERMISSIONS.distribuciones.confirmar);
+  const canCancel = usePermission(PERMISSIONS.distribuciones.cancelar);
   const userRole = user?.rol?.toUpperCase() || '';
 
   const [activeTab, setActiveTab] = useState<DistribucionTab>('disponibles');
@@ -166,9 +175,23 @@ const DistribucionPage: React.FC = () => {
 
   const preferredUbicacionIds = useMemo(() => {
     const pedidoUserUbicaciones = selectedDisponible?.ubicacionesUsuario ?? [];
+    const suggestedDestinationId =
+      selectedDisponible?.ubicacionDestinoSugerida?.id || '';
 
-    if (pedidoUserUbicaciones.length > 0) {
-      return pedidoUserUbicaciones.map((ubicacion) => ubicacion.id);
+    const preferredIds = new Set<string>();
+
+    pedidoUserUbicaciones.forEach((ubicacion) => {
+      if (ubicacion.id) {
+        preferredIds.add(ubicacion.id);
+      }
+    });
+
+    if (suggestedDestinationId) {
+      preferredIds.add(suggestedDestinationId);
+    }
+
+    if (preferredIds.size > 0) {
+      return Array.from(preferredIds);
     }
 
     return userUbicacionIds;
@@ -201,7 +224,7 @@ const DistribucionPage: React.FC = () => {
       return;
     }
 
-    if (userRole === 'PROFESOR') {
+    if (userRole === SYSTEM_ROLES.PROFESOR) {
       const response = await profesorService.getSlots();
       if (response.status < 200 || response.status >= 300) {
         throw new Error(
@@ -326,6 +349,35 @@ const DistribucionPage: React.FC = () => {
     ]
   );
 
+  const resolveValidDestinationId = useCallback(
+    (disponible: DistribucionDisponible, availableUbicaciones: Ubicacion[]) => {
+      const validDestinationIds = new Set(
+        availableUbicaciones
+          .filter((ubicacion) => ubicacion.id !== originId)
+          .map((ubicacion) => ubicacion.id)
+      );
+
+      const candidateIds = Array.from(
+        new Set([
+          destinationId,
+          disponible.ubicacionDestinoSugerida?.id || '',
+          ...(disponible.ubicacionesUsuario || []).map(
+            (ubicacion) => ubicacion.id
+          ),
+          ...preferredUbicacionIds,
+          ...availableUbicaciones.map((ubicacion) => ubicacion.id),
+        ])
+      );
+
+      return (
+        candidateIds.find(
+          (candidateId) => candidateId && validDestinationIds.has(candidateId)
+        ) || ''
+      );
+    },
+    [destinationId, originId, preferredUbicacionIds]
+  );
+
   const openDistributeDialog = (disponible: DistribucionDisponible) => {
     setSelectedDisponible(disponible);
     setDestinationId(getInitialDestinationId(disponible));
@@ -422,15 +474,29 @@ const DistribucionPage: React.FC = () => {
       return;
     }
 
-    if (destinationId === originId) {
+    const effectiveDestinationId = resolveValidDestinationId(
+      selectedDisponible,
+      ubicaciones
+    );
+
+    if (!effectiveDestinationId) {
+      toast.error('No se encontró una ubicación destino válida.');
+      return;
+    }
+
+    if (effectiveDestinationId === originId) {
       toast.error('La ubicación destino no puede ser la misma que la origen.');
       return;
+    }
+
+    if (effectiveDestinationId !== destinationId) {
+      setDestinationId(effectiveDestinationId);
     }
 
     const payload: CreateDistribucionPayload = {
       pedidoUsuarioId: selectedDisponible.pedidoUsuarioId,
       ubicacionOrigenId: originId || undefined,
-      ubicacionDestinoId: destinationId,
+      ubicacionDestinoId: effectiveDestinationId,
       alumnoSlotId: selectedDisponible.alumnoSlot?.id,
       observaciones: observaciones || undefined,
       lineas: lineas.map((linea) => ({
@@ -448,11 +514,33 @@ const DistribucionPage: React.FC = () => {
       await loadData();
       setActiveTab('historial');
     } catch (createError) {
-      toast.error(
+      const errorMessage =
         createError instanceof Error
           ? createError.message
-          : 'No se pudo realizar la distribución.'
-      );
+          : 'No se pudo realizar la distribución.';
+
+      const normalizedError = errorMessage.toLowerCase();
+      if (
+        normalizedError.includes('ubicación destino no encontrada') ||
+        normalizedError.includes('ubicacion destino no encontrada')
+      ) {
+        const refreshedUbicaciones = await UbicacionService.findAll();
+        setUbicaciones(refreshedUbicaciones);
+
+        const refreshedFallbackId = resolveValidDestinationId(
+          selectedDisponible,
+          refreshedUbicaciones
+        );
+        if (refreshedFallbackId) {
+          setDestinationId(refreshedFallbackId);
+        }
+
+        toast.error(
+          'La ubicación destino ya no existe. Se recargaron las ubicaciones; vuelve a intentar con un destino válido.'
+        );
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -496,19 +584,59 @@ const DistribucionPage: React.FC = () => {
     }
   };
 
-  const handleViewDetail = async (id: string) => {
-    try {
-      const detail = await fetchDistribucionById(id);
-      setSelectedHistorial(detail);
-      setDetailOpen(true);
-    } catch (detailError) {
-      toast.error(
-        detailError instanceof Error
-          ? detailError.message
-          : 'No se pudo cargar el detalle.'
-      );
+  const handleViewDetail = useCallback(
+    async (id: string) => {
+      try {
+        const detail = await fetchDistribucionById(id);
+        setSelectedHistorial(detail);
+        setDetailOpen(true);
+      } catch (detailError) {
+        toast.error(
+          detailError instanceof Error
+            ? detailError.message
+            : 'No se pudo cargar el detalle.'
+        );
+      }
+    },
+    [toast]
+  );
+
+  const handleOpenMovimientosTrace = useCallback(
+    (distribucionId: string) => {
+      setDetailOpen(false);
+      navigate('/movimientos', {
+        state: {
+          prefillSearchTerm: distribucionId,
+          prefillTypes: [
+            TipoMovimiento.SALIDA_DISTRIBUCION,
+            TipoMovimiento.ENTRADA_DISTRIBUCION,
+          ],
+        },
+      });
+    },
+    [navigate]
+  );
+
+  useEffect(() => {
+    const routeState = location.state as DistribucionLocationState | null;
+    if (!routeState) {
+      return;
     }
-  };
+
+    const prefillSearchTerm = routeState.prefillSearchTerm?.trim();
+    if (prefillSearchTerm) {
+      setSearchTerm(prefillSearchTerm);
+      setActiveTab('historial');
+    }
+
+    const detailId = routeState.openDetailDistribucionId?.trim();
+    if (detailId) {
+      setActiveTab('historial');
+      void handleViewDetail(detailId);
+    }
+
+    navigate(location.pathname, { replace: true, state: null });
+  }, [handleViewDetail, location.pathname, location.state, navigate]);
 
   const disponiblesColumns: Column<DistribucionDisponible>[] = useMemo(
     () => [
@@ -767,11 +895,24 @@ const DistribucionPage: React.FC = () => {
 
   const detailLineas = selectedHistorial?.lineas || [];
 
-  const userUbicaciones = useMemo(() => {
+  const ownUserUbicaciones = useMemo(() => {
     const ownIds = new Set(preferredUbicacionIds);
 
     return ubicaciones.filter((ubicacion) => ownIds.has(ubicacion.id));
   }, [preferredUbicacionIds, ubicaciones]);
+
+  const usingFallbackDestinationOptions = useMemo(
+    () => ownUserUbicaciones.length === 0 && ubicaciones.length > 0,
+    [ownUserUbicaciones, ubicaciones]
+  );
+
+  const userUbicaciones = useMemo(() => {
+    if (ownUserUbicaciones.length > 0) {
+      return ownUserUbicaciones;
+    }
+
+    return ubicaciones;
+  }, [ownUserUbicaciones, ubicaciones]);
 
   const selectedOriginUbicacion = useMemo(
     () => ubicaciones.find((ubicacion) => ubicacion.id === originId) || null,
@@ -792,8 +933,16 @@ const DistribucionPage: React.FC = () => {
       return `No hay ubicaciones disponibles del usuario porque el origen actual es ${selectedOriginUbicacion.nombre}.`;
     }
 
+    if (usingFallbackDestinationOptions) {
+      return `No se detectaron ubicaciones asociadas al pedido; se muestran ubicaciones generales excluyendo ${selectedOriginUbicacion.nombre}.`;
+    }
+
     return `Solo se muestran las ubicaciones del usuario, excluyendo ${selectedOriginUbicacion.nombre} por estar en origen.`;
-  }, [hasAvailableDestinationOptions, selectedOriginUbicacion]);
+  }, [
+    hasAvailableDestinationOptions,
+    selectedOriginUbicacion,
+    usingFallbackDestinationOptions,
+  ]);
 
   const visibleUserUbicaciones = useMemo(
     () => userUbicaciones.filter((ubicacion) => ubicacion.id !== originId),
@@ -1115,6 +1264,14 @@ const DistribucionPage: React.FC = () => {
                   onClick={() => void handleCancel(selectedHistorial.id)}
                 >
                   Cancelar Entrega
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() =>
+                    handleOpenMovimientosTrace(selectedHistorial.id)
+                  }
+                >
+                  Ver Movimientos
                 </Button>
               </Stack>
             )}

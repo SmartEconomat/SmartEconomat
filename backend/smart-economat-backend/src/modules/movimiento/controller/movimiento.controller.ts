@@ -21,19 +21,19 @@ import { UpdateMovimientoDto } from '../dto/update-movimiento.dto';
 import { MovimientoHistoryDto } from '../dto/movimiento-history.dto';
 import { MovimientoListQueryDto } from '../dto/movimiento-list-query.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/role.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
-import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 @ApiTags('movimientos')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('movimientos')
 export class MovimientoController {
   constructor(private readonly movimientoService: MovimientoService) {}
 
   @Post()
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.inventario.ajustar_stock)
   @ApiOperation({
     summary: 'Crear un nuevo movimiento',
     description: 'docs.SOLO_ADMIN_Y_PROFESORES_PUEDEN',
@@ -55,7 +55,7 @@ export class MovimientoController {
   }
 
   @Get()
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
+  @RequirePermissions(PERMISSIONS.movimientos.listar)
   @ApiOperation({
     summary: 'Listar todos los movimientos',
     description: 'docs.RETORNA_TODOS_LOS_MOVIMIENTOS_ORDENADOS',
@@ -75,7 +75,7 @@ export class MovimientoController {
   }
 
   @Get('historial')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.movimientos.listar)
   @ApiOperation({
     summary: 'Obtener historial de movimientos (Trazabilidad)',
     description: 'docs.BUSCA_EL_HISTORIAL_DE_MOVIMIENTOS_DE_UN',
@@ -146,7 +146,7 @@ export class MovimientoController {
   }
 
   @Get(':id')
-  @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR, rolUsuario.ALUMNO)
+  @RequirePermissions(PERMISSIONS.movimientos.listar)
   @ApiOperation({
     summary: 'Obtener un movimiento por ID',
     description: 'docs.RETORNA_LOS_DETALLES_COMPLETOS_DE_UN_MOV',
@@ -164,7 +164,7 @@ export class MovimientoController {
   }
 
   @Patch(':id')
-  @Roles(rolUsuario.ADMIN)
+  @RequirePermissions(PERMISSIONS.inventario.ajustar_stock)
   @ApiOperation({
     summary: 'Actualizar un movimiento',
     description: 'docs.SOLO_ADMIN_PUEDEN_ACTUALIZAR_M',
@@ -194,7 +194,7 @@ export class MovimientoController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles(rolUsuario.ADMIN)
+  @RequirePermissions(PERMISSIONS.inventario.ajustar_stock)
   @ApiOperation({
     summary: 'Eliminar un movimiento (soft delete)',
     description: 'docs.SOLO_ADMIN_PUEDEN_ELIMINAR_MOV',

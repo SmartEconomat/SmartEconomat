@@ -32,6 +32,7 @@ import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { CreateMissingStockBatchDto } from '../dto/create-missing-stock-batch.dto';
 import { GeneratePedidoFromRecetasDto } from '../dto/generate-pedido-from-recetas.dto';
 import { RecetaToPedidoService } from '../service/receta-to-pedido.service';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 type PurchaseBatchRequest = {
   user: { id: string };
@@ -48,7 +49,7 @@ export class PurchaseBatchController {
   ) {}
 
   @Post()
-  @RequirePermissions('pedidos:crear')
+  @RequirePermissions(PERMISSIONS.pedidos.crear)
   @HttpCode(HttpStatus.CREATED)
   create(
     @Body() dto: CreatePurchaseBatchDto,
@@ -60,7 +61,7 @@ export class PurchaseBatchController {
   }
 
   @Post('from-missing-stock')
-  @RequirePermissions('pedidos:crear')
+  @RequirePermissions(PERMISSIONS.pedidos.crear)
   @HttpCode(HttpStatus.CREATED)
   createFromMissingStock(
     @Body() dto: CreateMissingStockBatchDto,
@@ -72,7 +73,7 @@ export class PurchaseBatchController {
   }
 
   @Post('from-recipes')
-  @RequirePermissions('pedidos:crear')
+  @RequirePermissions(PERMISSIONS.pedidos.crear)
   @HttpCode(HttpStatus.CREATED)
   async createFromRecipes(
     @Body() dto: GeneratePedidoFromRecetasDto,
@@ -86,13 +87,13 @@ export class PurchaseBatchController {
   }
 
   @Get()
-  @RequirePermissions('pedidos:listar')
+  @RequirePermissions(PERMISSIONS.pedidos.listar)
   findAll() {
     return this.batchService.findAll();
   }
 
   @Post('consolidate')
-  @RequirePermissions('pedidos:crear')
+  @RequirePermissions(PERMISSIONS.pedidos.crear)
   @HttpCode(HttpStatus.CREATED)
   consolidate(@Body() dto: ConsolidatePurchaseBatchDto, @Request() req: any) {
     const userId = req.user.id as string;
@@ -100,49 +101,60 @@ export class PurchaseBatchController {
   }
 
   @Patch(':id/tramitar')
-  @RequirePermissions('pedidos:editar')
-  markAsProcessed(@Param('id', ParseUUIDv7Pipe) id: string) {
-    return this.batchService.acceptBatchOrder(id);
+  @RequirePermissions(PERMISSIONS.pedidos.editar)
+  markAsProcessed(
+    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Request() req: PurchaseBatchRequest
+  ) {
+    return this.batchService.acceptBatchOrder(id, req.user.id);
   }
 
   @Get(':id')
-  @RequirePermissions('pedidos:ver')
+  @RequirePermissions(PERMISSIONS.pedidos.ver)
   findOne(@Param('id', ParseUUIDv7Pipe) id: string) {
     return this.batchService.findOne(id);
   }
 
   @Patch(':id')
-  @RequirePermissions('pedidos:editar')
+  @RequirePermissions(PERMISSIONS.pedidos.editar)
   update(
     @Param('id', ParseUUIDv7Pipe) id: string,
-    @Body() dto: UpdatePurchaseBatchDto
+    @Body() dto: UpdatePurchaseBatchDto,
+    @Request() req: PurchaseBatchRequest
   ) {
-    return this.batchService.updateBatchOrder(id, dto);
+    return this.batchService.updateBatchOrder(id, dto, req.user.id);
   }
 
   @Patch(':id/aceptar')
-  @RequirePermissions('pedidos:editar')
-  accept(@Param('id', ParseUUIDv7Pipe) id: string) {
-    return this.batchService.approveBatchOrder(id);
+  @RequirePermissions(PERMISSIONS.pedidos.editar)
+  accept(
+    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Request() req: PurchaseBatchRequest
+  ) {
+    return this.batchService.approveBatchOrder(id, req.user.id);
   }
 
   @Patch(':id/cancelar')
-  @RequirePermissions('pedidos:cancelar')
+  @RequirePermissions(PERMISSIONS.pedidos.cancelar)
   cancel(
     @Param('id', ParseUUIDv7Pipe) id: string,
-    @Body() dto: CancelPurchaseBatchDto
+    @Body() dto: CancelPurchaseBatchDto,
+    @Request() req: PurchaseBatchRequest
   ) {
-    return this.batchService.cancelBatchOrder(id, dto);
+    return this.batchService.cancelBatchOrder(id, dto, req.user.id);
   }
 
   @Patch(':id/restaurar')
-  @RequirePermissions('pedidos:restaurar')
-  restore(@Param('id', ParseUUIDv7Pipe) id: string) {
-    return this.batchService.restoreBatchOrder(id);
+  @RequirePermissions(PERMISSIONS.pedidos.restaurar)
+  restore(
+    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Request() req: PurchaseBatchRequest
+  ) {
+    return this.batchService.restoreBatchOrder(id, req.user.id);
   }
 
   @Get(':id/pdf')
-  @RequirePermissions('pedidos:ver')
+  @RequirePermissions(PERMISSIONS.pedidos.ver)
   async generatePdf(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Query() query: RecepcionReportePdfDto,

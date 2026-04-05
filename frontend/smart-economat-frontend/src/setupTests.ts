@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom/vitest';
+import 'wicg-inert';
 
 function createMemoryStorage(): Storage {
   const data = new Map<string, string>();

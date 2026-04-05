@@ -10,6 +10,7 @@ interface BuildInventarioItemInput {
   cantidadMinima: number;
   proveedorNombre: string;
   ubicacionNombre: string;
+  deletedAt?: string | null;
 }
 
 const buildInventarioItem = ({
@@ -20,8 +21,10 @@ const buildInventarioItem = ({
   cantidadMinima,
   proveedorNombre,
   ubicacionNombre,
+  deletedAt,
 }: BuildInventarioItemInput): InventarioItem => ({
   id,
+  deletedAt,
   cantidadActual,
   cantidadMinima,
   ubicacion: {
@@ -129,5 +132,34 @@ describe('inventario.service agregarInventarioPorProducto', () => {
     expect(result).toHaveLength(1);
     expect(result[0].proveedores).toEqual(['Proveedor D', 'Proveedor E']);
     expect(result[0].ubicaciones).toEqual(['Estanteria 1', 'Estanteria 2']);
+  });
+
+  it('ignora lotes soft-deleted al consolidar stock por producto', () => {
+    const items: InventarioItem[] = [
+      buildInventarioItem({
+        id: 'inv-active',
+        productoId: 'prod-4',
+        nombreProducto: 'Garbanzos',
+        cantidadActual: 10,
+        cantidadMinima: 4,
+        proveedorNombre: 'Proveedor F',
+        ubicacionNombre: 'Almacén Principal',
+      }),
+      buildInventarioItem({
+        id: 'inv-deleted',
+        productoId: 'prod-4',
+        nombreProducto: 'Garbanzos',
+        cantidadActual: 999,
+        cantidadMinima: 4,
+        proveedorNombre: 'Proveedor F',
+        ubicacionNombre: 'Almacén Principal',
+        deletedAt: '2026-04-04T19:00:00.000Z',
+      }),
+    ];
+
+    const result = agregarInventarioPorProducto(items);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].cantidadTotal).toBe(10);
   });
 });

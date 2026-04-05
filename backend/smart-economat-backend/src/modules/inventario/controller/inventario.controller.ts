@@ -29,6 +29,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 @ApiTags('Inventario')
 @UseGuards(JwtAuthGuard, PermisosGuard)
@@ -37,7 +38,7 @@ export class InventarioController {
   constructor(private readonly inventarioService: InventarioService) {}
 
   @Post()
-  @RequirePermissions('inventario:crear')
+  @RequirePermissions(PERMISSIONS.inventario.crear)
   @HttpCode(HttpStatus.CREATED)
   create(
     @Body() createInventarioDto: CreateInventarioItemDto,
@@ -47,7 +48,7 @@ export class InventarioController {
   }
 
   @Get()
-  @RequirePermissions('inventario:listar')
+  @RequirePermissions(PERMISSIONS.inventario.listar)
   findAll(
     @SortableFields([
       'cantidadActual',
@@ -65,7 +66,7 @@ export class InventarioController {
   }
 
   @Get('stock')
-  @RequirePermissions('inventario:listar')
+  @RequirePermissions(PERMISSIONS.inventario.listar)
   queryStock(
     @Query() dto: InventoryQueryDto
   ): Promise<StockPorUbicacionDto[] | StockConsolidadoDto[]> {
@@ -73,7 +74,7 @@ export class InventarioController {
   }
 
   @Post('ajustes-manuales')
-  @RequirePermissions('inventario:ajustar_stock')
+  @RequirePermissions(PERMISSIONS.inventario.ajustar_stock)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Registrar un ajuste manual de stock con auditoría',
@@ -101,7 +102,7 @@ export class InventarioController {
   }
 
   @Get(':id')
-  @RequirePermissions('inventario:ver')
+  @RequirePermissions(PERMISSIONS.inventario.ver)
   findOne(
     @Param('id') id: string,
     @GetUser('rol') userRole: string
@@ -110,7 +111,7 @@ export class InventarioController {
   }
 
   @Patch(':id')
-  @RequirePermissions('inventario:editar')
+  @RequirePermissions(PERMISSIONS.inventario.editar)
   update(
     @Param('id') id: string,
     @Body() updateInventarioDto: UpdateInventarioDto,
@@ -120,7 +121,7 @@ export class InventarioController {
   }
 
   @Delete(':id')
-  @RequirePermissions('inventario:eliminar')
+  @RequirePermissions(PERMISSIONS.inventario.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @Param('id') id: string,

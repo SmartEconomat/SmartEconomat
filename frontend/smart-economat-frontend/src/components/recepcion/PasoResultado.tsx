@@ -14,6 +14,7 @@ import { RecepcionResultado } from '../../services/recepcion.types';
 import { downloadFile } from '../../services/api.service';
 import DetailModal, { DetailType } from './DetailModal';
 import { usePermission } from '../../store/auth.hooks';
+import { PERMISSIONS } from '../../sherlock-auth/permissions.constants';
 
 interface PasoResultadoProps {
   resultado: RecepcionResultado | null;
@@ -25,7 +26,7 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
   onResetWizard,
 }) => {
   const navigate = useNavigate();
-  const canViewDistribucion = usePermission('distribuciones:listar');
+  const canViewDistribucion = usePermission(PERMISSIONS.distribuciones.listar);
   const [openDetailModal, setOpenDetailModal] =
     React.useState<DetailType>(null);
   const [downloading, setDownloading] = React.useState(false);

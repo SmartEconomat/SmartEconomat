@@ -142,6 +142,6 @@ npm run dev -- --host
 
 - [Arquitectura backend](../architecture/backend.md)
 - [Arquitectura frontend](../architecture/frontend.md)
-- [Referencia de API](../reference/api.md)
+- [Referencia de API](../reference/api/README.md)
 - [Seeders](../development/seeders.md)
 - [Troubleshooting](../operations/troubleshooting/README.md)

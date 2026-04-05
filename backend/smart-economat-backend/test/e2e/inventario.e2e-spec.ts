@@ -220,6 +220,27 @@ describe('InventarioController (e2e)', () => {
       expect(response.status).toBe(409);
     });
 
+    it('E2E-INV-12B-MANUAL-ADJ-DELETED: Rechazar ajuste sobre inventario eliminado', async () => {
+      const item = await createInventario();
+
+      await request(app.getHttpServer() as string)
+        .delete(`/api/v1/inventario/${item.id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(204);
+
+      const response = await request(app.getHttpServer() as string)
+        .post('/api/v1/inventario/ajustes-manuales')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          inventarioId: item.id,
+          tipo: 'ajuste',
+          ajuste: 3,
+          motivo: 'Regularización sobre lote eliminado',
+        });
+
+      expect(response.status).toBe(409);
+    });
+
     it('E2E-INV-15-DEL-OK: Eliminar item de inventario', async () => {
       const item = await createInventario();
       await request(app.getHttpServer() as string)

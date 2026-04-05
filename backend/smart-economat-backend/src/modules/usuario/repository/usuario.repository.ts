@@ -10,6 +10,7 @@ import { UserStatus, rolUsuario } from '../enums/usuario.enums';
 import { Profesor } from '../../profesor/profesor.entity/profesor.entity';
 import { Alumno } from '../../alumno/alumno.entity/alumno.entity';
 import { isSherlockElevatedRole } from '../../sherlock-auth/utils/access.utils';
+import { SYSTEM_ROLES } from '../../../common/constants/system-roles.constants';
 
 @Injectable()
 export class UsuarioRepository {
@@ -75,13 +76,13 @@ export class UsuarioRepository {
       const normalized = query.rol.toUpperCase();
       let backendRol: rolUsuario;
 
-      if (normalized === 'SUPER_ADMIN') {
+      if (normalized === SYSTEM_ROLES.SUPER_ADMIN) {
         backendRol = rolUsuario.SUPER_ADMIN;
-      } else if (normalized === 'ADMIN') {
+      } else if (normalized === SYSTEM_ROLES.ADMIN) {
         backendRol = rolUsuario.ADMIN;
-      } else if (normalized === 'PROFESOR') {
+      } else if (normalized === SYSTEM_ROLES.PROFESOR) {
         backendRol = rolUsuario.PROFESOR;
-      } else if (normalized === 'ALUMNO') {
+      } else if (normalized === SYSTEM_ROLES.ALUMNO) {
         backendRol = rolUsuario.ALUMNO;
       } else {
         backendRol = query.rol as rolUsuario;

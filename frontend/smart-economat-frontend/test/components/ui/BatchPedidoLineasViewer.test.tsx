@@ -146,4 +146,51 @@ describe('BatchPedidoLineasViewer', () => {
       );
     });
   });
+
+  it('muestra todos los pedidos proveedor en compra aunque compartan pedido visible', () => {
+    const batchMultiProveedor = {
+      id: 'batch-2',
+      observaciones: 'Compra multi proveedor',
+      pedidos: [
+        {
+          id: 'ped-prov-1',
+          numeroGlobal: '200001',
+          numeroPedidoProveedor: '200001',
+          numeroPedidoVisible: '42',
+          referenciaPedidoVisible: 'PU-42',
+          fechaPedido: '2026-04-02T10:00:00.000Z',
+          estado: EstadoPedido.POR_RECEPCIONAR,
+          costeTotal: 10,
+          proveedor: { id: 'prov-a', nombre: 'Proveedor A' },
+          pedidoUsuario: { id: 'pu-42', numeroGlobal: '42' },
+          pedidoProductos: [],
+        },
+        {
+          id: 'ped-prov-2',
+          numeroGlobal: '200002',
+          numeroPedidoProveedor: '200002',
+          numeroPedidoVisible: '42',
+          referenciaPedidoVisible: 'PU-42',
+          fechaPedido: '2026-04-02T10:00:00.000Z',
+          estado: EstadoPedido.POR_RECEPCIONAR,
+          costeTotal: 15,
+          proveedor: { id: 'prov-b', nombre: 'Proveedor B' },
+          pedidoUsuario: { id: 'pu-42', numeroGlobal: '42' },
+          pedidoProductos: [],
+        },
+      ],
+    };
+
+    render(
+      <BatchPedidoLineasViewer
+        batch={batchMultiProveedor as unknown as PurchaseBatch}
+        mode="batch"
+      />
+    );
+
+    expect(screen.getByText('Pedidos involucrados en la compra')).toBeDefined();
+    expect(screen.getByText('#200001')).toBeDefined();
+    expect(screen.getByText('#200002')).toBeDefined();
+    expect(screen.getAllByText('PU-42').length).toBe(2);
+  });
 });

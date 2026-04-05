@@ -1,7 +1,10 @@
 import dayjs from 'dayjs';
 import { PedidoListItem, PurchaseBatch } from '../../../services/pedido.types';
 
-const WEEKLY_BATCH_PREFIX = /^Lote semanal generado desde/i;
+export type PedidoNumberContext =
+  | 'auto'
+  | 'pedido-proveedor'
+  | 'pedido-visible';
 
 export const formatPedidoDate = (
   value?: string,
@@ -26,8 +29,30 @@ export const formatPedidoId = (id?: string): string => {
   return id.split('-')[0] || id;
 };
 
+const resolvePedidoProveedorNumber = (pedido: {
+  numeroPedidoProveedor?: string | number;
+  numeroGlobal?: string | number;
+}): string | undefined => {
+  const numeroProveedor = pedido.numeroPedidoProveedor || pedido.numeroGlobal;
+  return numeroProveedor ? String(numeroProveedor) : undefined;
+};
+
+const resolvePedidoVisibleNumber = (pedido: {
+  numeroPedidoVisible?: string | number;
+  pedidoUsuario?: {
+    numeroGlobal?: string | number;
+  };
+}): string | undefined => {
+  const numeroVisible =
+    pedido.numeroPedidoVisible || pedido.pedidoUsuario?.numeroGlobal;
+  return numeroVisible ? String(numeroVisible) : undefined;
+};
+
 export const formatPedidoListNumber = (
   pedido: Pick<PedidoListItem, 'id' | 'numeroGlobal'> & {
+    entityType?: string;
+    numeroPedidoProveedor?: string | number;
+    numeroPedidoVisible?: string | number;
     pedidoUsuario?: {
       numeroGlobal?: string | number;
     };
@@ -35,14 +60,34 @@ export const formatPedidoListNumber = (
     batch?: {
       id?: string;
     };
-  }
+  },
+  context: PedidoNumberContext = 'auto'
 ): string => {
-  if (pedido.numeroGlobal) {
-    return String(pedido.numeroGlobal);
+  const numeroProveedor = resolvePedidoProveedorNumber(pedido);
+  const numeroVisible = resolvePedidoVisibleNumber(pedido);
+
+  if (context === 'pedido-proveedor' && numeroProveedor) {
+    return numeroProveedor;
   }
 
-  if (pedido.pedidoUsuario?.numeroGlobal) {
-    return String(pedido.pedidoUsuario.numeroGlobal);
+  if (context === 'pedido-visible' && numeroVisible) {
+    return numeroVisible;
+  }
+
+  if (
+    context === 'auto' &&
+    pedido.entityType === 'pedido_usuario' &&
+    numeroVisible
+  ) {
+    return numeroVisible;
+  }
+
+  if (numeroProveedor) {
+    return numeroProveedor;
+  }
+
+  if (numeroVisible) {
+    return numeroVisible;
   }
 
   if (pedido.batchId) {
@@ -54,6 +99,28 @@ export const formatPedidoListNumber = (
   }
 
   return formatPedidoId(pedido.id);
+};
+
+export const formatBatchNumber = (batch: PurchaseBatch): string => {
+  const numeroLote = batch.numeroLote || batch.numeroGlobal;
+  return numeroLote ? String(numeroLote) : formatPedidoId(batch.id);
+};
+
+export const formatBatchReference = (batch: PurchaseBatch): string => {
+  if (batch.referenciaLote) {
+    return batch.referenciaLote;
+  }
+
+  if (batch.referencia) {
+    return batch.referencia;
+  }
+
+  const numeroLote = batch.numeroLote || batch.numeroGlobal;
+  if (numeroLote) {
+    return `LC-${String(numeroLote).padStart(6, '0')}`;
+  }
+
+  return formatPedidoId(batch.id);
 };
 
 export const getPedidoCreatorName = (
@@ -75,17 +142,7 @@ export const getBatchProvidersSummary = (batch: PurchaseBatch): string => {
 };
 
 export const getBatchPedidosCount = (batch: PurchaseBatch): number => {
-  const pedidos = batch.pedidos || [];
-
-  if (pedidos.length === 0) {
-    return 0;
-  }
-
-  if (!WEEKLY_BATCH_PREFIX.test(batch.observaciones || '')) {
-    return 1;
-  }
-
-  return pedidos.length;
+  return (batch.pedidos || []).length;
 };
 
 export const getBatchTotal = (batch: PurchaseBatch): number =>

@@ -113,19 +113,26 @@ export async function ensureDeletableProfesorSlotResource(
 
   const createEndpoint: Endpoint = {
     method: 'POST',
-    path: '/profesores/slots',
+    path: '/profesores/admin-slots',
     source: 'precreate-profesor-slot-delete',
   };
 
   const createBodyBase = buildBody(
     context,
     createEndpoint,
-    '/profesores/slots',
+    '/profesores/admin-slots',
     iteration,
     coverage
   );
 
-  const profesorToken = chooseTokenForPath(context, '/profesores/slots');
+  const superAdminToken =
+    context.getState<string>('seedTokenSuperAdmin') ||
+    context.getState<string>('seedTokenAdmin') ||
+    context.getAccessToken();
+  const profesorToken = superAdminToken;
+
+  const profesorIds = getStateArray(context, 'profesorIds');
+  const profesorId = profesorIds.length > 0 ? profesorIds[0] : undefined;
 
   const uniqueSeed = Date.now() % 100000;
   const maxAttempts = 8;
@@ -137,17 +144,21 @@ export async function ensureDeletableProfesorSlotResource(
       aula: `Aula Delete Profesor ${String(variant).padStart(6, '0')}`,
       numeroClase: 95000 + (variant % 4000),
       capacidad: 1,
+      ...(profesorId ? { profesorId } : {}),
     };
 
     try {
-      const response = await context.requestJson<unknown>('/profesores/slots', {
-        method: 'POST',
-        body: createBody,
-        auth: true,
-        tokenOverride: profesorToken,
-      });
+      const response = await context.requestJson<unknown>(
+        '/profesores/admin-slots',
+        {
+          method: 'POST',
+          body: createBody,
+          auth: true,
+          tokenOverride: profesorToken,
+        }
+      );
 
-      collectStateFromResponse(context, '/profesores/slots', response);
+      collectStateFromResponse(context, '/profesores/admin-slots', response);
 
       const slotId = extractResourceId(response);
       if (!slotId) {

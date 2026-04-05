@@ -39,11 +39,6 @@ export class Usuario extends BaseEntity {
   @Column({ type: 'varchar', length: 255, unique: true, nullable: true })
   email?: string | null;
 
-  /**
-   * Rol del usuario que define sus permisos.
-   * (ADMIN, PROFESOR, ALUMNO, etc.)
-   * @type {rolUsuario}
-   */
   @Column({ type: 'enum', enum: rolUsuario, default: rolUsuario.ALUMNO })
   rol!: rolUsuario;
 

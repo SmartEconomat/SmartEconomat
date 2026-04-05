@@ -324,6 +324,7 @@ export class InventarioService {
       return await this.dataSource.transaction(async (manager) => {
         const inventario = await manager
           .createQueryBuilder(Inventario, 'inv')
+          .withDeleted()
           .innerJoinAndSelect('inv.productoProveedor', 'pp')
           .innerJoinAndSelect('pp.producto', 'producto')
           .innerJoinAndSelect('pp.proveedor', 'proveedor')
@@ -335,6 +336,12 @@ export class InventarioService {
         if (!inventario) {
           throw new NotFoundException(
             I18nHelper.getError('INVENTARIO_NOT_FOUND')
+          );
+        }
+
+        if (inventario.deletedAt) {
+          throw new ConflictException(
+            'No se puede ajustar un inventario eliminado. Recarga la vista para trabajar con lotes activos.'
           );
         }
 

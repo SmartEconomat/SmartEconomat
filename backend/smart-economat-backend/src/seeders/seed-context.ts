@@ -365,7 +365,7 @@ export class SeedContext {
       });
 
       console.warn(
-        `[seed] Normalizados ${invalidCount} registros legacy en producto_proveedor (precio_unitario <= 0) para permitir arranque del backend.`
+        `[seed] Normalizados ${invalidCount} registros incompatibles en producto_proveedor (precio_unitario <= 0) para permitir arranque del backend.`
       );
     } catch (error) {
       void error;

@@ -62,7 +62,7 @@ export class AlumnoService {
       );
     }
 
-    let legacySlot = (await manager.findOne(AlumnoSlot, {
+    let resolvedSlot = (await manager.findOne(AlumnoSlot, {
       where: {
         profesor: { id: profesor.id },
         aula: dto.aula,
@@ -71,22 +71,22 @@ export class AlumnoService {
       relations: ['profesor', 'profesor.user', 'alumnos'],
     })) as AlumnoSlot | null;
 
-    if (!legacySlot) {
-      legacySlot = manager.create(AlumnoSlot, {
+    if (!resolvedSlot) {
+      resolvedSlot = manager.create(AlumnoSlot, {
         profesor,
         aula: dto.aula,
         numeroClase: dto.numeroClase,
         capacidad: 1,
         alumnos: [],
       }) as AlumnoSlot;
-      legacySlot = (await manager.save(legacySlot)) as AlumnoSlot;
-      legacySlot = (await manager.findOne(AlumnoSlot, {
-        where: { id: legacySlot.id },
+      resolvedSlot = (await manager.save(resolvedSlot)) as AlumnoSlot;
+      resolvedSlot = (await manager.findOne(AlumnoSlot, {
+        where: { id: resolvedSlot.id },
         relations: ['profesor', 'profesor.user', 'alumnos'],
       })) as AlumnoSlot;
     }
 
-    return legacySlot;
+    return resolvedSlot;
   }
 
   private async findSlotByCode(

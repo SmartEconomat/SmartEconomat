@@ -111,7 +111,7 @@ interface InventoryDetailModalProps {
   productoId: string | null;
   items: InventarioItem[];
   onClose: () => void;
-  onRefreshItem: () => void;
+  onRefreshItem: () => void | Promise<void>;
 }
 
 const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
@@ -127,7 +127,8 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
   const relevantItems = React.useMemo(
     () =>
       items.filter(
-        (item) => item.productoProveedor?.producto?.id === productoId
+        (item) =>
+          item.productoProveedor?.producto?.id === productoId && !item.deletedAt
       ),
     [items, productoId]
   );
@@ -258,7 +259,16 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
         err instanceof Error
           ? err.message
           : 'Error al aplicar ajuste de stock.';
-      toast.error(errorMessage);
+
+      if (errorMessage.toLowerCase().includes('inventario no encontrado')) {
+        await onRefreshItem();
+        setStockAdjustments((prev) => ({ ...prev, [item.id]: '' }));
+        toast.error(
+          'El lote seleccionado ya no existe. Se recargó el inventario para continuar con lotes activos.'
+        );
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setIsSaving((prev) => ({ ...prev, [item.id]: false }));
     }

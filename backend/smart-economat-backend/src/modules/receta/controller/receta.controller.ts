@@ -35,6 +35,7 @@ import { RequirePermissions } from '../../../common/decorators/require-permissio
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 @ApiTags('Recetas')
 @UseGuards(JwtAuthGuard, PermisosGuard)
@@ -46,21 +47,21 @@ export class RecetaController {
   ) {}
 
   @Post()
-  @RequirePermissions('recetas:crear')
+  @RequirePermissions(PERMISSIONS.recetas.crear)
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() createRecetaDto: CreateRecetaDto): Promise<Receta> {
     return this.recetaService.create(createRecetaDto);
   }
 
   @Post('duplicate')
-  @RequirePermissions('recetas:duplicar')
+  @RequirePermissions(PERMISSIONS.recetas.duplicar)
   @HttpCode(HttpStatus.CREATED)
   duplicate(@Body() duplicateRecetaDto: DuplicateRecetaDto): Promise<Receta> {
     return this.recetaService.duplicate(duplicateRecetaDto);
   }
 
   @Get()
-  @RequirePermissions('recetas:listar')
+  @RequirePermissions(PERMISSIONS.recetas.listar)
   findAll(
     @SortableFields([
       'nombre',
@@ -81,7 +82,7 @@ export class RecetaController {
   }
 
   @Get(':id')
-  @RequirePermissions('recetas:ver')
+  @RequirePermissions(PERMISSIONS.recetas.ver)
   findOne(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Req() req: { user?: { rol?: string } }
@@ -91,7 +92,7 @@ export class RecetaController {
   }
 
   @Get(':id/detalle')
-  @RequirePermissions('recetas:ver')
+  @RequirePermissions(PERMISSIONS.recetas.ver)
   getDetalle(
     @Param('id', ParseUUIDv7Pipe) id: string
   ): Promise<DetalleRecetaDto> {
@@ -99,7 +100,7 @@ export class RecetaController {
   }
 
   @Get(':id/escandallo')
-  @RequirePermissions('recetas:ver')
+  @RequirePermissions(PERMISSIONS.recetas.ver)
   @ApiOperation({ summary: 'Calcular el escandallo (coste) de una receta' })
   @ApiParam({ name: 'id', description: 'docs.UUID_DE_LA_RECETA' })
   @ApiResponse({ status: 200, type: RecetaCostResponseDto })
@@ -111,7 +112,7 @@ export class RecetaController {
   }
 
   @Post(':id/cocinar')
-  @RequirePermissions('recetas:cocinar')
+  @RequirePermissions(PERMISSIONS.recetas.cocinar)
   @HttpCode(HttpStatus.OK)
   cocinar(
     @Param('id', ParseUUIDv7Pipe) id: string,
@@ -121,7 +122,7 @@ export class RecetaController {
   }
 
   @Post('calculate-preview')
-  @RequirePermissions('recetas:ver')
+  @RequirePermissions(PERMISSIONS.recetas.ver)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Vista previa del coste de una receta antes de crearla/editarla',
@@ -133,7 +134,7 @@ export class RecetaController {
   }
 
   @Get('export/pdf')
-  @RequirePermissions('recetas:ver')
+  @RequirePermissions(PERMISSIONS.recetas.ver)
   @ApiOperation({ summary: 'Generar PDF de varias recetas' })
   async exportMultiplePdf(
     @Query('ids') ids: string | string[],
@@ -154,7 +155,7 @@ export class RecetaController {
   }
 
   @Get(':id/pdf')
-  @RequirePermissions('recetas:ver')
+  @RequirePermissions(PERMISSIONS.recetas.ver)
   @ApiOperation({ summary: 'Generar PDF de una receta' })
   async exportSinglePdf(
     @Param('id', ParseUUIDv7Pipe) id: string,
@@ -179,7 +180,7 @@ export class RecetaController {
   }
 
   @Patch(':id')
-  @RequirePermissions('recetas:editar')
+  @RequirePermissions(PERMISSIONS.recetas.editar)
   async update(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() updateRecetaDto: UpdateRecetaDto
@@ -188,7 +189,7 @@ export class RecetaController {
   }
 
   @Delete(':id')
-  @RequirePermissions('recetas:eliminar')
+  @RequirePermissions(PERMISSIONS.recetas.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.recetaService.remove(id);

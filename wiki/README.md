@@ -32,7 +32,8 @@ Este bloque agrupa la documentación completa y detallada del backend NestJS + T
 | Explanation | [Seguridad, performance y escalabilidad](explanation/seguridad-performance-escalabilidad.md) |
 | Reference | [Módulos y responsabilidades](reference/modulos-y-responsabilidades.md) |
 | Reference | [Entidades TypeORM](reference/entidades.md) |
-| Reference | [Endpoints](reference/endpoints.md) |
+| Reference | [API backend](reference/api/README.md) |
+| Reference | [Mapa rápido de endpoints](reference/endpoints.md) |
 | Reference | [TypeORM, DataSource y seeders](reference/typeorm-y-datasource.md) |
 | Reference | [Variables de entorno](reference/variables-entorno.md) |
 | Reference | [Pipes, guards, interceptors y filters](reference/pipes-guards-interceptors-globales.md) |
@@ -133,7 +134,8 @@ Este bloque agrupa la documentación completa y detallada del backend NestJS + T
 
 | Documento | Descripción |
 |-----------|-------------|
-| [API](reference/api.md) | Referencia de endpoints, DTOs y autenticación |
+| [API backend](reference/api/README.md) | Referencia de integración por dominios, con requests, respuestas y entidades relacionadas |
+| [Mapa rápido de endpoints](reference/endpoints.md) | Índice corto de rutas base y saltos a la referencia detallada |
 | [Troubleshooting](operations/troubleshooting/README.md) | Problemas frecuentes y soluciones |
 | [Auditoría backend](audits/backend-unused-endpoints.md) | Auditoría técnica disponible del backend |
 | [Casos de uso](planning/use-cases/use-cases.md) | Casos de uso funcionales |

@@ -43,6 +43,7 @@ import {
 } from '../services/albaran.service';
 import { useToast } from '../store/toast.hooks';
 import { usePermission } from '../store/auth.hooks';
+import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 import AlbaranFilters, {
   AlbaranFiltersState,
 } from '../features/albaranes/AlbaranFilters';
@@ -130,10 +131,10 @@ const AlbaranPage: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
 
   // Permisos
-  const canView = usePermission('albaranes:ver');
-  const canCreate = usePermission('albaranes:crear');
-  const canEdit = usePermission('albaranes:editar');
-  const canDelete = usePermission('albaranes:eliminar');
+  const canView = usePermission(PERMISSIONS.albaranes.ver);
+  const canCreate = usePermission(PERMISSIONS.albaranes.crear);
+  const canEdit = usePermission(PERMISSIONS.albaranes.editar);
+  const canDelete = usePermission(PERMISSIONS.albaranes.eliminar);
 
   // ─── Carga de datos ──────────────────────────────────────────────────────
 

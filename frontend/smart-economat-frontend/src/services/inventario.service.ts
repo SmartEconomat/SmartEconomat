@@ -6,6 +6,14 @@ import type {
   InventarioPorProducto,
 } from './inventario.types';
 
+function isInventarioItemDeleted(item: InventarioItem): boolean {
+  const withSnakeCase = item as InventarioItem & {
+    deleted_at?: string | null;
+  };
+
+  return Boolean(item.deletedAt || withSnakeCase.deleted_at);
+}
+
 export async function fetchAlertasStock(): Promise<AlertaStock[]> {
   const response = await baseFetch('/alertas/stock');
   if (!response.ok) {
@@ -25,7 +33,9 @@ export async function fetchInventario(): Promise<InventarioItem[]> {
     );
   }
   const body = (await response.json()) as ApiResponse<unknown>;
-  return unwrapList<InventarioItem>(body.data);
+  return unwrapList<InventarioItem>(body.data).filter(
+    (item) => !isInventarioItemDeleted(item)
+  );
 }
 
 /**
@@ -53,6 +63,8 @@ export function agregarInventarioPorProducto(
   };
   for (const item of items) {
     const raw = item as RawItem;
+    if (isInventarioItemDeleted(item)) continue;
+
     const pp = raw.productoProveedor;
     const producto = pp?.producto ?? raw.producto;
     const proveedor = pp?.proveedor ?? raw.proveedor;

@@ -1554,12 +1554,114 @@ function findPedidoProductoIdForPedido(
   return pedidoProductoIds[iteration % pedidoProductoIds.length] || '';
 }
 
+function hasProfesorOwnedSlots(context: SeedContext, token: string): boolean {
+  if (!token) {
+    return false;
+  }
+
+  const tokenIndexMapJson =
+    context.getState<string>('seedProfesorIndexByToken') || '{}';
+
+  let tokenIndexMap: Record<string, number> = {};
+  try {
+    tokenIndexMap = JSON.parse(tokenIndexMapJson) as Record<string, number>;
+  } catch {
+    tokenIndexMap = {};
+  }
+
+  const profesorIndex = tokenIndexMap[token];
+  if (typeof profesorIndex !== 'number') {
+    return false;
+  }
+
+  const ownedSlotIdsJson =
+    context.getState<string>(`seedProfesorOwnedSlotIds:${profesorIndex}`) ||
+    '[]';
+
+  let ownedSlotIds: unknown = [];
+  try {
+    ownedSlotIds = JSON.parse(ownedSlotIdsJson) as unknown;
+  } catch {
+    ownedSlotIds = [];
+  }
+
+  return (
+    Array.isArray(ownedSlotIds) &&
+    ownedSlotIds.some(
+      (slotId) => typeof slotId === 'string' && slotId.trim().length > 0
+    )
+  );
+}
+
+function chooseDistribucionBootstrapActorToken(
+  context: SeedContext,
+  fallbackToken: string
+): string {
+  const privilegedToken =
+    context.getState<string>('seedTokenSuperAdmin') ||
+    context.getState<string>('seedTokenAdmin') ||
+    '';
+
+  if (privilegedToken) {
+    return privilegedToken;
+  }
+
+  const sessionProfesorTokens = context.getSessionTokensByPrefix('profesor:');
+  const stateProfesorTokens = getStateArray(context, 'seedProfesorTokens');
+  const fixedProfesorToken =
+    context.getState<string>('seedTokenProfesor') || '';
+
+  const candidateTokens = Array.from(
+    new Set(
+      [
+        ...sessionProfesorTokens,
+        ...stateProfesorTokens,
+        fixedProfesorToken,
+      ].filter((token) => Boolean(token))
+    )
+  );
+
+  const tokenWithSlots = candidateTokens.find((token) =>
+    hasProfesorOwnedSlots(context, token)
+  );
+
+  return tokenWithSlots || candidateTokens[0] || fallbackToken;
+}
+
+function resolveBootstrapDestinoUbicacionId(
+  context: SeedContext,
+  iteration: number
+): string {
+  const ubicaciones = getStateArray(context, 'ubicacionIds').filter(
+    (ubicacionId) => typeof ubicacionId === 'string' && ubicacionId.length > 0
+  );
+  const originId =
+    context.getState<string>('seedDefaultUbicacionId') || ubicaciones[0] || '';
+
+  const preferredDestino =
+    ubicaciones.find((ubicacionId) => ubicacionId !== originId) ||
+    pickStateValue(context, 'ubicacionIds', iteration + 1, '');
+
+  if (preferredDestino && preferredDestino !== originId) {
+    return preferredDestino;
+  }
+
+  return '';
+}
+
 async function ensureDistribucionDisponibilidadBootstrap(
   context: SeedContext,
   iteration: number,
   coverage: EnumCoverage,
   tokenOverride?: string
 ): Promise<void> {
+  const fallbackToken =
+    tokenOverride || chooseTokenForPath(context, '/pedido-usuarios', 'POST');
+  const bootstrapToken = chooseDistribucionBootstrapActorToken(
+    context,
+    fallbackToken
+  );
+
   const createPedidoUsuarioEndpoint: Endpoint = {
     method: 'POST',
     path: '/pedido-usuarios',
@@ -1573,14 +1675,30 @@ async function ensureDistribucionDisponibilidadBootstrap(
     iteration,
     coverage
   );
+  const pedidoUsuarioBodyRecord: Record<string, unknown> = isRecord(
+    pedidoUsuarioBody
+  )
+    ? { ...pedidoUsuarioBody }
+    : {};
+
+  const suggestedDestinoId = resolveBootstrapDestinoUbicacionId(
+    context,
+    iteration
+  );
+  if (
+    suggestedDestinoId &&
+    !toTrimmedSeedString(pedidoUsuarioBodyRecord.ubicacionEntregaSugeridaId)
+  ) {
+    pedidoUsuarioBodyRecord.ubicacionEntregaSugeridaId = suggestedDestinoId;
+  }
 
   const pedidoUsuarioResponse = await context.requestJson<unknown>(
     '/pedido-usuarios',
     {
       method: 'POST',
-      body: pedidoUsuarioBody,
+      body: pedidoUsuarioBodyRecord,
       auth: true,
-      tokenOverride,
+      tokenOverride: bootstrapToken,
     }
   );
 
@@ -1608,7 +1726,7 @@ async function ensureDistribucionDisponibilidadBootstrap(
       method: 'PATCH',
       body: {},
       auth: true,
-      tokenOverride,
+      tokenOverride: bootstrapToken,
     }
   );
 
@@ -1635,7 +1753,7 @@ async function ensureDistribucionDisponibilidadBootstrap(
         method: 'PATCH',
         body: {},
         auth: true,
-        tokenOverride,
+        tokenOverride: bootstrapToken,
       }
     );
     collectStateFromResponse(
@@ -1659,7 +1777,7 @@ async function ensureDistribucionDisponibilidadBootstrap(
       {
         method: 'GET',
         auth: true,
-        tokenOverride,
+        tokenOverride: bootstrapToken,
       }
     );
 
@@ -1682,9 +1800,6 @@ async function ensureDistribucionDisponibilidadBootstrap(
   }
 
   const albaranRef = `ALB-DIST-${String(iteration + 1).padStart(6, '0')}`;
-  const usuarioId =
-    pickStateValue(context, 'seedKnownAdminUserId', iteration, '') ||
-    pickStateValue(context, 'usuarioIds', iteration, '');
 
   const recepcionBody: Record<string, unknown> = {
     pedidos: [
@@ -1711,18 +1826,69 @@ async function ensureDistribucionDisponibilidadBootstrap(
     productosNuevos: [],
   };
 
-  if (usuarioId) {
-    recepcionBody.usuarioId = usuarioId;
-  }
+  const recepcionToken = chooseTokenForPath(context, '/recepciones', 'POST');
 
   const recepcionResponse = await context.requestJson<unknown>('/recepciones', {
     method: 'POST',
     body: recepcionBody,
     auth: true,
-    tokenOverride,
+    tokenOverride: recepcionToken,
   });
 
   collectStateFromResponse(context, '/recepciones', recepcionResponse);
+}
+
+export async function ensureDistribucionDisponiblesPostRun(
+  context: SeedContext,
+  coverage: EnumCoverage
+): Promise<void> {
+  const readToken =
+    context.getState<string>('seedTokenSuperAdmin') ||
+    context.getState<string>('seedTokenAdmin') ||
+    chooseTokenForPath(context, '/distribuciones/disponibles', 'GET');
+  const bootstrapToken = chooseDistribucionBootstrapActorToken(
+    context,
+    readToken
+  );
+
+  const fetchDisponibles = async (): Promise<
+    Array<Record<string, unknown>>
+  > => {
+    const response = await context.requestJson<unknown>(
+      buildPaginatedListPath('/distribuciones/disponibles', 1, 50),
+      {
+        method: 'GET',
+        auth: true,
+        tokenOverride: readToken,
+      }
+    );
+
+    collectStateFromResponse(context, '/distribuciones/disponibles', response);
+    return listFromResponse(response);
+  };
+
+  let disponibles = await fetchDisponibles();
+  if (disponibles.length > 0) {
+    return;
+  }
+
+  const bootstrapIteration =
+    getStateArray(context, 'pedidoUsuarioIds').length +
+    getStateArray(context, 'distribucionIds').length;
+
+  await ensureDistribucionDisponibilidadBootstrap(
+    context,
+    bootstrapIteration,
+    coverage,
+    bootstrapToken
+  );
+
+  disponibles = await fetchDisponibles();
+  if (disponibles.length === 0) {
+    throw new Error(
+      '[seed-massive] No se pudieron dejar pedidos disponibles para distribuir tras el bootstrap final'
+    );
+  }
 }
 
 async function buildDistribucionCreateBody(
@@ -1752,62 +1918,82 @@ async function buildDistribucionCreateBody(
     return listFromResponse(disponiblesResponse);
   };
 
+  const buildBodyFromDisponibles = (
+    disponiblesItems: Array<Record<string, unknown>>,
+    cycleOffset: number
+  ): Record<string, unknown> | undefined => {
+    for (let offset = 0; offset < disponiblesItems.length; offset++) {
+      const candidato =
+        disponiblesItems[
+          (iteration + cycleOffset + offset) % disponiblesItems.length
+        ];
+      if (!candidato) {
+        continue;
+      }
+
+      const pedidoUsuarioId = toTrimmedSeedString(candidato.pedidoUsuarioId);
+      if (!pedidoUsuarioId) {
+        continue;
+      }
+
+      const lineas = buildDistribucionLineasDesdeDisponible(
+        candidato,
+        iteration
+      );
+      if (lineas.length === 0) {
+        continue;
+      }
+
+      const ubicacionOrigenId =
+        context.getState<string>('seedDefaultUbicacionId') ||
+        pickStateValue(context, 'ubicacionIds', iteration, '');
+
+      const destino = resolveDistribucionDestinoDesdeDisponible(candidato);
+      const fallbackUbicacionDestinoId =
+        getStateArray(context, 'ubicacionIds').find(
+          (ubicacionId) =>
+            typeof ubicacionId === 'string' &&
+            ubicacionId.length > 0 &&
+            ubicacionId !== ubicacionOrigenId
+        ) ||
+        pickStateValue(context, 'ubicacionIds', iteration + offset + 1, '');
+      const ubicacionDestinoId =
+        destino.ubicacionDestinoId || fallbackUbicacionDestinoId;
+
+      if (!ubicacionDestinoId) {
+        continue;
+      }
+
+      return {
+        pedidoUsuarioId,
+        ...(ubicacionOrigenId ? { ubicacionOrigenId } : {}),
+        ...(ubicacionDestinoId ? { ubicacionDestinoId } : {}),
+        ...(destino.alumnoSlotId ? { alumnoSlotId: destino.alumnoSlotId } : {}),
+        observaciones: `Distribución automática seed #${iteration + 1}`,
+        lineas,
+      };
+    }
+
+    return undefined;
+  };
+
   let disponibles = await fetchDisponibles();
-  if (disponibles.length === 0) {
-    await ensureDistribucionDisponibilidadBootstrap(
-      context,
-      iteration,
-      coverage,
-      tokenOverride
-    );
-    disponibles = await fetchDisponibles();
+  let distribucionBody = buildBodyFromDisponibles(disponibles, 0);
+  if (distribucionBody) {
+    return distribucionBody;
   }
 
-  if (disponibles.length === 0) {
-    throw new Error(
-      '[seed-massive] No hay pedidos de usuario distribuibles en /distribuciones/disponibles'
-    );
-  }
+  await ensureDistribucionDisponibilidadBootstrap(
+    context,
+    iteration + disponibles.length,
+    coverage,
+    tokenOverride
+  );
 
-  for (let offset = 0; offset < disponibles.length; offset++) {
-    const candidato = disponibles[(iteration + offset) % disponibles.length];
-    if (!candidato) {
-      continue;
-    }
-
-    const pedidoUsuarioId = toTrimmedSeedString(candidato.pedidoUsuarioId);
-    if (!pedidoUsuarioId) {
-      continue;
-    }
-
-    const lineas = buildDistribucionLineasDesdeDisponible(candidato, iteration);
-    if (lineas.length === 0) {
-      continue;
-    }
-
-    const destino = resolveDistribucionDestinoDesdeDisponible(candidato);
-    const fallbackUbicacionDestinoId =
-      context.getState<string>('seedDefaultUbicacionId') ||
-      pickStateValue(context, 'ubicacionIds', iteration + offset, '');
-    const ubicacionDestinoId =
-      destino.ubicacionDestinoId || fallbackUbicacionDestinoId;
-
-    if (!ubicacionDestinoId && !destino.alumnoSlotId) {
-      continue;
-    }
-
-    const ubicacionOrigenId =
-      context.getState<string>('seedDefaultUbicacionId') ||
-      pickStateValue(context, 'ubicacionIds', iteration, '');
-
-    return {
-      pedidoUsuarioId,
-      ...(ubicacionOrigenId ? { ubicacionOrigenId } : {}),
-      ...(ubicacionDestinoId ? { ubicacionDestinoId } : {}),
-      ...(destino.alumnoSlotId ? { alumnoSlotId: destino.alumnoSlotId } : {}),
-      observaciones: `Distribución automática seed #${iteration + 1}`,
-      lineas,
-    };
+  disponibles = await fetchDisponibles();
+  distribucionBody = buildBodyFromDisponibles(disponibles, 1);
+  if (distribucionBody) {
+    return distribucionBody;
   }
 
   throw new Error(
@@ -2602,6 +2788,13 @@ export async function executeEndpointRequest(
       const distribucionId = extractResourceId(response);
       if (distribucionId) {
         pushStateValue(context, 'seedCreatedDistribucionIds', distribucionId);
+      }
+    }
+
+    if (endpoint.method === 'POST' && resolvedPath === '/roles') {
+      const roleId = extractResourceId(response);
+      if (roleId) {
+        pushStateValue(context, 'seedCreatedRoleIds', roleId);
       }
     }
 

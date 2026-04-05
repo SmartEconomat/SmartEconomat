@@ -40,6 +40,7 @@ const renderProtectedRoute = ({
         <Routes>
           <Route path="/login" element={<div>Login</div>} />
           <Route path="/" element={<div>Inicio</div>} />
+          <Route path="/perfil" element={<div>Perfil</div>} />
           <Route
             path="/administracion"
             element={
@@ -67,7 +68,7 @@ describe('ProtectedRoute', () => {
     expect(screen.getByText('Administración')).toBeInTheDocument();
   });
 
-  it('redirects to home when the user lacks the required permission', () => {
+  it('redirects to profile when the user lacks the required permission', () => {
     const userWithoutPermission: User = {
       id: 'user-2',
       name: 'Limited User',
@@ -81,7 +82,7 @@ describe('ProtectedRoute', () => {
       requiredPermission: 'usuarios:listar',
     });
 
-    expect(screen.getByText('Inicio')).toBeInTheDocument();
+    expect(screen.getByText('Perfil')).toBeInTheDocument();
   });
 
   it('redirects to login when the resolved session is not authenticated', () => {

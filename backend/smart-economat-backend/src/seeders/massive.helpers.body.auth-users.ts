@@ -272,6 +272,91 @@ export function buildBodyAuthUsers(
     };
   }
 
+  if (resolvedPath === '/permisos' && endpoint.method === 'POST') {
+    const moduloSeed = pickDeterministic(
+      ['alpha', 'beta', 'gamma', 'delta', 'omega', 'sigma', 'tau', 'zeta'],
+      iteration,
+      'permiso-modulo'
+    );
+    const accionSeed = pickDeterministic(
+      [
+        'crear',
+        'editar',
+        'listar',
+        'ver',
+        'activar',
+        'desactivar',
+        'auditar',
+        'sincronizar',
+      ],
+      iteration,
+      'permiso-accion'
+    );
+    const modulo = `seed_mod_${moduloSeed}`;
+    const accion = `seed_${accionSeed}`;
+
+    return {
+      codigo: `${modulo}:${accion}`,
+      nombre: `Permiso seed ${suffix}`.slice(0, 150),
+      descripcion: `Permiso generado por seed masivo (${suffix})`.slice(0, 255),
+      modulo,
+      accion,
+      activo: iteration % 2 === 0,
+    };
+  }
+
+  if (templatePath === '/permisos/:id' && endpoint.method === 'PATCH') {
+    return {
+      nombre: `Permiso actualizado ${suffix}`.slice(0, 150),
+      descripcion: `Actualización seed masivo ${suffix}`.slice(0, 255),
+      activo: iteration % 2 === 0,
+    };
+  }
+
+  if (resolvedPath === '/roles/assign-user' && endpoint.method === 'POST') {
+    return {
+      usuarioId: pickRequired('usuarioIds'),
+      rolId: pickRequired('roleIds'),
+    };
+  }
+
+  if (templatePath === '/roles/:id/permisos' && endpoint.method === 'PATCH') {
+    const availablePermissionIds = getStateArray(
+      context,
+      'permissionIds'
+    ).filter(Boolean);
+    const count = Math.min(4 + (iteration % 4), availablePermissionIds.length);
+    const selected = availablePermissionIds.slice(0, count);
+
+    return {
+      permisoIds: selected,
+    };
+  }
+
+  if (templatePath === '/plantillas-roles/:id/permisos') {
+    const availablePermissionIds = getStateArray(
+      context,
+      'permissionIds'
+    ).filter(Boolean);
+    const count = Math.min(3 + (iteration % 5), availablePermissionIds.length);
+    const selected = availablePermissionIds.slice(0, count);
+    return {
+      permisoIds: selected,
+    };
+  }
+
+  if (templatePath === '/plantillas-roles/:id/duplicar') {
+    return {
+      nombre: `Plantilla seed ${suffix}`.slice(0, 100),
+    };
+  }
+
+  if (templatePath === '/plantillas-roles/:id/activo') {
+    return {
+      activo: iteration % 2 === 0,
+    };
+  }
+
   if (resolvedPath === '/usuarios/perfil/password') {
     const currentPassword = getRequiredStateString(
       context,

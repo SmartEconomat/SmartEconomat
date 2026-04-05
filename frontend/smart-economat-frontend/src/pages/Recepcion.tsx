@@ -37,6 +37,7 @@ import {
 } from '../services/producto.service';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { usePermission } from '../store/auth.hooks';
+import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 import {
   CategoriaProducto,
   UnidadMedida,
@@ -69,6 +70,22 @@ const isWeightUnit = (unidad: string | undefined): boolean => {
   const u = unidad.toLowerCase();
   return u === 'kg' || u === 'g' || u === 'mg';
 };
+
+const hasDraftText = (value?: string): boolean =>
+  typeof value === 'string' && value.trim().length > 0;
+
+const hasCantidadAlbaran = (linea: LineaDraft): boolean =>
+  linea.cantidadAlbaran !== '' && linea.cantidadAlbaran != null;
+
+const isLineaDraftActiva = (linea: LineaDraft): boolean =>
+  Boolean(
+    linea.intervenida ||
+    Number(linea.cantidadRecibida) > 0 ||
+    hasCantidadAlbaran(linea) ||
+    hasDraftText(linea.observaciones) ||
+    hasDraftText(linea.fechaCaducidad) ||
+    linea.estadoVisual !== EstadoVisualProducto.OPTIMO
+  );
 
 const steps = [
   'Selección de Pedidos',
@@ -190,7 +207,7 @@ const Recepcion: React.FC = () => {
   const recoveryHandledRef = useRef(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const canCreate = usePermission('recepciones:crear');
+  const canCreate = usePermission(PERMISSIONS.recepciones.crear);
   const shouldAutoResumeDraft = Boolean(
     (location.state as RecepcionLocationState | null)?.autoResumeRecepcionDraft
   );
@@ -397,13 +414,36 @@ const Recepcion: React.FC = () => {
   const loadPedidos = async () => {
     setLoadingPedidos(true);
     try {
-      const resp = await fetchPedidos(
-        1,
-        50,
-        '',
-        [EstadoPedido.POR_RECEPCIONAR].join(',')
-      );
-      setPedidosDisponibles(resp.data as Pedido[]);
+      const estadosRecepcionables = [EstadoPedido.POR_RECEPCIONAR].join(',');
+
+      const pageSize = 50;
+      const maxPages = 50;
+      let page = 1;
+      let totalPages = 1;
+
+      const pedidos: Pedido[] = [];
+      const seenIds = new Set<string>();
+
+      while (page <= totalPages && page <= maxPages) {
+        const resp = await fetchPedidos(
+          page,
+          pageSize,
+          '',
+          estadosRecepcionables
+        );
+        totalPages = Math.max(Number(resp.totalPages || 1), 1);
+
+        for (const pedido of resp.data as Pedido[]) {
+          if (!seenIds.has(pedido.id)) {
+            seenIds.add(pedido.id);
+            pedidos.push(pedido);
+          }
+        }
+
+        page += 1;
+      }
+
+      setPedidosDisponibles(pedidos);
     } catch {
       setError('Error al cargar pedidos compatibles.');
     } finally {
@@ -424,6 +464,7 @@ const Recepcion: React.FC = () => {
       estadoVisual: EstadoVisualProducto.OPTIMO,
       fechaCaducidad: '',
       observaciones: '',
+      intervenida: false,
       estado: calculateEstado(0, Number(pp.cantidad)),
       unidad: pp.productoProveedor?.producto?.unidad || UnidadMedida.UNIDAD,
     }));
@@ -431,7 +472,7 @@ const Recepcion: React.FC = () => {
   // Helper para crear el objeto del pedido en el draft
   const createDraftPedido = (pedido: Pedido) => ({
     id: pedido.id,
-    descripcion: `Pedido ${formatPedidoListNumber(pedido)} - ${pedido.proveedor?.nombre}`,
+    descripcion: `Pedido ${formatPedidoListNumber(pedido, 'pedido-proveedor')} - ${pedido.proveedor?.nombre}`,
     proveedor: pedido.proveedor?.nombre || 'Desconocido',
     lineas: mapPedidoToDraft(pedido),
   });
@@ -678,6 +719,7 @@ const Recepcion: React.FC = () => {
         newPedidos[targetMatch.pIdx].lineas[targetMatch.lIdx] = {
           ...tLinea,
           cantidadRecibida: currRec + 1,
+          intervenida: true,
           estado: calculateEstado(currRec + 1, tLinea.cantidadPedida),
         };
 
@@ -704,6 +746,7 @@ const Recepcion: React.FC = () => {
                   cantidadRecibida: isWeightUnit(l.unidad)
                     ? Number(l.cantidadRecibida)
                     : Number(l.cantidadRecibida) + 1,
+                  intervenida: true,
                   estado: 'Exceso' as LineaDraft['estado'],
                 }
               : l;
@@ -734,6 +777,7 @@ const Recepcion: React.FC = () => {
             estadoVisual: EstadoVisualProducto.OPTIMO,
             fechaCaducidad: '',
             observaciones: '',
+            intervenida: !isWeightUnit(prod.unidad),
             estado: 'Nuevo',
           };
 
@@ -788,6 +832,17 @@ const Recepcion: React.FC = () => {
           );
         }
 
+        if (
+          field === 'cantidadRecibida' ||
+          field === 'cantidadAlbaran' ||
+          field === 'estadoVisual' ||
+          field === 'fechaCaducidad' ||
+          field === 'observaciones' ||
+          field === 'isWeighedWithScale'
+        ) {
+          newLinea.intervenida = true;
+        }
+
         // Si el usuario edita a mano (escribiendo), y no teníamos isWeighedWithScale = true, lo mantenemos en false.
         // Si ya era true (pesado con báscula) y cambia el valor a mano, podríamos poner false si queremos ser estrictos.
         // Por ahora, asumimos que si cambia un campo numérico manualmente `onChange`, quita la "oficialidad" de la báscula.
@@ -803,6 +858,17 @@ const Recepcion: React.FC = () => {
       } else {
         const newEsp = [...prevDraft.productosEspontaneos];
         const newLinea = { ...newEsp[lIdx], [field]: finalValue };
+
+        if (
+          field === 'cantidadRecibida' ||
+          field === 'cantidadAlbaran' ||
+          field === 'estadoVisual' ||
+          field === 'fechaCaducidad' ||
+          field === 'observaciones' ||
+          field === 'isWeighedWithScale'
+        ) {
+          newLinea.intervenida = true;
+        }
 
         if (field === 'cantidadRecibida') {
           newLinea.isWeighedWithScale = false;
@@ -905,34 +971,33 @@ const Recepcion: React.FC = () => {
       return false;
     }
 
-    // Validar observaciones si hay discrepancia
-    for (const p of draft.pedidosSeleccionados) {
-      for (const l of p.lineas) {
-        // Solo evaluamos lineas interactuadas
-        if (Number(l.cantidadRecibida) > 0 || l.estado === 'No entregado') {
-          const hasDiscrepancy =
-            Number(l.cantidadRecibida) !== l.cantidadPedida ||
-            (l.cantidadAlbaran !== '' &&
-              l.cantidadAlbaran != null &&
-              Number(l.cantidadAlbaran) !== l.cantidadPedida) ||
-            l.estadoVisual !== EstadoVisualProducto.OPTIMO;
+    const lineasActivasPedidos = draft.pedidosSeleccionados.flatMap((pedido) =>
+      pedido.lineas.filter((linea) => isLineaDraftActiva(linea))
+    );
 
-          if (
-            hasDiscrepancy &&
-            (!l.observaciones || l.observaciones.trim() === '')
-          ) {
-            setError(
-              `Falla Validativa: El producto "${l.nombreProducto}" presenta discrepancias con el pedido o estado y su campo de notas es obligatorio.`
-            );
-            return false;
-          }
-        }
+    // Validar observaciones si hay discrepancia
+    for (const l of lineasActivasPedidos) {
+      const hasDiscrepancy =
+        Number(l.cantidadRecibida) !== l.cantidadPedida ||
+        (hasCantidadAlbaran(l) &&
+          Number(l.cantidadAlbaran) !== l.cantidadPedida) ||
+        l.estadoVisual !== EstadoVisualProducto.OPTIMO;
+
+      if (hasDiscrepancy && !hasDraftText(l.observaciones)) {
+        setError(
+          `Falla Validativa: El producto "${l.nombreProducto}" presenta discrepancias con el pedido o estado y su campo de notas es obligatorio.`
+        );
+        return false;
       }
     }
 
-    for (const esp of draft.productosEspontaneos) {
+    const lineasActivasEspontaneas = draft.productosEspontaneos.filter(
+      (linea) => isLineaDraftActiva(linea)
+    );
+
+    for (const esp of lineasActivasEspontaneas) {
       // Los productos espontáneos siempre son discrepancias (exceso no planificado)
-      if (!esp.observaciones || esp.observaciones.trim() === '') {
+      if (!hasDraftText(esp.observaciones)) {
         setError(
           `Falla Validativa: El producto espontáneo "${esp.nombreProducto || esp.productoNuevo?.nombre}" requiere obligatoriamente una nota justificativa.`
         );
@@ -960,7 +1025,7 @@ const Recepcion: React.FC = () => {
       observaciones: draft.observaciones,
       productos: draft.pedidosSeleccionados
         .flatMap((p) => p.lineas)
-        .filter((l) => Number(l.cantidadRecibida) > 0)
+        .filter((l) => isLineaDraftActiva(l) && Number(l.cantidadRecibida) > 0)
         .map((l) => ({
           pedidoProductoId: l.pedidoProductoId!,
           cantidadRecibida: Number(l.cantidadRecibida),
@@ -1175,6 +1240,7 @@ const Recepcion: React.FC = () => {
       estadoVisual: EstadoVisualProducto.OPTIMO,
       fechaCaducidad: '',
       observaciones: '',
+      intervenida: !isWeight,
       estado: 'Nuevo',
       productoNuevo: {
         pendienteCreacion: true,
