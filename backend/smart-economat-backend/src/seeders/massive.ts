@@ -361,6 +361,9 @@ function getActionRank(method: HttpMethod, path: string): number {
   ) {
     return 8;
   }
+  if (method === 'DELETE' && path === '/roles/:id/users/:usuarioId') {
+    return 8;
+  }
   if (method === 'DELETE' && path === '/usuarios/:id') return 10;
   if (method === 'DELETE') return 9;
   return 7;
@@ -649,7 +652,9 @@ async function runMassiveSeeder(): Promise<void> {
             console.warn(warnMsg);
             continue;
           } else if (
-            (key === 'GET /albaranes/:id' || key === 'PATCH /albaranes/:id') &&
+            (key === 'GET /albaranes/:id' ||
+              key === 'PATCH /albaranes/:id' ||
+              key === 'DELETE /albaranes/:id') &&
             isIgnorableMissingAlbaran(result)
           ) {
             success++;

@@ -314,9 +314,40 @@ export function buildBodyAuthUsers(
   }
 
   if (resolvedPath === '/roles/assign-user' && endpoint.method === 'POST') {
+    const createdRoleIds = new Set(
+      getStateArray(context, 'seedCreatedRoleIds')
+    );
+    const roleIdByName =
+      context.getState<Record<string, string>>('seedRoleIdByName') || {};
+
+    const preferredSystemRoleIds = ['PROFESOR', 'ALUMNO', 'ADMIN']
+      .map((roleName) => roleIdByName[roleName])
+      .filter(
+        (roleId): roleId is string =>
+          typeof roleId === 'string' &&
+          roleId.trim().length > 0 &&
+          !createdRoleIds.has(roleId)
+      );
+
+    const fallbackAssignableRoleIds = getStateArray(context, 'roleIds').filter(
+      (roleId) =>
+        typeof roleId === 'string' &&
+        roleId.trim().length > 0 &&
+        !createdRoleIds.has(roleId)
+    );
+
+    const assignableRoleIds =
+      preferredSystemRoleIds.length > 0
+        ? preferredSystemRoleIds
+        : fallbackAssignableRoleIds;
+
+    const selectedRoleId =
+      assignableRoleIds[iteration % (assignableRoleIds.length || 1)] ||
+      pickRequired('roleIds');
+
     return {
       usuarioId: pickRequired('usuarioIds'),
-      rolId: pickRequired('roleIds'),
+      rolId: selectedRoleId,
     };
   }
 
