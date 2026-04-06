@@ -15,6 +15,7 @@ WORKDIR /app
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/src/i18n ./dist/i18n
+COPY --from=builder /app/src/seeders/datos-base-economato ./dist/seeders/datos-base-economato
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 
