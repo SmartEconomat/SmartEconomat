@@ -184,6 +184,64 @@ function extractDecoratorPathArg(rawArgs: string): string {
   return match[1].trim();
 }
 
+function extractControllerPathFromSource(source: string): string | null {
+  const tsControllerRegex = /@Controller\s*\(([^)]*)\)/;
+  const compiledControllerRegex =
+    /\(\s*0\s*,\s*_[A-Za-z0-9$]+\.Controller\)\s*\(([^)]*)\)/;
+
+  const tsMatch = source.match(tsControllerRegex);
+  if (tsMatch) {
+    return extractDecoratorPathArg(tsMatch[1]);
+  }
+
+  const compiledMatch = source.match(compiledControllerRegex);
+  if (compiledMatch) {
+    return extractDecoratorPathArg(compiledMatch[1]);
+  }
+
+  return null;
+}
+
+function extractMethodDecoratorsFromSource(
+  source: string
+): Array<{ method: HttpMethod; routePath: string }> {
+  const discovered: Array<{ method: HttpMethod; routePath: string }> = [];
+  const tsMethodRegex = /@(Get|Post|Patch|Put|Delete)\s*\(([^)]*)\)/g;
+  const compiledMethodRegex =
+    /\(\s*0\s*,\s*_[A-Za-z0-9$]+\.(Get|Post|Patch|Put|Delete)\)\s*\(([^)]*)\)/g;
+
+  const methodByDecorator: Record<
+    'Get' | 'Post' | 'Patch' | 'Put' | 'Delete',
+    HttpMethod
+  > = {
+    Get: 'GET',
+    Post: 'POST',
+    Patch: 'PATCH',
+    Put: 'PUT',
+    Delete: 'DELETE',
+  };
+
+  let tsMatch: RegExpExecArray | null;
+  while ((tsMatch = tsMethodRegex.exec(source)) !== null) {
+    const decorator = tsMatch[1] as keyof typeof methodByDecorator;
+    discovered.push({
+      method: methodByDecorator[decorator],
+      routePath: extractDecoratorPathArg(tsMatch[2] || ''),
+    });
+  }
+
+  let compiledMatch: RegExpExecArray | null;
+  while ((compiledMatch = compiledMethodRegex.exec(source)) !== null) {
+    const decorator = compiledMatch[1] as keyof typeof methodByDecorator;
+    discovered.push({
+      method: methodByDecorator[decorator],
+      routePath: extractDecoratorPathArg(compiledMatch[2] || ''),
+    });
+  }
+
+  return discovered;
+}
+
 function buildEndpointPath(controllerPath: string, routePath: string): string {
   const segments = [controllerPath, routePath]
     .map((segment) => segment.trim())
@@ -206,36 +264,20 @@ function discoverEndpointsFromControllers(): Endpoint[] {
     walkControllerFiles(root, controllerFiles);
   }
 
-  const methodRegex = /@(Get|Post|Patch|Put|Delete)\s*\(([^)]*)\)/g;
-  const controllerRegex = /@Controller\s*\(([^)]*)\)/;
-
   const discovered: Endpoint[] = [];
 
   for (const filePath of controllerFiles) {
     const source = readFileSync(filePath, 'utf8');
-    const controllerMatch = source.match(controllerRegex);
-    if (!controllerMatch) {
+    const controllerPath = extractControllerPathFromSource(source);
+    if (controllerPath === null) {
       continue;
     }
 
-    const controllerPath = extractDecoratorPathArg(controllerMatch[1]);
-
-    let match: RegExpExecArray | null;
-    while ((match = methodRegex.exec(source)) !== null) {
-      const decorator = match[1] as 'Get' | 'Post' | 'Patch' | 'Put' | 'Delete';
-      const routePath = extractDecoratorPathArg(match[2] || '');
-
-      const methodByDecorator: Record<typeof decorator, HttpMethod> = {
-        Get: 'GET',
-        Post: 'POST',
-        Patch: 'PATCH',
-        Put: 'PUT',
-        Delete: 'DELETE',
-      };
-
+    const methodDecorators = extractMethodDecoratorsFromSource(source);
+    for (const methodDecorator of methodDecorators) {
       discovered.push({
-        method: methodByDecorator[decorator],
-        path: buildEndpointPath(controllerPath, routePath),
+        method: methodDecorator.method,
+        path: buildEndpointPath(controllerPath, methodDecorator.routePath),
         source: 'controller-discovery',
       });
     }
