@@ -6,7 +6,7 @@
     "deleteOutDir": true,
     "builder": "swc",
     "typeCheck": true,
-    "assets": ["i18n/**/*"],
+    "assets": ["i18n/**/*", "seeders/datos-base-economato/**/*"],
     "watchAssets": false
   }
 }

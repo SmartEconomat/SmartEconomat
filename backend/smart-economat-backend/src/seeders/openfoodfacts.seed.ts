@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { SeedContext } from './seed-context';
 import {
@@ -79,10 +79,20 @@ const OPEN_FOOD_FACTS_IMAGE_TIMEOUT_MS = Math.max(
     10
   ) || 20000
 );
-const LOCAL_SEED_PRODUCTS_FILE = resolve(
-  process.cwd(),
-  'src/seeders/datos-base-economato/catalogo.productos-normalizados.json'
-);
+const LOCAL_SEED_PRODUCTS_FILE_CANDIDATES = [
+  resolve(
+    process.cwd(),
+    'src/seeders/datos-base-economato/catalogo.productos-normalizados.json'
+  ),
+  resolve(
+    __dirname,
+    'datos-base-economato/catalogo.productos-normalizados.json'
+  ),
+  resolve(
+    process.cwd(),
+    'dist/seeders/datos-base-economato/catalogo.productos-normalizados.json'
+  ),
+];
 
 let localCatalogProductsCache: OffProduct[] | undefined;
 
@@ -159,13 +169,23 @@ function loadLocalCatalogOffProducts(): OffProduct[] {
     return localCatalogProductsCache;
   }
 
+  const localCatalogPath = LOCAL_SEED_PRODUCTS_FILE_CANDIDATES.find((path) =>
+    existsSync(path)
+  );
+
+  if (!localCatalogPath) {
+    throw new Error(
+      `[seed-openfoodfacts] No se encontro el catalogo local. Rutas probadas: ${LOCAL_SEED_PRODUCTS_FILE_CANDIDATES.join(', ')}`
+    );
+  }
+
   let parsed: SeedCatalogFile;
   try {
-    const rawFile = readFileSync(LOCAL_SEED_PRODUCTS_FILE, 'utf8');
+    const rawFile = readFileSync(localCatalogPath, 'utf8');
     parsed = JSON.parse(rawFile) as SeedCatalogFile;
   } catch (error) {
     throw new Error(
-      `[seed-openfoodfacts] No se pudo cargar el catalogo local ${LOCAL_SEED_PRODUCTS_FILE}: ${String(
+      `[seed-openfoodfacts] No se pudo cargar el catalogo local ${localCatalogPath}: ${String(
         error instanceof Error ? error.message : error
       )}`
     );
