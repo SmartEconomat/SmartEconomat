@@ -3,7 +3,7 @@ name: Despliegue a Produccion
 on:
   push:
     branches:
-      - develop
+      - production
   workflow_dispatch:
 
 env:
