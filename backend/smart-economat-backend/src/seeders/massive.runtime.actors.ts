@@ -6,6 +6,7 @@ import {
   ADMIN_PERMISSION_CODES,
   ADMIN_RESTRICTED_PERMISSION_CODES,
 } from '../common/constants/role-permission-sets.constants';
+import { ALL_PERMISSION_CODES } from '../common/constants/permissions.constants';
 import { getSystemRoleTemplateAliases } from '../common/constants/system-role-template.constants';
 import AppDataSource from '../config/typeorm.config';
 import { Rol } from '../modules/roles/rol.entity/rol.entity';
@@ -419,6 +420,76 @@ async function resolvePermissionIdsByCodes(
     }
   }
   return ids;
+}
+
+type PermissionSeed = {
+  codigo: string;
+  nombre: string;
+  descripcion: string;
+  modulo: string;
+  accion: string;
+};
+
+function buildPermissionSeed(code: string): PermissionSeed | null {
+  const [modulo, accion] = code.split(':');
+  if (!modulo || !accion) {
+    return null;
+  }
+
+  const nombre = `${modulo} ${accion}`
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+
+  return {
+    codigo: code,
+    nombre,
+    descripcion: `[seed-massive] Permiso bootstrap ${code}`,
+    modulo,
+    accion,
+  };
+}
+
+async function ensureSeedPermissions(context: SeedContext): Promise<void> {
+  await ensureRepositoryReady();
+
+  const permisoRepo = AppDataSource.getRepository(Permiso);
+  const permissionCodes = [...ALL_PERMISSION_CODES].sort();
+  const ensuredPermissionIds: string[] = [];
+
+  for (const code of permissionCodes) {
+    const permissionSeed = buildPermissionSeed(code);
+    if (!permissionSeed) {
+      continue;
+    }
+
+    const existing = await permisoRepo
+      .createQueryBuilder('permiso')
+      .withDeleted()
+      .where('permiso.codigo = :codigo', {
+        codigo: permissionSeed.codigo,
+      })
+      .getOne();
+
+    const permiso = existing || permisoRepo.create();
+    permiso.codigo = permissionSeed.codigo;
+    permiso.nombre = permissionSeed.nombre;
+    permiso.descripcion = permissionSeed.descripcion;
+    permiso.modulo = permissionSeed.modulo;
+    permiso.accion = permissionSeed.accion;
+    permiso.activo = true;
+    permiso.deletedAt = null;
+    permiso.deletedBy = null;
+
+    const saved = await permisoRepo.save(permiso);
+    ensuredPermissionIds.push(saved.id);
+    pushStateValue(context, 'permissionIds', saved.id);
+  }
+
+  if (ensuredPermissionIds.length === 0) {
+    throw new Error(
+      '[seed-massive] No fue posible bootstrapear permisos del sistema para el seeder masivo'
+    );
+  }
 }
 
 async function removeUserAdditionalPermissions(
@@ -863,6 +934,7 @@ function isHttpConflict(error: unknown): error is HttpSeedRequestError {
 }
 
 export async function ensureRoleActors(context: SeedContext): Promise<void> {
+  await ensureSeedPermissions(context);
   await warmAdminState(context);
   await ensureSeedRoleTemplates(context);
 

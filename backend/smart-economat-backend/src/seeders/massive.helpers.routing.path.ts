@@ -7,6 +7,7 @@ import {
 } from './massive.helpers.routing.permissions';
 import { pickIdForRoute } from './massive.helpers.routing.pick-id';
 import {
+  consumeStateValue,
   getStateArray,
   pickRequiredStateValue,
   pickStateValue,
@@ -36,6 +37,16 @@ export function resolvePathParams(
   );
   if (alergenoDeletePath) {
     return alergenoDeletePath;
+  }
+
+  if (endpoint.method === 'DELETE' && path === '/roles/:id/users/:usuarioId') {
+    const assignedPair = consumeStateValue(context, 'seedRoleUserPairs', '');
+    if (assignedPair) {
+      const [roleId, userId] = assignedPair.split('|');
+      if (roleId && userId) {
+        return path.replace(':id', roleId).replace(':usuarioId', userId);
+      }
+    }
   }
 
   let resolved = path;

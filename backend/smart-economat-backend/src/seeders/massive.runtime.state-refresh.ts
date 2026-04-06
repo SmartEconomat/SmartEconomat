@@ -157,6 +157,20 @@ export async function refreshStateAfterOperation(
     pushStateValue(context, 'seedCreatedRecetaIds', result.resourceId);
   }
 
+  if (path === '/roles/assign-user' && result.endpoint.method === 'POST') {
+    const payload =
+      result.payload && typeof result.payload === 'object'
+        ? (result.payload as Record<string, unknown>)
+        : null;
+    const roleId = typeof payload?.rolId === 'string' ? payload.rolId : '';
+    const userId =
+      typeof payload?.usuarioId === 'string' ? payload.usuarioId : '';
+
+    if (roleId && userId) {
+      pushStateValue(context, 'seedRoleUserPairs', `${roleId}|${userId}`);
+    }
+  }
+
   if (
     path === '/pedidos' &&
     result.endpoint.method === 'POST' &&
@@ -566,6 +580,16 @@ export async function refreshStateAfterOperation(
     const deletedAlbaranId = path.split('/')[2] || '';
     if (deletedAlbaranId) {
       removeStateValue(context, 'albaranIds', deletedAlbaranId);
+    }
+  }
+
+  if (
+    result.endpoint.method === 'DELETE' &&
+    /^\/roles\/[^/]+\/users\/[^/]+$/.test(path)
+  ) {
+    const match = path.match(/^\/roles\/([^/]+)\/users\/([^/]+)$/);
+    if (match?.[1] && match[2]) {
+      removeStateValue(context, 'seedRoleUserPairs', `${match[1]}|${match[2]}`);
     }
   }
 
