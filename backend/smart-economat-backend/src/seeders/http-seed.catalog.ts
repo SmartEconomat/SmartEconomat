@@ -62,6 +62,20 @@ function getNestedStringField(
   return getStringField(nestedValue, childKey);
 }
 
+function getProfesorUsername(record: SeedRecord): string | undefined {
+  return (
+    getStringField(record, 'username') ||
+    getNestedStringField(record, 'user', 'username')
+  );
+}
+
+function getProfesorEmail(record: SeedRecord): string | undefined {
+  return (
+    getStringField(record, 'email') ||
+    getNestedStringField(record, 'user', 'email')
+  );
+}
+
 function getNumberField(record: SeedRecord, key: string): number | undefined {
   const value = record[key];
   return typeof value === 'number' && Number.isFinite(value)
@@ -267,9 +281,7 @@ async function usuariosTask(context: SeedContext): Promise<void> {
   )) as SeedProfesorEntity[];
 
   const profExists = profesores.some(
-    (profesor) =>
-      getNestedStringField(profesor, 'user', 'email') ===
-      'profesor1@smarteconomat.com'
+    (profesor) => getProfesorEmail(profesor) === 'profesor1@smarteconomat.com'
   );
 
   if (!profExists) {
@@ -293,9 +305,8 @@ async function usuariosTask(context: SeedContext): Promise<void> {
   );
   const profesorPrincipal = profesoresActualizados.find(
     (profesor) =>
-      getNestedStringField(profesor, 'user', 'username') === 'profesor' ||
-      getNestedStringField(profesor, 'user', 'email') ===
-        'profesor@smarteconomat.com'
+      getProfesorUsername(profesor) === 'profesor' ||
+      getProfesorEmail(profesor) === 'profesor@smarteconomat.com'
   );
   const profesorPrincipalId = profesorPrincipal
     ? getEntityId(profesorPrincipal)
