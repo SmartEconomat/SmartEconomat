@@ -17,10 +17,26 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
 import { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
+import { EstadoRecepcion } from '../../recepcion/enums/estado-recepcion.enum';
 import { AlbaranPedidoRecepcion } from '../albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
 import { ArchivoService } from '../../archivo/service/archivo.service';
 import * as fs from 'fs';
 import * as path from 'path';
+
+const ALBARAN_CONCORDANCIA_RELATIONS = [
+  'albaranPedidoRecepcion',
+  'albaranPedidoRecepcion.recepcionPedido',
+  'albaranPedidoRecepcion.recepcionPedido.recepcion',
+] as const;
+
+const ALBARAN_DETAIL_RELATIONS = [
+  ...ALBARAN_CONCORDANCIA_RELATIONS,
+  'albaranPedidoRecepcion.recepcionPedido.recepcion.recepcionProductos',
+  'albaranPedidoRecepcion.recepcionPedido.recepcion.recepcionProductos.pedidoProducto',
+  'albaranPedidoRecepcion.recepcionPedido.recepcion.recepcionProductos.pedidoProducto.productoProveedor',
+  'albaranPedidoRecepcion.recepcionPedido.recepcion.recepcionProductos.pedidoProducto.productoProveedor.producto',
+  'albaranPedidoRecepcion.recepcionPedido.recepcion.recepcionProductos.pedidoProducto.productoProveedor.proveedor',
+] as const;
 
 @Injectable()
 export class AlbaranService {
@@ -98,13 +114,67 @@ export class AlbaranService {
     return `${prefix}${paddedSeq}`;
   }
 
+  private deriveConcordanciaFromLinks(albaran: Albaran): boolean | undefined {
+    const recepciones = (albaran.albaranPedidoRecepcion ?? [])
+      .map((link) => link.recepcionPedido?.recepcion)
+      .filter((recepcion): recepcion is Recepcion => Boolean(recepcion));
+
+    if (recepciones.length === 0) {
+      return undefined;
+    }
+
+    return recepciones.every(
+      (recepcion) =>
+        recepcion.estado === EstadoRecepcion.COMPLETADA &&
+        recepcion.incidencia === false
+    );
+  }
+
+  private async syncLoadedAlbaranConcordancia(
+    repo: Repository<Albaran>,
+    albaran: Albaran
+  ): Promise<Albaran> {
+    const derivedConcordancia = this.deriveConcordanciaFromLinks(albaran);
+
+    if (derivedConcordancia === undefined) {
+      return albaran;
+    }
+
+    if (albaran.concordancia !== derivedConcordancia) {
+      albaran.concordancia = derivedConcordancia;
+      return await repo.save(albaran);
+    }
+
+    albaran.concordancia = derivedConcordancia;
+    return albaran;
+  }
+
+  async syncConcordanciaFromRecepciones(
+    albaranId: string,
+    manager?: EntityManager
+  ): Promise<Albaran> {
+    const repo = manager
+      ? manager.getRepository(Albaran)
+      : this.albaranRepository;
+
+    const albaran = await repo.findOne({
+      where: { id: albaranId },
+      relations: [...ALBARAN_CONCORDANCIA_RELATIONS],
+    });
+
+    if (!albaran) {
+      throw new NotFoundException(I18nHelper.getError('ALBARAN_NOT_FOUND'));
+    }
+
+    return await this.syncLoadedAlbaranConcordancia(repo, albaran);
+  }
+
   async findAll(
     query: PaginationQueryDto,
     userRole?: string
   ): Promise<PaginatedResponseDto<Albaran>> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
       userRole?.toUpperCase() === 'SUPER_ADMIN';
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 50);
@@ -112,15 +182,21 @@ export class AlbaranService {
     const order = query.order ?? 'DESC';
 
     const [data, total] = await this.albaranRepository.findAndCount({
-      relations: ['albaranPedidoRecepcion'],
+      relations: [...ALBARAN_CONCORDANCIA_RELATIONS],
       withDeleted: isAdmin,
       order: { [sortBy]: order },
       skip: (page - 1) * limit,
       take: limit,
     });
 
+    const albaranes = await Promise.all(
+      data.map((albaran) =>
+        this.syncLoadedAlbaranConcordancia(this.albaranRepository, albaran)
+      )
+    );
+
     return {
-      data,
+      data: albaranes,
       total,
       page,
       limit,
@@ -128,19 +204,30 @@ export class AlbaranService {
     };
   }
 
-  async findOne(id: string, _userRole?: string): Promise<Albaran> {
+  async findOne(
+    id: string,
+    _userRole?: string,
+    includeProductos = false
+  ): Promise<Albaran> {
     void _userRole;
+
+    const relations = includeProductos
+      ? ALBARAN_DETAIL_RELATIONS
+      : ALBARAN_CONCORDANCIA_RELATIONS;
 
     const albaran = await this.albaranRepository.findOne({
       where: { id },
-      relations: ['albaranPedidoRecepcion'],
+      relations: [...relations],
     });
 
     if (!albaran) {
       throw new NotFoundException(I18nHelper.getError('ALBARAN_NOT_FOUND'));
     }
 
-    return albaran;
+    return await this.syncLoadedAlbaranConcordancia(
+      this.albaranRepository,
+      albaran
+    );
   }
 
   async update(id: string, dto: UpdateAlbaranDto): Promise<Albaran> {
@@ -186,7 +273,6 @@ export class AlbaranService {
     try {
       let albaran = await queryRunner.manager.findOne(Albaran, {
         where: { nAlbaran: dto.numeroReferencia },
-        relations: ['albaranPedidoRecepcion'],
         lock: { mode: 'pessimistic_write' },
       });
 
@@ -251,6 +337,11 @@ export class AlbaranService {
           }
         }
       }
+
+      albaran = await this.syncConcordanciaFromRecepciones(
+        albaran.id,
+        queryRunner.manager
+      );
 
       const fileUrl = `/api/v1/albaranes/documento/${processedFile.filename}`;
 

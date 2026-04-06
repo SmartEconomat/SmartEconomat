@@ -20,7 +20,7 @@ export class AddProveedorToProductoDto {
     example: '01954a85-6215-7f83-8e5c-2b6fd3d6a4b1',
   })
   @Transform((params) => TrimStringTransformer.transform(params))
-  @IsUUID('7', {
+  @IsUUID('all', {
     message: i18nValidationMessage(
       'validation.EL_ID_DEL_PROVEEDOR_DEBE_SER_UN_UUID_V_L'
     ),
@@ -87,7 +87,7 @@ export class AddProveedorToProductoDto {
   @ApiProperty({
     description: 'Precio unitario pactado con el proveedor.',
     example: 1.35,
-    minimum: 0,
+    minimum: 0.01,
   })
   @IsDefined({
     message: i18nValidationMessage(
@@ -102,9 +102,9 @@ export class AddProveedorToProductoDto {
       ),
     }
   )
-  @Min(0, {
+  @Min(0.01, {
     message: i18nValidationMessage(
-      'validation.EL_PRECIO_UNITARIO_NO_PUEDE_SER_NEGATIV'
+      'validation.EL_PRECIO_UNITARIO_DEBE_SER_MAYOR_QUE_0'
     ),
   })
   precioUnitario?: number;

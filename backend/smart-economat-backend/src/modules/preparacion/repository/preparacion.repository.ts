@@ -36,7 +36,6 @@ export class PreparacionRepository {
   ): Promise<PaginatedResponseDto<Preparacion>> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
       userRole?.toUpperCase() === 'SUPER_ADMIN';
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 50);
@@ -63,7 +62,6 @@ export class PreparacionRepository {
   async findById(id: string, userRole?: string): Promise<Preparacion | null> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
       userRole?.toUpperCase() === 'SUPER_ADMIN';
 
     return this.preparacionRepo.findOne({

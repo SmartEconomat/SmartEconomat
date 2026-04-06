@@ -26,6 +26,7 @@ import { ProductoAlergeno } from '../producto-alergeno.entity/producto-alergeno.
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 @ApiTags('Producto Alérgenos')
 @UseGuards(JwtAuthGuard, PermisosGuard)
@@ -36,7 +37,7 @@ export class ProductoAlergenoController {
   ) {}
 
   @Post()
-  @RequirePermissions('productos:editar')
+  @RequirePermissions(PERMISSIONS.productos.editar)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Crear una asociación entre producto y alérgeno' })
   @ApiResponse({
@@ -59,7 +60,7 @@ export class ProductoAlergenoController {
   }
 
   @Get()
-  @RequirePermissions('productos:ver')
+  @RequirePermissions(PERMISSIONS.productos.ver)
   @ApiOperation({ summary: 'Listar asociaciones producto-alérgeno' })
   @ApiQuery({
     name: 'idProducto',
@@ -78,7 +79,7 @@ export class ProductoAlergenoController {
   }
 
   @Get(':id')
-  @RequirePermissions('productos:ver')
+  @RequirePermissions(PERMISSIONS.productos.ver)
   @ApiOperation({ summary: 'Obtener los alérgenos de un producto' })
   @ApiParam({ name: 'id', description: 'UUID v7 del producto.' })
   @ApiResponse({
@@ -97,7 +98,7 @@ export class ProductoAlergenoController {
   }
 
   @Patch(':id')
-  @RequirePermissions('productos:editar')
+  @RequirePermissions(PERMISSIONS.productos.editar)
   @ApiOperation({
     summary: 'Reemplazar completamente los alérgenos de un producto',
   })
@@ -119,7 +120,7 @@ export class ProductoAlergenoController {
   }
 
   @Delete(':idProducto/:alergeno')
-  @RequirePermissions('productos:editar')
+  @RequirePermissions(PERMISSIONS.productos.editar)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Eliminar una asociación concreta entre producto y alérgeno',

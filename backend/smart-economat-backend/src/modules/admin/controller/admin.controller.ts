@@ -18,6 +18,7 @@ import { GetUser } from '../../auth/decorators/get-user.decorator';
 import { UpdateAdminUserRoleDto } from '../dto/update-admin-user-role.dto';
 import { UpdateAdminUserActivationDto } from '../dto/update-admin-user-activation.dto';
 import { RolesGuard } from '../../auth/guards/role.guard';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard, PermisosGuard)
@@ -25,29 +26,29 @@ export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
   @Get('roles')
-  @Roles(rolUsuario.ADMINISTRADOR)
-  @RequirePermissions('usuarios:listar')
+  @Roles(rolUsuario.ADMIN)
+  @RequirePermissions(PERMISSIONS.usuarios.listar)
   async getRoles() {
     return this.adminService.getRoles();
   }
 
   @Get('permissions')
-  @Roles(rolUsuario.ADMINISTRADOR)
-  @RequirePermissions('usuarios:listar')
+  @Roles(rolUsuario.ADMIN)
+  @RequirePermissions(PERMISSIONS.usuarios.listar)
   async getPermissions() {
     return this.adminService.getPermissions();
   }
 
   @Post('profesores')
-  @Roles(rolUsuario.ADMINISTRADOR)
-  @RequirePermissions('usuarios:crear')
+  @Roles(rolUsuario.ADMIN)
+  @RequirePermissions(PERMISSIONS.usuarios.crear)
   async createProfesor(@Body() dto: CreateProfesorDto) {
     return this.adminService.createProfesor(dto);
   }
 
   @Patch('users/:id/role')
-  @Roles(rolUsuario.ADMINISTRADOR)
-  @RequirePermissions('usuarios:editar')
+  @Roles(rolUsuario.ADMIN)
+  @RequirePermissions(PERMISSIONS.usuarios.editar)
   async updateUserRole(
     @GetUser('id') actorUserId: string,
     @Param('id') userId: string,
@@ -63,8 +64,8 @@ export class AdminController {
   }
 
   @Patch('users/:id/activate')
-  @Roles(rolUsuario.ADMINISTRADOR)
-  @RequirePermissions('usuarios:activar_desactivar')
+  @Roles(rolUsuario.ADMIN)
+  @RequirePermissions(PERMISSIONS.usuarios.activar_desactivar)
   async activateUser(
     @Param('id') userId: string,
     @Body() dto: UpdateAdminUserActivationDto
@@ -73,8 +74,8 @@ export class AdminController {
   }
 
   @Post('users/:id/force-reset')
-  @Roles(rolUsuario.ADMINISTRADOR)
-  @RequirePermissions('usuarios:resetear_password')
+  @Roles(rolUsuario.ADMIN)
+  @RequirePermissions(PERMISSIONS.usuarios.resetear_password)
   async forcePasswordReset(@Param('id') userId: string) {
     return this.adminService.forcePasswordReset(userId);
   }

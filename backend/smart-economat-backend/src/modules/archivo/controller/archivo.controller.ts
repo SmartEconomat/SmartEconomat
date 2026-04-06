@@ -32,6 +32,7 @@ import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { Public } from '../../../common/decorators/public.decorator';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 @ApiTags('Archivos')
 @ApiBearerAuth()
@@ -41,7 +42,7 @@ export class ArchivoController {
   constructor(private readonly archivoService: ArchivoService) {}
 
   @Post('upload')
-  @RequirePermissions('archivos:subir')
+  @RequirePermissions(PERMISSIONS.archivos.subir)
   @ApiOperation({ summary: 'Subir un nuevo archivo' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -73,7 +74,7 @@ export class ArchivoController {
   }
 
   @Get()
-  @RequirePermissions('archivos:listar')
+  @RequirePermissions(PERMISSIONS.archivos.listar)
   @ApiOperation({ summary: 'Listar archivos' })
   @ApiResponse({ status: 200, description: 'docs.LISTA_DE_ARCHIVOS_PAGINADA' })
   async findAll(@Query() filterDto: FileListFilterDto) {
@@ -88,7 +89,7 @@ export class ArchivoController {
   }
 
   @Get(':id')
-  @RequirePermissions('archivos:ver')
+  @RequirePermissions(PERMISSIONS.archivos.ver)
   @ApiOperation({ summary: 'Obtener metadata de un archivo por ID' })
   @ApiResponse({ status: 200, description: 'docs.DETALLES_DEL_ARCHIVO' })
   async findOne(
@@ -107,7 +108,7 @@ export class ArchivoController {
   }
 
   @Delete(':id')
-  @RequirePermissions('archivos:eliminar')
+  @RequirePermissions(PERMISSIONS.archivos.eliminar)
   @ApiOperation({ summary: 'Eliminar un archivo (soft-delete)' })
   @ApiResponse({
     status: 204,

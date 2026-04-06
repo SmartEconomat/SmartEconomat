@@ -5,6 +5,146 @@ import { eventBus, AUTH_EVENTS } from '../utils/eventBus';
  */
 
 const API_BASE = '/api/v1';
+const INVALID_ID_TOKENS = new Set(['', 'undefined', 'null', 'nan']);
+
+function isIdLikeKey(key: string): boolean {
+  return /^(id|.*Id|.*Ids|.*_id|.*_ids)$/.test(key);
+}
+
+function isInvalidIdToken(value: string): boolean {
+  const normalizedValue = value.trim().toLowerCase();
+  return (
+    INVALID_ID_TOKENS.has(normalizedValue) || normalizedValue.startsWith(':')
+  );
+}
+
+function parseJsonBody(body: BodyInit | null | undefined): unknown | null {
+  if (!body || typeof body !== 'string') {
+    return null;
+  }
+
+  try {
+    return JSON.parse(body);
+  } catch {
+    return null;
+  }
+}
+
+function findInvalidIdInValue(
+  value: unknown,
+  location: string = 'body'
+): string | null {
+  if (Array.isArray(value)) {
+    for (let index = 0; index < value.length; index += 1) {
+      const item = value[index];
+      const nestedLocation = `${location}[${index}]`;
+      const nestedIssue = findInvalidIdInValue(item, nestedLocation);
+      if (nestedIssue) {
+        return nestedIssue;
+      }
+    }
+
+    return null;
+  }
+
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  for (const [key, nestedValue] of Object.entries(value)) {
+    const nextLocation = `${location}.${key}`;
+
+    if (isIdLikeKey(key)) {
+      if (Array.isArray(nestedValue)) {
+        for (let index = 0; index < nestedValue.length; index += 1) {
+          const item = nestedValue[index];
+          if (
+            item == null ||
+            (typeof item === 'number' && Number.isNaN(item)) ||
+            (typeof item === 'string' && isInvalidIdToken(item))
+          ) {
+            return `${nextLocation}[${index}]`;
+          }
+        }
+      } else if (
+        nestedValue == null ||
+        (typeof nestedValue === 'number' && Number.isNaN(nestedValue)) ||
+        (typeof nestedValue === 'string' && isInvalidIdToken(nestedValue))
+      ) {
+        return nextLocation;
+      }
+    }
+
+    const nestedIssue = findInvalidIdInValue(nestedValue, nextLocation);
+    if (nestedIssue) {
+      return nestedIssue;
+    }
+  }
+
+  return null;
+}
+
+function findInvalidIdInPath(path: string): string | null {
+  const [pathname, rawQuery = ''] = path.split('?');
+  const pathSegments = pathname.split('/');
+
+  for (let index = 1; index < pathSegments.length; index += 1) {
+    const segment = decodeURIComponent(pathSegments[index] || '').trim();
+    const nextSegment = pathSegments[index + 1];
+
+    if (!segment) {
+      if (nextSegment) {
+        return `path segment ${index}`;
+      }
+      continue;
+    }
+
+    if (isInvalidIdToken(segment)) {
+      return `path segment ${index}`;
+    }
+  }
+
+  const queryParams = new URLSearchParams(rawQuery);
+  for (const [key, value] of Array.from(queryParams.entries())) {
+    if (!isIdLikeKey(key)) {
+      continue;
+    }
+
+    if (key.endsWith('Ids') || key.endsWith('_ids')) {
+      const ids = value.split(',');
+      for (let index = 0; index < ids.length; index += 1) {
+        const item = ids[index];
+        if (isInvalidIdToken(item)) {
+          return `query.${key}[${index}]`;
+        }
+      }
+      continue;
+    }
+
+    if (isInvalidIdToken(value)) {
+      return `query.${key}`;
+    }
+  }
+
+  return null;
+}
+
+function getRequestContractIssue(
+  path: string,
+  body: BodyInit | null | undefined
+): string | null {
+  const pathIssue = findInvalidIdInPath(path);
+  if (pathIssue) {
+    return pathIssue;
+  }
+
+  const jsonBody = parseJsonBody(body);
+  if (!jsonBody) {
+    return null;
+  }
+
+  return findInvalidIdInValue(jsonBody);
+}
 
 export function resolveStoredFileUrl(filePath?: string | null): string {
   if (!filePath) return '';
@@ -160,6 +300,15 @@ export async function baseFetch(
   path: string,
   options: RequestInit = {}
 ): Promise<Response> {
+  const requestContractIssue = getRequestContractIssue(path, options.body);
+  if (requestContractIssue) {
+    throw new ApiError(
+      `Solicitud inválida antes de enviar al backend: id vacío o no resuelto en ${requestContractIssue}.`,
+      400,
+      { path, issue: requestContractIssue }
+    );
+  }
+
   const headers = new Headers(options.headers);
 
   // Protección CSRF: Añadir token desde la cookie si existe

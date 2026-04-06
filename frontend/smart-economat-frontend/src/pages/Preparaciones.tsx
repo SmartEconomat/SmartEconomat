@@ -22,6 +22,11 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import LocalDiningIcon from '@mui/icons-material/LocalDining';
 import HistoryIcon from '@mui/icons-material/History';
+import ReportProblemIcon from '@mui/icons-material/ReportProblem';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 import DataTable, { Column } from '../components/ui/DataTable';
 import PageToolbar from '../components/ui/PageToolbar';
 import {
@@ -31,6 +36,9 @@ import {
   TipoConsumoProduccion,
 } from '../services/produccion.service';
 import DetailModal, { DetailSection } from '../components/ui/DetailModal';
+import { getRecetaDetalle } from '../services/receta.service';
+import { createMermaProduccion } from '../services/merma.service';
+import { MotivoMerma } from '../services/merma.types';
 import { useToast } from '../store/toast.hooks';
 import {
   formatLocalizedNumber,
@@ -41,7 +49,52 @@ import {
 const formatAmount = (value?: number): string =>
   formatLocalizedNumber(value ?? 0, 3);
 
-const formatRations = (value?: number): string => formatAmount(value);
+const formatDateTime = (value?: string | null): string => {
+  if (!value) {
+    return '—';
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return '—';
+  }
+
+  return parsed.toLocaleString();
+};
+
+const RATION_STEP = 0.5;
+const CONSUMPTION_FLOAT_TOLERANCE = 0.000001;
+
+const getAmountConsumptionStep = (
+  rationAmount?: number | null
+): number | null => {
+  if (!rationAmount || !Number.isFinite(rationAmount) || rationAmount <= 0) {
+    return null;
+  }
+
+  return rationAmount * RATION_STEP;
+};
+
+const normalizeRationStep = (value?: number): number => {
+  const numericValue = typeof value === 'number' ? value : Number(value);
+  const safeValue = Number.isFinite(numericValue)
+    ? Math.max(0, numericValue)
+    : 0;
+
+  return Math.floor(safeValue / RATION_STEP) * RATION_STEP;
+};
+
+const formatRations = (value?: number): string =>
+  formatLocalizedNumber(normalizeRationStep(value), 1);
+
+const isMultipleOfAmount = (value: number, step: number): boolean => {
+  if (!Number.isFinite(value) || !Number.isFinite(step) || step <= 0) {
+    return false;
+  }
+
+  const ratio = value / step;
+  return Math.abs(ratio - Math.round(ratio)) <= CONSUMPTION_FLOAT_TOLERANCE;
+};
 
 const getRationAmount = (lote?: ProduccionLote): number | null => {
   if (!lote?.receta) {
@@ -72,7 +125,8 @@ const getAvailableAmountLabel = (lote?: ProduccionLote): string | null => {
     return null;
   }
 
-  return `${formatAmount(rationAmount * Number(availablePortions))} ${unit}`;
+  const normalizedPortions = normalizeRationStep(Number(availablePortions));
+  return `${formatAmount(rationAmount * normalizedPortions)} ${unit}`;
 };
 
 const formatRationInfo = (
@@ -97,6 +151,75 @@ const formatRationInfo = (
     : `${portionsLabel} raciones equivalen a ${totalLabel} ${unit}.`;
 };
 
+type MermaUnitInfo = {
+  fullLabel: string;
+  shortLabel: string;
+  example: string;
+  note?: string;
+};
+
+const getMermaUnitInfo = (rawUnit?: string): MermaUnitInfo => {
+  const unit = rawUnit?.toLowerCase();
+
+  switch (unit) {
+    case 'g':
+      return {
+        fullLabel: 'gramos (g)',
+        shortLabel: 'g',
+        example: '250',
+      };
+    case 'kg':
+      return {
+        fullLabel: 'kilogramos (kg)',
+        shortLabel: 'kg',
+        example: '0,5',
+      };
+    case 'ml':
+      return {
+        fullLabel: 'mililitros (ml)',
+        shortLabel: 'ml',
+        example: '200',
+      };
+    case 'l':
+      return {
+        fullLabel: 'litros (l)',
+        shortLabel: 'l',
+        example: '1',
+      };
+    case 'cda':
+      return {
+        fullLabel: 'cucharadas (cda)',
+        shortLabel: 'cda',
+        example: '2',
+      };
+    case 'cdta':
+      return {
+        fullLabel: 'cucharaditas (cdta)',
+        shortLabel: 'cdta',
+        example: '2',
+      };
+    case 'pieza':
+      return {
+        fullLabel: 'unidades (pieza/manojo)',
+        shortLabel: 'unidad',
+        example: '1',
+        note: 'Si el ingrediente se maneja por manojos, cuenta 1 manojo como 1 unidad.',
+      };
+    default:
+      return {
+        fullLabel: 'unidad del ingrediente',
+        shortLabel: 'unidad',
+        example: '1',
+      };
+  }
+};
+
+type MermaIngredienteOption = {
+  productoId: string;
+  productoNombre: string;
+  unidad?: string;
+};
+
 const Preparaciones: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -112,13 +235,26 @@ const Preparaciones: React.FC = () => {
     useState<TipoConsumoProduccion>('raciones');
   const [portionsInput, setPortionsInput] = useState('1');
   const [amountInput, setAmountInput] = useState('1');
+  const [mermaLote, setMermaLote] = useState<ProduccionLote | null>(null);
+  const [mermaIngredientes, setMermaIngredientes] = useState<
+    MermaIngredienteOption[]
+  >([]);
+  const [mermaProductoId, setMermaProductoId] = useState('');
+  const [mermaCantidadInput, setMermaCantidadInput] = useState('');
+  const [mermaMotivo, setMermaMotivo] = useState<MotivoMerma>(
+    MotivoMerma.ERROR_PREPARACION
+  );
+  const [mermaNotas, setMermaNotas] = useState('');
+  const [mermaLoadError, setMermaLoadError] = useState<string | null>(null);
+  const [isLoadingMermaDetalle, setIsLoadingMermaDetalle] = useState(false);
+  const [isSubmittingMerma, setIsSubmittingMerma] = useState(false);
   const toast = useToast();
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const estado = activeTab === 0 ? 'disponible' : 'agotado';
+      const estado = activeTab === 0 ? 'sin_consumo' : 'consumido';
       const response = await fetchProducciones(page, pageSize, estado);
       setData(response.data);
       setTotalPages(response.totalPages);
@@ -142,20 +278,56 @@ const Preparaciones: React.FC = () => {
   const availablePortions = consumingItem
     ? Number(consumingItem.porcionesRestantes) || 0
     : 0;
+  const availableRationPortions = normalizeRationStep(availablePortions);
   const rationAmount = getRationAmount(consumingItem ?? undefined);
+  const amountConsumptionStep = getAmountConsumptionStep(rationAmount);
   const maxConsumableAmount = rationAmount
-    ? availablePortions * rationAmount
+    ? availableRationPortions * rationAmount
     : null;
   const parsedPortions = parseLocalizedNumber(portionsInput);
   const parsedAmount = parseLocalizedNumber(amountInput);
   const currentValue =
     consumeMode === 'raciones' ? parsedPortions : parsedAmount;
   const currentMax =
-    consumeMode === 'raciones' ? availablePortions : maxConsumableAmount;
+    consumeMode === 'raciones' ? availableRationPortions : maxConsumableAmount;
+  const isAmountModeWithoutEquivalence =
+    consumeMode === 'cantidad' && rationAmount === null;
+  const isAmountMultipleInvalid =
+    consumeMode === 'cantidad' &&
+    currentValue !== null &&
+    amountConsumptionStep !== null &&
+    !isMultipleOfAmount(currentValue, amountConsumptionStep);
   const isCurrentValueInvalid =
     currentValue === null ||
     currentValue <= 0 ||
-    (currentMax !== null && currentValue > currentMax);
+    (currentMax !== null && currentValue > currentMax) ||
+    isAmountModeWithoutEquivalence ||
+    isAmountMultipleInvalid;
+  const mermaCantidad = parseLocalizedNumber(mermaCantidadInput);
+  const isMermaFormInvalid =
+    !mermaLote ||
+    !mermaProductoId ||
+    mermaCantidad === null ||
+    mermaCantidad <= 0 ||
+    isLoadingMermaDetalle ||
+    isSubmittingMerma;
+  const selectedMermaIngrediente =
+    mermaIngredientes.find((item) => item.productoId === mermaProductoId) ??
+    null;
+  const selectedMermaUnitInfo = getMermaUnitInfo(
+    selectedMermaIngrediente?.unidad
+  );
+  const isMermaCantidadInvalid =
+    mermaCantidadInput.length > 0 &&
+    (mermaCantidad === null || mermaCantidad <= 0);
+  const mermaCantidadLabel = selectedMermaIngrediente
+    ? `¿Cuánto se perdió? (${selectedMermaUnitInfo.fullLabel})`
+    : '¿Cuánto se perdió?';
+  const mermaCantidadHelperText = isMermaCantidadInvalid
+    ? 'Introduce un número mayor que 0.'
+    : selectedMermaIngrediente
+      ? `Registra la merma en ${selectedMermaUnitInfo.fullLabel}. Ejemplo: ${selectedMermaUnitInfo.example} ${selectedMermaUnitInfo.shortLabel}.`
+      : 'Selecciona primero el ingrediente para ver en qué medida registrar la merma.';
 
   const notifyExceededMax = useCallback(
     (mode: TipoConsumoProduccion) => {
@@ -189,9 +361,14 @@ const Preparaciones: React.FC = () => {
         }
 
         const parsedValue = parseLocalizedNumber(sanitized);
-        if (parsedValue !== null && parsedValue > availablePortions) {
-          setPortionsInput(formatLocalizedNumber(availablePortions, 3));
+        if (parsedValue !== null && parsedValue > availableRationPortions) {
+          setPortionsInput(formatRations(availableRationPortions));
           notifyExceededMax(mode);
+          return;
+        }
+
+        if (parsedValue !== null) {
+          setPortionsInput(formatRations(parsedValue));
           return;
         }
 
@@ -217,7 +394,7 @@ const Preparaciones: React.FC = () => {
 
       setAmountInput(sanitized);
     },
-    [availablePortions, maxConsumableAmount, notifyExceededMax]
+    [availableRationPortions, maxConsumableAmount, notifyExceededMax]
   );
 
   const handleConsume = async () => {
@@ -226,6 +403,20 @@ const Preparaciones: React.FC = () => {
     }
 
     if (isCurrentValueInvalid || currentValue === null) {
+      if (isAmountModeWithoutEquivalence) {
+        toast.error(
+          'Esta receta no tiene una equivalencia válida por ración para consumir por cantidad o peso.'
+        );
+        return;
+      }
+
+      if (isAmountMultipleInvalid && rationAmount) {
+        toast.error(
+          `La cantidad debe ser múltiplo de ${formatAmount(rationAmount)} ${consumingItem?.receta?.unidadResultado || 'unidad'}.`
+        );
+        return;
+      }
+
       if (
         currentMax !== null &&
         currentValue !== null &&
@@ -262,11 +453,124 @@ const Preparaciones: React.FC = () => {
     }
   };
 
+  const resetMermaForm = useCallback(() => {
+    setMermaIngredientes([]);
+    setMermaProductoId('');
+    setMermaCantidadInput('');
+    setMermaMotivo(MotivoMerma.ERROR_PREPARACION);
+    setMermaNotas('');
+    setMermaLoadError(null);
+    setIsLoadingMermaDetalle(false);
+    setIsSubmittingMerma(false);
+  }, []);
+
+  const closeMermaDialog = useCallback(() => {
+    setMermaLote(null);
+    resetMermaForm();
+  }, [resetMermaForm]);
+
+  const openMermaDialog = useCallback(
+    async (lote: ProduccionLote) => {
+      setMermaLote(lote);
+      resetMermaForm();
+
+      const ingredientesDesdeLote = (lote.receta?.ingredientes || [])
+        .filter((item) => Boolean(item?.producto?.id))
+        .map((item) => ({
+          productoId: String(item.producto?.id),
+          productoNombre: item.producto?.nombre || 'Ingrediente',
+          unidad: item.unidad,
+        }));
+
+      if (ingredientesDesdeLote.length > 0) {
+        setMermaIngredientes(ingredientesDesdeLote);
+        setMermaProductoId(ingredientesDesdeLote[0].productoId);
+        return;
+      }
+
+      const recetaId = lote.recetaId || lote.receta?.id;
+      if (!recetaId) {
+        setMermaLoadError(
+          'No se pudo resolver la receta del lote para cargar ingredientes.'
+        );
+        return;
+      }
+
+      setIsLoadingMermaDetalle(true);
+
+      try {
+        const detalle = await getRecetaDetalle(recetaId);
+        const ingredientes = (detalle.detalleIngredientes || [])
+          .filter((item) => Boolean(item.productoId))
+          .map((item) => ({
+            productoId: item.productoId,
+            productoNombre: item.productoNombre,
+            unidad: item.unidad,
+          }));
+
+        setMermaIngredientes(ingredientes);
+        if (ingredientes.length > 0) {
+          setMermaProductoId(ingredientes[0].productoId);
+        }
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error && err.message
+            ? err.message
+            : 'No se pudo cargar el detalle de ingredientes para reportar merma.';
+        setMermaLoadError(message);
+      } finally {
+        setIsLoadingMermaDetalle(false);
+      }
+    },
+    [resetMermaForm]
+  );
+
+  const handleSubmitMerma = async () => {
+    if (!mermaLote) {
+      toast.error('Selecciona un lote de producción válido.');
+      return;
+    }
+
+    if (!mermaProductoId) {
+      toast.error('Selecciona el ingrediente con merma.');
+      return;
+    }
+
+    if (mermaCantidad === null || mermaCantidad <= 0) {
+      toast.error('Introduce una cantidad de merma mayor que 0.');
+      return;
+    }
+
+    setIsSubmittingMerma(true);
+    try {
+      await createMermaProduccion({
+        produccionLoteId: mermaLote.id,
+        productoId: mermaProductoId,
+        cantidad: mermaCantidad,
+        motivo: mermaMotivo,
+        notas: mermaNotas.trim() || undefined,
+      });
+
+      toast.success('Merma de producción registrada correctamente.');
+      closeMermaDialog();
+      await loadData();
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'No se pudo registrar la merma de producción.';
+      toast.error(message);
+    } finally {
+      setIsSubmittingMerma(false);
+    }
+  };
+
   const columns: Column<ProduccionLote>[] = [
     {
-      id: 'fechaProduccion',
-      label: 'Fecha',
-      render: (row) => new Date(row.fechaProduccion).toLocaleString(),
+      id: 'createdAt',
+      label: 'Fecha creación',
+      render: (row) => formatDateTime(row.createdAt || row.fechaProduccion),
+      hideOnMobile: true,
     },
     {
       id: 'receta',
@@ -291,24 +595,47 @@ const Preparaciones: React.FC = () => {
       render: (row) => row.usuario?.nombre ?? '—',
       hideOnMobile: true,
     },
-    {
-      id: 'porcionesRestantes',
-      label: 'Raciones',
-      align: 'right',
-      render: (row) => (
-        <Typography
-          variant="body2"
-          sx={{
-            fontWeight: 'bold',
-            color:
-              row.estado === 'disponible' ? 'success.main' : 'text.disabled',
-          }}
-        >
-          {formatRations(row.porcionesRestantes)} /{' '}
-          {formatRations(row.porcionesProducidas)}
-        </Typography>
-      ),
-    },
+    ...(activeTab === 1
+      ? [
+          {
+            id: 'fechaAgotado' as const,
+            label: 'Fecha agotado',
+            render: (row: ProduccionLote) =>
+              row.estado === 'agotado'
+                ? formatDateTime(row.fechaAgotado || null)
+                : '—',
+            hideOnMobile: true,
+          },
+        ]
+      : []),
+    ...(activeTab === 0
+      ? [
+          {
+            id: 'porcionesRestantes' as const,
+            label: 'Raciones disponibles',
+            align: 'right' as const,
+            render: (row: ProduccionLote) => (
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 'bold', color: 'success.main' }}
+              >
+                {formatRations(row.porcionesRestantes)}
+              </Typography>
+            ),
+          },
+        ]
+      : [
+          {
+            id: 'porcionesProducidas' as const,
+            label: 'Raciones preparadas',
+            align: 'right' as const,
+            render: (row: ProduccionLote) => (
+              <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                {formatRations(row.porcionesProducidas)}
+              </Typography>
+            ),
+          },
+        ]),
   ];
 
   const renderActions = (row: ProduccionLote) => (
@@ -326,7 +653,7 @@ const Preparaciones: React.FC = () => {
           <VisibilityIcon fontSize="small" />
         </IconButton>
       </Tooltip>
-      {row.estado === 'disponible' && (
+      {activeTab === 0 && row.estado === 'disponible' && (
         <Tooltip title="Consumir raciones o cantidad">
           <IconButton
             color="success"
@@ -340,8 +667,24 @@ const Preparaciones: React.FC = () => {
               setConsumeMode('raciones');
             }}
             size="small"
+            aria-label="Consumir preparación"
           >
             <LocalDiningIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
+      {activeTab === 0 && row.estado === 'disponible' && (
+        <Tooltip title="Reportar merma de ingrediente">
+          <IconButton
+            color="warning"
+            onClick={(e) => {
+              e.currentTarget.blur();
+              void openMermaDialog(row);
+            }}
+            size="small"
+            aria-label="Reportar merma de ingrediente"
+          >
+            <ReportProblemIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       )}
@@ -357,16 +700,38 @@ const Preparaciones: React.FC = () => {
             { label: 'Receta', value: itemToView.receta?.nombre },
             {
               label: 'Fecha de ejecución',
-              value: new Date(itemToView.fechaProduccion).toLocaleString(),
+              value: formatDateTime(itemToView.fechaProduccion),
+            },
+            {
+              label: 'Fecha de creación',
+              value: formatDateTime(
+                itemToView.createdAt || itemToView.fechaProduccion
+              ),
+            },
+            {
+              label: 'Fecha de agotado',
+              value:
+                itemToView.estado === 'agotado'
+                  ? formatDateTime(itemToView.fechaAgotado || null)
+                  : 'Aún disponible',
             },
             {
               label: 'Cantidad Producida',
               value: itemToView.cantidadProducida,
             },
-            {
-              label: 'Raciones disponibles',
-              value: `${formatRations(itemToView.porcionesRestantes)} / ${formatRations(itemToView.porcionesProducidas)}`,
-            },
+            ...(activeTab === 0
+              ? [
+                  {
+                    label: 'Raciones disponibles',
+                    value: `${formatRations(itemToView.porcionesRestantes)} raciones`,
+                  },
+                ]
+              : [
+                  {
+                    label: 'Raciones preparadas',
+                    value: `${formatRations(itemToView.porcionesProducidas)} raciones`,
+                  },
+                ]),
             {
               label: 'Coste Total Real',
               value: `${Number(itemToView.costeTotalReal).toFixed(4)}€`,
@@ -477,7 +842,7 @@ const Preparaciones: React.FC = () => {
               >
                 <Typography variant="body2" sx={{ fontWeight: 700 }}>
                   Disponibles: {formatRations(consumingItem.porcionesRestantes)}{' '}
-                  de {formatRations(consumingItem.porcionesProducidas)} raciones
+                  raciones
                 </Typography>
                 {getAvailableAmountLabel(consumingItem) && (
                   <Typography
@@ -508,7 +873,11 @@ const Preparaciones: React.FC = () => {
                         consumingItem,
                         parsedPortions ?? undefined
                       )
-                    : `${formatAmount(parsedAmount ?? 0)} ${consumingItem.receta?.unidadResultado || ''} a consumir.`}
+                    : isAmountModeWithoutEquivalence
+                      ? 'Esta receta no admite consumo por cantidad o peso.'
+                      : isAmountMultipleInvalid && amountConsumptionStep
+                        ? `La cantidad debe ser múltiplo de ${formatAmount(amountConsumptionStep)} ${consumingItem.receta?.unidadResultado || 'unidad'}.`
+                        : `${formatAmount(parsedAmount ?? 0)} ${consumingItem.receta?.unidadResultado || ''} a consumir.`}
                 </Typography>
               </Box>
             )}
@@ -527,7 +896,9 @@ const Preparaciones: React.FC = () => {
               sx={{ mb: 2 }}
             >
               <ToggleButton value="raciones">Por raciones</ToggleButton>
-              <ToggleButton value="cantidad">Por cantidad/peso</ToggleButton>
+              <ToggleButton value="cantidad" disabled={rationAmount === null}>
+                Por cantidad/peso
+              </ToggleButton>
             </ToggleButtonGroup>
             <TextField
               fullWidth
@@ -545,7 +916,11 @@ const Preparaciones: React.FC = () => {
               helperText={
                 consumeMode === 'raciones'
                   ? `Máximo disponible: ${formatRations(availablePortions)} raciones.`
-                  : `Máximo disponible: ${formatAmount(maxConsumableAmount ?? 0)} ${consumingItem?.receta?.unidadResultado || ''}.`
+                  : isAmountModeWithoutEquivalence
+                    ? 'Esta receta no tiene una equivalencia válida por ración para consumir por cantidad o peso.'
+                    : isAmountMultipleInvalid && amountConsumptionStep
+                      ? `Debe ser múltiplo de ${formatAmount(amountConsumptionStep)} ${consumingItem?.receta?.unidadResultado || 'unidad'}.`
+                      : `Máximo disponible: ${formatAmount(maxConsumableAmount ?? 0)} ${consumingItem?.receta?.unidadResultado || ''}.`
               }
               inputProps={{ inputMode: 'decimal' }}
               margin="dense"
@@ -560,6 +935,158 @@ const Preparaciones: React.FC = () => {
               disabled={isCurrentValueInvalid}
             >
               Confirmar Consumo
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={!!mermaLote}
+          onClose={closeMermaDialog}
+          fullWidth
+          maxWidth="sm"
+        >
+          <DialogTitle>Reportar merma de producción</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" sx={{ mb: 2 }}>
+              Registra la merma real de un ingrediente usado en esta preparación
+              sin alterar estados históricos del lote.
+            </Typography>
+
+            {mermaLote && (
+              <Box
+                sx={{
+                  mb: 2,
+                  p: 1.5,
+                  borderRadius: 2,
+                  bgcolor: 'action.hover',
+                }}
+              >
+                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                  Lote: {mermaLote.id}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Receta: {mermaLote.receta?.nombre || '—'}
+                </Typography>
+              </Box>
+            )}
+
+            {isLoadingMermaDetalle ? (
+              <Typography variant="body2" color="text.secondary">
+                Cargando ingredientes de la receta...
+              </Typography>
+            ) : mermaLoadError ? (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {mermaLoadError}
+              </Alert>
+            ) : mermaIngredientes.length === 0 ? (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                No se encontraron ingredientes válidos para reportar merma en
+                este lote.
+              </Alert>
+            ) : (
+              <>
+                <FormControl fullWidth margin="dense">
+                  <InputLabel id="merma-ingrediente-label">
+                    Ingrediente
+                  </InputLabel>
+                  <Select
+                    labelId="merma-ingrediente-label"
+                    label="Ingrediente"
+                    value={mermaProductoId}
+                    onChange={(event) =>
+                      setMermaProductoId(String(event.target.value))
+                    }
+                  >
+                    {mermaIngredientes.map((ingrediente) => (
+                      <MenuItem
+                        key={ingrediente.productoId}
+                        value={ingrediente.productoId}
+                      >
+                        {ingrediente.productoNombre} ·{' '}
+                        {getMermaUnitInfo(ingrediente.unidad).fullLabel}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                {selectedMermaIngrediente && (
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mt: 0.5, mb: 1 }}
+                  >
+                    Se registrará en {selectedMermaUnitInfo.fullLabel}.
+                    {selectedMermaUnitInfo.note
+                      ? ` ${selectedMermaUnitInfo.note}`
+                      : ''}
+                  </Typography>
+                )}
+
+                <TextField
+                  fullWidth
+                  margin="dense"
+                  label={mermaCantidadLabel}
+                  value={mermaCantidadInput}
+                  placeholder={`Ejemplo: ${selectedMermaUnitInfo.example}`}
+                  inputProps={{ inputMode: 'decimal' }}
+                  onChange={(event) => {
+                    const sanitized = sanitizeLocalizedDecimalInput(
+                      event.target.value
+                    );
+                    setMermaCantidadInput(sanitized);
+                  }}
+                  error={isMermaCantidadInvalid}
+                  helperText={mermaCantidadHelperText}
+                />
+
+                <FormControl fullWidth margin="dense">
+                  <InputLabel id="merma-motivo-label">Motivo</InputLabel>
+                  <Select
+                    labelId="merma-motivo-label"
+                    label="Motivo"
+                    value={mermaMotivo}
+                    onChange={(event) =>
+                      setMermaMotivo(event.target.value as MotivoMerma)
+                    }
+                  >
+                    <MenuItem value={MotivoMerma.ERROR_PREPARACION}>
+                      Error de preparación
+                    </MenuItem>
+                    <MenuItem value={MotivoMerma.ROTURA}>Rotura</MenuItem>
+                    <MenuItem value={MotivoMerma.DETERIORO}>
+                      Deterioro / Caducidad
+                    </MenuItem>
+                    <MenuItem value={MotivoMerma.HURTO}>
+                      Hurto / Pérdida
+                    </MenuItem>
+                    <MenuItem value={MotivoMerma.OTROS}>Otros</MenuItem>
+                  </Select>
+                </FormControl>
+
+                <TextField
+                  fullWidth
+                  margin="dense"
+                  multiline
+                  minRows={2}
+                  maxRows={4}
+                  label="Observaciones"
+                  value={mermaNotas}
+                  onChange={(event) => setMermaNotas(event.target.value)}
+                />
+              </>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={closeMermaDialog} disabled={isSubmittingMerma}>
+              Cancelar
+            </Button>
+            <Button
+              variant="contained"
+              color="warning"
+              onClick={handleSubmitMerma}
+              disabled={isMermaFormInvalid}
+            >
+              Registrar merma
             </Button>
           </DialogActions>
         </Dialog>

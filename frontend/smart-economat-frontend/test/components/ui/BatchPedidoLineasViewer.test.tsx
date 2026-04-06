@@ -9,6 +9,8 @@ import {
 import BatchPedidoLineasViewer from '../../../src/components/ui/BatchPedidoLineasViewer';
 import {
   EstadoPedido,
+  EstadoPedidoUsuario,
+  PedidoUsuario,
   PurchaseBatch,
 } from '../../../src/services/pedido.types';
 import * as apiService from '../../../src/services/api.service';
@@ -33,23 +35,31 @@ describe('BatchPedidoLineasViewer', () => {
     pedidos: [
       {
         id: 'ped-1',
-        estado: EstadoPedido.PENDIENTE,
+        fechaPedido: '2026-04-01T10:00:00.000Z',
+        estado: EstadoPedido.PENDIENTE_DE_APROBACION,
         costeTotal: 100,
-        proveedor: { nombre: 'Proveedor A' },
+        proveedor: { id: 'prov-a', nombre: 'Proveedor A' },
         pedidoProductos: [
           {
             id: 'pp-1',
+            productoProveedorId: 'pp-1',
             cantidad: 10,
             precioUnitario: 10,
-            productoProveedor: { producto: { nombre: 'Producto A' } },
+            productoProveedor: {
+              id: 'pp-1',
+              precioUnitario: 10,
+              producto: { id: 'prod-a', nombre: 'Producto A' },
+              proveedor: { id: 'prov-a', nombre: 'Proveedor A' },
+            },
           },
         ],
       },
       {
         id: 'ped-2',
+        fechaPedido: '2026-04-01T10:00:00.000Z',
         estado: EstadoPedido.CANCELADO,
         costeTotal: 50,
-        proveedor: { nombre: 'Proveedor B' },
+        proveedor: { id: 'prov-b', nombre: 'Proveedor B' },
         pedidoProductos: [],
       },
     ],
@@ -57,17 +67,23 @@ describe('BatchPedidoLineasViewer', () => {
 
   it('debería renderizar la información del lote y pedidos', () => {
     render(
-      <BatchPedidoLineasViewer batch={mockBatch as unknown as PurchaseBatch} />
+      <BatchPedidoLineasViewer
+        batch={mockBatch as unknown as PurchaseBatch}
+        mode="batch"
+      />
     );
 
     expect(screen.getByText('Lote de prueba')).toBeDefined();
-    expect(screen.getByText('Proveedor A')).toBeDefined();
+    expect(screen.getByRole('heading', { name: 'Proveedor A' })).toBeDefined();
     expect(screen.getByText('TOTAL COMPRA: 150.00 €')).toBeDefined();
   });
 
   it('debería filtrar pedidos cancelados al desmarcar el checkbox', () => {
     render(
-      <BatchPedidoLineasViewer batch={mockBatch as unknown as PurchaseBatch} />
+      <BatchPedidoLineasViewer
+        batch={mockBatch as unknown as PurchaseBatch}
+        mode="batch"
+      />
     );
 
     // Por defecto están incluidos. Total 150.
@@ -78,12 +94,15 @@ describe('BatchPedidoLineasViewer', () => {
 
     // Ahora excluidos. Solo queda ped-1 (100).
     expect(screen.getByText('TOTAL COMPRA: 100.00 €')).toBeDefined();
-    expect(screen.queryByText('Proveedor B')).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Proveedor B' })).toBeNull();
   });
 
   it('debería llamar a downloadFile al pulsar el icono de PDF', async () => {
     render(
-      <BatchPedidoLineasViewer batch={mockBatch as unknown as PurchaseBatch} />
+      <BatchPedidoLineasViewer
+        batch={mockBatch as unknown as PurchaseBatch}
+        mode="batch"
+      />
     );
 
     const pdfButton = screen.getByTestId('PictureAsPdfIcon').parentElement!;
@@ -98,5 +117,80 @@ describe('BatchPedidoLineasViewer', () => {
         'reporte-lote-batch-1.pdf'
       );
     });
+  });
+
+  it('usa el endpoint de pedido-usuario cuando el detalle visible se identifica como pedido_usuario', async () => {
+    const pedidoVisible = {
+      id: 'pedido-usuario-1',
+      numeroGlobal: '42',
+      fechaPedido: '2026-04-01T10:00:00.000Z',
+      costeTotal: 100,
+      estado: EstadoPedidoUsuario.PENDIENTE,
+      pedidos: mockBatch.pedidos,
+    } satisfies PedidoUsuario;
+
+    render(<BatchPedidoLineasViewer batch={pedidoVisible} mode="pedido" />);
+
+    expect(screen.getByText('TOTAL: 150.00 €')).toBeDefined();
+
+    const pdfButton = screen.getByTestId('PictureAsPdfIcon').parentElement!;
+
+    await act(async () => {
+      fireEvent.click(pdfButton);
+    });
+
+    await waitFor(() => {
+      expect(apiService.downloadFile).toHaveBeenCalledWith(
+        expect.stringContaining('/pedido-usuarios/pedido-usuario-1/pdf'),
+        'pedido-pedido-u.pdf'
+      );
+    });
+  });
+
+  it('muestra todos los pedidos proveedor en compra aunque compartan pedido visible', () => {
+    const batchMultiProveedor = {
+      id: 'batch-2',
+      observaciones: 'Compra multi proveedor',
+      pedidos: [
+        {
+          id: 'ped-prov-1',
+          numeroGlobal: '200001',
+          numeroPedidoProveedor: '200001',
+          numeroPedidoVisible: '42',
+          referenciaPedidoVisible: 'PU-42',
+          fechaPedido: '2026-04-02T10:00:00.000Z',
+          estado: EstadoPedido.POR_RECEPCIONAR,
+          costeTotal: 10,
+          proveedor: { id: 'prov-a', nombre: 'Proveedor A' },
+          pedidoUsuario: { id: 'pu-42', numeroGlobal: '42' },
+          pedidoProductos: [],
+        },
+        {
+          id: 'ped-prov-2',
+          numeroGlobal: '200002',
+          numeroPedidoProveedor: '200002',
+          numeroPedidoVisible: '42',
+          referenciaPedidoVisible: 'PU-42',
+          fechaPedido: '2026-04-02T10:00:00.000Z',
+          estado: EstadoPedido.POR_RECEPCIONAR,
+          costeTotal: 15,
+          proveedor: { id: 'prov-b', nombre: 'Proveedor B' },
+          pedidoUsuario: { id: 'pu-42', numeroGlobal: '42' },
+          pedidoProductos: [],
+        },
+      ],
+    };
+
+    render(
+      <BatchPedidoLineasViewer
+        batch={batchMultiProveedor as unknown as PurchaseBatch}
+        mode="batch"
+      />
+    );
+
+    expect(screen.getByText('Pedidos involucrados en la compra')).toBeDefined();
+    expect(screen.getByText('#200001')).toBeDefined();
+    expect(screen.getByText('#200002')).toBeDefined();
+    expect(screen.getAllByText('PU-42').length).toBe(2);
   });
 });

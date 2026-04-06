@@ -21,6 +21,7 @@ import { RequirePermissions } from '../../../common/decorators/require-permissio
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { BaseController } from '../../../common/base/base.controller';
 import { Ubicacion } from '../ubicacion.entity/ubicacion.entity';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 @ApiTags('Ubicaciones')
 @ApiBearerAuth()
@@ -37,14 +38,14 @@ export class UbicacionController extends BaseController<
   }
 
   @Post()
-  @RequirePermissions('ubicaciones:crear')
+  @RequirePermissions(PERMISSIONS.ubicaciones.crear)
   @ApiOperation({ summary: 'Crear nueva ubicación' })
   override create(@Body() createUbicacionDto: CreateUbicacionDto) {
     return super.create(createUbicacionDto);
   }
 
   @Get()
-  @RequirePermissions('ubicaciones:listar')
+  @RequirePermissions(PERMISSIONS.ubicaciones.listar)
   @ApiOperation({ summary: 'Obtener todas las ubicaciones' })
   override findAll(
     @Query() query: PaginationQueryDto,
@@ -54,7 +55,7 @@ export class UbicacionController extends BaseController<
   }
 
   @Get(':id')
-  @RequirePermissions('ubicaciones:ver')
+  @RequirePermissions(PERMISSIONS.ubicaciones.ver)
   @ApiOperation({ summary: 'Obtener ubicación por ID' })
   override findOne(
     @Param('id', ParseUUIDv7Pipe) id: string,
@@ -64,7 +65,7 @@ export class UbicacionController extends BaseController<
   }
 
   @Patch(':id')
-  @RequirePermissions('ubicaciones:editar')
+  @RequirePermissions(PERMISSIONS.ubicaciones.editar)
   @ApiOperation({ summary: 'Actualizar una ubicación' })
   override update(
     @Param('id', ParseUUIDv7Pipe) id: string,
@@ -74,14 +75,14 @@ export class UbicacionController extends BaseController<
   }
 
   @Delete(':id')
-  @RequirePermissions('ubicaciones:eliminar')
+  @RequirePermissions(PERMISSIONS.ubicaciones.eliminar)
   @ApiOperation({ summary: 'Eliminar una ubicación lógica' })
   override remove(@Param('id', ParseUUIDv7Pipe) id: string) {
     return super.remove(id);
   }
 
   @Post(':id/restore')
-  @RequirePermissions('ubicaciones:restaurar')
+  @RequirePermissions(PERMISSIONS.ubicaciones.restaurar)
   @ApiOperation({ summary: 'Restaurar una ubicación eliminada' })
   restore(@Param('id', ParseUUIDv7Pipe) id: string) {
     return this.service.restore(id);

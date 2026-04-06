@@ -19,6 +19,7 @@ import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import CelebrationRoundedIcon from '@mui/icons-material/CelebrationRounded';
 import { useNavigate } from 'react-router-dom';
 import { useAnyPermission, usePermission } from '../../../store/auth.hooks';
+import { PERMISSIONS } from '../../../sherlock-auth/permissions.constants';
 import {
   AppNotification,
   fetchAppNotifications,
@@ -39,10 +40,10 @@ const getNotificationLabel = (priority: AppNotification['priority']) =>
 
 export default function NotificationCenter() {
   const navigate = useNavigate();
-  const canListUsers = usePermission('usuarios:listar');
+  const canListUsers = usePermission(PERMISSIONS.usuarios.listar);
   const canReviewInventoryNotifications = useAnyPermission([
-    'inventario:listar',
-    'inventario:ver',
+    PERMISSIONS.inventario.listar,
+    PERMISSIONS.inventario.ver,
     'inventario:ver_alertas',
   ]);
 

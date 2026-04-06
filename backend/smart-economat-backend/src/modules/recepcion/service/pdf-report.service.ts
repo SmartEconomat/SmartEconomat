@@ -45,6 +45,7 @@ export interface LineaPedidoAgrupada {
 
 export interface PedidoAgrupado {
   id: string;
+  numeroGlobal?: string;
   fecha: Date;
   estado: EstadoPedido;
   motivoCancelacion?: string;
@@ -270,6 +271,7 @@ export class PdfReportService {
       const subtotalPedido = lineas.reduce((sum, l) => sum + l.subtotal, 0);
       group.pedidos.push({
         id: pedido.id,
+        numeroGlobal: pedido.numeroGlobal,
         fecha: pedido.fechaPedido,
         estado: pedido.estado,
         motivoCancelacion: pedido.motivoCancelacion,
@@ -483,8 +485,11 @@ export class PdfReportService {
             .fillColor('#333333')
             .font('Helvetica-BoldOblique')
             .fontSize(FONT_SUMMARY);
+          const pedidoLabel = pedido.numeroGlobal
+            ? `Pedido #${pedido.numeroGlobal}`
+            : `Pedido ${pedido.id.slice(0, 8)}…`;
           doc.text(
-            `Pedido: ${pedido.id.slice(0, 8)}… | Fecha: ${pedido.fecha.toLocaleDateString('es-ES')} | Estado: ${pedido.estado}`,
+            `${pedidoLabel} | Fecha: ${pedido.fecha.toLocaleDateString('es-ES')} | Estado: ${pedido.estado}`,
             MARGIN + 4,
             y
           );
@@ -745,9 +750,8 @@ export class PdfReportService {
       where: { id: recepcionId },
       relations: [
         'usuario',
-        'recepcionesPedidos',
-        'recepcionesPedidos.pedido',
         'recepcionesPedidos.pedido.proveedor',
+        'recepcionProductos.pedidoProducto.productoProveedor.producto',
         'recepcionProductos.pedidoProducto.productoProveedor.producto',
         'recepcionProductos.incidencia',
       ],

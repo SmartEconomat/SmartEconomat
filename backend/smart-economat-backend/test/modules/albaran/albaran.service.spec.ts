@@ -8,7 +8,7 @@ describe('AlbaranService', () => {
     findAndCount: jest.fn(),
     findOne: jest.fn(),
     merge: jest.fn(),
-    delete: jest.fn(),
+    softDelete: jest.fn(),
   };
 
   const mockDataSource = {
@@ -47,6 +47,9 @@ describe('AlbaranService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRepo.save.mockImplementation((value: unknown) =>
+      Promise.resolve(value)
+    );
     service = new AlbaranService(
       mockRepo as any,
       mockDataSource as any,
@@ -56,27 +59,60 @@ describe('AlbaranService', () => {
   });
 
   it('remove lanza NotFoundException si no existe el albarán', async () => {
-    mockRepo.delete.mockResolvedValue({ affected: 0 });
+    mockRepo.findOne.mockResolvedValue(null);
 
     await expect(service.remove('missing-albaran')).rejects.toBeInstanceOf(
       NotFoundException
     );
   });
 
-  it('findAll pagina y ordena por fecha por defecto', async () => {
-    mockRepo.findAndCount.mockResolvedValue([[{ id: 'alb-1' }], 1]);
+  it('findAll deriva la concordancia desde las recepciones vinculadas', async () => {
+    mockRepo.findAndCount.mockResolvedValue([
+      [
+        {
+          id: 'alb-1',
+          concordancia: null,
+          albaranPedidoRecepcion: [
+            {
+              recepcionPedido: {
+                recepcion: {
+                  estado: 'COMPLETADA',
+                  incidencia: false,
+                },
+              },
+            },
+          ],
+        },
+      ],
+      1,
+    ]);
 
     const result = await service.findAll({ page: 1, limit: 20 } as any);
 
     expect(mockRepo.findAndCount).toHaveBeenCalledWith({
-      relations: ['albaranPedidoRecepcion'],
+      relations: [
+        'albaranPedidoRecepcion',
+        'albaranPedidoRecepcion.recepcionPedido',
+        'albaranPedidoRecepcion.recepcionPedido.recepcion',
+      ],
       order: { fecha: 'DESC' },
       skip: 0,
       take: 20,
       withDeleted: false,
     });
+    expect(mockRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'alb-1',
+        concordancia: true,
+      })
+    );
     expect(result).toEqual({
-      data: [{ id: 'alb-1' }],
+      data: [
+        expect.objectContaining({
+          id: 'alb-1',
+          concordancia: true,
+        }),
+      ],
       total: 1,
       page: 1,
       limit: 20,

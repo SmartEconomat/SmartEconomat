@@ -13,7 +13,6 @@ import {
   Snackbar,
   Backdrop,
   Box,
-  SelectChangeEvent,
 } from '@mui/material';
 import { Theme } from '@mui/material/styles';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -36,8 +35,9 @@ import {
   getProductoByBarcode,
   searchProductosByName,
 } from '../services/producto.service';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { usePermission } from '../store/auth.hooks';
+import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 import {
   CategoriaProducto,
   UnidadMedida,
@@ -56,6 +56,7 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import RecepcionDraftConflictDialog from '../components/recepcion/RecepcionDraftConflictDialog';
 import { useRecepcionDraft } from '../hooks/useRecepcionDraft';
 import { delay, serialService } from '../services/serial.service';
+import { formatPedidoListNumber } from '../features/pedidos/utils/pedidoFormatters';
 
 const calculateEstado = (rec: number, ped: number): LineaDraft['estado'] => {
   if (rec === 0) return 'No entregado';
@@ -69,6 +70,22 @@ const isWeightUnit = (unidad: string | undefined): boolean => {
   const u = unidad.toLowerCase();
   return u === 'kg' || u === 'g' || u === 'mg';
 };
+
+const hasDraftText = (value?: string): boolean =>
+  typeof value === 'string' && value.trim().length > 0;
+
+const hasCantidadAlbaran = (linea: LineaDraft): boolean =>
+  linea.cantidadAlbaran !== '' && linea.cantidadAlbaran != null;
+
+const isLineaDraftActiva = (linea: LineaDraft): boolean =>
+  Boolean(
+    linea.intervenida ||
+    Number(linea.cantidadRecibida) > 0 ||
+    hasCantidadAlbaran(linea) ||
+    hasDraftText(linea.observaciones) ||
+    hasDraftText(linea.fechaCaducidad) ||
+    linea.estadoVisual !== EstadoVisualProducto.OPTIMO
+  );
 
 const steps = [
   'Selección de Pedidos',
@@ -104,6 +121,10 @@ const defaultDraft = (): RecepcionDraft => ({
   erroresPorLinea: {},
   enviando: false,
 });
+
+type RecepcionLocationState = {
+  autoResumeRecepcionDraft?: boolean;
+};
 
 const getScaleHeaderChipConfig = (
   isScaleSupported: boolean,
@@ -163,6 +184,7 @@ const Recepcion: React.FC = () => {
   const [openModal, setOpenModal] = useState(false);
   const [expandedPanel, setExpandedPanel] = useState<string | false>(false);
   const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
+  const [isRecoveryDialogOpen, setIsRecoveryDialogOpen] = useState(false);
 
   // Báscula Modal State
   const [weightModalOpen, setWeightModalOpen] = useState(false);
@@ -182,19 +204,29 @@ const Recepcion: React.FC = () => {
   const scaleManuallyDisabledRef = useRef(false);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const recoveryHandledRef = useRef(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const canCreate = usePermission(PERMISSIONS.recepciones.crear);
+  const shouldAutoResumeDraft = Boolean(
+    (location.state as RecepcionLocationState | null)?.autoResumeRecepcionDraft
+  );
 
   const {
+    applyPendingRecoveryDraft,
     clearDraft: clearRemoteDraft,
     conflict,
     draft,
     isReady,
     keepLocalDraft,
+    pendingRecoveryDraft,
     setDraft,
     syncError,
     syncStatus,
     useRemoteDraft,
   } = useRecepcionDraft({
     activeStep,
+    autoResume: shouldAutoResumeDraft,
     defaultDraft,
     setActiveStep,
   });
@@ -213,8 +245,19 @@ const Recepcion: React.FC = () => {
   }, [draft]);
 
   useEffect(() => {
+    if (!isReady || recoveryHandledRef.current || !pendingRecoveryDraft) {
+      return;
+    }
+
+    recoveryHandledRef.current = true;
+    setIsRecoveryDialogOpen(true);
+  }, [isReady, pendingRecoveryDraft]);
+
+  useEffect(() => {
     if (activeStep === 1 && searchInputRef.current) {
-      searchInputRef.current.focus();
+      // Diferir el focus al siguiente frame para que el DOM esté estable
+      // y el focus trap de cualquier modal/dialog previo se haya resuelto.
+      requestAnimationFrame(() => searchInputRef.current?.focus());
     }
   }, [activeStep]);
 
@@ -355,8 +398,6 @@ const Recepcion: React.FC = () => {
   // Data
   const [pedidosDisponibles, setPedidosDisponibles] = useState<Pedido[]>([]);
   const [loadingPedidos, setLoadingPedidos] = useState(false);
-  const navigate = useNavigate();
-  const canCreate = usePermission('recepciones:crear');
 
   useEffect(() => {
     if (canCreate === false) {
@@ -373,17 +414,36 @@ const Recepcion: React.FC = () => {
   const loadPedidos = async () => {
     setLoadingPedidos(true);
     try {
-      const resp = await fetchPedidos(
-        1,
-        50,
-        '',
-        [
-          EstadoPedido.PENDIENTE,
-          EstadoPedido.EN_PROCESO,
-          EstadoPedido.PARCIAL,
-        ].join(',')
-      );
-      setPedidosDisponibles(resp.data as Pedido[]);
+      const estadosRecepcionables = [EstadoPedido.POR_RECEPCIONAR].join(',');
+
+      const pageSize = 50;
+      const maxPages = 50;
+      let page = 1;
+      let totalPages = 1;
+
+      const pedidos: Pedido[] = [];
+      const seenIds = new Set<string>();
+
+      while (page <= totalPages && page <= maxPages) {
+        const resp = await fetchPedidos(
+          page,
+          pageSize,
+          '',
+          estadosRecepcionables
+        );
+        totalPages = Math.max(Number(resp.totalPages || 1), 1);
+
+        for (const pedido of resp.data as Pedido[]) {
+          if (!seenIds.has(pedido.id)) {
+            seenIds.add(pedido.id);
+            pedidos.push(pedido);
+          }
+        }
+
+        page += 1;
+      }
+
+      setPedidosDisponibles(pedidos);
     } catch {
       setError('Error al cargar pedidos compatibles.');
     } finally {
@@ -398,15 +458,13 @@ const Recepcion: React.FC = () => {
       codigoBarras: pp.productoProveedor?.producto?.codigoBarras,
       nombreProducto: pp.productoProveedor?.producto?.nombre || 'Producto',
       cantidadPedida: Number(pp.cantidad),
-      cantidadYaRecibida: Number(
-        (pp as unknown as { cantidadRecibida?: number }).cantidadRecibida || 0
-      ),
       cantidadAlbaran: '',
       cantidadRecibida: 0,
       isWeighedWithScale: false,
       estadoVisual: EstadoVisualProducto.OPTIMO,
       fechaCaducidad: '',
       observaciones: '',
+      intervenida: false,
       estado: calculateEstado(0, Number(pp.cantidad)),
       unidad: pp.productoProveedor?.producto?.unidad || UnidadMedida.UNIDAD,
     }));
@@ -414,9 +472,8 @@ const Recepcion: React.FC = () => {
   // Helper para crear el objeto del pedido en el draft
   const createDraftPedido = (pedido: Pedido) => ({
     id: pedido.id,
-    descripcion: `Pedido ${pedido.id.substring(0, 8)} - ${pedido.proveedor?.nombre}`,
+    descripcion: `Pedido ${formatPedidoListNumber(pedido, 'pedido-proveedor')} - ${pedido.proveedor?.nombre}`,
     proveedor: pedido.proveedor?.nombre || 'Desconocido',
-    estadoPedido: pedido.estado,
     lineas: mapPedidoToDraft(pedido),
   });
 
@@ -436,7 +493,8 @@ const Recepcion: React.FC = () => {
     setDraft((prevDraft) => ({ ...prevDraft, pedidosSeleccionados: [] }));
   };
 
-  const handleSelectProvider = (e: SelectChangeEvent<unknown>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleSelectProvider = (e: any) => {
     const providerName = e.target.value as string;
     if (!providerName) return;
 
@@ -455,7 +513,8 @@ const Recepcion: React.FC = () => {
     setDraft({ ...draft, pedidosSeleccionados: newDraftPedidos });
   };
 
-  const handleDeselectProvider = (e: SelectChangeEvent<unknown>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleDeselectProvider = (e: any) => {
     const providerName = e.target.value as string;
     if (!providerName) return;
 
@@ -599,7 +658,7 @@ const Recepcion: React.FC = () => {
       setSearching(false);
       setSearchQuery('');
       if (searchInputRef.current) {
-        searchInputRef.current.focus();
+        requestAnimationFrame(() => searchInputRef.current?.focus());
       }
     }
   };
@@ -660,6 +719,7 @@ const Recepcion: React.FC = () => {
         newPedidos[targetMatch.pIdx].lineas[targetMatch.lIdx] = {
           ...tLinea,
           cantidadRecibida: currRec + 1,
+          intervenida: true,
           estado: calculateEstado(currRec + 1, tLinea.cantidadPedida),
         };
 
@@ -686,6 +746,7 @@ const Recepcion: React.FC = () => {
                   cantidadRecibida: isWeightUnit(l.unidad)
                     ? Number(l.cantidadRecibida)
                     : Number(l.cantidadRecibida) + 1,
+                  intervenida: true,
                   estado: 'Exceso' as LineaDraft['estado'],
                 }
               : l;
@@ -710,13 +771,13 @@ const Recepcion: React.FC = () => {
             nombreProducto: prod.nombre,
             unidad: prod.unidad || 'uds',
             cantidadPedida: 0,
-            cantidadYaRecibida: 0,
             cantidadAlbaran: '',
             cantidadRecibida: isWeightUnit(prod.unidad) ? 0 : 1,
             isWeighedWithScale: false,
             estadoVisual: EstadoVisualProducto.OPTIMO,
             fechaCaducidad: '',
             observaciones: '',
+            intervenida: !isWeightUnit(prod.unidad),
             estado: 'Nuevo',
           };
 
@@ -771,6 +832,17 @@ const Recepcion: React.FC = () => {
           );
         }
 
+        if (
+          field === 'cantidadRecibida' ||
+          field === 'cantidadAlbaran' ||
+          field === 'estadoVisual' ||
+          field === 'fechaCaducidad' ||
+          field === 'observaciones' ||
+          field === 'isWeighedWithScale'
+        ) {
+          newLinea.intervenida = true;
+        }
+
         // Si el usuario edita a mano (escribiendo), y no teníamos isWeighedWithScale = true, lo mantenemos en false.
         // Si ya era true (pesado con báscula) y cambia el valor a mano, podríamos poner false si queremos ser estrictos.
         // Por ahora, asumimos que si cambia un campo numérico manualmente `onChange`, quita la "oficialidad" de la báscula.
@@ -786,6 +858,17 @@ const Recepcion: React.FC = () => {
       } else {
         const newEsp = [...prevDraft.productosEspontaneos];
         const newLinea = { ...newEsp[lIdx], [field]: finalValue };
+
+        if (
+          field === 'cantidadRecibida' ||
+          field === 'cantidadAlbaran' ||
+          field === 'estadoVisual' ||
+          field === 'fechaCaducidad' ||
+          field === 'observaciones' ||
+          field === 'isWeighedWithScale'
+        ) {
+          newLinea.intervenida = true;
+        }
 
         if (field === 'cantidadRecibida') {
           newLinea.isWeighedWithScale = false;
@@ -888,34 +971,33 @@ const Recepcion: React.FC = () => {
       return false;
     }
 
-    // Validar observaciones si hay discrepancia
-    for (const p of draft.pedidosSeleccionados) {
-      for (const l of p.lineas) {
-        // Solo evaluamos lineas interactuadas
-        if (Number(l.cantidadRecibida) > 0 || l.estado === 'No entregado') {
-          const hasDiscrepancy =
-            Number(l.cantidadRecibida) !== l.cantidadPedida ||
-            (l.cantidadAlbaran !== '' &&
-              l.cantidadAlbaran != null &&
-              Number(l.cantidadAlbaran) !== l.cantidadPedida) ||
-            l.estadoVisual !== EstadoVisualProducto.OPTIMO;
+    const lineasActivasPedidos = draft.pedidosSeleccionados.flatMap((pedido) =>
+      pedido.lineas.filter((linea) => isLineaDraftActiva(linea))
+    );
 
-          if (
-            hasDiscrepancy &&
-            (!l.observaciones || l.observaciones.trim() === '')
-          ) {
-            setError(
-              `Falla Validativa: El producto "${l.nombreProducto}" presenta discrepancias con el pedido o estado y su campo de notas es obligatorio.`
-            );
-            return false;
-          }
-        }
+    // Validar observaciones si hay discrepancia
+    for (const l of lineasActivasPedidos) {
+      const hasDiscrepancy =
+        Number(l.cantidadRecibida) !== l.cantidadPedida ||
+        (hasCantidadAlbaran(l) &&
+          Number(l.cantidadAlbaran) !== l.cantidadPedida) ||
+        l.estadoVisual !== EstadoVisualProducto.OPTIMO;
+
+      if (hasDiscrepancy && !hasDraftText(l.observaciones)) {
+        setError(
+          `Falla Validativa: El producto "${l.nombreProducto}" presenta discrepancias con el pedido o estado y su campo de notas es obligatorio.`
+        );
+        return false;
       }
     }
 
-    for (const esp of draft.productosEspontaneos) {
+    const lineasActivasEspontaneas = draft.productosEspontaneos.filter(
+      (linea) => isLineaDraftActiva(linea)
+    );
+
+    for (const esp of lineasActivasEspontaneas) {
       // Los productos espontáneos siempre son discrepancias (exceso no planificado)
-      if (!esp.observaciones || esp.observaciones.trim() === '') {
+      if (!hasDraftText(esp.observaciones)) {
         setError(
           `Falla Validativa: El producto espontáneo "${esp.nombreProducto || esp.productoNuevo?.nombre}" requiere obligatoriamente una nota justificativa.`
         );
@@ -943,7 +1025,7 @@ const Recepcion: React.FC = () => {
       observaciones: draft.observaciones,
       productos: draft.pedidosSeleccionados
         .flatMap((p) => p.lineas)
-        .filter((l) => Number(l.cantidadRecibida) > 0)
+        .filter((l) => isLineaDraftActiva(l) && Number(l.cantidadRecibida) > 0)
         .map((l) => ({
           pedidoProductoId: l.pedidoProductoId!,
           cantidadRecibida: Number(l.cantidadRecibida),
@@ -984,11 +1066,7 @@ const Recepcion: React.FC = () => {
       const res = await createRecepcion(payload);
       setResultado(res);
       setActiveStep(3);
-      try {
-        await clearRemoteDraft();
-      } catch {
-        // La recepción ya fue confirmada en servidor; no bloqueamos el resultado
-      }
+      await clearRemoteDraft();
     } catch (err: unknown) {
       let errorMessage = '';
       if (isErrorWithMessage(err)) {
@@ -1002,21 +1080,6 @@ const Recepcion: React.FC = () => {
         setActiveStep(0);
         setError(
           `Error crítico: El pedido que intentabas recepcionar ya no existe o fue procesado. El borrador remoto obsoleto ha sido eliminado por seguridad. Por favor, selecciona nuevamente los pedidos a recepcionar.`
-        );
-      } else if (
-        errorMessage.includes('ORDER_NOT_RECEPTABLE') ||
-        errorMessage.includes(
-          'pedido no se encuentra en un estado válido para ser recepcionado'
-        ) ||
-        errorMessage.includes(
-          'El pedido no se encuentra en un estado válido para ser recepcionado'
-        )
-      ) {
-        await clearRemoteDraft();
-        await loadPedidos();
-        setActiveStep(0);
-        setError(
-          'La recepción ya se había procesado o alguno de los pedidos del borrador cambió de estado. He limpiado el borrador obsoleto; vuelve a seleccionar los pedidos recepcionables y continúa.'
         );
       } else {
         setError(
@@ -1107,6 +1170,17 @@ const Recepcion: React.FC = () => {
     await loadPedidos();
   };
 
+  const handleRecoverDraft = () => {
+    applyPendingRecoveryDraft();
+    setIsRecoveryDialogOpen(false);
+  };
+
+  const handleDiscardRecoveredDraft = () => {
+    setIsRecoveryDialogOpen(false);
+    recoveryHandledRef.current = true;
+    void resetWizard();
+  };
+
   const handleNext = () => {
     if (activeStep === 0 && draft.pedidosSeleccionados.length === 0) return;
     if (activeStep === 2) {
@@ -1160,13 +1234,13 @@ const Recepcion: React.FC = () => {
       nombreProducto: modalData.nombre,
       unidad: modalData.unidad,
       cantidadPedida: 0,
-      cantidadYaRecibida: 0,
       cantidadAlbaran: '',
       cantidadRecibida: isWeight ? 0 : 1, // Start at 0 for weighable items until weighed
       isWeighedWithScale: false,
       estadoVisual: EstadoVisualProducto.OPTIMO,
       fechaCaducidad: '',
       observaciones: '',
+      intervenida: !isWeight,
       estado: 'Nuevo',
       productoNuevo: {
         pendienteCreacion: true,
@@ -1380,7 +1454,7 @@ const Recepcion: React.FC = () => {
                 {activeStep === 2
                   ? isSubmitting
                     ? 'Procesando...'
-                    : 'Finalizar y Recibir Pedido'
+                    : 'Finalizar Recepción'
                   : 'Siguiente'}
               </Button>
             </Box>
@@ -1424,6 +1498,44 @@ const Recepcion: React.FC = () => {
         remoteDraft={conflict?.remoteDraft}
         onUseRemote={useRemoteDraft}
         onKeepLocal={keepLocalDraft}
+      />
+
+      <ConfirmDialog
+        isOpen={isRecoveryDialogOpen && !!pendingRecoveryDraft}
+        onClose={handleRecoverDraft}
+        onConfirm={handleRecoverDraft}
+        title="Recuperar recepción pendiente"
+        message={
+          <>
+            Has dejado una recepción a medias. ¿Deseas recuperarla y continuar
+            donde lo dejaste?
+            <br />
+            <br />
+            Última actualización:{' '}
+            <strong>
+              {(() => {
+                const updatedAt =
+                  pendingRecoveryDraft?.updatedAt ??
+                  draft.serverUpdatedAt ??
+                  draft.modificadoEn;
+                if (!updatedAt) {
+                  return 'desconocida';
+                }
+
+                const parsed = new Date(updatedAt);
+                if (Number.isNaN(parsed.getTime())) {
+                  return 'desconocida';
+                }
+
+                return parsed.toLocaleString('es-ES');
+              })()}
+            </strong>
+          </>
+        }
+        confirmText="Sí, recuperar"
+        cancelText="No, descartar"
+        confirmColor="primary"
+        onCancel={handleDiscardRecoveredDraft}
       />
 
       <ConfirmDialog

@@ -31,6 +31,7 @@ import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 @ApiTags('Productos')
 @UseGuards(JwtAuthGuard, PermisosGuard)
@@ -39,7 +40,7 @@ export class ProductoController {
   constructor(private readonly productoService: ProductoService) {}
 
   @Get('generar-ean13')
-  @RequirePermissions('productos:generar_ean13')
+  @RequirePermissions(PERMISSIONS.productos.generar_ean13)
   @ApiOperation({ summary: 'Generar un código EAN-13 único' })
   @ApiResponse({
     status: 200,
@@ -51,7 +52,7 @@ export class ProductoController {
   }
 
   @Post()
-  @RequirePermissions('productos:crear')
+  @RequirePermissions(PERMISSIONS.productos.crear)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary:
@@ -88,7 +89,7 @@ export class ProductoController {
   }
 
   @Get()
-  @RequirePermissions('productos:listar')
+  @RequirePermissions(PERMISSIONS.productos.listar)
   @ApiOperation({ summary: 'Listar productos con filtros y paginación' })
   findAll(
     @SortableFields(
@@ -103,7 +104,7 @@ export class ProductoController {
   }
 
   @Get(':id')
-  @RequirePermissions('productos:ver')
+  @RequirePermissions(PERMISSIONS.productos.ver)
   @ApiOperation({ summary: 'Obtener un producto por ID' })
   @ApiParam({ name: 'id', description: 'docs.UUID_DEL_PRODUCTO' })
   @ApiResponse({ status: 200, type: Producto })
@@ -117,7 +118,7 @@ export class ProductoController {
   }
 
   @Patch(':id')
-  @RequirePermissions('productos:editar')
+  @RequirePermissions(PERMISSIONS.productos.editar)
   @ApiOperation({ summary: 'Actualizar un producto' })
   @ApiResponse({ status: 200, type: Producto })
   update(
@@ -130,7 +131,7 @@ export class ProductoController {
   }
 
   @Delete(':id')
-  @RequirePermissions('productos:eliminar')
+  @RequirePermissions(PERMISSIONS.productos.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Eliminar un producto' })
   @ApiResponse({ status: 204, description: 'docs.PRODUCTO_ELIMINADO' })
@@ -143,7 +144,7 @@ export class ProductoController {
   }
 
   @Get(':id/historial-precios')
-  @RequirePermissions('productos:ver')
+  @RequirePermissions(PERMISSIONS.productos.ver)
   @ApiOperation({ summary: 'Obtener el historial de precios de un producto' })
   @ApiParam({ name: 'id', description: 'ID del producto' })
   @ApiResponse({ status: 200, type: [HistorialPrecio] })
@@ -155,7 +156,7 @@ export class ProductoController {
   }
 
   @Get(':id/pmp')
-  @RequirePermissions('productos:ver')
+  @RequirePermissions(PERMISSIONS.productos.ver)
   @ApiOperation({
     summary: 'Obtener el PMP actual de un producto, desglosado por proveedor',
   })

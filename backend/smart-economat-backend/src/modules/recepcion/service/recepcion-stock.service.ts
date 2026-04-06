@@ -68,6 +68,14 @@ interface IncidenciaGenerada {
   datosOriginales: { productos: LineaIncidencia[] };
 }
 
+interface LineaRecepcionConCantidad {
+  cantidadRecibida: number;
+}
+
+const PEDIDO_RECEPCION_ESTADOS_PERMITIDOS: readonly EstadoPedido[] = [
+  EstadoPedido.POR_RECEPCIONAR,
+];
+
 interface PedidoActualizado {
   id: string;
   estadoAnterior: string;
@@ -116,11 +124,7 @@ export class RecepcionStockService {
       throw new NotFoundException(I18nHelper.getError('ORDER_NOT_FOUND'));
     }
 
-    if (
-      pedido.estado !== EstadoPedido.PENDIENTE &&
-      pedido.estado !== EstadoPedido.EN_PROCESO &&
-      pedido.estado !== EstadoPedido.PARCIAL
-    ) {
+    if (!PEDIDO_RECEPCION_ESTADOS_PERMITIDOS.includes(pedido.estado)) {
       throw new BadRequestException(
         I18nHelper.getError('ORDER_NOT_RECEPTABLE')
       );
@@ -152,6 +156,7 @@ export class RecepcionStockService {
         fechaRecepcion: new Date(),
         observaciones: dto.observaciones,
         estado: EstadoRecepcion.COMPLETADA,
+        modifiedBy: userId,
       });
       const savedRecepcion = await queryRunner.manager.save(recepcion);
 
@@ -260,6 +265,7 @@ export class RecepcionStockService {
             productoProveedor: ppRef.productoProveedor,
             cantidadActual: cantidad,
             cantidadMinima: 10,
+            cantidadMaxima: Math.max(10, Number(cantidad) * 2),
             fechaEntrada: new Date(),
             ubicacion: defaultUbicacion,
             fechaCaducidad: linea.fechaCaducidad
@@ -301,7 +307,13 @@ export class RecepcionStockService {
         movimientosGenerados = batchMovimientos.length;
 
         for (const item of lineasConInventario) {
-          const precioUnitario = Number(item.ppRef.precioUnitario) || 0;
+          const precioUnitario = Number(item.ppRef.precioUnitario);
+          if (!Number.isFinite(precioUnitario) || precioUnitario <= 0) {
+            throw new BadRequestException(
+              I18nHelper.getError('PRICE_MUST_BE_GREATER_THAN_ZERO')
+            );
+          }
+
           const cantidadRecibida = Number(item.linea.cantidadRecibida);
 
           const historial = queryRunner.manager.create(HistorialPrecio, {
@@ -326,41 +338,20 @@ export class RecepcionStockService {
         }
       }
 
-      const lineasIncidencia: LineaIncidencia[] = [];
+      const lineasIncidencia = this.buildLineasIncidenciaCantidad(
+        ppArr,
+        detallesRecibidos
+      );
 
       for (const pp of ppArr) {
-        const cantPedida = Number(pp.cantidad);
         const lineasRecibidas = detallesRecibidos.get(pp.id) || [];
 
-        let subCantOptima = 0;
         let subCantRotaDefectuosa = 0;
 
         for (const lr of lineasRecibidas) {
-          if (lr.estadoVisual === EstadoVisualProducto.OPTIMO) {
-            subCantOptima += Number(lr.cantidadRecibida);
-          } else {
+          if (lr.estadoVisual !== EstadoVisualProducto.OPTIMO) {
             subCantRotaDefectuosa += Number(lr.cantidadRecibida);
           }
-        }
-
-        const cantRecibidaTotal = subCantOptima + subCantRotaDefectuosa;
-        const difNumerica = cantRecibidaTotal - cantPedida;
-
-        if (difNumerica !== 0) {
-          lineasIncidencia.push({
-            idPedidoProducto: pp.id,
-            nombreProducto:
-              pp.productoProveedor?.producto?.nombre || 'Producto',
-            cantidadPedida: cantPedida,
-            cantidadRecibida: cantRecibidaTotal,
-            diferencia: difNumerica,
-            tipo:
-              cantRecibidaTotal === 0
-                ? 'NO_ENTREGADO'
-                : difNumerica < 0
-                  ? 'FALTA'
-                  : 'EXCESO',
-          });
         }
 
         if (subCantRotaDefectuosa > 0) {
@@ -374,7 +365,7 @@ export class RecepcionStockService {
             idPedidoProducto: pp.id,
             nombreProducto:
               pp.productoProveedor?.producto?.nombre || 'Producto',
-            cantidadPedida: cantPedida,
+            cantidadPedida: Number(pp.cantidad),
             cantidadRecibida: subCantRotaDefectuosa,
             diferencia: -subCantRotaDefectuosa,
             tipo: 'DEFECTUOSO',
@@ -408,7 +399,8 @@ export class RecepcionStockService {
       const estadoPasado = pedido.estado;
       const finalState = await this.actualizarEstadoPedido(
         pedido.id,
-        queryRunner.manager
+        queryRunner.manager,
+        userId
       );
 
       await queryRunner.commitTransaction();
@@ -498,10 +490,7 @@ export class RecepcionStockService {
     }
 
     const pedidosInvalidos = pedidosArr.filter(
-      (p) =>
-        p.estado !== EstadoPedido.PENDIENTE &&
-        p.estado !== EstadoPedido.EN_PROCESO &&
-        p.estado !== EstadoPedido.PARCIAL
+      (p) => !PEDIDO_RECEPCION_ESTADOS_PERMITIDOS.includes(p.estado)
     );
     if (pedidosInvalidos.length > 0) {
       const invalidIds = pedidosInvalidos.map((p) => p.id);
@@ -539,6 +528,7 @@ export class RecepcionStockService {
         fechaRecepcion: dto.fechaRecepcion || new Date(),
         observaciones: observacionesGlobales,
         estado: EstadoRecepcion.COMPLETADA,
+        modifiedBy: dto.usuarioId,
       });
       const savedRecepcion = await queryRunner.manager.save(recepcion);
 
@@ -555,25 +545,45 @@ export class RecepcionStockService {
 
       if (dto.productosNuevos && dto.productosNuevos.length > 0) {
         for (const pNew of dto.productosNuevos) {
-          const prod = queryRunner.manager.create(Producto, {
-            nombre: pNew.nombre,
-            marca: pNew.marca,
-            unidad: pNew.unidad as any,
-            tipo: pNew.tipo as any,
-            codigoBarras: pNew.codigoBarras,
-            contenido: pNew.contenido,
-            pmp: 0,
-          });
-          const savedProd = await queryRunner.manager.save(prod);
+          let savedProd: Producto | null = null;
+          if (pNew.codigoBarras) {
+            savedProd = await queryRunner.manager.findOne(Producto, {
+              where: { codigoBarras: pNew.codigoBarras },
+            });
+          }
 
-          const pp = queryRunner.manager.create(ProductoProveedor, {
-            producto: savedProd,
-            proveedor: defaultProvider as any,
-            marca: pNew.marca,
-            codigoBarras: pNew.codigoBarras,
-            pmp: 0,
+          if (!savedProd) {
+            const prod = queryRunner.manager.create(Producto, {
+              nombre: pNew.nombre,
+              marca: pNew.marca,
+              unidad: pNew.unidad as any,
+              tipo: pNew.tipo as any,
+              codigoBarras: pNew.codigoBarras,
+              contenido: pNew.contenido,
+              pmp: 0,
+            });
+            savedProd = await queryRunner.manager.save(prod);
+          }
+
+          let savedPP = await queryRunner.manager.findOne(ProductoProveedor, {
+            where: {
+              productoId: savedProd.id,
+              proveedorId: defaultProvider?.id,
+            },
           });
-          const savedPP = await queryRunner.manager.save(pp);
+
+          if (!savedPP) {
+            const pp = queryRunner.manager.create(ProductoProveedor, {
+              producto: savedProd,
+              proveedor: defaultProvider as any,
+              marca: pNew.marca,
+              codigoBarras: pNew.codigoBarras,
+
+              precioUnitario: 0.01,
+              pmp: 0,
+            });
+            savedPP = await queryRunner.manager.save(pp);
+          }
 
           productosCreados.push({
             id: savedProd.id,
@@ -586,6 +596,7 @@ export class RecepcionStockService {
               productoProveedor: savedPP,
               cantidadActual: pNew.cantidadRecibida,
               cantidadMinima: 10,
+              cantidadMaxima: Math.max(10, Number(pNew.cantidadRecibida) * 2),
               fechaEntrada: new Date(),
               ubicacion: defaultUbicacion,
               fechaCaducidad: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
@@ -793,6 +804,7 @@ export class RecepcionStockService {
             productoProveedor: ppRef.productoProveedor as any,
             cantidadActual: linea.cantidadRecibida,
             cantidadMinima: 10,
+            cantidadMaxima: Math.max(10, Number(linea.cantidadRecibida) * 2),
             fechaEntrada: new Date(),
             ubicacion: defaultUbicacion,
             fechaCaducidad: linea.fechaCaducidad
@@ -815,7 +827,13 @@ export class RecepcionStockService {
           });
           movimientosGenerados++;
 
-          const precioUnitario = Number(ppRef.precioUnitario) || 0;
+          const precioUnitario = Number(ppRef.precioUnitario);
+          if (!Number.isFinite(precioUnitario) || precioUnitario <= 0) {
+            throw new BadRequestException(
+              I18nHelper.getError('PRICE_MUST_BE_GREATER_THAN_ZERO')
+            );
+          }
+
           const cantidadRecibida = Number(linea.cantidadRecibida);
 
           const historial = queryRunner.manager.create(HistorialPrecio, {
@@ -842,34 +860,10 @@ export class RecepcionStockService {
 
       for (const p of pedidosArr) {
         const ppArr = p.pedidoProductos as unknown as PedidoProducto[];
-        const lineasIncidencia: LineaIncidencia[] = [];
-
-        for (const pp of ppArr) {
-          const lineasRecibidas = detallesRecibidos.get(pp.id) || [];
-          const cantPedida = Number(pp.cantidad);
-
-          let subCantComputable = 0;
-
-          for (const lr of lineasRecibidas) {
-            if (permiteComputarComoRecibido(lr.estadoProducto)) {
-              subCantComputable += Number(lr.cantidadRecibida);
-            }
-          }
-
-          const exceso = Math.max(0, subCantComputable - cantPedida);
-
-          if (exceso > 0) {
-            lineasIncidencia.push({
-              idPedidoProducto: pp.id,
-              nombreProducto:
-                pp.productoProveedor?.producto?.nombre || 'Producto',
-              cantidadPedida: cantPedida,
-              cantidadRecibida: subCantComputable,
-              diferencia: exceso,
-              tipo: 'EXCESO',
-            });
-          }
-        }
+        const lineasIncidencia = this.buildLineasIncidenciaCantidad(
+          ppArr,
+          detallesRecibidos
+        );
 
         if (lineasIncidencia.length > 0) {
           recepcionEstadoEnum = EstadoRecepcion.CON_INCIDENCIAS;
@@ -898,7 +892,8 @@ export class RecepcionStockService {
         const estadoPasado = p.estado;
         const finalState = await this.actualizarEstadoPedido(
           p.id,
-          queryRunner.manager
+          queryRunner.manager,
+          dto.usuarioId
         );
         pedidosActualizadosFinal.push({
           id: p.id,
@@ -991,6 +986,46 @@ export class RecepcionStockService {
     }
   }
 
+  private buildLineasIncidenciaCantidad<
+    TLinea extends LineaRecepcionConCantidad,
+  >(
+    pedidoProductos: PedidoProducto[],
+    detallesRecibidos: Map<string, TLinea[]>
+  ): LineaIncidencia[] {
+    const lineasIncidencia: LineaIncidencia[] = [];
+
+    for (const pedidoProducto of pedidoProductos) {
+      const lineasRecibidas = detallesRecibidos.get(pedidoProducto.id) || [];
+      const cantidadPedida = Number(pedidoProducto.cantidad);
+      const cantidadRecibidaTotal = lineasRecibidas.reduce(
+        (total, linea) => total + Number(linea.cantidadRecibida),
+        0
+      );
+      const diferencia = cantidadRecibidaTotal - cantidadPedida;
+
+      if (diferencia === 0) {
+        continue;
+      }
+
+      lineasIncidencia.push({
+        idPedidoProducto: pedidoProducto.id,
+        nombreProducto:
+          pedidoProducto.productoProveedor?.producto?.nombre || 'Producto',
+        cantidadPedida,
+        cantidadRecibida: cantidadRecibidaTotal,
+        diferencia,
+        tipo:
+          cantidadRecibidaTotal === 0
+            ? 'NO_ENTREGADO'
+            : diferencia < 0
+              ? 'FALTA'
+              : 'EXCESO',
+      });
+    }
+
+    return lineasIncidencia;
+  }
+
   private toIncidenciaGenerada(
     id: string,
     productos: LineaIncidencia[]
@@ -1025,7 +1060,8 @@ export class RecepcionStockService {
 
   private async actualizarEstadoPedido(
     pedidoId: string,
-    manager: EntityManager
+    manager: EntityManager,
+    actorId?: string
   ): Promise<EstadoPedido> {
     const pedido = await manager.findOne(Pedido, {
       where: { id: pedidoId },
@@ -1101,7 +1137,8 @@ export class RecepcionStockService {
     const updatedPedido = await this.pedidoService.handleStatusTransition(
       pedidoId,
       trigger,
-      manager
+      manager,
+      actorId
     );
     return updatedPedido.estado;
   }
@@ -1135,11 +1172,16 @@ export class RecepcionStockService {
       if (!isNaN(lastSeq)) {
         sequence = lastSeq + 1;
       } else {
-        sequence = Math.floor(Math.random() * 1000000);
+        sequence = Math.floor(Math.random() * 100000);
       }
     }
 
     const paddedSeq = sequence.toString().padStart(5, '0');
-    return `${prefix}${paddedSeq}`;
+
+    const randomSuffix = Math.random()
+      .toString(36)
+      .substring(2, 7)
+      .toUpperCase();
+    return `${prefix}${paddedSeq}-${randomSuffix}`;
   }
 }

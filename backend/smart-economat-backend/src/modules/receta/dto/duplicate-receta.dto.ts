@@ -6,7 +6,7 @@ export class DuplicateRecetaDto {
     example: '550e8400-e29b-41d4-a716-446655440000',
     description: 'docs.ID_OF_THE_SOURCE_RECIPE_TO_DUPLICATE',
   })
-  @IsUUID('7')
+  @IsUUID('all')
   sourceId!: string;
 
   @ApiProperty({

@@ -2,7 +2,7 @@ import { i18nValidationMessage } from 'nestjs-i18n';
 import { IsUUID, IsNumber, Min, IsOptional, IsString } from 'class-validator';
 
 export class CreatePedidoProductoDto {
-  @IsUUID('7', {
+  @IsUUID('all', {
     message: i18nValidationMessage(
       'validation.EL_ID_DEL_PRODUCTOPROVEEDOR_DEBE_SER_UN'
     ),

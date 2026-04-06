@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Button,
@@ -42,7 +42,7 @@ export interface UI_RecetaIngrediente {
     nombre: string;
     alergenos?: { id_producto: string; alergeno: string }[];
     proveedores?: ProductoProveedor[];
-  };
+  } | null;
 }
 
 interface RecetaIngredientesSelectorProps {
@@ -66,50 +66,63 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
     Record<number, boolean>
   >({});
 
-  const getAvailableProviders = (
-    line: UI_RecetaIngrediente,
-    fallbackProduct?: Producto | null
-  ): ProductoProveedor[] => {
-    const detailedProduct = line.productoId
-      ? productDetails[line.productoId]
-      : undefined;
+  const getAvailableProviders = useCallback(
+    (
+      line: UI_RecetaIngrediente,
+      fallbackProduct?: Producto | null
+    ): ProductoProveedor[] => {
+      const detailedProduct = line.productoId
+        ? productDetails[line.productoId]
+        : undefined;
 
-    return (
-      detailedProduct?.proveedores ||
-      fallbackProduct?.proveedores ||
-      line.producto?.proveedores ||
-      []
-    );
-  };
-
-  const getCheapestProvider = (
-    providers: ProductoProveedor[]
-  ): ProductoProveedor | undefined => {
-    const providersWithPrice = providers.filter(
-      (provider) =>
-        provider.proveedor?.id &&
-        typeof provider.precioUnitario === 'number' &&
-        Number.isFinite(provider.precioUnitario)
-    );
-
-    if (providersWithPrice.length > 0) {
-      return providersWithPrice.reduce((cheapest, current) =>
-        (current.precioUnitario ?? Number.POSITIVE_INFINITY) <
-        (cheapest.precioUnitario ?? Number.POSITIVE_INFINITY)
-          ? current
-          : cheapest
+      return (
+        detailedProduct?.proveedores ||
+        fallbackProduct?.proveedores ||
+        line.producto?.proveedores ||
+        []
       );
-    }
+    },
+    [productDetails]
+  );
 
-    return providers.find((provider) => provider.proveedor?.id);
-  };
+  const getCheapestProvider = useCallback(
+    (providers: ProductoProveedor[]): ProductoProveedor | undefined => {
+      const providersWithPrice = providers.filter(
+        (provider) =>
+          provider.proveedor?.id &&
+          typeof provider.precioUnitario === 'number' &&
+          Number.isFinite(provider.precioUnitario)
+      );
 
-  const buildInlineProduct = (product: Producto) => ({
-    id: product.id,
-    nombre: product.nombre,
-    alergenos: product.alergenos,
-    proveedores: product.proveedores,
-  });
+      if (providersWithPrice.length > 0) {
+        return providersWithPrice.reduce((cheapest, current) =>
+          (current.precioUnitario ?? Number.POSITIVE_INFINITY) <
+          (cheapest.precioUnitario ?? Number.POSITIVE_INFINITY)
+            ? current
+            : cheapest
+        );
+      }
+
+      return providers.find((provider) => provider.proveedor?.id);
+    },
+    []
+  );
+
+  const buildInlineProduct = useCallback(
+    (product: Producto) => ({
+      id: product.id,
+      nombre: product.nombre,
+      alergenos: product.alergenos,
+      proveedores: product.proveedores,
+    }),
+    []
+  );
+
+  const getOptionId = useCallback(
+    (option?: Pick<Producto, 'id'> | UI_RecetaIngrediente['producto'] | null) =>
+      option?.id,
+    []
+  );
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -250,7 +263,14 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
     if (hasChanges) {
       onChange(nextLines);
     }
-  }, [value, productDetails, onChange]);
+  }, [
+    value,
+    productDetails,
+    onChange,
+    getAvailableProviders,
+    getCheapestProvider,
+    buildInlineProduct,
+  ]);
 
   const handleAddLine = () => {
     const newLines = [
@@ -456,24 +476,26 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
           <Table size="small">
             <TableHead sx={{ bgcolor: 'action.hover' }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold' }}>Producto</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
+                <TableCell sx={{ fontWeight: 'bold', width: '35%' }}>
+                  Producto
+                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold', width: '10%' }}>
                   Cantidad
                 </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', width: 140 }}>
+                <TableCell sx={{ fontWeight: 'bold', width: '12%' }}>
                   Unidad
                 </TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>
+                <TableCell sx={{ fontWeight: 'bold', width: '35%' }}>
                   Proveedor fav.
                 </TableCell>
-                <TableCell sx={{ width: 50 }}></TableCell>
+                <TableCell sx={{ width: '8%' }}></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {value.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={5}
                     align="center"
                     sx={{ py: 3, color: 'text.secondary' }}
                   >
@@ -515,15 +537,15 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
 
                   return (
                     <TableRow key={`ing-row-${index}`}>
-                      <TableCell sx={{ minWidth: 250 }}>
+                      <TableCell>
                         <Autocomplete
                           options={options}
                           getOptionLabel={(option) => option.nombre || ''}
                           value={selectedProduct || line.producto || null}
                           loading={Boolean(isSearchingByLine[index])}
                           openOnFocus
-                          isOptionEqualToValue={(option, val) =>
-                            (option.id || option) === (val.id || val)
+                          isOptionEqualToValue={(option, currentValue) =>
+                            getOptionId(option) === getOptionId(currentValue)
                           }
                           onInputChange={(_, inputValue, reason) => {
                             if (reason === 'input') {
@@ -537,11 +559,23 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                               newValue?.id || ''
                             )
                           }
-                          renderOption={(props, option) => (
-                            <li {...props} key={option.id}>
-                              {option.nombre}
-                            </li>
-                          )}
+                          renderOption={(props, option) => {
+                            const listItemProps = {
+                              ...props,
+                            } as React.HTMLAttributes<HTMLLIElement> & {
+                              keepMounted?: boolean;
+                              key?: React.Key;
+                            };
+
+                            delete listItemProps.keepMounted;
+                            delete listItemProps.key;
+
+                            return (
+                              <li {...listItemProps} key={option.id}>
+                                {option.nombre}
+                              </li>
+                            );
+                          }}
                           renderInput={(params) => (
                             <TextField
                               {...params}

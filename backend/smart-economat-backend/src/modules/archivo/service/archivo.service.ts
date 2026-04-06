@@ -11,7 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { Archivo } from '../archivo.entity/archivo.entity';
 import { FileListFilterDto } from '../dto/file-list-filter.dto';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
-import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { isSherlockElevatedRole } from '../../sherlock-auth/utils/access.utils';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -350,10 +350,7 @@ export class ArchivoService {
   async remove(id: string, user: Usuario): Promise<void> {
     const archivo = await this.findOne(id);
 
-    if (
-      archivo.usuario?.id !== user.id &&
-      user.rol !== rolUsuario.ADMINISTRADOR
-    ) {
+    if (archivo.usuario?.id !== user.id && !isSherlockElevatedRole(user.rol)) {
       throw new ForbiddenException(
         I18nHelper.getError('FILE_DELETE_FORBIDDEN')
       );

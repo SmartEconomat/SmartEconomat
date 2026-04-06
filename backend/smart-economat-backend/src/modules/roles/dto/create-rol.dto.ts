@@ -48,7 +48,7 @@ export class CreateRolDto {
     example: ['uuid-1', 'uuid-2'],
   })
   @IsArray()
-  @IsUUID('7', { each: true })
+  @IsUUID('all', { each: true })
   @IsOptional()
   permisoIds?: string[];
 }

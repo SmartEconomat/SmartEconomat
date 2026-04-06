@@ -73,9 +73,11 @@ export class UsuarioService {
         if (aula) {
           const slot = await manager.findOne(AlumnoSlot, {
             where: { aula },
+            relations: ['profesor'],
           });
           if (slot) {
             alumno.slot = slot;
+            alumno.profesor = slot.profesor;
           }
         }
         await manager.save(alumno);

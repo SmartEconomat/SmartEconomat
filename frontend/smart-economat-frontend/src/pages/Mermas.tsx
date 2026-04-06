@@ -18,7 +18,18 @@ import {
 import DynamicFormModal from '../components/ui/DynamicFormModal';
 import { mermaSchema } from '../utils/schemas';
 import { useToast } from '../store/toast.hooks';
-import { fetchProductosPaginated } from '../services/producto.service';
+import { fetchAllProductos } from '../services/producto.service';
+
+const formatProductoMedidaLabel = (
+  contenido?: number,
+  unidad?: string
+): string | null => {
+  if (!contenido || !Number.isFinite(contenido) || !unidad) {
+    return null;
+  }
+
+  return `${contenido} ${unidad}`;
+};
 
 const MermasPage: React.FC = () => {
   const [mermas, setMermas] = useState<Merma[]>([]);
@@ -74,9 +85,14 @@ const MermasPage: React.FC = () => {
 
   useEffect(() => {
     // Cargar productos para el select del form
-    fetchProductosPaginated({ limit: 1000 }).then((resp) => {
+    fetchAllProductos().then((productosResponse) => {
       setProductos(
-        resp.data.map((p) => ({ value: p.id as string, label: p.nombre }))
+        productosResponse.map((p) => ({
+          value: p.id as string,
+          label: formatProductoMedidaLabel(p.contenido, p.unidad)
+            ? `${p.nombre} · ${formatProductoMedidaLabel(p.contenido, p.unidad)} por unidad`
+            : p.nombre,
+        }))
       );
     });
   }, []);

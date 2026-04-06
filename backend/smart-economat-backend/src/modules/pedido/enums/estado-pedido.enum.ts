@@ -1,33 +1,22 @@
 export enum EstadoPedido {
-  /**
-   * Pedido recién creado, aún en borrador o pendiente de autorización.
-   */
-  PENDIENTE = 'pendiente',
+  PENDIENTE_DE_APROBACION = 'pendiente_de_aprobacion',
 
-  /**
-   * Pedido autorizado y tramitado con el proveedor.
-   */
-  EN_PROCESO = 'en_proceso',
+  POR_RECEPCIONAR = 'por_recepcionar',
 
-  /**
-   * Pedido recibido y verificado correctamente.
-   * Inventario actualizado sin discrepancias.
-   */
-  RECIBIDO = 'recibido',
+  RECEPCIONADO = 'recepcionado',
 
-  /**
-   * Pedido recibido pero con discrepancias que han generado incidencias.
-   * Requiere gestión adicional (devolución, reclamación, etc.).
-   */
   INCIDENCIA = 'incidencia',
 
-  /**
-   * Pedido anulado antes de ser servido completamente.
-   */
-  CANCELADO = 'cancelado',
-
-  /**
-   * Pedido recibido parcialmente.
-   */
   PARCIAL = 'parcial',
+
+  CANCELADO = 'cancelado',
 }
+
+export const ESTADO_PEDIDO_DB_VALUES = [
+  EstadoPedido.PENDIENTE_DE_APROBACION,
+  EstadoPedido.POR_RECEPCIONAR,
+  EstadoPedido.RECEPCIONADO,
+  EstadoPedido.INCIDENCIA,
+  EstadoPedido.PARCIAL,
+  EstadoPedido.CANCELADO,
+] as const;

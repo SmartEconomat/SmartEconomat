@@ -103,6 +103,13 @@ describe('IncidenciaController (e2e)', () => {
       expect(pedidoRes.status).toBe(201);
       pedidoId = pedidoRes.body.data?.id;
 
+      if (pedidoId) {
+        const aceptarRes = await request(app.getHttpServer() as string)
+          .patch(`/api/v1/pedidos/${pedidoId}/aceptar`)
+          .set('Authorization', `Bearer ${adminToken}`);
+        expect(aceptarRes.status).toBe(200);
+      }
+
       let pedidoProductoId: string | undefined;
       if (pedidoId) {
         const pedidoDetail = await request(app.getHttpServer() as string)

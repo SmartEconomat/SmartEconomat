@@ -2,6 +2,7 @@ import { baseFetch, ApiResponse, PaginatedData } from './api.service';
 import {
   Merma,
   CreateMermaPayload,
+  CreateMermaProduccionPayload,
   MermaStats,
   MermasQueryParams,
 } from './merma.types';
@@ -44,6 +45,27 @@ export async function createMerma(payload: CreateMermaPayload): Promise<Merma> {
       errorBody.message || `Error al registrar merma: ${response.status}`
     );
   }
+  const body = (await response.json()) as ApiResponse<Merma>;
+  return body.data;
+}
+
+export async function createMermaProduccion(
+  payload: CreateMermaProduccionPayload
+): Promise<Merma> {
+  const response = await baseFetch('/merma/produccion/reportar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    throw new Error(
+      errorBody.message ||
+        `Error al registrar merma desde produccion: ${response.status}`
+    );
+  }
+
   const body = (await response.json()) as ApiResponse<Merma>;
   return body.data;
 }

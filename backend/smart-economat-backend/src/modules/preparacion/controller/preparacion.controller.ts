@@ -14,15 +14,19 @@ import { PreparacionService } from '../service/preparacion.service';
 import { CreatePreparacionDto } from '../dto/create-preparacion.dto';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import type { Request } from 'express';
 
 @Controller('preparaciones')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 export class PreparacionController {
   constructor(private readonly preparacionService: PreparacionService) {}
 
   @Post()
+  @RequirePermissions(PERMISSIONS.recetas.cocinar)
   async create(
     @Body() dto: CreatePreparacionDto,
     @Req() req: Request & { user?: { id?: string } }
@@ -35,6 +39,7 @@ export class PreparacionController {
   }
 
   @Get()
+  @RequirePermissions(PERMISSIONS.recetas.listar)
   async findAll(
     @Query() query: PaginationQueryDto,
     @Req() req: Request & { user?: { rol?: { nombre?: string } } }
@@ -44,6 +49,7 @@ export class PreparacionController {
   }
 
   @Get(':id')
+  @RequirePermissions(PERMISSIONS.recetas.ver)
   async findOne(
     @Param('id') id: string,
     @Req() req: Request & { user?: { rol?: { nombre?: string } } }
@@ -53,11 +59,13 @@ export class PreparacionController {
   }
 
   @Patch(':id/iniciar')
+  @RequirePermissions(PERMISSIONS.recetas.cocinar)
   async iniciar(@Param('id') id: string) {
     return this.preparacionService.iniciarPreparacion(id);
   }
 
   @Patch(':id/finalizar')
+  @RequirePermissions(PERMISSIONS.recetas.cocinar)
   async finalizar(
     @Param('id') id: string,
     @Req() req: Request & { user?: { id?: string } },
@@ -75,11 +83,13 @@ export class PreparacionController {
   }
 
   @Patch(':id/cancelar')
+  @RequirePermissions(PERMISSIONS.recetas.cocinar)
   async cancelar(@Param('id') id: string) {
     return this.preparacionService.cancelarPreparacion(id);
   }
 
   @Delete(':id')
+  @RequirePermissions(PERMISSIONS.recetas.eliminar)
   async remove(@Param('id') id: string) {
     return this.preparacionService.remove(id);
   }

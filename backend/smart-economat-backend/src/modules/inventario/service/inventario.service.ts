@@ -53,14 +53,33 @@ export class InventarioService {
       );
     }
 
+    let cantidadMaxima = dto.cantidadMaxima as any;
+    if (
+      cantidadMaxima !== undefined &&
+      cantidadMaxima !== null &&
+      cantidadMaxima < dto.cantidadMinima
+    ) {
+      cantidadMaxima = null;
+    }
+
     const inventario = this.inventarioRepository.create({
       productoProveedor,
       cantidadActual: dto.cantidadActual,
       cantidadMinima: dto.cantidadMinima,
-      cantidadMaxima: dto.cantidadMaxima ?? null,
+      cantidadMaxima: cantidadMaxima ?? null,
       ubicacion: { id: dto.ubicacionId } as any,
       fechaCaducidad: dto.fechaCaducidad ? new Date(dto.fechaCaducidad) : null,
     });
+
+    if (inventario.cantidadMinima < 0) inventario.cantidadMinima = 0;
+    if (inventario.cantidadActual < 0) inventario.cantidadActual = 0;
+    if (
+      inventario.cantidadMaxima !== null &&
+      inventario.cantidadMaxima !== undefined &&
+      Number(inventario.cantidadMaxima) < Number(inventario.cantidadMinima)
+    ) {
+      (inventario as any).cantidadMaxima = null;
+    }
 
     try {
       const savedInventario = await this.inventarioRepository.save(inventario);
@@ -78,9 +97,10 @@ export class InventarioService {
 
       return savedInventario;
     } catch (err) {
+      console.error('[InventarioService] Error en creación:', err);
       if (err instanceof QueryFailedError) {
         throw new BadRequestException(
-          I18nHelper.getError('INVENTARIO_CONSTRAINT_VIOLATION')
+          `${I18nHelper.getError('INVENTARIO_CONSTRAINT_VIOLATION')} (Detail: ${err.message})`
         );
       }
       throw err;
@@ -93,7 +113,6 @@ export class InventarioService {
   ): Promise<PaginatedResponseDto<Inventario>> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
       userRole?.toUpperCase() === 'SUPER_ADMIN';
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 50);
@@ -125,7 +144,6 @@ export class InventarioService {
   async findOne(id: string, userRole?: string): Promise<Inventario> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
       userRole?.toUpperCase() === 'SUPER_ADMIN';
 
     const inventario = await this.inventarioRepository.findOne({
@@ -155,6 +173,7 @@ export class InventarioService {
     if (dto.productoProveedorId !== undefined) {
       const productoProveedor = await this.productoProveedorRepository.findOne({
         where: { id: dto.productoProveedorId },
+        relations: ['producto'],
       });
       if (!productoProveedor) {
         throw new NotFoundException(
@@ -168,17 +187,40 @@ export class InventarioService {
       inventario.cantidadActual = dto.cantidadActual;
     if (dto.cantidadMinima !== undefined)
       inventario.cantidadMinima = dto.cantidadMinima;
-    if (dto.cantidadMaxima !== undefined)
-      inventario.cantidadMaxima = dto.cantidadMaxima ?? null;
+
+    if (dto.cantidadMaxima !== undefined) {
+      let candidateMax = dto.cantidadMaxima as any;
+      if (candidateMax !== null && candidateMax < inventario.cantidadMinima) {
+        candidateMax = null;
+      }
+      inventario.cantidadMaxima = candidateMax;
+    }
+
     if (dto.ubicacionId !== undefined)
       inventario.ubicacion = { id: dto.ubicacionId } as any;
     if (dto.fechaCaducidad !== undefined)
-      inventario.fechaCaducidad = dto.fechaCaducidad
-        ? new Date(dto.fechaCaducidad)
-        : null;
+      inventario.fechaCaducidad = (
+        dto.fechaCaducidad ? new Date(dto.fechaCaducidad) : null
+      ) as any;
+
+    if (inventario.cantidadMinima < 0) inventario.cantidadMinima = 0;
+    if (inventario.cantidadActual < 0) inventario.cantidadActual = 0;
+    if (
+      inventario.cantidadMaxima !== null &&
+      inventario.cantidadMaxima !== undefined &&
+      Number(inventario.cantidadMaxima) < Number(inventario.cantidadMinima)
+    ) {
+      (inventario as any).cantidadMaxima = null;
+    }
 
     try {
-      await this.inventarioRepository.save(inventario);
+      await this.inventarioRepository.update(id, {
+        cantidadActual: inventario.cantidadActual,
+        cantidadMinima: inventario.cantidadMinima,
+        cantidadMaxima: (inventario as any).cantidadMaxima,
+        ubicacionId: inventario.ubicacionId,
+        fechaCaducidad: inventario.fechaCaducidad,
+      });
 
       if (
         dto.cantidadActual !== undefined &&
@@ -190,6 +232,10 @@ export class InventarioService {
             ? TipoMovimiento.ENTRADA
             : TipoMovimiento.SALIDA;
 
+        const productoNombre =
+          inventario.productoProveedor?.producto?.nombre ||
+          `productoProveedor:${inventario.productoProveedor?.id ?? 'desconocido'}`;
+
         await this.movimientoHelper.trackInventarioMovimiento(
           userId,
           id,
@@ -198,13 +244,14 @@ export class InventarioService {
           inventario.productoProveedor.id,
           'Inventario',
           id,
-          `Ajuste de inventario: ${inventario.productoProveedor.producto.nombre} (${oldCantidad} -> ${dto.cantidadActual})`
+          `Ajuste de inventario: ${productoNombre} (${oldCantidad} -> ${dto.cantidadActual})`
         );
       }
     } catch (err) {
+      console.error('[InventarioService] Error en actualización:', err);
       if (err instanceof QueryFailedError) {
         throw new BadRequestException(
-          I18nHelper.getError('INVENTARIO_CONSTRAINT_VIOLATION')
+          `${I18nHelper.getError('INVENTARIO_CONSTRAINT_VIOLATION')} (Detail: ${err.message})`
         );
       }
       throw err;
@@ -220,15 +267,21 @@ export class InventarioService {
       throw new NotFoundException(I18nHelper.getError('INVENTARIO_NOT_FOUND'));
     }
 
+    const productoProveedorId =
+      inventario.productoProveedor?.id ?? inventario.productoProveedorId;
+    const productoNombre =
+      inventario.productoProveedor?.producto?.nombre ||
+      `productoProveedor:${productoProveedorId ?? 'desconocido'}`;
+
     await this.movimientoHelper.trackInventarioMovimiento(
       userId,
       id,
       TipoMovimiento.SALIDA,
       inventario.cantidadActual,
-      inventario.productoProveedor.id,
+      productoProveedorId,
       'Inventario',
       id,
-      `Eliminación de inventario: ${inventario.productoProveedor.producto.nombre}`
+      `Eliminación de inventario: ${productoNombre}`
     );
   }
 
@@ -243,11 +296,15 @@ export class InventarioService {
   }
 
   async obtenerAlertasStock(): Promise<AlertaStockDTO[]> {
-    const productos = await this.inventarioRepository.findStockBajo();
-    return productos.map((p) => ({
-      id: p.id,
-      cantidadActual: p.cantidadActual,
-      cantidadMinima: p.cantidadMinima,
+    const items = await this.inventarioRepository.findStockBajo();
+    return items.map((item) => ({
+      id: item.id,
+      cantidadActual: item.cantidadActual,
+      cantidadMinima: item.cantidadMinima,
+      nombreProducto: item.productoProveedor?.producto?.nombre ?? 'Sin nombre',
+      unidad: item.productoProveedor?.producto?.unidad,
+      proveedorNombre: item.productoProveedor?.proveedor?.nombre,
+      ubicacionNombre: item.ubicacion?.nombre,
     }));
   }
 
@@ -267,6 +324,7 @@ export class InventarioService {
       return await this.dataSource.transaction(async (manager) => {
         const inventario = await manager
           .createQueryBuilder(Inventario, 'inv')
+          .withDeleted()
           .innerJoinAndSelect('inv.productoProveedor', 'pp')
           .innerJoinAndSelect('pp.producto', 'producto')
           .innerJoinAndSelect('pp.proveedor', 'proveedor')
@@ -281,6 +339,12 @@ export class InventarioService {
           );
         }
 
+        if (inventario.deletedAt) {
+          throw new ConflictException(
+            'No se puede ajustar un inventario eliminado. Recarga la vista para trabajar con lotes activos.'
+          );
+        }
+
         const cantidadAnterior = Number(inventario.cantidadActual);
 
         try {
@@ -291,18 +355,27 @@ export class InventarioService {
           );
         }
 
-        const inventarioActualizado = await manager.save(
-          Inventario,
-          inventario
-        );
+        if (
+          inventario.cantidadMaxima !== null &&
+          inventario.cantidadMaxima !== undefined &&
+          Number(inventario.cantidadMaxima) < Number(inventario.cantidadMinima)
+        ) {
+          (inventario as any).cantidadMaxima = null;
+        }
+
+        await manager.update(Inventario, inventario.id, {
+          cantidadActual: inventario.cantidadActual,
+        });
+
+        const inventarioActualizado = inventario;
 
         const tipoMovimiento = this.mapManualTipoToMovimiento(dto.tipo);
 
         const movimiento = manager.create(Movimiento, {
           tipo: tipoMovimiento,
           cantidad: Math.abs(dto.ajuste),
-          inventario: inventarioActualizado,
-          productoProveedor: inventario.productoProveedor,
+          inventario: { id: inventario.id } as any,
+          productoProveedor: { id: inventario.productoProveedor.id } as any,
           entidad: 'AjusteManualInventario',
           entidadId: inventario.id,
           descripcion: this.buildManualAdjustmentDescription(
@@ -319,9 +392,10 @@ export class InventarioService {
         return inventarioActualizado;
       });
     } catch (err) {
+      console.error('[InventarioService] Error en ajuste manual:', err);
       if (err instanceof QueryFailedError) {
         throw new BadRequestException(
-          I18nHelper.getError('INVENTARIO_CONSTRAINT_VIOLATION')
+          `${I18nHelper.getError('INVENTARIO_CONSTRAINT_VIOLATION')} (Detail: ${err.message})`
         );
       }
 

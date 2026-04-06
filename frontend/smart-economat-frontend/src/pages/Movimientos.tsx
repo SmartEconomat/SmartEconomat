@@ -3,6 +3,7 @@ import {
   Box,
   Typography,
   Alert,
+  Button,
   useTheme,
   alpha,
   Tooltip,
@@ -14,6 +15,10 @@ import PageToolbar from '../components/ui/PageToolbar';
 import MovimientoFilters, {
   MovimientoFiltersState,
 } from '../features/movimientos/MovimientoFilters';
+import {
+  getMovimientoUsuarioDisplayName,
+  getMovimientoUsuarioInitial,
+} from '../features/movimientos/movimiento-formatters';
 import { Movimiento, TipoMovimiento } from '../services/movimiento.types';
 import { fetchMovimientos } from '../services/movimiento.service';
 import StatusChip from '../components/ui/StatusChip';
@@ -26,7 +31,13 @@ import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import ConstructionIcon from '@mui/icons-material/Construction';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { usePermission } from '../store/auth.hooks'; // Original import path
-import { useNavigate } from 'react-router-dom'; // Added useNavigate import
+import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
+import { useLocation, useNavigate } from 'react-router-dom';
+
+type MovimientosLocationState = {
+  prefillSearchTerm?: string;
+  prefillTypes?: TipoMovimiento[];
+};
 
 const capitalize = (text: string) =>
   text.charAt(0).toUpperCase() + text.slice(1).replace(/_/g, ' ');
@@ -41,8 +52,9 @@ const getMovimientoNombreProducto = (row: Movimiento) => {
 
 const Movimientos: React.FC = () => {
   const theme = useTheme();
-  const canList = usePermission('movimientos:listar');
+  const canList = usePermission(PERMISSIONS.movimientos.listar);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (canList === false) {
@@ -63,6 +75,31 @@ const Movimientos: React.FC = () => {
     startDate: null,
     endDate: null,
   });
+
+  useEffect(() => {
+    const routeState = location.state as MovimientosLocationState | null;
+    if (!routeState) {
+      return;
+    }
+
+    const prefillSearchTerm = routeState.prefillSearchTerm?.trim();
+    if (prefillSearchTerm) {
+      setSearchTerm(prefillSearchTerm);
+    }
+
+    if (
+      Array.isArray(routeState.prefillTypes) &&
+      routeState.prefillTypes.length
+    ) {
+      setFilters((current) => ({
+        ...current,
+        types: routeState.prefillTypes || current.types,
+      }));
+    }
+
+    setPage(1);
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.pathname, location.state, navigate]);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -206,29 +243,31 @@ const Movimientos: React.FC = () => {
       {
         id: 'usuario',
         label: 'Usuario',
-        render: (row: Movimiento) => (
-          <Box display="flex" alignItems="center" gap={1}>
-            <Box
-              sx={{
-                width: 24,
-                height: 24,
-                borderRadius: '50%',
-                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                color: 'primary.main',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.7rem',
-                fontWeight: 700,
-              }}
-            >
-              {row.usuario?.nombre?.charAt(0) || 'U'}
+        render: (row: Movimiento) => {
+          const displayName = getMovimientoUsuarioDisplayName(row.usuario);
+
+          return (
+            <Box display="flex" alignItems="center" gap={1}>
+              <Box
+                sx={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: '50%',
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  color: 'primary.main',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                }}
+              >
+                {getMovimientoUsuarioInitial(row.usuario)}
+              </Box>
+              <Typography variant="body2">{displayName}</Typography>
             </Box>
-            <Typography variant="body2">
-              {row.usuario?.nombre || '—'}
-            </Typography>
-          </Box>
-        ),
+          );
+        },
         responsiveDisplay: { xs: 'none', sm: 'table-cell' },
       },
     ],
@@ -286,7 +325,10 @@ const Movimientos: React.FC = () => {
               '—',
             fullWidth: true,
           },
-          { label: 'Usuario', value: itemToView.usuario?.nombre || '—' },
+          {
+            label: 'Usuario',
+            value: getMovimientoUsuarioDisplayName(itemToView.usuario),
+          },
         ],
       },
       {
@@ -303,6 +345,33 @@ const Movimientos: React.FC = () => {
       },
     ];
   }, [itemToView]);
+
+  const detailActions = useMemo(() => {
+    if (!itemToView?.entidadId) {
+      return null;
+    }
+
+    if (String(itemToView.entidad || '').toLowerCase() === 'distribucion') {
+      return (
+        <Button
+          variant="outlined"
+          onClick={() => {
+            navigate('/distribucion', {
+              state: {
+                prefillSearchTerm: itemToView.entidadId,
+                openDetailDistribucionId: itemToView.entidadId,
+              },
+            });
+            setItemToView(null);
+          }}
+        >
+          Ver Distribución
+        </Button>
+      );
+    }
+
+    return null;
+  }, [itemToView, navigate]);
 
   return (
     <Box>
@@ -375,6 +444,7 @@ const Movimientos: React.FC = () => {
         subtitle={`ID: ${itemToView?.id || ''}`}
         size="md"
         sections={detailSections}
+        actions={detailActions}
       />
     </Box>
   );

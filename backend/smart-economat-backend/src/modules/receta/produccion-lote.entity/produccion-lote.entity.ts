@@ -53,6 +53,13 @@ export class ProduccionLote extends BaseEntity {
   fechaCaducidad?: Date | null;
 
   @Column({
+    type: 'timestamptz',
+    nullable: true,
+    name: 'fecha_agotado',
+  })
+  fechaAgotado?: Date | null;
+
+  @Column({
     type: 'numeric',
     precision: 14,
     scale: 4,

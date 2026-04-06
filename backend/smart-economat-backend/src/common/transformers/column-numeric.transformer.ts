@@ -1,6 +1,6 @@
 export class ColumnNumericTransformer {
-  to(data: number | null | undefined): number | null {
-    return data ?? null;
+  to(data: number | null | undefined): number {
+    return data ?? 0;
   }
 
   from(data: string | number | null | undefined): number {

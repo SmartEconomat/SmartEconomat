@@ -121,4 +121,17 @@ describe('DTOs - Alta compleja de producto', () => {
       true
     );
   });
+
+  it('rechaza precios unitarios en 0', () => {
+    const dto = plainToInstance(AddProveedorToProductoDto, {
+      proveedorId: '01954a87-0778-74d4-bb32-55b12044579f',
+      precioUnitario: 0,
+    });
+
+    const errors = validateSync(dto);
+
+    expect(errors.some((error) => error.property === 'precioUnitario')).toBe(
+      true
+    );
+  });
 });

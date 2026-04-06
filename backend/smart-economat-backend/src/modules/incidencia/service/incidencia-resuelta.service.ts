@@ -64,7 +64,6 @@ export class IncidenciaResuelaService {
   async findOne(id: string, userRole?: string): Promise<IncidenciaResuelta> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
       userRole?.toUpperCase() === 'SUPER_ADMIN';
 
     const resolucion = await this.incidenciaResuelaRepository.findOne({

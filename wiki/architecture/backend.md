@@ -86,7 +86,7 @@ El dominio de compras quedó separado en tres niveles para evitar ambigüedades 
 - Es el agregado de negocio que representa el pedido visible para el usuario.
 - Mantiene el identificador técnico UUID v7 y además expone `numeroGlobal` como numeración incremental de negocio.
 - Agrupa líneas de negocio (`PedidoUsuarioLinea`) y varios pedidos internos por proveedor.
-- Sus estados son: `pendiente`, `en_proceso`, `entregado`, `cancelado`.
+- Usa `EstadoPedido`; en la agregación de negocio se muestran estados `pendiente_de_aprobacion`, `por_recepcionar`, `recepcionado` y `cancelado`.
 
 ### 2. `Pedido`
 - Ya no representa el pedido “completo” de cara a negocio.

@@ -186,6 +186,17 @@ export class DistribucionService {
     userId: string
   ): Promise<Distribucion> {
     return this.dataSource.transaction(async (manager) => {
+      const requestedLineIds = dto.lineas.map(
+        (linea) => linea.pedidoUsuarioLineaId
+      );
+      const uniqueRequestedLineIds = new Set(requestedLineIds);
+
+      if (uniqueRequestedLineIds.size !== requestedLineIds.length) {
+        throw new BadRequestException(
+          'No se permiten líneas duplicadas en una misma distribución'
+        );
+      }
+
       const pedidoUsuario = await manager.findOne(PedidoUsuario, {
         where: { id: dto.pedidoUsuarioId },
         relations: [
@@ -210,9 +221,13 @@ export class DistribucionService {
         pedidoUsuario
       );
       const destino = await this.resolveDestino(manager, dto, targetSlot);
-      const requestedLineIds = dto.lineas.map(
-        (linea) => linea.pedidoUsuarioLineaId
-      );
+
+      if (origen.id === destino.id) {
+        throw new BadRequestException(
+          'La ubicación destino no puede ser la misma que la ubicación origen'
+        );
+      }
+
       const aggregateData = await this.calculatePendingByPedidoUsuarioLinea(
         manager,
         requestedLineIds
@@ -229,6 +244,7 @@ export class DistribucionService {
         ...(targetSlot ? { alumnoSlot: targetSlot } : {}),
         estado: EstadoDistribucion.PREPARADA,
         observaciones: dto.observaciones,
+        modifiedBy: userId,
       });
 
       distribucion.lineas = dto.lineas.map((lineaDto) => {
@@ -261,6 +277,7 @@ export class DistribucionService {
           cantidadEntregada: 0,
           estado: EstadoDistribucionLinea.PENDIENTE,
           observaciones: lineaDto.observaciones,
+          modifiedBy: userId,
         });
       });
 
@@ -316,6 +333,7 @@ export class DistribucionService {
 
       distribucion.estado = EstadoDistribucion.ENTREGADA;
       distribucion.fechaEntrega = new Date();
+      distribucion.modifiedBy = userId;
       await manager.save(distribucion);
 
       return manager.findOneOrFail(Distribucion, {
@@ -337,7 +355,8 @@ export class DistribucionService {
 
   async cancelar(
     id: string,
-    dto: CancelDistribucionDto
+    dto: CancelDistribucionDto,
+    userId?: string
   ): Promise<Distribucion> {
     const distribucion = await this.distribucionRepository.findOne({
       where: { id },
@@ -359,8 +378,14 @@ export class DistribucionService {
 
     distribucion.estado = EstadoDistribucion.CANCELADA;
     distribucion.motivoCancelacion = dto.motivoCancelacion;
+    if (userId) {
+      distribucion.modifiedBy = userId;
+    }
     distribucion.lineas?.forEach((linea) => {
       linea.estado = EstadoDistribucionLinea.CANCELADA;
+      if (userId) {
+        linea.modifiedBy = userId;
+      }
     });
 
     await this.distribucionRepository.save(distribucion);
@@ -402,20 +427,36 @@ export class DistribucionService {
     pedidoUsuario: PedidoUsuario
   ): Promise<AlumnoSlot | null> {
     const fallbackSlotId = pedidoUsuario.usuario?.alumno?.slot?.id;
-    const targetSlotId = dto.alumnoSlotId ?? fallbackSlotId;
+    const requestedSlotId = dto.alumnoSlotId;
+    const targetSlotId = requestedSlotId ?? fallbackSlotId;
 
     if (!targetSlotId) return null;
 
-    const slot = await manager.findOne(AlumnoSlot, {
+    const requestedSlot = await manager.findOne(AlumnoSlot, {
       where: { id: targetSlotId },
       relations: ['ubicacion'],
     });
 
-    if (!slot) {
-      throw new NotFoundException('Aula/slot de destino no encontrado');
+    if (requestedSlot) {
+      return requestedSlot;
     }
 
-    return slot;
+    if (
+      requestedSlotId &&
+      fallbackSlotId &&
+      fallbackSlotId !== requestedSlotId
+    ) {
+      const fallbackSlot = await manager.findOne(AlumnoSlot, {
+        where: { id: fallbackSlotId },
+        relations: ['ubicacion'],
+      });
+
+      if (fallbackSlot) {
+        return fallbackSlot;
+      }
+    }
+
+    return null;
   }
 
   private async resolveDestino(
@@ -423,7 +464,9 @@ export class DistribucionService {
     dto: CreateDistribucionDto,
     targetSlot: AlumnoSlot | null
   ): Promise<Ubicacion> {
-    const destinoId = dto.ubicacionDestinoId ?? targetSlot?.ubicacionId;
+    const requestedDestinoId = dto.ubicacionDestinoId;
+    const slotDestinoId = targetSlot?.ubicacionId;
+    const destinoId = requestedDestinoId ?? slotDestinoId;
 
     if (!destinoId) {
       throw new BadRequestException(
@@ -431,15 +474,25 @@ export class DistribucionService {
       );
     }
 
-    const destino = await manager.findOne(Ubicacion, {
+    const requestedDestino = await manager.findOne(Ubicacion, {
       where: { id: destinoId },
     });
 
-    if (!destino) {
-      throw new NotFoundException('Ubicación destino no encontrada');
+    if (requestedDestino) {
+      return requestedDestino;
     }
 
-    return destino;
+    if (requestedDestinoId && slotDestinoId && slotDestinoId !== destinoId) {
+      const slotDestino = await manager.findOne(Ubicacion, {
+        where: { id: slotDestinoId },
+      });
+
+      if (slotDestino) {
+        return slotDestino;
+      }
+    }
+
+    throw new NotFoundException('Ubicación destino no encontrada');
   }
 
   private async calculatePendingByPedidoUsuarioLinea(
@@ -745,6 +798,7 @@ export class DistribucionService {
 
       const mover = Math.min(disponible, restante);
       inventarioOrigen.ajustarCantidad(-mover);
+      inventarioOrigen.modifiedBy = userId;
       await manager.save(inventarioOrigen);
 
       const inventarioDestinoQb = manager
@@ -778,9 +832,11 @@ export class DistribucionService {
           ubicacion: distribucion.ubicacionDestino,
           fechaEntrada: new Date(),
           fechaCaducidad: inventarioOrigen.fechaCaducidad ?? null,
+          modifiedBy: userId,
         });
       } else {
         inventarioDestino.ajustarCantidad(mover);
+        inventarioDestino.modifiedBy = userId;
       }
 
       inventarioDestino = await manager.save(inventarioDestino);
@@ -799,6 +855,7 @@ export class DistribucionService {
           entidadId: distribucion.id,
           descripcion: `Distribución a ${distribucion.ubicacionDestino.nombre}: salida de ${productoNombre}`,
           usuario: { id: userId } as any,
+          modifiedBy: userId,
         })
       );
 
@@ -812,6 +869,7 @@ export class DistribucionService {
           entidadId: distribucion.id,
           descripcion: `Distribución desde ${distribucion.ubicacionOrigen.nombre}: entrada de ${productoNombre}`,
           usuario: { id: userId } as any,
+          modifiedBy: userId,
         })
       );
 
@@ -820,6 +878,7 @@ export class DistribucionService {
 
     linea.cantidadEntregada = cantidadObjetivo;
     linea.estado = EstadoDistribucionLinea.ENTREGADA;
+    linea.modifiedBy = userId;
     await manager.save(linea);
   }
 }

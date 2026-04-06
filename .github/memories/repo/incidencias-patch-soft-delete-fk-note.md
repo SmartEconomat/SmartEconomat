@@ -1,0 +1,4 @@
+- Bug reproducido: PATCH /incidencias/:id devolvia 500 cuando la recepcion relacionada estaba soft-deleted.
+- Causa: IncidenciaService.update hacia findOne con relaciones + save(entity); TypeORM intentaba persistir recepcion_id=null y fallaba NOT NULL.
+- Fix aplicado: update parcial por columnas (repository.update) tras validar existencia/resuelta, y luego findOne para respuesta.
+- Evidencia: QueryFailedError null value in column recepcion_id of relation incidencia.

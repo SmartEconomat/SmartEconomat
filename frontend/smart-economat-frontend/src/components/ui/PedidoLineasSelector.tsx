@@ -165,8 +165,25 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
     onChange(newLines);
   };
 
-  const handleRemoveLine = (index: number) => {
-    const newLines = value.filter((_, i) => i !== index);
+  const resolveLineIndexByKey = React.useCallback(
+    (lineKey: string): number => {
+      return value.findIndex((line, index) => {
+        const lineData = line as Partial<PedidoProducto> & {
+          id?: string;
+          _key?: string;
+          productoProveedorId?: string;
+        };
+        return getStableLineKey(lineData, index) === lineKey;
+      });
+    },
+    [value]
+  );
+
+  const handleRemoveLine = (lineKey: string) => {
+    const lineIndex = resolveLineIndexByKey(lineKey);
+    if (lineIndex < 0) return;
+
+    const newLines = value.filter((_, i) => i !== lineIndex);
     onChange(newLines);
   };
 
@@ -338,9 +355,12 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
   );
 
   const handleProductChange = (
-    index: number,
+    lineKey: string,
     product: ProductOption | null
   ) => {
+    const index = resolveLineIndexByKey(lineKey);
+    if (index < 0) return;
+
     const newLines = [...value];
     const currentLine = newLines[index] as Partial<PedidoProducto> & {
       productoId?: string;
@@ -384,7 +404,10 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
     onChange(newLines);
   };
 
-  const handleProviderChange = (index: number, providerId: string) => {
+  const handleProviderChange = (lineKey: string, providerId: string) => {
+    const index = resolveLineIndexByKey(lineKey);
+    if (index < 0) return;
+
     const newLines = [...value];
     const currentLine = newLines[index] as Partial<PedidoProducto> & {
       productoId?: string;
@@ -398,10 +421,13 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
   };
 
   const handleUpdateLine = (
-    index: number,
+    lineKey: string,
     field: string,
     newValue: unknown
   ) => {
+    const index = resolveLineIndexByKey(lineKey);
+    if (index < 0) return;
+
     const newLines = [...value];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const lineData = newLines[index] as any;
@@ -599,7 +625,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                           }
                           value={selectedProduct || null}
                           onChange={(_, newValue) =>
-                            handleProductChange(originalIndex, newValue)
+                            handleProductChange(uniqueKey, newValue)
                           }
                           disabled={disabled}
                           renderOption={(props, option) => {
@@ -661,10 +687,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                           fullWidth
                           value={selectedProvider?.id || ''}
                           onChange={(event) =>
-                            handleProviderChange(
-                              originalIndex,
-                              event.target.value
-                            )
+                            handleProviderChange(uniqueKey, event.target.value)
                           }
                           placeholder="Selecciona proveedor"
                         >
@@ -706,7 +729,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                             const rawValue = e.target.value;
 
                             if (rawValue === '') {
-                              handleUpdateLine(originalIndex, 'cantidad', '');
+                              handleUpdateLine(uniqueKey, 'cantidad', '');
                               return;
                             }
 
@@ -716,7 +739,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                                 : Number(rawValue);
 
                             handleUpdateLine(
-                              originalIndex,
+                              uniqueKey,
                               'cantidad',
                               parsedValue
                             );
@@ -794,7 +817,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                         <IconButton
                           size="small"
                           color="error"
-                          onClick={() => handleRemoveLine(originalIndex)}
+                          onClick={() => handleRemoveLine(uniqueKey)}
                         >
                           <DeleteIcon fontSize="small" />
                         </IconButton>

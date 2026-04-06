@@ -1,8 +1,10 @@
 import React from 'react';
-import { Box, Button, Stack, Tooltip } from '@mui/material';
+import { Box, Button, Stack } from '@mui/material';
+import CheckIcon from '@mui/icons-material/Check';
+import CancelIcon from '@mui/icons-material/Cancel';
+import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import PrintOutlinedIcon from '@mui/icons-material/PrintOutlined';
-import RestoreIcon from '@mui/icons-material/Restore';
 import DetailModal from '../../../components/ui/DetailModal';
 import BatchPedidoLineasViewer from '../../../components/ui/BatchPedidoLineasViewer';
 import {
@@ -13,81 +15,58 @@ import {
 } from '../../../services/pedido.service';
 import {
   EstadoLote,
-  EstadoPedido,
-  PedidoUsuario,
+  EstadoPedidoUsuario,
+  PedidoBatchDetail,
   PurchaseBatch,
 } from '../../../services/pedido.types';
 import { useToast } from '../../../store/toast.hooks';
-import { formatPedidoId } from '../utils/pedidoFormatters';
-import { getNextBatchAction } from '../utils/purchaseBatchUtils';
-import EditIcon from '@mui/icons-material/Edit';
+import {
+  formatBatchNumber,
+  formatBatchReference,
+  formatPedidoId,
+} from '../utils/pedidoFormatters';
 
 interface PurchaseBatchDetailModalProps {
-  batch: PurchaseBatch | PedidoUsuario | null;
+  detail: PedidoBatchDetail | null;
   canEdit?: boolean;
-  canRestore?: boolean;
-  mode?: 'batch' | 'pedido';
+  canApprove?: boolean;
+  canCancel?: boolean;
   onClose: () => void;
-  onEdit?: (batch: PurchaseBatch | PedidoUsuario) => void;
-  onRestore?: (batch: PurchaseBatch | PedidoUsuario) => void;
+  onEdit?: (detail: PedidoBatchDetail) => void;
+  onApprove?: (detail: PedidoBatchDetail) => void;
+  onCancel?: (detail: PedidoBatchDetail) => void;
   onRecepcion?: (batch: PurchaseBatch) => void;
-  canDistribucion?: boolean;
-  onDistribucion?: (batch: PurchaseBatch) => void;
-  onTramitar?: (batch: PurchaseBatch) => void;
 }
 
-function PurchaseBatchDetailModal({
-  batch,
-  canEdit,
-  canRestore,
-  mode,
+const PurchaseBatchDetailModal: React.FC<PurchaseBatchDetailModalProps> = ({
+  detail,
+  canEdit = false,
+  canApprove = false,
+  canCancel = false,
   onClose,
   onEdit,
-  onRestore,
+  onApprove,
+  onCancel,
   onRecepcion,
-  onDistribucion,
-  onTramitar,
-}: PurchaseBatchDetailModalProps) {
-  const _canEdit = canEdit ?? false;
-  const _canRestore = canRestore ?? false;
-  const _mode = mode ?? 'batch';
+}) => {
   const toast = useToast();
   const [isDownloadingPdf, setIsDownloadingPdf] = React.useState(false);
   const [isPrintingPdf, setIsPrintingPdf] = React.useState(false);
+  const batch = detail?.data ?? null;
+  const isPedidoUsuarioDetail = detail?.entityType === 'pedido_usuario';
 
-  const batchPedidos =
-    _mode === 'batch' && batch && 'pedidos' in batch
-      ? (batch.pedidos ?? [])
-      : [];
-  const hasPedidosDistribuibles = batchPedidos.some(
-    (pedido) => !!pedido.pedidoUsuarioId
-  );
-  const recepcionEstadosFinales = [
-    EstadoPedido.RECIBIDO,
-    EstadoPedido.INCIDENCIA,
-    EstadoPedido.CANCELADO,
-  ];
-  const isRecepcionCompleted =
-    _mode === 'batch' &&
+  const isPendingState =
     !!batch &&
-    ((batch as PurchaseBatch).estado === EstadoLote.COMPLETADO ||
-      (batchPedidos.length > 0 &&
-        batchPedidos.every((pedido) =>
-          recepcionEstadosFinales.includes(pedido.estado)
-        )));
-
-  const nextAction = getNextBatchAction(batch as PurchaseBatch, {
-    hasPedidosDistribuibles,
-    isRecepcionCompleted,
-  });
-  const NextActionIcon = nextAction.icon;
+    (isPedidoUsuarioDetail
+      ? String(batch.estado) === EstadoPedidoUsuario.PENDIENTE
+      : String(batch.estado) === EstadoLote.PENDIENTE);
 
   const handleDownloadPdf = async () => {
     if (!batch) return;
 
     setIsDownloadingPdf(true);
     try {
-      if (_mode === 'pedido') {
+      if (isPedidoUsuarioDetail) {
         await downloadPedidoUsuarioPdf(batch.id);
       } else {
         await downloadPurchaseBatchPdf(batch.id);
@@ -108,7 +87,7 @@ function PurchaseBatchDetailModal({
 
     setIsPrintingPdf(true);
     try {
-      if (_mode === 'pedido') {
+      if (isPedidoUsuarioDetail) {
         await printPedidoUsuarioPdf(batch.id);
       } else {
         await printPurchaseBatchPdf(batch.id);
@@ -125,157 +104,127 @@ function PurchaseBatchDetailModal({
   };
 
   return (
-    <>
-      <DetailModal
-        isOpen={!!batch}
-        onClose={onClose}
-        title={
-          _mode === 'pedido' ? 'Detalle del pedido ' : 'Detalle de la compra'
-        }
-        subtitle={
-          batch
-            ? 'numeroGlobal' in batch && batch.numeroGlobal
-              ? `Pedido #${batch.numeroGlobal}`
-              : `ID ${formatPedidoId(batch.id)}`
-            : undefined
-        }
-        size="lg"
-        actions={
-          batch ? (
-            <Box
-              sx={{
-                width: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 2,
-              }}
-            >
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: 2,
-                }}
+    <DetailModal
+      isOpen={!!detail}
+      onClose={onClose}
+      title={
+        isPedidoUsuarioDetail ? 'Detalle del pedido' : 'Detalle de la compra'
+      }
+      subtitle={
+        batch
+          ? isPedidoUsuarioDetail &&
+            'numeroGlobal' in batch &&
+            batch.numeroGlobal
+            ? `Pedido #${batch.numeroGlobal}`
+            : `Lote #${formatBatchNumber(batch as PurchaseBatch)} · ${formatBatchReference(batch as PurchaseBatch) || `ID ${formatPedidoId(batch.id)}`}`
+          : undefined
+      }
+      size="lg"
+      actions={
+        batch ? (
+          <Box
+            sx={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 1.5,
+              flexWrap: 'wrap',
+            }}
+          >
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+              <Button
+                variant="outlined"
+                color="primary"
+                startIcon={<PictureAsPdfIcon />}
+                onClick={() => void handleDownloadPdf()}
+                disabled={isDownloadingPdf || isPrintingPdf}
               >
-                {/* Lado izquierdo: Administración y Documentos */}
-                <Stack
-                  direction="row"
-                  spacing={1.5}
-                  flexWrap="wrap"
-                  alignItems="center"
+                {isDownloadingPdf ? 'Descargando...' : 'Descargar PDF'}
+              </Button>
+              <Button
+                variant="outlined"
+                color="inherit"
+                startIcon={<PrintOutlinedIcon />}
+                onClick={() => void handlePrintPdf()}
+                disabled={isPrintingPdf || isDownloadingPdf}
+              >
+                {isPrintingPdf ? 'Preparando impresión...' : 'Imprimir PDF'}
+              </Button>
+            </Stack>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+              {isPedidoUsuarioDetail &&
+                canApprove &&
+                onApprove &&
+                isPendingState && (
+                  <Button
+                    variant="outlined"
+                    color="success"
+                    startIcon={<CheckIcon />}
+                    onClick={() => detail && onApprove(detail)}
+                  >
+                    Aprobar pedido
+                  </Button>
+                )}
+              {isPedidoUsuarioDetail &&
+                canCancel &&
+                onCancel &&
+                isPendingState && (
+                  <Button
+                    variant="outlined"
+                    color="warning"
+                    startIcon={<CancelIcon />}
+                    onClick={() => detail && onCancel(detail)}
+                  >
+                    Cancelar pedido
+                  </Button>
+                )}
+              {canEdit && onEdit && isPendingState && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  disableElevation
+                  onClick={() => detail && onEdit(detail)}
                 >
-                  {nextAction.action === 'tramitar' &&
-                    _canEdit &&
-                    onEdit &&
-                    String(batch.estado) === EstadoPedido.PENDIENTE && (
-                      <Button
-                        variant="contained"
-                        color="success"
-                        disableElevation
-                        startIcon={<EditIcon />}
-                        onClick={() => onEdit(batch)}
-                        sx={{ fontWeight: 'bold', height: '40px' }}
-                      >
-                        Editar
-                      </Button>
-                    )}
-
-                  {_canRestore &&
-                    onRestore &&
-                    String(batch.estado) === EstadoPedido.CANCELADO && (
-                      <Button
-                        variant="outlined"
-                        color="info"
-                        startIcon={<RestoreIcon />}
-                        onClick={() => onRestore(batch)}
-                      >
-                        Revertir
-                      </Button>
-                    )}
-
-                  <Stack direction="row" spacing={1.5} alignItems="center">
-                    <Button
-                      variant="outlined"
-                      color="secondary"
-                      startIcon={<PictureAsPdfIcon />}
-                      onClick={() => void handleDownloadPdf()}
-                      disabled={isDownloadingPdf || isPrintingPdf}
-                      sx={{
-                        height: '40px',
-                        borderColor: 'secondary.main',
-                        color: 'secondary.main',
-                      }}
-                    >
-                      {isDownloadingPdf ? '...' : 'PDF'}
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      color="inherit"
-                      startIcon={<PrintOutlinedIcon />}
-                      onClick={() => void handlePrintPdf()}
-                      disabled={isPrintingPdf || isDownloadingPdf}
-                      sx={{ height: '40px', borderColor: 'grey.400' }}
-                    >
-                      {isPrintingPdf ? '...' : 'Imprimir'}
-                    </Button>
-                  </Stack>
-                </Stack>
-
-                {/* Lado derecho: Acción Logística (Siguiente Paso) */}
-                <Box>
-                  {nextAction.action !== 'none' && (
-                    <Tooltip title={nextAction.tooltip || ''}>
-                      <span>
-                        <Button
-                          variant="contained"
-                          color={nextAction.color}
-                          disableElevation
-                          startIcon={<NextActionIcon />}
-                          onClick={() => {
-                            if (nextAction.action === 'tramitar')
-                              onTramitar?.(batch as PurchaseBatch);
-                            if (nextAction.action === 'recepcion')
-                              onRecepcion?.(batch as PurchaseBatch);
-                            if (nextAction.action === 'distribucion')
-                              onDistribucion?.(batch as PurchaseBatch);
-                          }}
-                          disabled={
-                            nextAction.disabled ||
-                            (nextAction.action === 'tramitar' && !onTramitar)
-                          }
-                          sx={{
-                            fontWeight: 'bold',
-                            height: '40px',
-                            px: 4,
-                            ml: 2,
-                          }}
-                        >
-                          {nextAction.label}
-                        </Button>
-                      </span>
-                    </Tooltip>
-                  )}
-                </Box>
-              </Box>
-            </Box>
-          ) : undefined
-        }
-        sections={[
-          {
-            content: batch ? (
+                  {isPedidoUsuarioDetail ? 'Editar pedido' : 'Editar compra'}
+                </Button>
+              )}
+              {!isPedidoUsuarioDetail && onRecepcion && batch && (
+                <Button
+                  variant="contained"
+                  color="success"
+                  disableElevation
+                  startIcon={<LoginOutlinedIcon />}
+                  onClick={() => onRecepcion(batch as PurchaseBatch)}
+                >
+                  Recepción
+                </Button>
+              )}
+            </Stack>
+          </Box>
+        ) : undefined
+      }
+      sections={[
+        {
+          content: detail ? (
+            detail.entityType === 'pedido_usuario' ? (
               <BatchPedidoLineasViewer
-                batch={batch}
-                mode={_mode}
+                batch={detail.data}
+                mode="pedido"
                 showPdfActions={false}
               />
-            ) : null,
-          },
-        ]}
-      />
-    </>
+            ) : (
+              <BatchPedidoLineasViewer
+                batch={detail.data}
+                mode="batch"
+                showPdfActions={false}
+              />
+            )
+          ) : null,
+        },
+      ]}
+    />
   );
-}
+};
 
 export default PurchaseBatchDetailModal;

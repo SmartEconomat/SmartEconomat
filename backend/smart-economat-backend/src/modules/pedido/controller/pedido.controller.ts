@@ -25,6 +25,7 @@ import { RequirePermissions } from '../../../common/decorators/require-permissio
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { GeneratePedidoFromRecetasDto } from '../dto/generate-pedido-from-recetas.dto';
 import { RecetaToPedidoService } from '../service/receta-to-pedido.service';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('pedidos')
@@ -35,7 +36,7 @@ export class PedidoController {
   ) {}
 
   @Post()
-  @RequirePermissions('pedidos:crear')
+  @RequirePermissions(PERMISSIONS.pedidos.crear)
   create(
     @Body() dto: CreatePedidoDto,
     @Req() req: { user: { id: string } }
@@ -45,7 +46,7 @@ export class PedidoController {
   }
 
   @Get()
-  @RequirePermissions('pedidos:listar')
+  @RequirePermissions(PERMISSIONS.pedidos.listar)
   findAll(
     @SortableFields({
       fechaPedido: 'fechaPedido',
@@ -62,7 +63,7 @@ export class PedidoController {
   }
 
   @Post('from-recipes')
-  @RequirePermissions('pedidos:crear')
+  @RequirePermissions(PERMISSIONS.pedidos.crear)
   createFromRecipes(
     @Body() dto: GeneratePedidoFromRecetasDto,
     @Req() req: { user: { id: string } }
@@ -72,29 +73,30 @@ export class PedidoController {
   }
 
   @Get(':id')
-  @RequirePermissions('pedidos:ver')
+  @RequirePermissions(PERMISSIONS.pedidos.ver)
   findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Pedido> {
     return this.pedidoService.findOne(id);
   }
 
   @Patch(':id')
-  @RequirePermissions('pedidos:editar')
+  @RequirePermissions(PERMISSIONS.pedidos.editar)
   update(
     @Param('id', ParseUUIDv7Pipe) id: string,
-    @Body() dto: UpdatePedidoDto
+    @Body() dto: UpdatePedidoDto,
+    @Req() req: { user: { id: string } }
   ): Promise<Pedido> {
-    return this.pedidoService.update(id, dto);
+    return this.pedidoService.update(id, dto, req.user.id);
   }
 
   @Delete(':id')
-  @RequirePermissions('pedidos:eliminar')
+  @RequirePermissions(PERMISSIONS.pedidos.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.pedidoService.remove(id);
   }
 
   @Patch(':id/fecha-entrega')
-  @RequirePermissions('pedidos:editar')
+  @RequirePermissions(PERMISSIONS.pedidos.editar)
   updateFechaEntrega(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: UpdatePedidoDto
@@ -103,23 +105,30 @@ export class PedidoController {
   }
 
   @Patch(':id/cancelar')
-  @RequirePermissions('pedidos:cancelar')
+  @RequirePermissions(PERMISSIONS.pedidos.cancelar)
   cancelarPedido(
     @Param('id', ParseUUIDv7Pipe) id: string,
-    @Body() dto: CancelPedidoDto
+    @Body() dto: CancelPedidoDto,
+    @Req() req: { user: { id: string } }
   ): Promise<Pedido> {
-    return this.pedidoService.cancelarPedido(id, dto);
+    return this.pedidoService.cancelarPedido(id, dto, req.user.id);
   }
 
   @Patch(':id/aceptar')
-  @RequirePermissions('pedidos:editar')
-  aceptarPedido(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Pedido> {
-    return this.pedidoService.aceptarPedido(id);
+  @RequirePermissions(PERMISSIONS.pedidos.editar)
+  aceptarPedido(
+    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Req() req: { user: { id: string } }
+  ): Promise<Pedido> {
+    return this.pedidoService.aceptarPedido(id, req.user.id);
   }
 
   @Patch(':id/restaurar')
-  @RequirePermissions('pedidos:restaurar')
-  restaurarPedido(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Pedido> {
-    return this.pedidoService.restaurarPedido(id);
+  @RequirePermissions(PERMISSIONS.pedidos.restaurar)
+  restaurarPedido(
+    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Req() req: { user: { id: string } }
+  ): Promise<Pedido> {
+    return this.pedidoService.restaurarPedido(id, req.user.id);
   }
 }

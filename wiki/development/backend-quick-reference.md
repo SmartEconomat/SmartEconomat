@@ -1,6 +1,6 @@
-# SmartEconomat Backend - Guía de Referencia Rápida
+# Backend: guía de referencia rápida
 
-## 🚀 Inicio Rápido
+## Inicio rápido
 
 ### Ubicación del Servidor
 ```bash
@@ -15,11 +15,11 @@ npm run start:dev
 
 ### Acceso a la API
 - **API**: `http://localhost:3000/api/v1`
-- **Documentación Swagger**: `http://localhost:3000/api/v1/docs`
+- **Documentación Swagger**: `http://localhost:3000/docs`
 
 ---
 
-## 📂 Mapa de Directorios
+## Mapa de directorios
 
 ```
 src/
@@ -61,7 +61,7 @@ src/
 
 ---
 
-## 🏗️ Estructura de Módulo (Patrón Estándar)
+## Estructura de módulo
 
 Cada módulo contiene:
 
@@ -96,7 +96,7 @@ nombre-del-modulo/
 
 ---
 
-## 📋 Decoradores y Características Comunes
+## Decoradores y características comunes
 
 ### Autenticación y Autorización
 
@@ -106,14 +106,13 @@ nombre-del-modulo/
 @RequireAnyPermission('read', 'admin') // RBAC - requiere CUALQUIER permiso
 @Resource('producto')                  // Marca el recurso para auditoría
 @ControllerPermissions(...)            // Permisos de endpoints en bloque
-@Normalize()                           // Normalización de datos
 ```
 
 ### Pipes Personalizados
 
 ```typescript
 // Usar en @Param, @Query, @Body
-ParseUuidV7Pipe                    // Valida formato UUID v7
+ParseUUIDv7Pipe                    // Valida formato UUID v7
 NormalizeDataPipe                  // Normaliza datos complejos
 NormalizeStringPipe                // Trim y normaliza cadenas
 I18nValidationPipe                 // Validación + i18n (aplicado globalmente)
@@ -121,7 +120,7 @@ I18nValidationPipe                 // Validación + i18n (aplicado globalmente)
 
 ---
 
-## 🗄️ BaseEntity (Todas las Entidades la Extienden)
+## BaseEntity compartida
 
 ```typescript
 export abstract class BaseEntity {
@@ -147,7 +146,7 @@ export abstract class BaseEntity {
 
 ---
 
-## 📊 Patrón de Servicio (CRUD Estándar)
+## Patrón de servicio
 
 ### Métodos Comunes
 
@@ -183,7 +182,7 @@ class PaginatedResponseDto<T> {
 
 ---
 
-## 🔄 Formato de Respuesta (Estándar)
+## Formato de respuesta
 
 Cada respuesta de la API sigue este formato:
 
@@ -209,7 +208,7 @@ Cada respuesta de la API sigue este formato:
 
 ---
 
-## 🛠️ Creación de un Nuevo Módulo
+## Creación de un nuevo módulo
 
 ### Paso 1: Crear Estructura de Carpetas
 ```bash

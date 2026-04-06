@@ -130,7 +130,7 @@ const statusTranslations: Record<string, string> = {
   entrada_distribucion: 'Entrada distribución',
   salida_distribucion: 'Salida distribución',
   salida_elaboracion: 'Salida elaboración',
-  parcial: 'Tramitado',
+  parcial: 'Parcial',
   completado: 'Completado',
   preparada: 'Por recoger',
   preparado: 'Por recoger',

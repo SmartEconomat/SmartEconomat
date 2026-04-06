@@ -10,6 +10,26 @@ export interface LoginResponse {
   requirePasswordChange?: boolean;
 }
 
+export interface CurrentUserResponse {
+  id: string;
+  username?: string;
+  nombre?: string;
+  name?: string;
+  email: string;
+  rol?: string;
+  role?: string;
+  permisos?: string[];
+}
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  rol: string;
+  username?: string;
+  permisos: string[];
+}
+
 export interface RegisterAlumnoRequest {
   username: string;
   password: string;
@@ -54,7 +74,55 @@ export const authService = {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    return await parseApiResponse(response, 'Usuario o contraseña inválidos.');
+    const result = await parseApiResponse<LoginResponse>(
+      response,
+      'Usuario o contraseña inválidos.'
+    );
+
+    return result;
+  },
+
+  async getCurrentUser(): Promise<User> {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => {
+      controller.abort();
+    }, 10000);
+
+    let response: Response;
+
+    try {
+      response = await baseFetch('/usuarios/perfil', {
+        signal: controller.signal,
+      });
+    } catch (error: unknown) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        throw new Error(
+          'No se pudo validar la sesión a tiempo. Vuelve a intentarlo.'
+        );
+      }
+
+      throw error;
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
+
+    const result = await parseApiResponse<CurrentUserResponse>(
+      response,
+      'No se pudo obtener la información del usuario'
+    );
+
+    return {
+      id: result.data.id,
+      name:
+        result.data.nombre ||
+        result.data.name ||
+        result.data.username ||
+        result.data.email,
+      email: result.data.email,
+      rol: result.data.rol || result.data.role || 'usuario',
+      username: result.data.username,
+      permisos: result.data.permisos || [],
+    };
   },
 
   async registerAlumno(
@@ -163,5 +231,25 @@ export const authService = {
       response,
       'No se pudo cambiar la contraseña.'
     );
+  },
+
+  async updateProfile(data: {
+    username: string;
+    email?: string;
+  }): Promise<void> {
+    const response = await baseFetch('/usuarios/perfil', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    await parseApiResponse(response, 'Error al actualizar el perfil');
+  },
+
+  async logout(): Promise<void> {
+    const response = await baseFetch('/auth/logout', {
+      method: 'POST',
+    });
+    await parseApiResponse(response, 'Error al cerrar la sesión');
   },
 };

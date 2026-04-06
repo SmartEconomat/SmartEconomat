@@ -23,7 +23,7 @@ const MisPedidosStatusTabs: React.FC<MisPedidosStatusTabsProps> = ({
       icon: <WatchLaterOutlinedIcon sx={{ fontSize: 20 }} />,
     },
     {
-      value: 'en_proceso' as MisPedidosStatusFilter,
+      value: 'activos' as MisPedidosStatusFilter,
       label: 'EN PROCESO',
       icon: <AutorenewOutlinedIcon sx={{ fontSize: 20 }} />,
     },

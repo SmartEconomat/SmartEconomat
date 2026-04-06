@@ -1,14 +1,14 @@
-# Arquitectura UI: Módulo de Recepción (React)
+# Arquitectura UI del módulo de recepción
 
 Este documento detalla la estructura y organización de componentes en el Frontend para el flujo de Recepción de Pedidos (`Recepcion.tsx`).
 
-## 1. Problema Original
+## 1. Problema original
 Inicialmente, el archivo `Recepcion.tsx` centralizaba toda la lógica de negocio, manejo de estado (Drafts), y la declaración visual (UI) de los 4 pasos del "Wizard" de recepción, además de todos los modales adyacentes. Esto provocó que el archivo superara las 1,400 líneas de código, dificultando su legibilidad, mantenimiento y escalabilidad.
 
-## 2. Nueva Arquitectura Basada en Componentes
+## 2. Nueva arquitectura basada en componentes
 Para adherirse al principio de *Single Responsibility* (Responsabilidad Única) y mejorar la separación de conceptos, el monolito visual fue dividido en múltiples submódulos puramente presentacionales y de flujo, ubicados en `src/components/recepcion/`.
 
-### 2.1 Archivo Principal: `Recepcion.tsx` (Contenedor de Estado)
+### 2.1 Archivo principal: `Recepcion.tsx`
 Ubicación: `src/pages/Recepcion.tsx`
 - **Responsabilidad**: Actuar como el *Smart Component* (Componente Inteligente) o controlador general.
 - **Funcionalidad**: 
@@ -49,5 +49,3 @@ Ubicación: `src/components/recepcion/`
 2. **Persistencia Confiable**: El usuario puede refrescar o salir de la página sin perder el progreso.
 3. **Interfaz Limpia**: La información de la báscula solo aparece cuando es necesaria.
 
----
-*SmartEconomat Wiki - Actualizado Marzo 2026*

@@ -24,7 +24,6 @@ export const extractPedidoLines = (
       const current = line as {
         id?: string;
         productoProveedorId?: string;
-        id_producto_proveedor?: string;
         proveedorId?: string;
         cantidad?: number | string;
         productoProveedor?: {
@@ -33,21 +32,25 @@ export const extractPedidoLines = (
         };
       };
 
+      const productoProveedorId = (current.productoProveedorId || '').trim();
+      const proveedorId = (
+        current.proveedorId ||
+        current.productoProveedor?.proveedor?.id ||
+        current.productoProveedor?.proveedorId ||
+        ''
+      ).trim();
+
       return {
         id: current.id,
-        productoProveedorId:
-          current.productoProveedorId || current.id_producto_proveedor || '',
-        proveedorId:
-          current.proveedorId ||
-          current.productoProveedor?.proveedor?.id ||
-          current.productoProveedor?.proveedorId ||
-          '',
+        productoProveedorId,
+        proveedorId,
         cantidad: Number(current.cantidad),
       };
     })
     .filter(
       (line) =>
         Boolean(line.productoProveedorId) &&
+        Boolean(line.proveedorId) &&
         Number.isFinite(line.cantidad) &&
         line.cantidad > 0
     );
@@ -60,7 +63,11 @@ export const groupPedidoLinesByProvider = (
   const linesByProvider = new Map<string, NormalizedPedidoLine[]>();
 
   lines.forEach((line) => {
-    const providerId = line.proveedorId || fallbackProviderId || '';
+    const providerId = (line.proveedorId || fallbackProviderId || '').trim();
+    if (!providerId) {
+      return;
+    }
+
     if (!linesByProvider.has(providerId)) {
       linesByProvider.set(providerId, []);
     }

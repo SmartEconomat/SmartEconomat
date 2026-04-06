@@ -1,64 +1,57 @@
-# Documentación del Proyecto - SmartEconomat
+# Frontend
 
-Esta carpeta contiene la documentación técnica y de diseño (UX/UI) del frontend.
+Esta sección documenta la arquitectura y las piezas principales del cliente React + Vite. El objetivo es mantener una referencia de UI alineada con la implementación actual, no con versiones históricas de pantallas o componentes.
 
-## Estructura
+## Documentos base
 
-### Hooks Responsive
+- [arquitectura.md](arquitectura.md): visión general del frontend.
+- [hooks-permisos.md](hooks-permisos.md): consumo de permisos desde el cliente.
+- [useBreakpoints.md](useBreakpoints.md): responsive centralizado.
+- [gestion-usuarios.md](gestion-usuarios.md): comportamiento del módulo de administración de usuarios.
 
-- [useBreakpoints](./useBreakpoints.md): Hook centralizado de breakpoints. Expone `isMobile`, `isTablet`, `isDesktop` y rangos compuestos. **Todos los componentes deben usarlo en lugar de llamar a `useMediaQuery` directamente.**
+## Componentes transversales
 
-### Arquitectura
+| Documento | Uso principal |
+| --- | --- |
+| [componentes/MainLayout.md](componentes/MainLayout.md) | Shell principal de la aplicación |
+| [componentes/PageToolbar.md](componentes/PageToolbar.md) | Cabecera reutilizable con búsqueda, filtros y acciones |
+| [componentes/DataTable.md](componentes/DataTable.md) | Tablas y vistas list/grid reutilizables |
+| [componentes/DetailModal.md](componentes/DetailModal.md) | Vista de detalle de entidades |
+| [componentes/ConfirmDialog.md](componentes/ConfirmDialog.md) | Confirmaciones de acciones críticas |
+| [componentes/DynamicFormModal.md](componentes/DynamicFormModal.md) | Infraestructura genérica de formularios; varios módulos ya usan wrappers especializados encima |
+| [componentes/Login.md](componentes/Login.md) | Orquestación visual del acceso |
+| [componentes/ProductFilters.md](componentes/ProductFilters.md) | Filtros del catálogo de productos |
+| [componentes/RecetaIngredientesSelector.md](componentes/RecetaIngredientesSelector.md) | Selección de ingredientes para recetas |
 
-- [Arquitectura General](./arquitectura.md): Visión global del proyecto, estructura de carpetas y principios de diseño.
+## Modelo de sesión y permisos
 
-### Componentes (Atomic Design)
+- El transporte HTTP base usa `credentials: 'include'`.
+- La sesión se rehidrata con `GET /api/v1/usuarios/perfil`.
+- Los hooks de permisos del frontend reflejan la lógica de roles elevados del backend.
+- `DynamicFormModal` sigue existiendo, pero productos, recetas y usuarios ya no dependen de él como formulario principal.
 
-Documentación detallada de los componentes clave, desglosando su construcción desde átomos hasta organismos.
+## Páginas documentadas
 
-#### Base y UI Genérica
-- [DynamicFormModal](./componentes/DynamicFormModal.md): Modal dinámico genérico para generación automática de formularios.
-- [Select](./componentes/Select.md): Componente desplegable base de UI iterado sobre Select de MUI.
-- [Spinner](./componentes/Spinner.md): Indicador de carga dinámico y bloqueador de pantalla.
-- [Modal](./componentes/Modal.md): Ventana de diálogo base reutilizable con gestión de desenfoque.
-- [DetailModal](./componentes/DetailModal.md): Variante modal especializada en presentación de entidades con layouts de grilla en secciones dinámicas.
-- [ConfirmDialog](./componentes/ConfirmDialog.md): Modal para intercepción y confirmación de acciones críticas.
-- [ToastContainer](./componentes/ToastContainer.md): Sistema de notificaciones emergentes (Toasts).
-- [DataTable](./componentes/DataTable.md): Tabla general para visualización de registros con paginación integrada.
-- [Tooltip](./componentes/Tooltip.md): Componente de ayuda visual extendido.
-- [StatusChip](./componentes/StatusChip.md): Indicadores de estado visuales y semánticos (Rojo, Amarillo, Verde).
-- [AllergenSelector](./componentes/AllergenSelector.md): Selector visual 100% responsivo para los 14 alérgenos de declaración obligatoria (UE).
+| Documento | Área |
+| --- | --- |
+| [paginas/Auth.md](paginas/Auth.md) | Login, registro y flujos de autenticación |
+| [paginas/Dashboard.md](paginas/Dashboard.md) | Inicio, KPIs y acciones rápidas |
+| [paginas/Usuarios.md](paginas/Usuarios.md) | Administración de usuarios y privilegios |
+| [paginas/Productos.md](paginas/Productos.md) | Catálogo, exportación y alta de producto |
+| [paginas/Proveedores.md](paginas/Proveedores.md) | Gestión de proveedores |
+| [paginas/Recetas.md](paginas/Recetas.md) | Recetas, preparación y pedidos derivados |
+| [paginas/Pedidos.md](paginas/Pedidos.md) | Flujo de pedidos y compras |
+| [paginas/Perfil.md](paginas/Perfil.md) | Perfil y seguridad del usuario |
+| [paginas/Incidencias.md](paginas/Incidencias.md) | Registro y seguimiento de incidencias |
+| [paginas/Movimientos.md](paginas/Movimientos.md) | Histórico de movimientos |
 
-#### Funcionales y Layout
-- [Tutorial Onboarding](./componentes/TutorialHelper.md): Guía contextual paso a paso.
-- [Main Layout](./componentes/MainLayout.md): Estructura principal (Sidebar, Header).
-- [PageToolbar](./componentes/PageToolbar.md): Encabezado unificado sticky con búsqueda, filtros, paginación y acciones.
-- [Settings Menu](./componentes/SettingsMenu.md): Menú de configuración (Tema, Fuentes).
-- [ProductFilters](./componentes/ProductFilters.md): Autocomplete multi-select de categorías con búsqueda en tiempo real, chips con icono oficial dentro del control e integración en `PageToolbar`.
+## Servicios documentados
 
-#### Autenticación
-- [Login](./componentes/Login.md): Orquestador de la pantalla de auth — fases, animaciones y flujos de login/registro.
-- [AuthSlide](./componentes/AuthSlide.md): Panel informativo con gradiente animado, icono giratorio y carrusel.
-- [LoginForm](./componentes/LoginForm.md): Formulario de inicio de sesión con toggle de contraseña.
-- [RegisterForm](./componentes/RegisterForm.md): Formulario de alta de nuevos usuarios.
+- [servicios/usuarioService.md](servicios/usuarioService.md)
+- [servicios/profesor.service.md](servicios/profesor.service.md)
 
----
+## Relacionado
 
-### Páginas
-
-Documentación de las vistas completas (componentes raíz de cada ruta).
-
-- [Auth (Login / Registro)](./paginas/Auth.md): Sistema completo de autenticación — diseño, animaciones, seguridad y flujos.
-- [Dashboard / Inicio](./paginas/Dashboard.md): Vista principal con KPIs, actividad reciente, acciones rápidas y permisos granulares.
-- [Usuarios](./paginas/Usuarios.md): Gestión de usuarios con tabla y operaciones CRUD.
-- [Productos](./paginas/Productos.md): Catálogo de productos — búsqueda, filtrado por categoría, CRUD completo con vistas lista/mosaico e integración de `PageToolbar`.
-- [Proveedores](./paginas/Proveedores.md): Listado de proveedores con detalle expandido y gestión de contactos.
-- [Recetas](./paginas/Recetas.md): Gestión de escandallos y elaboración de platos.
-- [Pedidos](./paginas/Pedidos.md): Flujo de negocio con `PedidoUsuario`, vista semanal y compras consolidadas.
-- [Perfil](./paginas/Perfil.md): Gestión de datos personales, seguridad y herramientas académicas por rol.
-- [Incidencias](./paginas/Incidencias.md): Registro y seguimiento de problemas técnicos o de stock.
-- [Movimientos](./paginas/Movimientos.md): Histórico de entradas y salidas de almacén.
-
----
-
-_Esta documentación debe actualizarse cada vez que se cree o modifique sustancialmente un componente._
+- [Arquitectura frontend](../architecture/frontend.md)
+- [Referencia de API](../reference/api/README.md)
+- [RBAC técnico](../security/rbac.md)

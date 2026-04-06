@@ -20,34 +20,52 @@ import {
 } from '@mui/material';
 import { Autocomplete, CircularProgress } from '@mui/material';
 import DataTable, { Column } from '../components/ui/DataTable';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
+import DynamicFormModal, {
+  DynamicField,
+} from '../components/ui/DynamicFormModal';
 import StatusChip from '../components/ui/StatusChip';
 import {
   fetchInventario,
   agregarInventarioPorProducto,
   createInventarioItem,
 } from '../services/inventario.service';
+import {
+  createProducto,
+  getProductoByBarcode,
+} from '../services/producto.service';
+import type { Proveedor } from '../services/proveedor.types';
 import type {
   InventarioItem,
   InventarioPorProducto,
 } from '../services/inventario.types';
+import {
+  CategoriaProducto,
+  UnidadMedida,
+  normalizeUnidadMedida,
+} from '../services/producto.types';
 import { UbicacionService } from '../services/ubicacion.service';
 import type { Ubicacion } from '../services/ubicacion.types';
+import { fetchProveedores } from '../services/proveedor.service';
 import UbicacionesModal from '../components/inventario/UbicacionesModal';
 import InventoryDetailModal from '../components/inventario/InventoryDetailModal';
 import { useToast } from '../store/toast.hooks';
 import { useAuth, usePermission } from '../store/auth.hooks';
+import { isElevatedRole } from '../sherlock-auth/permissions';
+import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 import { profesorService } from '../services/profesor.service';
 import {
   searchProductoProveedor,
   type ProductoProveedorOption,
 } from '../services/productoProveedor.service';
+import { searchByBarcode } from '../services/openfoodfacts.service';
 
 import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined';
-import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import SettingsIcon from '@mui/icons-material/Settings';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import SyncAltIcon from '@mui/icons-material/SyncAlt';
+import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 
 import PageToolbar from '../components/ui/PageToolbar';
 import BarcodeScanner from '../components/ui/BarcodeScanner';
@@ -59,6 +77,117 @@ const initialFilters: InventarioFiltersState = {
   categorias: [],
   ubicaciones: [],
 };
+
+const MEASURABLE_STOCK_UNITS = new Set<UnidadMedida>([
+  UnidadMedida.KG,
+  UnidadMedida.G,
+  UnidadMedida.L,
+  UnidadMedida.ML,
+]);
+
+const formatStockUnits = (value: number): string =>
+  `${(Number(value) || 0).toFixed(2)} uds`;
+
+const formatEquivalentAmount = (value: number, unit: UnidadMedida): string => {
+  if (unit === UnidadMedida.ML && Math.abs(value) >= 1000) {
+    return `${(value / 1000).toFixed(2)} ${UnidadMedida.L}`;
+  }
+
+  if (unit === UnidadMedida.G && Math.abs(value) >= 1000) {
+    return `${(value / 1000).toFixed(2)} ${UnidadMedida.KG}`;
+  }
+
+  return `${value.toFixed(2)} ${unit}`;
+};
+
+const formatEquivalentByConstruction = (
+  cantidadUnidades: number,
+  contenidoPorUnidad?: number,
+  unidad?: string
+): string | null => {
+  const normalizedUnit = normalizeUnidadMedida(unidad);
+  if (!normalizedUnit || !MEASURABLE_STOCK_UNITS.has(normalizedUnit)) {
+    return null;
+  }
+
+  if (!contenidoPorUnidad || !Number.isFinite(contenidoPorUnidad)) {
+    return null;
+  }
+
+  const totalContenido = cantidadUnidades * contenidoPorUnidad;
+  return `≈ ${formatEquivalentAmount(totalContenido, normalizedUnit)}`;
+};
+
+interface ProductoFormProveedor {
+  proveedorId: string;
+  nombre?: string;
+  marca?: string;
+  codigoBarras?: string;
+  precioUnitario?: number | string;
+}
+
+interface ProductoFormData extends Record<string, unknown> {
+  nombre?: string;
+  marca?: string;
+  descripcion?: string;
+  unidad?: string;
+  tipo?: CategoriaProducto;
+  contenido?: number | string;
+  codigoBarras?: string;
+  proveedores?: ProductoFormProveedor[];
+}
+
+const PRODUCTO_CREATE_FIELDS_BASE: DynamicField[] = [
+  { name: 'nombre', label: 'Nombre Comercial', required: true },
+  { name: 'marca', label: 'Marca' },
+  { name: 'descripcion', label: 'Descripción' },
+  {
+    name: 'contenido',
+    label: 'Contenido Numérico',
+    type: 'number',
+    required: true,
+  },
+  {
+    name: 'unidad',
+    label: 'Unidad de Medida',
+    type: 'select',
+    required: true,
+    options: [
+      { value: UnidadMedida.KG, label: 'Kg' },
+      { value: UnidadMedida.G, label: 'Gramo' },
+      { value: UnidadMedida.L, label: 'Litro' },
+      { value: UnidadMedida.ML, label: 'Mililitro' },
+      { value: UnidadMedida.UNIDAD, label: 'Unidad' },
+      { value: UnidadMedida.PAQ, label: 'Paquete' },
+    ],
+    width: 6,
+  },
+  {
+    name: 'tipo',
+    label: 'Categoría',
+    type: 'select',
+    required: true,
+    width: 6,
+    options: [
+      { value: CategoriaProducto.VERDURA, label: 'Verdura' },
+      { value: CategoriaProducto.FRUTA, label: 'Fruta' },
+      { value: CategoriaProducto.CARNE, label: 'Carne' },
+      { value: CategoriaProducto.PESCADO, label: 'Pescado' },
+      { value: CategoriaProducto.MARISCO, label: 'Marisco' },
+      { value: CategoriaProducto.LACTEO, label: 'Lácteo' },
+      { value: CategoriaProducto.HUEVO, label: 'Huevo' },
+      { value: CategoriaProducto.CEREAL, label: 'Cereal' },
+      { value: CategoriaProducto.LEGUMBRE, label: 'Legumbre' },
+      { value: CategoriaProducto.FRUTO_SECO, label: 'Fruto Seco' },
+      { value: CategoriaProducto.CONDIMENTO, label: 'Condimento' },
+      { value: CategoriaProducto.ACEITE, label: 'Aceite' },
+      { value: CategoriaProducto.AZUCAR, label: 'Azúcar' },
+      { value: CategoriaProducto.BEBIDA, label: 'Bebida' },
+      { value: CategoriaProducto.OTRO, label: 'Otro' },
+    ],
+  },
+  { name: 'codigoBarras', label: 'Código de Barras', type: 'barcode' },
+];
 
 const Inventario: React.FC = () => {
   const [page, setPage] = useState(1);
@@ -97,36 +226,64 @@ const Inventario: React.FC = () => {
   const [fechaCaducidad, setFechaCaducidad] = useState('');
 
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
+  const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [isUbicacionesModalOpen, setIsUbicacionesModalOpen] = useState(false);
   const [isSearchScannerOpen, setIsSearchScannerOpen] = useState(false);
+  const [isCreateProductoModalOpen, setIsCreateProductoModalOpen] =
+    useState(false);
+  const [isSavingProducto, setIsSavingProducto] = useState(false);
+  const [isPreparingCreateProducto, setIsPreparingCreateProducto] =
+    useState(false);
+  const [createProductoInitialData, setCreateProductoInitialData] = useState<
+    Record<string, unknown>
+  >({});
+  const [barcodePendienteCrearProducto, setBarcodePendienteCrearProducto] =
+    useState<string | null>(null);
+  const [
+    productoPendienteCantidadInventario,
+    setProductoPendienteCantidadInventario,
+  ] = useState<{
+    barcode: string;
+    nombre: string;
+  } | null>(null);
+  const [cantidadEscaneo, setCantidadEscaneo] = useState('1');
+  const [isCantidadDialogOpen, setIsCantidadDialogOpen] = useState(false);
+  const [isAddingFromScanner, setIsAddingFromScanner] = useState(false);
 
   const toast = useToast();
   const { user } = useAuth();
-  const isAdmin =
-    user?.rol?.toUpperCase() === 'ADMINISTRADOR' ||
-    user?.rol?.toUpperCase() === 'SUPER_ADMIN' ||
-    user?.rol?.toUpperCase() === 'ADMIN';
+  const isAdmin = isElevatedRole(user?.rol);
   const canSeeGeneral =
-    isAdmin || user?.permisos?.includes('inventario:ver_general');
+    isAdmin || user?.permisos?.includes(PERMISSIONS.inventario.listar);
 
   const [tabIndex, setTabIndex] = useState(isAdmin ? 1 : 0);
   const [assignedLocations, setAssignedLocations] = useState<
     { id: string; nombre: string }[]
   >([]);
   const [isLocationsLoading, setIsLocationsLoading] = useState(false);
+  const canAjustar = usePermission(PERMISSIONS.inventario.ajustar_stock);
+  const canCrear = usePermission(PERMISSIONS.inventario.crear);
+  const canGestionarUbicaciones = usePermission(PERMISSIONS.ubicaciones.editar);
+  const canCrearProducto = usePermission(PERMISSIONS.productos.crear);
 
-  const loadUbicaciones = useCallback(async () => {
+  const loadUbicaciones = useCallback(async (): Promise<Ubicacion[]> => {
     try {
       const data = await UbicacionService.findAll();
       const ubicacionesList = Array.isArray(data) ? data : [];
       setUbicaciones(ubicacionesList);
-      if (ubicacionesList.length > 0 && !ubicacionId) {
-        setUbicacionId(ubicacionesList[0].id);
+      if (ubicacionesList.length > 0) {
+        setUbicacionId((prev) => prev || ubicacionesList[0].id);
       }
+      return ubicacionesList;
     } catch {
       toast.error('Error al cargar ubicaciones');
+      return [];
     }
-  }, [toast, ubicacionId]);
+  }, [toast]);
+
+  useEffect(() => {
+    void loadUbicaciones();
+  }, [loadUbicaciones]);
 
   const loadAssignedLocations = useCallback(async () => {
     if (!user) return;
@@ -206,7 +363,14 @@ const Inventario: React.FC = () => {
 
   const handleOpenCreate = () => {
     setIsCreateOpen(true);
+    if (ubicaciones.length === 0) {
+      void loadUbicaciones();
+    }
   };
+
+  const handleOpenSearchScanner = useCallback(() => {
+    setIsSearchScannerOpen(true);
+  }, []);
 
   const handleCloseCreate = () => {
     if (isSaving) return;
@@ -246,6 +410,434 @@ const Inventario: React.FC = () => {
   useEffect(() => {
     void reloadInventario();
   }, [tabIndex, assignedLocations, canSeeGeneral, reloadInventario]);
+
+  const productoCreateSchema = useMemo<DynamicField[]>(() => {
+    const schema = [...PRODUCTO_CREATE_FIELDS_BASE];
+    schema.push({
+      name: 'proveedores',
+      label: 'Proveedores Asociados',
+      type: 'proveedores',
+      position: 'bottom',
+      required: true,
+      defaultValue: [],
+      options: proveedores.map((p) => ({ value: p.id, label: p.nombre })),
+    });
+    return schema;
+  }, [proveedores]);
+
+  const ensureProveedoresLoaded = useCallback(async (): Promise<void> => {
+    if (proveedores.length > 0) return;
+
+    const PAGE_LIMIT = 50;
+    const proveedoresResponse = await fetchProveedores(1, PAGE_LIMIT);
+    const firstPageProviders = Array.isArray(proveedoresResponse.data)
+      ? proveedoresResponse.data
+      : [];
+
+    let providers = firstPageProviders;
+
+    if (proveedoresResponse.totalPages > 1) {
+      const remainingPages = await Promise.all(
+        Array.from({ length: proveedoresResponse.totalPages - 1 }, (_, index) =>
+          fetchProveedores(index + 2, PAGE_LIMIT)
+        )
+      );
+
+      const extraProviders = remainingPages.flatMap((pageResponse) =>
+        Array.isArray(pageResponse.data) ? pageResponse.data : []
+      );
+
+      providers = [...firstPageProviders, ...extraProviders];
+    }
+
+    const uniqueProviders = providers.filter(
+      (provider, index, self) =>
+        self.findIndex((item) => item.id === provider.id) === index
+    );
+
+    if (uniqueProviders.length === 0) {
+      throw new Error(
+        'No hay proveedores disponibles. Crea al menos uno antes de dar de alta un producto.'
+      );
+    }
+
+    setProveedores(uniqueProviders);
+  }, [proveedores]);
+
+  const buildCreateProductDraft = useCallback(async (barcode: string) => {
+    const offData = await searchByBarcode(barcode);
+
+    return {
+      nombre: offData?.name || '',
+      marca: offData?.brand || '',
+      descripcion: offData?.description || '',
+      unidad: normalizeUnidadMedida(offData?.uom) || UnidadMedida.UNIDAD,
+      tipo: CategoriaProducto.OTRO,
+      contenido: offData?.quantity ?? 1,
+      codigoBarras: barcode,
+      proveedores: [],
+    };
+  }, []);
+
+  const handleBarcodeFetch = useCallback(async (code: string) => {
+    const offData = await searchByBarcode(code);
+    if (!offData) return;
+
+    return {
+      nombre: offData.name || '',
+      marca: offData.brand || '',
+      descripcion: offData.description || '',
+      unidad: normalizeUnidadMedida(offData.uom) || UnidadMedida.UNIDAD,
+      contenido: offData.quantity ?? 1,
+    };
+  }, []);
+
+  const openCreateProductModalFromBarcode = useCallback(
+    async (barcode: string): Promise<boolean> => {
+      try {
+        await ensureProveedoresLoaded();
+        const draft = await buildCreateProductDraft(barcode);
+        setCreateProductoInitialData(draft);
+        setIsCreateProductoModalOpen(true);
+        return true;
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : 'No se pudo preparar el formulario de alta de producto.';
+        toast.error(message);
+        return false;
+      }
+    },
+    [buildCreateProductDraft, ensureProveedoresLoaded, toast]
+  );
+
+  const handleConfirmCreateProductoFromScanner = useCallback(async () => {
+    if (!barcodePendienteCrearProducto) return;
+
+    setIsPreparingCreateProducto(true);
+    try {
+      const wasOpened = await openCreateProductModalFromBarcode(
+        barcodePendienteCrearProducto
+      );
+      if (wasOpened) {
+        setBarcodePendienteCrearProducto(null);
+      }
+    } finally {
+      setIsPreparingCreateProducto(false);
+    }
+  }, [barcodePendienteCrearProducto, openCreateProductModalFromBarcode]);
+
+  const openCantidadDialogForProduct = useCallback(
+    (producto: { barcode: string; nombre: string }) => {
+      setProductoPendienteCantidadInventario(producto);
+      setCantidadEscaneo('1');
+      setIsCantidadDialogOpen(true);
+    },
+    []
+  );
+
+  const openInventarioCreateForProduct = useCallback(
+    async (
+      producto: { barcode: string; nombre: string },
+      initialCantidad?: number,
+      preloadedOptions?: ProductoProveedorOption[]
+    ) => {
+      const query = (producto.barcode || producto.nombre).trim();
+
+      setIsCreateOpen(true);
+      if (ubicaciones.length === 0) {
+        await loadUbicaciones();
+      }
+
+      setProductoProveedorValue(null);
+      setProductoProveedorInput(query);
+      if (initialCantidad !== undefined) {
+        setCantidadActual(String(initialCantidad));
+        setCantidadMinima('0');
+        setCantidadMaxima('');
+      }
+
+      if (query.length < 2 && !preloadedOptions) {
+        return;
+      }
+
+      setIsSearchingProductoProveedor(true);
+      try {
+        const options =
+          preloadedOptions ?? (await searchProductoProveedor(query, 20, 0));
+        setProductoProveedorOptions(options);
+
+        const exactByBarcode = producto.barcode
+          ? options.find(
+              (option) =>
+                option.codigoBarras?.trim() === producto.barcode.trim()
+            )
+          : undefined;
+
+        if (exactByBarcode) {
+          setProductoProveedorValue(exactByBarcode);
+        } else if (options.length === 1) {
+          setProductoProveedorValue(options[0]);
+        }
+
+        if (options.length === 0) {
+          toast.info(
+            'No se encontró relación producto/proveedor para este artículo. Asocia un proveedor y vuelve a intentarlo.'
+          );
+        }
+      } catch (err: unknown) {
+        console.error('Error preparando alta en inventario:', err);
+        toast.error('Error al cargar opciones de producto/proveedor.');
+      } finally {
+        setIsSearchingProductoProveedor(false);
+      }
+    },
+    [loadUbicaciones, toast, ubicaciones.length]
+  );
+
+  const handleCreateProductoDesdeInventario = async (
+    formData: Record<string, unknown>
+  ) => {
+    setIsSavingProducto(true);
+
+    try {
+      const typedFormData = formData as ProductoFormData;
+      const toOptionalString = (value: unknown): string | undefined => {
+        if (value == null) return undefined;
+        const trimmed = String(value).trim();
+        return trimmed !== '' ? trimmed : undefined;
+      };
+
+      const nombre = toOptionalString(typedFormData.nombre);
+      if (!nombre) {
+        throw new Error('El nombre del producto es obligatorio.');
+      }
+
+      const contenido = Number(typedFormData.contenido);
+      if (Number.isNaN(contenido) || contenido <= 0) {
+        throw new Error('El contenido debe ser un número mayor que 0.');
+      }
+
+      const unidad = normalizeUnidadMedida(
+        toOptionalString(typedFormData.unidad)
+      );
+      if (!unidad) {
+        throw new Error('Selecciona una unidad de medida válida.');
+      }
+
+      const proveedoresForm = Array.isArray(typedFormData.proveedores)
+        ? typedFormData.proveedores
+        : [];
+
+      const proveedoresPayload = proveedoresForm
+        .filter(
+          (proveedor) =>
+            typeof proveedor.proveedorId === 'string' &&
+            proveedor.proveedorId.trim() !== ''
+        )
+        .map((proveedor) => {
+          const precioNormalizado = Number(proveedor.precioUnitario);
+          return {
+            proveedorId: proveedor.proveedorId.trim(),
+            marcaEspecifica: toOptionalString(proveedor.marca),
+            codigoBarras: toOptionalString(proveedor.codigoBarras),
+            precioUnitario: precioNormalizado,
+          };
+        });
+
+      if (proveedoresPayload.length === 0) {
+        throw new Error(
+          'Debes asociar al menos un proveedor para poder añadir este producto al inventario.'
+        );
+      }
+
+      if (
+        proveedoresPayload.some(
+          (proveedor) =>
+            Number.isNaN(proveedor.precioUnitario) ||
+            proveedor.precioUnitario < 0
+        )
+      ) {
+        throw new Error(
+          'Cada proveedor debe tener un precio de compra válido (número mayor o igual a 0).'
+        );
+      }
+
+      const tipo =
+        typeof typedFormData.tipo === 'string'
+          ? (typedFormData.tipo as CategoriaProducto)
+          : CategoriaProducto.OTRO;
+
+      const codigoBarras = toOptionalString(typedFormData.codigoBarras);
+
+      const creado = await createProducto({
+        nombre,
+        marca: toOptionalString(typedFormData.marca),
+        descripcion: toOptionalString(typedFormData.descripcion),
+        unidad,
+        tipo,
+        contenido,
+        codigoBarras,
+        proveedores: proveedoresPayload,
+      });
+
+      setIsCreateProductoModalOpen(false);
+      setCreateProductoInitialData({});
+      toast.success('Producto creado correctamente en catálogo.');
+
+      if (canCrear) {
+        openCantidadDialogForProduct({
+          barcode: creado.codigoBarras || codigoBarras || '',
+          nombre: creado.nombre,
+        });
+      } else {
+        toast.info(
+          'Producto creado, pero no tienes permisos para añadirlo al inventario.'
+        );
+      }
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Error al crear el producto.';
+      toast.error(message);
+    } finally {
+      setIsSavingProducto(false);
+    }
+  };
+
+  const handleSearchScannerResult = useCallback(
+    async (rawCode: string) => {
+      const code = rawCode.trim();
+      if (!code) return;
+
+      setSearchTerm(code);
+      setPage(1);
+
+      const existsInInventory = data.some(
+        (item) => item.codigoBarras?.trim() === code
+      );
+
+      if (existsInInventory) {
+        toast.success('Producto localizado en inventario.');
+        return;
+      }
+
+      try {
+        const existingProduct = await getProductoByBarcode(code);
+
+        if (existingProduct) {
+          if (canCrear) {
+            openCantidadDialogForProduct({
+              barcode: code,
+              nombre: existingProduct.nombre,
+            });
+            toast.info(
+              'Producto encontrado en catálogo. Indica la cantidad que quieres añadir al inventario.'
+            );
+          } else {
+            toast.info(
+              'Producto encontrado en catálogo, pero no tienes permisos para añadir inventario.'
+            );
+          }
+          return;
+        }
+      } catch (err: unknown) {
+        console.error('Error comprobando producto escaneado:', err);
+      }
+
+      if (!canCrearProducto) {
+        toast.info(
+          'Este código no existe en inventario y no tienes permisos para crear productos.'
+        );
+        return;
+      }
+
+      setBarcodePendienteCrearProducto(code);
+    },
+    [canCrear, canCrearProducto, data, openCantidadDialogForProduct, toast]
+  );
+
+  const handleConfirmCantidadScanner = async () => {
+    const producto = productoPendienteCantidadInventario;
+    if (!producto) return;
+
+    const cantidad = Number(cantidadEscaneo);
+    if (Number.isNaN(cantidad) || cantidad <= 0) {
+      toast.error('La cantidad a añadir debe ser un número mayor que 0.');
+      return;
+    }
+
+    if (!canCrear) {
+      toast.info('No tienes permisos para añadir inventario.');
+      setIsCantidadDialogOpen(false);
+      setProductoPendienteCantidadInventario(null);
+      setCantidadEscaneo('1');
+      return;
+    }
+
+    setIsAddingFromScanner(true);
+    try {
+      const ubicacionesDisponibles =
+        ubicaciones.length > 0 ? ubicaciones : await loadUbicaciones();
+      const ubicacionDestinoId = ubicacionId || ubicacionesDisponibles[0]?.id;
+
+      if (!ubicacionDestinoId) {
+        throw new Error(
+          'No hay ubicaciones disponibles para registrar el inventario.'
+        );
+      }
+
+      const query = (producto.barcode || producto.nombre).trim();
+      const options = await searchProductoProveedor(query, 20, 0);
+      const exactByBarcode = producto.barcode
+        ? options.find(
+            (option) => option.codigoBarras?.trim() === producto.barcode.trim()
+          )
+        : undefined;
+      const selectedOption =
+        exactByBarcode || (options.length === 1 ? options[0] : null);
+
+      if (!selectedOption) {
+        setIsCantidadDialogOpen(false);
+        setProductoPendienteCantidadInventario(null);
+        setCantidadEscaneo('1');
+
+        if (options.length === 0) {
+          toast.error(
+            'No existe relación producto/proveedor para este artículo. Asocia un proveedor y vuelve a intentarlo.'
+          );
+          return;
+        }
+
+        toast.info(
+          'Se encontraron varias relaciones producto/proveedor. Selecciona una manualmente para completar el alta en inventario.'
+        );
+        void openInventarioCreateForProduct(producto, cantidad, options);
+        return;
+      }
+
+      await createInventarioItem({
+        productoProveedorId: selectedOption.id,
+        cantidadActual: cantidad,
+        cantidadMinima: 0,
+        ubicacionId: ubicacionDestinoId,
+      });
+
+      toast.success(`Stock añadido correctamente para ${producto.nombre}.`);
+      setIsCantidadDialogOpen(false);
+      setProductoPendienteCantidadInventario(null);
+      setCantidadEscaneo('1');
+      await reloadInventario();
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'No se pudo añadir el producto al inventario.';
+      toast.error(message);
+    } finally {
+      setIsAddingFromScanner(false);
+    }
+  };
 
   const handleCreateInventario = async () => {
     if (!productoProveedorValue?.id) {
@@ -316,6 +908,9 @@ const Inventario: React.FC = () => {
   const cantActualNum = Number(cantidadActual);
   const cantMinNum = Number(cantidadMinima);
   const cantMaxNum = cantidadMaxima ? Number(cantidadMaxima) : undefined;
+  const cantidadEscaneoNum = Number(cantidadEscaneo);
+  const isCantidadEscaneoValida =
+    !Number.isNaN(cantidadEscaneoNum) && cantidadEscaneoNum > 0;
   const isFormValid =
     !!productoProveedorValue?.id &&
     !Number.isNaN(cantActualNum) &&
@@ -375,12 +970,6 @@ const Inventario: React.FC = () => {
     setPage(1);
   }, [searchTerm, filters]);
 
-  const canAjustar = usePermission('inventario:ajustar_stock');
-  const canCrear = usePermission('inventario:crear');
-  const canGestionarUbicaciones = usePermission(
-    'inventario:gestionar_ubicaciones'
-  );
-
   const columns: Column<InventarioPorProducto>[] = [
     { id: 'nombre', label: 'Producto' },
     {
@@ -398,19 +987,51 @@ const Inventario: React.FC = () => {
       id: 'cantidadTotal',
       label: 'Stock Total',
       align: 'right',
-      render: (row) =>
-        row.unidad
-          ? `${Number(row.cantidadTotal).toFixed(2)} ${row.unidad}`
-          : String(row.cantidadTotal),
+      render: (row) => {
+        const equivalente = formatEquivalentByConstruction(
+          row.cantidadTotal,
+          row.contenidoPorUnidad,
+          row.unidad
+        );
+
+        return (
+          <Box sx={{ textAlign: 'right' }}>
+            <Typography variant="body2" fontWeight={500}>
+              {formatStockUnits(row.cantidadTotal)}
+            </Typography>
+            {equivalente ? (
+              <Typography variant="caption" color="text.secondary">
+                {equivalente}
+              </Typography>
+            ) : null}
+          </Box>
+        );
+      },
     },
     {
       id: 'cantidadMinima',
       label: 'Mínimo',
       align: 'right',
-      render: (row) =>
-        row.unidad
-          ? `${Number(row.cantidadMinima).toFixed(2)} ${row.unidad}`
-          : String(row.cantidadMinima),
+      render: (row) => {
+        const equivalente = formatEquivalentByConstruction(
+          row.cantidadMinima,
+          row.contenidoPorUnidad,
+          row.unidad
+        );
+
+        return (
+          <Box sx={{ textAlign: 'right' }}>
+            <Typography variant="body2" fontWeight={500}>
+              {formatStockUnits(row.cantidadMinima)}
+            </Typography>
+            {equivalente ? (
+              <Typography variant="caption" color="text.secondary">
+                {equivalente}
+              </Typography>
+            ) : null}
+          </Box>
+        );
+      },
       hideOnMobile: true,
     },
     {
@@ -462,7 +1083,7 @@ const Inventario: React.FC = () => {
             </IconButton>
           </Tooltip>
           {canAjustar && (
-            <Tooltip title="Auditar / Conciliar Stock">
+            <Tooltip title="Auditar stock por ajuste (+/-)">
               <IconButton
                 size="small"
                 color="secondary"
@@ -528,15 +1149,14 @@ const Inventario: React.FC = () => {
             />
           </Box>
         }
-        onScanBarcode={() => setIsSearchScannerOpen(true)}
+        onScanBarcode={handleOpenSearchScanner}
       />
 
       <BarcodeScanner
         open={isSearchScannerOpen}
         onClose={() => setIsSearchScannerOpen(false)}
         onScan={(code) => {
-          setSearchTerm(code);
-          setPage(1);
+          void handleSearchScannerResult(code);
         }}
         title="Escanear Producto para Buscar"
       />
@@ -766,6 +1386,110 @@ const Inventario: React.FC = () => {
               disabled={isSaving || !isFormValid}
             >
               {isSaving ? 'Guardando...' : 'Guardar'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <DynamicFormModal
+          isOpen={isCreateProductoModalOpen}
+          onClose={() => {
+            if (!isSavingProducto) {
+              setIsCreateProductoModalOpen(false);
+            }
+          }}
+          title="Crear Nuevo Producto"
+          size="lg"
+          fields={productoCreateSchema}
+          initialData={createProductoInitialData}
+          onSubmit={handleCreateProductoDesdeInventario}
+          isSubmitting={isSavingProducto}
+          requireConfirmation={true}
+          confirmationMessage="¿Deseas crear este producto y dejarlo listo para inventario?"
+          onBarcodeFetch={handleBarcodeFetch}
+        />
+
+        <ConfirmDialog
+          isOpen={!!barcodePendienteCrearProducto}
+          onClose={() => {
+            if (!isPreparingCreateProducto) {
+              setBarcodePendienteCrearProducto(null);
+            }
+          }}
+          onConfirm={() => {
+            void handleConfirmCreateProductoFromScanner();
+          }}
+          onCancel={() => {
+            if (!isPreparingCreateProducto) {
+              setBarcodePendienteCrearProducto(null);
+            }
+          }}
+          title="Producto no encontrado"
+          message={
+            barcodePendienteCrearProducto
+              ? `Este producto (${barcodePendienteCrearProducto}) no existe en inventario. ¿Deseas crearlo en el catálogo?`
+              : 'Este producto no existe en inventario. ¿Deseas crearlo en el catálogo?'
+          }
+          confirmText="Sí, crear producto"
+          cancelText="No"
+          confirmColor="primary"
+          confirmVariant="contained"
+          isLoading={isPreparingCreateProducto}
+        />
+
+        <Dialog
+          open={isCantidadDialogOpen}
+          onClose={() => {
+            if (!isAddingFromScanner) {
+              setIsCantidadDialogOpen(false);
+              setProductoPendienteCantidadInventario(null);
+              setCantidadEscaneo('1');
+            }
+          }}
+          fullWidth
+          maxWidth="xs"
+        >
+          <DialogTitle>Cantidad a añadir</DialogTitle>
+          <DialogContent dividers>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              {productoPendienteCantidadInventario
+                ? `Indica la cantidad que quieres añadir para "${productoPendienteCantidadInventario.nombre}".`
+                : 'Indica la cantidad que quieres añadir al inventario.'}
+            </Typography>
+            <TextField
+              autoFocus
+              fullWidth
+              label="Cantidad a añadir"
+              type="number"
+              value={cantidadEscaneo}
+              onChange={(e) => setCantidadEscaneo(e.target.value)}
+              inputProps={{ min: 0.01, step: 'any' }}
+              error={cantidadEscaneo !== '' && !isCantidadEscaneoValida}
+              helperText={
+                cantidadEscaneo !== '' && !isCantidadEscaneoValida
+                  ? 'Debe ser un número mayor que 0'
+                  : undefined
+              }
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => {
+                setIsCantidadDialogOpen(false);
+                setProductoPendienteCantidadInventario(null);
+                setCantidadEscaneo('1');
+              }}
+              disabled={isAddingFromScanner}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                void handleConfirmCantidadScanner();
+              }}
+              variant="contained"
+              disabled={isAddingFromScanner || !isCantidadEscaneoValida}
+            >
+              {isAddingFromScanner ? 'Añadiendo...' : 'Añadir al inventario'}
             </Button>
           </DialogActions>
         </Dialog>

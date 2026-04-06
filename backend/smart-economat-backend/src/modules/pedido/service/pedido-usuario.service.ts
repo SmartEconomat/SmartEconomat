@@ -18,15 +18,17 @@ import {
   PedidoUsuarioQueryDto,
   UpdatePedidoUsuarioDto,
 } from '../dto/pedido-usuario.dto';
+import { EstadoPedidoUsuario } from '../enums/estado-pedido-usuario.enum';
 import { CreatePedidoDto } from '../dto/create-pedido.dto';
 import { EstadoPedido } from '../enums/estado-pedido.enum';
-import { EstadoPedidoUsuario } from '../enums/estado-pedido-usuario.enum';
 import { PedidoProducto } from '../pedido-producto.entity/pedido-producto.entity';
 import { Pedido } from '../pedido.entity/pedido.entity';
 import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
 import { RecepcionProducto } from '../../recepcion/recepcion-productos.entity/recepcion-producto.entity';
 import { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
 import { IncidenciaLinea } from '../../incidencia/incidencia-linea.entity/incidencia-linea.entity';
+import { PurchaseBatchService } from './purchase-batch.service';
+import { reserveNextPedidoProveedorNumero } from '../utils/pedido-numero.util';
 import { isSherlockElevatedRole } from '../../sherlock-auth/utils/access.utils';
 
 type PendingAggregateLine = {
@@ -41,7 +43,8 @@ export class PedidoUsuarioService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly configService: ConfigService,
-    private readonly movimientoHelper: MovimientoHelper
+    private readonly movimientoHelper: MovimientoHelper,
+    private readonly purchaseBatchService: PurchaseBatchService
   ) {}
 
   async create(
@@ -108,6 +111,7 @@ export class PedidoUsuarioService {
       .leftJoinAndSelect('lineaProductoProveedor.producto', 'lineaProducto')
       .leftJoinAndSelect('lineaProductoProveedor.proveedor', 'lineaProveedor')
       .leftJoinAndSelect('pedidoUsuario.pedidos', 'pedidos')
+      .leftJoinAndSelect('pedidos.batch', 'batch')
       .leftJoinAndSelect('pedidos.proveedor', 'proveedor')
       .leftJoinAndSelect('pedidos.pedidoProductos', 'pedidoProductos')
       .leftJoinAndSelect(
@@ -193,6 +197,7 @@ export class PedidoUsuarioService {
           'lineas.productoProveedor.producto',
           'lineas.productoProveedor.proveedor',
           'pedidos',
+          'pedidos.batch',
           'pedidos.proveedor',
           'pedidos.pedidoProductos',
           'pedidos.pedidoProductos.productoProveedor',
@@ -211,7 +216,8 @@ export class PedidoUsuarioService {
 
   async update(
     id: string,
-    dto: UpdatePedidoUsuarioDto
+    dto: UpdatePedidoUsuarioDto,
+    userId?: string
   ): Promise<PedidoUsuario> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -262,10 +268,18 @@ export class PedidoUsuarioService {
         });
       }
 
+      const nuevaFechaEntrega = this.calculateFechaEntrega();
       existing.observaciones = dto.observaciones;
-      existing.fechaEntrega = this.calculateFechaEntrega();
-      existing.costeTotal = 0;
-      await queryRunner.manager.save(PedidoUsuario, existing);
+      existing.fechaEntrega = nuevaFechaEntrega;
+      existing.modifiedBy = userId || existing.modifiedBy || existing.usuarioId;
+      existing.lineas = [];
+      existing.pedidos = [];
+
+      await queryRunner.manager.update(PedidoUsuario, existing.id, {
+        observaciones: dto.observaciones,
+        fechaEntrega: nuevaFechaEntrega,
+        modifiedBy: existing.modifiedBy,
+      });
 
       await this.persistAggregateLinesAndPedidos(
         queryRunner.manager,
@@ -273,7 +287,11 @@ export class PedidoUsuarioService {
         dto,
         existing.usuarioId || ''
       );
-      await this.syncPedidoUsuarioStatus(existing.id, queryRunner.manager);
+      await this.syncPedidoUsuarioStatus(
+        existing.id,
+        queryRunner.manager,
+        userId
+      );
 
       await queryRunner.commitTransaction();
       return this.findOne(existing.id);
@@ -295,32 +313,43 @@ export class PedidoUsuarioService {
     }
   }
 
-  async accept(id: string): Promise<PedidoUsuario> {
-    return this.changePendingAggregateStatus(id, (pedido) => {
-      pedido.estado = EstadoPedido.EN_PROCESO;
-    });
+  async accept(id: string, userId: string): Promise<PedidoUsuario> {
+    await this.purchaseBatchService.approvePedidoUsuario(id, userId);
+    return this.findOne(id);
   }
 
   async cancel(
     id: string,
-    dto: CancelPedidoUsuarioDto
+    dto: CancelPedidoUsuarioDto,
+    userId?: string
   ): Promise<PedidoUsuario> {
     const motivo = dto.motivoCancelacion || 'Cancelado por el usuario';
 
-    return this.changePendingAggregateStatus(id, (pedido) => {
-      pedido.estado = EstadoPedido.CANCELADO;
-      pedido.motivoCancelacion = motivo;
-    });
-  }
-
-  async restore(id: string): Promise<PedidoUsuario> {
     return this.changePendingAggregateStatus(
       id,
       (pedido) => {
-        pedido.estado = EstadoPedido.PENDIENTE;
+        pedido.estado = EstadoPedido.CANCELADO;
+        pedido.motivoCancelacion = motivo;
+      },
+      false,
+      userId
+    );
+  }
+
+  async restore(id: string, userId?: string): Promise<PedidoUsuario> {
+    return this.changePendingAggregateStatus(
+      id,
+      (pedido) => {
+        if (pedido.estado !== EstadoPedido.CANCELADO) {
+          throw new BadRequestException(
+            'Solo se pueden restaurar los pedidos que estén en estado cancelado.'
+          );
+        }
+        pedido.estado = EstadoPedido.PENDIENTE_DE_APROBACION;
         pedido.motivoCancelacion = undefined;
       },
-      true
+      true,
+      userId
     );
   }
 
@@ -358,13 +387,13 @@ export class PedidoUsuarioService {
       }
 
       await queryRunner.manager.softRemove(PedidoUsuario, pedidoUsuario);
-
       await queryRunner.commitTransaction();
     } catch (error: any) {
       await queryRunner.rollbackTransaction();
       if (
         error instanceof NotFoundException ||
-        error instanceof BadRequestException
+        error instanceof BadRequestException ||
+        error instanceof ForbiddenException
       ) {
         throw error;
       }
@@ -378,7 +407,8 @@ export class PedidoUsuarioService {
 
   async syncPedidoUsuarioStatus(
     pedidoUsuarioId: string,
-    manager?: EntityManager
+    manager?: EntityManager,
+    actorId?: string
   ): Promise<void> {
     const repo = manager
       ? manager.getRepository(PedidoUsuario)
@@ -393,11 +423,15 @@ export class PedidoUsuarioService {
       return;
     }
 
-    const nuevoEstado = this.calculateAggregateStatus(
-      pedidoUsuario.pedidos || []
+    const nuevoEstado = await this.calculateAggregateStatus(
+      pedidoUsuario,
+      manager
     );
     if (pedidoUsuario.estado !== nuevoEstado) {
       pedidoUsuario.estado = nuevoEstado;
+      if (actorId) {
+        pedidoUsuario.modifiedBy = actorId;
+      }
       await repo.save(pedidoUsuario);
     }
   }
@@ -405,7 +439,8 @@ export class PedidoUsuarioService {
   private async changePendingAggregateStatus(
     id: string,
     mutatePedido: (pedido: Pedido) => Promise<void> | void,
-    force = false
+    force = false,
+    actorId?: string
   ): Promise<PedidoUsuario> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -437,10 +472,21 @@ export class PedidoUsuarioService {
 
       for (const pedido of pedidoUsuario.pedidos || []) {
         await mutatePedido(pedido);
+        if (actorId) {
+          pedido.modifiedBy = actorId;
+        }
         await queryRunner.manager.save(Pedido, pedido);
       }
 
-      await this.syncPedidoUsuarioStatus(pedidoUsuario.id, queryRunner.manager);
+      if (actorId) {
+        pedidoUsuario.modifiedBy = actorId;
+      }
+
+      await this.syncPedidoUsuarioStatus(
+        pedidoUsuario.id,
+        queryRunner.manager,
+        actorId
+      );
       await queryRunner.commitTransaction();
       return this.findOne(pedidoUsuario.id);
     } catch (error: any) {
@@ -469,10 +515,10 @@ export class PedidoUsuarioService {
     const pedidoUsuario = manager.create(PedidoUsuario, {
       usuarioId: userId,
       observaciones: dto.observaciones,
-      ubicacionEntregaSugeridaId: dto.ubicacionEntregaSugeridaId,
       fechaEntrega: this.calculateFechaEntrega(),
       estado: EstadoPedidoUsuario.PENDIENTE,
       costeTotal: 0,
+      modifiedBy: userId,
     });
 
     const savedPedidoUsuario = await manager.save(PedidoUsuario, pedidoUsuario);
@@ -482,7 +528,7 @@ export class PedidoUsuarioService {
       dto,
       userId
     );
-    await this.syncPedidoUsuarioStatus(savedPedidoUsuario.id, manager);
+    await this.syncPedidoUsuarioStatus(savedPedidoUsuario.id, manager, userId);
 
     return savedPedidoUsuario;
   }
@@ -556,7 +602,10 @@ export class PedidoUsuarioService {
     }
 
     pedidoUsuario.costeTotal = Number(costeTotal.toFixed(4));
-    await manager.save(PedidoUsuario, pedidoUsuario);
+    await manager.update(PedidoUsuario, pedidoUsuario.id, {
+      costeTotal: pedidoUsuario.costeTotal,
+      modifiedBy: userId,
+    });
 
     for (const [proveedorId, lineas] of lineasPorProveedor.entries()) {
       const createPedidoDto: CreatePedidoDto = {
@@ -572,13 +621,17 @@ export class PedidoUsuarioService {
         manager,
         createPedidoDto,
         userId,
-        EstadoPedido.PENDIENTE,
+        EstadoPedido.PENDIENTE_DE_APROBACION,
         () => this.calculateFechaEntrega()
       );
 
+      built.pedido.numeroGlobal =
+        await reserveNextPedidoProveedorNumero(manager);
       built.pedido.pedidoUsuarioId = pedidoUsuario.id;
       built.pedido.fechaPedido = pedidoUsuario.fechaPedido;
+      built.pedido.fechaEntrega = pedidoUsuario.fechaEntrega;
       built.pedido.observaciones = dto.observaciones;
+      built.pedido.modifiedBy = userId;
       const savedPedido = await manager.save(Pedido, built.pedido);
 
       const queueByProductProvider = new Map<string, string[]>();
@@ -602,6 +655,7 @@ export class PedidoUsuarioService {
           cantidad: pedidoProducto.cantidad,
           precioUnitario: pedidoProducto.precioUnitario,
           observaciones: pedidoProducto.observaciones,
+          modifiedBy: userId,
         });
       }
 
@@ -613,7 +667,12 @@ export class PedidoUsuarioService {
     }
   }
 
-  private calculateAggregateStatus(pedidos: Pedido[]): EstadoPedidoUsuario {
+  private async calculateAggregateStatus(
+    pedidoUsuario: PedidoUsuario,
+    manager?: EntityManager
+  ): Promise<EstadoPedidoUsuario> {
+    const pedidos = pedidoUsuario.pedidos || [];
+
     if (pedidos.length === 0) {
       return EstadoPedidoUsuario.PENDIENTE;
     }
@@ -622,28 +681,46 @@ export class PedidoUsuarioService {
       return EstadoPedidoUsuario.CANCELADO;
     }
 
-    if (
-      pedidos.every((pedido) =>
-        [EstadoPedido.RECIBIDO, EstadoPedido.CANCELADO].includes(pedido.estado)
+    const batchIds = Array.from(
+      new Set(
+        pedidos
+          .map((pedido) => pedido.batchId)
+          .filter((batchId): batchId is string => Boolean(batchId))
       )
-    ) {
-      return EstadoPedidoUsuario.ENTREGADO;
+    );
+
+    if (batchIds.length === 0) {
+      return EstadoPedidoUsuario.PENDIENTE;
     }
 
-    if (
-      pedidos.some((pedido) =>
-        [
-          EstadoPedido.EN_PROCESO,
-          EstadoPedido.PARCIAL,
-          EstadoPedido.RECIBIDO,
-          EstadoPedido.INCIDENCIA,
-        ].includes(pedido.estado)
-      )
-    ) {
-      return EstadoPedidoUsuario.EN_PROCESO;
+    if (pedidoUsuario.estado === EstadoPedidoUsuario.CONSOLIDADO) {
+      return EstadoPedidoUsuario.CONSOLIDADO;
     }
 
-    return EstadoPedidoUsuario.PENDIENTE;
+    if (pedidoUsuario.estado === EstadoPedidoUsuario.APROBADO) {
+      return EstadoPedidoUsuario.APROBADO;
+    }
+
+    if (batchIds.length > 1) {
+      return EstadoPedidoUsuario.CONSOLIDADO;
+    }
+
+    const pedidoRepo = manager
+      ? manager.getRepository(Pedido)
+      : this.dataSource.getRepository(Pedido);
+    const pedidosDelLote = await pedidoRepo.find({
+      where: { batchId: batchIds[0] },
+      select: ['pedidoUsuarioId'],
+    });
+    const pedidoUsuarioIds = new Set(
+      pedidosDelLote
+        .map((pedido) => pedido.pedidoUsuarioId)
+        .filter((value): value is string => Boolean(value))
+    );
+
+    return pedidoUsuarioIds.size > 1
+      ? EstadoPedidoUsuario.CONSOLIDADO
+      : EstadoPedidoUsuario.APROBADO;
   }
 
   private async hasLinkedReferences(
@@ -685,7 +762,7 @@ export class PedidoUsuarioService {
     }
 
     const invalidChild = (pedidoUsuario.pedidos || []).find(
-      (pedido) => pedido.estado !== EstadoPedido.PENDIENTE
+      (pedido) => pedido.estado !== EstadoPedido.PENDIENTE_DE_APROBACION
     );
     if (invalidChild) {
       throw new BadRequestException(

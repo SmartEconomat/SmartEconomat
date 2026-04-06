@@ -18,6 +18,20 @@ const TITLE_COLOR = '#1F4E79';
 const HEADER_COLOR = '#4472C4';
 const TEXT_COLOR = '#222222';
 const GRAY_COLOR = '#555555';
+const EXPORT_TIME_ZONE = 'Europe/Madrid';
+
+const formatExportDateShort = (date: Date): string =>
+  new Intl.DateTimeFormat('es-ES', {
+    timeZone: EXPORT_TIME_ZONE,
+  }).format(date);
+
+const formatExportDateLong = (date: Date): string =>
+  new Intl.DateTimeFormat('es-ES', {
+    timeZone: EXPORT_TIME_ZONE,
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(date);
 
 export function buildPdfTable(
   res: Response,
@@ -44,12 +58,13 @@ export function buildPdfTable(
       const w = doc.page.width;
       const h = doc.page.height;
       const footerY = h - PAGE_MARGIN - 10;
+      const now = new Date();
       doc
         .font('Helvetica')
         .fontSize(7)
         .fillColor(GRAY_COLOR)
         .text(
-          `SmartEconomat — Exportación de Productos | Pág. ${pageNum} | ${new Date().toLocaleDateString('es-ES')}`,
+          `SmartEconomat — Exportación de Productos | Pág. ${pageNum} | ${formatExportDateShort(now)}`,
           PAGE_MARGIN,
           footerY,
           {
@@ -79,7 +94,7 @@ export function buildPdfTable(
       .fontSize(SUMMARY_FONT_SIZE)
       .fillColor(GRAY_COLOR)
       .text(
-        `Generado el ${new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}`,
+        `Generado el ${formatExportDateLong(new Date())}`,
         PAGE_MARGIN,
         doc.y + 2
       );

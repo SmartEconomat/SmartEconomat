@@ -24,6 +24,7 @@ import { PedidoStatusTrigger } from '../enums/pedido-status-trigger.enum';
 import { PurchaseBatchService } from './purchase-batch.service';
 import { PedidoUsuarioService } from './pedido-usuario.service';
 import { forwardRef, Inject } from '@nestjs/common';
+import { reserveNextPedidoProveedorNumero } from '../utils/pedido-numero.util';
 
 @Injectable()
 export class PedidoService {
@@ -56,6 +57,10 @@ export class PedidoService {
         estadoInicial,
         () => this.calculateFechaEntrega()
       );
+      built.pedido.numeroGlobal = await reserveNextPedidoProveedorNumero(
+        queryRunner.manager
+      );
+      built.pedido.modifiedBy = userId;
 
       const savedPedido = await queryRunner.manager.save(Pedido, built.pedido);
 
@@ -63,6 +68,7 @@ export class PedidoService {
         await queryRunner.manager.save(PedidoProducto, {
           ...pp,
           pedido: { id: savedPedido.id },
+          modifiedBy: userId,
         });
       }
 
@@ -104,22 +110,32 @@ export class PedidoService {
     return pedido;
   }
 
-  async update(id: string, updatePedidoDto: UpdatePedidoDto): Promise<Pedido> {
-    const pedido = await this.findOne(id);
-
-    if (updatePedidoDto.proveedorId) {
-      pedido.proveedor = { id: updatePedidoDto.proveedorId } as any;
-    }
-
-    if (updatePedidoDto.observaciones !== undefined) {
-      pedido.observaciones = updatePedidoDto.observaciones;
-    }
+  async update(
+    id: string,
+    updatePedidoDto: UpdatePedidoDto,
+    userId?: string
+  ): Promise<Pedido> {
+    await this.findOne(id);
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
+      const pedidoUpdateData: Partial<Pedido> = {};
+
+      if (updatePedidoDto.proveedorId) {
+        pedidoUpdateData.proveedorId = updatePedidoDto.proveedorId;
+      }
+
+      if (updatePedidoDto.observaciones !== undefined) {
+        pedidoUpdateData.observaciones = updatePedidoDto.observaciones;
+      }
+
+      if (userId) {
+        pedidoUpdateData.modifiedBy = userId;
+      }
+
       if (updatePedidoDto.lineas !== undefined) {
         if (updatePedidoDto.lineas.length === 0) {
           throw new BadRequestException(
@@ -159,24 +175,28 @@ export class PedidoService {
           nuevoCosteTotal += costeLinea;
 
           lineasActualizadas.push({
-            pedido: { id: pedido.id },
+            pedido: { id },
             productoProveedor: { id: productoProveedor.id },
             cantidad: linea.cantidad,
             precioUnitario: precioVigente,
+            modifiedBy: userId,
           });
         }
 
-        pedido.costeTotal = nuevoCosteTotal;
+        pedidoUpdateData.costeTotal = nuevoCosteTotal;
 
         for (const linea of lineasActualizadas) {
           await queryRunner.manager.save(PedidoProducto, linea);
         }
       }
 
-      const savedPedido = await queryRunner.manager.save(Pedido, pedido);
+      if (Object.keys(pedidoUpdateData).length > 0) {
+        await queryRunner.manager.update(Pedido, { id }, pedidoUpdateData);
+      }
+
       await queryRunner.commitTransaction();
 
-      return await this.findOne(savedPedido.id);
+      return await this.findOne(id);
     } catch (error: any) {
       await queryRunner.rollbackTransaction();
       if (
@@ -195,17 +215,18 @@ export class PedidoService {
   }
 
   updateFechaEntrega(id: string, dto: UpdatePedidoDto): Promise<Pedido> {
-    void id;
     void dto;
-    throw new BadRequestException(
-      'La fecha de entrega se calcula automáticamente y no puede editarse manualmente.'
-    );
+    return this.findOne(id);
   }
 
-  async cancelarPedido(id: string, dto: CancelPedidoDto): Promise<Pedido> {
+  async cancelarPedido(
+    id: string,
+    dto: CancelPedidoDto,
+    userId?: string
+  ): Promise<Pedido> {
     const pedido = await this.findOne(id);
 
-    if (pedido.estado !== EstadoPedido.PENDIENTE) {
+    if (pedido.estado !== EstadoPedido.PENDIENTE_DE_APROBACION) {
       throw new BadRequestException(
         'Solo se pueden cancelar los pedidos que estén en estado pendiente.'
       );
@@ -220,10 +241,13 @@ export class PedidoService {
     pedido.estado = EstadoPedido.CANCELADO;
     pedido.motivoCancelacion =
       dto.motivoCancelacion || 'Cancelado por el usuario';
+    if (userId) {
+      pedido.modifiedBy = userId;
+    }
     return await this.pedidoRepository.save(pedido);
   }
 
-  async restaurarPedido(id: string): Promise<Pedido> {
+  async restaurarPedido(id: string, userId?: string): Promise<Pedido> {
     const pedido = await this.findOne(id);
 
     if (pedido.estado !== EstadoPedido.CANCELADO) {
@@ -232,25 +256,34 @@ export class PedidoService {
       );
     }
 
-    pedido.estado = EstadoPedido.PENDIENTE;
+    pedido.estado = EstadoPedido.PENDIENTE_DE_APROBACION;
     pedido.motivoCancelacion = undefined;
+    if (userId) {
+      pedido.modifiedBy = userId;
+    }
     return await this.pedidoRepository.save(pedido);
   }
 
-  async aceptarPedido(id: string): Promise<Pedido> {
+  async aceptarPedido(id: string, userId?: string): Promise<Pedido> {
     const pedido = await this.findOne(id);
-    if (pedido.estado !== EstadoPedido.PENDIENTE) {
+    if (pedido.estado !== EstadoPedido.PENDIENTE_DE_APROBACION) {
       throw new BadRequestException(
         'Solo los pedidos pendientes pueden ser aceptados.'
       );
     }
-    return this.handleStatusTransition(id, PedidoStatusTrigger.ACEPTAR);
+    return this.handleStatusTransition(
+      id,
+      PedidoStatusTrigger.ACEPTAR,
+      undefined,
+      userId
+    );
   }
 
   async handleStatusTransition(
     pedidoId: string,
     trigger: PedidoStatusTrigger,
-    manager?: EntityManager
+    manager?: EntityManager,
+    actorId?: string
   ): Promise<Pedido> {
     const pedido = manager
       ? await manager.findOne(Pedido, { where: { id: pedidoId } })
@@ -267,6 +300,9 @@ export class PedidoService {
     }
 
     pedido.estado = this.resolveStatusFromTrigger(trigger);
+    if (actorId) {
+      pedido.modifiedBy = actorId;
+    }
 
     const savedPedido = manager
       ? await manager.save(Pedido, pedido)
@@ -275,14 +311,16 @@ export class PedidoService {
     if (savedPedido.batchId) {
       await this.purchaseBatchService.syncBatchStatus(
         savedPedido.batchId,
-        manager
+        manager,
+        actorId
       );
     }
 
     if (savedPedido.pedidoUsuarioId) {
       await this.pedidoUsuarioService.syncPedidoUsuarioStatus(
         savedPedido.pedidoUsuarioId,
-        manager
+        manager,
+        actorId
       );
     }
 
@@ -293,7 +331,7 @@ export class PedidoService {
     const pedido = await this.findOne(id);
 
     if (
-      pedido.estado !== EstadoPedido.PENDIENTE &&
+      pedido.estado !== EstadoPedido.PENDIENTE_DE_APROBACION &&
       pedido.estado !== EstadoPedido.CANCELADO
     ) {
       throw new BadRequestException(
@@ -314,17 +352,17 @@ export class PedidoService {
   }
 
   private getInitialStatus(): EstadoPedido {
-    return EstadoPedido.PENDIENTE;
+    return EstadoPedido.PENDIENTE_DE_APROBACION;
   }
 
   private resolveStatusFromTrigger(trigger: PedidoStatusTrigger): EstadoPedido {
     switch (trigger) {
       case PedidoStatusTrigger.ACEPTAR:
-        return EstadoPedido.EN_PROCESO;
+        return EstadoPedido.POR_RECEPCIONAR;
       case PedidoStatusTrigger.RECEPCION_PARCIAL:
         return EstadoPedido.PARCIAL;
       case PedidoStatusTrigger.RECEPCION_TOTAL:
-        return EstadoPedido.RECIBIDO;
+        return EstadoPedido.RECEPCIONADO;
       case PedidoStatusTrigger.INCIDENCIA:
         return EstadoPedido.INCIDENCIA;
       default:

@@ -12,7 +12,7 @@ import { randomUUID } from 'node:crypto';
 import { QueryFailedError } from 'typeorm';
 import { ApiResponse } from '../interfaces/api-response.interface';
 import { APP_VERSION } from '../helpers/app-version.helper';
-import { I18nContext, I18nValidationException } from 'nestjs-i18n';
+import { I18nHelper } from '../helpers/i18n.helper';
 
 /**
  * Keys used to fetch readable messages for database errors.
@@ -39,8 +39,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       (request.headers['x-request-id'] as string) || randomUUID();
     response.setHeader('x-request-id', requestId);
 
-    const i18n = I18nContext.current(host);
-
     if (exception instanceof QueryFailedError) {
       const pgCode = (exception as QueryFailedError & { code?: string }).code;
       const errorKey = pgCode ? PG_ERROR_KEYS[pgCode] : undefined;
@@ -49,9 +47,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         this.logger.warn(
           `DB constraint violation [${pgCode}]: ${exception.message}`
         );
-        const translatedMessage = i18n
-          ? i18n.translate(`translation.${errorKey}`)
-          : errorKey;
+        const translatedMessage = I18nHelper.translate(
+          `translation.${errorKey}`
+        );
 
         return this.sendResponse(
           response,
@@ -63,28 +61,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       }
 
       this.logger.error(exception);
-      const translatedInternalError = i18n
-        ? i18n.translate('translation.errors.INTERNAL_SERVER_ERROR')
-        : 'translation.errors.INTERNAL_SERVER_ERROR';
+      const translatedInternalError = I18nHelper.getError(
+        'INTERNAL_SERVER_ERROR'
+      );
       return this.sendResponse(
         response,
         HttpStatus.INTERNAL_SERVER_ERROR,
         translatedInternalError,
         null,
-        requestId
-      );
-    }
-
-    if (exception instanceof I18nValidationException) {
-      const messages = this.flattenValidationErrors(exception.errors ?? []);
-      const fallback = i18n
-        ? i18n.translate('translation.errors.INTERNAL_SERVER_ERROR')
-        : 'translation.errors.INTERNAL_SERVER_ERROR';
-      return this.sendResponse(
-        response,
-        HttpStatus.BAD_REQUEST,
-        messages.length > 0 ? messages.join(', ') : fallback,
-        { errors: exception.errors },
         requestId
       );
     }
@@ -97,24 +81,27 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const exceptionResponse =
       exception instanceof HttpException ? exception.getResponse() : null;
 
-    let message = i18n
-      ? i18n.translate('translation.errors.INTERNAL_SERVER_ERROR')
-      : 'translation.errors.INTERNAL_SERVER_ERROR';
+    let message = I18nHelper.getError('INTERNAL_SERVER_ERROR');
     let errorDetails: unknown = null;
+
+    const translateIfNeeded = (val: unknown) => this.translateIfNeeded(val);
 
     if (exception instanceof HttpException) {
       if (typeof exceptionResponse === 'string') {
-        message = exceptionResponse;
+        message = translateIfNeeded(exceptionResponse);
       } else if (
         typeof exceptionResponse === 'object' &&
         exceptionResponse !== null
       ) {
         const resp = exceptionResponse as Record<string, unknown>;
         if (Array.isArray(resp.message)) {
-          message = (resp.message as string[]).join(', ');
+          message = (resp.message as string[])
+            .map((m) => translateIfNeeded(m))
+            .join(', ');
         } else {
-          message =
+          const candidate =
             (resp.message as string) || (resp.error as string) || message;
+          message = translateIfNeeded(candidate);
         }
         errorDetails = resp;
       }
@@ -123,7 +110,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
       if (process.env.NODE_ENV !== 'production') {
         if (exception instanceof Error) {
-          message = exception.message;
+          message = translateIfNeeded(exception.message);
           errorDetails = { name: exception.name, stack: exception.stack };
         } else {
           errorDetails = exception;
@@ -140,26 +127,57 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     );
   }
 
-  private flattenValidationErrors(
-    errors: { constraints?: Record<string, string>; children?: unknown[] }[]
-  ): string[] {
-    const messages: string[] = [];
-    for (const error of errors) {
-      if (error.constraints) {
-        messages.push(...Object.values(error.constraints));
+  private translateIfNeeded(value: unknown): string {
+    if (value === null || value === undefined) return '';
+
+    if (typeof value !== 'string') {
+      if (
+        typeof value === 'number' ||
+        typeof value === 'boolean' ||
+        typeof value === 'bigint'
+      ) {
+        return value.toString();
       }
-      if (Array.isArray(error.children) && error.children.length > 0) {
-        messages.push(
-          ...this.flattenValidationErrors(
-            error.children as {
-              constraints?: Record<string, string>;
-              children?: unknown[];
-            }[]
-          )
-        );
+
+      if (typeof value === 'symbol') {
+        return value.description || value.toString();
+      }
+
+      try {
+        const serialized = JSON.stringify(value);
+        return serialized ?? '[unserializable]';
+      } catch {
+        return '[unserializable]';
       }
     }
-    return messages;
+
+    const v = value.trim();
+
+    if (/\s/.test(v)) return v;
+
+    try {
+      if (v.startsWith('translation.')) {
+        return I18nHelper.translate(v);
+      }
+
+      if (v.startsWith('errors.')) {
+        return I18nHelper.translate(`translation.${v}`);
+      }
+
+      if (/^[A-Z0-9_]+$/.test(v)) {
+        return I18nHelper.getError(v);
+      }
+
+      if (v.includes('.')) {
+        return I18nHelper.translate(v);
+      }
+
+      return v;
+    } catch (err) {
+      const errMessage = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`i18n.translate failed for key "${v}": ${errMessage}`);
+      return v;
+    }
   }
 
   private sendResponse(

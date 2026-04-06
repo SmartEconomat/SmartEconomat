@@ -1,11 +1,25 @@
-import { ParseUUIDv7Pipe } from 'src/common/pipes/parse-uuid-v7.pipe';
 import { BadRequestException } from '@nestjs/common';
+import { I18nHelper } from '../../../src/common/helpers/i18n.helper';
+import { ParseUUIDv7Pipe } from 'src/common/pipes/parse-uuid-v7.pipe';
 
 /**
  * Tests Unitarios de ParseUUIDv7Pipe
  */
 describe('ParseUUIDv7Pipe', () => {
   const pipe = new ParseUUIDv7Pipe();
+
+  beforeAll(() => {
+    jest.spyOn(I18nHelper, 'getError').mockImplementation((key: string) => {
+      const messages: Record<string, string> = {
+        EL_UUID_NO_PUEDE_ESTAR_VAC_O: 'El UUID no puede estar vacío',
+      };
+      return messages[key] || key;
+    });
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
+  });
 
   describe('transform()', () => {
     it('debe aceptar UUID v7 válido (minúsculas)', () => {
@@ -60,13 +74,13 @@ describe('ParseUUIDv7Pipe', () => {
 
     it('debe rechazar string vacío', () => {
       expect(() => pipe.transform('')).toThrow(BadRequestException);
-      expect(() => pipe.transform('')).toThrow('EL_UUID_NO_PUEDE_ESTAR_VAC_O');
+      expect(() => pipe.transform('')).toThrow('El UUID no puede estar vacío');
     });
 
     it('debe rechazar undefined', () => {
       expect(() => pipe.transform(undefined)).toThrow(BadRequestException);
       expect(() => pipe.transform(undefined)).toThrow(
-        'EL_UUID_NO_PUEDE_ESTAR_VAC_O'
+        'El UUID no puede estar vacío'
       );
     });
 
@@ -74,6 +88,10 @@ describe('ParseUUIDv7Pipe', () => {
       expect(() => pipe.transform(null as unknown as string)).toThrow(
         BadRequestException
       );
+    });
+
+    it('debe rechazar "draft"', () => {
+      expect(() => pipe.transform('draft')).toThrow(BadRequestException);
     });
 
     it('debe rechazar formato inválido', () => {

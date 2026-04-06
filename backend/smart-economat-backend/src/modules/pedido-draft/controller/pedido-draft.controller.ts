@@ -11,6 +11,9 @@ import {
 } from '@nestjs/common';
 import { ApiBody, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 import { PedidoDraftService } from '../service/pedido-draft.service';
 import { UpsertPedidoDraftDto } from '../dto/upsert-pedido-draft.dto';
 import { PedidoDraftResponseDto } from '../dto/pedido-draft-response.dto';
@@ -18,12 +21,13 @@ import { PedidoUsuario } from '../../pedido/pedido-usuario.entity/pedido-usuario
 import { PedidoDraftRecord } from '../interfaces/pedido-draft-record.interface';
 
 @ApiTags('Pedido Draft')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('pedido/draft')
 export class PedidoDraftController {
   constructor(private readonly pedidoDraftService: PedidoDraftService) {}
 
   @Post()
+  @RequirePermissions(PERMISSIONS.pedidos.crear)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Crear o actualizar el borrador seguro de creación de pedido',
@@ -38,6 +42,7 @@ export class PedidoDraftController {
   }
 
   @Get()
+  @RequirePermissions(PERMISSIONS.pedidos.crear)
   @ApiOperation({
     summary: 'Recuperar el borrador de creación de pedido más reciente',
   })
@@ -49,6 +54,7 @@ export class PedidoDraftController {
   }
 
   @Delete()
+  @RequirePermissions(PERMISSIONS.pedidos.crear)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Eliminar el borrador activo de creación de pedido',
@@ -58,6 +64,7 @@ export class PedidoDraftController {
   }
 
   @Post('finalize')
+  @RequirePermissions(PERMISSIONS.pedidos.crear)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary:

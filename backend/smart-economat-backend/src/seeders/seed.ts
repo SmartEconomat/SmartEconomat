@@ -1,129 +1,99 @@
 import 'reflect-metadata';
-import { NestFactory } from '@nestjs/core';
-import { INestApplicationContext, Type } from '@nestjs/common';
-import { DataSource } from 'typeorm';
-import { readdirSync } from 'fs';
-import { join } from 'path';
-import * as dotenv from 'dotenv';
-import { useContainer } from 'class-validator';
-import { Seeder } from './interfaces/seeder.interface';
+import { readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
-import { SeedContext } from './seed-context';
-import { AppModule } from '../app.module';
-import { findInvalidReceptionLinks } from './utils/reception-consistency.util';
+import { Seeder } from './interfaces/seeder.interface';
+import { SeedContext, SeedContextConfig } from './seed-context';
+import { assertDevelopmentSeedEnvironment } from './seed-environment.guard';
 
-/* 
-  dotenv.config({ path: join(__dirname, '../../../../.env.prod') }); 
-  ⚠️ ADVERTENCIA: Esto solo debe usarse si entiendes perfectamente las implicaciones. 
-  Nunca usar en producción real. 
-  Solo habilitar en entornos de desarrollo controlados para pruebas específicas.
-*/
+assertDevelopmentSeedEnvironment('seed');
 
-dotenv.config({ path: join(__dirname, '../../../../.env') });
+const seedersInOrder = [
+  'roles-permisos.seeder',
+  'usuario.seeder',
+  'proveedor.seeder',
+  'producto.seeder',
+  'inventario.seeder',
+  'pedido.seeder',
+  'recepcion.seeder',
+  'albaran.seeder',
+  'historial-precio.seeder',
+  'incidencia.seeder',
+  'receta.seeder',
+  'preparacion.seeder',
+  'merma.seeder',
+  'profesor-alumno.seeder',
+  'archivo.seeder',
+  'export.seeder',
+  'produccion.seeder',
+  'movimiento.seeder',
+  'alertas.seeder',
+];
 
-if (process.env.NODE_ENV === 'production') {
-  console.error('No se permite ejecutar seeders en producción');
-  process.exit(1);
+export const dataSource = {
+  isInitialized: false,
+  initialize: async () => {},
+  destroy: async () => {},
+} as any;
+
+async function initializeHttpSeedContext(
+  config: SeedContextConfig = {}
+): Promise<SeedContext> {
+  process.env.IS_SEEDING = 'true';
+  const context = new SeedContext(config);
+
+  await context.ensureDockerInfra();
+  await context.ensureDatabaseCompatibility();
+  await context.waitForBackend();
+  await context.login();
+
+  return context;
 }
 
-import { dbConfig } from '../config/database.config';
+async function runSeedersWithContext(context: SeedContext): Promise<void> {
+  for (const name of seedersInOrder) {
+    const fileTs = `${name}.ts`;
+    const fileJs = `${name}.js`;
+    const dirFiles = readdirSync(__dirname);
+    const filePath = dirFiles.includes(fileTs)
+      ? fileTs
+      : dirFiles.includes(fileJs)
+        ? fileJs
+        : null;
 
-export const dataSource = new DataSource({
-  ...dbConfig,
-  entities: [join(__dirname, '../**/*.entity.{ts,js}')],
-  migrations: [join(__dirname, '../migrations/*.{ts,js}')],
-  synchronize:
-    process.env.NODE_ENV === 'test' || process.argv.includes('reset'),
-  dropSchema: process.argv.includes('reset'),
-});
+    if (!filePath) {
+      throw new Error(`[seed] Seeder file not found for: ${name}`);
+    }
 
-async function waitForDatabase(
-  ds: typeof dataSource,
-  retries = 5,
-  delayMs = 3000
-): Promise<void> {
-  if (ds.isInitialized) {
-    return;
-  }
-
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      await ds.initialize();
-      return;
-    } catch (err) {
-      if (attempt >= retries) {
-        throw err;
-      }
-
-      console.warn(
-        `[seed] DB no disponible (intento ${attempt}/${retries}), reintentando en ${delayMs}ms...`
+    const seederPath = join(__dirname, filePath);
+    const seeder: Seeder = require(seederPath);
+    if (typeof seeder.runSeeder === 'function') {
+      console.log(
+        SeederI18nHelper.getSeederMessage('running', { file: filePath })
       );
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      await seeder.runSeeder(context);
     }
   }
 }
 
-async function runAllSeeders() {
-  await waitForDatabase(dataSource);
-  const context = await createSeedContext();
+async function runAllSeeders(): Promise<void> {
+  const context = await initializeHttpSeedContext();
 
   try {
-    const seedersInOrder = [
-      'roles-permisos.seeder',
-      'usuario.seeder',
-      'proveedor.seeder',
-      'producto.seeder',
-      'inventario.seeder',
-      'pedido.seeder',
-      'recepcion.seeder',
-      'albaran.seeder',
-      'historial-precio.seeder',
-      'incidencia.seeder',
-      'movimiento.seeder',
-      'receta.seeder',
-      'preparacion.seeder',
-      'merma.seeder',
-    ];
-
-    for (const name of seedersInOrder) {
-      const fileTs = `${name}.ts`;
-      const fileJs = `${name}.js`;
-      const dirFiles = readdirSync(__dirname);
-      const filePath = dirFiles.includes(fileTs)
-        ? fileTs
-        : dirFiles.includes(fileJs)
-          ? fileJs
-          : null;
-
-      if (!filePath) {
-        console.warn(`Seeder file not found for: ${name}`);
-        continue;
-      }
-
-      const seederPath = join(__dirname, filePath);
-      const seeder: Seeder = require(seederPath);
-      if (typeof seeder.runSeeder === 'function') {
-        console.log(
-          SeederI18nHelper.getSeederMessage('running', { file: filePath })
-        );
-        try {
-          await seeder.runSeeder(context);
-        } catch (err) {
-          console.error(
-            `Error ejecutando el seeder ${filePath}:`,
-            err instanceof Error ? err.message : err
-          );
-        }
-      }
-    }
+    await runSeedersWithContext(context);
   } finally {
     await context.close();
   }
 }
 
-async function runSeederByName(name: string) {
-  await waitForDatabase(dataSource);
-  const context = await createSeedContext();
+async function createSeedContext(
+  config: SeedContextConfig = {}
+): Promise<SeedContext> {
+  return initializeHttpSeedContext(config);
+}
+
+async function runSeederByName(name: string): Promise<void> {
+  const context = await initializeHttpSeedContext();
 
   try {
     const fileTs = `${name}.seeder.ts`;
@@ -155,58 +125,19 @@ async function runSeederByName(name: string) {
   } finally {
     await context.close();
   }
-
-  const invalidLinks = await findInvalidReceptionLinks(dataSource.manager);
-  if (invalidLinks.length > 0) {
-    throw new Error(
-      `[seed] Se detectaron ${invalidLinks.length} recepciones inválidas asociadas a pedidos en estados no recepcionables: ${invalidLinks
-        .map((item) => `${item.estado}:${item.pedidoId}`)
-        .join(', ')}`
-    );
-  }
 }
 
-async function createSeedContext(): Promise<SeedContext> {
-  if (process.env.NODE_ENV === 'test') {
-    const g = global as { __NEST_APP_FOR_SEED__?: INestApplicationContext };
-    const nestApp = g.__NEST_APP_FOR_SEED__;
-
-    if (nestApp) {
-      return new SeedContext(nestApp, dataSource);
-    }
-
-    return new SeedContext(
-      {
-        get: (token: Type<unknown> | string | symbol) => {
-          throw new Error(
-            `Propiedad app.get(${String(
-              token
-            )}) no disponible en contexto de test. ` +
-              'Si un seeder lo requiere, usa una alternativa mockeada.'
-          );
-        },
-        close: async () => {},
-      } as unknown as INestApplicationContext,
-      dataSource
-    );
-  }
-
-  const app = await NestFactory.createApplicationContext(AppModule, {
-    logger: ['error', 'warn'],
-  });
-
-  useContainer(app.select(AppModule), { fallbackOnErrors: true });
-
-  return new SeedContext(app, dataSource);
-}
-
-export { runAllSeeders, runSeederByName };
+export {
+  runAllSeeders,
+  runSeederByName,
+  createSeedContext,
+  runSeedersWithContext,
+};
 
 if (require.main === module) {
   void (async () => {
     try {
-      console.log('Iniciando seeders en entorno de desarrollo...');
-      await waitForDatabase(dataSource);
+      console.log('Iniciando seeders HTTP en entorno de desarrollo...');
       const [, , arg] = process.argv;
 
       if (!arg || arg === 'all' || arg === 'reset') {
@@ -215,13 +146,9 @@ if (require.main === module) {
         await runSeederByName(arg);
       }
 
-      await dataSource.destroy();
-      console.log('Seeder ejecutado correctamente en desarrollo.');
+      console.log('Seeders HTTP ejecutados correctamente.');
     } catch (err) {
-      console.error(
-        'Error al ejecutar seeders: revisar usuario, password y base de datos de desarrollo',
-        err
-      );
+      console.error('Error al ejecutar seeders HTTP:', err);
       process.exit(1);
     }
   })();

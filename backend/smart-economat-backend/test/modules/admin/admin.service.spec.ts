@@ -122,7 +122,7 @@ describe('AdminService', () => {
 
   it('getRoles devuelve los roles activos del sistema', async () => {
     const roles = [
-      { id: '1', nombre: rolUsuario.ADMINISTRADOR, activo: true },
+      { id: '1', nombre: rolUsuario.ADMIN, activo: true },
       { id: '2', nombre: rolUsuario.PROFESOR, activo: true },
     ];
     mockRolRepo.find.mockResolvedValue(roles);
@@ -141,18 +141,18 @@ describe('AdminService', () => {
     };
     const adminRole = {
       id: 'rol-admin',
-      nombre: rolUsuario.ADMINISTRADOR,
+      nombre: rolUsuario.ADMIN,
       activo: true,
     };
     const updatedUser = {
       ...user,
-      rol: rolUsuario.ADMINISTRADOR,
+      rol: rolUsuario.ADMIN,
       roles: [adminRole],
     };
 
     const actor = {
       id: 'admin-1',
-      rol: rolUsuario.ADMINISTRADOR,
+      rol: rolUsuario.ADMIN,
       status: UserStatus.ACTIVE,
       activo: true,
     };
@@ -173,7 +173,7 @@ describe('AdminService', () => {
     expect(mockUsuarioRepo.save).toHaveBeenCalledWith(
       expect.objectContaining({
         id: user.id,
-        rol: rolUsuario.ADMINISTRADOR,
+        rol: rolUsuario.ADMIN,
         roles: [adminRole],
       })
     );

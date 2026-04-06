@@ -27,6 +27,7 @@ import { SortableFields } from '../../../common/decorators/sortable-fields.decor
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 @ApiTags('incidencias')
 @UseGuards(JwtAuthGuard, PermisosGuard)
@@ -35,22 +36,19 @@ export class IncidenciaController {
   constructor(private readonly incidenciaService: IncidenciaService) {}
 
   @Post()
-  @RequirePermissions('incidencias:crear')
+  @RequirePermissions(PERMISSIONS.incidencias.crear)
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateIncidenciaDto): Promise<Incidencia> {
     return this.incidenciaService.create(dto);
   }
 
   @Get()
-  @RequirePermissions('incidencias:listar')
+  @RequirePermissions(PERMISSIONS.incidencias.listar)
   findAll(
-    @SortableFields([
-      'recepcionId',
-      'pedidoId',
-      'fechaResolucion',
-      'createdAt',
-      'updatedAt',
-    ])
+    @SortableFields(
+      ['recepcionId', 'pedidoId', 'fechaResolucion', 'createdAt', 'updatedAt'],
+      IncidenciaQueryDto
+    )
     query: IncidenciaQueryDto,
     @Req() req: { user?: { rol?: string } }
   ): Promise<PaginatedResponseDto<Incidencia>> {
@@ -59,7 +57,7 @@ export class IncidenciaController {
   }
 
   @Get(':id')
-  @RequirePermissions('incidencias:ver')
+  @RequirePermissions(PERMISSIONS.incidencias.ver)
   findOne(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Req() req: { user?: { rol?: string } }
@@ -69,7 +67,7 @@ export class IncidenciaController {
   }
 
   @Patch(':id')
-  @RequirePermissions('incidencias:editar')
+  @RequirePermissions(PERMISSIONS.incidencias.editar)
   update(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: UpdateIncidenciaDto
@@ -78,23 +76,24 @@ export class IncidenciaController {
   }
 
   @Delete(':id')
-  @RequirePermissions('incidencias:eliminar')
+  @RequirePermissions(PERMISSIONS.incidencias.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.incidenciaService.remove(id);
   }
 
   @Patch(':id/resolver')
-  @RequirePermissions('incidencias:resolver')
+  @RequirePermissions(PERMISSIONS.incidencias.resolver)
   resolver(
     @Param('id', ParseUUIDv7Pipe) id: string,
-    @Body() dto: ResolverIncidenciaDto
+    @Body() dto: ResolverIncidenciaDto,
+    @GetUser('id') usuarioId: string
   ): Promise<Incidencia> {
-    return this.incidenciaService.resolverIncidencia(id, dto);
+    return this.incidenciaService.resolverIncidencia(id, dto, usuarioId);
   }
 
   @Post('reportar')
-  @RequirePermissions('incidencias:crear')
+  @RequirePermissions(PERMISSIONS.incidencias.crear)
   @ApiOperation({
     summary: 'Reporta una nueva incidencia vinculada a una recepción',
   })
@@ -107,7 +106,7 @@ export class IncidenciaController {
   }
 
   @Post(':id/resolver')
-  @RequirePermissions('incidencias:resolver')
+  @RequirePermissions(PERMISSIONS.incidencias.resolver)
   @ApiOperation({ summary: 'Resuelve una incidencia de forma transaccional' })
   @ApiResponse({
     status: 201,

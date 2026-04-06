@@ -151,6 +151,7 @@ describe('ProduccionService', () => {
         recetaId: 'receta-1',
         porcionesRestantes: 5,
         estado: EstadoLote.DISPONIBLE,
+        fechaAgotado: null,
       };
 
       manager.findOne
@@ -161,6 +162,7 @@ describe('ProduccionService', () => {
           receta: mockReceta,
           porcionesRestantes: 0,
           estado: EstadoLote.AGOTADO,
+          fechaAgotado: new Date('2026-04-04T09:00:00.000Z'),
         });
       manager.save.mockImplementation((_, entity) => entity);
 
@@ -171,6 +173,13 @@ describe('ProduccionService', () => {
 
       expect(result.porcionesRestantes).toBe(0);
       expect(result.estado).toBe(EstadoLote.AGOTADO);
+      expect(manager.save).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          estado: EstadoLote.AGOTADO,
+          fechaAgotado: expect.any(Date),
+        })
+      );
       expect(manager.save).toHaveBeenCalled();
     });
 
@@ -197,6 +206,107 @@ describe('ProduccionService', () => {
           valor: 5,
         } satisfies ConsumirProduccionDto)
       ).rejects.toThrow(BadRequestException);
+    });
+
+    it('debe permitir consumo por cantidad cuando es multiplo exacto del tamano de racion', async () => {
+      const mockReceta = {
+        id: 'receta-1',
+        tamanioRacion: 0.5,
+        unidadResultado: 'kg',
+      };
+      const mockLote = {
+        id: 'lote-1',
+        recetaId: 'receta-1',
+        porcionesRestantes: 10,
+        estado: EstadoLote.DISPONIBLE,
+        fechaAgotado: null,
+      };
+
+      manager.findOne
+        .mockResolvedValueOnce(mockLote)
+        .mockResolvedValueOnce(mockReceta)
+        .mockResolvedValueOnce({
+          ...mockLote,
+          receta: mockReceta,
+          porcionesRestantes: 7,
+          estado: EstadoLote.DISPONIBLE,
+          fechaAgotado: null,
+        });
+      manager.save.mockImplementation((_, entity) => entity);
+
+      const result = await service.consumirPorciones('lote-1', {
+        tipo: TipoConsumoProduccion.CANTIDAD,
+        valor: 1.5,
+      } satisfies ConsumirProduccionDto);
+
+      expect(result.porcionesRestantes).toBe(7);
+      expect(result.estado).toBe(EstadoLote.DISPONIBLE);
+      expect(manager.save).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          estado: EstadoLote.DISPONIBLE,
+          fechaAgotado: null,
+        })
+      );
+      expect(manager.save).toHaveBeenCalled();
+    });
+
+    it('debe rechazar consumo por cantidad cuando no es multiplo exacto del tamano de racion', async () => {
+      const mockReceta = {
+        id: 'receta-1',
+        tamanioRacion: 0.5,
+        unidadResultado: 'kg',
+      };
+      const mockLote = {
+        id: 'lote-1',
+        recetaId: 'receta-1',
+        porcionesRestantes: 10,
+        estado: EstadoLote.DISPONIBLE,
+      };
+
+      manager.findOne
+        .mockResolvedValueOnce(mockLote)
+        .mockResolvedValueOnce(mockReceta);
+
+      await expect(
+        service.consumirPorciones('lote-1', {
+          tipo: TipoConsumoProduccion.CANTIDAD,
+          valor: 1.2,
+        } satisfies ConsumirProduccionDto)
+      ).rejects.toThrow('La cantidad a consumir debe ser múltiplo de 0.25 kg.');
+    });
+
+    it('debe permitir consumir una cantidad equivalente a media racion acumulada', async () => {
+      const mockReceta = {
+        id: 'receta-1',
+        tamanioRacion: 0.17,
+        unidadResultado: 'kg',
+      };
+      const mockLote = {
+        id: 'lote-1',
+        recetaId: 'receta-1',
+        porcionesRestantes: 8.5,
+        estado: EstadoLote.DISPONIBLE,
+      };
+
+      manager.findOne
+        .mockResolvedValueOnce(mockLote)
+        .mockResolvedValueOnce(mockReceta)
+        .mockResolvedValueOnce({
+          ...mockLote,
+          receta: mockReceta,
+          porcionesRestantes: 0,
+          estado: EstadoLote.AGOTADO,
+        });
+      manager.save.mockImplementation((_, entity) => entity);
+
+      const result = await service.consumirPorciones('lote-1', {
+        tipo: TipoConsumoProduccion.CANTIDAD,
+        valor: 1.445,
+      } satisfies ConsumirProduccionDto);
+
+      expect(result.porcionesRestantes).toBe(0);
+      expect(result.estado).toBe(EstadoLote.AGOTADO);
     });
   });
 

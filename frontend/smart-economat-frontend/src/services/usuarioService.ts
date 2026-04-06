@@ -50,6 +50,8 @@ const mapFrontendToBackend = (
   delete mapped.roleName;
   delete mapped.permisosAdicionalesIds;
   delete mapped.permisosExcluidosIds;
+  delete mapped.slotId;
+  delete mapped.ubicacionId;
 
   return mapped;
 };

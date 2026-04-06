@@ -105,10 +105,44 @@ const highContrastDarkPalette = {
   divider: '#ffffff',
 };
 
+/**
+ * Defaults de accesibilidad que se aplican a TODOS los temas.
+ * Evitan el warning "Blocked aria-hidden on an element because its
+ * descendant retained focus" asegurando que Dialog, Modal, Menu y Drawer
+ * gestionen correctamente el focus trap y la limpieza de aria-hidden.
+ */
+const a11yComponentDefaults = {
+  MuiDialog: {
+    defaultProps: {
+      closeAfterTransition: true,
+    },
+  },
+  MuiModal: {
+    defaultProps: {
+      closeAfterTransition: true,
+    },
+  },
+  MuiMenu: {
+    defaultProps: {
+      // No mantener el menú en DOM cuando está cerrado: evita que elementos
+      // focusables ocultos con aria-hidden retengan el foco.
+      keepMounted: false,
+    },
+  },
+  MuiDrawer: {
+    defaultProps: {
+      // Para drawers temporales, no mantener en DOM cuando están cerrados.
+      ModalProps: {
+        keepMounted: false,
+      },
+    },
+  },
+};
+
 export const getTheme = (themeName: ThemeName, fontSize: FontSize) => {
   const typography = getTypography(fontSize) as Record<string, unknown>;
   let palette;
-  let components = {};
+  let components: Record<string, unknown> = {};
 
   switch (themeName) {
     case 'light':
@@ -177,6 +211,6 @@ export const getTheme = (themeName: ThemeName, fontSize: FontSize) => {
   return createTheme({
     palette,
     typography,
-    components,
+    components: { ...a11yComponentDefaults, ...components },
   });
 };

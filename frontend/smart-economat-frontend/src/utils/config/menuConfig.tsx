@@ -14,6 +14,11 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettingsOutlin
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 import CallSplitIcon from '@mui/icons-material/CallSplit';
 import BrokenImageOutlinedIcon from '@mui/icons-material/BrokenImageOutlined';
+import { PERMISSIONS } from '../../sherlock-auth/permissions.constants';
+import {
+  SYSTEM_ROLES,
+  ELEVATED_ROLES,
+} from '../../sherlock-auth/system-roles.constants';
 
 // Lazy load components
 const Home = React.lazy(() => import('../../pages/Home'));
@@ -55,7 +60,7 @@ export const menuItems: MenuItem[] = [
     icon: <HomeIconOption />,
     component: Home,
     showInMenu: true,
-    permiso: 'dashboard:ver_estadisticas',
+    permiso: PERMISSIONS.dashboard.ver_estadisticas,
   },
   {
     path: '/productos',
@@ -65,7 +70,7 @@ export const menuItems: MenuItem[] = [
     icon: <CategoryIconOption />,
     component: Productos,
     showInMenu: true,
-    permiso: 'productos:listar',
+    permiso: PERMISSIONS.productos.listar,
   },
   {
     path: '/proveedores',
@@ -75,7 +80,7 @@ export const menuItems: MenuItem[] = [
     icon: <LocalShippingIconOption />,
     component: Proveedores,
     showInMenu: true,
-    permiso: 'proveedores:listar',
+    permiso: PERMISSIONS.proveedores.listar,
   },
   {
     path: '/recetas',
@@ -85,7 +90,7 @@ export const menuItems: MenuItem[] = [
     icon: <MenuBookIconOption />,
     component: Recetas,
     showInMenu: true,
-    permiso: 'recetas:listar',
+    permiso: PERMISSIONS.recetas.listar,
   },
   {
     path: '/pedidos',
@@ -95,7 +100,7 @@ export const menuItems: MenuItem[] = [
     icon: <ShoppingCartIconOption />,
     component: Pedidos,
     showInMenu: true,
-    permiso: 'pedidos:listar',
+    permiso: PERMISSIONS.pedidos.listar,
   },
   {
     path: '/recepciones',
@@ -105,7 +110,7 @@ export const menuItems: MenuItem[] = [
     icon: <LoginIconOption />,
     component: Recepcion,
     showInMenu: true,
-    permiso: 'recepciones:listar',
+    permiso: PERMISSIONS.recepciones.listar,
   },
   {
     path: '/distribucion',
@@ -116,7 +121,7 @@ export const menuItems: MenuItem[] = [
     icon: <CallSplitIcon />,
     component: Distribucion,
     showInMenu: true,
-    permiso: 'distribuciones:listar',
+    permiso: PERMISSIONS.distribuciones.listar,
   },
   {
     path: '/preparaciones',
@@ -126,7 +131,7 @@ export const menuItems: MenuItem[] = [
     icon: <RestaurantIconOption />,
     component: Preparaciones,
     showInMenu: true,
-    permiso: 'recetas:listar',
+    permiso: PERMISSIONS.recetas.listar,
   },
   {
     path: '/albaranes',
@@ -136,7 +141,7 @@ export const menuItems: MenuItem[] = [
     icon: <AssignmentOutlinedIcon />,
     component: Albaranes,
     showInMenu: true,
-    permiso: 'albaranes:listar',
+    permiso: PERMISSIONS.albaranes.listar,
   },
   {
     path: '/inventario',
@@ -146,7 +151,7 @@ export const menuItems: MenuItem[] = [
     icon: <InventoryIconOption />,
     component: Inventario,
     showInMenu: true,
-    permiso: 'inventario:listar',
+    permiso: PERMISSIONS.inventario.listar,
   },
   {
     path: '/movimientos',
@@ -156,7 +161,7 @@ export const menuItems: MenuItem[] = [
     icon: <SwapHorizIconOption />,
     component: Movimientos,
     showInMenu: true,
-    permiso: 'movimientos:listar',
+    permiso: PERMISSIONS.movimientos.listar,
   },
   {
     path: '/mermas',
@@ -166,7 +171,7 @@ export const menuItems: MenuItem[] = [
     icon: <BrokenImageOutlinedIcon />,
     component: Mermas,
     showInMenu: true,
-    permiso: 'merma:listar',
+    permiso: PERMISSIONS.merma.listar,
   },
   {
     path: '/incidencias',
@@ -176,7 +181,7 @@ export const menuItems: MenuItem[] = [
     icon: <ReportProblemIconOption />,
     component: Incidencias,
     showInMenu: true,
-    permiso: 'incidencias:listar',
+    permiso: PERMISSIONS.incidencias.listar,
   },
   {
     path: '/administracion',
@@ -186,11 +191,11 @@ export const menuItems: MenuItem[] = [
     icon: <AdminPanelSettingsIcon />,
     component: Administracion,
     showInMenu: true,
-    roles: ['PROFESOR', 'ADMIN', 'ADMINISTRADOR', 'SUPER_ADMIN'],
+    roles: [SYSTEM_ROLES.PROFESOR, ...ELEVATED_ROLES],
     anyPermissions: [
-      'usuarios:listar',
-      'profesor:gestionar_slots',
-      'profesor:ver_alumnos',
+      PERMISSIONS.usuarios.listar,
+      PERMISSIONS.profesor.gestionar_slots,
+      PERMISSIONS.profesor.ver_alumnos,
     ],
   },
   {

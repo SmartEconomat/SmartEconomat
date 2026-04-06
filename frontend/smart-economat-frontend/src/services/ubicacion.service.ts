@@ -5,12 +5,20 @@ import type {
 } from './ubicacion.types';
 import { baseFetch, ApiResponse, unwrapList } from './api.service';
 
+type UbicacionApiRecord = Ubicacion & {
+  deleted_at?: string | null;
+};
+
+const isUbicacionDeleted = (ubicacion: UbicacionApiRecord): boolean =>
+  Boolean(ubicacion.deletedAt || ubicacion.deleted_at);
+
 export const UbicacionService = {
   findAll: async (): Promise<Ubicacion[]> => {
     const response = await baseFetch('/ubicacion');
     if (!response.ok) throw new Error('Error al obtener ubicaciones');
     const { data } = (await response.json()) as ApiResponse<unknown>;
-    return unwrapList<Ubicacion>(data);
+    const ubicaciones = unwrapList<UbicacionApiRecord>(data);
+    return ubicaciones.filter((ubicacion) => !isUbicacionDeleted(ubicacion));
   },
 
   create: async (data: CreateUbicacionDto): Promise<Ubicacion> => {

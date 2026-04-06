@@ -32,7 +32,7 @@ import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.
 @Entity({ name: 'producto_proveedor' })
 @Index(['productoId'])
 @Index(['proveedorId'])
-@Check(`"precio_unitario" IS NULL OR "precio_unitario" >= 0`)
+@Check(`"precio_unitario" IS NULL OR "precio_unitario" > 0`)
 export class ProductoProveedor extends BaseEntity {
   @Column({ name: 'producto_id' })
   productoId!: string;
@@ -73,7 +73,7 @@ export class ProductoProveedor extends BaseEntity {
 
   /**
    * Precio unitario actual pactado con el proveedor.
-   * Constraint: Debe ser mayor o igual a 0.
+   * Constraint: Debe ser mayor a 0 cuando existe.
    * @type {number | undefined}
    */
   @Column({

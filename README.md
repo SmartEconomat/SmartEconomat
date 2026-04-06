@@ -108,10 +108,16 @@ Para poblar la base de datos con datos iniciales o de prueba:
   npm run db:reset
   ```
 
+> **Seguridad:** `npm run seed` solo se permite en entorno de desarrollo. Si `NODE_ENV` no es `development` o la base de datos parece de producción (por ejemplo, nombre con `prod`), la ejecución se bloquea automáticamente.
+
 ### Documentación de la API
 
-Para una guía detallada de todos los endpoints, controladores y casos de uso, consulta el archivo:
-[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)
+La referencia actualizada del backend vive en la wiki del proyecto:
+
+- [Referencia de API backend](./wiki/reference/api/README.md)
+- [Mapa rápido de endpoints](./wiki/reference/endpoints.md)
+
+Para validar el contrato vivo en local también puedes consultar Swagger en `http://localhost:3000/docs`.
 
 ### Diagrama Entidad-Relación (ERD)
 

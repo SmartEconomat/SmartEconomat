@@ -11,17 +11,18 @@ import {
   IconButton,
 } from '@mui/material';
 import { useAuth, usePermission, useAnyPermission } from '../store/auth.hooks';
+import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 import { useNavigate } from 'react-router-dom';
 import DynamicFormModal from '../components/ui/DynamicFormModal';
-import { productoSchema, pedidoSchema, recetaSchema } from '../utils/schemas';
-import {
-  createProducto,
-  ProductoMutationPayload,
-} from '../services/producto.service';
-import { createPedido, CreatePedidoPayload } from '../services/pedido.service';
+import RecetaFormModal from '../features/recetas/RecetaFormModal';
+import { buildRecetaPayload } from '../features/recetas/recetaForm.helpers';
+import ProductoFormModal from '../features/productos/ProductoFormModal';
+import { buildProductoPayload } from '../features/productos/productoForm.helpers';
+import { getPedidoSchema } from '../features/pedidos/utils/pedidoSchema';
+import { usePedidoActions } from '../features/pedidos/hooks/usePedidoActions';
+import { PedidoFormValues } from '../features/pedidos/types/pedidos-ui.types';
+import { createProducto } from '../services/producto.service';
 import { createReceta } from '../services/receta.service';
-import { fetchProveedores } from '../services/proveedor.service';
-import { Proveedor } from '../services/proveedor.types';
 import { Receta } from '../services/receta.types';
 import { useToast } from '../store/toast.hooks';
 import {
@@ -58,11 +59,9 @@ import MetricsCustomizer, {
 } from '../components/dashboard/MetricsCustomizer';
 import { eventBus, UI_EVENTS } from '../utils/eventBus';
 
-interface PedidoProductoFormValue {
-  productoProveedorId?: string;
-  id_producto_proveedor?: string;
-  cantidad: number | string;
-}
+// Stable references to avoid DynamicFormModal resetting form on re-render
+const EMPTY_INITIAL_DATA: Record<string, unknown> = {};
+const PEDIDO_NEW_INITIAL_DATA: Record<string, unknown> = {};
 
 interface IngredienteFormValue {
   productoId: string;
@@ -70,25 +69,10 @@ interface IngredienteFormValue {
   unidad: string;
 }
 
-interface QuickRecipePayload {
-  nombre?: string;
-  instrucciones?: string;
-  tiempo?: Receta['tiempo'];
-  dificultad?: Receta['dificultad'];
-  tiempoPreparacion?: string;
-  ingredientes: Array<{
-    productoId: string;
-    cantidad: number;
-    unidad: string;
-  }>;
-}
-
 interface QuickActionFormData {
   contenido?: number | string;
+  codigoBarras?: string;
   alergenos?: string[];
-  proveedorId?: string;
-  fechaEntrega?: string;
-  pedidoProductos?: PedidoProductoFormValue[];
   nombre?: string;
   instrucciones?: string;
   tiempo?: Receta['tiempo'];
@@ -258,9 +242,6 @@ function tipoActividadLabel(mov: DashboardMovimiento): string {
     ajuste: 'Se ha realizado un ajuste de inventario',
     pedido: 'Se ha registrado un pedido',
     entrada_compra: 'Se ha registrado una recepción de compra',
-    entrada_distribucion:
-      'Se ha registrado una entrada por distribución interna',
-    salida_distribucion: 'Se ha registrado una salida por distribución interna',
   };
   const base = labels[mov.tipo] ?? `Se ha registrado actividad (${mov.tipo})`;
   if (mov.productoNombre) return `${base}: ${mov.productoNombre}`;
@@ -277,14 +258,6 @@ const TIPO_ACTIVIDAD_CONFIG: Record<
   ajuste: { color: 'warning', icon: <SwapHorizIcon fontSize="small" /> },
   pedido: { color: 'info', icon: <ShoppingCartIcon fontSize="small" /> },
   entrada_compra: { color: 'secondary', icon: <LoginIcon fontSize="small" /> },
-  entrada_distribucion: {
-    color: 'success',
-    icon: <InventoryIcon fontSize="small" />,
-  },
-  salida_distribucion: {
-    color: 'warning',
-    icon: <SwapHorizIcon fontSize="small" />,
-  },
 };
 
 function getActividadIcon(tipo: string): React.ReactNode {
@@ -319,21 +292,23 @@ const Home: React.FC = () => {
   const toast = useToast();
 
   // Permissions from auth.hooks
-  const canViewDashboard = usePermission('dashboard:ver_estadisticas');
-  const canListProductos = usePermission('productos:listar');
-  const canListPedidos = usePermission('pedidos:listar');
-  const canListIncidencias = usePermission('incidencias:listar');
-  const canListProveedores = usePermission('proveedores:listar');
-  const canListInventario = usePermission('inventario:listar');
-  const canCreatePedido = usePermission('pedidos:crear');
-  const canCreateProducto = usePermission('productos:crear');
-  const canCreateRecepcion = usePermission('recepciones:crear');
-  const canCreateReceta = usePermission('recetas:crear');
+  const canViewDashboard = usePermission(
+    PERMISSIONS.dashboard.ver_estadisticas
+  );
+  const canListProductos = usePermission(PERMISSIONS.productos.listar);
+  const canListPedidos = usePermission(PERMISSIONS.pedidos.listar);
+  const canListIncidencias = usePermission(PERMISSIONS.incidencias.listar);
+  const canListProveedores = usePermission(PERMISSIONS.proveedores.listar);
+  const canListInventario = usePermission(PERMISSIONS.inventario.listar);
+  const canCreatePedido = usePermission(PERMISSIONS.pedidos.crear);
+  const canCreateProducto = usePermission(PERMISSIONS.productos.crear);
+  const canCreateRecepcion = usePermission(PERMISSIONS.recepciones.crear);
+  const canCreateReceta = usePermission(PERMISSIONS.recetas.crear);
 
-  const canListUsers = usePermission('usuarios:listar');
+  const canListUsers = usePermission(PERMISSIONS.usuarios.listar);
   const canReviewInventoryNotifications = useAnyPermission([
-    'inventario:listar',
-    'inventario:ver',
+    PERMISSIONS.inventario.listar,
+    PERMISSIONS.inventario.ver,
     'inventario:ver_alertas',
   ]);
 
@@ -342,7 +317,6 @@ const Home: React.FC = () => {
     null | 'product' | 'order' | 'reception' | 'recipe'
   >(null);
   const [isSavingQuickAction, setIsSavingQuickAction] = useState(false);
-  const [proveedores, setProveedores] = useState<Proveedor[]>([]);
 
   // Summary Modal state
   const [summaryModal, setSummaryModal] = useState<{
@@ -423,64 +397,36 @@ const Home: React.FC = () => {
     loadStats();
   }, [loadStats]);
 
-  useEffect(() => {
-    if (quickActionTask === 'order') {
-      const loadProveedores = async () => {
-        try {
-          const resp = await fetchProveedores(1, 100);
-          setProveedores(resp.data);
-        } catch (err) {
-          console.error('Error loading proveedores for quick action', err);
-        }
-      };
-      loadProveedores();
-    }
-  }, [quickActionTask]);
+  const noOpDiscardDraft = useCallback(async () => {}, []);
+  const { savePedido, isSaving: isSavingPedido } = usePedidoActions({
+    reload: loadStats,
+    discardDraft: noOpDiscardDraft,
+  });
+
+  const handleSavePedidoQuickAction = useCallback(
+    async (formData: Record<string, unknown>) => {
+      try {
+        await savePedido(formData as PedidoFormValues);
+        setQuickActionTask(null);
+      } catch {
+        // savePedido already shows toast on error
+      }
+    },
+    [savePedido]
+  );
 
   const handleSaveQuickAction = async (formData: QuickActionFormData) => {
     setIsSavingQuickAction(true);
     try {
       if (quickActionTask === 'product') {
-        const payload: ProductoMutationPayload = {
-          ...formData,
-          contenido: Number(formData.contenido),
-          alergenos: Array.isArray(formData.alergenos)
-            ? formData.alergenos
-            : [],
-        };
-        await createProducto(payload);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const payload = await buildProductoPayload(formData as any);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await createProducto(payload as any);
         toast.success('Producto añadido correctamente.');
-      } else if (quickActionTask === 'order') {
-        const payload: CreatePedidoPayload = {
-          proveedorId: String(formData.proveedorId ?? ''),
-          lineas: Array.isArray(formData.pedidoProductos)
-            ? formData.pedidoProductos.map((linea) => ({
-                productoProveedorId:
-                  linea.productoProveedorId ||
-                  linea.id_producto_proveedor ||
-                  '',
-                cantidad: Number(linea.cantidad),
-              }))
-            : [],
-        };
-        await createPedido(payload);
-        toast.success('Pedido creado correctamente.');
       } else if (quickActionTask === 'recipe') {
-        const payload: QuickRecipePayload = {
-          nombre: formData.nombre,
-          instrucciones: formData.instrucciones,
-          tiempo: formData.tiempo,
-          dificultad: formData.dificultad,
-          tiempoPreparacion: formData.tiempoPreparacion,
-          ingredientes: Array.isArray(formData.ingredientes)
-            ? formData.ingredientes.map((ingrediente) => ({
-                productoId: ingrediente.productoId,
-                cantidad: Number(ingrediente.cantidad),
-                unidad: ingrediente.unidad,
-              }))
-            : [],
-        };
-        await createReceta(payload as unknown as Partial<Receta>);
+        const payload = await buildRecetaPayload(formData);
+        await createReceta(payload);
         toast.success('Receta creada correctamente.');
       }
       setQuickActionTask(null);
@@ -496,15 +442,7 @@ const Home: React.FC = () => {
     }
   };
 
-  const currentPedidoSchema = pedidoSchema.map((field) => {
-    if (field.name === 'proveedorId') {
-      return {
-        ...field,
-        options: proveedores.map((p) => ({ value: p.id, label: p.nombre })),
-      };
-    }
-    return field;
-  });
+  const pedidoSchema = getPedidoSchema(null);
 
   // ── Derived values ──────────────────────────────────────────────────────
 
@@ -952,13 +890,11 @@ const Home: React.FC = () => {
       />
 
       {/* Quick Action Modals */}
-      <DynamicFormModal
+      <ProductoFormModal
         isOpen={quickActionTask === 'product'}
         onClose={() => setQuickActionTask(null)}
         title="Añadir Nuevo Producto"
-        size="md"
-        fields={productoSchema}
-        initialData={{}}
+        initialData={EMPTY_INITIAL_DATA}
         onSubmit={handleSaveQuickAction}
         isSubmitting={isSavingQuickAction}
       />
@@ -967,20 +903,19 @@ const Home: React.FC = () => {
         isOpen={quickActionTask === 'order'}
         onClose={() => setQuickActionTask(null)}
         title="Crear Nuevo Pedido"
-        size="md"
-        fields={currentPedidoSchema}
-        initialData={{ estado: 'pendiente' }}
-        onSubmit={handleSaveQuickAction}
-        isSubmitting={isSavingQuickAction}
+        size="lg"
+        fields={pedidoSchema}
+        initialData={PEDIDO_NEW_INITIAL_DATA}
+        onSubmit={handleSavePedidoQuickAction}
+        isSubmitting={isSavingPedido}
+        requireConfirmation
+        confirmationMessage="¿Estás seguro de que deseas registrar este nuevo pedido?"
       />
 
-      <DynamicFormModal
+      <RecetaFormModal
         isOpen={quickActionTask === 'recipe'}
         onClose={() => setQuickActionTask(null)}
-        title="Crear Nueva Receta"
-        size="md"
-        fields={recetaSchema}
-        initialData={{}}
+        initialData={EMPTY_INITIAL_DATA}
         onSubmit={handleSaveQuickAction}
         isSubmitting={isSavingQuickAction}
       />

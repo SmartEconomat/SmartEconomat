@@ -38,6 +38,7 @@ export class RecepcionService {
       fechaRecepcion: dto.fechaRecepcion,
       observaciones: dto.observaciones,
       usuario,
+      modifiedBy: userId,
     });
 
     const savedRecepcion = await this.recepcionRepository.save(recepcion);
@@ -60,7 +61,6 @@ export class RecepcionService {
   ): Promise<PaginatedResponseDto<Recepcion>> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
       userRole?.toUpperCase() === 'SUPER_ADMIN';
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 50);
@@ -81,7 +81,6 @@ export class RecepcionService {
   async findOne(id: string, userRole?: string): Promise<Recepcion> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
       userRole?.toUpperCase() === 'SUPER_ADMIN';
 
     const recepcion = await this.recepcionRepository.findOne({
@@ -106,7 +105,11 @@ export class RecepcionService {
     return recepcion;
   }
 
-  async update(id: string, dto: UpdateRecepcionDto): Promise<Recepcion> {
+  async update(
+    id: string,
+    dto: UpdateRecepcionDto,
+    userId?: string
+  ): Promise<Recepcion> {
     const recepcion = await this.findOne(id);
 
     if (dto.usuarioId) {
@@ -124,6 +127,9 @@ export class RecepcionService {
     }
 
     this.recepcionRepository.merge(recepcion, dto);
+    if (userId) {
+      recepcion.modifiedBy = userId;
+    }
 
     return await this.recepcionRepository.save(recepcion);
   }

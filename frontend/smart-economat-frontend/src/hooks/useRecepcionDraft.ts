@@ -6,22 +6,20 @@ import {
   saveRecepcionDraft,
 } from '../services/recepcionDraft.service';
 import {
-  PasoWizard,
   RecepcionDraft,
   RecepcionDraftEnvelope,
 } from '../services/recepcion.types';
-
-const STEP_ORDER: PasoWizard[] = [
-  'SELECCION_PEDIDOS',
-  'ESCANEO_LOTE',
-  'REVISION_FINAL',
-  'RESULTADO',
-];
+import {
+  getRecepcionDraftStepIndex,
+  hasRecepcionDraftContent,
+  hydrateRecepcionDraft,
+} from './useRecepcionDraft.helpers';
 
 type SyncStatus = 'idle' | 'saving' | 'synced' | 'error' | 'conflict';
 
 interface UseRecepcionDraftOptions {
   activeStep: number;
+  autoResume?: boolean;
   debounceMs?: number;
   defaultDraft: () => RecepcionDraft;
   setActiveStep: (step: number) => void;
@@ -30,19 +28,6 @@ interface UseRecepcionDraftOptions {
 interface ConflictPayload {
   remoteDraft: RecepcionDraftEnvelope;
   localDraft: RecepcionDraft;
-}
-
-function hydrateDraft(
-  draft: RecepcionDraft,
-  envelope: RecepcionDraftEnvelope | null
-): RecepcionDraft {
-  return {
-    ...draft,
-    serverVersion: envelope?.version ?? null,
-    serverUpdatedAt: envelope?.updatedAt ?? null,
-    modificadoEn: envelope?.updatedAt ?? draft.modificadoEn,
-    creadoEn: envelope?.createdAt ?? draft.creadoEn,
-  };
 }
 
 function extractRemoteDraft(error: ApiError): RecepcionDraftEnvelope | null {
@@ -59,11 +44,14 @@ function extractRemoteDraft(error: ApiError): RecepcionDraftEnvelope | null {
 
 export function useRecepcionDraft({
   activeStep,
-  debounceMs = 6000,
+  autoResume = false,
+  debounceMs = 2000,
   defaultDraft,
   setActiveStep,
 }: UseRecepcionDraftOptions) {
   const [draft, setDraft] = useState<RecepcionDraft>(() => defaultDraft());
+  const [pendingRecoveryDraft, setPendingRecoveryDraft] =
+    useState<RecepcionDraftEnvelope | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const [syncError, setSyncError] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
@@ -72,6 +60,8 @@ export function useRecepcionDraft({
   const draftRef = useRef(draft);
   const activeStepRef = useRef(activeStep);
   const skipAutoSaveRef = useRef(false);
+  const pendingSyncTimerRef = useRef<number | null>(null);
+  const isSyncingRef = useRef(false);
 
   useEffect(() => {
     draftRef.current = draft;
@@ -81,6 +71,26 @@ export function useRecepcionDraft({
     activeStepRef.current = activeStep;
   }, [activeStep]);
 
+  const applyDraftEnvelope = useCallback(
+    (envelope: RecepcionDraftEnvelope) => {
+      skipAutoSaveRef.current = true;
+
+      const hydrated = hydrateRecepcionDraft(
+        envelope.payload,
+        envelope,
+        defaultDraft()
+      );
+
+      setDraft(hydrated);
+      setActiveStep(getRecepcionDraftStepIndex(hydrated));
+      setPendingRecoveryDraft(null);
+      setConflict(null);
+      setSyncStatus('synced');
+      setSyncError(null);
+    },
+    [defaultDraft, setActiveStep]
+  );
+
   const syncDraft = useCallback(
     async (
       overrideDraft?: RecepcionDraft
@@ -89,15 +99,36 @@ export function useRecepcionDraft({
         return null;
       }
 
+      if (isSyncingRef.current) {
+        return null;
+      }
+
       const candidateDraft = overrideDraft ?? draftRef.current;
+
+      if (
+        !hasRecepcionDraftContent(candidateDraft) &&
+        candidateDraft.serverVersion == null &&
+        !candidateDraft.serverUpdatedAt
+      ) {
+        setSyncStatus('idle');
+        setSyncError(null);
+        return null;
+      }
+
+      isSyncingRef.current = true;
       setSyncStatus('saving');
       setSyncError(null);
 
       try {
         const persisted = await saveRecepcionDraft(candidateDraft);
-        const hydrated = hydrateDraft(persisted.payload, persisted);
+        const hydrated = hydrateRecepcionDraft(
+          persisted.payload,
+          persisted,
+          defaultDraft()
+        );
         skipAutoSaveRef.current = true;
         setDraft(hydrated);
+        setPendingRecoveryDraft(null);
         setConflict(null);
         setSyncStatus('synced');
         return persisted;
@@ -121,10 +152,28 @@ export function useRecepcionDraft({
         setSyncError(message);
         setSyncStatus('error');
         return null;
+      } finally {
+        isSyncingRef.current = false;
       }
     },
-    []
+    [defaultDraft]
   );
+
+  const persistCurrentDraftSilently = useCallback(async () => {
+    if (activeStepRef.current >= 3 || pendingRecoveryDraft) {
+      return;
+    }
+
+    if (!hasRecepcionDraftContent(draftRef.current)) {
+      return;
+    }
+
+    try {
+      await saveRecepcionDraft(draftRef.current);
+    } catch {
+      // El guardado silencioso en salida no debe interrumpir navegación.
+    }
+  }, [pendingRecoveryDraft]);
 
   useEffect(() => {
     let isMounted = true;
@@ -137,14 +186,20 @@ export function useRecepcionDraft({
         }
 
         if (remoteDraft?.payload) {
-          skipAutoSaveRef.current = true;
-          const hydrated = hydrateDraft(remoteDraft.payload, remoteDraft);
-          setDraft(hydrated);
-          const stepIndex = STEP_ORDER.indexOf(hydrated.paso);
-          if (stepIndex >= 0) {
-            setActiveStep(stepIndex);
+          const hydrated = hydrateRecepcionDraft(
+            remoteDraft.payload,
+            remoteDraft,
+            defaultDraft()
+          );
+
+          if (hasRecepcionDraftContent(hydrated)) {
+            if (autoResume) {
+              applyDraftEnvelope(remoteDraft);
+            } else {
+              setPendingRecoveryDraft(remoteDraft);
+              setSyncStatus('synced');
+            }
           }
-          setSyncStatus('synced');
         }
       } catch (error) {
         if (!isMounted) {
@@ -167,10 +222,10 @@ export function useRecepcionDraft({
     return () => {
       isMounted = false;
     };
-  }, [defaultDraft, setActiveStep]);
+  }, [applyDraftEnvelope, autoResume, defaultDraft]);
 
   useEffect(() => {
-    if (!isReady || activeStep >= 3) {
+    if (!isReady || activeStep >= 3 || pendingRecoveryDraft) {
       return;
     }
 
@@ -179,49 +234,91 @@ export function useRecepcionDraft({
       return;
     }
 
-    const timer = window.setTimeout(() => {
+    if (pendingSyncTimerRef.current != null) {
+      return;
+    }
+
+    pendingSyncTimerRef.current = window.setTimeout(() => {
+      pendingSyncTimerRef.current = null;
       void syncDraft();
     }, debounceMs);
 
     return () => {
-      window.clearTimeout(timer);
+      if (pendingSyncTimerRef.current != null) {
+        window.clearTimeout(pendingSyncTimerRef.current);
+        pendingSyncTimerRef.current = null;
+      }
     };
-  }, [activeStep, debounceMs, draft, isReady, syncDraft]);
+  }, [activeStep, debounceMs, draft, isReady, pendingRecoveryDraft, syncDraft]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (
+        typeof document !== 'undefined' &&
+        document.visibilityState === 'hidden'
+      ) {
+        void persistCurrentDraftSilently();
+      }
+    };
+
+    const handlePageHide = () => {
+      void persistCurrentDraftSilently();
+    };
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('pagehide', handlePageHide);
+    }
+
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.removeEventListener(
+          'visibilitychange',
+          handleVisibilityChange
+        );
+      }
+
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('pagehide', handlePageHide);
+      }
+
+      if (pendingSyncTimerRef.current != null) {
+        window.clearTimeout(pendingSyncTimerRef.current);
+        pendingSyncTimerRef.current = null;
+      }
+
+      void persistCurrentDraftSilently();
+    };
+  }, [persistCurrentDraftSilently]);
 
   const clearDraft = useCallback(async () => {
-    try {
-      await deleteRecepcionDraft();
-    } catch (error) {
-      setSyncError(
-        error instanceof Error
-          ? error.message
-          : 'No se pudo eliminar el borrador remoto de recepción.'
-      );
-    }
+    await deleteRecepcionDraft();
     skipAutoSaveRef.current = true;
     setConflict(null);
+    setPendingRecoveryDraft(null);
+    setSyncError(null);
     setSyncStatus('idle');
     setDraft(defaultDraft());
   }, [defaultDraft]);
+
+  const applyPendingRecoveryDraft = useCallback(() => {
+    if (!pendingRecoveryDraft) {
+      return;
+    }
+
+    applyDraftEnvelope(pendingRecoveryDraft);
+  }, [applyDraftEnvelope, pendingRecoveryDraft]);
 
   const useRemoteDraft = useCallback(() => {
     if (!conflict) {
       return;
     }
 
-    skipAutoSaveRef.current = true;
-    const hydrated = hydrateDraft(
-      conflict.remoteDraft.payload,
-      conflict.remoteDraft
-    );
-    setDraft(hydrated);
-    const stepIndex = STEP_ORDER.indexOf(hydrated.paso);
-    if (stepIndex >= 0) {
-      setActiveStep(stepIndex);
-    }
-    setConflict(null);
-    setSyncStatus('synced');
-  }, [conflict, setActiveStep]);
+    applyDraftEnvelope(conflict.remoteDraft);
+  }, [applyDraftEnvelope, conflict]);
 
   const keepLocalDraft = useCallback(async () => {
     if (!conflict) {
@@ -237,11 +334,13 @@ export function useRecepcionDraft({
 
   return useMemo(
     () => ({
+      applyPendingRecoveryDraft,
       clearDraft,
       conflict,
       draft,
       isReady,
       keepLocalDraft,
+      pendingRecoveryDraft,
       setDraft,
       syncDraft,
       syncError,
@@ -249,11 +348,13 @@ export function useRecepcionDraft({
       useRemoteDraft,
     }),
     [
+      applyPendingRecoveryDraft,
       clearDraft,
       conflict,
       draft,
       isReady,
       keepLocalDraft,
+      pendingRecoveryDraft,
       setDraft,
       syncDraft,
       syncError,

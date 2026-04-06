@@ -1,4 +1,5 @@
 import type { User } from './types';
+import { ELEVATED_ROLES } from './system-roles.constants';
 
 export const normalizeRole = (role?: string | null): string =>
   String(role ?? '')
@@ -7,7 +8,7 @@ export const normalizeRole = (role?: string | null): string =>
 
 export const isElevatedRole = (role?: string | null): boolean => {
   const normalized = normalizeRole(role);
-  return normalized === 'SUPER_ADMIN';
+  return ELEVATED_ROLES.includes(normalized);
 };
 
 export const buildPermissionsMap = (

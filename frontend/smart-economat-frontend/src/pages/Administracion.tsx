@@ -23,14 +23,18 @@ import EditIcon from '@mui/icons-material/Edit';
 import CancelIcon from '@mui/icons-material/Cancel';
 import SchoolIcon from '@mui/icons-material/SchoolOutlined';
 import PeopleIcon from '@mui/icons-material/PeopleOutlined';
+import SecurityIcon from '@mui/icons-material/SecurityOutlined';
 
 import ProfessorSlotsManager from '../features/profile/components/ProfessorSlotsManager';
 import { UbicacionService } from '../services/ubicacion.service';
 import type { Ubicacion } from '../services/ubicacion.types';
 import ProfessorStudentList from '../features/profile/components/ProfessorStudentList';
-import UsuariosView from './Usuarios/UsuariosView';
+import { UsuariosView } from './Usuarios/UsuariosView';
+import PlantillasRolesView from '../features/admin/components/PlantillasRolesView';
 
 import { useAuth, usePermission, useAnyPermission } from '../store/auth.hooks';
+import { SYSTEM_ROLES } from '../sherlock-auth/system-roles.constants';
+import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 import { useToast } from '../store/toast.hooks';
 import {
   profesorService,
@@ -76,7 +80,7 @@ function a11yProps(index: string) {
   };
 }
 
-type AdminTabKey = 'slots' | 'alumnos' | 'usuarios';
+type AdminTabKey = 'slots' | 'alumnos' | 'usuarios' | 'plantillas';
 
 /**
  * Página de Administración Académica para Profesores con Tabs.
@@ -89,16 +93,18 @@ const Administracion: React.FC = () => {
 
   const userRole = user?.rol?.toUpperCase() || '';
   const canViewAdmin = useAnyPermission([
-    'profesor:ver_alumnos',
-    'profesor:gestionar_slots',
-    'usuarios:listar',
+    PERMISSIONS.profesor.ver_alumnos,
+    PERMISSIONS.profesor.gestionar_slots,
+    PERMISSIONS.usuarios.listar,
   ]);
-  const isAdmin = usePermission('usuarios:listar');
-  const canManageSlots = usePermission('profesor:gestionar_slots');
-  const canViewStudents = usePermission('profesor:ver_alumnos');
+  const isAdmin = usePermission(PERMISSIONS.usuarios.listar);
+  const canManageSlots = usePermission(PERMISSIONS.profesor.gestionar_slots);
+  const canViewStudents = usePermission(PERMISSIONS.profesor.ver_alumnos);
+  const canViewRoleTemplates = usePermission(PERMISSIONS.roles.listar);
+  const canEditRoleTemplates = usePermission(PERMISSIONS.roles.editar);
 
   // isPureProfesor: para cargar datos propios (esto se mantiene un poco por lógica de negocio del backend)
-  const isPureProfesor = userRole === 'PROFESOR';
+  const isPureProfesor = userRole === SYSTEM_ROLES.PROFESOR;
 
   const [activeTab, setActiveTab] = useState<AdminTabKey>('slots');
   const [isEditingSlots, setIsEditingSlots] = useState(false);
@@ -146,12 +152,19 @@ const Administracion: React.FC = () => {
               icon: <PeopleIcon />,
             }
           : null,
+        canViewRoleTemplates
+          ? {
+              key: 'plantillas' as const,
+              label: 'Plantillas Roles',
+              icon: <SecurityIcon />,
+            }
+          : null,
       ].filter(Boolean) as Array<{
         key: AdminTabKey;
         label: string;
         icon: React.ReactElement;
       }>,
-    [canManageSlots, canViewStudents, isAdmin]
+    [canManageSlots, canViewStudents, isAdmin, canViewRoleTemplates]
   );
 
   const initialTab = useMemo<AdminTabKey>(() => {
@@ -159,6 +172,10 @@ const Administracion: React.FC = () => {
 
     if (requestedTab === 'usuarios' && isAdmin) {
       return 'usuarios';
+    }
+
+    if (requestedTab === 'plantillas' && canViewRoleTemplates) {
+      return 'plantillas';
     }
 
     if (requestedTab === 'alumnos' && canViewStudents) {
@@ -170,7 +187,14 @@ const Administracion: React.FC = () => {
     }
 
     return availableTabs[0]?.key ?? 'slots';
-  }, [searchParams, isAdmin, canViewStudents, canManageSlots, availableTabs]);
+  }, [
+    searchParams,
+    isAdmin,
+    canViewRoleTemplates,
+    canViewStudents,
+    canManageSlots,
+    availableTabs,
+  ]);
 
   useEffect(() => {
     if (activeTab !== initialTab) {
@@ -598,6 +622,12 @@ const Administracion: React.FC = () => {
           {isAdmin && (
             <CustomTabPanel value={activeTab} index="usuarios">
               <UsuariosView />
+            </CustomTabPanel>
+          )}
+
+          {canViewRoleTemplates && (
+            <CustomTabPanel value={activeTab} index="plantillas">
+              <PlantillasRolesView canEdit={canEditRoleTemplates} />
             </CustomTabPanel>
           )}
         </CardContent>

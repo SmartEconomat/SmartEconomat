@@ -13,6 +13,7 @@ describe('InventarioService', () => {
   const mockInventarioRepo = {
     create: jest.fn(),
     save: jest.fn(),
+    update: jest.fn(),
     findAndCount: jest.fn(),
     findOne: jest.fn(),
     softDelete: jest.fn(),
@@ -89,7 +90,7 @@ describe('InventarioService', () => {
         productoProveedor: { id: 'pp-2', producto: { nombre: 'Leche' } },
       } as any)
       .mockResolvedValueOnce({ id: 'inv-2' } as any);
-    mockInventarioRepo.save.mockResolvedValue(undefined);
+    mockInventarioRepo.update.mockResolvedValue(undefined);
 
     await service.update('inv-2', { cantidadActual: 7 } as any, 'user-3');
 
@@ -109,6 +110,7 @@ describe('InventarioService', () => {
     jest.spyOn(service, 'findOne').mockResolvedValue({
       id: 'inv-3',
       cantidadActual: 5,
+      productoProveedorId: 'pp-3',
       productoProveedor: { id: 'pp-3', producto: { nombre: 'Aceite' } },
     } as any);
     mockInventarioRepo.softDelete.mockResolvedValue({ affected: 1 });
@@ -124,6 +126,29 @@ describe('InventarioService', () => {
       'Inventario',
       'inv-3',
       'Eliminación de inventario: Aceite'
+    );
+  });
+
+  it('remove usa fallback seguro si el producto relacionado no hidrata', async () => {
+    jest.spyOn(service, 'findOne').mockResolvedValue({
+      id: 'inv-3b',
+      cantidadActual: 5,
+      productoProveedorId: 'pp-3b',
+      productoProveedor: { id: 'pp-3b', producto: null },
+    } as any);
+    mockInventarioRepo.softDelete.mockResolvedValue({ affected: 1 });
+
+    await service.remove('inv-3b', 'user-4');
+
+    expect(mockMovimientoHelper.trackInventarioMovimiento).toHaveBeenCalledWith(
+      'user-4',
+      'inv-3b',
+      TipoMovimiento.SALIDA,
+      5,
+      'pp-3b',
+      'Inventario',
+      'inv-3b',
+      'Eliminación de inventario: productoProveedor:pp-3b'
     );
   });
 
@@ -146,7 +171,15 @@ describe('InventarioService', () => {
     ]);
 
     await expect(service.obtenerAlertasStock()).resolves.toEqual([
-      { id: 'inv-6', cantidadActual: 1, cantidadMinima: 3 },
+      {
+        id: 'inv-6',
+        cantidadActual: 1,
+        cantidadMinima: 3,
+        nombreProducto: 'Sin nombre',
+        unidad: undefined,
+        proveedorNombre: undefined,
+        ubicacionNombre: undefined,
+      },
     ]);
   });
 
@@ -167,6 +200,7 @@ describe('InventarioService', () => {
     };
 
     const queryBuilder = {
+      withDeleted: jest.fn().mockReturnThis(),
       innerJoinAndSelect: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       setLock: jest.fn().mockReturnThis(),
@@ -174,6 +208,7 @@ describe('InventarioService', () => {
     };
     const manager = {
       createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
+      update: jest.fn().mockResolvedValue(undefined),
       save: jest
         .fn()
         .mockImplementation((_entity: unknown, payload: unknown) => payload),
@@ -198,20 +233,21 @@ describe('InventarioService', () => {
     );
 
     expect(Number(result.cantidadActual)).toBe(6);
-    expect(manager.save).toHaveBeenNthCalledWith(
-      1,
+    expect(manager.update).toHaveBeenCalledWith(
       expect.anything(),
-      inventario
+      'inv-7',
+      expect.objectContaining({
+        cantidadActual: 6,
+      })
     );
-    expect(manager.save).toHaveBeenNthCalledWith(
-      2,
+    expect(manager.save).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
         tipo: TipoMovimiento.SALIDA_AJUSTE,
         cantidad: 4,
         entidad: 'AjusteManualInventario',
         usuario: { id: 'user-7' },
-        descripcion: expect.stringContaining('MANUAL'),
+        descripcion: expect.stringMatching(/manual/i),
       })
     );
   });
@@ -266,6 +302,7 @@ describe('InventarioService', () => {
 
   it('ajustarManual lanza NotFoundException si no existe el inventario', async () => {
     const queryBuilder = {
+      withDeleted: jest.fn().mockReturnThis(),
       innerJoinAndSelect: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       setLock: jest.fn().mockReturnThis(),
@@ -273,6 +310,7 @@ describe('InventarioService', () => {
     };
     const manager = {
       createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
+      update: jest.fn(),
       save: jest.fn(),
       create: jest.fn(),
     };
@@ -310,6 +348,7 @@ describe('InventarioService', () => {
     };
 
     const queryBuilder = {
+      withDeleted: jest.fn().mockReturnThis(),
       innerJoinAndSelect: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       setLock: jest.fn().mockReturnThis(),
@@ -317,6 +356,7 @@ describe('InventarioService', () => {
     };
     const manager = {
       createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
+      update: jest.fn(),
       save: jest.fn(),
       create: jest.fn(),
     };
@@ -336,5 +376,51 @@ describe('InventarioService', () => {
         'user-8'
       )
     ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('ajustarManual rechaza ajustes sobre inventario eliminado', async () => {
+    const inventarioEliminado = {
+      id: 'inv-deleted',
+      deletedAt: new Date('2026-04-04T10:00:00.000Z'),
+      cantidadActual: 8,
+      productoProveedor: {
+        id: 'pp-deleted',
+        producto: { nombre: 'Arroz' },
+      },
+      ajustarCantidad: jest.fn(),
+    };
+
+    const queryBuilder = {
+      withDeleted: jest.fn().mockReturnThis(),
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      setLock: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(inventarioEliminado),
+    };
+    const manager = {
+      createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
+      update: jest.fn(),
+      save: jest.fn(),
+      create: jest.fn(),
+    };
+
+    mockDataSource.transaction.mockImplementation((callback: any) =>
+      callback(manager)
+    );
+
+    await expect(
+      service.ajustarManual(
+        {
+          inventarioId: 'inv-deleted',
+          tipo: TipoMovimientoManual.AJUSTE,
+          ajuste: 2,
+          motivo: 'Regularización',
+        },
+        'user-deleted'
+      )
+    ).rejects.toBeInstanceOf(ConflictException);
+
+    expect(manager.update).not.toHaveBeenCalled();
+    expect(manager.save).not.toHaveBeenCalled();
   });
 });

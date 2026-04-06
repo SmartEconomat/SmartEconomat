@@ -118,6 +118,12 @@ describe('RecepcionController (e2e)', () => {
       .expect(201);
 
     const pedidoId = response.body.data.id as string;
+
+    await request(app.getHttpServer())
+      .patch(`/api/v1/pedidos/${pedidoId}/aceptar`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+
     const pedido = await dataSource.getRepository(Pedido).findOne({
       where: { id: pedidoId },
       relations: ['pedidoProductos'],
@@ -227,11 +233,11 @@ describe('RecepcionController (e2e)', () => {
         expect.arrayContaining([
           expect.objectContaining({
             id: pedidoA.pedidoId,
-            estadoNuevo: EstadoPedido.RECIBIDO,
+            estadoNuevo: EstadoPedido.RECEPCIONADO,
           }),
           expect.objectContaining({
             id: pedidoB.pedidoId,
-            estadoNuevo: EstadoPedido.RECIBIDO,
+            estadoNuevo: EstadoPedido.RECEPCIONADO,
           }),
         ])
       );
@@ -395,7 +401,7 @@ describe('RecepcionController (e2e)', () => {
       ).toBe(true);
     });
 
-    it('mueve el pedido de pendiente a en_proceso y después a recibido según recepciones parciales y totales', async () => {
+    it('mueve el pedido de por_recepcionar a parcial y bloquea una segunda recepción cuando ya no es recepcionable', async () => {
       const proveedor = await createProveedor();
       const producto = await createProductoConProveedor(proveedor.id, {
         nombre: generateUniqueName('Producto transición automática'),
@@ -425,7 +431,7 @@ describe('RecepcionController (e2e)', () => {
       expect(primeraRecepcion.body.data.pedidosActualizados).toEqual([
         expect.objectContaining({
           id: pedido.pedidoId,
-          estadoAnterior: EstadoPedido.PENDIENTE,
+          estadoAnterior: EstadoPedido.POR_RECEPCIONAR,
           estadoNuevo: EstadoPedido.PARCIAL,
         }),
       ]);
@@ -451,20 +457,14 @@ describe('RecepcionController (e2e)', () => {
             },
           ],
         })
-        .expect(201);
+        .expect(400);
 
-      expect(segundaRecepcion.body.data.pedidosActualizados).toEqual([
-        expect.objectContaining({
-          id: pedido.pedidoId,
-          estadoAnterior: EstadoPedido.PARCIAL,
-          estadoNuevo: EstadoPedido.RECIBIDO,
-        }),
-      ]);
+      expect(segundaRecepcion.body.success).toBe(false);
 
       pedidoActualizado = await dataSource.getRepository(Pedido).findOneBy({
         id: pedido.pedidoId,
       });
-      expect(pedidoActualizado?.estado).toBe(EstadoPedido.RECIBIDO);
+      expect(pedidoActualizado?.estado).toBe(EstadoPedido.PARCIAL);
     });
 
     it('crea productos nuevos durante la recepción y deja trazabilidad en stock', async () => {
@@ -539,7 +539,7 @@ describe('RecepcionController (e2e)', () => {
       ]);
       expect(response.body.data.inventariosCreados).toBe(2);
       expect(response.body.data.movimientosGenerados).toBe(2);
-      expect(pedidoActualizado?.estado).toBe(EstadoPedido.RECIBIDO);
+      expect(pedidoActualizado?.estado).toBe(EstadoPedido.RECEPCIONADO);
       expect(productoCreadoResponse.body.data.nombre).toBe(nombreNuevo);
       expect(stockNuevoResponse.body.data).toEqual([
         expect.objectContaining({
@@ -600,7 +600,9 @@ describe('RecepcionController (e2e)', () => {
         .findOneBy({ id: pedidoValido.pedidoId });
 
       expect(response.body.success).toBe(false);
-      expect(pedidoValidoActualizado?.estado).toBe(EstadoPedido.PENDIENTE);
+      expect(pedidoValidoActualizado?.estado).toBe(
+        EstadoPedido.POR_RECEPCIONAR
+      );
     });
 
     it('genera un PDF de pedidos agrupados por proveedor', async () => {

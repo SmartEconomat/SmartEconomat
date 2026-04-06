@@ -57,6 +57,11 @@ export class AlbaranRecepcionListener {
         }
       }
 
+      await this.albaranService.syncConcordanciaFromRecepciones(
+        albaran.id,
+        queryRunner.manager
+      );
+
       await queryRunner.commitTransaction();
       this.logger.log(
         `Albarán ${albaran.nAlbaran} vinculado a recepción ${event.recepcionId}`

@@ -1,10 +1,15 @@
 import { SeedContext } from './seed-context';
-import { faker } from '@faker-js/faker';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
 import { Merma } from '../modules/merma/merma.entity/merma.entity';
 import { MotivoMerma } from '../modules/merma/enums/merma.enums';
 import { Producto } from '../modules/producto/producto.entity/producto.entity';
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
+import {
+  DETERMINISTIC_SHORT_NOTES,
+  deterministicBool,
+  deterministicFloat,
+  pickDeterministic,
+} from './deterministic.seed-data';
 
 const NUM_MERMAS = process.env.NODE_ENV === 'test' ? 3 : 20;
 
@@ -23,18 +28,29 @@ export const runSeeder = async (context: SeedContext) => {
   }
 
   const motivos = Object.values(MotivoMerma);
+  const productosOrdenados = [...productos].sort((a, b) =>
+    a.id.localeCompare(b.id)
+  );
+  const usuariosOrdenados = [...usuarios].sort((a, b) =>
+    a.id.localeCompare(b.id)
+  );
   const mermas: Merma[] = [];
 
   for (let i = 0; i < NUM_MERMAS; i++) {
+    const producto = pickDeterministic(productosOrdenados, i, 'merma-producto');
+    const usuario =
+      usuariosOrdenados.length > 0 && deterministicBool(i, 'merma-usuario')
+        ? pickDeterministic(usuariosOrdenados, i, 'merma-usuario-pick')
+        : undefined;
+
     const merma = mermaRepo.create({
-      producto: faker.helpers.arrayElement(productos),
-      usuario:
-        usuarios.length > 0
-          ? faker.helpers.maybe(() => faker.helpers.arrayElement(usuarios))
-          : undefined,
-      cantidad: faker.number.float({ min: 0.1, max: 50, fractionDigits: 3 }),
-      motivo: faker.helpers.arrayElement(motivos),
-      notas: faker.helpers.maybe(() => faker.lorem.sentence()),
+      producto,
+      usuario,
+      cantidad: deterministicFloat(0.1, 50, 3, i, 'merma-cantidad'),
+      motivo: pickDeterministic(motivos, i, 'merma-motivo'),
+      notas: deterministicBool(i, 'merma-nota')
+        ? pickDeterministic(DETERMINISTIC_SHORT_NOTES, i, 'merma-nota-texto')
+        : undefined,
     });
 
     mermas.push(merma);

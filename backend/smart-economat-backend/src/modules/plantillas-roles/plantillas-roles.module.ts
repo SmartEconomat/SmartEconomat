@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PlantillaRol } from './plantilla-rol.entity/plantilla-rol.entity';
 import { PlantillaRolPermiso } from './plantilla-rol-permiso.entity/plantilla-rol-permiso.entity';
 import { PlantillasRolesService } from './service/plantillas-roles.service';
+import { PlantillasRolesController } from './controller/plantillas-roles.controller';
 import { PermisosModule } from '../permisos/permisos.module';
 import { RolesModule } from '../roles/roles.module';
 
@@ -12,6 +13,7 @@ import { RolesModule } from '../roles/roles.module';
     PermisosModule,
     RolesModule,
   ],
+  controllers: [PlantillasRolesController],
   providers: [PlantillasRolesService],
   exports: [PlantillasRolesService, TypeOrmModule],
 })

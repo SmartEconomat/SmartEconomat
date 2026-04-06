@@ -61,6 +61,7 @@ services:
       - FRONTEND_API_URL=${FRONTEND_API_URL}
       - BACKEND_API_URL=${BACKEND_API_URL}
       - DOMAIN=${DOMAIN}
+      - DB_SYNC=${DB_SYNC}
     depends_on:
       db:
         condition: service_healthy
@@ -94,7 +95,7 @@ services:
       - frontend-network
     volumes:
       - ./certs:/etc/nginx/certs:ro
-      - ./certs-webroot:/var/www/certbot:ro
+      - ./certs-webroot:/var/www/acme-challenge:ro
     depends_on:
       - backend
     logging:
@@ -102,26 +103,6 @@ services:
       options:
         max-size: '10m'
         max-file: '3'
-
-  certbot:
-    image: certbot/certbot:latest
-    restart: always
-    env_file: .env.prod
-    environment:
-      - ACME_DIRECTORY_URL=${ACME_DIRECTORY_URL}
-      - ACME_EMAIL=${ACME_EMAIL}
-      - DOMAIN=${DOMAIN}
-    entrypoint: /bin/sh
-    command: >
-      -c "set -e; mkdir -p /var/www/certbot/.well-known/acme-challenge; 
-      certbot certonly --non-interactive --agree-tos --server ${ACME_DIRECTORY_URL} --email ${ACME_EMAIL} --webroot -w /var/www/certbot -d ${DOMAIN} -d api.${DOMAIN} || true; 
-      while :; do certbot renew --non-interactive --quiet --server ${ACME_DIRECTORY_URL} --webroot -w /var/www/certbot --deploy-hook '/bin/sh /etc/letsencrypt/renewal-hooks/deploy/10-symlink-and-touch.sh' || true; sleep 12h; done"
-    volumes:
-      - ./certs:/etc/letsencrypt
-      - ./certs-data:/var/lib/letsencrypt
-      - ./certs-webroot:/var/www/certbot
-    networks:
-      - frontend-network
 
 volumes:
   database_prod:

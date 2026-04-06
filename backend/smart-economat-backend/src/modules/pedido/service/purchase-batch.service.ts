@@ -25,11 +25,24 @@ import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
 import { In } from 'typeorm';
 import { ProduccionService } from '../../receta/service/produccion.service';
 import { CreateMissingStockBatchDto } from '../dto/create-missing-stock-batch.dto';
+import { CreatePedidoUsuarioDto } from '../dto/pedido-usuario.dto';
 import { RecepcionProducto } from '../../recepcion/recepcion-productos.entity/recepcion-producto.entity';
 import { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
 import { IncidenciaLinea } from '../../incidencia/incidencia-linea.entity/incidencia-linea.entity';
 import { PedidoUsuario } from '../pedido-usuario.entity/pedido-usuario.entity';
 import { EstadoPedidoUsuario } from '../enums/estado-pedido-usuario.enum';
+import { reserveNextPedidoProveedorNumero } from '../utils/pedido-numero.util';
+import {
+  formatPurchaseBatchReferencia,
+  reserveNextPurchaseBatchNumero,
+} from '../utils/purchase-batch-numero.util';
+
+type BatchCreationMode = 'approve' | 'consolidate';
+type PedidoSemanticShape = Pedido & {
+  numeroPedidoProveedor?: string;
+  numeroPedidoVisible?: string;
+  referenciaPedidoVisible?: string;
+};
 
 @Injectable()
 export class PurchaseBatchService {
@@ -52,10 +65,17 @@ export class PurchaseBatchService {
     await queryRunner.startTransaction();
 
     try {
+      const numeroLote = await reserveNextPurchaseBatchNumero(
+        queryRunner.manager
+      );
+
       const batch = queryRunner.manager.create(PurchaseBatch, {
+        numeroGlobal: numeroLote,
+        referencia: formatPurchaseBatchReferencia(numeroLote),
         usuarioId: userId,
         observaciones: dto.observaciones,
         estado: EstadoLote.PENDIENTE,
+        modifiedBy: userId,
       });
       const savedBatch = await queryRunner.manager.save(PurchaseBatch, batch);
 
@@ -99,11 +119,15 @@ export class PurchaseBatchService {
           queryRunner.manager,
           createPedidoDto,
           userId,
-          EstadoPedido.PENDIENTE,
+          EstadoPedido.POR_RECEPCIONAR,
           () => this.calculateFechaEntrega()
         );
 
+        built.pedido.numeroGlobal = await reserveNextPedidoProveedorNumero(
+          queryRunner.manager
+        );
         built.pedido.batchId = savedBatch.id;
+        built.pedido.modifiedBy = userId;
 
         const savedPedido = await queryRunner.manager.save(
           Pedido,
@@ -117,6 +141,7 @@ export class PurchaseBatchService {
             cantidad: pp.cantidad,
             precioUnitario: pp.precioUnitario,
             observaciones: pp.observaciones,
+            modifiedBy: userId,
           });
         }
 
@@ -153,6 +178,15 @@ export class PurchaseBatchService {
     dto: CreateMissingStockBatchDto,
     userId: string
   ): Promise<PurchaseBatch> {
+    const pedidoUsuarioDto =
+      await this.buildPedidoUsuarioDtoFromMissingStock(dto);
+
+    return this.createBatchOrder(pedidoUsuarioDto, userId);
+  }
+
+  async buildPedidoUsuarioDtoFromMissingStock(
+    dto: CreateMissingStockBatchDto
+  ): Promise<CreatePedidoUsuarioDto> {
     const validation = await this.produccionService.validarMultiple({
       items: dto.items,
     });
@@ -205,126 +239,56 @@ export class PurchaseBatchService {
       );
     }
 
-    return this.createBatchOrder(
-      {
-        observaciones: dto.observaciones,
-        lineas,
-      },
-      userId
-    );
+    return {
+      observaciones: dto.observaciones,
+      lineas,
+    };
   }
 
   async findAll(): Promise<PurchaseBatch[]> {
-    return this.dataSource.getRepository(PurchaseBatch).find({
-      relations: ['pedidos', 'pedidos.proveedor', 'usuario'],
+    const batches = await this.dataSource.getRepository(PurchaseBatch).find({
+      relations: [
+        'pedidos',
+        'pedidos.proveedor',
+        'pedidos.pedidoUsuario',
+        'usuario',
+      ],
       order: { createdAt: 'DESC' },
     });
+
+    return batches.map((batch) => this.decorateBatchIdentity(batch));
   }
 
   async consolidateExistingOrders(
     dto: ConsolidatePurchaseBatchDto,
     userId: string
   ): Promise<PurchaseBatch> {
-    const uniquePedidoUsuarioIds = Array.from(
-      new Set(dto.pedidoUsuarioIds || dto.pedidoIds || [])
+    const uniquePedidoUsuarioIds = Array.from(new Set(dto.pedidoUsuarioIds));
+
+    return this.createBatchFromPedidoUsuarioIds(
+      uniquePedidoUsuarioIds,
+      userId,
+      dto.observaciones,
+      'consolidate'
     );
-    if (uniquePedidoUsuarioIds.length === 0) {
-      throw new BadRequestException(
-        I18nHelper.getError('SELECT_AT_LEAST_ONE_ORDER')
-      );
-    }
+  }
 
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      const pedidosUsuario = await queryRunner.manager.find(PedidoUsuario, {
-        where: { id: In(uniquePedidoUsuarioIds) },
-        relations: [
-          'pedidos',
-          'pedidos.proveedor',
-          'pedidos.usuario',
-          'pedidos.pedidoProductos',
-        ],
-      });
-
-      if (pedidosUsuario.length !== uniquePedidoUsuarioIds.length) {
-        throw new NotFoundException(
-          'Uno o varios pedidos seleccionados ya no existen.'
-        );
-      }
-
-      const invalidPedidoUsuario = pedidosUsuario.find(
-        (pedidoUsuario) =>
-          pedidoUsuario.estado !== EstadoPedidoUsuario.PENDIENTE
-      );
-
-      if (invalidPedidoUsuario) {
-        throw new BadRequestException(
-          'Solo se pueden consolidar pedidos de usuario pendientes.'
-        );
-      }
-
-      const pedidos = pedidosUsuario.flatMap(
-        (pedidoUsuario) => pedidoUsuario.pedidos || []
-      );
-
-      const invalidPedido = pedidos.find(
-        (pedido) =>
-          pedido.estado !== EstadoPedido.PENDIENTE || Boolean(pedido.batchId)
-      );
-
-      if (invalidPedido) {
-        throw new BadRequestException(
-          'Solo se pueden consolidar pedidos pendientes que todavía no pertenezcan a un lote.'
-        );
-      }
-
-      const batch = queryRunner.manager.create(PurchaseBatch, {
-        usuarioId: userId,
-        observaciones: dto.observaciones,
-        estado: EstadoLote.PENDIENTE,
-        isAprobado: true,
-      });
-      const savedBatch = await queryRunner.manager.save(PurchaseBatch, batch);
-
-      for (const pedido of pedidos) {
-        pedido.batchId = savedBatch.id;
-        pedido.estado = EstadoPedido.PENDIENTE;
-        await queryRunner.manager.save(Pedido, pedido);
-      }
-
-      for (const pedidoUsuario of pedidosUsuario) {
-        pedidoUsuario.estado = EstadoPedidoUsuario.EN_PROCESO;
-        await queryRunner.manager.save(PedidoUsuario, pedidoUsuario);
-      }
-
-      await this.syncBatchStatus(savedBatch.id, queryRunner.manager);
-      await queryRunner.commitTransaction();
-
-      return this.findOne(savedBatch.id);
-    } catch (error: any) {
-      await queryRunner.rollbackTransaction();
-      if (
-        error instanceof NotFoundException ||
-        error instanceof BadRequestException ||
-        error instanceof ConflictException
-      ) {
-        throw error;
-      }
-
-      throw new ConflictException(
-        `Error al consolidar pedidos en lote: ${error.message}`
-      );
-    } finally {
-      await queryRunner.release();
-    }
+  async approvePedidoUsuario(
+    pedidoUsuarioId: string,
+    userId: string
+  ): Promise<PurchaseBatch> {
+    return this.createBatchFromPedidoUsuarioIds(
+      [pedidoUsuarioId],
+      userId,
+      undefined,
+      'approve'
+    );
   }
 
   async updateBatchOrder(
     id: string,
-    dto: UpdatePurchaseBatchDto
+    dto: UpdatePurchaseBatchDto,
+    userId?: string
   ): Promise<PurchaseBatch> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -341,7 +305,13 @@ export class PurchaseBatchService {
       }
 
       if (
-        batch.pedidos.some((pedido) => pedido.estado !== EstadoPedido.PENDIENTE)
+        batch.pedidos.some(
+          (pedido) =>
+            [
+              EstadoPedido.PENDIENTE_DE_APROBACION,
+              EstadoPedido.POR_RECEPCIONAR,
+            ].includes(pedido.estado) === false
+        )
       ) {
         throw new BadRequestException(
           'Solo se pueden editar pedidos completos cuyos pedidos internos sigan pendientes.'
@@ -376,6 +346,9 @@ export class PurchaseBatchService {
       const retainedLineIds = new Set<string>();
 
       batch.observaciones = dto.observaciones;
+      if (userId) {
+        batch.modifiedBy = userId;
+      }
       await queryRunner.manager.save(PurchaseBatch, batch);
 
       for (const linea of dto.lineas) {
@@ -397,13 +370,17 @@ export class PurchaseBatchService {
           targetPedido = await queryRunner.manager.save(
             Pedido,
             queryRunner.manager.create(Pedido, {
+              numeroGlobal: await reserveNextPedidoProveedorNumero(
+                queryRunner.manager
+              ),
               usuarioId: batch.usuarioId,
               proveedorId: productProvider.proveedorId,
               batchId: batch.id,
-              estado: EstadoPedido.PENDIENTE,
+              estado: EstadoPedido.POR_RECEPCIONAR,
               observaciones: dto.observaciones,
               fechaEntrega: this.calculateFechaEntrega(),
               costeTotal: 0,
+              modifiedBy: userId,
             })
           );
 
@@ -434,6 +411,7 @@ export class PurchaseBatchService {
               cantidad: linea.cantidad,
               precioUnitario: precioVigente,
               observaciones: existingLine.observaciones,
+              modifiedBy: userId,
             }
           );
 
@@ -446,6 +424,7 @@ export class PurchaseBatchService {
           productoProveedorId: productProvider.id,
           cantidad: linea.cantidad,
           precioUnitario: precioVigente,
+          modifiedBy: userId,
         });
       }
 
@@ -494,6 +473,7 @@ export class PurchaseBatchService {
               {
                 observaciones: dto.observaciones,
                 costeTotal: 0,
+                modifiedBy: userId,
               }
             );
           } else {
@@ -516,11 +496,12 @@ export class PurchaseBatchService {
           {
             observaciones: dto.observaciones,
             costeTotal,
+            modifiedBy: userId,
           }
         );
       }
 
-      await this.syncBatchStatus(batch.id, queryRunner.manager);
+      await this.syncBatchStatus(batch.id, queryRunner.manager, userId);
       await queryRunner.commitTransaction();
 
       return this.findOne(batch.id);
@@ -543,7 +524,7 @@ export class PurchaseBatchService {
     }
   }
 
-  async acceptBatchOrder(id: string): Promise<PurchaseBatch> {
+  async acceptBatchOrder(id: string, userId?: string): Promise<PurchaseBatch> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -558,12 +539,6 @@ export class PurchaseBatchService {
         throw new NotFoundException(`Pedido #${id} no encontrado`);
       }
 
-      if (!batch.isAprobado) {
-        throw new BadRequestException(
-          'El lote debe ser aprobado antes de poder ser tramitado.'
-        );
-      }
-
       if (!batch.pedidos.length) {
         throw new BadRequestException(
           'El pedido no contiene pedidos internos para tramitar.'
@@ -571,7 +546,11 @@ export class PurchaseBatchService {
       }
 
       const invalidPedido = batch.pedidos.find(
-        (pedido) => pedido.estado !== EstadoPedido.PENDIENTE
+        (pedido) =>
+          [
+            EstadoPedido.PENDIENTE_DE_APROBACION,
+            EstadoPedido.POR_RECEPCIONAR,
+          ].includes(pedido.estado) === false
       );
 
       if (invalidPedido) {
@@ -581,11 +560,16 @@ export class PurchaseBatchService {
       }
 
       for (const pedido of batch.pedidos) {
-        pedido.estado = EstadoPedido.EN_PROCESO;
+        if (pedido.estado === EstadoPedido.PENDIENTE_DE_APROBACION) {
+          pedido.estado = EstadoPedido.POR_RECEPCIONAR;
+        }
+        if (userId) {
+          pedido.modifiedBy = userId;
+        }
         await queryRunner.manager.save(Pedido, pedido);
       }
 
-      await this.syncBatchStatus(batch.id, queryRunner.manager);
+      await this.syncBatchStatus(batch.id, queryRunner.manager, userId);
       await queryRunner.commitTransaction();
 
       return this.findOne(batch.id);
@@ -608,7 +592,11 @@ export class PurchaseBatchService {
     }
   }
 
-  async approveBatchOrder(id: string): Promise<PurchaseBatch> {
+  async approveBatchOrder(id: string, userId?: string): Promise<PurchaseBatch> {
+    return this.acceptBatchOrder(id, userId);
+  }
+
+  async restoreBatchOrder(id: string, userId?: string): Promise<PurchaseBatch> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -616,20 +604,87 @@ export class PurchaseBatchService {
     try {
       const batch = await queryRunner.manager.findOne(PurchaseBatch, {
         where: { id },
+        relations: [
+          'pedidos',
+          'pedidos.recepcionesPedido',
+          'pedidos.pedidoUsuario',
+        ],
       });
 
       if (!batch) {
-        throw new NotFoundException(`Lote #${id} no encontrado`);
+        throw new NotFoundException(`Pedido #${id} no encontrado`);
       }
 
-      batch.isAprobado = true;
-      await queryRunner.manager.save(PurchaseBatch, batch);
+      if (!batch.pedidos.length) {
+        throw new BadRequestException(
+          'El pedido no contiene pedidos internos para restaurar.'
+        );
+      }
 
+      const invalidPedido = batch.pedidos.find(
+        (pedido) => pedido.estado !== EstadoPedido.CANCELADO
+      );
+
+      if (invalidPedido) {
+        throw new BadRequestException(
+          'Solo se pueden restaurar lotes cuyos pedidos internos estén cancelados.'
+        );
+      }
+
+      const pedidoConRecepciones = batch.pedidos.find(
+        (pedido) =>
+          pedido.recepcionesPedido && pedido.recepcionesPedido.length > 0
+      );
+
+      if (pedidoConRecepciones) {
+        throw new BadRequestException(
+          'No se puede restaurar un pedido que ya tenga recepciones registradas.'
+        );
+      }
+
+      for (const pedido of batch.pedidos) {
+        pedido.estado = EstadoPedido.PENDIENTE_DE_APROBACION;
+        pedido.motivoCancelacion = undefined;
+        if (userId) {
+          pedido.modifiedBy = userId;
+        }
+        await queryRunner.manager.save(Pedido, pedido);
+      }
+
+      const touchedPedidoUsuarios = new Set(
+        batch.pedidos
+          .map((pedido) => pedido.pedidoUsuario)
+          .filter((pedidoUsuario): pedidoUsuario is PedidoUsuario =>
+            Boolean(pedidoUsuario)
+          )
+      );
+
+      for (const pedidoUsuario of touchedPedidoUsuarios) {
+        pedidoUsuario.estado = EstadoPedidoUsuario.PENDIENTE;
+        if (userId) {
+          pedidoUsuario.modifiedBy = userId;
+        }
+        await queryRunner.manager.save(PedidoUsuario, pedidoUsuario);
+      }
+
+      await this.syncBatchStatus(batch.id, queryRunner.manager, userId);
       await queryRunner.commitTransaction();
+
       return this.findOne(batch.id);
     } catch (error: any) {
       await queryRunner.rollbackTransaction();
-      throw error;
+
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException ||
+        error instanceof ConflictException
+      ) {
+        throw error;
+      }
+
+      throw new ConflictException(
+        `Error al restaurar el pedido: ${error.message}`
+      );
     } finally {
       await queryRunner.release();
     }
@@ -637,7 +692,8 @@ export class PurchaseBatchService {
 
   async cancelBatchOrder(
     id: string,
-    dto: CancelPurchaseBatchDto
+    dto: CancelPurchaseBatchDto,
+    userId?: string
   ): Promise<PurchaseBatch> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -646,7 +702,11 @@ export class PurchaseBatchService {
     try {
       const batch = await queryRunner.manager.findOne(PurchaseBatch, {
         where: { id },
-        relations: ['pedidos', 'pedidos.recepcionesPedido'],
+        relations: [
+          'pedidos',
+          'pedidos.recepcionesPedido',
+          'pedidos.pedidoUsuario',
+        ],
       });
 
       if (!batch) {
@@ -660,7 +720,11 @@ export class PurchaseBatchService {
       }
 
       const invalidPedido = batch.pedidos.find(
-        (pedido) => pedido.estado !== EstadoPedido.PENDIENTE
+        (pedido) =>
+          [
+            EstadoPedido.PENDIENTE_DE_APROBACION,
+            EstadoPedido.POR_RECEPCIONAR,
+          ].includes(pedido.estado) === false
       );
 
       if (invalidPedido) {
@@ -685,10 +749,29 @@ export class PurchaseBatchService {
       for (const pedido of batch.pedidos) {
         pedido.estado = EstadoPedido.CANCELADO;
         pedido.motivoCancelacion = motivo;
+        if (userId) {
+          pedido.modifiedBy = userId;
+        }
         await queryRunner.manager.save(Pedido, pedido);
       }
 
-      await this.syncBatchStatus(batch.id, queryRunner.manager);
+      const touchedPedidoUsuarios = new Set(
+        batch.pedidos
+          .map((pedido) => pedido.pedidoUsuario)
+          .filter((pedidoUsuario): pedidoUsuario is PedidoUsuario =>
+            Boolean(pedidoUsuario)
+          )
+      );
+
+      for (const pedidoUsuario of touchedPedidoUsuarios) {
+        pedidoUsuario.estado = EstadoPedidoUsuario.CANCELADO;
+        if (userId) {
+          pedidoUsuario.modifiedBy = userId;
+        }
+        await queryRunner.manager.save(PedidoUsuario, pedidoUsuario);
+      }
+
+      await this.syncBatchStatus(batch.id, queryRunner.manager, userId);
       await queryRunner.commitTransaction();
 
       return this.findOne(batch.id);
@@ -705,50 +788,6 @@ export class PurchaseBatchService {
 
       throw new ConflictException(
         `Error al cancelar el pedido: ${error.message}`
-      );
-    } finally {
-      await queryRunner.release();
-    }
-  }
-
-  async restoreBatchOrder(id: string): Promise<PurchaseBatch> {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      const batch = await queryRunner.manager.findOne(PurchaseBatch, {
-        where: { id },
-        relations: ['pedidos'],
-      });
-
-      if (!batch) {
-        throw new NotFoundException(`Pedido #${id} no encontrado`);
-      }
-
-      for (const pedido of batch.pedidos) {
-        if (pedido.estado === EstadoPedido.CANCELADO) {
-          pedido.estado = EstadoPedido.PENDIENTE;
-          pedido.motivoCancelacion = undefined;
-          await queryRunner.manager.save(Pedido, pedido);
-        }
-      }
-
-      await this.syncBatchStatus(batch.id, queryRunner.manager);
-      await queryRunner.commitTransaction();
-
-      return this.findOne(batch.id);
-    } catch (error: any) {
-      await queryRunner.rollbackTransaction();
-      if (
-        error instanceof NotFoundException ||
-        error instanceof BadRequestException ||
-        error instanceof ConflictException
-      ) {
-        throw error;
-      }
-      throw new ConflictException(
-        `Error al restaurar el pedido: ${error.message}`
       );
     } finally {
       await queryRunner.release();
@@ -776,7 +815,7 @@ export class PurchaseBatchService {
 
     await this.annotateLinkedMovements(batch.pedidos || []);
 
-    return batch;
+    return this.decorateBatchIdentity(batch);
   }
 
   /**
@@ -785,7 +824,8 @@ export class PurchaseBatchService {
    */
   async syncBatchStatus(
     batchId: string,
-    manager?: EntityManager
+    manager?: EntityManager,
+    actorId?: string
   ): Promise<void> {
     const repo = manager
       ? manager.getRepository(PurchaseBatch)
@@ -802,6 +842,9 @@ export class PurchaseBatchService {
 
     if (batch.estado !== nuevoEstado) {
       batch.estado = nuevoEstado;
+      if (actorId) {
+        batch.modifiedBy = actorId;
+      }
       await repo.save(batch);
     }
   }
@@ -872,5 +915,137 @@ export class PurchaseBatchService {
     );
     const fechaEntrega = new Date(baseDate.getTime() + hours * 60 * 60 * 1000);
     return fechaEntrega;
+  }
+
+  private async createBatchFromPedidoUsuarioIds(
+    pedidoUsuarioIds: string[],
+    userId: string,
+    observaciones: string | undefined,
+    mode: BatchCreationMode
+  ): Promise<PurchaseBatch> {
+    if (pedidoUsuarioIds.length === 0) {
+      throw new BadRequestException(
+        I18nHelper.getError('SELECT_AT_LEAST_ONE_ORDER')
+      );
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const pedidosUsuario = await queryRunner.manager.find(PedidoUsuario, {
+        where: { id: In(pedidoUsuarioIds) },
+        relations: [
+          'pedidos',
+          'pedidos.recepcionesPedido',
+          'pedidos.proveedor',
+          'pedidos.usuario',
+          'pedidos.pedidoProductos',
+        ],
+      });
+
+      if (pedidosUsuario.length !== pedidoUsuarioIds.length) {
+        throw new NotFoundException(
+          'Uno o varios pedidos seleccionados ya no existen.'
+        );
+      }
+
+      const invalidPedidoUsuario = pedidosUsuario.find(
+        (pedidoUsuario) =>
+          pedidoUsuario.estado !== EstadoPedidoUsuario.PENDIENTE
+      );
+
+      if (invalidPedidoUsuario) {
+        throw new BadRequestException(
+          'Solo se pueden aprobar o consolidar pedidos de usuario pendientes.'
+        );
+      }
+
+      const pedidos = pedidosUsuario.flatMap(
+        (pedidoUsuario) => pedidoUsuario.pedidos || []
+      );
+
+      const invalidPedido = pedidos.find(
+        (pedido) =>
+          pedido.estado !== EstadoPedido.PENDIENTE_DE_APROBACION ||
+          Boolean(pedido.batchId) ||
+          Boolean((pedido.recepcionesPedido || []).length)
+      );
+
+      if (invalidPedido) {
+        throw new BadRequestException(
+          'Solo se pueden aprobar o consolidar pedidos internos pendientes y sin recepciones.'
+        );
+      }
+
+      const batch = queryRunner.manager.create(PurchaseBatch, {
+        numeroGlobal: await reserveNextPurchaseBatchNumero(queryRunner.manager),
+        usuarioId: userId,
+        observaciones,
+        estado: EstadoLote.PENDIENTE,
+        modifiedBy: userId,
+      });
+
+      batch.referencia = formatPurchaseBatchReferencia(batch.numeroGlobal);
+
+      const savedBatch = await queryRunner.manager.save(PurchaseBatch, batch);
+
+      for (const pedido of pedidos) {
+        pedido.batchId = savedBatch.id;
+        pedido.estado = EstadoPedido.POR_RECEPCIONAR;
+        pedido.modifiedBy = userId;
+        await queryRunner.manager.save(Pedido, pedido);
+      }
+
+      const nextPedidoUsuarioEstado =
+        mode === 'approve'
+          ? EstadoPedidoUsuario.APROBADO
+          : EstadoPedidoUsuario.CONSOLIDADO;
+
+      for (const pedidoUsuario of pedidosUsuario) {
+        pedidoUsuario.estado = nextPedidoUsuarioEstado;
+        pedidoUsuario.modifiedBy = userId;
+        await queryRunner.manager.save(PedidoUsuario, pedidoUsuario);
+      }
+
+      await this.syncBatchStatus(savedBatch.id, queryRunner.manager, userId);
+      await queryRunner.commitTransaction();
+
+      return this.findOne(savedBatch.id);
+    } catch (error: any) {
+      await queryRunner.rollbackTransaction();
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException ||
+        error instanceof ConflictException
+      ) {
+        throw error;
+      }
+
+      throw new ConflictException(
+        `Error al crear la compra desde pedidos visibles: ${error.message}`
+      );
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  private decorateBatchIdentity(batch: PurchaseBatch): PurchaseBatch {
+    batch.numeroLote = batch.numeroGlobal;
+    batch.referenciaLote = batch.referencia;
+
+    (batch.pedidos || []).forEach((pedido) => {
+      const semanticPedido = pedido as PedidoSemanticShape;
+      semanticPedido.numeroPedidoProveedor = pedido.numeroGlobal;
+
+      const numeroPedidoVisible = pedido.pedidoUsuario?.numeroGlobal;
+      if (numeroPedidoVisible) {
+        semanticPedido.numeroPedidoVisible = numeroPedidoVisible;
+        semanticPedido.referenciaPedidoVisible = `PU-${numeroPedidoVisible}`;
+      }
+    });
+
+    return batch;
   }
 }

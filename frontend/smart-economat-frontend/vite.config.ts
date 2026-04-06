@@ -1,5 +1,6 @@
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react-swc';
+import path from 'node:path';
 
 // Declaración mínima de process para que TypeScript resuelva process.env en este
 // archivo de configuración. @types/node está listado como devDependency y se
@@ -176,10 +177,12 @@ export default defineConfig(() => {
       },
     },
     resolve: {
-      alias: {
-        // Add any aliases here if needed, for example:
-        // '@': path.resolve(__dirname, './src'),
-      },
+      alias: [
+        {
+          find: /^@mui\/material$/,
+          replacement: path.resolve(__dirname, 'src/lib/mui-material.ts'),
+        },
+      ],
     },
     test: {
       globals: true,

@@ -13,6 +13,8 @@ import { DataSource } from 'typeorm';
 import { typeOrmConfig } from './config/database.config';
 
 import { PlantillasRolesModule } from './modules/plantillas-roles/plantillas-roles.module';
+import { RolesModule } from './modules/roles/roles.module';
+import { PermisosModule } from './modules/permisos/permisos.module';
 import { IsUniqueConstraint } from './common/decorators/is-unique.decorator';
 import { ExportModule } from './modules/export/export.module';
 import { MermaModule } from './modules/merma/merma.module';
@@ -36,6 +38,7 @@ import { AlbaranModule } from './modules/albaran/albaran.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { PedidoDraftModule } from './modules/pedido-draft/pedido-draft.module';
 import { RecepcionDraftModule } from './modules/recepcion-draft/recepcion-draft.module';
+import { OpenfoodfactsModule } from './modules/openfoodfacts/openfoodfacts.module';
 import { DistribucionModule } from './modules/distribucion/distribucion.module';
 
 @Module({
@@ -43,9 +46,9 @@ import { DistribucionModule } from './modules/distribucion/distribucion.module';
     EventEmitterModule.forRoot(),
     CacheModule.register({ isGlobal: true, ttl: 300000, max: 100 }),
     ThrottlerModule.forRoot([
-      { name: 'auth', ttl: 60000, limit: 100 },
-      { name: 'write', ttl: 60000, limit: 200 },
-      { name: 'read', ttl: 60000, limit: 1000 },
+      { name: 'auth', ttl: 60000, limit: 500 },
+      { name: 'write', ttl: 60000, limit: 1000 },
+      { name: 'read', ttl: 60000, limit: 5000 },
     ]),
     SentryModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
@@ -77,6 +80,8 @@ import { DistribucionModule } from './modules/distribucion/distribucion.module';
       },
     }),
     PlantillasRolesModule,
+    RolesModule,
+    PermisosModule,
     ExportModule,
     MermaModule,
     UbicacionModule,
@@ -98,6 +103,7 @@ import { DistribucionModule } from './modules/distribucion/distribucion.module';
     DashboardModule,
     PedidoDraftModule,
     RecepcionDraftModule,
+    OpenfoodfactsModule,
     DistribucionModule,
   ],
   controllers: [AppController],

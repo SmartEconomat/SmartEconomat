@@ -38,6 +38,9 @@ import {
   Incidencia,
   TipoDiferencia,
 } from '../../services/incidencia.types';
+import { fetchAlertasStock } from '../../services/inventario.service';
+import type { AlertaStock } from '../../services/inventario.types';
+import { formatPedidoListNumber } from '../../features/pedidos/utils/pedidoFormatters';
 
 export type SummaryModalType =
   | 'productos'
@@ -62,7 +65,12 @@ interface SummaryProducto extends Producto {
   };
 }
 
-type SummaryItem = SummaryProducto | Pedido | Proveedor | Incidencia;
+type SummaryItem =
+  | SummaryProducto
+  | Pedido
+  | Proveedor
+  | Incidencia
+  | AlertaStock;
 
 const isPedido = (item: SummaryItem): item is Pedido => 'fechaPedido' in item;
 
@@ -72,13 +80,20 @@ const isProveedor = (item: SummaryItem): item is Proveedor =>
 const isIncidencia = (item: SummaryItem): item is Incidencia =>
   'pedidoId' in item && 'lineas' in item;
 
+const isAlertaStock = (item: SummaryItem): item is AlertaStock =>
+  'nombreProducto' in item && 'cantidadActual' in item;
+
 const isSummaryProducto = (item: SummaryItem): item is SummaryProducto =>
-  !isPedido(item) && !isProveedor(item) && !isIncidencia(item);
+  !isPedido(item) &&
+  !isProveedor(item) &&
+  !isIncidencia(item) &&
+  !isAlertaStock(item);
 
 const SUMMARY_PAGE_SIZE = 50;
 const DASHBOARD_PENDING_ORDER_STATES = [
-  EstadoPedido.PENDIENTE,
-  EstadoPedido.EN_PROCESO,
+  EstadoPedido.PENDIENTE_DE_APROBACION,
+  EstadoPedido.POR_RECEPCIONAR,
+  EstadoPedido.PARCIAL,
   EstadoPedido.INCIDENCIA,
 ] as const;
 
@@ -94,6 +109,32 @@ const estadoReclamacionLabel: Record<EstadoReclamacion, string> = {
   ABONADO: 'Abonado',
   REENVIADO: 'Reenviado',
 };
+
+const decimalFormatter = new Intl.NumberFormat('es-ES', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+function normalizeNumericValue(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  return null;
+}
+
+function formatDecimalOrFallback(value: unknown, fallback = 'N/D'): string {
+  const normalized = normalizeNumericValue(value);
+  if (normalized == null) return fallback;
+  return decimalFormatter.format(normalized);
+}
+
+function formatCompactId(value: string | null | undefined): string {
+  if (!value) {
+    return 'N/D';
+  }
+
+  return value.substring(0, 8);
+}
 
 const SummaryModal: React.FC<SummaryModalProps> = ({
   isOpen,
@@ -209,11 +250,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       } else if (type === 'incidencias') {
         result = await fetchAllIncidencias();
       } else if (type === 'stock') {
-        const res = await fetchProductos(1, 100);
-        result = (res.data as SummaryProducto[]).filter(
-          (producto) =>
-            (producto.stockActual || 0) <= (producto.stockMinimo || 0)
-        );
+        result = await fetchAlertasStock();
       } else if (type === 'proveedores') {
         const res = await fetchProveedores(1, 50);
         result = res.data;
@@ -274,7 +311,54 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   };
 
   const renderItem = (item: SummaryItem) => {
-    if ((type === 'productos' || type === 'stock') && isSummaryProducto(item)) {
+    if (type === 'stock' && isAlertaStock(item)) {
+      const stockLabel = `${formatDecimalOrFallback(item.cantidadActual)} / ${formatDecimalOrFallback(item.cantidadMinima)} ${item.unidad || 'und'}`;
+
+      return (
+        <ListItem key={item.id} sx={{ px: 0 }}>
+          <ListItemIcon>
+            <WarningAmberIcon color="error" />
+          </ListItemIcon>
+          <ListItemText
+            primary={item.nombreProducto}
+            secondaryTypographyProps={{ component: 'div' }}
+            secondary={
+              <Stack direction="row" spacing={1} alignItems="center" mt={0.5}>
+                {item.proveedorNombre && (
+                  <Typography variant="caption" color="text.secondary">
+                    {item.proveedorNombre}
+                  </Typography>
+                )}
+                {item.ubicacionNombre && (
+                  <Typography variant="caption" color="text.secondary">
+                    {item.ubicacionNombre}
+                  </Typography>
+                )}
+                <Chip
+                  label={stockLabel}
+                  size="small"
+                  variant="outlined"
+                  color="error"
+                />
+              </Stack>
+            }
+          />
+        </ListItem>
+      );
+    }
+
+    if (type === 'productos' && isSummaryProducto(item)) {
+      const stockActual = normalizeNumericValue(item.stockActual);
+      const stockMinimo = normalizeNumericValue(item.stockMinimo);
+      const stockLabel =
+        stockActual != null
+          ? `${formatDecimalOrFallback(stockActual)} ${item.unidad || 'und'}`
+          : 'N/D';
+      const isLowStock =
+        stockActual != null &&
+        stockMinimo != null &&
+        stockActual <= stockMinimo;
+
       return (
         <ListItem key={item.id} sx={{ px: 0 }}>
           <ListItemIcon>
@@ -282,26 +366,25 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           </ListItemIcon>
           <ListItemText
             primary={item.nombre}
+            secondaryTypographyProps={{ component: 'div' }}
             secondary={
               <Stack direction="row" spacing={1} alignItems="center" mt={0.5}>
                 <Typography variant="caption" color="text.secondary">
                   {item.categoria?.nombre || 'Sin categoría'}
                 </Typography>
                 <Chip
-                  label={`${item.stockActual || 0} ${item.unidad || 'und'}`}
+                  label={stockLabel}
                   size="small"
                   variant="outlined"
-                  color={
-                    (item.stockActual || 0) <= (item.stockMinimo || 0)
-                      ? 'error'
-                      : 'default'
-                  }
+                  color={isLowStock ? 'error' : 'default'}
                 />
               </Stack>
             }
           />
           <Typography variant="body2" fontWeight={600}>
-            {item.precioVenta ? `${item.precioVenta}€` : '-'}
+            {item.precioVenta != null
+              ? `${formatDecimalOrFallback(item.precioVenta, '-')}€`
+              : '-'}
           </Typography>
         </ListItem>
       );
@@ -314,7 +397,8 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             <ShoppingCartIcon />
           </ListItemIcon>
           <ListItemText
-            primary={`Pedido #${item.id.substring(0, 8)}`}
+            primary={`Pedido #${formatPedidoListNumber(item)}`}
+            secondaryTypographyProps={{ component: 'div' }}
             secondary={
               <Stack direction="row" spacing={1} alignItems="center" mt={0.5}>
                 <Typography variant="caption" color="text.secondary">
@@ -333,6 +417,8 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
     if (type === 'incidencias' && isIncidencia(item)) {
       const isExpanded = expandedIncidenciaId === item.id;
+      const pedidoLabel = formatCompactId(item.pedidoId);
+      const lineas = Array.isArray(item.lineas) ? item.lineas : [];
 
       return (
         <Paper
@@ -354,7 +440,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             >
               <Box>
                 <Typography variant="subtitle1" fontWeight={700}>
-                  Pedido #{item.pedidoId.substring(0, 8)}
+                  Pedido #{pedidoLabel}
                 </Typography>
                 <Stack
                   direction="row"
@@ -375,7 +461,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                   <Chip
                     size="small"
                     variant="outlined"
-                    label={`${item.lineas.length} línea${item.lineas.length !== 1 ? 's' : ''}`}
+                    label={`${lineas.length} línea${lineas.length !== 1 ? 's' : ''}`}
                   />
                 </Stack>
               </Box>
@@ -423,7 +509,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                     Detalle de la incidencia
                   </Typography>
                   <Stack spacing={1}>
-                    {item.lineas.map((linea) => (
+                    {lineas.map((linea) => (
                       <Paper
                         key={linea.id}
                         variant="outlined"
@@ -559,7 +645,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
             <List disablePadding>
               {data.map((item, index) => (
-                <React.Fragment key={item.id || index}>
+                <React.Fragment key={'id' in item ? item.id : index}>
                   {renderItem(item)}
                   {type !== 'incidencias' && index < data.length - 1 && (
                     <Divider component="li" />

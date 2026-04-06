@@ -11,7 +11,7 @@ import { StringToNumberTransformer } from '../../../common/transformers/string-t
 
 export class EjecutarProduccionDto {
   @ApiProperty({ description: 'docs.UUID_DE_LA_RECETA_A_PRODUCIR' })
-  @IsUUID('7')
+  @IsUUID('all')
   recetaId!: string;
 
   @ApiProperty({ description: 'docs.CANTIDAD_TOTAL_A_PRODUCIR' })
@@ -31,6 +31,6 @@ export class EjecutarProduccionDto {
     description: 'docs.UUID_DE_LA_UBICACI_N_DE_ALMAC_N_DESTINO',
   })
   @IsOptional()
-  @IsUUID('7')
+  @IsUUID('all')
   ubicacionDestinoId?: string;
 }

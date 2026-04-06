@@ -1,101 +1,153 @@
-# 🚀 Guía de Despliegue en Producción - SmartEconomat
+# Despliegue en producción
 
-Esta guía garantiza un despliegue profesional y robusto del sistema SmartEconomat desde cero en cualquier servidor Linux o Windows.
+Esta es la guía canónica de despliegue para SmartEconomat. Describe el comportamiento real del stack actual y las implicaciones de `docker-compose.prod.yml`, `scripts/deploy.sh` y `frontend/smart-economat-frontend/nginx.conf`.
 
-## 📋 Requisitos del Sistema
-- **SO**: Linux (se recomienda Ubuntu 22.04+) o Windows (10/11/Server con WSL2).
-- **RAM**: Mínimo 2GB (se recomiendan 4GB).
-- **Espacio en Disco**: 20GB libres.
-- **Red**: Los puertos **80** (HTTP) y **443** (HTTPS) deben estar abiertos en el firewall/grupo de seguridad.
+## Alcance
 
----
+- Host recomendado: Linux con Docker Engine y Docker Compose disponibles.
+- Stack de producción: PostgreSQL, Redis, backend NestJS y frontend Nginx con TLS local.
+- Despliegue automatizado disponible mediante [scripts/deploy.sh](../scripts/deploy.sh).
+- Casos específicos: [PRODUCTION.md](PRODUCTION.md) para un escenario Linux/Azure con `nip.io`, y [Windows-Deployment.md](Windows-Deployment.md) para hosts Windows con contenedores Linux.
+- Gestión TLS detallada: [security/self-signed-tls.md](security/self-signed-tls.md).
 
-## ⚡ Inicio Rápido (Automatizado)
+## Arquitectura de runtime
 
-### 🐧 Para Usuarios de Linux
-1. Clona este repositorio o transfiere los archivos a tu servidor.
-2. Ejecuta el script de preparación universal:
-   ```bash
-   chmod +x setup-production.sh
-   ./setup-production.sh
-   ```
-3. El script se encargará de:
-   - Instalar Docker y Docker Compose si faltan.
-   - Configurar tu archivo `.env.prod`.
-   - Generar certificados SSL (Let's Encrypt).
-   - Lanzar todos los contenedores.
+| Servicio | Función | Exposición | Notas |
+| --- | --- | --- | --- |
+| `db` | PostgreSQL con imagen custom | Interna | Volumen persistente `database_prod` |
+| `redis` | Caché y soporte de runtime | Interna | AOF activado |
+| `backend` | API NestJS | Interna | No publica el puerto `3000` al host en el compose de producción |
+| `frontend` | Nginx + frontend compilado | `80`, `443` y `5173:80` | Proxy inverso solo para `/api/` |
 
-### 🪟 Para Usuarios de Windows
-1. Abre PowerShell como Administrador.
-2. Navega a la raíz del proyecto.
-3. Ejecuta el script de preparación:
-   ```powershell
-   Set-ExecutionPolicy Bypass -Scope Process -Force
-   .\setup-production.ps1
-   ```
+## Requisitos previos
 
----
+- Docker Engine operativo.
+- `docker compose` o `docker-compose` accesible en el host.
+- Puertos `80` y `443` abiertos en firewall o security group.
+- Dominio apuntando al host cuando se use `TLS_PROVIDER=letsencrypt`.
+- Permiso de escritura sobre `.env.prod`, `certs/`, `certs-data/`, `certs-webroot/` y `uploads/`.
+- `openssl` disponible en host (instalado automáticamente por `scripts/deploy.sh`).
 
-## 🔧 Configuración Manual
+## Variables mínimas para `.env.prod`
 
-### 1. Variables de Entorno (`.env.prod`)
-Variables esenciales a configurar antes del despliegue:
-- `DOMAIN`: Tu dominio público o IP (ej. `smarteconomat.com`).
-- `BACKEND_API_URL`: `https://api.tu-dominio.com`
-- `FRONTEND_API_URL`: `https://tu-dominio.com`.
-- `POSTGRES_PASSWORD`: Usa una contraseña fuerte.
-- `JWT_SECRET`: Secreto para los tokens de autenticación.
+| Variable | Uso |
+| --- | --- |
+| `DOMAIN` | Dominio base del despliegue |
+| `BACKEND_API_URL` | URL pública esperada para el backend |
+| `FRONTEND_API_URL` | URL pública del frontend |
+| `POSTGRES_USER` | Usuario de PostgreSQL |
+| `POSTGRES_PASSWORD` | Contraseña de PostgreSQL |
+| `POSTGRES_DB` | Base de datos principal |
+| `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE` | Configuración efectiva de TypeORM |
+| `JWT_SECRET` | Secreto de firma JWT |
+| `JWT_EXPIRATION` | Expiración del token |
+| `TLS_PROVIDER` | Proveedor TLS del script (`selfsigned` por defecto, `letsencrypt` opcional) |
+| `TLS_SELF_SIGNED_DAYS` | Días de validez del certificado autofirmado |
+| `LETSENCRYPT_EMAIL` | Email para registro en Let's Encrypt (solo si `TLS_PROVIDER=letsencrypt`) |
+| `LETSENCRYPT_DIRECTORY_URL` | Endpoint ACME de Let's Encrypt (`prod` o `staging`, solo para deploy script) |
 
-### 2. Certificados SSL
-El sistema espera encontrar los certificados en la carpeta `./certs`:
-- `fullchain.pem`
-- `privkey.pem`
+Variables opcionales frecuentes: `SENTRY_DSN`, `VITE_SENTRY_DSN`, `VITE_API_PROXY_TARGET`.
 
-Si usas nuestro script `./scripts/generate-certs.sh`, este utiliza **Let's Encrypt** y configura una **renovación automática mensual** mediante Cron.
+## Opción recomendada: despliegue automatizado
 
----
+El script [scripts/deploy.sh](../scripts/deploy.sh) realiza estas acciones:
 
-## 🛠️ Comandos Operativos
+1. Instala dependencias del host si faltan (`zip`, `unzip`, `curl`, `ufw`, Docker).
+2. Descomprime el paquete de aplicación y restaura `certs`, `certs-data`, `certs-webroot` y `uploads` si existían.
+3. Configura `.env.prod` con los valores exportados en el shell.
+4. Genera certificados TLS autofirmados (o usa Let's Encrypt si `TLS_PROVIDER=letsencrypt`).
+5. Arranca `docker-compose.prod.yml`.
+6. Ejecuta `node dist/seeders/seed.js reset` dentro del backend.
 
-### Reiniciar el sistema
+### Advertencia importante
+
+El paso 6 reinicia y repuebla la base de datos. Con el script en su estado actual, es apto para aprovisionamiento inicial o entornos donde un reset de datos sea aceptable; no es un flujo seguro para actualizar una producción con datos persistentes.
+
+## Opción manual
+
+### 1. Preparar entorno y directorios
+
 ```bash
-docker-compose -f docker-compose.prod.yml --env-file .env.prod restart
+mkdir -p certs certs-data certs-webroot uploads
+cp .env.example .env.prod
 ```
 
-### Actualizar la aplicación
+Edita `.env.prod` con valores reales de producción.
+
+### 2. Arrancar el stack
+
 ```bash
-# Descargar últimos cambios
-git pull origin main
-# Reconstruir y reiniciar
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+```
+
+Si el host usa `docker-compose` clásico:
+
+```bash
 docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 ```
 
-### Ver registros (logs)
+### 3. Certificados TLS
+
+Por defecto, `scripts/deploy.sh` genera un certificado autofirmado local para `DOMAIN` y `api.DOMAIN` y crea symlinks estables en `certs/fullchain.pem` y `certs/privkey.pem`.
+
+Si el despliegue es DigitalOcean y se desea certificado público, el mismo script puede operar en modo `TLS_PROVIDER=letsencrypt`.
+
+Si ya existen certificados en `certs/live/<domain>/`, Nginx usa los symlinks estables `certs/fullchain.pem` y `certs/privkey.pem`.
+
+Para el flujo completo de generación, renovación, rutas y requisitos, consulta [security/self-signed-tls.md](security/self-signed-tls.md).
+
+## Proxy, HTTPS y Swagger
+
+- Nginx redirige todo HTTP a HTTPS.
+- Nginx solo proxya `location /api/` hacia `http://backend:3000`.
+- El frontend está servido como SPA con `try_files $uri $uri/ /index.html`.
+
+### Consecuencia operativa
+
+La documentación Swagger del backend sigue estando en `/docs` dentro del propio proceso NestJS, pero el proxy de producción actual no publica esa ruta externamente. En otras palabras:
+
+- en local o con acceso directo al backend: `http://localhost:3000/docs`;
+- en producción estándar con el Nginx actual: Swagger no queda expuesto al exterior salvo que se añada una regla explícita de proxy para `/docs` o se publique el backend de otro modo.
+
+## Operación diaria
+
+### Ver logs
+
 ```bash
-# Todos los logs
-docker-compose -f docker-compose.prod.yml logs -f
-# Servicio específico (backend/frontend/db)
-docker logs -f smarteconomat-prod-backend-1
+docker compose -f docker-compose.prod.yml --env-file .env.prod logs -f
+docker compose -f docker-compose.prod.yml --env-file .env.prod logs -f backend
+docker compose -f docker-compose.prod.yml --env-file .env.prod logs -f frontend
 ```
 
-### Copias de Seguridad (Base de Datos)
-Para exportar la base de datos:
+### Reiniciar servicios
+
 ```bash
-docker exec smarteconomat-prod-db-1 pg_dump -U smarteconomat-prod-user smarteconomat_prod > backup_$(date +%F).sql
+docker compose -f docker-compose.prod.yml --env-file .env.prod restart
 ```
 
-### Detener el sistema
+### Reconstruir tras cambios
+
 ```bash
-docker-compose -f docker-compose.prod.yml down
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 ```
 
----
+### Detener el stack
 
-## ✅ Lista de Verificación Post-Despliegue
-1. Visita `https://tu-dominio.com` para comprobar el frontend.
-2. Comprueba `https://api.tu-dominio.com/api/v1/docs` para la documentación de la API.
-3. Verifica que la redirección de HTTP a HTTPS funciona.
-4. Revisa los logs para asegurar que no hay errores de conexión con la base de datos.
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod down
+```
 
----
-*Creado por Antigravity - Solución DevOps Senior*
+### Exportar base de datos
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T db \
+  pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > backup_$(date +%F).sql
+```
+
+## Verificación posterior al despliegue
+
+1. Comprobar que el frontend responde en `https://<DOMAIN>`.
+2. Verificar que las llamadas a `/api/` devuelven JSON y no `index.html`.
+3. Confirmar que existen `certs/fullchain.pem` y `certs/privkey.pem` apuntando a la línea activa.
+4. Revisar logs de `backend`, `db` y `frontend` tras el arranque inicial.
+5. Si se necesita Swagger en producción, planificar una regla adicional de proxy antes de anunciar esa URL como pública.

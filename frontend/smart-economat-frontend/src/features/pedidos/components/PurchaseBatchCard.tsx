@@ -12,8 +12,10 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import LayersIcon from '@mui/icons-material/Layers';
 import { Pedido, PurchaseBatch } from '../../../services/pedido.types';
-import StatusChip, { getStatusColor } from '../../../components/ui/StatusChip';
+import StatusChip from '../../../components/ui/StatusChip';
 import {
+  formatBatchNumber,
+  formatBatchReference,
   formatPedidoDate,
   formatCurrency,
   getPedidoCreatorName,
@@ -47,30 +49,12 @@ const PurchaseBatchCard: React.FC<PurchaseBatchCardProps> = ({
         position: 'relative',
         transition: 'all 0.2s ease-in-out',
         cursor: isSelectable ? 'pointer' : 'default',
-        borderLeft: (theme) => {
-          const resolvedStatus = getStatusColor(String(batch.estado));
-          const color =
-            resolvedStatus === 'default'
-              ? theme.palette.primary.main
-              : theme.palette[
-                  resolvedStatus as 'success' | 'error' | 'warning' | 'info'
-                ].main;
-          return `4px solid ${color}`;
-        },
+        borderLeft: (theme) => `4px solid ${theme.palette.primary.main}`,
         '&:hover': isSelectable
-          ? (theme) => {
-              const resolvedStatus = getStatusColor(String(batch.estado));
-              const color =
-                resolvedStatus === 'default'
-                  ? theme.palette.primary.main
-                  : theme.palette[
-                      resolvedStatus as 'success' | 'error' | 'warning' | 'info'
-                    ].main;
-              return {
-                borderColor: color,
-                boxShadow: `0 0 0 1px ${color}`,
-                transform: 'translateY(-2px)',
-              };
+          ? {
+              borderColor: 'primary.main',
+              boxShadow: (theme) => `0 0 0 1px ${theme.palette.primary.main}`,
+              transform: 'translateY(-2px)',
             }
           : {},
       }}
@@ -88,7 +72,7 @@ const PurchaseBatchCard: React.FC<PurchaseBatchCardProps> = ({
               color="text.secondary"
               sx={{ lineHeight: 1, fontSize: '0.65rem' }}
             >
-              Lote de Compra
+              Lote #{formatBatchNumber(batch)}
             </Typography>
             <Typography
               variant="caption"
@@ -96,7 +80,7 @@ const PurchaseBatchCard: React.FC<PurchaseBatchCardProps> = ({
               display="block"
               sx={{ mt: 0.5 }}
             >
-              ID: {batch.id.split('-')[0]}
+              Ref: {formatBatchReference(batch)}
             </Typography>
           </Box>
           <StatusChip status={batch.estado} size="small" />
@@ -109,7 +93,7 @@ const PurchaseBatchCard: React.FC<PurchaseBatchCardProps> = ({
               variant="h6"
               sx={{ fontWeight: 'bold', lineHeight: 1.2 }}
             >
-              {pedidosCount} Pedidos Consolidados
+              {pedidosCount} Pedidos Proveedor
             </Typography>
           </Box>
         </Box>

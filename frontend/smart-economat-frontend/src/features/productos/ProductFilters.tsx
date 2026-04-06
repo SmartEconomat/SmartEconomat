@@ -149,13 +149,22 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
       }
       /* ── Opciones del dropdown con icono ── */
       renderOption={(props, option) => {
-        // Separamos key del resto para evitar el warning de React
-        const { key, ...listItemProps } =
-          props as React.HTMLAttributes<HTMLLIElement> & { key: React.Key };
+        // Filtramos props internas de MUI que no deben llegar al DOM.
+        const listItemProps = {
+          ...props,
+        } as React.HTMLAttributes<HTMLLIElement> & {
+          keepMounted?: boolean;
+          key?: React.Key;
+        };
+        const optionKey = listItemProps.key ?? option.value;
+
+        delete listItemProps.keepMounted;
+        delete listItemProps.key;
+
         return (
           <Box
             component="li"
-            key={key}
+            key={optionKey}
             {...listItemProps}
             sx={{
               display: 'flex',

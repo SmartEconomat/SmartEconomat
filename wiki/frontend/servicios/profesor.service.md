@@ -1,66 +1,45 @@
-# Profesor Service
+# Servicio `profesorService`
 
-Capa de abstracción para la comunicación con los endpoints de gestión educativa destinados a usuarios con el rol `PROFESOR`.
+`profesorService` agrupa las operaciones del frontend para slots, alumnos y administración educativa.
 
-## Ubicación
-`frontend/smart-economat-frontend/src/services/profesor.service.ts`
+## Ubicación real
 
-## Métodos de Gestión de Clases
+- Servicio: `src/services/profesor.service.ts`
+- Transporte HTTP: `src/services/api.service.ts`
 
-### `getSlots()`
-Recupera la lista de aulas y clases creadas por el profesor.
-- **Endpoint**: `GET /profesores/slots`
-- **Retorno**: `AlumnoSlot[]`
+## Modelo de transporte
 
-### `createSlot(data)`
-Crea una nueva clase configurando aula y capacidad.
-- **Endpoint**: `POST /profesores/slots`
-- **Body**: `{ aula: string, numeroClase: number, capacidad: number }`
+- Todas las llamadas usan `baseFetch`
+- La autenticación se apoya en cookie de sesión
+- El servicio devuelve el envelope recibido junto con `status`
 
-### `deleteSlot(slotId)`
-Elimina una clase existente.
-- **Endpoint**: `DELETE /profesores/slots/:id`
+## Operaciones soportadas por el backend actual
 
-## Métodos de Gestión de Alumnos
+| Método del servicio | Endpoint backend | Uso |
+| --- | --- | --- |
+| `getSlots()` | `GET /profesores/slots` | Slots del profesor actual |
+| `createSlot()` | `POST /profesores/slots` | Alta de slot propio |
+| `updateSlot()` | `PATCH /profesores/slots/:id` | Edición de slot propio |
+| `deleteSlot()` | `DELETE /profesores/slots/:id` | Eliminación de slot propio |
+| `getAlumnos()` | `GET /profesores/alumnos` | Alumnos vinculados al profesor |
+| `activateAlumno()` | `PATCH /profesores/alumnos/:id/activate` | Activación de alumno |
+| `forcePasswordReset()` | `POST /profesores/alumnos/:id/force-reset` | Reset docente de credenciales |
+| `getAllSlots()` | `GET /profesores/all-slots` | Vista administrativa de slots |
+| `getAllProfesores()` | `GET /profesores/all-profesores` | Selector administrativo de profesorado |
+| `adminUpdateSlot()` | `PATCH /profesores/admin-slots/:id` | Reasignación o edición administrativa |
+| `adminDeleteSlot()` | `DELETE /profesores/admin-slots/:id` | Borrado administrativo |
+| `adminCreateSlot()` | `POST /profesores/admin-slots` | Alta administrativa de slot |
 
-### `getAlumnos()`
-Obtiene todos los alumnos vinculados a las clases del profesor.
-- **Endpoint**: `GET /profesores/alumnos`
-- **Retorno**: `Alumno[]`
+## Inconsistencias detectadas en el servicio
 
-### `activateAlumno(alumnoId)`
-Activa un alumno que está en estado `INACTIVE`.
-- **Endpoint**: `PATCH /profesores/alumnos/:id/activate`
+El archivo de frontend todavía expone dos métodos sin respaldo en el controlador backend actual:
 
-### `forcePasswordReset(alumnoId)`
-Resetea la contraseña de un alumno y genera una clave provisional.
-- **Endpoint**: `POST /profesores/alumnos/:id/force-reset`
-- **Retorno**: `{ message: string, provisionalPassword: string }`
+- `removeStudent()` apunta a `DELETE /profesores/alumnos/:id`
+- `updateStudentPermissions()` apunta a `PATCH /profesores/alumnos/:id/permissions`
 
-### `removeStudent(alumnoId)`
-Desvincula a un alumno del sistema del profesor.
-- **Endpoint**: `DELETE /profesores/alumnos/:id`
+Esas rutas no aparecen en el `ProfesorController` actual, así que no deben documentarse ni usarse como contrato soportado hasta que exista soporte backend real.
 
-## Interfaces de Datos
+## Relacionado
 
-### `AlumnoSlot`
-```typescript
-interface AlumnoSlot {
-  id: string;
-  aula: string;
-  numeroClase: number;
-  capacidad: number;
-  codigoSlot?: string; // Código de invitación generado por el backend
-}
-```
-
-### `Alumno`
-```typescript
-interface Alumno {
-  id: string;
-  username: string;
-  status: string;
-  aula: string;
-  numeroClase: number;
-}
-```
+- [Auth del sistema educativo](../../security/auth-sistema-educativo.md)
+- [Referencia de endpoints](../../reference/endpoints.md)

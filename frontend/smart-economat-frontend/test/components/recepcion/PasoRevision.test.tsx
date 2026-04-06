@@ -26,7 +26,6 @@ describe('PasoRevision', () => {
             pedidoProductoId: 'pp-1',
             nombreProducto: 'Producto Test',
             cantidadPedida: 10,
-            cantidadYaRecibida: 0,
             cantidadRecibida: 5,
             cantidadAlbaran: 5,
             observaciones: '',

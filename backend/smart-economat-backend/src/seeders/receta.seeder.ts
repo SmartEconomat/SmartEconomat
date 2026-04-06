@@ -1,21 +1,63 @@
 import { SeedContext } from './seed-context';
-import { faker } from '@faker-js/faker';
 import { Receta } from '../modules/receta/receta.entity/receta.entity';
 import { RecetaIngrediente } from '../modules/receta/receta-ingrediente.entity/receta-ingrediente.entity';
 import { Producto } from '../modules/producto/producto.entity/producto.entity';
 import {
   UnidadIngrediente,
-  DificultadReceta,
+  getTiempoRecetaMinutos,
 } from '../modules/receta/enums/receta.enums';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
+import { deterministicFloat } from './deterministic.seed-data';
+import {
+  type SeedRecipeIngredientSlot,
+  pickSeedRecipeTemplate,
+} from './seed-recipes.catalog';
+import type { DataSource, Repository } from 'typeorm';
+
+function mapUnidadProducto(unidad: Producto['unidad']): UnidadIngrediente {
+  switch (String(unidad).toUpperCase()) {
+    case 'G':
+      return UnidadIngrediente.GRAMO;
+    case 'KG':
+      return UnidadIngrediente.KILOGRAMO;
+    case 'L':
+      return UnidadIngrediente.LITRO;
+    case 'ML':
+      return UnidadIngrediente.MILILITRO;
+    default:
+      return UnidadIngrediente.PIEZA;
+  }
+}
+
+function buildCantidadIngrediente(
+  slot: SeedRecipeIngredientSlot,
+  unidad: UnidadIngrediente,
+  seedIndex: number
+): number {
+  const variacion = deterministicFloat(
+    0.9,
+    1.1,
+    3,
+    seedIndex,
+    'receta-cantidad'
+  );
+  const base = slot.cantidadBase * variacion;
+
+  if (unidad === UnidadIngrediente.PIEZA) {
+    return Math.max(1, Math.round(base));
+  }
+
+  return Number(base.toFixed(3));
+}
 
 const NUM_RECETAS = process.env.NODE_ENV === 'test' ? 2 : 10;
 
 export const runSeeder = async (context: SeedContext) => {
-  const dataSource = context.getDataSource();
-  const recetaRepo = dataSource.getRepository(Receta);
-  const ingredienteRepo = dataSource.getRepository(RecetaIngrediente);
-  const productoRepo = dataSource.getRepository(Producto);
+  const dataSource = context.getDataSource() as DataSource;
+  const recetaRepo: Repository<Receta> = dataSource.getRepository(Receta);
+  const ingredienteRepo: Repository<RecetaIngrediente> =
+    dataSource.getRepository(RecetaIngrediente);
+  const productoRepo: Repository<Producto> = dataSource.getRepository(Producto);
 
   const productos = await productoRepo.find();
   if (productos.length === 0) {
@@ -23,75 +65,54 @@ export const runSeeder = async (context: SeedContext) => {
     return;
   }
 
+  const productosOrdenados = [...productos].sort((a, b) =>
+    a.id.localeCompare(b.id)
+  );
+
   for (let i = 0; i < NUM_RECETAS; i++) {
-    const raciones = faker.number.int({ min: 1, max: 8 });
-    const tamanioRacion = faker.number.float({
-      min: 0.1,
-      max: 0.5,
-      multipleOf: 0.05,
-    });
+    const template = pickSeedRecipeTemplate(i);
+    const raciones = template.raciones;
+    const tamanioRacion = template.tamanioRacion;
     const rendimiento = Number((raciones * tamanioRacion).toFixed(3));
 
     const receta = recetaRepo.create({
-      nombre: faker.commerce.productName(),
-      instrucciones: faker.lorem.paragraphs(3),
-      tiempoEstimadoMinutos: faker.number.int({ min: 15, max: 150 }),
-      dificultad: faker.helpers.arrayElement(Object.values(DificultadReceta)),
+      nombre: template.nombre,
+      instrucciones: template.instrucciones.join(' '),
+      tiempoEstimadoMinutos: getTiempoRecetaMinutos(template.tiempo),
+      dificultad: template.dificultad,
       rendimiento,
-      unidadResultado: faker.helpers.arrayElement([
-        UnidadIngrediente.KILOGRAMO,
-        UnidadIngrediente.LITRO,
-      ]),
+      unidadResultado: template.unidadResultado,
       raciones,
       tamanioRacion,
-      diasCaducidad: faker.number.int({ min: 2, max: 7 }),
-      costeUnitarioEstimado: faker.number.float({
-        min: 1.5,
-        max: 8.5,
-        multipleOf: 0.1,
-      }),
+      diasCaducidad: template.diasCaducidad,
+      costeUnitarioEstimado: deterministicFloat(1.5, 8.5, 1, i, 'receta-coste'),
     });
 
     const recetaGuardada = await recetaRepo.save(receta);
 
-    const numIngredientes = faker.number.int({ min: 2, max: 5 });
-    const productosAleatorios = faker.helpers.arrayElements(
-      productos,
-      numIngredientes
-    );
-
-    const mapUnidad = (u: any): UnidadIngrediente => {
-      const val = String(u).toUpperCase();
-      if (val === 'G') return UnidadIngrediente.GRAMO;
-      if (val === 'KG') return UnidadIngrediente.KILOGRAMO;
-      if (val === 'L') return UnidadIngrediente.LITRO;
-      if (val === 'ML') return UnidadIngrediente.MILILITRO;
-      return UnidadIngrediente.KILOGRAMO;
-    };
-
-    const ingredientes: RecetaIngrediente[] = productosAleatorios.map(
-      (producto) => {
-        const unidad = mapUnidad(producto.unidad);
-        let cantidad = 0;
-        if (
-          unidad === UnidadIngrediente.GRAMO ||
-          unidad === UnidadIngrediente.MILILITRO
-        ) {
-          cantidad = faker.number.float({ min: 10, max: 100, multipleOf: 1 });
-        } else {
-          cantidad = faker.number.float({
-            min: 0.05,
-            max: 0.5,
-            multipleOf: 0.01,
-          });
-        }
+    const ingredientes: RecetaIngrediente[] = template.ingredientes.map(
+      (slot, index) => {
+        const producto =
+          productosOrdenados[
+            (i * template.ingredientes.length + index) %
+              productosOrdenados.length
+          ];
+        const unidad = mapUnidadProducto(producto.unidad);
+        const unidadSeleccionada = slot.unidades.includes(unidad)
+          ? unidad
+          : slot.unidades[0] || unidad;
+        const cantidad = buildCantidadIngrediente(
+          slot,
+          unidadSeleccionada,
+          i + index + 1
+        );
 
         return ingredienteRepo.create({
           receta: recetaGuardada,
           producto,
           cantidad,
-          unidad,
-          mermaAplicada: faker.number.int({ min: 0, max: 15 }),
+          unidad: unidadSeleccionada,
+          mermaAplicada: slot.merma,
         });
       }
     );

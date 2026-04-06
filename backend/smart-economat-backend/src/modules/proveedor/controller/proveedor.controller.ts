@@ -21,24 +21,23 @@ import { ProveedorService } from '../service/proveedor.service';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/role.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
-import { rolUsuario } from '../../usuario/enums/usuario.enums';
+import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('proveedor')
 export class ProveedorController {
   constructor(private readonly proveedorService: ProveedorService) {}
 
   @Post()
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.proveedores.crear)
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateProveedorDto): Promise<Proveedor> {
     return this.proveedorService.create(dto);
   }
 
   @Get()
-  @RequirePermissions('proveedores:listar')
+  @RequirePermissions(PERMISSIONS.proveedores.listar)
   findAll(
     @SortableFields([
       'nombre',
@@ -58,13 +57,13 @@ export class ProveedorController {
   }
 
   @Get('con-pedidos')
-  @RequirePermissions('proveedores:listar')
+  @RequirePermissions(PERMISSIONS.proveedores.listar)
   findWithOrders(): Promise<Proveedor[]> {
     return this.proveedorService.findWithOrders();
   }
 
   @Get(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.proveedores.listar)
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() req: { user?: { rol?: string } }
@@ -74,7 +73,7 @@ export class ProveedorController {
   }
 
   @Patch(':id')
-  @Roles(rolUsuario.ADMINISTRADOR, rolUsuario.PROFESOR)
+  @RequirePermissions(PERMISSIONS.proveedores.editar)
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateProveedorDto
@@ -83,7 +82,7 @@ export class ProveedorController {
   }
 
   @Delete(':id')
-  @Roles(rolUsuario.ADMINISTRADOR)
+  @RequirePermissions(PERMISSIONS.proveedores.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.proveedorService.remove(id);

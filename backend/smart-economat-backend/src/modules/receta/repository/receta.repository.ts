@@ -120,10 +120,7 @@ export class RecetaRepository {
     query: PaginationQueryDto,
     userRole?: string
   ): Promise<PaginatedResponseDto<Receta>> {
-    const isAdmin =
-      userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
-      userRole?.toUpperCase() === 'SUPER_ADMIN';
+    void userRole;
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 50);
     let sortBy = query.sortBy ?? 'nombre';
@@ -146,7 +143,7 @@ export class RecetaRepository {
       order: { [sortBy]: order },
       skip: (page - 1) * limit,
       take: limit,
-      withDeleted: isAdmin,
+      withDeleted: false,
     });
 
     return {
@@ -168,7 +165,6 @@ export class RecetaRepository {
   async findById(id: string, userRole?: string): Promise<Receta | null> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
       userRole?.toUpperCase() === 'SUPER_ADMIN';
 
     const receta = await this.recetaRepo.findOne({
@@ -468,8 +464,8 @@ export class RecetaRepository {
     const pp = manager.create(ProductoProveedor, {
       productoId,
       proveedorId: internalProvider.id,
-      precioUnitario: 0,
       marca: 'Interna',
+      precioUnitario: 0.01,
     });
     await manager.save(ProductoProveedor, pp);
   }

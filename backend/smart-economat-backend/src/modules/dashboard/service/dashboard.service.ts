@@ -10,9 +10,17 @@ import { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
 import { Incidencia } from '../../incidencia/incidencia.entity/incidencia.entity';
 import { DashboardStatsDto } from '../dto/dashboard-stats.dto';
 
+const DASHBOARD_PENDING_ORDER_STATES = [
+  EstadoPedido.PENDIENTE_DE_APROBACION,
+  EstadoPedido.POR_RECEPCIONAR,
+  EstadoPedido.PARCIAL,
+  EstadoPedido.INCIDENCIA,
+] as const;
+
 @Injectable()
 export class DashboardService {
   private readonly logger = new Logger(DashboardService.name);
+  private static readonly MOVIMIENTOS_RECIENTES_LIMITE = 7;
 
   constructor(
     @InjectRepository(Inventario)
@@ -99,11 +107,7 @@ export class DashboardService {
 
     const pedidosPendientes = await this.pedidoRepository.count({
       where: {
-        estado: In([
-          EstadoPedido.PENDIENTE,
-          EstadoPedido.EN_PROCESO,
-          EstadoPedido.INCIDENCIA,
-        ]),
+        estado: In([...DASHBOARD_PENDING_ORDER_STATES]),
       },
     });
 
@@ -115,7 +119,7 @@ export class DashboardService {
 
     const completadosHoy = await this.pedidoRepository.count({
       where: {
-        estado: EstadoPedido.RECIBIDO,
+        estado: EstadoPedido.RECEPCIONADO,
         fechaEntrega: Between(startOfDay, endOfDay),
       },
     });
@@ -124,11 +128,7 @@ export class DashboardService {
       .createQueryBuilder('pedido')
       .select('SUM(pedido.coste_total)', 'costeTotal')
       .where('pedido.estado IN (:...estados)', {
-        estados: [
-          EstadoPedido.PENDIENTE,
-          EstadoPedido.EN_PROCESO,
-          EstadoPedido.INCIDENCIA,
-        ],
+        estados: DASHBOARD_PENDING_ORDER_STATES,
       })
       .getRawOne();
 
@@ -147,7 +147,7 @@ export class DashboardService {
     const totalProveedores = await this.proveedorRepository.count();
 
     const movimientosRecientes = await this.movimientoRepository.find({
-      take: 5,
+      take: DashboardService.MOVIMIENTOS_RECIENTES_LIMITE,
       order: {
         createdAt: 'DESC',
       },

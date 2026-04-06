@@ -1,12 +1,8 @@
 import { ProductoNuevoDto } from './producto.types';
 
 export enum EstadoRecepcion {
-  PENDIENTE = 'PENDIENTE',
-  EN_PROCESO = 'EN_PROCESO',
-  PARCIAL = 'PARCIAL',
   COMPLETADA = 'COMPLETADA',
   CON_INCIDENCIAS = 'CON_INCIDENCIAS',
-  CANCELADA = 'CANCELADA',
 }
 
 export enum EstadoVisualProducto {
@@ -66,7 +62,6 @@ export interface LineaDraft {
   nombreProducto: string;
   unidad: string;
   cantidadPedida: number; // 0 si no venía en ningún pedido
-  cantidadYaRecibida: number; // Nuevo: lo que ya se recibió en anteriores entregas
 
   // ── Producto nuevo (pendiente de crear en BD) ──────
   productoNuevo?: {
@@ -89,6 +84,7 @@ export interface LineaDraft {
   estadoVisual: EstadoVisualProducto;
   fechaCaducidad?: string; // Formato YYYY-MM-DD
   observaciones: string;
+  intervenida?: boolean;
 
   // ── Estado visual ──────────────────────────────────
   estado:
@@ -113,7 +109,6 @@ export interface PedidoDraft {
   lineas: LineaDraft[];
   nAlbaran?: string;
   observaciones?: string;
-  estadoPedido?: string;
 }
 
 export interface RecepcionDraft {

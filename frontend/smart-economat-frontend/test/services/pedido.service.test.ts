@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   cancelPedido,
   createPedido,
+  createPedidoUsuarioFromMissingStock,
+  createPedidoUsuarioFromRecetas,
   updatePedido,
 } from '../../src/services/pedido.service';
 
@@ -96,6 +98,62 @@ describe('pedido.service', () => {
         method: 'PATCH',
         body: JSON.stringify({
           motivoCancelacion: 'Proveedor sin stock',
+        }),
+      })
+    );
+  });
+
+  it('createPedidoUsuarioFromMissingStock usa el endpoint canónico de pedido-usuarios', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 201,
+      json: async () => ({
+        success: true,
+        message: 'ok',
+        data: { id: 'pu-1', numeroGlobal: '42' },
+      }),
+    });
+
+    await createPedidoUsuarioFromMissingStock({
+      observaciones: 'Faltantes',
+      items: [{ recetaId: 'receta-1', cantidad: 2 }],
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/v1/pedido-usuarios/from-missing-stock',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          observaciones: 'Faltantes',
+          items: [{ recetaId: 'receta-1', cantidad: 2 }],
+        }),
+      })
+    );
+  });
+
+  it('createPedidoUsuarioFromRecetas usa el endpoint canónico de pedido-usuarios', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 201,
+      json: async () => ({
+        success: true,
+        message: 'ok',
+        data: { id: 'pu-2', numeroGlobal: '43' },
+      }),
+    });
+
+    await createPedidoUsuarioFromRecetas({
+      recetaIds: ['receta-1', 'receta-2'],
+      observaciones: 'Pedido desde recetas',
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/v1/pedido-usuarios/from-recipes',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          recetaIds: ['receta-1', 'receta-2'],
+          observaciones: 'Pedido desde recetas',
         }),
       })
     );

@@ -8,7 +8,7 @@ export const PERMISSIONS_MODE_KEY = 'permissions_mode';
  * Se utiliza applyDecorators para asegurar que múltiples metadatos se registren
  * correctamente y sean detectables por Reflector.getAllAndOverride.
  *
- * @param permissions Lista de códigos de permiso (ej. 'productos:crear')
+ * @param permissions Lista de códigos de permiso (ej. PERMISSIONS.productos.crear)
  */
 export const RequirePermissions = (...permissions: string[]) =>
   applyDecorators(

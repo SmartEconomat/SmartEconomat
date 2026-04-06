@@ -28,12 +28,14 @@ import StatusChip from '../components/ui/StatusChip';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import {
   Albaran,
+  AlbaranRecepcion,
   AlbaranQueryParams,
   CreateAlbaranDto,
   UpdateAlbaranDto,
 } from '../services/albaran.types';
 import {
   fetchAlbaranes,
+  fetchAlbaranById,
   createAlbaran,
   updateAlbaran,
   removeAlbaran,
@@ -41,6 +43,7 @@ import {
 } from '../services/albaran.service';
 import { useToast } from '../store/toast.hooks';
 import { usePermission } from '../store/auth.hooks';
+import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 import AlbaranFilters, {
   AlbaranFiltersState,
 } from '../features/albaranes/AlbaranFilters';
@@ -83,6 +86,16 @@ const ALBARAN_FORM_FIELDS: DynamicField[] = [
   },
 ];
 
+interface ProductoAlbaranDetalle {
+  key: string;
+  nombre: string;
+  unidad: string;
+  proveedor: string;
+  cantidadRecibida: string;
+  estadoProducto: string;
+  recepcionId: string;
+}
+
 // ─── Componente principal ────────────────────────────────────────────────────
 
 const AlbaranPage: React.FC = () => {
@@ -118,9 +131,10 @@ const AlbaranPage: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
 
   // Permisos
-  const canCreate = usePermission('albaranes:crear');
-  const canEdit = usePermission('albaranes:editar');
-  const canDelete = usePermission('albaranes:eliminar');
+  const canView = usePermission(PERMISSIONS.albaranes.ver);
+  const canCreate = usePermission(PERMISSIONS.albaranes.crear);
+  const canEdit = usePermission(PERMISSIONS.albaranes.editar);
+  const canDelete = usePermission(PERMISSIONS.albaranes.eliminar);
 
   // ─── Carga de datos ──────────────────────────────────────────────────────
 
@@ -184,6 +198,25 @@ const AlbaranPage: React.FC = () => {
   const handleOpenEdit = (albaran: Albaran) => {
     setItemToEdit(albaran);
     setIsFormOpen(true);
+  };
+
+  const handleOpenView = async (albaran: Albaran) => {
+    if (!canView) {
+      setItemToView(albaran);
+      return;
+    }
+
+    try {
+      const detalle = await fetchAlbaranById(albaran.id);
+      setItemToView(detalle);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'No se pudo cargar el detalle completo del albarán';
+      toast.error(`${message}. Se mostrará la información disponible.`);
+      setItemToView(albaran);
+    }
   };
 
   const handleFormSubmit = async (formData: Record<string, unknown>) => {
@@ -288,6 +321,47 @@ const AlbaranPage: React.FC = () => {
     };
   }, [itemToEdit]);
 
+  const productosVinculados = useMemo<ProductoAlbaranDetalle[]>(() => {
+    if (!itemToView?.albaranPedidoRecepcion?.length) {
+      return [];
+    }
+
+    const recepcionesPorId = new Map<string, AlbaranRecepcion>();
+
+    for (const apr of itemToView.albaranPedidoRecepcion) {
+      const recepcion = apr.recepcionPedido?.recepcion;
+      if (recepcion?.id && !recepcionesPorId.has(recepcion.id)) {
+        recepcionesPorId.set(recepcion.id, recepcion);
+      }
+    }
+
+    const lineas: ProductoAlbaranDetalle[] = [];
+
+    recepcionesPorId.forEach((recepcion) => {
+      for (const recepcionProducto of recepcion.recepcionProductos ?? []) {
+        const producto =
+          recepcionProducto.pedidoProducto?.productoProveedor?.producto;
+        const proveedor =
+          recepcionProducto.pedidoProducto?.productoProveedor?.proveedor;
+
+        lineas.push({
+          key: recepcionProducto.id,
+          nombre: producto?.nombre || 'Producto sin nombre',
+          unidad: producto?.unidad || '—',
+          proveedor: proveedor?.nombre || '—',
+          cantidadRecibida:
+            recepcionProducto.cantidadRecibida != null
+              ? String(recepcionProducto.cantidadRecibida)
+              : '—',
+          estadoProducto: recepcionProducto.estadoProducto || '—',
+          recepcionId: recepcion.id,
+        });
+      }
+    });
+
+    return lineas;
+  }, [itemToView]);
+
   // ─── Columnas de la tabla ────────────────────────────────────────────────
 
   const columns: Column<Albaran>[] = useMemo(
@@ -381,7 +455,7 @@ const AlbaranPage: React.FC = () => {
             color="primary"
             onClick={(e) => {
               e.currentTarget.blur();
-              setItemToView(row);
+              void handleOpenView(row);
             }}
             size="small"
           >
@@ -507,8 +581,25 @@ const AlbaranPage: React.FC = () => {
             }))
           : [{ label: 'Sin recepciones vinculadas', value: '—' }],
       },
+      {
+        title: `Productos Vinculados (${productosVinculados.length})`,
+        fields: productosVinculados.length
+          ? productosVinculados.map((linea, idx) => ({
+              label: `Producto ${idx + 1}`,
+              value: `${linea.nombre} · Cantidad recibida: ${linea.cantidadRecibida} ${linea.unidad} · Proveedor: ${linea.proveedor} · Estado: ${linea.estadoProducto} · Recepción: ${linea.recepcionId}`,
+              fullWidth: true,
+            }))
+          : [
+              {
+                label: 'Sin productos vinculados',
+                value:
+                  'No hay líneas de producto asociadas a las recepciones de este albarán.',
+                fullWidth: true,
+              },
+            ],
+      },
     ];
-  }, [itemToView]);
+  }, [itemToView, productosVinculados]);
 
   // ─── Render ──────────────────────────────────────────────────────────────
 

@@ -5,15 +5,16 @@ import { TrimStringTransformer } from '../../../common/transformers/trim-string.
 import { TipoResolucion } from '../enums/incidencia.enums';
 
 export class CreateIncidenciaDto {
-  @IsUUID('7', {
+  @IsUUID('all', {
     message: i18nValidationMessage(
       'validation.EL_ID_DE_LA_RECEPCI_N_DEBE_SER_UN_UUID_V'
     ),
   })
   recepcionId: string;
 
-  @IsUUID('7')
-  pedidoId!: string;
+  @IsOptional()
+  @IsUUID('all')
+  pedidoId?: string;
 
   @IsOptional()
   @Transform((params) => TrimStringTransformer.transform(params))
@@ -22,22 +23,18 @@ export class CreateIncidenciaDto {
 }
 
 export class CreateIncidenciaResuelaDto {
-  @IsUUID('7', {
+  @IsUUID('all', {
     message: i18nValidationMessage(
       'validation.EL_ID_DE_LA_INCIDENCIA_DEBE_SER_UN_UUID'
     ),
   })
   idIncidencia!: string;
 
-  @IsUUID('7', {
-    message: i18nValidationMessage(
-      'validation.EL_ID_DEL_USUARIO_DEBE_SER_UN_UUID_V_LID'
-    ),
-  })
+  @IsUUID('all')
   idUsuarioResolutor!: string;
 
   @IsEnum(TipoResolucion)
-  tipoResolucion: TipoResolucion;
+  tipoResolucion!: TipoResolucion;
 
   @IsOptional()
   @Transform((params) => TrimStringTransformer.transform(params))

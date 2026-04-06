@@ -11,7 +11,7 @@ import { Type, Transform } from 'class-transformer';
 import { StringToDateTransformer } from '../../../common/transformers/string-to-date.transformer';
 
 export class CreateInventarioItemDto {
-  @IsUUID('7', {
+  @IsUUID('all', {
     message: i18nValidationMessage(
       'validation.EL_ID_DEL_PRODUCTO_PROVEEDOR_DEBE_SER_UN'
     ),
@@ -72,7 +72,7 @@ export class CreateInventarioItemDto {
   })
   cantidadMaxima?: number;
 
-  @IsUUID('7', {
+  @IsUUID('all', {
     message: i18nValidationMessage(
       'validation.EL_ID_DE_LA_UBICACI_N_DEBE_SER_UN_UUID_V'
     ),

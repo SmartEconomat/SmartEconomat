@@ -27,10 +27,11 @@ import ChangePasswordForm from '../features/profile/components/ChangePasswordFor
 
 import { useAuth } from '../store/auth.hooks';
 import { useToast } from '../store/toast.hooks';
-import { authService as authSvc } from '../services/authService';
+import { authService } from '../services/auth.service';
 import { getRoleColor } from '../utils/theme/roleColors';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
+import { SYSTEM_ROLES } from '../sherlock-auth/system-roles.constants';
 
 /**
  * Página de Perfil - Unificada como una Ficha de Usuario.
@@ -40,7 +41,7 @@ const Perfil: React.FC = () => {
   const toast = useToast();
 
   const userRole = user?.rol?.toUpperCase() || '';
-  const isAlumno = userRole === 'ALUMNO';
+  const isAlumno = userRole === SYSTEM_ROLES.ALUMNO;
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -130,7 +131,7 @@ const Perfil: React.FC = () => {
 
     try {
       if (profileData.username !== (user?.username || user?.name)) {
-        await authSvc.updateProfile({ username: profileData.username });
+        await authService.updateProfile({ username: profileData.username });
       }
 
       if (passwordData.newPassword) {
@@ -138,10 +139,10 @@ const Perfil: React.FC = () => {
           throw new Error('Las contraseñas no coinciden.');
         }
 
-        await authSvc.changePassword(
-          passwordData.currentPassword,
-          passwordData.newPassword
-        );
+        await authService.changePassword({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        });
 
         setPasswordData({
           currentPassword: '',

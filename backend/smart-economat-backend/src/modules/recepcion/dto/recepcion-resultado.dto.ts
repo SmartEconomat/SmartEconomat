@@ -37,13 +37,13 @@ class PedidoActualizadoDto {
 
   @ApiProperty({
     description: 'docs.ESTADO_ANTERIOR_ANTES_DE_LA_RECEPCI_N',
-    example: 'en_proceso',
+    example: 'por_recepcionar',
   })
   estadoAnterior: string;
 
   @ApiProperty({
     description: 'docs.ESTADO_RESULTANTE_TRAS_LA_RECEPCI_N',
-    example: 'recibido',
+    example: 'recepcionado',
   })
   estadoNuevo: string;
 }

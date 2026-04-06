@@ -37,6 +37,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 @ApiTags('Albaranes')
 @ApiBearerAuth()
@@ -46,7 +47,7 @@ export class AlbaranController {
   constructor(private readonly albaranService: AlbaranService) {}
 
   @Post()
-  @RequirePermissions('albaranes:crear')
+  @RequirePermissions(PERMISSIONS.albaranes.crear)
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateAlbaranDto): Promise<Albaran> {
     return this.albaranService.create(dto);
@@ -63,7 +64,7 @@ export class AlbaranController {
    * Tamaño máximo: configurado en MAX_FILE_SIZE_MB (por defecto 10 MB).
    */
   @Post('upload-documento')
-  @RequirePermissions('albaranes:crear')
+  @RequirePermissions(PERMISSIONS.albaranes.crear)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Subir documento de albarán',
@@ -129,10 +130,10 @@ export class AlbaranController {
 
   /**
    * Obtiene el archivo físico del albarán.
-   * Requiere permiso 'albaranes:ver' en lugar del general 'archivos:ver'.
+   * Requiere permiso PERMISSIONS.albaranes.ver en lugar del general PERMISSIONS.archivos.ver.
    */
   @Get('documento/:filename')
-  @RequirePermissions('albaranes:ver')
+  @RequirePermissions(PERMISSIONS.albaranes.ver)
   @ApiOperation({
     summary: 'Obtener documento de albarán',
     description: 'Sirve el archivo físico del albarán (imagen o PDF).',
@@ -146,7 +147,7 @@ export class AlbaranController {
   }
 
   @Get()
-  @RequirePermissions('albaranes:listar')
+  @RequirePermissions(PERMISSIONS.albaranes.listar)
   findAll(
     @SortableFields([
       'nAlbaran',
@@ -163,17 +164,17 @@ export class AlbaranController {
   }
 
   @Get(':id')
-  @RequirePermissions('albaranes:ver')
+  @RequirePermissions(PERMISSIONS.albaranes.ver)
   findOne(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Req() req: { user?: { rol?: string } }
   ): Promise<Albaran> {
     const userRole = req.user?.rol;
-    return this.albaranService.findOne(id, userRole);
+    return this.albaranService.findOne(id, userRole, true);
   }
 
   @Patch(':id')
-  @RequirePermissions('albaranes:editar')
+  @RequirePermissions(PERMISSIONS.albaranes.editar)
   update(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: UpdateAlbaranDto
@@ -182,7 +183,7 @@ export class AlbaranController {
   }
 
   @Delete(':id')
-  @RequirePermissions('albaranes:eliminar')
+  @RequirePermissions(PERMISSIONS.albaranes.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.albaranService.remove(id);

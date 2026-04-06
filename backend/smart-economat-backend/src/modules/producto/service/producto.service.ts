@@ -25,6 +25,7 @@ import { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
 import { ArchivoService } from '../../archivo/service/archivo.service';
 import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.entity';
 import { Inventario } from '../../inventario/inventario.entity/inventario.entity';
+import { RecetaIngrediente } from '../../receta/receta-ingrediente.entity/receta-ingrediente.entity';
 
 @Injectable()
 export class ProductoService {
@@ -110,7 +111,6 @@ export class ProductoService {
   ): Promise<PaginatedResponseDto<Producto>> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
       userRole?.toUpperCase() === 'SUPER_ADMIN';
     const page = query.page ?? 1;
     const {
@@ -256,8 +256,9 @@ export class ProductoService {
           await this.validateProveedorPayload(manager, proveedores);
         }
 
-        manager.merge(Producto, producto, rest);
-        await manager.save(Producto, producto);
+        await manager.update(Producto, id, rest);
+
+        Object.assign(producto, rest);
 
         if (normalizedAlergenos !== undefined) {
           await this.replaceAlergenosWithManager(
@@ -293,6 +294,17 @@ export class ProductoService {
 
   async remove(id: string, userId: string): Promise<void> {
     const producto = await this.findOne(id);
+
+    const recipeUsageCount = await this.dataSource
+      .getRepository(RecetaIngrediente)
+      .count({ where: { productoId: id } });
+
+    if (recipeUsageCount > 0) {
+      throw new ConflictException(
+        I18nHelper.getError('PRODUCT_IN_USE_BY_RECIPE')
+      );
+    }
+
     await this.productoRepository.update(id, { deletedBy: userId });
     const result = await this.productoRepository.softDelete(id);
     if (result.affected === 0) {
@@ -359,8 +371,14 @@ export class ProductoService {
           divisorPP
         : nuevoPrecio;
 
-    pp.pmp = Number(nuevoPmpPP.toFixed(4));
-    await em.save(ProductoProveedor, pp);
+    const finalPmp = Number(nuevoPmpPP.toFixed(4));
+
+    await em.update(
+      ProductoProveedor,
+      { id: productoProveedorId },
+      { pmp: finalPmp }
+    );
+    pp.pmp = finalPmp;
 
     if (pp.producto) {
       await this.recalcularPmpProducto(pp.producto.id, em);
@@ -407,21 +425,13 @@ export class ProductoService {
       sumaPonderada += stockPP * pmpPP;
     }
 
+    const pmpActualProducto = Number(producto.pmp) || 0;
     producto.pmp =
       stockTotal > 0
         ? Number((sumaPonderada / stockTotal).toFixed(4))
-        : producto.proveedores.length > 0
-          ? Number(
-              (
-                producto.proveedores.reduce(
-                  (sum, p) => sum + Number(p.pmp),
-                  0
-                ) / producto.proveedores.length
-              ).toFixed(4)
-            )
-          : 0;
+        : pmpActualProducto;
 
-    await em.save(Producto, producto);
+    await em.update(Producto, { id: productoId }, { pmp: producto.pmp });
   }
 
   async getHistorialPrecios(
@@ -462,6 +472,49 @@ export class ProductoService {
     return uniqueAlergenos;
   }
 
+  private validatePrecioMayorQueCero(
+    precioUnitario: number,
+    proveedorId: string
+  ): void {
+    if (precioUnitario <= 0) {
+      throw new BadRequestException(
+        `El precio unitario del proveedor ${proveedorId} debe ser mayor que 0`
+      );
+    }
+  }
+
+  private async registrarPrecioYResolverPrecioActual(
+    manager: EntityManager,
+    productoProveedorId: string,
+    precio: number
+  ): Promise<number> {
+    if (precio <= 0) {
+      throw new BadRequestException(
+        I18nHelper.getError('PRICE_MUST_BE_GREATER_THAN_ZERO')
+      );
+    }
+
+    const historial = manager.create(HistorialPrecio, {
+      productoProveedorId,
+      precio,
+      fecha: new Date(),
+    });
+    await manager.save(HistorialPrecio, historial);
+
+    const latestHistorial = await manager.findOne(HistorialPrecio, {
+      where: { productoProveedorId },
+      order: { fecha: 'DESC', createdAt: 'DESC' },
+    });
+
+    if (!latestHistorial) {
+      throw new InternalServerErrorException(
+        'No se pudo resolver el precio vigente desde el historial de precios'
+      );
+    }
+
+    return latestHistorial.precio;
+  }
+
   private async validateProveedorPayload(
     manager: EntityManager,
     proveedores?: AddProveedorToProductoDto[],
@@ -497,6 +550,16 @@ export class ProductoService {
       ) {
         throw new BadRequestException(
           `El precio unitario es obligatorio para el proveedor ${proveedor.proveedorId}`
+        );
+      }
+
+      if (
+        proveedor.precioUnitario !== undefined &&
+        proveedor.precioUnitario !== null
+      ) {
+        this.validatePrecioMayorQueCero(
+          proveedor.precioUnitario,
+          proveedor.proveedorId
         );
       }
     }
@@ -576,23 +639,76 @@ export class ProductoService {
           proveedorId: p.proveedorId,
           producto: { id: productoId } as any,
           proveedor: { id: p.proveedorId } as any,
-          precioUnitario: p.precioUnitario ?? 0,
+
+          precioUnitario: p.precioUnitario,
           marca: p.marcaEspecifica,
           codigoBarras: p.codigoBarras,
           pmp: 0,
         })
       );
-      await manager.save(newRelations);
+
+      const savedNewRelations = await manager.save(
+        ProductoProveedor,
+        newRelations
+      );
+
+      for (const relation of savedNewRelations) {
+        const payload = newProveedores.find(
+          (proveedor) => proveedor.proveedorId === relation.proveedorId
+        );
+
+        if (
+          !payload ||
+          payload.precioUnitario === undefined ||
+          payload.precioUnitario === null
+        ) {
+          continue;
+        }
+
+        const precioActual = await this.registrarPrecioYResolverPrecioActual(
+          manager,
+          relation.id,
+          payload.precioUnitario
+        );
+
+        relation.precioUnitario = precioActual;
+        await manager.update(
+          ProductoProveedor,
+          { id: relation.id },
+          { precioUnitario: precioActual }
+        );
+      }
     }
 
     if (proveedoresToUpdate.length > 0) {
       for (const p of proveedoresToUpdate) {
         const toUpdate = existing.find((e) => e.proveedorId === p.proveedorId);
         if (toUpdate) {
-          toUpdate.precioUnitario = p.precioUnitario ?? toUpdate.precioUnitario;
+          if (
+            p.precioUnitario !== undefined &&
+            p.precioUnitario !== null &&
+            p.precioUnitario !== toUpdate.precioUnitario
+          ) {
+            toUpdate.precioUnitario =
+              await this.registrarPrecioYResolverPrecioActual(
+                manager,
+                toUpdate.id,
+                p.precioUnitario
+              );
+          }
+
           toUpdate.marca = p.marcaEspecifica ?? toUpdate.marca;
           toUpdate.codigoBarras = p.codigoBarras ?? toUpdate.codigoBarras;
-          await manager.save(toUpdate);
+
+          await manager.update(
+            ProductoProveedor,
+            { id: toUpdate.id },
+            {
+              precioUnitario: toUpdate.precioUnitario,
+              marca: toUpdate.marca,
+              codigoBarras: toUpdate.codigoBarras,
+            }
+          );
         }
       }
     }

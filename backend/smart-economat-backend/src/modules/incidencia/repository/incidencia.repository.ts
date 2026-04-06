@@ -16,7 +16,6 @@ export class IncidenciaRepository extends Repository<Incidencia> {
   ): Promise<Incidencia | null> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
       userRole?.toUpperCase() === 'SUPER_ADMIN';
 
     return this.findOne({
@@ -25,16 +24,30 @@ export class IncidenciaRepository extends Repository<Incidencia> {
       relations: [
         'recepcion',
         'pedido',
+        'pedido.proveedor',
         'usuarioResolutor',
         'lineas',
         'lineas.pedidoProducto',
+        'lineas.pedidoProducto.productoProveedor',
+        'lineas.pedidoProducto.productoProveedor.producto',
+        'lineas.pedidoProducto.productoProveedor.proveedor',
       ],
     });
   }
 
   findAllWithRelations(): Promise<Incidencia[]> {
     return this.find({
-      relations: ['recepcion', 'pedido', 'usuarioResolutor', 'lineas'],
+      relations: [
+        'recepcion',
+        'pedido',
+        'pedido.proveedor',
+        'usuarioResolutor',
+        'lineas',
+        'lineas.pedidoProducto',
+        'lineas.pedidoProducto.productoProveedor',
+        'lineas.pedidoProducto.productoProveedor.producto',
+        'lineas.pedidoProducto.productoProveedor.proveedor',
+      ],
       order: { createdAt: 'DESC' },
     });
   }
@@ -45,7 +58,6 @@ export class IncidenciaRepository extends Repository<Incidencia> {
   ): Promise<PaginatedResponseDto<Incidencia>> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
       userRole?.toUpperCase() === 'SUPER_ADMIN';
 
     const page = query.page ?? 1;
@@ -59,7 +71,16 @@ export class IncidenciaRepository extends Repository<Incidencia> {
       .leftJoinAndSelect('pedido.proveedor', 'proveedor')
       .leftJoinAndSelect('incidencia.usuarioResolutor', 'usuarioResolutor')
       .leftJoinAndSelect('incidencia.lineas', 'lineas')
-      .leftJoinAndSelect('lineas.pedidoProducto', 'pedidoProducto');
+      .leftJoinAndSelect('lineas.pedidoProducto', 'pedidoProducto')
+      .leftJoinAndSelect(
+        'pedidoProducto.productoProveedor',
+        'productoProveedor'
+      )
+      .leftJoinAndSelect('productoProveedor.producto', 'producto')
+      .leftJoinAndSelect(
+        'productoProveedor.proveedor',
+        'proveedorProductoProveedor'
+      );
 
     if (isAdmin) {
       queryBuilder.withDeleted();
@@ -70,6 +91,7 @@ export class IncidenciaRepository extends Repository<Incidencia> {
       queryBuilder.andWhere(
         `(
           LOWER(COALESCE(proveedor.nombre, '')) LIKE :searchTerm
+          OR LOWER(COALESCE(producto.nombre, '')) LIKE :searchTerm
           OR LOWER(COALESCE(incidencia.observacionesRecepcion, '')) LIKE :searchTerm
           OR LOWER(COALESCE(incidencia.observacionesResolucion, '')) LIKE :searchTerm
         )`,

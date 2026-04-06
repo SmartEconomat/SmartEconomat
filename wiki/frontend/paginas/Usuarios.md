@@ -1,28 +1,69 @@
-# Gestión de Usuarios (Módulo / Página)
+# Página Usuarios
 
-Página maestra (`Usuarios.tsx`) que ensambla múltiples atómicos, componentes moleculares y de layout para entregar la interfaz de administración del Control de Acceso basado en Roles (RBAC) de SmartEconomat.
+## Ubicación real
 
-## Ubicación
-`src/pages/Usuarios/Usuarios.tsx`
-*(Y su subcomponente `UserModal.tsx` en el mismo directorio)*.
+Vista principal: `src/pages/Usuarios/UsuariosView.tsx`
 
-## Composición
+Modal asociado: `src/pages/Usuarios/UserModal.tsx`
 
-1.- **[DataTable](../componentes/DataTable.md)**: Muestra la lista de usuarios con su rol y estado (Activo/Inactivo).
-- **[StatusChip](../componentes/StatusChip.md)**: Visualización semántica del estado del usuario.
-- **[DetailModal](../componentes/DetailModal.md)**: Vista de detalle del perfil de usuario con sus permisos asociados.
-- **[DynamicFormModal](../componentes/DynamicFormModal.md)**: Formulario de creación y edición (incluyendo roles y contraseñas).
-2. **Tabla Inteligente (`DataTable`)**: Instancia la grilla dinámica, mapeando el modelo de datos.
-3. **Sistema de Feedback (`ToastContext`)**: Dispara alertas de éxito en operaciones CRUD (Verde) y excepciones al intentar cruzar validaciones de red o negocio (Rojo).
-4. **Indicadores Semánticos**: Usa `StatusChip` para el estado (Activo/Inactivo) y `RoleBadge` para la entidad de poder (Admin/Profesor/Alumno).
+## Propósito
 
-## Reglas de Negocio Embebidas (Security Front-End)
-Para evitar bloqueos catastróficos en el backend o en el uso diario:
-- El modal bloquea la iteración del estado a **"Inactivo"** si se está editando al **Último Administrador** del sistema.
-- Se previene la degradación en su Rol a uno inferior (Profesor, Alumno) bajo las mismas circunstancias.
-- El disparador `handleDeleteConfirm` comprueba el catálogo local e impide purgar un administrador si se dejaría el sistema acéfalo de administradores activos.
+Es la interfaz de administración de usuarios, roles efectivos, activación y reseteo de credenciales. Sustituye a enfoques anteriores más fragmentados y organiza los usuarios por rol visible.
 
-## Funciones Modulares
+## Estructura actual
 
-- **Búsqueda Dinámica y Filtros Combinados**: El buscador textual abarca Nombre o Correo y reinicia automáticamente la paginación a `1` usando el EventLoop en los hooks.
-- **Sincronización `useEffect`**: El módulo se autoinstancia con polling reactivo (`fetchUsuarios`), recargando el subset de la base de datos tras las mutaciones positivas del modal de edición o borrado cruzando los callbacks asíncronos en estado final `finally()`.
+- encabezado con buscador, refresco y alta de usuario
+- banner informativo cuando la vista llega desde notificaciones con filtros activos
+- tres acordeones: administradores, profesores y alumnos
+- `UserModal` para alta y edición
+- diálogos de confirmación para borrado y reset de contraseña
+
+La página ya no usa `DynamicFormModal`.
+
+## Comportamiento funcional
+
+## Búsqueda y agrupación
+
+- el buscador usa debounce
+- la data se consulta por rol con paginaciones independientes
+- la pantalla admite filtros por query string como `estado` y `focus`
+
+## Acciones por fila
+
+- activar o suspender
+- resetear contraseña temporal
+- editar
+- eliminar
+
+La activación usa el endpoint administrativo; el reset genera una contraseña fuerte temporal y la muestra una sola vez al operador.
+
+## Edición avanzada
+
+`UserModal` no solo modifica datos básicos. También permite:
+
+- seleccionar el rol principal desde roles cargados por backend
+- revisar permisos por grupo
+- persistir permisos adicionales y excluidos
+
+Cuando el usuario editado es el actual, la pantalla intenta refrescar la sesión para mantener la UI consistente con sus permisos reales.
+
+## Reglas de seguridad visibles
+
+- la visibilidad de acciones depende de permisos (`usuarios:crear`, `usuarios:editar`, `usuarios:eliminar`)
+- el flujo protege el caso del último administrador activo
+- un profesor solo puede resetear alumnos cuando su contexto actual lo permite
+
+## Servicios implicados
+
+- `usuarioService.getUsuarios()`
+- `usuarioService.getRoles()`
+- `usuarioService.getPermissions()`
+- `usuarioService.updateUserRole()`
+- `usuarioService.setUserActivation()`
+- `usuarioService.resetPassword()`
+
+## Relacionado
+
+- [Gestión de usuarios](../gestion-usuarios.md)
+- [Servicio `usuarioService`](../servicios/usuarioService.md)
+- [Roles y permisos](../../security/roles-y-permisos.md)

@@ -13,6 +13,7 @@ import {
   EstadoReclamacion,
   TipoDiferencia,
 } from '../../../src/modules/incidencia/incidencia-linea.entity/incidencia-linea.entity';
+import { EstadoPedido } from '../../../src/modules/pedido/enums/estado-pedido.enum';
 
 function makeProveedor(id: string, nombre: string, nif?: string): Proveedor {
   const p = new Proveedor();
@@ -52,7 +53,7 @@ function makePedido(
     proveedorId: proveedor?.id,
     proveedor,
     fechaPedido: new Date('2026-03-01T00:00:00Z'),
-    estado: 'RECIBIDO',
+    estado: EstadoPedido.RECEPCIONADO,
     pedidoProductos: lineas,
   });
   return pedido;

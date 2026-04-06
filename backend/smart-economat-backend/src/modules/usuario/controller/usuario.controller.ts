@@ -27,6 +27,7 @@ import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { RolesGuard } from '../../auth/guards/role.guard';
 import { rolUsuario } from '../enums/usuario.enums';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 @UseGuards(JwtAuthGuard, RolesGuard, PermisosGuard)
 @Controller('usuarios')
@@ -34,14 +35,14 @@ export class UsuarioController {
   constructor(private readonly usuarioService: UsuarioService) {}
 
   @Post()
-  @RequirePermissions('usuarios:crear')
+  @RequirePermissions(PERMISSIONS.usuarios.crear)
   create(@Body() dto: CreateUsuarioDto) {
     return this.usuarioService.create(dto);
   }
 
   @Post('admin')
-  @Roles(rolUsuario.ADMINISTRADOR)
-  @RequirePermissions('usuarios:crear')
+  @Roles(rolUsuario.ADMIN)
+  @RequirePermissions(PERMISSIONS.usuarios.crear)
   createAdmin(@Body() dto: AdminCreateUsuarioDto) {
     return this.usuarioService.createAdmin(dto);
   }
@@ -67,7 +68,7 @@ export class UsuarioController {
   }
 
   @Get()
-  @RequirePermissions('usuarios:listar')
+  @RequirePermissions(PERMISSIONS.usuarios.listar)
   findAll(
     @SortableFields([
       'username',
@@ -85,19 +86,19 @@ export class UsuarioController {
   }
 
   @Get('minimos')
-  @RequirePermissions('usuarios:listar')
+  @RequirePermissions(PERMISSIONS.usuarios.listar)
   findAllMinimal() {
     return this.usuarioService.findAllMinimal();
   }
 
   @Get(':id')
-  @RequirePermissions('usuarios:ver')
+  @RequirePermissions(PERMISSIONS.usuarios.ver)
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.usuarioService.findOne(id);
   }
 
   @Patch(':id')
-  @RequirePermissions('usuarios:editar')
+  @RequirePermissions(PERMISSIONS.usuarios.editar)
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUsuarioDto
@@ -106,8 +107,8 @@ export class UsuarioController {
   }
 
   @Patch(':id/admin')
-  @Roles(rolUsuario.ADMINISTRADOR)
-  @RequirePermissions('usuarios:editar')
+  @Roles(rolUsuario.ADMIN)
+  @RequirePermissions(PERMISSIONS.usuarios.editar)
   updateAdmin(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: AdminUpdateUsuarioDto
@@ -116,7 +117,7 @@ export class UsuarioController {
   }
 
   @Patch(':id/activar')
-  @RequirePermissions('usuarios:editar')
+  @RequirePermissions(PERMISSIONS.usuarios.editar)
   updateStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUsuarioStatusDto
@@ -125,7 +126,7 @@ export class UsuarioController {
   }
 
   @Patch(':id/rol')
-  @RequirePermissions('usuarios:editar')
+  @RequirePermissions(PERMISSIONS.usuarios.editar)
   updateRol(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUsuarioRolDto
@@ -134,7 +135,7 @@ export class UsuarioController {
   }
 
   @Patch(':id/password')
-  @RequirePermissions('usuarios:editar')
+  @RequirePermissions(PERMISSIONS.usuarios.editar)
   updatePassword(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ResetPasswordDto
@@ -143,13 +144,13 @@ export class UsuarioController {
   }
 
   @Delete(':id')
-  @RequirePermissions('usuarios:eliminar')
+  @RequirePermissions(PERMISSIONS.usuarios.eliminar)
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.usuarioService.remove(id);
   }
 
   @Post(':id/permisos-adicionales/:permisoId')
-  @RequirePermissions('usuarios:editar')
+  @RequirePermissions(PERMISSIONS.usuarios.editar)
   addAdditionalPermission(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('permisoId', ParseUUIDPipe) permisoId: string
@@ -158,7 +159,7 @@ export class UsuarioController {
   }
 
   @Delete(':id/permisos-adicionales/:permisoId')
-  @RequirePermissions('usuarios:editar')
+  @RequirePermissions(PERMISSIONS.usuarios.editar)
   removeAdditionalPermission(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('permisoId', ParseUUIDPipe) permisoId: string
@@ -167,7 +168,7 @@ export class UsuarioController {
   }
 
   @Post(':id/permisos-excluidos/:permisoId')
-  @RequirePermissions('usuarios:editar')
+  @RequirePermissions(PERMISSIONS.usuarios.editar)
   addExcludedPermission(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('permisoId', ParseUUIDPipe) permisoId: string
@@ -176,7 +177,7 @@ export class UsuarioController {
   }
 
   @Delete(':id/permisos-excluidos/:permisoId')
-  @RequirePermissions('usuarios:editar')
+  @RequirePermissions(PERMISSIONS.usuarios.editar)
   removeExcludedPermission(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('permisoId', ParseUUIDPipe) permisoId: string

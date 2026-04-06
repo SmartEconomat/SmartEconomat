@@ -557,7 +557,6 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                             }
                             MenuProps={{
                               disableScrollLock: true,
-                              disablePortal: true,
                             }}
                             onChange={(e) =>
                               onUpdateLinea(
@@ -795,7 +794,6 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                           value={l.estadoVisual || EstadoVisualProducto.OPTIMO}
                           MenuProps={{
                             disableScrollLock: true,
-                            disablePortal: true,
                           }}
                           onChange={(e) =>
                             onUpdateLinea(

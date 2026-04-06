@@ -45,6 +45,9 @@ import {
 import { ROLE_COLORS } from '../../utils/theme/roleColors';
 import { useToast } from '../../store/toast.hooks';
 import { useAuth, usePermission } from '../../store/auth.hooks';
+import { isElevatedRole } from '../../sherlock-auth/permissions';
+import { SYSTEM_ROLES } from '../../sherlock-auth/system-roles.constants';
+import { PERMISSIONS } from '../../sherlock-auth/permissions.constants';
 
 // Eliminada función isAdminRole en favor de hasPermission
 
@@ -160,7 +163,7 @@ const UserAccordion = React.memo(
 
 UserAccordion.displayName = 'UserAccordion';
 
-const UsuariosView: React.FC = () => {
+export const UsuariosView: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   // Estados para datos por rol
@@ -199,10 +202,10 @@ const UsuariosView: React.FC = () => {
   const toast = useToast();
   const { user: currentUser, refreshUser } = useAuth();
 
-  const canList = usePermission('usuarios:listar');
-  const canEdit = usePermission('usuarios:editar');
-  const canDelete = usePermission('usuarios:eliminar');
-  const canCreate = usePermission('usuarios:crear');
+  const canList = usePermission(PERMISSIONS.usuarios.listar);
+  const canEdit = usePermission(PERMISSIONS.usuarios.editar);
+  const canDelete = usePermission(PERMISSIONS.usuarios.eliminar);
+  const canCreate = usePermission(PERMISSIONS.usuarios.crear);
 
   useEffect(() => {
     if (canList === false) {
@@ -374,8 +377,6 @@ const UsuariosView: React.FC = () => {
           username: payload.username,
           email: payload.email,
           nombre: payload.nombre,
-          slotId: payload.slotId,
-          ubicacionId: payload.ubicacionId,
         };
         const previousRoleId = userToEdit.roleId || '';
         const previousStatus = userToEdit.estado;
@@ -400,9 +401,7 @@ const UsuariosView: React.FC = () => {
         const profileChanged =
           updatePayload.username !== userToEdit.username ||
           (updatePayload.email ?? '') !== (userToEdit.email ?? '') ||
-          updatePayload.nombre !== userToEdit.nombre ||
-          updatePayload.slotId !== userToEdit.slotId ||
-          updatePayload.ubicacionId !== userToEdit.ubicacionId;
+          updatePayload.nombre !== userToEdit.nombre;
 
         if (profileChanged) {
           await usuarioService.actualizarUsuario(userToEdit.id, updatePayload);
@@ -489,10 +488,11 @@ const UsuariosView: React.FC = () => {
       if (!currentUser) return false;
       const currentRol = currentUser.rol.toUpperCase();
       if (targetUser.id.toString() === currentUser.id.toString()) return false;
-      if (currentRol === 'ADMIN' || currentRol === 'ADMINISTRADOR') {
+      if (isElevatedRole(currentRol)) {
         return true;
       }
-      if (currentRol === 'PROFESOR') return targetUser.rol === 'Alumno';
+      if (currentRol === SYSTEM_ROLES.PROFESOR)
+        return targetUser.rol.toUpperCase() === SYSTEM_ROLES.ALUMNO;
       return false;
     },
     [currentUser]
@@ -806,4 +806,6 @@ const UsuariosView: React.FC = () => {
   );
 };
 
-export default React.memo(UsuariosView);
+const MemoizedUsuariosView = React.memo(UsuariosView);
+
+export default MemoizedUsuariosView;

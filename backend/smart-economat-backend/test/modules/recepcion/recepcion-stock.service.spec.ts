@@ -11,7 +11,7 @@ import { Usuario } from '../../../src/modules/usuario/usuario.entity/usuario.ent
 
 describe('RecepcionStockService', () => {
             it('procesarRecepcionMasiva asume isWeighedWithScale=false si no se informa', async () => {
-              const pedido = createPedido('ped-omitido', EstadoPedido.PENDIENTE, [
+              const pedido = createPedido('ped-omitido', EstadoPedido.PENDIENTE_DE_APROBACION, [
                 { id: 'pp-omitido', cantidad: 2, nombre: 'Azúcar' },
               ]);
 
@@ -62,10 +62,10 @@ describe('RecepcionStockService', () => {
               expect(result.incidencias).toEqual([]);
               expect(result.inventariosCreados).toBe(1);
               expect(result.movimientosGenerados).toBe(1);
-              expect(result.pedidosActualizados[0].estadoNuevo).toBe(EstadoPedido.RECIBIDO);
+              expect(result.pedidosActualizados[0].estadoNuevo).toBe(EstadoPedido.RECEPCIONADO);
             });
           it('procesarRecepcionMasiva rechaza o marca incidencia si el peso es irrealmente alto', async () => {
-            const pedido = createPedido('ped-alto', EstadoPedido.PENDIENTE, [
+            const pedido = createPedido('ped-alto', EstadoPedido.PENDIENTE_DE_APROBACION, [
               { id: 'pp-alto', cantidad: 1, nombre: 'Sal' },
             ]);
 
@@ -111,7 +111,7 @@ describe('RecepcionStockService', () => {
             ).rejects.toBeInstanceOf(Error);
           });
         it('procesarRecepcionMasiva rechaza líneas con peso 0 o negativo', async () => {
-          const pedido = createPedido('ped-cero', EstadoPedido.PENDIENTE, [
+          const pedido = createPedido('ped-cero', EstadoPedido.PENDIENTE_DE_APROBACION, [
             { id: 'pp-cero', cantidad: 2, nombre: 'Azúcar' },
           ]);
 
@@ -178,7 +178,7 @@ describe('RecepcionStockService', () => {
           ).rejects.toBeInstanceOf(Error);
         });
       it('procesarRecepcionMasiva soporta mezcla de líneas con y sin balanza', async () => {
-        const pedido = createPedido('ped-mix', EstadoPedido.PENDIENTE, [
+        const pedido = createPedido('ped-mix', EstadoPedido.PENDIENTE_DE_APROBACION, [
           { id: 'pp-balanza', cantidad: 2, nombre: 'Harina' },
           { id: 'pp-manual', cantidad: 1, nombre: 'Café' },
         ]);
@@ -241,10 +241,10 @@ describe('RecepcionStockService', () => {
         expect(result.incidencias).toEqual([]);
         expect(result.inventariosCreados).toBe(2);
         expect(result.movimientosGenerados).toBe(2);
-        expect(result.pedidosActualizados[0].estadoNuevo).toBe(EstadoPedido.RECIBIDO);
+        expect(result.pedidosActualizados[0].estadoNuevo).toBe(EstadoPedido.RECEPCIONADO);
       });
     it('procesarRecepcionMasiva registra correctamente isWeighedWithScale=false (peso manual)', async () => {
-      const pedido = createPedido('ped-manual', EstadoPedido.PENDIENTE, [
+      const pedido = createPedido('ped-manual', EstadoPedido.PENDIENTE_DE_APROBACION, [
         { id: 'pp-manual', cantidad: 2, nombre: 'Sal' },
       ]);
 
@@ -295,7 +295,7 @@ describe('RecepcionStockService', () => {
       expect(result.incidencias).toEqual([]);
       expect(result.inventariosCreados).toBe(1);
       expect(result.movimientosGenerados).toBe(1);
-      expect(result.pedidosActualizados[0].estadoNuevo).toBe(EstadoPedido.RECIBIDO);
+      expect(result.pedidosActualizados[0].estadoNuevo).toBe(EstadoPedido.RECEPCIONADO);
     });
   const mockDataSource = {
     manager: {
@@ -333,7 +333,7 @@ describe('RecepcionStockService', () => {
 
   const createPedido = (
     id: string,
-    estado: EstadoPedido = EstadoPedido.PENDIENTE,
+    estado: EstadoPedido = EstadoPedido.PENDIENTE_DE_APROBACION,
     lineas: Array<{ id: string; cantidad: number; nombre: string }>
   ) => ({
     id,
@@ -425,7 +425,7 @@ describe('RecepcionStockService', () => {
   it('procesarRecepcionMasiva rechaza pedidos no recepcionables', async () => {
     mockDataSource.manager.findOne
       .mockResolvedValueOnce({ id: 'user-1' })
-      .mockResolvedValueOnce({ id: 'ped-1', estado: EstadoPedido.RECIBIDO });
+      .mockResolvedValueOnce({ id: 'ped-1', estado: EstadoPedido.RECEPCIONADO });
 
     await expect(
       service.procesarRecepcionMasiva(
@@ -436,7 +436,7 @@ describe('RecepcionStockService', () => {
   });
 
   it('procesarRecepcionMasiva procesa recepción exacta en batch sin incidencias', async () => {
-    const pedido = createPedido('ped-1', EstadoPedido.PENDIENTE, [
+    const pedido = createPedido('ped-1', EstadoPedido.PENDIENTE_DE_APROBACION, [
       { id: 'pp-1', cantidad: 5, nombre: 'Leche' },
     ]);
 
@@ -462,7 +462,7 @@ describe('RecepcionStockService', () => {
 
     jest
       .spyOn(service as any, 'actualizarEstadoPedido')
-      .mockResolvedValue(EstadoPedido.RECIBIDO);
+      .mockResolvedValue(EstadoPedido.RECEPCIONADO);
 
     const result = await service.procesarRecepcionMasiva(
       {
@@ -487,8 +487,8 @@ describe('RecepcionStockService', () => {
     expect(result.pedidosActualizados).toEqual([
       {
         id: 'ped-1',
-        estadoAnterior: EstadoPedido.PENDIENTE,
-        estadoNuevo: EstadoPedido.RECIBIDO,
+        estadoAnterior: EstadoPedido.PENDIENTE_DE_APROBACION,
+        estadoNuevo: EstadoPedido.RECEPCIONADO,
       },
     ]);
 
@@ -517,7 +517,7 @@ describe('RecepcionStockService', () => {
   });
 
   it('procesarRecepcionMasiva genera incidencias por falta y defectuoso', async () => {
-    const pedido = createPedido('ped-2', EstadoPedido.PENDIENTE, [
+    const pedido = createPedido('ped-2', EstadoPedido.PENDIENTE_DE_APROBACION, [
       { id: 'pp-2', cantidad: 5, nombre: 'Tomate' },
     ]);
 
@@ -540,7 +540,7 @@ describe('RecepcionStockService', () => {
 
     jest
       .spyOn(service as any, 'actualizarEstadoPedido')
-      .mockResolvedValue(EstadoPedido.EN_PROCESO);
+      .mockResolvedValue(EstadoPedido.POR_RECEPCIONAR);
 
     const result = await service.procesarRecepcionMasiva(
       {
@@ -566,7 +566,7 @@ describe('RecepcionStockService', () => {
       ])
     );
     expect(result.pedidosActualizados[0].estadoNuevo).toBe(
-      EstadoPedido.EN_PROCESO
+      EstadoPedido.POR_RECEPCIONAR
     );
     expect(queryRunner.commitTransaction).toHaveBeenCalledTimes(1);
 
@@ -580,10 +580,10 @@ describe('RecepcionStockService', () => {
   });
 
   it('procesarRecepcion soporta multipedido y alta directa en una sola transacción', async () => {
-    const pedido1 = createPedido('ped-10', EstadoPedido.PENDIENTE, [
+    const pedido1 = createPedido('ped-10', EstadoPedido.PENDIENTE_DE_APROBACION, [
       { id: 'pp-10', cantidad: 4, nombre: 'Arroz' },
     ]);
-    const pedido2 = createPedido('ped-20', EstadoPedido.EN_PROCESO, [
+    const pedido2 = createPedido('ped-20', EstadoPedido.POR_RECEPCIONAR, [
       { id: 'pp-20', cantidad: 2, nombre: 'Aceite' },
     ]);
 
@@ -607,8 +607,8 @@ describe('RecepcionStockService', () => {
 
     const actualizarEstadoPedidoSpy = jest
       .spyOn(service as any, 'actualizarEstadoPedido')
-      .mockResolvedValueOnce(EstadoPedido.RECIBIDO)
-      .mockResolvedValueOnce(EstadoPedido.RECIBIDO);
+      .mockResolvedValueOnce(EstadoPedido.RECEPCIONADO)
+      .mockResolvedValueOnce(EstadoPedido.RECEPCIONADO);
 
     const result = await service.procesarRecepcion({
       usuarioId: 'user-1',
@@ -666,13 +666,13 @@ describe('RecepcionStockService', () => {
     expect(result.pedidosActualizados).toEqual([
       {
         id: 'ped-10',
-        estadoAnterior: EstadoPedido.PENDIENTE,
-        estadoNuevo: EstadoPedido.RECIBIDO,
+        estadoAnterior: EstadoPedido.PENDIENTE_DE_APROBACION,
+        estadoNuevo: EstadoPedido.RECEPCIONADO,
       },
       {
         id: 'ped-20',
-        estadoAnterior: EstadoPedido.EN_PROCESO,
-        estadoNuevo: EstadoPedido.RECIBIDO,
+        estadoAnterior: EstadoPedido.POR_RECEPCIONAR,
+        estadoNuevo: EstadoPedido.RECEPCIONADO,
       },
     ]);
     expect(actualizarEstadoPedidoSpy).toHaveBeenCalledTimes(2);
@@ -702,7 +702,7 @@ describe('RecepcionStockService', () => {
   });
 
   it('procesarRecepcion hace rollback si una línea no pertenece a los pedidos seleccionados', async () => {
-    const pedido = createPedido('ped-30', EstadoPedido.PENDIENTE, [
+    const pedido = createPedido('ped-30', EstadoPedido.PENDIENTE_DE_APROBACION, [
       { id: 'pp-30', cantidad: 1, nombre: 'Yogur' },
     ]);
 
@@ -751,7 +751,7 @@ describe('RecepcionStockService', () => {
     expect(queryRunner.release).toHaveBeenCalledTimes(1);
   });
 
-  it('actualizarEstadoPedido dispara RECEPCION_PARCIAL y devuelve EN_PROCESO', async () => {
+  it('actualizarEstadoPedido dispara RECEPCION_PARCIAL y devuelve PARCIAL', async () => {
     const manager = {
       findOne: jest.fn().mockResolvedValue({
         id: 'ped-2',
@@ -776,7 +776,7 @@ describe('RecepcionStockService', () => {
 
     mockPedidoService.handleStatusTransition.mockResolvedValue({
       id: 'ped-2',
-      estado: EstadoPedido.EN_PROCESO,
+      estado: EstadoPedido.POR_RECEPCIONAR,
     });
 
     const result = await (service as any).actualizarEstadoPedido(
@@ -789,7 +789,7 @@ describe('RecepcionStockService', () => {
       PedidoStatusTrigger.RECEPCION_PARCIAL,
       manager
     );
-    expect(result).toBe(EstadoPedido.EN_PROCESO);
+    expect(result).toBe(EstadoPedido.POR_RECEPCIONAR);
   });
 
   it('actualizarEstadoPedido mantiene RECEPCION_PARCIAL cuando hay exceso o no entregado', async () => {
@@ -817,7 +817,7 @@ describe('RecepcionStockService', () => {
 
     mockPedidoService.handleStatusTransition.mockResolvedValue({
       id: 'ped-3',
-      estado: EstadoPedido.EN_PROCESO,
+      estado: EstadoPedido.POR_RECEPCIONAR,
     });
 
     const result = await (service as any).actualizarEstadoPedido(
@@ -830,7 +830,7 @@ describe('RecepcionStockService', () => {
       PedidoStatusTrigger.RECEPCION_PARCIAL,
       manager
     );
-    expect(result).toBe(EstadoPedido.EN_PROCESO);
+    expect(result).toBe(EstadoPedido.POR_RECEPCIONAR);
   });
 
   it('actualizarEstadoPedido dispara RECEPCION_TOTAL cuando todas las cantidades coinciden', async () => {
@@ -858,7 +858,7 @@ describe('RecepcionStockService', () => {
 
     mockPedidoService.handleStatusTransition.mockResolvedValue({
       id: 'ped-4',
-      estado: EstadoPedido.RECIBIDO,
+      estado: EstadoPedido.RECEPCIONADO,
     });
 
     const result = await (service as any).actualizarEstadoPedido(
@@ -871,7 +871,7 @@ describe('RecepcionStockService', () => {
       PedidoStatusTrigger.RECEPCION_TOTAL,
       manager
     );
-    expect(result).toBe(EstadoPedido.RECIBIDO);
+    expect(result).toBe(EstadoPedido.RECEPCIONADO);
   });
 });
 
@@ -889,7 +889,7 @@ import { Usuario } from '../../../src/modules/usuario/usuario.entity/usuario.ent
 
 const createPedido = (
   id: string,
-  estado: EstadoPedido = EstadoPedido.PENDIENTE,
+  estado: EstadoPedido = EstadoPedido.POR_RECEPCIONAR,
   lineas: Array<{ id: string; cantidad: number; nombre: string }>
 ) => ({
   id,
@@ -1062,7 +1062,10 @@ describe('RecepcionStockService', () => {
   it('rechaza pedidos no recepcionables', async () => {
     mockDataSource.manager.findOne
       .mockResolvedValueOnce({ id: 'user-1' })
-      .mockResolvedValueOnce({ id: 'ped-1', estado: EstadoPedido.RECIBIDO });
+      .mockResolvedValueOnce({
+        id: 'ped-1',
+        estado: EstadoPedido.RECEPCIONADO,
+      });
 
     await expect(
       service.procesarRecepcionMasiva(
@@ -1072,15 +1075,96 @@ describe('RecepcionStockService', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
+  it('rechaza pedidos en estado parcial o incidencia para recepcion masiva', async () => {
+    mockDataSource.manager.findOne
+      .mockResolvedValueOnce({ id: 'user-1' })
+      .mockResolvedValueOnce({
+        id: 'ped-parcial',
+        estado: EstadoPedido.PARCIAL,
+      });
+
+    await expect(
+      service.procesarRecepcionMasiva(
+        { pedidoId: 'ped-parcial', productosRecibidos: [] } as any,
+        'user-1'
+      )
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    mockDataSource.manager.findOne
+      .mockResolvedValueOnce({ id: 'user-1' })
+      .mockResolvedValueOnce({
+        id: 'ped-incidencia',
+        estado: EstadoPedido.INCIDENCIA,
+      });
+
+    await expect(
+      service.procesarRecepcionMasiva(
+        { pedidoId: 'ped-incidencia', productosRecibidos: [] } as any,
+        'user-1'
+      )
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rechaza pedidos en estado parcial o incidencia para recepcion normal', async () => {
+    mockDataSource.manager.findOne.mockImplementation((entity: unknown) => {
+      const name =
+        typeof entity === 'function' ? entity.name : (entity as any)?.name;
+      if (entity === Usuario || name === 'Usuario') {
+        return Promise.resolve({ id: 'user-estado' });
+      }
+      return Promise.resolve(null);
+    });
+
+    mockDataSource.manager.find.mockResolvedValueOnce([
+      createPedido('ped-parcial', EstadoPedido.PARCIAL, [
+        { id: 'pp-parcial', cantidad: 1, nombre: 'Harina' },
+      ]),
+    ]);
+
+    await expect(
+      service.procesarRecepcion({
+        usuarioId: 'user-estado',
+        pedidos: [{ pedidoId: 'ped-parcial' }],
+        productos: [
+          {
+            pedidoProductoId: 'pp-parcial',
+            cantidadRecibida: 1,
+            estadoVisual: EstadoVisualProducto.OPTIMO,
+          },
+        ],
+      } as any)
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    mockDataSource.manager.find.mockResolvedValueOnce([
+      createPedido('ped-incidencia', EstadoPedido.INCIDENCIA, [
+        { id: 'pp-incidencia', cantidad: 1, nombre: 'Azucar' },
+      ]),
+    ]);
+
+    await expect(
+      service.procesarRecepcion({
+        usuarioId: 'user-estado',
+        pedidos: [{ pedidoId: 'ped-incidencia' }],
+        productos: [
+          {
+            pedidoProductoId: 'pp-incidencia',
+            cantidadRecibida: 1,
+            estadoVisual: EstadoVisualProducto.OPTIMO,
+          },
+        ],
+      } as any)
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
   it('registra isWeighedWithScale=true desde balanza', async () => {
-    const pedido = createPedido('ped-balanza', EstadoPedido.PENDIENTE, [
+    const pedido = createPedido('ped-balanza', EstadoPedido.POR_RECEPCIONAR, [
       { id: 'pp-balanza', cantidad: 3, nombre: 'Azúcar' },
     ]);
     mockUserAndPedido('user-balanza', pedido);
     mockRecepcionContext();
     jest
       .spyOn(service as any, 'actualizarEstadoPedido')
-      .mockResolvedValue(EstadoPedido.RECIBIDO);
+      .mockResolvedValue(EstadoPedido.RECEPCIONADO);
 
     const result = await service.procesarRecepcionMasiva(
       {
@@ -1107,19 +1191,60 @@ describe('RecepcionStockService', () => {
     expect(result.inventariosCreados).toBe(1);
     expect(result.movimientosGenerados).toBe(1);
     expect(result.pedidosActualizados[0].estadoNuevo).toBe(
-      EstadoPedido.RECIBIDO
+      EstadoPedido.RECEPCIONADO
+    );
+  });
+
+  it('invoca actualizarPMP con productoProveedorId, cantidad y precio de la línea', async () => {
+    const pedido = createPedido('ped-pmp', EstadoPedido.POR_RECEPCIONAR, [
+      { id: 'pp-pmp', cantidad: 3, nombre: 'Arroz' },
+    ]);
+    (
+      pedido.pedidoProductos[0] as {
+        precioUnitario: number;
+      }
+    ).precioUnitario = 3.75;
+
+    mockUserAndPedido('user-pmp', pedido);
+    mockRecepcionContext();
+    jest
+      .spyOn(service as any, 'actualizarEstadoPedido')
+      .mockResolvedValue(EstadoPedido.RECEPCIONADO);
+
+    await service.procesarRecepcionMasiva(
+      {
+        pedidoId: 'ped-pmp',
+        nAlbaran: 'ALB-PMP-001',
+        observaciones: 'Recepción para validación de PMP',
+        productosRecibidos: [
+          {
+            pedidoProductoId: 'pp-pmp',
+            cantidadRecibida: 3,
+            cantidadAlbaran: 3,
+            estadoVisual: EstadoVisualProducto.OPTIMO,
+          },
+        ],
+      },
+      'user-pmp'
+    );
+
+    expect(mockProductoService.actualizarPMP).toHaveBeenCalledWith(
+      'pprov-pp-pmp',
+      3,
+      3.75,
+      queryRunner.manager
     );
   });
 
   it('registra isWeighedWithScale=false en peso manual', async () => {
-    const pedido = createPedido('ped-manual', EstadoPedido.PENDIENTE, [
+    const pedido = createPedido('ped-manual', EstadoPedido.POR_RECEPCIONAR, [
       { id: 'pp-manual', cantidad: 2, nombre: 'Sal' },
     ]);
     mockUserAndPedido('user-manual', pedido);
     mockRecepcionContext();
     jest
       .spyOn(service as any, 'actualizarEstadoPedido')
-      .mockResolvedValue(EstadoPedido.RECIBIDO);
+      .mockResolvedValue(EstadoPedido.RECEPCIONADO);
 
     const result = await service.procesarRecepcionMasiva(
       {
@@ -1147,15 +1272,78 @@ describe('RecepcionStockService', () => {
     expect(result.movimientosGenerados).toBe(1);
   });
 
+  it('procesarRecepcion genera incidencias por faltante y no entregado', async () => {
+    const pedido = createPedido('ped-faltas', EstadoPedido.POR_RECEPCIONAR, [
+      { id: 'pp-falta', cantidad: 5, nombre: 'Leche' },
+      { id: 'pp-no-entregado', cantidad: 3, nombre: 'Tomate' },
+    ]);
+
+    mockDataSource.manager.findOne.mockImplementation((entity: unknown) => {
+      const name =
+        typeof entity === 'function' ? entity.name : (entity as any)?.name;
+      if (entity === Usuario || name === 'Usuario') {
+        return Promise.resolve({ id: 'user-faltas' });
+      }
+      return Promise.resolve(null);
+    });
+    mockDataSource.manager.find.mockResolvedValue([pedido]);
+    mockRecepcionContext();
+    jest
+      .spyOn(service as any, 'actualizarEstadoPedido')
+      .mockResolvedValue(EstadoPedido.POR_RECEPCIONAR);
+
+    const result = await service.procesarRecepcion({
+      usuarioId: 'user-faltas',
+      pedidos: [{ pedidoId: 'ped-faltas', nAlbaran: 'ALB-FALTAS-001' }],
+      observaciones: 'Recepción parcial con faltas',
+      productos: [
+        {
+          pedidoProductoId: 'pp-falta',
+          cantidadRecibida: 2,
+          cantidadAlbaran: 2,
+          estadoVisual: EstadoVisualProducto.OPTIMO,
+        },
+      ],
+    } as any);
+
+    expect(result.incidencias).toHaveLength(1);
+    expect(result.incidencias[0].datosOriginales.productos).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          idPedidoProducto: 'pp-falta',
+          tipo: 'FALTA',
+          diferencia: -3,
+          cantidadRecibida: 2,
+        }),
+        expect.objectContaining({
+          idPedidoProducto: 'pp-no-entregado',
+          tipo: 'NO_ENTREGADO',
+          diferencia: -3,
+          cantidadRecibida: 0,
+        }),
+      ])
+    );
+    expect(result.movimientosGenerados).toBe(1);
+    expect(result.inventariosCreados).toBe(1);
+    expect(result.pedidosActualizados).toEqual([
+      {
+        id: 'ped-faltas',
+        estadoAnterior: EstadoPedido.POR_RECEPCIONAR,
+        estadoNuevo: EstadoPedido.POR_RECEPCIONAR,
+      },
+    ]);
+    expect(queryRunner.commitTransaction).toHaveBeenCalledTimes(1);
+  });
+
   it('asume isWeighedWithScale=false si no se informa', async () => {
-    const pedido = createPedido('ped-omitido', EstadoPedido.PENDIENTE, [
+    const pedido = createPedido('ped-omitido', EstadoPedido.POR_RECEPCIONAR, [
       { id: 'pp-omitido', cantidad: 2, nombre: 'Azúcar' },
     ]);
     mockUserAndPedido('user-omitido', pedido);
     mockRecepcionContext();
     jest
       .spyOn(service as any, 'actualizarEstadoPedido')
-      .mockResolvedValue(EstadoPedido.RECIBIDO);
+      .mockResolvedValue(EstadoPedido.RECEPCIONADO);
 
     const result = await service.procesarRecepcionMasiva(
       {
@@ -1183,7 +1371,7 @@ describe('RecepcionStockService', () => {
   });
 
   it('soporta mezcla de líneas con y sin balanza', async () => {
-    const pedido = createPedido('ped-mix', EstadoPedido.PENDIENTE, [
+    const pedido = createPedido('ped-mix', EstadoPedido.POR_RECEPCIONAR, [
       { id: 'pp-balanza', cantidad: 2, nombre: 'Harina' },
       { id: 'pp-manual', cantidad: 1, nombre: 'Café' },
     ]);
@@ -1191,7 +1379,7 @@ describe('RecepcionStockService', () => {
     mockRecepcionContext();
     jest
       .spyOn(service as any, 'actualizarEstadoPedido')
-      .mockResolvedValue(EstadoPedido.RECIBIDO);
+      .mockResolvedValue(EstadoPedido.RECEPCIONADO);
 
     const result = await service.procesarRecepcionMasiva(
       {
@@ -1227,7 +1415,7 @@ describe('RecepcionStockService', () => {
   });
 
   it('rechaza peso 0 o negativo', async () => {
-    const pedido = createPedido('ped-cero', EstadoPedido.PENDIENTE, [
+    const pedido = createPedido('ped-cero', EstadoPedido.POR_RECEPCIONAR, [
       { id: 'pp-cero', cantidad: 2, nombre: 'Azúcar' },
     ]);
     mockUserAndPedido('user-cero', pedido);
@@ -1250,7 +1438,7 @@ describe('RecepcionStockService', () => {
         },
         'user-cero'
       )
-    ).rejects.toThrow(/positivo|RECEPTION_FAILED/i);
+    ).rejects.toThrow(/positivo|RECEPTION_FAILED|fallo en la recepci[oó]n/i);
 
     await expect(
       service.procesarRecepcionMasiva(
@@ -1269,11 +1457,11 @@ describe('RecepcionStockService', () => {
         },
         'user-cero'
       )
-    ).rejects.toThrow(/positivo|RECEPTION_FAILED/i);
+    ).rejects.toThrow(/positivo|RECEPTION_FAILED|fallo en la recepci[oó]n/i);
   });
 
   it('rechaza cantidades irrealmente altas', async () => {
-    const pedido = createPedido('ped-alto', EstadoPedido.PENDIENTE, [
+    const pedido = createPedido('ped-alto', EstadoPedido.POR_RECEPCIONAR, [
       { id: 'pp-alto', cantidad: 1, nombre: 'Sal' },
     ]);
     mockUserAndPedido('user-alto', pedido);
@@ -1319,7 +1507,7 @@ describe('RecepcionStockService', () => {
     ]);
     mockPedidoService.handleStatusTransition.mockResolvedValue({
       id: 'ped-2',
-      estado: EstadoPedido.EN_PROCESO,
+      estado: EstadoPedido.POR_RECEPCIONAR,
     });
 
     const result = await (service as any).actualizarEstadoPedido(
@@ -1330,9 +1518,10 @@ describe('RecepcionStockService', () => {
     expect(mockPedidoService.handleStatusTransition).toHaveBeenCalledWith(
       'ped-2',
       PedidoStatusTrigger.RECEPCION_PARCIAL,
-      queryRunner.manager
+      queryRunner.manager,
+      undefined
     );
-    expect(result).toBe(EstadoPedido.EN_PROCESO);
+    expect(result).toBe(EstadoPedido.POR_RECEPCIONAR);
   });
 
   it('actualizarEstadoPedido dispara RECEPCION_TOTAL cuando coincide todo', async () => {
@@ -1355,7 +1544,7 @@ describe('RecepcionStockService', () => {
     ]);
     mockPedidoService.handleStatusTransition.mockResolvedValue({
       id: 'ped-4',
-      estado: EstadoPedido.RECIBIDO,
+      estado: EstadoPedido.RECEPCIONADO,
     });
 
     const result = await (service as any).actualizarEstadoPedido(
@@ -1366,8 +1555,9 @@ describe('RecepcionStockService', () => {
     expect(mockPedidoService.handleStatusTransition).toHaveBeenCalledWith(
       'ped-4',
       PedidoStatusTrigger.RECEPCION_TOTAL,
-      queryRunner.manager
+      queryRunner.manager,
+      undefined
     );
-    expect(result).toBe(EstadoPedido.RECIBIDO);
+    expect(result).toBe(EstadoPedido.RECEPCIONADO);
   });
 });

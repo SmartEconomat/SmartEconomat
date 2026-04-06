@@ -15,27 +15,34 @@ describe('PlantillasRolesService', () => {
   const mockRolRepo = {
     create: jest.fn(),
     save: jest.fn(),
+    find: jest.fn(),
+    count: jest.fn(),
+  };
+  const mockAuthPermissionsService = {
+    invalidateAllCache: jest.fn(),
   };
 
   let service: PlantillasRolesService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
     service = new PlantillasRolesService(
       mockPlantillaRepo as any,
       mockPermisoRepo as any,
-      mockRolRepo as any
+      mockRolRepo as any,
+      mockAuthPermissionsService as any
     );
   });
 
   it('create vincula plantilla padre y permisos', async () => {
     mockPlantillaRepo.findOne
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({ id: 'padre-1' });
+      .mockResolvedValueOnce({ id: 'padre-1', plantillaPadreId: undefined });
     mockPlantillaRepo.create.mockReturnValue({ id: 'plant-1' });
-    mockPlantillaRepo.save
-      .mockResolvedValueOnce({ id: 'plant-1', permisos: [] })
-      .mockResolvedValueOnce({ id: 'plant-1', permisos: [{ id: 'perm-1' }] });
+    mockPlantillaRepo.save.mockResolvedValueOnce({
+      id: 'plant-1',
+      permisos: [{ id: 'perm-1' }],
+    });
     mockPermisoRepo.find.mockResolvedValue([{ id: 'perm-1' }]);
     jest.spyOn(service, 'findOne').mockResolvedValue({ id: 'plant-1' } as any);
 
@@ -76,6 +83,19 @@ describe('PlantillasRolesService', () => {
     } as any);
 
     await expect(service.remove('plant-3')).rejects.toBeInstanceOf(
+      BadRequestException
+    );
+  });
+
+  it('remove bloquea plantillas vinculadas a roles', async () => {
+    jest.spyOn(service, 'findOne').mockResolvedValue({
+      id: 'plant-4',
+      nombre: 'Plantilla Custom',
+      esEditable: true,
+    } as any);
+    mockRolRepo.count.mockResolvedValue(2);
+
+    await expect(service.remove('plant-4')).rejects.toBeInstanceOf(
       BadRequestException
     );
   });
@@ -128,5 +148,101 @@ describe('PlantillasRolesService', () => {
       nombre: 'ROL_X',
       permisos: [{ id: 'perm-1' }, { id: 'perm-2' }],
     });
+  });
+
+  it('update sincroniza permisos a roles vinculados e invalida cache', async () => {
+    jest
+      .spyOn(service, 'findOne')
+      .mockResolvedValueOnce({
+        id: 'plant-5',
+        nombre: 'Plantilla Custom',
+        esEditable: true,
+        permisos: [],
+        plantillaPadreId: undefined,
+      } as any)
+      .mockResolvedValueOnce({
+        id: 'plant-5',
+        nombre: 'Plantilla Custom',
+        permisos: [{ id: 'perm-1' }],
+        plantillaPadreId: undefined,
+      } as any)
+      .mockResolvedValueOnce({ id: 'plant-5' } as any);
+
+    mockPermisoRepo.find.mockResolvedValue([{ id: 'perm-1' }]);
+    mockPlantillaRepo.save.mockResolvedValue({
+      id: 'plant-5',
+      permisos: [{ id: 'perm-1' }],
+    });
+    mockPlantillaRepo.find.mockResolvedValue([]);
+    mockRolRepo.find.mockResolvedValue([{ id: 'rol-1', permisos: [] }]);
+    mockRolRepo.save.mockResolvedValue([{ id: 'rol-1' }]);
+
+    const result = await service.update('plant-5', {
+      permisoIds: ['perm-1'],
+    } as any);
+
+    expect(result).toEqual({ id: 'plant-5' });
+    expect(mockRolRepo.save).toHaveBeenCalledTimes(1);
+    expect(mockAuthPermissionsService.invalidateAllCache).toHaveBeenCalledTimes(
+      1
+    );
+  });
+
+  it('duplicate genera una copia con nombre incremental', async () => {
+    jest
+      .spyOn(service, 'findOne')
+      .mockResolvedValueOnce({
+        id: 'plant-6',
+        nombre: 'Compras',
+        descripcion: 'Base',
+        activo: true,
+        plantillaPadreId: undefined,
+        permisos: [{ id: 'perm-1' }],
+      } as any)
+      .mockResolvedValueOnce({ id: 'plant-6-copia' } as any);
+
+    mockPlantillaRepo.findOne.mockResolvedValue(null);
+    mockPlantillaRepo.create.mockReturnValue({ id: 'plant-6-copia' });
+    mockPlantillaRepo.save.mockResolvedValue({ id: 'plant-6-copia' });
+
+    const result = await service.duplicateTemplate('plant-6');
+
+    expect(result).toEqual({ id: 'plant-6-copia' });
+  });
+
+  it('updatePermisos asigna permisos y sincroniza roles vinculados', async () => {
+    const plantillaBase = {
+      id: 'plant-7',
+      nombre: 'Plantilla Operativa',
+      permisos: [{ id: 'perm-1' }, { id: 'perm-2' }],
+      plantillaPadreId: null,
+      plantillasHijas: [],
+    };
+
+    mockPlantillaRepo.findOne
+      .mockResolvedValueOnce({ ...plantillaBase, permisos: [] })
+      .mockResolvedValueOnce(plantillaBase)
+      .mockResolvedValueOnce(plantillaBase);
+
+    mockPermisoRepo.find.mockResolvedValue([
+      { id: 'perm-1' },
+      { id: 'perm-2' },
+    ]);
+    mockPlantillaRepo.save.mockResolvedValue(plantillaBase);
+
+    mockPlantillaRepo.find.mockResolvedValue([]);
+
+    mockRolRepo.find.mockResolvedValue([{ id: 'rol-1', permisos: [] }]);
+    mockRolRepo.save.mockResolvedValue([{ id: 'rol-1' }]);
+
+    const result = await service.updatePermisos('plant-7', [
+      'perm-1',
+      'perm-2',
+    ]);
+
+    expect(result.id).toBe('plant-7');
+    expect(result.permisos).toHaveLength(2);
+    expect(mockRolRepo.save).toHaveBeenCalled();
+    expect(mockAuthPermissionsService.invalidateAllCache).toHaveBeenCalled();
   });
 });

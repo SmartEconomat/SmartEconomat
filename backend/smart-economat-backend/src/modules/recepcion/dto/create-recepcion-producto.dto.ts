@@ -24,12 +24,12 @@ import { EstadoProductoRecepcion } from '../enums/estado-producto.enum';
 
 export class CreateRecepcionProductoDto {
   @IsNotEmpty()
-  @IsUUID('7')
+  @IsUUID('all')
   @Validate(NotDraftConstraint)
   idRecepcion!: string;
 
   @IsNotEmpty()
-  @IsUUID('7')
+  @IsUUID('all')
   @Validate(NotDraftConstraint)
   idPedidoProducto!: string;
 

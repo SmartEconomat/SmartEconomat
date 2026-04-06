@@ -10,6 +10,7 @@ import { UserStatus, rolUsuario } from '../enums/usuario.enums';
 import { Profesor } from '../../profesor/profesor.entity/profesor.entity';
 import { Alumno } from '../../alumno/alumno.entity/alumno.entity';
 import { isSherlockElevatedRole } from '../../sherlock-auth/utils/access.utils';
+import { SYSTEM_ROLES } from '../../../common/constants/system-roles.constants';
 
 @Injectable()
 export class UsuarioRepository {
@@ -75,11 +76,13 @@ export class UsuarioRepository {
       const normalized = query.rol.toUpperCase();
       let backendRol: rolUsuario;
 
-      if (normalized === 'ADMINISTRADOR' || normalized === 'ADMIN') {
-        backendRol = rolUsuario.ADMINISTRADOR;
-      } else if (normalized === 'PROFESOR') {
+      if (normalized === SYSTEM_ROLES.SUPER_ADMIN) {
+        backendRol = rolUsuario.SUPER_ADMIN;
+      } else if (normalized === SYSTEM_ROLES.ADMIN) {
+        backendRol = rolUsuario.ADMIN;
+      } else if (normalized === SYSTEM_ROLES.PROFESOR) {
         backendRol = rolUsuario.PROFESOR;
-      } else if (normalized === 'ALUMNO') {
+      } else if (normalized === SYSTEM_ROLES.ALUMNO) {
         backendRol = rolUsuario.ALUMNO;
       } else {
         backendRol = query.rol as rolUsuario;
@@ -194,6 +197,15 @@ export class UsuarioRepository {
 
     if (data.activo !== undefined && data.status === undefined) {
       data.status = data.activo ? UserStatus.ACTIVE : UserStatus.INACTIVE;
+    }
+
+    if (data.status !== undefined && data.activo !== undefined) {
+      if (
+        (data.status === UserStatus.ACTIVE && !data.activo) ||
+        (data.status !== UserStatus.ACTIVE && data.activo)
+      ) {
+        data.activo = data.status === UserStatus.ACTIVE;
+      }
     }
 
     if (data.rol !== undefined && data.roles === undefined) {

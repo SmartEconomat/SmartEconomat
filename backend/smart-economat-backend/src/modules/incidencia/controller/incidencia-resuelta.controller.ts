@@ -22,6 +22,7 @@ import { IncidenciaResuelta } from '../incidencia-resuelta.entity/incidencia-res
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('incidencias-resueltas')
@@ -31,14 +32,14 @@ export class IncidenciaResuelaController {
   ) {}
 
   @Post()
-  @RequirePermissions('incidencias:crear')
+  @RequirePermissions(PERMISSIONS.incidencias.crear)
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateIncidenciaResuelaDto): Promise<IncidenciaResuelta> {
     return this.incidenciaResuelaService.create(dto);
   }
 
   @Get()
-  @RequirePermissions('incidencias:listar')
+  @RequirePermissions(PERMISSIONS.incidencias.listar)
   findAll(
     @Query() query: PaginationQueryDto,
     @Req() req: { user?: { rol?: string } }
@@ -48,7 +49,7 @@ export class IncidenciaResuelaController {
   }
 
   @Get(':id')
-  @RequirePermissions('incidencias:ver')
+  @RequirePermissions(PERMISSIONS.incidencias.ver)
   findOne(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Req() req: { user?: { rol?: string } }
@@ -58,7 +59,7 @@ export class IncidenciaResuelaController {
   }
 
   @Patch(':id')
-  @RequirePermissions('incidencias:editar')
+  @RequirePermissions(PERMISSIONS.incidencias.editar)
   update(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: UpdateIncidenciaResuelaDto
@@ -67,7 +68,7 @@ export class IncidenciaResuelaController {
   }
 
   @Delete(':id')
-  @RequirePermissions('incidencias:eliminar')
+  @RequirePermissions(PERMISSIONS.incidencias.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.incidenciaResuelaService.remove(id);

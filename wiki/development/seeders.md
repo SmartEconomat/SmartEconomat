@@ -16,7 +16,7 @@ npm run seed
 npm run db:reset
 ```
 
-> **Seguridad:** Los seeders están bloqueados en producción (`NODE_ENV=production`). El script verifica el entorno antes de ejecutarse.
+> **Seguridad:** Los seeders solo se permiten en desarrollo (`NODE_ENV=development`). Si el entorno no es desarrollo o la base de datos tiene perfil de producción (ej. nombre con `prod`), la ejecución se bloquea.
 
 ---
 
@@ -66,14 +66,14 @@ movimiento (referencia a Usuario, Producto, Pedido)
 ### 1. Roles y Permisos (`roles-permisos.seeder.ts`)
 
 Crea la estructura base de autorización:
-- **~70 permisos** organizados por módulo (CRUD por cada módulo del sistema)
+- **88 permisos** organizados por módulo (CRUD y acciones específicas por cada módulo del sistema)
 - **4 plantillas de rol**
 - **4 roles dinámicos de sistema** sincronizados con sus permisos para pruebas del panel de acceso:
 
 | Plantilla | Descripción |
 |-----------|-------------|
 | `SUPER_ADMIN` | Todos los permisos |
-| `ADMINISTRADOR` | Gestión completa sin acceso a configuración del sistema |
+| `ADMIN` | Gestión completa salvo creación y eliminación de roles y permisos |
 | `PROFESOR` | Lectura de inventario, gestión de alumnos |
 | `ALUMNO` | Acceso de solo lectura limitado |
 

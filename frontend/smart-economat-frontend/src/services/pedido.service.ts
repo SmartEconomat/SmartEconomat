@@ -1,4 +1,9 @@
-import { Pedido, PedidoUsuario, PurchaseBatch } from './pedido.types';
+import {
+  Pedido,
+  PedidoUsuario,
+  PedidoUsuarioRow,
+  PurchaseBatch,
+} from './pedido.types';
 import {
   baseFetch,
   downloadFile,
@@ -27,7 +32,6 @@ export interface CreatePedidoPayload {
 export interface CreatePurchaseBatchPayload {
   observaciones?: string;
   lineas: PedidoLinePayload[];
-  ubicacionEntregaSugeridaId?: string;
 }
 
 export interface CreateMissingStockBatchPayload {
@@ -44,9 +48,8 @@ export interface CreatePedidoFromRecetasPayload {
 }
 
 export interface ConsolidatePurchaseBatchPayload {
-  pedidoIds: string[];
+  pedidoUsuarioIds: string[];
   observaciones?: string;
-  ubicacionEntregaSugeridaId?: string;
 }
 
 export interface UpdatePurchaseBatchPayload {
@@ -95,20 +98,82 @@ const buildProviderSummary = (pedidoUsuario: PedidoUsuario): string => {
   return `${providerNames.length} proveedores`;
 };
 
-export const mapPedidoUsuarioToPedidoRow = (
+const formatBatchReferenceFromNumber = (
+  numero?: string | number
+): string | undefined => {
+  if (numero === undefined || numero === null) {
+    return undefined;
+  }
+
+  const numeroTexto = String(numero).trim();
+  if (!numeroTexto) {
+    return undefined;
+  }
+
+  return `LC-${numeroTexto.padStart(6, '0')}`;
+};
+
+const normalizePedido = (pedido: Pedido): Pedido => {
+  const numeroPedidoProveedor =
+    pedido.numeroPedidoProveedor || pedido.numeroGlobal;
+  const numeroPedidoVisible =
+    pedido.numeroPedidoVisible || pedido.pedidoUsuario?.numeroGlobal;
+  const referenciaPedidoVisible =
+    pedido.referenciaPedidoVisible ||
+    (numeroPedidoVisible ? `PU-${String(numeroPedidoVisible)}` : undefined);
+
+  return {
+    ...pedido,
+    numeroPedidoProveedor: numeroPedidoProveedor
+      ? String(numeroPedidoProveedor)
+      : undefined,
+    numeroPedidoVisible: numeroPedidoVisible
+      ? String(numeroPedidoVisible)
+      : undefined,
+    referenciaPedidoVisible,
+  };
+};
+
+const normalizePurchaseBatch = (batch: PurchaseBatch): PurchaseBatch => {
+  const numeroLote = batch.numeroLote || batch.numeroGlobal;
+
+  return {
+    ...batch,
+    numeroLote: numeroLote ? String(numeroLote) : undefined,
+    referenciaLote:
+      batch.referenciaLote ||
+      batch.referencia ||
+      formatBatchReferenceFromNumber(numeroLote),
+    pedidos: (batch.pedidos || []).map(normalizePedido),
+  };
+};
+
+const normalizePedidoUsuario = (
   pedidoUsuario: PedidoUsuario
 ): PedidoUsuario => ({
   ...pedidoUsuario,
-  pedidoUsuarioId: pedidoUsuario.id,
-  aggregateType: 'pedido_usuario',
-  proveedor: {
-    id: pedidoUsuario.id,
-    nombre: buildProviderSummary(pedidoUsuario),
-  },
-  pedidoProductos:
-    pedidoUsuario.pedidos?.flatMap((pedido) => pedido.pedidoProductos || []) ||
-    [],
+  pedidos: (pedidoUsuario.pedidos || []).map(normalizePedido),
 });
+
+export const mapPedidoUsuarioToVisibleRow = (
+  pedidoUsuario: PedidoUsuario
+): PedidoUsuarioRow => {
+  const normalizedPedidoUsuario = normalizePedidoUsuario(pedidoUsuario);
+
+  return {
+    ...normalizedPedidoUsuario,
+    entityType: 'pedido_usuario',
+    pedidoUsuarioId: normalizedPedidoUsuario.id,
+    proveedor: {
+      id: normalizedPedidoUsuario.id,
+      nombre: buildProviderSummary(normalizedPedidoUsuario),
+    },
+    pedidoProductos:
+      normalizedPedidoUsuario.pedidos?.flatMap(
+        (pedido) => pedido.pedidoProductos || []
+      ) || [],
+  };
+};
 
 export async function fetchPedidos(
   page: number = 1,
@@ -141,7 +206,10 @@ export async function fetchPedidos(
     );
   }
   const body = (await response.json()) as ApiResponse<PaginatedData<Pedido>>;
-  return body.data;
+  return {
+    ...body.data,
+    data: body.data.data.map(normalizePedido),
+  };
 }
 
 export async function fetchPedidoUsuarios(
@@ -176,7 +244,10 @@ export async function fetchPedidoUsuarios(
   const body = (await response.json()) as ApiResponse<
     PaginatedData<PedidoUsuario>
   >;
-  return body.data;
+  return {
+    ...body.data,
+    data: body.data.data.map(normalizePedidoUsuario),
+  };
 }
 
 export async function createPedido(
@@ -200,7 +271,7 @@ export async function createPedido(
   }
 
   const body = (await response.json()) as ApiResponse<Pedido>;
-  return body.data;
+  return normalizePedido(body.data);
 }
 
 export async function updatePedido(
@@ -225,7 +296,7 @@ export async function updatePedido(
   }
 
   const body = (await response.json()) as ApiResponse<Pedido>;
-  return body.data;
+  return normalizePedido(body.data);
 }
 
 export async function cancelPedido(
@@ -251,7 +322,7 @@ export async function cancelPedido(
   }
 
   const body = (await response.json()) as ApiResponse<Pedido>;
-  return body.data;
+  return normalizePedido(body.data);
 }
 
 export async function aceptarPedido(id: string): Promise<Pedido> {
@@ -272,7 +343,7 @@ export async function aceptarPedido(id: string): Promise<Pedido> {
   }
 
   const body = (await response.json()) as ApiResponse<Pedido>;
-  return body.data;
+  return normalizePedido(body.data);
 }
 
 export async function createPurchaseBatch(
@@ -296,20 +367,20 @@ export async function createPurchaseBatch(
   }
 
   const body = (await response.json()) as ApiResponse<PurchaseBatch>;
-  return body.data;
+  return normalizePurchaseBatch(body.data);
 }
 
-export async function createMissingStockBatch(
+export async function createPedidoUsuarioFromMissingStock(
   payload: CreateMissingStockBatchPayload
-): Promise<PurchaseBatch> {
-  const response = await baseFetch('/purchase-batches/from-missing-stock', {
+): Promise<PedidoUsuario> {
+  const response = await baseFetch('/pedido-usuarios/from-missing-stock', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
-    let errorMessage = `Error al crear pedidos de faltantes: ${response.status}`;
+    let errorMessage = `Error al crear pedido por faltantes: ${response.status}`;
     try {
       const errorDetail = (await response.json()) as { message?: string };
       if (errorDetail?.message) errorMessage = errorDetail.message;
@@ -319,8 +390,8 @@ export async function createMissingStockBatch(
     throw new Error(errorMessage);
   }
 
-  const body = (await response.json()) as ApiResponse<PurchaseBatch>;
-  return body.data;
+  const body = (await response.json()) as ApiResponse<PedidoUsuario>;
+  return normalizePedidoUsuario(body.data);
 }
 
 export async function createPedidoUsuario(
@@ -344,7 +415,7 @@ export async function createPedidoUsuario(
   }
 
   const body = (await response.json()) as ApiResponse<PedidoUsuario>;
-  return body.data;
+  return normalizePedidoUsuario(body.data);
 }
 
 export async function createPedidoFromRecetas(
@@ -368,20 +439,20 @@ export async function createPedidoFromRecetas(
   }
 
   const body = (await response.json()) as ApiResponse<Pedido>;
-  return body.data;
+  return normalizePedido(body.data);
 }
 
-export async function createPurchaseBatchFromRecetas(
+export async function createPedidoUsuarioFromRecetas(
   payload: CreatePedidoFromRecetasPayload
-): Promise<PurchaseBatch> {
-  const response = await baseFetch('/purchase-batches/from-recipes', {
+): Promise<PedidoUsuario> {
+  const response = await baseFetch('/pedido-usuarios/from-recipes', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
-    let errorMessage = `Error al crear lote desde recetas: ${response.status}`;
+    let errorMessage = `Error al crear pedido desde recetas: ${response.status}`;
     try {
       const errorDetail = (await response.json()) as { message?: string };
       if (errorDetail?.message) errorMessage = errorDetail.message;
@@ -391,8 +462,8 @@ export async function createPurchaseBatchFromRecetas(
     throw new Error(errorMessage);
   }
 
-  const body = (await response.json()) as ApiResponse<PurchaseBatch>;
-  return body.data;
+  const body = (await response.json()) as ApiResponse<PedidoUsuario>;
+  return normalizePedidoUsuario(body.data);
 }
 
 export async function consolidatePurchaseBatch(
@@ -416,7 +487,7 @@ export async function consolidatePurchaseBatch(
   }
 
   const body = (await response.json()) as ApiResponse<PurchaseBatch>;
-  return body.data;
+  return normalizePurchaseBatch(body.data);
 }
 
 export async function fetchPurchaseBatches(): Promise<PurchaseBatch[]> {
@@ -425,7 +496,7 @@ export async function fetchPurchaseBatches(): Promise<PurchaseBatch[]> {
     throw new Error(`Error al obtener lotes: ${response.status}`);
   }
   const body = (await response.json()) as ApiResponse<PurchaseBatch[]>;
-  return body.data;
+  return body.data.map(normalizePurchaseBatch);
 }
 
 export async function fetchPedidoUsuarioById(
@@ -438,7 +509,7 @@ export async function fetchPedidoUsuarioById(
     );
   }
   const body = (await response.json()) as ApiResponse<PedidoUsuario>;
-  return body.data;
+  return normalizePedidoUsuario(body.data);
 }
 
 export async function fetchPurchaseBatchById(
@@ -449,7 +520,7 @@ export async function fetchPurchaseBatchById(
     throw new Error(`Error al obtener el detalle del lote: ${response.status}`);
   }
   const body = (await response.json()) as ApiResponse<PurchaseBatch>;
-  return body.data;
+  return normalizePurchaseBatch(body.data);
 }
 
 export async function updatePurchaseBatch(
@@ -474,7 +545,7 @@ export async function updatePurchaseBatch(
   }
 
   const body = (await response.json()) as ApiResponse<PurchaseBatch>;
-  return body.data;
+  return normalizePurchaseBatch(body.data);
 }
 
 export async function updatePedidoUsuario(
@@ -499,7 +570,7 @@ export async function updatePedidoUsuario(
   }
 
   const body = (await response.json()) as ApiResponse<PedidoUsuario>;
-  return body.data;
+  return normalizePedidoUsuario(body.data);
 }
 
 export async function aceptarPurchaseBatch(id: string): Promise<PurchaseBatch> {
@@ -520,7 +591,7 @@ export async function aceptarPurchaseBatch(id: string): Promise<PurchaseBatch> {
   }
 
   const body = (await response.json()) as ApiResponse<PurchaseBatch>;
-  return body.data;
+  return normalizePurchaseBatch(body.data);
 }
 
 export async function aceptarPedidoUsuario(id: string): Promise<PedidoUsuario> {
@@ -542,30 +613,7 @@ export async function aceptarPedidoUsuario(id: string): Promise<PedidoUsuario> {
   }
 
   const body = (await response.json()) as ApiResponse<PedidoUsuario>;
-  return body.data;
-}
-
-export async function tramitarPurchaseBatch(
-  id: string
-): Promise<PurchaseBatch> {
-  const response = await baseFetch(`/purchase-batches/${id}/tramitar`, {
-    method: 'PATCH',
-  });
-
-  if (!response.ok) {
-    let errorDetail: { message?: string } = {};
-    try {
-      errorDetail = await response.json();
-    } catch {
-      // ignore
-    }
-    throw new Error(
-      errorDetail?.message || `Error al tramitar pedido: ${response.status}`
-    );
-  }
-
-  const body = (await response.json()) as ApiResponse<PurchaseBatch>;
-  return body.data;
+  return normalizePedidoUsuario(body.data);
 }
 
 export async function cancelPurchaseBatch(
@@ -591,7 +639,7 @@ export async function cancelPurchaseBatch(
   }
 
   const body = (await response.json()) as ApiResponse<PurchaseBatch>;
-  return body.data;
+  return normalizePurchaseBatch(body.data);
 }
 
 export async function cancelPedidoUsuario(
@@ -618,67 +666,7 @@ export async function cancelPedidoUsuario(
   }
 
   const body = (await response.json()) as ApiResponse<PedidoUsuario>;
-  return body.data;
-}
-
-export async function restaurarPedido(id: string): Promise<Pedido> {
-  const response = await baseFetch(`/pedidos/${id}/restaurar`, {
-    method: 'PATCH',
-  });
-
-  if (!response.ok) {
-    throw new Error(`Error al restaurar pedido: ${response.status}`);
-  }
-
-  const body = (await response.json()) as ApiResponse<Pedido>;
-  return body.data;
-}
-
-export async function restaurarPedidoUsuario(
-  id: string
-): Promise<PedidoUsuario> {
-  const response = await baseFetch(`/pedido-usuarios/${id}/restaurar`, {
-    method: 'PATCH',
-  });
-
-  if (!response.ok) {
-    throw new Error(`Error al restaurar pedido de usuario: ${response.status}`);
-  }
-
-  const body = (await response.json()) as ApiResponse<PedidoUsuario>;
-  return body.data;
-}
-
-export async function deletePedidoUsuario(id: string): Promise<void> {
-  const response = await baseFetch(`/pedido-usuarios/${id}`, {
-    method: 'DELETE',
-  });
-
-  if (!response.ok) {
-    let errorMessage = `Error al eliminar pedido de usuario: ${response.status}`;
-    try {
-      const errorDetail = (await response.json()) as { message?: string };
-      if (errorDetail?.message) errorMessage = errorDetail.message;
-    } catch {
-      // ignore
-    }
-    throw new Error(errorMessage);
-  }
-}
-
-export async function restaurarPurchaseBatch(
-  id: string
-): Promise<PurchaseBatch> {
-  const response = await baseFetch(`/purchase-batches/${id}/restaurar`, {
-    method: 'PATCH',
-  });
-
-  if (!response.ok) {
-    throw new Error(`Error al restaurar lote: ${response.status}`);
-  }
-
-  const body = (await response.json()) as ApiResponse<PurchaseBatch>;
-  return body.data;
+  return normalizePedidoUsuario(body.data);
 }
 
 function getPedidoPdfPath(id: string): string {

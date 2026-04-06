@@ -68,6 +68,7 @@ describe('AuthService', () => {
 
   function createLoginQueryBuilder(user: Usuario | null) {
     return {
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       addSelect: jest.fn().mockReturnThis(),
       getOne: jest.fn().mockResolvedValue(user),
@@ -199,7 +200,7 @@ describe('AuthService', () => {
     const user = createUsuario({
       id: 'user-4',
       username: 'active.user',
-      rol: rolUsuario.ADMINISTRADOR,
+      rol: rolUsuario.ADMIN,
       password: await bcrypt.hash('Pass1234*', 10),
       status: UserStatus.ACTIVE,
       mustChangePassword: true,
@@ -222,7 +223,7 @@ describe('AuthService', () => {
     expect(mockJwtService.sign).toHaveBeenCalledWith({
       sub: 'user-4',
       username: 'active.user',
-      role: rolUsuario.ADMINISTRADOR,
+      role: rolUsuario.ADMIN,
     });
   });
 

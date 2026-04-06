@@ -155,9 +155,8 @@ describe('InventarioController (e2e)', () => {
       expect(movimiento).toBeTruthy();
       expect(movimiento?.tipo).toBe('salida_ajuste');
       expect(Number(movimiento?.cantidad)).toBe(15);
-      expect(movimiento?.descripcion).toContain(
-        'MANUAL_INVENTORY_ADJUSTMENT_DESCRIPTION'
-      );
+      expect(movimiento?.descripcion).toContain('Ajuste manual de inventario:');
+      expect(movimiento?.descripcion).toContain('Rotura interna');
 
       expect(movimiento?.usuarioId).toBeTruthy();
     });
@@ -221,12 +220,70 @@ describe('InventarioController (e2e)', () => {
       expect(response.status).toBe(409);
     });
 
+    it('E2E-INV-12B-MANUAL-ADJ-DELETED: Rechazar ajuste sobre inventario eliminado', async () => {
+      const item = await createInventario();
+
+      await request(app.getHttpServer() as string)
+        .delete(`/api/v1/inventario/${item.id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(204);
+
+      const response = await request(app.getHttpServer() as string)
+        .post('/api/v1/inventario/ajustes-manuales')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          inventarioId: item.id,
+          tipo: 'ajuste',
+          ajuste: 3,
+          motivo: 'Regularización sobre lote eliminado',
+        });
+
+      expect(response.status).toBe(409);
+    });
+
     it('E2E-INV-15-DEL-OK: Eliminar item de inventario', async () => {
       const item = await createInventario();
       await request(app.getHttpServer() as string)
         .delete(`/api/v1/inventario/${item.id}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(204);
+    });
+
+    it('E2E-INV-15B-DEL-MOV-USER: El movimiento de eliminación expone el usuario en la API', async () => {
+      const item = await createInventario();
+
+      await request(app.getHttpServer() as string)
+        .delete(`/api/v1/inventario/${item.id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(204);
+
+      const movimientoRepo = dataSource.getRepository(Movimiento);
+      const movimiento = await movimientoRepo.findOne({
+        where: {
+          inventarioId: item.id,
+          entidad: 'Inventario',
+        },
+        relations: ['usuario'],
+        order: {
+          createdAt: 'DESC',
+        },
+      });
+
+      expect(movimiento).toBeTruthy();
+      expect(movimiento?.usuarioId).toBeTruthy();
+
+      const response = await request(app.getHttpServer() as string)
+        .get(`/api/v1/movimientos/${movimiento?.id}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.usuario).toBeTruthy();
+      expect(response.body.data.usuario.id).toBe(movimiento?.usuarioId);
+      expect(
+        response.body.data.usuario.nombre ||
+          response.body.data.usuario.username ||
+          response.body.data.usuario.email
+      ).toBeTruthy();
     });
   });
 

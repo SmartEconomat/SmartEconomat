@@ -320,6 +320,20 @@ export class ExportService {
     );
   }
 
+  async streamIncidenciasToPdf(
+    query: ExportIncidenciaFilterDto,
+    res: Response
+  ): Promise<void> {
+    await this.streamQueryToPdf(
+      res,
+      'Incidencias',
+      INCIDENCIA_COLUMNS,
+      this.buildIncidenciaQueryBuilder(query),
+      mapIncidenciaToExcelRow,
+      query.maxRows ?? DEFAULT_MAX_ROWS
+    );
+  }
+
   async streamRecetasToPdf(
     query: ExportRecetaFilterDto,
     res: Response
@@ -662,10 +676,40 @@ export class ExportService {
       .leftJoinAndSelect('incidencia.usuarioResolutor', 'usuarioResolutor')
       .leftJoinAndSelect('incidencia.lineas', 'lineas');
 
-    if (query.resuelta === true) {
+    if (query.soloNoResueltas === true) {
+      qb.andWhere('incidencia.fechaResolucion IS NULL');
+    } else if (query.resuelta === true) {
       qb.andWhere('incidencia.fechaResolucion IS NOT NULL');
     } else if (query.resuelta === false) {
       qb.andWhere('incidencia.fechaResolucion IS NULL');
+    }
+
+    if (query.startDate) {
+      const normalizedStartDate =
+        query.startDate.length === 10
+          ? `${query.startDate}T00:00:00.000Z`
+          : query.startDate;
+
+      qb.andWhere('incidencia.createdAt >= :startDate', {
+        startDate: normalizedStartDate,
+      });
+    }
+
+    if (query.endDate) {
+      const normalizedEndDate =
+        query.endDate.length === 10
+          ? `${query.endDate}T23:59:59.999Z`
+          : query.endDate;
+
+      qb.andWhere('incidencia.createdAt <= :endDate', {
+        endDate: normalizedEndDate,
+      });
+    }
+
+    if (query.proveedorId) {
+      qb.andWhere('pedido.proveedorId = :proveedorId', {
+        proveedorId: query.proveedorId,
+      });
     }
 
     qb.orderBy('incidencia.createdAt', 'DESC');
@@ -810,6 +854,7 @@ export class ExportService {
   ): SelectQueryBuilder<Usuario> {
     const qb = this.dataSource
       .createQueryBuilder(Usuario, 'usuario')
+      .leftJoinAndSelect('usuario.profesor', 'profesor')
       .select([
         'usuario.id',
         'usuario.nombre',
@@ -817,9 +862,9 @@ export class ExportService {
         'usuario.email',
         'usuario.rol',
         'usuario.activo',
-        'usuario.cialProfesor',
-        'usuario.aula',
         'usuario.createdAt',
+        'profesor.id',
+        'profesor.cial',
       ]);
 
     if (query.searchTerm) {

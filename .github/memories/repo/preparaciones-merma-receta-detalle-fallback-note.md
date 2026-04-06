@@ -1,0 +1,3 @@
+- En Preparaciones, el modal de merma no debe depender solo de GET /recetas/:id/detalle: algunos lotes históricos pueden mostrar receta en producción pero fallar en detalle (ej. soft-delete/visibilidad).
+- Solución robusta: enriquecer ProduccionService.findAll con receta + ingredientes (withDeleted) y usar esos ingredientes en frontend como fuente primaria; usar getRecetaDetalle solo como fallback.
+- Warning React de `keepMounted` en DOM se corrige en tema MUI usando `MuiDrawer.defaultProps.ModalProps.keepMounted`, no `keepMounted` directo en Drawer.

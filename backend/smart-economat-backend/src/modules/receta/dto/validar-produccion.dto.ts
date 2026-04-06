@@ -9,7 +9,7 @@ import { i18nValidationMessage } from 'nestjs-i18n';
 import { Type } from 'class-transformer';
 
 class ValidarItemDto {
-  @IsUUID('7', {
+  @IsUUID('all', {
     message: i18nValidationMessage('validation.ID_RECETA_INVALIDO'),
   })
   recetaId!: string;

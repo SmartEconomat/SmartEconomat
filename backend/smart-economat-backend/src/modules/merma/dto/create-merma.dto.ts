@@ -5,15 +5,16 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Matches,
   MaxLength,
   Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { MotivoMerma } from '../enums/merma.enums';
+import { MotivoMerma, TipoMerma } from '../enums/merma.enums';
 
 export class CreateMermaDto {
   @ApiProperty({ description: 'UUID del producto al que se registra la merma' })
-  @IsUUID('7')
+  @IsUUID('all')
   productoId!: string;
 
   @ApiProperty({
@@ -38,4 +39,49 @@ export class CreateMermaDto {
   @IsString()
   @MaxLength(500)
   notas?: string;
+
+  @ApiPropertyOptional({
+    enum: TipoMerma,
+    description:
+      'Tipología operacional de la merma para analítica y trazabilidad',
+  })
+  @IsOptional()
+  @IsEnum(TipoMerma)
+  tipo?: TipoMerma;
+
+  @ApiPropertyOptional({
+    description:
+      'Entidad de origen para trazabilidad (por ejemplo: Recepcion, ProduccionLote, AjusteInventario)',
+    maxLength: 50,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  @Matches(/^[A-Za-z][A-Za-z0-9_]*$/, {
+    message: 'origenEntidad must be alphanumeric snake-style',
+  })
+  origenEntidad?: string;
+
+  @ApiPropertyOptional({
+    description: 'UUID de la entidad de origen para trazabilidad del evento',
+  })
+  @IsOptional()
+  @IsUUID('all')
+  origenId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'UUID de referencia secundaria (por ejemplo, línea operativa o recurso relacionado)',
+  })
+  @IsOptional()
+  @IsUUID('all')
+  referenciaId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Clave de idempotencia opcional para prevenir doble aplicación por reintentos',
+  })
+  @IsOptional()
+  @IsUUID('all')
+  idempotencyKey?: string;
 }

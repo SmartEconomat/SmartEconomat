@@ -13,7 +13,7 @@ La página de Incidencias es el panel central para gestionar discrepancias detec
 - **[DataTable](../componentes/DataTable.md)**: Listado de incidencias con columnas para fecha, proveedor, cantidad de líneas afectadas y estado.
 - **[DetailModal](../componentes/DetailModal.md)**: Vista detallada que desglosa los productos específicos con discrepancias, cantidades esperadas vs recibidas, y notas de recepción/resolución.
 - **[StatusChip](../componentes/StatusChip.md)**: Visualización semántica del estado (Pendiente en amarillo, Resuelta en verde con icono de check).
-- **[ResolveIncidenciaModal](../../features/incidencias/ResolveIncidenciaModal.tsx)**: Formulario modal para capturar las observaciones de cómo se solucionó la incidencia.
+- **[ResolveIncidenciaModal](../../../frontend/smart-economat-frontend/src/features/incidencias/ResolveIncidenciaModal.tsx)**: Formulario modal para capturar las observaciones de cómo se solucionó la incidencia.
 - **[ConfirmDialog](../componentes/ConfirmDialog.md)**: Validación para la eliminación de registros de incidencia.
 
 ## Funcionalidades Clave

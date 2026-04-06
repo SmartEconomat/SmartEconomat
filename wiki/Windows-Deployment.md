@@ -1,66 +1,60 @@
-# Guía de Despliegue en Windows Server (Azure)
+# Despliegue sobre host Windows
 
-Esta guía detalla el proceso completo realizado para desplegar el proyecto **SmartEconomat** en una máquina virtual Windows Server 2025 Datacenter en Azure.
+Esta guía recoge las consideraciones reales para ejecutar SmartEconomat desde un host Windows. El stack usa contenedores Linux, así que la ruta recomendada es operar mediante WSL2 y Docker Desktop, no con contenedores Windows nativos.
 
-## Requisitos de la Máquina
-- **Tamaño:** Standard D2s v3 (mínimo 2 vCPUs y 8GB RAM para soportar virtualización anidada).
-- **Sistema Operativo:** Windows Server 2025 Datacenter.
-- **Red (Azure NSG):** Puertos abiertos 80 (HTTP), 443 (HTTPS), 22 (SSH), 3389 (RDP).
+## Recomendación general
 
-## Paso 1: Configuración de OpenSSH
-Windows Server incluye OpenSSH, pero requiere configuración manual para uso profesional:
+Si puedes elegir, usa un host Linux y sigue [DEPLOYMENT.md](DEPLOYMENT.md). Mantener el proyecto en Windows añade complejidad en permisos, rendimiento de volúmenes y automatización de certificados.
 
-1. **Instalación:**
-   ```powershell
-   Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
-   Start-Service sshd
-   Set-Service -Name sshd -StartupType 'Automatic'
-   ```
+## Requisitos del host
 
-2. **Permisos de Seguridad (Crítico):**
-   OpenSSH en Windows es muy estricto. Se deben eliminar los permisos heredados del archivo `authorized_keys`:
-   ```powershell
-   icacls "C:\Users\psych\.ssh\authorized_keys" /inheritance:r
-   icacls "C:\Users\psych\.ssh\authorized_keys" /grant "psych:F"
-   icacls "C:\Users\psych\.ssh\authorized_keys" /grant "SYSTEM:F"
-   ```
+- Windows 11 o Windows Server con virtualización habilitada.
+- WSL2 operativo.
+- Docker Desktop configurado para usar el backend de WSL2.
+- Puertos `80` y `443` abiertos en el firewall o NSG.
 
-3. **Configuración de sshd_config:**
-   Ubicación: `C:\ProgramData\ssh\sshd_config`. Ajustes realizados:
-   - `PubkeyAuthentication yes`
-   - `PasswordAuthentication yes`
-   - `AuthorizedKeysFile .ssh/authorized_keys`
-   - Desactivado el bloque `Match Group administrators` que redirigía las llaves de administradores a una ruta global protegida.
+## Flujo recomendado
 
-## Paso 2: Preparación para Docker (Linux Containers)
-Como el proyecto usa imágenes de Linux (Redis, Postgres, Node), Windows debe actuar como host de contenedores Linux:
+### 1. Preparar WSL2 y Docker Desktop
 
-1. **Habilitar Virtualización:**
-   ```powershell
-   Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -NoRestart
-   Enable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform -NoRestart
-   # Reinicio requerido
-   ```
+```powershell
+wsl --install
+```
 
-2. **Instalación de WSL2:**
-   Se instaló el kernel de WSL2 para permitir que Docker ejecute contenedores Linux con alto rendimiento.
+Después instala Docker Desktop y habilita la integración con la distribución WSL que vayas a usar.
 
-3. **Instalación de Docker Desktop:**
-   Se instaló mediante línea de comandos:
-   ```powershell
-   .\DockerDesktopInstaller.exe install --quiet --accept-license
-   ```
+### 2. Trabajar desde el sistema de archivos Linux
 
-## Paso 3: Despliegue de la Aplicación
+Clona el repositorio dentro de la distribución WSL, por ejemplo en `~/SmartEconomat`, para evitar penalizaciones y problemas de permisos sobre NTFS.
 
-1. **Subida de archivos:** El proyecto se subió comprimido vía SCP y se descomprimió en `C:\Users\psych\SmartEconomat`.
-2. **Configuración de Entorno:** Se creó el archivo `.env.prod` basándose en `.env.example`, configurando el dominio con `nip.io` para SSL automático.
-3. **Ejecución:**
-   ```powershell
-   docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
-   ```
+### 3. Ejecutar el despliegue desde shell Linux
 
-## Mantenimiento y Logs
-- Ver logs de contenedores: `docker logs -f smarteconomat-backend`
-- Estado del sistema: `docker ps`
-- Reiniciar app: `docker-compose restart`
+Dentro de WSL:
+
+```bash
+cd ~/SmartEconomat
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+```
+
+El script [scripts/deploy.sh](../scripts/deploy.sh) es bash/Linux-centric. Si quieres usarlo, ejecútalo también desde WSL, no desde PowerShell puro.
+
+## Consideraciones operativas
+
+- Los certificados y volúmenes deben permanecer en el árbol del proyecto dentro de WSL.
+- Nginx y el backend siguen funcionando como contenedores Linux estándar; los certificados TLS se gestionan desde `scripts/deploy.sh`.
+- Swagger no queda publicado en producción por defecto con el `nginx.conf` actual, igual que en Linux.
+
+## Mantenimiento básico
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod logs -f
+docker compose -f docker-compose.prod.yml --env-file .env.prod restart
+docker compose -f docker-compose.prod.yml --env-file .env.prod down
+```
+
+## Cuándo usar un escenario Windows
+
+- Laboratorios o entornos corporativos donde el host Linux no sea viable.
+- Pruebas de compatibilidad con infraestructura interna basada en Windows.
+
+Para producción estable, el camino recomendado sigue siendo Linux con Docker Engine nativo.

@@ -45,7 +45,6 @@ export class ProveedorService {
   ): Promise<PaginatedResponseDto<Proveedor>> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
       userRole?.toUpperCase() === 'SUPER_ADMIN';
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 50);
@@ -82,7 +81,6 @@ export class ProveedorService {
   async findOne(id: string, userRole?: string): Promise<Proveedor> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'ADMINISTRADOR' ||
       userRole?.toUpperCase() === 'SUPER_ADMIN';
 
     const proveedor = await this.proveedorRepository.findOne({

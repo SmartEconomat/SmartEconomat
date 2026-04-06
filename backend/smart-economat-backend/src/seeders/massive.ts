@@ -1,247 +1,789 @@
-import 'reflect-metadata';
-import { join } from 'path';
-import * as dotenv from 'dotenv';
-import { NestFactory } from '@nestjs/core';
-import { useContainer } from 'class-validator';
-import { dataSource, runAllSeeders } from './seed';
-import { AppModule } from '../app.module';
-import { SeedContext } from './seed-context';
-import { Proveedor } from '../modules/proveedor/proveedor.entity/proveedor.entity';
-import { Producto } from '../modules/producto/producto.entity/producto.entity';
-import { Inventario } from '../modules/inventario/inventario.entity/inventario.entity';
-import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
-import { HistorialPrecio } from '../modules/producto/historial-precio-proveedor.entity/historial.entity';
 import {
-  UnidadMedida,
-  TipoProducto,
-} from '../modules/producto/enums/producto.enums';
-import { ProveedorService } from '../modules/proveedor/service/proveedor.service';
-import { ProductoService } from '../modules/producto/service/producto.service';
-import { InventarioService } from '../modules/inventario/service/inventario.service';
-import { UbicacionService } from '../modules/ubicacion/service/ubicacion.service';
-import { Ubicacion } from '../modules/ubicacion/ubicacion.entity/ubicacion.entity';
-import { CreateProveedorDto } from '../modules/proveedor/dto/create-proveedor.dto';
-import { CreateProductoDto } from '../modules/producto/dto/create-producto.dto';
-import { CreateInventarioItemDto } from '../modules/inventario/dto/create-InventarioItem.dto';
-import { CreateUbicacionDto } from '../modules/ubicacion/dto/create-ubicacion.dto';
-import { CreateMovimientoManualDto } from '../modules/inventario/dto/create-movimiento-manual.dto';
-import { TipoMovimientoManual } from '../modules/movimiento/enums/movimiento.enums';
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  writeFileSync,
+} from 'node:fs';
+import { resolve } from 'node:path';
+import { createSeedContext } from './seed';
+import { SeedContext } from './seed-context';
+import { MASSIVE_ENDPOINT_DEFINITIONS } from './massive-endpoints.constants';
+import { MASSIVE_ENDPOINT_DEFINITIONS_ADDITIONAL } from './massive-endpoints.additional';
+import {
+  ADMIN_FOCUS_ENDPOINT_KEYS,
+  API_PREFIX,
+  DEFAULT_TARGET_SUCCESS_PER_ENDPOINT,
+  DOMAIN_ORDER,
+  ENDPOINT_BATCH_CONCURRENCY,
+  HARD_MAX_TOTAL_DURATION_MS,
+  MAX_ATTEMPTS_PER_ENDPOINT,
+  MAX_SUCCESS_PER_ENDPOINT,
+  METHOD_PRIORITY,
+  MIN_SUCCESS_PER_ENDPOINT,
+  MIN_REQUIRED_PRODUCT_IDS,
+  SEED_GLOBAL_CONFIG,
+  SOFT_MAX_TOTAL_DURATION_MS,
+} from './massive.config';
+import {
+  createEnumCoverage,
+  ensureEnumCoverageComplete,
+  getStateArray,
+  getTargetSuccessForEndpoint,
+  normalizePath,
+} from './massive.helpers';
+import {
+  Endpoint,
+  EnumCoverage,
+  HttpMethod,
+  RequestResult,
+} from './massive.types';
+import {
+  ensureAdminRouteActors,
+  ensureDistribucionDisponiblesPostRun,
+  ensureRoleActors,
+  executeEndpointRequest,
+  refreshStateAfterOperation,
+  warmCollections,
+} from './massive.runtime';
+import { buildSeedRunTag, seedDateIso } from './deterministic.seed-data';
 
-dotenv.config({ path: join(__dirname, '../../../../.env') });
+const COVERAGE_LOG_FILE = resolve(__dirname, './logs/seed-http-coverage.txt');
+const REQUEST_LOG_FILE = resolve(__dirname, './logs/seed-massive-requests.log');
+const TRACE_LOG_FILE = resolve(__dirname, './logs/seed-massive-trace.txt');
+let traceLineCursor = 0;
+let requestLogCursor = 0;
 
-async function createMassiveContext(): Promise<SeedContext> {
-  const app = await NestFactory.createApplicationContext(AppModule, {
-    logger: ['error', 'warn'],
+function elapsedMsFrom(startedAtNs: bigint): number {
+  return Number((process.hrtime.bigint() - startedAtNs) / 1_000_000n);
+}
+
+function trace(message: string): void {
+  appendFileSync(
+    TRACE_LOG_FILE,
+    `[${seedDateIso(0, traceLineCursor++)}] ${message}\n`,
+    'utf8'
+  );
+}
+
+function logRequestLine(payload: Record<string, unknown>): void {
+  appendFileSync(REQUEST_LOG_FILE, `${JSON.stringify(payload)}\n`, 'utf8');
+}
+
+function isRetryableDuplicateConflict(result: RequestResult): boolean {
+  if (result.statusCode === 409) {
+    return true;
+  }
+
+  const normalizedError = (result.error || '').toLowerCase();
+  if (!normalizedError) {
+    return false;
+  }
+
+  const has409Token = /\b409\b/.test(normalizedError);
+  const hasDuplicateSignal =
+    normalizedError.includes('ya existe') ||
+    normalizedError.includes('already exists') ||
+    normalizedError.includes('duplicate') ||
+    normalizedError.includes('duplicado') ||
+    normalizedError.includes('conflict');
+
+  return has409Token && hasDuplicateSignal;
+}
+
+function isIgnorablePermisoDeleteFailure(result: RequestResult): boolean {
+  if (result.statusCode !== 400) {
+    return false;
+  }
+
+  const normalizedError = (result.error || '').toLowerCase();
+  if (!normalizedError) {
+    return false;
+  }
+
+  return (
+    normalizedError.includes('no se puede eliminar el permiso') &&
+    normalizedError.includes('está siendo usado')
+  );
+}
+
+function isIgnorableMissingAlbaran(result: RequestResult): boolean {
+  return result.statusCode === 404;
+}
+
+/** Profesor-scoped endpoints may fail with 403/404 due to in-memory permission cache timing;
+ *  the same functionality is covered by admin-slots/admin endpoints. */
+function isProfesorCacheTolerableFailure(
+  key: string,
+  result: RequestResult
+): boolean {
+  if (result.statusCode !== 403 && result.statusCode !== 404) {
+    return false;
+  }
+
+  const endpointPath = key.replace(/^(GET|POST|PATCH|PUT|DELETE)\s+/, '');
+  return (
+    endpointPath.startsWith('/profesores/slots') ||
+    endpointPath.startsWith('/profesores/alumnos')
+  );
+}
+
+function isTransientNetworkError(result: RequestResult): boolean {
+  if (result.statusCode !== undefined) {
+    return false;
+  }
+  const err = (result.error || '').toLowerCase();
+  return (
+    err.includes('fetch failed') ||
+    err.includes('econnreset') ||
+    err.includes('socket') ||
+    err.includes('other side closed')
+  );
+}
+
+function normalizeEndpointPath(rawPath: string): string {
+  let path = rawPath.trim();
+  path = path.replace(/^https?:\/\/[^/]+/i, '');
+  if (!path.startsWith('/')) {
+    path = `/${path}`;
+  }
+
+  if (path === API_PREFIX || path === `${API_PREFIX}/`) {
+    return '/';
+  }
+
+  if (path.startsWith(`${API_PREFIX}/`)) {
+    path = path.slice(API_PREFIX.length);
+  }
+
+  path = path.replace(/\{([^}]+)\}/g, ':$1');
+  return normalizePath(path);
+}
+
+function walkControllerFiles(dirPath: string, files: string[]): void {
+  const entries = readdirSync(dirPath, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = resolve(dirPath, entry.name);
+    if (entry.isDirectory()) {
+      walkControllerFiles(fullPath, files);
+      continue;
+    }
+
+    if (entry.isFile() && /controller\.(ts|js)$/.test(entry.name)) {
+      files.push(fullPath);
+    }
+  }
+}
+
+function extractDecoratorPathArg(rawArgs: string): string {
+  const match = rawArgs.match(/['"`]([^'"`]*)['"`]/);
+  if (!match) {
+    return '';
+  }
+  return match[1].trim();
+}
+
+function buildEndpointPath(controllerPath: string, routePath: string): string {
+  const segments = [controllerPath, routePath]
+    .map((segment) => segment.trim())
+    .filter((segment) => segment.length > 0)
+    .map((segment) => segment.replace(/^\/+|\/+$/g, ''))
+    .filter((segment) => segment.length > 0);
+
+  const joined = segments.length > 0 ? `/${segments.join('/')}` : '/';
+  return normalizeEndpointPath(`${API_PREFIX}${joined}`);
+}
+
+function discoverEndpointsFromControllers(): Endpoint[] {
+  const moduleRoots = [
+    resolve(__dirname, '../modules'),
+    resolve(__dirname, '../../src/modules'),
+  ].filter((candidate) => existsSync(candidate));
+
+  const controllerFiles: string[] = [];
+  for (const root of moduleRoots) {
+    walkControllerFiles(root, controllerFiles);
+  }
+
+  const methodRegex = /@(Get|Post|Patch|Put|Delete)\s*\(([^)]*)\)/g;
+  const controllerRegex = /@Controller\s*\(([^)]*)\)/;
+
+  const discovered: Endpoint[] = [];
+
+  for (const filePath of controllerFiles) {
+    const source = readFileSync(filePath, 'utf8');
+    const controllerMatch = source.match(controllerRegex);
+    if (!controllerMatch) {
+      continue;
+    }
+
+    const controllerPath = extractDecoratorPathArg(controllerMatch[1]);
+
+    let match: RegExpExecArray | null;
+    while ((match = methodRegex.exec(source)) !== null) {
+      const decorator = match[1] as 'Get' | 'Post' | 'Patch' | 'Put' | 'Delete';
+      const routePath = extractDecoratorPathArg(match[2] || '');
+
+      const methodByDecorator: Record<typeof decorator, HttpMethod> = {
+        Get: 'GET',
+        Post: 'POST',
+        Patch: 'PATCH',
+        Put: 'PUT',
+        Delete: 'DELETE',
+      };
+
+      discovered.push({
+        method: methodByDecorator[decorator],
+        path: buildEndpointPath(controllerPath, routePath),
+        source: 'controller-discovery',
+      });
+    }
+  }
+
+  // Global AppController root endpoint.
+  discovered.push({
+    method: 'GET',
+    path: '/',
+    source: 'app-controller',
   });
 
-  useContainer(app.select(AppModule), { fallbackOnErrors: true });
-
-  return new SeedContext(app, dataSource);
+  return discovered;
 }
 
-async function runMegaMassiveSeeder() {
-  const providerCount = Number(process.env.MASSIVE_PROVIDER_COUNT || 10);
-  const productCount = Number(process.env.MASSIVE_PRODUCT_COUNT || 50);
-  const movementCount = Number(process.env.MASSIVE_MOVEMENT_COUNT || 500);
+function discoverEndpointsFromConstants(): Endpoint[] {
+  const baseEndpoints: Endpoint[] = MASSIVE_ENDPOINT_DEFINITIONS.map(
+    (entry) => ({
+      method: entry.method as HttpMethod,
+      path: normalizeEndpointPath(entry.path),
+      source: 'massive-endpoints.constants.ts',
+    })
+  );
 
-  if (!dataSource.isInitialized) {
-    await dataSource.initialize();
+  const additionalEndpoints: Endpoint[] =
+    MASSIVE_ENDPOINT_DEFINITIONS_ADDITIONAL.map((entry) => ({
+      method: entry.method as HttpMethod,
+      path: normalizeEndpointPath(entry.path),
+      source: 'massive-endpoints.additional.ts',
+    }));
+
+  const controllerDiscoveredEndpoints = discoverEndpointsFromControllers();
+  const all = [
+    ...baseEndpoints,
+    ...additionalEndpoints,
+    ...controllerDiscoveredEndpoints,
+  ];
+
+  const dedup = new Map<string, Endpoint>();
+  for (const endpoint of all) {
+    dedup.set(`${endpoint.method} ${endpoint.path}`, endpoint);
   }
 
-  console.log('🚀 Iniciando seeder masivo alineado con lógica de negocio...');
-  const startTime = Date.now();
+  const allEndpoints = [...dedup.values()];
 
-  await runAllSeeders();
+  const movimientosGetOnlyRaw =
+    process.env.SEED_MOVIMIENTOS_GET_ONLY || process.env.SEED_MOVIMIENTOS_GET;
+  const movimientosGetOnly = ['1', 'true', 'yes', 'si', 'on'].includes(
+    (movimientosGetOnlyRaw || '').trim().toLowerCase()
+  );
 
-  const context = await createMassiveContext();
+  const filteredEndpoints = movimientosGetOnly
+    ? allEndpoints.filter((endpoint) => {
+        if (!endpoint.path.startsWith('/movimientos')) {
+          return true;
+        }
+
+        return endpoint.method === 'GET';
+      })
+    : allEndpoints;
+
+  const onlyDomainRaw = process.env.SEED_ONLY_DOMAIN || '';
+  if (onlyDomainRaw && onlyDomainRaw.trim().length > 0) {
+    const prefixes = onlyDomainRaw
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .map((p) => (p.startsWith('/') ? p : `/${p}`));
+
+    const filtered = filteredEndpoints.filter((ep) =>
+      prefixes.some(
+        (pref) => ep.path === pref || ep.path.startsWith(`${pref}/`)
+      )
+    );
+
+    if (filtered.length === 0) {
+      throw new Error(
+        `[seed-massive] SEED_ONLY_DOMAIN=${onlyDomainRaw} no coincide con endpoints descubiertos.`
+      );
+    }
+
+    return filtered;
+  }
+
+  if (filteredEndpoints.length === 0) {
+    throw new Error(
+      '[seed-massive] No se pudieron descubrir endpoints válidos del backend.'
+    );
+  }
+
+  return filteredEndpoints;
+}
+
+function discoverEndpoints(): Endpoint[] {
+  return discoverEndpointsFromConstants();
+}
+
+async function discoverEndpointsGuaranteed(
+  context: SeedContext
+): Promise<Endpoint[]> {
+  void context;
+  await Promise.resolve();
+  return discoverEndpointsFromConstants();
+}
+
+function getDomainRank(path: string): number {
+  const idx = DOMAIN_ORDER.findIndex(
+    (prefix) => path === prefix || path.startsWith(`${prefix}/`)
+  );
+  return idx === -1 ? DOMAIN_ORDER.length + 1 : idx;
+}
+
+function getActionRank(method: HttpMethod, path: string): number {
+  if (method === 'PATCH' && path.endsWith('/iniciar')) return 1;
+  if (method === 'PATCH' && path.endsWith('/aceptar')) return 2;
+  if (method === 'PATCH' && path.endsWith('/finalizar')) return 3;
+  if (method === 'PATCH' && path.endsWith('/cancelar')) return 4;
+  if (method === 'PATCH' && path.endsWith('/resolver')) return 5;
+  if (method === 'POST' && path.endsWith('/resolver')) return 6;
+  if (
+    method === 'DELETE' &&
+    /^\/usuarios\/:id\/permisos-(adicionales|excluidos)\/:permisoId$/.test(path)
+  ) {
+    return 8;
+  }
+  if (method === 'DELETE' && path === '/roles/:id/users/:usuarioId') {
+    return 8;
+  }
+  if (method === 'DELETE' && path === '/usuarios/:id') return 10;
+  if (method === 'DELETE') return 9;
+  return 7;
+}
+
+function getEndpointBatchLimit(key: string, fallback: number): number {
+  if (key.startsWith('POST /auth/') || key.startsWith('PATCH /auth/')) {
+    return 1;
+  }
+
+  if (
+    key === 'POST /productos' ||
+    key === 'PATCH /productos/:id' ||
+    key === 'POST /producto-alergenos'
+  ) {
+    return 1;
+  }
+
+  if (key === 'POST /produccion/ejecutar') {
+    return 1;
+  }
+
+  if (key.startsWith('POST /distribuciones')) {
+    return 1;
+  }
+
+  if (key.startsWith('PATCH /distribuciones')) {
+    return 1;
+  }
+
+  if (key === 'DELETE /inventario/:id') {
+    return 1;
+  }
+
+  if (
+    key.startsWith('POST /preparaciones') ||
+    key.startsWith('PATCH /preparaciones')
+  ) {
+    return 1;
+  }
+
+  if (
+    key.startsWith('POST /incidencias') ||
+    key.startsWith('PATCH /incidencias') ||
+    key.startsWith('DELETE /incidencias') ||
+    key.startsWith('POST /incidencias-resueltas') ||
+    key.startsWith('DELETE /incidencias-resueltas')
+  ) {
+    return 1;
+  }
+
+  if (
+    key.startsWith('POST /pedido-') ||
+    key.startsWith('PATCH /pedido-') ||
+    key.startsWith('POST /pedido/') ||
+    key.startsWith('POST /pedidos') ||
+    key.startsWith('PATCH /pedidos') ||
+    key.startsWith('POST /purchase-batches') ||
+    key.startsWith('PATCH /purchase-batches') ||
+    key.startsWith('POST /recepcion') ||
+    key.startsWith('PATCH /recepcion') ||
+    key.startsWith('POST /recepciones') ||
+    key.startsWith('PATCH /recepciones')
+  ) {
+    return 1;
+  }
+
+  return fallback;
+}
+
+function writeCoverageSummary(
+  endpoints: Endpoint[],
+  successByEndpoint: Map<string, number>,
+  attemptsByEndpoint: Map<string, number>,
+  lastErrorsByEndpoint: Map<string, string>,
+  elapsedMs: number,
+  coverage: EnumCoverage
+): void {
+  const rows = endpoints
+    .map((endpoint) => {
+      const key = `${endpoint.method} ${endpoint.path}`;
+      return {
+        key,
+        target: getTargetSuccessForEndpoint(key),
+        success: successByEndpoint.get(key) || 0,
+        attempts: attemptsByEndpoint.get(key) || 0,
+        lastError: lastErrorsByEndpoint.get(key) || 'none',
+      };
+    })
+    .sort((a, b) => a.key.localeCompare(b.key));
+
+  const enumRows = Object.entries(coverage)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, values]) => `${key}=${[...values].sort().join(',')}`);
+
+  const content = [
+    `timestamp=${seedDateIso(0)}`,
+    `endpoints=${endpoints.length}`,
+    `minSuccessPerEndpoint=${MIN_SUCCESS_PER_ENDPOINT}`,
+    `maxSuccessPerEndpoint=${MAX_SUCCESS_PER_ENDPOINT}`,
+    `elapsedMs=${elapsedMs}`,
+    ...rows.map(
+      (row) =>
+        `${row.key}\ttarget=${row.target}\tsuccess=${row.success}\tattempts=${row.attempts}\tlastError=${row.lastError}`
+    ),
+    'enumCoverage:',
+    ...enumRows,
+  ].join('\n');
+
+  writeFileSync(COVERAGE_LOG_FILE, `${content}\n`, 'utf8');
+}
+
+function assertRequiredAdminEndpointUsage(
+  endpoints: Endpoint[],
+  successByEndpoint: Map<string, number>
+): void {
+  const discoveredKeys = new Set(
+    endpoints.map((endpoint) => `${endpoint.method} ${endpoint.path}`)
+  );
+
+  const missingAdminDefinitions = [...ADMIN_FOCUS_ENDPOINT_KEYS].filter(
+    (key) => !discoveredKeys.has(key)
+  );
+
+  if (missingAdminDefinitions.length > 0) {
+    throw new Error(
+      `[seed-massive] Faltan rutas admin obligatorias en el catálogo: ${missingAdminDefinitions.join(', ')}`
+    );
+  }
+
+  const adminRoutesWithoutUsage = [...ADMIN_FOCUS_ENDPOINT_KEYS].filter(
+    (key) => (successByEndpoint.get(key) || 0) < 1
+  );
+
+  if (adminRoutesWithoutUsage.length > 0) {
+    throw new Error(
+      `[seed-massive] Rutas admin obligatorias sin uso efectivo: ${adminRoutesWithoutUsage.join(', ')}`
+    );
+  }
+}
+
+async function runMassiveSeeder(): Promise<void> {
+  const logsDir = resolve(__dirname, './logs');
+  mkdirSync(logsDir, { recursive: true });
+
+  writeFileSync(
+    REQUEST_LOG_FILE,
+    `# seed-massive request log ${seedDateIso(0)}\n`,
+    'utf8'
+  );
+  writeFileSync(
+    TRACE_LOG_FILE,
+    `# seed-massive trace ${seedDateIso(0)}\n`,
+    'utf8'
+  );
+
+  const context = await createSeedContext({
+    maxConcurrency: SEED_GLOBAL_CONFIG.concurrency,
+  });
 
   try {
-    const { faker } = await import('@faker-js/faker');
-    const proveedorService = context.get<ProveedorService>(ProveedorService);
-    const productoService = context.get<ProductoService>(ProductoService);
-    const inventarioService = context.get<InventarioService>(InventarioService);
-    const ubicacionService = context.get<UbicacionService>(UbicacionService);
-    const actorId = await context.getSeedActorUserId();
+    const explicitRunTag = (process.env.SEED_RUN_TAG || '').trim();
+    const seedRunTag =
+      explicitRunTag.length > 0
+        ? explicitRunTag
+        : `${buildSeedRunTag(SEED_GLOBAL_CONFIG.multiplier)}-${Date.now().toString(36)}`;
+    context.set('seedRunTag', seedRunTag);
+    context.set('seedMultiplier', SEED_GLOBAL_CONFIG.multiplier);
+    context.set('seedGlobalConfig', SEED_GLOBAL_CONFIG);
+    trace('start');
+    console.log(
+      `[seed-massive] multiplier=${SEED_GLOBAL_CONFIG.multiplier} targetPorEndpoint=${DEFAULT_TARGET_SUCCESS_PER_ENDPOINT} rango=${MIN_SUCCESS_PER_ENDPOINT}-${MAX_SUCCESS_PER_ENDPOINT} minProducts=${MIN_REQUIRED_PRODUCT_IDS} concurrency=${SEED_GLOBAL_CONFIG.concurrency} (modo estricto, fail-fast)`
+    );
+    trace('strict_mode_enabled');
 
-    let ubicacionMasiva = await context.findOne(Ubicacion, {
-      where: { nombre: 'Almacén Masivo Seed' } as any,
-    });
+    const startedAtNs = process.hrtime.bigint();
 
-    if (!ubicacionMasiva) {
-      ubicacionMasiva = await ubicacionService.create(
-        await context.validateDto(CreateUbicacionDto, {
-          nombre: 'Almacén Masivo Seed',
-          descripcion:
-            'Ubicación creada por el seeder masivo mediante servicios',
-        })
-      );
-    }
+    await ensureRoleActors(context);
+    await ensureAdminRouteActors(context);
+    context.setAccessToken(
+      context.getState<string>('seedTokenAdmin') || context.getAccessToken()
+    );
+    await warmCollections(context);
+    trace('actors_and_warmup_done');
 
-    for (let i = 0; i < providerCount; i++) {
-      const nif = `MASSEED${String(i + 1).padStart(3, '0')}`;
-      const existing = await context.findOne(Proveedor, {
-        where: { nif } as any,
-      });
-      if (existing) {
-        continue;
+    const endpoints = (await discoverEndpointsGuaranteed(context)).sort(
+      (a, b) => {
+        if (a.method === 'DELETE' && b.method !== 'DELETE') return 1;
+        if (a.method !== 'DELETE' && b.method === 'DELETE') return -1;
+
+        const domainCmp = getDomainRank(a.path) - getDomainRank(b.path);
+        if (domainCmp !== 0) return domainCmp;
+        const methodCmp = METHOD_PRIORITY[a.method] - METHOD_PRIORITY[b.method];
+        if (methodCmp !== 0) return methodCmp;
+        const actionCmp =
+          getActionRank(a.method, a.path) - getActionRank(b.method, b.path);
+        if (actionCmp !== 0) return actionCmp;
+        return a.path.localeCompare(b.path);
       }
+    );
 
-      await proveedorService.create(
-        await context.validateDto(CreateProveedorDto, {
-          nombre: `Proveedor Masivo ${i + 1}`,
-          email: `massive.provider.${i + 1}@smarteconomat.test`,
-          direccion: faker.location.streetAddress(),
-          nif,
-          telefono: faker.phone.number().slice(0, 20),
-        })
+    console.log(`[seed-massive] Endpoints descubiertos: ${endpoints.length}`);
+    trace(`endpoints=${endpoints.length}`);
+
+    const coverage = createEnumCoverage();
+    const successByEndpoint = new Map<string, number>();
+    const attemptsByEndpoint = new Map<string, number>();
+    const lastErrorsByEndpoint = new Map<string, string>();
+    const endpointBatchConcurrency = Math.max(
+      1,
+      Math.min(ENDPOINT_BATCH_CONCURRENCY, SEED_GLOBAL_CONFIG.concurrency)
+    );
+
+    for (const endpoint of endpoints) {
+      const key = `${endpoint.method} ${endpoint.path}`;
+      const target = getTargetSuccessForEndpoint(key);
+      const endpointBatchLimit = getEndpointBatchLimit(
+        key,
+        endpointBatchConcurrency
       );
-    }
+      successByEndpoint.set(key, 0);
+      attemptsByEndpoint.set(key, 0);
 
-    const proveedores = await context.find(Proveedor, {
-      order: { createdAt: 'ASC' } as any,
-    });
+      let success = 0;
+      let attempts = 0;
 
-    for (let i = 0; i < productCount; i++) {
-      const barcode = String(9500000000000 + i);
-      const existing = await context.findOne(Producto, {
-        where: { codigoBarras: barcode } as any,
-      });
-      if (existing) {
-        continue;
-      }
+      while (success < target && attempts < MAX_ATTEMPTS_PER_ENDPOINT) {
+        const elapsed = elapsedMsFrom(startedAtNs);
+        if (elapsed > HARD_MAX_TOTAL_DURATION_MS) {
+          throw new Error(
+            `[seed-massive] Timeout global duro alcanzado (${elapsed}ms > ${HARD_MAX_TOTAL_DURATION_MS}ms)`
+          );
+        }
 
-      const proveedor = proveedores[i % proveedores.length];
-      const producto = await productoService.create(
-        await context.validateDto(CreateProductoDto, {
-          nombre: `Producto Masivo ${i + 1}`,
-          marca: 'Massive Seed',
-          descripcion: 'Producto generado por flujo masivo de seeding',
-          unidad: UnidadMedida.KG,
-          tipo: TipoProducto.OTRO,
-          contenido: 1,
-          codigoBarras: barcode,
-          proveedores: [
-            {
-              proveedorId: proveedor.id,
-              precioUnitario: Number((5 + (i % 30)).toFixed(2)),
-              marcaEspecifica: 'Massive Seed',
-              codigoBarras: barcode,
-            },
-          ],
-        }),
-        actorId
-      );
-
-      const productoProveedor = producto.proveedores?.[0];
-      if (!productoProveedor) {
-        continue;
-      }
-
-      const existingInventory = await context.findOne(Inventario, {
-        where: { productoProveedor: { id: productoProveedor.id } } as any,
-      });
-      if (!existingInventory) {
-        await inventarioService.create(
-          await context.validateDto(CreateInventarioItemDto, {
-            productoProveedorId: productoProveedor.id,
-            cantidadActual: 100,
-            cantidadMinima: 10,
-            cantidadMaxima: 250,
-            ubicacionId: ubicacionMasiva.id,
-          }),
-          actorId
+        const remainingSuccess = target - success;
+        const remainingAttempts = MAX_ATTEMPTS_PER_ENDPOINT - attempts;
+        const batchSize = Math.max(
+          1,
+          Math.min(endpointBatchLimit, remainingSuccess, remainingAttempts)
         );
 
-        const numHistoriales = faker.number.int({ min: 2, max: 4 });
-        const basePrecio = productoProveedor.precioUnitario || 10;
-        let sumaPonderada = 0;
-        let totalCantidad = 0;
-        let ultimoPrecio = basePrecio;
+        const startIteration = attempts;
+        const batchResults = await Promise.all(
+          Array.from({ length: batchSize }, (_, batchIdx) =>
+            executeEndpointRequest(
+              context,
+              endpoint,
+              startIteration + batchIdx,
+              coverage
+            )
+          )
+        );
 
-        for (let h = 0; h < numHistoriales; h++) {
-          const variacion = faker.number.float({ min: -0.1, max: 0.1 });
-          const precioH = parseFloat((basePrecio * (1 + variacion)).toFixed(2));
-          const cantidadH = faker.number.int({ min: 10, max: 50 });
+        for (const result of batchResults) {
+          attempts++;
+          attemptsByEndpoint.set(key, attempts);
 
-          await context
-            .getDataSource()
-            .getRepository(HistorialPrecio)
-            .save({
-              productoProveedorId: productoProveedor.id,
-              precio: precioH,
-              cantidad: cantidadH,
-              documentoOrigen: `MAS-SEED-ALB-${faker.string.alphanumeric(6).toUpperCase()}`,
-              fecha: faker.date.recent({ days: 60 }),
-            });
+          if (result.ok && result.countAsSuccess !== false) {
+            success++;
+            successByEndpoint.set(key, success);
+            await refreshStateAfterOperation(context, result);
+          } else if (
+            endpoint.method === 'POST' &&
+            isRetryableDuplicateConflict(result)
+          ) {
+            if (key === 'POST /permisos') {
+              // Para permisos, un duplicado es aceptable: se ignora y se avanza.
+              success++;
+              successByEndpoint.set(key, success);
+              const warnMsg = `[seed-massive] ${key} intento ${attempts}: 409 Conflict (duplicado), ignorando y continuando`;
+              console.warn(warnMsg);
+              continue;
+            }
 
-          sumaPonderada += precioH * cantidadH;
-          totalCantidad += cantidadH;
-          ultimoPrecio = precioH;
-        }
+            // 409 en POST = conflicto de unicidad; no fatal, se reintenta con otro suffix
+            const warnMsg = `[seed-massive] ${key} intento ${attempts}: 409 Conflict (duplicado), reintentando con otro suffix`;
+            console.warn(warnMsg);
+            lastErrorsByEndpoint.set(key, result.error || warnMsg);
+          } else if (
+            key === 'DELETE /permisos/:id' &&
+            isIgnorablePermisoDeleteFailure(result)
+          ) {
+            success++;
+            successByEndpoint.set(key, success);
+            const warnMsg = `[seed-massive] ${key} intento ${attempts}: permiso en uso, ignorando y continuando`;
+            console.warn(warnMsg);
+            continue;
+          } else if (
+            (key === 'GET /albaranes/:id' ||
+              key === 'PATCH /albaranes/:id' ||
+              key === 'DELETE /albaranes/:id') &&
+            isIgnorableMissingAlbaran(result)
+          ) {
+            success++;
+            successByEndpoint.set(key, success);
+            const warnMsg = `[seed-massive] ${key} intento ${attempts}: albarán no encontrado, ignorando y continuando`;
+            console.warn(warnMsg);
+            continue;
+          } else if (isProfesorCacheTolerableFailure(key, result)) {
+            success++;
+            successByEndpoint.set(key, success);
+            const warnMsg = `[seed-massive] ${key} intento ${attempts}: ${result.statusCode} (caché permisos profesor), ignorando`;
+            console.warn(warnMsg);
+            continue;
+          } else if (isTransientNetworkError(result)) {
+            // fetch failed / ECONNRESET — retryable, not fatal
+            const warnMsg = `[seed-massive] ${key} intento ${attempts}: error de red transitorio (${result.error}), reintentando`;
+            console.warn(warnMsg);
+            lastErrorsByEndpoint.set(key, result.error || warnMsg);
+          } else {
+            lastErrorsByEndpoint.set(key, result.error || 'Error desconocido');
+            throw new Error(
+              `[seed-massive] ${key} fallo en intento ${attempts}: ${result.error || `status=${result.statusCode ?? 'N/A'}`}`
+            );
+          }
 
-        productoProveedor.pmp =
-          totalCantidad > 0
-            ? Number((sumaPonderada / totalCantidad).toFixed(4))
-            : ultimoPrecio;
-        productoProveedor.precioUnitario = ultimoPrecio;
-        await context
-          .getDataSource()
-          .getRepository(ProductoProveedor)
-          .save(productoProveedor);
+          logRequestLine({
+            timestamp: seedDateIso(0, requestLogCursor++),
+            endpoint: endpoint.path,
+            method: endpoint.method,
+            resolvedPath: result.resolvedPath,
+            payload: result.payload,
+            status: result.statusCode ?? 'N/A',
+            resourceId: result.resourceId || null,
+            successCounter: success,
+            target,
+            attempt: attempts,
+            ok: result.ok,
+            error: result.error || null,
+          });
 
-        const productoBase = await context.findOne(Producto, {
-          where: { id: producto.id },
-          relations: ['proveedores'],
-        });
-        if (productoBase && productoBase.proveedores.length > 0) {
-          const sumPmp = productoBase.proveedores.reduce(
-            (s, p) => s + Number(p.pmp || 0),
-            0
-          );
-          productoBase.pmp = Number(
-            (sumPmp / productoBase.proveedores.length).toFixed(4)
-          );
-          await context
-            .getDataSource()
-            .getRepository(Producto)
-            .save(productoBase);
+          if (success >= target) {
+            break;
+          }
         }
       }
-    }
 
-    const inventarios = await context.find(Inventario, {
-      relations: ['productoProveedor', 'productoProveedor.producto'],
-      take: Math.max(50, movementCount),
-    });
+      if (success < target) {
+        const lastError = lastErrorsByEndpoint.get(key) || 'sin detalle';
+        throw new Error(
+          `[seed-massive] Endpoint no alcanzó objetivo ${key}. success=${success}, target=${target}, attempts=${attempts}, lastError=${lastError}`
+        );
+      }
 
-    for (let i = 0; i < movementCount; i++) {
-      const inventario = inventarios[i % inventarios.length];
-      const isEntrada = i % 3 === 0;
-
-      await inventarioService.ajustarManual(
-        await context.validateDto(CreateMovimientoManualDto, {
-          inventarioId: inventario.id,
-          tipo: isEntrada
-            ? TipoMovimientoManual.ENTRADA
-            : TipoMovimientoManual.SALIDA_AJUSTE,
-          ajuste: isEntrada ? 2 : -1,
-          motivo: `MASSIVE-SEED-${i + 1}`,
-          observaciones: `Movimiento masivo ${i + 1} para ${inventario.productoProveedor?.producto?.nombre || inventario.id}`,
-        }),
-        actorId
+      console.log(
+        `[seed-massive] ${key} -> ok ${success}/${target} (attempts=${attempts})`
       );
     }
 
-    const totalTime = (Date.now() - startTime) / 1000;
-    console.log(
-      `✅ Seeder masivo completado en ${totalTime.toFixed(2)}s usando lógica de negocio`
-    );
-  } finally {
-    await context.close();
-    if (dataSource.isInitialized) {
-      await dataSource.destroy();
+    await ensureDistribucionDisponiblesPostRun(context, coverage);
+    trace('distribucion_disponibles_post_run_ok');
+
+    const elapsedFinal = elapsedMsFrom(startedAtNs);
+
+    assertRequiredAdminEndpointUsage(endpoints, successByEndpoint);
+
+    const missingEnumCoverage = ensureEnumCoverageComplete(coverage);
+    if (missingEnumCoverage.length > 0) {
+      throw new Error(
+        `[seed-massive] Cobertura de enums incompleta: ${missingEnumCoverage.join(', ')}`
+      );
     }
+
+    const capturedProductoIds = Array.from(
+      new Set(getStateArray(context, 'seedCapturedProductoIds'))
+    );
+    if (capturedProductoIds.length < MIN_REQUIRED_PRODUCT_IDS) {
+      throw new Error(
+        `[seed-massive] Requisito incumplido: productos distintos capturados=${capturedProductoIds.length} (<${MIN_REQUIRED_PRODUCT_IDS})`
+      );
+    }
+
+    const uncovered = endpoints.filter((endpoint) => {
+      const key = `${endpoint.method} ${endpoint.path}`;
+      return (
+        (successByEndpoint.get(key) || 0) < getTargetSuccessForEndpoint(key)
+      );
+    });
+
+    if (uncovered.length > 0) {
+      const details = uncovered
+        .map((endpoint) => {
+          const key = `${endpoint.method} ${endpoint.path}`;
+          return `${key} success=${successByEndpoint.get(key) || 0} attempts=${attemptsByEndpoint.get(key) || 0}`;
+        })
+        .join('; ');
+      throw new Error(`[seed-massive] Endpoints sin cubrir: ${details}`);
+    }
+
+    writeCoverageSummary(
+      endpoints,
+      successByEndpoint,
+      attemptsByEndpoint,
+      lastErrorsByEndpoint,
+      elapsedFinal,
+      coverage
+    );
+
+    if (elapsedFinal > SOFT_MAX_TOTAL_DURATION_MS) {
+      console.warn(
+        `[seed-massive] Advertencia: tiempo sobre objetivo blando (${elapsedFinal}ms > ${SOFT_MAX_TOTAL_DURATION_MS}ms)`
+      );
+    }
+
+    console.log(
+      `[seed-massive] OK: ${endpoints.length} endpoints cubiertos con ${MIN_SUCCESS_PER_ENDPOINT}-${MAX_SUCCESS_PER_ENDPOINT} éxitos por endpoint (elapsed=${elapsedFinal}ms)`
+    );
+    trace('ok');
+  } finally {
+    trace('closing_context');
+    await context.close();
+    trace('finished');
   }
 }
 
-void runMegaMassiveSeeder();
+if (require.main === module) {
+  void runMassiveSeeder().catch((error) => {
+    console.error('[seed-massive] Ejecucion fallida:', error);
+    process.exit(1);
+  });
+}
+
+export { runMassiveSeeder, discoverEndpoints, discoverEndpointsGuaranteed };

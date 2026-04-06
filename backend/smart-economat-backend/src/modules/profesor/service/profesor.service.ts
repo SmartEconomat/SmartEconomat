@@ -13,6 +13,8 @@ import { rolUsuario, UserStatus } from '../../usuario/enums/usuario.enums';
 import { CreateSlotDto } from '../dto/create-slot.dto';
 import { CreateProfesorDto } from '../dto/create-profesor.dto';
 import { UpdateSlotDto } from '../dto/update-slot.dto';
+import { AdminCreateSlotDto } from '../dto/admin-create-slot.dto';
+import { AdminUpdateSlotDto } from '../dto/admin-update-slot.dto';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'node:crypto';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
@@ -143,7 +145,7 @@ export class ProfesorService {
     return this.slotRepo.save(slot);
   }
 
-  async adminCreateSlot(dto: CreateSlotDto & { profesorId: string }) {
+  async adminCreateSlot(dto: AdminCreateSlotDto) {
     const profesor = await this.profesorRepo.findOne({
       where: { id: dto.profesorId },
     });
@@ -387,10 +389,7 @@ export class ProfesorService {
   }
 
   /** Admin: actualiza un slot (campos basicos + reasignacion de profesor) */
-  async adminUpdateSlot(
-    slotId: string,
-    dto: UpdateSlotDto & { profesorId?: string }
-  ) {
+  async adminUpdateSlot(slotId: string, dto: AdminUpdateSlotDto) {
     const slot = await this.slotRepo.findOne({
       where: { id: slotId },
       relations: ['profesor'],

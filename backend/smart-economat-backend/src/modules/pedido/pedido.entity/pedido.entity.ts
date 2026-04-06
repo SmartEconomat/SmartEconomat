@@ -10,7 +10,10 @@ import {
 import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
-import { EstadoPedido } from '../enums/estado-pedido.enum';
+import {
+  ESTADO_PEDIDO_DB_VALUES,
+  EstadoPedido,
+} from '../enums/estado-pedido.enum';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
 import { PedidoProducto } from '../pedido-producto.entity/pedido-producto.entity';
@@ -24,16 +27,18 @@ import { PedidoUsuario } from '../pedido-usuario.entity/pedido-usuario.entity';
  * Representa una solicitud de compra de productos a proveedores.
  *
  * Flujo de estados:
- * 1. PENDIENTE: Creado, en borrador.
- * 2. EN_PROCESO: Tramitado con el proveedor.
- * 3. RECIBIDO: Mercancía recepcionada correctamente y verificada.
- * 4. INCIDENCIA: Recibido con discrepancias (cantidad/calidad) pendientes de resolución.
- * 5. CANCELADO: Pedido anulado antes de completarse.
+ * 1. PENDIENTE_DE_APROBACION: Pedido interno creado y pendiente de validación.
+ * 2. POR_RECEPCIONAR: Compra aprobada o consolidada, pendiente de recepción.
+ * 3. PARCIAL: La recepción ha empezado pero aún no está cerrada.
+ * 4. INCIDENCIA: Existe una incidencia abierta asociada al pedido.
+ * 5. RECEPCIONADO: Mercancía recepcionada completamente.
+ * 6. CANCELADO: Pedido anulado antes de cerrarse.
  *
  * @class Pedido
  * @extends {BaseEntity}
  */
 @Entity({ name: 'pedido' })
+@Index(['numeroGlobal'], { unique: true })
 @Index(['estado'])
 @Index(['fechaPedido'])
 @Index(['usuarioId'])
@@ -43,6 +48,9 @@ import { PedidoUsuario } from '../pedido-usuario.entity/pedido-usuario.entity';
 @Index(['estado', 'createdAt'])
 @Check(`"coste_total" >= 0`)
 export class Pedido extends BaseEntity {
+  @Column({ name: 'numero_global', type: 'bigint', unique: true })
+  numeroGlobal!: string;
+
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
 
@@ -79,7 +87,7 @@ export class Pedido extends BaseEntity {
   proveedor?: Relation<Proveedor>;
 
   /**
-   * Lote de compra al que pertenece este pedido (opcional para legacy).
+   * Lote de compra al que pertenece este pedido.
    */
   @ManyToOne(() => PurchaseBatch, (batch) => batch.pedidos, {
     nullable: true,
@@ -142,8 +150,9 @@ export class Pedido extends BaseEntity {
    */
   @Column({
     type: 'enum',
-    enum: EstadoPedido,
-    default: EstadoPedido.PENDIENTE,
+    enum: ESTADO_PEDIDO_DB_VALUES,
+    enumName: 'estado_pedido',
+    default: EstadoPedido.PENDIENTE_DE_APROBACION,
   })
   estado!: EstadoPedido;
 
@@ -170,7 +179,8 @@ export class Pedido extends BaseEntity {
   motivoCancelacion?: string;
 
   /**
-   * Motivo de incidencia (solo si estado === INCIDENCIA).
+   * Observaciones de incidencia asociadas al pedido interno.
+   * El detalle funcional vive en el módulo de incidencias y el estado operativo pasa a INCIDENCIA.
    */
   @Column({ type: 'text', nullable: true, name: 'motivo_incidencia' })
   motivoIncidencia?: string;
@@ -190,10 +200,10 @@ export class Pedido extends BaseEntity {
   }
 
   /**
-   * Marcar como entregado
+   * Marcar como recepcionado
    */
-  marcarComoEntregado(): void {
-    this.estado = EstadoPedido.RECIBIDO;
+  marcarComoRecepcionado(): void {
+    this.estado = EstadoPedido.RECEPCIONADO;
   }
 
   /**
