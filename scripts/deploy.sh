@@ -158,7 +158,7 @@ fi
 echo -e "${GREEN}Iniciando despliegue de $APP_NAME...${NC}"
 
 # 1. Asegurar dependencias del sistema
-echo -e "\n${YELLOW}[1/8] Verificando dependencias del sistema...${NC}"
+echo -e "\n${YELLOW}[1/7] Verificando dependencias del sistema...${NC}"
 sudo DEBIAN_FRONTEND=noninteractive apt-get update -y > /dev/null
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y zip unzip curl ufw openssl > /dev/null
 
@@ -176,7 +176,7 @@ fi
 sudo chmod 666 /var/run/docker.sock || true
 
 # 2. Backup y Extracción
-echo -e "\n${YELLOW}[2/8] Preparando archivos de la aplicación...${NC}"
+echo -e "\n${YELLOW}[2/7] Preparando archivos de la aplicación...${NC}"
 if [ ! -f "$ARCHIVE_PATH" ]; then
     echo -e "${RED}Error: No se encontro el paquete en $ARCHIVE_PATH${NC}"
     exit 1
@@ -203,14 +203,14 @@ for path in certs certs-data certs-webroot uploads; do
 done
 
 # 3. Configurar Firewall (UFW)
-echo -e "\n${YELLOW}[3/8] Configurando Firewall...${NC}"
+echo -e "\n${YELLOW}[3/7] Configurando Firewall...${NC}"
 sudo ufw allow 22/tcp
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
 sudo ufw --force enable
 
 # 4. Generar .env.prod
-echo -e "\n${YELLOW}[4/8] Generando variables de entorno...${NC}"
+echo -e "\n${YELLOW}[4/7] Generando variables de entorno...${NC}"
 cat > "$APP_DIR/.env.prod" <<EOF
 NODE_ENV=${NODE_ENV:-production}
 DOMAIN=${DOMAIN:-}
@@ -252,7 +252,7 @@ if [ -z "${DOMAIN:-}" ]; then
 fi
 
 # 5. Gestionar Certificados TLS
-echo -e "\n${YELLOW}[5/8] Configurando Certificados TLS (modo: $TLS_PROVIDER)...${NC}"
+echo -e "\n${YELLOW}[5/7] Configurando Certificados TLS (modo: $TLS_PROVIDER)...${NC}"
 cd "$APP_DIR"
 mkdir -p certs certs-data certs-webroot/.well-known/acme-challenge
 
@@ -276,17 +276,11 @@ sudo chmod -R 755 certs certs-data || true
 configure_renewal_cron
 
 # 6. Desplegar Contenedores
-echo -e "\n${YELLOW}[6/8] Levantando Docker Compose...${NC}"
+echo -e "\n${YELLOW}[6/7] Levantando Docker Compose...${NC}"
 sudo docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 
-# 7. Ejecutar Seeders
-echo -e "\n${YELLOW}[7/8] Inicializando base de datos (Seeders)...${NC}"
-echo "Esperando a que el backend este listo..."
-sleep 15
-sudo docker-compose --env-file .env.prod -f docker-compose.prod.yml exec -T backend sh -lc 'NODE_ENV=development node dist/seeders/seed.js reset'
-
-# 8. Limpiar
-echo -e "\n${YELLOW}[8/8] Limpiando archivos temporales...${NC}"
+# 7. Limpiar
+echo -e "\n${YELLOW}[7/7] Limpiando archivos temporales...${NC}"
 rm -f "$ARCHIVE_PATH"
 
 echo -e "\n${GREEN}====================================================${NC}"
