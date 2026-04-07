@@ -25,6 +25,8 @@ LETSENCRYPT_CONFIG_DIR="/etc/letsencrypt"
 LETSENCRYPT_WORK_DIR="/var/lib/letsencrypt"
 LETSENCRYPT_LOGS_DIR="/var/log/letsencrypt"
 LETSENCRYPT_WEBROOT_DIR="/var/www/acme-challenge"
+DEPLOY_BACKUP_RETENTION="${DEPLOY_BACKUP_RETENTION:-1}"
+DEPLOY_PRUNE_DOCKER_BEFORE_BUILD="${DEPLOY_PRUNE_DOCKER_BEFORE_BUILD:-true}"
 
 TLS_PROVIDER="${TLS_PROVIDER:-selfsigned}"
 TLS_SELF_SIGNED_DAYS="${TLS_SELF_SIGNED_DAYS:-825}"
@@ -51,6 +53,51 @@ validate_letsencrypt_directory() {
             exit 1
             ;;
     esac
+}
+
+cleanup_old_release_backups() {
+    local backups=()
+    local backup
+
+    while IFS= read -r backup; do
+        backups+=("$backup")
+    done < <(find "$REMOTE_BASE_DIR" -maxdepth 1 -mindepth 1 -type d -name "${APP_NAME}_backup_*" | sort -r)
+
+    if [ "${#backups[@]}" -le "$DEPLOY_BACKUP_RETENTION" ]; then
+        return
+    fi
+
+    echo "Eliminando backups antiguos para liberar espacio..."
+    for ((i=DEPLOY_BACKUP_RETENTION; i<${#backups[@]}; i++)); do
+        sudo rm -rf "${backups[$i]}"
+    done
+}
+
+cleanup_release_workspace() {
+    if [ ! -d "$APP_DIR" ]; then
+        return
+    fi
+
+    echo "Limpiando release anterior preservando datos persistentes..."
+    find "$APP_DIR" -mindepth 1 -maxdepth 1 \
+        ! -name "certs" \
+        ! -name "certs-data" \
+        ! -name "certs-webroot" \
+        ! -name "uploads" \
+        ! -name "renewal.log" \
+        ! -name ".env.prod" \
+        -exec sudo rm -rf {} +
+}
+
+prune_docker_storage() {
+    if [ "$DEPLOY_PRUNE_DOCKER_BEFORE_BUILD" != "true" ]; then
+        return
+    fi
+
+    echo "Liberando cache y artefactos Docker no usados..."
+    sudo docker builder prune -af || true
+    sudo docker image prune -af || true
+    sudo docker container prune -f || true
 }
 
 refresh_active_certificate_symlinks() {
@@ -175,7 +222,7 @@ if ! command -v docker-compose &> /dev/null; then
 fi
 sudo chmod 666 /var/run/docker.sock || true
 
-# 2. Backup y Extracción
+# 2. Preparación y Extracción
 echo -e "\n${YELLOW}[2/7] Preparando archivos de la aplicación...${NC}"
 if [ ! -f "$ARCHIVE_PATH" ]; then
     echo -e "${RED}Error: No se encontro el paquete en $ARCHIVE_PATH${NC}"
@@ -186,12 +233,21 @@ STAMP=$(date +%s)
 BACKUP_DIR="$REMOTE_BASE_DIR/${APP_NAME}_backup_$STAMP"
 
 if [ -d "$APP_DIR" ]; then
-    echo "Haciendo backup de la versión anterior..."
-    sudo mv "$APP_DIR" "$BACKUP_DIR"
+    echo "Guardando un backup ligero de datos persistentes..."
+    mkdir -p "$BACKUP_DIR"
+    for path in certs certs-data certs-webroot uploads; do
+        if [ -d "$APP_DIR/$path" ]; then
+            sudo cp -rp "$APP_DIR/$path" "$BACKUP_DIR/"
+        fi
+    done
 fi
+
+cleanup_old_release_backups
+cleanup_release_workspace
 
 mkdir -p "$APP_DIR"
 unzip -q "$ARCHIVE_PATH" -d "$APP_DIR"
+rm -f "$ARCHIVE_PATH"
 
 # Restaurar datos persistentes si existen
 for path in certs certs-data certs-webroot uploads; do
@@ -277,11 +333,14 @@ configure_renewal_cron
 
 # 6. Desplegar Contenedores
 echo -e "\n${YELLOW}[6/7] Levantando Docker Compose...${NC}"
-sudo docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+prune_docker_storage
+sudo docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d --build --remove-orphans
 
 # 7. Limpiar
 echo -e "\n${YELLOW}[7/7] Limpiando archivos temporales...${NC}"
-rm -f "$ARCHIVE_PATH"
+if [ -d "$BACKUP_DIR" ]; then
+    echo "Backup persistente disponible en $BACKUP_DIR"
+fi
 
 echo -e "\n${GREEN}====================================================${NC}"
 echo -e "${GREEN}       ¡DESPLIEGUE COMPLETADO EXITOSAMENTE!         ${NC}"

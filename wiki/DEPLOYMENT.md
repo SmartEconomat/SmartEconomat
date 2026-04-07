@@ -53,14 +53,14 @@ Variables opcionales frecuentes: `SENTRY_DSN`, `VITE_SENTRY_DSN`, `VITE_API_PROX
 El script [scripts/deploy.sh](../scripts/deploy.sh) realiza estas acciones:
 
 1. Instala dependencias del host si faltan (`zip`, `unzip`, `curl`, `ufw`, Docker).
-2. Descomprime el paquete de aplicación y restaura `certs`, `certs-data`, `certs-webroot` y `uploads` si existían.
+2. Limpia el release anterior preservando datos persistentes, descomprime el paquete y restaura `certs`, `certs-data`, `certs-webroot` y `uploads` si existían.
 3. Configura `.env.prod` con los valores exportados en el shell.
 4. Genera certificados TLS autofirmados (o usa Let's Encrypt si `TLS_PROVIDER=letsencrypt`).
-5. Arranca `docker-compose.prod.yml`.
-6. Ejecuta `node dist/seeders/seed.js reset` dentro del backend.
+5. Libera caché de Docker no usada y arranca `docker-compose.prod.yml`.
+6. Finaliza el despliegue dejando disponible un backup ligero de los datos persistentes restaurados.
 
 > [!WARNING]
-> El paso 6 reinicia y repuebla la base de datos. Con el script en su estado actual, es apto para aprovisionamiento inicial o entornos donde un reset de datos sea aceptable; no es un flujo seguro para actualizar una producción con datos persistentes.
+> El script no hace reset automático de la base de datos. Los datos persistentes viven en volúmenes Docker y directorios restaurados (`certs`, `certs-data`, `certs-webroot`, `uploads`).
 
 ## Opción manual
 

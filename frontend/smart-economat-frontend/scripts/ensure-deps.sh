@@ -23,7 +23,11 @@ fi
 
 if [ ! -d node_modules ] || [ "$CURRENT_HASH" != "$STORED_HASH" ]; then
   echo "📦 Sincronizando dependencias del frontend usando $MANIFEST_FILE..."
-  npm install
+  if [ "$MANIFEST_FILE" = "package-lock.json" ]; then
+    npm ci
+  else
+    npm install
+  fi
   mkdir -p "$MARKER_DIR"
   printf '%s' "$CURRENT_HASH" > "$MARKER_FILE"
 else

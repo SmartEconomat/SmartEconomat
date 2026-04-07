@@ -23,8 +23,11 @@ fi
 
 if [ ! -d node_modules ] || [ ! -f node_modules/.bin/nest ] || [ "$CURRENT_HASH" != "$STORED_HASH" ]; then
   echo "📦 Sincronizando dependencias del backend usando $MANIFEST_FILE..."
-  # Forzamos npm install para asegurar compatibilidad en dev
-  npm install
+  if [ "$MANIFEST_FILE" = "package-lock.json" ]; then
+    npm ci
+  else
+    npm install
+  fi
   mkdir -p "$(dirname "$MARKER_FILE")"
   printf '%s' "$CURRENT_HASH" > "$MARKER_FILE"
 else

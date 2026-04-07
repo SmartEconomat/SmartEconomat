@@ -11,9 +11,6 @@ WORKDIR /app
 # Copiar manifiestos
 COPY --chown=node:node package*.json ./
 
-# Instalar dependencias
-RUN npm install
-
 # Copiar código
 COPY --chown=node:node . .
 
