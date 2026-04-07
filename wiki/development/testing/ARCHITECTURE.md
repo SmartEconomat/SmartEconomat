@@ -1,12 +1,12 @@
-# 📦 Sistema de Testing - Arquitectura Técnica
+# Sistema de Testing - Arquitectura Técnica
 
-## 🎯 Objetivo
+## Objetivo
 
 Crear un sistema de testing extremadamente rápido que permita ejecutar cientos o miles de tests en segundos, sin usar base de datos real, manteniendo aislamiento completo entre tests.
 
 ---
 
-## 🏗️ Componentes del Sistema
+## Componentes del Sistema
 
 ### 1. pg-mem (PostgreSQL en Memoria)
 
@@ -19,14 +19,14 @@ Crear un sistema de testing extremadamente rápido que permita ejecutar cientos 
 - Gestionar snapshots (backup/restore)
 
 **Ventajas:**
-- ✅ 1000x más rápido que PostgreSQL real
-- ✅ No requiere Docker o PostgreSQL instalado
-- ✅ Soporta la mayoría de features de PostgreSQL
-- ✅ Snapshots instantáneos (<1ms)
+- 1000x más rápido que PostgreSQL real
+- No requiere Docker o PostgreSQL instalado
+- Soporta la mayoría de features de PostgreSQL
+- Snapshots instantáneos (<1ms)
 
 **Limitaciones conocidas:**
-- ❌ No soporta algunas funciones avanzadas de PostgreSQL
-- ❌ Cada worker tiene su propia instancia (no compartida)
+- No soporta algunas funciones avanzadas de PostgreSQL
+- Cada worker tiene su propia instancia (no compartida)
 
 ---
 
@@ -95,25 +95,25 @@ Worker inicia
 - Garantiza que cada test individual empieza con el mismo estado
 
 **Ventajas:**
-- ✅ Aislamiento completo entre tests
-- ✅ Cada test ve el mismo estado inicial
-- ✅ No necesita transacciones manuales
-- ✅ Funciona con transacciones internas de servicios
-- ✅ Rollback instantáneo (<1ms)
+- Aislamiento completo entre tests
+- Cada test ve el mismo estado inicial
+- No necesita transacciones manuales
+- Funciona con transacciones internas de servicios
+- Rollback instantáneo (<1ms)
 
 **Comparación con transacciones:**
 ```
 Transacciones:
-  ❌ No pueden rollback transacciones internas
-  ❌ Requiere SAVEPOINTs complejos
-  ❌ No funciona con QueryRunners independientes
-  ❌ Requiere código adicional en cada test
+   No pueden rollback transacciones internas
+   Requiere SAVEPOINTs complejos
+   No funciona con QueryRunners independientes
+   Requiere código adicional en cada test
 
 Snapshots:
-  ✅ Rollback de TODO el estado
-  ✅ Sin configuración adicional
-  ✅ Funciona con cualquier patrón de acceso a datos
-  ✅ Más simple y más rápido
+   Rollback de TODO el estado
+   Sin configuración adicional
+   Funciona con cualquier patrón de acceso a datos
+   Más simple y más rápido
 ```
 
 ---
@@ -133,9 +133,9 @@ Snapshots:
 - Reducción de tiempo: ~100x
 
 **Seguridad:**
-- ✅ Solo afecta entorno de test
-- ✅ Los tests siguen validando la lógica correctamente
-- ✅ En producción se usa el valor real (10+ rounds)
+- Solo afecta entorno de test
+- Los tests siguen validando la lógica correctamente
+- En producción se usa el valor real (10+ rounds)
 
 ---
 
@@ -164,7 +164,7 @@ Snapshots:
 
 ---
 
-## 🔄 Flujo Completo de Ejecución
+## Flujo Completo de Ejecución
 
 ### Inicio de Jest
 
@@ -221,13 +221,13 @@ Worker 1                    Worker 2
 ├─ app NestJS 1            ├─ app NestJS 2
 └─ Ejecuta tests A, B, C   └─ Ejecuta tests D, E, F
 
-No hay estado compartido ✅
-Paralelización segura ✅
+No hay estado compartido.
+Paralelización segura.
 ```
 
 ---
 
-## ⚡ Métricas de Rendimiento
+## Métricas de Rendimiento
 
 ### Tiempos típicos
 
@@ -256,7 +256,7 @@ Mejora: 10x
 
 ---
 
-## 🔍 Debugging
+## Debugging
 
 ### Ver logs detallados
 
@@ -293,7 +293,7 @@ npm run test:e2e:debug
 
 ---
 
-## 🛠️ Configuración Avanzada
+## Configuración Avanzada
 
 ### Ajustar número de workers
 
@@ -322,7 +322,7 @@ npm run test:e2e -- --runInBand
 
 ---
 
-## 🔐 Variables de Entorno de Test
+## Variables de Entorno de Test
 
 ```env
 NODE_ENV=test
@@ -335,7 +335,7 @@ OFF_API_ENABLED=false                 # Deshabilitar APIs externas
 
 ---
 
-## 📊 Comparación con Alternativas
+## Comparación con Alternativas
 
 ### pg-mem vs PostgreSQL real
 
@@ -351,15 +351,15 @@ OFF_API_ENABLED=false                 # Deshabilitar APIs externas
 
 | Feature | Snapshots | Transacciones |
 |---------|-----------|---------------|
-| Rollback completo | ✅ TODO | ❌ Solo TX actual |
-| Transacciones internas | ✅ Funciona | ❌ No rollback |
+| Rollback completo | TODO | Solo TX actual |
+| Transacciones internas | Funciona | No rollback |
 | Velocidad | <1ms | ~10-50ms |
 | Complejidad | Simple | Complejo (SAVEPOINTs) |
 | Código adicional | No | Sí (beforeEach/afterEach) |
 
 ---
 
-## 🎓 Principios del Diseño
+## Principios del Diseño
 
 1. **Singleton Pattern**: Una instancia compartida reduce overhead
 2. **Lazy Initialization**: Solo crear cuando se necesita
@@ -416,7 +416,7 @@ Tiempo real: ~70-90s
 
 ---
 
-## 🔮 Mejoras Futuras
+## Mejoras Futuras
 
 1. **Snapshots pre-generados**
    - Generar snapshot una vez y reutilizarlo en todos los runs

@@ -1,8 +1,8 @@
-# 🎯 Guía de Migración de Tests
+# Guía de Migración de Tests
 
 Esta guía te ayudará a migrar tests existentes al nuevo sistema de testing optimizado.
 
-## 📋 Checklist de migración
+## Checklist de migración
 
 - [ ] Actualizar imports
 - [ ] Simplificar beforeAll
@@ -13,9 +13,9 @@ Esta guía te ayudará a migrar tests existentes al nuevo sistema de testing opt
 
 ---
 
-## 1️⃣ Actualizar imports
+## 1. Actualizar imports
 
-### ❌ Antes
+### Antes
 
 ```typescript
 import { Test } from '@nestjs/testing';
@@ -24,7 +24,7 @@ import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
 ```
 
-### ✅ Después
+### Después
 
 ```typescript
 import { INestApplication } from '@nestjs/common';
@@ -38,9 +38,9 @@ import {
 
 ---
 
-## 2️⃣ Simplificar beforeAll
+## 2. Simplificar beforeAll
 
-### ❌ Antes
+### Antes
 
 ```typescript
 let app: INestApplication;
@@ -71,7 +71,7 @@ beforeAll(async () => {
 });
 ```
 
-### ✅ Después
+### Después
 
 ```typescript
 let app: INestApplication;
@@ -90,9 +90,9 @@ beforeAll(async () => {
 
 ---
 
-## 3️⃣ Usar helpers de datos únicos
+## 3. Usar helpers de datos únicos
 
-### ❌ Antes
+### Antes
 
 ```typescript
 it('crear usuario', async () => {
@@ -108,7 +108,7 @@ it('crear usuario', async () => {
 });
 ```
 
-### ✅ Después
+### Después
 
 ```typescript
 import { generateUniqueName, generateUniqueEmail } from './setup';
@@ -133,19 +133,19 @@ it('crear usuario', async () => {
 
 ---
 
-## 4️⃣ Remover código innecesario
+## 4. Remover código innecesario
 
-### ❌ Cosas que ya NO necesitas
+### Cosas que ya no necesitas
 
 ```typescript
 // 1. NO cerrar la app en afterAll
 afterAll(async () => {
-  await app.close(); // ❌ REMOVER - La app es singleton
+  await app.close(); // Remover: la app es singleton
 });
 
 // 2. NO limpiar datos en afterEach
 afterEach(async () => {
-  await repository.clear(); // ❌ REMOVER - Los snapshots lo manejan
+  await repository.clear(); // Remover: los snapshots lo manejan
 });
 
 // 3. NO crear transacciones manuales
@@ -156,15 +156,15 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
-  await queryRunner.rollbackTransaction(); // ❌ REMOVER - Los snapshots son mejores
+  await queryRunner.rollbackTransaction(); // Remover: los snapshots son mejores
   await queryRunner.release();
 });
 
 // 4. NO configurar timeout individual
-jest.setTimeout(30000); // ❌ REMOVER - Ya está configurado globalmente
+jest.setTimeout(30000); // Remover: ya está configurado globalmente
 ```
 
-### ✅ Tu test solo necesita
+### Tu test solo necesita
 
 ```typescript
 describe('MiModulo (e2e)', () => {
@@ -182,9 +182,9 @@ describe('MiModulo (e2e)', () => {
 
 ---
 
-## 5️⃣ Refactorizar helpers del test
+## 5. Refactorizar helpers del test
 
-### ❌ Antes
+### Antes
 
 ```typescript
 async function createProducto(nombre?: string) {
@@ -199,7 +199,7 @@ async function createProducto(nombre?: string) {
 }
 ```
 
-### ✅ Después
+### Después
 
 ```typescript
 import { generateUniqueName } from './setup';
@@ -218,9 +218,9 @@ async function createProducto(nombre?: string) {
 
 ---
 
-## 6️⃣ Usar helpers de assertions
+## 6. Usar helpers de assertions
 
-### ❌ Antes
+### Antes
 
 ```typescript
 it('listar productos', async () => {
@@ -237,7 +237,7 @@ it('listar productos', async () => {
 });
 ```
 
-### ✅ Después
+### Después
 
 ```typescript
 import { expectPaginatedResponse } from './setup';
@@ -253,9 +253,9 @@ it('listar productos', async () => {
 
 ---
 
-## 7️⃣ Ejemplo completo de migración
+## 7. Ejemplo completo de migración
 
-### ❌ ANTES: Test antiguo (50+ líneas)
+### ANTES: Test antiguo (50+ líneas)
 
 ```typescript
 import { Test, TestingModule } from '@nestjs/testing';
@@ -306,7 +306,7 @@ describe('Productos (e2e)', () => {
 });
 ```
 
-### ✅ DESPUÉS: Test optimizado (25 líneas)
+### DESPUÉS: Test optimizado (25 líneas)
 
 ```typescript
 import { INestApplication } from '@nestjs/common';
@@ -342,38 +342,38 @@ describe('Productos (e2e)', () => {
 ```
 
 **Mejoras:**
-- ✅ 50% menos código
-- ✅ Más legible
-- ✅ Más rápido (~100x)
-- ✅ Más mantenible
-- ✅ Patrones consistentes
+- 50% menos código
+- Más legible
+- Más rápido (~100x)
+- Más mantenible
+- Patrones consistentes
 
 ---
 
-## 🔍 Verificar la migración
+## Verificar la migración
 
 Después de migrar un test, verifica:
 
-1. **El test pasa** ✅
+1. **El test pasa**
    ```bash
    npm run test:e2e -- productos.e2e-spec.ts
    ```
 
-2. **El test es rápido** ⚡
+2. **El test es rápido**
    - Primer test: ~2-5s (include seeders)
    - Tests subsecuentes: < 100ms
 
-3. **El test es aislado** 🔒
+3. **El test es aislado**
    - Ejecutar múltiples veces da mismo resultado
    - Ejecutar en paralelo funciona correctamente
 
-4. **No hay warnings** 🚫
+4. **No hay warnings**
    - No hay memory leaks
    - No hay conexiones abiertas
 
 ---
 
-## 📊 Prioridad de migración
+## Prioridad de migración
 
 ### Alta prioridad (migrar primero)
 1. Tests que se ejecutan frecuentemente
@@ -390,7 +390,7 @@ Después de migrar un test, verifica:
 
 ---
 
-## 💡 Tips adicionales
+## Tips adicionales
 
 1. **Migar un archivo a la vez**
    - No intentes migrar todo de golpe
@@ -408,7 +408,7 @@ Después de migrar un test, verifica:
 
 ---
 
-## ❓ FAQ
+## FAQ
 
 **P: ¿Necesito migrar todos los tests?**  
 R: No es obligatorio, pero recomendado. Los tests antiguos seguirán funcionando.
@@ -424,4 +424,4 @@ R: Sí, pero no es recomendado. Mejor migrar un archivo completo.
 
 ---
 
-**¡Buena suerte con la migración! 🚀**
+Buena suerte con la migración.

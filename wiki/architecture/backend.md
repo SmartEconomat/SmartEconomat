@@ -2,6 +2,18 @@
 
 Este documento detalla la arquitectura del servidor de `SmartEconomat`, construido con **NestJS**, siguiendo un enfoque modular, orientado a capas y optimizado para alto rendimiento con **SWC** y **UUID v7**.
 
+## Resumen estructural actual
+
+El backend expone una API pública bajo `/api/v1` y organiza su dominio en 27 carpetas de módulo dentro de `src/modules`, con 36 controladores HTTP visibles en `src/modules/**/controller/*.ts`.
+
+Los dominios principales son:
+
+- seguridad y administración: `auth`, `sherlock-auth`, `usuario`, `roles`, `permisos`, `plantillas-roles`, `admin`, `dashboard`;
+- catálogo y stock: `producto`, `proveedor`, `inventario`, `movimiento`, `merma`, `ubicacion`, `openfoodfacts`;
+- compras y recepción: `pedido`, `pedido-draft`, `recepcion`, `recepcion-draft`, `incidencia`, `albaran`, `distribucion`;
+- producción: `receta`, `preparacion`;
+- educativo y soporte: `profesor`, `alumno`, `archivo`, `export`.
+
 ## Estructura del Proyecto
 
 El backend se organiza en módulos funcionales dentro de `src/modules/`:
@@ -15,7 +27,7 @@ src/
 ├── database/           # Archivos relacionados con la base de datos.
 ├── i18n/               # Diccionarios de internacionalización (es, en).
 ├── migrations/         # Control de versiones de la base de datos (TypeORM).
-├── modules/            # Módulos de negocio (Auth, Usuario, Producto, etc.).
+├── modules/            # Módulos de negocio y soporte expuestos por dominio.
 │   └── [module_name]/
 │       ├── controller/ # Manejo de peticiones HTTP y Swagger.
 │       ├── service/    # Lógica de negocio y orquestación.
@@ -27,6 +39,43 @@ src/
 ├── main.ts             # Punto de entrada (Configuración de pipes, guards, Swagger).
 └── app.module.ts       # Módulo raíz que importa todos los submódulos.
 ```
+
+## Organización del dominio
+
+### Seguridad y administración
+
+- `auth`: login, logout, recuperación y cambio de contraseña.
+- `sherlock-auth`: resolución de permisos efectivos y piezas compartidas de autenticación.
+- `usuario`: perfil, CRUD de usuarios y permisos por usuario.
+- `roles`, `permisos`, `plantillas-roles`: gobierno del RBAC.
+- `admin` y `dashboard`: operaciones privilegiadas y KPIs.
+
+### Catálogo y stock
+
+- `producto`: producto maestro, producto-proveedor, alérgenos e histórico de precios.
+- `proveedor`: proveedores.
+- `inventario`, `movimiento`, `merma`, `ubicacion`: stock, trazabilidad y localización.
+- `openfoodfacts`: integración de catálogo externo.
+
+### Compras, recepción e incidencias
+
+- `pedido`: pedidos internos, `PedidoUsuario` y `PurchaseBatch`.
+- `pedido-draft`: borradores de pedido.
+- `recepcion` y `recepcion-draft`: recepción operativa y borradores.
+- `incidencia`: discrepancias y resolución.
+- `albaran`: documentación de entrega.
+- `distribucion`: preparación y confirmación de distribuciones.
+
+### Producción
+
+- `receta`: recetas y producción.
+- `preparacion`: preparación operativa.
+
+### Educativo y soporte
+
+- `profesor` y `alumno`: dominio educativo.
+- `archivo`: gestión de ficheros.
+- `export`: exportaciones PDF y XLSX.
 
 ## Arquitectura de Capas
 
@@ -71,6 +120,8 @@ Además de los roles estáticos (`ADMINISTRADOR`, `PROFESOR`, `ALUMNO`), el sist
 - **Permisos Excluidos**: Revocar permisos específicos a un usuario aunque su rol los incluya.
 Esto se gestiona a través de las tablas `usuario_permiso_adicional` y `usuario_permiso_excluido`.
 
+El acceso HTTP no se limita a un `RolesGuard` clásico. El backend combina autenticación JWT, guards de permisos y resolución dinámica de capacidades efectivas.
+
 ### Borrado Lógico (Soft Delete)
 Implementado en la `BaseEntity`. Los registros no se borran físicamente (`DELETE`), sino que se marca la columna `deleted_at` y se registra el `deleted_by` para auditoría.
 
@@ -113,8 +164,16 @@ El dominio de compras quedó separado en tres niveles para evitar ambigüedades 
 
 ## Seguridad
 
-*   **Autenticación:** Basada en **JWT (JSON Web Tokens)**.
-*   **Autorización:** Guardias personalizados (`RolesGuard`) que verifican el rol del usuario (`ADMINISTRADOR`, `PROFESOR`, `ALUMNO`) contra los decoradores `@Roles` definidos en los controladores.
+*   **Autenticación:** Basada en **JWT (JSON Web Tokens)** y en el uso de cookie `access_token` para el flujo web principal.
+*   **Autorización:** Se apoya en guards como `JwtAuthGuard` y `PermisosGuard`, además de decoradores de permisos para control fino por acción.
+*   **Rate limiting:** El backend trabaja con perfiles `auth`, `write` y `read` mediante `ThrottlerModule`.
+
+## Relación con la documentación de referencia
+
+- Contrato API: `wiki/reference/api/README.md`
+- Mapa de endpoints: `wiki/reference/endpoints.md`
+- Módulos y responsabilidades: `wiki/reference/modulos-y-responsabilidades.md`
+- Cobertura pendiente: `wiki/planning/improvements/auditoria-documentacion-backend-api.md`
 
 ---
 *Este documento refleja la estructura técnica del backend y debe actualizarse ante cambios estructurales significativos.*

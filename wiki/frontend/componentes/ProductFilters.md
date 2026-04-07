@@ -38,8 +38,8 @@ export interface ProductFiltersState {
 
 | Propiedad | Tipo | Obligatorio | Descripción |
 | :--- | :--- | :---: | :--- |
-| `filters` | `ProductFiltersState` | ✅ | Estado actual de filtros procedente del padre. |
-| `onChange` | `(filters: ProductFiltersState) => void` | ✅ | Callback que recibe el estado actualizado al marcar/desmarcar una categoría. |
+| `filters` | `ProductFiltersState` | Sí | Estado actual de filtros procedente del padre. |
+| `onChange` | `(filters: ProductFiltersState) => void` | Sí | Callback que recibe el estado actualizado al marcar/desmarcar una categoría. |
 | `onClear` | `() => void` | — | Callback para limpiar todos los filtros (no genera botón interno; la limpieza la gestiona el padre). |
 | `inline` | `boolean` | — | Mantenida por compatibilidad. No tiene efecto visual en la versión actual. |
 

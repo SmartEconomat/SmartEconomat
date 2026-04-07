@@ -1,13 +1,13 @@
-# 🚀 Sistema de Testing de Alto Rendimiento
+# Sistema de Testing de Alto Rendimiento
 
 Sistema de testing optimizado para **SmartEconomat Backend** usando **pg-mem**, **snapshots** y **singleton patterns**.
 
-## 📊 Rendimiento
+## Rendimiento
 
 ### Antes de la optimización
 
-- ⏱️ Setup por test: **2-5 segundos**
-- 🐌 Tests lentos debido a:
+- Setup por test: **2-5 segundos**
+- Tests lentos debido a:
   - Conexión a PostgreSQL real
   - Ejecución de migraciones
   - Ejecución de seeders repetidamente
@@ -16,8 +16,8 @@ Sistema de testing optimizado para **SmartEconomat Backend** usando **pg-mem**, 
 
 ### Después de la optimización
 
-- ⚡ Setup por test: **~0 milisegundos**
-- 🚀 Tests ultrarrápidos gracias a:
+- Setup por test: **~0 milisegundos**
+- Tests ultrarrápidos gracias a:
   - PostgreSQL en memoria (pg-mem)
   - DataSource singleton
   - Seeders ejecutados una sola vez
@@ -33,9 +33,9 @@ Sistema de testing optimizado para **SmartEconomat Backend** usando **pg-mem**, 
 
 ---
 
-## 🏗️ Arquitectura
+## Arquitectura
 
-## 📘 Suites documentadas
+## Suites documentadas
 
 - [Tests E2E de contratos frontend-backend](frontend-backend-contracts-e2e.md): regresión específica para los contratos corregidos entre el frontend y la API NestJS.
 - [Pedidos desde recetas](../../modules/pedido/pedidos-desde-recetas.md): cobertura unitaria y E2E del flujo de consolidación de ingredientes en pedidos.
@@ -62,7 +62,7 @@ test/
 
 ---
 
-## 🔄 Flujo de ejecución
+## Flujo de ejecución
 
 ### 1. Inicio de Jest (Proceso principal)
 
@@ -116,7 +116,7 @@ npm run test:e2e:file -- test/e2e/productos.e2e-spec.ts
 
 ---
 
-## 📝 Cómo escribir tests
+## Cómo escribir tests
 
 ### Patrón básico
 
@@ -201,9 +201,9 @@ describe('MiModulo (e2e)', () => {
 
 ---
 
-## 🎯 Mejores prácticas
+## Mejores prácticas
 
-### ✅ DO (Hacer)
+### DO (Hacer)
 
 1. **Usar getTestApp()** en lugar de crear TestingModule
 
@@ -236,12 +236,12 @@ describe('MiModulo (e2e)', () => {
    const nombre = `Producto ${Date.now()}`;
    ```
 
-### ❌ DON'T (No hacer)
+### DON'T (No hacer)
 
 1. **No crear TestingModule manualmente**
 
    ```typescript
-   // ❌ MAL
+  // Incorrecto
    const module = await Test.createTestingModule({
      imports: [AppModule],
    }).compile();
@@ -250,14 +250,14 @@ describe('MiModulo (e2e)', () => {
 2. **No ejecutar seeders manualmente**
 
    ```typescript
-   // ❌ MAL - Los seeders ya se ejecutaron automáticamente
+  // Incorrecto: los seeders ya se ejecutaron automáticamente
    await runAllSeeders();
    ```
 
 3. **No limpiar datos en afterEach**
 
    ```typescript
-   // ❌ MAL - El snapshot restore lo hace automáticamente
+  // Incorrecto: el snapshot restore lo hace automáticamente
    afterEach(async () => {
      await repository.clear();
    });
@@ -266,7 +266,7 @@ describe('MiModulo (e2e)', () => {
 4. **No usar transacciones manuales**
 
    ```typescript
-   // ❌ MAL - Los snapshots son superiores
+  // Incorrecto: los snapshots son superiores
    beforeEach(async () => {
      await dataSource.transaction(async () => {...});
    });
@@ -274,7 +274,7 @@ describe('MiModulo (e2e)', () => {
 
 5. **No cerrar la app en afterAll**
    ```typescript
-   // ❌ MAL - La app es singleton, no debe cerrarse
+  // Incorrecto: la app es singleton, no debe cerrarse
    afterAll(async () => {
      await app.close();
    });
@@ -282,7 +282,7 @@ describe('MiModulo (e2e)', () => {
 
 ---
 
-## 🔧 Configuración
+## Configuración
 
 ### Jest E2E (test/jest-e2e.json)
 
@@ -317,7 +317,7 @@ npm run test:cov
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Problema: Tests fallan con "DataSource no inicializado"
 
@@ -349,7 +349,7 @@ npm run test:cov
 
 ---
 
-## 📊 Métricas y monitoreo
+## Métricas y monitoreo
 
 ### Verificar rendimiento
 
@@ -369,7 +369,7 @@ npm run test:e2e -- --verbose 2>&1 | grep -A 1 "PASS"
 
 ---
 
-## 🔐 Seguridad
+## Seguridad
 
 ### bcrypt en tests
 
@@ -377,14 +377,14 @@ El sistema reduce bcrypt a 1 round **solo en tests**.
 
 **¿Es seguro?**
 
-- ✅ Sí, porque solo afecta el entorno de test
-- ✅ La lógica de negocio sigue siendo la misma
-- ✅ Los tests validan el comportamiento, no la seguridad del hash
-- ✅ En producción se usa el valor configurado (10+ rounds)
+- Sí, porque solo afecta el entorno de test
+- La lógica de negocio sigue siendo la misma
+- Los tests validan el comportamiento, no la seguridad del hash
+- En producción se usa el valor configurado (10+ rounds)
 
 ---
 
-## 🚀 Migración de tests existentes
+## Migración de tests existentes
 
 ### Paso 1: Actualizar imports
 
@@ -433,7 +433,7 @@ afterEach(async () => {
 
 ---
 
-## 📚 Referencias
+## Referencias
 
 - [pg-mem Documentation](https://github.com/oguimbal/pg-mem)
 - [Jest Configuration](https://jestjs.io/docs/configuration)
@@ -442,7 +442,7 @@ afterEach(async () => {
 
 ---
 
-## 👥 Soporte
+## Soporte
 
 Para preguntas o issues relacionados con el sistema de testing:
 

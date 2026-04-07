@@ -4,6 +4,19 @@ import { Incidencia } from '../incidencia.entity/incidencia.entity';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { IncidenciaQueryDto } from '../dto/incidencia-query.dto';
 
+function normalizeDateBoundary(
+  value: string,
+  boundary: 'start' | 'end'
+): string {
+  if (value.length !== 10) {
+    return value;
+  }
+
+  return boundary === 'start'
+    ? `${value}T00:00:00.000Z`
+    : `${value}T23:59:59.999Z`;
+}
+
 @Injectable()
 export class IncidenciaRepository extends Repository<Incidencia> {
   constructor(private dataSource: DataSource) {
@@ -109,15 +122,13 @@ export class IncidenciaRepository extends Repository<Incidencia> {
 
     if (query.startDate) {
       queryBuilder.andWhere('incidencia.createdAt >= :startDate', {
-        startDate: new Date(query.startDate),
+        startDate: normalizeDateBoundary(query.startDate, 'start'),
       });
     }
 
     if (query.endDate) {
-      const endDate = new Date(query.endDate);
-      endDate.setHours(23, 59, 59, 999);
       queryBuilder.andWhere('incidencia.createdAt <= :endDate', {
-        endDate,
+        endDate: normalizeDateBoundary(query.endDate, 'end'),
       });
     }
 

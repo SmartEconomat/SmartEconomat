@@ -43,8 +43,8 @@ La pantalla no trabaja solo con una tabla; actúa como orquestador de filtros, b
 - Si hay varias páginas en backend, `usePedidosData()` las consume y unifica en cliente para mostrar una sola vista.
 - Utiliza **`MisPedidosStatusTabs`** para filtrar visualmente por estado:
 	- ⏳ `pendientes` → `PENDIENTE`
-	- 🔄 `en_proceso` → `EN_PROCESO` o `PARCIAL`
-	- ✅ `finalizados` → `ENTREGADO` o `CANCELADO`
+	- `en_proceso` → `EN_PROCESO` o `PARCIAL`
+	- `finalizados` → `ENTREGADO` o `CANCELADO`
 
 ### Pedidos
 
@@ -104,6 +104,5 @@ La pantalla no trabaja solo con una tabla; actúa como orquestador de filtros, b
 - `src/features/pedidos/utils/pedidoColumns.tsx`
 - `src/features/pedidos/utils/pedidoFormatters.ts`
 
-## Nota de integración
-
-La consolidación semanal del frontend sigue enviando `pedidoIds`, pero en realidad la vista selecciona IDs de `PedidoUsuario`. Backend lo tolera porque `PurchaseBatchService` hace fallback a `pedidoIds` si no recibe `pedidoUsuarioIds`. Funciona hoy, pero conviene tenerlo documentado para futuros endurecimientos del contrato.
+> [!NOTE]
+> La consolidación semanal del frontend sigue enviando `pedidoIds`, pero en realidad la vista selecciona IDs de `PedidoUsuario`. Backend lo tolera porque `PurchaseBatchService` hace fallback a `pedidoIds` si no recibe `pedidoUsuarioIds`. Funciona hoy, pero conviene tenerlo documentado para futuros endurecimientos del contrato.

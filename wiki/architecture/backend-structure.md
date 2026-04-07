@@ -1,6 +1,6 @@
 # Descripción General de la Estructura del Backend de SmartEconomat
 
-## 📁 Ubicación del Proyecto
+## Ubicación del Proyecto
 ```
 /home/psych/projects/SmartEconomat/backend/smart-economat-backend/
 ```
@@ -97,13 +97,13 @@ nombre-del-modulo/
 ### 4.1 Patrón de ProductoService (Complejo)
 ```typescript
 // Características:
-✅ Soporte de transacciones (dataSource.transaction)
-✅ Validación (código de barras EAN-13)
-✅ Verificación de duplicados
-✅ Integración de helpers (MovimientoHelper)
-✅ Soporte de paginación
-✅ Manejo de errores con i18n
-✅ Métodos de repositorio personalizados
+- Soporte de transacciones (dataSource.transaction)
+- Validación (código de barras EAN-13)
+- Verificación de duplicados
+- Integración de helpers (MovimientoHelper)
+- Soporte de paginación
+- Manejo de errores con i18n
+- Métodos de repositorio personalizados
 ```
 
 ---
@@ -113,32 +113,32 @@ nombre-del-modulo/
 ### 5.1 Base de Datos (TypeORM + PostgreSQL)
 
 **Características:**
-- ✅ Borrado lógico (DeleteDateColumn)
-- ✅ Bloqueo optimista (VersionColumn)
-- ✅ UUID v7 (claves primarias ordenadas por tiempo)
-- ✅ Marcas de tiempo automáticas
-- ✅ Soporte de migraciones
-- ✅ Seeders para datos de prueba
+- Borrado lógico (DeleteDateColumn)
+- Bloqueo optimista (VersionColumn)
+- UUID v7 (claves primarias ordenadas por tiempo)
+- Marcas de tiempo automáticas
+- Soporte de migraciones
+- Seeders para datos de prueba
 
 ---
 
-## 7. Lo que ya existe ✅
+## 7. Lo que ya existe
 
-- ✅ 20 módulos de funcionalidades completos
-- ✅ Infraestructura común integral
-- ✅ Manejo global de errores con i18n
-- ✅ Capa de transformación de respuestas
-- ✅ Soporte de paginación
-- ✅ Implementación de borrado lógico
-- ✅ Bloqueo optimista
-- ✅ Decoradores RBAC
-- ✅ Validación y normalización de datos
-- ✅ Validación de código de barras EAN-13
-- ✅ Integración con Sentry
-- ✅ Documentación Swagger
-- ✅ Más de 30 especificaciones de pruebas E2E
-- ✅ Semillas de base de datos
-- ✅ Soporte i18n (ES/EN)
+- 20 módulos de funcionalidades completos
+- Infraestructura común integral
+- Manejo global de errores con i18n
+- Capa de transformación de respuestas
+- Soporte de paginación
+- Implementación de borrado lógico
+- Bloqueo optimista
+- Decoradores RBAC
+- Validación y normalización de datos
+- Validación de código de barras EAN-13
+- Integración con Sentry
+- Documentación Swagger
+- Más de 30 especificaciones de pruebas E2E
+- Semillas de base de datos
+- Soporte i18n (ES/EN)
 
 ---
 
@@ -146,13 +146,13 @@ nombre-del-modulo/
 
 **El Backend de SmartEconomat es una aplicación NestJS lista para producción que cuenta con:**
 
-✅ **Bien estructurado** - Clara separación de responsabilidades, diseño modular
-✅ **Escalable** - 20 módulos de funciones que siguen patrones consistentes
-✅ **Seguro** - Decoradores RBAC, validación de permisos
-✅ **Confiable** - Manejo global de errores, soporte de transacciones
-✅ **Observable** - Integración con Sentry, rastreo de requestId
-✅ **Internacionalizado** - Soporte en español e inglés
-✅ **Documentado** - Documentación de la API Swagger, comentarios de código
-✅ **Probado** - Más de 30 especificaciones de pruebas E2E
-✅ **Basado en base de datos** - TypeORM con PostgreSQL, borrado lógico, bloqueo optimista
-✅ **Cumple con las mejores prácticas** - Convenciones de NestJS, arquitectura limpia
+- **Bien estructurado** - Clara separación de responsabilidades, diseño modular
+- **Escalable** - 20 módulos de funciones que siguen patrones consistentes
+- **Seguro** - Decoradores RBAC, validación de permisos
+- **Confiable** - Manejo global de errores, soporte de transacciones
+- **Observable** - Integración con Sentry, rastreo de requestId
+- **Internacionalizado** - Soporte en español e inglés
+- **Documentado** - Documentación de la API Swagger, comentarios de código
+- **Probado** - Más de 30 especificaciones de pruebas E2E
+- **Basado en base de datos** - TypeORM con PostgreSQL, borrado lógico, bloqueo optimista
+- **Cumple con las mejores prácticas** - Convenciones de NestJS, arquitectura limpia

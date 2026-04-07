@@ -9,11 +9,10 @@ Hace exactamente esto:
 - ejecuta `dist/seeders/seed.js reset`
 - elimina el bypass temporal al terminar
 
-## Advertencia
-
-Este procedimiento fuerza la ejecucion de seeders en un entorno de produccion.
-
-Usalo solo si sabes exactamente por que lo necesitas.
+> [!CAUTION]
+> Este procedimiento fuerza la ejecucion de seeders en un entorno de produccion.
+>
+> Usalo solo si sabes exactamente por que lo necesitas.
 
 ## Cuando usarlo
 
@@ -180,9 +179,8 @@ Eso evita que falle esta validacion:
 
 La conexion real a la base no se altera. Solo se neutraliza el guard de ejecucion.
 
-## Notas
-
-- este procedimiento no modifica ningun fichero `.ts`
-- este procedimiento no cambia `scripts/deploy.sh`
-- el bypass vive solo durante esa ejecucion
-- si el seeder falla por datos inconsistentes, el bypass no corrige la logica interna del seeder
+> [!NOTE]
+> - este procedimiento no modifica ningun fichero `.ts`
+> - este procedimiento no cambia `scripts/deploy.sh`
+> - el bypass vive solo durante esa ejecucion
+> - si el seeder falla por datos inconsistentes, el bypass no corrige la logica interna del seeder

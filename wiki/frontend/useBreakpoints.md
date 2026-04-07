@@ -143,23 +143,23 @@ const [open, setOpen] = useState(!isMobile); // cerrado por defecto en móvil
 
 ---
 
-## ❌ Anti-patrones a evitar
+## Anti-patrones a evitar
 
 ```tsx
-// ❌ MAL: llama useMediaQuery directamente
+// Incorrecto: llama useMediaQuery directamente
 import { useMediaQuery } from '@mui/material';
 const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-// ✅ BIEN: usa el hook centralizado
+// Correcto: usa el hook centralizado
 import { useBreakpoints } from '@/utils/useBreakpoints';
 const { isMobile } = useBreakpoints();
 ```
 
 ```tsx
-// ❌ MAL: breakpoints en sx con tokens sx en vez de lógica JS
+// Incorrecto: breakpoints en sx con tokens sx en vez de lógica JS
 sx={{ display: { xs: 'none', sm: 'block' } }}
 
-// ✅ BIEN: lógica clara con el hook
+// Correcto: lógica clara con el hook
 {!isMobile && <Component />}
 // o si es puramente visual (sin lógica JS asociada):
 sx={{ display: { xs: 'none', sm: 'block' } }}  // aceptable para casos simples

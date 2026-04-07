@@ -8,14 +8,14 @@
 
 | Severidad | Criterio |
 |---|---|
-| 🔴 **Critical** | Riesgo de seguridad explotable o pérdida de datos en producción |
-| 🟠 **High** | Degradación severa de seguridad, estabilidad o rendimiento |
-| 🟡 **Medium** | Problema de mantenibilidad, observabilidad o rendimiento moderado |
-| 🟢 **Low** | Mejora de calidad, documentación o buenas prácticas |
+| **Critical** | Riesgo de seguridad explotable o pérdida de datos en producción |
+| **High** | Degradación severa de seguridad, estabilidad o rendimiento |
+| **Medium** | Problema de mantenibilidad, observabilidad o rendimiento moderado |
+| **Low** | Mejora de calidad, documentación o buenas prácticas |
 
 ---
 
-## 🔴 Critical
+## Critical
 
 | ID | Archivo | Línea | Descripción | Evidencia | Recomendación |
 |---|---|---|---|---|---|
@@ -24,7 +24,7 @@
 
 ---
 
-## 🟠 High
+## High
 
 | ID | Archivo | Línea | Descripción | Evidencia | Recomendación |
 |---|---|---|---|---|---|
@@ -36,7 +36,7 @@
 
 ---
 
-## 🟡 Medium
+## Medium
 
 | ID | Archivo | Línea | Descripción | Evidencia | Recomendación |
 |---|---|---|---|---|---|
@@ -51,7 +51,7 @@
 
 ---
 
-## 🟢 Low
+## Low
 
 | ID | Archivo | Línea | Descripción | Evidencia | Recomendación |
 |---|---|---|---|---|---|

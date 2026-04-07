@@ -2,6 +2,25 @@
 
 Convenciones, patrones y estilo de código adoptados en SmartEconomat.
 
+## Documentación Markdown de la wiki
+
+Cuando un archivo `.md` de `wiki/` necesite resaltar información, usa callouts GitHub con este formato:
+
+```md
+> [!NOTE]
+> Texto de la anotación.
+```
+
+Convención recomendada:
+
+- `NOTE` para contexto adicional.
+- `TIP` para recomendaciones operativas.
+- `IMPORTANT` para restricciones relevantes.
+- `WARNING` para riesgos importantes.
+- `CAUTION` para acciones destructivas o difíciles de revertir.
+
+Evita mezclar este patrón con encabezados como `## Advertencia`, `## Nota` o avisos con emoji cuando el contenido es una anotación breve.
+
 ---
 
 ## Nomenclatura

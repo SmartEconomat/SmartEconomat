@@ -1,12 +1,12 @@
-# 🆔 Arquitectura UUID v7 - SmartEconomat
+# Arquitectura UUID v7 - SmartEconomat
 
-## 📋 RESUMEN EJECUTIVO
+## RESUMEN EJECUTIVO
 
 El sistema utiliza **UUID versión 7** para todos los identificadores primarios y foráneos, garantizando consistencia, rendimiento y ordenamiento cronológico.
 
 ---
 
-## 🎯 ¿POR QUÉ UUID v7?
+## ¿POR QUÉ UUID v7?
 
 ### Comparativa v4 vs v7
 
@@ -27,7 +27,7 @@ El sistema utiliza **UUID versión 7** para todos los identificadores primarios 
 
 ---
 
-## 🏗️ IMPLEMENTACIÓN
+## IMPLEMENTACIÓN
 
 ### 1. Generación en Base de Datos
 
@@ -58,10 +58,10 @@ export abstract class BaseEntity {
 
 **Ventajas:**
 
-- ✅ Los IDs se generan en la BD (no en la aplicación)
-- ✅ Consistencia garantizada en todas las entidades
-- ✅ Sin dependencias de librerías npm
-- ✅ Funciona con seeds y migraciones
+- Los IDs se generan en la BD (no en la aplicación)
+- Consistencia garantizada en todas las entidades
+- Sin dependencias de librerías npm
+- Funciona con seeds y migraciones
 
 ---
 
@@ -197,7 +197,7 @@ export class AssignPermissionsDto {
 
 ---
 
-## 📝 MIGRACIÓN DE v4 A v7
+## MIGRACIÓN DE v4 A v7
 
 ### Antes (UUID v4)
 
@@ -297,12 +297,12 @@ Todos los DTOs en `modules/*/dto/` que referencian IDs de otras entidades actual
 import { ParseUUIDPipe } from '@nestjs/common';
 
 export interface IProducto {
-  id: ParseUUIDPipe; // ❌ ParseUUIDPipe no es un tipo
+  id: ParseUUIDPipe; // Incorrecto: ParseUUIDPipe no es un tipo
 }
 
 // DESPUÉS (correcto)
 export interface IProducto {
-  id: string; // ✅ Tipo correcto
+  id: string; // Correcto: tipo esperado
 }
 ```
 
@@ -314,7 +314,7 @@ Archivos corregidos:
 
 ---
 
-## 🧪 TESTING
+## TESTING
 
 ### Test Unitario del Pipe
 
@@ -383,7 +383,7 @@ describe('Validación UUID v7 (e2e)', () => {
 
 ---
 
-## ⚡ RENDIMIENTO
+## RENDIMIENTO
 
 ### Benchmarks (PostgreSQL 16)
 
@@ -402,7 +402,7 @@ describe('Validación UUID v7 (e2e)', () => {
 
 ---
 
-## 🔧 CONFIGURACIÓN
+## CONFIGURACIÓN
 
 ### PostgreSQL (database/Dockerfile)
 
@@ -438,7 +438,7 @@ RUN echo "CREATE EXTENSION IF NOT EXISTS pg_uuidv7;" > /docker-entrypoint-initdb
 
 ---
 
-## 📚 REFERENCIAS
+## REFERENCIAS
 
 ### Documentación Oficial
 
@@ -456,7 +456,7 @@ RUN echo "CREATE EXTENSION IF NOT EXISTS pg_uuidv7;" > /docker-entrypoint-initdb
 
 ---
 
-## ✅ CHECKLIST DE IMPLEMENTACIÓN
+## CHECKLIST DE IMPLEMENTACIÓN
 
 - [x] Extensión `pg_uuidv7` instalada en PostgreSQL
 - [x] `BaseEntity` configurada con `uuid_generate_v7()`
@@ -470,4 +470,4 @@ RUN echo "CREATE EXTENSION IF NOT EXISTS pg_uuidv7;" > /docker-entrypoint-initdb
 
 ---
 
-**🎉 UUID v7 COMPLETAMENTE IMPLEMENTADO EN TODO EL PROYECTO**
+**UUID v7 COMPLETAMENTE IMPLEMENTADO EN TODO EL PROYECTO**

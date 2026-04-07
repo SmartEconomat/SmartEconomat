@@ -47,12 +47,12 @@
 
 | Área | Tests existentes |
 |------|-----------------|
-| `ParseUUIDv7Pipe` | ✅ Completo (spec) |
-| Transformers (7) | ✅ Completo (specs) |
-| `ean13.util` | ✅ Completo (spec) |
-| `master-requirements.e2e` | ✅ Flujo completo auth+registro+activación+RBAC |
-| `password-recovery.e2e` | ✅ 9 casos de recuperación de contraseña |
-| `rbac.e2e` | ✅ 5 casos de permisos adicionales/excluidos |
+| `ParseUUIDv7Pipe` | Completo (spec) |
+| Transformers (7) | Completo (specs) |
+| `ean13.util` | Completo (spec) |
+| `master-requirements.e2e` | Flujo completo auth+registro+activación+RBAC |
+| `password-recovery.e2e` | 9 casos de recuperación de contraseña |
+| `rbac.e2e` | 5 casos de permisos adicionales/excluidos |
 
 ### Hallazgo principal
 

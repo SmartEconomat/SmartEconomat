@@ -16,8 +16,8 @@
 
 | Prop | Tipo | Requerido | Descripción |
 |------|------|-----------|-------------|
-| `onToggleForm` | `() => void` | ✅ | Vuelve al formulario de inicio de sesión. |
-| `onRegisterSuccess` | `() => void` | ✅ | Invocado al confirmar el registro. |
+| `onToggleForm` | `() => void` | Sí | Vuelve al formulario de inicio de sesión. |
+| `onRegisterSuccess` | `() => void` | Sí | Invocado al confirmar el registro. |
 
 ---
 

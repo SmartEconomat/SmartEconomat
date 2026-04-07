@@ -7,7 +7,7 @@ Esta es la guía canónica de despliegue para SmartEconomat. Describe el comport
 - Host recomendado: Linux con Docker Engine y Docker Compose disponibles.
 - Stack de producción: PostgreSQL, Redis, backend NestJS y frontend Nginx con TLS local.
 - Despliegue automatizado disponible mediante [scripts/deploy.sh](../scripts/deploy.sh).
-- Casos específicos: [PRODUCTION.md](PRODUCTION.md) para un escenario Linux/Azure con `nip.io`, y [Windows-Deployment.md](Windows-Deployment.md) para hosts Windows con contenedores Linux.
+- Casos específicos: [PRODUCTION.md](PRODUCTION.md) para un escenario Linux con `nip.io`, y [Windows-Deployment.md](Windows-Deployment.md) para hosts Windows con contenedores Linux.
 - Gestión TLS detallada: [security/self-signed-tls.md](security/self-signed-tls.md).
 
 ## Arquitectura de runtime
@@ -59,9 +59,8 @@ El script [scripts/deploy.sh](../scripts/deploy.sh) realiza estas acciones:
 5. Arranca `docker-compose.prod.yml`.
 6. Ejecuta `node dist/seeders/seed.js reset` dentro del backend.
 
-### Advertencia importante
-
-El paso 6 reinicia y repuebla la base de datos. Con el script en su estado actual, es apto para aprovisionamiento inicial o entornos donde un reset de datos sea aceptable; no es un flujo seguro para actualizar una producción con datos persistentes.
+> [!WARNING]
+> El paso 6 reinicia y repuebla la base de datos. Con el script en su estado actual, es apto para aprovisionamiento inicial o entornos donde un reset de datos sea aceptable; no es un flujo seguro para actualizar una producción con datos persistentes.
 
 ## Opción manual
 
@@ -102,12 +101,12 @@ Para el flujo completo de generación, renovación, rutas y requisitos, consulta
 - Nginx solo proxya `location /api/` hacia `http://backend:3000`.
 - El frontend está servido como SPA con `try_files $uri $uri/ /index.html`.
 
-### Consecuencia operativa
-
-La documentación Swagger del backend sigue estando en `/docs` dentro del propio proceso NestJS, pero el proxy de producción actual no publica esa ruta externamente. En otras palabras:
-
-- en local o con acceso directo al backend: `http://localhost:3000/docs`;
-- en producción estándar con el Nginx actual: Swagger no queda expuesto al exterior salvo que se añada una regla explícita de proxy para `/docs` o se publique el backend de otro modo.
+> [!IMPORTANT]
+> La documentación Swagger del backend sigue estando en `/docs` dentro del propio proceso NestJS, pero el proxy de producción actual no publica esa ruta externamente.
+>
+> En otras palabras:
+> - en local o con acceso directo al backend: `http://localhost:3000/docs`;
+> - en producción estándar con el Nginx actual: Swagger no queda expuesto al exterior salvo que se añada una regla explícita de proxy para `/docs` o se publique el backend de otro modo.
 
 ## Operación diaria
 

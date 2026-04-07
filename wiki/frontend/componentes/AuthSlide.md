@@ -20,7 +20,7 @@
 
 | Prop | Tipo | Requerido | Descripción |
 |------|------|-----------|-------------|
-| `isLogin` | `boolean` | ✅ | Determina qué color de fondo, icono y slides mostrar. |
+| `isLogin` | `boolean` | Sí | Determina qué color de fondo, icono y slides mostrar. |
 
 ---
 

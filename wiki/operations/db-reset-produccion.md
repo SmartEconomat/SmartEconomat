@@ -8,9 +8,8 @@ Hace exactamente esto:
 - recrea el esquema con `schema:sync`
 - no ejecuta seeders
 
-## Advertencia
-
-Esto borra todos los datos de la base de datos de produccion.
+> [!CAUTION]
+> Esto borra todos los datos de la base de datos de produccion.
 
 ## Requisitos
 
@@ -126,8 +125,7 @@ sudo docker-compose -f docker-compose.prod.yml --env-file .env.prod ps
 sudo docker-compose -f docker-compose.prod.yml --env-file .env.prod exec -T db sh -lc 'echo "$POSTGRES_DB"'
 ```
 
-## Notas
-
-- este procedimiento no usa `scripts/deploy.sh`
-- este procedimiento no ejecuta seeders
-- si quieres poblar datos despues del reset, los seeders deben ejecutarse manualmente y por separado
+> [!NOTE]
+> - este procedimiento no usa `scripts/deploy.sh`
+> - este procedimiento no ejecuta seeders
+> - si quieres poblar datos despues del reset, los seeders deben ejecutarse manualmente y por separado

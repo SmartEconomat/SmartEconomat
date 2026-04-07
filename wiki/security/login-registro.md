@@ -19,9 +19,8 @@ El flujo recomendado es cookie-first:
 3. El frontend rehidrata la sesión consultando `GET /usuarios/perfil`.
 4. La UI calcula permisos, navegación y visibilidad a partir de la respuesta del backend, no del JWT local.
 
-### Nota de compatibilidad
-
-El frontend todavía conserva el `access_token` en `tokenManager` y `localStorage` dentro de `auth.service.ts`, pero eso ya no es la fuente de verdad de la sesión. El estado efectivo y los permisos reales se recuperan desde backend.
+> [!NOTE]
+> El frontend todavía conserva el `access_token` en `tokenManager` y `localStorage` dentro de `auth.service.ts`, pero eso ya no es la fuente de verdad de la sesión. El estado efectivo y los permisos reales se recuperan desde backend.
 
 ## Inicio de sesión
 

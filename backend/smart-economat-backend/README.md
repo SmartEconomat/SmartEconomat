@@ -59,18 +59,20 @@ $ npm run test:cov
 
 ## Deployment
 
-### Despliegue en Azure/App Service o dominio personalizado
+### Despliegue con dominio personalizado
 
-1. Asegúrate de definir las variables de entorno en el portal de Azure/App Service o en tu plataforma cloud:
-  - BACKEND_PORT
-  - BACKEND_API_URL
-  - DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE
-  - SENTRY_DSN
-  - DOMAIN (si aplica)
-  - NODE_ENV=production
+1. Define las variables de entorno en `.env.prod` o en el entorno donde vayas a desplegar:
+
+- BACKEND_PORT
+- BACKEND_API_URL
+- DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE
+- SENTRY_DSN
+- DOMAIN (si aplica)
+- NODE_ENV=production
+
 2. Configura el archivo `.env.prod` con los valores de tu dominio y base de datos.
 3. Si usas Docker, asegúrate de que docker-compose use las variables correctas y exponga los puertos necesarios.
-4. Consulta la guía [Centralización de configuración](../../CENTRALIZACION_CONFIGURACION.md) para más detalles.
+4. Consulta la guía [Centralización de configuración](../../wiki/CENTRALIZACION_CONFIGURACION.md) para más detalles.
 
 ## Resources
 

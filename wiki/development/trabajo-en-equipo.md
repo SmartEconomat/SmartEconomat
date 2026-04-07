@@ -1,11 +1,11 @@
-# 🧩 Guía de Trabajo en Equipo — Proyecto Backend (NestJS + Git/GitHub + Docker)
+# Guía de Trabajo en Equipo — Proyecto Backend (NestJS + Git/GitHub + Docker)
 
-## 📘 Objetivo General
+## Objetivo General
 Este documento establece las **normas y procedimientos de trabajo colaborativo** para el desarrollo del backend del proyecto, garantizando coherencia en la estructura, control de versiones y flujo de integración continua.  
 
 ---
 
-## ⚙️ Arquitectura del Proyecto (NestJS)
+## Arquitectura del Proyecto (NestJS)
 
 El proyecto sigue una **arquitectura en capas** basada en el patrón `controller → service → repository`.  
 Este enfoque permite mantener una **separación de responsabilidades**, mejor legibilidad y escalabilidad del código.
@@ -51,7 +51,7 @@ src/
 
 ---
 
-### 🗂️ Explicación de carpetas y archivos
+### Explicación de carpetas y archivos
 
 | Carpeta / Archivo | Descripción |
 |--------------------|-------------|
@@ -72,7 +72,7 @@ src/
 
 ---
 
-## 🧱 Flujo de Trabajo con Git y GitHub
+## Flujo de Trabajo con Git y GitHub
 
 Para mantener un control de versiones limpio y ordenado, se aplicará una **estrategia basada en ramas**, siguiendo una estructura centralizada en `develop` y `main`.
 
@@ -86,12 +86,12 @@ Para mantener un control de versiones limpio y ordenado, se aplicará una **estr
   - `bugfix/<número o descripción>` → Corrección de errores.  
   - `docs/<nombre>` → Documentación.
 
-📊 **Esquema visual del flujo de ramas:**  
+**Esquema visual del flujo de ramas:**  
 ![Flujo de ramas](../assets/images/integracion.jpeg)
 
 ---
 
-## 🔄 Reglas de Integración y Pull Requests
+## Reglas de Integración y Pull Requests
 
 - Solo la rama **develop** puede fusionarse con **main**.  
 - Todas las ramas deben crearse **a partir de develop**.  
@@ -101,7 +101,7 @@ Para mantener un control de versiones limpio y ordenado, se aplicará una **estr
 
 ---
 
-## 🐳 Entorno de Ejecución con Docker
+## Entorno de Ejecución con Docker
 
 Todo el entorno se ejecutará mediante **Docker**, garantizando la portabilidad y homogeneidad entre entornos de desarrollo.
 

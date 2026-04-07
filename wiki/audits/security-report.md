@@ -15,16 +15,16 @@ La superficie de ataque del backend SmartEconomat es **moderada**. El sistema im
 
 | Categoría OWASP | Estado | Hallazgos clave |
 |---|---|---|
-| **A01 — Broken Access Control** | ✅ **Bueno** | `JwtAuthGuard` + `AuthPermissionsGuard` + decoradores `@RequirePermissions` / `@RequireAnyPermission` aplicados consistentemente. Riesgo residual: TTL de cache 300 s para permisos. |
-| **A02 — Cryptographic Failures** | ✅ **Bueno** | `bcrypt` para passwords, JWT firmado, cookies `secure` en producción. Mejora recomendada: `jti` en JWT y rotación de `JWT_SECRET`. |
-| **A03 — Injection** | ✅ **Bueno** | Uso de TypeORM query builder y `findOne({ where: ... })`, no se detectan concatenaciones de SQL manual. Riesgo residual: parámetros dinámicos en decorador `@IsUnique` pero protegidos por metadata. |
-| **A04 — Insecure Design** | ⚠️ **Medio** | Ausencia de rate limiting distribuido y falta de health checks/boot validation. No hay pruebas de amenazas (threat modeling) documentadas. |
-| **A05 — Security Misconfiguration** | 🔴 **Crítico** | `CORS` con fallback `origin: '*'`, `credentials: true`; `synchronize: true` si `NODE_ENV` no está definido; Sentry se carga sin DSN. |
-| **A06 — Vulnerable and Outdated Components** | ⚠️ **Sin evidencia actual** | Dependencias principales actualizadas; no se ejecutó `npm audit` en esta auditoría. Riesgo residual en transitivas de `jimp`, `pdfmake`, `@jsquash/webp`. |
-| **A07 — Identification and Authentication Failures** | ✅ **Bueno** | Login con comparación bcrypt, recuperación de contraseña con token SHA-256 y expiración 15 min, cookies `httpOnly`. Mejora: tracking/revocación de sesiones activas. |
-| **A08 — Software and Data Integrity Failures** | ⚠️ **Medio** | Dockerfiles multi-stage correctos, pero sin firma de imágenes ni SBOM. Falta pipeline de integridad de dependencias. |
-| **A09 — Security Logging and Monitoring Failures** | ⚠️ **Medio–Alto** | Uso de `console.log`/`console.error` fuera del logger central; Sentry opcional pero no forzado; sin métricas de seguridad expuestas. |
-| **A10 — SSRF** | ✅ **Controlado** | El único `fetch` externo significativo es a OpenFoodFacts en `producto.seeder.ts`, limitado a entornos no test y no expuesto por HTTP público. Riesgo bajo. |
+| **A01 — Broken Access Control** | **Bueno** | `JwtAuthGuard` + `AuthPermissionsGuard` + decoradores `@RequirePermissions` / `@RequireAnyPermission` aplicados consistentemente. Riesgo residual: TTL de cache 300 s para permisos. |
+| **A02 — Cryptographic Failures** | **Bueno** | `bcrypt` para passwords, JWT firmado, cookies `secure` en producción. Mejora recomendada: `jti` en JWT y rotación de `JWT_SECRET`. |
+| **A03 — Injection** | **Bueno** | Uso de TypeORM query builder y `findOne({ where: ... })`, no se detectan concatenaciones de SQL manual. Riesgo residual: parámetros dinámicos en decorador `@IsUnique` pero protegidos por metadata. |
+| **A04 — Insecure Design** | **Medio** | Ausencia de rate limiting distribuido y falta de health checks/boot validation. No hay pruebas de amenazas (threat modeling) documentadas. |
+| **A05 — Security Misconfiguration** | **Crítico** | `CORS` con fallback `origin: '*'`, `credentials: true`; `synchronize: true` si `NODE_ENV` no está definido; Sentry se carga sin DSN. |
+| **A06 — Vulnerable and Outdated Components** | **Sin evidencia actual** | Dependencias principales actualizadas; no se ejecutó `npm audit` en esta auditoría. Riesgo residual en transitivas de `jimp`, `pdfmake`, `@jsquash/webp`. |
+| **A07 — Identification and Authentication Failures** | **Bueno** | Login con comparación bcrypt, recuperación de contraseña con token SHA-256 y expiración 15 min, cookies `httpOnly`. Mejora: tracking/revocación de sesiones activas. |
+| **A08 — Software and Data Integrity Failures** | **Medio** | Dockerfiles multi-stage correctos, pero sin firma de imágenes ni SBOM. Falta pipeline de integridad de dependencias. |
+| **A09 — Security Logging and Monitoring Failures** | **Medio-Alto** | Uso de `console.log`/`console.error` fuera del logger central; Sentry opcional pero no forzado; sin métricas de seguridad expuestas. |
+| **A10 — SSRF** | **Controlado** | El único `fetch` externo significativo es a OpenFoodFacts en `producto.seeder.ts`, limitado a entornos no test y no expuesto por HTTP público. Riesgo bajo. |
 
 ---
 
@@ -32,7 +32,7 @@ La superficie de ataque del backend SmartEconomat es **moderada**. El sistema im
 
 ### 1. Configuración CORS insegura por omisión
 
-**Severidad:** 🔴 Critical  
+**Severidad:** Critical  
 **Archivo:** `src/main.ts`  
 **Línea:** 48
 
@@ -54,7 +54,7 @@ Lanzar error al arranque si `FRONTEND_API_URL` no está definida en `NODE_ENV=pr
 
 ### 2. `synchronize: true` si `NODE_ENV` no está definido
 
-**Severidad:** 🔴 Critical  
+**Severidad:** Critical  
 **Archivo:** `src/config/database.config.ts`  
 **Líneas:** 50–51
 
@@ -73,7 +73,7 @@ Usar `synchronize: process.env.DB_SYNC === 'true'` y documentar `DB_SYNC=true` s
 
 ### 3. Logging inseguro / no estructurado
 
-**Severidad:** 🟠 High  
+**Severidad:** High  
 **Archivos:**
 - `src/modules/auth/service/auth.service.ts:112`
 - `src/modules/auth/service/auth-permissions.service.ts:66`
@@ -92,7 +92,7 @@ Sustituir por `this.logger.error` / `this.logger.debug` y controlar la emisión 
 
 ### 4. Rate limiting no distribuido
 
-**Severidad:** 🟡 Medium  
+**Severidad:** Medium  
 **Archivo:** `src/app.module.ts`
 
 ```ts
@@ -116,7 +116,7 @@ Migrar a `@nestjs/throttler-storage-redis` o equivalente antes de escalar horizo
 
 ### 5. Secrets sin validación al arranque
 
-**Severidad:** 🟡 Medium  
+**Severidad:** Medium  
 **Archivos:**
 - `src/main.ts` — `FRONTEND_API_URL`
 - `src/instrument.ts` — `SENTRY_DSN`
@@ -137,7 +137,7 @@ Añadir validación de entorno centralizada usando `ConfigModule.forRoot({ valid
 
 ### 6. Recuperación de contraseña correcta pero con observabilidad mejorable
 
-**Severidad:** 🟢 Low  
+**Severidad:** Low  
 **Archivo:** `src/modules/auth/service/auth.service.ts`
 
 **Aspectos positivos:**

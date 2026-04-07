@@ -1,30 +1,30 @@
-# 📝 Changelog - Sistema de Testing v2.0
+# Changelog - Sistema de Testing v2.0
 
 ## [2.0.0] - Marzo 2026
 
-### 🚀 Nueva Arquitectura de Testing de Alto Rendimiento
+### Nueva Arquitectura de Testing de Alto Rendimiento
 
 Sistema completamente refactorizado para testing extremadamente rápido usando pg-mem, snapshots y singleton patterns.
 
 ---
 
-## ✨ Características Nuevas
+## Características Nuevas
 
 ### 1. PostgreSQL en Memoria (pg-mem)
-- ✅ Base de datos completamente en memoria
-- ✅ 1000x más rápido que PostgreSQL real
-- ✅ Sin dependencia de Docker o PostgreSQL instalado
-- ✅ Soporta funciones UUID v7 y v4
+- Base de datos completamente en memoria
+- 1000x más rápido que PostgreSQL real
+- Sin dependencia de Docker o PostgreSQL instalado
+- Soporta funciones UUID v7 y v4
 
 **Archivos:**
 - `test/setup/pg-mem.ts` - Sistema de pg-mem
 - `test/setup/seed-test-database.ts` - Seeders optimizados
 
 ### 2. Sistema de Snapshots de Dos Niveles
-- ✅ SEED_SNAPSHOT: Estado post-seeders reutilizable
-- ✅ FILE_SNAPSHOT: Estado post-beforeAll de cada archivo
-- ✅ Restore instantáneo (<1ms)
-- ✅ Aislamiento perfecto entre tests
+- SEED_SNAPSHOT: Estado post-seeders reutilizable
+- FILE_SNAPSHOT: Estado post-beforeAll de cada archivo
+- Restore instantáneo (<1ms)
+- Aislamiento perfecto entre tests
 
 **Ventajas sobre transacciones:**
 - Rollback de TODO el estado (incluye transacciones internas)
@@ -32,39 +32,39 @@ Sistema completamente refactorizado para testing extremadamente rápido usando p
 - Más simple y más rápido
 
 ### 3. App NestJS Singleton
-- ✅ Una instancia de app por worker
-- ✅ Reutilizada en todos los tests
-- ✅ Bootstrap una sola vez (~2s)
-- ✅ Tests subsecuentes instantáneos
+- Una instancia de app por worker
+- Reutilizada en todos los tests
+- Bootstrap una sola vez (~2s)
+- Tests subsecuentes instantáneos
 
 **Archivo:**
 - `test/setup/test-app.ts` - App singleton
 
 ### 4. Optimización de bcrypt
-- ✅ Reducido de 10 rounds a 1 round en tests
-- ✅ 100x más rápido (~100ms → <1ms)
-- ✅ Solo afecta entorno de test
-- ✅ Producción sigue usando valor real
+- Reducido de 10 rounds a 1 round en tests
+- 100x más rápido (~100ms → <1ms)
+- Solo afecta entorno de test
+- Producción sigue usando valor real
 
 **Archivo:**
 - `test/setup/bcrypt-mock.ts` - Mock de bcrypt
 
 ### 5. Helpers de Testing
-- ✅ `loginAndGetToken()` - Autenticación simplificada
-- ✅ `generateUniqueName()` - Nombres únicos para tests
-- ✅ `generateUniqueEmail()` - Emails únicos
-- ✅ `expectStandardResponse()` - Assertions reutilizables
-- ✅ `expectPaginatedResponse()` - Validar paginación
-- ✅ `createAuthenticatedClient()` - Cliente pre-autenticado
+- `loginAndGetToken()` - Autenticación simplificada
+- `generateUniqueName()` - Nombres únicos para tests
+- `generateUniqueEmail()` - Emails únicos
+- `expectStandardResponse()` - Assertions reutilizables
+- `expectPaginatedResponse()` - Validar paginación
+- `createAuthenticatedClient()` - Cliente pre-autenticado
 
 **Archivo:**
 - `test/utils/test-helpers.ts` - Utilidades comunes
 
 ### 6. Configuración Optimizada de Jest
-- ✅ `maxWorkers: 50%` - Usar 50% de CPUs
-- ✅ `testTimeout: 30000` - Timeout adecuado
-- ✅ Parallel execution optimizado
-- ✅ Scripts de NPM actualizados
+- `maxWorkers: 50%` - Usar 50% de CPUs
+- `testTimeout: 30000` - Timeout adecuado
+- Parallel execution optimizado
+- Scripts de NPM actualizados
 
 **Archivos:**
 - `test/jest-e2e.json` - Configuración E2E
@@ -72,7 +72,7 @@ Sistema completamente refactorizado para testing extremadamente rápido usando p
 
 ---
 
-## 📁 Estructura de Archivos Nueva
+## Estructura de Archivos Nueva
 
 ```
 test/
@@ -103,7 +103,7 @@ test/
 
 ---
 
-## 🔄 Archivos Modificados
+## Archivos Modificados
 
 ### 1. `test/globalSetup.ts`
 - Simplificado
@@ -134,7 +134,7 @@ test/
 
 ---
 
-## 📊 Mejoras de Rendimiento
+## Mejoras de Rendimiento
 
 ### Antes de la Refactorización
 
@@ -153,7 +153,7 @@ Tiempo por test:       ~50-100 milisegundos
 Suite de 100 tests:    ~20-30 segundos
 Paralelización:        Perfecto (sin conflictos)
 
-MEJORA: 10x más rápido ⚡
+MEJORA: 10x más rápido
 ```
 
 ### Desglose de Mejoras
@@ -168,26 +168,26 @@ MEJORA: 10x más rápido ⚡
 
 ---
 
-## 🎯 Impacto en Desarrollo
+## Impacto en Desarrollo
 
 ### Antes
-- ❌ Tests lentos desaniman a desarrolladores
-- ❌ CI/CD tarda mucho tiempo
-- ❌ Feedback lento en desarrollo
-- ❌ Difícil depurar tests
+- Tests lentos desaniman a desarrolladores
+- CI/CD tarda mucho tiempo
+- Feedback lento en desarrollo
+- Difícil depurar tests
 
 ### Después
-- ✅ Tests instantáneos motivan a escribir más tests
-- ✅ CI/CD 10x más rápido
-- ✅ Feedback inmediato
-- ✅ Debugging más rápido
-- ✅ Mayor confianza en refactorings
+- Tests instantáneos motivan a escribir más tests
+- CI/CD 10x más rápido
+- Feedback inmediato
+- Debugging más rápido
+- Mayor confianza en refactorings
 
 ---
 
-## 🔧 Breaking Changes
+## Breaking Changes
 
-### ⚠️ Cambios que requieren actualización de tests
+### Cambios que requieren actualización de tests
 
 1. **Import paths cambiados**
    ```typescript
@@ -213,7 +213,7 @@ MEJORA: 10x más rápido ⚡
    ```typescript
    // Antes
    afterAll(async () => {
-     await app.close(); // ❌ NO HACER
+   await app.close(); // No hacer
    });
    
    // Después
@@ -222,7 +222,7 @@ MEJORA: 10x más rápido ⚡
 
 ---
 
-## ⬆️ Guía de Migración
+## Guía de Migración
 
 Para migrar tests existentes, consulta:
 - **[MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md)** - Guía paso a paso
@@ -237,7 +237,7 @@ Para migrar tests existentes, consulta:
 
 ---
 
-## 📚 Documentación
+## Documentación
 
 ### Nuevos archivos de documentación:
 
@@ -264,7 +264,7 @@ Para migrar tests existentes, consulta:
 
 ---
 
-## 🧪 Compatibilidad
+## Compatibilidad
 
 ### Versiones soportadas:
 - Node.js: >= 18.x
@@ -274,14 +274,14 @@ Para migrar tests existentes, consulta:
 - pg-mem: >= 3.x
 
 ### Plataformas:
-- ✅ Windows
-- ✅ macOS
-- ✅ Linux
-- ✅ Docker
+- Windows
+- macOS
+- Linux
+- Docker
 
 ---
 
-## 🤝 Contribuciones
+## Contribuciones
 
 ### Cómo contribuir a los tests:
 
@@ -293,7 +293,7 @@ Para migrar tests existentes, consulta:
 
 ---
 
-## 🐛 Bugs Conocidos
+## Bugs Conocidos
 
 Ninguno conocido en este momento.
 
@@ -305,7 +305,7 @@ Si encuentras un bug:
 
 ---
 
-## 🔮 Roadmap
+## Roadmap
 
 ### v2.1.0 (Futuro)
 - [ ] Snapshots pre-generados para CI/CD
@@ -320,7 +320,7 @@ Si encuentras un bug:
 
 ---
 
-## 🙏 Agradecimientos
+## Agradecimientos
 
 Gracias a todos los desarrolladores que contribuyeron a este sistema de testing.
 
@@ -332,7 +332,7 @@ Tecnologías clave:
 
 ---
 
-## 📞 Soporte
+## Soporte
 
 Para preguntas o soporte:
 1. Revisa la documentación
@@ -347,7 +347,7 @@ Para preguntas o soporte:
 
 ---
 
-## 📝 Notas Técnicas
+## Notas Técnicas
 
 ### Por qué pg-mem
 

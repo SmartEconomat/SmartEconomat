@@ -22,11 +22,11 @@ El componente extiende casi todas las Props nativas de un `Chip` de Material UI 
 
 | Tipo Devuelto | Equivalencias (`status`) |
 | :--- | :--- |
-| 🟢 **success** | `'success'`, `'completed'`, `'delivered'`, `'approved'`, `'fácil'`, `'entrada'`, `'entrada_compra'` |
-| 🔴 **error** | `'error'`, `'failed'`, `'cancelled'`, `'rejected'`, `'difícil'`, `'salida'`, `'salida_elaboracion'` |
-| 🟡 **warning** | `'warning'`, `'pending'`, `'in_progress'`, `'review'`, `'media'`, `'ajuste'` |
-| 🔵 **info** | `'info'`, `'active'`, `'archived'`, `'pedido'` |
-| ⚪ **default** | Cualquier _string_ ajeno que caiga por defecto (`'unknown'`, `'custom'`). |
+| **success** | `'success'`, `'completed'`, `'delivered'`, `'approved'`, `'fácil'`, `'entrada'`, `'entrada_compra'` |
+| **error** | `'error'`, `'failed'`, `'cancelled'`, `'rejected'`, `'difícil'`, `'salida'`, `'salida_elaboracion'` |
+| **warning** | `'warning'`, `'pending'`, `'in_progress'`, `'review'`, `'media'`, `'ajuste'` |
+| **info** | `'info'`, `'active'`, `'archived'`, `'pedido'` |
+| **default** | Cualquier _string_ ajeno que caiga por defecto (`'unknown'`, `'custom'`). |
 
 ## Ejemplo de Integración en un DataTable
 

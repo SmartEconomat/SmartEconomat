@@ -8,6 +8,7 @@ Guía de resolución de errores frecuentes encontrados durante el desarrollo y d
 
 | Error | Entorno | Documento |
 |-------|---------|-----------|
+| Binarios incompatibles en `node_modules` montados desde macOS/Windows | Docker Desarrollo | [docker_mac_node_modules.md](docker_mac_node_modules.md) |
 | EACCES: permission denied, mkdir './uploads' | Docker Producción | [eacces_mkdir_uploads.md](eacces_mkdir_uploads.md) |
 | ENOENT: scandir '/app/dist/i18n/' | Docker Producción | [enoent_scandir_i18n.md](enoent_scandir_i18n.md) |
 | JSON.parse: unexpected character at line 1 | Nginx / Producción | [json_parse_nginx_proxy.md](json_parse_nginx_proxy.md) |
@@ -16,6 +17,12 @@ Guía de resolución de errores frecuentes encontrados durante el desarrollo y d
 ---
 
 ## Resumen rápido
+
+### Binarios incompatibles en `node_modules`
+
+**Causa:** el host instala binarios nativos para su propia plataforma, pero Docker ejecuta Linux dentro del contenedor.
+
+**Solución:** aislar `node_modules` con volumen propio del contenedor o reinstalar dependencias dentro del servicio Docker. Ver [docker_mac_node_modules.md](docker_mac_node_modules.md).
 
 ### EACCES: mkdir './uploads'
 

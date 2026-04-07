@@ -4,6 +4,23 @@ Documentación técnica y funcional del proyecto SmartEconomat, reorganizada por
 
 **Stack principal:** NestJS 11 · React 19 · TypeORM · PostgreSQL · Docker · JWT
 
+## Anotaciones Markdown
+
+Para resaltar contexto dentro de la wiki, usa callouts compatibles con GitHub en lugar de títulos sueltos como `## Nota` o avisos con emoji en línea.
+
+```md
+> [!NOTE]
+> Aclaración breve o contexto complementario.
+```
+
+Tipos recomendados:
+
+- `> [!NOTE]` para contexto adicional o aclaraciones.
+- `> [!TIP]` para consejos prácticos o atajos útiles.
+- `> [!IMPORTANT]` para restricciones o decisiones que no deben ignorarse.
+- `> [!WARNING]` para riesgos operativos relevantes.
+- `> [!CAUTION]` para acciones destructivas o irreversibles.
+
 ---
 
 ## Documentación Backend (Diátaxis)
@@ -66,7 +83,7 @@ Este bloque agrupa la documentación completa y detallada del backend NestJS + T
 |-----------|-------------|
 | [Inicio rápido](getting-started/inicio-rapido.md) | Cómo clonar, configurar y ejecutar el proyecto |
 | [Requisitos técnicos](getting-started/requisitos-tecnicos.md) | Requisitos funcionales y no funcionales |
-| [Dependencias](getting-started/dependencias.md) | Dependencias clave y justificación de uso |
+| [Dependencias](getting-started/dependencias.md) | Resumen de dependencias runtime y enlace a la referencia detallada |
 
 ## Arquitectura
 
@@ -119,6 +136,11 @@ Este bloque agrupa la documentación completa y detallada del backend NestJS + T
 | [Recepción](modules/recepcion/README.md) | Visión general del módulo de recepción |
 | [Recepción masiva](modules/recepcion/recepcion-masiva.md) | Flujo batch y garantías ACID |
 | [Arquitectura UI de recepción](modules/recepcion/arquitectura-ui.md) | Diseño de la interfaz del módulo |
+| [Albaranes](modules/albaran/README.md) | Rol documental del albarán dentro del flujo de compras y recepción |
+| [Administración](modules/admin/README.md) | Acciones privilegiadas de gobierno sobre usuarios, roles y seguridad |
+| [Dashboard](modules/dashboard/README.md) | KPIs agregados y principios de lectura del panel principal |
+| [Archivos](modules/archivo/README.md) | Gestión genérica de ficheros y diferencia frente a documentos de negocio |
+| [Exportación](modules/export/README.md) | Generación de binarios XLSX y PDF a partir de filtros de dominio |
 
 ## Frontend
 
@@ -136,8 +158,10 @@ Este bloque agrupa la documentación completa y detallada del backend NestJS + T
 |-----------|-------------|
 | [API backend](reference/api/README.md) | Referencia de integración por dominios, con requests, respuestas y entidades relacionadas |
 | [Mapa rápido de endpoints](reference/endpoints.md) | Índice corto de rutas base y saltos a la referencia detallada |
+| [Dependencias frontend y backend](reference/dependencias-frontend-backend.md) | Inventario runtime por librería, uso real y motivo técnico |
 | [Troubleshooting](operations/troubleshooting/README.md) | Problemas frecuentes y soluciones |
 | [Auditoría backend](audits/backend-unused-endpoints.md) | Auditoría técnica disponible del backend |
+| [Auditoría documental backend y API](planning/improvements/auditoria-documentacion-backend-api.md) | Matriz de cobertura actual, huecos y prioridades para cerrar la documentación del backend |
 | [Casos de uso](planning/use-cases/use-cases.md) | Casos de uso funcionales |
 | [Mejoras propuestas](planning/improvements/) | Propuestas de evolución del producto |
 

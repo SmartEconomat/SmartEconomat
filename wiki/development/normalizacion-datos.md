@@ -173,18 +173,18 @@ app.useGlobalPipes(
 ### Strings
 
 ```typescript
-// ✅ CORRECTO - Todos los strings deben tener trim
+// Correcto: todos los strings deben tener trim
 @Transform(TrimStringTransformer.transform)
 @IsString()
 @IsNotEmpty()
 nombre: string;
 
-// ✅ CORRECTO - Emails en minúsculas
+// Correcto: emails en minúsculas
 @Transform(LowercaseStringTransformer.transform)
 @IsEmail()
 email: string;
 
-// ✅ CORRECTO - Códigos en mayúsculas
+// Correcto: códigos en mayúsculas
 @Transform(UppercaseStringTransformer.transform)
 @IsString()
 @Matches(/^[A-Z0-9]+$/)
@@ -194,14 +194,14 @@ codigo: string;
 ### Números
 
 ```typescript
-// ✅ CORRECTO - Números con conversión desde string
+// Correcto: números con conversión desde string
 @Type(() => Number)
 @Transform(StringToNumberTransformer.transform)
 @IsNumber()
 @Min(0)
 precio: number;
 
-// ✅ CORRECTO - Enteros
+// Correcto: enteros
 @Type(() => Number)
 @Transform(StringToNumberTransformer.transform)
 @IsInt()
@@ -212,13 +212,13 @@ cantidad: number;
 ### Fechas
 
 ```typescript
-// ✅ CORRECTO - Fechas desde string ISO
+// Correcto: fechas desde string ISO
 @Type(() => Date)
 @Transform(StringToDateTransformer.transform)
 @IsDate()
 fechaCaducidad: Date;
 
-// ✅ CORRECTO - Fechas como string ISO (para APIs)
+// Correcto: fechas como string ISO (para APIs)
 @Transform(StringToDateTransformer.transform)
 @IsDateString()
 fechaEntrega: string;
@@ -227,7 +227,7 @@ fechaEntrega: string;
 ### Booleanos
 
 ```typescript
-// ✅ CORRECTO - Booleanos con conversión
+// Correcto: booleanos con conversión
 @Transform(StringToBooleanTransformer.transform)
 @IsBoolean()
 activo: boolean;
@@ -236,13 +236,13 @@ activo: boolean;
 ### Arrays
 
 ```typescript
-// ✅ CORRECTO - Arrays normalizados
+// Correcto: arrays normalizados
 @IsArray()
 @ValidateNested({ each: true })
 @Type(() => ItemDto)
 items: ItemDto[];
 
-// ✅ CORRECTO - Arrays de enums
+// Correcto: arrays de enums
 @IsArray()
 @IsEnum(Alergeno, { each: true })
 alergenos: Alergeno[];

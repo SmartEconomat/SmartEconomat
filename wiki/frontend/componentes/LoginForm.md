@@ -10,7 +10,8 @@
 
 `LoginForm` es el formulario de inicio de sesión. Gestiona la entrada de credenciales, la visibilidad de la contraseña, el estado de carga y los errores de red/autenticación.
 
-> ⚠️ **Importante:** Este componente **no llama directamente** a `AuthContext.login()`. En su lugar, delega la autenticación al componente padre (`Login.tsx`) mediante el callback `onLoginSuccess`. Esto permite que el padre ejecute la animación de salida **antes** de navegar al dashboard.
+> [!IMPORTANT]
+> Este componente **no llama directamente** a `AuthContext.login()`. En su lugar, delega la autenticación al componente padre (`Login.tsx`) mediante el callback `onLoginSuccess`. Esto permite que el padre ejecute la animación de salida **antes** de navegar al dashboard.
 
 ---
 
@@ -18,8 +19,8 @@
 
 | Prop | Tipo | Requerido | Descripción |
 |------|------|-----------|-------------|
-| `onToggleForm` | `() => void` | ✅ | Cambia al modo de registro. |
-| `onLoginSuccess` | `(user: DecodedUser, token: string) => void` | ✅ | Invocado cuando el login es exitoso. El padre gestiona la animación y la navegación. |
+| `onToggleForm` | `() => void` | Sí | Cambia al modo de registro. |
+| `onLoginSuccess` | `(user: DecodedUser, token: string) => void` | Sí | Invocado cuando el login es exitoso. El padre gestiona la animación y la navegación. |
 
 ### Tipo `DecodedUser`
 

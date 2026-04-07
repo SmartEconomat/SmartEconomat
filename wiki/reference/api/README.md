@@ -42,7 +42,7 @@ Esta carpeta sustituye la referencia monolítica anterior por una documentación
 - Auth educativo: [../../security/auth-sistema-educativo.md](../../security/auth-sistema-educativo.md)
 - Roles y permisos: [../../security/roles-y-permisos.md](../../security/roles-y-permisos.md)
 
-## Si vienes desde enlaces antiguos
+## Navegación complementaria
 
-- [../api.md](../api.md) se mantiene como entrada corta y redirige a esta carpeta.
-- [../endpoints.md](../endpoints.md) se mantiene como mapa rápido de rutas y dominios.
+- [../api.md](../api.md) ofrece el inventario completo generado desde el backend.
+- [../endpoints.md](../endpoints.md) sirve como mapa rápido de rutas y dominios.

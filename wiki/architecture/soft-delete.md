@@ -1,8 +1,8 @@
-# 🗑️ Soft Delete Global - Arquitectura
+# Soft Delete Global - Arquitectura
 
 El sistema implementa un mecanismo de **borrado lógico (Soft Delete)** de forma transversal en todas las entidades que heredan de `BaseEntity`. Esto permite "eliminar" registros de la vista del usuario sin borrarlos físicamente de la base de datos, facilitando la recuperación de datos y manteniendo la integridad referencial histórica.
 
-## 🏗️ Implementación en el Modelo
+## Implementación en el Modelo
 
 ### `BaseEntity`
 Todas las entidades del sistema extienden `BaseEntity` (ubicada en `src/common/entities/base.entity.ts`), que incluye la columna necesaria para TypeORM:
@@ -28,7 +28,7 @@ deletedBy?: string | null;
 
 ---
 
-## 🛠️ Lógica en Servicios
+## Lógica en Servicios
 
 El `BaseService` (`src/common/base/base.service.ts`) gestiona cómo se interactúa con estos registros:
 
@@ -60,13 +60,13 @@ const entity = await this.repository.findOne({
 
 ---
 
-## 🔄 Restauración de Datos
+## Restauración de Datos
 
 Para restaurar un registro eliminado, se debe limpiar la columna `deletedAt`. Actualmente, esto se realiza a nivel de servicio específico cuando se requiere la funcionalidad de "Deshacer" o "Restaurar".
 
 ---
 
-## 🚀 Ventajas del Soft Delete
+## Ventajas del Soft Delete
 
 1. **Seguridad**: Previene la pérdida accidental de datos críticos (recetas, pedidos, movimientos).
 2. **Auditoría**: Permite saber quien borró qué y cuándo.
@@ -74,6 +74,6 @@ Para restaurar un registro eliminado, se debe limpiar la columna `deletedAt`. Ac
 
 ---
 
-## 🔗 Relacionado
+## Relacionado
 - [Diagrama de Datos](../architecture/data-model.md)
 - [Sistema de Permisos](../security/rbac.md)

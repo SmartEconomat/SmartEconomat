@@ -2,9 +2,9 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-## Configuración para despliegue en dominio/Azure
+## Configuración de despliegue
 
-1. Define las variables de entorno en el portal de Azure/App Service o en tu plataforma cloud:
+1. Define las variables de entorno en tu archivo `.env.prod` o en el entorno donde vayas a desplegar:
    - FRONTEND_PORT
    - FRONTEND_API_URL
    - VITE_API_PROXY_TARGET
@@ -13,7 +13,7 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
    - NODE_ENV=production
 2. Configura el archivo `.env.prod` con los valores de tu dominio y API.
 3. Si usas Docker, asegúrate de que docker-compose use las variables correctas y exponga los puertos necesarios.
-4. Consulta la guía [Centralización de configuración](../../CENTRALIZACION_CONFIGURACION.md) para más detalles.
+4. Consulta la guía [Centralización de configuración](../../wiki/CENTRALIZACION_CONFIGURACION.md) para más detalles.
 
 In the project directory, you can run:
 

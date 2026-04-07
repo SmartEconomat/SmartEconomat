@@ -1,72 +1,26 @@
 # Gestión de paquetes y dependencias
 
-Este documento detalla las librerías principales utilizadas en **SmartEconomat**, justificando su elección según los requisitos de rendimiento, seguridad y arquitectura del proyecto.
+Esta página resume las dependencias runtime principales del proyecto y enlaza a la referencia exhaustiva por librería.
 
----
+## Documento principal
 
-## Núcleo de rendimiento
+- [Referencia detallada de dependencias frontend y backend](../reference/dependencias-frontend-backend.md)
 
-| Paquete | Propósito / Razón |
-| :--- | :--- |
-| **`@swc/core` / `@swc/cli`** | **Compilación Ultra Rápida**: Sustituye a `tsc` en desarrollo. Reduce el tiempo de compilación de segundos a milisegundos, permitiendo un ciclo de feedback instantáneo (`nest start -b swc`). |
-| **`@nestjs/cache-manager`** | **Optimización de Consultas**: Integración con `cache-manager` para almacenar en memoria (o Redis) datos de alta lectura y baja escritura (configuraciones, perfiles, catálogos estáticos). |
-| **`rxjs`** | **Programación Reactiva**: Requisito de NestJS para manejar flujos de datos asíncronos y eventos de forma eficiente. |
+## Resumen rápido
 
----
+| Área | Dependencias clave |
+| --- | --- |
+| Frontend | `react`, `react-dom`, `react-router-dom`, `@mui/material`, `@mui/icons-material`, `@mui/x-date-pickers`, `@reduxjs/toolkit`, `react-redux`, `dayjs`, `@sentry/react`, `@zxing/browser`, `@zxing/library`, `wicg-inert`, `web-vitals` |
+| Backend | `@nestjs/common`, `@nestjs/core`, `@nestjs/config`, `@nestjs/platform-express`, `typeorm`, `@nestjs/typeorm`, `pg`, `@nestjs/jwt`, `@nestjs/passport`, `passport`, `passport-jwt`, `bcrypt`, `class-validator`, `class-transformer`, `nestjs-i18n`, `@nestjs/swagger`, `swagger-ui-express`, `@nestjs/cache-manager`, `cache-manager`, `ioredis`, `@nestjs/event-emitter`, `@sentry/nestjs`, `nodemailer`, `exceljs`, `pdfkit`, `jimp`, `@jsquash/webp` |
 
-## Base de datos y persistencia
+## Cómo usar esta documentación
 
-| Paquete | Propósito / Razón |
-| :--- | :--- |
-| **`typeorm` / `@nestjs/typeorm`** | **ORM de grado industrial**: Manejo de relaciones complejas, migraciones y soporte para el patrón Repository. |
-| **`pg`** | **Driver PostgreSQL**: Librería necesaria para que Node.js se comunique con nuestra base de datos relacional. |
-| **`pg-mem`** | **Tests E2E Ultra Rápidos**: Base de datos PostgreSQL en memoria utilizada exclusivamente para tests unitarios y de integración para no depender de una instancia física. |
+- Si necesitas entender el stack real y el motivo de cada librería, usa la referencia detallada.
+- Si estás buscando tooling de build, lint, testing o CI/CD, consulta la documentación de desarrollo y operación; ese alcance queda fuera de esta página.
+- Si quieres revisar la capa de persistencia o la configuración del entorno, usa también [reference/typeorm-y-datasource.md](../reference/typeorm-y-datasource.md) y [reference/variables-entorno.md](../reference/variables-entorno.md).
 
----
+## Alcance de este resumen
 
-## Seguridad y autenticación
+- Incluye dependencias de runtime con uso o configuración activa.
+- Excluye devDependencies, infraestructura externa y paquetes declarados sin evidencia de uso runtime principal.
 
-| Paquete | Propósito / Razón |
-| :--- | :--- |
-| **`@nestjs/jwt` / `passport-jwt`** | **Protocolo Estándar**: Implementación de JSON Web Tokens para una sesión `stateless`, escalable y segura. |
-| **`bcrypt`** | **Hashing de Contraseñas**: Algoritmo de hashing con sal (salt) para asegurar que las contraseñas nunca se almacenen en texto plano. |
-| **`cookie-parser`** | **Seguridad de Sesión**: Permite leer y establecer cookies `httpOnly`, protegiendo los tokens contra ataques XSS. |
-
----
-
-## Validación y estándares
-
-| Paquete | Propósito / Razón |
-| :--- | :--- |
-| **`class-validator` / `class-transformer`** | **Contratos de Datos**: Valida los DTOs en tiempo de ejecución. Asegura que los datos que entran a la API cumplen con los tipos y restricciones esperadas (ej: `@IsEmail`, `@Min`). |
-| **`nestjs-i18n`** | **Internacionalización**: Centraliza todos los mensajes de error y etiquetas en ficheros JSON para soportar múltiples idiomas (es/en). |
-| **`uuid`** | **Identificadores Únicos**: Generación de UUIDs, crucial para nuestra arquitectura basada en **UUID v7**. |
-
----
-
-## Documentación y utilidades
-
-| Paquete | Propósito / Razón |
-| :--- | :--- |
-| **`@nestjs/swagger` / `swagger-ui-express`** | **Documentación Viva**: Genera automáticamente el portal de OpenAPI (Swagger) a partir de los decoradores en los controladores, facilitando la integración con el frontend. |
-| **`@faker-js/faker`** | **Generación de Datos**: Utilizado en seeders para poblar la base de datos con miles de productos y usuarios realistas para pruebas de carga. |
-| **`erdia`** | **Diagramas ERD**: Genera diagramas de Entidad-Relación directamente desde las clases de TypeORM. |
-
----
-
-## Calidad de código
-
-| Paquete | Propósito / Razón |
-| :--- | :--- |
-| **`eslint` / `typescript-eslint`** | **Análisis Estático**: Asegura que el código sigue las reglas de estilo y buenas prácticas definidas para el proyecto. |
-| **`prettier`** | **Formateo Automático**: Mantiene la consistencia visual del código en todo el equipo. |
-| **`husky` / `lint-staged`** | **Pre-commit Hooks**: Garantiza que ningún código se suba al repositorio si no pasa el linting o los tests básicos. |
-| **`jest` / `supertest`** | **Testing Framework**: Suite completa para unit testing y simulación de peticiones HTTP en tests E2E. |
-
----
-
-## Módulos educativos
-
-| Paquete | Propósito / Razón |
-| :--- | :--- |
-| **`ts-node` / `tsconfig-paths`** | **Ejecución Directa**: Permite ejecutar scripts de TypeScript (como los seeders) directamente sin necesidad de compilación previa a JS. |

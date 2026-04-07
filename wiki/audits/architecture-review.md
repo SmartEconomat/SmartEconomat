@@ -165,23 +165,23 @@ graph LR
 
 | Aspecto | Estado | Notas |
 |---|---|---|
-| Módulos verticales por dominio | ✅ Cumple | 21 módulos bien delimitados |
-| Capa `common/` transversal | ✅ Cumple | Guards, filters, pipes, interceptores |
-| Interfaces de repositorio | ✅ Parcial | `BaseRepository` existe; algunos repositorios extienden `Repository<T>` directamente |
-| Use cases explícitos | ⚠️ Parcial | Existe `src/application/product/use-cases/` pero no generalizado a todos los módulos |
-| DDD base entities | ✅ Cumple | `src/common/ddd/base-entity.ts`, `domain-error.ts`, `use-case.ts` presentes |
+| Módulos verticales por dominio | Cumple | 21 módulos bien delimitados |
+| Capa `common/` transversal | Cumple | Guards, filters, pipes, interceptores |
+| Interfaces de repositorio | Parcial | `BaseRepository` existe; algunos repositorios extienden `Repository<T>` directamente |
+| Use cases explícitos | Parcial | Existe `src/application/product/use-cases/` pero no generalizado a todos los módulos |
+| DDD base entities | Cumple | `src/common/ddd/base-entity.ts`, `domain-error.ts`, `use-case.ts` presentes |
 
 ### Patrones de diseño detectados
 
 | Patrón | Ubicación | Evaluación |
 |---|---|---|
-| Repository Pattern | `**/repository/*.repository.ts` | ✅ Bien aplicado, separado de servicios |
-| Service Layer | `**/service/*.service.ts` | ✅ Lógica de negocio aislada del controlador |
-| Data Mapper (TypeORM) | Entidades con `@Entity()` | ✅ Sin Active Record, favorece testabilidad |
-| Decorator pattern | `src/common/decorators/` | ✅ Decoradores `@RequirePermissions`, `@Public`, `@Resource` |
-| Command/Factory | `src/application/pedido/pedido.factory.ts` | ✅ Presente aunque limitado a un módulo |
-| CQRS | — | ❌ No implementado. Podría beneficiar al módulo de inventario de alta escritura |
-| Event Sourcing | — | ❌ No aplica en el estado actual del sistema |
+| Repository Pattern | `**/repository/*.repository.ts` | Bien aplicado, separado de servicios |
+| Service Layer | `**/service/*.service.ts` | Lógica de negocio aislada del controlador |
+| Data Mapper (TypeORM) | Entidades con `@Entity()` | Sin Active Record, favorece testabilidad |
+| Decorator pattern | `src/common/decorators/` | Decoradores `@RequirePermissions`, `@Public`, `@Resource` |
+| Command/Factory | `src/application/pedido/pedido.factory.ts` | Presente aunque limitado a un módulo |
+| CQRS | — | No implementado. Podría beneficiar al módulo de inventario de alta escritura |
+| Event Sourcing | — | No aplica en el estado actual del sistema |
 
 ### Inversión de dependencias (DI)
 

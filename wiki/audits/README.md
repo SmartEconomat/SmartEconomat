@@ -7,7 +7,7 @@
 
 ---
 
-## 🎯 Score General
+## Score General
 
 | Dimensión | Puntuación |
 |---|---|
@@ -24,7 +24,7 @@
 
 ---
 
-## 📋 Índice de documentos
+## Índice de documentos
 
 | Documento | Descripción |
 |---|---|
@@ -35,19 +35,19 @@
 
 ---
 
-## 📊 Resumen de hallazgos
+## Resumen de hallazgos
 
 | Severidad | Cantidad |
 |---|---|
-| 🔴 Critical | 2 |
-| 🟠 High | 5 |
-| 🟡 Medium | 8 |
-| 🟢 Low | 6 |
+| Critical | 2 |
+| High | 5 |
+| Medium | 8 |
+| Low | 6 |
 | **Total** | **21** |
 
 ---
 
-## 🏆 Fortalezas principales
+## Fortalezas principales
 
 - **Sistema RBAC dinámico (Sherlock):** permisos granulares con cache Redis, invalidación correcta y resolución eficiente (<5 ms con cache).
 - **Indización de base de datos:** prácticamente todos los módulos tienen `@Index` en FKs y campos de filtrado frecuente.
@@ -59,7 +59,7 @@
 
 ---
 
-## ⚠️ Riesgos residuales (sin ejecución completa)
+## Riesgos residuales (sin ejecución completa)
 
 Esta auditoría se basa en **análisis estático de código**. Los siguientes puntos requieren validación dinámica:
 

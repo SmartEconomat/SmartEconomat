@@ -1,7 +1,7 @@
 # How-to: Generar y aplicar migración
 
-## Nota del proyecto
-El backend dispone de script `migration:run`, pero en desarrollo se usa frecuentemente `DB_SYNC=true`. Esta guía describe el flujo recomendado para evolución controlada de esquema.
+> [!NOTE]
+> El backend dispone de script `migration:run`, pero en desarrollo se usa frecuentemente `DB_SYNC=true`. Esta guía describe el flujo recomendado para evolución controlada de esquema.
 
 ## Pasos
 1. Desactiva sincronización automática para validar migraciones.

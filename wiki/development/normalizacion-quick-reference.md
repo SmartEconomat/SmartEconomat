@@ -103,7 +103,7 @@ nombre: string;
 
 // Incorrecto: validar antes de transformar
 @IsString()
-@Transform(TrimStringTransformer.transform)  // ❌ Demasiado tarde
+@Transform(TrimStringTransformer.transform)  // Incorrecto: demasiado tarde
 nombre: string;
 ```
 

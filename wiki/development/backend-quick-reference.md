@@ -230,7 +230,7 @@ export class MyModule extends BaseEntity {
 
 ---
 
-## 🧪 Llamadas de Ejemplo a la API
+## Llamadas de Ejemplo a la API
 
 ### Listado con Paginación
 ```bash
@@ -239,7 +239,7 @@ curl "http://localhost:3000/api/v1/proveedores?page=1&limit=20&searchTerm=Provee
 
 ---
 
-## 🌍 Internacionalización (i18n)
+## Internacionalización (i18n)
 
 ### Mensajes de Error
 ```typescript
