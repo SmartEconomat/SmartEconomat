@@ -4,10 +4,12 @@
 
 Antes de implementar cambios en este repositorio:
 
-- leer `ARCHITECTURE.md` como mapa estructural del sistema;
-- seguir `PROJECT_RULES.md` como norma operativa del proyecto;
-- ejecutar `TASKS.md` como checklist de trabajo;
-- respetar `TESTING_RULES.md` antes de cerrar cualquier tarea.
+- leer `.github/ai/ARCHITECTURE.md` como mapa estructural del sistema;
+- seguir `.github/ai/PROJECT_RULES.md` como norma operativa del proyecto;
+- ejecutar `.github/ai/TASKS.md` como checklist de trabajo;
+- respetar `.github/ai/TESTING_RULES.md` antes de cerrar cualquier tarea.
+- recordar `.github/memories` siempre que necesites realizar una tarea
+- actualizar `.github/memories` siempre que las condiciones cambien.
 
 Reglas críticas de integración:
 
