@@ -39,6 +39,7 @@ describe('massive.helpers.body.orders', () => {
       recetaDificultad: '',
       recetaUnidad: '',
       incidenciaTipo: '',
+      incidenciaEstadoObjetivo: 'nueva',
       resolucionTipo: '',
       mermaMotivo: '',
       estadoVisual: '',

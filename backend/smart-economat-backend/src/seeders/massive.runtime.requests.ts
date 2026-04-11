@@ -10,6 +10,7 @@ import { Ubicacion } from '../modules/ubicacion/ubicacion.entity/ubicacion.entit
 import { Endpoint, EnumCoverage, RequestResult } from './massive.types';
 import { EstadoPedido } from '../modules/pedido/enums/estado-pedido.enum';
 import { EstadoLote } from '../modules/pedido/enums/estado-lote.enum';
+import { INCIDENCIA_ESTADOS } from './massive.config';
 import {
   buildBody,
   buildGetPath,
@@ -1363,6 +1364,36 @@ async function createPendingPedidoUsuarioForConsolidate(
   pushStateValue(context, 'seedConsolidatePedidoUsuarioIds', pedidoUsuarioId);
 }
 
+async function ensureReportableRecepcionIds(
+  context: SeedContext
+): Promise<void> {
+  await ensureRepositoryReady();
+
+  const rows = await AppDataSource.query(`
+    SELECT DISTINCT rp.recepcion_id AS "recepcionId"
+    FROM recepcion_producto rp
+    INNER JOIN pedido_producto pp ON pp.id = rp.pedido_producto_id
+    WHERE rp.deleted_at IS NULL
+      AND pp.deleted_at IS NULL
+      AND (
+        ABS(COALESCE(rp.cantidad_recibida, 0) - COALESCE(pp.cantidad, 0)) > 0.0005
+        OR rp.estado_producto IN ('ROTO', 'FALTA_TOTAL', 'EXCEDE')
+      )
+  `);
+
+  const recepcionIds = (Array.isArray(rows) ? rows : [])
+    .map((row) => (isRecord(row) ? toTrimmedSeedString(row.recepcionId) : ''))
+    .filter((id) => id.length > 0);
+
+  if (recepcionIds.length === 0) {
+    throw new Error(
+      '[seed-massive] No hay recepciones con discrepancia para /incidencias/reportar'
+    );
+  }
+
+  context.set('recepcionReportableIds', Array.from(new Set(recepcionIds)));
+}
+
 async function ensureIncidenciaForResolver(
   context: SeedContext,
   coverage: EnumCoverage,
@@ -1383,36 +1414,151 @@ async function ensureIncidenciaForResolver(
 
   const createEndpoint: Endpoint = {
     method: 'POST',
-    path: '/incidencias/reportar',
+    path: '/incidencias',
     source: 'precreate-incidencia-resolver',
   };
 
   const createBody = buildBody(
     context,
     createEndpoint,
-    '/incidencias/reportar',
+    '/incidencias',
     iteration,
     coverage
   );
 
-  if (!createBody.recepcionId) {
-    createBody.recepcionId = recepcionIds[iteration % recepcionIds.length];
+  const recepcionCandidates = recepcionIds.filter((id) => id.length > 0);
+  const pedidoProductoCandidates = Array.from(
+    new Set([
+      ...getStateArray(context, 'pedidoProductoIdsFresh'),
+      ...getStateArray(context, 'seedCreatedPedidoProductoIds'),
+      ...getStateArray(context, 'pedidoProductoIds'),
+    ])
+  ).filter((id) => id.length > 0);
+
+  if (pedidoProductoCandidates.length === 0) {
+    throw new Error(
+      '[seed-massive] No se pudo precrear incidencia para resolver: faltan pedidoProductoIds válidos'
+    );
   }
 
   const previousToken = context.getAccessToken();
-  context.setAccessToken(chooseTokenForPath(context, '/incidencias/reportar'));
+  context.setAccessToken(chooseTokenForPath(context, '/incidencias'));
 
   try {
-    const response = await context.requestJson<unknown>(
-      '/incidencias/reportar',
-      {
-        method: 'POST',
-        body: createBody,
-        auth: true,
-      }
-    );
+    let created = false;
 
-    collectStateFromResponse(context, '/incidencias/reportar', response);
+    for (const [recepcionIndex, recepcionId] of recepcionCandidates.entries()) {
+      for (
+        let lineIndex = 0;
+        lineIndex < Math.min(pedidoProductoCandidates.length, 6);
+        lineIndex++
+      ) {
+        const pedidoProductoId =
+          pedidoProductoCandidates[
+            (iteration + recepcionIndex + lineIndex) %
+              pedidoProductoCandidates.length
+          ] || '';
+
+        if (!pedidoProductoId) {
+          continue;
+        }
+
+        const lineasBase = Array.isArray(createBody.lineas)
+          ? createBody.lineas
+          : [];
+        const primeraLinea =
+          lineasBase.length > 0 && isRecord(lineasBase[0]) ? lineasBase[0] : {};
+
+        const candidateBody = {
+          ...createBody,
+          recepcionId,
+
+          pedidoId: undefined,
+          lineas: [
+            {
+              ...primeraLinea,
+              pedidoProductoId,
+              cantidadEsperada:
+                Number(primeraLinea.cantidadEsperada) > 0
+                  ? Number(primeraLinea.cantidadEsperada)
+                  : 10,
+              cantidadRecibida: Number.isFinite(
+                Number(primeraLinea.cantidadRecibida)
+              )
+                ? Number(primeraLinea.cantidadRecibida)
+                : 8,
+              tipoDiferencia:
+                typeof primeraLinea.tipoDiferencia === 'string'
+                  ? primeraLinea.tipoDiferencia
+                  : 'FALTANTE',
+              observaciones:
+                typeof primeraLinea.observaciones === 'string'
+                  ? primeraLinea.observaciones
+                  : 'Precreación de incidencia para flujo resolver',
+            },
+          ],
+        };
+
+        try {
+          const response = await context.requestJson<unknown>('/incidencias', {
+            method: 'POST',
+            body: candidateBody,
+            auth: true,
+          });
+
+          collectStateFromResponse(context, '/incidencias', response);
+          created = true;
+          break;
+        } catch (error) {
+          if (
+            error instanceof HttpSeedRequestError &&
+            [400, 404, 409].includes(error.status)
+          ) {
+            continue;
+          }
+
+          throw error;
+        }
+      }
+
+      if (created) {
+        break;
+      }
+    }
+
+    if (!created) {
+      for (const recepcionId of recepcionCandidates) {
+        try {
+          const response = await context.requestJson<unknown>(
+            '/incidencias/reportar',
+            {
+              method: 'POST',
+              body: {
+                recepcionId,
+                tipo:
+                  typeof createBody.tipo === 'string'
+                    ? createBody.tipo
+                    : 'otro',
+              },
+              auth: true,
+            }
+          );
+
+          collectStateFromResponse(context, '/incidencias/reportar', response);
+          created = true;
+          break;
+        } catch (error) {
+          if (
+            error instanceof HttpSeedRequestError &&
+            [400, 404, 409].includes(error.status)
+          ) {
+            continue;
+          }
+
+          throw error;
+        }
+      }
+    }
   } finally {
     context.setAccessToken(previousToken);
   }
@@ -1891,6 +2037,344 @@ export async function ensureDistribucionDisponiblesPostRun(
   }
 }
 
+function unwrapIncidenciaPayload(
+  payload: unknown
+): Record<string, unknown> | null {
+  if (isRecord(payload)) {
+    if (isRecord(payload.data)) {
+      return payload.data;
+    }
+
+    return payload;
+  }
+
+  return null;
+}
+
+function readIncidenciaEstado(payload: unknown): string {
+  const incidencia = unwrapIncidenciaPayload(payload);
+  const estado = toTrimmedSeedString(incidencia?.estado);
+  return estado.toLowerCase();
+}
+
+function readIncidenciaLineas(
+  payload: unknown
+): Array<Record<string, unknown>> {
+  const incidencia = unwrapIncidenciaPayload(payload);
+  if (!incidencia || !Array.isArray(incidencia.lineas)) {
+    return [];
+  }
+
+  return incidencia.lineas.filter(isRecord);
+}
+
+async function createReportedIncidencia(
+  context: SeedContext,
+  recepcionIds: string[],
+  token: string,
+  startOffset: number
+): Promise<string> {
+  for (let offset = 0; offset < recepcionIds.length; offset++) {
+    const recepcionId =
+      recepcionIds[(startOffset + offset) % recepcionIds.length] || '';
+    if (!recepcionId) {
+      continue;
+    }
+
+    try {
+      const response = await context.requestJson<unknown>(
+        '/incidencias/reportar',
+        {
+          method: 'POST',
+          body: {
+            recepcionId,
+            tipo: 'otro',
+          },
+          auth: true,
+          tokenOverride: token,
+        }
+      );
+
+      collectStateFromResponse(context, '/incidencias/reportar', response);
+      const incidenciaId = extractResourceId(response);
+      if (incidenciaId) {
+        return incidenciaId;
+      }
+    } catch (error) {
+      if (
+        error instanceof HttpSeedRequestError &&
+        [400, 404, 409].includes(error.status)
+      ) {
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  throw new Error(
+    '[seed-massive] No fue posible crear incidencia reportada para garantizar cobertura final de estados'
+  );
+}
+
+async function fetchIncidenciaById(
+  context: SeedContext,
+  incidenciaId: string,
+  token: string
+): Promise<Record<string, unknown>> {
+  const payload = await context.requestJson<unknown>(
+    `/incidencias/${incidenciaId}`,
+    {
+      method: 'GET',
+      auth: true,
+      tokenOverride: token,
+    }
+  );
+
+  collectStateFromResponse(context, '/incidencias/:id', payload);
+  const incidencia = unwrapIncidenciaPayload(payload);
+  if (!incidencia) {
+    throw new Error(
+      `[seed-massive] No se pudo leer incidencia ${incidenciaId} para verificar estado`
+    );
+  }
+
+  return incidencia;
+}
+
+async function fetchObservedIncidenciaStates(
+  context: SeedContext,
+  token: string
+): Promise<Set<string>> {
+  const observed = new Set<string>();
+
+  for (let page = 1; page <= 5; page++) {
+    const payload = await context.requestJson<unknown>(
+      buildPaginatedListPath('/incidencias', page, 50),
+      {
+        method: 'GET',
+        auth: true,
+        tokenOverride: token,
+      }
+    );
+
+    collectStateFromResponse(context, '/incidencias', payload);
+    const rows = listFromResponse(payload);
+    if (rows.length === 0) {
+      break;
+    }
+
+    for (const row of rows) {
+      const estado = toTrimmedSeedString(row.estado).toLowerCase();
+      if (estado.length > 0) {
+        observed.add(estado);
+      }
+    }
+
+    if (rows.length < 50) {
+      break;
+    }
+  }
+
+  return observed;
+}
+
+async function ensureIncidenciaStateSample(
+  context: SeedContext,
+  targetEstado: string,
+  recepcionIds: string[],
+  usuarioId: string,
+  token: string,
+  cursor: number
+): Promise<string> {
+  const incidenciaId = await createReportedIncidencia(
+    context,
+    recepcionIds,
+    token,
+    cursor
+  );
+
+  if (targetEstado === 'nueva') {
+    return incidenciaId;
+  }
+
+  const incidenciaDetalle = await fetchIncidenciaById(
+    context,
+    incidenciaId,
+    token
+  );
+  const lineas = readIncidenciaLineas(incidenciaDetalle);
+
+  if (targetEstado === 'pendiente_validacion') {
+    const ajustes = lineas
+      .map((linea) => {
+        const lineaId = toTrimmedSeedString(linea.id);
+        const cantidadEsperada = toSeedFiniteNumber(linea.cantidadEsperada);
+
+        if (!lineaId || !Number.isFinite(cantidadEsperada)) {
+          return null;
+        }
+
+        return {
+          id: lineaId,
+          cantidadRecibida: Number(cantidadEsperada.toFixed(3)),
+        };
+      })
+      .filter(
+        (linea): linea is { id: string; cantidadRecibida: number } =>
+          linea !== null
+      );
+
+    if (ajustes.length === 0) {
+      throw new Error(
+        `[seed-massive] Incidencia ${incidenciaId} sin líneas ajustables para estado pendiente_validacion`
+      );
+    }
+
+    const response = await context.requestJson<unknown>(
+      `/incidencias/${incidenciaId}/resolver`,
+      {
+        method: 'PATCH',
+        body: {
+          marcarComoResuelta: false,
+          lineas: ajustes,
+          observacionesResolucion: 'Seed cobertura estado pendiente_validacion',
+        },
+        auth: true,
+        tokenOverride: token,
+      }
+    );
+    collectStateFromResponse(
+      context,
+      `/incidencias/${incidenciaId}/resolver`,
+      response
+    );
+    return incidenciaId;
+  }
+
+  if (targetEstado === 'en_ajuste') {
+    const primeraLineaId = toTrimmedSeedString(lineas[0]?.id);
+    if (!primeraLineaId) {
+      throw new Error(
+        `[seed-massive] Incidencia ${incidenciaId} sin línea válida para estado en_ajuste`
+      );
+    }
+
+    const response = await context.requestJson<unknown>(
+      `/incidencias/${incidenciaId}/resolver`,
+      {
+        method: 'PATCH',
+        body: {
+          marcarComoResuelta: false,
+          lineas: [
+            {
+              id: primeraLineaId,
+              estadoReclamacion: 'RECLAMADO',
+            },
+          ],
+          observacionesResolucion: 'Seed cobertura estado en_ajuste',
+        },
+        auth: true,
+        tokenOverride: token,
+      }
+    );
+    collectStateFromResponse(
+      context,
+      `/incidencias/${incidenciaId}/resolver`,
+      response
+    );
+    return incidenciaId;
+  }
+
+  const estadoFinal =
+    targetEstado === 'cancelada'
+      ? 'cancelada'
+      : targetEstado === 'invalida'
+        ? 'invalida'
+        : 'resuelta';
+
+  const response = await context.requestJson<unknown>(
+    `/incidencias/${incidenciaId}/resolver`,
+    {
+      method: 'PATCH',
+      body: {
+        usuarioId,
+        marcarComoResuelta: true,
+        estadoFinal,
+        observacionesResolucion: `Seed cobertura estado ${estadoFinal}`,
+      },
+      auth: true,
+      tokenOverride: token,
+    }
+  );
+  collectStateFromResponse(
+    context,
+    `/incidencias/${incidenciaId}/resolver`,
+    response
+  );
+  return incidenciaId;
+}
+
+export async function ensureIncidenciaEstadosPostRun(
+  context: SeedContext
+): Promise<void> {
+  const recepcionIds = getStateArray(context, 'recepcionIds').filter(
+    (id) => id.length > 0
+  );
+  const usuarioIds = getStateArray(context, 'usuarioIds').filter(
+    (id) => id.length > 0
+  );
+
+  if (recepcionIds.length === 0 || usuarioIds.length === 0) {
+    throw new Error(
+      '[seed-massive] No hay recepciones o usuarios suficientes para garantizar estados finales de incidencias'
+    );
+  }
+
+  const token =
+    context.getState<string>('seedTokenSuperAdmin') ||
+    context.getState<string>('seedTokenAdmin') ||
+    chooseTokenForPath(context, '/incidencias/reportar', 'POST');
+
+  const observedBefore = await fetchObservedIncidenciaStates(context, token);
+  const missingStates = INCIDENCIA_ESTADOS.filter(
+    (estado) => !observedBefore.has(estado)
+  );
+
+  let cursor = 0;
+  for (const estado of missingStates) {
+    const incidenciaId = await ensureIncidenciaStateSample(
+      context,
+      estado,
+      recepcionIds,
+      usuarioIds[cursor % usuarioIds.length] || usuarioIds[0] || '',
+      token,
+      cursor
+    );
+
+    const refreshed = await fetchIncidenciaById(context, incidenciaId, token);
+    const finalEstado = readIncidenciaEstado(refreshed);
+    if (finalEstado !== estado) {
+      throw new Error(
+        `[seed-massive] Estado final de incidencia no coincide: esperado=${estado}, obtenido=${finalEstado || 'desconocido'} (id=${incidenciaId})`
+      );
+    }
+
+    cursor += 1;
+  }
+
+  const observedAfter = await fetchObservedIncidenciaStates(context, token);
+  const stillMissing = INCIDENCIA_ESTADOS.filter(
+    (estado) => !observedAfter.has(estado)
+  );
+
+  if (stillMissing.length > 0) {
+    throw new Error(
+      `[seed-massive] No se logró cobertura final de estados de incidencia: ${stillMissing.join(', ')}`
+    );
+  }
+}
+
 async function buildDistribucionCreateBody(
   context: SeedContext,
   iteration: number,
@@ -2295,6 +2779,10 @@ export async function executeEndpointRequest(
     (endpoint.method === 'POST' || endpoint.method === 'PATCH')
   ) {
     await ensureIncidenciaForResolver(context, coverage, iteration);
+  }
+
+  if (endpoint.method === 'POST' && endpoint.path === '/incidencias/reportar') {
+    await ensureReportableRecepcionIds(context);
   }
 
   if (

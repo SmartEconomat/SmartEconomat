@@ -12,16 +12,18 @@ export enum EstadoReclamacion {
 }
 
 export enum EstadoIncidencia {
-  PENDIENTE = 'pendiente',
-  EN_REVISION = 'en_revision',
+  NUEVA = 'nueva',
+  EN_AJUSTE = 'en_ajuste',
+  PENDIENTE_VALIDACION = 'pendiente_validacion',
   RESUELTA = 'resuelta',
-  PARCIAL = 'parcial',
   CANCELADA = 'cancelada',
+  INVALIDA = 'invalida',
 }
 
 export interface IncidenciaLinea {
   id: string;
   pedidoProductoId: string;
+  productoId?: string;
   nombreProducto: string;
   unidad?: string;
   cantidadEsperada: number;
@@ -64,6 +66,10 @@ export interface ResolveIncidenciaPayload {
   usuarioId?: string;
   observacionesResolucion?: string;
   marcarComoResuelta?: boolean;
+  estadoFinal?:
+    | EstadoIncidencia.RESUELTA
+    | EstadoIncidencia.CANCELADA
+    | EstadoIncidencia.INVALIDA;
   lineas?: ResolveIncidenciaLineaAdjustment[];
 }
 

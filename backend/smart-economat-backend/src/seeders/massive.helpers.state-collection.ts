@@ -713,6 +713,40 @@ export function collectStateFromResponse(
       isIncidenciaEntity(entity)
     ) {
       const incidenciaId = entity.id as string;
+      const incidenciaEstado =
+        typeof entity.estado === 'string'
+          ? entity.estado.trim().toLowerCase()
+          : '';
+      if (incidenciaEstado.length > 0) {
+        pushStateValue(context, 'incidenciaObservedEstados', incidenciaEstado);
+      }
+
+      if (Array.isArray(entity.lineas)) {
+        for (const linea of entity.lineas) {
+          if (!isRecord(linea)) {
+            continue;
+          }
+
+          const pedidoProductoLineaId =
+            (typeof linea.pedidoProductoId === 'string' &&
+              linea.pedidoProductoId) ||
+            (typeof linea.idPedidoProducto === 'string' &&
+              linea.idPedidoProducto) ||
+            (isRecord(linea.pedidoProducto) &&
+            typeof linea.pedidoProducto.id === 'string'
+              ? linea.pedidoProducto.id
+              : '');
+
+          if (pedidoProductoLineaId.length > 0) {
+            pushStateValue(
+              context,
+              'incidenciaToPedidoProductoPairs',
+              `${incidenciaId}|${pedidoProductoLineaId}`
+            );
+          }
+        }
+      }
+
       const hasFechaResolucion =
         (typeof entity.fechaResolucion === 'string' &&
           entity.fechaResolucion.trim().length > 0) ||

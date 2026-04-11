@@ -215,6 +215,15 @@ describe('Frontend Integration Contracts (e2e)', () => {
         recepcionId,
         pedidoId: pedido.id,
         observacionesRecepcion: `Incidencia ${searchMarker}`,
+        lineas: [
+          {
+            pedidoProductoId,
+            cantidadEsperada: 3,
+            cantidadRecibida: 2,
+            tipoDiferencia: 'FALTANTE',
+            observaciones: `Línea integración ${searchMarker}`,
+          },
+        ],
       })
       .expect(201);
 

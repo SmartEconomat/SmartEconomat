@@ -2,6 +2,7 @@ import { SeedContext } from './seed-context';
 import { Endpoint, EnumCoverage } from './massive.types';
 import {
   ALERGEN_VALUES,
+  INCIDENCIA_ESTADOS,
   INCIDENCIA_TIPOS,
   MERMA_MOTIVOS,
   MOVIMIENTO_MANUAL_TYPES,
@@ -40,6 +41,7 @@ export type BuildBodyEnv = {
   recetaDificultad: string;
   recetaUnidad: string;
   incidenciaTipo: string;
+  incidenciaEstadoObjetivo: string;
   resolucionTipo: string;
   mermaMotivo: string;
   estadoVisual: string;
@@ -86,6 +88,8 @@ export function createBuildBodyEnv(
     RECETA_DIFICULTAD[iteration % RECETA_DIFICULTAD.length];
   const recetaUnidad = RECETA_UNIDADES[iteration % RECETA_UNIDADES.length];
   const incidenciaTipo = INCIDENCIA_TIPOS[iteration % INCIDENCIA_TIPOS.length];
+  const incidenciaEstadoObjetivo =
+    INCIDENCIA_ESTADOS[iteration % INCIDENCIA_ESTADOS.length];
   const resolucionTipo = RESOLUCION_TIPOS[iteration % RESOLUCION_TIPOS.length];
   const mermaMotivo = MERMA_MOTIVOS[iteration % MERMA_MOTIVOS.length];
   const estadoVisual =
@@ -103,6 +107,7 @@ export function createBuildBodyEnv(
   markEnum(coverage, 'recetaDificultad', recetaDificultad);
   markEnum(coverage, 'recetaUnidades', recetaUnidad);
   markEnum(coverage, 'incidenciaTipos', incidenciaTipo);
+  markEnum(coverage, 'incidenciaEstados', incidenciaEstadoObjetivo);
   markEnum(coverage, 'incidenciaResoluciones', resolucionTipo);
   markEnum(coverage, 'mermaMotivos', mermaMotivo);
   markEnum(coverage, 'recepcionEstadoVisual', estadoVisual);
@@ -160,6 +165,7 @@ export function createBuildBodyEnv(
     recetaDificultad,
     recetaUnidad,
     incidenciaTipo,
+    incidenciaEstadoObjetivo,
     resolucionTipo,
     mermaMotivo,
     estadoVisual,

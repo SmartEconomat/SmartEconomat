@@ -103,7 +103,7 @@ export async function updateReceta(
   return body.data;
 }
 
-type RecetaDetalleApiData = {
+export type RecetaDetalleApiData = {
   receta: Receta;
   detalleIngredientes: Array<{
     productoId: string;

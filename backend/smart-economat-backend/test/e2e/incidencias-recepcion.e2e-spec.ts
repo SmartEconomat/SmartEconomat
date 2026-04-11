@@ -96,8 +96,8 @@ describe('Incidencias en Recepción (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           pedidoIds: [pedidoRes.body.data?.id],
-          productos: [{ pedidoProductoId, cantidadRecibida: 1 }],
-          observaciones: 'Recepción para test E2E',
+          productos: [{ pedidoProductoId, cantidadRecibida: 0 }],
+          observaciones: 'Recepción con faltante para test E2E',
         });
       recepcionId = recepRes.body.data?.id || recepRes.body.data?.[0]?.id;
     }

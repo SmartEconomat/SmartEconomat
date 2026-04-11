@@ -7,6 +7,15 @@ export enum TipoResolucion {
   CAMBIO = 'cambio',
 }
 
+export enum EstadoIncidencia {
+  NUEVA = 'nueva',
+  EN_AJUSTE = 'en_ajuste',
+  PENDIENTE_VALIDACION = 'pendiente_validacion',
+  RESUELTA = 'resuelta',
+  CANCELADA = 'cancelada',
+  INVALIDA = 'invalida',
+}
+
 export enum TipoIncidencia {
   ROTURA = 'rotura',
   CADUCADO = 'caducado',

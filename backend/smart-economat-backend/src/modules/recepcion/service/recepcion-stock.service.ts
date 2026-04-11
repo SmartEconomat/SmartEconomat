@@ -948,6 +948,12 @@ export class RecepcionStockService {
     observacionesRecepcion: string | undefined,
     lineas: LineaIncidencia[]
   ): Promise<Incidencia> {
+    if (lineas.length === 0) {
+      throw new BadRequestException(
+        'No se puede crear una incidencia sin líneas de producto.'
+      );
+    }
+
     const incidencia = manager.create(Incidencia, {
       recepcion,
       pedido: { id: pedido.id } as Pedido,

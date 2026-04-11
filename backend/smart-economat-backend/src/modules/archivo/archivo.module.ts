@@ -11,6 +11,7 @@ import { BadRequestException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import * as fs from 'fs';
 import { I18nHelper } from '../../common/helpers/i18n.helper';
+import { resolveWritableLocalStoragePath } from '../../common/utils/local-storage-path.util';
 
 @Module({
   imports: [
@@ -19,10 +20,9 @@ import { I18nHelper } from '../../common/helpers/i18n.helper';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const uploadDir = configService.get<string>(
-          'LOCAL_STORAGE_PATH',
-          './uploads'
-        );
+        const configuredUploadDir =
+          configService.get<string>('LOCAL_STORAGE_PATH');
+        const uploadDir = resolveWritableLocalStoragePath(configuredUploadDir);
         if (!fs.existsSync(uploadDir)) {
           fs.mkdirSync(uploadDir, { recursive: true });
         }

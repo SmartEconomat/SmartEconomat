@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IncidenciaLineaDto } from './incidencia-linea.dto';
+import { EstadoIncidencia } from '../enums/incidencia.enums';
 
 export class IncidenciaDto {
   @ApiProperty({ description: 'docs.ID_DE_LA_INCIDENCIA' })
@@ -31,6 +32,12 @@ export class IncidenciaDto {
 
   @ApiProperty({ description: 'docs.SI_LA_INCIDENCIA_EST_RESUELTA_O_NO' })
   resuelta!: boolean;
+
+  @ApiProperty({
+    enum: EstadoIncidencia,
+    description: 'Estado operativo canónico de la incidencia',
+  })
+  estado!: EstadoIncidencia;
 
   @ApiProperty({
     description: 'docs.FECHA_EN_LA_QUE_FUE_RESUELTA',
