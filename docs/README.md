@@ -35,7 +35,9 @@ Este bloque agrupa la documentación completa y detallada del backend NestJS + T
 | Arquitectura | [Arquitectura NestJS + TypeORM](architecture/backend-nestjs-typeorm.md) |
 | Patrones | [Patrones y trade-offs](architecture/patrones-y-tradeoffs.md) |
 | Tutorial | [Levantar proyecto desde cero](tutorials/levantar-proyecto-desde-cero.md) |
+| Tutorial | [Laboratorio de estados de incidencias](tutorials/laboratorio-estados-incidencias.md) |
 | How-to | [Crear entidad y relaciones](how-to/crear-entidad-y-relaciones.md) |
+| How-to | [Reproducir estados de incidencia](how-to/reproducir-estados-incidencia.md) |
 | How-to | [Generar y aplicar migración](how-to/generar-y-aplicar-migracion.md) |
 | How-to | [Añadir módulo/controller/service/DTOs](how-to/anadir-modulo-controller-service-dtos.md) |
 | How-to | [Endpoint con validación y errores](how-to/endpoint-con-validacion-y-errores.md) |
@@ -45,15 +47,18 @@ Este bloque agrupa la documentación completa y detallada del backend NestJS + T
 | How-to | [Implementar soft-delete](how-to/implementar-soft-delete.md) |
 | How-to | [Relaciones many-to-many y one-to-many](how-to/relaciones-many-to-many-y-one-to-many.md) |
 | Explanation | [Flujo completo de una request](explanation/flujo-completo-request.md) |
+| Explanation | [Incidencias: estados y ciclo de vida](explanation/incidencias-estados-y-ciclo-de-vida.md) |
 | Explanation | [Elección de patrones y trade-offs](explanation/patrones-eleccion-y-tradeoffs.md) |
 | Explanation | [Seguridad, performance y escalabilidad](explanation/seguridad-performance-escalabilidad.md) |
-| Reference | [Módulos y responsabilidades](reference/modulos-y-responsabilidades.md) |
-| Reference | [Entidades TypeORM](reference/entidades.md) |
-| Reference | [API backend](reference/api/README.md) |
-| Reference | [Mapa rápido de endpoints](reference/endpoints.md) |
-| Reference | [TypeORM, DataSource y seeders](reference/typeorm-y-datasource.md) |
-| Reference | [Variables de entorno](reference/variables-entorno.md) |
-| Reference | [Pipes, guards, interceptors y filters](reference/pipes-guards-interceptors-globales.md) |
+| Reference | [Módulos y responsabilidades](reference/modulos-y-responsabilidades.md) | Documentación de los módulos de dominio principales |
+| Reference | [Entidades TypeORM](reference/entidades.md) | Catálogo de entidades y relaciones del backend |
+| Reference | [Estados del negocio](reference/estados-del-negocio.md) | Referencia canónica de estados, chips y badges de dominio |
+| Reference | [Máquina de estados de incidencias](reference/incidencias-maquina-de-estados.md) | Reglas, prioridades y transiciones reales del módulo de incidencias |
+| Reference | [API backend](reference/api/README.md) | Referencia de integración por dominios, con requests, respuestas y entidades relacionadas |
+| Reference | [Mapa rápido de endpoints](reference/endpoints.md) | Índice corto de rutas base y saltos a la referencia detallada |
+| Reference | [TypeORM, DataSource y seeders](reference/typeorm-y-datasource.md) | Cómo conectar al ORM, configurar la fuente de datos y ejecutar seeders |
+| Reference | [Variables de entorno](reference/variables-entorno.md) | Inventario de variables de configuración por entorno |
+| Reference | [Pipes, guards, interceptors y filters](reference/pipes-guards-interceptors-globales.md) | Capas transversales y pipeline global de la API |
 | Diagramas | [Arquitectura backend (Mermaid)](diagrams/arquitectura-backend.md) |
 
 ---

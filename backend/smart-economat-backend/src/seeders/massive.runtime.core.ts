@@ -12,6 +12,7 @@ export {
 export {
   executeAdminFocusEndpointRequest,
   ensureDistribucionDisponiblesPostRun,
+  ensureIncidenciaEstadosPostRun,
   executeEndpointRequest,
 } from './massive.runtime.requests';
 

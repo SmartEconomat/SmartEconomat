@@ -2,6 +2,7 @@ import { SeedContext } from './seed-context';
 import { EnumCoverage } from './massive.types';
 import {
   ALERGEN_VALUES,
+  INCIDENCIA_ESTADOS,
   INCIDENCIA_TIPOS,
   MERMA_MOTIVOS,
   MOVIMIENTO_MANUAL_TYPES,
@@ -47,6 +48,7 @@ export function createEnumCoverage(): EnumCoverage {
     recetaDificultad: new Set<string>(),
     recetaUnidades: new Set<string>(),
     incidenciaTipos: new Set<string>(),
+    incidenciaEstados: new Set<string>(),
     incidenciaResoluciones: new Set<string>(),
     mermaMotivos: new Set<string>(),
     recepcionEstadoVisual: new Set<string>(),
@@ -77,6 +79,7 @@ export function ensureEnumCoverageComplete(coverage: EnumCoverage): string[] {
     { key: 'recetaDificultad', values: RECETA_DIFICULTAD },
     { key: 'recetaUnidades', values: RECETA_UNIDADES },
     { key: 'incidenciaTipos', values: INCIDENCIA_TIPOS },
+    { key: 'incidenciaEstados', values: INCIDENCIA_ESTADOS },
     { key: 'incidenciaResoluciones', values: RESOLUCION_TIPOS },
     { key: 'mermaMotivos', values: MERMA_MOTIVOS },
     { key: 'recepcionEstadoVisual', values: RECEPCION_ESTADO_VISUAL },

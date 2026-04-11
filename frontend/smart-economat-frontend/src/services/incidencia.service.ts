@@ -14,6 +14,7 @@ interface RawProveedor {
 }
 
 interface RawProducto {
+  id?: string;
   nombre?: string | null;
   unidad?: string | null;
 }
@@ -51,6 +52,7 @@ interface RawIncidencia {
   id?: string;
   recepcionId?: string;
   pedidoId?: string | null;
+  estado?: string;
   proveedorNombre?: string;
   observacionesRecepcion?: string;
   observacionesResolucion?: string;
@@ -119,7 +121,43 @@ function formatMotivoDesdeTipo(tipo: TipoDiferencia): string {
   return 'Faltante de producto';
 }
 
-function resolveEstadoIncidencia(
+function normalizeEstadoIncidencia(value: unknown): EstadoIncidencia | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  switch (normalized) {
+    case EstadoIncidencia.NUEVA:
+      return EstadoIncidencia.NUEVA;
+    case EstadoIncidencia.EN_AJUSTE:
+      return EstadoIncidencia.EN_AJUSTE;
+    case EstadoIncidencia.PENDIENTE_VALIDACION:
+      return EstadoIncidencia.PENDIENTE_VALIDACION;
+    case EstadoIncidencia.RESUELTA:
+      return EstadoIncidencia.RESUELTA;
+    case EstadoIncidencia.CANCELADA:
+    case 'cancelado':
+      return EstadoIncidencia.CANCELADA;
+    case EstadoIncidencia.INVALIDA:
+    case 'invalido':
+      return EstadoIncidencia.INVALIDA;
+    case 'pendiente':
+      return EstadoIncidencia.NUEVA;
+    case 'en_revision':
+    case 'parcial':
+      return EstadoIncidencia.EN_AJUSTE;
+    default:
+      return null;
+  }
+}
+
+function resolveEstadoIncidenciaFallback(
   lineas: IncidenciaLinea[],
   resuelta: boolean,
   observacionesResolucion?: string
@@ -128,30 +166,33 @@ function resolveEstadoIncidencia(
     return EstadoIncidencia.CANCELADA;
   }
 
+  if (
+    observacionesResolucion &&
+    /inválid|invalid/i.test(observacionesResolucion)
+  ) {
+    return EstadoIncidencia.INVALIDA;
+  }
+
   if (resuelta) {
     return EstadoIncidencia.RESUELTA;
   }
 
   if (lineas.length === 0) {
-    return EstadoIncidencia.PENDIENTE;
+    return EstadoIncidencia.INVALIDA;
   }
 
   const pendientes = lineas.filter((linea) => linea.cantidadPendiente > 0);
   if (pendientes.length === 0) {
-    return EstadoIncidencia.EN_REVISION;
+    return EstadoIncidencia.PENDIENTE_VALIDACION;
   }
 
-  if (pendientes.length < lineas.length) {
-    return EstadoIncidencia.PARCIAL;
-  }
-
-  const enRevision = lineas.some(
+  const enAjuste = lineas.some(
     (linea) =>
       linea.estadoReclamacion === EstadoReclamacion.RECLAMADO ||
       linea.estadoReclamacion === EstadoReclamacion.REENVIADO
   );
 
-  return enRevision ? EstadoIncidencia.EN_REVISION : EstadoIncidencia.PENDIENTE;
+  return enAjuste ? EstadoIncidencia.EN_AJUSTE : EstadoIncidencia.NUEVA;
 }
 
 function mapLinea(
@@ -184,6 +225,10 @@ function mapLinea(
     ) ||
     'Producto sin nombre';
 
+  const productoId =
+    toOptionalText(rawLinea.pedidoProducto?.productoProveedor?.producto?.id) ||
+    undefined;
+
   const unidad = toOptionalText(
     rawLinea.pedidoProducto?.productoProveedor?.producto?.unidad
   );
@@ -196,6 +241,7 @@ function mapLinea(
   return {
     id: toOptionalText(rawLinea.id) || `${incidenciaId}-linea-${index + 1}`,
     pedidoProductoId,
+    productoId,
     nombreProducto,
     unidad,
     cantidadEsperada,
@@ -273,7 +319,13 @@ function mapIncidencia(raw: RawIncidencia): Incidencia {
       toOptionalText(raw.pedidoId) || toOptionalText(raw.pedido?.id) || null,
     proveedorNombre,
     motivoIncidencia: buildMotivoIncidencia(raw, lineas),
-    estado: resolveEstadoIncidencia(lineas, resuelta, observacionesResolucion),
+    estado:
+      normalizeEstadoIncidencia(raw.estado) ??
+      resolveEstadoIncidenciaFallback(
+        lineas,
+        resuelta,
+        observacionesResolucion
+      ),
     observacionesRecepcion: toOptionalText(raw.observacionesRecepcion),
     observacionesResolucion,
     resuelta,

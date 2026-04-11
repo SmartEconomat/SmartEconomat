@@ -295,6 +295,14 @@ export const INCIDENCIA_TIPOS = [
   'exceso_producto',
   'otro',
 ] as const;
+export const INCIDENCIA_ESTADOS = [
+  'nueva',
+  'en_ajuste',
+  'pendiente_validacion',
+  'resuelta',
+  'cancelada',
+  'invalida',
+] as const;
 export const RESOLUCION_TIPOS = [
   'aceptada',
   'rechazada',

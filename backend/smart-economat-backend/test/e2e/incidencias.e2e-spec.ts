@@ -17,6 +17,7 @@ describe('IncidenciaController (e2e)', () => {
   let testIncidenciaId: string;
   let recepcionId: string;
   let pedidoId: string;
+  let pedidoProductoId: string;
 
   beforeAll(async () => {
     app = await getTestApp();
@@ -50,6 +51,7 @@ describe('IncidenciaController (e2e)', () => {
   beforeEach(async () => {
     recepcionId = '';
     pedidoId = '';
+    pedidoProductoId = '';
 
     const provRes = await request(app.getHttpServer() as string)
       .post('/api/v1/proveedor')
@@ -110,7 +112,6 @@ describe('IncidenciaController (e2e)', () => {
         expect(aceptarRes.status).toBe(200);
       }
 
-      let pedidoProductoId: string | undefined;
       if (pedidoId) {
         const pedidoDetail = await request(app.getHttpServer() as string)
           .get(`/api/v1/pedidos/${pedidoId}`)
@@ -120,7 +121,7 @@ describe('IncidenciaController (e2e)', () => {
           pedidoDetail.body.data?.pedidoProductos ||
           pedidoDetail.body.data?.productos ||
           [];
-        pedidoProductoId = pedidoProductos[0]?.id;
+        pedidoProductoId = pedidoProductos[0]?.id || '';
 
         const recepRes = await request(app.getHttpServer() as string)
           .post('/api/v1/recepciones')
@@ -146,6 +147,15 @@ describe('IncidenciaController (e2e)', () => {
           recepcionId,
           pedidoId,
           observacionesRecepcion: 'Incidencia Base E2E',
+          lineas: [
+            {
+              pedidoProductoId,
+              cantidadEsperada: 10,
+              cantidadRecibida: 8,
+              tipoDiferencia: 'FALTANTE',
+              observaciones: 'Faltan unidades en recepción base',
+            },
+          ],
         });
       expect(incRes.status).toBe(201);
       testIncidenciaId = incRes.body.data?.id;
@@ -165,6 +175,15 @@ describe('IncidenciaController (e2e)', () => {
           recepcionId,
           pedidoId,
           observacionesRecepcion: 'Falta un bulto en la caja 2',
+          lineas: [
+            {
+              pedidoProductoId,
+              cantidadEsperada: 10,
+              cantidadRecibida: 8,
+              tipoDiferencia: 'FALTANTE',
+              observaciones: 'Faltan 2 unidades en la caja 2',
+            },
+          ],
         });
 
       if (response.status !== 201) {
@@ -249,6 +268,15 @@ describe('IncidenciaController (e2e)', () => {
           recepcionId,
           pedidoId,
           observacionesRecepcion: 'Incidencia para borrar',
+          lineas: [
+            {
+              pedidoProductoId,
+              cantidadEsperada: 10,
+              cantidadRecibida: 9,
+              tipoDiferencia: 'FALTANTE',
+              observaciones: 'Línea de incidencia para borrar',
+            },
+          ],
         });
 
       const resBody = createRes.body.data;

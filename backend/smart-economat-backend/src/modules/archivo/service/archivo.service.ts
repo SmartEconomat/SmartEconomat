@@ -17,6 +17,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Jimp } from 'jimp';
 import { ImageProcessOptionsDto } from '../dto/image-process-options.dto';
+import { resolveWritableLocalStoragePath } from '../../../common/utils/local-storage-path.util';
 
 export interface PaginatedFiles {
   data: Archivo[];
@@ -41,9 +42,8 @@ export class ArchivoService {
     private readonly configService: ConfigService
   ) {
     this.storageType = this.configService.get<string>('STORAGE_TYPE', 'local');
-    this.uploadDir = this.configService.get<string>(
-      'LOCAL_STORAGE_PATH',
-      './uploads'
+    this.uploadDir = resolveWritableLocalStoragePath(
+      this.configService.get<string>('LOCAL_STORAGE_PATH')
     );
   }
 
@@ -277,8 +277,17 @@ export class ArchivoService {
   }
 
   private async loadEsmModule<T>(specifier: string): Promise<T> {
-    const module = await import(specifier);
-    return module.default || module;
+    const moduleNamespace: unknown = await import(specifier);
+
+    if (
+      typeof moduleNamespace === 'object' &&
+      moduleNamespace !== null &&
+      'default' in moduleNamespace
+    ) {
+      return (moduleNamespace as { default: T }).default;
+    }
+
+    return moduleNamespace as T;
   }
 
   async findAll(filterDto: FileListFilterDto): Promise<PaginatedFiles> {

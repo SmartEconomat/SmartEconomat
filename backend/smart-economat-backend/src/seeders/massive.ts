@@ -18,6 +18,7 @@ import {
   DOMAIN_ORDER,
   ENDPOINT_BATCH_CONCURRENCY,
   HARD_MAX_TOTAL_DURATION_MS,
+  INCIDENCIA_ESTADOS,
   MAX_ATTEMPTS_PER_ENDPOINT,
   MAX_SUCCESS_PER_ENDPOINT,
   METHOD_PRIORITY,
@@ -42,6 +43,7 @@ import {
 import {
   ensureAdminRouteActors,
   ensureDistribucionDisponiblesPostRun,
+  ensureIncidenciaEstadosPostRun,
   ensureRoleActors,
   executeEndpointRequest,
   refreshStateAfterOperation,
@@ -758,6 +760,9 @@ async function runMassiveSeeder(): Promise<void> {
     await ensureDistribucionDisponiblesPostRun(context, coverage);
     trace('distribucion_disponibles_post_run_ok');
 
+    await ensureIncidenciaEstadosPostRun(context);
+    trace('incidencia_estados_post_run_ok');
+
     const elapsedFinal = elapsedMsFrom(startedAtNs);
 
     assertRequiredAdminEndpointUsage(endpoints, successByEndpoint);
@@ -766,6 +771,20 @@ async function runMassiveSeeder(): Promise<void> {
     if (missingEnumCoverage.length > 0) {
       throw new Error(
         `[seed-massive] Cobertura de enums incompleta: ${missingEnumCoverage.join(', ')}`
+      );
+    }
+
+    const observedIncidenciaEstados = new Set(
+      getStateArray(context, 'incidenciaObservedEstados')
+        .map((value) => value.trim().toLowerCase())
+        .filter((value) => value.length > 0)
+    );
+    const missingObservedIncidenciaEstados = INCIDENCIA_ESTADOS.filter(
+      (estado) => !observedIncidenciaEstados.has(estado)
+    );
+    if (missingObservedIncidenciaEstados.length > 0) {
+      throw new Error(
+        `[seed-massive] Cobertura real de estados de incidencia incompleta: ${missingObservedIncidenciaEstados.join(', ')}`
       );
     }
 

@@ -8,6 +8,7 @@ import { IncidenciaRepository } from '../repository/incidencia.repository';
 import { CreateIncidenciaDto } from '../dto/create-incidencia.dto';
 import { UpdateIncidenciaDto } from '../dto/update-incidencia.dto';
 import {
+  EstadoFinalIncidenciaDto,
   ResolverIncidenciaDto,
   ResolverIncidenciaLineaDto,
 } from '../dto/resolver-incidencia.dto';
@@ -20,7 +21,7 @@ import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
 import { IncidenciaResuelta } from '../incidencia-resuelta.entity/incidencia-resuelta.entity';
-import { TipoResolucion } from '../enums/incidencia.enums';
+import { EstadoIncidencia, TipoResolucion } from '../enums/incidencia.enums';
 import { TipoMovimiento } from '../../movimiento/enums/movimiento.enums';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import {
@@ -34,6 +35,7 @@ import { PedidoStatusTrigger } from '../../pedido/enums/pedido-status-trigger.en
 import { PedidoService } from '../../pedido/service/pedido.service';
 import { EstadoProductoRecepcion } from '../../recepcion/enums/estado-producto.enum';
 import { permiteComputarComoRecibido } from '../../recepcion/utils/recepcion-producto-state.util';
+import { PedidoProducto } from '../../pedido/pedido-producto.entity/pedido-producto.entity';
 
 @Injectable()
 export class IncidenciaService {
@@ -49,20 +51,51 @@ export class IncidenciaService {
   ) {}
 
   async create(dto: CreateIncidenciaDto): Promise<Incidencia> {
-    const incidencia = this.incidenciaRepository.create({
-      recepcion: { id: dto.recepcionId } as any,
-      pedido: { id: dto.pedidoId } as any,
-      observacionesRecepcion: dto.observacionesRecepcion,
-    });
+    return this.dataSource.transaction(async (manager) => {
+      const incidencia = manager.create(Incidencia, {
+        recepcion: { id: dto.recepcionId } as Recepcion,
+        ...(dto.pedidoId ? { pedido: { id: dto.pedidoId } as Pedido } : {}),
+        observacionesRecepcion: dto.observacionesRecepcion,
+      });
 
-    return this.incidenciaRepository.save(incidencia);
+      const savedIncidencia = await manager.save(Incidencia, incidencia);
+
+      const lineas = dto.lineas.map((lineaDto) => {
+        const cantidadEsperada = Number(lineaDto.cantidadEsperada);
+        const cantidadRecibida = Number(lineaDto.cantidadRecibida);
+
+        return manager.create(IncidenciaLinea, {
+          incidencia: savedIncidencia,
+          pedidoProducto: { id: lineaDto.pedidoProductoId } as PedidoProducto,
+          cantidadEsperada,
+          cantidadRecibida,
+          diferencia: cantidadRecibida - cantidadEsperada,
+          tipoDiferencia: lineaDto.tipoDiferencia,
+          observaciones: lineaDto.observaciones,
+        });
+      });
+
+      const lineasPersistidas = await manager.save(IncidenciaLinea, lineas);
+      savedIncidencia.lineas = lineasPersistidas;
+
+      return this.attachEstadoComputado(savedIncidencia);
+    });
   }
 
   async findAll(
     query: IncidenciaQueryDto,
     userRole?: string
   ): Promise<PaginatedResponseDto<Incidencia>> {
-    return this.incidenciaRepository.findAllPaginated(query, userRole);
+    const result = await this.incidenciaRepository.findAllPaginated(
+      query,
+      userRole
+    );
+
+    result.data = result.data.map((incidencia) =>
+      this.attachEstadoComputado(incidencia)
+    );
+
+    return result;
   }
 
   async findOne(id: string, userRole?: string): Promise<Incidencia> {
@@ -75,7 +108,7 @@ export class IncidenciaService {
       throw new NotFoundException(I18nHelper.getError('INCIDENCIA_NOT_FOUND'));
     }
 
-    return incidencia;
+    return this.attachEstadoComputado(incidencia);
   }
 
   async update(id: string, dto: UpdateIncidenciaDto): Promise<Incidencia> {
@@ -93,7 +126,8 @@ export class IncidenciaService {
       observacionesRecepcion: dto.observacionesRecepcion,
     });
 
-    return this.incidenciaRepository.save(incidencia);
+    const saved = await this.incidenciaRepository.save(incidencia);
+    return this.attachEstadoComputado(saved);
   }
 
   async remove(id: string): Promise<void> {
@@ -143,6 +177,12 @@ export class IncidenciaService {
         );
       }
 
+      if ((incidencia.lineas ?? []).length === 0) {
+        throw new BadRequestException(
+          'No se puede resolver una incidencia sin líneas de producto.'
+        );
+      }
+
       const ajustesLinea = dto.lineas ?? [];
       if (ajustesLinea.length > 0) {
         this.applyLineaAjustes(incidencia.lineas ?? [], ajustesLinea);
@@ -154,15 +194,30 @@ export class IncidenciaService {
       const todasLasLineasBalanceadas = (incidencia.lineas ?? []).every(
         (linea) => this.isLineaBalanceada(linea)
       );
+      const estadoFinalManual = dto.estadoFinal;
+      const solicitaCierreTerminal =
+        estadoFinalManual === EstadoFinalIncidenciaDto.CANCELADA ||
+        estadoFinalManual === EstadoFinalIncidenciaDto.INVALIDA ||
+        estadoFinalManual === EstadoFinalIncidenciaDto.RESUELTA;
 
-      if (resolverExplicito || todasLasLineasBalanceadas) {
+      if (
+        resolverExplicito ||
+        todasLasLineasBalanceadas ||
+        solicitaCierreTerminal
+      ) {
         if (!usuarioResolutorId) {
           throw new BadRequestException(
             'No se pudo determinar el usuario resolutor de la incidencia.'
           );
         }
 
-        incidencia.resolver(usuarioResolutorId, dto.observacionesResolucion);
+        incidencia.resolver(
+          usuarioResolutorId,
+          this.composeObservacionesResolucion(
+            dto.observacionesResolucion,
+            estadoFinalManual
+          )
+        );
       }
 
       await manager.save(Incidencia, incidencia);
@@ -174,7 +229,7 @@ export class IncidenciaService {
         );
       }
 
-      return (
+      const hydrated =
         (await manager.findOne(Incidencia, {
           where: { id: incidencia.id },
           relations: [
@@ -188,8 +243,9 @@ export class IncidenciaService {
             'lineas.pedidoProducto.productoProveedor.producto',
             'lineas.pedidoProducto.productoProveedor.proveedor',
           ],
-        })) ?? incidencia
-      );
+        })) ?? incidencia;
+
+      return this.attachEstadoComputado(hydrated);
     });
   }
 
@@ -202,15 +258,96 @@ export class IncidenciaService {
       throw new NotFoundException(I18nHelper.getError('RECEPTION_NOT_FOUND'));
     }
 
-    recepcion.incidencia = true;
-    await this.recepcionRepository.save(recepcion);
+    return this.dataSource.transaction(async (manager) => {
+      const recepcionProductos = await manager.find(RecepcionProducto, {
+        where: { recepcionId: recepcion.id },
+        relations: ['pedidoProducto'],
+      });
 
-    const incidencia = this.incidenciaRepository.create({
-      recepcion: { id: dto.recepcionId } as any,
-      observacionesRecepcion: `Incidencia reportada de tipo: ${dto.tipo}`,
+      const lineasPorPedidoProducto = new Map<
+        string,
+        {
+          pedidoProductoId: string;
+          cantidadEsperada: number;
+          cantidadRecibida: number;
+          tipoDiferencia: TipoDiferencia;
+          observaciones: string | undefined;
+        }
+      >();
+
+      for (const item of recepcionProductos) {
+        const expected = Number(item.pedidoProducto?.cantidad ?? 0);
+        const current = lineasPorPedidoProducto.get(item.pedidoProductoId) ?? {
+          pedidoProductoId: item.pedidoProductoId,
+          cantidadEsperada: expected,
+          cantidadRecibida: 0,
+          tipoDiferencia: TipoDiferencia.FALTANTE,
+          observaciones: undefined,
+        };
+
+        current.cantidadRecibida += Number(item.cantidadRecibida ?? 0);
+
+        const diferencia = current.cantidadRecibida - current.cantidadEsperada;
+        if (item.estadoProducto === EstadoProductoRecepcion.ROTO) {
+          current.tipoDiferencia = TipoDiferencia.DEFECTUOSO;
+        } else if (diferencia > IncidenciaService.CANTIDAD_EPSILON) {
+          current.tipoDiferencia = TipoDiferencia.EXCESO;
+        } else {
+          current.tipoDiferencia = TipoDiferencia.FALTANTE;
+        }
+
+        if (item.observaciones?.trim()) {
+          current.observaciones = current.observaciones
+            ? `${current.observaciones}; ${item.observaciones.trim()}`
+            : item.observaciones.trim();
+        }
+
+        lineasPorPedidoProducto.set(item.pedidoProductoId, current);
+      }
+
+      const lineasValidas = Array.from(lineasPorPedidoProducto.values()).filter(
+        (linea) => {
+          const diferencia = linea.cantidadRecibida - linea.cantidadEsperada;
+          return (
+            Math.abs(diferencia) >= IncidenciaService.CANTIDAD_EPSILON ||
+            linea.tipoDiferencia === TipoDiferencia.DEFECTUOSO
+          );
+        }
+      );
+
+      if (lineasValidas.length === 0) {
+        throw new BadRequestException(
+          'No se puede reportar una incidencia sin productos con discrepancia.'
+        );
+      }
+
+      recepcion.incidencia = true;
+      await manager.save(Recepcion, recepcion);
+
+      const incidencia = manager.create(Incidencia, {
+        recepcion: { id: dto.recepcionId } as Recepcion,
+        observacionesRecepcion: `Incidencia reportada de tipo: ${dto.tipo}`,
+      });
+
+      const savedIncidencia = await manager.save(Incidencia, incidencia);
+
+      const lineas = lineasValidas.map((linea) =>
+        manager.create(IncidenciaLinea, {
+          incidencia: savedIncidencia,
+          pedidoProducto: { id: linea.pedidoProductoId } as PedidoProducto,
+          cantidadEsperada: linea.cantidadEsperada,
+          cantidadRecibida: linea.cantidadRecibida,
+          diferencia: linea.cantidadRecibida - linea.cantidadEsperada,
+          tipoDiferencia: linea.tipoDiferencia,
+          observaciones: linea.observaciones,
+        })
+      );
+
+      const lineasPersistidas = await manager.save(IncidenciaLinea, lineas);
+      savedIncidencia.lineas = lineasPersistidas;
+
+      return this.attachEstadoComputado(savedIncidencia);
     });
-
-    return this.incidenciaRepository.save(incidencia);
   }
 
   async resolverIncidenciaTransaccional(
@@ -223,6 +360,12 @@ export class IncidenciaService {
     if (incidencia.estaResuelta()) {
       throw new BadRequestException(
         I18nHelper.getError('INCIDENCIA_YA_RESUELTA')
+      );
+    }
+
+    if ((incidencia.lineas ?? []).length === 0) {
+      throw new BadRequestException(
+        'No se puede resolver una incidencia sin líneas de producto.'
       );
     }
 
@@ -260,8 +403,94 @@ export class IncidenciaService {
         );
       }
 
-      return incidencia;
+      return this.attachEstadoComputado(incidencia);
     });
+  }
+
+  private attachEstadoComputado(incidencia: Incidencia): Incidencia {
+    incidencia.resuelta = incidencia.estaResuelta();
+    incidencia.estado = this.resolveEstadoIncidencia(incidencia);
+    return incidencia;
+  }
+
+  private resolveEstadoIncidencia(incidencia: Incidencia): EstadoIncidencia {
+    const observacionesResolucion =
+      incidencia.observacionesResolucion?.toLowerCase() ?? '';
+
+    if (
+      observacionesResolucion.includes('[cancelada]') ||
+      observacionesResolucion.includes('#cancelada') ||
+      observacionesResolucion.includes('cancelad')
+    ) {
+      return EstadoIncidencia.CANCELADA;
+    }
+
+    if (
+      observacionesResolucion.includes('[invalida]') ||
+      observacionesResolucion.includes('[inválida]') ||
+      observacionesResolucion.includes('#invalida') ||
+      observacionesResolucion.includes('#inválida') ||
+      observacionesResolucion.includes('inválid') ||
+      observacionesResolucion.includes('invalid')
+    ) {
+      return EstadoIncidencia.INVALIDA;
+    }
+
+    if (incidencia.estaResuelta()) {
+      return EstadoIncidencia.RESUELTA;
+    }
+
+    const lineas = incidencia.lineas ?? [];
+    if (lineas.length === 0) {
+      return EstadoIncidencia.INVALIDA;
+    }
+
+    const todasBalanceadas = lineas.every((linea) =>
+      this.isLineaBalanceada(linea)
+    );
+
+    if (todasBalanceadas) {
+      return EstadoIncidencia.PENDIENTE_VALIDACION;
+    }
+
+    const tieneGestionManual = lineas.some(
+      (linea) => linea.estadoReclamacion !== EstadoReclamacion.PENDIENTE
+    );
+
+    if (!tieneGestionManual) {
+      return EstadoIncidencia.NUEVA;
+    }
+
+    return EstadoIncidencia.EN_AJUSTE;
+  }
+
+  private composeObservacionesResolucion(
+    observaciones: string | undefined,
+    estadoFinal?: EstadoFinalIncidenciaDto
+  ): string | undefined {
+    const base = observaciones?.trim();
+
+    if (estadoFinal === EstadoFinalIncidenciaDto.CANCELADA) {
+      return this.appendStateTag(base, '[cancelada]');
+    }
+
+    if (estadoFinal === EstadoFinalIncidenciaDto.INVALIDA) {
+      return this.appendStateTag(base, '[invalida]');
+    }
+
+    return base;
+  }
+
+  private appendStateTag(base: string | undefined, tag: string): string {
+    if (!base) {
+      return tag;
+    }
+
+    if (base.toLowerCase().includes(tag.toLowerCase())) {
+      return base;
+    }
+
+    return `${base} ${tag}`;
   }
 
   private isLineaBalanceada(linea: IncidenciaLinea): boolean {
@@ -288,6 +517,12 @@ export class IncidenciaService {
     lineas: IncidenciaLinea[],
     ajustes: ResolverIncidenciaLineaDto[]
   ): void {
+    if (lineas.length === 0) {
+      throw new BadRequestException(
+        'No se puede ajustar una incidencia sin líneas de producto.'
+      );
+    }
+
     for (const ajuste of ajustes) {
       if (!ajuste.id && !ajuste.pedidoProductoId) {
         throw new BadRequestException(

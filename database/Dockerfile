@@ -1,7 +1,8 @@
 # Etapa 1: Builder
-# Fijamos Bookworm para evitar la cadena de dependencias más pesada de Debian 13
-# (llvm-19-dev), que estaba agotando el almacenamiento del builder.
-FROM postgres:16-bookworm AS builder
+# Mirror configurable para entornos con bloqueos/timeout en Docker Hub Cloudflare R2.
+# Se puede sobrescribir con --build-arg POSTGRES_BASE_IMAGE=postgres:16-bookworm
+ARG POSTGRES_BASE_IMAGE=public.ecr.aws/docker/library/postgres:16-bookworm
+FROM ${POSTGRES_BASE_IMAGE} AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
@@ -15,7 +16,8 @@ RUN cd /tmp/pg_uuidv7 \
     && make install
 
 # Etapa 2: Imagen Final (ligera)
-FROM postgres:16-bookworm
+ARG POSTGRES_BASE_IMAGE=public.ecr.aws/docker/library/postgres:16-bookworm
+FROM ${POSTGRES_BASE_IMAGE}
 
 # Copiar SÓLO los binarios/files generados de la extensión
 COPY --from=builder /usr/lib/postgresql/16/lib/pg_uuidv7.so /usr/lib/postgresql/16/lib/

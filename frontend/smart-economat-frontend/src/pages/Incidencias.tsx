@@ -37,6 +37,7 @@ import IncidenciaFilters, {
   IncidenciaFiltersState,
 } from '../features/incidencias/IncidenciaFilters';
 import IncidenciasStatusTabs, {
+  IncidenciasCerradasTab,
   IncidenciasResolucionTab,
 } from '../features/incidencias/IncidenciasStatusTabs';
 import ResolveIncidenciaModal from '../features/incidencias/ResolveIncidenciaModal';
@@ -49,19 +50,36 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 
 const INCIDENCIA_STATUS_LABEL: Record<EstadoIncidencia, string> = {
-  pendiente: 'Pendiente',
-  en_revision: 'En revisión',
-  parcial: 'Parcial',
+  nueva: 'Nueva',
+  en_ajuste: 'En ajuste',
+  pendiente_validacion: 'Pendiente validación',
   resuelta: 'Resuelta',
   cancelada: 'Cancelada',
+  invalida: 'Inválida',
 };
 
 const INCIDENCIA_STATUS_CHIP: Record<EstadoIncidencia, string> = {
-  pendiente: 'pending',
-  en_revision: 'review',
-  parcial: 'parcial',
+  nueva: 'pending',
+  en_ajuste: 'warning',
+  pendiente_validacion: 'review',
   resuelta: 'completed',
   cancelada: 'cancelled',
+  invalida: 'error',
+};
+
+const CLOSED_INCIDENCIA_STATES = new Set<EstadoIncidencia>([
+  EstadoIncidencia.RESUELTA,
+  EstadoIncidencia.CANCELADA,
+  EstadoIncidencia.INVALIDA,
+]);
+
+const CLOSED_STATE_PRIORITY: Record<EstadoIncidencia, number> = {
+  [EstadoIncidencia.CANCELADA]: 0,
+  [EstadoIncidencia.INVALIDA]: 1,
+  [EstadoIncidencia.RESUELTA]: 2,
+  [EstadoIncidencia.EN_AJUSTE]: 3,
+  [EstadoIncidencia.PENDIENTE_VALIDACION]: 4,
+  [EstadoIncidencia.NUEVA]: 5,
 };
 
 type ResolveDialogMode = 'adjust' | 'resolve';
@@ -79,7 +97,9 @@ const Incidencias: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [resolucionTab, setResolucionTab] =
-    useState<IncidenciasResolucionTab>('por_resolver');
+    useState<IncidenciasResolucionTab>('abiertas');
+  const [cerradasTab, setCerradasTab] =
+    useState<IncidenciasCerradasTab>('todas');
   const [filters, setFilters] = useState<IncidenciaFiltersState>({
     startDate: null,
     endDate: null,
@@ -97,22 +117,77 @@ const Incidencias: React.FC = () => {
   const canResolve = usePermission(PERMISSIONS.incidencias.resolver);
   const canDelete = usePermission(PERMISSIONS.incidencias.eliminar);
 
+  const isCerradasTab = resolucionTab === 'cerradas';
+
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const params: IncidenciasQueryParams = {
-        page,
-        limit: pageSize,
-        searchTerm: searchTerm || undefined,
-        resuelta: resolucionTab === 'resueltas',
-        startDate: filters.startDate || undefined,
-        endDate: filters.endDate || undefined,
-      };
-      const result = await fetchIncidencias(params);
-      setData(result.data);
-      setTotalItems(result.total);
-      setTotalPages(result.totalPages);
+      if (isCerradasTab) {
+        const limit = 50;
+        const baseParams: IncidenciasQueryParams = {
+          limit,
+          searchTerm: searchTerm || undefined,
+          startDate: filters.startDate || undefined,
+          endDate: filters.endDate || undefined,
+        };
+
+        const firstPage = await fetchIncidencias({
+          ...baseParams,
+          page: 1,
+        });
+
+        let mergedData = [...firstPage.data];
+        if (firstPage.totalPages > 1) {
+          const restPages = await Promise.all(
+            Array.from({ length: firstPage.totalPages - 1 }, (_, idx) =>
+              fetchIncidencias({
+                ...baseParams,
+                page: idx + 2,
+              })
+            )
+          );
+
+          mergedData = mergedData.concat(
+            ...restPages.map((result) => result.data)
+          );
+        }
+
+        const mergedClosedData = mergedData.filter((item) =>
+          CLOSED_INCIDENCIA_STATES.has(item.estado)
+        );
+
+        mergedClosedData.sort((a, b) => {
+          const stateDiff =
+            (CLOSED_STATE_PRIORITY[a.estado] ?? 99) -
+            (CLOSED_STATE_PRIORITY[b.estado] ?? 99);
+
+          if (stateDiff !== 0) {
+            return stateDiff;
+          }
+
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+        });
+
+        setData(mergedClosedData);
+        setTotalItems(mergedClosedData.length);
+        setTotalPages(1);
+      } else {
+        const params: IncidenciasQueryParams = {
+          page,
+          limit: pageSize,
+          searchTerm: searchTerm || undefined,
+          resuelta: false,
+          startDate: filters.startDate || undefined,
+          endDate: filters.endDate || undefined,
+        };
+        const result = await fetchIncidencias(params);
+        setData(result.data);
+        setTotalItems(result.total);
+        setTotalPages(result.totalPages);
+      }
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'Error al cargar incidencias';
@@ -120,7 +195,7 @@ const Incidencias: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, searchTerm, resolucionTab, filters]);
+  }, [page, pageSize, searchTerm, isCerradasTab, filters]);
 
   useEffect(() => {
     loadData();
@@ -137,11 +212,21 @@ const Incidencias: React.FC = () => {
         usuarioId:
           payload.usuarioId || (user?.id ? String(user.id) : undefined),
       });
-      toast.success(
-        payload.marcarComoResuelta
-          ? 'Incidencia marcada como resuelta'
-          : 'Incidencia actualizada correctamente'
-      );
+      if (payload.marcarComoResuelta) {
+        switch (payload.estadoFinal) {
+          case EstadoIncidencia.CANCELADA:
+            toast.success('Incidencia marcada como cancelada');
+            break;
+          case EstadoIncidencia.INVALIDA:
+            toast.success('Incidencia marcada como inválida');
+            break;
+          default:
+            toast.success('Incidencia marcada como resuelta');
+            break;
+        }
+      } else {
+        toast.success('Incidencia actualizada correctamente');
+      }
       setItemToResolve(null);
       if (itemToView?.id === id) {
         setItemToView(null);
@@ -188,8 +273,33 @@ const Incidencias: React.FC = () => {
 
   const handleResolucionTabChange = (nextTab: IncidenciasResolucionTab) => {
     setResolucionTab(nextTab);
+    if (nextTab !== 'cerradas') {
+      setCerradasTab('todas');
+    }
     setPage(1);
   };
+
+  const dataFiltrada = useMemo(() => {
+    if (!isCerradasTab || cerradasTab === 'todas') {
+      return data;
+    }
+
+    return data.filter((item) => item.estado === cerradasTab);
+  }, [data, isCerradasTab, cerradasTab]);
+
+  const dataPaginada = useMemo(() => {
+    if (!isCerradasTab) {
+      return data;
+    }
+
+    const start = (page - 1) * pageSize;
+    return dataFiltrada.slice(start, start + pageSize);
+  }, [data, dataFiltrada, isCerradasTab, page, pageSize]);
+
+  const totalItemsVista = isCerradasTab ? dataFiltrada.length : totalItems;
+  const totalPagesVista = isCerradasTab
+    ? Math.max(1, Math.ceil(totalItemsVista / pageSize))
+    : totalPages;
 
   const columns: Column<Incidencia>[] = useMemo(
     () => [
@@ -273,69 +383,74 @@ const Incidencias: React.FC = () => {
     []
   );
 
-  const renderActions = (row: Incidencia) => (
-    <Stack
-      direction="row"
-      spacing={0.5}
-      sx={{ minWidth: 160, justifyContent: 'flex-start' }}
-    >
-      <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-        <Tooltip title="Ver detalle">
-          <IconButton
-            color="primary"
-            onClick={(e) => {
-              e.currentTarget.blur();
-              setItemToView(row);
-            }}
-            size="small"
-          >
-            <VisibilityIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </Box>
-      <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-        {!row.resuelta && canResolve && (
-          <Tooltip title="Ajustar cantidades">
+  const renderActions = (row: Incidencia) => {
+    const hasLineas = (row.lineas?.length ?? 0) > 0;
+    const canOperate = !row.resuelta && hasLineas;
+
+    return (
+      <Stack
+        direction="row"
+        spacing={0.5}
+        sx={{ minWidth: 160, justifyContent: 'flex-start' }}
+      >
+        <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
+          <Tooltip title="Ver detalle">
             <IconButton
-              onClick={() => openResolveModal(row, 'adjust')}
+              color="primary"
+              onClick={(e) => {
+                e.currentTarget.blur();
+                setItemToView(row);
+              }}
               size="small"
-              color="warning"
-              aria-label="Ajustar cantidades"
             >
-              <TuneIcon fontSize="small" />
+              <VisibilityIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-        )}
-      </Box>
-      <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-        {!row.resuelta && canResolve && (
-          <Tooltip title="Resolver incidencia">
-            <IconButton
-              onClick={() => openResolveModal(row, 'resolve')}
-              size="small"
-              color="success"
-              aria-label="Resolver incidencia"
-            >
-              <CheckCircleIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        )}
-      </Box>
-      <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-        {canDelete && (
-          <Tooltip title="Eliminar">
-            <IconButton
-              onClick={() => setItemToDelete(row)}
-              size="small"
-              color="error"
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        )}
-      </Box>
-    </Stack>
-  );
+        </Box>
+        <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
+          {canOperate && canResolve && (
+            <Tooltip title="Ajustar cantidades">
+              <IconButton
+                onClick={() => openResolveModal(row, 'adjust')}
+                size="small"
+                color="warning"
+                aria-label="Ajustar cantidades"
+              >
+                <TuneIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
+        <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
+          {canOperate && canResolve && (
+            <Tooltip title="Resolver incidencia">
+              <IconButton
+                onClick={() => openResolveModal(row, 'resolve')}
+                size="small"
+                color="success"
+                aria-label="Resolver incidencia"
+              >
+                <CheckCircleIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
+        <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
+          {canDelete && (
+            <Tooltip title="Eliminar">
+              <IconButton
+                onClick={() => setItemToDelete(row)}
+                size="small"
+                color="error"
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
+      </Stack>
+    );
+  };
 
   const detailSections = useMemo(() => {
     if (!itemToView) return [];
@@ -554,7 +669,7 @@ const Incidencias: React.FC = () => {
     <Box>
       <PageToolbar
         title="Centro de Incidencias"
-        totalItems={totalItems}
+        totalItems={totalItemsVista}
         totalItemsLabel="incidencias"
         searchValue={searchTerm}
         onSearchChange={(v) => {
@@ -594,6 +709,11 @@ const Incidencias: React.FC = () => {
       <IncidenciasStatusTabs
         value={resolucionTab}
         onChange={handleResolucionTabChange}
+        closedValue={cerradasTab}
+        onClosedChange={(nextTab) => {
+          setCerradasTab(nextTab);
+          setPage(1);
+        }}
       />
 
       <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
@@ -605,7 +725,7 @@ const Incidencias: React.FC = () => {
 
         <DataTable
           columns={columns}
-          data={data}
+          data={dataPaginada}
           isLoading={isLoading}
           renderActions={renderActions}
           emptyStateMessage={
@@ -614,9 +734,11 @@ const Incidencias: React.FC = () => {
                 sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
               />
               <Typography variant="h6" color="text.secondary" gutterBottom>
-                {resolucionTab === 'resueltas'
-                  ? 'No hay incidencias resueltas'
-                  : 'No hay incidencias por resolver'}
+                {isCerradasTab
+                  ? cerradasTab === 'todas'
+                    ? 'No hay incidencias cerradas'
+                    : `No hay incidencias ${INCIDENCIA_STATUS_LABEL[cerradasTab]}`
+                  : 'No hay incidencias abiertas'}
               </Typography>
               <Typography
                 variant="body2"
@@ -625,15 +747,15 @@ const Incidencias: React.FC = () => {
               >
                 {searchTerm
                   ? 'No se encontraron incidencias que coincidan con tu búsqueda.'
-                  : resolucionTab === 'resueltas'
-                    ? 'Aún no se han registrado incidencias resueltas con los filtros aplicados.'
+                  : isCerradasTab
+                    ? 'Las incidencias cerradas incluyen resueltas, canceladas e inválidas.'
                     : '¡Excelente trabajo! No se han detectado discrepancias pendientes en las recepciones recientes.'}
               </Typography>
             </Box>
           }
           pagination={{
             currentPage: page,
-            totalPages: totalPages,
+            totalPages: totalPagesVista,
             onPageChange: (_, p) => setPage(p),
             pageSize: pageSize,
             onPageSizeChange: (e) => {

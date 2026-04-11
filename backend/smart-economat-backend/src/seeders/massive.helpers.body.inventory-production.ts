@@ -190,6 +190,8 @@ export function buildBodyInventoryAndProduction(
     recepcionId,
     pedidoId,
     usuarioId,
+    pedidoProductoId,
+    incidenciaEstadoObjetivo,
     resolucionTipo,
     mermaMotivo,
     movimientoTipo,
@@ -425,13 +427,52 @@ export function buildBodyInventoryAndProduction(
   }
 
   if (resolvedPath === '/incidencias/reportar') {
+    const recepcionReportableIds = getStateArray(
+      context,
+      'recepcionReportableIds'
+    ).filter((id) => id.length > 0);
+    const selectedRecepcionId =
+      recepcionReportableIds[
+        iteration % Math.max(1, recepcionReportableIds.length)
+      ] || recepcionId;
+
     return {
-      recepcionId,
+      recepcionId: selectedRecepcionId,
       tipo: incidenciaTipo,
     };
   }
 
   if (resolvedPath === '/incidencias') {
+    const pedidoProductoCandidates = Array.from(
+      new Set([
+        ...getStateArray(context, 'pedidoProductoIdsFresh'),
+        ...getStateArray(context, 'seedCreatedPedidoProductoIds'),
+        ...getStateArray(context, 'pedidoProductoIds'),
+      ])
+    ).filter((id) => id.length > 0);
+
+    const pedidoProductoId =
+      pedidoProductoCandidates[
+        iteration % Math.max(1, pedidoProductoCandidates.length)
+      ] ||
+      pickStateValue(context, 'pedidoProductoIds', iteration) ||
+      env.pickRequired('pedidoProductoIds');
+
+    const cantidadEsperada = deterministicInt(
+      5,
+      25,
+      iteration,
+      'incidencia-cantidad-esperada'
+    );
+    const cantidadRecibida =
+      incidenciaEstadoObjetivo === 'pendiente_validacion'
+        ? cantidadEsperada
+        : Math.max(
+            0,
+            cantidadEsperada -
+              deterministicInt(1, 4, iteration, 'incidencia-cantidad-recibida')
+          );
+
     return {
       recepcionId,
       pedidoId,
@@ -440,6 +481,19 @@ export function buildBodyInventoryAndProduction(
         iteration,
         'incidencia-create-observaciones'
       ),
+      lineas: [
+        {
+          pedidoProductoId,
+          cantidadEsperada,
+          cantidadRecibida,
+          tipoDiferencia: 'FALTANTE',
+          observaciones: pickDeterministic(
+            DETERMINISTIC_SHORT_NOTES,
+            iteration,
+            'incidencia-create-linea-observaciones'
+          ),
+        },
+      ],
     };
   }
 
@@ -463,8 +517,80 @@ export function buildBodyInventoryAndProduction(
     resolvedPath.endsWith('/resolver')
   ) {
     if (endpoint.method === 'PATCH') {
+      if (incidenciaEstadoObjetivo === 'cancelada') {
+        return {
+          usuarioId,
+          marcarComoResuelta: true,
+          estadoFinal: 'cancelada',
+          observacionesResolucion: pickDeterministic(
+            DETERMINISTIC_SHORT_NOTES,
+            iteration,
+            'incidencia-resolucion-cancelada-observaciones'
+          ),
+        };
+      }
+
+      if (incidenciaEstadoObjetivo === 'invalida') {
+        return {
+          usuarioId,
+          marcarComoResuelta: true,
+          estadoFinal: 'invalida',
+          observacionesResolucion: pickDeterministic(
+            DETERMINISTIC_SHORT_NOTES,
+            iteration,
+            'incidencia-resolucion-invalida-observaciones'
+          ),
+        };
+      }
+
+      if (incidenciaEstadoObjetivo === 'en_ajuste') {
+        const incidenciaId =
+          resolvedPath.split('/').filter((segment) => segment.length > 0)[1] ||
+          '';
+        const incidenciaLineaPairs = getStateArray(
+          context,
+          'incidenciaToPedidoProductoPairs'
+        );
+        const pedidoProductoLineaIds = incidenciaLineaPairs
+          .map((pair) => pair.split('|'))
+          .filter(
+            (parts) =>
+              parts.length === 2 &&
+              parts[0] === incidenciaId &&
+              typeof parts[1] === 'string' &&
+              parts[1].length > 0
+          )
+          .map((parts) => parts[1]);
+        const pedidoProductoLineaId =
+          pedidoProductoLineaIds[
+            iteration % Math.max(1, pedidoProductoLineaIds.length)
+          ] || pedidoProductoId;
+
+        return {
+          marcarComoResuelta: false,
+          lineas: [
+            {
+              pedidoProductoId: pedidoProductoLineaId,
+              estadoReclamacion: 'RECLAMADO',
+              observaciones: pickDeterministic(
+                DETERMINISTIC_SHORT_NOTES,
+                iteration,
+                'incidencia-resolucion-en-ajuste-observaciones-linea'
+              ),
+            },
+          ],
+          observacionesResolucion: pickDeterministic(
+            DETERMINISTIC_SHORT_NOTES,
+            iteration,
+            'incidencia-resolucion-en-ajuste-observaciones'
+          ),
+        };
+      }
+
       return {
         usuarioId,
+        marcarComoResuelta: true,
+        estadoFinal: 'resuelta',
         observacionesResolucion: pickDeterministic(
           DETERMINISTIC_SHORT_NOTES,
           iteration,
