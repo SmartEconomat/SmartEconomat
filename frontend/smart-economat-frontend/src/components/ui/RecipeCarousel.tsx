@@ -73,7 +73,7 @@ const RecipeCarousel: React.FC = () => {
           borderRadius: 4,
           overflow: 'hidden',
           position: 'relative',
-          background: '#000',
+          background: (theme) => theme.palette.background.default,
           transition: 'all 0.5s ease-in-out',
         }}
       >

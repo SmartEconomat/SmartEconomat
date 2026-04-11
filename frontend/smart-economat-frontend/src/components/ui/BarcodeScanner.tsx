@@ -555,10 +555,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         {/* Viewfinder de la cámara */}
         <Box
           sx={{
-            position: 'relative',
-            width: '100%',
-            aspectRatio: '4/3',
-            bgcolor: '#000',
+            gridColumn: '1 / -1',
+            gridRow: '1',
+            bgcolor: 'background.default',
             borderRadius: 2,
             overflow: 'hidden',
             mt: 1,

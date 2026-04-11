@@ -73,7 +73,7 @@ const WeightScaleModal: React.FC<WeightScaleModalProps> = ({
         ) : (
           <Box
             sx={{
-              bgcolor: '#000',
+              bgcolor: 'background.default',
               color: '#0f0',
               fontFamily: 'monospace',
               px: 4,

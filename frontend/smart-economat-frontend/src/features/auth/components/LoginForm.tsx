@@ -12,7 +12,8 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 import Checkbox from '../../../components/ui/Checkbox';
-import Logo from '../../../assets/images/SVG/logo-smat-economato.svg';
+import AuthLogo from './AuthLogo';
+import SecondaryActionButton from './SecondaryActionButton';
 import { User } from '../../../store/auth.types';
 import { authService } from '../../../services/auth.service';
 import { getPasswordChangeError } from '../../../utils/passwordValidation';
@@ -264,14 +265,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
         Iniciar Sesión en Smart Economat
       </Typography>
 
-      {/* Logo responsivo: más pequeño en móvil, más grande en desktop */}
-      <Box sx={{ mb: 1, mt: { xs: 0, md: 1 } }}>
-        <img
-          src={Logo}
-          alt="SmartEconomat"
-          style={{ height: 'clamp(90px, 15vw, 130px)', width: 'auto' }}
-        />
-      </Box>
+      <AuthLogo />
 
       {errorMsg && (
         <Alert severity="error" sx={{ width: '100%', maxWidth: 400, mt: 2 }}>
@@ -435,18 +429,15 @@ const LoginForm: React.FC<LoginFormProps> = ({
               mt: 1,
             }}
           >
-            <Button
-              variant="outlined"
-              color="primary"
+            <SecondaryActionButton
               onClick={() => {
                 setIsForgotPassword(false);
                 setForgotSuccess('');
                 setErrorMsg('');
               }}
-              sx={{ mt: 1 }}
             >
               Volver al inicio de sesión
-            </Button>
+            </SecondaryActionButton>
             <Link
               href="#"
               variant="body2"
@@ -518,14 +509,9 @@ const LoginForm: React.FC<LoginFormProps> = ({
               mt: 1,
             }}
           >
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={() => onToggleForm()}
-              sx={{ mt: 1 }}
-            >
+            <SecondaryActionButton onClick={() => onToggleForm()}>
               ¿No tienes cuenta? Regístrate aquí.
-            </Button>
+            </SecondaryActionButton>
             <Link
               href="#"
               variant="body2"

@@ -62,28 +62,28 @@ const darkPalette = {
     main: '#4db6ac',
   },
   background: {
-    default: '#121212',
-    paper: '#1e1e1e',
+    default: '#0B0E14',
+    paper: '#161B22',
   },
 };
 
 const highContrastLightPalette = {
   mode: 'light' as const,
   primary: {
-    main: '#000000',
+    main: '#0B0E14',
   },
   secondary: {
-    main: '#000000',
+    main: '#0B0E14',
   },
   background: {
     default: '#ffffff',
     paper: '#ffffff',
   },
   text: {
-    primary: '#000000',
-    secondary: '#000000',
+    primary: '#0B0E14',
+    secondary: '#0B0E14',
   },
-  divider: '#000000',
+  divider: '#0B0E14',
 };
 
 const highContrastDarkPalette = {
@@ -95,8 +95,8 @@ const highContrastDarkPalette = {
     main: '#ffffff',
   },
   background: {
-    default: '#000000',
-    paper: '#000000',
+    default: '#050505',
+    paper: '#050505',
   },
   text: {
     primary: '#ffffff',
@@ -157,7 +157,7 @@ export const getTheme = (themeName: ThemeName, fontSize: FontSize) => {
         MuiButton: {
           styleOverrides: {
             root: {
-              border: '2px solid #000000',
+              border: '2px solid #0B0E14',
               fontWeight: 'bold',
             },
           },
@@ -176,7 +176,7 @@ export const getTheme = (themeName: ThemeName, fontSize: FontSize) => {
         MuiPaper: {
           styleOverrides: {
             root: {
-              border: '1px solid #000000',
+              border: '1px solid #0B0E14',
             },
           },
         },
@@ -208,9 +208,42 @@ export const getTheme = (themeName: ThemeName, fontSize: FontSize) => {
       palette = lightPalette;
   }
 
+  /**
+   * Overrides globales para componentes que se aplican a todos los temas.
+   */
+  const baseComponents = {
+    ...a11yComponentDefaults,
+    MuiButton: {
+      styleOverrides: {
+        root: ({ theme }: { theme: Theme }) => ({
+          borderRadius: 8,
+          textTransform: 'none' as const,
+          fontWeight: 600,
+          '&.Mui-disabled': {
+            backgroundColor:
+              theme.palette.mode === 'light' ? '#f0f0f0' : '#2c2c2c',
+            color: theme.palette.mode === 'light' ? '#666666' : '#aaaaaa',
+          },
+        }),
+        contained: {
+          boxShadow: 'none',
+          '&:hover': {
+            boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.15)',
+          },
+        },
+        outlined: {
+          borderWidth: '1.5px',
+          '&:hover': {
+            borderWidth: '1.5px',
+          },
+        },
+      },
+    },
+  };
+
   return createTheme({
     palette,
     typography,
-    components: { ...a11yComponentDefaults, ...components },
+    components: { ...baseComponents, ...components },
   });
 };

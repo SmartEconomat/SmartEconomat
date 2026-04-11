@@ -178,11 +178,11 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
           justifyContent: 'center',
           alignItems: 'center',
           textAlign: 'center',
-          px: 5,
+          px: { xs: 3, md: 5 },
           color: 'white',
           // En móvil damos más pb para que los dots (48px) no tapen el texto
-          pb: { xs: 7, md: 8 },
-          pt: { xs: 3, md: 0 },
+          pb: { xs: 5, md: 8 },
+          pt: { xs: 2, md: 0 },
         }}
       >
         {/* Icono — oculto en móvil para ahorrar espacio vertical */}
