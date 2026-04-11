@@ -11,9 +11,10 @@ const Login = React.lazy(() => import('../features/auth/Login'));
 const ResetPassword = React.lazy(
   () => import('../features/auth/ResetPassword')
 );
-import Spinner from '../components/ui/Spinner';
 
-const LoadingFallback = () => <Spinner overlay="screen" size="lg" />;
+import LinearLoader from '../components/ui/LinearLoader';
+
+const LoadingFallback = () => <LinearLoader fixed />;
 
 const AppRouter: React.FC = () => {
   return (

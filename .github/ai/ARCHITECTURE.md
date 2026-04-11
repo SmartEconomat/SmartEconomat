@@ -209,6 +209,17 @@ frontend/smart-economat-frontend/src/
 4. Si 401 → evento `AUTH_UNAUTHORIZED` → logout limpio
 5. Rutas protegidas validan `AuthContext.user` + permiso requerido vía `ProtectedRoute`
 
+### Rendimiento y UX (Carga Progresiva)
+
+- **Code Splitting**: Se utiliza `React.lazy` y `Suspense` para cargar componentes pesados y modales de forma diferida.
+
+### Accesibilidad (Arquitectura Semántica)
+
+SmartEconomat sigue los estándares WCAG AA para garantizar una experiencia inclusiva:
+- **Outline Semántico**: Cada página debe poseer un único `h1` que defina el contexto principal, seguido de una jerarquía lógica de `h2`, `h3`, etc., sin saltar niveles.
+- **Etiquetado ARIA**: Todo elemento interactivo sin texto (como `IconButton`) debe incluir un `aria-label` descriptivo. Los iconos meramente decorativos se ocultan mediante `aria-hidden="true"`.
+- **Ratios de Contraste**: Se garantiza un contraste mínimo de 4.5:1, ajustando los tokens de texto secundario en temas oscuros para maximizar la legibilidad.
+
 ### Transporte HTTP
 
 `api.service.ts` expone un `baseFetch()` que:

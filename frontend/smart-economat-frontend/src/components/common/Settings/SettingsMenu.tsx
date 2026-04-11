@@ -8,6 +8,7 @@ import {
   Typography,
   Divider,
   ListItemButton,
+  useTheme,
 } from '@mui/material';
 import { Tooltip } from '../../ui/Tooltip';
 import { getTooltipContent } from '../../../utils/tooltipUtils';
@@ -29,6 +30,7 @@ export default function SettingsMenu({
   isOpen = true,
 }: SettingsMenuProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const theme = useTheme();
   const { currentThemeName, setTheme, fontSize, setFontSize, isLearningMode } =
     useThemeContext();
   const open = Boolean(anchorEl);
@@ -81,7 +83,16 @@ export default function SettingsMenu({
             </ListItemIcon>
             <ListItemText
               primary="Configuración"
-              sx={{ opacity: isOpen ? 1 : 0 }}
+              sx={{
+                opacity: isOpen ? 1 : 0,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                transition: theme.transitions.create('opacity', {
+                  easing: theme.transitions.easing.easeInOut,
+                  duration: isOpen ? theme.transitions.duration.standard : 100,
+                  delay: isOpen ? 150 : 0,
+                }),
+              }}
             />
           </ListItemButton>
         </Tooltip>

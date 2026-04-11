@@ -208,7 +208,19 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
             >
               <HelpOutlineIcon />
             </ListItemIcon>
-            <ListItemText primary="Ayuda" sx={{ opacity: isOpen ? 1 : 0 }} />
+            <ListItemText
+              primary="Ayuda"
+              sx={{
+                opacity: isOpen ? 1 : 0,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                transition: theme.transitions.create('opacity', {
+                  easing: theme.transitions.easing.easeInOut,
+                  duration: isOpen ? theme.transitions.duration.standard : 100,
+                  delay: isOpen ? 150 : 0,
+                }),
+              }}
+            />
           </ListItemButton>
         </Tooltip>
         <Popover

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Box,
   Paper,
@@ -16,6 +17,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import TuneIcon from '@mui/icons-material/Tune';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import ClearIcon from '@mui/icons-material/Clear';
 import DataTable, { Column } from '../components/ui/DataTable';
 import PageToolbar from '../components/ui/PageToolbar';
 import DetailModal from '../components/ui/DetailModal';
@@ -70,6 +73,8 @@ const Incidencias: React.FC = () => {
   const theme = useTheme();
   const toast = useToast();
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hasDashboardFilter = searchParams.get('resolucion') === 'por_resolver';
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
@@ -84,6 +89,18 @@ const Incidencias: React.FC = () => {
     startDate: null,
     endDate: null,
   });
+
+  useEffect(() => {
+    if (hasDashboardFilter) {
+      setResolucionTab('por_resolver');
+    }
+  }, [hasDashboardFilter]);
+
+  const clearDashboardFilter = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('resolucion');
+    setSearchParams(nextParams, { replace: true });
+  };
   const [itemToView, setItemToView] = useState<Incidencia | null>(null);
   const [itemToResolve, setItemToResolve] = useState<Incidencia | null>(null);
   const [resolveDialogMode, setResolveDialogMode] =
@@ -600,6 +617,35 @@ const Incidencias: React.FC = () => {
         {error && (
           <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
             {error}
+          </Alert>
+        )}
+
+        {hasDashboardFilter && (
+          <Alert
+            severity="info"
+            icon={<FilterListIcon />}
+            action={
+              <Button
+                color="inherit"
+                size="small"
+                onClick={clearDashboardFilter}
+                startIcon={<ClearIcon />}
+                sx={{ fontWeight: 700 }}
+              >
+                Quitar filtro
+              </Button>
+            }
+            sx={{
+              mb: 3,
+              borderRadius: 2,
+              bgcolor: alpha(theme.palette.info.main, 0.1),
+              border: '1px solid',
+              borderColor: alpha(theme.palette.info.main, 0.3),
+              '& .MuiAlert-message': { fontWeight: 500 },
+            }}
+          >
+            Estas visualizando las incidencias pendientes filtradas desde el
+            Dashboard.
           </Alert>
         )}
 

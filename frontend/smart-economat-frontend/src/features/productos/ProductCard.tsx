@@ -146,6 +146,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                     color: 'text.secondary',
                     '& svg': { fontSize: 16 },
                   }}
+                  aria-hidden="true"
                 >
                   {a.icon}
                 </Box>

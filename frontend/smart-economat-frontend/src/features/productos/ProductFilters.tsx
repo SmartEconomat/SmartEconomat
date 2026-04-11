@@ -122,6 +122,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                     mr: '-2px',
                     '& svg': { fontSize: '13px !important' },
                   }}
+                  aria-hidden="true"
                 >
                   {getCategoryIconFilled(option.value, {
                     sx: { fontSize: 13 },
@@ -180,6 +181,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                 color: 'text.secondary',
                 '& svg': { fontSize: 18 },
               }}
+              aria-hidden="true"
             >
               {getCategoryIconFilled(option.value, { sx: { fontSize: 18 } })}
             </Box>
@@ -209,6 +211,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                     mr: 0.25,
                     flexShrink: 0,
                   }}
+                  aria-hidden="true"
                 >
                   <FilterListIcon sx={{ fontSize: 18 }} />
                 </Box>

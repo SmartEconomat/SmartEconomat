@@ -29,7 +29,10 @@ import DataTable, { Column } from '../components/ui/DataTable';
 import PageToolbar from '../components/ui/PageToolbar';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import DetailModal from '../components/ui/DetailModal';
-import ProductoFormModal from '../features/productos/ProductoFormModal';
+// Importación dinámica para optimización de rendimiento (Code Splitting)
+const ProductoFormModal = React.lazy(
+  () => import('../features/productos/ProductoFormModal')
+);
 import { buildProductoPayload } from '../features/productos/productoForm.helpers';
 import {
   Producto,
@@ -617,13 +620,15 @@ const Productos: React.FC = () => {
           isLoading={isDeleting}
         />
 
-        <ProductoFormModal
-          isOpen={!!productToEdit}
-          onClose={() => setProductToEdit(null)}
-          initialData={productToEdit || {}}
-          onSubmit={handleSaveProduct}
-          isSubmitting={isSaving}
-        />
+        <React.Suspense fallback={null}>
+          <ProductoFormModal
+            isOpen={!!productToEdit}
+            onClose={() => setProductToEdit(null)}
+            initialData={productToEdit || {}}
+            onSubmit={handleSaveProduct}
+            isSubmitting={isSaving}
+          />
+        </React.Suspense>
 
         {/* ── Modal de DETALLE ── */}
         {productToView &&

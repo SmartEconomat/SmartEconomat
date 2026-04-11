@@ -58,6 +58,7 @@ const closedMixin = (theme: Theme): CSSObject => ({
   transition: theme.transitions.create('width', {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
+    delay: 50, // Espera a que el texto se desvanezca
   }),
   overflowX: 'hidden',
   width: `calc(${theme.spacing(7)} + 1px)`,
@@ -260,6 +261,16 @@ export default function MainLayout() {
                     color: 'text.secondary',
                     letterSpacing: '0.08em',
                     fontWeight: 700,
+                    opacity: open ? 1 : 0,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    transition: theme.transitions.create('opacity', {
+                      easing: theme.transitions.easing.easeInOut,
+                      duration: open
+                        ? theme.transitions.duration.standard
+                        : 150, // Desvanecimiento ultra-rápido al cerrar
+                      delay: open ? 150 : 0, // Retraso al abrir para esperar espacio
+                    }),
                   }}
                 >
                   {groupLabels[item.group]}
@@ -303,7 +314,18 @@ export default function MainLayout() {
                     </ListItemIcon>
                     <ListItemText
                       primary={item.title}
-                      sx={{ opacity: open ? 1 : 0 }}
+                      sx={{
+                        opacity: open ? 1 : 0,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        transition: theme.transitions.create('opacity', {
+                          easing: theme.transitions.easing.easeInOut,
+                          duration: open
+                            ? theme.transitions.duration.standard
+                            : 150, // Desvanecimiento ultra-rápido al cerrar
+                          delay: open ? 250 : 0, // Retraso al abrir para esperar espacio
+                        }),
+                      }}
                     />
                   </ListItemButton>
                 </Tooltip>
@@ -366,7 +388,11 @@ export default function MainLayout() {
             >
               {user?.name}
             </Typography>
-            <IconButton onClick={handleUserMenuOpen} sx={{ p: 0 }}>
+            <IconButton
+              onClick={handleUserMenuOpen}
+              sx={{ p: 0 }}
+              aria-label="Abrir menú de usuario"
+            >
               <Avatar
                 sx={{
                   bgcolor: getRoleColor(user?.rol || ''),
@@ -436,7 +462,7 @@ export default function MainLayout() {
         </DesktopDrawer>
       )}
 
-      <Box component="main" sx={{ flexGrow: 1, p: { xs: 1, sm: 3 } }}>
+      <Box component="main" sx={{ flexGrow: 1, p: { xs: 2.5, sm: 3 } }}>
         <DrawerHeader />
         <Outlet />
       </Box>

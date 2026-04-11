@@ -5,8 +5,11 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
-import { Box, Alert, Paper } from '@mui/material';
+import { Box, Alert, Paper, Button, useTheme, alpha } from '@mui/material';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import ClearIcon from '@mui/icons-material/Clear';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
@@ -86,6 +89,18 @@ const isEditablePedidoForm = (itemToEdit: PedidoFormValues | null): boolean => {
 };
 
 const Pedidos: React.FC = () => {
+  const theme = useTheme();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hasDashboardFilter =
+    searchParams.get('tab') === '0' &&
+    searchParams.get('ownStatus') === 'pendientes';
+
+  const clearDashboardFilter = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('tab');
+    nextParams.delete('ownStatus');
+    setSearchParams(nextParams, { replace: true });
+  };
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [itemToDelete, setItemToDelete] = useState<Pedido | null>(null);
@@ -597,6 +612,35 @@ const Pedidos: React.FC = () => {
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
+          </Alert>
+        )}
+
+        {hasDashboardFilter && (
+          <Alert
+            severity="info"
+            icon={<FilterListIcon />}
+            action={
+              <Button
+                color="inherit"
+                size="small"
+                onClick={clearDashboardFilter}
+                startIcon={<ClearIcon />}
+                sx={{ fontWeight: 700 }}
+              >
+                Quitar filtro
+              </Button>
+            }
+            sx={{
+              mb: 3,
+              borderRadius: 2,
+              bgcolor: alpha(theme.palette.info.main, 0.1),
+              border: '1px solid',
+              borderColor: alpha(theme.palette.info.main, 0.3),
+              '& .MuiAlert-message': { fontWeight: 500 },
+            }}
+          >
+            Estas visualizando tus pedidos pendientes filtrados desde el
+            Dashboard.
           </Alert>
         )}
 

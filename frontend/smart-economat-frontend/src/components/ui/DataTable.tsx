@@ -410,20 +410,58 @@ export function DataTable<T extends Record<string, any>>({
               </TableRow>
             </TableHead>
             <TableBody>
-              {isLoading && (
-                <TableRow>
-                  <TableCell
-                    colSpan={colSpanCount}
-                    align="center"
-                    sx={{ py: 6 }}
-                  >
-                    <Spinner size="md" color="primary" />
-                    <Typography sx={{ mt: 2 }} color="text.secondary">
-                      Cargando datos...
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              )}
+              {isLoading &&
+                Array.from({ length: pageSize || 5 }).map((_, i) => (
+                  <TableRow key={`skeleton-row-${i}`}>
+                    {selectable && (
+                      <TableCell padding="checkbox">
+                        <Skeleton
+                          variant="rectangular"
+                          width={20}
+                          height={20}
+                          sx={{ borderRadius: 0.5 }}
+                        />
+                      </TableCell>
+                    )}
+                    {columns.map((column, j) => (
+                      <TableCell
+                        key={`skeleton-col-${j}`}
+                        align={column.align || 'left'}
+                        sx={{
+                          display:
+                            column.responsiveDisplay ||
+                            (column.hideOnMobile
+                              ? { xs: 'none', md: 'table-cell' }
+                              : undefined),
+                        }}
+                      >
+                        <Skeleton
+                          variant="text"
+                          width={`${Math.floor(Math.random() * 40) + 40}%`}
+                          height={24}
+                        />
+                      </TableCell>
+                    ))}
+                    {renderActions && (
+                      <TableCell align={actionsAlign}>
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          justifyContent={
+                            actionsAlign === 'right'
+                              ? 'flex-end'
+                              : actionsAlign === 'center'
+                                ? 'center'
+                                : 'flex-start'
+                          }
+                        >
+                          <Skeleton variant="circular" width={28} height={28} />
+                          <Skeleton variant="circular" width={28} height={28} />
+                        </Stack>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
               {!isLoading && data.length === 0 && (
                 <TableRow>
                   <TableCell

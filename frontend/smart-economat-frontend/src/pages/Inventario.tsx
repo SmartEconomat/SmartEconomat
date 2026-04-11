@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Box,
   Paper,
@@ -17,6 +18,8 @@ import {
   Stack,
   Tabs,
   Tab,
+  useTheme,
+  alpha,
 } from '@mui/material';
 import { Autocomplete, CircularProgress } from '@mui/material';
 import DataTable, { Column } from '../components/ui/DataTable';
@@ -60,12 +63,14 @@ import {
 } from '../services/productoProveedor.service';
 import { searchByBarcode } from '../services/openfoodfacts.service';
 
-import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined';
-import AddIcon from '@mui/icons-material/Add';
-import SettingsIcon from '@mui/icons-material/Settings';
+import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import ClearIcon from '@mui/icons-material/Clear';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import SyncAltIcon from '@mui/icons-material/SyncAlt';
-import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
+import AddIcon from '@mui/icons-material/Add';
+import SettingsIcon from '@mui/icons-material/Settings';
+import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined';
 
 import PageToolbar from '../components/ui/PageToolbar';
 import BarcodeScanner from '../components/ui/BarcodeScanner';
@@ -250,8 +255,17 @@ const Inventario: React.FC = () => {
   const [isCantidadDialogOpen, setIsCantidadDialogOpen] = useState(false);
   const [isAddingFromScanner, setIsAddingFromScanner] = useState(false);
 
+  const theme = useTheme();
   const toast = useToast();
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hasDashboardFilter = searchParams.get('filter') === 'stockBajo';
+
+  const clearDashboardFilter = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('filter');
+    setSearchParams(nextParams, { replace: true });
+  };
   const isAdmin = isElevatedRole(user?.rol);
   const canSeeGeneral =
     isAdmin || user?.permisos?.includes(PERMISSIONS.inventario.listar);
@@ -394,8 +408,14 @@ const Inventario: React.FC = () => {
           : items;
 
       const agregado = agregarInventarioPorProducto(itemsToGroup);
-      setData(agregado);
-      setTotalItems(agregado.length);
+
+      // Aplicar filtro de dashboard si está activo
+      const finalData = hasDashboardFilter
+        ? agregado.filter((p) => p.bajoStock)
+        : agregado;
+
+      setData(finalData);
+      setTotalItems(finalData.length);
     } catch (err: unknown) {
       const message =
         err instanceof Error
@@ -405,7 +425,7 @@ const Inventario: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [tabIndex, assignedLocations]);
+  }, [tabIndex, assignedLocations, hasDashboardFilter]);
 
   useEffect(() => {
     void reloadInventario();
@@ -1179,6 +1199,35 @@ const Inventario: React.FC = () => {
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
+          </Alert>
+        )}
+
+        {hasDashboardFilter && (
+          <Alert
+            severity="warning"
+            icon={<FilterListIcon />}
+            action={
+              <Button
+                color="inherit"
+                size="small"
+                onClick={clearDashboardFilter}
+                startIcon={<ClearIcon />}
+                sx={{ fontWeight: 700 }}
+              >
+                Quitar filtro
+              </Button>
+            }
+            sx={{
+              mb: 3,
+              borderRadius: 2,
+              bgcolor: alpha(theme.palette.warning.main, 0.1),
+              border: '1px solid',
+              borderColor: alpha(theme.palette.warning.main, 0.3),
+              '& .MuiAlert-message': { fontWeight: 500 },
+            }}
+          >
+            Estas visualizando el inventario filtrado por productos con stock
+            bajo el mínimo.
           </Alert>
         )}
 
