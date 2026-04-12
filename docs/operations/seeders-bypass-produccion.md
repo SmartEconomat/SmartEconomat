@@ -83,7 +83,26 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod ps backend
 
 Busca una salida tipo:
 
+- `[seed-cli] Seeding completado exitosamente.`
 - `OK: ... endpoints cubiertos ...`
+
+> [!TROUBLESHOOTING]
+> **El seeder se detiene sin mensaje de fin**
+>
+> Si el seeder muestra los últimos endpoints (`PATCH /purchase-batches/:id/aceptar -> ok`) pero se queda en espera sin mensaje de conclusión:
+>
+> 1. **¿Es la primera vez que lo ejecutas?** — Es posible que la imagen anterior no tenía el fix. Necesitas:
+>    ```bash
+>    git pull                              # Traer cambios recientes
+>    docker compose -f docker-compose.prod.yml build --no-cache backend  # Reconstruir
+>    docker compose -f docker-compose.prod.yml down backend               # Parar
+>    docker compose -f docker-compose.prod.yml --env-file .env.prod up -d backend  # Levantar
+>    sleep 5
+>    # Reintentar el seed
+>    ```
+>
+> 2. **Si ves el mensaje `[seed-cli] Seeding completado exitosamente.`**, ¡ya está bien! ✅
+>    El seeder terminó y el contenedor saldrá automáticamente.
 
 ## Notas operativas
 
