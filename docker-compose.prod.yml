@@ -7,11 +7,12 @@ services:
       dockerfile: Dockerfile
     image: smarteconomat-db:prod
     restart: always
+    init: true
     env_file: .env.prod
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER:-}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-}
+      - POSTGRES_DB=${POSTGRES_DB:-}
     volumes:
       - database_prod:/var/lib/postgresql/data
     healthcheck:
@@ -26,10 +27,19 @@ services:
       options:
         max-size: '10m'
         max-file: '3'
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
 
   redis:
     image: redis:7-alpine
     restart: always
+    init: true
     command: redis-server --appendonly yes
     volumes:
       - redis_prod:/data
@@ -45,6 +55,14 @@ services:
       options:
         max-size: '10m'
         max-file: '3'
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
 
   backend:
     build:
@@ -52,66 +70,99 @@ services:
       dockerfile: ../Dockerfile.prod
     image: smarteconomat-backend:prod
     restart: always
+    init: true
     env_file: .env.prod
     environment:
       - NODE_ENV=production
       - DB_HOST=db
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - FRONTEND_API_URL=${FRONTEND_API_URL}
-      - BACKEND_API_URL=${BACKEND_API_URL}
-      - DOMAIN=${DOMAIN}
-      - DB_SYNC=${DB_SYNC}
-      - STARTUP_RUN_MIGRATIONS=${STARTUP_RUN_MIGRATIONS:-true}
-      - SEED_DEFAULT_ADMIN_TEMP_PASSWORD=${SEED_DEFAULT_ADMIN_TEMP_PASSWORD}
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - FRONTEND_API_URL=${FRONTEND_API_URL:-https://smarteconomat.app}
+      - BACKEND_API_URL=${BACKEND_API_URL:-https://smarteconomat.app/api/v1}
+      - DOMAIN=${DOMAIN:-smarteconomat.app}
+      - DB_SYNC=${DB_SYNC:-false}
+      - STARTUP_RUN_MIGRATIONS=${STARTUP_RUN_MIGRATIONS:-false}
+      - SEED_DEFAULT_ADMIN_TEMP_PASSWORD=${SEED_DEFAULT_ADMIN_TEMP_PASSWORD:-}
     networks:
       - backend-network
       - frontend-network
     volumes:
-      - ./uploads:/app/uploads
+      - uploads_prod:/app/uploads
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:3000/']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     logging:
       driver: 'json-file'
       options:
         max-size: '50m'
         max-file: '5'
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
 
   frontend:
     build:
       context: ./frontend/smart-economat-frontend
       dockerfile: ../Dockerfile.prod
       args:
-        - VITE_SENTRY_DSN=${VITE_SENTRY_DSN}
+        - VITE_SENTRY_DSN=${VITE_SENTRY_DSN:-}
     image: smarteconomat-frontend:prod
     restart: always
+    init: true
     ports:
       - '80:80'
       - '443:443'
-      - '5173:80' # Backup mapping
     env_file: .env.prod
+    environment:
+      - DOMAIN=${DOMAIN:-smarteconomat.app}
+      - FRONTEND_API_URL=${FRONTEND_API_URL:-https://smarteconomat.app}
+      - BACKEND_API_URL=${BACKEND_API_URL:-https://smarteconomat.app/api/v1}
     networks:
       - frontend-network
     volumes:
       - ./certs:/etc/nginx/certs:ro
       - ./certs-webroot:/var/www/acme-challenge:ro
-    depends_on:
-      - backend
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:80/']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     logging:
       driver: 'json-file'
       options:
         max-size: '10m'
         max-file: '3'
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
 
 volumes:
   database_prod:
   redis_prod:
+  uploads_prod:
 
 networks:
   backend-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16
   frontend-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

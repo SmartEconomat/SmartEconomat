@@ -1,9 +1,80 @@
+# Dependencies
 node_modules
+npm-debug.log
+
+# Build output
 dist
 build
-npm-debug.log
+.vite
+.cache
+
+# Runtime configuration - PRODUCTION SAFE
+.env
+.env.*
+!.env.prod
+
+# Version control
 .git
 .gitignore
-.env
-Dockerfile*
-docker-compose*
+.gitattributes
+
+# IDE and editors
+.vscode
+.idea
+.DS_Store
+.editorconfig
+
+# Development utilities
+.husky
+.pre-commit-hooks.yaml
+
+# Documentation
+*.md
+LICENSE
+CONTRIBUTING.md
+CHANGELOG.md
+
+# Testing and development
+test
+tests
+__tests__
+spec
+specs
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+**/*.e2e.ts
+**/*.e2e.tsx
+jest.config.js
+jest.config.ts
+vitest.config.ts
+vitest.config.js
+playwright.config.ts
+coverage
+.nyc_output
+cypress
+cypress.config.js
+
+# Source code (NEEDED for build stage, NOT copied to nginx final by multi-stage)
+# Removed: src, public, **/*.tsx, **/*.ts - these are needed for compilation in builder stage
+
+# Package managers
+pnpm-lock.yaml
+yarn.lock
+
+# OS files
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Temporary and backup files
+*.tmp
+*.bak
+*.backup
+*.log
+
+# Testing and coverage
+dist/*.map
+**/*.map

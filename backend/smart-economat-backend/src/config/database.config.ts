@@ -5,11 +5,24 @@ import { join } from 'path';
 
 import { existsSync } from 'fs';
 
-const envPaths = [
-  join(process.cwd(), '.env'),
-  join(process.cwd(), '../../.env'),
-  join(process.cwd(), '../../.env.dev'),
-];
+const normalizedNodeEnv = String(process.env.NODE_ENV || '')
+  .trim()
+  .toLowerCase();
+
+const envPaths =
+  normalizedNodeEnv === 'production'
+    ? [
+        join(process.cwd(), '.env.prod'),
+        join(process.cwd(), '../../.env.prod'),
+        join(process.cwd(), '.env'),
+        join(process.cwd(), '../../.env'),
+        join(process.cwd(), '../../.env.dev'),
+      ]
+    : [
+        join(process.cwd(), '.env'),
+        join(process.cwd(), '../../.env'),
+        join(process.cwd(), '../../.env.dev'),
+      ];
 
 for (const path of envPaths) {
   if (existsSync(path)) {

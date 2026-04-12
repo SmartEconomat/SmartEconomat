@@ -62,13 +62,27 @@ SmartEconomat es una aplicación diseñada para gestionar el inventario de ingre
 
    Despliega la aplicación optimizada para producción (imágenes ligeras, sin código fuente montado, sin herramientas de desarrollo).
 
+   Para un entorno local con HTTPS y dominio `smarteconomat.app`, prepara primero certificados y `.env.prod`:
+
+   ```bash
+   bash ./scripts/setup-smarteconomat-local.sh
+   ```
+
+   En Windows, usa:
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File "scripts/setup-smarteconomat-local.ps1"
+   ```
+
+   Consulta la guía completa en `docs/operations/local-https-smarteconomat-app.md`.
+
    ```bash
    docker compose -f docker-compose.prod.yml up --build --detach
    ```
 
    | Servicio | URL |
    |---|---|
-   | Frontend (Nginx) | http://localhost:80 |
+   | Frontend (Nginx) | https://smarteconomat.app |
    | Backend (NestJS) | http://localhost:3000 |
 
 4. **Detener el proyecto**
@@ -108,7 +122,7 @@ Para poblar la base de datos con datos iniciales o de prueba:
   npm run db:reset
   ```
 
-> **Seguridad:** `npm run seed` solo se permite en entorno de desarrollo. Si `NODE_ENV` no es `development` o la base de datos parece de producción (por ejemplo, nombre con `prod`), la ejecución se bloquea automáticamente.
+> **Seguridad:** `npm run seed` solo se permite en entorno de desarrollo. Para ejecuciones controladas en producción usa explícitamente `NODE_ENV=production npm run seed -- --force-production` (o `npm run seed:force-production`).
 
 ### Documentación de la API
 

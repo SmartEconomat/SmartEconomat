@@ -52,9 +52,20 @@ import {
 import { ensureCanonicalSeedCredentials } from './massive.runtime.actors';
 import { buildSeedRunTag, seedDateIso } from './deterministic.seed-data';
 
-const COVERAGE_LOG_FILE = resolve(__dirname, './logs/seed-http-coverage.txt');
-const REQUEST_LOG_FILE = resolve(__dirname, './logs/seed-massive-requests.log');
-const TRACE_LOG_FILE = resolve(__dirname, './logs/seed-massive-trace.txt');
+const DEFAULT_MASSIVE_LOGS_DIR = resolve(__dirname, './logs');
+let coverageLogFilePath = resolve(
+  DEFAULT_MASSIVE_LOGS_DIR,
+  'seed-http-coverage.txt'
+);
+let requestLogFilePath = resolve(
+  DEFAULT_MASSIVE_LOGS_DIR,
+  'seed-massive-requests.log'
+);
+let traceLogFilePath = resolve(
+  DEFAULT_MASSIVE_LOGS_DIR,
+  'seed-massive-trace.txt'
+);
+let areMassiveLogTargetsReady = false;
 const PRODUCTION_ENV = 'production';
 let traceLineCursor = 0;
 let requestLogCursor = 0;
@@ -133,16 +144,59 @@ function elapsedMsFrom(startedAtNs: bigint): number {
   return Number((process.hrtime.bigint() - startedAtNs) / 1_000_000n);
 }
 
+function ensureMassiveLogTargets(): void {
+  if (areMassiveLogTargetsReady) {
+    return;
+  }
+
+  const configuredLogsDir = String(process.env.SEED_LOG_DIR || '').trim();
+  const candidates = [
+    configuredLogsDir ? resolve(configuredLogsDir) : '',
+    DEFAULT_MASSIVE_LOGS_DIR,
+    resolve(process.cwd(), 'logs', 'seeders'),
+    '/tmp/smart-economat-seed-logs',
+  ].filter((logsDir): logsDir is string => logsDir.length > 0);
+
+  let lastError: unknown;
+
+  for (const logsDir of candidates) {
+    try {
+      mkdirSync(logsDir, { recursive: true });
+
+      const requestLogCandidate = resolve(logsDir, 'seed-massive-requests.log');
+      appendFileSync(requestLogCandidate, '', 'utf8');
+
+      coverageLogFilePath = resolve(logsDir, 'seed-http-coverage.txt');
+      requestLogFilePath = requestLogCandidate;
+      traceLogFilePath = resolve(logsDir, 'seed-massive-trace.txt');
+      areMassiveLogTargetsReady = true;
+
+      return;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  const details = String(
+    lastError instanceof Error ? lastError.message : lastError
+  );
+  throw new Error(
+    `[seed-massive] No se pudo inicializar directorio de logs para seeders: ${details}`
+  );
+}
+
 function trace(message: string): void {
+  ensureMassiveLogTargets();
   appendFileSync(
-    TRACE_LOG_FILE,
+    traceLogFilePath,
     `[${seedDateIso(0, traceLineCursor++)}] ${message}\n`,
     'utf8'
   );
 }
 
 function logRequestLine(payload: Record<string, unknown>): void {
-  appendFileSync(REQUEST_LOG_FILE, `${JSON.stringify(payload)}\n`, 'utf8');
+  ensureMassiveLogTargets();
+  appendFileSync(requestLogFilePath, `${JSON.stringify(payload)}\n`, 'utf8');
 }
 
 function isRetryableDuplicateConflict(result: RequestResult): boolean {
@@ -589,7 +643,8 @@ function writeCoverageSummary(
     ...enumRows,
   ].join('\n');
 
-  writeFileSync(COVERAGE_LOG_FILE, `${content}\n`, 'utf8');
+  ensureMassiveLogTargets();
+  writeFileSync(coverageLogFilePath, `${content}\n`, 'utf8');
 }
 
 function assertRequiredAdminEndpointUsage(
@@ -622,16 +677,15 @@ function assertRequiredAdminEndpointUsage(
 }
 
 async function runMassiveSeeder(): Promise<void> {
-  const logsDir = resolve(__dirname, './logs');
-  mkdirSync(logsDir, { recursive: true });
+  ensureMassiveLogTargets();
 
   writeFileSync(
-    REQUEST_LOG_FILE,
+    requestLogFilePath,
     `# seed-massive request log ${seedDateIso(0)}\n`,
     'utf8'
   );
   writeFileSync(
-    TRACE_LOG_FILE,
+    traceLogFilePath,
     `# seed-massive trace ${seedDateIso(0)}\n`,
     'utf8'
   );

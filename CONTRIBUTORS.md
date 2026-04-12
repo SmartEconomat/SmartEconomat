@@ -1,6 +1,6 @@
 # 🏆 Clasificación de Contribuidores - SmartEconomat
 
-> **Última actualización:** 12/04/2026, 18:20:57
+> **Última actualización:** 12/04/2026, 23:03:34
 
 ---
 
@@ -9,7 +9,7 @@
 ### 🎖️ **Darel**
 
 Este guerrero del código lidera la carga con:
-- 💻 **568** Commits
+- 💻 **569** Commits
 - 🔀 **100** PRs Fusionados
 
 Demostrando que:
@@ -18,7 +18,7 @@ Demostrando que:
 - 🚀 Git commit es su mantra matutino
 
 **Estadísticas de Dominio:**
-- Posee el **50.94%** de todo el código.
+- Posee el **50.99%** de todo el código.
 - Ha logrado fusionar **100** funcionalidades completas.
 
 ---
@@ -26,15 +26,15 @@ Demostrando que:
 ## 📊 Hall de la Fama
 
 ### 🥈 Alexis
-- 💻 Commits: **282** (25.29%)
+- 💻 Commits: **282** (25.27%)
 - 🔀 PRs Fusionados: **23**
 
 ### 🥈 Sergio
-- 💻 Commits: **139** (12.47%)
+- 💻 Commits: **139** (12.46%)
 - 🔀 PRs Fusionados: **24**
 
 ### 🥈 Maurizio
-- 💻 Commits: **75** (6.73%)
+- 💻 Commits: **75** (6.72%)
 - 🔀 PRs Fusionados: **8**
 
 ### 🥈 Guillermo
@@ -63,27 +63,27 @@ Con **51 commits** y **8 PRs**, tenemos aquí a alguien que:
 
 | Posición | Contribuidor | Commits | PRs Fusionados | % Código | Estado |
 |----------|--------------|---------|----------------|----------|--------|
-| #1 | Darel | **568** | 🔀 **100** | 50.94% | 👑 Líder |
-| #2 | Alexis | **282** | 🔀 **23** | 25.29% | 💪 Activo |
-| #3 | Sergio | **139** | 🔀 **24** | 12.47% | 💪 Activo |
-| #4 | Maurizio | **75** | 🔀 **8** | 6.73% | 💪 Activo |
+| #1 | Darel | **569** | 🔀 **100** | 50.99% | 👑 Líder |
+| #2 | Alexis | **282** | 🔀 **23** | 25.27% | 💪 Activo |
+| #3 | Sergio | **139** | 🔀 **24** | 12.46% | 💪 Activo |
+| #4 | Maurizio | **75** | 🔀 **8** | 6.72% | 💪 Activo |
 | #5 | Guillermo | **51** | 🔀 **8** | 4.57% | 🐌 Necesita café |
 
 ---
 
 ## 📊 Estadísticas Generales
 
-- **Total de commits:** 1115
+- **Total de commits:** 1116
 - **Total de PRs fusionados:** 163
 - **Total de contribuidores:** 5
-- **Promedio de commits por persona:** 223.0
+- **Promedio de commits por persona:** 223.2
 
 ---
 
 ## 🎯 Ranking de Poder (Commits + PRs)
 
 **Darel**
-`████████████████████` 568 commits | 100 PRs
+`████████████████████` 569 commits | 100 PRs
 
 **Alexis**
 `██████████░░░░░░░░░░` 282 commits | 23 PRs

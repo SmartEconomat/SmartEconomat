@@ -164,6 +164,9 @@ Este bloque agrupa la documentación completa y detallada del backend NestJS + T
 | [API backend](reference/api/README.md) | Referencia de integración por dominios, con requests, respuestas y entidades relacionadas |
 | [Mapa rápido de endpoints](reference/endpoints.md) | Índice corto de rutas base y saltos a la referencia detallada |
 | [Dependencias frontend y backend](reference/dependencias-frontend-backend.md) | Inventario runtime por librería, uso real y motivo técnico |
+| [DB reset en produccion](operations/db-reset-produccion.md) | Procedimiento real para ejecutar `npm run db:reset` en entorno productivo |
+| [Seeders en produccion](operations/seeders-bypass-produccion.md) | Ejecución oficial de seeders con `--force-production` |
+| [HTTPS local con smarteconomat.app](operations/local-https-smarteconomat-app.md) | Preparación automática de dominio y certificados TLS locales |
 | [Troubleshooting](operations/troubleshooting/README.md) | Problemas frecuentes y soluciones |
 | [Auditoría backend](audits/backend-unused-endpoints.md) | Auditoría técnica disponible del backend |
 | [Auditoría documental backend y API](planning/improvements/auditoria-documentacion-backend-api.md) | Matriz de cobertura actual, huecos y prioridades para cerrar la documentación del backend |
