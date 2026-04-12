@@ -73,8 +73,13 @@ async function run(): Promise<void> {
 }
 
 if (require.main === module) {
-  void run().catch((error) => {
-    console.error('[seed-cli] Ejecucion fallida:', error);
-    process.exit(1);
-  });
+  void run()
+    .then(() => {
+      console.log('[seed-cli] Seeding completado exitosamente.');
+      process.exit(0);
+    })
+    .catch((error) => {
+      console.error('[seed-cli] Ejecucion fallida:', error);
+      process.exit(1);
+    });
 }
