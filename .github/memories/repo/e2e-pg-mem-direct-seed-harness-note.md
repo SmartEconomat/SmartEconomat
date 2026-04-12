@@ -1,5 +1,0 @@
-- El harness E2E ya no puede depender de src/seeders/seed.ts: el seeder principal pasó a HTTP-only y su dataSource exportado es un placeholder.
-- test/setup/seed-test-database.ts debe crear su propio DataSource real para pg-mem y sembrar baseline directo (roles, permisos, admin@smarteconomat.com, profesor1@smarteconomat.com).
-- getTestApp() debe asegurar runTestSeeders() antes de compilar AppModule para que loginAndGetToken tenga usuarios base.
-- pg-mem necesita un intercept de CREATE TYPE duplicado durante schema sync para reutilizar enums compartidos como estado_pedido y evitar "type already exists".
-- Validación real: npm run test:e2e:file -- test/e2e/purchase-batch.e2e-spec.ts pasa con 4/4 tests.

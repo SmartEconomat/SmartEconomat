@@ -1,3 +1,0 @@
-- Skill frontmatter valido: name, description, argument-hint, compatibility, disable-model-invocation, license, metadata, user-invocable.
-- No usar claves como tools, model, priority, file_patterns, exclude_patterns en encabezado YAML de skills.
-- Si se necesitan patrones de alcance, colocarlos en el cuerpo del SKILL.

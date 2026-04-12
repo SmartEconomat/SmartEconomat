@@ -1,4 +1,0 @@
-- OpenFoodFacts en runtime ya no se consulta desde el navegador: el frontend usa `/api/v1/openfoodfacts/*` y el backend hace el fetch server-side para evitar el CORS/preflight 404 de `world.openfoodfacts.org`.
-- Endpoints añadidos: `GET /openfoodfacts/producto/:codigoBarras` y `GET /openfoodfacts/buscar?nombre=...` con `JwtAuthGuard + PermisosGuard` y `RequireAnyPermission(productos|inventario|recepciones)`.
-- El frontend mantiene la misma API pública (`searchByBarcode`, `searchByName`) y por eso no hubo que tocar consumidores como Productos, Inventario o Recepción.
-- Runtime proxy usa throttle en memoria con `OPEN_FOOD_FACTS_PROXY_REQUEST_DELAY_MS` (fallback a `OPEN_FOOD_FACTS_REQUEST_DELAY_MS`) y timeout con `OPEN_FOOD_FACTS_PROXY_TIMEOUT_MS`.

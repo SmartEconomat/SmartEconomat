@@ -1,3 +1,0 @@
-- El cliente de OpenFoodFacts del seeder ahora aplica un throttle global compartido entre requests con OPEN_FOOD_FACTS_REQUEST_DELAY_MS (default 1000ms).
-- fetchOpenFoodFactsProducts() espera su turno antes de cada fetch y mantiene fallback a faker cuando se llama con fallbackToFaker=true.
-- Validado con npm run seed: 215 endpoints cubiertos tras el cambio.

@@ -119,6 +119,7 @@ export const SPECIAL_TARGETS = new Map<string, number>([
   ['POST /purchase-batches', specialTarget(20)],
   ['POST /recepciones', specialTarget(20)],
   ['POST /incidencias', specialTarget(30)],
+  ['DELETE /ubicacion/:id', 0],
   ['DELETE /producto-alergenos/:idProducto/:alergeno', 5],
   ['DELETE /albaranes/:id', 3],
   ['DELETE /archivos/:id', 3],

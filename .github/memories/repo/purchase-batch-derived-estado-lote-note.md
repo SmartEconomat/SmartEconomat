@@ -1,4 +1,0 @@
-- `PurchaseBatch.calcularEstadoLote()` es la fuente de verdad del agregado: `CANCELADO` si todos cancelados; `INCIDENCIA` si alguno está en incidencia; `COMPLETADO` si todos están en `RECEPCIONADO|CANCELADO`; `PARCIAL` si alguno ya avanzó a `RECEPCIONADO|PARCIAL`; en otro caso `PENDIENTE`.
-- `PurchaseBatchService` ya no debe asignar `estado` manualmente al crear o consolidar lotes; el estado se deriva desde los pedidos.
-- El frontend no debe inventar fallback de `EstadoLote`; si falta `batch.estado` canónico, el pedido no se agrupa como lote sintético.
-- Los seeders solo deben meter lotes en colas `pendiente` si la respuesta real vuelve con `estado=pending/pendiente`.

@@ -1,4 +1,0 @@
-- En el seeder masivo, `/recepciones` debe consumir solo `pedidoReceivableIds` o `seedCreatedPedidoReceivableIds`; usar colas de `pedidoPendienteIds` reintroduce 400 de recepción.
-- El precreate de `POST /recepciones` debe crear y aceptar el pedido (`PATCH /pedidos/:id/aceptar`) antes de fijar `seedRecepcionPedidoId`.
-- `collectStateFromResponse` no debe marcar todos los pedidos como recepcionables: solo `EstadoPedido.POR_RECEPCIONAR`; `PENDIENTE_DE_APROBACION` alimenta la cola de pendientes.
-- `refreshStateAfterOperation` debe mover pedidos aceptados a la cola receivable y sacar de esa cola los pedidos ya usados en una recepción exitosa.

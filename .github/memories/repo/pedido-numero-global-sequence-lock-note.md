@@ -1,4 +1,0 @@
-- `pedido.numero_global` no debe reservarse con `MAX(numero_global)+1` bajo concurrencia.
-- Patrón verificado: `pg_advisory_lock` + secuencia dedicada `pedido_numero_global_seq` + `setval` sincronizado con el máximo actual.
-- Mantener fallback solo para entornos de test/memoria que no soporten locks/secuencias reales.
-- Este endurecimiento resolvió el fallo de seed masivo por unique constraint en `UQ_e93275d2baa8aa95b46e7296591`.

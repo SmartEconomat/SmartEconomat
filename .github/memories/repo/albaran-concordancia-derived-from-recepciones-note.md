@@ -1,4 +1,0 @@
-- `Albaran.concordancia` no debe quedar en `null` cuando hay recepciones vinculadas.
-- Regla confirmada en docs/dominio: indica si el albaran coincide con los pedidos/recepciones vinculados.
-- Derivacion aplicada: `true` solo si todas las recepciones vinculadas estan `COMPLETADA` y sin incidencia; `false` si alguna esta `PARCIAL`, `CON_INCIDENCIAS` o con `incidencia=true`.
-- Para evitar regresiones, sincronizar concordancia no solo al crear/enlazar, tambien en lectura (`findAll`/`findOne`) para reparar historicos.

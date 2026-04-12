@@ -62,6 +62,10 @@ export function getTargetSuccessForEndpoint(key: string): number {
   };
 
   if (explicitTarget !== undefined) {
+    if (explicitTarget <= 0) {
+      return 0;
+    }
+
     const normalizedTarget = Math.min(
       MAX_SUCCESS_PER_ENDPOINT,
       Math.max(MIN_SUCCESS_PER_ENDPOINT, explicitTarget)

@@ -32,11 +32,18 @@ if (!isDocker && dbHost === 'db') {
 const finalHost = dbHost;
 
 const isTestEnv = process.env.NODE_ENV === 'test';
+const isProductionEnv = process.env.NODE_ENV === 'production';
 const isMigrationCliCommand = process.argv.some((arg) =>
   /^migration:(run|revert|show)$/u.test(arg)
 );
 const synchronizeEnabled =
-  process.env.DB_SYNC === 'true' && !isMigrationCliCommand;
+  process.env.DB_SYNC === 'true' && !isMigrationCliCommand && !isProductionEnv;
+
+if (isProductionEnv && process.env.DB_SYNC === 'true') {
+  console.warn(
+    '[database.config] DB_SYNC=true ignorado en produccion por seguridad. Usa migraciones.'
+  );
+}
 
 export const dbConfig: DataSourceOptions = {
   type: 'postgres',

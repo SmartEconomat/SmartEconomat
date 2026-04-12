@@ -1,3 +1,0 @@
-- `GET /proveedor` visible para admin puede incluir registros soft-deleted con `deletedAt` o `deletedBy`.
-- El seeder masivo no debe tratarlos como proveedores activos al poblar `proveedorIds` ni al construir el pool OFF/faker para `POST /productos`.
-- Usar `extractActiveEntityIds` o filtrar por ausencia de marcas de soft delete; si no, `POST /productos` puede referenciar un proveedor borrado y fallar con `404 No existe el proveedor ...`.

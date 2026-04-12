@@ -30,4 +30,4 @@ USER appuser
 
 EXPOSE 3000
 
-CMD ["npm", "run", "start:prod"]
+CMD ["sh", "-lc", "node scripts/prod-bootstrap-runner.js && node dist/main.js"]

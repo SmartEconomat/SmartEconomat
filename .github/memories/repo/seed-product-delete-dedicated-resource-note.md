@@ -1,4 +1,0 @@
-- `DELETE /productos/:id` no debe consumir `seedCreatedProductoIds` ni `productoIds` genéricos porque esos productos pueden quedar referenciados por `receta_ingrediente` y romper recetas duplicadas.
-- El seeder masivo debe precrear un `seedCreatedDeletableProductoIds` dedicado y `pickIdForRoute` debe priorizarlo para rutas DELETE.
-- `refreshStateAfterOperation` debe limpiar también `seedCreatedDeletableProductoIds` al borrar el producto.
-- El seed HTTP simple debe crear un producto eliminable dedicado antes de probar `DELETE /productos/:id`.

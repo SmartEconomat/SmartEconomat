@@ -1,9 +1,0 @@
-- Fecha: 2026-04-02
-- Cambio: el modal de auditoria de inventario paso de editar `cantidadActual` absoluta por lote a registrar ajustes delta (`+/-`) por lote.
-- Frontend: `InventoryDetailModal` ahora muestra `stock actual` y `stock resultante` en solo lectura, y solo permite editar `Ajuste de stock (+/-)`.
-- Contrato usado: se reutiliza `POST /inventario/ajustes-manuales` con payload `{ inventarioId, tipo: entrada|salida_ajuste, ajuste, motivo }`.
-- Regla UX: el stock total es visualizacion (solo lectura) y no editable; se muestra resumen actual/proyectado en el modal.
-- Validaciones UI: bloquea vacio, NaN, 0 y ajustes que dejen stock negativo antes de enviar.
-- Refinamiento: el stock de auditoria se muestra en unidades de envase (uds); la unidad del producto (ML/L/KG/G) se usa solo como equivalencia calculada con `contenido` para evitar sumar directamente en la unidad final.
-- Archivos clave: `frontend/src/components/inventario/InventoryDetailModal.tsx`, `frontend/src/services/inventario.service.ts`, `frontend/src/services/inventario.types.ts`.
-- Presentacion equivalente: cuando la construccion viene en `ML` o `G` y el total supera 1000, la UI normaliza a `L` o `KG` para lectura operativa.

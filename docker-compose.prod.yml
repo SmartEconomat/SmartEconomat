@@ -62,6 +62,8 @@ services:
       - BACKEND_API_URL=${BACKEND_API_URL}
       - DOMAIN=${DOMAIN}
       - DB_SYNC=${DB_SYNC}
+      - STARTUP_RUN_MIGRATIONS=${STARTUP_RUN_MIGRATIONS:-true}
+      - SEED_DEFAULT_ADMIN_TEMP_PASSWORD=${SEED_DEFAULT_ADMIN_TEMP_PASSWORD}
     depends_on:
       db:
         condition: service_healthy

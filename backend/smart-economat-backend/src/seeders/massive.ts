@@ -8,7 +8,7 @@ import {
 } from 'node:fs';
 import { resolve } from 'node:path';
 import { createSeedContext } from './seed';
-import { SeedContext } from './seed-context';
+import { SeedContext, type SeedContextConfig } from './seed-context';
 import { MASSIVE_ENDPOINT_DEFINITIONS } from './massive-endpoints.constants';
 import { MASSIVE_ENDPOINT_DEFINITIONS_ADDITIONAL } from './massive-endpoints.additional';
 import {
@@ -49,13 +49,85 @@ import {
   refreshStateAfterOperation,
   warmCollections,
 } from './massive.runtime';
+import { ensureCanonicalSeedCredentials } from './massive.runtime.actors';
 import { buildSeedRunTag, seedDateIso } from './deterministic.seed-data';
 
 const COVERAGE_LOG_FILE = resolve(__dirname, './logs/seed-http-coverage.txt');
 const REQUEST_LOG_FILE = resolve(__dirname, './logs/seed-massive-requests.log');
 const TRACE_LOG_FILE = resolve(__dirname, './logs/seed-massive-trace.txt');
+const PRODUCTION_ENV = 'production';
 let traceLineCursor = 0;
 let requestLogCursor = 0;
+
+function normalizeEnv(value: string | undefined): string {
+  return String(value || '')
+    .trim()
+    .toLowerCase();
+}
+
+function normalizeSeedApiBaseUrl(
+  rawValue: string | undefined
+): string | undefined {
+  const value = String(rawValue || '').trim();
+  if (!value) {
+    return undefined;
+  }
+
+  const withoutTrailingSlash = value.replace(/\/+$/, '');
+  if (/\/api\/v\d+$/i.test(withoutTrailingSlash)) {
+    return withoutTrailingSlash;
+  }
+
+  if (/\/api$/i.test(withoutTrailingSlash)) {
+    return `${withoutTrailingSlash}/v1`;
+  }
+
+  return `${withoutTrailingSlash}/api/v1`;
+}
+
+function resolveSeedApiBaseUrl(): string | undefined {
+  const explicit = normalizeSeedApiBaseUrl(process.env.SEED_API_BASE_URL);
+  if (explicit) {
+    return explicit;
+  }
+
+  const backendUrl = normalizeSeedApiBaseUrl(process.env.BACKEND_API_URL);
+  if (backendUrl) {
+    return backendUrl;
+  }
+
+  return normalizeSeedApiBaseUrl(process.env.FRONTEND_API_URL);
+}
+
+function resolveSeedDockerComposeFile(): string | undefined {
+  const explicit = String(process.env.SEED_DOCKER_COMPOSE_FILE || '').trim();
+  if (explicit) {
+    return explicit;
+  }
+
+  const nodeEnv = normalizeEnv(process.env.NODE_ENV);
+  if (nodeEnv === PRODUCTION_ENV) {
+    return '../../../../docker-compose.prod.yml';
+  }
+
+  return undefined;
+}
+
+function resolveSeedContextConfig(): SeedContextConfig {
+  const config: SeedContextConfig = {};
+  const apiBaseUrl = resolveSeedApiBaseUrl();
+  const dockerComposeFile = resolveSeedDockerComposeFile();
+
+  if (apiBaseUrl) {
+    config.apiBaseUrl = apiBaseUrl;
+  }
+
+  if (dockerComposeFile) {
+    config.dockerComposeFile = dockerComposeFile;
+  }
+
+  return config;
+}
 
 function elapsedMsFrom(startedAtNs: bigint): number {
   return Number((process.hrtime.bigint() - startedAtNs) / 1_000_000n);
@@ -564,9 +636,16 @@ async function runMassiveSeeder(): Promise<void> {
     'utf8'
   );
 
+  const seedContextConfig = resolveSeedContextConfig();
   const context = await createSeedContext({
+    ...seedContextConfig,
     maxConcurrency: SEED_GLOBAL_CONFIG.concurrency,
   });
+  let credentialsStabilized = false;
+
+  console.log(
+    `[seed-massive] Contexto de ejecucion: apiBaseUrl=${context.apiBaseUrl}, dockerCompose=${seedContextConfig.dockerComposeFile || 'default'}`
+  );
 
   try {
     const explicitRunTag = (process.env.SEED_RUN_TAG || '').trim();
@@ -697,6 +776,7 @@ async function runMassiveSeeder(): Promise<void> {
             continue;
           } else if (
             (key === 'GET /albaranes/:id' ||
+              key === 'GET /albaranes/documento/:filename' ||
               key === 'PATCH /albaranes/:id' ||
               key === 'DELETE /albaranes/:id') &&
             isIgnorableMissingAlbaran(result)
@@ -762,6 +842,10 @@ async function runMassiveSeeder(): Promise<void> {
 
     await ensureIncidenciaEstadosPostRun(context);
     trace('incidencia_estados_post_run_ok');
+
+    await ensureCanonicalSeedCredentials(context);
+    credentialsStabilized = true;
+    trace('canonical_seed_credentials_ok');
 
     const elapsedFinal = elapsedMsFrom(startedAtNs);
 
@@ -834,6 +918,19 @@ async function runMassiveSeeder(): Promise<void> {
     );
     trace('ok');
   } finally {
+    if (!credentialsStabilized) {
+      try {
+        await ensureCanonicalSeedCredentials(context);
+        trace('canonical_seed_credentials_recovered');
+      } catch (recoveryError) {
+        console.warn(
+          '[seed-massive] No se pudieron restablecer credenciales canónicas en fase de recuperación:',
+          recoveryError
+        );
+        trace('canonical_seed_credentials_recovery_failed');
+      }
+    }
+
     trace('closing_context');
     await context.close();
     trace('finished');
