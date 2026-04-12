@@ -29,8 +29,10 @@ Hace todo automáticamente:
 
 ## 📦 Scripts de soporte
 
-- `setup-local-prod-https.sh` - Genera certificados y actualiza `.env.prod`.
 - `setup-local-prod-https.sh` - Genera certificados, detecta la IP LAN y actualiza `.env.prod`.
+- `fix-prod-container-conflict.sh` - Resuelve conflictos de contenedores duplicados en producción (limpieza completa + redesplegue).
+- `fix-prod-env-duplicates.sh` - Limpia duplicados en `.env.prod` y reinicia backend (resuelve restart loop).
+- `fix-prod-restart-loop.sh` - Resuelve bucle de reinicio en backend producción (ausencia de `SEED_DEFAULT_ADMIN_TEMP_PASSWORD`).
 - `deploy.sh` - Deploy a servidor remoto.
 - `collect-host-info.sh` / `collect-host-info.ps1` - Exportan variables `HOST_*` para el entorno de desarrollo.
 - `install-docker.sh` - Instalador auxiliar para hosts Linux compatibles.
@@ -85,6 +87,20 @@ powershell -ExecutionPolicy Bypass -File "scripts/setup-smarteconomat-local.ps1"
 ### "Error generando certificados"
 - Verifica `openssl` instalado
 - Verifica permisos en `./certs/`
+
+### "Backend en bucle de reinicio en producción"
+En el servidor remoto, ejecuta:
+```bash
+bash ./scripts/fix-prod-restart-loop.sh
+```
+Esto agregará `SEED_DEFAULT_ADMIN_TEMP_PASSWORD` a `.env.prod` y reconstruirá el backend.
+
+### "Conflicto de nombres de contenedores Docker"
+Si ves `Conflict. The container name is already in use by container...`:
+```bash
+bash ./scripts/fix-prod-container-conflict.sh
+```
+Este script hace limpieza completa de contenedores huérfanos y redespliega.
 
 ---
 
