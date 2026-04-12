@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import DynamicFormModal, { DynamicField } from './DynamicFormModal';
-import { createProveedor, CreateProveedorPayload } from '../../services/proveedor.service';
+import {
+  createProveedor,
+  CreateProveedorPayload,
+} from '../../services/proveedor.service';
 import { Proveedor } from '../../services/proveedor.types';
 import { useToast } from '../../store/toast.hooks';
 

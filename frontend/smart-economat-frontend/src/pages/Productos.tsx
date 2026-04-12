@@ -26,7 +26,6 @@ import { formatDigitsForSR } from '../utils/a11y-format';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import DataTable, { Column } from '../components/ui/DataTable';
@@ -251,22 +250,24 @@ const Productos: React.FC = () => {
   };
 
   const handleSaveProduct = async (formData: ProductoFormValues) => {
-     setIsSaving(true);
-     try {
-      const payload = await buildProductoPayload(formData as Record<string, unknown>);
-       const category = formData.tipo;
- 
-       if (formData.id) {
+    setIsSaving(true);
+    try {
+      const payload = await buildProductoPayload(
+        formData as Record<string, unknown>
+      );
+      const category = formData.tipo;
+
+      if (formData.id) {
         await updateProducto(formData.id, payload);
-         toast.success('Producto actualizado correctamente.', undefined, {
-           productCategory: category,
-         });
-       } else {
+        toast.success('Producto actualizado correctamente.', undefined, {
+          productCategory: category,
+        });
+      } else {
         await createProducto(payload);
-         toast.success('Producto creado correctamente.', undefined, {
-           productCategory: category,
-         });
-       }
+        toast.success('Producto creado correctamente.', undefined, {
+          productCategory: category,
+        });
+      }
 
       await loadData();
       setProductToEdit(null);
@@ -343,7 +344,9 @@ const Productos: React.FC = () => {
     if (row.pathImg) editData.imagen = resolveStoredFileUrl(row.pathImg);
     if (row.alergenos) {
       editData.alergenos = row.alergenos.map((alergeno) =>
-        typeof alergeno === 'string' ? alergeno : (alergeno as ProductoAlergeno).alergeno || ''
+        typeof alergeno === 'string'
+          ? alergeno
+          : (alergeno as ProductoAlergeno).alergeno || ''
       );
     }
     if (row.proveedores) {
@@ -590,7 +593,9 @@ const Productos: React.FC = () => {
           onSort={handleSort}
           sortConfig={{ key: sortBy || '', direction: sortOrder }}
           actionsWidth={120}
-          getRowAriaLabel={(row) => `Producto: ${row.nombre}, Marca: ${row.marca ?? 'Genérica'}`}
+          getRowAriaLabel={(row) =>
+            `Producto: ${row.nombre}, Marca: ${row.marca ?? 'Genérica'}`
+          }
           emptyStateMessage={
             <Box
               sx={{
@@ -624,9 +629,7 @@ const Productos: React.FC = () => {
                 variant="h5"
                 sx={{ fontWeight: 700, mb: 1, color: 'text.primary' }}
               >
-                {hasSearchOrFilters
-                  ? 'Sin coincidencias'
-                  : 'Catálogo vacío'}
+                {hasSearchOrFilters ? 'Sin coincidencias' : 'Catálogo vacío'}
               </Typography>
               <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
                 {hasSearchOrFilters
@@ -698,7 +701,9 @@ const Productos: React.FC = () => {
             isOpen={!!productToEdit}
             onClose={() => setProductToEdit(null)}
             initialData={productToEdit || {}}
-            onSubmit={(data) => void handleSaveProduct(data as ProductoFormValues)}
+            onSubmit={(data) =>
+              void handleSaveProduct(data as ProductoFormValues)
+            }
             isSubmitting={isSaving}
           />
         </React.Suspense>
@@ -1062,67 +1067,98 @@ const Productos: React.FC = () => {
                         </Box>
 
                         {isLoadingHistory ? (
-                          <Box sx={{ py: 6, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                            <CircularProgress size={32} thickness={5} sx={{ color: alpha(theme.palette.primary.main, 0.4) }} />
+                          <Box
+                            sx={{
+                              py: 6,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              gap: 2,
+                            }}
+                          >
+                            <CircularProgress
+                              size={32}
+                              thickness={5}
+                              sx={{
+                                color: alpha(theme.palette.primary.main, 0.4),
+                              }}
+                            />
                             <Typography variant="body2" color="text.secondary">
                               Consultando evolución de precios...
                             </Typography>
                           </Box>
                         ) : priceHistory.length > 0 ? (
-                          <Box 
-                            sx={{ 
+                          <Box
+                            sx={{
                               overflowX: 'auto',
                               borderRadius: 2,
                               border: '1px solid',
                               borderColor: 'divider',
-                              bgcolor: alpha(theme.palette.background.paper, 0.4),
+                              bgcolor: alpha(
+                                theme.palette.background.paper,
+                                0.4
+                              ),
                             }}
                           >
-                            <Table size="small" aria-label="Histórico de precios del producto">
+                            <Table
+                              size="small"
+                              aria-label="Histórico de precios del producto"
+                            >
                               <TableHead>
-                                <TableRow sx={{ bgcolor: alpha(theme.palette.action.hover, 0.5) }}>
-                                  <TableCell sx={{ 
-                                    fontWeight: 700, 
-                                    fontSize: '0.7rem', 
-                                    textTransform: 'uppercase', 
-                                    letterSpacing: 1,
-                                    color: 'text.secondary',
-                                    py: 1.5 
-                                  }}>
+                                <TableRow
+                                  sx={{
+                                    bgcolor: alpha(
+                                      theme.palette.action.hover,
+                                      0.5
+                                    ),
+                                  }}
+                                >
+                                  <TableCell
+                                    sx={{
+                                      fontWeight: 700,
+                                      fontSize: '0.7rem',
+                                      textTransform: 'uppercase',
+                                      letterSpacing: 1,
+                                      color: 'text.secondary',
+                                      py: 1.5,
+                                    }}
+                                  >
                                     Fecha
                                   </TableCell>
-                                  <TableCell sx={{ 
-                                    fontWeight: 700, 
-                                    fontSize: '0.7rem', 
-                                    textTransform: 'uppercase', 
-                                    letterSpacing: 1,
-                                    color: 'text.secondary',
-                                    py: 1.5 
-                                  }}>
+                                  <TableCell
+                                    sx={{
+                                      fontWeight: 700,
+                                      fontSize: '0.7rem',
+                                      textTransform: 'uppercase',
+                                      letterSpacing: 1,
+                                      color: 'text.secondary',
+                                      py: 1.5,
+                                    }}
+                                  >
                                     Proveedor
                                   </TableCell>
                                   <TableCell
                                     align="right"
-                                    sx={{ 
-                                      fontWeight: 700, 
-                                      fontSize: '0.7rem', 
-                                      textTransform: 'uppercase', 
+                                    sx={{
+                                      fontWeight: 700,
+                                      fontSize: '0.7rem',
+                                      textTransform: 'uppercase',
                                       letterSpacing: 1,
                                       color: 'text.secondary',
-                                      py: 1.5 
+                                      py: 1.5,
                                     }}
                                   >
                                     Cantidad
                                   </TableCell>
                                   <TableCell
                                     align="right"
-                                    sx={{ 
-                                      fontWeight: 700, 
-                                      fontSize: '0.7rem', 
-                                      textTransform: 'uppercase', 
+                                    sx={{
+                                      fontWeight: 700,
+                                      fontSize: '0.7rem',
+                                      textTransform: 'uppercase',
                                       letterSpacing: 1,
                                       color: 'text.secondary',
-                                      py: 1.5 
+                                      py: 1.5,
                                     }}
                                   >
                                     Precio Unit.
@@ -1130,27 +1166,49 @@ const Productos: React.FC = () => {
                                 </TableRow>
                               </TableHead>
                               <TableBody>
-                                {priceHistory.map((h, idx) => (
-                                  <TableRow 
+                                {priceHistory.map((h) => (
+                                  <TableRow
                                     key={h.id}
-                                    sx={{ 
+                                    sx={{
                                       '&:last-child td': { border: 0 },
-                                      '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.02) }
+                                      '&:hover': {
+                                        bgcolor: alpha(
+                                          theme.palette.primary.main,
+                                          0.02
+                                        ),
+                                      },
                                     }}
                                   >
-                                    <TableCell sx={{ py: 1.5, whiteSpace: 'nowrap', fontWeight: 500 }}>
-                                      {new Date(h.fecha).toLocaleDateString(undefined, {
-                                        day: '2-digit',
-                                        month: 'short',
-                                        year: 'numeric'
-                                      })}
+                                    <TableCell
+                                      sx={{
+                                        py: 1.5,
+                                        whiteSpace: 'nowrap',
+                                        fontWeight: 500,
+                                      }}
+                                    >
+                                      {new Date(h.fecha).toLocaleDateString(
+                                        undefined,
+                                        {
+                                          day: '2-digit',
+                                          month: 'short',
+                                          year: 'numeric',
+                                        }
+                                      )}
                                     </TableCell>
                                     <TableCell sx={{ py: 1.5 }}>
-                                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                        {h.productoProveedor?.proveedor?.nombre || '—'}
+                                      <Typography
+                                        variant="body2"
+                                        sx={{ fontWeight: 600 }}
+                                      >
+                                        {h.productoProveedor?.proveedor
+                                          ?.nombre || '—'}
                                       </Typography>
                                       {h.documentoOrigen && (
-                                        <Typography variant="caption" color="text.secondary" display="block">
+                                        <Typography
+                                          variant="caption"
+                                          color="text.secondary"
+                                          display="block"
+                                        >
                                           Doc: {h.documentoOrigen}
                                         </Typography>
                                       )}
@@ -1162,20 +1220,20 @@ const Productos: React.FC = () => {
                                           : '—'}
                                       </Typography>
                                     </TableCell>
-                                    <TableCell
-                                      align="right"
-                                      sx={{ py: 1.5 }}
-                                    >
+                                    <TableCell align="right" sx={{ py: 1.5 }}>
                                       <Typography
                                         variant="body2"
-                                        sx={{ 
+                                        sx={{
                                           fontWeight: 700,
                                           color: 'primary.main',
-                                          bgcolor: alpha(theme.palette.primary.main, 0.05),
+                                          bgcolor: alpha(
+                                            theme.palette.primary.main,
+                                            0.05
+                                          ),
                                           display: 'inline-block',
                                           px: 1,
                                           py: 0.5,
-                                          borderRadius: 1
+                                          borderRadius: 1,
                                         }}
                                       >
                                         {Number(h.precio).toFixed(4)} €

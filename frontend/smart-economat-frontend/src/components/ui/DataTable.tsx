@@ -149,7 +149,7 @@ export interface DataTableProps<T> {
  * Componente genérico para mostrar listas tabulares de datos
  * con soporte para estado de carga, paginación unificada (TablePagination), acciones y vista en mosaico.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 // Eliminada la utilidad extractText local para usar la global en a11y-format.ts
 
 export function DataTable<T extends Record<string, any>>({
@@ -235,9 +235,7 @@ export function DataTable<T extends Record<string, any>>({
   };
 
   return (
-    <Box 
-      sx={{ width: '100%', mb: 2 }}
-    >
+    <Box sx={{ width: '100%', mb: 2 }}>
       {hasTopBarControls && (
         <Box
           display="flex"
@@ -257,11 +255,11 @@ export function DataTable<T extends Record<string, any>>({
                 size="small"
               >
                 <ToggleButton value="list" aria-label="Vista de lista">
-                   <ViewListIcon />
-                 </ToggleButton>
-                 <ToggleButton value="grid" aria-label="Vista de cuadrícula">
-                   <ViewModuleIcon />
-                 </ToggleButton>
+                  <ViewListIcon />
+                </ToggleButton>
+                <ToggleButton value="grid" aria-label="Vista de cuadrícula">
+                  <ViewModuleIcon />
+                </ToggleButton>
               </ToggleButtonGroup>
             )}
             {leftHeaderAction && <Box>{leftHeaderAction}</Box>}
@@ -464,11 +462,7 @@ export function DataTable<T extends Record<string, any>>({
                               : undefined),
                         }}
                       >
-                        <Skeleton
-                          variant="text"
-                          width="80%"
-                          height={24}
-                        />
+                        <Skeleton variant="text" width="80%" height={24} />
                       </TableCell>
                     ))}
                     {renderActions && (

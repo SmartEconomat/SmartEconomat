@@ -581,13 +581,13 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
           display: 'flex',
           flexDirection: 'column',
           gap: isShortScreen ? 1 : 2,
-          overflow: 'hidden', 
+          overflow: 'hidden',
         }}
       >
         {/* Viewfinder de la cámara */}
         <Box
           sx={{
-            flex: 1, 
+            flex: 1,
             minHeight: isShortScreen ? 180 : 300,
             position: 'relative',
             gridColumn: '1 / -1',
@@ -616,7 +616,6 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             onLoadedMetadata={() => setVideoReady(true)}
             onPlaying={() => setVideoReady(true)}
           />
-
 
           {/* Marco del visor - Feedback inmediato para el usuario */}
           {(isScanning || scannerState === 'requesting') && (
@@ -705,10 +704,10 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         )}
 
         {/* Último código leído (modo continuo) */}
-          <Alert severity="success" icon={<CheckCircleIcon />} sx={{ mt: 2 }}>
-            Último código leído:{' '}
-            <strong aria-label={formatDigitsForSR(lastCode)}>{lastCode}</strong>
-          </Alert>
+        <Alert severity="success" icon={<CheckCircleIcon />} sx={{ mt: 2 }}>
+          Último código leído:{' '}
+          <strong aria-label={formatDigitsForSR(lastCode)}>{lastCode}</strong>
+        </Alert>
 
         {isScanning && (
           <Typography
@@ -762,7 +761,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                   px: isShortScreen ? 1 : 2,
                 }}
               >
-                {!isShortScreen && (torchEnabled ? 'Apagar luz' : 'Encender luz')}
+                {!isShortScreen &&
+                  (torchEnabled ? 'Apagar luz' : 'Encender luz')}
               </Button>
             )}
           </Stack>

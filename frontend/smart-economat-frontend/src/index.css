@@ -24,8 +24,8 @@ code {
   text-decoration: none;
   border-radius: 0 0 8px 8px;
   font-weight: bold;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
   /* Ocultar visualmente por defecto pero mantener para lectores de pantalla */
   width: 1px;
   height: 1px;
@@ -36,7 +36,9 @@ code {
   border: 0;
   white-space: nowrap;
   transform: translateX(-50%) translateY(-100%); /* Centrado y fuera de pantalla */
-  transition: transform 0.2s ease-in-out, clip 0s 0.2s;
+  transition:
+    transform 0.2s ease-in-out,
+    clip 0s 0.2s;
 }
 
 .skip-link:focus {
@@ -55,16 +57,16 @@ code {
 }
 
 /* Resaltado visual para secciones enfocadas mediante navegación accesible */
-[id="sidebar-nav"]:focus {
+[id='sidebar-nav']:focus {
   outline: 1px solid #dc004e !important; /* Línea más fina */
   outline-offset: -1px; /* Pegada al borde interno para evitar cortes */
   box-shadow: inset 0 0 0 2px rgba(220, 0, 78, 0.1);
   transition: all 0.2s ease;
 }
 
-[id="main-content"]:focus,
-[id="filters-area"]:focus,
-[id="results-area"]:focus {
+[id='main-content']:focus,
+[id='filters-area']:focus,
+[id='results-area']:focus {
   outline: 2px solid #dc004e !important;
   outline-offset: 2px;
   box-shadow: 0 0 0 4px rgba(220, 0, 78, 0.15);
@@ -73,13 +75,13 @@ code {
 }
 
 /* Margen de seguridad para compensar la cabecera fija al hacer scroll programático */
-[id="main-content"],
-[id="sidebar-nav"],
-[id="filters-area"] {
+[id='main-content'],
+[id='sidebar-nav'],
+[id='filters-area'] {
   scroll-margin-top: 120px !important;
 }
 
 /* La tabla de resultados necesita un margen mayor para asegurar que se vean las cabeceras */
-[id="results-area"] {
+[id='results-area'] {
   scroll-margin-top: 180px !important;
 }

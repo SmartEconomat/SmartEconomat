@@ -1,8 +1,13 @@
 import React from 'react';
-import FastfoodOutlinedIcon from '@mui/icons-material/FastfoodOutlined';
-import LocalDrinkOutlinedIcon from '@mui/icons-material/LocalDrinkOutlined';
 import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
-import ShoppingBasketOutlinedIcon from '@mui/icons-material/ShoppingBasketOutlined';
+import LocalDrinkOutlinedIcon from '@mui/icons-material/LocalDrinkOutlined';
+import GrainOutlinedIcon from '@mui/icons-material/GrainOutlined';
+import SetMealOutlinedIcon from '@mui/icons-material/SetMealOutlined';
+import EggOutlinedIcon from '@mui/icons-material/EggOutlined';
+import AppleOutlinedIcon from '@mui/icons-material/AppleOutlined';
+import EcoOutlinedIcon from '@mui/icons-material/EcoOutlined';
+import RestaurantOutlinedIcon from '@mui/icons-material/RestaurantOutlined';
+import VignetteOutlinedIcon from '@mui/icons-material/VignetteOutlined';
 import { CategoriaProducto } from '../../../services/producto.types';
 
 const defaultIconProps = {
@@ -15,31 +20,36 @@ const defaultIconProps = {
  */
 export function getCategoryIcon(
   tipo: CategoriaProducto | undefined,
-  iconProps: React.ComponentProps<
-    typeof CategoryOutlinedIcon
-  > = defaultIconProps
+  iconProps: React.ComponentProps<typeof CategoryOutlinedIcon> = defaultIconProps
 ): React.ReactElement {
   const props = { ...defaultIconProps, ...iconProps };
+
   if (!tipo) return <CategoryOutlinedIcon {...props} />;
-  if (tipo === CategoriaProducto.LACTEO || tipo === CategoriaProducto.BEBIDA) {
-    return <LocalDrinkOutlinedIcon {...props} />;
+
+  switch (tipo) {
+    case CategoriaProducto.VERDURA:
+      return <EcoOutlinedIcon {...props} />;
+    case CategoriaProducto.FRUTA:
+      return <AppleOutlinedIcon {...props} />;
+    case CategoriaProducto.CARNE:
+      return <RestaurantOutlinedIcon {...props} />;
+    case CategoriaProducto.PESCADO:
+    case CategoriaProducto.MARISCO:
+      return <SetMealOutlinedIcon {...props} />;
+    case CategoriaProducto.LACTEO:
+    case CategoriaProducto.BEBIDA:
+    case CategoriaProducto.ACEITE:
+      return <LocalDrinkOutlinedIcon {...props} />;
+    case CategoriaProducto.HUEVO:
+      return <EggOutlinedIcon {...props} />;
+    case CategoriaProducto.CEREAL:
+    case CategoriaProducto.LEGUMBRE:
+    case CategoriaProducto.AZUCAR:
+      return <GrainOutlinedIcon {...props} />;
+    case CategoriaProducto.CONDIMENTO:
+      return <VignetteOutlinedIcon {...props} />;
+    case CategoriaProducto.OTRO:
+    default:
+      return <CategoryOutlinedIcon {...props} />;
   }
-  if (
-    tipo === CategoriaProducto.CARNE ||
-    tipo === CategoriaProducto.PESCADO ||
-    tipo === CategoriaProducto.MARISCO ||
-    tipo === CategoriaProducto.HUEVO
-  ) {
-    return <FastfoodOutlinedIcon {...props} />;
-  }
-  if (
-    tipo === CategoriaProducto.VERDURA ||
-    tipo === CategoriaProducto.FRUTA ||
-    tipo === CategoriaProducto.CEREAL ||
-    tipo === CategoriaProducto.LEGUMBRE ||
-    tipo === CategoriaProducto.FRUTO_SECO
-  ) {
-    return <ShoppingBasketOutlinedIcon {...props} />;
-  }
-  return <CategoryOutlinedIcon {...props} />;
 }

@@ -67,7 +67,7 @@ const darkPalette = {
   },
   text: {
     primary: '#ffffff',
-    secondary: 'rgba(255, 255, 255, 0.85)', 
+    secondary: 'rgba(255, 255, 255, 0.85)',
     disabled: 'rgba(255, 255, 255, 0.5)',
   },
 };
@@ -87,7 +87,7 @@ const highContrastLightPalette = {
   text: {
     primary: '#000000',
     secondary: '#0B0E14',
-    disabled: '#4A5568', 
+    disabled: '#4A5568',
   },
   divider: '#000000',
 };

@@ -365,10 +365,10 @@ export default function MainLayout() {
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
       <SkipLinks />
-      <AppBar 
-        position="fixed" 
-        open={open} 
-        color="inherit" 
+      <AppBar
+        position="fixed"
+        open={open}
+        color="inherit"
         elevation={1}
         component="header"
         role="banner"
@@ -470,7 +470,7 @@ export default function MainLayout() {
           PaperProps={{
             id: 'sidebar-nav',
             tabIndex: -1,
-            sx: { outline: 'none' }
+            sx: { outline: 'none' },
           }}
           sx={{
             display: { xs: 'block', sm: 'none' },
@@ -483,15 +483,15 @@ export default function MainLayout() {
           {drawerContent}
         </MuiDrawer>
       ) : (
-        <DesktopDrawer 
-          variant="permanent" 
+        <DesktopDrawer
+          variant="permanent"
           open={open}
           component="nav"
           aria-label="Menú principal lateral"
           PaperProps={{
             id: 'sidebar-nav',
             tabIndex: -1,
-            sx: { outline: 'none' }
+            sx: { outline: 'none' },
           }}
           sx={{ outline: 'none' }}
         >
@@ -499,17 +499,17 @@ export default function MainLayout() {
         </DesktopDrawer>
       )}
 
-      <Box 
-        component="main" 
-        id="main-content" 
+      <Box
+        component="main"
+        id="main-content"
         role="main"
         aria-label="Contenido principal"
         tabIndex={-1}
-        sx={{ 
-          flexGrow: 1, 
+        sx={{
+          flexGrow: 1,
           p: { xs: 2.5, sm: 3 },
           outline: 'none', // Evitar borde al recibir foco por salto
-        }} 
+        }}
       >
         <DrawerHeader />
         <Outlet />

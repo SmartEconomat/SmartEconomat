@@ -68,7 +68,6 @@ export interface DynamicField {
   multiple?: boolean;
   /** Opcional: Define el ancho del campo en una cuadrícula de 1-12 (Por defecto 12). Se aplica a partir del breakpoint 'sm'. */
   width?: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getFallbackIcon?: (formData: Record<string, any>) => React.ReactNode;
   pattern?: string;
   patternMessage?: string;
@@ -78,9 +77,7 @@ export interface DynamicField {
 
 export interface DynamicFormModalProps extends Omit<ModalProps, 'children'> {
   fields?: DynamicField[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialData?: Record<string, any>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSubmit: (data: Record<string, any>) => void | Promise<void>;
   onCancel?: () => void;
   submitLabel?: string;
@@ -104,7 +101,6 @@ export interface DynamicFormModalProps extends Omit<ModalProps, 'children'> {
     | 'info'
     | 'error'
     | 'inherit';
-  onRefreshProveedores?: () => void;
 }
 
 const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
@@ -129,10 +125,9 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   secondarySubmitLabel,
   onSecondarySubmit,
   secondarySubmitColor = 'success',
-  onRefreshProveedores,
 }) => {
-  const [formData, setFormData] = useState<Record<string, unknown>>({});
-  const formDataRef = useRef<Record<string, unknown>>({});
+  const [formData, setFormData] = useState<Record<string, any>>({});
+  const formDataRef = useRef<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [activeBarcodeField, setActiveBarcodeField] = useState<string | null>(
@@ -160,8 +155,8 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   const updateFormData = useCallback(
     (
       updater:
-        | Record<string, unknown>
-        | ((prev: Record<string, unknown>) => Record<string, unknown>)
+        | Record<string, any>
+        | ((prev: Record<string, any>) => Record<string, any>)
     ) => {
       setFormData((prev) => {
         const next = typeof updater === 'function' ? updater(prev) : updater;
@@ -198,7 +193,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   useEffect(() => {
     if (isOpen && valueUpdates && Object.keys(valueUpdates).length > 0) {
       updateFormData((prev) => {
-        const next = { ...prev };
+        const next = { ...prev } as Record<string, any>;
         let changed = false;
         Object.keys(valueUpdates).forEach((key) => {
           if (next[key] !== valueUpdates[key]) {
@@ -229,10 +224,10 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    
+
     // Bloquear números negativos en tiempo real
     if (value.startsWith('-')) return;
-    
+
     const parsedValue = parseLocalizedNumber(value);
     if (parsedValue !== null && parsedValue < 0) return;
 
@@ -248,31 +243,6 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
     updateFormData((prev) => ({ ...prev, [name]: checked }));
   };
 
-  const handleValueChange = (name: string, value: any) => {
-    setFormData((prev) => {
-      const newData = { ...prev, [name]: value };
-      formDataRef.current = newData;
-      if (onValuesChange) {
-        onValuesChange(newData);
-      }
-      return newData;
-    });
-
-    // Limpiar error dinámicamente si el campo ahora es válido
-    if (errors[name]) {
-      const field = fields.find((f) => f.name === name);
-      if (field) {
-        const error = validateField(field, value);
-        if (!error) {
-          setErrors((prev) => {
-            const newErrors = { ...prev };
-            delete newErrors[name];
-            return newErrors;
-          });
-        }
-      }
-    }
-  };
 
   const validateField = (field: DynamicField, value: any): string | null => {
     const { required, label, pattern, patternMessage, maxLength, minLength } =
@@ -297,7 +267,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
           if (!regex.test(stringValue)) {
             return patternMessage || `${label} no tiene un formato válido`;
           }
-        } catch (e) {
+        } catch (_e) {
           console.error(`Invalid regex for field ${field.name}:`, pattern);
         }
       }
@@ -972,7 +942,9 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                             pointerEvents: 'none',
                           }}
                         >
-                          <CloudUploadOutlinedIcon sx={{ fontSize: 40, mb: 1 }} />
+                          <CloudUploadOutlinedIcon
+                            sx={{ fontSize: 40, mb: 1 }}
+                          />
                           <Typography variant="button">
                             {previewUrl ? 'Cambiar Imagen' : 'Cargar Imagen'}
                           </Typography>
@@ -986,9 +958,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
           )}
 
           {/* Right Side - Grid for Fields */}
-          <Grid
-            size={mainImageField ? { xs: 12, md: 8, lg: 8 } : { xs: 12 }}
-          >
+          <Grid size={mainImageField ? { xs: 12, md: 8, lg: 8 } : { xs: 12 }}>
             <Box
               display="grid"
               gridTemplateColumns="repeat(12, 1fr)"

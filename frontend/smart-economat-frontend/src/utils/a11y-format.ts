@@ -33,7 +33,8 @@ export const extractA11yText = (node: ReactNode): string => {
     const element = node as React.ReactElement<any>;
     if (element.props.label) text = extractA11yText(element.props.label);
     else if (element.props.title) text = extractA11yText(element.props.title);
-    else if (element.props.children) text = extractA11yText(element.props.children);
+    else if (element.props.children)
+      text = extractA11yText(element.props.children);
   }
 
   return formatDigitsForSR(text);

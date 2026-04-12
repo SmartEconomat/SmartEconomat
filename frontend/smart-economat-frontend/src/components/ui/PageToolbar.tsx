@@ -24,7 +24,6 @@ import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import BarcodeIcon from './BarcodeIcon';
 import ClearIcon from '@mui/icons-material/Clear'; // Added ClearIcon
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import FilterListIcon from '@mui/icons-material/FilterList';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { useBreakpoints } from '../../utils/useBreakpoints';
@@ -43,15 +42,6 @@ export interface PageToolbarProps {
   /** ID para el input de búsqueda */
   searchId?: string;
   primaryAction?: {
-    label: string;
-    onClick: () => void;
-    icon?: React.ReactNode;
-    id?: string;
-    disabled?: boolean;
-    isLoading?: boolean;
-  };
-  /** Acción secundaria (ej: "Gestionar") */
-  secondaryAction?: {
     label: string;
     onClick: () => void;
     icon?: React.ReactNode;
@@ -107,7 +97,6 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
   searchPlaceholder = 'Buscar...',
   searchId = 'page-search',
   primaryAction,
-  secondaryAction,
   filters,
   totalItems,
   totalItemsLabel = 'elementos',
@@ -189,7 +178,9 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
               {totalItems !== undefined && (
                 <Tooltip title={`Total de ${totalItemsLabel}: ${totalItems}`}>
                   <Chip
-                    icon={<CheckCircleIcon sx={{ fontSize: '14px !important' }} />}
+                    icon={
+                      <CheckCircleIcon sx={{ fontSize: '14px !important' }} />
+                    }
                     label={
                       <>
                         Total: <strong>{totalItems}</strong>
@@ -223,7 +214,6 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                   }}
                 />
               )}
-
             </Box>
           </Box>
         )}
@@ -241,79 +231,76 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
               flexWrap="wrap"
               sx={{ outline: 'none', mt: 0.5, mb: 0.5, width: '100%' }}
             >
-                <TextField
-                  id={searchId}
-                  placeholder={searchPlaceholder}
-                  value={searchValue}
-                  onChange={(e) => onSearchChange?.(e.target.value)}
-                  size="small"
-                  autoFocus={autoFocusSearch}
-                  fullWidth
-                  sx={{
-                    flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 8px)' },
-                    width: { xs: '100%', sm: 'calc(50% - 8px)' },
-                    minWidth: 0,
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      bgcolor: 'background.paper',
-                    },
-                  }}
-                  slotProps={{
-                    htmlInput: {
-                      'aria-label': searchPlaceholder,
-                    },
-                    input: {
-                      startAdornment: onScanBarcode && (
-                        <InputAdornment position="start">
-                          <Tooltip title="Escanear con cámara">
+              <TextField
+                id={searchId}
+                placeholder={searchPlaceholder}
+                value={searchValue}
+                onChange={(e) => onSearchChange?.(e.target.value)}
+                size="small"
+                autoFocus={autoFocusSearch}
+                fullWidth
+                sx={{
+                  flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 8px)' },
+                  width: { xs: '100%', sm: 'calc(50% - 8px)' },
+                  minWidth: 0,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    bgcolor: 'background.paper',
+                  },
+                }}
+                slotProps={{
+                  htmlInput: {
+                    'aria-label': searchPlaceholder,
+                  },
+                  input: {
+                    startAdornment: onScanBarcode && (
+                      <InputAdornment position="start">
+                        <Tooltip title="Escanear con cámara">
+                          <IconButton
+                            size="small"
+                            onClick={onScanBarcode}
+                            aria-label="Escanear código"
+                            color="primary"
+                            sx={{
+                              '&:hover': {
+                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                borderRadius: 1,
+                              },
+                              p: 0.5,
+                              ml: -0.5,
+                            }}
+                          >
+                            <BarcodeIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Stack
+                          direction="row"
+                          spacing={0.5}
+                          alignItems="center"
+                        >
+                          {searchValue && (
                             <IconButton
                               size="small"
-                              onClick={onScanBarcode}
-                              aria-label="Escanear código"
-                              color="primary"
-                              sx={{
-                                '&:hover': {
-                                  bgcolor: alpha(
-                                    theme.palette.primary.main,
-                                    0.1
-                                  ),
-                                  borderRadius: 1,
-                                },
-                                p: 0.5,
-                                ml: -0.5,
-                              }}
+                              onClick={() => onSearchChange?.('')}
+                              aria-label="Limpiar búsqueda"
                             >
-                              <BarcodeIcon fontSize="small" />
+                              <ClearIcon fontSize="small" />
                             </IconButton>
-                          </Tooltip>
-                        </InputAdornment>
-                      ),
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <Stack
-                            direction="row"
-                            spacing={0.5}
-                            alignItems="center"
-                          >
-                            {searchValue && (
-                              <IconButton
-                                size="small"
-                                onClick={() => onSearchChange?.('')}
-                                aria-label="Limpiar búsqueda"
-                              >
-                                <ClearIcon fontSize="small" />
-                              </IconButton>
-                            )}
-                            <SearchIcon
-                              fontSize="small"
-                              sx={{ color: 'text.secondary', ml: 0.5 }}
-                            />
-                          </Stack>
-                        </InputAdornment>
-                      ),
-                    },
-                  }}
-                />
+                          )}
+                          <SearchIcon
+                            fontSize="small"
+                            sx={{ color: 'text.secondary', ml: 0.5 }}
+                          />
+                        </Stack>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
               {filters && (
                 <Box
                   sx={{
@@ -395,7 +382,10 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                       }}
                     >
                       {action.isLoading ? (
-                        <CircularProgress size={isMobile ? 18 : 20} color="inherit" />
+                        <CircularProgress
+                          size={isMobile ? 18 : 20}
+                          color="inherit"
+                        />
                       ) : (
                         action.icon
                       )}

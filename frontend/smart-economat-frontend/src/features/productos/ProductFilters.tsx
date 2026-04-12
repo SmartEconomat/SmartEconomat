@@ -58,7 +58,7 @@ const CATEGORIA_OPTIONS: CategoryOption[] = [
 
 /**
  * ProductFilters
- * 
+ *
  * Componente que utiliza el SmartFilterAutocomplete atómico para filtrar productos.
  */
 const ProductFilters: React.FC<ProductFiltersProps> = ({

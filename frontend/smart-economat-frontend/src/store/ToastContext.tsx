@@ -1,5 +1,4 @@
 import React, { useState, useCallback, ReactNode } from 'react';
-import { CategoriaProducto } from '../services/producto.types';
 import { Toast, ToastOptions } from './toast.types';
 import { ToastContext } from './toast.context';
 

@@ -1,19 +1,23 @@
-import React, { useRef, useEffect, useState, useCallback, ReactNode } from 'react';
+import React, {
+  useRef,
+  useEffect,
+  useState,
+  useCallback,
+  ReactNode,
+} from 'react';
 import Autocomplete, { AutocompleteProps } from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
 import Box from '@mui/material/Box';
 import FilterListIcon from '@mui/icons-material/FilterList';
-import { useBreakpoints } from '../../utils/useBreakpoints';
 
 /**
  * Props para el componente SmartFilterAutocomplete.
  * Hereda de las props de Autocomplete de MUI pero fija el modo 'multiple'.
  */
-export interface SmartFilterAutocompleteProps<T>
-  extends Omit<
-    AutocompleteProps<T, true, false, false>,
-    'renderInput' | 'multiple'
-  > {
+export interface SmartFilterAutocompleteProps<T> extends Omit<
+  AutocompleteProps<T, true, false, false>,
+  'renderInput' | 'multiple'
+> {
   /** Texto que aparece cuando no hay nada escrito */
   placeholder?: string;
   /** Etiqueta de accesibilidad para lectores de pantalla */
@@ -26,7 +30,7 @@ export interface SmartFilterAutocompleteProps<T>
 
 /**
  * SmartFilterAutocomplete
- * 
+ *
  * Un componente de Autocomplete ultra-personalizado para SmartEconomat que ofrece:
  * - Layout optimizado para barras de herramientas (Toolbar).
  * - Orden de Búsqueda -> Chips (tags al final).
@@ -42,7 +46,6 @@ export function SmartFilterAutocomplete<T>({
   sx,
   ...props
 }: SmartFilterAutocompleteProps<T>) {
-  const { isMobileOrTablet } = useBreakpoints();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(true);
@@ -178,7 +181,8 @@ export function SmartFilterAutocomplete<T>({
             boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
           },
           '&.Mui-focused': {
-            boxShadow: '0 0 0 2px rgba(var(--mui-palette-primary-mainChannel), 0.1)',
+            boxShadow:
+              '0 0 0 2px rgba(var(--mui-palette-primary-mainChannel), 0.1)',
           },
         },
         '& .MuiAutocomplete-inputRoot': {
