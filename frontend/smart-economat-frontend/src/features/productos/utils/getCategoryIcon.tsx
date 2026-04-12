@@ -5,7 +5,7 @@ import GrainOutlinedIcon from '@mui/icons-material/Grain';
 import SetMealIcon from '@mui/icons-material/SetMeal';
 import EggIcon from '@mui/icons-material/Egg';
 import AppleIcon from '@mui/icons-material/Apple';
-import EcoIcon from '@mui/icons-material/Eco';
+import LocalFloristIcon from '@mui/icons-material/LocalFlorist';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import VignetteIcon from '@mui/icons-material/Vignette';
 import { CategoriaProducto } from '../../../services/producto.types';
@@ -28,7 +28,7 @@ export function getCategoryIcon(
 
   switch (tipo) {
     case CategoriaProducto.VERDURA:
-      return <EcoIcon {...props} />;
+      return <LocalFloristIcon {...props} />;
     case CategoriaProducto.FRUTA:
       return <AppleIcon {...props} />;
     case CategoriaProducto.CARNE:
