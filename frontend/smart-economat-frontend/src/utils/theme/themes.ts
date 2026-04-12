@@ -65,6 +65,11 @@ const darkPalette = {
     default: '#0B0E14',
     paper: '#161B22',
   },
+  text: {
+    primary: '#ffffff',
+    secondary: 'rgba(255, 255, 255, 0.85)', 
+    disabled: 'rgba(255, 255, 255, 0.5)',
+  },
 };
 
 const highContrastLightPalette = {
@@ -80,12 +85,17 @@ const highContrastLightPalette = {
     paper: '#ffffff',
   },
   text: {
-    primary: '#0B0E14',
+    primary: '#000000',
     secondary: '#0B0E14',
+    disabled: '#4A5568', 
   },
-  divider: '#0B0E14',
+  divider: '#000000',
 };
 
+/**
+ * Paleta para el modo de alto contraste oscuro (High Contrast Dark).
+ * Sigue la norma de contraste máximo (Blanco sobre Negro puro) sin semitransparencias.
+ */
 const highContrastDarkPalette = {
   mode: 'dark' as const,
   primary: {

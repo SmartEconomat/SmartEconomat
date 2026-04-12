@@ -13,6 +13,19 @@ Ofrecer una solución unificada en toda la aplicación para mostrar listas, evit
 - **UI de Ordenamiento Mejorada**: Flechas de ordenamiento con `space-between` para una mejor legibilidad.
 - **Acciones Estabilizadas**: Soporte para contenedores de ancho fijo en acciones para evitar saltos visuales cuando se ocultan botones condicionalmente (ej. botón de resolución).
 - **Modo de Vista Controlado**: Soporte para sincronización externa del modo de vista (Lista/Cuadrícula).
+- **Anti-CLS (Estabilidad de Layout) ✅**: Sincronización estricta de anchos de columna entre `TableHead`, `TableRow` y `Skeletons` para una carga fluida sin saltos visuales.
+- **Accesibilidad Universal (WAVE Ready) ✅**: Etiquetas `aria-label` integradas en todos los controles de paginación y selectores de filas mediante `slotProps`. Soporte para lectura de códigos de barras cifra a cifra.
+- **Navegación Operativa ✅**: Soporte nativo para saltos rápidos mediante el atajo **F4** y navegación por teclado en filas interactivas.
+
+## Navegación por Teclado e Interacción
+
+El componente `DataTable` está optimizado para la eficiencia en teclado:
+1.  **Salto Directo (`F4`)**: Al pulsar la tecla F4, el foco se desplaza instantáneamente al contenedor de la tabla (`#results-area`).
+2.  **Filas Interactivas**: Si se provee la prop `onRowClick`, cada fila:
+    -   Se incluye en el orden de tabulación (`tabIndex={0}`).
+    -   Permite activación mediante las teclas `Enter` o `Espacio`.
+    -   Muestra un "Focus Ring" (resalte visual) distintivo al recibir el foco táctil o de teclado.
+3.  **Encabezados Ordenables**: Los títulos de columna que permiten ordenamiento son accesibles mediante `Tab` y se activan con teclado, permitiendo gestionar la vista de datos sin usar el ratón.
 
 ## Props Principales (\`DataTableProps<T>\`)
 

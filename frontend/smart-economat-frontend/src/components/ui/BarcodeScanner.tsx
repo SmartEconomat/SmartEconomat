@@ -24,10 +24,15 @@ import {
   CircularProgress,
   Fade,
   Stack,
+  useMediaQuery,
+  useTheme,
+  alpha,
 } from '@mui/material';
+import { formatDigitsForSR } from '../../utils/a11y-format';
 import CloseIcon from '@mui/icons-material/Close';
 import FlashOnIcon from '@mui/icons-material/FlashOn';
 import FlashOffIcon from '@mui/icons-material/FlashOff';
+import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
 import BarcodeIcon from './BarcodeIcon';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { BrowserMultiFormatReader, IScannerControls } from '@zxing/browser';
@@ -227,6 +232,12 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   const [torchAvailable, setTorchAvailable] = useState(false);
   const [torchEnabled, setTorchEnabled] = useState(false);
   const [torchBusy, setTorchBusy] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
+
+  const theme = useTheme();
+  // Detectar si la ventana es muy baja para simplificar UI
+  const isShortScreen = useMediaQuery('(max-height: 600px)');
+  const isDarkMode = theme.palette.mode === 'dark';
 
   useEffect(() => {
     isOpenRef.current = open;
@@ -359,6 +370,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     setShowSuccess(false);
     setTorchAvailable(false);
     setTorchEnabled(false);
+    setVideoReady(false);
     setScannerState('requesting');
     readerRef.current = new BrowserMultiFormatReader(
       SCANNER_HINTS,
@@ -527,7 +539,21 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       maxWidth="sm"
       fullWidth
       PaperProps={{
-        sx: { borderRadius: 3, overflow: 'hidden' },
+        sx: {
+          borderRadius: 3,
+          overflow: 'hidden',
+          maxHeight: 'calc(100vh - 32px)',
+          display: 'flex',
+          flexDirection: 'column',
+          // Aplicar Negro Azulado Profundo para máxima cohesión temática
+          ...(isDarkMode
+            ? {
+                bgcolor: '#05070A',
+                backgroundImage: 'none',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+              }
+            : {}),
+        },
       }}
     >
       <DialogTitle
@@ -536,8 +562,6 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
           alignItems: 'center',
           gap: 1,
           pr: 6,
-          borderBottom: '1px solid',
-          borderColor: 'divider',
         }}
       >
         <BarcodeIcon color="primary" />
@@ -551,19 +575,32 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         </IconButton>
       </DialogTitle>
 
-      <DialogContent sx={{ p: 2 }}>
+      <DialogContent
+        sx={{
+          p: isShortScreen ? 1 : 2,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: isShortScreen ? 1 : 2,
+          overflow: 'hidden', 
+        }}
+      >
         {/* Viewfinder de la cámara */}
         <Box
           sx={{
+            flex: 1, 
+            minHeight: isShortScreen ? 180 : 300,
+            position: 'relative',
             gridColumn: '1 / -1',
             gridRow: '1',
-            bgcolor: 'background.default',
+            bgcolor: '#000',
             borderRadius: 2,
             overflow: 'hidden',
-            mt: 1,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            aspectRatio: isShortScreen ? '21/9' : { xs: '4/3', sm: '16/9' },
+            boxShadow: 'inset 0 0 60px rgba(0,0,0,0.9)',
+            border: isDarkMode ? '1px solid rgba(255,255,255,0.1)' : 'none',
           }}
         >
           <video
@@ -576,44 +613,51 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             }}
             muted
             playsInline
+            onLoadedMetadata={() => setVideoReady(true)}
+            onPlaying={() => setVideoReady(true)}
           />
 
-          {/* Línea de escaneo animada */}
-          {isScanning && (
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: '10%',
-                width: '80%',
-                height: '2px',
-                bgcolor: 'primary.main',
-                boxShadow: '0 0 8px 2px rgba(25, 118, 210, 0.7)',
-                animation: 'scanLine 2s linear infinite',
-                '@keyframes scanLine': {
-                  '0%': { top: '10%' },
-                  '50%': { top: '85%' },
-                  '100%': { top: '10%' },
-                },
-              }}
-            />
-          )}
 
-          {/* Marco del visor */}
-          {isScanning && (
+          {/* Marco del visor - Feedback inmediato para el usuario */}
+          {(isScanning || scannerState === 'requesting') && (
             <Box
               sx={{
                 position: 'absolute',
                 top: '50%',
                 left: '50%',
                 transform: 'translate(-50%, -50%)',
-                width: '70%',
-                height: '60%',
-                border: '2px solid rgba(255,255,255,0.6)',
+                width: isShortScreen ? '50%' : '70%',
+                height: isShortScreen ? '70%' : '60%',
+                border: '2px solid rgba(255,255,255,0.8)',
                 borderRadius: 1,
                 pointerEvents: 'none',
+                zIndex: 3,
+                overflow: 'hidden', // Asegura que la línea no se salga del marco
               }}
-            />
+            >
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '2px',
+                  background: (theme) =>
+                    `linear-gradient(90deg, 
+                    transparent 0%, 
+                    ${alpha(theme.palette.primary.main, 0.8)} 50%, 
+                    transparent 100%)`,
+                  boxShadow: (theme) =>
+                    `0 0 12px 1px ${alpha(theme.palette.primary.main, 0.4)}`,
+                  animation: 'scanLineInside 2.5s ease-in-out infinite',
+                  '@keyframes scanLineInside': {
+                    '0%': { top: '0%' },
+                    '50%': { top: '99%' },
+                    '100%': { top: '0%' },
+                  },
+                }}
+              />
+            </Box>
           )}
 
           {/* Flash de éxito */}
@@ -661,17 +705,21 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         )}
 
         {/* Último código leído (modo continuo) */}
-        {continuous && lastCode && (
           <Alert severity="success" icon={<CheckCircleIcon />} sx={{ mt: 2 }}>
-            Último código leído: <strong>{lastCode}</strong>
+            Último código leído:{' '}
+            <strong aria-label={formatDigitsForSR(lastCode)}>{lastCode}</strong>
           </Alert>
-        )}
 
         {isScanning && (
           <Typography
             variant="caption"
             color="text.secondary"
-            sx={{ display: 'block', textAlign: 'center', mt: 1.5 }}
+            sx={{
+              display: 'block',
+              textAlign: 'center',
+              mt: 1.5,
+              fontSize: '0.75rem',
+            }}
           >
             Acerca el código al recuadro. Se priorizan cámaras traseras, enfoque
             continuo y formatos EAN, UPC y Code 128.
@@ -680,17 +728,24 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
         {isScanning && (
           <Stack
-            direction={{ xs: 'column', sm: 'row' }}
+            direction="row"
             spacing={1}
-            sx={{ mt: 2 }}
+            sx={{ mt: isShortScreen ? 0.5 : 2 }}
           >
             <Button
               fullWidth
               variant="outlined"
               size="small"
               onClick={() => void startScanner(selectedCamera)}
+              title="Reiniciar cámara"
+              aria-label="Reiniciar cámara"
+              startIcon={<HistoryOutlinedIcon />}
+              sx={{
+                minWidth: isShortScreen ? '44px' : 'auto',
+                px: isShortScreen ? 1 : 2,
+              }}
             >
-              Reiniciar cámara
+              {!isShortScreen && 'Reiniciar cámara'}
             </Button>
             {torchAvailable && (
               <Button
@@ -700,8 +755,14 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                 onClick={() => void handleToggleTorch()}
                 disabled={torchBusy}
                 startIcon={torchEnabled ? <FlashOffIcon /> : <FlashOnIcon />}
+                title={torchEnabled ? 'Apagar luz' : 'Encender luz'}
+                aria-label={torchEnabled ? 'Apagar luz' : 'Encender luz'}
+                sx={{
+                  minWidth: isShortScreen ? '44px' : 'auto',
+                  px: isShortScreen ? 1 : 2,
+                }}
               >
-                {torchEnabled ? 'Apagar luz' : 'Encender luz'}
+                {!isShortScreen && (torchEnabled ? 'Apagar luz' : 'Encender luz')}
               </Button>
             )}
           </Stack>

@@ -18,7 +18,11 @@ import {
   Alert,
   Button,
   Tooltip,
+  CircularProgress,
+  alpha,
+  useTheme,
 } from '@mui/material';
+import { formatDigitsForSR } from '../utils/a11y-format';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -86,8 +90,38 @@ import { getCategoryIcon } from '../features/productos/utils/getCategoryIcon';
 import ShoppingBasketOutlinedIcon from '@mui/icons-material/ShoppingBasketOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
-import BarcodeScanner from '../components/ui/BarcodeScanner';
+const BarcodeScanner = React.lazy(
+  () => import('../components/ui/BarcodeScanner')
+);
 import { searchByBarcode } from '../services/openfoodfacts.service';
+import LinearLoader from '../components/ui/LinearLoader';
+import { Suspense } from 'react';
+
+/**
+ * Interfaz para los valores del formulario de producto.
+ * Define la estructura exacta que maneja el componente ProductoFormModal,
+ * evitando el uso de Record<string, unknown> y proporcionando tipado estricto.
+ */
+interface ProductoFormValues {
+  id?: string;
+  nombre?: string;
+  marca?: string;
+  descripcion?: string;
+  tipo?: CategoriaProducto;
+  unidad?: UnidadMedida;
+  contenido?: number;
+  codigoBarras?: string;
+  alergenos?: string[];
+  imagen?: string;
+  pathImg?: string;
+  proveedores?: {
+    proveedorId: string;
+    nombre: string;
+    marca?: string;
+    codigoBarras?: string;
+    precioUnitario?: string | number;
+  }[];
+}
 
 const initialFilters: ProductFiltersState = {
   categorias: [],
@@ -111,13 +145,13 @@ const Productos: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [productToDelete, setProductToDelete] = useState<Producto | null>(null);
-  const [productToEdit, setProductToEdit] = useState<Record<
-    string,
-    unknown
-  > | null>(null);
+  const [productToEdit, setProductToEdit] = useState<ProductoFormValues | null>(
+    null
+  );
   const [productToView, setProductToView] = useState<Producto | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const theme = useTheme();
   const [isSearchScannerOpen, setIsSearchScannerOpen] = useState(false);
   const [priceHistory, setPriceHistory] = useState<HistorialPrecio[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
@@ -216,25 +250,23 @@ const Productos: React.FC = () => {
     }
   };
 
-  const handleSaveProduct = async (formData: Record<string, unknown>) => {
-    setIsSaving(true);
-    try {
-      const payload = await buildProductoPayload(formData);
-      const category = (formData as { tipo?: CategoriaProducto }).tipo;
-
-      if (formData.id) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await updateProducto(formData.id as string, payload as any);
-        toast.success('Producto actualizado correctamente.', undefined, {
-          productCategory: category,
-        });
-      } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await createProducto(payload as any);
-        toast.success('Producto creado correctamente.', undefined, {
-          productCategory: category,
-        });
-      }
+  const handleSaveProduct = async (formData: ProductoFormValues) => {
+     setIsSaving(true);
+     try {
+      const payload = await buildProductoPayload(formData as Record<string, unknown>);
+       const category = formData.tipo;
+ 
+       if (formData.id) {
+        await updateProducto(formData.id, payload);
+         toast.success('Producto actualizado correctamente.', undefined, {
+           productCategory: category,
+         });
+       } else {
+        await createProducto(payload);
+         toast.success('Producto creado correctamente.', undefined, {
+           productCategory: category,
+         });
+       }
 
       await loadData();
       setProductToEdit(null);
@@ -249,38 +281,52 @@ const Productos: React.FC = () => {
     }
   };
 
-  const columns: Column<Producto>[] = [
-    { id: 'nombre', label: 'Nombre', sortable: true },
-    {
-      id: 'marca',
-      label: 'Marca',
-      render: (row) => row.marca ?? '—',
-      hideOnMobile: true,
-      sortable: true,
-    },
-    {
-      id: 'tipo',
-      label: 'Tipo',
-      render: (row) =>
-        row.tipo ? <StatusChip status={row.tipo} variant="outlined" /> : '—',
-      hideOnMobile: true,
-      sortable: true,
-    },
-    {
-      id: 'contenido',
-      label: 'Contenido',
-      align: 'right',
-      render: (row) =>
-        row.unidad ? `${row.contenido} ${row.unidad}` : `${row.contenido}`,
-    },
-    {
-      id: 'codigoBarras',
-      label: 'Cód. Barras',
-      render: (row) => row.codigoBarras ?? '—',
-      hideOnMobile: true,
-      sortable: true,
-    },
-  ];
+  const columns = React.useMemo<Column<Producto>[]>(
+    () => [
+      { id: 'nombre', label: 'Nombre', sortable: true, minWidth: 200 },
+      {
+        id: 'marca',
+        label: 'Marca',
+        render: (row) => row.marca ?? '—',
+        hideOnMobile: true,
+        sortable: true,
+        width: 140,
+      },
+      {
+        id: 'tipo',
+        label: 'Tipo',
+        render: (row) =>
+          row.tipo ? <StatusChip status={row.tipo} variant="outlined" /> : '—',
+        hideOnMobile: true,
+        sortable: true,
+        width: 140,
+      },
+      {
+        id: 'contenido',
+        label: 'Contenido',
+        align: 'right',
+        render: (row) =>
+          row.unidad ? `${row.contenido} ${row.unidad}` : `${row.contenido}`,
+        width: 120,
+      },
+      {
+        id: 'codigoBarras',
+        label: 'Cód. Barras',
+        render: (row) => (
+          <Typography
+            variant="body2"
+            aria-label={`Código de barras: ${formatDigitsForSR(row.codigoBarras || '')}`}
+          >
+            {row.codigoBarras ?? '—'}
+          </Typography>
+        ),
+        responsiveDisplay: { xs: 'none', lg: 'table-cell' },
+        sortable: true,
+        width: 160,
+      },
+    ],
+    []
+  );
 
   const handleSort = (key: string | keyof Producto) => {
     const isAsc = sortBy === key && sortOrder === 'asc';
@@ -288,18 +334,22 @@ const Productos: React.FC = () => {
     setSortBy(key as string);
   };
 
-  const buildEditData = (row: Producto): Record<string, unknown> => {
-    const editData: Record<string, unknown> = { ...row };
+  const buildEditData = (row: Producto): ProductoFormValues => {
+    const editData: ProductoFormValues = {
+      ...row,
+      alergenos: [],
+      proveedores: [],
+    };
     if (row.pathImg) editData.imagen = resolveStoredFileUrl(row.pathImg);
     if (row.alergenos) {
       editData.alergenos = row.alergenos.map((alergeno) =>
-        typeof alergeno === 'string' ? alergeno : alergeno.alergeno || alergeno
+        typeof alergeno === 'string' ? alergeno : (alergeno as ProductoAlergeno).alergeno || ''
       );
     }
     if (row.proveedores) {
       editData.proveedores = row.proveedores.map(
         (proveedor: ProductoProveedor) => ({
-          proveedorId: proveedor.proveedor?.id || proveedor.id,
+          proveedorId: proveedor.proveedor?.id || proveedor.proveedorId || '',
           nombre: proveedor.proveedor?.nombre || '',
           marca: proveedor.marca || '',
           codigoBarras: proveedor.codigoBarras || '',
@@ -409,19 +459,6 @@ const Productos: React.FC = () => {
 
   const renderActions = (row: Producto) => (
     <Stack direction="row" spacing={1} justifyContent="center">
-      <Tooltip title="Ver detalle">
-        <IconButton
-          color="primary"
-          onClick={(e) => {
-            e.currentTarget.blur();
-            handleViewClick(row);
-          }}
-          size="small"
-          aria-label="Ver detalle"
-        >
-          <VisibilityIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
       {canEdit && (
         <Tooltip title="Editar">
           <IconButton
@@ -458,6 +495,7 @@ const Productos: React.FC = () => {
 
   return (
     <Box>
+      {(isLoading || isSaving) && <LinearLoader fixed />}
       <PageToolbar
         title="Gestión de Productos"
         searchValue={searchTerm}
@@ -524,14 +562,16 @@ const Productos: React.FC = () => {
         onScanBarcode={() => setIsSearchScannerOpen(true)}
       />
 
-      <BarcodeScanner
-        open={isSearchScannerOpen}
-        onClose={() => setIsSearchScannerOpen(false)}
-        onScan={(code) => {
-          void handleSearchScannerResult(code);
-        }}
-        title="Escanear Producto para Buscar"
-      />
+      <Suspense fallback={<LinearLoader />}>
+        <BarcodeScanner
+          open={isSearchScannerOpen}
+          onClose={() => setIsSearchScannerOpen(false)}
+          onScan={(code) => {
+            void handleSearchScannerResult(code);
+          }}
+          title="Escanear Producto para Buscar"
+        />
+      </Suspense>
 
       <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
         {error && (
@@ -549,20 +589,49 @@ const Productos: React.FC = () => {
           defaultViewMode={viewMode}
           onSort={handleSort}
           sortConfig={{ key: sortBy || '', direction: sortOrder }}
+          actionsWidth={120}
+          getRowAriaLabel={(row) => `Producto: ${row.nombre}, Marca: ${row.marca ?? 'Genérica'}`}
           emptyStateMessage={
-            <Box sx={{ py: 4, textAlign: 'center' }}>
-              <ShoppingBasketOutlinedIcon
-                sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
-              />
-              <Typography variant="h6" color="text.secondary" gutterBottom>
+            <Box
+              sx={{
+                py: { xs: 6, md: 10 },
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                maxWidth: 450,
+                mx: 'auto',
+              }}
+            >
+              <Box
+                sx={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: '24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                  color: 'primary.main',
+                  mb: 3,
+                  boxShadow: (theme) =>
+                    `0 8px 16px ${alpha(theme.palette.primary.main, 0.1)}`,
+                }}
+              >
+                <ShoppingBasketOutlinedIcon sx={{ fontSize: 40 }} />
+              </Box>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, mb: 1, color: 'text.primary' }}
+              >
                 {hasSearchOrFilters
-                  ? 'No hay productos que coincidan con tu búsqueda o filtros'
-                  : 'No se encontraron productos'}
+                  ? 'Sin coincidencias'
+                  : 'Catálogo vacío'}
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
                 {hasSearchOrFilters
-                  ? 'Prueba con otros términos o limpia los filtros.'
-                  : 'Empieza añadiendo el primer producto a tu inventario.'}
+                  ? 'Prueba a ajustar tus filtros o el término de búsqueda para encontrar lo que necesitas.'
+                  : 'Empieza a digitalizar tu inventario añadiendo tu primer producto hoy mismo.'}
               </Typography>
               {!hasSearchOrFilters && canCreate && (
                 <Button
@@ -572,11 +641,14 @@ const Productos: React.FC = () => {
                     setProductToEdit({});
                   }}
                   sx={{
-                    borderRadius: 2,
-                    px: 3,
+                    borderRadius: 3,
+                    px: 4,
+                    py: 1.2,
+                    boxShadow: (theme) =>
+                      `0 8px 20px ${alpha(theme.palette.primary.main, 0.25)}`,
                   }}
                 >
-                  Añadir Producto
+                  Nuevo Producto
                 </Button>
               )}
             </Box>
@@ -601,6 +673,7 @@ const Productos: React.FC = () => {
             />
           )}
           renderActions={renderActions}
+          onRowClick={handleViewClick}
         />
 
         <ConfirmDialog
@@ -620,12 +693,12 @@ const Productos: React.FC = () => {
           isLoading={isDeleting}
         />
 
-        <React.Suspense fallback={null}>
+        <React.Suspense fallback={<LinearLoader />}>
           <ProductoFormModal
             isOpen={!!productToEdit}
             onClose={() => setProductToEdit(null)}
             initialData={productToEdit || {}}
-            onSubmit={handleSaveProduct}
+            onSubmit={(data) => void handleSaveProduct(data as ProductoFormValues)}
             isSubmitting={isSaving}
           />
         </React.Suspense>
@@ -989,68 +1062,124 @@ const Productos: React.FC = () => {
                         </Box>
 
                         {isLoadingHistory ? (
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            align="center"
-                            sx={{ py: 3 }}
-                          >
-                            Cargando historial...
-                          </Typography>
+                          <Box sx={{ py: 6, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                            <CircularProgress size={32} thickness={5} sx={{ color: alpha(theme.palette.primary.main, 0.4) }} />
+                            <Typography variant="body2" color="text.secondary">
+                              Consultando evolución de precios...
+                            </Typography>
+                          </Box>
                         ) : priceHistory.length > 0 ? (
-                          <Box sx={{ overflowX: 'auto' }}>
-                            <Table size="small">
+                          <Box 
+                            sx={{ 
+                              overflowX: 'auto',
+                              borderRadius: 2,
+                              border: '1px solid',
+                              borderColor: 'divider',
+                              bgcolor: alpha(theme.palette.background.paper, 0.4),
+                            }}
+                          >
+                            <Table size="small" aria-label="Histórico de precios del producto">
                               <TableHead>
-                                <TableRow>
-                                  <TableCell sx={{ fontWeight: 600 }}>
+                                <TableRow sx={{ bgcolor: alpha(theme.palette.action.hover, 0.5) }}>
+                                  <TableCell sx={{ 
+                                    fontWeight: 700, 
+                                    fontSize: '0.7rem', 
+                                    textTransform: 'uppercase', 
+                                    letterSpacing: 1,
+                                    color: 'text.secondary',
+                                    py: 1.5 
+                                  }}>
                                     Fecha
                                   </TableCell>
-                                  <TableCell sx={{ fontWeight: 600 }}>
+                                  <TableCell sx={{ 
+                                    fontWeight: 700, 
+                                    fontSize: '0.7rem', 
+                                    textTransform: 'uppercase', 
+                                    letterSpacing: 1,
+                                    color: 'text.secondary',
+                                    py: 1.5 
+                                  }}>
                                     Proveedor
                                   </TableCell>
                                   <TableCell
-                                    sx={{ fontWeight: 600 }}
                                     align="right"
+                                    sx={{ 
+                                      fontWeight: 700, 
+                                      fontSize: '0.7rem', 
+                                      textTransform: 'uppercase', 
+                                      letterSpacing: 1,
+                                      color: 'text.secondary',
+                                      py: 1.5 
+                                    }}
                                   >
-                                    Cant.
+                                    Cantidad
                                   </TableCell>
                                   <TableCell
-                                    sx={{ fontWeight: 600 }}
                                     align="right"
+                                    sx={{ 
+                                      fontWeight: 700, 
+                                      fontSize: '0.7rem', 
+                                      textTransform: 'uppercase', 
+                                      letterSpacing: 1,
+                                      color: 'text.secondary',
+                                      py: 1.5 
+                                    }}
                                   >
-                                    Precio
-                                  </TableCell>
-                                  <TableCell
-                                    sx={{ fontWeight: 600 }}
-                                    align="center"
-                                  >
-                                    Doc.
+                                    Precio Unit.
                                   </TableCell>
                                 </TableRow>
                               </TableHead>
                               <TableBody>
-                                {priceHistory.map((h) => (
-                                  <TableRow key={h.id}>
-                                    <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                      {new Date(h.fecha).toLocaleDateString()}
+                                {priceHistory.map((h, idx) => (
+                                  <TableRow 
+                                    key={h.id}
+                                    sx={{ 
+                                      '&:last-child td': { border: 0 },
+                                      '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.02) }
+                                    }}
+                                  >
+                                    <TableCell sx={{ py: 1.5, whiteSpace: 'nowrap', fontWeight: 500 }}>
+                                      {new Date(h.fecha).toLocaleDateString(undefined, {
+                                        day: '2-digit',
+                                        month: 'short',
+                                        year: 'numeric'
+                                      })}
                                     </TableCell>
-                                    <TableCell>
-                                      {h.productoProveedor?.proveedor?.nombre ||
-                                        '—'}
+                                    <TableCell sx={{ py: 1.5 }}>
+                                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                        {h.productoProveedor?.proveedor?.nombre || '—'}
+                                      </Typography>
+                                      {h.documentoOrigen && (
+                                        <Typography variant="caption" color="text.secondary" display="block">
+                                          Doc: {h.documentoOrigen}
+                                        </Typography>
+                                      )}
                                     </TableCell>
-                                    <TableCell align="right">
-                                      {h.cantidad != null
-                                        ? Number(h.cantidad).toFixed(2)
-                                        : '—'}
+                                    <TableCell align="right" sx={{ py: 1.5 }}>
+                                      <Typography variant="body2">
+                                        {h.cantidad != null
+                                          ? Number(h.cantidad).toLocaleString()
+                                          : '—'}
+                                      </Typography>
                                     </TableCell>
                                     <TableCell
                                       align="right"
-                                      sx={{ fontWeight: 500 }}
+                                      sx={{ py: 1.5 }}
                                     >
-                                      {Number(h.precio).toFixed(4)} €
-                                    </TableCell>
-                                    <TableCell align="center">
-                                      {h.documentoOrigen || '—'}
+                                      <Typography
+                                        variant="body2"
+                                        sx={{ 
+                                          fontWeight: 700,
+                                          color: 'primary.main',
+                                          bgcolor: alpha(theme.palette.primary.main, 0.05),
+                                          display: 'inline-block',
+                                          px: 1,
+                                          py: 0.5,
+                                          borderRadius: 1
+                                        }}
+                                      >
+                                        {Number(h.precio).toFixed(4)} €
+                                      </Typography>
                                     </TableCell>
                                   </TableRow>
                                 ))}

@@ -40,6 +40,8 @@ import SettingsMenu from '../components/common/Settings/SettingsMenu';
 import TutorialHelper from '../components/common/Tutorial/TutorialHelper';
 import LearningModeToggle from '../components/common/Learning/LearningModeToggle';
 import NotificationCenter from '../components/common/Notification/NotificationCenter';
+import SkipLinks from '../components/layout/SkipLinks';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import Logo from '../assets/images/SVG/logo-smat-economato.svg';
 import LogoBlanco from '../assets/images/SVG/logo-smart-economat-blanco.svg';
 
@@ -83,6 +85,7 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 
 interface AppBarProps extends React.ComponentProps<typeof MuiAppBar> {
   open?: boolean;
+  component?: React.ElementType;
 }
 
 const AppBar = styled(MuiAppBar, {
@@ -136,6 +139,9 @@ export default function MainLayout() {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Activar atajos de teclado globales
+  useKeyboardShortcuts();
 
   const getLogo = () => {
     if (
@@ -247,34 +253,38 @@ export default function MainLayout() {
           return (
             <React.Fragment key={item.path}>
               {index > 0 && showNewGroup && (
-                <Divider sx={{ my: open ? 1.5 : 1 }} />
+                <ListItem disablePadding sx={{ display: 'block' }}>
+                  <Divider sx={{ my: open ? 1.5 : 1 }} />
+                </ListItem>
               )}
 
               {open && showNewGroup && item.group !== 'inicio' && (
-                <Typography
-                  variant="overline"
-                  sx={{
-                    display: 'block',
-                    px: 2.5,
-                    pt: index === 0 ? 1 : 0,
-                    pb: 0.5,
-                    color: 'text.secondary',
-                    letterSpacing: '0.08em',
-                    fontWeight: 700,
-                    opacity: open ? 1 : 0,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    transition: theme.transitions.create('opacity', {
-                      easing: theme.transitions.easing.easeInOut,
-                      duration: open
-                        ? theme.transitions.duration.standard
-                        : 150, // Desvanecimiento ultra-rápido al cerrar
-                      delay: open ? 150 : 0, // Retraso al abrir para esperar espacio
-                    }),
-                  }}
-                >
-                  {groupLabels[item.group]}
-                </Typography>
+                <ListItem disablePadding sx={{ display: 'block' }}>
+                  <Typography
+                    variant="overline"
+                    sx={{
+                      display: 'block',
+                      px: 2.5,
+                      pt: index === 0 ? 1 : 0,
+                      pb: 0.5,
+                      color: 'text.secondary',
+                      letterSpacing: '0.08em',
+                      fontWeight: 700,
+                      opacity: open ? 1 : 0,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      transition: theme.transitions.create('opacity', {
+                        easing: theme.transitions.easing.easeInOut,
+                        duration: open
+                          ? theme.transitions.duration.standard
+                          : 150, // Desvanecimiento ultra-rápido al cerrar
+                        delay: open ? 150 : 0, // Retraso al abrir para esperar espacio
+                      }),
+                    }}
+                  >
+                    {groupLabels[item.group]}
+                  </Typography>
+                </ListItem>
               )}
 
               <ListItem disablePadding sx={{ display: 'block' }}>
@@ -354,7 +364,16 @@ export default function MainLayout() {
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
-      <AppBar position="fixed" open={open} color="inherit" elevation={1}>
+      <SkipLinks />
+      <AppBar 
+        position="fixed" 
+        open={open} 
+        color="inherit" 
+        elevation={1}
+        component="header"
+        role="banner"
+        aria-label="Cabecera superior"
+      >
         <Toolbar
           sx={{
             minHeight: { xs: '80px !important', sm: '100px !important' },
@@ -446,6 +465,13 @@ export default function MainLayout() {
           variant="temporary"
           open={open}
           onClose={handleDrawerClose}
+          component="nav"
+          aria-label="Menú principal lateral"
+          PaperProps={{
+            id: 'sidebar-nav',
+            tabIndex: -1,
+            sx: { outline: 'none' }
+          }}
           sx={{
             display: { xs: 'block', sm: 'none' },
             '& .MuiDrawer-paper': {
@@ -457,12 +483,34 @@ export default function MainLayout() {
           {drawerContent}
         </MuiDrawer>
       ) : (
-        <DesktopDrawer variant="permanent" open={open}>
+        <DesktopDrawer 
+          variant="permanent" 
+          open={open}
+          component="nav"
+          aria-label="Menú principal lateral"
+          PaperProps={{
+            id: 'sidebar-nav',
+            tabIndex: -1,
+            sx: { outline: 'none' }
+          }}
+          sx={{ outline: 'none' }}
+        >
           {drawerContent}
         </DesktopDrawer>
       )}
 
-      <Box component="main" sx={{ flexGrow: 1, p: { xs: 2.5, sm: 3 } }}>
+      <Box 
+        component="main" 
+        id="main-content" 
+        role="main"
+        aria-label="Contenido principal"
+        tabIndex={-1}
+        sx={{ 
+          flexGrow: 1, 
+          p: { xs: 2.5, sm: 3 },
+          outline: 'none', // Evitar borde al recibir foco por salto
+        }} 
+      >
         <DrawerHeader />
         <Outlet />
       </Box>

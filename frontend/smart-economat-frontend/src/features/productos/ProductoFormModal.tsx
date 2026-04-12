@@ -20,14 +20,15 @@ import { useToast } from '../../store/toast.hooks';
 // ── Base schema ────────────────────────────────────────────────────────
 
 const productoBaseSchema: DynamicField[] = [
-  { name: 'nombre', label: 'Nombre Comercial', required: true },
-  { name: 'marca', label: 'Marca' },
-  { name: 'descripcion', label: 'Descripción' },
+  { name: 'nombre', label: 'Nombre Comercial', required: true, width: 8 },
+  { name: 'marca', label: 'Marca', width: 4 },
+  { name: 'descripcion', label: 'Descripción', type: 'textarea', width: 12 },
   {
     name: 'contenido',
     label: 'Contenido Numérico',
     type: 'number',
     required: true,
+    width: 4,
   },
   {
     name: 'unidad',
@@ -67,7 +68,12 @@ const productoBaseSchema: DynamicField[] = [
       { value: CategoriaProducto.OTRO, label: 'Otro' },
     ],
   },
-  { name: 'codigoBarras', label: 'Código de Barras', type: 'barcode' },
+  {
+    name: 'codigoBarras',
+    label: 'Código de Barras',
+    type: 'barcode',
+    position: 'bottom',
+  },
   {
     name: 'imagen',
     label: 'Cargar Imagen',
@@ -121,12 +127,17 @@ const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
   const canGenerateEan13 = usePermission(PERMISSIONS.productos.generar_ean13);
   const toast = useToast();
 
-  useEffect(() => {
-    if (!isOpen) return;
-    fetchProveedores(1, 50)
+  const loadProveedores = useCallback(() => {
+    fetchProveedores(1, 100) // Aumentamos un poco el límite para asegurarnos de que el nuevo aparezca
       .then((resp) => setProveedores(resp.data))
       .catch(() => setProveedores([]));
-  }, [isOpen]);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadProveedores();
+    }
+  }, [isOpen, loadProveedores]);
 
   const dynamicSchema = React.useMemo(() => {
     const schema = [...productoBaseSchema];
@@ -183,6 +194,7 @@ const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
           : 'Crear Nuevo Producto')
       }
       size="lg"
+      submitLabel={isEditing ? 'Guardar Cambios' : 'Crear Producto'}
       fields={dynamicSchema}
       initialData={initialData}
       onSubmit={onSubmit}
@@ -191,6 +203,7 @@ const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
       onBarcodeFetch={handleBarcodeFetch}
       onBarcodeGenerate={canGenerateEan13 ? handleBarcodeGenerate : undefined}
       onOFFSearch={handleOFFSearch}
+      onRefreshProveedores={loadProveedores}
       confirmationMessage={
         isEditing
           ? '¿Estás seguro de que deseas guardar los cambios realizados en este producto?'

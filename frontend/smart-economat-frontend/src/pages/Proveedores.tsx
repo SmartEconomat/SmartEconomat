@@ -37,11 +37,42 @@ import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
 import { DownloadService } from '../services/download.service';
 
 const proveedorSchema: DynamicField[] = [
-  { name: 'nif', label: 'NIF / CUIT', required: true, width: 4 },
-  { name: 'nombre', label: 'Razón Social', required: true, width: 8 },
-  { name: 'contacto', label: 'Persona de Contacto' },
-  { name: 'telefono', label: 'Teléfono', width: 6 },
-  { name: 'email', label: 'Email', type: 'text', width: 6 },
+  {
+    name: 'nif',
+    label: 'NIF / CUIT',
+    required: true,
+    width: 4,
+    maxLength: 20,
+    pattern: '^[a-zA-Z0-9]+$',
+    patternMessage: 'NIF solo permite caracteres alfanuméricos',
+  },
+  {
+    name: 'nombre',
+    label: 'Razón Social',
+    required: true,
+    width: 8,
+    maxLength: 100,
+  },
+  {
+    name: 'contacto',
+    label: 'Persona de Contacto',
+    maxLength: 100,
+  },
+  {
+    name: 'telefono',
+    label: 'Teléfono',
+    width: 6,
+    maxLength: 50,
+    pattern: '^[+]?[0-9\\s]*$',
+    patternMessage: 'El teléfono solo permite números, espacios y el prefijo +',
+  },
+  {
+    name: 'email',
+    label: 'Email',
+    type: 'email',
+    width: 6,
+    maxLength: 255,
+  },
   { name: 'direccion', label: 'Dirección' },
 ];
 

@@ -4,11 +4,11 @@ El componente `PageToolbar` es el encabezado unificado para las páginas de gest
 
 ## Características
 
-- **Diseño Premium**: Fondo con desenfoque (backdrop-filter) y bordes sutiles.
-- **Sticky**: Se mantiene fijo en la parte superior al hacer scroll para facilitar el acceso a los controles.
-- **Responsivo**: Adaptación automática para dispositivos móviles, tabletas y escritorio.
-- **Integración de Filtros**: Espacio dedicado para componentes de filtrado complejos (como `ProductFilters`).
-- **Configuración de Tabla**: Integración de cambio de vista (Lista/Cuadrícula), selector de tamaño de página y un **Chip de Conteo Total** reubicado en la fila del título para mayor visibilidad.
+- **Diseño Ultra-Compacto (v3)**: Estructura de tres filas optimizada para densidad de información sin saturación visual.
+- **Micro-Interacciones**: Botón de colapso minimalista (flecha inferior) para expandir o contraer la zona de búsqueda y filtros.
+- **Layout Responsivo 50/50**: En resoluciones de Tablet y Escritorio, el buscador y el componente de filtros ocupan exactamente el 50% de la fila, garantizando una alineación simétrica perfecta.
+- **Adaptativo a Móvil**: Los inputs crecen al 100% en pantallas pequeñas, apilándose verticalmente para maximizar la usabilidad táctil.
+- **Acciones dinámicas**: Los botones de acción (`Exportar`, `Nuevo`) se reducen automáticamente a iconos con Tooltip en dispositivos móviles y tablets para ahorrar espacio vertical.
 
 ## Propiedades (Props)
 
@@ -17,24 +17,27 @@ El componente `PageToolbar` es el encabezado unificado para las páginas de gest
 | `title` | `string` | Título principal de la sección. |
 | `searchValue` | `string` | Valor actual del campo de búsqueda. |
 | `onSearchChange` | `(value: string) => void` | Callback invocado al cambiar el texto de búsqueda. |
-| `searchPlaceholder` | `string` | Texto de ayuda para el input de búsqueda (por defecto "Buscar..."). |
-| `searchId` | `string` | Identificador único para el input de búsqueda. |
-| `primaryAction` | `{ label: string, onClick: () => void, icon?: ReactNode, id?: string, disabled?: boolean }` | Configuración del botón principal (ej: "Nuevo Producto"). |
-| `filters` | `ReactNode` | Nodo con los componentes de filtrado adicionales. |
-| `totalItems` | `number` | Conteo total de elementos. Se muestra como un Chip de color `success` en la fila del título. |
-| `totalItemsLabel` | `string` | Sufijo para el chip de conteo (ej: "registrados"). El chip mostrará "[X] [sufijo]". |
-| `viewMode` | `'list' \| 'grid'` | Modo de vista activo. |
-| `onViewModeChange` | `(mode: 'list' \| 'grid') => void` | Callback para cambiar el modo de vista. |
-| `pageSize` | `number` | Registros por página actuales. |
-| `onPageSizeChange` | `(event: SelectChangeEvent<number>) => void` | Callback para cambiar el tamaño de página. |
-| `pageSizeOptions` | `number[]` | Opciones disponibles para el tamaño de página (por defecto `[5, 10, 25, 50]`). |
-| `sticky` | `boolean` | Determina si el toolbar es pegajoso (por defecto `true`). |
+| `filters` | `ReactNode` | Nodo con los componentes de filtrado adicionales (ej: `ProductFilters`). |
+| `totalItems` | `number` | Conteo total que se muestra en un Chip de éxito junto al título. |
 
-## Implementación Responsiva
+## Estructura del Layout
 
-- **Escritorio**: Diseño en tres niveles. El título y el **Chip de Conteo** comparten la primera fila. Los filtros crecen dinámicamente hacia la izquierda en la segunda fila.
-- **Móvil/Tablet**: El Chip de conteo se compacta (solo número) en móviles para ahorrar espacio. Los elementos de búsqueda y filtros se apilan verticalmente ocupando el 100% del ancho.
-- **Alineación**: El botón de acción principal y el conteo total están optimizados para mantenerse en la misma línea siempre que sea posible en el layout inferior.
+1. **Fila 1 (Cabecera)**: Título y Chip de Conteo Total. Proporciona contexto inmediato.
+2. **Fila 2 (Controles)**: Buscador principal y Filtros inteligentes (SmartFilters) en una disposición 50/50 simétrica.
+3. **Fila 3 (Acciones)**: Botones de exportación, creación y selector de vista/paginación.
+4. **Base**: Botón de colapso para reducir la altura del Toolbar a solo la Cabecera + Acciones.
+
+## Implementación de Filtros
+El espacio de filtros (`filters`) está diseñado- **Carga Diferida de Filtros Avanzados**: Los selectores complejos (ej: `SmartFilterAutocomplete`) se cargan mediante `React.lazy` para no penalizar el tiempo de carga inicial de la página (LCP).
+- **Navegación Rápida (`F3`) ✅**: El área de filtros es un objetivo de salto global accesible mediante la tecla de función F3, permitiendo al usuario volver a la búsqueda instantáneamente desde cualquier punto de la página.
+
+## Navegación por Teclado e Interacción
+
+El `PageToolbar` actúa como un Landmark de búsqueda y filtrado:
+1.  **Salto a Filtros (`F3`)**: Al pulsar F3, el foco se desplaza al contenedor de filtros (`#filters-area`).
+2.  **Foco Inteligente**: El contenedor de filtros tiene un estilo de resalte visual cuando está activo, confirmando al usuario que puede empezar a escribir o navegar entre categorías.
+3.  **Accesibilidad en Controles**: Todos los campos de búsqueda y selectores tienen etiquetas descriptivas para lectores de pantalla.
+ageToolbar` nunca cambie su altura vertical independientemente de la selección. 📏✅
 
 ## Ejemplo de Uso
 

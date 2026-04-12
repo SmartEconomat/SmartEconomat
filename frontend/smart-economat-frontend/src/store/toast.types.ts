@@ -4,6 +4,7 @@ export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
 export interface ToastOptions {
   productCategory?: CategoriaProducto;
+  iconType?: 'navigation' | 'normal';
 }
 
 export interface Toast {
@@ -12,6 +13,7 @@ export interface Toast {
   type: ToastType;
   duration?: number;
   productCategory?: CategoriaProducto;
+  iconType?: 'navigation' | 'normal';
 }
 
 export interface ToastContextType {

@@ -1,6 +1,6 @@
 import React, { useState, useCallback, ReactNode } from 'react';
 import { CategoriaProducto } from '../services/producto.types';
-import { Toast } from './toast.types';
+import { Toast, ToastOptions } from './toast.types';
 import { ToastContext } from './toast.context';
 
 export const ToastProvider: React.FC<{ children: ReactNode }> = ({
@@ -17,7 +17,7 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({
       message: string,
       type: 'success' | 'error' | 'info' | 'warning',
       duration = 6000,
-      options?: { productCategory?: CategoriaProducto }
+      options?: ToastOptions
     ) => {
       const id = Math.random().toString(36).substring(2, 9);
       const newToast: Toast = {
@@ -26,6 +26,7 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({
         type,
         duration,
         productCategory: options?.productCategory,
+        iconType: options?.iconType,
       };
 
       setToasts((prevToasts) => [...prevToasts, newToast]);

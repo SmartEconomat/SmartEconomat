@@ -8,7 +8,9 @@ Documento de referencia para el sistema de diseño y la biblioteca de componente
 - **Accesibilidad (WCAG AA)**: Todo componente interactivo debe ser navegable por teclado, manejar focos y tener etiquetas ARIA descriptivas.
   - **Botones de Icono**: Deben incluir `aria-label` descriptivo.
   - **Estructura Semántica**: Solo un `h1` por página; las secciones internas deben usar `h2`, `h3`, etc., sin saltar niveles.
-  - **Contraste**: Ratio mínimo de 4.5:1 (AA). En modo oscuro, priorizar `text.primary` con opacidad moderada sobre `text.secondary` si este último es demasiado tenue.
+  - **Contraste**: Ratio mínimo de 4.5:1 (AA). En modo oscuro, se ha ajustado `text.secondary` a **0.85 opacity** sobre fondo Slate Deep para cumplimiento estricto.
+  - **Fuentes**: No utilizar tamaños inferiores a **0.8rem (12.8px)** en textos informativos o interactivos para evitar alertas de WAVE.
+  - **Inputs sin Label**: Usar el patrón `slotProps.htmlInput={{ 'aria-label': 'Nombre' }}` para que los lectores de pantalla detecten la etiqueta incluso si el diseño visual no la incluye.
   - **Decoración**: Los iconos decorativos llevan `aria-hidden="true"`.
 - **Rendimiento (Lazy Loading)**: Los componentes de alto coste (modales pesados, gráficas, páginas) se cargan de forma diferida mediante `React.lazy`.
 - **Estética Premium (Slate Modern)**:
@@ -64,6 +66,13 @@ Indicador de progreso lineal premium para partes superiores.
 - **Lógica**: Utiliza un avance determinado simulado (finto progreso) que avanza de forma orgánica hasta el 94%, deteniéndose ahí hasta que la carga finaliza.
 - **Uso**: Obligatorio en `AppRouter` (transiciones de chunk) y recomendado en el tope de páginas durante el `fetch` inicial junto a Skeletons.
 
+### DynamicFormModal
+Motor dinámico para la generación de formularios complejos y reutilizables.
+- **Blindaje de Datos**: Incluye motor de validación interna con soporte para Regex (`pattern`), límites físicos de escritura (`maxLength`) y validación de nulidad (`required`).
+- **Arquitectura de Layout (Grid v2)**: Implementa la grilla proporcional de MUI (ej: proporción **4/8** para Ficha de Producto) asegurando alineación pixel-perfect entre activos visuales y campos de datos.
+- **Seguridad de Interfaz**: Implementa `e.preventDefault()` nativo para blindar la estabilidad de los modales padres durante el envío de datos.
+- **Tipos de Campo**: Soporte para `text`, `number` (blindaje de negativos), `email`, `date`, `select`, `allergens`, `image` y `barcode`.
+
 ## Componentes de Autenticación (`src/features/auth/components`)
 
 ### AuthLogo
@@ -75,10 +84,45 @@ Botón con estilo `outlined` suavizado y `text-transform: none` para evitar comp
 - **Ubicación**: `src/features/auth/components/SecondaryActionButton.tsx`
 - **Uso**: Enlaces de navegación entre Login y Registro.
 
-## Componentes de Dashboard (`src/features/dashboard/components`)
+### SmartFilterAutocomplete
+Filtro de búsqueda avanzada con experiencia de usuario fluida (SaaS Premium).
+- **Características**
+---
 
-Consulta la [Guía de Componentes de Dashboard](./Dashboard_Components.md) para detalles sobre:
-- **DashboardMetricCard**: Tarjetas de KPIs y estadísticas.
-- **DashboardQuickAction**: Botones de acciones rápidas con hover animado.
-- **SummaryModal**: Diálogos de resumen con navegación filtrada.
+## Estándares de Accesibilidad y Foco ♿
+
+SmartEconomat adopta un estándar de "Accesibilidad Primero" para asegurar una experiencia inclusiva y eficiente.
+
+### Estados de Foco (Focus Ring)
+Toda interacción mediante teclado debe proporcionar un feedback visual inmediato y distinguible.
+- **Color de Foco**: `#dc004e` (Primary Pink) con una transparencia del 15% para el resalte exterior.
+- **Estilo**: Borde sólido de 2px con un `outline-offset` de 2px para no obstruir el contenido del elemento.
+- **Implementación**: Centralizada en `index.css` mediante selectores de ID para landmarks.
+
+### Navegación Operativa (shortcuts)
+Se reserva el rango de teclas **F1 a F4** para la navegación estructural global. Ningún componente local debe sobrescribir estos atajos.
+
+### Notificaciones de Navegación
+Las confirmaciones de salto de sección deben:
+- Aparecer **centradas en la parte superior**.
+- Utilizar el icono `NearMeOutlined` (Brújula) para indicar movimiento/navegación.
+- Tener una duración breve (2000ms a 3000ms) para no obstruir la vista permanentemente.
+
+### Lectura de Datos Críticos
+- Los identificadores numéricos largos (códigos de barras, UUIDs) deben tener un `aria-label` que facilite su lectura cifra a cifra si el contexto de auditoria lo requiere.
+    - Scroll horizontal automático para chips (altura fija).
+    - Degradado dinámico inteligente (`mask-image`) reactivo al scroll.
+    - Orden "Búsqueda-Primero" para flujo natural.
+- **Uso**: Obligatorio para todos los componentes de filtrado múltiple en barras de herramientas.
+
+### PageToolbar (v3)
+Barra de herramientas unificada con layout de tres filas y control de densidad.
+- **Características**:
+    - Disposición 50/50 simétrica para Buscador y SmartFilters.
+    - Botón de colapso minimalista para reducir altura visual.
+    - Responsividad adaptativa: los campos ocupan el 100% en móviles.
+    - Integración de conteo total (Badge) en la fila de cabecera.
+- **Ubicación**: `src/components/ui/PageToolbar.tsx`
+
+## Componentes de Dashboard (`src/features/dashboard/components`)
 

@@ -30,6 +30,7 @@ import {
   IconButton,
   alpha,
 } from '@mui/material';
+import { extractA11yText } from '../../utils/a11y-format';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
@@ -149,6 +150,8 @@ export interface DataTableProps<T> {
  * con soporte para estado de carga, paginación unificada (TablePagination), acciones y vista en mosaico.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+// Eliminada la utilidad extractText local para usar la global en a11y-format.ts
+
 export function DataTable<T extends Record<string, any>>({
   columns,
   data,
@@ -181,6 +184,15 @@ export function DataTable<T extends Record<string, any>>({
   const [internalViewMode, setInternalViewMode] = useState<'list' | 'grid'>(
     defaultViewMode
   );
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [minHeight, setMinHeight] = useState<number | undefined>(undefined);
+
+  // Capturar la altura del contenedor antes de que cambie el contenido (prevención de CLS)
+  React.useLayoutEffect(() => {
+    if (!isLoading && containerRef.current) {
+      setMinHeight(containerRef.current.offsetHeight);
+    }
+  }, [isLoading]);
 
   // Determinar qué modo usar (el prop controlado tiene prioridad)
   const viewMode = controlledViewMode || internalViewMode;
@@ -223,7 +235,9 @@ export function DataTable<T extends Record<string, any>>({
   };
 
   return (
-    <Box sx={{ width: '100%', mb: 2 }}>
+    <Box 
+      sx={{ width: '100%', mb: 2 }}
+    >
       {hasTopBarControls && (
         <Box
           display="flex"
@@ -242,12 +256,12 @@ export function DataTable<T extends Record<string, any>>({
                 onChange={handleViewModeChange}
                 size="small"
               >
-                <ToggleButton value="list">
-                  <ViewListIcon />
-                </ToggleButton>
-                <ToggleButton value="grid">
-                  <ViewModuleIcon />
-                </ToggleButton>
+                <ToggleButton value="list" aria-label="Vista de lista">
+                   <ViewListIcon />
+                 </ToggleButton>
+                 <ToggleButton value="grid" aria-label="Vista de cuadrícula">
+                   <ViewModuleIcon />
+                 </ToggleButton>
               </ToggleButtonGroup>
             )}
             {leftHeaderAction && <Box>{leftHeaderAction}</Box>}
@@ -320,7 +334,19 @@ export function DataTable<T extends Record<string, any>>({
       )}
 
       {viewMode === 'list' || !renderGridItem ? (
-        <TableContainer component={Paper} elevation={0}>
+        <TableContainer
+          ref={containerRef}
+          component={Paper}
+          id="results-area"
+          tabIndex={-1}
+          elevation={0}
+          sx={{
+            minHeight: isLoading ? minHeight : 'auto',
+            transition: 'min-height 0.2s ease',
+            outline: 'none',
+            overflowX: 'auto',
+          }}
+        >
           <Table
             sx={{
               minWidth: { xs: '100%', md: 650 },
@@ -411,7 +437,7 @@ export function DataTable<T extends Record<string, any>>({
             </TableHead>
             <TableBody>
               {isLoading &&
-                Array.from({ length: pageSize || 5 }).map((_, i) => (
+                Array.from({ length: pageSize }).map((_, i) => (
                   <TableRow key={`skeleton-row-${i}`}>
                     {selectable && (
                       <TableCell padding="checkbox">
@@ -428,6 +454,9 @@ export function DataTable<T extends Record<string, any>>({
                         key={`skeleton-col-${j}`}
                         align={column.align || 'left'}
                         sx={{
+                          height: 53, // Altura estándar de una fila de tabla MUI con padding
+                          width: column.width,
+                          minWidth: column.minWidth,
                           display:
                             column.responsiveDisplay ||
                             (column.hideOnMobile
@@ -437,7 +466,7 @@ export function DataTable<T extends Record<string, any>>({
                       >
                         <Skeleton
                           variant="text"
-                          width={`${Math.floor(Math.random() * 40) + 40}%`}
+                          width="80%"
                           height={24}
                         />
                       </TableCell>
@@ -536,26 +565,38 @@ export function DataTable<T extends Record<string, any>>({
                         />
                       </TableCell>
                     )}
-                    {columns.map((column) => (
-                      <TableCell
-                        key={String(column.id)}
-                        align={column.align || 'left'}
-                        sx={{
-                          width: column.width,
-                          minWidth: column.minWidth,
-                          display:
-                            column.responsiveDisplay ||
-                            (column.hideOnMobile
-                              ? { xs: 'none', md: 'table-cell' }
-                              : undefined),
-                          ...column.cellSx,
-                        }}
-                      >
-                        {column.render
-                          ? column.render(row)
-                          : (row[column.id as keyof T] as ReactNode)}
-                      </TableCell>
-                    ))}
+                    {columns.map((column) => {
+                      const cellValue = column.render
+                        ? column.render(row)
+                        : (row[column.id as keyof T] as ReactNode);
+
+                      const colLabel = extractA11yText(column.label);
+                      const valText = extractA11yText(cellValue);
+
+                      return (
+                        <TableCell
+                          key={String(column.id)}
+                          align={column.align || 'left'}
+                          aria-label={
+                            colLabel && valText
+                              ? `${colLabel}: ${valText}`
+                              : undefined
+                          }
+                          sx={{
+                            width: column.width,
+                            minWidth: column.minWidth,
+                            display:
+                              column.responsiveDisplay ||
+                              (column.hideOnMobile
+                                ? { xs: 'none', md: 'table-cell' }
+                                : undefined),
+                            ...column.cellSx,
+                          }}
+                        >
+                          {cellValue}
+                        </TableCell>
+                      );
+                    })}
                     {renderActions && (
                       <TableCell
                         align={actionsAlign}
@@ -586,10 +627,17 @@ export function DataTable<T extends Record<string, any>>({
           </Table>
         </TableContainer>
       ) : (
-        <Grid container spacing={3}>
+        <Grid
+          container
+          spacing={3}
+          ref={containerRef}
+          sx={{
+            minHeight: isLoading ? minHeight : 'auto',
+          }}
+        >
           {isLoading && viewMode === 'grid' && (
             <>
-              {Array.from({ length: 8 }).map((_, i) => (
+              {Array.from({ length: pageSize }).map((_, i) => (
                 <Grid
                   size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
                   key={`skeleton-${i}`}
@@ -699,10 +747,19 @@ export function DataTable<T extends Record<string, any>>({
               }
             }}
             rowsPerPageOptions={pagination.pageSizeOptions ?? [5, 10, 15, 20]}
-            labelRowsPerPage="Por página:"
+            labelRowsPerPage="Filas por página:"
             labelDisplayedRows={({ from, to, count }) =>
               `${from}–${to} de ${count}`
             }
+            slotProps={{
+              select: {
+                'aria-label': 'Cantidad de filas por página',
+              },
+              actions: {
+                nextButton: { 'aria-label': 'Página siguiente' },
+                previousButton: { 'aria-label': 'Página anterior' },
+              },
+            }}
           />
         </Box>
       )}

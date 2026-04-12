@@ -1,4 +1,4 @@
-**Contexto**: Este proyecto se encuentra en una fase de Refactorización Atómica, Auditoría de Accesibilidad (WCAG) y Refinamiento Estético Premium. Se han completado las fases de **Login**, **Inicio (Dashboard)** y el **Sistema de Diseño Premium (Slate Modern)**.
+**Contexto**: Este proyecto se encuentra en una fase de Refactorización Atómica, Auditoría de Accesibilidad (WCAG) y Refinamiento Estético. Se han completado las fases de **Login**, **Inicio (Dashboard)** y el **Sistema de Diseño Premium (Slate Modern)**.
 
 **Objetivo**: Continuar con la auditoría sistemática de los siguientes módulos:
 - [ ] Catálogo de Productos (`/productos`)

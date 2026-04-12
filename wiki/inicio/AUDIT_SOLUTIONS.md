@@ -89,6 +89,19 @@ Se añadieron etiquetas descriptivas a todos los elementos interactivos que care
 ### 🌓 Optimización de Contraste en Modo Oscuro
 - **Legibilidad de Metadatos**: Se incrementó el contraste en las leyendas de las tarjetas (`DashboardMetricCard`) cambiando de `text.secondary` a `text.primary` con alta opacidad en el tema oscuro, garantizando el cumplimiento de los ratios AA en textos pequeños.
 
+---
+
+## Fase 6: Blindaje de Datos y Estabilidad Global de Formularios
+
+### 🛡️ Motor de Validación Blindada (Integral)
+Se ha implementado un sistema de validación activa en el componente core `DynamicFormModal.tsx` que afecta a todos los formularios dinámicos del sistema.
+- **Prevención de Eventos**: Implementación de `e.preventDefault()` en el envío de formularios para evitar refrescos accidentales y cierres de modales padres.
+- **Integridad de Datos**: Soporte nativo para `maxLength`, `pattern` (Regex) y limpieza automática de errores al corregir los campos.
+- **Seguridad Numérica**: Validación estricta para impedir la entrada de valores negativos en campos de contenido y precios.
+
+### 📐 Layout Pixel-Perfect (MUI Grid v2)
+- **Migración a Grid v2**: Adopción de la nueva arquitectura de Grilla de Material UI para asegurar alineaciones consistentes entre imágenes y campos de formulario, eliminando desajustes visuales en resoluciones MD y LG.
+
 ## ✅ Criterios de Calidad Cumplidos
 - [x] Navegación por teclado funcional en todo el dashboard.
 - [x] Cumplimiento de contrastes AA en widgets y textos secundarios.
