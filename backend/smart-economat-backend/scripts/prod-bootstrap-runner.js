@@ -320,7 +320,60 @@ async function runBootstrap() {
   }
 }
 
-runBootstrap().catch((error) => {
-  console.error('[prod-bootstrap-runner] Error inesperado:', error);
-  process.exit(1);
-});
+async function main() {
+  try {
+    await runBootstrap();
+
+    const args = process.argv.slice(2);
+
+    if (args.length === 0) {
+      console.error(
+        '[prod-bootstrap-runner] No se especificó comando a ejecutar después de bootstrap.'
+      );
+      process.exit(1);
+    }
+
+    const separatorIndex = args.indexOf('--');
+    if (separatorIndex === -1) {
+      console.error(
+        '[prod-bootstrap-runner] No se encontró separador "--" en argumentos.'
+      );
+      process.exit(1);
+    }
+
+    const command = args[separatorIndex + 1];
+    const commandArgs = args.slice(separatorIndex + 2);
+
+    if (!command) {
+      console.error(
+        '[prod-bootstrap-runner] No se especificó comando después de "--".'
+      );
+      process.exit(1);
+    }
+
+    console.log(
+      `[prod-bootstrap-runner] Bootstrap completado. Pasando control a: ${command} ${commandArgs.join(' ')}`
+    );
+
+    const { execFile } = require('child_process');
+    execFile(
+      command,
+      commandArgs,
+      { stdio: 'inherit' },
+      (error, stdout, stderr) => {
+        if (error) {
+          console.error(
+            '[prod-bootstrap-runner] Error ejecutando aplicación:',
+            error
+          );
+          process.exit(1);
+        }
+      }
+    );
+  } catch (error) {
+    console.error('[prod-bootstrap-runner] Error inesperado:', error);
+    process.exit(1);
+  }
+}
+
+main();
