@@ -901,18 +901,25 @@ const DistribucionPage: React.FC = () => {
     return ubicaciones.filter((ubicacion) => ownIds.has(ubicacion.id));
   }, [preferredUbicacionIds, ubicaciones]);
 
+  const ownUserDestinationUbicaciones = useMemo(
+    () => ownUserUbicaciones.filter((ubicacion) => ubicacion.id !== originId),
+    [originId, ownUserUbicaciones]
+  );
+
   const usingFallbackDestinationOptions = useMemo(
-    () => ownUserUbicaciones.length === 0 && ubicaciones.length > 0,
-    [ownUserUbicaciones, ubicaciones]
+    () =>
+      ownUserDestinationUbicaciones.length === 0 &&
+      ubicaciones.some((ubicacion) => ubicacion.id !== originId),
+    [originId, ownUserDestinationUbicaciones, ubicaciones]
   );
 
   const userUbicaciones = useMemo(() => {
-    if (ownUserUbicaciones.length > 0) {
+    if (ownUserDestinationUbicaciones.length > 0) {
       return ownUserUbicaciones;
     }
 
     return ubicaciones;
-  }, [ownUserUbicaciones, ubicaciones]);
+  }, [ownUserDestinationUbicaciones, ownUserUbicaciones, ubicaciones]);
 
   const selectedOriginUbicacion = useMemo(
     () => ubicaciones.find((ubicacion) => ubicacion.id === originId) || null,
@@ -955,7 +962,9 @@ const DistribucionPage: React.FC = () => {
     if (visibleUserUbicaciones.length > 0) {
       items.push(
         <ListSubheader key="user-locations-header" disableSticky>
-          Ubicaciones del usuario
+          {usingFallbackDestinationOptions
+            ? 'Ubicaciones disponibles'
+            : 'Ubicaciones del usuario'}
         </ListSubheader>
       );
     }
@@ -969,7 +978,7 @@ const DistribucionPage: React.FC = () => {
     });
 
     return items;
-  }, [visibleUserUbicaciones]);
+  }, [usingFallbackDestinationOptions, visibleUserUbicaciones]);
 
   useEffect(() => {
     if (!distributeOpen || !selectedDisponible) {

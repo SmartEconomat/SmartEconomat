@@ -318,6 +318,20 @@ async function usuariosTask(context: SeedContext): Promise<void> {
     );
   }
 
+  const ubicacionesDisponibles = (await saveListIds(
+    context,
+    '/ubicacion',
+    'ubicacionIds'
+  )) as SeedUbicacionEntity[];
+
+  const ubicacionSlotProfesor =
+    ubicacionesDisponibles.find(
+      (ubicacion) => getStringField(ubicacion, 'nombre') !== 'Almacén Principal'
+    ) || ubicacionesDisponibles[0];
+  const ubicacionSlotProfesorId = ubicacionSlotProfesor
+    ? getEntityId(ubicacionSlotProfesor)
+    : undefined;
+
   try {
     await safe('crear slot fijo profesor', () =>
       context.postJson<SeedEntity>('/profesores/admin-slots', {
@@ -325,6 +339,9 @@ async function usuariosTask(context: SeedContext): Promise<void> {
         numeroClase: 2026,
         capacidad: 30,
         profesorId: profesorPrincipalId,
+        ...(ubicacionSlotProfesorId
+          ? { ubicacionId: ubicacionSlotProfesorId }
+          : {}),
       })
     );
   } catch (error) {
