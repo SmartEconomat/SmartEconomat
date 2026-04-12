@@ -355,21 +355,27 @@ async function main() {
       `[prod-bootstrap-runner] Bootstrap completado. Pasando control a: ${command} ${commandArgs.join(' ')}`
     );
 
-    const { execFile } = require('child_process');
-    execFile(
-      command,
-      commandArgs,
-      { stdio: 'inherit' },
-      (error, stdout, stderr) => {
-        if (error) {
-          console.error(
-            '[prod-bootstrap-runner] Error ejecutando aplicación:',
-            error
-          );
-          process.exit(1);
-        }
+    const { spawn } = require('node:child_process');
+    const child = spawn(command, commandArgs, {
+      stdio: 'inherit',
+      env: process.env,
+    });
+
+    child.on('error', (error) => {
+      console.error('[prod-bootstrap-runner] Error ejecutando aplicación:', error);
+      process.exit(1);
+    });
+
+    child.on('exit', (code, signal) => {
+      if (typeof code === 'number') {
+        process.exit(code);
       }
-    );
+
+      console.error(
+        `[prod-bootstrap-runner] Proceso hijo terminado por señal: ${signal ?? 'desconocida'}`
+      );
+      process.exit(1);
+    });
   } catch (error) {
     console.error('[prod-bootstrap-runner] Error inesperado:', error);
     process.exit(1);
