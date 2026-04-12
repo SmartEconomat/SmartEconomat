@@ -312,10 +312,13 @@ export class BaselineSchema1775000000000 implements MigrationInterface {
       `CREATE INDEX "IDX_6389bd3aaa9f0acbae746ae732" ON "archivo" ("is_deleted") `
     );
     await queryRunner.query(
-      `CREATE TABLE "alumno_slot" ("id" uuid NOT NULL DEFAULT uuid_generate_v7(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP WITH TIME ZONE, "deleted_by" uuid, "modified_by" uuid, "version" integer NOT NULL DEFAULT '1', "aula" character varying NOT NULL, "numero_clase" integer NOT NULL, "capacidad" integer NOT NULL DEFAULT '30', "codigo_slot" character varying, "profesor_id" uuid, CONSTRAINT "UQ_77c874ff179cb8c2c1581b7e0ab" UNIQUE ("codigo_slot"), CONSTRAINT "PK_91fb60059da013049de1843333d" PRIMARY KEY ("id"))`
+      `CREATE TABLE "alumno_slot" ("id" uuid NOT NULL DEFAULT uuid_generate_v7(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP WITH TIME ZONE, "deleted_by" uuid, "modified_by" uuid, "version" integer NOT NULL DEFAULT '1', "aula" character varying NOT NULL, "numero_clase" integer NOT NULL, "capacidad" integer NOT NULL DEFAULT '30', "ubicacion_id" uuid, "codigo_slot" character varying, "profesor_id" uuid, CONSTRAINT "UQ_77c874ff179cb8c2c1581b7e0ab" UNIQUE ("codigo_slot"), CONSTRAINT "PK_91fb60059da013049de1843333d" PRIMARY KEY ("id"))`
     );
     await queryRunner.query(
       `CREATE UNIQUE INDEX "idx_slot_profesor_aula_clase" ON "alumno_slot" ("profesor_id", "aula", "numero_clase") `
+    );
+    await queryRunner.query(
+      `CREATE INDEX "idx_alumno_slot_ubicacion_id" ON "alumno_slot" ("ubicacion_id") `
     );
     await queryRunner.query(
       `CREATE TABLE "alumno" ("id" uuid NOT NULL DEFAULT uuid_generate_v7(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP WITH TIME ZONE, "deleted_by" uuid, "modified_by" uuid, "version" integer NOT NULL DEFAULT '1', "user_id" uuid, "slot_id" uuid, "profesor_id" uuid, CONSTRAINT "REL_b35254e55b6b08bf00e70223c9" UNIQUE ("user_id"), CONSTRAINT "PK_7f3dc49afa47af23777d1ddf00c" PRIMARY KEY ("id"))`
@@ -665,6 +668,9 @@ export class BaselineSchema1775000000000 implements MigrationInterface {
       `ALTER TABLE "alumno_slot" ADD CONSTRAINT "FK_e16584c870db2f5dd021c7b072c" FOREIGN KEY ("profesor_id") REFERENCES "profesor"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
     );
     await queryRunner.query(
+      `ALTER TABLE "alumno_slot" ADD CONSTRAINT "FK_alumno_slot_ubicacion_id" FOREIGN KEY ("ubicacion_id") REFERENCES "ubicacion"("id") ON DELETE SET NULL ON UPDATE NO ACTION`
+    );
+    await queryRunner.query(
       `ALTER TABLE "alumno" ADD CONSTRAINT "FK_b35254e55b6b08bf00e70223c90" FOREIGN KEY ("user_id") REFERENCES "usuario"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
     );
     await queryRunner.query(
@@ -863,6 +869,9 @@ export class BaselineSchema1775000000000 implements MigrationInterface {
     );
     await queryRunner.query(
       `ALTER TABLE "alumno" DROP CONSTRAINT "FK_b35254e55b6b08bf00e70223c90"`
+    );
+    await queryRunner.query(
+      `ALTER TABLE "alumno_slot" DROP CONSTRAINT "FK_alumno_slot_ubicacion_id"`
     );
     await queryRunner.query(
       `ALTER TABLE "alumno_slot" DROP CONSTRAINT "FK_e16584c870db2f5dd021c7b072c"`
@@ -1137,6 +1146,9 @@ export class BaselineSchema1775000000000 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE "alumno"`);
     await queryRunner.query(
       `DROP INDEX "public"."idx_slot_profesor_aula_clase"`
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."idx_alumno_slot_ubicacion_id"`
     );
     await queryRunner.query(`DROP TABLE "alumno_slot"`);
     await queryRunner.query(
