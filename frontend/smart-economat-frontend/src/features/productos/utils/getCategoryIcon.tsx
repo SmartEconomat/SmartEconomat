@@ -1,13 +1,13 @@
 import React from 'react';
 import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
-import LocalDrinkOutlinedIcon from '@mui/icons-material/LocalDrinkOutlined';
-import GrainOutlinedIcon from '@mui/icons-material/GrainOutlined';
-import SetMealOutlinedIcon from '@mui/icons-material/SetMealOutlined';
-import EggOutlinedIcon from '@mui/icons-material/EggOutlined';
-import AppleOutlinedIcon from '@mui/icons-material/AppleOutlined';
-import EcoOutlinedIcon from '@mui/icons-material/EcoOutlined';
-import RestaurantOutlinedIcon from '@mui/icons-material/RestaurantOutlined';
-import VignetteOutlinedIcon from '@mui/icons-material/VignetteOutlined';
+import LocalDrinkOutlinedIcon from '@mui/icons-material/LocalDrink';
+import GrainOutlinedIcon from '@mui/icons-material/Grain';
+import SetMealIcon from '@mui/icons-material/SetMeal';
+import EggIcon from '@mui/icons-material/Egg';
+import AppleIcon from '@mui/icons-material/Apple';
+import EcoIcon from '@mui/icons-material/Eco';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
+import VignetteIcon from '@mui/icons-material/Vignette';
 import { CategoriaProducto } from '../../../services/producto.types';
 
 const defaultIconProps = {
@@ -28,26 +28,26 @@ export function getCategoryIcon(
 
   switch (tipo) {
     case CategoriaProducto.VERDURA:
-      return <EcoOutlinedIcon {...props} />;
+      return <EcoIcon {...props} />;
     case CategoriaProducto.FRUTA:
-      return <AppleOutlinedIcon {...props} />;
+      return <AppleIcon {...props} />;
     case CategoriaProducto.CARNE:
-      return <RestaurantOutlinedIcon {...props} />;
+      return <RestaurantIcon {...props} />;
     case CategoriaProducto.PESCADO:
     case CategoriaProducto.MARISCO:
-      return <SetMealOutlinedIcon {...props} />;
+      return <SetMealIcon {...props} />;
     case CategoriaProducto.LACTEO:
     case CategoriaProducto.BEBIDA:
     case CategoriaProducto.ACEITE:
       return <LocalDrinkOutlinedIcon {...props} />;
     case CategoriaProducto.HUEVO:
-      return <EggOutlinedIcon {...props} />;
+      return <EggIcon {...props} />;
     case CategoriaProducto.CEREAL:
     case CategoriaProducto.LEGUMBRE:
     case CategoriaProducto.AZUCAR:
       return <GrainOutlinedIcon {...props} />;
     case CategoriaProducto.CONDIMENTO:
-      return <VignetteOutlinedIcon {...props} />;
+      return <VignetteIcon {...props} />;
     case CategoriaProducto.OTRO:
     default:
       return <CategoryOutlinedIcon {...props} />;
