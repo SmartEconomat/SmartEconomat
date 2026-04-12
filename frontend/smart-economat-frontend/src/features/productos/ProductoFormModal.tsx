@@ -203,7 +203,6 @@ const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
       onBarcodeFetch={handleBarcodeFetch}
       onBarcodeGenerate={canGenerateEan13 ? handleBarcodeGenerate : undefined}
       onOFFSearch={handleOFFSearch}
-      onRefreshProveedores={loadProveedores}
       confirmationMessage={
         isEditing
           ? '¿Estás seguro de que deseas guardar los cambios realizados en este producto?'
