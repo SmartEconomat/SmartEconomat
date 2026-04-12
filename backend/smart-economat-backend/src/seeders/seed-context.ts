@@ -85,17 +85,37 @@ export class SeedContext {
     },
   ];
 
+  private resolveWritableLogFilePath(): string {
+    const candidates = [
+      resolve(__dirname, './logs'),
+      resolve(process.cwd(), 'logs'),
+      '/tmp/smart-economat-seed-logs',
+    ];
+    const header = `=== SEED HTTP LOG START ${this.nextLogTimestamp()} ===\n`;
+    let lastError: unknown;
+
+    for (const logsDir of candidates) {
+      try {
+        mkdirSync(logsDir, { recursive: true });
+        const logFilePath = resolve(logsDir, 'seed-http-log.txt');
+        writeFileSync(logFilePath, header, 'utf8');
+        return logFilePath;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    const message = String(
+      lastError instanceof Error ? lastError.message : lastError
+    );
+    throw new Error(
+      `[seed] No se pudo inicializar directorio de logs para seeders: ${message}`
+    );
+  }
+
   constructor(config: SeedContextConfig = {}) {
     this.resolveConfig(config);
-
-    const logsDir = resolve(__dirname, './logs');
-    mkdirSync(logsDir, { recursive: true });
-    this.logFilePath = resolve(logsDir, 'seed-http-log.txt');
-    writeFileSync(
-      this.logFilePath,
-      `=== SEED HTTP LOG START ${this.nextLogTimestamp()} ===\n`,
-      'utf8'
-    );
+    this.logFilePath = this.resolveWritableLogFilePath();
   }
 
   private token = '';
@@ -106,20 +126,20 @@ export class SeedContext {
   private readonly queue: Array<() => void> = [];
   private readonly logFilePath: string;
   private logEventCursor = 0;
-  private dockerComposeFile: string;
-  private dockerServices: string[];
-  private authCandidates: SeedCredential[];
+  private dockerComposeFile = SeedContext.DEFAULT_DOCKER_COMPOSE_FILE;
+  private dockerServices = [...SeedContext.DEFAULT_DOCKER_SERVICES];
+  private authCandidates = [...SeedContext.DEFAULT_AUTH_CANDIDATES];
   private bootstrapAdminAttempted = false;
 
-  private requestDelayMs: number;
-  private requestTimeoutMs: number;
-  private maxConcurrency: number;
-  private maxRetries: number;
-  private backoffBaseMs: number;
-  private backoffMaxMs: number;
+  private requestDelayMs = SeedContext.DEFAULT_REQUEST_DELAY_MS;
+  private requestTimeoutMs = SeedContext.DEFAULT_REQUEST_TIMEOUT_MS;
+  private maxConcurrency = SeedContext.DEFAULT_MAX_CONCURRENCY;
+  private maxRetries = SeedContext.DEFAULT_MAX_RETRIES;
+  private backoffBaseMs = SeedContext.DEFAULT_BACKOFF_BASE_MS;
+  private backoffMaxMs = SeedContext.DEFAULT_BACKOFF_MAX_MS;
 
   readonly env = 'development';
-  apiBaseUrl: string;
+  apiBaseUrl = SeedContext.DEFAULT_API_BASE_URL;
 
   private ensurePositiveInt(
     value: number | undefined,

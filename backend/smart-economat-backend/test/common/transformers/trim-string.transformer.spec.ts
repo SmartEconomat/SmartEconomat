@@ -1,4 +1,4 @@
-import { TrimStringTransformer } from 'src/common/transformers/trim-string.transformer';
+import { TrimStringTransformer } from '../../../src/common/transformers/trim-string.transformer';
 
 /**
  * Tests Unitarios de TrimStringTransformer

@@ -1,4 +1,4 @@
-import { StringToBooleanTransformer } from 'src/common/transformers/string-to-boolean.transformer';
+import { StringToBooleanTransformer } from '../../../src/common/transformers/string-to-boolean.transformer';
 
 /**
  * Tests Unitarios de StringToBooleanTransformer

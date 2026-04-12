@@ -2,7 +2,7 @@ import {
   calculateCheckDigit,
   generateEan13,
   validateEan13,
-} from 'src/common/utils/ean13.util';
+} from '../../../src/common/utils/ean13.util';
 
 describe('EAN-13 Utils', () => {
   describe('calculateCheckDigit', () => {

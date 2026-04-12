@@ -1,1 +1,1 @@
-export * from 'src/modules/usuario/constants/es/usuario-messages';
+export * from './es/usuario-messages';

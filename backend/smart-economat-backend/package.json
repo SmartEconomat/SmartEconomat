@@ -22,11 +22,11 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config ./test/jest-e2e.json --runInBand test/e2e/all.e2e-spec.ts",
     "test:e2e:file": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config ./test/jest-e2e.json --runInBand",
-    "seed": "ts-node -r tsconfig-paths/register -r dotenv/config src/seeders/seed.cli.ts",
+    "seed": "node scripts/seed-runner.js",
     "migration:run": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d src/config/typeorm.config.ts",
     "schema:drop": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js schema:drop -d src/config/typeorm.config.ts",
     "schema:sync": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js schema:sync -d src/config/typeorm.config.ts",
-    "db:reset": "npm run schema:drop && npm run schema:sync",
+    "db:reset": "node scripts/db-reset-runner.js",
     "generate:erd": "ts-node tools/scripts/generate-erd.ts",
     "log-user-info": "ts-node scripts/log-user-info.ts",
     "prepare": "node -e \"const fs=require('fs');const cp=require('child_process');const path=require('path');const candidates=[path.resolve('/project_root'),path.resolve(process.cwd(),'../..'),process.cwd()];const repoRoot=candidates.find((dir)=>fs.existsSync(path.join(dir,'.git'))&&fs.existsSync(path.join(dir,'.husky')));if(repoRoot){cp.execSync('npx husky '+path.join(repoRoot,'.husky'),{stdio:'inherit'});}else{console.log('⏭️ Husky omitido: repositorio git no disponible');}\""

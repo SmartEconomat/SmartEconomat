@@ -26,7 +26,7 @@ import { TipoMovimiento } from '../../movimiento/enums/movimiento.enums';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
-import { Alergeno } from 'src/modules/producto/enums/producto.enums';
+import { Alergeno } from '../../producto/enums/producto.enums';
 
 @Injectable()
 export class RecetaService {

@@ -3,7 +3,7 @@ import { BadRequestException } from '@nestjs/common';
 import {
   transformAndValidateSortableQuery,
   validateSortableField,
-} from 'src/common/decorators/sortable-fields.decorator';
+} from '../../../src/common/decorators/sortable-fields.decorator';
 
 describe('SortableFields decorator', () => {
   it('acepta un campo de ordenación permitido', () => {
