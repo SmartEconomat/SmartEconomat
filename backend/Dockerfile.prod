@@ -28,8 +28,10 @@ COPY --from=builder /app/src/seeders/datos-base-economato ./dist/seeders/datos-b
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 
-# Copy only the specific bootstrap script (not entire scripts directory)
+# Copy scripts needed for production
 COPY --from=builder /app/scripts/prod-bootstrap-runner.js ./scripts/prod-bootstrap-runner.js
+COPY --from=builder /app/scripts/db-reset-runner.js ./scripts/db-reset-runner.js
+COPY --from=builder /app/scripts/seed-runner.js ./scripts/seed-runner.js
 
 # Create non-root user for security
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup

@@ -13,10 +13,18 @@ El comando oficial actual es `npm run db:reset` dentro del contenedor `backend`.
 - Proyecto desplegado con `docker-compose.prod.yml` y `.env.prod`.
 - Servicios `db`, `redis` y `backend` disponibles.
 - Variable `SEED_DEFAULT_ADMIN_TEMP_PASSWORD` definida en `.env.prod`.
+- **Imagen backend actualizada** (include `db-reset-runner.js`):
+  ```bash
+  docker compose -f docker-compose.prod.yml build --no-cache backend
+  ```
 
 > [!IMPORTANT]
 > En `NODE_ENV=production`, el bootstrap de migraciones exige `SEED_DEFAULT_ADMIN_TEMP_PASSWORD`.
 > Si no esta definida, el backend entra en bucle de reinicio y el reset no es operativo.
+
+> [!NOTE]
+> Si ves error `Cannot find module 'scripts/db-reset-runner.js'`, significa que la imagen no tiene los scripts.
+> Solución: ejecutar `git pull` y reconstruir con `docker compose build --no-cache backend`.
 
 ## Paso a paso
 
