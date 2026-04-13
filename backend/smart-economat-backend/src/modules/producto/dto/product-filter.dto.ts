@@ -20,6 +20,15 @@ export class ProductFilterDto extends PaginationQueryDto {
   minStock?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value as boolean | undefined;
+  })
+  soloEliminados?: boolean;
+
+  @IsOptional()
   @IsArray()
   @IsEnum(Alergeno, { each: true })
   @Transform(({ value }) =>

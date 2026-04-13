@@ -130,6 +130,18 @@ export class ProductoController {
     return this.productoService.update(id, updateProductoDto, userId);
   }
 
+  @Patch(':id/restore')
+  @RequirePermissions(PERMISSIONS.productos.eliminar)
+  @ApiOperation({ summary: 'Restaurar un producto eliminado' })
+  @ApiResponse({ status: 200, type: Producto })
+  restore(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: { user: { id: string } }
+  ): Promise<Producto> {
+    const userId = req.user.id;
+    return this.productoService.restore(id, userId);
+  }
+
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.productos.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)

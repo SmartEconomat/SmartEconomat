@@ -85,7 +85,7 @@ export default function ToastContainer() {
             <Typography
               component="span"
               variant="body2"
-              sx={{ color: 'inherit', lineHeight: 1.4 }}
+              sx={{ color: 'inherit', lineHeight: 1.4, whiteSpace: 'pre-line' }}
             >
               {toast.message}
             </Typography>

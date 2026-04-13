@@ -84,8 +84,9 @@ const DashboardMetricCard: React.FC<DashboardMetricCardProps> = ({
           display="flex"
           justifyContent="space-between"
           alignItems="flex-start"
+          gap={2}
         >
-          <Box>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography
               variant="subtitle2"
               color="text.secondary"
@@ -115,6 +116,7 @@ const DashboardMetricCard: React.FC<DashboardMetricCardProps> = ({
               bgcolor: alpha(theme.palette[color].main, 0.1),
               color: `${color}.main`,
               display: 'flex',
+              flexShrink: 0,
               transition: 'all 0.3s ease',
             }}
           >

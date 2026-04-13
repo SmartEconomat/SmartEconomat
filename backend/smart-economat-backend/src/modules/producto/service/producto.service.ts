@@ -129,8 +129,10 @@ export class ProductoService {
       .leftJoinAndSelect('proveedores.proveedor', 'proveedor')
       .leftJoinAndSelect('producto.alergenos', 'alergenos');
 
-    if (isAdmin) {
-      queryBuilder.withDeleted();
+    if (query.soloEliminados) {
+      queryBuilder.withDeleted().andWhere('producto.deleted_at IS NOT NULL');
+    } else if (isAdmin) {
+      queryBuilder.where('producto.deleted_at IS NULL');
     }
 
     if (query.codigoBarras) {
@@ -226,6 +228,7 @@ export class ProductoService {
         const producto = await manager.findOne(Producto, {
           where: { id },
           relations: ['proveedores', 'proveedores.proveedor', 'alergenos'],
+          withDeleted: true,
         });
 
         if (!producto) {
@@ -290,6 +293,35 @@ export class ProductoService {
     }
 
     return updatedProduct;
+  }
+
+  async restore(id: string, userId: string): Promise<Producto> {
+    const producto = await this.productoRepository.findOne({
+      where: { id },
+      withDeleted: true,
+    });
+
+    if (!producto) {
+      throw new NotFoundException(I18nHelper.getError('PRODUCT_NOT_FOUND'));
+    }
+
+    if (!producto.deletedAt) {
+      return producto;
+    }
+
+    producto.deletedAt = null;
+    producto.deletedBy = null;
+    producto.modifiedBy = userId;
+
+    const restoredProduct = await this.productoRepository.save(producto);
+
+    await this.movimientoHelper.trackProductoCreation(
+      userId,
+      id,
+      `Restauración de producto: ${producto.nombre}`
+    );
+
+    return restoredProduct;
   }
 
   async remove(id: string, userId: string): Promise<void> {
