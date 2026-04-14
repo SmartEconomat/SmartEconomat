@@ -1,0 +1,77 @@
+name: Installer CI
+
+on:
+  push:
+    branches: [development, production]
+  pull_request:
+    branches: [development, production]
+
+jobs:
+  installer-quality:
+    name: Lint, Typecheck, Test, Build Installer
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22.13.1
+          cache: npm
+          cache-dependency-path: ElectronInstaller/package-lock.json
+
+      - name: Install installer dependencies
+        working-directory: ElectronInstaller
+        run: npm ci
+
+      - name: Lint installer
+        working-directory: ElectronInstaller
+        run: npm run lint
+
+      - name: Type-check installer
+        working-directory: ElectronInstaller
+        run: npm run type-check
+
+      - name: Test installer
+        working-directory: ElectronInstaller
+        run: npm run test
+
+      - name: Build installer app bundle
+        working-directory: ElectronInstaller
+        run: npm run build:app
+
+  compose-smoke:
+    name: Compose Smoke (db + redis)
+    runs-on: ubuntu-latest
+    needs: installer-quality
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Prepare env
+        run: |
+          cp .env.example .env.prod
+          echo "REDIS_PASSWORD=smoke_redis_password_1234" >> .env.prod
+          echo "CERTS_DIR=./certs" >> .env.prod
+          echo "CERTS_WEBROOT_DIR=./certs-webroot" >> .env.prod
+
+      - name: Compose config validation
+        run: docker compose -f docker-compose.prod.yml --env-file .env.prod config -q
+
+      - name: Build smoke services
+        run: docker compose -f docker-compose.prod.yml --env-file .env.prod build db redis
+
+      - name: Start smoke services
+        run: docker compose -f docker-compose.prod.yml --env-file .env.prod up -d db redis
+
+      - name: Verify services
+        run: |
+          docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T db pg_isready -U postgres -d app_db
+          docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T redis sh -lc 'redis-cli -a "$REDIS_PASSWORD" --no-auth-warning ping | grep -q PONG'
+
+      - name: Tear down
+        if: always()
+        run: docker compose -f docker-compose.prod.yml --env-file .env.prod down -v

@@ -6,7 +6,7 @@ services:
       context: ./database
       dockerfile: Dockerfile
     image: smarteconomat-db:prod
-    restart: always
+    restart: unless-stopped
     init: true
     env_file: .env.prod
     environment:
@@ -38,15 +38,29 @@ services:
 
   redis:
     image: redis:7-alpine
-    restart: always
+    restart: unless-stopped
     init: true
-    command: redis-server --appendonly yes
+    env_file: .env.prod
+    command:
+      [
+        "redis-server",
+        "--appendonly",
+        "yes",
+        "--requirepass",
+        "${REDIS_PASSWORD:?REDIS_PASSWORD is required}"
+      ]
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:?REDIS_PASSWORD is required}
     volumes:
       - redis_prod:/data
     networks:
       - backend-network
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test:
+        [
+          'CMD-SHELL',
+          'redis-cli -a "$${REDIS_PASSWORD}" --no-auth-warning ping | grep -q PONG'
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -69,7 +83,7 @@ services:
       context: ./backend/smart-economat-backend
       dockerfile: ../Dockerfile.prod
     image: smarteconomat-backend:prod
-    restart: always
+    restart: unless-stopped
     init: true
     env_file: .env.prod
     environment:
@@ -77,6 +91,7 @@ services:
       - DB_HOST=db
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:?REDIS_PASSWORD is required}
       - FRONTEND_API_URL=${FRONTEND_API_URL:-https://smarteconomat.app}
       - BACKEND_API_URL=${BACKEND_API_URL:-https://smarteconomat.app/api/v1}
       - DOMAIN=${DOMAIN:-smarteconomat.app}
@@ -86,10 +101,15 @@ services:
     networks:
       - backend-network
       - frontend-network
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - uploads_prod:/app/uploads
     healthcheck:
-      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:3000/']
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://127.0.0.1:3000/api/v1']
       interval: 10s
       timeout: 5s
       retries: 3
@@ -115,7 +135,7 @@ services:
       args:
         - VITE_SENTRY_DSN=${VITE_SENTRY_DSN:-}
     image: smarteconomat-frontend:prod
-    restart: always
+    restart: unless-stopped
     init: true
     ports:
       - '80:80'
@@ -128,10 +148,10 @@ services:
     networks:
       - frontend-network
     volumes:
-      - ./certs:/etc/nginx/certs:ro
-      - ./certs-webroot:/var/www/acme-challenge:ro
+      - ${CERTS_DIR:-./certs}:/etc/nginx/certs:ro
+      - ${CERTS_WEBROOT_DIR:-./certs-webroot}:/var/www/acme-challenge:ro
     healthcheck:
-      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:80/']
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', '--no-check-certificate', 'https://127.0.0.1/']
       interval: 10s
       timeout: 5s
       retries: 3
@@ -149,6 +169,14 @@ services:
         reservations:
           cpus: '0.5'
           memory: 256M
+
+  tools:
+    image: alpine:3.20
+    profiles: ['tools']
+    command: ['sh', '-c', 'while true; do sleep 3600; done']
+    networks:
+      - backend-network
+    restart: 'no'
 
 volumes:
   database_prod:

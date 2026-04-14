@@ -30,10 +30,19 @@ jobs:
           cache-dependency-path: |
             backend/smart-economat-backend/package-lock.json
             frontend/smart-economat-frontend/package-lock.json
+            ElectronInstaller/package-lock.json
 
       - name: Instalar dependencias del backend
         working-directory: backend/smart-economat-backend
         run: npm ci
+
+      - name: Lint backend
+        working-directory: backend/smart-economat-backend
+        run: npm run lint
+
+      - name: Tests backend
+        working-directory: backend/smart-economat-backend
+        run: npm run test
 
       - name: Construir backend
         working-directory: backend/smart-economat-backend
@@ -43,9 +52,37 @@ jobs:
         working-directory: frontend/smart-economat-frontend
         run: npm ci
 
+      - name: Lint frontend
+        working-directory: frontend/smart-economat-frontend
+        run: npm run lint
+
+      - name: Tests frontend
+        working-directory: frontend/smart-economat-frontend
+        run: npm run test
+
       - name: Construir frontend
         working-directory: frontend/smart-economat-frontend
         run: npm run build
+
+      - name: Instalar dependencias del installer
+        working-directory: ElectronInstaller
+        run: npm ci
+
+      - name: Lint installer
+        working-directory: ElectronInstaller
+        run: npm run lint
+
+      - name: Type-check installer
+        working-directory: ElectronInstaller
+        run: npm run type-check
+
+      - name: Tests installer
+        working-directory: ElectronInstaller
+        run: npm run test
+
+      - name: Build installer app
+        working-directory: ElectronInstaller
+        run: npm run build:app
 
   deploy:
     name: Desplegar en servidor

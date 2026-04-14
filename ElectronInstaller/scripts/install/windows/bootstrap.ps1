@@ -1,0 +1,127 @@
+param(
+  [Parameter(Mandatory = $true)][string]$RuntimePath,
+  [ValidateSet('all', 'tls')][string]$Mode = 'all',
+  [switch]$ReleaseBusyPorts
+)
+
+$ErrorActionPreference = 'Stop'
+
+if ([string]::IsNullOrWhiteSpace($RuntimePath)) {
+  Write-Error 'RuntimePath no puede estar vacío.'
+  exit 90
+}
+
+$RuntimePath = [System.IO.Path]::GetFullPath($RuntimePath)
+
+if (-not (Test-Path $RuntimePath)) {
+  New-Item -Path $RuntimePath -ItemType Directory -Force | Out-Null
+}
+
+New-Item -Path (Join-Path $RuntimePath 'backups') -ItemType Directory -Force | Out-Null
+New-Item -Path (Join-Path $RuntimePath 'diagnostics') -ItemType Directory -Force | Out-Null
+
+if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+  Write-Error 'Docker no encontrado en PATH.'
+  exit 1
+}
+
+docker compose version *> $null
+if ($LASTEXITCODE -ne 0) {
+  Write-Error 'docker compose no disponible.'
+  exit 2
+}
+
+function Get-PortOwner {
+  param([Parameter(Mandatory = $true)][int]$Port)
+
+  $connection = Get-NetTCPConnection -State Listen -LocalPort $Port -ErrorAction SilentlyContinue |
+    Select-Object -First 1
+
+  if (-not $connection) {
+    return $null
+  }
+
+  $pid = [int]$connection.OwningProcess
+  $processName = (Get-Process -Id $pid -ErrorAction SilentlyContinue).ProcessName
+  if (-not $processName) {
+    $processName = 'desconocido'
+  }
+
+  return [PSCustomObject]@{
+    Port = $Port
+    Pid = $pid
+    ProcessName = $processName
+  }
+}
+
+function Ensure-PortAvailable {
+  param([Parameter(Mandatory = $true)][int]$Port)
+
+  $owner = Get-PortOwner -Port $Port
+  if (-not $owner) {
+    return $true
+  }
+
+  if (-not $ReleaseBusyPorts) {
+    Write-Error "Puerto $Port ocupado por '$($owner.ProcessName)' (PID $($owner.Pid)). Reejecuta con -ReleaseBusyPorts para cerrarlo automáticamente."
+    return $false
+  }
+
+  try {
+    Stop-Process -Id $owner.Pid -Force -ErrorAction Stop
+  }
+  catch {
+    Write-Error ("No se pudo detener PID {0} en puerto {1}: {2}" -f $owner.Pid, $Port, $_.Exception.Message)
+    return $false
+  }
+
+  $stillBusy = Get-PortOwner -Port $Port
+  if ($stillBusy) {
+    Write-Error ("Puerto {0} sigue ocupado tras intentar detener PID {1}." -f $Port, $owner.Pid)
+    return $false
+  }
+
+  return $true
+}
+
+if ($Mode -ne 'tls') {
+  if (-not (Ensure-PortAvailable -Port 80)) {
+    exit 3
+  }
+
+  if (-not (Ensure-PortAvailable -Port 443)) {
+    exit 3
+  }
+}
+
+if ($Mode -eq 'all' -or $Mode -eq 'tls') {
+  $openssl = Get-Command openssl -ErrorAction SilentlyContinue
+  if (-not $openssl) {
+    Write-Error 'OpenSSL requerido para generar certificados. Instala OpenSSL y asegúrate de que openssl.exe esté en PATH. Ejemplos: winget install ShiningLight.OpenSSL.Light o choco install openssl.'
+    exit 4
+  }
+
+  $certsDir = Join-Path $RuntimePath 'certs'
+  $liveDir = Join-Path $certsDir 'live/local-smarteconomat'
+  $webroot = Join-Path $RuntimePath 'certs-webroot/.well-known/acme-challenge'
+
+  New-Item -Path $liveDir -ItemType Directory -Force | Out-Null
+  New-Item -Path $webroot -ItemType Directory -Force | Out-Null
+
+  $keyFile = Join-Path $liveDir 'privkey.pem'
+  $fullchain = Join-Path $liveDir 'fullchain.pem'
+
+  & $openssl.Path req -x509 -nodes -newkey rsa:4096 -sha256 -days 825 -keyout "$keyFile" -out "$fullchain" -subj '/CN=smarteconomat.app/O=SmartEconomat/C=ES' | Out-Null
+
+  Copy-Item -Path $fullchain -Destination (Join-Path $certsDir 'fullchain.pem') -Force
+  Copy-Item -Path $keyFile -Destination (Join-Path $certsDir 'privkey.pem') -Force
+}
+
+$output = @{
+  ok = $true
+  mode = $Mode
+  runtimePath = $RuntimePath
+  releaseBusyPorts = [bool]$ReleaseBusyPorts
+}
+
+$output | ConvertTo-Json -Compress

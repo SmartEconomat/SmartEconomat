@@ -1,0 +1,32 @@
+export const IPCChannels = {
+  installer: {
+    runPreflight: "installer:run-preflight",
+    runAutoRepair: "installer:run-auto-repair",
+    releaseBusyPort: "installer:release-busy-port",
+    startInstall: "installer:start-install",
+    getState: "installer:get-state",
+    pickFile: "installer:pick-file",
+    progressEvent: "installer:progress-event",
+  },
+  runtime: {
+    startStack: "runtime:start-stack",
+    stopStack: "runtime:stop-stack",
+    restartStack: "runtime:restart-stack",
+    getHealth: "runtime:get-health",
+    tailLogs: "runtime:tail-logs",
+    streamLogEvent: "runtime:stream-log-event",
+    stopLogStream: "runtime:stop-log-stream",
+    exportVisibleLogs: "runtime:export-visible-logs",
+    pruneSafe: "runtime:prune-safe",
+    backupNow: "runtime:backup-now",
+    restoreFrom: "runtime:restore-from",
+    diagnostics: "runtime:diagnostics",
+  },
+  debug: {
+    rendererLog: "debug:renderer-log",
+    streamEvent: "debug:stream-event",
+    getLogs: "debug:get-logs",
+    clearLogs: "debug:clear-logs",
+    isEnabled: "debug:is-enabled",
+  },
+} as const;

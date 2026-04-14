@@ -18,6 +18,10 @@ RUN npm run build
 # ============================================================================
 FROM nginx:alpine
 
+ARG BUILD_DATE=unknown
+ARG VCS_REF=unknown
+ARG VERSION=1.0.0
+
 # Copy built frontend assets to nginx
 COPY --from=builder /app/build /usr/share/nginx/html
 
@@ -32,7 +36,20 @@ COPY docker-entrypoint.d/15-export-vars.sh /docker-entrypoint.d/15-export-vars.s
 
 RUN chmod +x /docker-entrypoint.d/19-select-nginx-template.sh /docker-entrypoint.d/15-export-vars.sh
 
+RUN apk add --no-cache libcap \
+    && setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
+    && mkdir -p /var/cache/nginx /var/run /var/log/nginx /var/www/acme-challenge \
+    && chown -R nginx:nginx /var/cache/nginx /var/run /var/log/nginx /etc/nginx /opt/nginx-templates /var/www/acme-challenge
+
+LABEL org.opencontainers.image.title="SmartEconomat Frontend"
+LABEL org.opencontainers.image.description="React SPA served by nginx"
+LABEL org.opencontainers.image.version="$VERSION"
+LABEL org.opencontainers.image.revision="$VCS_REF"
+LABEL org.opencontainers.image.created="$BUILD_DATE"
+
 EXPOSE 80 443
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD wget --quiet --tries=1 --spider --no-check-certificate https://127.0.0.1/ || exit 1
 
 # Use exec form for proper signal handling  
 CMD ["nginx", "-g", "daemon off;"]

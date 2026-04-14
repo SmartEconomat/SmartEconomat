@@ -9,6 +9,7 @@ type DefaultUserSeed = {
   email: string;
   nombre: string;
   rol: rolUsuario;
+  tempPassword: string;
 };
 
 type PermissionSeed = {
@@ -20,33 +21,67 @@ type PermissionSeed = {
 };
 
 const MIGRATION_TAG = '[MIGRACION_DEFAULT_ADMINS_20260403]';
-const providedTempPassword =
+const providedLegacyTempPassword =
   process.env.SEED_DEFAULT_ADMIN_TEMP_PASSWORD?.trim() || '';
+const providedAdminTempPassword =
+  process.env.SEED_DEFAULT_ADMIN_USER_TEMP_PASSWORD?.trim() || '';
+const providedSuperAdminTempPassword =
+  process.env.SEED_DEFAULT_SUPERADMIN_TEMP_PASSWORD?.trim() || '';
+const providedAdminUsername =
+  process.env.SEED_DEFAULT_ADMIN_USERNAME?.trim() ||
+  process.env.ADMIN_USERNAME?.trim() ||
+  'admin';
+const providedSuperAdminUsername =
+  process.env.SEED_DEFAULT_SUPERADMIN_USERNAME?.trim() || 'superadmin';
 const isProductionEnv = process.env.NODE_ENV === 'production';
+const hasAnyProvidedTempPassword =
+  providedLegacyTempPassword.length > 0 ||
+  providedAdminTempPassword.length > 0 ||
+  providedSuperAdminTempPassword.length > 0;
 
-if (isProductionEnv && providedTempPassword.length === 0) {
+if (isProductionEnv && !hasAnyProvidedTempPassword) {
   throw new Error(
-    `${MIGRATION_TAG} En produccion debes definir SEED_DEFAULT_ADMIN_TEMP_PASSWORD para ejecutar la migracion de admins por defecto.`
+    `${MIGRATION_TAG} En produccion debes definir credenciales temporales para admin/superadmin (SEED_DEFAULT_ADMIN_TEMP_PASSWORD legacy o variables dedicadas).`
   );
 }
 
-const DEFAULT_TEMP_PASSWORD =
-  providedTempPassword.length > 0
-    ? providedTempPassword
-    : 'SmartEconomatTemp2026!';
+if (
+  providedAdminUsername.toLowerCase() ===
+  providedSuperAdminUsername.toLowerCase()
+) {
+  throw new Error(
+    `${MIGRATION_TAG} Los usernames de admin y superadmin no pueden coincidir.`
+  );
+}
+
+const DEFAULT_ADMIN_TEMP_PASSWORD =
+  providedAdminTempPassword.length > 0
+    ? providedAdminTempPassword
+    : providedLegacyTempPassword.length > 0
+      ? providedLegacyTempPassword
+      : 'SmartEconomatTemp2026!';
+
+const DEFAULT_SUPERADMIN_TEMP_PASSWORD =
+  providedSuperAdminTempPassword.length > 0
+    ? providedSuperAdminTempPassword
+    : providedLegacyTempPassword.length > 0
+      ? providedLegacyTempPassword
+      : 'SmartEconomatTemp2026!';
 
 const DEFAULT_USERS: readonly DefaultUserSeed[] = [
   {
-    username: 'superadmin',
+    username: providedSuperAdminUsername,
     email: 'superadmin@smarteconomat.com',
     nombre: 'Super Administrador',
     rol: rolUsuario.SUPER_ADMIN,
+    tempPassword: DEFAULT_SUPERADMIN_TEMP_PASSWORD,
   },
   {
-    username: 'admin',
+    username: providedAdminUsername,
     email: 'admin@smarteconomat.com',
     nombre: 'Administrador Principal',
     rol: rolUsuario.ADMIN,
+    tempPassword: DEFAULT_ADMIN_TEMP_PASSWORD,
   },
 ];
 
@@ -67,11 +102,6 @@ export class SeedDefaultAdminAccounts1775200000000 implements MigrationInterface
       permissionIdByCode
     );
 
-    const hashedTemporaryPassword = await bcrypt.hash(
-      DEFAULT_TEMP_PASSWORD,
-      10
-    );
-
     for (const seedUser of DEFAULT_USERS) {
       const roleId = roleIdByName.get(seedUser.rol);
       if (!roleId) {
@@ -79,6 +109,11 @@ export class SeedDefaultAdminAccounts1775200000000 implements MigrationInterface
           `${MIGRATION_TAG} No se encontró el rol requerido ${seedUser.rol}`
         );
       }
+
+      const hashedTemporaryPassword = await bcrypt.hash(
+        seedUser.tempPassword,
+        10
+      );
 
       const userId = await this.upsertDefaultUser(
         queryRunner,

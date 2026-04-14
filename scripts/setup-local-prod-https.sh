@@ -126,6 +126,20 @@ ensure_seed_temp_password() {
   printf "SEED_DEFAULT_ADMIN_TEMP_PASSWORD=%s\n" "$generated_password" >> "$ENV_FILE"
 }
 
+ensure_redis_password() {
+  if [ ! -f "$ENV_FILE" ]; then
+    cp "${ROOT_DIR}/.env.example" "$ENV_FILE"
+  fi
+
+  if grep -q '^REDIS_PASSWORD=' "$ENV_FILE"; then
+    return
+  fi
+
+  local generated_password
+  generated_password="$(openssl rand -hex 16)"
+  printf "REDIS_PASSWORD=%s\n" "$generated_password" >> "$ENV_FILE"
+}
+
 ensure_network_ip_env() {
   upsert_env "LOCAL_BIND_IP" "$LAN_IP"
 }
@@ -203,6 +217,7 @@ upsert_env "DB_SYNC" "false"
 upsert_env "TLS_PROVIDER" "selfsigned"
 ensure_network_ip_env
 ensure_seed_temp_password
+ensure_redis_password
 
 if [ "$with_hosts" = true ]; then
   ensure_hosts_entry
