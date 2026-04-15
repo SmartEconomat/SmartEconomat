@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -23,7 +24,10 @@ export interface ModalProps {
   children: React.ReactNode;
 }
 
-// Mapeamos nuestro ModalSize a los maxWidth de Dialog de MUI
+/**
+ * Mapeo de los tamaños semánticos de modal a valores concretos de `maxWidth` CSS.
+ * Se usa en las `PaperProps` del `Dialog` de MUI.
+ */
 const sizeToPaperMaxWidth: Record<ModalSize, string> = {
   sm: '400px',
   md: '600px',
@@ -32,6 +36,13 @@ const sizeToPaperMaxWidth: Record<ModalSize, string> = {
   full: '100vw',
 };
 
+/**
+ * Modal genérico basado en el `Dialog` de MUI.
+ * Soporta distintos tamaños, título personalizable y botón de cierre accesible.
+ *
+ * @param props - Propiedades del componente definidas en {@link ModalProps}.
+ * @returns Diálogo modal con cabecera y área de contenido desplazable.
+ */
 const Modal = ({
   isOpen,
   onClose,
@@ -39,6 +50,7 @@ const Modal = ({
   size = 'md',
   children,
 }: ModalProps) => {
+  const { t } = useTranslation();
   return (
     <Dialog
       open={isOpen}
@@ -80,7 +92,7 @@ const Modal = ({
           </Typography>
         )}
         <IconButton
-          aria-label="Cerrar modal"
+          aria-label={t('comun.cerrarModal')}
           onClick={() => onClose('closeButton')}
           size="small"
           sx={{

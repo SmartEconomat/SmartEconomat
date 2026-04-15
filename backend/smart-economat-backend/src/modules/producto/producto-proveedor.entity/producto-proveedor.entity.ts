@@ -34,9 +34,11 @@ import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.
 @Index(['proveedorId'])
 @Check(`"precio_unitario" IS NULL OR "precio_unitario" > 0`)
 export class ProductoProveedor extends BaseEntity {
+  /** Foreign key referencing the base Producto. */
   @Column({ name: 'producto_id' })
   productoId!: string;
 
+  /** Foreign key referencing the Proveedor. */
   @Column({ name: 'proveedor_id' })
   proveedorId!: string;
 
@@ -86,6 +88,11 @@ export class ProductoProveedor extends BaseEntity {
   })
   precioUnitario?: number;
 
+  /**
+   * Expected waste percentage for this product-supplier combination.
+   * Used as a default when the recipe ingredient does not define its own merma.
+   * @type {number | undefined}
+   */
   @Column({
     type: 'numeric',
     precision: 5,

@@ -6,28 +6,29 @@
  */
 
 import React, { ReactNode, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
+  Box,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Typography,
-  Box,
-  TablePagination,
-  Stack,
-  ToggleButtonGroup,
-  ToggleButton,
-  SelectChangeEvent,
-  Grid,
   TableSortLabel,
+  TablePagination,
+  Paper,
+  Stack,
+  ToggleButton,
+  ToggleButtonGroup,
+  Grid,
   Skeleton,
-  Checkbox,
   SxProps,
   Theme,
   IconButton,
+  Typography,
+  SelectChangeEvent,
+  Checkbox,
   alpha,
 } from '@mui/material';
 import ViewListIcon from '@mui/icons-material/ViewList';
@@ -41,11 +42,8 @@ import Spinner from './Spinner';
  * Representa la configuración de una columna en la tabla.
  */
 export interface Column<T> {
-  /** Identificador único o key del objeto de la fila */
   id: keyof T | string;
-  /** Etiqueta visual que va en el encabezado de la columna */
   label: ReactNode;
-  /** Renderizado personalizado opcional para la celda. Si no se pasa, inyecta `row[id]` directamente */
   render?: (row: T) => ReactNode;
   /** Alineación del texto en la columna */
   align?: 'inherit' | 'left' | 'center' | 'right' | 'justify';
@@ -66,7 +64,6 @@ export interface Column<T> {
   width?: number | string;
   /** Anchura mínima de la columna */
   minWidth?: number | string;
-  /** Estilos extra para la cabecera */
   headerSx?: SxProps<Theme>;
   /** Estilos extra para las celdas */
   cellSx?: SxProps<Theme>;
@@ -147,13 +144,17 @@ export interface DataTableProps<T> {
 /**
  * Componente genérico para mostrar listas tabulares de datos
  * con soporte para estado de carga, paginación unificada (TablePagination), acciones y vista en mosaico.
+ *
+ * @template T - Tipo del objeto de datos de cada fila.
+ * @param props - Propiedades del componente definidas en {@link DataTableProps}.
+ * @returns Tabla o cuadrícula de datos con paginación opcional.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function DataTable<T extends Record<string, any>>({
   columns,
   data,
   isLoading = false,
-  emptyStateMessage = 'No hay datos disponibles.',
+  emptyStateMessage,
   pagination,
   renderActions,
   actionsLabel = 'Acciones',
@@ -176,6 +177,7 @@ export function DataTable<T extends Record<string, any>>({
   viewMode: controlledViewMode,
   onViewModeChange: onControlledViewModeChange,
 }: DataTableProps<T>) {
+  const { t } = useTranslation();
   const colSpanCount =
     columns.length + (renderActions ? 1 : 0) + (selectable ? 1 : 0);
   const [internalViewMode, setInternalViewMode] = useState<'list' | 'grid'>(
@@ -211,6 +213,13 @@ export function DataTable<T extends Record<string, any>>({
     pagination?.totalItems ??
     (pagination ? pagination.totalPages * pageSize : 0);
 
+  /**
+   * Maneja la pulsación de teclas sobre una fila de la tabla para accesibilidad.
+   * Ejecuta {@link onRowClick} cuando se pulsa Enter o Espacio.
+   *
+   * @param event - Evento de teclado sobre el elemento `<tr>`.
+   * @param row - Objeto de datos correspondiente a la fila.
+   */
   const handleRowKeyDown = (
     event: React.KeyboardEvent<HTMLTableRowElement>,
     row: T
@@ -419,7 +428,7 @@ export function DataTable<T extends Record<string, any>>({
                   >
                     <Spinner size="md" color="primary" />
                     <Typography sx={{ mt: 2 }} color="text.secondary">
-                      Cargando datos...
+                      {t('comun.cargando')}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -435,8 +444,12 @@ export function DataTable<T extends Record<string, any>>({
                       <Typography color="text.secondary">
                         {emptyStateMessage}
                       </Typography>
-                    ) : (
+                    ) : emptyStateMessage ? (
                       emptyStateMessage
+                    ) : (
+                      <Typography color="text.secondary">
+                        {t('comun.sinDatos')}
+                      </Typography>
                     )}
                   </TableCell>
                 </TableRow>
@@ -599,7 +612,7 @@ export function DataTable<T extends Record<string, any>>({
               >
                 <Spinner size="md" color="primary" />
                 <Typography sx={{ mt: 2 }} color="text.secondary">
-                  Cargando datos...
+                  {t('comun.cargando')}
                 </Typography>
               </Box>
             </Grid>
@@ -611,8 +624,12 @@ export function DataTable<T extends Record<string, any>>({
                   <Typography color="text.secondary">
                     {emptyStateMessage}
                   </Typography>
-                ) : (
+                ) : emptyStateMessage ? (
                   emptyStateMessage
+                ) : (
+                  <Typography color="text.secondary">
+                    {t('comun.sinDatos')}
+                  </Typography>
                 )}
               </Box>
             </Grid>
@@ -661,7 +678,7 @@ export function DataTable<T extends Record<string, any>>({
               }
             }}
             rowsPerPageOptions={pagination.pageSizeOptions ?? [5, 10, 15, 20]}
-            labelRowsPerPage="Por página:"
+            labelRowsPerPage={t('comun.porPagina')}
             labelDisplayedRows={({ from, to, count }) =>
               `${from}–${to} de ${count}`
             }

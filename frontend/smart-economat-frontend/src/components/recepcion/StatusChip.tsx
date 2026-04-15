@@ -5,40 +5,48 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import FiberNewIcon from '@mui/icons-material/FiberNew';
+import { useTranslation } from 'react-i18next';
 
 interface StatusChipProps {
   status: string;
 }
 
 const StatusChip: React.FC<StatusChipProps> = ({ status }) => {
+  const { t } = useTranslation();
   let color: 'success' | 'warning' | 'info' | 'error' | 'default' = 'default';
   let icon = null;
+  let label: string;
 
-  // Limpiar emojis residuales que hayan quedado oxidados en el localStorage del navegador
-  let cleanStatus = status.replace(/✅|⚠️|🔵|❌|🆕/g, '').trim();
+  const cleanStatus = status.replace(/✅|⚠️|🔵|❌|🆕/g, '').trim();
 
   if (cleanStatus === 'OK') {
     color = 'success';
     icon = <CheckCircleIcon fontSize="small" />;
+    label = t('recepcion.estadoLinea.ok');
   } else if (cleanStatus === 'Parcial') {
     color = 'warning';
     icon = <WarningAmberIcon fontSize="small" />;
+    label = t('recepcion.estadoLinea.parcial');
   } else if (cleanStatus === 'Exceso') {
     color = 'info';
     icon = <InfoOutlinedIcon fontSize="small" />;
+    label = t('recepcion.estadoLinea.exceso');
   } else if (cleanStatus === 'No entregado') {
     color = 'error';
     icon = <ErrorOutlineIcon fontSize="small" />;
+    label = t('recepcion.estadoLinea.noEntregado');
   } else if (cleanStatus.toLowerCase() === 'nuevo') {
     color = 'success';
     icon = <FiberNewIcon fontSize="small" />;
-    cleanStatus = 'Nuevo';
+    label = t('recepcion.estadoLinea.nuevo');
+  } else {
+    label = cleanStatus;
   }
 
   return (
     <Chip
       icon={icon || undefined}
-      label={cleanStatus}
+      label={label}
       size="small"
       color={color}
       variant="outlined"

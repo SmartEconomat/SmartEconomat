@@ -29,6 +29,13 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
 
+/**
+ * Service responsible for inventory management operations including creating,
+ * updating, querying, and soft-deleting inventory items, as well as performing
+ * manual stock adjustments with full audit trail via movements.
+ *
+ * @class InventarioService
+ */
 @Injectable()
 export class InventarioService {
   constructor(
@@ -39,6 +46,16 @@ export class InventarioService {
     private readonly dataSource: DataSource
   ) {}
 
+  /**
+   * Creates a new inventory item for a given product-provider relation and location.
+   * Automatically registers an ENTRADA movement for audit purposes.
+   *
+   * @param {CreateInventarioItemDto} dto - DTO containing inventory creation details.
+   * @param {string} userId - The ID of the user performing the creation.
+   * @returns {Promise<Inventario>} The newly created inventory entity.
+   * @throws {NotFoundException} When the product-provider relation is not found.
+   * @throws {BadRequestException} When a database constraint violation occurs.
+   */
   async create(
     dto: CreateInventarioItemDto,
     userId: string
@@ -107,6 +124,14 @@ export class InventarioService {
     }
   }
 
+  /**
+   * Retrieves a paginated list of inventory items.
+   * Admin and Super Admin users can also see soft-deleted records.
+   *
+   * @param {PaginationQueryDto} query - Pagination and sorting parameters.
+   * @param {string} [userRole] - The role of the requesting user; admins see deleted records.
+   * @returns {Promise<PaginatedResponseDto<Inventario>>} Paginated inventory data.
+   */
   async findAll(
     query: PaginationQueryDto,
     userRole?: string
@@ -141,6 +166,15 @@ export class InventarioService {
     };
   }
 
+  /**
+   * Retrieves a single inventory item by its ID, including related product, provider, and location.
+   * Admin and Super Admin users can also retrieve soft-deleted records.
+   *
+   * @param {string} id - The UUID of the inventory item.
+   * @param {string} [userRole] - The role of the requesting user; admins can see deleted records.
+   * @returns {Promise<Inventario>} The found inventory entity.
+   * @throws {NotFoundException} When no inventory item is found for the given ID.
+   */
   async findOne(id: string, userRole?: string): Promise<Inventario> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
@@ -162,6 +196,17 @@ export class InventarioService {
     return inventario;
   }
 
+  /**
+   * Updates an existing inventory item. If the quantity changes, registers a corresponding
+   * ENTRADA or SALIDA movement for audit purposes.
+   *
+   * @param {string} id - The UUID of the inventory item to update.
+   * @param {UpdateInventarioDto} dto - DTO with the fields to update.
+   * @param {string} userId - The ID of the user performing the update.
+   * @returns {Promise<Inventario>} The updated inventory entity.
+   * @throws {NotFoundException} When the inventory item or product-provider is not found.
+   * @throws {BadRequestException} When a database constraint violation occurs.
+   */
   async update(
     id: string,
     dto: UpdateInventarioDto,
@@ -260,6 +305,14 @@ export class InventarioService {
     return this.findOne(id);
   }
 
+  /**
+   * Soft-deletes an inventory item and registers a SALIDA movement for the remaining stock.
+   *
+   * @param {string} id - The UUID of the inventory item to remove.
+   * @param {string} userId - The ID of the user performing the deletion.
+   * @returns {Promise<void>}
+   * @throws {NotFoundException} When the inventory item is not found.
+   */
   async remove(id: string, userId: string): Promise<void> {
     const inventario = await this.findOne(id);
     const result = await this.inventarioRepository.softDelete(id);
@@ -285,6 +338,11 @@ export class InventarioService {
     );
   }
 
+  /**
+   * Retrieves inventory items with expiry dates that are approaching.
+   *
+   * @returns {Promise<AlertaCaducidadDTO[]>} List of expiry alert DTOs with item ID and expiry date.
+   */
   async obtenerAlertasCaducidad(): Promise<AlertaCaducidadDTO[]> {
     const productos = await this.inventarioRepository.findCaducidadProxima();
     return productos
@@ -295,6 +353,11 @@ export class InventarioService {
       }));
   }
 
+  /**
+   * Retrieves inventory items whose current stock is at or below the minimum threshold.
+   *
+   * @returns {Promise<AlertaStockDTO[]>} List of low-stock alert DTOs with product and location info.
+   */
   async obtenerAlertasStock(): Promise<AlertaStockDTO[]> {
     const items = await this.inventarioRepository.findStockBajo();
     return items.map((item) => ({
@@ -308,12 +371,31 @@ export class InventarioService {
     }));
   }
 
+  /**
+   * Queries stock levels either consolidated across locations or broken down by location,
+   * depending on the provided query parameters.
+   *
+   * @param {InventoryQueryDto} dto - Query parameters specifying filters and grouping mode.
+   * @returns {Promise<StockPorUbicacionDto[] | StockConsolidadoDto[]>} Stock data grouped by location or consolidated.
+   */
   async queryStock(
     dto: InventoryQueryDto
   ): Promise<StockPorUbicacionDto[] | StockConsolidadoDto[]> {
     return this.inventarioRepository.queryStock(dto);
   }
 
+  /**
+   * Performs a manual stock adjustment on an inventory item within a pessimistic-write
+   * transaction to prevent race conditions. Records the adjustment as an audited movement.
+   *
+   * @param {CreateMovimientoManualDto} dto - DTO specifying the adjustment amount, type, reason, and optional observations.
+   * @param {string} userId - The ID of the user performing the adjustment.
+   * @returns {Promise<Inventario>} The updated inventory entity after the adjustment.
+   * @throws {NotFoundException} When the inventory item is not found.
+   * @throws {ConflictException} When the inventory item has been soft-deleted or the adjustment would result in negative stock.
+   * @throws {BadRequestException} When the adjustment is zero, or the sign does not match the movement type.
+   * @throws {BadRequestException} When a database constraint violation occurs.
+   */
   async ajustarManual(
     dto: CreateMovimientoManualDto,
     userId: string
@@ -341,7 +423,7 @@ export class InventarioService {
 
         if (inventario.deletedAt) {
           throw new ConflictException(
-            'No se puede ajustar un inventario eliminado. Recarga la vista para trabajar con lotes activos.'
+            I18nHelper.getError('INVENTARIO_DELETED_CANNOT_ADJUST')
           );
         }
 
@@ -351,7 +433,7 @@ export class InventarioService {
           inventario.ajustarCantidad(dto.ajuste);
         } catch {
           throw new ConflictException(
-            'El ajuste manual dejaría el stock en negativo'
+            I18nHelper.getError('INVENTARIO_ADJUSTMENT_WOULD_BE_NEGATIVE')
           );
         }
 
@@ -403,6 +485,16 @@ export class InventarioService {
     }
   }
 
+  /**
+   * Validates the consistency of a manual adjustment DTO, ensuring the adjustment
+   * value and movement type are coherent (e.g. ENTRADA must be positive, SALIDA_AJUSTE negative).
+   *
+   * @param {CreateMovimientoManualDto} dto - The manual adjustment DTO to validate.
+   * @returns {void}
+   * @throws {BadRequestException} When the adjustment is zero.
+   * @throws {BadRequestException} When an ENTRADA movement has a negative adjustment.
+   * @throws {BadRequestException} When a SALIDA_AJUSTE movement has a positive adjustment.
+   */
   private validarConsistenciaAjusteManual(
     dto: CreateMovimientoManualDto
   ): void {
@@ -427,6 +519,14 @@ export class InventarioService {
     }
   }
 
+  /**
+   * Maps a TipoMovimientoManual enum value to the corresponding TipoMovimiento value
+   * used in the movement audit trail.
+   *
+   * @param {TipoMovimientoManual} tipo - The manual movement type.
+   * @returns {TipoMovimiento} The corresponding audit movement type.
+   * @throws {BadRequestException} When the provided type is not a recognized manual movement type.
+   */
   private mapManualTipoToMovimiento(
     tipo: TipoMovimientoManual
   ): TipoMovimiento {
@@ -444,6 +544,15 @@ export class InventarioService {
     }
   }
 
+  /**
+   * Builds a human-readable description string for a manual inventory adjustment movement.
+   *
+   * @param {string} productoNombre - The name of the product being adjusted.
+   * @param {number} cantidadAnterior - The stock quantity before the adjustment.
+   * @param {number} cantidadActual - The stock quantity after the adjustment.
+   * @param {CreateMovimientoManualDto} dto - The adjustment DTO providing the reason and optional observations.
+   * @returns {string} A formatted description string for the movement record.
+   */
   private buildManualAdjustmentDescription(
     productoNombre: string,
     cantidadAnterior: number,

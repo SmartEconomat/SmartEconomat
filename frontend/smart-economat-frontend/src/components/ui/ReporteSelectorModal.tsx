@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Button,
@@ -46,12 +47,22 @@ const TITLES: Record<TipoReportePdf, Record<ReporteFormato, string>> = {
   },
 };
 
+/**
+ * Modal para seleccionar el rango de fechas y opciones de un reporte
+ * (pedidos o incidencias) y descargarlo en formato PDF o Excel.
+ *
+ * @param props.isOpen - Controla la visibilidad del modal.
+ * @param props.onClose - Callback para cerrar el modal.
+ * @param props.tipo - Tipo de reporte: `'pedido'` o `'incidencias'`.
+ * @param props.formato - Formato de descarga: `'pdf'` (por defecto) o `'excel'`.
+ */
 const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
   isOpen,
   onClose,
   tipo,
   formato = 'pdf',
 }) => {
+  const { t } = useTranslation();
   const toast = useToast();
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -97,10 +108,10 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
 
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
-    if (!startDate) errs.startDate = 'La fecha de inicio es obligatoria';
-    if (!endDate) errs.endDate = 'La fecha de fin es obligatoria';
+    if (!startDate) errs.startDate = t('reporte.fechaInicioObligatoria');
+    if (!endDate) errs.endDate = t('reporte.fechaFinObligatoria');
     if (startDate && endDate && dayjs(startDate).isAfter(dayjs(endDate))) {
-      errs.endDate = 'La fecha de fin debe ser posterior a la de inicio';
+      errs.endDate = t('reporte.fechaFinInvalida');
     }
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
@@ -135,8 +146,8 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
       }
       toast.success(
         isExcelMode
-          ? 'Excel generado correctamente.'
-          : 'Reporte generado correctamente.'
+          ? t('reporte.excelGenerado')
+          : t('reporte.reporteGenerado')
       );
       onClose();
     } catch (err: unknown) {
@@ -144,8 +155,8 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
         err instanceof Error
           ? err.message
           : isExcelMode
-            ? 'Error al generar el Excel.'
-            : 'Error al generar el reporte.';
+            ? t('reporte.errorExcel')
+            : t('reporte.errorReporte');
       toast.error(message);
     } finally {
       setIsDownloading(false);
@@ -165,7 +176,7 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
         <DatePicker
-          label="Fecha de inicio"
+          label={t('reporte.fechaInicio')}
           name="startDate"
           value={startDate}
           onChange={(_, val) => {
@@ -181,7 +192,7 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
         )}
 
         <DatePicker
-          label="Fecha de fin"
+          label={t('reporte.fechaFin')}
           name="endDate"
           value={endDate}
           onChange={(_, val) => {
@@ -197,23 +208,23 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
         )}
 
         <FormControl fullWidth sx={{ mt: 1.5, mb: 0.5 }}>
-          <InputLabel>Proveedor (opcional)</InputLabel>
+          <InputLabel>{t('reporte.proveedorOpcional')}</InputLabel>
           <Select
             value={proveedorId}
             onChange={(e) => setProveedorId(e.target.value as string)}
-            label="Proveedor (opcional)"
+            label={t('reporte.proveedorOpcional')}
             disabled={isLoadingProveedores}
           >
-            <MenuItem value="">Todos los proveedores</MenuItem>
+            <MenuItem value="">{t('reporte.todosProveedores')}</MenuItem>
             {isLoadingProveedores && (
               <MenuItem disabled value="_loading">
                 <CircularProgress size={16} sx={{ mr: 1 }} />
-                Cargando proveedores...
+                {t('comun.cargando')}
               </MenuItem>
             )}
             {!isLoadingProveedores && proveedores.length === 0 && (
               <MenuItem disabled value="_empty">
-                No se encontraron proveedores
+                {t('reporte.sinProveedores')}
               </MenuItem>
             )}
             {proveedores.map((p) => (
@@ -236,7 +247,7 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
               }
               label={
                 <Typography variant="body2">
-                  Incluir pedidos cancelados
+                  {t('reporte.incluirCancelados')}
                 </Typography>
               }
             />
@@ -250,7 +261,7 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
               }
               label={
                 <Typography variant="body2">
-                  Una página por proveedor
+                  {t('reporte.paginaPorProveedor')}
                 </Typography>
               }
             />
@@ -269,7 +280,7 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
             }
             label={
               <Typography variant="body2">
-                Solo incidencias no resueltas
+                {t('reporte.soloNoResueltas')}
               </Typography>
             }
           />
@@ -283,7 +294,7 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
             onClick={handleClose}
             disabled={isDownloading}
           >
-            Cancelar
+            {t('comun.cancelar')}
           </Button>
           <Button
             variant={isExcelMode ? 'outlined' : 'contained'}
@@ -301,10 +312,10 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
             disabled={isDownloading}
           >
             {isDownloading
-              ? 'Generando...'
+              ? t('reporte.generando')
               : isExcelMode
-                ? 'Generar Excel'
-                : 'Generar PDF'}
+                ? t('reporte.generarExcel')
+                : t('reporte.generarPdf')}
           </Button>
         </Box>
       </Box>

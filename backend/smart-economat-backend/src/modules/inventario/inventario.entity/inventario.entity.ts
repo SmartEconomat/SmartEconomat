@@ -27,9 +27,11 @@ import { Ubicacion } from '../../ubicacion/ubicacion.entity/ubicacion.entity';
 @Check(`"cantidad_minima" >= 0`)
 @Check(`"cantidad_maxima" IS NULL OR "cantidad_maxima" >= "cantidad_minima"`)
 export class Inventario extends BaseEntity {
+  /** Foreign key referencing the ProductoProveedor whose stock this row represents. */
   @Column({ name: 'producto_proveedor_id' })
   productoProveedorId!: string;
 
+  /** Foreign key referencing the Ubicacion where this stock lot is stored. */
   @Column({ name: 'ubicacion_id' })
   ubicacionId!: string;
 

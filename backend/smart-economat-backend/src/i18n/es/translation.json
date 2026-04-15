@@ -38,6 +38,7 @@
     "INVALID_CREDENTIALS": "Credenciales incorrectas",
     "INVALID_DATA": "Los datos proporcionados no son válidos",
     "INVALID_OLD_PASSWORD": "La contraseña actual no es correcta",
+    "NEW_PASSWORD_MUST_DIFFER_FROM_CURRENT": "La nueva contraseña debe ser diferente a la actual",
     "INVALID_STATE": "Estado inválido",
     "INVENTARIO_CONSTRAINT_VIOLATION": "Violación de restricción: verifique que cantidad_maxima >= cantidad_minima y que las cantidades no sean negativas",
     "MANUAL_ADJUSTMENT_CANNOT_BE_ZERO": "El ajuste manual no puede ser 0",
@@ -125,7 +126,13 @@
     "INVALID_SORT_FIELD": "Campo de ordenación inválido: \"{sortBy}\". Campos permitidos: {allowedFields}",
     "INVALID_EAN13_PREFIX": "El prefijo debe contener solo dígitos y tener como máximo 12 caracteres",
     "CANNOT_CONVERT_TO_NUMBER": "El valor '{value}' no puede ser convertido a número",
-    "EMAIL_SEND_FAILED": "No se pudo enviar el correo de recuperación"
+    "EMAIL_SEND_FAILED": "No se pudo enviar el correo de recuperación",
+    "PASSWORD_RESET_SUBJECT": "Recuperación de contraseña - SmartEconomat",
+    "PREPARACION_NOT_FOUND": "Preparación no encontrada",
+    "PREPARACION_CANNOT_START": "No se puede iniciar una preparación en estado {estado}",
+    "PREPARACION_MUST_BE_IN_PROCESS": "Solo se pueden finalizar preparaciones EN_PROCESO. Estado actual: {estado}",
+    "PREPARACION_MISSING_DESTINATION": "Se requiere una ubicación de destino para finalizar la preparación",
+    "PREPARACION_ALREADY_COMPLETED": "No se puede cancelar una preparación ya completada"
   },
   "success": {
     "CREATED": "Creado exitosamente",

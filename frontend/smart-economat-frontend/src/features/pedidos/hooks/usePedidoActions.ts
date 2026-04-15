@@ -39,6 +39,14 @@ interface UsePedidoActionsParams {
   onBatchCreated?: (batch: PurchaseBatch) => void;
 }
 
+/**
+ * @description Custom hook that provides all mutating actions for the pedidos feature:
+ * save, delete, approve, cancel, fetch details, consolidate, and start reception.
+ * @param params - Callbacks for reloading data and reacting to side-effects
+ * @returns Object with action callbacks and their individual loading flags
+ * @example
+ * const { savePedido, deletePedidoById, isSaving } = usePedidoActions({ reload, discardDraft });
+ */
 export function usePedidoActions({
   reload,
   discardDraft,

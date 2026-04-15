@@ -9,30 +9,36 @@ import { validate } from 'class-validator';
 import { I18nHelper } from '../helpers/i18n.helper';
 
 /**
- * NormalizeDataPipe
+ * @description Global NestJS pipe for automatic normalisation of incoming request data.
  *
- * Pipe global para normalización automática de datos recibidos desde el frontend.
+ * This pipe runs BEFORE class-validator validation and performs the following steps:
+ * 1. Trims all string values (including nested ones).
+ * 2. Converts types (string → number, boolean, Date) via `class-transformer`.
+ * 3. Recursively normalises arrays and nested objects.
+ * 4. Validates the transformed data via `class-validator` and throws a
+ *    `BadRequestException` with a translated message on failure.
  *
- * Este pipe se ejecuta ANTES de la validación y realiza:
- * 1. Trim de todos los strings
- * 2. Conversión de tipos (string a number, boolean, Date)
- * 3. Normalización de arrays y objetos anidados
- * 4. Validación de datos transformados
- *
- * Se utiliza automáticamente en todos los endpoints gracias a la configuración
- * global en main.ts con I18nValidationPipe.
+ * Custom param decorators (`metadata.type === 'custom'`) and primitives are passed
+ * through unchanged.
  *
  * @example
- *
- *
- * @Post()
- * create(@Body(NormalizeDataPipe) dto: CreateUsuarioDto) {
- *
+ * \@Post()
+ * create(\@Body(NormalizeDataPipe) dto: CreateUsuarioDto) {
  *   return this.service.create(dto);
  * }
  */
 @Injectable()
 export class NormalizeDataPipe implements PipeTransform<unknown> {
+  /**
+   * @description Transforms and validates the incoming pipeline value. Bypasses
+   * normalisation for custom param types and primitives. When a DTO metatype is
+   * available it uses `plainToInstance` + `validate` for type coercion and constraint
+   * checking. Falls back to recursive object normalisation for plain objects and arrays.
+   * @param value - The raw value injected by NestJS (body, query, param, etc.).
+   * @param metadata - Argument metadata describing the parameter type and metatype.
+   * @returns The normalised (and validated) value.
+   * @throws {BadRequestException} If class-validator reports constraint violations on the transformed DTO.
+   */
   async transform(
     value: unknown,
     metadata: ArgumentMetadata
@@ -83,7 +89,11 @@ export class NormalizeDataPipe implements PipeTransform<unknown> {
   }
 
   /**
-   * Normaliza un objeto recursivamente
+   * @description Recursively normalises a plain object or array. For each string
+   * value (including object keys) a `trim()` is applied. Nested objects and arrays
+   * are processed recursively. Non-string, non-object primitives are left unchanged.
+   * @param obj - The object or array to normalise.
+   * @returns The normalised object, array, or primitive value.
    */
   private normalizeObject(obj: object): unknown {
     if (!obj || typeof obj !== 'object') {

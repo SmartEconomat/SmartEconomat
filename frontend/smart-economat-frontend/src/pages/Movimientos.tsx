@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -39,9 +40,20 @@ type MovimientosLocationState = {
   prefillTypes?: TipoMovimiento[];
 };
 
+/**
+ * Capitalises the first character of a string and replaces underscores with spaces.
+ * @param text - The input string.
+ * @returns The capitalised string.
+ */
 const capitalize = (text: string) =>
   text.charAt(0).toUpperCase() + text.slice(1).replace(/_/g, ' ');
 
+/**
+ * Extracts the product name from a Movimiento row, checking both direct
+ * and nested productoProveedor relationships.
+ * @param row - The movimiento record.
+ * @returns The product name or an em-dash when not found.
+ */
 const getMovimientoNombreProducto = (row: Movimiento) => {
   return (
     row.productoProveedor?.producto?.nombre ||
@@ -50,7 +62,13 @@ const getMovimientoNombreProducto = (row: Movimiento) => {
   );
 };
 
+/**
+ * Movimientos page component.
+ * Displays a paginated, filterable table of all stock movement history
+ * with a detail modal and links to related distribution records.
+ */
 const Movimientos: React.FC = () => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const canList = usePermission(PERMISSIONS.movimientos.listar);
   const navigate = useNavigate();
@@ -101,6 +119,10 @@ const Movimientos: React.FC = () => {
     navigate(location.pathname, { replace: true, state: null });
   }, [location.pathname, location.state, navigate]);
 
+  /**
+   * Fetches the current page of movimientos from the API, applying all
+   * active filters and search terms.
+   */
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -132,6 +154,11 @@ const Movimientos: React.FC = () => {
     loadData();
   }, [loadData]);
 
+  /**
+   * Returns the appropriate MUI icon component for a given movement type.
+   * @param tipo - The TipoMovimiento enum value.
+   * @returns A JSX icon element.
+   */
   const getMovementIcon = (tipo: TipoMovimiento) => {
     switch (tipo) {
       case TipoMovimiento.ENTRADA:
@@ -155,7 +182,7 @@ const Movimientos: React.FC = () => {
     () => [
       {
         id: 'createdAt',
-        label: 'Fecha',
+        label: t('movimientos.columns.fecha'),
         render: (row: Movimiento) => (
           <Box>
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
@@ -173,9 +200,9 @@ const Movimientos: React.FC = () => {
       },
       {
         id: 'tipo',
-        label: 'Tipo',
+        label: t('movimientos.columns.tipo'),
         render: (row: Movimiento) => (
-          <Tooltip title={capitalize(row.tipo)}>
+          <Tooltip title={t(`movimientos.tipos.${row.tipo}`)}>
             <StatusChip
               status={row.tipo}
               icon={getMovementIcon(row.tipo)}
@@ -193,7 +220,7 @@ const Movimientos: React.FC = () => {
       },
       {
         id: 'cantidad',
-        label: 'Cant.',
+        label: t('movimientos.columns.cantidad'),
         render: (row: Movimiento) => {
           const isNegative =
             row.tipo === TipoMovimiento.SALIDA ||
@@ -216,7 +243,7 @@ const Movimientos: React.FC = () => {
       },
       {
         id: 'producto',
-        label: 'Descripción',
+        label: t('movimientos.columns.descripcion'),
         render: (row: Movimiento) => (
           <Box>
             <Typography variant="body2" sx={{ fontWeight: 500 }}>
@@ -242,7 +269,7 @@ const Movimientos: React.FC = () => {
       },
       {
         id: 'usuario',
-        label: 'Usuario',
+        label: t('movimientos.columns.usuario'),
         render: (row: Movimiento) => {
           const displayName = getMovimientoUsuarioDisplayName(row.usuario);
 
@@ -271,20 +298,29 @@ const Movimientos: React.FC = () => {
         responsiveDisplay: { xs: 'none', sm: 'table-cell' },
       },
     ],
-    [theme]
+    [theme, t]
   );
 
+  /**
+   * Opens the detail modal for a specific movimiento row.
+   * @param row - The movimiento record to display.
+   */
   const handleViewClick = (row: Movimiento) => {
     setItemToView(row);
   };
 
+  /**
+   * Renders the action buttons for a movimiento row in the DataTable.
+   * @param row - The movimiento record.
+   * @returns A JSX element containing the action buttons.
+   */
   const renderActions = (row: Movimiento) => (
     <Stack direction="row" spacing={0.5} justifyContent="center">
-      <Tooltip title="Ver detalle">
+      <Tooltip title={t('movimientos.verDetalle')}>
         <IconButton
           onClick={() => handleViewClick(row)}
           size="small"
-          aria-label="Ver detalle"
+          aria-label={t('movimientos.verDetalle')}
           sx={{ color: 'text.secondary' }}
         >
           <VisibilityIcon fontSize="small" />
@@ -293,32 +329,39 @@ const Movimientos: React.FC = () => {
     </Stack>
   );
 
+  /**
+   * Builds the section definitions for the DetailModal when a movimiento is
+   * selected for viewing. Returns an empty array when nothing is selected.
+   */
   const detailSections = useMemo(() => {
     if (!itemToView) return [];
 
     return [
       {
-        title: 'Información General',
+        title: t('movimientos.detalle.general'),
         fields: [
-          { label: 'Tipo', value: capitalize(itemToView.tipo) },
           {
-            label: 'Cantidad',
+            label: t('movimientos.columns.tipo'),
+            value: t(`movimientos.tipos.${itemToView.tipo}`),
+          },
+          {
+            label: t('movimientos.columns.cantidad'),
             value:
               itemToView.cantidad > 0
                 ? `+${itemToView.cantidad}`
                 : itemToView.cantidad.toString(),
           },
           {
-            label: 'Fecha',
+            label: t('movimientos.columns.fecha'),
             value: new Date(itemToView.createdAt).toLocaleString(),
           },
         ],
       },
       {
-        title: 'Contexto',
+        title: t('movimientos.detalle.contexto'),
         fields: [
           {
-            label: 'Producto / Descripción',
+            label: t('movimientos.detalle.productoDescripcion'),
             value:
               getMovimientoNombreProducto(itemToView) ||
               itemToView.descripcion ||
@@ -326,18 +369,24 @@ const Movimientos: React.FC = () => {
             fullWidth: true,
           },
           {
-            label: 'Usuario',
+            label: t('movimientos.columns.usuario'),
             value: getMovimientoUsuarioDisplayName(itemToView.usuario),
           },
         ],
       },
       {
-        title: 'Seguimiento',
+        title: t('movimientos.detalle.seguimiento'),
         fields: [
-          { label: 'Lote', value: itemToView.inventario?.lote || '—' },
-          { label: 'Origen (Entidad)', value: itemToView.entidad || '—' },
           {
-            label: 'ID Entidad',
+            label: t('movimientos.detalle.lote'),
+            value: itemToView.inventario?.lote || '—',
+          },
+          {
+            label: t('movimientos.detalle.origenEntidad'),
+            value: itemToView.entidad || '—',
+          },
+          {
+            label: t('movimientos.detalle.idEntidad'),
             value: itemToView.entidadId || '—',
             fullWidth: true,
           },
@@ -346,6 +395,10 @@ const Movimientos: React.FC = () => {
     ];
   }, [itemToView]);
 
+  /**
+   * Builds optional action buttons shown at the bottom of the detail modal.
+   * Currently provides a navigation button for distribution-origin movements.
+   */
   const detailActions = useMemo(() => {
     if (!itemToView?.entidadId) {
       return null;
@@ -365,7 +418,7 @@ const Movimientos: React.FC = () => {
             setItemToView(null);
           }}
         >
-          Ver Distribución
+          {t('movimientos.verDistribucion')}
         </Button>
       );
     }
@@ -376,9 +429,9 @@ const Movimientos: React.FC = () => {
   return (
     <Box>
       <PageToolbar
-        title="Historial de Movimientos"
+        title={t('movimientos.titulo')}
         totalItems={totalItems}
-        totalItemsLabel="movimientos"
+        totalItemsLabel={t('movimientos.totalItemsLabel')}
         searchValue={searchTerm}
         onSearchChange={(val) => {
           setSearchTerm(val);
@@ -410,7 +463,7 @@ const Movimientos: React.FC = () => {
           <Box sx={{ py: 8, textAlign: 'center' }}>
             <HistoryIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
             <Typography variant="h6" color="text.secondary" gutterBottom>
-              No hay movimientos
+              {t('movimientos.empty.noMovimientos')}
             </Typography>
             <Typography
               variant="body2"
@@ -421,8 +474,8 @@ const Movimientos: React.FC = () => {
               filters.types.length > 0 ||
               filters.startDate ||
               filters.endDate
-                ? 'No se encontraron movimientos que coincidan con los filtros seleccionados.'
-                : 'Aún no se han registrado alteraciones de inventario en el sistema.'}
+                ? t('movimientos.empty.noResultados')
+                : t('movimientos.empty.noRegistros')}
             </Typography>
           </Box>
         }
@@ -440,8 +493,10 @@ const Movimientos: React.FC = () => {
       <DetailModal
         isOpen={!!itemToView}
         onClose={() => setItemToView(null)}
-        title="Detalle del Movimiento"
-        subtitle={`ID: ${itemToView?.id || ''}`}
+        title={t('movimientos.detalle.titulo')}
+        subtitle={
+          itemToView ? t('movimientos.detalle.id', { id: itemToView.id }) : ''
+        }
         size="md"
         sections={detailSections}
         actions={detailActions}

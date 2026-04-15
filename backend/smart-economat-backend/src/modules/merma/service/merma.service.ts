@@ -33,6 +33,10 @@ const MOVIMIENTOS_REFERENCIA_MERMA: TipoMovimiento[] = [
   TipoMovimiento.PRODUCCION_RESULTADO,
 ];
 
+/**
+ * Internal command object used by registerMerma to encapsulate all data
+ * required to record a waste (merma) event.
+ */
 interface MermaCommand {
   productoId: string;
   cantidad: number;
@@ -45,6 +49,9 @@ interface MermaCommand {
   idempotencyKey?: string;
 }
 
+/**
+ * Response shape returned by the getKpis method, containing waste KPI aggregates.
+ */
 export interface MermaKpiResponse {
   ventana: {
     startDate?: string;
@@ -68,10 +75,25 @@ export interface MermaKpiResponse {
   }>;
 }
 
+/**
+ * Service responsible for managing waste (merma) events including recording,
+ * inventory deduction, KPI aggregation, and idempotent creation.
+ *
+ * @class MermaService
+ */
 @Injectable()
 export class MermaService {
   private readonly logger = new Logger(MermaService.name);
 
+  /**
+   * Creates an instance of MermaService.
+   *
+   * @param {Repository<Merma>} mermaRepository - TypeORM repository for Merma entities.
+   * @param {Repository<Producto>} productoRepository - TypeORM repository for Producto entities.
+   * @param {Repository<ProduccionLote>} produccionLoteRepository - TypeORM repository for ProduccionLote entities.
+   * @param {Repository<RecetaIngrediente>} recetaIngredienteRepository - TypeORM repository for RecetaIngrediente entities.
+   * @param {DataSource} dataSource - TypeORM DataSource used for transactional operations and raw queries.
+   */
   constructor(
     @InjectRepository(Merma)
     private readonly mermaRepository: Repository<Merma>,
@@ -84,6 +106,18 @@ export class MermaService {
     private readonly dataSource: DataSource
   ) {}
 
+  /**
+   * Records a generic waste event, deducts the specified quantity from inventory using FEFO,
+   * and emits a high-value warning log if the quantity exceeds the configured threshold.
+   *
+   * @param {CreateMermaDto} dto - DTO containing product ID, quantity, reason, and optional metadata.
+   * @param {string} userId - ID of the authenticated user registering the waste.
+   * @returns {Promise<Merma>} The created merma record with product and user relations loaded.
+   * @throws {NotFoundException} When the referenced product does not exist.
+   * @throws {BadRequestException} When there is insufficient stock to cover the merma quantity.
+   * @example
+   * const merma = await mermaService.create(createMermaDto, userId);
+   */
   async create(dto: CreateMermaDto, userId: string): Promise<Merma> {
     const merma = await this.registerMerma(
       {
@@ -105,6 +139,19 @@ export class MermaService {
     return merma;
   }
 
+  /**
+   * Records a waste event linked to a specific production batch (ProduccionLote).
+   * Validates that the product belongs to the recipe's ingredient list before registering.
+   *
+   * @param {CreateMermaProduccionDto} dto - DTO containing produccionLoteId, productoId, quantity, and optional metadata.
+   * @param {string} userId - ID of the authenticated user registering the waste.
+   * @returns {Promise<Merma>} The created merma record with product and user relations loaded.
+   * @throws {NotFoundException} When the production batch does not exist.
+   * @throws {BadRequestException} When the product is not an ingredient of the batch's recipe,
+   *   or when there is insufficient stock.
+   * @example
+   * const merma = await mermaService.createFromProduccion(dto, userId);
+   */
   async createFromProduccion(
     dto: CreateMermaProduccionDto,
     userId: string
@@ -151,6 +198,14 @@ export class MermaService {
     return merma;
   }
 
+  /**
+   * Returns a paginated list of all waste records with product and user relations.
+   *
+   * @param {PaginationQueryDto} query - Pagination and sorting parameters (max limit 50).
+   * @returns {Promise<PaginatedResponseDto<Merma>>} Paginated collection of merma records.
+   * @example
+   * const result = await mermaService.findAll({ page: 1, limit: 20, sortBy: 'createdAt', order: 'DESC' });
+   */
   async findAll(
     query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Merma>> {
@@ -175,6 +230,15 @@ export class MermaService {
     };
   }
 
+  /**
+   * Retrieves a single waste record by its UUID.
+   *
+   * @param {string} id - UUID v7 of the merma to retrieve.
+   * @returns {Promise<Merma>} The found merma with product and user relations loaded.
+   * @throws {NotFoundException} When no merma exists with the given ID.
+   * @example
+   * const merma = await mermaService.findOne('019c9b4f-74f8-7a6e-8b5b-96191c30c1e5');
+   */
   async findOne(id: string): Promise<Merma> {
     const merma = await this.mermaRepository.findOne({
       where: { id },
@@ -188,6 +252,17 @@ export class MermaService {
     return merma;
   }
 
+  /**
+   * Calculates aggregated KPI metrics for waste events within an optional date range and product filter.
+   * Returns total events, quantity lost, reference quantity (from incoming movements), percentage waste,
+   * breakdown by waste type, and breakdown by context (origin entity).
+   *
+   * @param {MermaKpiQueryDto} query - Optional filters: startDate, endDate, productoId.
+   * @returns {Promise<MermaKpiResponse>} Aggregated waste KPI data.
+   * @throws {BadRequestException} When startDate or endDate are invalid ISO dates, or start > end.
+   * @example
+   * const kpis = await mermaService.getKpis({ startDate: '2026-01-01', endDate: '2026-03-31' });
+   */
   async getKpis(query: MermaKpiQueryDto): Promise<MermaKpiResponse> {
     const { startDate, endDate, productoId } = query;
     const dateRange = this.resolveDateRange(startDate, endDate);
@@ -304,6 +379,13 @@ export class MermaService {
     };
   }
 
+  /**
+   * Returns summary statistics for waste records grouped by reason (motivo) and by product.
+   *
+   * @returns {Promise<{ porMotivo: unknown[]; porProducto: unknown[] }>} Aggregated waste stats.
+   * @example
+   * const stats = await mermaService.getStats();
+   */
   async getStats(): Promise<{ porMotivo: unknown[]; porProducto: unknown[] }> {
     const porMotivo = await this.mermaRepository
       .createQueryBuilder('m')
@@ -331,6 +413,17 @@ export class MermaService {
     return { porMotivo, porProducto };
   }
 
+  /**
+   * Core private method that handles idempotent merma registration within a transaction.
+   * Checks for existing records by idempotency key before proceeding, consumes inventory
+   * using FEFO ordering, creates the merma entity, and saves the corresponding movement records.
+   *
+   * @param {MermaCommand} command - Command object containing all data needed to register the merma.
+   * @param {string} userId - ID of the user performing the action.
+   * @returns {Promise<Merma>} The created or existing merma record.
+   * @throws {NotFoundException} When the referenced product does not exist.
+   * @throws {BadRequestException} When there is insufficient stock.
+   */
   private async registerMerma(
     command: MermaCommand,
     userId: string
@@ -416,6 +509,17 @@ export class MermaService {
     }
   }
 
+  /**
+   * Consumes inventory lots for a given product in FEFO order (earliest expiry, then earliest entry)
+   * using a pessimistic write lock. Reduces the cantidadActual of each lot as needed.
+   *
+   * @param {EntityManager} manager - The active transaction EntityManager.
+   * @param {string} productoId - ID of the product whose inventory must be consumed.
+   * @param {number} cantidad - Total quantity to deduct from inventory.
+   * @param {string} productoNombre - Human-readable product name used in error messages.
+   * @returns {Promise<Array<{ inventario: Inventario; descontar: number }>>} List of lots consumed with the amount deducted from each.
+   * @throws {BadRequestException} When the total available stock is less than the requested quantity.
+   */
   private async consumeInventoryByProduct(
     manager: EntityManager,
     productoId: string,
@@ -468,6 +572,16 @@ export class MermaService {
     return consumos;
   }
 
+  /**
+   * Creates MERMA-type movement records for each inventory lot consumed during the waste event.
+   *
+   * @param {EntityManager} manager - The active transaction EntityManager.
+   * @param {Array<{ inventario: Inventario; descontar: number }>} consumos - List of consumed lots with deducted amounts.
+   * @param {Merma} merma - The parent merma entity that caused these movements.
+   * @param {string} productoNombre - Human-readable product name used in movement descriptions.
+   * @param {string} userId - ID of the user performing the action.
+   * @returns {Promise<void>}
+   */
   private async createMermaMovements(
     manager: EntityManager,
     consumos: Array<{ inventario: Inventario; descontar: number }>,
@@ -491,6 +605,12 @@ export class MermaService {
     await manager.save(Movimiento, movimientos);
   }
 
+  /**
+   * Infers the TipoMerma value from a given MotivoMerma when no explicit type is provided.
+   *
+   * @param {MotivoMerma} motivo - The reason for the waste event.
+   * @returns {TipoMerma} The inferred waste type.
+   */
   private resolveTipoMerma(motivo: MotivoMerma): TipoMerma {
     switch (motivo) {
       case MotivoMerma.ROTURA:
@@ -504,6 +624,12 @@ export class MermaService {
     }
   }
 
+  /**
+   * Looks up an existing merma record by its idempotency key.
+   *
+   * @param {string} key - The idempotency key to search for.
+   * @returns {Promise<Merma | null>} The existing merma if found, or null.
+   */
   private async findByIdempotencyKey(key: string): Promise<Merma | null> {
     return this.mermaRepository.findOne({
       where: { idempotencyKey: key },
@@ -511,6 +637,13 @@ export class MermaService {
     });
   }
 
+  /**
+   * Determines whether a caught error is a PostgreSQL unique constraint violation (code 23505).
+   * Used to handle idempotent creation race conditions gracefully.
+   *
+   * @param {unknown} error - The error thrown during the database operation.
+   * @returns {boolean} True if the error is a unique violation, false otherwise.
+   */
   private isUniqueViolation(error: unknown): boolean {
     if (!(error instanceof QueryFailedError)) {
       return false;
@@ -523,6 +656,16 @@ export class MermaService {
     return withDriverError.driverError?.code === '23505';
   }
 
+  /**
+   * Parses and validates optional start/end date strings, returning Date objects.
+   * Adjusts the end date to the last millisecond of the day (23:59:59.999).
+   *
+   * @param {string} [startDate] - Optional ISO date string for the start of the range.
+   * @param {string} [endDate] - Optional ISO date string for the end of the range.
+   * @returns {{ start?: Date; end?: Date }} Validated and adjusted date range.
+   * @throws {BadRequestException} When startDate or endDate is not a valid ISO date,
+   *   or when startDate is after endDate.
+   */
   private resolveDateRange(
     startDate?: string,
     endDate?: string
@@ -554,6 +697,12 @@ export class MermaService {
     return { start, end };
   }
 
+  /**
+   * Emits a WARN-level security log when a merma's quantity meets or exceeds the high-value threshold.
+   *
+   * @param {Merma} merma - The merma entity that was just created.
+   * @param {string} userId - ID of the user who registered the waste.
+   */
   private logHighValueMerma(merma: Merma, userId: string): void {
     if (merma.cantidad >= MERMA_UMBRAL_ALTO) {
       this.logger.warn(

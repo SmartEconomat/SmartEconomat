@@ -9,6 +9,7 @@ import dayjs from 'dayjs';
 import { Box, Alert, Paper } from '@mui/material';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
+import { useTranslation } from 'react-i18next';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import DynamicFormModal from '../components/ui/DynamicFormModal';
 import { ModalCloseReason } from '../components/ui/Modal';
@@ -63,6 +64,11 @@ interface PedidoActionTarget {
   numeroGlobal?: string | number;
 }
 
+/**
+ * @description Strips auto-generated weekly batch observation text from an order's notes.
+ * @param observaciones - The raw observations string from the order.
+ * @returns The sanitised string, or empty string if it matches the auto-generated pattern.
+ */
 const sanitizePedidoObservation = (observaciones?: string) => {
   if (!observaciones) return '';
   return /^Lote semanal generado desde/i.test(observaciones)
@@ -70,6 +76,12 @@ const sanitizePedidoObservation = (observaciones?: string) => {
     : observaciones;
 };
 
+/**
+ * @description Determines whether the given pedido form values represent an editable order.
+ * New orders, pending purchase batches, and pending user orders are editable.
+ * @param itemToEdit - The current form values, or null if no order is being edited.
+ * @returns True if the order form should be in edit mode; false for read-only.
+ */
 const isEditablePedidoForm = (itemToEdit: PedidoFormValues | null): boolean => {
   if (!itemToEdit?.id) {
     return true;
@@ -85,7 +97,13 @@ const isEditablePedidoForm = (itemToEdit: PedidoFormValues | null): boolean => {
   );
 };
 
+/**
+ * @description Page component for managing orders (pedidos) and purchase batches.
+ * Supports weekly board view, list view, draft recovery, approvals, cancellations, and exports.
+ * @returns The Pedidos React page element.
+ */
 const Pedidos: React.FC = () => {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [itemToDelete, setItemToDelete] = useState<Pedido | null>(null);
@@ -123,6 +141,10 @@ const Pedidos: React.FC = () => {
   const canEdit = usePermission(PERMISSIONS.pedidos.editar);
   const canDelete = usePermission(PERMISSIONS.pedidos.eliminar);
   const canCreate = usePermission(PERMISSIONS.pedidos.crear);
+
+  /**
+   * @description Memoised permissions object built from the user's individual permission flags.
+   */
   const permissions: PedidoPermissions = useMemo(
     () => buildPedidoPermissions(canCreate, canEdit, canDelete),
     [canCreate, canDelete, canEdit]
@@ -160,6 +182,10 @@ const Pedidos: React.FC = () => {
     misPedidosStatus,
   });
 
+  /**
+   * @description Memoised filtered data for the "mis pedidos" tab based on the selected status.
+   * Falls back to the full data array when not on the own-orders tab.
+   */
   const ownOrdersData = useMemo(() => {
     if (!isOwnOrdersTab) return data;
 
@@ -187,6 +213,10 @@ const Pedidos: React.FC = () => {
       : totalItems;
   const isItemToEditEditable = isEditablePedidoForm(itemToEdit);
 
+  /**
+   * @description Exports the current filtered order list as an Excel file.
+   * @returns Promise that resolves when the download is initiated.
+   */
   const handleExportExcel = useCallback(async () => {
     const query = new URLSearchParams();
     if (searchTerm.trim()) {
@@ -232,6 +262,9 @@ const Pedidos: React.FC = () => {
     },
   });
 
+  /**
+   * @description Memoised dynamic form schema for the pedido editor, derived from the item being edited.
+   */
   const pedidoSchema = useMemo(() => getPedidoSchema(itemToEdit), [itemToEdit]);
 
   useEffect(() => {
@@ -254,6 +287,11 @@ const Pedidos: React.FC = () => {
     }
   }, [draft, isLoadingDraft, isRecoveryOpen, itemToEdit]);
 
+  /**
+   * @description Checks whether the given form values contain enough content to be saved as a draft.
+   * @param vals - The current form values object.
+   * @returns True if there are product lines or non-empty observations.
+   */
   const hasDraftableContent = useCallback((vals: Record<string, unknown>) => {
     const lines = (vals.pedidoProductos as unknown[]) || [];
     const observations = (vals.observaciones as string) || '';
@@ -264,12 +302,20 @@ const Pedidos: React.FC = () => {
     );
   }, []);
 
+  /**
+   * @description Clears the current pedido editor state and closes the draft-close confirm dialog.
+   */
   const closePedidoEditor = useCallback(() => {
     setItemToEdit(null);
     setIsDraftCloseConfirmOpen(false);
     latestValsRef.current = {};
   }, []);
 
+  /**
+   * @description Handles form value changes in the pedido editor. Auto-saves a draft
+   * whenever draftable content exists and the form is for a new (unsaved) order.
+   * @param vals - The current form values object.
+   */
   const handleValuesChange = useCallback(
     (vals: Record<string, unknown>) => {
       latestValsRef.current = vals;
@@ -285,6 +331,12 @@ const Pedidos: React.FC = () => {
     [hasDraftableContent, itemToEdit?.id, saveDraft]
   );
 
+  /**
+   * @description Handles the modal close action for the pedido editor.
+   * For new orders with content, shows the draft-close confirm dialog or flushes the draft
+   * on backdrop click. Existing orders close immediately.
+   * @param reason - The reason the modal was closed (e.g. 'backdropClick').
+   */
   const handleCloseModal = useCallback(
     (reason?: ModalCloseReason) => {
       if (!itemToEdit?.id) {
@@ -311,6 +363,9 @@ const Pedidos: React.FC = () => {
     [closePedidoEditor, flushSave, hasDraftableContent, itemToEdit?.id]
   );
 
+  /**
+   * @description Flushes any draftable content to the draft store and then closes the editor.
+   */
   const handleSaveDraftAndClose = useCallback(() => {
     const vals = latestValsRef.current;
 
@@ -321,11 +376,20 @@ const Pedidos: React.FC = () => {
     closePedidoEditor();
   }, [closePedidoEditor, flushSave, hasDraftableContent]);
 
+  /**
+   * @description Discards the current draft and closes the pedido editor.
+   */
   const handleDiscardDraftAndClose = useCallback(() => {
     void discardDraft();
     closePedidoEditor();
   }, [closePedidoEditor, discardDraft]);
 
+  /**
+   * @description Builds PedidoFormValues from a fully-loaded batch detail, normalising
+   * the pedidoProductos array for use in the editor form.
+   * @param detail - The fully-loaded PedidoBatchDetail object.
+   * @returns A PedidoFormValues object suitable for the editor form's initialData.
+   */
   const buildBatchEditData = useCallback(
     (detail: PedidoBatchDetail): PedidoFormValues => {
       const batch = detail.data;
@@ -359,11 +423,18 @@ const Pedidos: React.FC = () => {
     []
   );
 
+  /**
+   * @description Opens the new pedido editor form, marking the draft prompt as already shown.
+   */
   const openNewPedidoForm = useCallback(() => {
     setItemToEdit({ targetType: 'pedido_usuario' });
     hasPromptedRef.current = true;
   }, []);
 
+  /**
+   * @description Handles the "create new order" button click. If a draft exists, shows a
+   * warning dialog; otherwise directly opens the new pedido form.
+   */
   const handleCreateClick = useCallback(() => {
     if (draft) {
       setIsNewPedidoWarningOpen(true);
@@ -373,6 +444,9 @@ const Pedidos: React.FC = () => {
     openNewPedidoForm();
   }, [draft, openNewPedidoForm]);
 
+  /**
+   * @description Restores the saved draft into the editor and closes the recovery/warning dialogs.
+   */
   const handleRecoverDraft = useCallback(() => {
     if (draft) {
       setItemToEdit(draft.payload as PedidoFormValues);
@@ -381,11 +455,19 @@ const Pedidos: React.FC = () => {
     setIsNewPedidoWarningOpen(false);
   }, [draft]);
 
+  /**
+   * @description Discards the saved draft and closes the recovery dialog.
+   */
   const handleDiscardDraft = useCallback(() => {
     void discardDraft();
     setIsRecoveryOpen(false);
   }, [discardDraft]);
 
+  /**
+   * @description Submits the pedido editor form by calling savePedido and then closing the editor.
+   * @param formData - The submitted form values.
+   * @returns Promise that resolves when the order is saved.
+   */
   const handleSave = useCallback(
     async (formData: Record<string, unknown>) => {
       await savePedido(formData as PedidoFormValues);
@@ -394,12 +476,20 @@ const Pedidos: React.FC = () => {
     [savePedido]
   );
 
+  /**
+   * @description Confirms deletion of the currently selected pedido.
+   * @returns Promise that resolves when deletion is complete.
+   */
   const handleDeleteConfirm = useCallback(async () => {
     if (!itemToDelete) return;
     await deletePedidoById(itemToDelete.id);
     setItemToDelete(null);
   }, [deletePedidoById, itemToDelete]);
 
+  /**
+   * @description Confirms approval of the currently selected pedido or purchase batch.
+   * @returns Promise that resolves when the approval is complete.
+   */
   const handleAceptarConfirm = useCallback(async () => {
     if (!itemToAceptar) return;
     if (itemToAceptar.targetType === 'purchase_batch') {
@@ -410,11 +500,17 @@ const Pedidos: React.FC = () => {
     setItemToAceptar(null);
   }, [approvePedidoById, approvePurchaseBatchById, itemToAceptar]);
 
+  /**
+   * @description Handles submission of the cancellation form, extracting the motivo and
+   * calling the appropriate cancel API (batch or pedido_usuario).
+   * @param formData - Form values containing optional motivoCancelacion.
+   * @returns Promise that resolves when the cancellation is complete.
+   */
   const handleCancelarSubmit = useCallback(
     async (formData: Record<string, unknown>) => {
       if (!itemToCancelar) return;
       const motivo =
-        (formData.motivoCancelacion as string) || 'Cancelado por el usuario';
+        (formData.motivoCancelacion as string) || t('pedidos.cancelar.motivoPorDefecto');
       if (itemToCancelar.targetType === 'purchase_batch') {
         await cancelPurchaseBatchById(itemToCancelar.id, motivo);
       } else {
@@ -422,9 +518,15 @@ const Pedidos: React.FC = () => {
       }
       setItemToCancelar(null);
     },
-    [cancelPedidoById, cancelPurchaseBatchById, itemToCancelar]
+    [cancelPedidoById, cancelPurchaseBatchById, itemToCancelar, t]
   );
 
+  /**
+   * @description Fetches the full detail of a batch or pedido_usuario by ID and opens the detail modal.
+   * @param id - The UUID of the order or batch.
+   * @param entityType - Whether the entity is a 'purchase_batch' or 'pedido_usuario'.
+   * @returns Promise that resolves when the detail is loaded.
+   */
   const handleViewBatch = useCallback(
     async (id: string, entityType: PedidoDetailEntityType) => {
       const fullBatch = await fetchBatchDetail(id, entityType);
@@ -433,6 +535,10 @@ const Pedidos: React.FC = () => {
     [fetchBatchDetail]
   );
 
+  /**
+   * @description Closes the batch detail modal and opens the batch editor form.
+   * @param detail - The PedidoBatchDetail to edit.
+   */
   const handleEditBatch = useCallback(
     (detail: PedidoBatchDetail) => {
       setItemToViewBatch(null);
@@ -441,6 +547,12 @@ const Pedidos: React.FC = () => {
     [buildBatchEditData]
   );
 
+  /**
+   * @description Fetches the full batch detail and opens the editor form, closing any open detail views.
+   * @param batchId - The UUID of the batch to open.
+   * @param entityType - The entity type of the batch.
+   * @returns Promise that resolves when the batch is loaded and the editor opened.
+   */
   const handleOpenBatchEditor = useCallback(
     async (batchId: string, entityType: PedidoDetailEntityType) => {
       const fullBatch = await fetchBatchDetail(batchId, entityType);
@@ -451,6 +563,11 @@ const Pedidos: React.FC = () => {
     [buildBatchEditData, fetchBatchDetail]
   );
 
+  /**
+   * @description Builds a PedidoActionTarget from a batch detail for use in approve/cancel dialogs.
+   * @param detail - The PedidoBatchDetail to extract action target data from.
+   * @returns A PedidoActionTarget with id, targetType, proveedorNombre, fechaPedido, and numeroGlobal.
+   */
   const buildBatchActionTarget = useCallback(
     (detail: PedidoBatchDetail): PedidoActionTarget => {
       const providerNames = Array.from(
@@ -466,7 +583,7 @@ const Pedidos: React.FC = () => {
           id: detail.data.id,
           targetType: detail.entityType,
           proveedorNombre:
-            providerNames.length > 0 ? providerNames.join(', ') : 'Pedido',
+            providerNames.length > 0 ? providerNames.join(', ') : t('pedidos.pedidoFallback'),
           fechaPedido: detail.data.createdAt,
           numeroGlobal:
             detail.data.numeroLote || detail.data.numeroGlobal || undefined,
@@ -477,14 +594,20 @@ const Pedidos: React.FC = () => {
         id: detail.data.id,
         targetType: detail.entityType,
         proveedorNombre:
-          providerNames.length > 0 ? providerNames.join(', ') : 'Pedido',
+          providerNames.length > 0 ? providerNames.join(', ') : t('pedidos.pedidoFallback'),
         fechaPedido: detail.data.fechaPedido,
         numeroGlobal: detail.data.numeroGlobal,
       };
     },
-    []
+    [t]
   );
 
+  /**
+   * @description Consolidates a list of pedido_usuario IDs into a weekly purchase batch.
+   * @param pedidoUsuarioIds - Array of pedido_usuario UUIDs to consolidate.
+   * @param weekLabel - Human-readable label for the week used in the batch observation.
+   * @returns Promise that resolves when consolidation is complete.
+   */
   const handleConsolidateWeek = useCallback(
     async (pedidoUsuarioIds: string[], weekLabel: string) => {
       await consolidatePedidosByIds(
@@ -495,6 +618,10 @@ const Pedidos: React.FC = () => {
     [consolidatePedidosByIds]
   );
 
+  /**
+   * @description Memoised event handler map passed down to table and board components.
+   * Covers view, edit, delete, approve, cancel, and delivery date actions.
+   */
   const handlers = useMemo(
     () => ({
       onView: (pedido: PedidoListItem) => {
@@ -553,7 +680,7 @@ const Pedidos: React.FC = () => {
         draft={draft}
         isLoadingDraft={isLoadingDraft}
         totalItems={visibleTotalItems}
-        totalItemsLabel={isBatchTab ? 'compras' : 'pedidos'}
+        totalItemsLabel={isBatchTab ? t('pedidos.totalItemsLabelCompras') : t('pedidos.totalItemsLabel')}
         searchTerm={searchTerm}
         viewMode={viewMode}
         onSearchChange={(value) => {
@@ -565,7 +692,7 @@ const Pedidos: React.FC = () => {
         onContinueDraftClick={handleRecoverDraft}
         extraActions={[
           {
-            label: 'Reporte PDF',
+            label: t('pedidos.acciones.reportePdf'),
             onClick: () => setIsReporteOpen(true),
             icon: <PictureAsPdfIcon />,
             id: 'btn-reporte-pedidos-pdf',
@@ -573,7 +700,7 @@ const Pedidos: React.FC = () => {
             variant: 'outlined',
           },
           {
-            label: 'Exportar Excel',
+            label: t('pedidos.acciones.exportarExcel'),
             onClick: () => {
               void handleExportExcel();
             },
@@ -663,20 +790,18 @@ const Pedidos: React.FC = () => {
           isOpen={!!itemToDelete}
           onClose={() => !isDeleting && setItemToDelete(null)}
           onConfirm={() => void handleDeleteConfirm()}
-          title="Eliminar pedido"
+          title={t('pedidos.confirm.eliminarTitulo')}
           message={
             <>
-              ¿Estás seguro de que deseas eliminar el pedido del{' '}
-              <strong>
-                {itemToDelete?.fechaPedido
+              {t('pedidos.confirm.eliminarMensaje', {
+                fecha: itemToDelete?.fechaPedido
                   ? dayjs(itemToDelete.fechaPedido).format('DD/MM/YYYY')
-                  : ''}
-              </strong>
-              ? Esta acción no se puede deshacer.
+                  : '',
+              })}
             </>
           }
-          confirmText="Sí, eliminar"
-          cancelText="Cancelar"
+          confirmText={t('pedidos.confirm.eliminarConfirm')}
+          cancelText={t('comun.cancelar')}
           isLoading={isDeleting}
         />
 
@@ -684,37 +809,33 @@ const Pedidos: React.FC = () => {
           isOpen={!!itemToAceptar}
           onClose={() => !isAceptando && setItemToAceptar(null)}
           onConfirm={() => void handleAceptarConfirm()}
-          title="Aprobar Pedido"
+          title={t('pedidos.confirm.aprobarTitulo')}
           message={
             <>
               {itemToAceptar?.targetType === 'purchase_batch' ? (
                 <>
-                  ¿Estás seguro de que deseas tramitar la compra{' '}
-                  <strong>
-                    {itemToAceptar?.numeroGlobal
+                  {t('pedidos.confirm.aprobarCompra', {
+                    numero: itemToAceptar?.numeroGlobal
                       ? `#${itemToAceptar.numeroGlobal} `
-                      : ''}
-                  </strong>
-                  ({formatPedidoId(itemToAceptar?.id)})? La compra avanzará a su
-                  siguiente estado operativo.
+                      : '',
+                    id: formatPedidoId(itemToAceptar?.id),
+                  })}
                 </>
               ) : (
                 <>
-                  ¿Estás seguro de que deseas aprobar el pedido{' '}
-                  <strong>
-                    {itemToAceptar?.numeroGlobal
+                  {t('pedidos.confirm.aprobarPedido', {
+                    numero: itemToAceptar?.numeroGlobal
                       ? `#${itemToAceptar.numeroGlobal} `
-                      : ''}
-                    ({formatPedidoId(itemToAceptar?.id)})
-                  </strong>{' '}
-                  al proveedor <strong>{itemToAceptar?.proveedorNombre}</strong>
-                  ? Pasará a estar "En Proceso" y se considerará tramitado.
+                      : '',
+                    id: formatPedidoId(itemToAceptar?.id),
+                    proveedor: itemToAceptar?.proveedorNombre,
+                  })}
                 </>
               )}
             </>
           }
-          confirmText="Sí, Aprobar"
-          cancelText="Cancelar"
+          confirmText={t('pedidos.confirm.aprobarConfirm')}
+          cancelText={t('comun.cancelar')}
           isLoading={isAceptando}
           confirmColor="success"
         />
@@ -724,14 +845,14 @@ const Pedidos: React.FC = () => {
           onClose={() => !isCancelando && setItemToCancelar(null)}
           title={
             itemToCancelar?.targetType === 'purchase_batch'
-              ? `Cancelar Compra: ${formatPedidoId(itemToCancelar?.id)}`
-              : `Cancelar Pedido: ${itemToCancelar?.proveedorNombre || ''}`
+              ? t('pedidos.cancelar.tituloCompra', { id: formatPedidoId(itemToCancelar?.id) })
+              : t('pedidos.cancelar.tituloPedido', { proveedor: itemToCancelar?.proveedorNombre || '' })
           }
           size="sm"
           fields={[
             {
               name: 'motivoCancelacion',
-              label: 'Motivo de Cancelación (Opcional)',
+              label: t('pedidos.cancelar.motivoLabel'),
               type: 'text',
               width: 12,
               required: false,
@@ -749,17 +870,33 @@ const Pedidos: React.FC = () => {
           title={
             itemToEdit?.targetType === 'purchase_batch'
               ? isItemToEditEditable
-                ? `Editar Compra ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)}`
-                : `Detalles de la Compra ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)} (Solo lectura)`
+                ? t('pedidos.editor.editarCompra', {
+                    numero: itemToEdit?.numeroGlobal
+                      ? `#${itemToEdit.numeroGlobal}`
+                      : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id),
+                  })
+                : t('pedidos.editor.detallesCompra', {
+                    numero: itemToEdit?.numeroGlobal
+                      ? `#${itemToEdit.numeroGlobal}`
+                      : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id),
+                  })
               : itemToEdit?.targetType === 'pedido_usuario'
                 ? isItemToEditEditable
-                  ? `Editar Pedido ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)}`
-                  : `Detalles del Pedido ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)} (Solo lectura)`
+                  ? t('pedidos.editor.editarPedidoUsuario', {
+                      numero: itemToEdit?.numeroGlobal
+                        ? `#${itemToEdit.numeroGlobal}`
+                        : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id),
+                    })
+                  : t('pedidos.editor.detallesPedidoUsuario', {
+                      numero: itemToEdit?.numeroGlobal
+                        ? `#${itemToEdit.numeroGlobal}`
+                        : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id),
+                    })
                 : itemToEdit?.id
                   ? isItemToEditEditable
-                    ? 'Editar Pedido'
-                    : 'Detalles del Pedido (Solo lectura)'
-                  : 'Crear Nuevo Pedido'
+                    ? t('pedidos.editor.editarPedido')
+                    : t('pedidos.editor.detallesPedido')
+                  : t('pedidos.editor.crearNuevo')
           }
           size="lg"
           fields={pedidoSchema}
@@ -770,14 +907,14 @@ const Pedidos: React.FC = () => {
           isSubmitting={isSaving}
           onValuesChange={handleValuesChange}
           requireConfirmation={isItemToEditEditable}
-          submitLabel={isItemToEditEditable ? 'Guardar' : 'Cerrar'}
-          cancelLabel={isItemToEditEditable ? 'Cancelar' : ''}
+          submitLabel={isItemToEditEditable ? t('comun.guardar') : t('comun.cerrar')}
+          cancelLabel={isItemToEditEditable ? t('comun.cancelar') : ''}
           confirmationMessage={
             itemToEdit?.id
               ? itemToEdit.targetType === 'purchase_batch'
-                ? '¿Estás seguro de que deseas guardar los cambios en esta compra?'
-                : '¿Estás seguro de que deseas guardar los cambios en este pedido?'
-              : '¿Estás seguro de que deseas registrar este nuevo pedido?'
+                ? t('pedidos.confirm.guardarCompra')
+                : t('pedidos.confirm.guardarPedido')
+              : t('pedidos.confirm.registrarNuevo')
           }
         />
 
@@ -824,29 +961,21 @@ const Pedidos: React.FC = () => {
           isOpen={isRecoveryOpen}
           onClose={() => setIsRecoveryOpen(false)}
           onConfirm={handleRecoverDraft}
-          title="Recuperar Pedido Pendiente"
+          title={t('pedidos.recovery.titulo')}
           message={
             <>
-              Tienes un pedido que no llegaste a finalizar el día{' '}
-              <strong>
-                {dayjs(draft?.updatedAt).isValid()
+              {t('pedidos.recovery.mensaje', {
+                fecha: dayjs(draft?.updatedAt).isValid()
                   ? dayjs(draft?.updatedAt).format('DD/MM/YYYY')
-                  : '...'}
-              </strong>{' '}
-              a las{' '}
-              <strong>
-                {dayjs(draft?.updatedAt).isValid()
+                  : '...',
+                hora: dayjs(draft?.updatedAt).isValid()
                   ? dayjs(draft?.updatedAt).format('HH:mm')
-                  : '...'}
-              </strong>
-              .
-              <br />
-              <br />
-              ¿Deseas recuperarlo y continuar donde lo dejaste?
+                  : '...',
+              })}
             </>
           }
-          confirmText="Sí, Recuperar"
-          cancelText="No, Descartar"
+          confirmText={t('pedidos.recovery.confirmar')}
+          cancelText={t('pedidos.recovery.cancelar')}
           confirmColor="primary"
           onCancel={handleDiscardDraft}
         />
@@ -858,24 +987,18 @@ const Pedidos: React.FC = () => {
             setIsNewPedidoWarningOpen(false);
             openNewPedidoForm();
           }}
-          title="Ya tienes un pedido pendiente"
+          title={t('pedidos.borradorExistente.titulo')}
           message={
             <>
-              Ya existe un borrador de pedido guardado del día{' '}
-              <strong>
-                {dayjs(draft?.updatedAt).isValid()
+              {t('pedidos.borradorExistente.mensaje', {
+                fecha: dayjs(draft?.updatedAt).isValid()
                   ? dayjs(draft?.updatedAt).format('DD/MM/YYYY')
-                  : '...'}
-              </strong>
-              . Si empiezas uno nuevo y se guarda, el borrador pendiente se
-              reemplazará.
-              <br />
-              <br />
-              ¿Qué quieres hacer?
+                  : '...',
+              })}
             </>
           }
-          confirmText="Crear nuevo pedido"
-          cancelText="Continuar borrador"
+          confirmText={t('pedidos.borradorExistente.confirmar')}
+          cancelText={t('pedidos.borradorExistente.cancelar')}
           confirmColor="warning"
           onCancel={handleRecoverDraft}
         />
@@ -884,10 +1007,10 @@ const Pedidos: React.FC = () => {
           isOpen={isDraftCloseConfirmOpen}
           onClose={() => setIsDraftCloseConfirmOpen(false)}
           onConfirm={handleSaveDraftAndClose}
-          title="¿Qué quieres hacer con este pedido?"
-          message="Si lo guardas en borrador, podrás retomarlo más tarde. Si cancelas ahora, se descartará el pedido pendiente."
-          confirmText="Guardar en borrador"
-          cancelText="Cancelar pedido"
+          title={t('pedidos.cerrarEditor.titulo')}
+          message={t('pedidos.cerrarEditor.mensaje')}
+          confirmText={t('pedidos.cerrarEditor.confirmar')}
+          cancelText={t('pedidos.cerrarEditor.cancelar')}
           confirmColor="primary"
           onCancel={handleDiscardDraftAndClose}
         />

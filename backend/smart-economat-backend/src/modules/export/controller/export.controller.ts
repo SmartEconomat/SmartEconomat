@@ -21,11 +21,22 @@ const XLSX_MIME =
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 const PDF_MIME = 'application/pdf';
 
+/**
+ * Controller that exposes endpoints for exporting entity data as XLSX or PDF downloads.
+ * All endpoints require JWT authentication and entity-specific list permissions.
+ * @class ExportController
+ */
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('export')
 export class ExportController {
   constructor(private readonly exportService: ExportService) {}
 
+  /**
+   * Exports the productos dataset as an XLSX file download.
+   * @param {ExportProductoFilterDto} query - Optional filter criteria for the export.
+   * @param {Response} res - Express response used to stream the file.
+   * @returns {Promise<void>}
+   */
   @Get('productos/xlsx')
   @RequirePermissions(PERMISSIONS.productos.listar)
   async exportProductos(
@@ -40,6 +51,12 @@ export class ExportController {
     await this.exportService.streamProductosToExcel(query, res);
   }
 
+  /**
+   * Exports the pedidos dataset as an XLSX file download.
+   * @param {ExportPedidoFilterDto} query - Optional filter criteria for the export.
+   * @param {Response} res - Express response used to stream the file.
+   * @returns {Promise<void>}
+   */
   @Get('pedidos/xlsx')
   @RequirePermissions(PERMISSIONS.pedidos.listar)
   async exportPedidos(
@@ -51,6 +68,12 @@ export class ExportController {
     await this.exportService.streamPedidosToExcel(query, res);
   }
 
+  /**
+   * Exports the proveedores dataset as an XLSX file download.
+   * @param {ExportProveedorFilterDto} query - Optional filter criteria for the export.
+   * @param {Response} res - Express response used to stream the file.
+   * @returns {Promise<void>}
+   */
   @Get('proveedores/xlsx')
   @RequirePermissions(PERMISSIONS.proveedores.listar)
   async exportProveedores(
@@ -65,6 +88,12 @@ export class ExportController {
     await this.exportService.streamProveedoresToExcel(query, res);
   }
 
+  /**
+   * Exports the albaranes dataset as an XLSX file download.
+   * @param {ExportAlbaranFilterDto} query - Optional filter criteria for the export.
+   * @param {Response} res - Express response used to stream the file.
+   * @returns {Promise<void>}
+   */
   @Get('albaranes/xlsx')
   @RequirePermissions(PERMISSIONS.albaranes.listar)
   async exportAlbaranes(
@@ -79,6 +108,12 @@ export class ExportController {
     await this.exportService.streamAlbaranesToExcel(query, res);
   }
 
+  /**
+   * Exports the incidencias dataset as an XLSX file download.
+   * @param {ExportIncidenciaFilterDto} query - Optional filter criteria for the export.
+   * @param {Response} res - Express response used to stream the file.
+   * @returns {Promise<void>}
+   */
   @Get('incidencias/xlsx')
   @RequirePermissions(PERMISSIONS.incidencias.listar)
   async exportIncidencias(
@@ -93,6 +128,12 @@ export class ExportController {
     await this.exportService.streamIncidenciasToExcel(query, res);
   }
 
+  /**
+   * Exports the inventario dataset as an XLSX file download.
+   * @param {ExportInventarioFilterDto} query - Optional filter criteria for the export.
+   * @param {Response} res - Express response used to stream the file.
+   * @returns {Promise<void>}
+   */
   @Get('inventario/xlsx')
   @RequirePermissions(PERMISSIONS.inventario.listar)
   async exportInventario(
@@ -107,6 +148,12 @@ export class ExportController {
     await this.exportService.streamInventarioToExcel(query, res);
   }
 
+  /**
+   * Exports the movimientos dataset as an XLSX file download.
+   * @param {ExportMovimientoFilterDto} query - Optional filter criteria for the export.
+   * @param {Response} res - Express response used to stream the file.
+   * @returns {Promise<void>}
+   */
   @Get('movimientos/xlsx')
   @RequirePermissions(PERMISSIONS.movimientos.listar)
   async exportMovimientos(
@@ -121,6 +168,12 @@ export class ExportController {
     await this.exportService.streamMovimientosToExcel(query, res);
   }
 
+  /**
+   * Exports the recepciones dataset as an XLSX file download.
+   * @param {ExportRecepcionFilterDto} query - Optional filter criteria for the export.
+   * @param {Response} res - Express response used to stream the file.
+   * @returns {Promise<void>}
+   */
   @Get('recepciones/xlsx')
   @RequirePermissions(PERMISSIONS.recepciones.listar)
   async exportRecepciones(
@@ -135,6 +188,12 @@ export class ExportController {
     await this.exportService.streamRecepcionesToExcel(query, res);
   }
 
+  /**
+   * Exports the recetas dataset as an XLSX file download.
+   * @param {ExportRecetaFilterDto} query - Optional filter criteria for the export.
+   * @param {Response} res - Express response used to stream the file.
+   * @returns {Promise<void>}
+   */
   @Get('recetas/xlsx')
   @RequirePermissions(PERMISSIONS.recetas.listar)
   async exportRecetas(
@@ -146,6 +205,12 @@ export class ExportController {
     await this.exportService.streamRecetasToExcel(query, res);
   }
 
+  /**
+   * Exports the ubicaciones dataset as an XLSX file download.
+   * @param {ExportUbicacionFilterDto} query - Optional filter criteria for the export.
+   * @param {Response} res - Express response used to stream the file.
+   * @returns {Promise<void>}
+   */
   @Get('ubicaciones/xlsx')
   @RequirePermissions(PERMISSIONS.ubicaciones.listar)
   async exportUbicaciones(
@@ -160,6 +225,12 @@ export class ExportController {
     await this.exportService.streamUbicacionesToExcel(query, res);
   }
 
+  /**
+   * Exports the usuarios dataset as an XLSX file download.
+   * @param {ExportUsuarioFilterDto} query - Optional filter criteria for the export.
+   * @param {Response} res - Express response used to stream the file.
+   * @returns {Promise<void>}
+   */
   @Get('usuarios/xlsx')
   @RequirePermissions(PERMISSIONS.usuarios.listar)
   async exportUsuarios(
@@ -174,6 +245,12 @@ export class ExportController {
     await this.exportService.streamUsuariosToExcel(query, res);
   }
 
+  /**
+   * Exports the productos dataset as a PDF file download.
+   * @param {ExportProductoFilterDto} query - Optional filter criteria for the export.
+   * @param {Response} res - Express response used to stream the file.
+   * @returns {Promise<void>}
+   */
   @Get('productos/pdf')
   @RequirePermissions(PERMISSIONS.productos.listar)
   async exportProductosPdf(
@@ -188,6 +265,12 @@ export class ExportController {
     await this.exportService.streamProductosToPdf(query, res);
   }
 
+  /**
+   * Exports the proveedores dataset as a PDF file download.
+   * @param {ExportProveedorFilterDto} query - Optional filter criteria for the export.
+   * @param {Response} res - Express response used to stream the file.
+   * @returns {Promise<void>}
+   */
   @Get('proveedores/pdf')
   @RequirePermissions(PERMISSIONS.proveedores.listar)
   async exportProveedoresPdf(
@@ -202,6 +285,12 @@ export class ExportController {
     await this.exportService.streamProveedoresToPdf(query, res);
   }
 
+  /**
+   * Exports the inventario dataset as a PDF file download.
+   * @param {ExportInventarioFilterDto} query - Optional filter criteria for the export.
+   * @param {Response} res - Express response used to stream the file.
+   * @returns {Promise<void>}
+   */
   @Get('inventario/pdf')
   @RequirePermissions(PERMISSIONS.inventario.listar)
   async exportInventarioPdf(
@@ -216,6 +305,12 @@ export class ExportController {
     await this.exportService.streamInventarioToPdf(query, res);
   }
 
+  /**
+   * Exports the pedidos dataset as a PDF file download.
+   * @param {ExportPedidoFilterDto} query - Optional filter criteria for the export.
+   * @param {Response} res - Express response used to stream the file.
+   * @returns {Promise<void>}
+   */
   @Get('pedidos/pdf')
   @RequirePermissions(PERMISSIONS.pedidos.listar)
   async exportPedidosPdf(
@@ -227,6 +322,12 @@ export class ExportController {
     await this.exportService.streamPedidosToPdf(query, res);
   }
 
+  /**
+   * Exports the albaranes dataset as a PDF file download.
+   * @param {ExportAlbaranFilterDto} query - Optional filter criteria for the export.
+   * @param {Response} res - Express response used to stream the file.
+   * @returns {Promise<void>}
+   */
   @Get('albaranes/pdf')
   @RequirePermissions(PERMISSIONS.albaranes.listar)
   async exportAlbaranesPdf(
@@ -241,6 +342,12 @@ export class ExportController {
     await this.exportService.streamAlbaranesToPdf(query, res);
   }
 
+  /**
+   * Exports the incidencias dataset as a PDF file download.
+   * @param {ExportIncidenciaFilterDto} query - Optional filter criteria for the export.
+   * @param {Response} res - Express response used to stream the file.
+   * @returns {Promise<void>}
+   */
   @Get('incidencias/pdf')
   @RequirePermissions(PERMISSIONS.incidencias.listar)
   async exportIncidenciasPdf(
@@ -255,6 +362,12 @@ export class ExportController {
     await this.exportService.streamIncidenciasToPdf(query, res);
   }
 
+  /**
+   * Exports the recetas dataset as a PDF file download.
+   * @param {ExportRecetaFilterDto} query - Optional filter criteria for the export.
+   * @param {Response} res - Express response used to stream the file.
+   * @returns {Promise<void>}
+   */
   @Get('recetas/pdf')
   @RequirePermissions(PERMISSIONS.recetas.listar)
   async exportRecetasPdf(

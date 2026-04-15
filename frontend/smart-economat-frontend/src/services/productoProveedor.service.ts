@@ -19,6 +19,16 @@ interface ApiResponse<T> {
   data: T;
 }
 
+/**
+ * @description Searches product-supplier pairings by text query, returning formatted option objects.
+ * @param {string} q - The search text (product or supplier name).
+ * @param {number} [limit=20] - Maximum number of results to return.
+ * @param {number} [offset=0] - Number of results to skip (for pagination).
+ * @returns {Promise<ProductoProveedorOption[]>} List of matching product-supplier options with display labels.
+ * @throws {Error} When the API returns an error response.
+ * @example
+ * const options = await searchProductoProveedor('leche', 10);
+ */
 export async function searchProductoProveedor(
   q: string,
   limit: number = 20,

@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Stack } from '@mui/material';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
@@ -123,6 +124,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   onSecondarySubmit,
   secondarySubmitColor = 'success',
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const formDataRef = useRef<Record<string, unknown>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -295,7 +297,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
           val === '' ||
           (Array.isArray(val) && val.length === 0);
         if (isEmpty) {
-          newErrors[field.name] = 'Este campo es obligatorio';
+          newErrors[field.name] = t('comun.campoObligatorio');
         }
       }
       // Specific validation: proveedorId must be UUID v4
@@ -303,7 +305,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
         const uuidRegex =
           /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         if (!uuidRegex.test(String(formDataRef.current[field.name]))) {
-          newErrors[field.name] = 'El ID del proveedor debe ser un UUID válido';
+          newErrors[field.name] = t('comun.uuidInvalido');
         }
       }
     });
@@ -318,11 +320,6 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
     } else {
       await onSubmit(formDataRef.current);
     }
-  };
-
-  const handleConfirmSubmit = async () => {
-    setIsConfirmOpen(false);
-    await onSubmit(formDataRef.current);
   };
 
   const handleSecondarySubmit = async (e: React.MouseEvent) => {
@@ -578,7 +575,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Tooltip title="Escanear con cámara">
+                    <Tooltip title={t('comun.escanearCamara')}>
                       <IconButton
                         size="small"
                         onClick={() => setActiveBarcodeField(name)}
@@ -602,7 +599,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                   <InputAdornment position="end">
                     <Stack direction="row" spacing={0.5}>
                       {onBarcodeGenerate && (
-                        <Tooltip title="Generar codigo EAN-13">
+                        <Tooltip title={t('comun.generarEan13')}>
                           <span>
                             <IconButton
                               size="small"
@@ -632,7 +629,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                         </Tooltip>
                       )}
                       {onOFFSearch && (
-                        <Tooltip title="Buscar en OpenFoodFacts">
+                        <Tooltip title={t('comun.buscarOpenFoodFacts')}>
                           <span>
                             <IconButton
                               size="small"
@@ -831,7 +828,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                     size="small"
                     sx={{ mt: 0, py: 1 }}
                   >
-                    {label || 'Cargar Imagen'}
+                    {label || t('comun.cargarImagen')}
                     <input
                       type="file"
                       hidden
@@ -914,14 +911,17 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
       <ConfirmDialog
         isOpen={isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}
-        onConfirm={handleConfirmSubmit}
-        title="Confirmar acción"
+        onConfirm={async () => {
+          setIsConfirmOpen(false);
+          await onSubmit(formDataRef.current);
+        }}
+        title={t('comun.confirmarAccion')}
         message={
           confirmationMessage ||
-          '¿Estás seguro de que deseas guardar estos datos?'
+          t('comun.confirmarGuardar')
         }
-        confirmText="Guardar"
-        cancelText="Cerrar"
+        confirmText={t('comun.guardar')}
+        cancelText={t('comun.cerrar')}
         confirmColor="primary"
       />
     </Modal>

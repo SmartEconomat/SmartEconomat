@@ -7,6 +7,7 @@ import {
   DialogTitle,
   Typography,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { RecepcionDraftEnvelope } from '../../services/recepcion.types';
 
 interface RecepcionDraftConflictDialogProps {
@@ -19,32 +20,35 @@ interface RecepcionDraftConflictDialogProps {
 const RecepcionDraftConflictDialog: React.FC<
   RecepcionDraftConflictDialogProps
 > = ({ open, remoteDraft, onKeepLocal, onUseRemote }) => {
+  const { t } = useTranslation();
+
   return (
     <Dialog open={open} maxWidth="sm" fullWidth>
-      <DialogTitle>Conflicto de borrador detectado</DialogTitle>
+      <DialogTitle>{t('recepcion.conflicto.titulo')}</DialogTitle>
       <DialogContent>
         <Typography sx={{ mb: 2 }}>
-          Este formulario fue actualizado desde otro dispositivo o pestaña.
+          {t('recepcion.conflicto.descripcion')}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Última versión del servidor:{' '}
+          {t('recepcion.conflicto.ultimaVersion')}{' '}
           {remoteDraft?.updatedAt
             ? new Date(remoteDraft.updatedAt).toLocaleString('es-ES')
-            : 'desconocida'}
+            : t('recepcion.conflicto.desconocida')}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          Puedes cargar el borrador remoto o sobrescribirlo con tu versión
-          local.
+          {t('recepcion.conflicto.instruccion')}
         </Typography>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onUseRemote}>Usar versión remota</Button>
+        <Button onClick={onUseRemote}>
+          {t('recepcion.conflicto.usarRemota')}
+        </Button>
         <Button
           variant="contained"
           color="warning"
           onClick={() => void onKeepLocal()}
         >
-          Sobrescribir con mi versión
+          {t('recepcion.conflicto.sobrescribir')}
         </Button>
       </DialogActions>
     </Dialog>

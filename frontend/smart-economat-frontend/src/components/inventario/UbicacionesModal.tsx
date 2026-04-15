@@ -17,19 +17,35 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { UbicacionService } from '../../services/ubicacion.service';
 import type { Ubicacion } from '../../services/ubicacion.types';
 import { useToast } from '../../store/toast.hooks';
+import { useTranslation } from 'react-i18next';
 
+/** Props for the {@link UbicacionesModal} component. */
 interface Props {
   open: boolean;
   onClose: () => void;
-  onChanged: () => void; // Triggered whenever a location is added/removed
+  /** Triggered whenever a location is added or removed. */
+  onChanged: () => void;
 }
 
+/**
+ * Modal dialog for managing warehouse locations (ubicaciones).
+ *
+ * Allows users to add new locations by name and delete existing ones.
+ * The list is reloaded from the API every time the modal is opened.
+ *
+ * @param props - {@link Props}
+ */
 const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
   const [newNombre, setNewNombre] = useState('');
   const [loading, setLoading] = useState(false);
   const toast = useToast();
+  const { t } = useTranslation();
 
+  /**
+   * Fetches all locations from the API and updates local state.
+   * Shows an error toast on failure.
+   */
   const loadUbicaciones = async () => {
     setLoading(true);
     try {
@@ -50,6 +66,10 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  /**
+   * Creates a new location with the current value of `newNombre`.
+   * Reloads the list and notifies the parent on success.
+   */
   const handleAdd = async () => {
     if (!newNombre.trim()) return;
     try {
@@ -64,6 +84,12 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
     }
   };
 
+  /**
+   * Deletes the location identified by `id`.
+   * Reloads the list and notifies the parent on success.
+   *
+   * @param id - The UUID of the location to delete.
+   */
   const handleDelete = async (id: string) => {
     try {
       await UbicacionService.remove(id);
@@ -78,11 +104,11 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Gestionar Ubicaciones</DialogTitle>
+      <DialogTitle>{t('inventario.ubicaciones.titulo')}</DialogTitle>
       <DialogContent dividers>
         <Box display="flex" gap={1} mb={3}>
           <TextField
-            label="Nueva ubicación"
+            label={t('inventario.ubicaciones.nueva')}
             size="small"
             value={newNombre}
             onChange={(e) => setNewNombre(e.target.value)}
@@ -99,15 +125,15 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
             onClick={handleAdd}
             disabled={!newNombre.trim()}
           >
-            Añadir
+            {t('comun.anadir')}
           </Button>
         </Box>
 
         {loading ? (
-          <Typography>Cargando...</Typography>
+          <Typography>{t('comun.cargando')}</Typography>
         ) : ubicaciones.length === 0 ? (
           <Typography color="text.secondary">
-            No hay ubicaciones registradas.
+            {t('inventario.ubicaciones.sinUbicaciones')}
           </Typography>
         ) : (
           <List>
@@ -138,7 +164,7 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cerrar</Button>
+        <Button onClick={onClose}>{t('comun.cerrar')}</Button>
       </DialogActions>
     </Dialog>
   );

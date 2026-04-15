@@ -26,6 +26,10 @@ import {
 } from './pedidoFormatters';
 import { isPedidoUsuarioRow } from './pedidoOwnOrders';
 
+/**
+ * @description Builds the column definitions for the main pedidos DataTable.
+ * @returns Array of Column<PedidoListItem> objects with render functions for each column
+ */
 export const buildPedidoColumns = (): Column<PedidoListItem>[] => [
   {
     id: 'pedidoId',
@@ -62,6 +66,10 @@ export const buildPedidoColumns = (): Column<PedidoListItem>[] => [
   },
 ];
 
+/**
+ * @description Builds the column definitions for the purchase batches DataTable.
+ * @returns Array of Column<PurchaseBatch> objects with render functions for each column
+ */
 export const buildBatchColumns = (): Column<PurchaseBatch>[] => [
   {
     id: 'createdAt',
@@ -91,6 +99,15 @@ export const buildBatchColumns = (): Column<PurchaseBatch>[] => [
   },
 ];
 
+/**
+ * @description Renders the inline action buttons for a pedido row.
+ * Approve, cancel, and edit buttons are shown conditionally based on permissions and order status.
+ * For non-user (internal) orders a read-only chip is shown instead.
+ * @param row - The pedido row to render actions for
+ * @param permissions - Permission flags controlling which buttons are visible
+ * @param handlers - Callbacks invoked when action buttons are clicked
+ * @returns React node containing the action buttons or status chip
+ */
 export const renderPedidoActions = (
   row: PedidoListItem,
   permissions: PedidoPermissions,
@@ -160,6 +177,12 @@ export const renderPedidoActions = (
     </Stack>
   );
 
+/**
+ * @description Renders the inline action button for a purchase batch row (initiate reception).
+ * @param row - The PurchaseBatch to render the action for
+ * @param handlers - Callbacks invoked when action buttons are clicked
+ * @returns React node containing the reception action button
+ */
 export const renderBatchActions = (
   row: PurchaseBatch,
   handlers: PurchaseBatchActionHandlers

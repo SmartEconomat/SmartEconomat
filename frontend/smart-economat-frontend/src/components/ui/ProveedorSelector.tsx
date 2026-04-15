@@ -11,6 +11,9 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Proveedor } from '../../services/proveedor.types';
 
+/**
+ * Represents a supplier association for a product, including commercial conditions.
+ */
 export interface ProveedorAsociado {
   proveedorId: string;
   nombre?: string;
@@ -19,13 +22,36 @@ export interface ProveedorAsociado {
   precioUnitario?: number;
 }
 
+/**
+ * Props for the {@link ProveedorSelector} component.
+ */
 interface ProveedorSelectorProps {
+  /** Currently associated suppliers with their commercial conditions. */
   value: ProveedorAsociado[];
+  /** Callback invoked with the updated supplier list after any add/remove/edit. */
   onChange: (value: ProveedorAsociado[]) => void;
+  /** Full catalogue of available suppliers for the autocomplete options. */
   proveedores: Proveedor[];
+  /** If `true`, all inputs are disabled. */
   disabled?: boolean;
 }
 
+/**
+ * Multi-supplier selector for products.
+ *
+ * Renders an autocomplete to add new suppliers and a list of cards for each
+ * already-associated supplier where the user can set brand, barcode, and
+ * unit purchase price. Duplicate suppliers are prevented automatically.
+ *
+ * @param props - See {@link ProveedorSelectorProps}.
+ * @returns JSX element with autocomplete and editable supplier cards.
+ * @example
+ * <ProveedorSelector
+ *   value={proveedores}
+ *   onChange={setProveedores}
+ *   proveedores={allProveedores}
+ * />
+ */
 const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
   value = [],
   onChange,

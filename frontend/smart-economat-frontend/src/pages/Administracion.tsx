@@ -24,6 +24,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import SchoolIcon from '@mui/icons-material/SchoolOutlined';
 import PeopleIcon from '@mui/icons-material/PeopleOutlined';
 import SecurityIcon from '@mui/icons-material/SecurityOutlined';
+import { useTranslation } from 'react-i18next';
 
 import ProfessorSlotsManager from '../features/profile/components/ProfessorSlotsManager';
 import { UbicacionService } from '../services/ubicacion.service';
@@ -53,6 +54,12 @@ interface TabPanelProps {
 
 import { Fade } from '@mui/material';
 
+/**
+ * Renders the content panel for a given tab, with a fade-in transition when active.
+ *
+ * @param props - Tab panel props including children, current value, panel index, and optional loading flag.
+ * @returns A div acting as a tabpanel with animated content visibility.
+ */
 function CustomTabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
   const isActive = value === index;
@@ -73,6 +80,12 @@ function CustomTabPanel(props: TabPanelProps) {
   );
 }
 
+/**
+ * Returns the accessibility props (id and aria-controls) for a tab element.
+ *
+ * @param index - The unique string key identifying the tab panel.
+ * @returns An object with `id` and `aria-controls` attributes for the tab.
+ */
 function a11yProps(index: string) {
   return {
     id: `admin-tab-${index}`,
@@ -84,8 +97,13 @@ type AdminTabKey = 'slots' | 'alumnos' | 'usuarios' | 'plantillas';
 
 /**
  * Página de Administración Académica para Profesores con Tabs.
+ * Gestiona aulas/clases, alumnos, usuarios del sistema y plantillas de roles
+ * según los permisos del usuario autenticado.
+ *
+ * @returns The full administration page with permission-based tab navigation.
  */
 const Administracion: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -134,28 +152,28 @@ const Administracion: React.FC = () => {
         canManageSlots
           ? {
               key: 'slots' as const,
-              label: 'Aulas y Clases',
+              label: t('admin.tabs.aulasClases'),
               icon: <SchoolIcon />,
             }
           : null,
         canViewStudents
           ? {
               key: 'alumnos' as const,
-              label: 'Alumnos',
+              label: t('admin.tabs.alumnos'),
               icon: <PeopleIcon />,
             }
           : null,
         isAdmin
           ? {
               key: 'usuarios' as const,
-              label: 'Gestión Usuarios',
+              label: t('admin.tabs.gestionUsuarios'),
               icon: <PeopleIcon />,
             }
           : null,
         canViewRoleTemplates
           ? {
               key: 'plantillas' as const,
-              label: 'Plantillas Roles',
+              label: t('admin.tabs.plantillasRoles'),
               icon: <SecurityIcon />,
             }
           : null,
@@ -164,7 +182,7 @@ const Administracion: React.FC = () => {
         label: string;
         icon: React.ReactElement;
       }>,
-    [canManageSlots, canViewStudents, isAdmin, canViewRoleTemplates]
+    [canManageSlots, canViewStudents, isAdmin, canViewRoleTemplates, t]
   );
 
   const initialTab = useMemo<AdminTabKey>(() => {
@@ -202,6 +220,11 @@ const Administracion: React.FC = () => {
     }
   }, [initialTab, activeTab]);
 
+  /**
+   * Loads all data required for the Aulas y Clases tab.
+   * Fetches own slots (for pure professors), all slots and professor list (for admins),
+   * and all available ubicaciones. Redirects to home if user lacks permissions.
+   */
   const loadSlotsTabData = useCallback(async () => {
     if (canViewAdmin === false) {
       navigate('/');
@@ -237,12 +260,17 @@ const Administracion: React.FC = () => {
       setLoadedTabs((prev) => ({ ...prev, slots: true }));
     } catch (loadError) {
       console.error('Error loading administración data', loadError);
-      setError('Error al cargar los datos de administración');
+      setError(t('admin.errors.cargarDatos'));
     } finally {
       setLoadingTab((current) => (current === 'slots' ? null : current));
     }
-  }, [canViewAdmin, navigate, isPureProfesor, isAdmin]);
+  }, [canViewAdmin, navigate, isPureProfesor, isAdmin, t]);
 
+  /**
+   * Loads all data required for the Alumnos tab.
+   * Fetches the professor's student list and, if not yet loaded, their slot list.
+   * Redirects to home if user lacks permissions.
+   */
   const loadStudentsTabData = useCallback(async () => {
     if (canViewAdmin === false) {
       navigate('/');
@@ -275,11 +303,11 @@ const Administracion: React.FC = () => {
       }));
     } catch (loadError) {
       console.error('Error loading administración students', loadError);
-      setError('Error al cargar los alumnos');
+      setError(t('admin.errors.cargarAlumnos'));
     } finally {
       setLoadingTab((current) => (current === 'alumnos' ? null : current));
     }
-  }, [canViewAdmin, navigate, isPureProfesor, slots.length]);
+  }, [canViewAdmin, navigate, isPureProfesor, slots.length, t]);
 
   useEffect(() => {
     if (activeTab === 'slots' && !loadedTabs.slots) {
@@ -291,6 +319,13 @@ const Administracion: React.FC = () => {
     }
   }, [activeTab, loadedTabs, loadSlotsTabData, loadStudentsTabData]);
 
+  /**
+   * Handles tab change events, updates the active tab state, syncs the URL search param,
+   * and closes slot editing mode when leaving the slots tab.
+   *
+   * @param _event - The synthetic event from the tab click (unused).
+   * @param newValue - The key of the newly selected tab.
+   */
   const handleTabChange = (
     _event: React.SyntheticEvent,
     newValue: AdminTabKey
@@ -303,10 +338,22 @@ const Administracion: React.FC = () => {
     if (newValue !== 'slots') setIsEditingSlots(false);
   };
 
+  /**
+   * Handles input changes on the new slot form fields.
+   *
+   * @param e - The change event from an input element inside the new slot form.
+   */
   const handleNewSlotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewSlot((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  /**
+   * Handles form submission to create a new aula/slot.
+   * Supports both professor self-creation and admin creation on behalf of another professor.
+   * Shows a toast on success or error, and resets the form on success.
+   *
+   * @param e - The form submit event.
+   */
   const handleCreateSlot = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
@@ -327,9 +374,7 @@ const Administracion: React.FC = () => {
           targetProfesorId = myProfile.id;
         } else if (!isPureProfesor) {
           // Si no es "puro profesor" y no tiene perfil, el backend fallará con PROFESSOR_PROFILE_NOT_FOUND
-          toast.error(
-            'No tienes un perfil de profesor vinculado. Selecciona un profesor de la lista o asegúrate de tener un perfil de profesor creado.'
-          );
+          toast.error(t('admin.errors.sinProfesorVinculado'));
           setIsSaving(false);
           return;
         }
@@ -358,19 +403,26 @@ const Administracion: React.FC = () => {
           profesorId: '',
           ubicacionId: '',
         });
-        toast.success('Aula/Clase añadida con éxito');
+        toast.success(t('admin.toast.aulaCreada'));
       } else {
-        toast.error(res.message || 'Error al crear la clase');
+        toast.error(res.message || t('admin.toast.errorCrearClase'));
       }
     } catch {
-      toast.error('Error al crear la clase');
+      toast.error(t('admin.toast.errorCrearClase'));
     } finally {
       setIsSaving(false);
     }
   };
 
+  /**
+   * Handles deletion of a slot after user confirmation.
+   * Removes the slot from the appropriate list (admin or professor) on success.
+   *
+   * @param id - The ID of the slot to delete.
+   * @param isAdminView - Whether the deletion is performed from the admin view.
+   */
   const handleDeleteSlot = async (id: string, isAdminView?: boolean) => {
-    if (!window.confirm('¿Seguro que quieres eliminar esta clase?')) return;
+    if (!window.confirm(t('admin.confirm.eliminarClase'))) return;
     try {
       const res = isAdminView
         ? await profesorService.adminDeleteSlot(id)
@@ -382,7 +434,7 @@ const Administracion: React.FC = () => {
         } else {
           setSlots((prev) => prev.filter((s) => s.id !== id));
         }
-        toast.success('Ubicación eliminada');
+        toast.success(t('admin.toast.ubicacionEliminada'));
       } else {
         toast.error(res.message || 'Error al eliminar');
       }
@@ -391,6 +443,13 @@ const Administracion: React.FC = () => {
     }
   };
 
+  /**
+   * Handles updating a slot owned by the current professor.
+   * Shows a toast on success or error.
+   *
+   * @param id - The ID of the slot to update.
+   * @param data - Partial slot data to update (excluding id and codigoSlot).
+   */
   const handleUpdateSlot = async (
     id: string,
     data: Partial<Omit<AlumnoSlot, 'id' | 'codigoSlot'>>
@@ -400,7 +459,7 @@ const Administracion: React.FC = () => {
       const res = await profesorService.updateSlot(id, data);
       if (res.success) {
         setSlots((prev) => prev.map((s) => (s.id === id ? res.data : s)));
-        toast.success('Ubicación actualizada');
+        toast.success(t('admin.toast.ubicacionActualizada'));
       } else {
         toast.error(res.message || 'Error al actualizar');
       }
@@ -411,6 +470,13 @@ const Administracion: React.FC = () => {
     }
   };
 
+  /**
+   * Handles admin-level update of any slot, including changing the assigned professor.
+   * Reloads the full slot list after a successful update to reflect professor changes.
+   *
+   * @param id - The ID of the slot to update.
+   * @param data - Partial slot data to update, optionally including a new profesorId.
+   */
   const handleAdminUpdateSlot = async (
     id: string,
     data: Partial<Omit<AlumnoSlot, 'id' | 'codigoSlot'>> & {
@@ -424,7 +490,7 @@ const Administracion: React.FC = () => {
         // Recargar todos los slots para reflejar el nuevo profesor
         const allSlotsRes = await profesorService.getAllSlots();
         if (allSlotsRes.success) setAllSlots(allSlotsRes.data);
-        toast.success('Aula actualizada correctamente');
+        toast.success(t('admin.toast.aulaActualizada'));
       } else {
         toast.error(res.message || 'Error al actualizar el aula');
       }
@@ -435,6 +501,13 @@ const Administracion: React.FC = () => {
     }
   };
 
+  /**
+   * Toggles the active/inactive status of a student.
+   * Updates the local student list with the new status returned by the API.
+   *
+   * @param id - The ID of the student whose status should be toggled.
+   * @param currentStatus - The student's current status string (e.g. 'ACTIVE' or 'INACTIVE').
+   */
   const handleToggleStudentStatus = async (
     id: string,
     currentStatus: string
@@ -449,7 +522,7 @@ const Administracion: React.FC = () => {
         setStudents((prev) =>
           prev.map((s) => (s.id === id ? { ...s, status: newStatus } : s))
         );
-        toast.success('Estado de alumno actualizado');
+        toast.success(t('admin.toast.estadoAlumnoActualizado'));
       }
     } catch {
       toast.error('Error al cambiar estado');
@@ -458,12 +531,17 @@ const Administracion: React.FC = () => {
     }
   };
 
+  /**
+   * Forces a password reset for a student and displays the new provisional password in a toast.
+   *
+   * @param id - The ID of the student whose password should be reset.
+   */
   const handleResetStudentPassword = async (id: string) => {
     try {
       const res = await profesorService.forcePasswordReset(id);
       if (res.success) {
         toast.success(
-          `Contraseña reseteada. Nueva clave: ${res.data.provisionalPassword}`,
+          t('admin.toast.contrasenaReset', { clave: res.data.provisionalPassword }),
           10000
         );
       }
@@ -472,20 +550,32 @@ const Administracion: React.FC = () => {
     }
   };
 
+  /**
+   * Handles deletion of a student after user confirmation.
+   * Removes the student from the local list on success.
+   *
+   * @param id - The ID of the student to delete.
+   */
   const handleDeleteStudent = async (id: string) => {
-    if (!window.confirm('¿Seguro que quieres eliminar a este alumno?')) return;
+    if (!window.confirm(t('admin.confirm.eliminarAlumno'))) return;
 
     try {
       const res = await profesorService.removeStudent(id);
       if (res.success) {
         setStudents((prev) => prev.filter((s) => s.id !== id));
-        toast.success('Alumno eliminado');
+        toast.success(t('admin.toast.alumnoEliminado'));
       }
     } catch {
       toast.error('No se pudo eliminar');
     }
   };
 
+  /**
+   * Shows an informational toast indicating that the permissions management feature
+   * for the given student is not yet available.
+   *
+   * @param alumno - The student object whose permissions would be managed.
+   */
   const handleManagePermissions = (alumno: Alumno) => {
     toast.info(
       `Funcionalidad de permisos para ${alumno.username} próximamente`
@@ -504,19 +594,19 @@ const Administracion: React.FC = () => {
           color="primary.main"
           sx={{ fontSize: { xs: '1.75rem', md: '2.125rem' } }}
         >
-          Administración Académica
+          {t('admin.titulo')}
         </Typography>
 
         <Typography variant="body1" color="text.secondary" sx={{ mb: 1.5 }}>
-          Gestiona tus aulas, clases y alumnos vinculados desde un solo lugar.
+          {t('admin.subtitulo')}
         </Typography>
 
         <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />}>
           <Link underline="hover" color="inherit" component={RouterLink} to="/">
-            Inicio
+            {t('admin.breadcrumb.inicio')}
           </Link>
           <Typography color="text.primary" fontWeight={500}>
-            Administración
+            {t('admin.breadcrumb.administracion')}
           </Typography>
         </Breadcrumbs>
       </Box>
@@ -546,7 +636,7 @@ const Administracion: React.FC = () => {
           <Tabs
             value={activeTab}
             onChange={handleTabChange}
-            aria-label="admin tabs"
+            aria-label={t('admin.tabs.ariaLabel')}
             variant="fullWidth"
             textColor="primary"
             indicatorColor="primary"
@@ -600,7 +690,7 @@ const Administracion: React.FC = () => {
                       width: { xs: '100%', sm: 'auto' },
                     }}
                   >
-                    {isEditingSlots ? 'Finalizar Edición' : 'Gestionar'}
+                    {isEditingSlots ? t('admin.actions.finalizarEdicion') : t('admin.actions.gestionar')}
                   </Button>
                 </Box>
               )}

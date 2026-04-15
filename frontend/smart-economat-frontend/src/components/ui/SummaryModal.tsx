@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -97,18 +98,6 @@ const DASHBOARD_PENDING_ORDER_STATES = [
   EstadoPedido.INCIDENCIA,
 ] as const;
 
-const tipoDiferenciaLabel: Record<TipoDiferencia, string> = {
-  FALTANTE: 'Faltante',
-  EXCESO: 'Exceso',
-  DEFECTUOSO: 'Defectuoso',
-};
-
-const estadoReclamacionLabel: Record<EstadoReclamacion, string> = {
-  PENDIENTE: 'Pendiente',
-  RECLAMADO: 'Reclamado',
-  ABONADO: 'Abonado',
-  REENVIADO: 'Reenviado',
-};
 
 const decimalFormatter = new Intl.NumberFormat('es-ES', {
   minimumFractionDigits: 2,
@@ -136,12 +125,24 @@ function formatCompactId(value: string | null | undefined): string {
   return value.substring(0, 8);
 }
 
+/**
+ * Modal de resumen del dashboard que muestra una lista detallada de elementos
+ * según el tipo seleccionado (productos, pedidos, incidencias, stock o proveedores).
+ *
+ * Carga los datos bajo demanda cuando el modal se abre y los limpia al cerrarse.
+ *
+ * @param props.isOpen - Controla la visibilidad del modal.
+ * @param props.onClose - Callback para cerrar el modal.
+ * @param props.type - Tipo de datos a mostrar.
+ * @param props.title - Título que se muestra en la cabecera del modal.
+ */
 const SummaryModal: React.FC<SummaryModalProps> = ({
   isOpen,
   onClose,
   type,
   title,
 }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<SummaryItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -258,7 +259,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       setData(result);
     } catch (err) {
       console.error('Error loading summary data:', err);
-      setError('No se pudo cargar la información detallada.');
+      setError(t('resumen.errorCarga'));
     } finally {
       setLoading(false);
     }
@@ -456,7 +457,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                   <Chip
                     size="small"
                     color={item.resuelta ? 'success' : 'warning'}
-                    label={item.resuelta ? 'Resuelta' : 'Pendiente'}
+                    label={item.resuelta ? 'Resuelta' : t('resumen.pendiente')}
                   />
                   <Chip
                     size="small"
@@ -480,7 +481,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 }
                 sx={{ alignSelf: 'center' }}
               >
-                {isExpanded ? 'Ocultar resumen' : 'Ver resumen'}
+                {isExpanded ? t('resumen.ocultar') : t('resumen.ver')}
               </Button>
             </Stack>
 
@@ -492,11 +493,11 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               <Stack spacing={1.5} sx={{ pt: 0.5 }}>
                 <Box>
                   <Typography variant="caption" color="text.secondary">
-                    Observaciones de recepción
+                    {t('resumen.observaciones')}
                   </Typography>
                   <Typography variant="body2">
                     {item.observacionesRecepcion ||
-                      'Sin observaciones registradas.'}
+                      t('resumen.sinObservaciones')}
                   </Typography>
                 </Box>
 
@@ -506,7 +507,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                     color="text.secondary"
                     sx={{ display: 'block', mb: 1 }}
                   >
-                    Detalle de la incidencia
+                    {t('resumen.detalleIncidencia')}
                   </Typography>
                   <Stack spacing={1}>
                     {lineas.map((linea) => (
@@ -528,7 +529,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                             <Chip
                               size="small"
                               color="error"
-                              label={tipoDiferenciaLabel[linea.tipoDiferencia]}
+                              label={t(`resumen.${linea.tipoDiferencia.toLowerCase()}`)}
                             />
                           </Stack>
                           <Typography variant="caption" color="text.secondary">
@@ -538,7 +539,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
                             Reclamación:{' '}
-                            {estadoReclamacionLabel[linea.estadoReclamacion]}
+                            {t(`resumen.${linea.estadoReclamacion.toLowerCase()}`)}
                           </Typography>
                           {linea.observaciones ? (
                             <Typography

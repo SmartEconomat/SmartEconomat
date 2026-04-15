@@ -27,7 +27,14 @@ import {
 import { eventBus, UI_EVENTS } from '../../../utils/eventBus';
 import Spinner from '../../ui/Spinner';
 import { Tooltip } from '../../ui/Tooltip';
+import { useTranslation } from 'react-i18next';
 
+/**
+ * Returns the icon element for a notification based on its priority level.
+ *
+ * @param priority - The notification priority (`'urgent'` or `'normal'`).
+ * @returns A MUI icon component coloured to indicate urgency.
+ */
 const getNotificationIcon = (priority: AppNotification['priority']) =>
   priority === 'urgent' ? (
     <WarningAmberRoundedIcon color="error" fontSize="medium" />
@@ -35,11 +42,32 @@ const getNotificationIcon = (priority: AppNotification['priority']) =>
     <PendingActionsRoundedIcon color="warning" fontSize="medium" />
   );
 
-const getNotificationLabel = (priority: AppNotification['priority']) =>
-  priority === 'urgent' ? 'Urgente' : 'Pendiente';
+/**
+ * Returns a translated badge label for a notification based on its priority.
+ *
+ * @param priority - The notification priority.
+ * @param t - The i18n translation function.
+ * @returns A human-readable label string.
+ */
+const getNotificationLabel = (
+  priority: AppNotification['priority'],
+  t: (key: string) => string
+) => (priority === 'urgent' ? t('notificaciones.urgente') : t('notificaciones.pendiente'));
 
+/**
+ * Notification center component.
+ *
+ * Renders a bell icon button in the app-bar. Clicking it opens a right-side
+ * drawer that lists all pending application notifications (e.g. pending user
+ * activations, inventory alerts). Notifications are fetched from the back-end
+ * and filtered by the current user's permissions.
+ *
+ * Also listens to the {@link UI_EVENTS.OPEN_NOTIFICATION_CENTER} event bus
+ * signal so other parts of the UI can open the panel programmatically.
+ */
 export default function NotificationCenter() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const canListUsers = usePermission(PERMISSIONS.usuarios.listar);
   const canReviewInventoryNotifications = useAnyPermission([
     PERMISSIONS.inventario.listar,
@@ -52,6 +80,10 @@ export default function NotificationCenter() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Fetches notifications from the API and updates local state.
+   * Skips the request entirely if the user has no relevant permissions.
+   */
   const loadNotifications = useCallback(async () => {
     if (!canListUsers && !canReviewInventoryNotifications) {
       setNotifications([]);
@@ -70,16 +102,18 @@ export default function NotificationCenter() {
       setNotifications(data);
     } catch (err) {
       console.error('Error loading notifications', err);
-      setError('No se pudieron cargar las notificaciones.');
+      setError(t('notificaciones.errorCarga'));
     } finally {
       setIsLoading(false);
     }
   }, [canListUsers, canReviewInventoryNotifications]);
 
+  /** Load notifications on mount and whenever permissions change. */
   useEffect(() => {
     void loadNotifications();
   }, [loadNotifications]);
 
+  /** Subscribe to the global event that requests opening this panel. */
   useEffect(() => {
     const handleOpen = () => {
       setOpen(true);
@@ -92,20 +126,27 @@ export default function NotificationCenter() {
     };
   }, [loadNotifications]);
 
+  /** Total count of all notifications, used for the bell badge. */
   const totalNotifications = useMemo(
     () => notifications.reduce((sum, item) => sum + item.count, 0),
     [notifications]
   );
 
+  /** Opens the drawer and refreshes notifications. */
   const handleOpen = () => {
     setOpen(true);
     void loadNotifications();
   };
 
+  /** Closes the drawer. */
   const handleClose = () => {
     setOpen(false);
   };
 
+  /**
+   * Navigates to the action path associated with a notification and closes the drawer.
+   * @param path - The route to navigate to.
+   */
   const handleNotificationAction = (path: string) => {
     navigate(path);
     setOpen(false);
@@ -113,11 +154,11 @@ export default function NotificationCenter() {
 
   return (
     <>
-      <Tooltip title="Abrir centro de notificaciones">
+      <Tooltip title={t('notificaciones.abrirCentro')}>
         <IconButton
           color="inherit"
           onClick={handleOpen}
-          aria-label="Notificaciones"
+          aria-label={t('notificaciones.titulo')}
         >
           <Badge badgeContent={totalNotifications} color="error" max={99}>
             <NotificationsOutlinedIcon />
@@ -173,7 +214,7 @@ export default function NotificationCenter() {
             <Box>
               <Stack direction="row" spacing={1} alignItems="center">
                 <Typography variant="h6" fontWeight={800} color="text.primary">
-                  Notificaciones
+                  {t('notificaciones.titulo')}
                 </Typography>
                 <Badge
                   badgeContent={totalNotifications}
@@ -189,11 +230,11 @@ export default function NotificationCenter() {
                 />
               </Stack>
               <Typography variant="body2" color="text.secondary">
-                Tareas y alertas que requieren tu atención.
+                {t('notificaciones.tareasYAlertas')}
               </Typography>
             </Box>
             <Stack direction="row" spacing={1}>
-              <Tooltip title="Actualizar">
+              <Tooltip title={t('notificaciones.actualizar')}>
                 <IconButton
                   size="small"
                   onClick={() =>
@@ -208,7 +249,7 @@ export default function NotificationCenter() {
                       })
                       .catch((err) => {
                         console.error('Error loading notifications', err);
-                        setError('No se pudieron cargar las notificaciones.');
+                        setError(t('notificaciones.errorCarga'));
                       })
                   }
                   sx={{
@@ -255,7 +296,7 @@ export default function NotificationCenter() {
               >
                 <Spinner size="md" />
                 <Typography variant="caption" color="text.secondary">
-                  Buscando actualizaciones...
+                  {t('notificaciones.buscandoActualizaciones')}
                 </Typography>
               </Box>
             ) : error ? (
@@ -270,7 +311,7 @@ export default function NotificationCenter() {
                 }}
               >
                 <Typography color="error.main" fontWeight={700} mb={1}>
-                  Hubo un problema
+                  {t('notificaciones.huboProblem')}
                 </Typography>
                 <Typography variant="body2" color="error.dark">
                   {error}
@@ -307,11 +348,10 @@ export default function NotificationCenter() {
                   />
                 </Box>
                 <Typography variant="subtitle1" fontWeight={700}>
-                  ¡Todo bajo control!
+                  {t('notificaciones.todoControlado')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  No tienes acciones urgentes ni tareas pendientes en este
-                  momento. Buen trabajo.
+                  {t('notificaciones.sinAccionesUrgentes')}
                 </Typography>
               </Box>
             ) : (
@@ -390,7 +430,8 @@ export default function NotificationCenter() {
                             </Typography>
                             <Chip
                               label={getNotificationLabel(
-                                notification.priority
+                                notification.priority,
+                                t
                               )}
                               size="small"
                               color={
@@ -473,7 +514,9 @@ export default function NotificationCenter() {
                           color="text.secondary"
                           fontWeight={600}
                         >
-                          Total pendientes: {notification.count}
+                          {t('notificaciones.totalPendientes', {
+                            count: notification.count,
+                          })}
                         </Typography>
                         <Button
                           size="small"

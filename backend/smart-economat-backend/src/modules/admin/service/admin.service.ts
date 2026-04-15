@@ -24,8 +24,24 @@ import {
   getRolPrincipal,
 } from '../../sherlock-auth/utils/access.utils';
 
+/**
+ * Service responsible for administrative operations such as managing user roles,
+ * activating/deactivating users, creating professors, and forcing password resets.
+ *
+ * @class AdminService
+ */
 @Injectable()
 export class AdminService {
+  /**
+   * Constructs the AdminService with all required and optional dependencies.
+   *
+   * @param {Repository<Usuario>} usuarioRepo - TypeORM repository for the Usuario entity.
+   * @param {Repository<Profesor>} profesorRepo - TypeORM repository for the Profesor entity.
+   * @param {DataSource} dataSource - TypeORM DataSource used to run transactions.
+   * @param {Repository<Rol>} [rolRepo] - Optional TypeORM repository for the Rol entity (required for role management features).
+   * @param {AuthPermissionsService} [authPermissionsService] - Optional service for invalidating permission caches.
+   * @param {Repository<Permiso>} [permisoRepo] - Optional TypeORM repository for the Permiso entity.
+   */
   constructor(
     @InjectRepository(Usuario)
     private readonly usuarioRepo: Repository<Usuario>,
@@ -42,15 +58,39 @@ export class AdminService {
     private readonly permisoRepo?: Repository<Permiso>
   ) {}
 
+  /**
+   * Determines whether the given role name is an elevated admin role.
+   *
+   * @param {string} [role] - The role name to check.
+   * @returns {boolean} True if the role is an elevated admin role.
+   */
   private isAdminRole(role?: string) {
     return isSherlockElevatedRole(role);
   }
 
+  /**
+   * Determines whether the given role name corresponds to the Super Admin role.
+   *
+   * @param {string} [role] - The role name to check.
+   * @returns {boolean} True if the role is SUPER_ADMIN.
+   */
   private isSuperAdmin(role?: string) {
     const normalized = role?.trim().toUpperCase();
     return normalized === SYSTEM_ROLES.SUPER_ADMIN;
   }
 
+  /**
+   * Ensures that the actor has sufficient privileges to modify the target user.
+   * Throws a BadRequestException if a non-super-admin attempts to modify a super-admin,
+   * or if a non-admin attempts to modify an admin.
+   * Also checks that the last active admin is not being demoted.
+   *
+   * @param {string} actorId - The ID of the user performing the action.
+   * @param {string} targetUserId - The ID of the user being modified.
+   * @param {string} [nextRoleName] - The new role name that will be assigned to the target.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the actor lacks privileges to modify the target user.
+   */
   private async ensureNotDemotingAdmin(
     actorId: string,
     targetUserId: string,
@@ -75,14 +115,16 @@ export class AdminService {
     const targetIsAdmin = this.isAdminRole(targetRol);
 
     if (targetIsSuper && !actorIsSuper) {
+      // TODO: add translation key 'errors.SUPER_ADMIN_MODIFY_REQUIRED' to i18n/es/translation.json
       throw new BadRequestException(
-        'Solo un Super Administrador puede modificar a otro Super Administrador'
+        I18nHelper.getError('SUPER_ADMIN_MODIFY_REQUIRED')
       );
     }
 
     if (targetIsAdmin && !actorIsAdmin) {
+      // TODO: add translation key 'errors.ADMIN_MODIFY_REQUIRED' to i18n/es/translation.json
       throw new BadRequestException(
-        'Solo un administrador puede modificar a otro administrador'
+        I18nHelper.getError('ADMIN_MODIFY_REQUIRED')
       );
     }
 
@@ -91,6 +133,16 @@ export class AdminService {
     }
   }
 
+  /**
+   * Ensures the user is not the last active administrator in the system before
+   * applying a change that would demote or deactivate them.
+   *
+   * @param {Usuario} user - The user entity being modified.
+   * @param {string} nextRole - The role name the user will be assigned.
+   * @param {boolean} nextActive - Whether the user will remain active after the change.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the user is the last active admin and the change would remove admin coverage.
+   */
   private async ensureNotLastActiveAdmin(
     user: Usuario,
     nextRole: string,
@@ -119,11 +171,16 @@ export class AdminService {
 
     if (activeAdmins <= 1) {
       throw new BadRequestException(
-        'No puedes modificar al último administrador activo del sistema'
+        I18nHelper.getError('CANNOT_MODIFY_LAST_ACTIVE_ADMIN')
       );
     }
   }
 
+  /**
+   * Retrieves all active roles with their associated permissions.
+   *
+   * @returns {Promise<Rol[]>} List of active roles ordered alphabetically by name, or empty array if role management is unavailable.
+   */
   async getRoles() {
     if (!this.rolRepo) {
       return [];
@@ -136,6 +193,11 @@ export class AdminService {
     });
   }
 
+  /**
+   * Retrieves all active permissions ordered by module and name.
+   *
+   * @returns {Promise<Permiso[]>} List of active permissions, or empty array if permission management is unavailable.
+   */
   async getPermissions() {
     if (!this.permisoRepo) {
       return [];
@@ -147,6 +209,15 @@ export class AdminService {
     });
   }
 
+  /**
+   * Creates a new professor user within a database transaction.
+   * Validates uniqueness of username, email, and CIAL before persisting.
+   *
+   * @param {CreateProfesorDto} dto - Data transfer object containing professor registration details.
+   * @returns {Promise<{ id: string; user_id: string; username: string; cial: string; status: UserStatus }>} The created professor summary.
+   * @throws {ConflictException} When a user with the same username or email already exists.
+   * @throws {ConflictException} When a professor with the same CIAL already exists.
+   */
   async createProfesor(dto: CreateProfesorDto) {
     return this.dataSource.transaction(async (manager) => {
       const whereConditions: FindOptionsWhere<Usuario>[] = [
@@ -205,6 +276,20 @@ export class AdminService {
     });
   }
 
+  /**
+   * Updates the role of a user, optionally adjusting additional and excluded permissions.
+   * Enforces role hierarchy rules (e.g. only super-admins can modify super-admins).
+   *
+   * @param {string} actorUserId - The ID of the administrator performing the update.
+   * @param {string} userId - The ID of the user whose role is being updated.
+   * @param {string} roleId - The ID of the new role to assign.
+   * @param {string[]} [extraPermisosIds] - Optional list of additional permission IDs to grant.
+   * @param {string[]} [excludedPermisosIds] - Optional list of permission IDs to explicitly exclude.
+   * @returns {Promise<Usuario | null>} The updated user with roles and permissions relations loaded.
+   * @throws {BadRequestException} When dynamic role management is not available.
+   * @throws {NotFoundException} When the user or role is not found.
+   * @throws {BadRequestException} When the actor lacks sufficient privileges to modify the target.
+   */
   async updateUserRole(
     actorUserId: string,
     userId: string,
@@ -214,7 +299,7 @@ export class AdminService {
   ) {
     if (!this.rolRepo) {
       throw new BadRequestException(
-        'La gestión dinámica de roles no está disponible'
+        I18nHelper.getError('DYNAMIC_ROLE_MANAGEMENT_UNAVAILABLE')
       );
     }
 
@@ -273,6 +358,18 @@ export class AdminService {
     });
   }
 
+  /**
+   * Activates or deactivates a user account.
+   * If the `active` parameter is omitted, toggles the current activation status.
+   * Prevents deactivating the last active administrator.
+   *
+   * @param {string} userId - The ID of the user to activate or deactivate.
+   * @param {boolean} [active] - Explicit desired activation state. Omit to toggle.
+   * @returns {Promise<{ message: string; id: string; status: UserStatus; activo: boolean }>} Result with updated status info.
+   * @throws {NotFoundException} When the user is not found.
+   * @throws {BadRequestException} When attempting to activate an already-active user.
+   * @throws {BadRequestException} When the change would remove the last active admin.
+   */
   async activateUser(userId: string, active?: boolean) {
     const user = await this.usuarioRepo.findOne({
       where: { id: userId },
@@ -303,13 +400,21 @@ export class AdminService {
     return {
       message: nextActive
         ? I18nHelper.translate('messages.USER_ACTIVATED_SUCCESSFULLY')
-        : 'Usuario suspendido correctamente',
+        : I18nHelper.translate('messages.USER_SUSPENDED_SUCCESSFULLY'),
       id: user.id,
       status: user.status,
       activo: user.activo,
     };
   }
 
+  /**
+   * Forces a password reset for a user by generating a provisional random password
+   * and setting the mustChangePassword flag.
+   *
+   * @param {string} userId - The ID of the user whose password will be reset.
+   * @returns {Promise<{ message: string; provisionalPassword: string; mustChangePassword: boolean }>} Result with the new provisional password.
+   * @throws {NotFoundException} When the user is not found.
+   */
   async forcePasswordReset(userId: string) {
     const user = await this.usuarioRepo.findOne({ where: { id: userId } });
     if (!user)

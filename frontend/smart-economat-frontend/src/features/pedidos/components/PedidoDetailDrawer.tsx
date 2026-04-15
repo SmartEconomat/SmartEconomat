@@ -40,6 +40,16 @@ interface PedidoDetailDrawerProps {
   onEdit: (pedido: Pedido) => void;
 }
 
+/**
+ * @description Detail modal/drawer for a single Pedido.
+ * Displays all order metadata, product line table, and provides PDF download/print actions.
+ * When canEdit is true and the order is in an editable state, an edit button is also shown.
+ * @param props.pedido - The Pedido to display, or null when the drawer is closed
+ * @param props.canEdit - Whether the edit action should be available
+ * @param props.onClose - Callback invoked when the user closes the drawer
+ * @param props.onEdit - Callback invoked with the pedido when the user clicks edit
+ * @returns DetailModal populated with pedido information, or null when no pedido is selected
+ */
 const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
   pedido,
   canEdit,

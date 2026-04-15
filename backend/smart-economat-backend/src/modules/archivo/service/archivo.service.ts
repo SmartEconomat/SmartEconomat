@@ -29,6 +29,14 @@ export interface PaginatedFiles {
 
 type ProcessedImageFormat = 'webp';
 
+/**
+ * Service that handles file upload, image optimisation, metadata persistence,
+ * listing, retrieval, deletion and cleanup of files stored locally.
+ * Images are automatically compressed to WebP using @jsquash/webp.
+ * Supports both registered (Archivo entity) and unregistered (standalone) compression flows.
+ *
+ * @class ArchivoService
+ */
 @Injectable()
 export class ArchivoService {
   private static webpEncoderInitPromise?: Promise<void>;
@@ -47,6 +55,18 @@ export class ArchivoService {
     );
   }
 
+  /**
+   * Uploads a file, optionally optimises images to WebP, and persists an Archivo record.
+   * For local storage the file URL is set to the `/api/v1/archivos/content/<filename>` pattern.
+   * When image processing succeeds the original upload is deleted and replaced by the optimised version.
+   *
+   * @param {Express.Multer.File} file - Uploaded file object from Multer.
+   * @param {Usuario} user - Authenticated user who is uploading the file.
+   * @param {ImageProcessOptionsDto} [processOptions] - Optional image processing parameters (quality, dimensions, format).
+   * @param {boolean} [shouldProcess=true] - Whether to apply image optimisation for image MIME types.
+   * @returns {Promise<Archivo>} Persisted Archivo entity with URL and size metadata.
+   * @throws {BadRequestException} When no file is provided.
+   */
   async uploadFile(
     file: Express.Multer.File,
     user: Usuario,
@@ -162,6 +182,14 @@ export class ArchivoService {
     }
   }
 
+  /**
+   * Resizes and converts an image file to WebP using @jsquash/webp.
+   * Applies optional dimension constraints while optionally preserving the aspect ratio.
+   *
+   * @param {string} inputPath - Absolute path to the source image file.
+   * @param {ImageProcessOptionsDto} options - Processing options: quality, ancho, alto, mantenerAspectRatio, formatoSalida.
+   * @returns {Promise<{ path: string; size: number; mimeType: string }>} Path to the output WebP file and its size.
+   */
   private async processImage(
     inputPath: string,
     options: ImageProcessOptionsDto
@@ -235,6 +263,13 @@ export class ArchivoService {
     };
   }
 
+  /**
+   * Resolves the output image format. Currently always returns 'webp' regardless
+   * of the requested format, as only WebP encoding is supported.
+   *
+   * @param {ImageProcessOptionsDto['formatoSalida']} [requestedFormat] - Requested output format (ignored).
+   * @returns {ProcessedImageFormat} Always 'webp'.
+   */
   private resolveOutputFormat(
     requestedFormat?: ImageProcessOptionsDto['formatoSalida']
   ): ProcessedImageFormat {
@@ -242,6 +277,13 @@ export class ArchivoService {
     return 'webp';
   }
 
+  /**
+   * Lazily initialises the @jsquash/webp WASM encoder (once per process lifetime).
+   * Detects SIMD support and loads the appropriate WASM binary from the node_modules directory.
+   * Subsequent calls return the cached initialisation promise without re-running the setup.
+   *
+   * @returns {Promise<void>}
+   */
   private async initializeWebpEncoder(): Promise<void> {
     if (!ArchivoService.webpEncoderInitPromise) {
       ArchivoService.webpEncoderInitPromise = (async () => {
@@ -270,12 +312,27 @@ export class ArchivoService {
     return ArchivoService.webpEncoderInitPromise;
   }
 
+  /**
+   * Clamps the quality value to the valid WebP range [1, 100].
+   * Defaults to 80 when no value is provided.
+   *
+   * @param {number} [quality] - Requested quality percentage.
+   * @returns {number} Clamped quality value between 1 and 100.
+   */
   private normalizeQuality(quality?: number): number {
     const normalized = quality ?? 80;
 
     return Math.max(1, Math.min(100, normalized));
   }
 
+  /**
+   * Dynamically imports an ESM module and unwraps its default export when present.
+   * Used to work around the CommonJS/ESM interop boundary for packages such as @jsquash.
+   *
+   * @template T - Expected type of the imported module or its default export.
+   * @param {string} specifier - Module specifier to import (e.g. '@jsquash/webp/encode.js').
+   * @returns {Promise<T>} The module's default export if it has one; otherwise the full module namespace.
+   */
   private async loadEsmModule<T>(specifier: string): Promise<T> {
     const moduleNamespace: unknown = await import(specifier);
 
@@ -290,6 +347,13 @@ export class ArchivoService {
     return moduleNamespace as T;
   }
 
+  /**
+   * Returns a paginated list of active (non-deleted) Archivo records.
+   * Supports optional filtering by user ID and MIME type.
+   *
+   * @param {FileListFilterDto} filterDto - Pagination and filter parameters (page, limit, usuarioId, mimeType).
+   * @returns {Promise<PaginatedFiles>} Paginated result containing items and pagination metadata.
+   */
   async findAll(filterDto: FileListFilterDto): Promise<PaginatedFiles> {
     const { page = 1, limit = 20, usuarioId, mimeType } = filterDto;
 
@@ -322,6 +386,13 @@ export class ArchivoService {
     };
   }
 
+  /**
+   * Returns a single active Archivo record by its ID, including the uploader relation.
+   *
+   * @param {string} id - UUID of the Archivo to retrieve.
+   * @returns {Promise<Archivo>} The found Archivo entity.
+   * @throws {NotFoundException} When no active file with the given ID exists.
+   */
   async findOne(id: string): Promise<Archivo> {
     const archivo = await this.archivoRepository.findOne({
       where: { id, isDeleted: false },
@@ -335,6 +406,17 @@ export class ArchivoService {
     return archivo;
   }
 
+  /**
+   * Resolves the absolute filesystem path for a locally stored file.
+   * Validates that the resolved path stays within the configured upload directory
+   * to prevent path-traversal attacks.
+   *
+   * @param {string} filename - Name of the file to serve (no directory components).
+   * @returns {string} Absolute path to the file for use with `res.sendFile()`.
+   * @throws {BadRequestException} When the filename resolves outside the upload directory or
+   *   when the storage type is not 'local'.
+   * @throws {NotFoundException} When the file does not exist on disk.
+   */
   getFileContent(filename: string): string {
     if (this.storageType === 'local') {
       const uploadDirResolved = path.resolve(this.uploadDir);
@@ -356,6 +438,16 @@ export class ArchivoService {
     );
   }
 
+  /**
+   * Soft-deletes an Archivo record and physically removes its associated files from disk.
+   * Only the uploader or elevated-role users may delete a file.
+   *
+   * @param {string} id - UUID of the Archivo to remove.
+   * @param {Usuario} user - Authenticated user performing the deletion.
+   * @returns {Promise<void>}
+   * @throws {NotFoundException} When no active file with the given ID exists.
+   * @throws {ForbiddenException} When the requesting user is not the uploader and does not have an elevated role.
+   */
   async remove(id: string, user: Usuario): Promise<void> {
     const archivo = await this.findOne(id);
 
@@ -373,6 +465,14 @@ export class ArchivoService {
     await this.archivoRepository.softRemove(archivo);
   }
 
+  /**
+   * Looks up an Archivo by its URL (original or optimised) and removes it.
+   * If no database record is found for the URL, attempts to delete the physical file directly.
+   * Silently returns when the URL is empty.
+   *
+   * @param {string} [fileUrl] - File URL to clean up (may be the original or optimised variant).
+   * @returns {Promise<void>}
+   */
   async cleanupByUrl(fileUrl?: string): Promise<void> {
     if (!fileUrl?.trim()) {
       return;
@@ -397,6 +497,12 @@ export class ArchivoService {
     await this.deletePhysicalFileFromUrl(trimmedUrl);
   }
 
+  /**
+   * Deletes the physical files (original and optimised) associated with an Archivo record.
+   *
+   * @param {Archivo} archivo - Archivo entity whose physical files should be removed.
+   * @returns {Promise<void>}
+   */
   private async deleteManagedFiles(archivo: Archivo): Promise<void> {
     await this.deletePhysicalFileFromUrl(archivo.url);
 
@@ -405,6 +511,14 @@ export class ArchivoService {
     }
   }
 
+  /**
+   * Extracts the filename from a file URL and deletes the corresponding physical file
+   * from the upload directory. Silently skips when the URL is empty, the path
+   * resolves outside the upload directory, or the file does not exist.
+   *
+   * @param {string} [fileUrl] - URL from which to extract the filename (original or optimised).
+   * @returns {Promise<void>}
+   */
   private async deletePhysicalFileFromUrl(fileUrl?: string): Promise<void> {
     const filename = this.extractFilenameFromUrl(fileUrl);
     if (!filename) {
@@ -431,6 +545,13 @@ export class ArchivoService {
     }
   }
 
+  /**
+   * Quietly deletes a local file by its absolute path.
+   * Logs a warning when the deletion fails but does not throw.
+   *
+   * @param {string} [filePath] - Absolute path to the file to delete.
+   * @returns {Promise<void>}
+   */
   private async deleteLocalFileQuietly(filePath?: string): Promise<void> {
     if (!filePath) {
       return;
@@ -449,6 +570,16 @@ export class ArchivoService {
     }
   }
 
+  /**
+   * Extracts the bare filename from a file URL.
+   * Handles two URL patterns:
+   * - `/uploads/<filename>` (legacy Multer path)
+   * - `/archivos/content/<filename>` (current API path)
+   * Returns null when neither pattern matches or the URL is empty.
+   *
+   * @param {string} [fileUrl] - URL from which to extract the filename.
+   * @returns {string | null} The extracted filename, or null when no match is found.
+   */
   private extractFilenameFromUrl(fileUrl?: string): string | null {
     if (!fileUrl?.trim()) {
       return null;

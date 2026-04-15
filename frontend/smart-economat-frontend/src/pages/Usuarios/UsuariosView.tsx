@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Box,
@@ -89,80 +90,96 @@ const UserAccordion = React.memo(
         student: { total: number; page: number; limit: number };
       }>
     >;
-  }) => (
-    <Accordion
-      defaultExpanded={data.length > 0}
-      sx={{
-        mb: 2,
-        borderRadius: '8px !important',
-        overflow: 'hidden',
-        border: '1px solid',
-        borderColor: 'divider',
-      }}
-    >
-      <AccordionSummary
-        expandIcon={<ExpandMoreIcon />}
-        sx={{ bgcolor: 'action.hover' }}
+  }) => {
+    const { t } = useTranslation();
+    return (
+      <Accordion
+        defaultExpanded={data.length > 0}
+        sx={{
+          mb: 2,
+          borderRadius: '8px !important',
+          overflow: 'hidden',
+          border: '1px solid',
+          borderColor: 'divider',
+        }}
       >
-        <Box display="flex" alignItems="center" gap={1.5}>
-          <Avatar sx={{ bgcolor: color, width: 32, height: 32 }}>{icon}</Avatar>
-          <Typography fontWeight={700}>
-            {title} ({rolePagination.total})
-          </Typography>
-        </Box>
-      </AccordionSummary>
-      <AccordionDetails sx={{ p: 0 }}>
-        {rolePagination.total === 0 ? (
-          <Typography
-            variant="body2"
-            sx={{
-              p: 3,
-              textAlign: 'center',
-              fontStyle: 'italic',
-              color: 'text.secondary',
-            }}
-          >
-            No hay usuarios encontrados para este rol y búsqueda.
-          </Typography>
-        ) : (
-          <DataTable
-            columns={columns}
-            data={data}
-            isLoading={false}
-            renderActions={renderActions}
-            pagination={{
-              currentPage: rolePagination.page,
-              totalPages: Math.ceil(
-                rolePagination.total / rolePagination.limit
-              ),
-              onPageChange: (_, newPage) => {
-                setPagination((prev) => ({
-                  ...prev,
-                  [role]: { ...prev[role], page: newPage },
-                }));
-              },
-              pageSize: rolePagination.limit,
-              onPageSizeChange: (e: SelectChangeEvent<number>) => {
-                setPagination((prev) => ({
-                  ...prev,
-                  [role]: {
-                    ...prev[role],
-                    limit: Number(e.target.value),
-                    page: 1,
-                  },
-                }));
-              },
-              pageSizeOptions: [10, 20, 50],
-            }}
-          />
-        )}
-      </AccordionDetails>
-    </Accordion>
-  )
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          sx={{ bgcolor: 'action.hover' }}
+        >
+          <Box display="flex" alignItems="center" gap={1.5}>
+            <Avatar sx={{ bgcolor: color, width: 32, height: 32 }}>
+              {icon}
+            </Avatar>
+            <Typography fontWeight={700}>
+              {t(title)} ({rolePagination.total})
+            </Typography>
+          </Box>
+        </AccordionSummary>
+        <AccordionDetails sx={{ p: 0 }}>
+          {rolePagination.total === 0 ? (
+            <Typography
+              variant="body2"
+              sx={{
+                p: 3,
+                textAlign: 'center',
+                fontStyle: 'italic',
+                color: 'text.secondary',
+              }}
+            >
+              {t('usuarios.empty.noUsuariosRol')}
+            </Typography>
+          ) : (
+            <DataTable
+              columns={columns}
+              data={data}
+              isLoading={false}
+              renderActions={renderActions}
+              pagination={{
+                currentPage: rolePagination.page,
+                totalPages: Math.ceil(
+                  rolePagination.total / rolePagination.limit
+                ),
+                onPageChange: (_, newPage) => {
+                  setPagination((prev) => ({
+                    ...prev,
+                    [role]: { ...prev[role], page: newPage },
+                  }));
+                },
+                pageSize: rolePagination.limit,
+                onPageSizeChange: (e: SelectChangeEvent<number>) => {
+                  setPagination((prev) => ({
+                    ...prev,
+                    [role]: {
+                      ...prev[role],
+                      limit: Number(e.target.value),
+                      page: 1,
+                    },
+                  }));
+                },
+                pageSizeOptions: [10, 20, 50],
+              }}
+            />
+          )}
+        </AccordionDetails>
+      </Accordion>
+    );
+  }
 );
 
 UserAccordion.displayName = 'UserAccordion';
 
+/**
+ * Vista principal de gestión de usuarios del sistema.
+ *
+ * Muestra los usuarios agrupados por rol en acordeones expandibles.
+ * Permite buscar, crear, editar, bloquear/desbloquear y eliminar usuarios,
+ * así como cambiar contraseñas. Las acciones se protegen por permisos.
+ *
+ * @returns {JSX.Element} Vista completa de gestión de usuarios.
+ * @example
+ * <Route path="/usuarios" element={<UsuariosView />} />
+ */
 export const UsuariosView: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();

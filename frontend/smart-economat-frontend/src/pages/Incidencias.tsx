@@ -16,6 +16,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import TuneIcon from '@mui/icons-material/Tune';
+import { useTranslation } from 'react-i18next';
 import DataTable, { Column } from '../components/ui/DataTable';
 import PageToolbar from '../components/ui/PageToolbar';
 import DetailModal from '../components/ui/DetailModal';
@@ -49,15 +50,10 @@ import ReporteSelectorModal, {
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 
-const INCIDENCIA_STATUS_LABEL: Record<EstadoIncidencia, string> = {
-  nueva: 'Nueva',
-  en_ajuste: 'En ajuste',
-  pendiente_validacion: 'Pendiente validación',
-  resuelta: 'Resuelta',
-  cancelada: 'Cancelada',
-  invalida: 'Inválida',
-};
-
+/**
+ * Maps each `EstadoIncidencia` value to its corresponding StatusChip variant string.
+ * Used to determine the visual style of status chips in the incidencias table.
+ */
 const INCIDENCIA_STATUS_CHIP: Record<EstadoIncidencia, string> = {
   nueva: 'pending',
   en_ajuste: 'warning',
@@ -84,7 +80,15 @@ const CLOSED_STATE_PRIORITY: Record<EstadoIncidencia, number> = {
 
 type ResolveDialogMode = 'adjust' | 'resolve';
 
+/**
+ * Page component that displays the Incidencias (incident management) centre.
+ *
+ * Renders a filterable, paginated table of incidencias with support for
+ * resolving, adjusting quantities, deleting, and exporting incidents.
+ * Permissions are enforced via `usePermission` hooks.
+ */
 const Incidencias: React.FC = () => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const toast = useToast();
   const { user } = useAuth();
@@ -119,6 +123,31 @@ const Incidencias: React.FC = () => {
 
   const isCerradasTab = resolucionTab === 'cerradas';
 
+  /**
+   * Returns the localised display label for a given `EstadoIncidencia` value.
+   * Falls back to the raw status string if no translation key is matched.
+   *
+   * @param status - The incidencia status to translate.
+   * @returns The translated label string.
+   */
+  const incidenciaStatusLabel = (status: EstadoIncidencia): string =>
+    ({
+      nueva: t('incidencias.estados.nueva'),
+      en_ajuste: t('incidencias.estados.enAjuste'),
+      pendiente_validacion: t('incidencias.estados.pendienteValidacion'),
+      resuelta: t('incidencias.estados.resuelta'),
+      cancelada: t('incidencias.estados.cancelada'),
+      invalida: t('incidencias.estados.invalida'),
+    }[status] ?? status);
+
+  /**
+   * Fetches incidencias from the API and updates local state.
+   *
+   * When the "cerradas" tab is active, all pages are fetched in parallel,
+   * merged, filtered to closed states only, and sorted by state priority
+   * then creation date. For open incidencias, standard server-side pagination
+   * is used.
+   */
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -201,6 +230,15 @@ const Incidencias: React.FC = () => {
     loadData();
   }, [loadData]);
 
+  /**
+   * Submits a resolve/adjust payload to the API for a given incidencia.
+   *
+   * Shows a contextual success toast based on the final state chosen,
+   * closes the resolve modal, and refreshes the table data.
+   *
+   * @param id - UUID of the incidencia to resolve.
+   * @param payload - Resolution details including final state and quantities.
+   */
   const handleResolve = async (
     id: string,
     payload: ResolveIncidenciaPayload
@@ -215,17 +253,17 @@ const Incidencias: React.FC = () => {
       if (payload.marcarComoResuelta) {
         switch (payload.estadoFinal) {
           case EstadoIncidencia.CANCELADA:
-            toast.success('Incidencia marcada como cancelada');
+            toast.success(t('incidencias.toast.marcadaCancelada'));
             break;
           case EstadoIncidencia.INVALIDA:
-            toast.success('Incidencia marcada como inválida');
+            toast.success(t('incidencias.toast.marcadaInvalida'));
             break;
           default:
-            toast.success('Incidencia marcada como resuelta');
+            toast.success(t('incidencias.toast.marcadaResuelta'));
             break;
         }
       } else {
-        toast.success('Incidencia actualizada correctamente');
+        toast.success(t('incidencias.toast.actualizada'));
       }
       setItemToResolve(null);
       if (itemToView?.id === id) {
@@ -241,6 +279,12 @@ const Incidencias: React.FC = () => {
     }
   };
 
+  /**
+   * Deletes the currently selected incidencia (`itemToDelete`).
+   *
+   * Shows a success toast on completion, clears the selection, and
+   * refreshes the table data. Shows an error toast if the request fails.
+   */
   const handleDelete = async () => {
     if (!itemToDelete) return;
     setIsDeleting(true);
@@ -258,6 +302,12 @@ const Incidencias: React.FC = () => {
     }
   };
 
+  /**
+   * Opens the resolve/adjust modal for a specific incidencia.
+   *
+   * @param incidencia - The incidencia to operate on.
+   * @param mode - `'adjust'` to adjust quantities, `'resolve'` to mark as resolved.
+   */
   const openResolveModal = (
     incidencia: Incidencia,
     mode: ResolveDialogMode
@@ -266,11 +316,24 @@ const Incidencias: React.FC = () => {
     setItemToResolve(incidencia);
   };
 
+  /**
+   * Opens the report selector modal pre-set to the given format.
+   *
+   * @param formato - The desired report format (`'pdf'` or `'excel'`).
+   */
   const openReporteModal = (formato: ReporteFormato) => {
     setReporteFormato(formato);
     setIsReporteOpen(true);
   };
 
+  /**
+   * Handles switching between the "abiertas" and "cerradas" resolution tabs.
+   *
+   * Resets the cerradas sub-tab to `'todas'` when leaving the cerradas tab
+   * and resets pagination to page 1.
+   *
+   * @param nextTab - The tab the user is switching to.
+   */
   const handleResolucionTabChange = (nextTab: IncidenciasResolucionTab) => {
     setResolucionTab(nextTab);
     if (nextTab !== 'cerradas') {
@@ -279,6 +342,13 @@ const Incidencias: React.FC = () => {
     setPage(1);
   };
 
+  /**
+   * Memoised list of incidencias filtered by the active cerradas sub-tab.
+   *
+   * When on the cerradas tab and a specific sub-tab is selected (e.g. `'resuelta'`),
+   * only items with that exact estado are returned. Otherwise the full dataset
+   * is returned unchanged.
+   */
   const dataFiltrada = useMemo(() => {
     if (!isCerradasTab || cerradasTab === 'todas') {
       return data;
@@ -287,6 +357,11 @@ const Incidencias: React.FC = () => {
     return data.filter((item) => item.estado === cerradasTab);
   }, [data, isCerradasTab, cerradasTab]);
 
+  /**
+   * Memoised page slice of `dataFiltrada` used for client-side pagination
+   * when the cerradas tab is active. For open incidencias, server-side
+   * pagination is used and the full `data` array is returned directly.
+   */
   const dataPaginada = useMemo(() => {
     if (!isCerradasTab) {
       return data;
@@ -372,7 +447,7 @@ const Incidencias: React.FC = () => {
         render: (row) => (
           <StatusChip
             status={INCIDENCIA_STATUS_CHIP[row.estado]}
-            label={INCIDENCIA_STATUS_LABEL[row.estado]}
+            label={incidenciaStatusLabel(row.estado)}
             icon={
               row.resuelta ? <CheckCircleIcon /> : <ReportProblemOutlinedIcon />
             }
@@ -380,9 +455,19 @@ const Incidencias: React.FC = () => {
         ),
       },
     ],
-    []
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t]
   );
 
+  /**
+   * Renders the action buttons for a given row in the incidencias table.
+   *
+   * Shows View, Adjust, Resolve, and Delete actions depending on the
+   * incidencia state and the current user's permissions.
+   *
+   * @param row - The incidencia row to render actions for.
+   * @returns A JSX element containing the action icon buttons.
+   */
   const renderActions = (row: Incidencia) => {
     const hasLineas = (row.lineas?.length ?? 0) > 0;
     const canOperate = !row.resuelta && hasLineas;
@@ -409,12 +494,12 @@ const Incidencias: React.FC = () => {
         </Box>
         <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
           {canOperate && canResolve && (
-            <Tooltip title="Ajustar cantidades">
+            <Tooltip title={t('incidencias.actions.ajustarCantidades')}>
               <IconButton
                 onClick={() => openResolveModal(row, 'adjust')}
                 size="small"
                 color="warning"
-                aria-label="Ajustar cantidades"
+                aria-label={t('incidencias.actions.ajustarCantidades')}
               >
                 <TuneIcon fontSize="small" />
               </IconButton>
@@ -423,12 +508,12 @@ const Incidencias: React.FC = () => {
         </Box>
         <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
           {canOperate && canResolve && (
-            <Tooltip title="Resolver incidencia">
+            <Tooltip title={t('incidencias.actions.resolverIncidencia')}>
               <IconButton
                 onClick={() => openResolveModal(row, 'resolve')}
                 size="small"
                 color="success"
-                aria-label="Resolver incidencia"
+                aria-label={t('incidencias.actions.resolverIncidencia')}
               >
                 <CheckCircleIcon fontSize="small" />
               </IconButton>
@@ -452,6 +537,11 @@ const Incidencias: React.FC = () => {
     );
   };
 
+  /**
+   * Memoised array of detail sections passed to `DetailModal` when viewing
+   * a single incidencia. Includes incident info, notes, resolution details
+   * (if resolved), and a per-line product discrepancy breakdown.
+   */
   const detailSections = useMemo(() => {
     if (!itemToView) return [];
     return [
@@ -465,7 +555,7 @@ const Incidencias: React.FC = () => {
           },
           {
             label: 'Estado',
-            value: INCIDENCIA_STATUS_LABEL[itemToView.estado],
+            value: incidenciaStatusLabel(itemToView.estado),
           },
           { label: 'ID Recepción', value: itemToView.recepcionId || '—' },
           {
@@ -663,20 +753,21 @@ const Incidencias: React.FC = () => {
         ),
       },
     ];
-  }, [itemToView, theme]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemToView, theme, t]);
 
   return (
     <Box>
       <PageToolbar
-        title="Centro de Incidencias"
+        title={t('incidencias.titulo')}
         totalItems={totalItemsVista}
-        totalItemsLabel="incidencias"
+        totalItemsLabel={t('incidencias.totalItemsLabel')}
         searchValue={searchTerm}
         onSearchChange={(v) => {
           setSearchTerm(v);
           setPage(1);
         }}
-        searchPlaceholder="Buscar por proveedor u observaciones..."
+        searchPlaceholder={t('incidencias.buscar')}
         extraActions={[
           {
             label: 'Reporte PDF',
@@ -736,8 +827,8 @@ const Incidencias: React.FC = () => {
               <Typography variant="h6" color="text.secondary" gutterBottom>
                 {isCerradasTab
                   ? cerradasTab === 'todas'
-                    ? 'No hay incidencias cerradas'
-                    : `No hay incidencias ${INCIDENCIA_STATUS_LABEL[cerradasTab]}`
+                    ? t('incidencias.empty.noCerradas')
+                    : `No hay incidencias ${incidenciaStatusLabel(cerradasTab as EstadoIncidencia)}`
                   : 'No hay incidencias abiertas'}
               </Typography>
               <Typography
@@ -748,8 +839,8 @@ const Incidencias: React.FC = () => {
                 {searchTerm
                   ? 'No se encontraron incidencias que coincidan con tu búsqueda.'
                   : isCerradasTab
-                    ? 'Las incidencias cerradas incluyen resueltas, canceladas e inválidas.'
-                    : '¡Excelente trabajo! No se han detectado discrepancias pendientes en las recepciones recientes.'}
+                    ? t('incidencias.empty.mensajeCerradas')
+                    : t('incidencias.empty.noPendientes')}
               </Typography>
             </Box>
           }
@@ -769,7 +860,7 @@ const Incidencias: React.FC = () => {
       <DetailModal
         isOpen={!!itemToView}
         onClose={() => setItemToView(null)}
-        title="Detalle de Incidencia"
+        title={t('incidencias.modal.detalle')}
         subtitle={itemToView?.proveedorNombre}
         sections={detailSections}
         size="md"
@@ -786,7 +877,7 @@ const Incidencias: React.FC = () => {
                   }
                 }}
               >
-                Ajustar cantidades
+                {t('incidencias.actions.ajustarCantidades')}
               </Button>
               <Button
                 variant="contained"
@@ -798,7 +889,7 @@ const Incidencias: React.FC = () => {
                   }
                 }}
               >
-                Resolver incidencia
+                {t('incidencias.actions.resolverIncidencia')}
               </Button>
             </Stack>
           ) : undefined
@@ -809,9 +900,9 @@ const Incidencias: React.FC = () => {
         isOpen={!!itemToDelete}
         onClose={() => !isDeleting && setItemToDelete(null)}
         onConfirm={handleDelete}
-        title="Eliminar Incidencia"
-        message="¿Estás seguro de que deseas eliminar esta incidencia? Esta acción no se puede deshacer y se perderá el registro de la discrepancia."
-        confirmText="Eliminar"
+        title={t('incidencias.confirm.titulo')}
+        message={t('incidencias.confirm.mensaje')}
+        confirmText={t('incidencias.confirm.eliminar')}
         isLoading={isDeleting}
       />
 

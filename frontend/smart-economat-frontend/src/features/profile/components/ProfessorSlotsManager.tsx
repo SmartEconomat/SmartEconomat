@@ -65,6 +65,26 @@ interface ProfessorSlotsManagerProps {
   onRefreshUbicaciones?: () => Promise<void>;
 }
 
+/**
+ * @description Manages professor-student slot assignments in the profile view.
+ * Provides accordion-grouped pagination, inline editing of individual slots,
+ * and an admin mode for assigning slots across all professors and locations.
+ * @param props.isEditing - Whether the form is in edit mode (enables actions)
+ * @param props.slots - Current user's slot assignments
+ * @param props.allSlots - All slots (admin mode only)
+ * @param props.allProfesores - All professors available for assignment (admin mode)
+ * @param props.ubicaciones - Available storage locations for new slots
+ * @param props.isLoading - Whether slot data is being fetched
+ * @param props.isSaving - Whether a save operation is in progress
+ * @param props.newSlot - Draft state for the slot creation form
+ * @param props.onNewSlotChange - Callback for changes to the new-slot form
+ * @param props.onCreateSlot - Callback to create a new slot
+ * @param props.onDeleteSlot - Callback to delete a slot by ID
+ * @param props.onUpdateSlot - Callback to update the current user's slot
+ * @param props.onAdminUpdateSlot - Callback to update any slot (admin mode)
+ * @param props.onRefreshUbicaciones - Optional callback to refresh the ubicaciones list
+ * @returns Accordion-based slot manager component
+ */
 const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
   isEditing,
   slots,

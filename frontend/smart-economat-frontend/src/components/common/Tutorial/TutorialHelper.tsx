@@ -23,21 +23,42 @@ import { useThemeContext } from '../../../store/theme.hooks';
 import { getTooltipContent } from '../../../utils/tooltipUtils';
 import { tutorialConfig } from '../../../utils/config/tutorialData';
 import { useAuth } from '../../../store/auth.hooks';
+import { useTranslation } from 'react-i18next';
 
+/**
+ * A single step in a tutorial sequence.
+ */
 interface TutorialStep {
+  /** Short heading displayed at the top of the step card. */
   title: string;
+  /** Body text explaining the step. */
   description: string;
+  /** Decorative icon rendered above the title. */
   icon: React.ReactNode;
 }
 
+/**
+ * Central configuration shape for a route's tutorial.
+ */
 interface RouteTutorialConfig {
+  /** Default steps shown to all roles. */
   steps?: TutorialStep[];
+  /** Role-specific overrides: maps UPPER_CASE role name → step list. */
   roles?: Record<string, TutorialStep[]>;
 }
 
+/**
+ * Props for the {@link TutorialHelper} component.
+ */
 interface TutorialHelperProps {
+  /** Display mode: 'icon' renders a standalone icon button; 'listitem' renders a sidebar list item. */
   mode?: 'icon' | 'listitem';
+  /** Whether the sidebar drawer is currently open (affects label visibility in listitem mode). */
   isOpen?: boolean;
+  /**
+   * Custom steps to override the route-based configuration.
+   * When provided, these take priority over the central `tutorialConfig`.
+   */
   steps?: {
     title: string;
     content: string;
@@ -46,6 +67,23 @@ interface TutorialHelperProps {
   }[];
 }
 
+/**
+ * Contextual tutorial helper component.
+ *
+ * Displays a multi-step tutorial popover when activated. The steps shown are
+ * determined by (in priority order):
+ * 1. Custom `steps` passed via props.
+ * 2. Role-specific steps from the central `tutorialConfig` for the current route.
+ * 3. Default steps from the central `tutorialConfig` for the current route.
+ *
+ * If no steps are found the component renders `null`.
+ *
+ * In `listitem` mode the trigger is a MUI `ListItemButton` for sidebar
+ * placement. In `icon` mode the trigger is a standalone `IconButton` for
+ * top-bar placement.
+ *
+ * @param props - {@link TutorialHelperProps}
+ */
 const TutorialHelper: React.FC<TutorialHelperProps> = ({
   mode = 'icon',
   isOpen = true,
@@ -55,24 +93,32 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
   const location = useLocation();
   const theme = useTheme();
   const { isLearningMode } = useThemeContext();
+  const { t } = useTranslation();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [activeStep, setActiveStep] = useState<number>(0);
 
   const userRole = user?.rol?.toUpperCase() || '';
 
+  /**
+   * Opens the tutorial popover and resets to the first step.
+   * @param event - The click event from the trigger element.
+   */
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
     setActiveStep(0); // Reset to first step on open
   };
 
+  /** Closes the tutorial popover. */
   const handleClose = () => {
     setAnchorEl(null);
   };
 
+  /** Advances to the next tutorial step. */
   const handleNext = () => {
     setActiveStep((prevActiveStep: number) => prevActiveStep + 1);
   };
 
+  /** Returns to the previous tutorial step. */
   const handleBack = () => {
     setActiveStep((prevActiveStep: number) => prevActiveStep - 1);
   };
@@ -172,7 +218,7 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
           onClick={handleClose}
           sx={{ color: 'text.secondary' }}
         >
-          Cerrar
+          {t('tutorial.cerrar')}
         </Button>
       </CardActions>
     </Card>
@@ -185,14 +231,14 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
           title={getTooltipContent(
             isOpen,
             isLearningMode,
-            'Ayuda',
-            'Ver guía de ayuda de esta página'
+            t('tutorial.ayuda'),
+            t('tutorial.verGuiaAyuda')
           )}
         >
           <ListItemButton
             onClick={handleClick}
             aria-describedby={id}
-            aria-label="Mostrar tutorial"
+            aria-label={t('tutorial.mostrar')}
             sx={{
               minHeight: 48,
               justifyContent: isOpen ? 'initial' : 'center',
@@ -208,7 +254,10 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
             >
               <HelpOutlineIcon />
             </ListItemIcon>
-            <ListItemText primary="Ayuda" sx={{ opacity: isOpen ? 1 : 0 }} />
+            <ListItemText
+              primary={t('tutorial.ayuda')}
+              sx={{ opacity: isOpen ? 1 : 0 }}
+            />
           </ListItemButton>
         </Tooltip>
         <Popover
@@ -240,8 +289,8 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
         title={getTooltipContent(
           false,
           isLearningMode,
-          'Ayuda',
-          'Ver guía de ayuda'
+          t('tutorial.ayuda'),
+          t('tutorial.verGuia')
         )}
         placement="bottom"
       >
@@ -249,7 +298,7 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
           color="inherit"
           aria-describedby={id}
           onClick={handleClick}
-          aria-label="Mostrar tutorial"
+          aria-label={t('tutorial.mostrar')}
           sx={{ ml: 1 }}
         >
           <HelpOutlineIcon />

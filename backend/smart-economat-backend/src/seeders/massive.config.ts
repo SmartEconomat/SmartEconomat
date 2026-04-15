@@ -1,7 +1,15 @@
 import { HttpMethod } from './massive.types';
 
+/** @description Base API path prefix prepended to all seeder endpoint paths. */
 export const API_PREFIX = '/api/v1';
 
+/**
+ * @description Reads an environment variable by name and parses it as a positive integer.
+ * Returns `fallback` when the variable is absent, empty, not a valid integer, or non-positive.
+ * @param {string} name - Name of the environment variable to read.
+ * @param {number} fallback - Value to return when the variable is missing or invalid.
+ * @returns {number} Parsed positive integer value, or `fallback`.
+ */
 function readPositiveInt(name: string, fallback: number): number {
   const raw = process.env[name];
   if (!raw) {
@@ -104,6 +112,13 @@ export const MIN_REQUIRED_PRODUCT_IDS = readPositiveInt(
   SEED_GLOBAL_CONFIG.minProducts
 );
 
+/**
+ * @description Computes a scaled target success count for a special endpoint.
+ * Multiplies `baseTarget` by `SEED_MULTIPLIER` then clamps the result between
+ * `MIN_SUCCESS_PER_ENDPOINT` and `MAX_SUCCESS_PER_ENDPOINT`.
+ * @param {number} baseTarget - Unscaled base target count for the endpoint.
+ * @returns {number} Clamped, scaled target success count.
+ */
 function specialTarget(baseTarget: number): number {
   return Math.max(
     MIN_SUCCESS_PER_ENDPOINT,

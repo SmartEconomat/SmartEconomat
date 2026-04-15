@@ -10,6 +10,7 @@ import {
   MenuItem,
   Button,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { CategoriaProducto, UnidadMedida } from '../../services/producto.types';
 
 export interface ModalProductData {
@@ -29,6 +30,21 @@ interface NewProductModalProps {
   onConfirm: () => void;
 }
 
+/**
+ * Modal dialog for adding a new product during the reception flow.
+ *
+ * Two modes are supported:
+ * - **Auto-filled** (product found in the global catalogue): pre-populated
+ *   fields are shown for the user to review before confirming.
+ * - **Unknown product**: empty form where the user enters the basic product
+ *   details manually.
+ *
+ * @param props.open - Whether the modal is visible.
+ * @param props.onClose - Callback invoked when the user dismisses the modal.
+ * @param props.modalData - Current form field values.
+ * @param props.setModalData - Setter to update individual form fields.
+ * @param props.onConfirm - Callback invoked when the user confirms the addition.
+ */
 const NewProductModal: React.FC<NewProductModalProps> = ({
   open,
   onClose,
@@ -36,20 +52,21 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
   setModalData,
   onConfirm,
 }) => {
+  const { t } = useTranslation();
   const isAutoFilled = modalData.nombre.trim() !== '';
 
   return (
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>
         {isAutoFilled
-          ? 'Añadir Producto Encontrado'
-          : 'Añadir Producto Desconocido'}
+          ? t('recepcion.nuevoProducto.tituloEncontrado')
+          : t('recepcion.nuevoProducto.tituloDesconocido')}
       </DialogTitle>
       <DialogContent dividers>
         <Typography variant="body2" sx={{ mb: 2 }}>
           {isAutoFilled
-            ? 'Hemos auto-completado los datos usando una base de datos global. Revisa la información antes de añadir el producto a tu catálogo.'
-            : 'Este producto no figura en el catálogo ni en los pedidos seleccionados. Por favor, introduce sus datos básicos.'}
+            ? t('recepcion.nuevoProducto.infoEncontrado')
+            : t('recepcion.nuevoProducto.infoDesconocido')}
         </Typography>
         <Box
           sx={{
@@ -60,7 +77,7 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
           }}
         >
           <TextField
-            label="Nombre del Producto"
+            label={t('recepcion.nuevoProducto.nombre')}
             value={modalData.nombre}
             onChange={(e) =>
               setModalData({ ...modalData, nombre: e.target.value })
@@ -69,7 +86,7 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
           />
           {modalData.codigoBarras && (
             <TextField
-              label="Código de Barras"
+              label={t('recepcion.nuevoProducto.codigoBarras')}
               value={modalData.codigoBarras}
               disabled
               fullWidth
@@ -78,7 +95,7 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
             />
           )}
           <TextField
-            label="Marca"
+            label={t('recepcion.nuevoProducto.marca')}
             value={modalData.marca}
             onChange={(e) =>
               setModalData({ ...modalData, marca: e.target.value })
@@ -87,7 +104,7 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
           />
           <Box sx={{ display: 'flex', gap: 2 }}>
             <TextField
-              label="Unidad"
+              label={t('comun.unidad')}
               select
               value={modalData.unidad}
               onChange={(e) =>
@@ -105,7 +122,7 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
               ))}
             </TextField>
             <TextField
-              label="Categoría"
+              label={t('recepcion.nuevoProducto.categoria')}
               select
               value={modalData.tipo}
               onChange={(e) =>
@@ -124,7 +141,7 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
             </TextField>
           </Box>
           <TextField
-            label="Contenido (Neto)"
+            label={t('recepcion.nuevoProducto.contenido')}
             type="number"
             InputProps={{ inputProps: { min: 0 } }}
             value={modalData.contenido}
@@ -139,13 +156,13 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancelar</Button>
+        <Button onClick={onClose}>{t('comun.cancelar')}</Button>
         <Button
           variant="contained"
           onClick={onConfirm}
           disabled={!modalData.nombre}
         >
-          Confirmar y Añadir
+          {t('recepcion.nuevoProducto.confirmar')}
         </Button>
       </DialogActions>
     </Dialog>

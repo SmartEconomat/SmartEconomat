@@ -26,6 +26,17 @@ export interface ProductCardProps {
   actions?: ReactNode;
 }
 
+/**
+ * @description Card component for displaying a single Producto in the product grid.
+ * Shows the product image (or a category icon placeholder), name, unit, content, allergens,
+ * and status chip. Renders optional edit, delete, and view icon buttons.
+ * @param props.producto - The Producto entity to display
+ * @param props.onEdit - Optional callback invoked when the edit button is clicked
+ * @param props.onDelete - Optional callback invoked when the delete button is clicked
+ * @param props.onView - Optional callback invoked when the view button is clicked
+ * @param props.actions - Optional extra React nodes rendered in the card actions area
+ * @returns MUI Card representing a single product
+ */
 const ProductCard: React.FC<ProductCardProps> = ({
   producto,
   onEdit,

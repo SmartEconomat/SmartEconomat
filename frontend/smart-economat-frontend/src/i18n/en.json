@@ -1,0 +1,1607 @@
+{
+  "auth": {
+    "login": {
+      "title": "Login",
+      "username": "Username",
+      "password": "Password",
+      "submit": "Sign In",
+      "success": "Login successful!",
+      "welcome": "Welcome!",
+      "loading": "Loading your application…"
+    },
+    "register": {
+      "successTitle": "Registration successful!",
+      "successWait": "Please wait until your account is active."
+    },
+    "errors": {
+      "invalidCredentials": "Invalid username or password.",
+      "accountPending": "Your account is still pending activation.",
+      "accountBlocked": "Your account is blocked. Contact the administrator.",
+      "invalidEmail": "Enter a valid email to recover your password.",
+      "invalidOrExpiredToken": "The reset link is invalid or has expired.",
+      "invalidCurrentPassword": "The current password is incorrect.",
+      "invalidClassCode": "The class code is invalid or unavailable.",
+      "classFull": "This class is already full.",
+      "usernameTaken": "That username is already taken.",
+      "invalidCial": "The entered CIAL already exists or is invalid.",
+      "userOrEmailTaken": "User or email is already registered."
+    },
+    "resetPassword": {
+      "titulo": "Reset Password",
+      "descripcion": "Please enter your new password below.",
+      "nuevaContrasena": "New Password",
+      "confirmarContrasena": "Confirm Password",
+      "guardando": "Saving...",
+      "guardar": "Save New Password",
+      "volver": "Back to login",
+      "exito": "Your password has been reset successfully. You will be redirected to the login page.",
+      "errors": {
+        "tokenInvalido": "The recovery link is invalid or does not contain a token.",
+        "contrasenasNoCoinciden": "Passwords do not match.",
+        "noSePudo": "Could not reset the password.",
+        "conexion": "Connection error with the server."
+      }
+    },
+    "slide": {
+      "navAriaLabel": "Informational slides navigation",
+      "dotAriaLabel": "Slide {{current}} of {{total}}",
+      "login": {
+        "slide1": {
+          "title": "Welcome to SmartEconomat",
+          "description": "Manage your economat efficiently, quickly and from any device."
+        },
+        "slide2": {
+          "title": "Real-time control",
+          "description": "Check stock, movements and orders instantly, without delays or surprises."
+        },
+        "slide3": {
+          "title": "Always available",
+          "description": "Your economat accessible 24/7 with a secure and reliable system."
+        }
+      },
+      "register": {
+        "slide1": {
+          "title": "Join SmartEconomat",
+          "description": "Register in seconds and start managing your economat today."
+        },
+        "slide2": {
+          "title": "Everything in one place",
+          "description": "Products, recipes, orders, incidents and more, all integrated in a single platform."
+        },
+        "slide3": {
+          "title": "Modern and simple interface",
+          "description": "Intuitive design so you can focus on what really matters."
+        }
+      }
+    },
+    "loginForm": {
+      "pageTitle": "Sign In to Smart Economat",
+      "usernameOrEmail": "Username or Email",
+      "password": "Password",
+      "rememberMe": "Remember me",
+      "submit": "Sign In",
+      "noAccount": "Don't have an account? Register here.",
+      "ariaRevealPassword": "reveal password",
+      "ariaShowNewPassword": "show new password",
+      "ariaShowConfirmPassword": "show confirm password",
+      "forgotPassword": {
+        "link": "Forgot your password?",
+        "description": "Enter the email address linked to your account to receive a temporary reset link.",
+        "emailLabel": "Email Address",
+        "submit": "Reset Password",
+        "backToLogin": "Back to login",
+        "errorEmpty": "Please enter your username or email address.",
+        "errorAlumno": "Students must request a password reset directly from their assigned teacher.",
+        "errorNoSePudo": "Could not process the recovery request.",
+        "successDefault": "If the email address is in our system, you will receive instructions shortly."
+      },
+      "changePassword": {
+        "title": "Mandatory password change",
+        "description": "Your administrator has reset your password. For security reasons, you must choose a new one before continuing.",
+        "newPassword": "New Password",
+        "confirmPassword": "Confirm New Password",
+        "submit": "Update & Sign In",
+        "errorNoSePudo": "Could not change the password."
+      },
+      "errors": {
+        "loginFailed": "Could not sign in with the provided credentials.",
+        "conexion": "Connection error with the server."
+      }
+    },
+    "registerForm": {
+      "createAccount": "Create an account",
+      "roleAriaLabel": "User role",
+      "roleAlumno": "Student",
+      "roleProfesor": "Teacher",
+      "username": "Username",
+      "email": "Email Address",
+      "codigoClase": "Class code",
+      "cial": "CIAL (ID or Identifier)",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "submitAlumno": "Register as Student",
+      "submitProfesor": "Register as Teacher",
+      "alreadyHaveAccount": "Already have an account? Sign in here",
+      "ariaRevealPassword": "reveal password",
+      "slotReferenceMessage": "You are registering in class {{aula}} - Class {{numeroClase}} by teacher {{profesor}}.",
+      "codigoVerificado": "Code verified successfully.",
+      "codigoHelper": "Enter the class code to confirm it belongs to your group.",
+      "verificandoCodigo": "Verifying class code…",
+      "codigoValido": "Valid code.",
+      "errorPasswordMismatch": "Passwords do not match.",
+      "errorCodigoRequerido": "Please enter the class code.",
+      "errorCodigoInvalido": "You must enter a valid class code to complete registration.",
+      "errorNoSePudo": "Could not complete the registration.",
+      "errorConexion": "Connection error with the server.",
+      "errorValidarCodigo": "Could not validate the class code."
+    }
+  },
+  "toast": {
+    "success": "Operation completed successfully!",
+    "error": "An error occurred.",
+    "info": "Information message.",
+    "warning": "Warning message.",
+    "errors": {
+      "mustBeUsedInProvider": "useToast must be used within a ToastProvider."
+    }
+  },
+  "dashboard": {
+    "greeting": "Hello, {{name}}",
+    "admin": "Administrator",
+    "intro": "Here is a summary of the current state of the economat.",
+    "statsTitle": "Economat Statistics",
+    "metrics": {
+      "totalProductos": "Total Products",
+      "pedidosPendientes": "Pending Orders",
+      "incidencias": "Incidents",
+      "alertasStock": "Stock Alerts",
+      "proveedores": "Suppliers",
+      "notificaciones": "Notifications",
+      "productosEsteMes": "+{{count}} added this month",
+      "sinNuevosProductos": "No new products this month",
+      "pedidosHoy": "{{count}} received today",
+      "sinRecepcionesHoy": "No receptions today",
+      "pedidosConIncidencias": "{{count}} order(s) with incidents",
+      "sinIncidencias": "No incidents",
+      "itemsBajoMinimo": "{{count}} item(s) below minimum",
+      "stockCorrecto": "Stock correct",
+      "catalogoActualizado": "Catalog updated",
+      "accionesPendientes": "{{count}} pending action(s)",
+      "sinNotificaciones": "No notifications"
+    },
+    "summary": {
+      "productos": "Product List",
+      "pedidos": "Pending Orders",
+      "incidencias": "Incident List",
+      "stock": "Products Below Minimum",
+      "proveedores": "Our Suppliers"
+    },
+    "retry": "Retry",
+    "quickActions": {
+      "nuevoPedido": "New Order",
+      "anadirProducto": "Add Product",
+      "registrarRecepcion": "Register Reception",
+      "nuevaReceta": "New Recipe",
+      "anadirNuevoProducto": "Add New Product",
+      "crearNuevoPedido": "Create New Order",
+      "confirmarNuevoPedido": "Are you sure you want to register this new order?"
+    },
+    "recentActivity": "Recent Activity",
+    "noRecentActivity": "No recent activity recorded.",
+    "viewAllHistory": "View all history",
+    "errors": {
+      "sinPermisos": "You do not have permission to view the dashboard.",
+      "desconocido": "Unknown error loading the dashboard."
+    },
+    "toast": {
+      "productoAniadido": "Product added successfully.",
+      "recetaCreada": "Recipe created successfully.",
+      "errorQuickAction": "Error saving the quick action."
+    },
+    "time": {
+      "ahora": "now",
+      "min": "{{count}}min",
+      "hora": "{{count}}h",
+      "ayer": "yesterday",
+      "dias": "{{count}}d"
+    },
+    "activity": {
+      "entrada": "A stock entry has been recorded",
+      "salida": "A stock exit has been recorded",
+      "ajuste": "An inventory adjustment has been made",
+      "pedido": "An order has been recorded",
+      "entradaCompra": "A purchase reception has been recorded",
+      "desconocido": "Activity recorded ({{tipo}})"
+    },
+    "customizer": {
+      "titulo": "Customise Panel",
+      "descripcion": "Select the metric cards you want to see on your Dashboard. At least one must remain active."
+    }
+  },
+  "layout": {
+    "menu": {
+      "inicio": "Home",
+      "catalogo": "Catalog",
+      "operaciones": "Operations",
+      "control": "Control",
+      "gestion": "Management",
+      "minimizar": "Minimize menu",
+      "expandir": "Expand menu",
+      "navegacionPrincipal": "Main navigation"
+    }
+  },
+  "receta": {
+    "form": {
+      "nombre": "Recipe Name",
+      "tiempoPreparacion": "Preparation Time",
+      "tiempo": {
+        "10min": "10 min",
+        "20min": "20 min",
+        "30min": "30 min",
+        "45min": "45 min",
+        "60min": "60 min"
+      },
+      "dificultad": "Difficulty",
+      "dificultadFacil": "Easy",
+      "dificultadMedia": "Medium",
+      "dificultadDificil": "Hard",
+      "instrucciones": "Instructions",
+      "rendimiento": "Estimated Yield",
+      "unidadResultado": "Unit",
+      "diasCaducidad": "Expiration Days",
+      "costeUnitarioEstimado": "Estimated Cost (info)",
+      "raciones": "Base Servings",
+      "tamanioRacion": "Serving Size",
+      "ingredientes": "Recipe Ingredients",
+      "imagen": "Recipe Image",
+      "tituloEditar": "Edit: {{nombre}}",
+      "tituloNueva": "New Recipe",
+      "confirmarEdicion": "Are you sure you want to save the changes to this recipe?",
+      "confirmarCreacion": "Are you sure you want to add this new recipe to the system?"
+    },
+    "cocinar": {
+      "configuracionLote": "Batch Configuration",
+      "ubicacionDestino": "Destination location",
+      "fechaCaducidadManual": "Expiration date (manual)"
+    },
+    "ingredientes": {
+      "titulo": "Recipe Ingredients",
+      "anadir": "Add Ingredient",
+      "alergenos": "Allergens in this recipe:",
+      "proveedorFav": "Fav. supplier",
+      "vacio": "No ingredients added to the recipe",
+      "sinProveedor": "No supplier available",
+      "masBarato": "Automatically select the cheapest",
+      "masBaratoLabel": "Cheapest"
+    }
+  },
+  "recetas": {
+    "ingredientes": {
+      "empty": "No ingredients registered.",
+      "producto": "Product",
+      "cantidad": "Quantity",
+      "unidad": "Unit",
+      "proveedorFav": "Fav. supplier",
+      "auto": "Auto",
+      "automatico": "Automatic"
+    },
+    "toast": {
+      "eliminada": "Recipe \"{{nombre}}\" deleted successfully.",
+      "errorEliminar": "Error deleting the recipe.",
+      "actualizada": "Recipe updated successfully.",
+      "creada": "Recipe created successfully.",
+      "errorGuardar": "Error saving the recipe.",
+      "seleccionaParaExportar": "Select at least one recipe to export to PDF.",
+      "noProveedoresFaltantes": "No valid suppliers found for missing ingredients.",
+      "pedidoGeneradoConInternos": "Order #{{numero}} with {{total}} internal order(s) has been generated to cover the missing items.",
+      "pedidoGenerado": "Order #{{numero}} has been generated to cover the missing items.",
+      "errorGenerarPedidos": "Error generating orders: {{error}}",
+      "seleccionaUbicacion": "You must select a destination location."
+    }
+  },
+  "usuarios": {
+    "empty": {
+      "noUsuariosRol": "No users found for this role and search."
+    }
+  },
+  "movimientos": {
+    "titulo": "Movement History",
+    "totalItemsLabel": "movements",
+    "columns": {
+      "fecha": "Date",
+      "tipo": "Type",
+      "cantidad": "Qty.",
+      "descripcion": "Description",
+      "usuario": "User"
+    },
+    "tipos": {
+      "ENTRADA": "Entry",
+      "ENTRADA_COMPRA": "Entry (purchase)",
+      "ENTRADA_DISTRIBUCION": "Entry (distribution)",
+      "SALIDA": "Exit",
+      "SALIDA_ELABORACION": "Exit (production)",
+      "SALIDA_DISTRIBUCION": "Exit (distribution)",
+      "AJUSTE": "Adjustment",
+      "PEDIDO": "Order"
+    },
+    "filtros": {
+      "tipos": "Types",
+      "placeholder": "Filter by type...",
+      "desde": "From",
+      "hasta": "To"
+    },
+    "verDetalle": "View details",
+    "verDistribucion": "View Distribution",
+    "detalle": {
+      "titulo": "Movement Details",
+      "id": "ID: {{id}}",
+      "general": "General Information",
+      "contexto": "Context",
+      "seguimiento": "Tracking",
+      "productoDescripcion": "Product / Description",
+      "lote": "Batch",
+      "origenEntidad": "Origin (Entity)",
+      "idEntidad": "Entity ID"
+    },
+    "empty": {
+      "noMovimientos": "No movements",
+      "noResultados": "No movements found matching the selected filters.",
+      "noRegistros": "No inventory changes have been recorded in the system yet."
+    }
+  },
+  "albaran": {
+    "titulo": "Delivery Notes",
+    "totalItemsLabel": "delivery notes",
+    "buscar": "Search by delivery note number...",
+    "nuevo": "New Delivery Note",
+    "filters": {
+      "placeholder": "Filter by match status...",
+      "desde": "From",
+      "hasta": "To"
+    },
+    "upload": {
+      "titulo": "Upload Delivery Note Document",
+      "numeroReferencia": "Delivery Note Reference Number",
+      "numeroReferenciaHelper": "Identifying number of the physical delivery note",
+      "seleccionarArchivo": "Select file",
+      "cambiarArchivo": "Change file",
+      "formatosAceptados": "Accepted formats: JPG, PNG, GIF, PDF · Maximum {{max}} MB",
+      "recepcionId": "Reception ID (optional)",
+      "recepcionIdPlaceholder": "UUID of the reception to link...",
+      "recepcionIdHelper": "If provided, links the delivery note to that reception",
+      "observaciones": "Observations (optional)",
+      "observacionesPlaceholder": "Notes about the document...",
+      "botonSubir": "Upload Document",
+      "errorTamano": "The file exceeds the maximum size of {{max}} MB.",
+      "errorSinArchivo": "You must select a file."
+    },
+    "form": {
+      "nAlbaran": "Delivery Note Number",
+      "concordancia": "Match Status",
+      "concordanciaVacio": "— Not defined —",
+      "conforme": "Compliant",
+      "noConforme": "Non-compliant",
+      "fecha": "Delivery Note Date"
+    },
+    "columns": {
+      "nAlbaran": "Nº Note",
+      "fecha": "Date",
+      "concordancia": "Match Status",
+      "documento": "Document",
+      "recepciones": "Receptions"
+    },
+    "actions": {
+      "verDetalle": "View detail",
+      "subirDocumento": "Upload document",
+      "editar": "Edit",
+      "eliminar": "Delete"
+    },
+    "detalle": {
+      "infoTitulo": "Delivery Note Information",
+      "nAlbaran": "Nº Note",
+      "fecha": "Date",
+      "concordancia": "Match Status",
+      "fechaRegistro": "Registration Date",
+      "documentoAdjunto": "Attached Document",
+      "nombre": "Name",
+      "tipo": "Type",
+      "tamano": "Size",
+      "verDocumento": "View document",
+      "abrirArchivo": "Open file",
+      "sinRecepciones": "No linked receptions",
+      "sinLineas": "No product lines associated with the receptions of this delivery note."
+    },
+    "modal": {
+      "tituloDetalle": "Delivery Note Detail",
+      "tituloEditar": "Edit Delivery Note",
+      "tituloSubirDoc": "Upload Document",
+      "guardarCambios": "Save Changes",
+      "crearAlbaran": "Create Delivery Note"
+    },
+    "confirm": {
+      "titulo": "Delete Delivery Note",
+      "mensaje": "Are you sure you want to delete delivery note \"{{nAlbaran}}\"?",
+      "eliminar": "Delete"
+    },
+    "empty": {
+      "noAlbaranes": "No delivery notes registered",
+      "noResultados": "No delivery notes matching your search.",
+      "primerAlbaran": "There are no delivery notes in the system yet. Create the first one with the \"New Delivery Note\" button."
+    },
+    "errors": {
+      "cargar": "Error loading delivery notes",
+      "cargarDetalle": "Could not load the full delivery note detail",
+      "errorGuardar": "Error saving delivery note",
+      "errorEliminar": "Error deleting delivery note",
+      "errorSubir": "Error uploading document"
+    },
+    "toast": {
+      "actualizado": "Delivery note updated successfully",
+      "creado": "Delivery note created successfully",
+      "eliminado": "Delivery note deleted successfully",
+      "documentoSubido": "Document uploaded successfully"
+    }
+  },
+  "incidencias": {
+    "titulo": "Incident Center",
+    "totalItemsLabel": "incidents",
+    "buscar": "Search by supplier or observations...",
+    "estados": {
+      "nueva": "New",
+      "enAjuste": "In adjustment",
+      "pendienteValidacion": "Pending validation",
+      "resuelta": "Resolved",
+      "cancelada": "Cancelled",
+      "invalida": "Invalid"
+    },
+    "tabs": {
+      "abiertas": "Open",
+      "cerradas": "Closed",
+      "todas": "All"
+    },
+    "filters": {
+      "desde": "From",
+      "hasta": "To"
+    },
+    "actions": {
+      "ajustarCantidades": "Adjust quantities",
+      "resolverIncidencia": "Resolve incident"
+    },
+    "modal": {
+      "detalle": "Incident Detail",
+      "resolverTitulo": "Resolve incident",
+      "ajustarTitulo": "Adjust incident quantities",
+      "descripcion": "All lines of the incident are shown. Only lines with discrepancies allow adjustment, keeping the received quantity as read-only.",
+      "proveedor": "Supplier",
+      "sinLineas": "This incident has no associated products. It cannot be adjusted or resolved until it has at least one valid line.",
+      "marcarResuelta": "Mark incident as resolved",
+      "estadoFinal": "Final status",
+      "buscarProducto": "Search product",
+      "ajustables": "Adjustable",
+      "sinAjuste": "No adjustment",
+      "total": "Total",
+      "sinDiscrepancias": "This incident has products, but there are no active discrepancies to adjust. You can close the incident if applicable.",
+      "tabla": {
+        "producto": "Product",
+        "pedida": "Ordered",
+        "recibida": "Received",
+        "ajuste": "Adjustment",
+        "trasAjuste": "After adjustment",
+        "balance": "Balance",
+        "estado": "Status",
+        "nota": "Note"
+      },
+      "ajusteLabel": "Adjustment",
+      "rangoPermitidoMax": "Allowed range: {{min}} to 0",
+      "rangoPermitidoMin": "Allowed range: 0 to {{max}}",
+      "ajusteManual": "Manual adjustment",
+      "noRequiereAjuste": "No adjustment required",
+      "chipPendiente": "Pending adjustment",
+      "chipBalanceado": "Balanced",
+      "chipSinAjuste": "No adjustment",
+      "filasPorPagina": "Rows",
+      "sinResultadosFiltro": "No products match the current filter.",
+      "notasResolucion": "Resolution notes (optional)",
+      "notasResolucionPlaceholder": "E.g.: Partial adjustment received today, 1 unit pending for tomorrow.",
+      "guardarYResolver": "Save and resolve",
+      "guardarAjustes": "Save adjustments"
+    },
+    "confirm": {
+      "titulo": "Delete Incident",
+      "mensaje": "Are you sure you want to delete this incident? This action cannot be undone and the discrepancy record will be lost.",
+      "eliminar": "Delete"
+    },
+    "empty": {
+      "noCerradas": "No closed incidents",
+      "mensajeCerradas": "Closed incidents include resolved, cancelled, and invalid ones.",
+      "noPendientes": "Excellent work! No pending discrepancies detected in recent receptions."
+    },
+    "toast": {
+      "marcadaCancelada": "Incident marked as cancelled",
+      "marcadaInvalida": "Incident marked as invalid",
+      "marcadaResuelta": "Incident marked as resolved",
+      "actualizada": "Incident updated successfully"
+    }
+  },
+  "admin": {
+    "titulo": "Academic Administration",
+    "subtitulo": "Manage your classrooms, classes and linked students from one place.",
+    "breadcrumb": {
+      "inicio": "Home",
+      "administracion": "Administration"
+    },
+    "tabs": {
+      "aulasClases": "Classrooms & Classes",
+      "alumnos": "Students",
+      "gestionUsuarios": "User Management",
+      "plantillasRoles": "Role Templates",
+      "ariaLabel": "admin tabs"
+    },
+    "actions": {
+      "finalizarEdicion": "Finish Editing",
+      "gestionar": "Manage"
+    },
+    "options": {
+      "propio": "-- Mine (Own) --"
+    },
+    "errors": {
+      "cargarDatos": "Error loading administration data",
+      "cargarAlumnos": "Error loading students",
+      "sinProfesorVinculado": "You do not have a linked teacher profile. Select a teacher from the list or make sure you have a teacher profile created."
+    },
+    "toast": {
+      "aulaCreada": "Classroom/Class added successfully",
+      "errorCrearClase": "Error creating the class",
+      "ubicacionEliminada": "Location deleted",
+      "ubicacionActualizada": "Location updated",
+      "aulaActualizada": "Classroom updated successfully",
+      "estadoAlumnoActualizado": "Student status updated",
+      "contrasenaReset": "Password reset. New key: {{clave}}",
+      "alumnoEliminado": "Student deleted"
+    },
+    "confirm": {
+      "eliminarClase": "Are you sure you want to delete this class?",
+      "eliminarAlumno": "Are you sure you want to delete this student?"
+    }
+  },
+  "recepcion": {
+    "conflicto": {
+      "titulo": "Draft conflict detected",
+      "descripcion": "This form was updated from another device or tab.",
+      "ultimaVersion": "Last server version:",
+      "desconocida": "unknown",
+      "instruccion": "You can load the remote draft or overwrite it with your local version.",
+      "usarRemota": "Use remote version",
+      "sobrescribir": "Overwrite with my version"
+    },
+    "estadoLinea": {
+      "ok": "OK",
+      "parcial": "Partial",
+      "exceso": "Excess",
+      "noEntregado": "Not delivered",
+      "nuevo": "New"
+    },
+    "nuevoProducto": {
+      "tituloEncontrado": "Add Found Product",
+      "tituloDesconocido": "Add Unknown Product",
+      "infoEncontrado": "We have auto-filled the data using a global database. Review the information before adding the product to your catalogue.",
+      "infoDesconocido": "This product does not appear in the catalogue or in the selected orders. Please enter its basic details.",
+      "nombre": "Product Name",
+      "codigoBarras": "Barcode",
+      "marca": "Brand",
+      "categoria": "Category",
+      "contenido": "Content (Net)",
+      "confirmar": "Confirm & Add"
+    },
+    "pasos": {
+      "seleccionPedidos": "Order Selection",
+      "escaneoConteo": "Scanning & Counting",
+      "revisionAjuste": "Review & Adjustment",
+      "resultado": "Result"
+    },
+    "estados": {
+      "noEntregado": "Not delivered",
+      "ok": "OK",
+      "parcial": "Partial",
+      "exceso": "Excess"
+    },
+    "titulo": "Reception Management",
+    "recuperandoBorrador": "Recovering reception draft...",
+    "acciones": {
+      "escanearCamara": "Scan with camera",
+      "escanearProducto": "Scan Product",
+      "cerrarEscaner": "Close scanner",
+      "descartar": "Discard",
+      "atras": "Back",
+      "siguiente": "Next",
+      "procesando": "Processing...",
+      "finalizarRecepcion": "Finalise Reception"
+    },
+    "campos": {
+      "autoGenerado": "Auto-generated if empty",
+      "justificante": "Required justification*",
+      "notasGenerales": "Add any general notes here..."
+    },
+    "escaneo": {
+      "titulo": "Scan Barcode or ID",
+      "placeholder": "EAN-13 or parcel ID...",
+      "escanearProducto": "Scan Product",
+      "opcionesBascula": "Scale options",
+      "usarBascula": "Use scale",
+      "pedida": "Ordered",
+      "albaran": "Delivery note",
+      "recibida": "Received",
+      "itemsRecibidos": "{{count}} items received",
+      "sinCodigo": "No barcode",
+      "estadoOptimo": "Optimal",
+      "estadoRoto": "Broken",
+      "estadoDefecto": "Defect",
+      "nuevo": "New",
+      "fueraDePedido": "Special / Out of Order",
+      "fisico": "Physical",
+      "ean": "EAN"
+    },
+    "revision": {
+      "instruccion": "Review the totals. If you do not enter a delivery note number, one will be auto-generated.",
+      "numAlbaran": "Delivery Note No.",
+      "autoGenerado": "Auto-generated if empty",
+      "exp": "Exp.",
+      "alb": "D/N",
+      "real": "Actual",
+      "origenPeso": "Weight source",
+      "estadoFisico": "Physical State",
+      "bascula": "Scale",
+      "manual": "Manual",
+      "defectuoso": "Defective",
+      "justificante": "Required justification*",
+      "firma": "Signature / General Observations",
+      "notasPlaceholder": "Add any general notes here..."
+    },
+    "resultado": {
+      "exito": "Reception registered successfully!",
+      "idRegistro": "Record ID",
+      "registros": "Records Created",
+      "registradosAutom": "registered automatically",
+      "productosAlmacen": "Products in Warehouse",
+      "disponibles": "now available",
+      "productosNuevos": "New Products",
+      "anadidosCatalogo": "added to catalogue",
+      "discrepancias": "Discrepancies have been detected in the reception",
+      "pedidoRef": "Order Ref",
+      "faltan": "Missing",
+      "sobran": "Excess",
+      "unidades": "units",
+      "guardado": "The reception has been saved correctly and the inventory has been updated.",
+      "descargarPdf": "Download Details (PDF)",
+      "distribuir": "Distribute now",
+      "finalizar": "Finish & Return"
+    },
+    "seleccion": {
+      "titulo": "Select the orders you are receiving",
+      "anadirProveedor": "Add by Supplier",
+      "seleccionaProveedor": "Select a supplier",
+      "deseleccionarProveedor": "Deselect by Supplier",
+      "pedido": "Order"
+    },
+    "bascula": {
+      "titulo": "Reception Scale",
+      "pesando": "Weighing",
+      "comunicando": "Communicating with scale...",
+      "recalcular": "Recalculate",
+      "confirmarPeso": "Confirm Weight",
+      "webSerialNoDisponible": "Web Serial not available",
+      "sinBasculaAutorizada": "No authorised scale",
+      "guardadaListaParaConectar": "Scale saved, ready to connect",
+      "conectada": "Scale connected",
+      "desconectada": "Scale disconnected",
+      "desactivada": "Scale disabled",
+      "seleccionCancelada": "Port selection cancelled",
+      "noSePudoConectar": "Could not connect the scale",
+      "leyendoPeso": "Reading weight in real time",
+      "pesoRecibido": "Weight received from scale",
+      "errorLectura": "Scale read error",
+      "noSePudoLeer": "Could not read the scale",
+      "estadoTooltip": "Scale status: {{estado}}",
+      "vincular": "Link",
+      "cambiarPuerto": "Change port"
+    },
+    "sync": {
+      "guardando": "Saving...",
+      "guardandoTooltip": "Syncing draft with the server",
+      "sincronizado": "Synced",
+      "sincronizadoTooltip": "Draft securely synchronised",
+      "error": "Sync error",
+      "errorTooltip": "Error syncing the draft",
+      "conflicto": "Conflict",
+      "conflictoTooltip": "Draft changed on another device"
+    },
+    "recovery": {
+      "titulo": "Recover pending reception",
+      "mensaje": "You left a reception in progress. Do you want to recover it and continue where you left off?",
+      "ultimaActualizacion": "Last updated:",
+      "fechaDesconocida": "unknown",
+      "confirmar": "Yes, recover",
+      "cancelar": "No, discard"
+    },
+    "descartar": {
+      "titulo": "Discard reception",
+      "mensaje": "Are you sure you want to delete the current reception draft? You will lose all unvalidated progress.",
+      "confirmar": "Yes, discard",
+      "cancelar": "Cancel"
+    },
+    "procesando": {
+      "titulo": "Processing Bulk Reception...",
+      "descripcion": "Ensuring transactional integrity (ACID). Please do not close the browser."
+    },
+    "errors": {
+      "webSerialNoSoportado": "This browser does not support Web Serial for connecting the scale.",
+      "noPudoAbrirPuerto": "Could not open the scale's serial port.",
+      "cargarPedidos": "Error loading compatible orders.",
+      "minProducto": "You must receive at least one product.",
+      "discrepanciaObservaciones": "Validation Error: Product \"{{nombre}}\" has discrepancies with the order or status and its notes field is required.",
+      "espontaneoObservaciones": "Validation Error: Spontaneous product \"{{nombre}}\" requires a mandatory justification note.",
+      "pedidoNoEncontrado": "Critical error: The order you were receiving no longer exists or has been processed. The obsolete remote draft has been deleted for safety. Please select the orders to receive again.",
+      "errorTransaccion": "Critical transaction error: {{detalle}}. The data is still synchronised on the server; you can try sending it again.",
+      "basculaNoActiva": "The scale is not active. Link it or enter the weight manually.",
+      "sinBasculaDisponible": "No authorised scale is available.",
+      "perdidaComunicacion": "Communication with the scale was lost.",
+      "noSePudoIniciarLectura": "Could not start reading the scale."
+    }
+  },
+  "merma": {
+    "form": {
+      "producto": "Product",
+      "cantidad": "How much was lost? (according to the product unit)",
+      "motivo": "Reason for loss",
+      "motivoOpciones": {
+        "roturaEnvase": "Container breakage",
+        "deterioroCaducidad": "Deterioration / Expiration",
+        "hurto": "Theft / Loss",
+        "errorPreparacion": "Preparation error",
+        "otros": "Other reasons"
+      },
+      "observaciones": "Observations / Notes"
+    }
+  },
+  "usuario": {
+    "perfilDescripcion": "This is the user profile configuration page."
+  },
+  "perfil": {
+    "titulo": "User Profile",
+    "miPerfil": "My Profile",
+    "descripcionAlumno": "View your profile, change your username or password, and request email changes with higher-role approval.",
+    "descripcionOtros": "View and edit your personal data and security options.",
+    "seccion": {
+      "titulo": "Profile & Security",
+      "descripcionAlumno": "You can edit your username and password. Email changes require approval from a higher-privilege role.",
+      "descripcionOtros": "Manage your personal information and password."
+    },
+    "actions": {
+      "editarPerfil": "Edit Profile",
+      "guardarCambios": "Save Changes"
+    },
+    "errors": {
+      "passwordMismatch": "Passwords do not match.",
+      "saveFailed": "Error saving changes"
+    },
+    "toast": {
+      "updated": "Profile updated successfully",
+      "updateError": "Error updating the profile"
+    },
+    "emailModal": {
+      "titulo": "Request Email Change",
+      "descripcion": "The email change is not immediate. The request will be reviewed by a higher-privilege role and will only be applied after approval.",
+      "nuevoEmail": "New Email",
+      "confirmarNuevoEmail": "Confirm New Email",
+      "justificacion": "Justification",
+      "enviarSolicitud": "Submit Request",
+      "errors": {
+        "required": "Enter and confirm the new email",
+        "invalidFormat": "The email format is not valid",
+        "mismatch": "The emails do not match",
+        "sameEmail": "The new email must be different from the current one",
+        "justificationTooShort": "Provide a valid justification (at least 10 characters)"
+      },
+      "toast": {
+        "requestSent": "Request submitted. The email change will be pending approval by a higher-privilege role."
+      }
+    }
+  },
+  "comun": {
+    "acciones": "Actions",
+    "guardar": "Save",
+    "cancelar": "Cancel",
+    "eliminar": "Delete",
+    "editar": "Edit",
+    "ver": "View",
+    "cerrar": "Close",
+    "aceptar": "Accept",
+    "buscar": "Search",
+    "filtrar": "Filter",
+    "exportar": "Export",
+    "importar": "Import",
+    "nuevo": "New",
+    "crear": "Create",
+    "actualizar": "Update",
+    "confirmar": "Confirm",
+    "si": "Yes",
+    "no": "No",
+    "cargando": "Loading...",
+    "sinDatos": "No data available.",
+    "porPagina": "Per page:",
+    "ocultarFiltros": "Hide filters",
+    "mostrarFiltros": "Show filters",
+    "totalDe": "Total of",
+    "escanearCamara": "Scan with camera",
+    "escanearCodigo": "Scan barcode",
+    "limpiarBusqueda": "Clear search",
+    "cerrarModal": "Close modal",
+    "campoObligatorio": "This field is required",
+    "uuidInvalido": "Supplier ID must be a valid UUID",
+    "generarEan13": "Generate EAN-13 code",
+    "buscarOpenFoodFacts": "Search OpenFoodFacts",
+    "cargarImagen": "Upload image",
+    "confirmarAccion": "Confirm action",
+    "confirmarGuardar": "Are you sure you want to save this data?",
+    "error": "Error",
+    "exito": "Success",
+    "producto": "Product",
+    "unidad": "Unit",
+    "estado": "Status",
+    "accion": "Action",
+    "item": "Item",
+    "notas": "Notes",
+    "opcional": "Optional...",
+    "descargando": "Downloading...",
+    "seleccionarTodos": "Select All",
+    "deseleccionarTodos": "Deselect All",
+    "id": "ID: ",
+    "proveedor": "Supplier",
+    "ubicacion": "Location",
+    "anadir": "Add",
+    "reintentar": "Retry",
+    "cantidad": "Quantity",
+    "buscarProducto": "Search product...",
+    "quitar": "Remove",
+    "proveedorLabel": "Supplier: ",
+    "pendiente": "Pending",
+    "sinElementos": "No items",
+    "idioma": {
+      "es": "Español",
+      "en": "English"
+    }
+  },
+  "notificaciones": {
+    "abrirCentro": "Open notification center",
+    "titulo": "Notifications",
+    "actualizar": "Refresh",
+    "buscandoActualizaciones": "Searching for updates...",
+    "todoControlado": "Everything under control!",
+    "sinAccionesUrgentes": "You have no urgent actions or pending tasks at this moment. Good work.",
+    "totalPendientes": "Total pending: {{count}}",
+    "tareasYAlertas": "Tasks and alerts that require your attention.",
+    "huboProblem": "There was a problem",
+    "urgente": "Urgent",
+    "pendiente": "Pending",
+    "errorCarga": "Notifications could not be loaded."
+  },
+  "configuracion": {
+    "titulo": "Settings",
+    "descripcion": "Theme and appearance settings",
+    "temaYApariencia": "Theme and appearance settings",
+    "tema": "Theme",
+    "ajustes": "Settings",
+    "tamanoFuente": "Font Size",
+    "claro": "Light",
+    "oscuro": "Dark",
+    "altoContrasteClaro": "High Contrast (Light)",
+    "altoContrasteOscuro": "High Contrast (Dark)",
+    "pequeno": "Small",
+    "mediano": "Medium",
+    "grande": "Large",
+    "temaClaro": "Light",
+    "temaOscuro": "Dark",
+    "temaAltoClaroContraste": "High Contrast (Light)",
+    "temaAltoOscuroContraste": "High Contrast (Dark)",
+    "fuente": {
+      "pequeno": "Small",
+      "mediano": "Medium",
+      "grande": "Large"
+    },
+    "aprendizaje": {
+      "activar": "Enable learning mode (Show detailed descriptions)",
+      "desactivar": "Disable learning mode (Hide detailed descriptions)",
+      "on": "Learning: ON",
+      "off": "Learning: OFF"
+    }
+  },
+  "tutorial": {
+    "mostrar": "Show tutorial",
+    "ayuda": "Help",
+    "verGuiaAyuda": "View help guide for this page",
+    "verGuia": "View help guide",
+    "cerrar": "Close"
+  },
+  "aprendizaje": {
+    "activar": "Enable learning mode (Show detailed descriptions)",
+    "desactivar": "Disable learning mode (Hide detailed descriptions)",
+    "on": "Learning: ON",
+    "off": "Learning: OFF"
+  },
+  "plantillasRoles": {
+    "titulo": "Permission Management by Role Template",
+    "descripcionInfo": "Each template defines the base permissions of a role. When modifying the permissions of a template, the changes are automatically synchronized with all linked roles.",
+    "columnas": {
+      "plantilla": "Template",
+      "estado": "Status",
+      "permisos": "Permissions",
+      "rolesVinculados": "Linked Roles",
+      "acciones": "Actions"
+    },
+    "activa": "Active",
+    "inactiva": "Inactive",
+    "verPermisos": "View permissions (all active)",
+    "editarPermisos": "Edit permissions",
+    "plantillaSistema": "System template (not editable)",
+    "dialogTituloVer": "View permissions",
+    "dialogTituloEditar": "Edit permissions",
+    "superadminInfo": "The Superadmin template has all permissions active automatically. It cannot be modified.",
+    "warningGuardar": "When saving, permissions will be applied to all roles linked to this template",
+    "permisosActivos": "Active permissions: {{selected}} / {{total}}",
+    "seleccionarTodos": "Select all",
+    "deseleccionarTodos": "Deselect all",
+    "guardando": "Saving...",
+    "guardarPermisos": "Save permissions",
+    "errorCargar": "Could not load role templates",
+    "errorActualizar": "Could not update permissions",
+    "actualizadoExito": "Permissions for \"{{nombre}}\" updated successfully.{{sync}}"
+  },
+  "mermas": {
+    "titulo": "Waste Management",
+    "totalItemsLabel": "records",
+    "acciones": {
+      "registrar": "Report Waste",
+      "escanear": "Scan Product to Search"
+    },
+    "historial": "Waste History",
+    "columns": {
+      "producto": "Product",
+      "cantidad": "Quantity",
+      "motivo": "Reason",
+      "fecha": "Date",
+      "usuario": "User",
+      "notas": "Notes"
+    },
+    "toast": {
+      "registrada": "Waste recorded successfully",
+      "errorCargar": "Error loading waste data",
+      "errorRegistrar": "Error recording waste"
+    },
+    "empty": {
+      "noMermas": "No waste records found",
+      "noResultados": "No waste records matching your search or filters."
+    },
+    "modal": {
+      "titulo": "Report Product Waste",
+      "confirmacion": "This action will permanently deduct stock from inventory. Are you sure?"
+    }
+  },
+  "productos": {
+    "titulo": "Product Management",
+    "totalItemsLabel": "products",
+    "acciones": {
+      "escanear": "Scan Product to Search",
+      "nuevo": "New Product",
+      "exportarPdf": "Export PDF",
+      "exportarExcel": "Export Excel",
+      "anadirProducto": "Add Product",
+      "editarProducto": "Edit product"
+    },
+    "searchPlaceholder": "Search by name, brand, barcode...",
+    "columns": {
+      "nombre": "Name",
+      "marca": "Brand",
+      "tipo": "Type",
+      "contenido": "Content",
+      "codigoBarras": "Barcode"
+    },
+    "detail": {
+      "infoGeneral": "General Information",
+      "tipo": "Type",
+      "contenido": "Content",
+      "codigoBarras": "Barcode",
+      "pmp": "Current APC",
+      "descripcion": "Description",
+      "alergenos": "Allergens",
+      "proveedores": "Associated Suppliers",
+      "historicoPrecios": "Price History",
+      "mejorOpcion": "Best Option",
+      "mejorOpcionConAhorro": "Best Option · -{{pct}}%",
+      "precio": "Price",
+      "merma": "Waste",
+      "costeReal": "Real Cost",
+      "filtroProveedor": "Filter by Supplier",
+      "todosProveedores": "All suppliers",
+      "proveedor": "Supplier",
+      "cargandoHistorial": "Loading history...",
+      "sinHistorial": "No historical records for this product.",
+      "graficoPreciosPlaceholder": "Structure ready for price evolution chart"
+    },
+    "historial": {
+      "fecha": "Date",
+      "proveedor": "Supplier",
+      "cantidad": "Qty.",
+      "precio": "Price",
+      "documento": "Doc."
+    },
+    "actions": {
+      "verDetalle": "View detail",
+      "editar": "Edit",
+      "eliminar": "Delete",
+      "verHistorico": "View history for this supplier",
+      "ariaVerHistorico": "View history for {{nombre}}"
+    },
+    "toast": {
+      "eliminado": "Product deleted successfully.",
+      "actualizado": "Product updated successfully.",
+      "creado": "Product created successfully.",
+      "errorEliminar": "Error deleting the product.",
+      "errorGuardar": "Error saving the product.",
+      "localizado": "Product found. Opening its record for editing.",
+      "noEncontradoInfo": "Product not found. The code was left in the search.",
+      "noEncontradoForm": "Product not found. The form was opened to create it.",
+      "errorCatalogo": "Could not check the catalog, but the product creation form was opened.",
+      "errorValidar": "Could not validate the scanned code."
+    },
+    "empty": {
+      "sinResultados": "No products matching your search or filters",
+      "sinProductos": "No products found",
+      "prueba": "Try other terms or clear the filters.",
+      "empieza": "Start by adding the first product to your inventory."
+    },
+    "confirm": {
+      "eliminarTitulo": "Delete product",
+      "eliminarMensaje": "Are you sure you want to delete product {{nombre}}? This action cannot be undone.",
+      "eliminarConfirm": "Yes, delete",
+      "cancelar": "Cancel"
+    },
+    "errors": {
+      "errorCargar": "Unknown error loading data."
+    }
+  },
+  "inventario": {
+    "titulo": "Inventory by Product",
+    "totalItemsLabel": "products",
+    "acciones": {
+      "escanear": "Scan Product to Search",
+      "añadir": "Add to inventory",
+      "gestionarUbicaciones": "Manage Locations",
+      "registrarMerma": "Record Wastage"
+    },
+    "searchPlaceholder": "Search by product, type, supplier or location...",
+    "tabs": {
+      "misUbicaciones": "My Locations",
+      "inventarioGeneral": "General Inventory"
+    },
+    "columns": {
+      "producto": "Product",
+      "tipo": "Type",
+      "stockTotal": "Total Stock",
+      "minimo": "Minimum",
+      "estado": "Status",
+      "proveedores": "Suppliers",
+      "ubicaciones": "Locations",
+      "acciones": "Actions"
+    },
+    "estado": {
+      "bajoStock": "Low stock",
+      "ok": "OK"
+    },
+    "actions": {
+      "verDetalles": "View Details and Batches",
+      "auditarStock": "Audit stock by adjustment (+/-)"
+    },
+    "dialogs": {
+      "añadirTitulo": "Add product to inventory",
+      "productoProveedor": "Product / Supplier",
+      "buscarProducto": "Search product or supplier…",
+      "debeSeleccionar": "You must select a valid option",
+      "escribeMas": "Type at least 2 characters to search…",
+      "sinResultados": "No results",
+      "cantidadActual": "Current quantity",
+      "cantidadMinima": "Minimum quantity",
+      "cantidadMaxima": "Maximum quantity (optional)",
+      "ubicacion": "Warehouse location",
+      "fechaCaducidad": "Expiration date (optional)",
+      "debeNumero": "Must be a number ≥ 0",
+      "maxMenorMin": "Cannot be less than the minimum",
+      "guardando": "Saving...",
+      "guardar": "Save",
+      "cancelar": "Cancel",
+      "crearProductoTitulo": "Create New Product",
+      "crearProductoConfirm": "Do you want to create this product and make it ready for inventory?",
+      "cantidadAñadirTitulo": "Quantity to add",
+      "cantidadAñadirLabel": "Quantity to add",
+      "cantidadAñadirDesc": "Enter the quantity you want to add for \"{{nombre}}\".",
+      "cantidadAñadirDescGeneric": "Enter the quantity you want to add to the inventory.",
+      "debeMayorQueCero": "Must be a number greater than 0",
+      "añadiendo": "Adding...",
+      "añadirAlInventario": "Add to inventory",
+      "escanearProducto": "Scan Product to Search",
+      "añadirAlInventarioBtn": "Add to inventory",
+      "gestionarUbicaciones": "Manage Locations"
+    },
+    "confirm": {
+      "productoNoEncontradoTitulo": "Product not found",
+      "productoNoEncontradoMsg": "This product ({{codigo}}) does not exist in inventory. Do you want to create it in the catalog?",
+      "productoNoEncontradoMsgGeneric": "This product does not exist in inventory. Do you want to create it in the catalog?",
+      "siCrear": "Yes, create product",
+      "no": "No"
+    },
+    "toast": {
+      "errorCargarUbicaciones": "Error loading locations",
+      "errorBuscarProductoProveedor": "Error searching product/supplier.",
+      "stockAñadido": "Stock successfully added for {{nombre}}.",
+      "inventarioCreado": "Inventory entry created successfully.",
+      "productoCreado": "Product created successfully in catalog.",
+      "sinPermisosInventario": "Product created, but you do not have permission to add it to inventory.",
+      "productLocalizadoInventario": "Product found in inventory.",
+      "productoEnCatalogo": "Product found in catalog. Enter the quantity you want to add to the inventory.",
+      "productoEnCatalogoSinPermisos": "Product found in catalog, but you do not have permission to add inventory.",
+      "codigoNoExisteSinPermisos": "This code does not exist in inventory and you do not have permission to create products.",
+      "relacionNoExiste": "No product/supplier relationship exists for this item. Associate a supplier and try again.",
+      "variasRelaciones": "Multiple product/supplier relationships found. Select one manually to complete the inventory entry.",
+      "errorAltaInventario": "Error loading product/supplier options.",
+      "cantidadInvalida": "The quantity to add must be a number greater than 0.",
+      "sinPermisos": "You do not have permission to add inventory.",
+      "sinUbicaciones": "No locations available to register the inventory.",
+      "errorCrearProducto": "Error creating the product.",
+      "errorInventario": "Could not add the product to the inventory.",
+      "seleccionaProducto": "Select a product/supplier.",
+      "cantActualInvalida": "Current quantity must be a valid number greater than or equal to 0.",
+      "cantMinInvalida": "Minimum quantity must be a valid number greater than or equal to 0.",
+      "cantMaxInvalida": "Maximum quantity must be a valid number greater than or equal to 0.",
+      "cantMaxMenorMin": "Maximum quantity cannot be less than the minimum.",
+      "errorCrearInventario": "Error creating the inventory entry."
+    },
+    "empty": {
+      "sinResultados": "No products matching your search or filters",
+      "sinUbicacionesAsignadas": "You have no assigned locations",
+      "sinStockUbicaciones": "No stock in {{ubicaciones}}",
+      "sinStockGeneral": "No stock in inventory",
+      "prueba": "Try other terms or clear the filters.",
+      "contactaProfesor": "Contact your teacher or administrator to assign you a slot.",
+      "registraStock": "Register receptions or create inventory entries to see stock."
+    },
+    "detalle": {
+      "auditarTitulo": "Audit Stock by Adjustment",
+      "detalleLotesTitulo": "Batch Details",
+      "instruccion": "Read-only: current stock and total stock in packaging units. Editable: stock adjustment (+/-).",
+      "sinLotes": "No batches found for this product.",
+      "resumen": "Audit summary",
+      "stockActual": "Total current stock (read-only)",
+      "ajustePendiente": "Pending total adjustment",
+      "stockProyectado": "Total projected stock (read-only)",
+      "loteId": "Batch ID",
+      "caducidad": "Expiry",
+      "stockActualUds": "Current stock (units)",
+      "ajusteUds": "Stock adjustment (units +/-)",
+      "stockResultante": "Resulting stock (units)",
+      "reportarMerma": "Report Wastage",
+      "cerrarAuditoria": "Close Audit",
+      "registrarMerma": "Record Wastage",
+      "confirmarMerma": "This action will permanently deduct stock from inventory. Are you sure?",
+      "toast": {
+        "ajusteAplicado": "Stock adjustment applied successfully.",
+        "errorAjuste": "Error applying stock adjustment.",
+        "loteNoExiste": "The selected batch no longer exists. Inventory was reloaded to continue with active batches.",
+        "mermaRegistrada": "Wastage recorded successfully",
+        "errorMerma": "Error recording wastage"
+      }
+    },
+    "ubicaciones": {
+      "titulo": "Manage Locations",
+      "nueva": "New location",
+      "sinUbicaciones": "No locations registered."
+    },
+    "nuevaUbicacion": {
+      "titulo": "New Warehouse Location",
+      "nombre": "Location Name",
+      "placeholder": "e.g. Shelf A, Central Warehouse...",
+      "nombreObligatorio": "Location name is required",
+      "creada": "Location created successfully",
+      "yaExiste": "A location with this name already exists",
+      "error": "Error creating the location"
+    },
+    "productoCreateFields": {
+      "nombreComercial": "Commercial Name",
+      "marca": "Brand",
+      "descripcion": "Description",
+      "contenidoNumerico": "Numeric Content",
+      "unidadMedida": "Unit of Measure",
+      "categoria": "Category",
+      "codigoBarras": "Barcode",
+      "proveedoresAsociados": "Associated Suppliers"
+    },
+    "unidades": {
+      "kg": "Kg",
+      "g": "Gram",
+      "l": "Litre",
+      "ml": "Millilitre",
+      "unidad": "Unit",
+      "paquete": "Package"
+    },
+    "categorias": {
+      "verdura": "Vegetable",
+      "fruta": "Fruit",
+      "carne": "Meat",
+      "pescado": "Fish",
+      "marisco": "Seafood",
+      "lacteo": "Dairy",
+      "huevo": "Egg",
+      "cereal": "Cereal",
+      "legumbre": "Legume",
+      "frutoSeco": "Dried Fruit",
+      "condimento": "Condiment",
+      "aceite": "Oil",
+      "azucar": "Sugar",
+      "bebida": "Beverage",
+      "otro": "Other"
+    }
+  },
+  "distribucion": {
+    "titulo": "Internal Distribution",
+    "searchPlaceholder": "Search by order, user or classroom...",
+    "totalItemsDisponibles": "distributable orders",
+    "totalItemsHistorial": "distributions",
+    "tabs": {
+      "disponibles": "Available",
+      "historial": "History"
+    },
+    "columns": {
+      "pedido": "Order",
+      "usuario": "User",
+      "aula": "Classroom",
+      "pendiente": "Pending",
+      "destinoSugerido": "Suggested destination",
+      "estadoPedido": "Order status",
+      "estado": "Status",
+      "origen": "Origin",
+      "destino": "Destination",
+      "fechaEntrega": "Delivery Date",
+      "lineas": "Lines"
+    },
+    "actions": {
+      "distribuir": "Distribute products",
+      "confirmarRecepcion": "Confirm receipt",
+      "soloDestinatario": "Only the recipient can confirm receipt",
+      "cancelarEntrega": "Cancel delivery"
+    },
+    "dialog": {
+      "nuevaEntrega": "New Delivery",
+      "ubicacionOrigen": "Origin location",
+      "ubicacionDestino": "Destination location",
+      "observaciones": "Observations",
+      "lineasEntregar": "Lines to deliver",
+      "cantidadPendiente": "Pending quantity",
+      "cantidadEntregar": "Quantity to deliver",
+      "cancelar": "Cancel",
+      "distribuir": "Distribute"
+    },
+    "detail": {
+      "titulo": "Distribution detail",
+      "estado": "Status",
+      "origen": "Origin",
+      "destino": "Destination",
+      "lineas": "Lines",
+      "pedido": "Order",
+      "recepcionado": "Received",
+      "yaDistribuido": "Already distributed",
+      "preparado": "Prepared",
+      "entregado": "Delivered",
+      "confirmarRecepcion": "Confirm Receipt",
+      "cancelarEntrega": "Cancel Delivery",
+      "verMovimientos": "View Movements",
+      "cerrar": "Close"
+    },
+    "helper": {
+      "sinUbicaciones": "No user locations available because the current origin is {{nombre}}.",
+      "fallbackUbicaciones": "No locations associated with the order were detected; general locations are shown excluding {{nombre}}.",
+      "soloPropias": "Only the user's locations are shown, excluding {{nombre}} as it is the origin.",
+      "ubicacionesDisponibles": "Available locations",
+      "ubicacionesUsuario": "User locations"
+    },
+    "empty": {
+      "sinPedidos": "No orders ready to distribute.",
+      "sinDistribuciones": "No distributions recorded.",
+      "sinAula": "No classroom"
+    },
+    "toast": {
+      "distribucionRealizada": "Distribution completed successfully.",
+      "distribucionConfirmada": "Distribution confirmed and stock transferred.",
+      "distribucionCancelada": "Distribution cancelled.",
+      "errorDistribucion": "Could not complete the distribution.",
+      "errorConfirmar": "Could not confirm the distribution.",
+      "errorCancelar": "Could not cancel the distribution.",
+      "errorDetalle": "Could not load the detail.",
+      "errorUbicacionDestino": "The destination location no longer exists. Locations were reloaded; try again with a valid destination.",
+      "lineaRequerida": "You must specify at least one line with quantity to distribute.",
+      "lineasInvalidas": "There are lines with invalid quantities or exceeding the pending amount.",
+      "destinoRequerido": "You must select a destination location.",
+      "destinoNoValido": "No valid destination location was found.",
+      "destinoIgualOrigen": "The destination location cannot be the same as the origin."
+    },
+    "motivoCancelacion": "Cancellation reason (optional):"
+  },
+  "preparaciones": {
+    "titulo": "Preparation Pool",
+    "totalItemsLabel": "preparations",
+    "tabs": {
+      "disponibles": "Available",
+      "agotadas": "Exhausted (Consumed)"
+    },
+    "columns": {
+      "fechaCreacion": "Creation date",
+      "receta": "Recipe",
+      "cantidad": "Quantity",
+      "costeReal": "Real Cost",
+      "cocinero": "Cook",
+      "fechaAgotado": "Exhausted date",
+      "racionesDisponibles": "Available portions",
+      "racionesPreparadas": "Prepared portions"
+    },
+    "actions": {
+      "verDetalles": "View details",
+      "consumir": "Consume preparation",
+      "merma": "Report ingredient waste"
+    },
+    "detail": {
+      "titulo": "Preparation",
+      "subtitulo": "Executed on {{fecha}}",
+      "infoGeneral": "General Information",
+      "receta": "Recipe",
+      "fechaEjecucion": "Execution date",
+      "fechaCreacion": "Creation date",
+      "fechaAgotado": "Exhausted date",
+      "aunDisponible": "Still available",
+      "cantidadProducida": "Produced Quantity",
+      "racionesDisponibles": "Available portions",
+      "racionesPreparadas": "Prepared portions",
+      "raciones": "portions",
+      "costeTotalReal": "Total Real Cost",
+      "caducidad": "Expiry",
+      "noDefinida": "Not defined",
+      "equivalencia": "Equivalence"
+    },
+    "consumir": {
+      "titulo": "Consume preparation",
+      "descripcion": "You can consume this batch by portions or by total quantity/weight.",
+      "disponibles": "Available:",
+      "raciones": "portions",
+      "cantidadDisponible": "Available quantity:",
+      "porRaciones": "By portions",
+      "porCantidad": "By quantity/weight",
+      "cantidadRaciones": "Number of Portions",
+      "cantidadConsumir": "Quantity to consume ({{unidad}})",
+      "maximoDisponibleRaciones": "Maximum available: {{max}} portions.",
+      "maximoDisponibleCantidad": "Maximum available: {{max}} {{unidad}}.",
+      "sinEquivalencia": "This recipe does not have a valid per-portion equivalence for quantity/weight consumption.",
+      "sinEquivalenciaCorto": "This recipe does not support quantity/weight consumption.",
+      "multiploRequerido": "Must be a multiple of {{step}} {{unidad}}.",
+      "cancelar": "Cancel",
+      "confirmarConsumo": "Confirm Consumption"
+    },
+    "mermaDialog": {
+      "titulo": "Report production waste",
+      "descripcion": "Record the actual waste of an ingredient used in this preparation without altering historical batch states.",
+      "lote": "Batch:",
+      "receta": "Recipe:",
+      "cargandoIngredientes": "Loading recipe ingredients...",
+      "sinIngredientes": "No valid ingredients found to report waste for this batch.",
+      "ingrediente": "Ingredient",
+      "seRegistraraEn": "Will be recorded in {{unidad}}.",
+      "motivo": "Reason",
+      "motivoErrorPreparacion": "Preparation error",
+      "motivoRotura": "Breakage",
+      "motivoDeterioroCaducidad": "Deterioration / Expiry",
+      "motivoHurto": "Theft / Loss",
+      "motivoOtros": "Other",
+      "observaciones": "Observations",
+      "cancelar": "Cancel",
+      "registrar": "Record waste"
+    },
+    "empty": {
+      "noPreparaciones": "No preparations recorded",
+      "ejecutaReceta": "Run a recipe to see its history here."
+    },
+    "toast": {
+      "consumoRegistrado": "Consumption recorded successfully.",
+      "errorConsumir": "Error consuming the preparation.",
+      "mermaRegistrada": "Production waste recorded successfully.",
+      "errorMerma": "Could not record production waste.",
+      "errorCargar": "Error loading preparations"
+    }
+  },
+  "pedido": {
+    "lineas": {
+      "titulo": "Order Lines",
+      "multiProveedor": "(Multi-Supplier Enabled)",
+      "precioUnid": "Unit Price",
+      "subtotal": "Subtotal",
+      "anadirProducto": "Add Product",
+      "proveedorAuto": "Automatic supplier",
+      "seleccionaProducto": "Select a product",
+      "seleccionaProveedor": "Select supplier",
+      "nuevosProductos": "New Products (Select one)",
+      "cestaVacia": "No products in the basket yet. Use the \"Add Product\" button to start.",
+      "totalEstimado": "ESTIMATED TOTAL: "
+    }
+  },
+  "escaner": {
+    "permisosDenegados": "Camera permission denied",
+    "permisosDenegadosDesc": "To use the scanner, allow camera access in your browser settings and reload the page.",
+    "sinCamara": "No camera detected",
+    "sinCamaraDesc": "This device has no camera available or it is not accessible. Enter the barcode manually.",
+    "errorCamara": "Error starting the camera",
+    "errorCamaraDesc": "Could not start the scanner. Make sure no other application is using the camera and try again.",
+    "solicitandoAcceso": "Requesting camera access…",
+    "cerrar": "Close scanner",
+    "camara": "Camera",
+    "ultimoCodigo": "Last scanned code: ",
+    "instruccion": "Bring the code close to the frame. Rear cameras, continuous focus and EAN, UPC and Code 128 formats are prioritised.",
+    "reiniciar": "Restart camera",
+    "apagarLuz": "Turn off light",
+    "encenderLuz": "Turn on light",
+    "cancelar": "Cancel"
+  },
+  "reporte": {
+    "fechaInicioObligatoria": "Start date is required",
+    "fechaFinObligatoria": "End date is required",
+    "fechaFinInvalida": "End date must be after start date",
+    "excelGenerado": "Excel generated successfully.",
+    "reporteGenerado": "Report generated successfully.",
+    "errorExcel": "Error generating the Excel.",
+    "errorReporte": "Error generating the report.",
+    "fechaInicio": "Start date",
+    "fechaFin": "End date",
+    "proveedorOpcional": "Supplier (optional)",
+    "todosProveedores": "All suppliers",
+    "sinProveedores": "No suppliers found",
+    "incluirCancelados": "Include cancelled orders",
+    "paginaPorProveedor": "One page per supplier",
+    "soloNoResueltas": "Only unresolved incidents",
+    "generando": "Generating...",
+    "generarExcel": "Generate Excel",
+    "generarPdf": "Generate PDF"
+  },
+  "resumen": {
+    "faltante": "Shortage",
+    "exceso": "Excess",
+    "defectuoso": "Defective",
+    "reclamado": "Claimed",
+    "abonado": "Credited",
+    "reenviado": "Resent",
+    "pendiente": "Pending",
+    "errorCarga": "Could not load the detailed information.",
+    "ver": "View summary",
+    "ocultar": "Hide summary",
+    "observaciones": "Reception observations",
+    "sinObservaciones": "No observations recorded.",
+    "detalleIncidencia": "Incident detail"
+  },
+  "proveedores": {
+    "titulo": "Supplier Management",
+    "totalItemsLabel": "suppliers",
+    "searchPlaceholder": "Search by name, VAT, contact, email...",
+    "exportLabel": "filtered suppliers",
+    "acciones": {
+      "nuevo": "New Supplier",
+      "anadir": "Add Supplier"
+    },
+    "columns": {
+      "nombre": "Name",
+      "nif": "VAT Number",
+      "contacto": "Contact",
+      "telefono": "Phone",
+      "email": "Email"
+    },
+    "actions": {
+      "verDetalle": "View detail",
+      "editarProveedor": "Edit supplier",
+      "descargarFicha": "Download Profile"
+    },
+    "detail": {
+      "infoFiscal": "Fiscal Information",
+      "razonSocial": "Company Name",
+      "nifCuit": "VAT / CUIT",
+      "contacto": "Contact",
+      "personaContacto": "Contact Person",
+      "telefono": "Phone",
+      "email": "Email",
+      "ubicacion": "Location",
+      "direccion": "Address"
+    },
+    "modal": {
+      "tituloEditar": "Edit: {{nombre}}",
+      "tituloCrear": "Create New Supplier"
+    },
+    "confirm": {
+      "eliminarTitulo": "Delete supplier",
+      "eliminarMensaje": "Are you sure you want to delete supplier {{nombre}}? This action cannot be undone.",
+      "eliminarConfirm": "Yes, delete",
+      "guardarCambios": "Are you sure you want to save the changes made to this supplier?",
+      "crearNuevo": "Are you sure you want to add this new supplier to the system?"
+    },
+    "toast": {
+      "eliminado": "Supplier deleted successfully.",
+      "actualizado": "Supplier updated successfully.",
+      "creado": "Supplier created successfully."
+    },
+    "errors": {
+      "errorCargar": "Unknown error loading suppliers.",
+      "errorEliminar": "Error deleting the supplier.",
+      "errorGuardar": "Error saving the supplier."
+    },
+    "empty": {
+      "sinResultados": "No suppliers matching your search",
+      "sinProveedores": "No suppliers found",
+      "prueba": "Try other terms or clear the filter.",
+      "empieza": "Start by adding the first supplier to your catalog."
+    }
+  },
+  "pedidos": {
+    "titulo": "Order Management",
+    "totalItemsLabel": "orders",
+    "totalItemsLabelCompras": "purchases",
+    "pedidoFallback": "Order",
+    "acciones": {
+      "reportePdf": "PDF Report",
+      "exportarExcel": "Export Excel"
+    },
+    "cancelar": {
+      "tituloCompra": "Cancel Purchase: {{id}}",
+      "tituloPedido": "Cancel Order: {{proveedor}}",
+      "motivoLabel": "Cancellation Reason (Optional)",
+      "motivoPorDefecto": "Cancelled by user"
+    },
+    "editor": {
+      "editarCompra": "Edit Purchase {{numero}}",
+      "detallesCompra": "Purchase Details {{numero}} (Read-only)",
+      "editarPedidoUsuario": "Edit Order {{numero}}",
+      "detallesPedidoUsuario": "Order Details {{numero}} (Read-only)",
+      "editarPedido": "Edit Order",
+      "detallesPedido": "Order Details (Read-only)",
+      "crearNuevo": "Create New Order"
+    },
+    "confirm": {
+      "eliminarTitulo": "Delete order",
+      "eliminarMensaje": "Are you sure you want to delete the order from {{fecha}}? This action cannot be undone.",
+      "eliminarConfirm": "Yes, delete",
+      "aprobarTitulo": "Approve Order",
+      "aprobarCompra": "Are you sure you want to process purchase {{numero}}({{id}})? The purchase will advance to its next operational state.",
+      "aprobarPedido": "Are you sure you want to approve order {{numero}}({{id}}) to supplier {{proveedor}}? It will move to «In Progress» and be considered processed.",
+      "aprobarConfirm": "Yes, Approve",
+      "guardarCompra": "Are you sure you want to save the changes to this purchase?",
+      "guardarPedido": "Are you sure you want to save the changes to this order?",
+      "registrarNuevo": "Are you sure you want to register this new order?"
+    },
+    "recovery": {
+      "titulo": "Recover Pending Order",
+      "mensaje": "You have an unfinished order from {{fecha}} at {{hora}}.\n\nDo you want to recover it and continue where you left off?",
+      "confirmar": "Yes, Recover",
+      "cancelar": "No, Discard"
+    },
+    "borradorExistente": {
+      "titulo": "You already have a pending order",
+      "mensaje": "A saved order draft from {{fecha}} already exists. If you start a new one and save it, the pending draft will be replaced.\n\nWhat do you want to do?",
+      "confirmar": "Create new order",
+      "cancelar": "Continue draft"
+    },
+    "cerrarEditor": {
+      "titulo": "What do you want to do with this order?",
+      "mensaje": "If you save it as a draft, you can resume it later. If you cancel now, the pending order will be discarded.",
+      "confirmar": "Save as draft",
+      "cancelar": "Cancel order"
+    }
+  }
+}

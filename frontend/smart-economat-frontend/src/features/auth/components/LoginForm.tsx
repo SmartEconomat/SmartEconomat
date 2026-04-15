@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -18,6 +19,7 @@ import { authService } from '../../../services/auth.service';
 import { getPasswordChangeError } from '../../../utils/passwordValidation';
 import { getAuthErrorMessage } from '../../../utils/authErrorMessages';
 
+/** Utility style object for visually hiding elements while keeping them accessible. */
 const visuallyHidden = {
   border: 0,
   clip: 'rect(0 0 0 0)',
@@ -32,6 +34,7 @@ const visuallyHidden = {
 
 /**
  * Propiedades del componente LoginForm.
+ *
  * @interface LoginFormProps
  * @property {() => void} onToggleForm - Callback para cambiar al modo de registro.
  * @property {(user: User) => void} onLoginSuccess - Callback invocado
@@ -44,14 +47,19 @@ interface LoginFormProps {
 
 /**
  * Formulario de inicio de sesión.
+ *
  * Delega la navegación al padre mediante `onLoginSuccess` para permitir la
  * animación de salida antes de llamar a AuthContext.login().
+ * Todos los textos visibles se obtienen del sistema i18n.
+ *
+ * @param {LoginFormProps} props - Propiedades del componente.
+ * @returns {JSX.Element} Formulario de inicio de sesión.
  */
-
 const LoginForm: React.FC<LoginFormProps> = ({
   onToggleForm,
   onLoginSuccess,
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -90,6 +98,13 @@ const LoginForm: React.FC<LoginFormProps> = ({
     }
   }, []);
 
+  /**
+   * Handles login form submission.
+   * Stores the remember-me preference, calls the auth service and either triggers
+   * a forced password change flow or calls `onLoginSuccess`.
+   *
+   * @param {React.FormEvent<HTMLFormElement>} e - The form submit event.
+   */
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMsg('');
@@ -132,19 +147,25 @@ const LoginForm: React.FC<LoginFormProps> = ({
           getAuthErrorMessage(
             res.message,
             'login',
-            'No se pudo iniciar sesión con las credenciales ingresadas.'
+            t('auth.loginForm.errors.loginFailed')
           )
         );
       }
     } catch (err: unknown) {
       setErrorMsg(
-        getAuthErrorMessage(err, 'login', 'Error de conexión al servidor.')
+        getAuthErrorMessage(err, 'login', t('auth.loginForm.errors.conexion'))
       );
     } finally {
       setIsLoading(false);
     }
   };
 
+  /**
+   * Handles forgot-password form submission.
+   * Validates the input format (rejects non-email usernames) and calls the API.
+   *
+   * @param {React.FormEvent<HTMLFormElement>} e - The form submit event.
+   */
   const handleForgotSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMsg('');
@@ -152,15 +173,13 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
     const emailOrUser = formData.email.trim();
     if (!emailOrUser) {
-      setErrorMsg('Por favor ingresa tu usuario o correo electrónico.');
+      setErrorMsg(t('auth.loginForm.forgotPassword.errorEmpty'));
       return;
     }
 
     // Si no contiene @, asumimos que es un nombre de usuario (probablemente alumno)
     if (!emailOrUser.includes('@')) {
-      setErrorMsg(
-        'Los alumnos deben solicitar el restablecimiento de contraseña a su profesor asignado directamente.'
-      );
+      setErrorMsg(t('auth.loginForm.forgotPassword.errorAlumno'));
       return;
     }
 
@@ -169,15 +188,14 @@ const LoginForm: React.FC<LoginFormProps> = ({
       const res = await authService.forgotPassword(emailOrUser);
       if (res.success) {
         setForgotSuccess(
-          res.message ||
-            'Si el correo electrónico figura en nuestro sistema, recibirás instrucciones próximamente.'
+          res.message || t('auth.loginForm.forgotPassword.successDefault')
         );
       } else {
         setErrorMsg(
           getAuthErrorMessage(
             res.message,
             'forgotPassword',
-            'No se pudo procesar la solicitud de recuperación.'
+            t('auth.loginForm.forgotPassword.errorNoSePudo')
           )
         );
       }
@@ -186,7 +204,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
         getAuthErrorMessage(
           err,
           'forgotPassword',
-          'Error de conexión al servidor.'
+          t('auth.loginForm.errors.conexion')
         )
       );
     } finally {
@@ -194,6 +212,11 @@ const LoginForm: React.FC<LoginFormProps> = ({
     }
   };
 
+  /**
+   * Handles forced password-change form submission after an admin reset.
+   *
+   * @param {React.FormEvent<HTMLFormElement>} e - The form submit event.
+   */
   const handlePasswordChangeSubmit = async (
     e: React.FormEvent<HTMLFormElement>
   ) => {
@@ -221,7 +244,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
           getAuthErrorMessage(
             res.message,
             'changePassword',
-            'No se pudo cambiar la contraseña.'
+            t('auth.loginForm.changePassword.errorNoSePudo')
           )
         );
       }
@@ -230,7 +253,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
         getAuthErrorMessage(
           err,
           'changePassword',
-          'Error de conexión al servidor.'
+          t('auth.loginForm.errors.conexion')
         )
       );
     } finally {
@@ -238,15 +261,26 @@ const LoginForm: React.FC<LoginFormProps> = ({
     }
   };
 
+  /**
+   * Generic change handler for the login / forgot-password inputs.
+   *
+   * @param {React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>} e - Change event.
+   */
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
+  /**
+   * Generic change handler for the forced-password-change inputs.
+   *
+   * @param {React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>} e - Change event.
+   */
   const handleChangePass = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) =>
     setChangePassData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
+  /** Toggles password visibility for all password fields on the active sub-form. */
   const togglePasswordVisibility = () => setShowPassword((v) => !v);
 
   return (
@@ -261,7 +295,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
       }}
     >
       <Typography component="h1" sx={visuallyHidden}>
-        Iniciar Sesión en Smart Economat
+        {t('auth.loginForm.pageTitle')}
       </Typography>
 
       {/* Logo responsivo: más pequeño en móvil, más grande en desktop */}
@@ -301,18 +335,17 @@ const LoginForm: React.FC<LoginFormProps> = ({
               fontWeight: 'bold',
             }}
           >
-            Cambio de contraseña obligatorio
+            {t('auth.loginForm.changePassword.title')}
           </Typography>
           <Typography
             variant="body2"
             sx={{ textAlign: 'center', mb: 3, color: 'text.secondary' }}
           >
-            Su administrador ha restablecido su contraseña. Por seguridad, debe
-            elegir una nueva antes de continuar.
+            {t('auth.loginForm.changePassword.description')}
           </Typography>
 
           <Input
-            label="Nueva Contraseña"
+            label={t('auth.loginForm.changePassword.newPassword')}
             name="newPassword"
             type={showPassword ? 'text' : 'password'}
             autoComplete="new-password"
@@ -323,7 +356,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
-                    aria-label="mostrar nueva contraseña"
+                    aria-label={t('auth.loginForm.ariaShowNewPassword')}
                     onClick={togglePasswordVisibility}
                     edge="end"
                   >
@@ -342,7 +375,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             }
           />
           <Input
-            label="Confirmar Nueva Contraseña"
+            label={t('auth.loginForm.changePassword.confirmPassword')}
             name="confirmPassword"
             type={showPassword ? 'text' : 'password'}
             autoComplete="new-password"
@@ -353,7 +386,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
-                    aria-label="mostrar confirmación de contraseña"
+                    aria-label={t('auth.loginForm.ariaShowConfirmPassword')}
                     onClick={togglePasswordVisibility}
                     edge="end"
                   >
@@ -379,7 +412,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             disabled={isForcedPasswordChangeDisabled}
             sx={{ mt: 3, mb: 0 }}
           >
-            Actualizar y Acceder
+            {t('auth.loginForm.changePassword.submit')}
           </Button>
 
           <Button
@@ -392,7 +425,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             }}
             sx={{ mt: 1 }}
           >
-            Cancelar
+            {t('comun.cancelar')}
           </Button>
         </Box>
       ) : isForgotPassword ? (
@@ -406,11 +439,10 @@ const LoginForm: React.FC<LoginFormProps> = ({
             variant="body1"
             sx={{ textAlign: 'center', mb: 2, color: 'text.secondary' }}
           >
-            Introduce la dirección de correo electrónico vinculada a tu cuenta
-            para recibir un enlace temporal de reestablecimiento.
+            {t('auth.loginForm.forgotPassword.description')}
           </Typography>
           <Input
-            label="Correo Electrónico"
+            label={t('auth.loginForm.forgotPassword.emailLabel')}
             name="email"
             autoComplete="email"
             autoFocus
@@ -423,7 +455,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             disabled={isForgotSubmitDisabled}
             sx={{ mt: 2, mb: 0 }}
           >
-            Restablecer Contraseña
+            {t('auth.loginForm.forgotPassword.submit')}
           </Button>
 
           <Box
@@ -445,7 +477,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
               }}
               sx={{ mt: 1 }}
             >
-              Volver al inicio de sesión
+              {t('auth.loginForm.forgotPassword.backToLogin')}
             </Button>
             <Link
               href="#"
@@ -455,7 +487,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 onToggleForm();
               }}
             >
-              ¿No tienes cuenta? Regístrate aquí.
+              {t('auth.loginForm.noAccount')}
             </Link>
           </Box>
         </Box>
@@ -467,7 +499,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
           sx={{ mt: 1, width: '100%', maxWidth: 400 }}
         >
           <Input
-            label="Usuario o Email"
+            label={t('auth.loginForm.usernameOrEmail')}
             name="email"
             autoComplete="username"
             autoFocus
@@ -475,7 +507,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             onChange={handleChange}
           />
           <Input
-            label="Contraseña"
+            label={t('auth.loginForm.password')}
             name="password"
             type={showPassword ? 'text' : 'password'}
             autoComplete="current-password"
@@ -485,7 +517,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
-                    aria-label="revelar contraseña"
+                    aria-label={t('auth.loginForm.ariaRevealPassword')}
                     onClick={togglePasswordVisibility}
                     edge="end"
                   >
@@ -498,7 +530,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
           <Checkbox
             checked={rememberMe}
             onChange={(e) => setRememberMe(e.target.checked)}
-            label="Recordarme"
+            label={t('auth.loginForm.rememberMe')}
           />
           <Button
             type="submit"
@@ -506,7 +538,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             disabled={isLoginSubmitDisabled}
             sx={{ mt: 2, mb: 0 }}
           >
-            Acceder
+            {t('auth.loginForm.submit')}
           </Button>
 
           <Box
@@ -524,7 +556,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
               onClick={() => onToggleForm()}
               sx={{ mt: 1 }}
             >
-              ¿No tienes cuenta? Regístrate aquí.
+              {t('auth.loginForm.noAccount')}
             </Button>
             <Link
               href="#"
@@ -536,7 +568,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 setForgotSuccess('');
               }}
             >
-              ¿Olvidaste tu contraseña?
+              {t('auth.loginForm.forgotPassword.link')}
             </Link>
           </Box>
         </Box>

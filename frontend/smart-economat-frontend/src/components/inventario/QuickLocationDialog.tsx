@@ -12,13 +12,25 @@ import {
 import { UbicacionService } from '../../services/ubicacion.service';
 import type { Ubicacion } from '../../services/ubicacion.types';
 import { useToast } from '../../store/toast.hooks';
+import { useTranslation } from 'react-i18next';
 
+/** Props for the {@link QuickLocationDialog} component. */
 interface QuickLocationDialogProps {
   open: boolean;
   onClose: () => void;
+  /** Called with the newly created location object after a successful save. */
   onSuccess: (newLocation: Ubicacion) => void;
 }
 
+/**
+ * Compact dialog that lets the user quickly create a new warehouse location
+ * without leaving their current workflow.
+ *
+ * On successful creation the `onSuccess` callback receives the new location
+ * so the parent can immediately select or use it.
+ *
+ * @param props - {@link QuickLocationDialogProps}
+ */
 const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
   open,
   onClose,
@@ -27,20 +39,27 @@ const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
   const [nombre, setNombre] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const toast = useToast();
+  const { t } = useTranslation();
 
+  /**
+   * Validates the name, calls the API to create the location, and handles
+   * success/error feedback via toasts.
+   *
+   * @param e - Optional form submit event (prevents default if provided).
+   */
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
     const trimmedNombre = nombre.trim();
     if (!trimmedNombre) {
-      toast.error('El nombre de la ubicación es obligatorio');
+      toast.error(t('inventario.nuevaUbicacion.nombreObligatorio'));
       return;
     }
 
     setIsSaving(true);
     try {
       const newLoc = await UbicacionService.create({ nombre: trimmedNombre });
-      toast.success('Ubicación creada con éxito');
+      toast.success(t('inventario.nuevaUbicacion.creada'));
       onSuccess(newLoc);
       setNombre('');
       onClose();
@@ -52,9 +71,9 @@ const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
         msg.includes('already exists') ||
         msg.includes('400')
       ) {
-        toast.error('Ya existe una ubicación con este nombre');
+        toast.error(t('inventario.nuevaUbicacion.yaExiste'));
       } else {
-        toast.error('Error al crear la ubicación');
+        toast.error(t('inventario.nuevaUbicacion.error'));
       }
     } finally {
       setIsSaving(false);
@@ -63,15 +82,15 @@ const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle>Nueva Ubicación de Almacén</DialogTitle>
+      <DialogTitle>{t('inventario.nuevaUbicacion.titulo')}</DialogTitle>
       <form onSubmit={handleSave}>
         <DialogContent dividers>
           <Box sx={{ pt: 1 }}>
             <TextField
               autoFocus
               fullWidth
-              label="Nombre de la Ubicación"
-              placeholder="Ej: Estantería A, Almacén Central..."
+              label={t('inventario.nuevaUbicacion.nombre')}
+              placeholder={t('inventario.nuevaUbicacion.placeholder')}
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               disabled={isSaving}
@@ -81,7 +100,7 @@ const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
           <Button onClick={onClose} color="inherit" disabled={isSaving}>
-            Cancelar
+            {t('comun.cancelar')}
           </Button>
           <Button
             type="submit"
@@ -89,7 +108,7 @@ const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
             disabled={isSaving || !nombre.trim()}
             startIcon={isSaving ? <CircularProgress size={20} /> : null}
           >
-            Guardar
+            {t('comun.guardar')}
           </Button>
         </DialogActions>
       </form>

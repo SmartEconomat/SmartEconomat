@@ -32,9 +32,16 @@ import { mermaSchema } from '../../utils/schemas';
 import { createMerma } from '../../services/merma.service';
 import { MotivoMerma } from '../../services/merma.types';
 import { fetchAllProductos } from '../../services/producto.service';
+import { useTranslation } from 'react-i18next';
 
 const AUDIT_MANUAL_REASON = 'Ajuste de auditoria desde inventario';
 
+/**
+ * Parses a raw adjustment string input into a finite number or null.
+ *
+ * @param value - The raw string from the adjustment text field.
+ * @returns The parsed number, or null if the value is empty or non-finite.
+ */
 const parseAdjustmentValue = (value: string | undefined): number | null => {
   if (!value) return null;
   const parsed = Number(value);
@@ -43,11 +50,24 @@ const parseAdjustmentValue = (value: string | undefined): number | null => {
 
 const MEASURABLE_STOCK_UNITS = new Set(['KG', 'G', 'L', 'ML']);
 
+/**
+ * Formats a stock unit value as a fixed-precision string with the "uds" suffix.
+ *
+ * @param value - The numeric stock count.
+ * @returns Formatted string, e.g. "3.00 uds".
+ */
 const formatStockUnits = (value: number): string => {
   const safeValue = Number.isFinite(value) ? value : 0;
   return `${safeValue.toFixed(2)} uds`;
 };
 
+/**
+ * Formats a measurement value with automatic unit upgrade (mL→L, g→kg).
+ *
+ * @param value - The numeric measurement value.
+ * @param unit  - The base unit string (e.g. "ML", "G").
+ * @returns Formatted string with the appropriate unit label.
+ */
 const formatEquivalentAmount = (value: number, unit: string): string => {
   if (unit === 'ML' && Math.abs(value) >= 1000) {
     return `${(value / 1000).toFixed(2)} L`;
@@ -60,6 +80,16 @@ const formatEquivalentAmount = (value: number, unit: string): string => {
   return `${value.toFixed(2)} ${unit}`;
 };
 
+/**
+ * Calculates the equivalent measurable amount from stock units and the product
+ * construction metadata.  Returns null when the unit is not measurable or
+ * the conversion data is missing.
+ *
+ * @param stockUnits         - Number of stock units.
+ * @param contenidoPorUnidad - Product content per stock unit (e.g. 330 for 330 mL).
+ * @param unidadContenido    - Unit of measurement (e.g. "ML", "G").
+ * @returns Formatted equivalent string prefixed with "≈", or null.
+ */
 const formatEquivalentFromConstruction = (
   stockUnits: number,
   contenidoPorUnidad?: number,
@@ -78,6 +108,14 @@ const formatEquivalentFromConstruction = (
   return `≈ ${formatEquivalentAmount(equivalent, normalizedUnit)}`;
 };
 
+/**
+ * Builds a human-readable product construction label, e.g. "1 ud stock = 330.00 ML".
+ * Returns null when the unit is not measurable or conversion data is missing.
+ *
+ * @param contenidoPorUnidad - Product content per stock unit.
+ * @param unidadContenido    - Unit of measurement.
+ * @returns Construction label string or null.
+ */
 const formatProductConstruction = (
   contenidoPorUnidad?: number,
   unidadContenido?: string
@@ -94,6 +132,14 @@ const formatProductConstruction = (
   return `1 ud stock = ${contenidoPorUnidad.toFixed(2)} ${normalizedUnit}`;
 };
 
+/**
+ * Formats a product measure label combining the content amount and its unit.
+ * Returns null if either argument is missing or non-finite.
+ *
+ * @param contenido - Numeric content amount.
+ * @param unidad    - Unit of measurement string.
+ * @returns Label string like "330 ML", or null.
+ */
 const formatProductoMedidaLabel = (
   contenido?: number,
   unidad?: string
@@ -105,6 +151,7 @@ const formatProductoMedidaLabel = (
   return `${contenido} ${unidad}`;
 };
 
+/** Props for the {@link InventoryDetailModal} component. */
 interface InventoryDetailModalProps {
   open: boolean;
   mode: 'view' | 'audit';
@@ -114,6 +161,15 @@ interface InventoryDetailModalProps {
   onRefreshItem: () => void | Promise<void>;
 }
 
+/**
+ * Modal dialog that displays batch-level inventory details for a given product.
+ *
+ * In `view` mode it shows the current stock per batch (read-only).
+ * In `audit` mode it allows the user to enter per-batch stock adjustments and
+ * save them individually.  A "Report Wastage" shortcut opens a sub-modal.
+ *
+ * @param props - {@link InventoryDetailModalProps}
+ */
 const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
   open,
   mode,
@@ -123,6 +179,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
   onRefreshItem,
 }) => {
   const toast = useToast();
+  const { t } = useTranslation();
   // Filter items matching the product – memoized to avoid new reference each render
   const relevantItems = React.useMemo(
     () =>
@@ -198,6 +255,14 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
         ? 'warning.main'
         : 'text.primary';
 
+  /**
+   * Returns an inline validation error message for the adjustment field of a
+   * given inventory item, or null when the value is valid.
+   *
+   * @param item         - The inventory item being validated.
+   * @param requireValue - When true, an empty value also triggers an error.
+   * @returns Error string or null.
+   */
   const getAdjustmentError = (
     item: InventarioItem,
     requireValue: boolean
@@ -224,10 +289,22 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
     return null;
   };
 
+  /**
+   * Updates the local adjustment input value for a specific inventory item.
+   *
+   * @param id    - The inventory item ID.
+   * @param value - The new raw text value from the TextField.
+   */
   const handleAdjustmentChange = (id: string, value: string) => {
     setStockAdjustments((prev) => ({ ...prev, [id]: value }));
   };
 
+  /**
+   * Validates and persists the stock adjustment for a single inventory batch.
+   * Displays toast feedback on success or failure.
+   *
+   * @param item - The inventory item whose adjustment should be saved.
+   */
   const handleSaveAdjustment = async (item: InventarioItem) => {
     const validationError = getAdjustmentError(item, true);
     if (validationError) {
@@ -252,20 +329,18 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
     try {
       await createAjusteManualInventario(payload);
       setStockAdjustments((prev) => ({ ...prev, [item.id]: '' }));
-      toast.success('Ajuste de stock aplicado correctamente.');
+      toast.success(t('inventario.detalle.toast.ajusteAplicado'));
       onRefreshItem();
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error
           ? err.message
-          : 'Error al aplicar ajuste de stock.';
+          : t('inventario.detalle.toast.errorAjuste');
 
       if (errorMessage.toLowerCase().includes('inventario no encontrado')) {
         await onRefreshItem();
         setStockAdjustments((prev) => ({ ...prev, [item.id]: '' }));
-        toast.error(
-          'El lote seleccionado ya no existe. Se recargó el inventario para continuar con lotes activos.'
-        );
+        toast.error(t('inventario.detalle.toast.loteNoExiste'));
       } else {
         toast.error(errorMessage);
       }
@@ -274,6 +349,10 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
     }
   };
 
+  /**
+   * Loads the product options list lazily (only on first open) and opens the
+   * wastage sub-modal.
+   */
   const handleOpenMerma = async () => {
     if (productosOptions.length === 0) {
       const productos = await fetchAllProductos();
@@ -289,6 +368,12 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
     setIsMermaModalOpen(true);
   };
 
+  /**
+   * Submits the wastage form data to the API.
+   * Closes the sub-modal and refreshes inventory on success.
+   *
+   * @param formData - Key-value map of form field values from DynamicFormModal.
+   */
   const handleSaveMerma = async (formData: Record<string, string | number>) => {
     setIsSavingMerma(true);
     try {
@@ -298,12 +383,12 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
         motivo: formData.motivo as MotivoMerma,
         notas: formData.notas as string | undefined,
       });
-      toast.success('Merma registrada correctamente');
+      toast.success(t('inventario.detalle.toast.mermaRegistrada'));
       setIsMermaModalOpen(false);
       onRefreshItem();
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Error al registrar merma';
+        err instanceof Error ? err.message : t('inventario.detalle.toast.errorMerma');
       toast.error(message);
     } finally {
       setIsSavingMerma(false);
@@ -321,7 +406,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle component="div">
         <Typography variant="h6" component="h2">
-          {mode === 'audit' ? 'Auditar Stock por Ajuste' : 'Detalles de Lotes'}
+          {mode === 'audit' ? t('inventario.detalle.auditarTitulo') : t('inventario.detalle.detalleLotesTitulo')}
         </Typography>
         <Typography
           variant="subtitle2"
@@ -337,8 +422,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
             color="text.secondary"
             sx={{ display: 'block', mt: 0.5 }}
           >
-            Solo lectura: stock actual y stock total en unidades de envase.
-            Editable: ajuste de stock (+/-).
+            {t('inventario.detalle.instruccion')}
           </Typography>
         )}
         {mode === 'audit' && productConstruction && (
@@ -354,7 +438,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
       <DialogContent dividers>
         {relevantItems.length === 0 ? (
           <Typography color="text.secondary">
-            No se encontraron lotes para este producto.
+            {t('inventario.detalle.sinLotes')}
           </Typography>
         ) : (
           <>
@@ -370,7 +454,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
                 }}
               >
                 <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                  Resumen de auditoria
+                  {t('inventario.detalle.resumen')}
                 </Typography>
                 <Box
                   sx={{
@@ -382,7 +466,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
                 >
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Stock total actual (solo lectura)
+                      {t('inventario.detalle.stockActual')}
                     </Typography>
                     <Typography variant="h6">
                       {formatStockUnits(totalCurrentStock)}
@@ -403,7 +487,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Ajuste total pendiente
+                      {t('inventario.detalle.ajustePendiente')}
                     </Typography>
                     <Typography
                       variant="h6"
@@ -428,7 +512,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Stock total proyectado (solo lectura)
+                      {t('inventario.detalle.stockProyectado')}
                     </Typography>
                     <Typography
                       variant="h6"
@@ -458,18 +542,18 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Lote ID</TableCell>
-                    <TableCell>Proveedor</TableCell>
-                    <TableCell>Ubicación</TableCell>
-                    <TableCell>Caducidad</TableCell>
+                    <TableCell>{t('inventario.detalle.loteId')}</TableCell>
+                    <TableCell>{t('comun.proveedor')}</TableCell>
+                    <TableCell>{t('comun.ubicacion')}</TableCell>
+                    <TableCell>{t('inventario.detalle.caducidad')}</TableCell>
                     {mode === 'audit' ? (
                       <>
-                        <TableCell align="right">Stock actual (uds)</TableCell>
+                        <TableCell align="right">{t('inventario.detalle.stockActualUds')}</TableCell>
                         <TableCell align="right">
-                          Ajuste de stock (uds +/-)
+                          {t('inventario.detalle.ajusteUds')}
                         </TableCell>
                         <TableCell align="right">
-                          Stock resultante (uds)
+                          {t('inventario.detalle.stockResultante')}
                         </TableCell>
                         <TableCell align="center">Acción</TableCell>
                       </>
@@ -641,11 +725,11 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
           variant="outlined"
           onClick={handleOpenMerma}
         >
-          Reportar Merma
+          {t('inventario.detalle.reportarMerma')}
         </Button>
         <Box>
           <Button onClick={onClose} variant="contained" color="primary">
-            {mode === 'audit' ? 'Cerrar Auditoría' : 'Cerrar'}
+            {mode === 'audit' ? t('inventario.detalle.cerrarAuditoria') : t('comun.cerrar')}
           </Button>
         </Box>
       </DialogActions>
@@ -653,13 +737,13 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
       <DynamicFormModal
         isOpen={isMermaModalOpen}
         onClose={() => setIsMermaModalOpen(false)}
-        title="Registrar Merma"
+        title={t('inventario.detalle.registrarMerma')}
         fields={dynamicMermaSchema}
         onSubmit={handleSaveMerma}
         isSubmitting={isSavingMerma}
         initialData={{ productoId }}
         requireConfirmation={true}
-        confirmationMessage="Esta acción descontará el stock del inventario de forma permanente. ¿Estás seguro?"
+        confirmationMessage={t('inventario.detalle.confirmarMerma')}
       />
     </Dialog>
   );

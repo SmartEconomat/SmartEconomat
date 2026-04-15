@@ -63,7 +63,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         )}
       </Box>
 
-      {/* Acciones */}
+      {/* Actions */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
         {cancelText && (
           <Button

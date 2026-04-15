@@ -22,6 +22,14 @@ import { Alumno } from '../../alumno/alumno.entity/alumno.entity';
 import { Rol } from '../../roles/rol.entity/rol.entity';
 import { Ubicacion } from '../../ubicacion/ubicacion.entity/ubicacion.entity';
 
+/**
+ * Service that manages professor profiles, classroom slots, and student activation.
+ * Handles professor self-registration, slot creation/update/deletion, student listing,
+ * account activation, and forced password resets. Admin variants of slot operations
+ * are also provided for use by the admin panel.
+ *
+ * @class ProfesorService
+ */
 @Injectable()
 export class ProfesorService {
   constructor(
@@ -34,6 +42,14 @@ export class ProfesorService {
     private readonly dataSource: DataSource
   ) {}
 
+  /**
+   * Resolves a warehouse location entity by its ID.
+   * Returns null when no ID is provided.
+   *
+   * @param {string} [ubicacionId] - UUID of the Ubicacion to resolve.
+   * @returns {Promise<Ubicacion | null>} The found Ubicacion entity, or null if no ID was given.
+   * @throws {NotFoundException} When an ID is provided but no matching Ubicacion exists.
+   */
   private async resolveUbicacion(
     ubicacionId?: string
   ): Promise<Ubicacion | null> {
@@ -50,6 +66,15 @@ export class ProfesorService {
     return ubicacion;
   }
 
+  /**
+   * Registers a new professor account within a database transaction.
+   * Creates the linked Usuario record (INACTIVE) and the Profesor profile simultaneously.
+   * Validates that the username, email and CIAL code are unique before persisting.
+   *
+   * @param {CreateProfesorDto} dto - DTO containing username, email, password and CIAL.
+   * @returns {Promise<{ message: string; id: string; username: string }>} Registration confirmation.
+   * @throws {ConflictException} When username/email or CIAL already exists.
+   */
   async register(dto: CreateProfesorDto) {
     return this.dataSource.transaction(async (manager) => {
       const whereConditions: FindOptionsWhere<Usuario>[] = [
@@ -108,6 +133,16 @@ export class ProfesorService {
     });
   }
 
+  /**
+   * Creates a new classroom slot for the authenticated professor.
+   * Generates a unique slot code (AL-XXXXXX) and optionally links a warehouse location.
+   *
+   * @param {string} userId - ID of the authenticated professor's user account.
+   * @param {CreateSlotDto} dto - DTO containing aula, numeroClase, capacidad and optional ubicacionId.
+   * @returns {Promise<AlumnoSlot>} The newly created AlumnoSlot entity.
+   * @throws {NotFoundException} When no Profesor profile exists for the given userId.
+   * @throws {ConflictException} When a slot for the same aula/numeroClase combination already exists.
+   */
   async createSlot(userId: string, dto: CreateSlotDto) {
     const profesor = await this.profesorRepo.findOne({
       where: { user: { id: userId } },
@@ -145,6 +180,14 @@ export class ProfesorService {
     return this.slotRepo.save(slot);
   }
 
+  /**
+   * Admin variant: creates a classroom slot for any professor by their ID.
+   *
+   * @param {AdminCreateSlotDto} dto - DTO containing profesorId plus slot details.
+   * @returns {Promise<AlumnoSlot>} The newly created AlumnoSlot entity.
+   * @throws {NotFoundException} When the specified profesor does not exist.
+   * @throws {ConflictException} When the aula/numeroClase combination already exists for that profesor.
+   */
   async adminCreateSlot(dto: AdminCreateSlotDto) {
     const profesor = await this.profesorRepo.findOne({
       where: { id: dto.profesorId },
@@ -180,6 +223,17 @@ export class ProfesorService {
     return this.slotRepo.save(slot);
   }
 
+  /**
+   * Updates a classroom slot owned by the authenticated professor.
+   * Validates the aula/numeroClase uniqueness constraint before saving.
+   *
+   * @param {string} userId - ID of the authenticated professor's user account.
+   * @param {string} slotId - UUID of the AlumnoSlot to update.
+   * @param {UpdateSlotDto} dto - Partial DTO with fields to update (aula, numeroClase, capacidad, ubicacionId).
+   * @returns {Promise<AlumnoSlot>} The updated AlumnoSlot entity.
+   * @throws {NotFoundException} When the professor profile or the slot are not found.
+   * @throws {ConflictException} When the new aula/numeroClase combination conflicts with an existing slot.
+   */
   async updateSlot(userId: string, slotId: string, dto: UpdateSlotDto) {
     const profesor = await this.profesorRepo.findOne({
       where: { user: { id: userId } },
@@ -225,6 +279,14 @@ export class ProfesorService {
     return this.slotRepo.save(slot);
   }
 
+  /**
+   * Returns all classroom slots belonging to the authenticated professor,
+   * including their enrolled students and linked warehouse location.
+   *
+   * @param {string} userId - ID of the authenticated professor's user account.
+   * @returns {Promise<AlumnoSlot[]>} List of slots ordered by aula and numeroClase.
+   * @throws {NotFoundException} When no Profesor profile exists for the given userId.
+   */
   async getSlots(userId: string) {
     const profesor = await this.profesorRepo.findOne({
       where: { user: { id: userId } },
@@ -242,6 +304,16 @@ export class ProfesorService {
     });
   }
 
+  /**
+   * Deletes a classroom slot owned by the authenticated professor.
+   * Refuses deletion when the slot still has enrolled students.
+   *
+   * @param {string} userId - ID of the authenticated professor's user account.
+   * @param {string} slotId - UUID of the AlumnoSlot to delete.
+   * @returns {Promise<{ message: string }>} Success confirmation message.
+   * @throws {NotFoundException} When the professor profile or the slot are not found.
+   * @throws {ConflictException} When the slot has one or more enrolled students.
+   */
   async deleteSlot(userId: string, slotId: string) {
     const profesor = await this.profesorRepo.findOne({
       where: { user: { id: userId } },
@@ -269,6 +341,15 @@ export class ProfesorService {
     return { message: I18nHelper.translate('success.DELETED') };
   }
 
+  /**
+   * Activates a student account that belongs to one of the professor's slots.
+   * Sets the student's user status to ACTIVE and activo flag to true.
+   *
+   * @param {string} profesorUserId - ID of the authenticated professor's user account.
+   * @param {string} alumnoId - UUID of the Alumno entity to activate.
+   * @returns {Promise<{ status: UserStatus; message: string }>} Updated status and confirmation message.
+   * @throws {NotFoundException} When the professor profile is not found or the student does not belong to this professor.
+   */
   async activateAlumno(profesorUserId: string, alumnoId: string) {
     return this.dataSource.transaction(async (manager) => {
       const profesor = await manager.findOne(Profesor, {
@@ -298,6 +379,14 @@ export class ProfesorService {
     });
   }
 
+  /**
+   * Returns a summary list of all students enrolled in the professor's slots.
+   *
+   * @param {string} profesorUserId - ID of the authenticated professor's user account.
+   * @returns {Promise<Array<{ id: string; username: string; status: UserStatus; aula: string; numeroClase: number }>>}
+   *   Flattened student summaries including their slot details.
+   * @throws {NotFoundException} When no Profesor profile exists for the given userId.
+   */
   async getAlumnos(profesorUserId: string) {
     const profesor = await this.profesorRepo.findOne({
       where: { user: { id: profesorUserId } },
@@ -320,6 +409,18 @@ export class ProfesorService {
     }));
   }
 
+  /**
+   * Forces a password reset for a student enrolled in one of the professor's slots.
+   * Generates an 8-character provisional password and marks the account as `mustChangePassword`.
+   * The provisional password is returned in plain text (one-time delivery).
+   *
+   * @param {string} profesorUserId - ID of the authenticated professor's user account.
+   * @param {string} alumnoId - UUID of the Alumno whose password should be reset.
+   * @returns {Promise<{ message: string; provisionalPassword: string; mustChangePassword: true }>}
+   *   Confirmation with the provisional password.
+   * @throws {BadRequestException} When the alumnoId is missing or equals the string 'undefined'.
+   * @throws {NotFoundException} When the professor profile or the student are not found.
+   */
   async forcePasswordReset(profesorUserId: string, alumnoId: string) {
     if (!alumnoId || alumnoId === 'undefined') {
       throw new BadRequestException('ID de alumno no válido');
@@ -366,6 +467,11 @@ export class ProfesorService {
     };
   }
 
+  /**
+   * Admin: returns all classroom slots across all professors with full relations.
+   *
+   * @returns {Promise<AlumnoSlot[]>} All slots ordered by aula and numeroClase.
+   */
   async getAllSlots() {
     return this.slotRepo.find({
       relations: ['profesor', 'profesor.user', 'alumnos', 'ubicacion'],
@@ -388,7 +494,16 @@ export class ProfesorService {
     }));
   }
 
-  /** Admin: actualiza un slot (campos basicos + reasignacion de profesor) */
+  /**
+   * Admin: updates a classroom slot, including reassigning it to a different professor.
+   * Validates aula/numeroClase uniqueness for the (potentially new) professor before saving.
+   *
+   * @param {string} slotId - UUID of the AlumnoSlot to update.
+   * @param {AdminUpdateSlotDto} dto - DTO with optional fields: aula, numeroClase, capacidad, ubicacionId, profesorId.
+   * @returns {Promise<AlumnoSlot>} The updated AlumnoSlot entity.
+   * @throws {NotFoundException} When the slot or the new profesor are not found.
+   * @throws {ConflictException} When the updated aula/numeroClase combination conflicts with an existing slot.
+   */
   async adminUpdateSlot(slotId: string, dto: AdminUpdateSlotDto) {
     const slot = await this.slotRepo.findOne({
       where: { id: slotId },
@@ -449,6 +564,15 @@ export class ProfesorService {
     return this.slotRepo.save(slot);
   }
 
+  /**
+   * Admin: deletes any classroom slot regardless of which professor owns it.
+   * Refuses deletion when the slot still has enrolled students.
+   *
+   * @param {string} slotId - UUID of the AlumnoSlot to delete.
+   * @returns {Promise<{ message: string }>} Success confirmation message.
+   * @throws {NotFoundException} When the slot is not found.
+   * @throws {ConflictException} When the slot has one or more enrolled students.
+   */
   async adminDeleteSlot(slotId: string) {
     const slot = await this.slotRepo.findOne({
       where: { id: slotId },

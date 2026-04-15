@@ -13,8 +13,17 @@ import { UpdateProductoAlergenoDto } from '../dto/producto-alergeno.dto/update-p
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { Alergeno } from '../enums/producto.enums';
 
+/**
+ * @description Service layer for managing allergen associations on products (ProductoAlergeno).
+ * Supports creating, listing, replacing, and hard-deleting product–allergen links.
+ */
 @Injectable()
 export class ProductoAlergenoService {
+  /**
+   * @description Constructs the service with the required TypeORM repositories.
+   * @param productoAlergenoRepository - Repository for ProductoAlergeno join entities.
+   * @param productoRepository - Repository for Producto entities, used for existence checks.
+   */
   constructor(
     @InjectRepository(ProductoAlergeno)
     private readonly productoAlergenoRepository: Repository<ProductoAlergeno>,
@@ -23,8 +32,12 @@ export class ProductoAlergenoService {
   ) {}
 
   /**
-   * Crea una nueva asociación entre un Producto y un Alérgeno.
-   * Verifica que el producto exista y que la asociación no esté duplicada.
+   * @description Creates a new association between a Producto and an Alérgeno.
+   * Validates that the product exists and that the association is not already registered.
+   * @param dto - DTO containing the product ID and allergen value.
+   * @returns The newly created ProductoAlergeno entity.
+   * @throws {NotFoundException} If the referenced Producto does not exist.
+   * @throws {ConflictException} If the product–allergen association already exists.
    */
   async create(dto: CreateProductoAlergenoDto): Promise<ProductoAlergeno> {
     const { idProducto, alergeno } = dto;
@@ -55,8 +68,11 @@ export class ProductoAlergenoService {
   }
 
   /**
-   * Devuelve todas las asociaciones producto-alérgeno.
-   * Si se pasa idProducto como query param, filtra por ese producto.
+   * @description Returns all product–allergen associations, optionally filtered by product.
+   * When `idProducto` is provided the result is scoped to that product; otherwise all records
+   * are returned. The `producto` relation is always joined.
+   * @param idProducto - Optional product UUID to filter results by.
+   * @returns Array of ProductoAlergeno entities (may be empty).
    */
   async findAll(idProducto?: string): Promise<ProductoAlergeno[]> {
     const qb = this.productoAlergenoRepository
@@ -71,8 +87,11 @@ export class ProductoAlergenoService {
   }
 
   /**
-   * Devuelve todos los alérgenos asociados a un producto concreto.
-   * Lanza NotFoundException si el producto no existe.
+   * @description Returns all allergen associations for a specific product.
+   * Validates that the product exists before querying its allergens.
+   * @param idProducto - UUID of the product whose allergens should be returned.
+   * @returns Array of ProductoAlergeno entities for the given product.
+   * @throws {NotFoundException} If the referenced Producto does not exist.
    */
   async findOne(idProducto: string): Promise<ProductoAlergeno[]> {
     const productoExiste = await this.productoRepository.findOne({
@@ -89,9 +108,14 @@ export class ProductoAlergenoService {
   }
 
   /**
-   * Reemplaza completamente el conjunto de alérgenos de un producto.
-   * Elimina (hard delete) las asociaciones existentes y crea las nuevas.
-   * Se usa hard delete porque la PK compuesta impide recrear registros con soft delete.
+   * @description Replaces the full set of allergens for a product.
+   * All existing product–allergen associations are hard-deleted and then recreated
+   * from the deduplicated list in the DTO. Hard delete is required because the
+   * composite primary key prevents soft-deleted records from being recreated.
+   * @param idProducto - UUID of the product whose allergens should be replaced.
+   * @param dto - DTO containing the new list of allergen values.
+   * @returns Array of the newly created ProductoAlergeno entities.
+   * @throws {NotFoundException} If the referenced Producto does not exist.
    */
   async update(
     idProducto: string,
@@ -124,9 +148,13 @@ export class ProductoAlergenoService {
   }
 
   /**
-   * Elimina (hard delete) una asociación concreta producto-alérgeno.
-   * Lanza BadRequestException si el valor del alérgeno no pertenece al enum.
-   * Lanza NotFoundException si la asociación no existe.
+   * @description Hard-deletes a specific product–allergen association.
+   * Validates that the allergen string is a member of the `Alergeno` enum before querying.
+   * @param idProducto - UUID of the product.
+   * @param alergeno - Allergen string value (must be a valid `Alergeno` enum member).
+   * @returns Resolves with void on success.
+   * @throws {BadRequestException} If the allergen value is not a valid enum member.
+   * @throws {NotFoundException} If the product–allergen association does not exist.
    */
   async remove(idProducto: string, alergeno: string): Promise<void> {
     if (!Object.values(Alergeno).includes(alergeno as Alergeno)) {

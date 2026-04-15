@@ -15,7 +15,7 @@ import { APP_VERSION } from '../helpers/app-version.helper';
 import { I18nHelper } from '../helpers/i18n.helper';
 
 /**
- * Keys used to fetch readable messages for database errors.
+ * @description Keys used to fetch readable messages for database errors.
  * Instead of static mapping, we use dynamic i18n translations.
  */
 const PG_ERROR_KEYS: Record<string, string> = {
@@ -25,10 +25,30 @@ const PG_ERROR_KEYS: Record<string, string> = {
   '23505': 'errors.DUPLICATE_ENTRY',
 };
 
+/**
+ * @description Global NestJS exception filter that catches every unhandled exception
+ * (HTTP, TypeORM QueryFailedError, and unexpected runtime errors) and converts them
+ * into a consistent {@link ApiResponse} JSON envelope. PostgreSQL constraint violations
+ * are mapped to human-readable i18n messages. A unique `x-request-id` header is added
+ * to every error response for distributed tracing. In non-production environments,
+ * unexpected errors include a stack trace in the `error` field.
+ * @example
+ * // Registered globally in main.ts:
+ * app.useGlobalFilters(new GlobalExceptionFilter());
+ */
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
 
+  /**
+   * @description Main exception handler invoked by the NestJS pipeline for every
+   * uncaught exception. Determines the appropriate HTTP status code and i18n message,
+   * then delegates to `sendResponse` to write the JSON body.
+   * @param exception - The thrown exception; may be an `HttpException`, a TypeORM
+   *   `QueryFailedError`, a generic `Error`, or any other value.
+   * @param host - NestJS `ArgumentsHost` providing access to the HTTP context.
+   * @returns The HTTP response written to the underlying socket (via `response.json`).
+   */
   @SentryExceptionCaptured()
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -127,6 +147,15 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     );
   }
 
+  /**
+   * @description Converts an arbitrary value to a human-readable string, attempting
+   * i18n translation when the value looks like a translation key. Handles strings,
+   * numbers, booleans, symbols, and JSON-serialisable objects. Keys that match
+   * `translation.*`, `errors.*`, or all-caps identifiers (`[A-Z0-9_]+`) are passed
+   * through `I18nHelper` for translation.
+   * @param value - The value to translate or serialise.
+   * @returns A human-readable string representation of the value.
+   */
   private translateIfNeeded(value: unknown): string {
     if (value === null || value === undefined) return '';
 
@@ -180,6 +209,16 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     }
   }
 
+  /**
+   * @description Writes a standard {@link ApiResponse} JSON body with a given HTTP
+   * status code. Includes application metadata (name, version, timestamp, environment)
+   * and the provided `x-request-id` for tracing.
+   * @param response - The Express `Response` object to write to.
+   * @param status - The HTTP status code to set on the response.
+   * @param message - The human-readable error message.
+   * @param error - Optional structured error details (e.g. validation errors, stack trace).
+   * @param requestId - The unique request identifier added to the `x-request-id` header.
+   */
   private sendResponse(
     response: Response,
     status: number,
