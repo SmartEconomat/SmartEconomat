@@ -19,21 +19,34 @@ import { useToast } from '../../store/toast.hooks';
 
 // ── Base schema ────────────────────────────────────────────────────────
 
+// Estructura de campos para el formulario de producto
 const productoBaseSchema: DynamicField[] = [
+  // --- Bloque Superior (Junto a Imagen) ---
   { name: 'nombre', label: 'Nombre Comercial', required: true, width: 8 },
-  { name: 'marca', label: 'Marca', width: 4 },
-  { name: 'descripcion', label: 'Descripción', type: 'textarea', width: 12 },
+  { name: 'marca', label: 'Fabricante / Marca Genérica', width: 4 },
+  {
+    name: 'descripcion',
+    label: 'Descripción',
+    type: 'textarea',
+    width: 12,
+    maxLength: 500,
+  },
+
+  // --- Bloque Técnico (Fila de Datos) ---
   {
     name: 'contenido',
     label: 'Contenido Numérico',
     type: 'number',
     required: true,
     width: 4,
+    defaultValue: 1,
+    position: 'bottom',
   },
   {
     name: 'unidad',
     label: 'Unidad de Medida',
     type: 'select',
+    required: true,
     options: [
       { value: UnidadMedida.KG, label: 'Kg' },
       { value: UnidadMedida.G, label: 'Gramo' },
@@ -42,8 +55,9 @@ const productoBaseSchema: DynamicField[] = [
       { value: UnidadMedida.UNIDAD, label: 'Unidad' },
       { value: UnidadMedida.PAQ, label: 'Paquete' },
     ],
-    required: true,
     width: 4,
+    defaultValue: UnidadMedida.UNIDAD,
+    position: 'bottom',
   },
   {
     name: 'tipo',
@@ -67,13 +81,19 @@ const productoBaseSchema: DynamicField[] = [
       { value: CategoriaProducto.BEBIDA, label: 'Bebida' },
       { value: CategoriaProducto.OTRO, label: 'Otro' },
     ],
-  },
-  {
-    name: 'codigoBarras',
-    label: 'Código de Barras',
-    type: 'barcode',
     position: 'bottom',
   },
+
+  // --- Bloque Código de Barras (Línea Sola) ---
+  {
+    name: 'codigoBarras',
+    label: 'EAN Maestro / Global',
+    type: 'barcode',
+    width: 12,
+    position: 'bottom',
+  },
+
+  // --- Media y Otros ---
   {
     name: 'imagen',
     label: 'Cargar Imagen',

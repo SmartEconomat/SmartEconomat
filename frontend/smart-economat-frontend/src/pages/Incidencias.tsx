@@ -3,6 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import {
   Box,
   Paper,
+  Tab,
+  Tabs,
   Typography,
   Alert,
   IconButton,
@@ -19,6 +21,8 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import TuneIcon from '@mui/icons-material/Tune';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ClearIcon from '@mui/icons-material/Clear';
+import PendingActionsIcon from '@mui/icons-material/PendingActions';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import DataTable, { Column } from '../components/ui/DataTable';
 import PageToolbar from '../components/ui/PageToolbar';
 import DetailModal from '../components/ui/DetailModal';
@@ -39,9 +43,7 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import IncidenciaFilters, {
   IncidenciaFiltersState,
 } from '../features/incidencias/IncidenciaFilters';
-import IncidenciasStatusTabs, {
-  IncidenciasResolucionTab,
-} from '../features/incidencias/IncidenciasStatusTabs';
+import { type IncidenciasResolucionTab } from '../features/incidencias/IncidenciasStatusTabs';
 import ResolveIncidenciaModal from '../features/incidencias/ResolveIncidenciaModal';
 import { useAuth, usePermission } from '../store/auth.hooks';
 import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
@@ -608,86 +610,120 @@ const Incidencias: React.FC = () => {
         }
       />
 
-      <IncidenciasStatusTabs
-        value={resolucionTab}
-        onChange={handleResolucionTabChange}
-      />
-
-      <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
-        {error && (
-          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-            {error}
-          </Alert>
-        )}
-
-        {hasDashboardFilter && (
-          <Alert
-            severity="info"
-            icon={<FilterListIcon />}
-            action={
-              <Button
-                color="inherit"
-                size="small"
-                onClick={clearDashboardFilter}
-                startIcon={<ClearIcon />}
-                sx={{ fontWeight: 700 }}
-              >
-                Quitar filtro
-              </Button>
-            }
-            sx={{
-              mb: 3,
-              borderRadius: 2,
-              bgcolor: alpha(theme.palette.info.main, 0.1),
-              border: '1px solid',
-              borderColor: alpha(theme.palette.info.main, 0.3),
-              '& .MuiAlert-message': { fontWeight: 500 },
-            }}
-          >
-            Estas visualizando las incidencias pendientes filtradas desde el
-            Dashboard.
-          </Alert>
-        )}
-
-        <DataTable
-          columns={columns}
-          data={data}
-          isLoading={isLoading}
-          renderActions={renderActions}
-          emptyStateMessage={
-            <Box sx={{ py: 8, textAlign: 'center' }}>
-              <ReportProblemOutlinedIcon
-                sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
-              />
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                {resolucionTab === 'resueltas'
-                  ? 'No hay incidencias resueltas'
-                  : 'No hay incidencias por resolver'}
-              </Typography>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ maxWidth: 400, mx: 'auto' }}
-              >
-                {searchTerm
-                  ? 'No se encontraron incidencias que coincidan con tu búsqueda.'
-                  : resolucionTab === 'resueltas'
-                    ? 'Aún no se han registrado incidencias resueltas con los filtros aplicados.'
-                    : '¡Excelente trabajo! No se han detectado discrepancias pendientes en las recepciones recientes.'}
-              </Typography>
-            </Box>
-          }
-          pagination={{
-            currentPage: page,
-            totalPages: totalPages,
-            onPageChange: (_, p) => setPage(p),
-            pageSize: pageSize,
-            onPageSizeChange: (e) => {
-              setPageSize(Number(e.target.value));
-              setPage(1);
-            },
+      <Paper
+        elevation={2}
+        sx={{
+          borderRadius: 3,
+          overflow: 'hidden',
+          border: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
+        <Box
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
           }}
-        />
+        >
+          <Tabs
+            value={resolucionTab}
+            onChange={(_, newValue: IncidenciasResolucionTab) =>
+              handleResolucionTabChange(newValue)
+            }
+            variant="fullWidth"
+            textColor="primary"
+            indicatorColor="primary"
+          >
+            <Tab
+              value="por_resolver"
+              label="Por resolver"
+              icon={<PendingActionsIcon />}
+            />
+            <Tab
+              value="resueltas"
+              label="Resueltas"
+              icon={<CheckCircleOutlineIcon />}
+            />
+          </Tabs>
+        </Box>
+
+        <Box sx={{ p: { xs: 2, sm: 4 } }}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          {hasDashboardFilter && (
+            <Alert
+              severity="info"
+              icon={<FilterListIcon />}
+              action={
+                <Button
+                  color="inherit"
+                  size="small"
+                  onClick={clearDashboardFilter}
+                  startIcon={<ClearIcon />}
+                  sx={{ fontWeight: 700 }}
+                >
+                  Quitar filtro
+                </Button>
+              }
+              sx={{
+                mb: 3,
+                borderRadius: 2,
+                bgcolor: alpha(theme.palette.info.main, 0.1),
+                border: '1px solid',
+                borderColor: alpha(theme.palette.info.main, 0.3),
+                '& .MuiAlert-message': { fontWeight: 500 },
+              }}
+            >
+              Estas visualizando las incidencias pendientes filtradas desde el
+              Dashboard.
+            </Alert>
+          )}
+
+          <DataTable
+            columns={columns}
+            data={data}
+            isLoading={isLoading}
+            renderActions={renderActions}
+            emptyStateMessage={
+              <Box sx={{ py: 8, textAlign: 'center' }}>
+                <ReportProblemOutlinedIcon
+                  sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
+                />
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  {resolucionTab === 'resueltas'
+                    ? 'No hay incidencias resueltas'
+                    : 'No hay incidencias por resolver'}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ maxWidth: 400, mx: 'auto' }}
+                >
+                  {searchTerm
+                    ? 'No se encontraron incidencias que coincidan con tu búsqueda.'
+                    : resolucionTab === 'resueltas'
+                      ? 'Aún no se han registrado incidencias resueltas con los filtros aplicados.'
+                      : '¡Excelente trabajo! No se han detectado discrepancias pendientes en las recepciones recientes.'}
+                </Typography>
+              </Box>
+            }
+            pagination={{
+              currentPage: page,
+              totalPages: totalPages,
+              onPageChange: (_, p) => setPage(p),
+              pageSize: pageSize,
+              onPageSizeChange: (e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              },
+            }}
+          />
+        </Box>
       </Paper>
 
       <DetailModal

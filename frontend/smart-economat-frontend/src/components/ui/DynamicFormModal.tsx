@@ -55,20 +55,20 @@ export type FieldType =
   | 'batchViewer'
   | 'barcode';
 
+export type FormDataRecord = Record<string, unknown>;
+
 export interface DynamicField {
   name: string;
   label: string;
   type?: FieldType;
   required?: boolean;
   options?: SelectOption[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  defaultValue?: any;
+  defaultValue?: unknown;
   disabled?: boolean;
   position?: 'left' | 'right' | 'bottom';
   multiple?: boolean;
-  /** Opcional: Define el ancho del campo en una cuadrícula de 1-12 (Por defecto 12). Se aplica a partir del breakpoint 'sm'. */
   width?: number;
-  getFallbackIcon?: (formData: Record<string, any>) => React.ReactNode;
+  getFallbackIcon?: (formData: FormDataRecord) => React.ReactNode;
   pattern?: string;
   patternMessage?: string;
   maxLength?: number;
@@ -77,8 +77,8 @@ export interface DynamicField {
 
 export interface DynamicFormModalProps extends Omit<ModalProps, 'children'> {
   fields?: DynamicField[];
-  initialData?: Record<string, any>;
-  onSubmit: (data: Record<string, any>) => void | Promise<void>;
+  initialData?: FormDataRecord;
+  onSubmit: (data: FormDataRecord) => void | Promise<void>;
   onCancel?: () => void;
   submitLabel?: string;
   cancelLabel?: string;
@@ -126,8 +126,8 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   onSecondarySubmit,
   secondarySubmitColor = 'success',
 }) => {
-  const [formData, setFormData] = useState<Record<string, any>>({});
-  const formDataRef = useRef<Record<string, any>>({});
+  const [formData, setFormData] = useState<FormDataRecord>({});
+  const formDataRef = useRef<FormDataRecord>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [activeBarcodeField, setActiveBarcodeField] = useState<string | null>(
@@ -153,11 +153,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
         : undefined;
 
   const updateFormData = useCallback(
-    (
-      updater:
-        | Record<string, any>
-        | ((prev: Record<string, any>) => Record<string, any>)
-    ) => {
+    (updater: FormDataRecord | ((prev: FormDataRecord) => FormDataRecord)) => {
       setFormData((prev) => {
         const next = typeof updater === 'function' ? updater(prev) : updater;
         formDataRef.current = next;
@@ -186,14 +182,12 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
       setOffResults([]);
       if (onValuesChange) onValuesChange(dataToSet);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialData, fields]);
 
-  // Handle external value updates (e.g., from real-time calculations)
   useEffect(() => {
     if (isOpen && valueUpdates && Object.keys(valueUpdates).length > 0) {
       updateFormData((prev) => {
-        const next = { ...prev } as Record<string, any>;
+        const next: FormDataRecord = { ...prev };
         let changed = false;
         Object.keys(valueUpdates).forEach((key) => {
           if (next[key] !== valueUpdates[key]) {
@@ -243,8 +237,10 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
     updateFormData((prev) => ({ ...prev, [name]: checked }));
   };
 
-
-  const validateField = (field: DynamicField, value: any): string | null => {
+  const validateField = (
+    field: DynamicField,
+    value: unknown
+  ): string | null => {
     const { required, label, pattern, patternMessage, maxLength, minLength } =
       field;
 
@@ -267,7 +263,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
           if (!regex.test(stringValue)) {
             return patternMessage || `${label} no tiene un formato válido`;
           }
-        } catch (_e) {
+        } catch {
           console.error(`Invalid regex for field ${field.name}:`, pattern);
         }
       }
@@ -416,7 +412,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
           if (typeOfVal === 'number') type = 'number';
           if (typeOfVal === 'boolean') type = 'boolean';
           if (
-            typeOfVal === 'string' &&
+            typeof val === 'string' &&
             !isNaN(Date.parse(val)) &&
             val.includes('-')
           )
@@ -436,14 +432,9 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   const nonImageFields = formFields.filter((f) => f.type !== 'image');
 
   const imageFieldName = mainImageField?.name;
-  const imageRawValue = useMemo(
-    () => (imageFieldName !== undefined ? formData[imageFieldName] : undefined),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      imageFieldName,
-      imageFieldName !== undefined ? formData[imageFieldName] : undefined,
-    ]
-  );
+  const imageFieldValue =
+    imageFieldName !== undefined ? formData[imageFieldName] : undefined;
+  const imageRawValue = useMemo(() => imageFieldValue, [imageFieldValue]);
   const [imageBlobUrl, setImageBlobUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -521,6 +512,11 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
             onChange={handleNumberChange}
             required={required}
             disabled={disabled}
+            slotProps={{
+              inputLabel: {
+                shrink: true,
+              },
+            }}
             inputProps={{ step: 'any', inputMode: 'decimal', min: 0 }}
           />
         );
@@ -561,6 +557,11 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
             disabled={disabled}
             multiline
             rows={3}
+            slotProps={{
+              inputLabel: {
+                shrink: true,
+              },
+            }}
             inputProps={maxLength ? { maxLength } : undefined}
             error={Boolean(errors[name])}
             helperText={errors[name]}
@@ -583,6 +584,8 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                 nifNie: '',
               })) || []
             }
+            masterMarca={formData.marca as string | undefined}
+            masterBarcode={formData.codigoBarras as string | undefined}
             disabled={disabled}
           />
         );
@@ -631,120 +634,114 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
               error={Boolean(errors[name])}
               helperText={errors[name]}
               inputProps={maxLength ? { maxLength } : undefined}
-              onBlur={async (e) => {
-                const code = (e.target as HTMLInputElement).value;
-                if (code && onBarcodeFetch && code !== initialData?.[name]) {
-                  const newData = await onBarcodeFetch(code);
-                  if (newData) {
-                    setFormData((prev) => ({ ...prev, ...newData }));
-                  }
-                }
-              }}
-              required={required}
-              disabled={disabled}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Tooltip title="Escanear con cámara">
-                      <IconButton
-                        size="small"
-                        onClick={() => setActiveBarcodeField(name)}
-                        disabled={disabled}
-                        color="primary"
-                        sx={{
-                          '&:hover': {
-                            bgcolor: 'rgba(216, 27, 96, 0.1)',
-                            borderRadius: 1,
-                          },
-                          p: 0.5,
-                          ml: -0.5,
-                        }}
-                      >
-                        <BarcodeIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </InputAdornment>
-                ),
-                endAdornment: (onBarcodeGenerate || onOFFSearch) && (
-                  <InputAdornment position="end">
-                    <Stack direction="row" spacing={0.5}>
-                      {onBarcodeGenerate && (
-                        <Tooltip title="Generar codigo EAN-13">
-                          <span>
-                            <IconButton
-                              size="small"
-                              disabled={
-                                disabled || Boolean(generatingBarcodeField)
-                              }
-                              onClick={() => {
-                                void handleBarcodeGenerate(name);
-                              }}
-                              sx={{
-                                bgcolor: 'success.main',
-                                color: 'common.white',
-                                '&:hover': {
-                                  bgcolor: 'success.dark',
-                                },
-                                borderRadius: 1,
-                                p: 0.5,
-                              }}
-                            >
-                              {generatingBarcodeField === name ? (
-                                <CircularProgress size={20} color="inherit" />
-                              ) : (
-                                <AutoFixHighOutlinedIcon fontSize="small" />
-                              )}
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-                      )}
-                      {onOFFSearch && (
-                        <Tooltip title="Buscar en OpenFoodFacts">
-                          <span>
-                            <IconButton
-                              size="small"
-                              disabled={disabled || isOFFSearching || !value}
-                              onClick={async () => {
-                                if (!value || isOFFSearching) return;
-                                setIsOFFSearching(true);
-                                setShowOFFResults(false);
-                                const results = await onOFFSearch(
-                                  String(value)
-                                );
-                                setIsOFFSearching(false);
-                                if (results.length === 1) {
-                                  setFormData((prev) => ({
-                                    ...prev,
-                                    ...results[0],
-                                    ...results[0],
-                                  }));
-                                } else if (results.length > 1) {
-                                  setOffResults(results);
-                                  setShowOFFResults(true);
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Tooltip title="Escanear con cámara">
+                        <IconButton
+                          size="small"
+                          onClick={() => setActiveBarcodeField(name)}
+                          disabled={disabled}
+                          color="primary"
+                          sx={{
+                            '&:hover': {
+                              bgcolor: 'rgba(216, 27, 96, 0.1)',
+                              borderRadius: 1,
+                            },
+                            p: 0.5,
+                            ml: -0.5,
+                          }}
+                        >
+                          <BarcodeIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  ),
+                  endAdornment: (onBarcodeGenerate || onOFFSearch) && (
+                    <InputAdornment position="end">
+                      <Stack direction="row" spacing={0.5}>
+                        {onBarcodeGenerate && (
+                          <Tooltip title="Generar codigo EAN-13">
+                            <span>
+                              <IconButton
+                                size="small"
+                                disabled={
+                                  disabled || Boolean(generatingBarcodeField)
                                 }
-                              }}
-                              sx={{
-                                bgcolor: 'primary.main',
-                                color: 'white',
-                                '&:hover': {
-                                  bgcolor: 'primary.dark',
-                                },
-                                borderRadius: 1,
-                                p: 0.5,
-                              }}
-                            >
-                              {isOFFSearching ? (
-                                <CircularProgress size={20} />
-                              ) : (
-                                <SearchIcon fontSize="small" />
-                              )}
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-                      )}
-                    </Stack>
-                  </InputAdornment>
-                ),
+                                onClick={() => {
+                                  void handleBarcodeGenerate(name);
+                                }}
+                                sx={{
+                                  bgcolor: 'success.main',
+                                  color: 'common.white',
+                                  '&:hover': {
+                                    bgcolor: 'success.dark',
+                                  },
+                                  borderRadius: 1,
+                                  p: 0.5,
+                                }}
+                              >
+                                {generatingBarcodeField === name ? (
+                                  <CircularProgress size={20} color="inherit" />
+                                ) : (
+                                  <AutoFixHighOutlinedIcon fontSize="small" />
+                                )}
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        )}
+                        {onOFFSearch && (
+                          <Tooltip title="Buscar en OpenFoodFacts">
+                            <span>
+                              <IconButton
+                                size="small"
+                                disabled={disabled || isOFFSearching || !value}
+                                onClick={async () => {
+                                  if (!value || isOFFSearching) return;
+                                  setIsOFFSearching(true);
+                                  setShowOFFResults(false);
+                                  const results = await onOFFSearch(
+                                    String(value)
+                                  );
+                                  setIsOFFSearching(false);
+                                  if (results.length === 1) {
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      ...results[0],
+                                      ...results[0],
+                                    }));
+                                  } else if (results.length > 1) {
+                                    setOffResults(results);
+                                    setShowOFFResults(true);
+                                  }
+                                }}
+                                sx={{
+                                  bgcolor: 'primary.main',
+                                  color: 'white',
+                                  '&:hover': {
+                                    bgcolor: 'primary.dark',
+                                  },
+                                  borderRadius: 1,
+                                  p: 0.5,
+                                }}
+                              >
+                                {isOFFSearching ? (
+                                  <CircularProgress size={20} />
+                                ) : (
+                                  <SearchIcon fontSize="small" />
+                                )}
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        )}
+                      </Stack>
+                    </InputAdornment>
+                  ),
+                },
               }}
             />
             {showOFFResults && offResults.length > 0 && (
@@ -752,12 +749,24 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                 elevation={8}
                 sx={{
                   position: 'absolute',
-                  top: '100%',
+                  top: 'calc(100% + 4px)',
                   left: 0,
                   right: 0,
                   zIndex: 1300,
-                  maxHeight: 260,
+                  maxHeight: 280,
                   overflowY: 'auto',
+                  bgcolor: 'background.paper',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1.5,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                  '&::-webkit-scrollbar': {
+                    width: '6px',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    bgcolor: 'divider',
+                    borderRadius: '3px',
+                  },
                 }}
               >
                 <List dense disablePadding>
@@ -768,6 +777,13 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                         setFormData((prev) => ({ ...prev, ...result }));
                         setShowOFFResults(false);
                         setOffResults([]);
+                      }}
+                      sx={{
+                        py: 1,
+                        '&:hover': {
+                          bgcolor:
+                            'rgba(var(--mui-palette-primary-mainChannel), 0.04)',
+                        },
                       }}
                     >
                       <ListItemText
@@ -781,6 +797,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                           (result['brand'] as string) ||
                           undefined
                         }
+                        primaryTypographyProps={{ fontWeight: 500 }}
                       />
                     </ListItemButton>
                   ))}
@@ -818,6 +835,11 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
             onChange={handleTextChange}
             required={required}
             disabled={disabled}
+            slotProps={{
+              inputLabel: {
+                shrink: true,
+              },
+            }}
             inputProps={maxLength ? { maxLength } : undefined}
             error={Boolean(errors[name])}
             helperText={errors[name]}
@@ -834,16 +856,20 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
       size={size || 'md'}
     >
       <form onSubmit={handleSubmit}>
-        <Grid container spacing={3} sx={{ mt: 0 }}>
+        <Grid
+          container
+          spacing={3}
+          sx={{ mt: 0, alignItems: { md: 'center' } }}
+        >
           {/* Image Sidebar Layout - Left on MD+ */}
           {mainImageField && (
             <Grid
-              size={{ xs: 12, md: 4, lg: 4 }}
+              size={{ xs: 12, md: 3, lg: 3 }}
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                pt: { xs: 0, sm: 5.2 }, // Mantener la alineación lograda
+                pt: { xs: 0, sm: 0 }, // Alineación superior pura
               }}
             >
               {(() => {
@@ -872,7 +898,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                       onDrop={handleDrop(name)}
                       sx={{
                         width: '100%',
-                        aspectRatio: '1',
+                        height: { md: 190 },
                         border: '2px dashed',
                         borderColor: isDragOver ? 'primary.main' : 'divider',
                         borderRadius: 2,
@@ -958,7 +984,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
           )}
 
           {/* Right Side - Grid for Fields */}
-          <Grid size={mainImageField ? { xs: 12, md: 8, lg: 8 } : { xs: 12 }}>
+          <Grid size={mainImageField ? { xs: 12, md: 9, lg: 9 } : { xs: 12 }}>
             <Box
               display="grid"
               gridTemplateColumns="repeat(12, 1fr)"
@@ -982,12 +1008,26 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
 
         {/* Bottom Row Fields */}
         {bottomFields.length > 0 && (
-          <Box sx={{ mt: 2, width: '100%' }}>
-            <Stack spacing={2}>
-              {bottomFields.map((field) => (
-                <Box key={field.name}>{renderFieldContent(field)}</Box>
-              ))}
-            </Stack>
+          <Box
+            sx={{
+              mt: 2,
+              width: '100%',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(12, 1fr)',
+              gap: 2,
+            }}
+          >
+            {bottomFields.map((field) => {
+              const { name, width = 12 } = field;
+              return (
+                <Box
+                  key={name}
+                  sx={{ gridColumn: { xs: 'span 12', sm: `span ${width}` } }}
+                >
+                  {renderFieldContent(field)}
+                </Box>
+              );
+            })}
           </Box>
         )}
 

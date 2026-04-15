@@ -141,7 +141,7 @@ export class ProductoService {
       });
     } else if (query.searchTerm) {
       queryBuilder.andWhere(
-        '(producto.nombre ILIKE :searchTerm OR producto.codigoBarras ILIKE :searchTerm OR producto.marca ILIKE :searchTerm)',
+        '(producto.nombre ILIKE :searchTerm OR producto.codigoBarras ILIKE :searchTerm OR producto.marca ILIKE :searchTerm OR proveedores.codigoBarras ILIKE :searchTerm OR proveedores.marca ILIKE :searchTerm)',
         {
           searchTerm: `%${query.searchTerm}%`,
         }
@@ -463,7 +463,13 @@ export class ProductoService {
         ? Number((sumaPonderada / stockTotal).toFixed(4))
         : pmpActualProducto;
 
-    await em.update(Producto, { id: productoId }, { pmp: producto.pmp });
+    await em.update(
+      Producto,
+      { id: productoId },
+      {
+        pmp: producto.pmp,
+      }
+    );
   }
 
   async getHistorialPrecios(

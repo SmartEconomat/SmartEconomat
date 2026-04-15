@@ -223,6 +223,31 @@ export const getTheme = (themeName: ThemeName, fontSize: FontSize) => {
    */
   const baseComponents = {
     ...a11yComponentDefaults,
+    MuiTabs: {
+      styleOverrides: {
+        root: {
+          minHeight: 42,
+        },
+      },
+    },
+    MuiTab: {
+      defaultProps: {
+        iconPosition: 'start' as const,
+      },
+      styleOverrides: {
+        root: ({ theme }: { theme: Theme }) => ({
+          minHeight: 42,
+          paddingTop: 8,
+          paddingBottom: 8,
+          fontWeight: 600,
+          textTransform: 'none' as const,
+          fontSize: '0.875rem',
+          [theme.breakpoints.up('sm')]: {
+            minHeight: 42,
+          },
+        }),
+      },
+    },
     MuiButton: {
       styleOverrides: {
         root: ({ theme }: { theme: Theme }) => ({

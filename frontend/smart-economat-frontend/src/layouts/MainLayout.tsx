@@ -76,10 +76,10 @@ const DrawerHeader = styled('div')(({ theme }) => ({
   padding: theme.spacing(0, 1),
   ...theme.mixins.toolbar,
   [theme.breakpoints.down('sm')]: {
-    minHeight: '80px !important',
+    minHeight: '64px !important',
   },
   [theme.breakpoints.up('sm')]: {
-    minHeight: '100px !important',
+    minHeight: '76px !important',
   },
 }));
 
@@ -130,7 +130,8 @@ const DesktopDrawer = styled(MuiDrawer, {
 
 export default function MainLayout() {
   const theme = useTheme();
-  const { isMobile } = useBreakpoints();
+  const { isMobile, isTabletOrAbove, isTabletOrBelow } = useBreakpoints();
+  const isTablet = isTabletOrAbove && isTabletOrBelow;
   const { currentThemeName, isLearningMode } = useThemeContext();
   const [open, setOpen] = useState(!isMobile);
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(
@@ -142,6 +143,13 @@ export default function MainLayout() {
 
   // Activar atajos de teclado globales
   useKeyboardShortcuts();
+
+  // Cerrar el menú automáticamente al cambiar de ruta si estamos en modo overlay (tablet o móvil)
+  React.useEffect(() => {
+    if (isMobile || isTablet) {
+      setOpen(false);
+    }
+  }, [location.pathname, isMobile, isTablet]);
 
   const getLogo = () => {
     if (
@@ -217,7 +225,7 @@ export default function MainLayout() {
               src={getLogo()}
               alt="Smart Economat Logo"
               sx={{
-                height: { xs: 60, sm: 80 },
+                height: { xs: 48, sm: 56 },
                 maxWidth: '100%',
                 objectFit: 'contain',
               }}
@@ -367,7 +375,7 @@ export default function MainLayout() {
       <SkipLinks />
       <AppBar
         position="fixed"
-        open={open}
+        open={isTablet ? false : open}
         color="inherit"
         elevation={1}
         component="header"
@@ -376,7 +384,7 @@ export default function MainLayout() {
       >
         <Toolbar
           sx={{
-            minHeight: { xs: '80px !important', sm: '100px !important' },
+            minHeight: { xs: '64px !important', sm: '76px !important' },
             px: { xs: 2, sm: 3 },
           }}
         >
@@ -482,6 +490,37 @@ export default function MainLayout() {
         >
           {drawerContent}
         </MuiDrawer>
+      ) : isTablet ? (
+        <>
+          {/* Permanent Mini Sidebar (Icons always visible) */}
+          <DesktopDrawer
+            variant="permanent"
+            open={false}
+            component="nav"
+            aria-label="Menú principal lateral (iconos)"
+            sx={{ outline: 'none' }}
+          >
+            {drawerContent}
+          </DesktopDrawer>
+
+          {/* Temporary Overlay (Full menu over content) */}
+          <MuiDrawer
+            variant="temporary"
+            open={open}
+            onClose={handleDrawerClose}
+            component="nav"
+            aria-label="Menú principal completo"
+            PaperProps={{
+              sx: {
+                width: drawerWidth,
+                boxShadow: (theme) => theme.shadows[8],
+                zIndex: (theme) => theme.zIndex.drawer + 2,
+              },
+            }}
+          >
+            {drawerContent}
+          </MuiDrawer>
+        </>
       ) : (
         <DesktopDrawer
           variant="permanent"

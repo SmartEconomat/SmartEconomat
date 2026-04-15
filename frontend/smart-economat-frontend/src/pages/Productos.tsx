@@ -108,6 +108,7 @@ import { Suspense } from 'react';
  * evitando el uso de Record<string, unknown> y proporcionando tipado estricto.
  */
 interface ProductoFormValues {
+  [key: string]: unknown;
   id?: string;
   nombre?: string;
   marca?: string;
@@ -126,6 +127,7 @@ interface ProductoFormValues {
     codigoBarras?: string;
     precioUnitario?: string | number;
   }[];
+  pmp?: number;
 }
 
 const initialFilters: ProductFiltersState = {
@@ -316,7 +318,31 @@ const Productos: React.FC = () => {
 
   const columns = React.useMemo<Column<Producto>[]>(
     () => [
-      { id: 'nombre', label: 'Nombre', sortable: true, minWidth: 280, flex: 2 },
+      {
+        id: 'nombre',
+        label: 'Nombre',
+        sortable: true,
+        minWidth: 280,
+        flex: 2,
+        render: (row) => (
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {row.nombre}
+            </Typography>
+            {(!row.proveedores || row.proveedores.length === 0) && (
+              <Tooltip title="Producto sin proveedores asignados">
+                <Chip
+                  label="Sin Prov."
+                  size="small"
+                  color="warning"
+                  variant="outlined"
+                  sx={{ height: 20, fontSize: '0.65rem' }}
+                />
+              </Tooltip>
+            )}
+          </Stack>
+        ),
+      },
       {
         id: 'marca',
         label: 'Marca',
@@ -386,6 +412,7 @@ const Productos: React.FC = () => {
       ...row,
       alergenos: [],
       proveedores: [],
+      pmp: row.pmp ?? 0,
     };
     if (row.pathImg) editData.imagen = resolveStoredFileUrl(row.pathImg);
     if (row.alergenos) {
@@ -666,17 +693,13 @@ const Productos: React.FC = () => {
           >
             <Tab
               icon={<Inventory2OutlinedIcon />}
-              iconPosition="start"
               label="Activos"
               value="active"
-              sx={{ fontWeight: 600, py: 2 }}
             />
             <Tab
               icon={<DeleteSweepOutlinedIcon />}
-              iconPosition="start"
               label="Eliminados"
               value="deleted"
-              sx={{ fontWeight: 600, py: 2 }}
             />
           </Tabs>
         </Box>
@@ -728,13 +751,21 @@ const Productos: React.FC = () => {
                       `0 8px 16px ${alpha(theme.palette.primary.main, 0.1)}`,
                   }}
                 >
-                  <ShoppingBasketOutlinedIcon sx={{ fontSize: 40 }} />
+                  {activeTab === 'deleted' ? (
+                    <DeleteSweepOutlinedIcon sx={{ fontSize: 40 }} />
+                  ) : (
+                    <ShoppingBasketOutlinedIcon sx={{ fontSize: 40 }} />
+                  )}
                 </Box>
                 <Typography
                   variant="h5"
                   sx={{ fontWeight: 700, mb: 1, color: 'text.primary' }}
                 >
-                  {hasSearchOrFilters ? 'Sin coincidencias' : 'Catálogo vacío'}
+                  {hasSearchOrFilters
+                    ? 'Sin coincidencias'
+                    : activeTab === 'deleted'
+                      ? 'Sin productos eliminados'
+                      : 'Catálogo vacío'}
                 </Typography>
                 <Typography
                   variant="body1"
@@ -743,7 +774,9 @@ const Productos: React.FC = () => {
                 >
                   {hasSearchOrFilters
                     ? 'Prueba a ajustar tus filtros o el término de búsqueda para encontrar lo que necesitas.'
-                    : 'Empieza a digitalizar tu inventario añadiendo tu primer producto hoy mismo.'}
+                    : activeTab === 'deleted'
+                      ? 'No hay registros de productos que hayan sido borrados anteriormente.'
+                      : 'Empieza a digitalizar tu inventario añadiendo tu primer producto hoy mismo.'}
                 </Typography>
                 {!hasSearchOrFilters && canCreate && activeTab === 'active' && (
                   <Button
@@ -906,21 +939,20 @@ const Productos: React.FC = () => {
                       value: `${p.contenido}${p.unidad ? ' ' + p.unidad : ''}`,
                     },
                     {
-                      label: 'Código de Barras',
+                      label: 'Código de barras',
                       value: p.codigoBarras ?? undefined,
                     },
                     {
                       label: 'PMP Actual',
-                      value:
-                        p.pmp != null ? (
-                          <Typography
-                            variant="body2"
-                            fontWeight={700}
-                            color="primary.main"
-                          >
-                            {Number(p.pmp).toFixed(2)} €
-                          </Typography>
-                        ) : undefined,
+                      value: (
+                        <Typography
+                          variant="body2"
+                          fontWeight={700}
+                          color="primary.main"
+                        >
+                          {(p.pmp ?? 0).toFixed(2)} €
+                        </Typography>
+                      ),
                     },
                     {
                       label: 'Descripción',

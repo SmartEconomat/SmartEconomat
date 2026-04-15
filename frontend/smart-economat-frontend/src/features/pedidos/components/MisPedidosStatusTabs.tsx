@@ -51,7 +51,7 @@ const MisPedidosStatusTabs: React.FC<MisPedidosStatusTabsProps> = ({
           variant="scrollable"
           scrollButtons="auto"
           sx={{
-            minHeight: 40,
+            minHeight: 42,
             '& .MuiTabs-indicator': {
               height: '100%',
               borderRadius: '8px',
@@ -70,11 +70,10 @@ const MisPedidosStatusTabs: React.FC<MisPedidosStatusTabsProps> = ({
               key={option.value}
               value={option.value}
               icon={option.icon}
-              iconPosition="start"
               label={option.label}
               disableRipple
               sx={{
-                minHeight: 40,
+                minHeight: 42,
                 px: 2.5,
                 borderRadius: '8px',
                 fontSize: '0.75rem',

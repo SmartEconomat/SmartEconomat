@@ -556,10 +556,8 @@ const Administracion: React.FC = () => {
                 key={tab.key}
                 value={tab.key}
                 icon={tab.icon}
-                iconPosition="start"
                 label={tab.label}
                 {...a11yProps(tab.key)}
-                sx={{ fontWeight: 600, py: 2 }}
               />
             ))}
           </Tabs>

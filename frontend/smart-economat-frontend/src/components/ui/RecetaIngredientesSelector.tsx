@@ -15,9 +15,9 @@ import {
   Autocomplete,
   CircularProgress,
   Tooltip,
-  Select,
-  MenuItem,
 } from '@mui/material';
+import Select from './Select';
+import MenuItem from '@mui/material/MenuItem';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
@@ -579,9 +579,10 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                           renderInput={(params) => (
                             <TextField
                               {...params}
-                              variant="standard"
+                              variant="outlined"
                               placeholder="Buscar producto..."
                               helperText="Escribe al menos 2 letras para buscar productos."
+                              InputLabelProps={{ shrink: true }}
                               InputProps={{
                                 ...params.InputProps,
                                 endAdornment: (
@@ -614,19 +615,23 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                               Number(e.target.value)
                             )
                           }
-                          variant="standard"
-                          inputProps={{ min: 0.01, step: 'any' }}
+                          variant="outlined"
                           size="small"
+                          inputProps={{ min: 0.01, step: 'any' }}
                         />
                       </TableCell>
                       <TableCell>
                         <Select
+                          name={`ing-unidad-${index}`}
+                          label=""
                           value={line.unidad || ''}
                           onChange={(e) =>
                             handleUpdateLine(index, 'unidad', e.target.value)
                           }
-                          variant="standard"
+                          variant="outlined"
+                          size="small"
                           fullWidth
+                          margin="none"
                         >
                           {Object.values(UnidadIngrediente).map((unidad) => (
                             <MenuItem key={unidad} value={unidad}>
@@ -637,6 +642,8 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                       </TableCell>
                       <TableCell>
                         <Select
+                          name={`ing-prov-${index}`}
+                          label=""
                           value={line.proveedorFavoritoId || ''}
                           onChange={(e) =>
                             handleUpdateLine(
@@ -645,58 +652,62 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                               e.target.value
                             )
                           }
-                          variant="standard"
+                          variant="outlined"
+                          size="small"
                           fullWidth
-                          displayEmpty
-                          disabled={!line.productoId}
-                          renderValue={(val) => {
-                            if (!val) {
-                              return <em>Sin proveedor disponible</em>;
-                            }
+                          margin="none"
+                          SelectProps={{
+                            displayEmpty: true,
+                            renderValue: (val) => {
+                              if (!val) {
+                                return <em>Sin proveedor disponible</em>;
+                              }
 
-                            const selected = availableProviders.find(
-                              (pp) => pp.proveedor?.id === val
-                            );
-
-                            if (selected) {
-                              const isAutomatic =
-                                line.proveedorFavoritoAuto ||
-                                selected.proveedor?.id === cheapestProviderId;
-
-                              return (
-                                <Box
-                                  sx={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: 0.75,
-                                    color: isAutomatic
-                                      ? 'success.dark'
-                                      : 'primary.dark',
-                                    fontWeight: 'bold',
-                                  }}
-                                >
-                                  <span>
-                                    {selected.proveedor?.nombre} (
-                                    {selected.precioUnitario}€)
-                                  </span>
-                                  {isAutomatic && (
-                                    <Box
-                                      component="span"
-                                      sx={{
-                                        fontSize: '0.7rem',
-                                        textTransform: 'uppercase',
-                                        letterSpacing: 0.5,
-                                        fontWeight: 700,
-                                      }}
-                                    >
-                                      Auto
-                                    </Box>
-                                  )}
-                                </Box>
+                              const selected = availableProviders.find(
+                                (pp) => pp.proveedor?.id === val
                               );
-                            }
-                            return val;
+
+                              if (selected) {
+                                const isAutomatic =
+                                  line.proveedorFavoritoAuto ||
+                                  selected.proveedor?.id === cheapestProviderId;
+
+                                return (
+                                  <Box
+                                    sx={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 0.75,
+                                      color: isAutomatic
+                                        ? 'success.dark'
+                                        : 'primary.dark',
+                                      fontWeight: 'bold',
+                                    }}
+                                  >
+                                    <span>
+                                      {selected.proveedor?.nombre} (
+                                      {selected.precioUnitario}€)
+                                    </span>
+                                    {isAutomatic && (
+                                      <Box
+                                        component="span"
+                                        sx={{
+                                          fontSize: '0.7rem',
+                                          textTransform: 'uppercase',
+                                          letterSpacing: 0.5,
+                                          fontWeight: 700,
+                                        }}
+                                      >
+                                        Auto
+                                      </Box>
+                                    )}
+                                  </Box>
+                                );
+                              }
+                              return val as string;
+                            },
                           }}
+                          disabled={!line.productoId}
                         >
                           <MenuItem value="">
                             <em>Seleccionar automáticamente el más barato</em>

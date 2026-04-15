@@ -434,3 +434,15 @@ Comandos:
 - [Sistema RBAC](../wiki/security/rbac.md)
 - [Guía de despliegue](../wiki/DEPLOYMENT.md)
 - [Auditoría de seguridad](../wiki/audits/security-report.md)
+
+---
+
+## Evolución de Módulos (2026)
+
+### Elasticidad del Catálogo (Módulo Producto)
+
+Para soportar flujos de trabajo más flexibles, el catálogo de productos implementa **Elasticidad de Suministro**:
+- **Precio de Referencia Maestro**: La entidad `Producto` posee un campo `precioReferencia` que actúa como el coste maestro del producto.
+- **Sincronización PMP**: El sistema sincroniza automáticamente el `precioReferencia` con el valor del `PMP` (Precio Medio Ponderado) cada vez que este último se recalcula tras una compra oficial. Esto garantiza que las recetas y escandallos usen siempre el coste real más actualizado.
+- **Fallback de Estimación**: En ausencia de proveedores vinculados (productos nuevos o sin stock), el usuario puede definir manualmente el `precioReferencia`, permitiendo la creación de escandallos teóricos antes de realizar la primera compra.
+- **UX Adaptativo**: La interfaz de usuario oculta datos redundantes y solo muestra el precio de referencia como etiqueta "(Ref.)" cuando es el único dato de coste disponible.

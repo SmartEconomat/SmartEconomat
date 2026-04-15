@@ -97,9 +97,7 @@ const MermasPage: React.FC = () => {
     });
   }, []);
 
-  const handleCreateMerma = async (
-    formData: Record<string, string | number>
-  ) => {
+  const handleCreateMerma = async (formData: Record<string, unknown>) => {
     setIsSaving(true);
     try {
       await createMerma({

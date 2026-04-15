@@ -71,7 +71,6 @@ const PedidosTabs: React.FC<PedidosTabsProps> = ({ value, onChange }) => {
               key={tab.value}
               value={tab.value}
               icon={tab.icon}
-              iconPosition="start"
               label={tab.label}
               disableRipple
               sx={{

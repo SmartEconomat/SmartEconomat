@@ -49,6 +49,15 @@ export interface PageToolbarProps {
     disabled?: boolean;
     isLoading?: boolean;
   };
+  /** Acción secundaria (botón outline, ej: Gestionar Ubicaciones) */
+  secondaryAction?: {
+    label: string;
+    onClick: () => void;
+    icon?: React.ReactNode;
+    id?: string;
+    disabled?: boolean;
+    isLoading?: boolean;
+  };
   /** Filtros adicionales (Autocomplete, Selects, etc.) */
   filters?: React.ReactNode;
   /** Conteo total de elementos */
@@ -97,6 +106,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
   searchPlaceholder = 'Buscar...',
   searchId = 'page-search',
   primaryAction,
+  secondaryAction,
   filters,
   totalItems,
   totalItemsLabel = 'elementos',
@@ -467,6 +477,62 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                     }}
                   >
                     {primaryAction.label}
+                  </Button>
+                )}
+              </>
+            )}
+
+            {secondaryAction && (
+              <>
+                {isMobileOrTablet ? (
+                  <Tooltip title={secondaryAction.label}>
+                    <IconButton
+                      id={secondaryAction.id}
+                      onClick={secondaryAction.onClick}
+                      disabled={secondaryAction.disabled}
+                      sx={{
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        color: 'text.secondary',
+                        '&:hover': {
+                          bgcolor: alpha(theme.palette.primary.main, 0.08),
+                          borderColor: 'primary.main',
+                          color: 'primary.main',
+                        },
+                        width: isMobile ? 36 : 40,
+                        height: isMobile ? 36 : 40,
+                        borderRadius: 2,
+                      }}
+                    >
+                      {secondaryAction.icon || <AddIcon />}
+                    </IconButton>
+                  </Tooltip>
+                ) : (
+                  <Button
+                    id={secondaryAction.id}
+                    variant="outlined"
+                    size="small"
+                    startIcon={
+                      secondaryAction.isLoading ? (
+                        <CircularProgress size={16} color="inherit" />
+                      ) : (
+                        secondaryAction.icon || <AddIcon />
+                      )
+                    }
+                    onClick={secondaryAction.onClick}
+                    disabled={
+                      secondaryAction.disabled || secondaryAction.isLoading
+                    }
+                    sx={{
+                      borderRadius: 2,
+                      py: 0.6,
+                      px: 1.5,
+                      fontWeight: 600,
+                      fontSize: '0.75rem',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {secondaryAction.label}
                   </Button>
                 )}
               </>

@@ -10,6 +10,7 @@ import {
   IconButton,
   ListSubheader,
   MenuItem,
+  Paper,
   Stack,
   Tab,
   Tabs,
@@ -22,6 +23,8 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import DataTable, { Column } from '../components/ui/DataTable';
 import PageToolbar from '../components/ui/PageToolbar';
+import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
+import HistoryIcon from '@mui/icons-material/History';
 import StatusChip from '../components/ui/StatusChip';
 import {
   cancelDistribucion,
@@ -1002,55 +1005,81 @@ const DistribucionPage: React.FC = () => {
         }
       />
 
-      <Tabs
-        value={activeTab}
-        onChange={(_event, value: DistribucionTab) => setActiveTab(value)}
-        sx={{ mb: 2 }}
+      <Paper
+        elevation={2}
+        sx={{
+          borderRadius: 3,
+          overflow: 'hidden',
+          border: '1px solid',
+          borderColor: 'divider',
+        }}
       >
-        <Tab value="disponibles" label="Disponibles" />
-        <Tab value="historial" label="Historial" />
-      </Tabs>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      {activeTab === 'disponibles' ? (
-        <DataTable
-          columns={disponiblesColumns}
-          data={sortedDisponibles}
-          isLoading={loading}
-          emptyStateMessage="No hay pedidos listos para distribuir."
-          renderActions={renderDisponiblesActions}
-          onRowClick={openDistributeDialog}
-          actionsLabel="Distribuir"
-          hideTopBar
-          sortConfig={sortConfigDisponibles || undefined}
-          onSort={handleSortDisponibles}
-        />
-      ) : (
-        <DataTable
-          columns={historialColumns}
-          data={sortedHistorial}
-          isLoading={loading}
-          emptyStateMessage="No hay distribuciones registradas."
-          renderActions={renderHistorialActions}
-          onRowClick={(row) => void handleViewDetail(row.id)}
-          actionsLabel="Acciones"
-          hideTopBar
-          sortConfig={sortConfigHistorial || undefined}
-          onSort={handleSortHistorial}
-          pagination={{
-            currentPage: page,
-            totalPages: Math.max(1, Math.ceil(totalItems / pageSize)),
-            totalItems,
-            pageSize,
-            onPageChange: (_event, nextPage) => setPage(nextPage),
+        <Box
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
           }}
-        />
-      )}
+        >
+          <Tabs
+            value={activeTab}
+            onChange={(_event, value: DistribucionTab) => setActiveTab(value)}
+            variant="fullWidth"
+            textColor="primary"
+            indicatorColor="primary"
+          >
+            <Tab
+              value="disponibles"
+              label="Disponibles"
+              icon={<LocalShippingOutlinedIcon />}
+            />
+            <Tab value="historial" label="Historial" icon={<HistoryIcon />} />
+          </Tabs>
+        </Box>
+
+        <Box sx={{ p: { xs: 2, sm: 4 } }}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          {activeTab === 'disponibles' ? (
+            <DataTable
+              columns={disponiblesColumns}
+              data={sortedDisponibles}
+              isLoading={loading}
+              emptyStateMessage="No hay pedidos listos para distribuir."
+              renderActions={renderDisponiblesActions}
+              onRowClick={openDistributeDialog}
+              actionsLabel="Distribuir"
+              hideTopBar
+              sortConfig={sortConfigDisponibles || undefined}
+              onSort={handleSortDisponibles}
+            />
+          ) : (
+            <DataTable
+              columns={historialColumns}
+              data={sortedHistorial}
+              isLoading={loading}
+              emptyStateMessage="No hay distribuciones registradas."
+              renderActions={renderHistorialActions}
+              onRowClick={(row) => void handleViewDetail(row.id)}
+              actionsLabel="Acciones"
+              hideTopBar
+              sortConfig={sortConfigHistorial || undefined}
+              onSort={handleSortHistorial}
+              pagination={{
+                currentPage: page,
+                totalPages: Math.max(1, Math.ceil(totalItems / pageSize)),
+                totalItems,
+                pageSize,
+                onPageChange: (_event, nextPage) => setPage(nextPage),
+              }}
+            />
+          )}
+        </Box>
+      </Paper>
 
       <Dialog
         open={distributeOpen}

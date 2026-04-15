@@ -42,10 +42,11 @@ export function SmartFilterAutocomplete<T>({
   placeholder = 'Filtrar...',
   ariaLabel = 'Filtrar elementos',
   icon = <FilterListIcon sx={{ fontSize: 18 }} />,
-  inputWidth = 140,
+  inputWidth: _inputWidth,
   sx,
   ...props
 }: SmartFilterAutocompleteProps<T>) {
+  void _inputWidth;
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(true);
@@ -95,6 +96,9 @@ export function SmartFilterAutocomplete<T>({
           size="small"
           placeholder={placeholder}
           slotProps={{
+            inputLabel: {
+              shrink: true,
+            },
             htmlInput: {
               ...params.inputProps,
               'aria-label': ariaLabel,
@@ -138,7 +142,7 @@ export function SmartFilterAutocomplete<T>({
                       flex: 1,
                       minWidth: 0,
                       ml: atStart ? 0.5 : 1,
-                      pr: 6.5, // Zona de seguridad para evitar solapamiento con botones nativos
+                      pr: 4.5,
                       mr: 0,
                       '&::-webkit-scrollbar': { display: 'none' },
                       msOverflowStyle: 'none',
@@ -171,28 +175,13 @@ export function SmartFilterAutocomplete<T>({
         width: '100%',
         '& .MuiOutlinedInput-root': {
           bgcolor: 'background.paper',
-          borderRadius: 2,
-          display: 'flex',
-          flexWrap: 'nowrap',
-          overflow: 'hidden',
-          pr: '8px !important',
           transition: 'all 0.2s ease-in-out',
-          '&:hover': {
-            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'divider',
           },
-          '&.Mui-focused': {
-            boxShadow:
-              '0 0 0 2px rgba(var(--mui-palette-primary-mainChannel), 0.1)',
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'primary.main',
           },
-        },
-        '& .MuiAutocomplete-inputRoot': {
-          flexWrap: 'nowrap !important',
-        },
-        '& .MuiAutocomplete-input': {
-          width: `${inputWidth}px !important`,
-          minWidth: `${inputWidth}px !important`,
-          flex: '0 0 auto',
-          transition: 'width 0.2s ease',
         },
         ...sx,
       }}

@@ -396,6 +396,7 @@ const Home: React.FC = () => {
               lg: '2.2fr 0.8fr',
             },
             gap: { xs: 2.5, md: 3 },
+            alignItems: { lg: 'stretch' },
           }}
         >
           {/* Main Column: Stats + Quick Actions */}
@@ -673,7 +674,14 @@ const Home: React.FC = () => {
           </Box>
 
           {/* Sidebar Column: Recent Activity */}
-          <Box>
+          <Box
+            sx={{
+              height: '100%',
+              minHeight: 0,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
             <Paper
               elevation={0}
               sx={{
@@ -681,16 +689,33 @@ const Home: React.FC = () => {
                 border: '1px solid',
                 borderColor: 'divider',
                 borderRadius: 2,
-                height: '100%',
+                flexGrow: 1,
                 display: 'flex',
                 flexDirection: 'column',
+                overflow: 'hidden',
               }}
             >
               <Typography component="h2" variant="h6" fontWeight={600} mb={3}>
                 Actividad Reciente
               </Typography>
 
-              <Box sx={{ flexGrow: 1 }}>
+              <Box
+                sx={{
+                  flexGrow: 1,
+                  height: 0,
+                  minHeight: '100%',
+                  overflowY: 'auto',
+                  pr: 1,
+                  // Estética del scrollbar para mantener el look premium
+                  '&::-webkit-scrollbar': { width: 6 },
+                  '&::-webkit-scrollbar-track': { bgcolor: 'transparent' },
+                  '&::-webkit-scrollbar-thumb': {
+                    bgcolor: 'action.hover',
+                    borderRadius: 3,
+                    '&:hover': { bgcolor: 'action.selected' },
+                  },
+                }}
+              >
                 {isLoading ? (
                   renderActivitySkeleton()
                 ) : movimientos.length === 0 ? (

@@ -31,6 +31,8 @@ interface ProveedorSelectorProps {
   proveedores: Proveedor[];
   disabled?: boolean;
   onRefreshProveedores?: () => void;
+  masterMarca?: string;
+  masterBarcode?: string;
 }
 
 const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
@@ -39,6 +41,8 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
   proveedores = [],
   disabled = false,
   onRefreshProveedores,
+  masterMarca = '',
+  masterBarcode = '',
 }) => {
   const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false);
   const canCreate = usePermission(PERMISSIONS.proveedores.crear);
@@ -53,8 +57,8 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
       {
         proveedorId: newValue.id,
         nombre: newValue.nombre,
-        marca: '',
-        codigoBarras: '',
+        marca: masterMarca || '',
+        codigoBarras: masterBarcode || '',
         precioUnitario: 0,
       },
     ]);
@@ -111,26 +115,31 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
             variant="outlined"
             size="small"
             placeholder="Buscar proveedor..."
-            InputProps={{
-              ...params.InputProps,
-              endAdornment: (
-                <React.Fragment>
-                  {canCreate && !disabled && (
-                    <InputAdornment position="end" sx={{ mr: 1 }}>
-                      <Tooltip title="Crear Nuevo Proveedor">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => setIsQuickCreateOpen(true)}
-                        >
-                          <AddCircleOutlineIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </InputAdornment>
-                  )}
-                  {params.InputProps.endAdornment}
-                </React.Fragment>
-              ),
+            slotProps={{
+              inputLabel: {
+                shrink: true,
+              },
+              input: {
+                ...params.InputProps,
+                endAdornment: (
+                  <React.Fragment>
+                    {canCreate && !disabled && (
+                      <InputAdornment position="end" sx={{ mr: 1 }}>
+                        <Tooltip title="Crear Nuevo Proveedor">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => setIsQuickCreateOpen(true)}
+                          >
+                            <AddCircleOutlineIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </InputAdornment>
+                    )}
+                    {params.InputProps.endAdornment}
+                  </React.Fragment>
+                ),
+              },
             }}
           />
         )}
@@ -170,9 +179,13 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
                 label="Marca"
                 size="small"
                 value={prov.marca || ''}
+                placeholder={
+                  masterMarca ? `Ej: ${masterMarca}` : 'Marca específica'
+                }
                 onChange={(e) =>
                   handleChangeField(prov.proveedorId, 'marca', e.target.value)
                 }
+                slotProps={{ inputLabel: { shrink: true } }}
                 disabled={disabled}
                 fullWidth
               />
@@ -180,6 +193,9 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
                 label="Código Barras Prov."
                 size="small"
                 value={prov.codigoBarras || ''}
+                placeholder={
+                  masterBarcode ? `Ej: ${masterBarcode}` : 'Ref. específica'
+                }
                 onChange={(e) =>
                   handleChangeField(
                     prov.proveedorId,
@@ -187,6 +203,7 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
                     e.target.value
                   )
                 }
+                slotProps={{ inputLabel: { shrink: true } }}
                 disabled={disabled}
                 fullWidth
               />
@@ -194,7 +211,10 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
                 label="Precio Compra"
                 size="small"
                 type="number"
-                InputProps={{ inputProps: { min: 0, step: 0.01 } }}
+                slotProps={{
+                  inputLabel: { shrink: true },
+                  input: { inputProps: { min: 0, step: 0.01 } },
+                }}
                 value={prov.precioUnitario ?? ''}
                 onChange={(e) =>
                   handleChangeField(

@@ -9,6 +9,7 @@ import {
   IconButton,
   Tooltip,
   Typography,
+  Chip,
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
@@ -85,6 +86,30 @@ const ProductCard: React.FC<ProductCardProps> = ({
           }}
         >
           Eliminado
+        </Box>
+      )}
+      {(!producto.proveedores || producto.proveedores.length === 0) && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 10,
+            left: 10,
+            zIndex: 2,
+          }}
+        >
+          <Tooltip title="Sin proveedores asignados">
+            <Chip
+              label="Sin Prov."
+              size="small"
+              color="warning"
+              sx={{
+                height: 20,
+                fontSize: '0.65rem',
+                fontWeight: 'bold',
+                boxShadow: 2,
+              }}
+            />
+          </Tooltip>
         </Box>
       )}
       <CardActionArea
@@ -205,6 +230,19 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 </Tooltip>
               ))}
             </Box>
+          </Box>
+
+          <Box sx={{ mt: 1.5, display: 'flex', justifyContent: 'flex-end' }}>
+            <Typography
+              variant="subtitle1"
+              sx={{
+                fontWeight: 700,
+                color: 'primary.main',
+                fontSize: '1rem',
+              }}
+            >
+              {(producto.pmp ?? 0).toFixed(2)} €
+            </Typography>
           </Box>
         </CardContent>
       </CardActionArea>
