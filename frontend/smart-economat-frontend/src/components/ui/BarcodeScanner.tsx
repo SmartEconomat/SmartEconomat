@@ -30,11 +30,25 @@ import {
 } from '@zxing/library';
 import { useTranslation } from 'react-i18next';
 
+/**
+ * Props for the {@link BarcodeScanner} component.
+ */
 export interface BarcodeScannerProps {
+  /** Whether the dialog is currently open. */
   open: boolean;
+  /** Called when the user dismisses the dialog. */
   onClose: () => void;
+  /**
+   * Called with the decoded barcode string on every successful scan.
+   * In non-continuous mode the dialog closes automatically after the first scan.
+   */
   onScan: (code: string) => void | Promise<void>;
+  /** Dialog title shown in the header bar. Defaults to `"Escanear Código de Barras"`. */
   title?: string;
+  /**
+   * When `true` the scanner keeps running after each successful scan and
+   * does not close automatically. Defaults to `false`.
+   */
   continuous?: boolean;
 }
 
@@ -192,6 +206,28 @@ const playBeep = () => {
   }
 };
 
+/**
+ * Camera-based barcode scanner rendered inside a full-width dialog.
+ *
+ * Uses `@zxing/browser` to decode barcodes from a live video stream. Features:
+ * - Automatic camera selection (prefers rear/environment-facing camera).
+ * - Multi-camera selector when multiple devices are detected.
+ * - Optional torch (flashlight) toggle when the device supports it.
+ * - Animated scan-line overlay and audible beep on successful decode.
+ * - Graceful error states for denied permissions and missing cameras.
+ * - Duplicate-scan suppression with a configurable cooldown window.
+ *
+ * Supported formats: EAN-13, EAN-8, UPC-A, UPC-E, Code-128, Code-39, ITF, Codabar.
+ *
+ * @param props - See {@link BarcodeScannerProps}.
+ * @returns A dialog containing a live camera viewfinder and scanner controls.
+ * @example
+ * <BarcodeScanner
+ *   open={isScannerOpen}
+ *   onClose={() => setIsScannerOpen(false)}
+ *   onScan={(code) => handleBarcode(code)}
+ * />
+ */
 const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   open,
   onClose,

@@ -334,7 +334,8 @@ const Inventario: React.FC = () => {
         })
         .catch((err: unknown) => {
           console.error('Error buscando producto/proveedor:', err);
-          if (!cancelled) toast.error(t('inventario.toast.errorBuscarProductoProveedor'));
+          if (!cancelled)
+            toast.error(t('inventario.toast.errorBuscarProductoProveedor'));
         })
         .finally(() => {
           if (!cancelled) setIsSearchingProductoProveedor(false);
@@ -393,7 +394,9 @@ const Inventario: React.FC = () => {
       const message =
         err instanceof Error
           ? err.message
-          : t('inventario.toast.errorCargar', { defaultValue: 'Error desconocido al cargar inventario.' });
+          : t('inventario.toast.errorCargar', {
+              defaultValue: 'Error desconocido al cargar inventario.',
+            });
       setError(message);
     } finally {
       setIsLoading(false);
@@ -410,9 +413,16 @@ const Inventario: React.FC = () => {
    */
   const productoCreateSchema = useMemo<DynamicField[]>(() => {
     const schema: DynamicField[] = [
-      { name: 'nombre', label: t('inventario.productoCreateFields.nombreComercial'), required: true },
+      {
+        name: 'nombre',
+        label: t('inventario.productoCreateFields.nombreComercial'),
+        required: true,
+      },
       { name: 'marca', label: t('inventario.productoCreateFields.marca') },
-      { name: 'descripcion', label: t('inventario.productoCreateFields.descripcion') },
+      {
+        name: 'descripcion',
+        label: t('inventario.productoCreateFields.descripcion'),
+      },
       {
         name: 'contenido',
         label: t('inventario.productoCreateFields.contenidoNumerico'),
@@ -429,7 +439,10 @@ const Inventario: React.FC = () => {
           { value: UnidadMedida.G, label: t('inventario.unidades.g') },
           { value: UnidadMedida.L, label: t('inventario.unidades.l') },
           { value: UnidadMedida.ML, label: t('inventario.unidades.ml') },
-          { value: UnidadMedida.UNIDAD, label: t('inventario.unidades.unidad') },
+          {
+            value: UnidadMedida.UNIDAD,
+            label: t('inventario.unidades.unidad'),
+          },
           { value: UnidadMedida.PAQ, label: t('inventario.unidades.paquete') },
         ],
         width: 6,
@@ -441,24 +454,73 @@ const Inventario: React.FC = () => {
         required: true,
         width: 6,
         options: [
-          { value: CategoriaProducto.VERDURA, label: t('inventario.categorias.verdura') },
-          { value: CategoriaProducto.FRUTA, label: t('inventario.categorias.fruta') },
-          { value: CategoriaProducto.CARNE, label: t('inventario.categorias.carne') },
-          { value: CategoriaProducto.PESCADO, label: t('inventario.categorias.pescado') },
-          { value: CategoriaProducto.MARISCO, label: t('inventario.categorias.marisco') },
-          { value: CategoriaProducto.LACTEO, label: t('inventario.categorias.lacteo') },
-          { value: CategoriaProducto.HUEVO, label: t('inventario.categorias.huevo') },
-          { value: CategoriaProducto.CEREAL, label: t('inventario.categorias.cereal') },
-          { value: CategoriaProducto.LEGUMBRE, label: t('inventario.categorias.legumbre') },
-          { value: CategoriaProducto.FRUTO_SECO, label: t('inventario.categorias.frutoSeco') },
-          { value: CategoriaProducto.CONDIMENTO, label: t('inventario.categorias.condimento') },
-          { value: CategoriaProducto.ACEITE, label: t('inventario.categorias.aceite') },
-          { value: CategoriaProducto.AZUCAR, label: t('inventario.categorias.azucar') },
-          { value: CategoriaProducto.BEBIDA, label: t('inventario.categorias.bebida') },
-          { value: CategoriaProducto.OTRO, label: t('inventario.categorias.otro') },
+          {
+            value: CategoriaProducto.VERDURA,
+            label: t('inventario.categorias.verdura'),
+          },
+          {
+            value: CategoriaProducto.FRUTA,
+            label: t('inventario.categorias.fruta'),
+          },
+          {
+            value: CategoriaProducto.CARNE,
+            label: t('inventario.categorias.carne'),
+          },
+          {
+            value: CategoriaProducto.PESCADO,
+            label: t('inventario.categorias.pescado'),
+          },
+          {
+            value: CategoriaProducto.MARISCO,
+            label: t('inventario.categorias.marisco'),
+          },
+          {
+            value: CategoriaProducto.LACTEO,
+            label: t('inventario.categorias.lacteo'),
+          },
+          {
+            value: CategoriaProducto.HUEVO,
+            label: t('inventario.categorias.huevo'),
+          },
+          {
+            value: CategoriaProducto.CEREAL,
+            label: t('inventario.categorias.cereal'),
+          },
+          {
+            value: CategoriaProducto.LEGUMBRE,
+            label: t('inventario.categorias.legumbre'),
+          },
+          {
+            value: CategoriaProducto.FRUTO_SECO,
+            label: t('inventario.categorias.frutoSeco'),
+          },
+          {
+            value: CategoriaProducto.CONDIMENTO,
+            label: t('inventario.categorias.condimento'),
+          },
+          {
+            value: CategoriaProducto.ACEITE,
+            label: t('inventario.categorias.aceite'),
+          },
+          {
+            value: CategoriaProducto.AZUCAR,
+            label: t('inventario.categorias.azucar'),
+          },
+          {
+            value: CategoriaProducto.BEBIDA,
+            label: t('inventario.categorias.bebida'),
+          },
+          {
+            value: CategoriaProducto.OTRO,
+            label: t('inventario.categorias.otro'),
+          },
         ],
       },
-      { name: 'codigoBarras', label: t('inventario.productoCreateFields.codigoBarras'), type: 'barcode' },
+      {
+        name: 'codigoBarras',
+        label: t('inventario.productoCreateFields.codigoBarras'),
+        type: 'barcode',
+      },
     ];
     schema.push({
       name: 'proveedores',
@@ -784,7 +846,9 @@ const Inventario: React.FC = () => {
       }
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : t('inventario.toast.errorCrearProducto');
+        err instanceof Error
+          ? err.message
+          : t('inventario.toast.errorCrearProducto');
       toast.error(message);
     } finally {
       setIsSavingProducto(false);
@@ -906,7 +970,9 @@ const Inventario: React.FC = () => {
         ubicacionId: ubicacionDestinoId,
       });
 
-      toast.success(t('inventario.toast.stockAñadido', { nombre: producto.nombre }));
+      toast.success(
+        t('inventario.toast.stockAñadido', { nombre: producto.nombre })
+      );
       setIsCantidadDialogOpen(false);
       setProductoPendienteCantidadInventario(null);
       setCantidadEscaneo('1');
@@ -1256,10 +1322,12 @@ const Inventario: React.FC = () => {
             setTabIndex(v);
             setPage(1);
           }}
-          aria-label="inventory tabs"
+          aria-label={t('inventario.tabsLabel')}
         >
           <Tab label={t('inventario.tabs.misUbicaciones')} />
-          {canSeeGeneral && <Tab label={t('inventario.tabs.inventarioGeneral')} />}
+          {canSeeGeneral && (
+            <Tab label={t('inventario.tabs.inventarioGeneral')} />
+          )}
         </Tabs>
       </Box>
 
@@ -1289,7 +1357,9 @@ const Inventario: React.FC = () => {
                     ? assignedLocations.length === 0
                       ? t('inventario.empty.sinUbicacionesAsignadas')
                       : t('inventario.empty.sinStockUbicaciones', {
-                          ubicaciones: assignedLocations.map((l) => l.nombre).join(', '),
+                          ubicaciones: assignedLocations
+                            .map((l) => l.nombre)
+                            .join(', '),
                         })
                     : t('inventario.empty.sinStockGeneral')}
               </Typography>
@@ -1475,7 +1545,9 @@ const Inventario: React.FC = () => {
               variant="contained"
               disabled={isSaving || !isFormValid}
             >
-              {isSaving ? t('inventario.dialogs.guardando') : t('inventario.dialogs.guardar')}
+              {isSaving
+                ? t('inventario.dialogs.guardando')
+                : t('inventario.dialogs.guardar')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -1516,7 +1588,9 @@ const Inventario: React.FC = () => {
           title={t('inventario.confirm.productoNoEncontradoTitulo')}
           message={
             barcodePendienteCrearProducto
-              ? t('inventario.confirm.productoNoEncontradoMsg', { codigo: barcodePendienteCrearProducto })
+              ? t('inventario.confirm.productoNoEncontradoMsg', {
+                  codigo: barcodePendienteCrearProducto,
+                })
               : t('inventario.confirm.productoNoEncontradoMsgGeneric')
           }
           confirmText={t('inventario.confirm.siCrear')}
@@ -1538,7 +1612,9 @@ const Inventario: React.FC = () => {
           fullWidth
           maxWidth="xs"
         >
-          <DialogTitle>{t('inventario.dialogs.cantidadAñadirTitulo')}</DialogTitle>
+          <DialogTitle>
+            {t('inventario.dialogs.cantidadAñadirTitulo')}
+          </DialogTitle>
           <DialogContent dividers>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               {productoPendienteCantidadInventario

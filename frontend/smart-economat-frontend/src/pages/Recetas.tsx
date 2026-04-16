@@ -789,41 +789,41 @@ const Recetas: React.FC = () => {
 
   const renderActions = (row: Receta) => (
     <Stack direction="row" spacing={1} justifyContent="center">
-      <Tooltip title="Ver detalles">
+      <Tooltip title={t('recetas.verDetalles')}>
         <IconButton
           color="primary"
           onClick={() => {
             setItemToView(row);
           }}
           size="small"
-          aria-label="Ver detalles"
+          aria-label={t('recetas.verDetalles')}
         >
           <VisibilityIcon fontSize="small" />
         </IconButton>
       </Tooltip>
       {canCook && (
-        <Tooltip title="Preparar ahora">
+        <Tooltip title={t('recetas.prepararAhora')}>
           <IconButton
             color="success"
             onClick={() => {
               handleCookClick([row]);
             }}
             size="small"
-            aria-label="Preparar"
+            aria-label={t('recetas.preparar')}
           >
             <PlayCircleOutlineIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       )}
       {canCreateOrders && (
-        <Tooltip title="Crear pedido">
+        <Tooltip title={t('recetas.crearPedido')}>
           <IconButton
             color="warning"
             onClick={() => {
               void handleCreateOrderFromRecipes([row]);
             }}
             size="small"
-            aria-label="Crear pedido"
+            aria-label={t('recetas.crearPedido')}
             disabled={isCooking}
           >
             <ShoppingCartCheckoutOutlinedIcon fontSize="small" />
@@ -831,14 +831,14 @@ const Recetas: React.FC = () => {
         </Tooltip>
       )}
       {canExportPdf && (
-        <Tooltip title="Exportar PDF">
+        <Tooltip title={t('recetas.exportarPdf')}>
           <IconButton
             color="error"
             onClick={() => {
               openExportDialog([row.id]);
             }}
             size="small"
-            aria-label="Exportar PDF"
+            aria-label={t('recetas.exportarPdf')}
             disabled={isExportingPdf}
           >
             <PictureAsPdfOutlinedIcon fontSize="small" />
@@ -852,7 +852,7 @@ const Recetas: React.FC = () => {
             handleEditClick(row);
           }}
           size="small"
-          aria-label="Editar"
+          aria-label={t('comun.editar')}
         >
           <EditIcon fontSize="small" />
         </IconButton>
@@ -864,7 +864,7 @@ const Recetas: React.FC = () => {
             setItemToDelete(row);
           }}
           size="small"
-          aria-label="Borrar"
+          aria-label={t('comun.eliminar')}
         >
           <DeleteIcon fontSize="small" />
         </IconButton>
@@ -952,7 +952,7 @@ const Recetas: React.FC = () => {
       <RecipeCarousel />
 
       <PageToolbar
-        title="Gestión de Recetas"
+        title={t('recetas.gestionTitulo')}
         searchValue={searchTerm}
         onSearchChange={(v) => {
           setSearchTerm(v);
@@ -1194,7 +1194,7 @@ const Recetas: React.FC = () => {
           isOpen={!!itemToDelete}
           onClose={() => !isDeleting && setItemToDelete(null)}
           onConfirm={() => void handleDeleteConfirm()}
-          title="Eliminar receta"
+          title={t('recetas.eliminarReceta')}
           message={
             <>
               ¿Estás seguro de que deseas eliminar la receta{' '}
@@ -1309,7 +1309,7 @@ const Recetas: React.FC = () => {
                   color="primary"
                 />
               }
-              label="Incluir imagen de la receta"
+              label={t('recetas.incluirImagenReceta')}
             />
 
             <Typography

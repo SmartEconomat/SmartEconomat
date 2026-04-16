@@ -297,12 +297,40 @@
       "pedidoGenerado": "Order #{{numero}} has been generated to cover the missing items.",
       "errorGenerarPedidos": "Error generating orders: {{error}}",
       "seleccionaUbicacion": "You must select a destination location."
-    }
+    },
+    "prepararAhora": "Prepare now",
+    "preparar": "Prepare",
+    "crearPedido": "Create order",
+    "exportarPdf": "Export PDF",
+    "verDetalles": "View details",
+    "gestionTitulo": "Recipes Management",
+    "eliminarReceta": "Delete recipe",
+    "sinGluten": "Gluten Free",
+    "sinLacteos": "Dairy Free",
+    "incluirImagenReceta": "Include recipe image"
   },
   "usuarios": {
     "empty": {
       "noUsuariosRol": "No users found for this role and search."
-    }
+    },
+    "buscarPlaceholder": "Search by name or email...",
+    "resetPassword": "Reset Password",
+    "editarUsuario": "Edit user",
+    "eliminarUsuario": "Delete user",
+    "gestionTitulo": "Users Management",
+    "roles": {
+      "administradores": "Administrators",
+      "profesores": "Professors",
+      "alumnos": "Students"
+    },
+    "campoNombreUsuario": "Username",
+    "campoNombreApellidos": "First and Last Name",
+    "campoCorreoElectronico": "Email Address",
+    "campoRol": "Role",
+    "campoEstadoInicial": "Initial Status",
+    "campoAulaSlot": "Classroom / Assigned Slot",
+    "campoUbicacionAlmacen": "Warehouse Location",
+    "cargandoRoles": "Loading roles..."
   },
   "movimientos": {
     "titulo": "Movement History",
@@ -805,7 +833,35 @@
       "toast": {
         "requestSent": "Request submitted. The email change will be pending approval by a higher-privilege role."
       }
-    }
+    },
+    "guardarSlot": "Save slot",
+    "cancelarEdicion": "Cancel editing",
+    "editarSlot": "Edit slot",
+    "eliminarSlot": "Delete slot",
+    "copiarCodigo": "Click to copy class code",
+    "codigoPendiente": "PENDING",
+    "aulaPlaceholder": "E.g.: Basic Kitchen, Room 101...",
+    "crearNuevaUbicacion": "Create new Location",
+    "crearNuevaAula": "Create new Classroom",
+    "gestionarPermisos": "Manage Permissions",
+    "restablecerContrasena": "Reset Password",
+    "eliminarAlumno": "Delete Student",
+    "campoAula": "Classroom/Group",
+    "campoNumeroClase": "Class No.",
+    "campoCapacidad": "Capacity",
+    "cursoGrupo": "Course/Group (e.g.: A01)",
+    "numeroClaseEj": "Class No. (e.g.: 1)",
+    "capacidadAlumnos": "Capacity (Students)",
+    "nombreAulaGrupo": "Classroom/Group Name",
+    "contrasenaActual": "Current Password",
+    "nuevaContrasena": "New Password",
+    "confirmarNuevaContrasena": "Confirm New Password",
+    "nombreUsuario": "Username",
+    "sinUbicacion": "No location",
+    "sinAsignar": "Unassigned",
+    "campoProfesor": "Professor",
+    "profesorResponsable": "Responsible Professor",
+    "ubicacionWarehouse": "Warehouse Location (Optional)"
   },
   "comun": {
     "acciones": "Actions",
@@ -869,7 +925,21 @@
     "idioma": {
       "es": "Español",
       "en": "English"
-    }
+    },
+    "aprobar": "Approve",
+    "borrar": "Delete",
+    "iniciarRecepcion": "Start Reception",
+    "verDetalle": "View detail",
+    "escanear": "Scan",
+    "buscarProveedor": "Search supplier...",
+    "buscarNombreEmail": "Search by name or email...",
+    "editarItem": "Edit {{item}}",
+    "cerrarDialogo": "Close dialog",
+    "guardarCambios": "Save changes",
+    "expandirMenu": "Expand menu",
+    "tablaDatos": "Data table",
+    "opcionesSistema": "System options",
+    "entendido": "Got it"
   },
   "notificaciones": {
     "abrirCentro": "Open notification center",
@@ -1067,7 +1137,8 @@
     },
     "errors": {
       "errorCargar": "Unknown error loading data."
-    }
+    },
+    "sinMarca": "No brand"
   },
   "inventario": {
     "titulo": "Inventory by Product",
@@ -1247,7 +1318,8 @@
       "azucar": "Sugar",
       "bebida": "Beverage",
       "otro": "Other"
-    }
+    },
+    "tabsLabel": "Inventory tabs"
   },
   "distribucion": {
     "titulo": "Internal Distribution",
@@ -1547,7 +1619,13 @@
       "sinProveedores": "No suppliers found",
       "prueba": "Try other terms or clear the filter.",
       "empieza": "Start by adding the first supplier to your catalog."
-    }
+    },
+    "condicionesLabel": "Suppliers & Conditions",
+    "nombreDesconocido": "Unknown Supplier",
+    "campoMarca": "Brand",
+    "campoCodigoBarras": "Supplier Barcode",
+    "campoPrecioCompra": "Purchase Price",
+    "eliminarAria": "Remove supplier {{nombre}}"
   },
   "pedidos": {
     "titulo": "Order Management",
@@ -1602,6 +1680,13 @@
       "mensaje": "If you save it as a draft, you can resume it later. If you cancel now, the pending order will be discarded.",
       "confirmar": "Save as draft",
       "cancelar": "Cancel order"
-    }
+    },
+    "fechaEstimadaEntrega": "Estimated delivery date",
+    "detalleTitulo": "Order detail",
+    "gestionTitulo": "Orders Management",
+    "fechaEntregaDialogMensaje": "The estimated delivery date for this order is {{fecha}}. This value is calculated automatically by the system and cannot be edited manually.",
+    "buscarPlaceholder": "Search by supplier, status, user...",
+    "nuevoPedido": "New Order",
+    "continuarPedido": "Continue Order"
   }
 }

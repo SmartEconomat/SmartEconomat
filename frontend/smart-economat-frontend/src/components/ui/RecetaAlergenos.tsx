@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Chip, Tooltip, Typography, Alert } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
@@ -30,6 +31,7 @@ interface RecetaAlergenosProps {
 const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
   ingredientes = [],
 }) => {
+  const { t } = useTranslation();
   const presentIds = useMemo(() => {
     const set = new Set<string>();
     ingredientes.forEach((ing) => {
@@ -49,7 +51,7 @@ const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
           icon={
             isGlutenFree ? <CheckCircleOutlineIcon /> : <WarningAmberIcon />
           }
-          label="Sin Gluten"
+          label={t('recetas.sinGluten')}
           color={isGlutenFree ? 'success' : 'error'}
           variant={isGlutenFree ? 'filled' : 'outlined'}
         />
@@ -58,7 +60,7 @@ const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
           icon={
             isLacteosFree ? <CheckCircleOutlineIcon /> : <WarningAmberIcon />
           }
-          label="Sin Lácteos"
+          label={t('recetas.sinLacteos')}
           color={isLacteosFree ? 'success' : 'error'}
           variant={isLacteosFree ? 'filled' : 'outlined'}
         />

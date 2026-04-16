@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Logger,
 } from '@nestjs/common';
+import { I18nHelper } from '../helpers/i18n.helper';
 import { Request, Response, NextFunction } from 'express';
 import * as crypto from 'crypto';
 
@@ -19,7 +20,7 @@ import * as crypto from 'crypto';
  *    value. A mismatch or missing value results in a `403 ForbiddenException`.
  *
  * @example
- * // Applied in AppModule (or a feature module) via configure():
+ *
  * consumer.apply(CsrfMiddleware).forRoutes('*');
  */
 @Injectable()
@@ -59,7 +60,7 @@ export class CsrfMiddleware implements NestMiddleware {
         this.logger.warn(
           `Intento de ataque CSRF detectado o token faltante. Método: ${req.method}, Path: ${req.path}`
         );
-        throw new ForbiddenException('CSRF Token Invalido o Faltante');
+        throw new ForbiddenException(I18nHelper.getError('CSRF_INVALID'));
       }
     }
 

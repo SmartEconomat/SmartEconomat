@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -66,6 +67,7 @@ const UserModal: React.FC<UserModalProps> = ({
   usuariosList,
   roleOptions,
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     username: '',
     nombre: '',
@@ -419,7 +421,7 @@ const UserModal: React.FC<UserModalProps> = ({
             <InputField
               id="user-username"
               fullWidth
-              label="Nombre de Usuario"
+              label={t('usuarios.campoNombreUsuario')}
               value={formData.username}
               onChange={handleChange('username')}
               error={!!errors.username}
@@ -430,7 +432,7 @@ const UserModal: React.FC<UserModalProps> = ({
             <InputField
               id="user-nombre"
               fullWidth
-              label="Nombre y Apellidos"
+              label={t('usuarios.campoNombreApellidos')}
               value={formData.nombre}
               onChange={handleChange('nombre')}
               error={!!errors.nombre}
@@ -441,7 +443,7 @@ const UserModal: React.FC<UserModalProps> = ({
               <InputField
                 id="user-email"
                 fullWidth
-                label="Correo Electrónico"
+                label={t('usuarios.campoCorreoElectronico')}
                 type="email"
                 value={formData.email}
                 onChange={handleChange('email')}
@@ -462,14 +464,14 @@ const UserModal: React.FC<UserModalProps> = ({
                 <SelectField
                   fullWidth
                   id="user-role-select"
-                  label="Rol"
+                  label={t('usuarios.campoRol')}
                   value={formData.roleId}
                   onChange={handleChange('roleId')}
                   error={!!errors.roleId || !!errors.rol}
                   helperText={
                     errors.roleId ||
                     errors.rol ||
-                    (isLoadingRoles ? 'Cargando roles...' : undefined)
+                    (isLoadingRoles ? t('usuarios.cargandoRoles') : undefined)
                   }
                   disabled={
                     isSaving || isLoadingRoles || roleOptions.length === 0
@@ -526,7 +528,7 @@ const UserModal: React.FC<UserModalProps> = ({
                   <SelectField
                     fullWidth
                     id="user-status-select"
-                    label="Estado Inicial"
+                    label={t('usuarios.campoEstadoInicial')}
                     value={formData.estado}
                     onChange={handleChange('estado')}
                     disabled={isSaving}
@@ -552,7 +554,7 @@ const UserModal: React.FC<UserModalProps> = ({
                   <SelectField
                     fullWidth
                     id="user-slot-select"
-                    label="Aula / Slot Asignado"
+                    label={t('usuarios.campoAulaSlot')}
                     value={formData.slotId || ''}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -582,7 +584,7 @@ const UserModal: React.FC<UserModalProps> = ({
                     ]}
                   />
                 </Box>
-                <Tooltip title="Crear nueva Aula">
+                <Tooltip title={t('perfil.crearNuevaAula')}>
                   <IconButton
                     color="primary"
                     sx={{ mt: 1 }}
@@ -604,7 +606,7 @@ const UserModal: React.FC<UserModalProps> = ({
                   <SelectField
                     fullWidth
                     id="user-ubicacion-select"
-                    label="Ubicación Almacén"
+                    label={t('usuarios.campoUbicacionAlmacen')}
                     value={formData.ubicacionId || ''}
                     onChange={handleChange('ubicacionId')}
                     disabled={isSaving}
@@ -629,7 +631,7 @@ const UserModal: React.FC<UserModalProps> = ({
                     ]}
                   />
                 </Box>
-                <Tooltip title="Crear nueva Ubicación">
+                <Tooltip title={t('perfil.crearNuevaUbicacion')}>
                   <IconButton
                     color="primary"
                     sx={{ mt: 1 }}

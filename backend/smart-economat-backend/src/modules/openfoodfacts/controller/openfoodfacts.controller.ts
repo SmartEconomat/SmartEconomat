@@ -6,6 +6,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import {
   ApiOperation,
   ApiParam,
@@ -70,7 +71,7 @@ export class OpenFoodFactsController {
     }
 
     if (!isValidBarcode(trimmedBarcode)) {
-      throw new BadRequestException('Código de barras inválido');
+      throw new BadRequestException(I18nHelper.getError('BARCODE_INVALID'));
     }
 
     return this.openFoodFactsService.searchByBarcode(trimmedBarcode);

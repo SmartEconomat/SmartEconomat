@@ -9,6 +9,7 @@ import {
   Stack,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { useTranslation } from 'react-i18next';
 import { Proveedor } from '../../services/proveedor.types';
 
 /**
@@ -58,6 +59,7 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
   proveedores = [],
   disabled = false,
 }) => {
+  const { t } = useTranslation();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleAdd = (_event: any, newValue: Proveedor | null) => {
     if (!newValue) return;
@@ -101,7 +103,7 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
   return (
     <Box sx={{ width: '100%', mt: 1 }}>
       <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-        Proveedores y Condiciones
+        {t('proveedores.condicionesLabel')}
       </Typography>
 
       <Autocomplete
@@ -113,10 +115,10 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
         renderInput={(params) => (
           <TextField
             {...params}
-            label="Añadir Proveedor"
+            label={t('proveedores.acciones.anadir')}
             variant="outlined"
             size="small"
-            placeholder="Buscar proveedor..."
+            placeholder={t('comun.buscarProveedor')}
           />
         )}
         sx={{ mb: 2 }}
@@ -135,7 +137,9 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
               disabled={disabled}
               onClick={() => handleRemove(prov.proveedorId)}
               sx={{ position: 'absolute', top: 8, right: 8 }}
-              aria-label={`Eliminar proveedor ${prov.nombre || ''}`}
+              aria-label={t('proveedores.eliminarAria', {
+                nombre: prov.nombre ?? '',
+              })}
             >
               <DeleteIcon fontSize="small" />
             </IconButton>
@@ -147,12 +151,12 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
             >
               {prov.nombre ||
                 proveedores.find((p) => p.id === prov.proveedorId)?.nombre ||
-                'Proveedor Desconocido'}
+                t('proveedores.nombreDesconocido')}
             </Typography>
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField
-                label="Marca"
+                label={t('proveedores.campoMarca')}
                 size="small"
                 value={prov.marca || ''}
                 onChange={(e) =>
@@ -162,7 +166,7 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
                 fullWidth
               />
               <TextField
-                label="Código Barras Prov."
+                label={t('proveedores.campoCodigoBarras')}
                 size="small"
                 value={prov.codigoBarras || ''}
                 onChange={(e) =>
@@ -176,7 +180,7 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
                 fullWidth
               />
               <TextField
-                label="Precio Compra"
+                label={t('proveedores.campoPrecioCompra')}
                 size="small"
                 type="number"
                 InputProps={{ inputProps: { min: 0, step: 0.01 } }}

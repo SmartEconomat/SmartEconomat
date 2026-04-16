@@ -297,12 +297,40 @@
       "pedidoGenerado": "Se ha generado el pedido #{{numero}} para cubrir los faltantes.",
       "errorGenerarPedidos": "Error al generar pedidos: {{error}}",
       "seleccionaUbicacion": "Debes seleccionar una ubicación de destino."
-    }
+    },
+    "prepararAhora": "Preparar ahora",
+    "preparar": "Preparar",
+    "crearPedido": "Crear pedido",
+    "exportarPdf": "Exportar PDF",
+    "verDetalles": "Ver detalles",
+    "gestionTitulo": "Gestión de Recetas",
+    "eliminarReceta": "Eliminar receta",
+    "sinGluten": "Sin Gluten",
+    "sinLacteos": "Sin Lácteos",
+    "incluirImagenReceta": "Incluir imagen de la receta"
   },
   "usuarios": {
     "empty": {
       "noUsuariosRol": "No hay usuarios encontrados para este rol y búsqueda."
-    }
+    },
+    "buscarPlaceholder": "Buscar por nombre o email...",
+    "resetPassword": "Restablecer Contraseña",
+    "editarUsuario": "Editar usuario",
+    "eliminarUsuario": "Eliminar usuario",
+    "gestionTitulo": "Gestión de Usuarios",
+    "roles": {
+      "administradores": "Administradores",
+      "profesores": "Profesores",
+      "alumnos": "Alumnos"
+    },
+    "campoNombreUsuario": "Nombre de Usuario",
+    "campoNombreApellidos": "Nombre y Apellidos",
+    "campoCorreoElectronico": "Correo Electrónico",
+    "campoRol": "Rol",
+    "campoEstadoInicial": "Estado Inicial",
+    "campoAulaSlot": "Aula / Slot Asignado",
+    "campoUbicacionAlmacen": "Ubicación Almacén",
+    "cargandoRoles": "Cargando roles..."
   },
   "incidencias": {
     "titulo": "Centro de Incidencias",
@@ -926,7 +954,8 @@
       "azucar": "Azúcar",
       "bebida": "Bebida",
       "otro": "Otro"
-    }
+    },
+    "tabsLabel": "Pestañas de inventario"
   },
   "distribucion": {
     "titulo": "Distribución Interna",
@@ -1158,7 +1187,35 @@
       "toast": {
         "requestSent": "Solicitud enviada. El cambio de email quedará pendiente de aprobación por un rol superior."
       }
-    }
+    },
+    "guardarSlot": "Guardar slot",
+    "cancelarEdicion": "Cancelar edición",
+    "editarSlot": "Editar slot",
+    "eliminarSlot": "Eliminar slot",
+    "copiarCodigo": "Haga clic para copiar el código de clase",
+    "codigoPendiente": "PENDIENTE",
+    "aulaPlaceholder": "Ej: Cocina Básica, Aula 101...",
+    "crearNuevaUbicacion": "Crear nueva Ubicación",
+    "crearNuevaAula": "Crear nueva Aula",
+    "gestionarPermisos": "Gestionar Permisos",
+    "restablecerContrasena": "Restablecer Contraseña",
+    "eliminarAlumno": "Eliminar Alumno",
+    "campoAula": "Aula/Grupo",
+    "campoNumeroClase": "Nº Clase",
+    "campoCapacidad": "Capacidad",
+    "cursoGrupo": "Curso/Grupo (ej: A01)",
+    "numeroClaseEj": "Nº Clase (ej: 1)",
+    "capacidadAlumnos": "Capacidad (Alumnos)",
+    "nombreAulaGrupo": "Nombre del Aula/Grupo",
+    "contrasenaActual": "Contraseña Actual",
+    "nuevaContrasena": "Nueva Contraseña",
+    "confirmarNuevaContrasena": "Confirmar Nueva Contraseña",
+    "nombreUsuario": "Nombre de Usuario",
+    "sinUbicacion": "Sin ubicación",
+    "sinAsignar": "Sin asignar",
+    "campoProfesor": "Profesor",
+    "profesorResponsable": "Profesor Responsable",
+    "ubicacionWarehouse": "Ubicación Warehouse (Opcional)"
   },
   "comun": {
     "acciones": "Acciones",
@@ -1222,7 +1279,21 @@
     "idioma": {
       "es": "Español",
       "en": "English"
-    }
+    },
+    "aprobar": "Aprobar",
+    "borrar": "Borrar",
+    "iniciarRecepcion": "Iniciar Recepción",
+    "verDetalle": "Ver detalle",
+    "escanear": "Escanear",
+    "buscarProveedor": "Buscar proveedor...",
+    "buscarNombreEmail": "Buscar por nombre o email...",
+    "editarItem": "Editar {{item}}",
+    "cerrarDialogo": "Cerrar diálogo",
+    "guardarCambios": "Guardar cambios",
+    "expandirMenu": "Expandir menú",
+    "tablaDatos": "Tabla de datos",
+    "opcionesSistema": "Opciones del sistema",
+    "entendido": "Entendido"
   },
   "notificaciones": {
     "abrirCentro": "Abrir centro de notificaciones",
@@ -1487,7 +1558,8 @@
       "eliminarMensaje": "¿Estás seguro de que deseas eliminar el producto {{nombre}}? Esta acción no se puede deshacer.",
       "eliminarConfirm": "Sí, eliminar",
       "cancelar": "Cancelar"
-    }
+    },
+    "sinMarca": "Sin marca"
   },
   "proveedores": {
     "titulo": "Gestión de Proveedores",
@@ -1547,7 +1619,13 @@
       "sinProveedores": "No se encontraron proveedores",
       "prueba": "Prueba con otros términos o limpia el filtro.",
       "empieza": "Empieza añadiendo el primer proveedor a tu catálogo."
-    }
+    },
+    "condicionesLabel": "Proveedores y Condiciones",
+    "nombreDesconocido": "Proveedor Desconocido",
+    "campoMarca": "Marca",
+    "campoCodigoBarras": "Código Barras Prov.",
+    "campoPrecioCompra": "Precio Compra",
+    "eliminarAria": "Eliminar proveedor {{nombre}}"
   },
   "pedidos": {
     "titulo": "Gestión de Pedidos",
@@ -1602,6 +1680,13 @@
       "mensaje": "Si lo guardas en borrador, podrás retomarlo más tarde. Si cancelas ahora, se descartará el pedido pendiente.",
       "confirmar": "Guardar en borrador",
       "cancelar": "Cancelar pedido"
-    }
+    },
+    "fechaEstimadaEntrega": "Fecha estimada de entrega",
+    "detalleTitulo": "Detalle del pedido",
+    "gestionTitulo": "Gestión de Pedidos",
+    "fechaEntregaDialogMensaje": "La fecha prevista para este pedido es {{fecha}}. Este valor se calcula automáticamente por el sistema y no admite edición manual.",
+    "buscarPlaceholder": "Buscar por proveedor, estado, usuario...",
+    "nuevoPedido": "Nuevo Pedido",
+    "continuarPedido": "Continuar Pedido"
   }
 }

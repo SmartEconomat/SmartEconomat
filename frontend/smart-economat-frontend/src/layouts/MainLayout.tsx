@@ -335,7 +335,7 @@ export default function MainLayout() {
       </List>
       <Box sx={{ marginTop: 'auto' }}>
         <Divider />
-        <List aria-label="Opciones del sistema">
+        <List aria-label={t('comun.opcionesSistema')}>
           <ListItem disablePadding sx={{ display: 'block' }}>
             <TutorialHelper mode="listitem" isOpen={open} />
           </ListItem>
@@ -360,10 +360,10 @@ export default function MainLayout() {
             px: { xs: 2, sm: 3 },
           }}
         >
-          <Tooltip title="Expandir menú">
+          <Tooltip title={t('comun.expandirMenu')}>
             <IconButton
               color="inherit"
-              aria-label="Expandir menú"
+              aria-label={t('comun.expandirMenu')}
               onClick={handleDrawerOpen}
               edge="start"
               sx={{

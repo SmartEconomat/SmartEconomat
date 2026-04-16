@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import PageToolbar, {
   type PageToolbarProps,
 } from '../../../components/ui/PageToolbar';
@@ -51,38 +52,41 @@ const PedidosPageHeader: React.FC<PedidosPageHeaderProps> = ({
   onCreateClick,
   onContinueDraftClick,
   extraActions = [],
-}) => (
-  <PageToolbar
-    title="Gestión de Pedidos"
-    searchValue={searchTerm}
-    onSearchChange={onSearchChange}
-    searchPlaceholder="Buscar por proveedor, estado, usuario..."
-    searchId="search-pedidos"
-    totalItems={totalItems}
-    totalItemsLabel={totalItemsLabel}
-    viewMode={viewMode}
-    onViewModeChange={onViewModeChange}
-    primaryAction={
-      canCreate
-        ? {
-            label: 'Nuevo Pedido',
-            onClick: onCreateClick,
-            id: 'btn-nuevo-pedido',
-          }
-        : undefined
-    }
-    secondaryAction={
-      canCreate && draft
-        ? {
-            label: 'Continuar Pedido',
-            onClick: onContinueDraftClick,
-            id: 'btn-continuar-pedido',
-            isLoading: isLoadingDraft,
-          }
-        : undefined
-    }
-    extraActions={extraActions}
-  />
-);
+}) => {
+  const { t } = useTranslation();
+  return (
+    <PageToolbar
+      title={t('pedidos.gestionTitulo')}
+      searchValue={searchTerm}
+      onSearchChange={onSearchChange}
+      searchPlaceholder={t('pedidos.buscarPlaceholder')}
+      searchId="search-pedidos"
+      totalItems={totalItems}
+      totalItemsLabel={totalItemsLabel}
+      viewMode={viewMode}
+      onViewModeChange={onViewModeChange}
+      primaryAction={
+        canCreate
+          ? {
+              label: t('pedidos.nuevoPedido'),
+              onClick: onCreateClick,
+              id: 'btn-nuevo-pedido',
+            }
+          : undefined
+      }
+      secondaryAction={
+        canCreate && draft
+          ? {
+              label: t('pedidos.continuarPedido'),
+              onClick: onContinueDraftClick,
+              id: 'btn-continuar-pedido',
+              isLoading: isLoadingDraft,
+            }
+          : undefined
+      }
+      extraActions={extraActions}
+    />
+  );
+};
 
 export default PedidosPageHeader;

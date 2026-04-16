@@ -30,6 +30,7 @@ import { IncidenciaLinea } from '../../incidencia/incidencia-linea.entity/incide
 import { PurchaseBatchService } from './purchase-batch.service';
 import { reserveNextPedidoProveedorNumero } from '../utils/pedido-numero.util';
 import { isSherlockElevatedRole } from '../../sherlock-auth/utils/access.utils';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 
 type PendingAggregateLine = {
   productoProveedorId: string;
@@ -238,7 +239,9 @@ export class PedidoUsuarioService {
       });
 
     if (!pedidoUsuario) {
-      throw new NotFoundException(`Pedido de usuario #${id} no encontrado`);
+      throw new NotFoundException(
+        I18nHelper.getError('PEDIDO_USUARIO_NOT_FOUND')
+      );
     }
 
     await this.annotateLinkedMovements(pedidoUsuario.pedidos || []);
@@ -274,7 +277,9 @@ export class PedidoUsuarioService {
       });
 
       if (!existing) {
-        throw new NotFoundException(`Pedido de usuario #${id} no encontrado`);
+        throw new NotFoundException(
+          I18nHelper.getError('PEDIDO_USUARIO_NOT_FOUND')
+        );
       }
 
       this.assertEditable(existing);
@@ -449,7 +454,9 @@ export class PedidoUsuarioService {
       });
 
       if (!pedidoUsuario) {
-        throw new NotFoundException(`Pedido de usuario #${id} no encontrado`);
+        throw new NotFoundException(
+          I18nHelper.getError('PEDIDO_USUARIO_NOT_FOUND')
+        );
       }
 
       const isElevated = isSherlockElevatedRole(user.rol);
@@ -559,7 +566,9 @@ export class PedidoUsuarioService {
       });
 
       if (!pedidoUsuario) {
-        throw new NotFoundException(`Pedido de usuario #${id} no encontrado`);
+        throw new NotFoundException(
+          I18nHelper.getError('PEDIDO_USUARIO_NOT_FOUND')
+        );
       }
 
       if (!force) {

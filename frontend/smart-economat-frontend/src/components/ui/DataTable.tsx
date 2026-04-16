@@ -335,7 +335,7 @@ export function DataTable<T extends Record<string, any>>({
               minWidth: { xs: '100%', md: 650 },
               tableLayout: hasSizedColumns ? 'fixed' : 'auto',
             }}
-            aria-label="data table"
+            aria-label={t('comun.tablaDatos')}
           >
             <TableHead>
               <TableRow>

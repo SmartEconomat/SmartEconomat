@@ -138,7 +138,7 @@ const Incidencias: React.FC = () => {
       resuelta: t('incidencias.estados.resuelta'),
       cancelada: t('incidencias.estados.cancelada'),
       invalida: t('incidencias.estados.invalida'),
-    }[status] ?? status);
+    })[status] ?? status;
 
   /**
    * Fetches incidencias from the API and updates local state.
@@ -479,7 +479,7 @@ const Incidencias: React.FC = () => {
         sx={{ minWidth: 160, justifyContent: 'flex-start' }}
       >
         <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-          <Tooltip title="Ver detalle">
+          <Tooltip title={t('comun.verDetalle')}>
             <IconButton
               color="primary"
               onClick={(e) => {
@@ -522,7 +522,7 @@ const Incidencias: React.FC = () => {
         </Box>
         <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
           {canDelete && (
-            <Tooltip title="Eliminar">
+            <Tooltip title={t('comun.eliminar')}>
               <IconButton
                 onClick={() => setItemToDelete(row)}
                 size="small"

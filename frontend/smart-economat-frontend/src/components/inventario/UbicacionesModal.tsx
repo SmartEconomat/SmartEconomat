@@ -143,7 +143,7 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
                 secondaryAction={
                   <IconButton
                     edge="end"
-                    aria-label="delete"
+                    aria-label={t('comun.eliminar')}
                     onClick={() => handleDelete(u.id)}
                     color="error"
                   >

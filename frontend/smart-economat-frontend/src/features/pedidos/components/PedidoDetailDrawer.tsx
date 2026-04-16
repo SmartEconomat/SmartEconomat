@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Box,
@@ -56,6 +57,7 @@ const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
   onClose,
   onEdit,
 }) => {
+  const { t } = useTranslation();
   const toast = useToast();
   const [isDownloadingPdf, setIsDownloadingPdf] = React.useState(false);
   const [isPrintingPdf, setIsPrintingPdf] = React.useState(false);
@@ -219,7 +221,7 @@ const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
     <DetailModal
       isOpen={!!pedido}
       onClose={onClose}
-      title="Detalle del pedido"
+      title={t('pedidos.detalleTitulo')}
       subtitle={
         pedido
           ? `Pedido #${formatPedidoListNumber(pedido)} · ID ${formatPedidoId(pedido.id)}`

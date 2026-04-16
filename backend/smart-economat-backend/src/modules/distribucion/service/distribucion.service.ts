@@ -9,6 +9,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
@@ -168,7 +169,9 @@ export class DistribucionService {
     });
 
     if (!distribucion) {
-      throw new NotFoundException('Distribución no encontrada');
+      throw new NotFoundException(
+        I18nHelper.getError('DISTRIBUCION_NOT_FOUND')
+      );
     }
 
     return distribucion;
@@ -254,7 +257,7 @@ export class DistribucionService {
 
       if (uniqueRequestedLineIds.size !== requestedLineIds.length) {
         throw new BadRequestException(
-          'No se permiten líneas duplicadas en una misma distribución'
+          I18nHelper.getError('DISTRIBUCION_DUPLICATE_LINES')
         );
       }
 
@@ -272,7 +275,9 @@ export class DistribucionService {
       });
 
       if (!pedidoUsuario) {
-        throw new NotFoundException('Pedido de usuario no encontrado');
+        throw new NotFoundException(
+          I18nHelper.getError('PEDIDO_USUARIO_NOT_FOUND')
+        );
       }
 
       const origen = await this.resolveOrigen(manager, dto.ubicacionOrigenId);
@@ -285,7 +290,7 @@ export class DistribucionService {
 
       if (origen.id === destino.id) {
         throw new BadRequestException(
-          'La ubicación destino no puede ser la misma que la ubicación origen'
+          I18nHelper.getError('DISTRIBUCION_DEST_SAME_AS_ORIGIN')
         );
       }
 
@@ -314,7 +319,7 @@ export class DistribucionService {
         );
         if (!pedidoUsuarioLinea) {
           throw new BadRequestException(
-            'Una de las líneas no pertenece al pedido de usuario seleccionado'
+            I18nHelper.getError('DISTRIBUCION_LINE_NOT_FROM_ORDER')
           );
         }
 
@@ -324,7 +329,10 @@ export class DistribucionService {
 
         if (cantidadSolicitada > cantidadPendiente) {
           throw new BadRequestException(
-            `La línea ${pedidoUsuarioLinea.id} solo dispone de ${cantidadPendiente} unidades pendientes de distribuir`
+            I18nHelper.getError('DISTRIBUCION_INSUFFICIENT_STOCK_IN_LOCATION', {
+              ubicacion: pedidoUsuarioLinea.id,
+              producto: String(cantidadPendiente),
+            })
           );
         }
 
@@ -388,7 +396,9 @@ export class DistribucionService {
       });
 
       if (!distribucion) {
-        throw new NotFoundException('Distribución no encontrada');
+        throw new NotFoundException(
+          I18nHelper.getError('DISTRIBUCION_NOT_FOUND')
+        );
       }
 
       if (
@@ -396,7 +406,7 @@ export class DistribucionService {
         distribucion.estado !== EstadoDistribucion.BORRADOR
       ) {
         throw new BadRequestException(
-          'Solo se pueden confirmar distribuciones preparadas'
+          I18nHelper.getError('DISTRIBUCION_ONLY_PREPARADAS_CONFIRMABLE')
         );
       }
 
@@ -447,7 +457,9 @@ export class DistribucionService {
     });
 
     if (!distribucion) {
-      throw new NotFoundException('Distribución no encontrada');
+      throw new NotFoundException(
+        I18nHelper.getError('DISTRIBUCION_NOT_FOUND')
+      );
     }
 
     if (
@@ -455,7 +467,7 @@ export class DistribucionService {
       distribucion.estado === EstadoDistribucion.PARCIAL
     ) {
       throw new BadRequestException(
-        'No se puede cancelar una distribución ya confirmada'
+        I18nHelper.getError('DISTRIBUCION_ALREADY_CONFIRMED')
       );
     }
 
@@ -493,7 +505,9 @@ export class DistribucionService {
         where: { id: ubicacionOrigenId },
       });
       if (!origen) {
-        throw new NotFoundException('Ubicación origen no encontrada');
+        throw new NotFoundException(
+          I18nHelper.getError('DISTRIBUCION_ORIGIN_NOT_FOUND')
+        );
       }
       return origen;
     }
@@ -582,7 +596,7 @@ export class DistribucionService {
 
     if (!destinoId) {
       throw new BadRequestException(
-        'Debes indicar una ubicación destino o vincular una ubicación al aula seleccionada'
+        I18nHelper.getError('DISTRIBUCION_DEST_NO_LOCATION')
       );
     }
 
@@ -604,7 +618,9 @@ export class DistribucionService {
       }
     }
 
-    throw new NotFoundException('Ubicación destino no encontrada');
+    throw new NotFoundException(
+      I18nHelper.getError('DISTRIBUCION_DEST_NOT_FOUND')
+    );
   }
 
   /**
@@ -960,7 +976,10 @@ export class DistribucionService {
 
     if (stockTotal < cantidadObjetivo) {
       throw new BadRequestException(
-        `Stock insuficiente en ${distribucion.ubicacionOrigen.nombre} para ${linea.productoProveedor.producto?.nombre || 'la línea solicitada'}`
+        I18nHelper.getError('DISTRIBUCION_INSUFFICIENT_STOCK_IN_LOCATION', {
+          ubicacion: distribucion.ubicacionOrigen.nombre,
+          producto: linea.productoProveedor.producto?.nombre ?? '',
+        })
       );
     }
 

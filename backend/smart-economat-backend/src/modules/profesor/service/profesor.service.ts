@@ -60,7 +60,9 @@ export class ProfesorService {
     });
 
     if (!ubicacion) {
-      throw new NotFoundException('Ubicación no encontrada');
+      throw new NotFoundException(
+        I18nHelper.getError('UBICACI_N_NO_ENCONTRADA')
+      );
     }
 
     return ubicacion;
@@ -423,7 +425,7 @@ export class ProfesorService {
    */
   async forcePasswordReset(profesorUserId: string, alumnoId: string) {
     if (!alumnoId || alumnoId === 'undefined') {
-      throw new BadRequestException('ID de alumno no válido');
+      throw new BadRequestException(I18nHelper.getError('INVALID_ALUMNO_ID'));
     }
 
     const profesor = await this.profesorRepo.findOne({

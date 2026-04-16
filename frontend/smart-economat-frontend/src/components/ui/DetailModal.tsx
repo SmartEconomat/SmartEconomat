@@ -335,7 +335,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
         <DynamicFormModal
           isOpen={editOpen}
           onClose={handleCloseEdit}
-          title={editConfig.title ?? `Editar ${title}`}
+          title={editConfig.title ?? t('comun.editarItem', { item: title })}
           size={editConfig.size ?? 'lg'}
           fields={editConfig.fields}
           initialData={editConfig.initialData}

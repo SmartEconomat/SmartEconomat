@@ -295,7 +295,7 @@ export class AlumnoService {
 
         if (!profesorActual || alumno.slot.profesor.id !== profesorActual.id) {
           throw new BadRequestException(
-            'No tienes permisos para cambiar a este alumno'
+            I18nHelper.getError('NO_PERMISSION_CHANGE_ALUMNO')
           );
         }
       } else if (
@@ -303,7 +303,7 @@ export class AlumnoService {
         alumno.user.id !== reqUserId
       ) {
         throw new BadRequestException(
-          'No tienes permisos para cambiar a este alumno'
+          I18nHelper.getError('NO_PERMISSION_CHANGE_ALUMNO')
         );
       }
 

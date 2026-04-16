@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -101,6 +102,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
   onAdminUpdateSlot,
   onRefreshUbicaciones,
 }) => {
+  const { t } = useTranslation();
   const [editingSlotId, setEditingSlotId] = React.useState<string | null>(null);
   const [openLocDialog, setOpenLocDialog] = React.useState(false);
   const [editData, setEditData] = React.useState({
@@ -210,7 +212,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                       <>
                         <IconButton
                           edge="end"
-                          aria-label="save"
+                          aria-label={t('perfil.guardarSlot')}
                           onClick={() => handleSaveEdit(slot.id, showOwner)}
                           color="success"
                           size="small"
@@ -220,7 +222,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                         </IconButton>
                         <IconButton
                           edge="end"
-                          aria-label="cancel"
+                          aria-label={t('perfil.cancelarEdicion')}
                           onClick={handleCancelEdit}
                           color="inherit"
                           size="small"
@@ -247,7 +249,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                             cursor: 'pointer',
                             '&:hover': { bgcolor: 'primary.main' },
                           }}
-                          title="Haga clic para copiar el código de clase"
+                          title={t('perfil.copiarCodigo')}
                           onClick={() => {
                             if (slot.codigoSlot) {
                               navigator.clipboard.writeText(slot.codigoSlot);
@@ -259,7 +261,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
 
                         <IconButton
                           edge="end"
-                          aria-label="edit"
+                          aria-label={t('perfil.editarSlot')}
                           onClick={() => handleStartEdit(slot, showOwner)}
                           color="success"
                           size="small"
@@ -269,7 +271,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                         </IconButton>
                         <IconButton
                           edge="end"
-                          aria-label="delete"
+                          aria-label={t('perfil.eliminarSlot')}
                           onClick={() => onDeleteSlot(slot.id, showOwner)}
                           color="error"
                           size="small"
@@ -292,7 +294,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                     flexWrap="wrap"
                   >
                     <TextField
-                      label="Aula/Grupo"
+                      label={t('perfil.campoAula')}
                       name="aula"
                       size="small"
                       value={editData.aula}
@@ -301,7 +303,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                       sx={{ flex: '1 1 80px', minWidth: 80 }}
                     />
                     <TextField
-                      label="Nº Clase"
+                      label={t('perfil.campoNumeroClase')}
                       name="numeroClase"
                       size="small"
                       type="number"
@@ -311,7 +313,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                       sx={{ flex: '1 1 70px', minWidth: 70 }}
                     />
                     <TextField
-                      label="Capacidad"
+                      label={t('perfil.campoCapacidad')}
                       name="capacidad"
                       size="small"
                       type="number"
@@ -329,11 +331,11 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                     >
                       <FormControl size="small" fullWidth>
                         <InputLabel id={`ubicacion-select-${slot.id}`}>
-                          Ubicación
+                          {t('comun.ubicacion')}
                         </InputLabel>
                         <Select
                           labelId={`ubicacion-select-${slot.id}`}
-                          label="Ubicación"
+                          label={t('comun.ubicacion')}
                           value={editData.ubicacionId}
                           onChange={(e) => {
                             const val = e.target.value as string;
@@ -365,7 +367,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                           </MenuItem>
                         </Select>
                       </FormControl>
-                      <Tooltip title="Crear nueva Ubicación">
+                      <Tooltip title={t('perfil.crearNuevaUbicacion')}>
                         <IconButton
                           size="small"
                           color="primary"
@@ -382,11 +384,11 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                         sx={{ flex: '2 1 140px', minWidth: 140 }}
                       >
                         <InputLabel id={`profesor-select-${slot.id}`}>
-                          Profesor
+                          {t('perfil.campoProfesor')}
                         </InputLabel>
                         <Select
                           labelId={`profesor-select-${slot.id}`}
-                          label="Profesor"
+                          label={t('perfil.campoProfesor')}
                           value={editData.profesorId}
                           onChange={(e) =>
                             setEditData((prev) => ({
@@ -525,7 +527,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
           >
             <Box flex={1} width="100%">
               <Input
-                label="Curso/Grupo (ej: A01)"
+                label={t('perfil.cursoGrupo')}
                 name="aula"
                 value={newSlot.aula}
                 onChange={onNewSlotChange}
@@ -535,7 +537,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
             </Box>
             <Box flex={1} width="100%">
               <Input
-                label="Nº Clase (ej: 1)"
+                label={t('perfil.numeroClaseEj')}
                 name="numeroClase"
                 type="number"
                 value={newSlot.numeroClase}
@@ -546,7 +548,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
             </Box>
             <Box flex={1} width="100%">
               <Input
-                label="Capacidad (Alumnos)"
+                label={t('perfil.capacidadAlumnos')}
                 name="capacidad"
                 type="number"
                 value={newSlot.capacidad}
@@ -564,10 +566,12 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
               gap={0.5}
             >
               <FormControl fullWidth size="small">
-                <InputLabel id="new-slot-ubicacion-label">Ubicación</InputLabel>
+                <InputLabel id="new-slot-ubicacion-label">
+                  {t('comun.ubicacion')}
+                </InputLabel>
                 <Select
                   labelId="new-slot-ubicacion-label"
-                  label="Ubicación"
+                  label={t('comun.ubicacion')}
                   name="ubicacionId"
                   value={newSlot.ubicacionId || ''}
                   onChange={(e) => {
@@ -603,7 +607,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                   </MenuItem>
                 </Select>
               </FormControl>
-              <Tooltip title="Crear nueva Ubicación">
+              <Tooltip title={t('perfil.crearNuevaUbicacion')}>
                 <IconButton
                   size="small"
                   color="primary"
@@ -617,10 +621,12 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
             {allProfesores.length > 0 && (
               <Box flex={2} width="100%">
                 <FormControl fullWidth size="small">
-                  <InputLabel id="new-slot-profesor-label">Profesor</InputLabel>
+                  <InputLabel id="new-slot-profesor-label">
+                    {t('perfil.campoProfesor')}
+                  </InputLabel>
                   <Select
                     labelId="new-slot-profesor-label"
-                    label="Profesor"
+                    label={t('perfil.campoProfesor')}
                     name="profesorId"
                     value={newSlot.profesorId || ''}
                     onChange={(e) =>

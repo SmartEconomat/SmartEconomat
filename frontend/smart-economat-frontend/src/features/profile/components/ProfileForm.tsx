@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Typography, Divider } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import Input from '../../../components/ui/Input';
@@ -25,6 +26,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
   onOpenEmailModal,
   isSaving,
 }) => {
+  const { t } = useTranslation();
   return (
     <Box>
       <Box display="flex" alignItems="center" mb={{ xs: 2, md: 3 }}>
@@ -51,7 +53,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
         <Box>
           {isEditing ? (
             <Input
-              label="Nombre de Usuario"
+              label={t('perfil.nombreUsuario')}
               name="username"
               value={formData.username}
               onChange={onFormChange}

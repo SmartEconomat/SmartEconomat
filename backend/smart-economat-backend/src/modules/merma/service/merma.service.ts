@@ -161,7 +161,7 @@ export class MermaService {
     });
 
     if (!lote) {
-      throw new NotFoundException('Lote de produccion no encontrado');
+      throw new NotFoundException(I18nHelper.getError('MERMA_LOTE_NOT_FOUND'));
     }
 
     const ingrediente = await this.recetaIngredienteRepository.findOne({
@@ -174,7 +174,7 @@ export class MermaService {
 
     if (!ingrediente) {
       throw new BadRequestException(
-        'El producto indicado no pertenece a los ingredientes de la receta asociada al lote'
+        I18nHelper.getError('MERMA_INGREDIENTE_NOT_IN_RECIPE')
       );
     }
 
@@ -677,16 +677,16 @@ export class MermaService {
     const end = endDate ? new Date(endDate) : undefined;
 
     if (start && Number.isNaN(start.getTime())) {
-      throw new BadRequestException('startDate must be a valid ISO date');
+      throw new BadRequestException(I18nHelper.getError('INVALID_START_DATE'));
     }
 
     if (end && Number.isNaN(end.getTime())) {
-      throw new BadRequestException('endDate must be a valid ISO date');
+      throw new BadRequestException(I18nHelper.getError('INVALID_END_DATE'));
     }
 
     if (start && end && start > end) {
       throw new BadRequestException(
-        'startDate must be less than or equal to endDate'
+        I18nHelper.getError('START_DATE_AFTER_END_DATE')
       );
     }
 

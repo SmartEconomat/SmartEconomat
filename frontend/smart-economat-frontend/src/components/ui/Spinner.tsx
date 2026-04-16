@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, CircularProgress, useTheme } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 /** Available size tokens for {@link Spinner}. */
 type SpinnerSize = 'sm' | 'md' | 'lg';
@@ -55,6 +56,7 @@ const Spinner: React.FC<SpinnerProps> = ({
   className,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const getColorValue = (): string => {
     switch (color) {
@@ -77,7 +79,7 @@ const Spinner: React.FC<SpinnerProps> = ({
     <CircularProgress
       size={spinnerSize}
       role="status"
-      aria-label="Cargando"
+      aria-label={t('comun.cargando')}
       sx={{ color: spinnerColor }}
       className={!overlay ? className : undefined}
     />

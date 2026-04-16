@@ -39,6 +39,19 @@ import { resolveStoredFileUrl } from '../../services/api.service';
 import { parseLocalizedNumber } from '../../utils/numberUtils';
 import { PedidoUsuario, PurchaseBatch } from '../../services/pedido.types';
 
+/**
+ * Supported field types for {@link DynamicField}.
+ *
+ * - `text` / `textarea` / `number` / `boolean` / `date` — standard inputs.
+ * - `select` — dropdown powered by {@link SelectOption} options array.
+ * - `image` — file upload with preview and optional fallback icon.
+ * - `allergens` — EU-14 allergen tile picker ({@link AllergenSelector}).
+ * - `proveedores` — async supplier search ({@link ProveedorSelector}).
+ * - `orderLines` — purchase-order line editor ({@link PedidoLineasSelector}).
+ * - `recipeIngredients` — recipe ingredient list editor ({@link RecetaIngredientesSelector}).
+ * - `batchViewer` — read-only batch order viewer ({@link BatchPedidoLineasViewer}).
+ * - `barcode` — text input with scan and auto-generate buttons ({@link BarcodeScanner}).
+ */
 export type FieldType =
   | 'text'
   | 'textarea'
@@ -101,6 +114,33 @@ export interface DynamicFormModalProps extends Omit<ModalProps, 'children'> {
     | 'inherit';
 }
 
+/**
+ * Schema-driven form dialog.
+ *
+ * Renders a {@link Modal} containing a grid of form controls whose type,
+ * layout, and behaviour are described declaratively via a `fields` array of
+ * {@link DynamicField} descriptors. Handles local state for all field values,
+ * dirty-state tracking, optional confirm-before-submit, and a secondary submit
+ * action (e.g. "Save as draft" alongside "Submit").
+ *
+ * Special capabilities:
+ * - Barcode fields support camera scanning (`onBarcodeFetch`) and auto-generation
+ *   (`onBarcodeGenerate`).
+ * - OpenFoodFacts integration via `onOFFSearch` for product lookup.
+ * - External value injection via `valueUpdates` (e.g. after an async fill).
+ * - Two-way change notifications via `onValuesChange`.
+ *
+ * @param props - See {@link DynamicFormModalProps}.
+ * @returns A configurable form dialog.
+ * @example
+ * <DynamicFormModal
+ *   isOpen={open}
+ *   onClose={() => setOpen(false)}
+ *   title="Nuevo Producto"
+ *   fields={[{ name: 'nombre', label: 'Nombre', required: true }]}
+ *   onSubmit={handleCreate}
+ * />
+ */
 const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   isOpen,
   onClose,
@@ -373,14 +413,9 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   const nonImageFields = formFields.filter((f) => f.type !== 'image');
 
   const imageFieldName = mainImageField?.name;
-  const imageRawValue = useMemo(
-    () => (imageFieldName !== undefined ? formData[imageFieldName] : undefined),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      imageFieldName,
-      imageFieldName !== undefined ? formData[imageFieldName] : undefined,
-    ]
-  );
+  const imageFieldValue =
+    imageFieldName !== undefined ? formData[imageFieldName] : undefined;
+  const imageRawValue = useMemo(() => imageFieldValue, [imageFieldValue]);
   const [imageBlobUrl, setImageBlobUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -730,7 +765,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                   }
                 }
               }}
-              title={`Escanear ${label}`}
+              title={t('comun.escanear') + ' ' + label}
             />
           </Box>
         );
@@ -916,10 +951,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
           await onSubmit(formDataRef.current);
         }}
         title={t('comun.confirmarAccion')}
-        message={
-          confirmationMessage ||
-          t('comun.confirmarGuardar')
-        }
+        message={confirmationMessage || t('comun.confirmarGuardar')}
         confirmText={t('comun.guardar')}
         cancelText={t('comun.cerrar')}
         confirmColor="primary"

@@ -1,5 +1,6 @@
 import React from 'react';
 import { IconButton, Stack, Tooltip, Chip, Typography } from '@mui/material';
+import i18n from '../../../i18n';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -117,12 +118,12 @@ export const renderPedidoActions = (
     <Stack direction="row" spacing={1} justifyContent="center">
       {permissions.canApprove &&
         isPendingPedidoUsuarioStatus(String(row.estado)) && (
-          <Tooltip title="Aprobar pedido">
+          <Tooltip title={i18n.t('comun.aprobar')}>
             <IconButton
               color="success"
               onClick={() => handlers.onApprove(row)}
               size="small"
-              aria-label="Aprobar pedido"
+              aria-label={i18n.t('comun.aprobar')}
             >
               <CheckIcon fontSize="small" />
             </IconButton>
@@ -131,12 +132,12 @@ export const renderPedidoActions = (
 
       {permissions.canCancel &&
         isPendingPedidoUsuarioStatus(String(row.estado)) && (
-          <Tooltip title="Cancelar pedido">
+          <Tooltip title={i18n.t('comun.cancelar')}>
             <IconButton
               color="warning"
               onClick={() => handlers.onCancel(row)}
               size="small"
-              aria-label="Cancelar pedido"
+              aria-label={i18n.t('comun.cancelar')}
             >
               <CancelIcon fontSize="small" />
             </IconButton>
@@ -145,12 +146,12 @@ export const renderPedidoActions = (
 
       {permissions.canEdit &&
         isPendingPedidoUsuarioStatus(String(row.estado)) && (
-          <Tooltip title="Editar pedido">
+          <Tooltip title={i18n.t('comun.editar')}>
             <IconButton
               color="secondary"
               onClick={() => handlers.onEdit(row)}
               size="small"
-              aria-label="Editar pedido"
+              aria-label={i18n.t('comun.editar')}
             >
               <EditIcon fontSize="small" />
             </IconButton>
@@ -188,7 +189,7 @@ export const renderBatchActions = (
   handlers: PurchaseBatchActionHandlers
 ): React.ReactNode => (
   <Stack direction="row" spacing={1} justifyContent="center">
-    <Tooltip title="Iniciar Recepción">
+    <Tooltip title={i18n.t('comun.iniciarRecepcion')}>
       <IconButton
         color="success"
         onClick={(e) => {
@@ -196,7 +197,7 @@ export const renderBatchActions = (
           handlers.onRecepcion(row);
         }}
         size="small"
-        aria-label="Iniciar Recepción"
+        aria-label={i18n.t('comun.iniciarRecepcion')}
       >
         <LoginOutlinedIcon fontSize="small" />
       </IconButton>

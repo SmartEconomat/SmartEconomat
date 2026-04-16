@@ -34,11 +34,7 @@ import { Producto } from '../../services/producto.types';
 import { EstadoPedido, Pedido } from '../../services/pedido.types';
 import { Proveedor } from '../../services/proveedor.types';
 import { fetchIncidencias } from '../../services/incidencia.service';
-import {
-  EstadoReclamacion,
-  Incidencia,
-  TipoDiferencia,
-} from '../../services/incidencia.types';
+import { Incidencia } from '../../services/incidencia.types';
 import { fetchAlertasStock } from '../../services/inventario.service';
 import type { AlertaStock } from '../../services/inventario.types';
 import { formatPedidoListNumber } from '../../features/pedidos/utils/pedidoFormatters';
@@ -97,7 +93,6 @@ const DASHBOARD_PENDING_ORDER_STATES = [
   EstadoPedido.PARCIAL,
   EstadoPedido.INCIDENCIA,
 ] as const;
-
 
 const decimalFormatter = new Intl.NumberFormat('es-ES', {
   minimumFractionDigits: 2,
@@ -263,7 +258,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [fetchAllIncidencias, fetchDashboardPendingPedidos, type]);
+  }, [fetchAllIncidencias, fetchDashboardPendingPedidos, t, type]);
 
   useEffect(() => {
     if (isOpen && type) {
@@ -529,7 +524,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                             <Chip
                               size="small"
                               color="error"
-                              label={t(`resumen.${linea.tipoDiferencia.toLowerCase()}`)}
+                              label={t(
+                                `resumen.${linea.tipoDiferencia.toLowerCase()}`
+                              )}
                             />
                           </Stack>
                           <Typography variant="caption" color="text.secondary">
@@ -539,7 +536,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
                             Reclamación:{' '}
-                            {t(`resumen.${linea.estadoReclamacion.toLowerCase()}`)}
+                            {t(
+                              `resumen.${linea.estadoReclamacion.toLowerCase()}`
+                            )}
                           </Typography>
                           {linea.observaciones ? (
                             <Typography
@@ -596,7 +595,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           {title}
         </Typography>
         <IconButton
-          aria-label="close"
+          aria-label={t('comun.cerrar')}
           onClick={onClose}
           sx={{
             position: 'absolute',

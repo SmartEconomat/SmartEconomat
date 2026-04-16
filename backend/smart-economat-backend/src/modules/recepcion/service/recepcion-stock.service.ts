@@ -87,6 +87,22 @@ type RecepcionLineaProcesada = RecepcionLineDto & {
   estadoProducto: EstadoProductoRecepcion;
 };
 
+/**
+ * Core stock-reception service that processes incoming goods into inventory.
+ *
+ * Supports two flows:
+ * - **`procesarRecepcionMasiva`** — batch reception for a single purchase order.
+ * - **`procesarRecepcion`** — standard reception for one or many orders with
+ *   optional new-product registration.
+ *
+ * Both flows run inside a database transaction and:
+ * 1. Create {@link Recepcion} + {@link RecepcionPedido} + {@link Albaran} records.
+ * 2. Upsert {@link Inventario} lots (FEFO-safe) and write {@link Movimiento} audit entries.
+ * 3. Record a {@link HistorialPrecio} entry and update the PMP on the {@link ProductoProveedor}.
+ * 4. Detect quantity/quality discrepancies and auto-create {@link Incidencia} records.
+ * 5. Advance the order status machine via {@link PedidoService.handleStatusTransition}.
+ * 6. Emit a `recepcion.completada` event on commit.
+ */
 @Injectable()
 export class RecepcionStockService {
   private readonly logger = new Logger(RecepcionStockService.name);

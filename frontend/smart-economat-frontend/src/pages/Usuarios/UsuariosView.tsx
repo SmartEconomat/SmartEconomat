@@ -181,6 +181,7 @@ UserAccordion.displayName = 'UserAccordion';
  * <Route path="/usuarios" element={<UsuariosView />} />
  */
 export const UsuariosView: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   // Estados para datos por rol
@@ -573,7 +574,7 @@ export const UsuariosView: React.FC = () => {
             color="primary"
             onClick={() => setUserToReset(row)}
             size="small"
-            title="Reset Password"
+            title={t('usuarios.resetPassword')}
           >
             <VpnKeyIcon fontSize="small" />
           </IconButton>
@@ -584,7 +585,7 @@ export const UsuariosView: React.FC = () => {
             onClick={() => void handleEditUser(row)}
             disabled={isLoadingUserDetail}
             size="small"
-            title="Editar"
+            title={t('comun.editar')}
           >
             <EditIcon fontSize="small" />
           </IconButton>
@@ -594,7 +595,7 @@ export const UsuariosView: React.FC = () => {
             color="error"
             onClick={() => setUserToDelete(row)}
             size="small"
-            title="Eliminar"
+            title={t('comun.eliminar')}
           >
             <DeleteIcon fontSize="small" />
           </IconButton>
@@ -609,6 +610,7 @@ export const UsuariosView: React.FC = () => {
       fetchAllData,
       handleEditUser,
       isLoadingUserDetail,
+      t,
       toast,
     ]
   );
@@ -659,7 +661,7 @@ export const UsuariosView: React.FC = () => {
         >
           <Box display="flex" alignItems="center" gap={2} flex={1}>
             <TextField
-              placeholder="Buscar por nombre o email..."
+              placeholder={t('usuarios.buscarPlaceholder')}
               size="small"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -708,7 +710,7 @@ export const UsuariosView: React.FC = () => {
       ) : (
         <Box>
           <UserAccordion
-            title="Administradores"
+            title={t('usuarios.roles.administradores')}
             icon={<AdminPanelSettingsIcon sx={{ fontSize: 20 }} />}
             data={admins}
             role="admin"
@@ -719,7 +721,7 @@ export const UsuariosView: React.FC = () => {
             setPagination={setPagination}
           />
           <UserAccordion
-            title="Profesores"
+            title={t('usuarios.roles.profesores')}
             icon={<SupervisorAccountIcon sx={{ fontSize: 20 }} />}
             data={professors}
             role="professor"
@@ -730,7 +732,7 @@ export const UsuariosView: React.FC = () => {
             setPagination={setPagination}
           />
           <UserAccordion
-            title="Alumnos"
+            title={t('usuarios.roles.alumnos')}
             icon={<SchoolIcon sx={{ fontSize: 20 }} />}
             data={students}
             role="student"
@@ -759,7 +761,7 @@ export const UsuariosView: React.FC = () => {
         isOpen={!!userToDelete}
         onClose={() => setUserToDelete(null)}
         onConfirm={handleDeleteConfirm}
-        title="Eliminar usuario"
+        title={t('usuarios.eliminarUsuario')}
         message={
           <>
             ¿Seguro que quieres eliminar a{' '}
