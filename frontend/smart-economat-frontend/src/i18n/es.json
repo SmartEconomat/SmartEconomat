@@ -1153,6 +1153,11 @@
     "miPerfil": "Mi Perfil",
     "descripcionAlumno": "Consulta tu perfil, cambia tu nombre de usuario o contraseña y solicita cambios de email con aprobación superior.",
     "descripcionOtros": "Consulta y edita tus datos personales y opciones de seguridad.",
+    "preferencias": {
+      "titulo": "Preferencias",
+      "descripcion": "Ajusta las preferencias de visualización de la aplicación.",
+      "idioma": "Idioma de la aplicación"
+    },
     "seccion": {
       "titulo": "Perfil y Seguridad",
       "descripcionAlumno": "Puedes editar tu nombre de usuario y contraseña. El cambio de email requiere aprobación de un rol superior.",

@@ -25,6 +25,7 @@ import { useTranslation } from 'react-i18next';
 
 import ProfileForm from '../features/profile/components/ProfileForm';
 import ChangePasswordForm from '../features/profile/components/ChangePasswordForm';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 
 import { useAuth } from '../store/auth.hooks';
 import { useToast } from '../store/toast.hooks';
@@ -331,6 +332,42 @@ const Perfil: React.FC = () => {
       )}
 
       <Stack spacing={4}>
+        <Card
+          elevation={2}
+          sx={{
+            borderRadius: 3,
+            overflow: 'hidden',
+            border: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          <CardContent sx={{ p: { xs: 3, md: 5 } }}>
+            <Stack spacing={3}>
+              <Box>
+                <Typography variant="h5" fontWeight={700} gutterBottom>
+                  {t('perfil.preferencias.titulo')}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {t('perfil.preferencias.descripcion')}
+                </Typography>
+              </Box>
+              <Divider />
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                flexWrap="wrap"
+                gap={2}
+              >
+                <Typography variant="body1">
+                  {t('perfil.preferencias.idioma')}
+                </Typography>
+                <LanguageSwitcher />
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+
         <Card
           elevation={2}
           sx={{

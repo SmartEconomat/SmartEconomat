@@ -1,12 +1,12 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { ToggleButton, ToggleButtonGroup } from '@mui/material';
 
 /**
- * Global language selector component.
+ * Language selector using MUI ToggleButtonGroup.
  *
- * Renders two buttons that allow the user to switch the application language
- * between Spanish (`es`) and English (`en`). The button labels are i18n
- * strings so the display name can be adjusted per locale if required.
+ * Highlights the currently active language and calls `i18n.changeLanguage`
+ * when the user picks the other option.  Renders ES / EN buttons.
  *
  * @example
  * <LanguageSwitcher />
@@ -14,18 +14,29 @@ import { useTranslation } from 'react-i18next';
 export const LanguageSwitcher: React.FC = () => {
   const { i18n, t } = useTranslation();
 
-  const changeLanguage = (lng: string) => {
-    i18n.changeLanguage(lng);
+  const handleChange = (
+    _: React.MouseEvent<HTMLElement>,
+    newLng: string | null
+  ) => {
+    if (newLng) {
+      void i18n.changeLanguage(newLng);
+    }
   };
 
   return (
-    <div>
-      <button onClick={() => changeLanguage('es')}>
+    <ToggleButtonGroup
+      value={i18n.language}
+      exclusive
+      onChange={handleChange}
+      size="small"
+      aria-label={t('perfil.preferencias.idioma')}
+    >
+      <ToggleButton value="es" aria-label={t('comun.idioma.es')}>
         {t('comun.idioma.es')}
-      </button>
-      <button onClick={() => changeLanguage('en')}>
+      </ToggleButton>
+      <ToggleButton value="en" aria-label={t('comun.idioma.en')}>
         {t('comun.idioma.en')}
-      </button>
-    </div>
+      </ToggleButton>
+    </ToggleButtonGroup>
   );
 };

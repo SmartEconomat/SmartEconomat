@@ -799,6 +799,11 @@
     "miPerfil": "My Profile",
     "descripcionAlumno": "View your profile, change your username or password, and request email changes with higher-role approval.",
     "descripcionOtros": "View and edit your personal data and security options.",
+    "preferencias": {
+      "titulo": "Preferences",
+      "descripcion": "Adjust the application display preferences.",
+      "idioma": "Application language"
+    },
     "seccion": {
       "titulo": "Profile & Security",
       "descripcionAlumno": "You can edit your username and password. Email changes require approval from a higher-privilege role.",
