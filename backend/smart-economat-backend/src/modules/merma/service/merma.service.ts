@@ -86,7 +86,7 @@ export class MermaService {
   private readonly logger = new Logger(MermaService.name);
 
   /**
-   * Creates an instance of MermaService.
+   * Crea una instancia de MermaService.
    *
    * @param {Repository<Merma>} mermaRepository - TypeORM repository for Merma entities.
    * @param {Repository<Producto>} productoRepository - TypeORM repository for Producto entities.
@@ -141,7 +141,7 @@ export class MermaService {
 
   /**
    * Records a waste event linked to a specific production batch (ProduccionLote).
-   * Validates that the product belongs to the recipe's ingredient list before registering.
+   * Valida that the product belongs to the recipe's ingredient list before registering.
    *
    * @param {CreateMermaProduccionDto} dto - DTO containing produccionLoteId, productoId, quantity, and optional metadata.
    * @param {string} userId - ID of the authenticated user registering the waste.
@@ -199,7 +199,7 @@ export class MermaService {
   }
 
   /**
-   * Returns a paginated list of all waste records with product and user relations.
+   * Devuelve una lista paginada de all waste records with product and user relations.
    *
    * @param {PaginationQueryDto} query - Pagination and sorting parameters (max limit 50).
    * @returns {Promise<PaginatedResponseDto<Merma>>} Paginated collection of merma records.
@@ -253,8 +253,8 @@ export class MermaService {
   }
 
   /**
-   * Calculates aggregated KPI metrics for waste events within an optional date range and product filter.
-   * Returns total events, quantity lost, reference quantity (from incoming movements), percentage waste,
+   * Calcula aggregated KPI metrics for waste events within an optional date range and product filter.
+   * Devuelve el total de events, quantity lost, reference quantity (from incoming movements), percentage waste,
    * breakdown by waste type, and breakdown by context (origin entity).
    *
    * @param {MermaKpiQueryDto} query - Optional filters: startDate, endDate, productoId.
@@ -380,7 +380,7 @@ export class MermaService {
   }
 
   /**
-   * Returns summary statistics for waste records grouped by reason (motivo) and by product.
+   * Devuelve estadísticas resumidas for waste records grouped by reason (motivo) and by product.
    *
    * @returns {Promise<{ porMotivo: unknown[]; porProducto: unknown[] }>} Aggregated waste stats.
    * @example
@@ -415,7 +415,7 @@ export class MermaService {
 
   /**
    * Core private method that handles idempotent merma registration within a transaction.
-   * Checks for existing records by idempotency key before proceeding, consumes inventory
+   * Comprueba for existing records by idempotency key before proceeding, consumes inventory
    * using FEFO ordering, creates the merma entity, and saves the corresponding movement records.
    *
    * @param {MermaCommand} command - Command object containing all data needed to register the merma.
@@ -513,11 +513,11 @@ export class MermaService {
    * Consumes inventory lots for a given product in FEFO order (earliest expiry, then earliest entry)
    * using a pessimistic write lock. Reduces the cantidadActual of each lot as needed.
    *
-   * @param {EntityManager} manager - The active transaction EntityManager.
+   * @param {EntityManager} manager - El estado activo transaction EntityManager.
    * @param {string} productoId - ID of the product whose inventory must be consumed.
    * @param {number} cantidad - Total quantity to deduct from inventory.
    * @param {string} productoNombre - Human-readable product name used in error messages.
-   * @returns {Promise<Array<{ inventario: Inventario; descontar: number }>>} List of lots consumed with the amount deducted from each.
+   * @returns {Promise<Array<{ inventario: Inventario; descontar: number }>>} Lista de lotes consumidos con la cantidad deducida de cada uno.
    * @throws {BadRequestException} When the total available stock is less than the requested quantity.
    */
   private async consumeInventoryByProduct(
@@ -573,11 +573,11 @@ export class MermaService {
   }
 
   /**
-   * Creates MERMA-type movement records for each inventory lot consumed during the waste event.
+   * Crea registros de movimiento de tipo MERMA movement records for each inventory lot consumed during the waste event.
    *
-   * @param {EntityManager} manager - The active transaction EntityManager.
-   * @param {Array<{ inventario: Inventario; descontar: number }>} consumos - List of consumed lots with deducted amounts.
-   * @param {Merma} merma - The parent merma entity that caused these movements.
+   * @param {EntityManager} manager - El estado activo transaction EntityManager.
+   * @param {Array<{ inventario: Inventario; descontar: number }>} consumos - Lista de lotes consumidos con las cantidades deducidas.
+   * @param {Merma} merma - La entidad padre merma entity that caused these movements.
    * @param {string} productoNombre - Human-readable product name used in movement descriptions.
    * @param {string} userId - ID of the user performing the action.
    * @returns {Promise<void>}
@@ -608,7 +608,7 @@ export class MermaService {
   /**
    * Infers the TipoMerma value from a given MotivoMerma when no explicit type is provided.
    *
-   * @param {MotivoMerma} motivo - The reason for the waste event.
+   * @param {MotivoMerma} motivo - La razón for the waste event.
    * @returns {TipoMerma} The inferred waste type.
    */
   private resolveTipoMerma(motivo: MotivoMerma): TipoMerma {
@@ -627,7 +627,7 @@ export class MermaService {
   /**
    * Looks up an existing merma record by its idempotency key.
    *
-   * @param {string} key - The idempotency key to search for.
+   * @param {string} key - La clave de idempotencia key to search for.
    * @returns {Promise<Merma | null>} The existing merma if found, or null.
    */
   private async findByIdempotencyKey(key: string): Promise<Merma | null> {
@@ -638,11 +638,11 @@ export class MermaService {
   }
 
   /**
-   * Determines whether a caught error is a PostgreSQL unique constraint violation (code 23505).
+   * Determines si a caught error is a PostgreSQL unique constraint violation (code 23505).
    * Used to handle idempotent creation race conditions gracefully.
    *
-   * @param {unknown} error - The error thrown during the database operation.
-   * @returns {boolean} True if the error is a unique violation, false otherwise.
+   * @param {unknown} error - El error thrown during the database operation.
+   * @returns {boolean} True si el error es una violación de unicidad, false en caso contrario.
    */
   private isUniqueViolation(error: unknown): boolean {
     if (!(error instanceof QueryFailedError)) {
@@ -657,7 +657,7 @@ export class MermaService {
   }
 
   /**
-   * Parses and validates optional start/end date strings, returning Date objects.
+   * Procesa/Analiza and validates optional start/end date strings, returning Date objects.
    * Adjusts the end date to the last millisecond of the day (23:59:59.999).
    *
    * @param {string} [startDate] - Optional ISO date string for the start of the range.
@@ -698,9 +698,9 @@ export class MermaService {
   }
 
   /**
-   * Emits a WARN-level security log when a merma's quantity meets or exceeds the high-value threshold.
+   * Emite a WARN-level security log when a merma's quantity meets or exceeds the high-value threshold.
    *
-   * @param {Merma} merma - The merma entity that was just created.
+   * @param {Merma} merma - La entidad merma entity that was just created.
    * @param {string} userId - ID of the user who registered the waste.
    */
   private logHighValueMerma(merma: Merma, userId: string): void {

@@ -46,7 +46,7 @@ export class PlantillasRolesService {
   ) {}
 
   /**
-   * Creates a new role template with an optional parent template and permission set.
+   * Crea un nuevo role template with an optional parent template and permission set.
    *
    * @param {CreatePlantillaDto} dto - DTO with the template name, description, optional parent ID and permission IDs.
    * @returns {Promise<PlantillaRol>} The newly created template with relations loaded.
@@ -82,7 +82,7 @@ export class PlantillasRolesService {
   /**
    * Retrieves all role templates ordered alphabetically by name, with their permissions and parent template.
    *
-   * @returns {Promise<PlantillaRol[]>} List of all templates with `permisos` and `plantillaPadre` relations loaded.
+   * @returns {Promise<PlantillaRol[]>} Lista de todas las plantillas con las relaciones `permisos` y `plantillaPadre` cargadas.
    */
   async findAll(): Promise<PlantillaRol[]> {
     return this.plantillaRepo.find({
@@ -114,7 +114,7 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Updates an editable role template's name, description, parent, or permissions.
+   * Actualiza an editable role template's name, description, parent, or permissions.
    * After saving, syncs all linked roles for the updated template and its descendants.
    *
    * @param {string} id - UUID of the template to update.
@@ -181,10 +181,10 @@ export class PlantillasRolesService {
    * Replaces the permission set of a template and syncs all linked roles.
    *
    * @param {string} id - UUID of the template whose permissions will be updated.
-   * @param {string[]} permisoIds - List of permission UUIDs to assign to the template.
+   * @param {string[]} permisoIds - Lista de UUIDs de permisos a asignar to the template.
    * @returns {Promise<PlantillaRol>} The updated template with all relations loaded.
    * @throws {NotFoundException} When the template is not found.
-   * @throws {BadRequestException} When permission mutation is not allowed for this template (e.g. ADMIN or SUPER_ADMIN).
+   * @throws {BadRequestException} When permission mutation is not allowed for this template (p. ej. ADMIN or SUPER_ADMIN).
    * @throws {BadRequestException} When any of the provided permission IDs do not exist.
    */
   async updatePermisos(
@@ -207,7 +207,7 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Creates a duplicate of an existing template with a new unique name.
+   * Crea un duplicado of an existing template with a new unique name.
    * The copy is always editable and shares the same parent and permissions as the original.
    *
    * @param {string} id - UUID of the template to duplicate.
@@ -243,7 +243,7 @@ export class PlantillasRolesService {
    * Activates or deactivates an editable template.
    *
    * @param {string} id - UUID of the template to activate or deactivate.
-   * @param {boolean} activo - The desired activation state.
+   * @param {boolean} activo - El valor deseado activation state.
    * @returns {Promise<PlantillaRol>} The updated template with all relations loaded.
    * @throws {NotFoundException} When the template is not found.
    * @throws {BadRequestException} When the template is not editable.
@@ -272,9 +272,9 @@ export class PlantillasRolesService {
 
   /**
    * Asserts that permission mutation is allowed for the given template.
-   * Throws if the template name belongs to the set of immutable system templates (e.g. ADMIN, SUPER_ADMIN).
+   * Lanza if the template name belongs to the set of immutable system templates (p. ej. ADMIN, SUPER_ADMIN).
    *
-   * @param {PlantillaRol} plantilla - The template entity to validate.
+   * @param {PlantillaRol} plantilla - La plantilla entity to validate.
    * @returns {void}
    * @throws {BadRequestException} When the template's permissions cannot be modified.
    */
@@ -337,7 +337,7 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Creates a new role from a template, copying the template's effective permissions
+   * Crea un nuevo role from a template, copiando los permisos efectivos de la plantilla
    * (including inherited ones) into the new role.
    *
    * @param {string} plantillaId - UUID of the source template.
@@ -377,7 +377,7 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Returns the direct, inherited, and effective permissions of a template.
+   * Devuelve los permisos directos, heredados y efectivos permissions of a template.
    * Useful for UI display to distinguish what comes from the template itself vs. from a parent.
    *
    * @param {string} id - UUID of the template to inspect.
@@ -451,7 +451,7 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Resolves a list of permission IDs to their full Permiso entities, deduplicating the input.
+   * Resuelve a list of permission IDs to their full Permiso entities, deduplicating the input.
    *
    * @param {string[]} permisoIds - Array of permission UUIDs to resolve.
    * @returns {Promise<Permiso[]>} Array of matched Permiso entities.
@@ -477,10 +477,10 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Checks that the given template name is not already taken (including soft-deleted records).
+   * Comprueba that the given template name is not already taken (including soft-deleted records).
    * When `plantillaId` is provided, the check excludes the template itself (for rename operations).
    *
-   * @param {string} nombre - The template name to validate.
+   * @param {string} nombre - La plantilla name to validate.
    * @param {string} [plantillaId] - UUID of the template being renamed; excluded from the uniqueness check.
    * @returns {Promise<void>}
    * @throws {ConflictException} When a template with the same name already exists.
@@ -502,7 +502,7 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Validates that assigning `parentId` as the parent of `currentTemplateId` would not
+   * Valida that assigning `parentId` as the parent of `currentTemplateId` would not
    * create a circular reference by traversing the ancestor chain.
    *
    * @param {string | undefined} currentTemplateId - UUID of the template being updated; excluded from the visited set as the starting node.
@@ -551,7 +551,7 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Performs a breadth-first traversal starting from `rootTemplateId` to collect the IDs
+   * Realiza a breadth-first traversal starting from `rootTemplateId` to collect the IDs
    * of the template and all of its descendants.
    *
    * @param {string} rootTemplateId - UUID of the root template.
@@ -604,7 +604,7 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Updates the permissions of all roles linked to a specific template by synchronising them
+   * Actualiza the permissions of all roles linked to a specific template by synchronising them
    * with the template's effective (inherited) permission set.
    *
    * @param {string} templateId - UUID of the template whose linked roles should be synced.
@@ -639,10 +639,10 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Generates a unique duplicate name for a template by appending " COPIA" (or " COPIA N") to the base name.
+   * Genera a unique duplicate name for a template by appending " COPIA" (or " COPIA N") to the base name.
    * Truncates the base name if necessary to keep the total length within 100 characters.
    *
-   * @param {string} baseName - The name of the original template.
+   * @param {string} baseName - El nombre de the original template.
    * @returns {Promise<string>} A unique name for the duplicated template.
    * @throws {ConflictException} When no unique name can be generated within 999 attempts.
    */

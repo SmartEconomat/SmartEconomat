@@ -7,10 +7,8 @@
  * - Proporciona el hook `useTranslation()` que re-renderiza automáticamente
  *   los componentes al cambiar el idioma, sin necesidad de Context manual.
  * - Soporta interpolación, pluralización y namespaces listos para usar.
- * - `i18n.changeLanguage(lng)` actualiza toda la interfaz de forma reactiva.
  *
- * Idioma por defecto: `es`. Fallback: `en`.
- * Para cambiar el idioma dinámicamente: `i18n.changeLanguage('en')`.
+ * Idioma fijo: `es` (español de España). Fallback: `en`.
  */
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';

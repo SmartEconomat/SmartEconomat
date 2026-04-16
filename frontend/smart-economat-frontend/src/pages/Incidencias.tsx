@@ -124,11 +124,11 @@ const Incidencias: React.FC = () => {
   const isCerradasTab = resolucionTab === 'cerradas';
 
   /**
-   * Returns the localised display label for a given `EstadoIncidencia` value.
-   * Falls back to the raw status string if no translation key is matched.
+   * Devuelve la etiqueta localizada para un valor `EstadoIncidencia` dado.
+   * Usa el string de estado sin procesar como alternativa si no se encuentra la clave de traducción.
    *
-   * @param status - The incidencia status to translate.
-   * @returns The translated label string.
+   * @param status - El estado de la incidencia a traducir.
+   * @returns La cadena de etiqueta traducida.
    */
   const incidenciaStatusLabel = (status: EstadoIncidencia): string =>
     ({
@@ -141,12 +141,12 @@ const Incidencias: React.FC = () => {
     })[status] ?? status;
 
   /**
-   * Fetches incidencias from the API and updates local state.
+   * Obtiene las incidencias desde la API y actualiza el estado local.
    *
-   * When the "cerradas" tab is active, all pages are fetched in parallel,
-   * merged, filtered to closed states only, and sorted by state priority
-   * then creation date. For open incidencias, standard server-side pagination
-   * is used.
+   * Cuando la pestaña "cerradas" está activa, se obtienen todas las páginas en paralelo,
+   * se combinan, se filtran a estados cerrados y se ordenan por prioridad de estado
+   * y luego por fecha de creación. Para incidencias abiertas se utiliza paginación
+   * estándar del servidor.
    */
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -231,13 +231,13 @@ const Incidencias: React.FC = () => {
   }, [loadData]);
 
   /**
-   * Submits a resolve/adjust payload to the API for a given incidencia.
+   * Envía un payload de resolución/ajuste a la API para una incidencia dada.
    *
-   * Shows a contextual success toast based on the final state chosen,
-   * closes the resolve modal, and refreshes the table data.
+   * Muestra un toast de éxito contextual según el estado final elegido,
+   * cierra el modal de resolución y recarga los datos de la tabla.
    *
-   * @param id - UUID of the incidencia to resolve.
-   * @param payload - Resolution details including final state and quantities.
+   * @param id - UUID de la incidencia a resolver.
+   * @param payload - Detalles de resolución incluyendo el estado final y las cantidades.
    */
   const handleResolve = async (
     id: string,
@@ -280,17 +280,17 @@ const Incidencias: React.FC = () => {
   };
 
   /**
-   * Deletes the currently selected incidencia (`itemToDelete`).
+   * Elimina la incidencia seleccionada actualmente (`itemToDelete`).
    *
-   * Shows a success toast on completion, clears the selection, and
-   * refreshes the table data. Shows an error toast if the request fails.
+   * Muestra un toast de éxito al completarse, limpia la selección y
+   * recarga los datos de la tabla. Muestra un toast de error si la solicitud falla.
    */
   const handleDelete = async () => {
     if (!itemToDelete) return;
     setIsDeleting(true);
     try {
       await removeIncidencia(itemToDelete.id);
-      toast.success('Incidencia eliminada correctamente');
+      toast.success(t('incidencias.toast.eliminada'));
       setItemToDelete(null);
       loadData();
     } catch (err: unknown) {
@@ -303,10 +303,10 @@ const Incidencias: React.FC = () => {
   };
 
   /**
-   * Opens the resolve/adjust modal for a specific incidencia.
+   * Abre el modal de resolución/ajuste para una incidencia específica.
    *
-   * @param incidencia - The incidencia to operate on.
-   * @param mode - `'adjust'` to adjust quantities, `'resolve'` to mark as resolved.
+   * @param incidencia - La incidencia sobre la que operar.
+   * @param mode - `'adjust'` para ajustar cantidades, `'resolve'` para marcar como resuelta.
    */
   const openResolveModal = (
     incidencia: Incidencia,
@@ -317,9 +317,9 @@ const Incidencias: React.FC = () => {
   };
 
   /**
-   * Opens the report selector modal pre-set to the given format.
+   * Abre el modal selector de reporte preconfigurado con el formato indicado.
    *
-   * @param formato - The desired report format (`'pdf'` or `'excel'`).
+   * @param formato - El formato de reporte deseado (`'pdf'` o `'excel'`).
    */
   const openReporteModal = (formato: ReporteFormato) => {
     setReporteFormato(formato);
@@ -327,12 +327,12 @@ const Incidencias: React.FC = () => {
   };
 
   /**
-   * Handles switching between the "abiertas" and "cerradas" resolution tabs.
+   * Gestiona el cambio entre las pestañas de resolución "abiertas" y "cerradas".
    *
-   * Resets the cerradas sub-tab to `'todas'` when leaving the cerradas tab
-   * and resets pagination to page 1.
+   * Restablece la subpestaña de cerradas a `'todas'` al abandonar la pestaña de cerradas
+   * y reinicia la paginación a la página 1.
    *
-   * @param nextTab - The tab the user is switching to.
+   * @param nextTab - La pestaña a la que cambia el usuario.
    */
   const handleResolucionTabChange = (nextTab: IncidenciasResolucionTab) => {
     setResolucionTab(nextTab);
@@ -343,11 +343,11 @@ const Incidencias: React.FC = () => {
   };
 
   /**
-   * Memoised list of incidencias filtered by the active cerradas sub-tab.
+   * Lista memorizada de incidencias filtradas por la subpestaña activa de cerradas.
    *
-   * When on the cerradas tab and a specific sub-tab is selected (e.g. `'resuelta'`),
-   * only items with that exact estado are returned. Otherwise the full dataset
-   * is returned unchanged.
+   * Cuando se está en la pestaña de cerradas y se selecciona una subpestaña específica
+   * (p. ej. `'resuelta'`), solo se devuelven los elementos con ese estado exacto.
+   * En caso contrario, se devuelve el conjunto de datos completo sin modificar.
    */
   const dataFiltrada = useMemo(() => {
     if (!isCerradasTab || cerradasTab === 'todas') {

@@ -23,6 +23,7 @@ import {
   PurchaseBatch,
 } from '../../../services/pedido.types';
 import { useToast } from '../../../store/toast.hooks';
+import { useTranslation } from 'react-i18next';
 import { PedidoFormValues } from '../types/pedidos-ui.types';
 import {
   buildCreatePedidoPayload,
@@ -40,10 +41,11 @@ interface UsePedidoActionsParams {
 }
 
 /**
- * @description Custom hook that provides all mutating actions for the pedidos feature:
- * save, delete, approve, cancel, fetch details, consolidate, and start reception.
- * @param params - Callbacks for reloading data and reacting to side-effects
- * @returns Object with action callbacks and their individual loading flags
+ * Hook personalizado que centraliza todas las acciones mutantes del módulo de pedidos:
+ * guardar, eliminar, aprobar, cancelar, obtener detalles, consolidar e iniciar recepción.
+ *
+ * @param params - Callbacks para recargar datos y reaccionar a efectos secundarios
+ * @returns Objeto con los callbacks de acción y sus indicadores individuales de carga
  * @example
  * const { savePedido, deletePedidoById, isSaving } = usePedidoActions({ reload, discardDraft });
  */
@@ -53,6 +55,7 @@ export function usePedidoActions({
   onPedidoDeleted,
   onBatchCreated,
 }: UsePedidoActionsParams) {
+  const { t } = useTranslation();
   const toast = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -70,9 +73,7 @@ export function usePedidoActions({
         const targetType = formData.targetType ?? 'pedido_usuario';
 
         if (normalizedLines.length === 0) {
-          throw new Error(
-            'Cada línea debe tener un producto-proveedor y una cantidad mayor que 0.'
-          );
+          throw new Error(t('pedidos.errors.sinProductos'));
         }
 
         const linesByProvider = groupPedidoLinesByProvider(
@@ -83,9 +84,7 @@ export function usePedidoActions({
         if (
           Array.from(linesByProvider.keys()).some((providerId) => !providerId)
         ) {
-          throw new Error(
-            'Ocurrió un error al identificar el proveedor de algunos productos.'
-          );
+          throw new Error(t('pedidos.errors.errorIdentificarProveedor'));
         }
 
         if (formData.id && targetType === 'purchase_batch') {
@@ -94,7 +93,7 @@ export function usePedidoActions({
             buildPurchaseBatchPayload(formData.observaciones, normalizedLines)
           );
 
-          toast.success('Compra actualizada correctamente.');
+          toast.success(t('pedidos.toast.compraActualizada'));
           await reload();
           return;
         }
@@ -105,7 +104,7 @@ export function usePedidoActions({
             buildPurchaseBatchPayload(formData.observaciones, normalizedLines)
           );
 
-          toast.success('Pedido actualizado correctamente.');
+          toast.success(t('pedidos.toast.pedidoActualizado'));
           await reload();
           return;
         }
@@ -115,9 +114,7 @@ export function usePedidoActions({
           const mainProviderLines = linesByProvider.get(mainProviderId);
 
           if (!mainProviderLines) {
-            throw new Error(
-              'Debes mantener al menos un producto del proveedor original del pedido.'
-            );
+            throw new Error(t('pedidos.errors.mantenerProductoProveedor'));
           }
 
           await updatePedido(
@@ -145,8 +142,8 @@ export function usePedidoActions({
 
           toast.success(
             linesByProvider.size > 0
-              ? 'Pedido actualizado y dividido por proveedor cuando ha sido necesario.'
-              : 'Pedido actualizado correctamente.'
+              ? t('pedidos.toast.pedidoActualizadoDividido')
+              : t('pedidos.toast.pedidoActualizado')
           );
         } else {
           await createPedidoUsuario(
@@ -155,8 +152,10 @@ export function usePedidoActions({
 
           toast.success(
             linesByProvider.size > 1
-              ? `Se ha registrado el pedido con ${normalizedLines.length} líneas y separación interna por proveedor.`
-              : 'Pedido registrado correctamente.'
+              ? t('pedidos.toast.pedidoRegistradoMultiproveedor', {
+                  count: normalizedLines.length,
+                })
+              : t('pedidos.toast.pedidoRegistrado')
           );
           await discardDraft();
         }
@@ -164,7 +163,7 @@ export function usePedidoActions({
         await reload();
       } catch (err: unknown) {
         const message =
-          err instanceof Error ? err.message : 'Error al guardar el pedido.';
+          err instanceof Error ? err.message : t('pedidos.errors.errorGuardar');
         toast.error(message);
         throw err;
       } finally {
@@ -180,7 +179,7 @@ export function usePedidoActions({
       try {
         await deleteResource(`/pedidos/${id}`);
         onPedidoDeleted?.(id);
-        toast.success('Pedido eliminado correctamente.');
+        toast.success(t('pedidos.toast.pedidoEliminado'));
         await reload();
       } catch (err: unknown) {
         const isNotFoundError =
@@ -190,13 +189,13 @@ export function usePedidoActions({
 
         if (isNotFoundError) {
           onPedidoDeleted?.(id);
-          toast.info('El pedido ya no existía. Se ha actualizado la lista.');
+          toast.info(t('pedidos.toast.pedidoYaNoExistia'));
           await reload();
           return;
         }
 
         toast.error(
-          err instanceof Error ? err.message : 'Error al eliminar el pedido.'
+          err instanceof Error ? err.message : t('pedidos.errors.errorEliminar')
         );
         throw err;
       } finally {
@@ -211,13 +210,11 @@ export function usePedidoActions({
       setIsAceptando(true);
       try {
         await aceptarPedidoUsuario(id);
-        toast.success('El pedido visible ha sido aprobado correctamente.');
+        toast.success(t('pedidos.toast.pedidoAprobado'));
         await reload();
       } catch (err: unknown) {
         toast.error(
-          err instanceof Error
-            ? err.message
-            : 'Error al aprobar el pedido visible.'
+          err instanceof Error ? err.message : t('pedidos.errors.errorAprobar')
         );
         throw err;
       } finally {
@@ -232,11 +229,13 @@ export function usePedidoActions({
       setIsAceptando(true);
       try {
         await aceptarPurchaseBatch(id);
-        toast.success('La compra ha sido tramitada correctamente.');
+        toast.success(t('pedidos.toast.compraTramitada'));
         await reload();
       } catch (err: unknown) {
         toast.error(
-          err instanceof Error ? err.message : 'Error al aprobar la compra.'
+          err instanceof Error
+            ? err.message
+            : t('pedidos.errors.errorAprobarCompra')
         );
         throw err;
       } finally {
@@ -251,15 +250,14 @@ export function usePedidoActions({
       setIsCancelando(true);
       try {
         await cancelPedidoUsuario(id, {
-          motivoCancelacion: motivoCancelacion || 'Cancelado por el usuario',
+          motivoCancelacion:
+            motivoCancelacion || t('pedidos.cancelar.motivoPorDefecto'),
         });
-        toast.success('El pedido visible ha sido cancelado.');
+        toast.success(t('pedidos.toast.pedidoCancelado'));
         await reload();
       } catch (err: unknown) {
         toast.error(
-          err instanceof Error
-            ? err.message
-            : 'Error al cancelar el pedido visible.'
+          err instanceof Error ? err.message : t('pedidos.errors.errorCancelar')
         );
         throw err;
       } finally {
@@ -274,13 +272,16 @@ export function usePedidoActions({
       setIsCancelando(true);
       try {
         await cancelPurchaseBatch(id, {
-          motivoCancelacion: motivoCancelacion || 'Cancelado por el usuario',
+          motivoCancelacion:
+            motivoCancelacion || t('pedidos.cancelar.motivoPorDefecto'),
         });
-        toast.success('La compra ha sido cancelada.');
+        toast.success(t('pedidos.toast.compraCancelada'));
         await reload();
       } catch (err: unknown) {
         toast.error(
-          err instanceof Error ? err.message : 'Error al cancelar la compra.'
+          err instanceof Error
+            ? err.message
+            : t('pedidos.errors.errorCancelarCompra')
         );
         throw err;
       } finally {
@@ -310,7 +311,9 @@ export function usePedidoActions({
         };
       } catch (err: unknown) {
         toast.error(
-          err instanceof Error ? err.message : 'Error al cargar el lote.'
+          err instanceof Error
+            ? err.message
+            : t('pedidos.errors.errorCargarLote')
         );
         throw err;
       } finally {
@@ -328,7 +331,7 @@ export function usePedidoActions({
           pedidoUsuarioIds,
           observaciones,
         });
-        toast.success('Se ha generado el lote semanal correctamente.');
+        toast.success(t('pedidos.toast.loteSemanalGenerado'));
         onBatchCreated?.(batch);
         await reload();
         return batch;
@@ -336,7 +339,7 @@ export function usePedidoActions({
         toast.error(
           err instanceof Error
             ? err.message
-            : 'Error al consolidar pedidos en un lote.'
+            : t('pedidos.errors.errorConsolidar')
         );
         throw err;
       } finally {
@@ -352,9 +355,7 @@ export function usePedidoActions({
         const draft = mapPurchaseBatchToRecepcionDraft(batch);
 
         if ((draft.pedidosSeleccionados || []).length === 0) {
-          toast.info(
-            'Esta compra no tiene pedidos por recepcionar. Gestiona los casos parciales o con incidencia desde Incidencias.'
-          );
+          toast.info(t('pedidos.toast.sinPedidosRecepcionar'));
           return;
         }
 
@@ -364,14 +365,12 @@ export function usePedidoActions({
             autoResumeRecepcionDraft: true,
           },
         });
-        toast.success(
-          'Se ha iniciado la recepción con los productos de la compra.'
-        );
+        toast.success(t('pedidos.toast.recepcionIniciada'));
       } catch (err: unknown) {
         toast.error(
           err instanceof Error
             ? err.message
-            : 'Error al iniciar la recepción desde la compra.'
+            : t('pedidos.errors.errorIniciarRecepcion')
         );
       }
     },

@@ -19,19 +19,19 @@ import type { Ubicacion } from '../../services/ubicacion.types';
 import { useToast } from '../../store/toast.hooks';
 import { useTranslation } from 'react-i18next';
 
-/** Props for the {@link UbicacionesModal} component. */
+/** Props del componente {@link UbicacionesModal}. */
 interface Props {
   open: boolean;
   onClose: () => void;
-  /** Triggered whenever a location is added or removed. */
+  /** Se dispara cada vez que se añade o elimina una ubicación. */
   onChanged: () => void;
 }
 
 /**
- * Modal dialog for managing warehouse locations (ubicaciones).
+ * Diálogo modal para gestionar ubicaciones del almacén.
  *
- * Allows users to add new locations by name and delete existing ones.
- * The list is reloaded from the API every time the modal is opened.
+ * Permite añadir nuevas ubicaciones por nombre y eliminar las existentes.
+ * La lista se recarga desde la API cada vez que el modal se abre.
  *
  * @param props - {@link Props}
  */
@@ -43,8 +43,8 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
   const { t } = useTranslation();
 
   /**
-   * Fetches all locations from the API and updates local state.
-   * Shows an error toast on failure.
+   * Obtiene todas las ubicaciones desde la API y actualiza el estado local.
+   * Muestra un toast de error en caso de fallo.
    */
   const loadUbicaciones = async () => {
     setLoading(true);
@@ -53,7 +53,9 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
       setUbicaciones(Array.isArray(data) ? data : []);
     } catch (err) {
       const error = err as Error;
-      toast.error(error.message || 'Error al cargar ubicaciones');
+      toast.error(
+        error.message || t('inventario.toast.errorCargarUbicaciones')
+      );
     } finally {
       setLoading(false);
     }
@@ -67,38 +69,38 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
   }, [open]);
 
   /**
-   * Creates a new location with the current value of `newNombre`.
-   * Reloads the list and notifies the parent on success.
+   * Crea una nueva ubicación con el valor actual de `newNombre`.
+   * Recarga la lista y notifica al componente padre en caso de éxito.
    */
   const handleAdd = async () => {
     if (!newNombre.trim()) return;
     try {
       await UbicacionService.create({ nombre: newNombre.trim() });
       setNewNombre('');
-      toast.success('Ubicación añadida');
+      toast.success(t('inventario.ubicaciones.toast.creada'));
       onChanged();
       loadUbicaciones();
     } catch (err) {
       const error = err as Error;
-      toast.error(error.message || 'Error al crear ubicación');
+      toast.error(error.message || t('inventario.ubicaciones.errors.crear'));
     }
   };
 
   /**
-   * Deletes the location identified by `id`.
-   * Reloads the list and notifies the parent on success.
+   * Elimina la ubicación identificada por `id`.
+   * Recarga la lista y notifica al componente padre en caso de éxito.
    *
-   * @param id - The UUID of the location to delete.
+   * @param id - UUID de la ubicación a eliminar.
    */
   const handleDelete = async (id: string) => {
     try {
       await UbicacionService.remove(id);
-      toast.success('Ubicación eliminada');
+      toast.success(t('inventario.ubicaciones.toast.eliminada'));
       onChanged();
       loadUbicaciones();
     } catch (err) {
       const error = err as Error;
-      toast.error(error.message || 'Error al eliminar ubicación');
+      toast.error(error.message || t('inventario.ubicaciones.errors.eliminar'));
     }
   };
 

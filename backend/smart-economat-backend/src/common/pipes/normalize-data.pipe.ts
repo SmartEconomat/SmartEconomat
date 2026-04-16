@@ -9,17 +9,17 @@ import { validate } from 'class-validator';
 import { I18nHelper } from '../helpers/i18n.helper';
 
 /**
- * @description Global NestJS pipe for automatic normalisation of incoming request data.
+ * @description Pipe global de NestJS para la normalización automática de los datos de la petición entrante.
  *
- * This pipe runs BEFORE class-validator validation and performs the following steps:
- * 1. Trims all string values (including nested ones).
- * 2. Converts types (string → number, boolean, Date) via `class-transformer`.
- * 3. Recursively normalises arrays and nested objects.
- * 4. Validates the transformed data via `class-validator` and throws a
- *    `BadRequestException` with a translated message on failure.
+ * Este pipe se ejecuta ANTES de la validación de class-validator y realiza los siguientes pasos:
+ * 1. Recorta todos los valores de cadena (incluidos los anidados).
+ * 2. Convierte tipos (string → number, boolean, Date) mediante `class-transformer`.
+ * 3. Normaliza recursivamente arrays y objetos anidados.
+ * 4. Valida los datos transformados mediante `class-validator` y lanza una
+ *    `BadRequestException` con un mensaje traducido si falla.
  *
- * Custom param decorators (`metadata.type === 'custom'`) and primitives are passed
- * through unchanged.
+ * Los decoradores de parámetro personalizados (`metadata.type === 'custom'`) y los primitivos se pasan
+ * sin modificar.
  *
  * @example
  * \@Post()
@@ -30,14 +30,14 @@ import { I18nHelper } from '../helpers/i18n.helper';
 @Injectable()
 export class NormalizeDataPipe implements PipeTransform<unknown> {
   /**
-   * @description Transforms and validates the incoming pipeline value. Bypasses
-   * normalisation for custom param types and primitives. When a DTO metatype is
-   * available it uses `plainToInstance` + `validate` for type coercion and constraint
-   * checking. Falls back to recursive object normalisation for plain objects and arrays.
-   * @param value - The raw value injected by NestJS (body, query, param, etc.).
-   * @param metadata - Argument metadata describing the parameter type and metatype.
-   * @returns The normalised (and validated) value.
-   * @throws {BadRequestException} If class-validator reports constraint violations on the transformed DTO.
+   * @description Transforma y valida el valor entrante del pipeline. Omite la normalización
+   * para tipos de parámetro personalizados y primitivos. Cuando hay un metatipo DTO disponible,
+   * usa `plainToInstance` + `validate` para la conversión de tipos y la comprobación de restricciones.
+   * Recurre a la normalización recursiva de objetos para objetos simples y arrays.
+   * @param value - El valor bruto inyectado por NestJS (body, query, param, etc.).
+   * @param metadata - Metadatos del argumento que describen el tipo y el metatipo del parámetro.
+   * @returns El valor normalizado (y validado).
+   * @throws {BadRequestException} Si class-validator detecta violaciones de restricciones en el DTO transformado.
    */
   async transform(
     value: unknown,
@@ -89,11 +89,11 @@ export class NormalizeDataPipe implements PipeTransform<unknown> {
   }
 
   /**
-   * @description Recursively normalises a plain object or array. For each string
-   * value (including object keys) a `trim()` is applied. Nested objects and arrays
-   * are processed recursively. Non-string, non-object primitives are left unchanged.
-   * @param obj - The object or array to normalise.
-   * @returns The normalised object, array, or primitive value.
+   * @description Normaliza recursivamente un objeto simple o un array. A cada valor de cadena
+   * (incluidas las claves del objeto) se le aplica un `trim()`. Los objetos y arrays anidados
+   * se procesan recursivamente. Los primitivos que no son cadenas ni objetos se dejan sin cambios.
+   * @param obj - El objeto o array a normalizar.
+   * @returns El objeto, array o valor primitivo normalizado.
    */
   private normalizeObject(obj: object): unknown {
     if (!obj || typeof obj !== 'object') {

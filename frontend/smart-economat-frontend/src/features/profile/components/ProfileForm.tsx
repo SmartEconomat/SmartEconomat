@@ -59,7 +59,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
               onChange={onFormChange}
               required
               disabled={isSaving}
-              helperText="El nombre que verán los demás"
+              helperText={t('perfil.form.helperNombre')}
             />
           ) : (
             <Box>

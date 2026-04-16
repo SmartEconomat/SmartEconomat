@@ -1,7 +1,7 @@
 /**
  * @module IncidenciaService
- * Service layer for managing supply-reception incidences. Handles creation,
- * retrieval, update, resolution and status synchronisation with parent pedidos.
+ * Capa de servicio para gestionar las incidencias de recepción de suministros. Gestiona la creación,
+ * recuperación, actualización, resolución y sincronización de estado con los pedidos padre.
  */
 import {
   BadRequestException,
@@ -43,23 +43,23 @@ import { permiteComputarComoRecibido } from '../../recepcion/utils/recepcion-pro
 import { PedidoProducto } from '../../pedido/pedido-producto.entity/pedido-producto.entity';
 
 /**
- * Service that manages the full lifecycle of incidencias (supply discrepancies).
- * Provides CRUD, resolution workflows, automatic line-state derivation and
- * pedido status synchronisation after resolution.
+ * Servicio que gestiona el ciclo de vida completo de las incidencias (discrepancias de suministro).
+ * Proporciona CRUD, flujos de resolución, derivación automática del estado de líneas y
+ * sincronización del estado del pedido tras la resolución.
  * @class IncidenciaService
  */
 @Injectable()
 export class IncidenciaService {
-  /** Tolerance used when comparing floating-point quantities. */
+  /** Tolerancia utilizada al comparar cantidades en coma flotante. */
   private static readonly CANTIDAD_EPSILON = 0.0005;
 
   /**
-   * Constructs the IncidenciaService with its required dependencies.
-   * @param {IncidenciaRepository} incidenciaRepository - Custom repository for Incidencia with pagination support.
-   * @param {Repository<Recepcion>} recepcionRepository - TypeORM repository for Recepcion entity.
-   * @param {DataSource} dataSource - TypeORM DataSource used to run transactions.
-   * @param {MovimientoHelper} movimientoHelper - Helper that creates stock movement audit records.
-   * @param {PedidoService} pedidoService - Service used to trigger pedido status transitions.
+   * Construye el IncidenciaService con sus dependencias requeridas.
+   * @param {IncidenciaRepository} incidenciaRepository - Repositorio personalizado para Incidencia con soporte de paginación.
+   * @param {Repository<Recepcion>} recepcionRepository - Repositorio TypeORM para la entidad Recepcion.
+   * @param {DataSource} dataSource - DataSource de TypeORM utilizado para ejecutar transacciones.
+   * @param {MovimientoHelper} movimientoHelper - Helper que crea registros de auditoría de movimientos de stock.
+   * @param {PedidoService} pedidoService - Servicio utilizado para disparar transiciones de estado del pedido.
    */
   constructor(
     private readonly incidenciaRepository: IncidenciaRepository,
@@ -71,10 +71,10 @@ export class IncidenciaService {
   ) {}
 
   /**
-   * Creates a new incidencia with its associated lines inside a single transaction.
-   * Each line captures the expected vs received quantity and the type of discrepancy.
-   * @param {CreateIncidenciaDto} dto - Payload describing the incidencia and its lines.
-   * @returns {Promise<Incidencia>} The created Incidencia entity with lines and computed estado attached.
+   * Crea una nueva incidencia con sus líneas asociadas dentro de una única transacción.
+   * Cada línea captura la cantidad esperada frente a la recibida y el tipo de discrepancia.
+   * @param {CreateIncidenciaDto} dto - Carga útil que describe la incidencia y sus líneas.
+   * @returns {Promise<Incidencia>} La entidad Incidencia creada con las líneas y el estado calculado adjuntos.
    */
   async create(dto: CreateIncidenciaDto): Promise<Incidencia> {
     return this.dataSource.transaction(async (manager) => {
@@ -109,10 +109,10 @@ export class IncidenciaService {
   }
 
   /**
-   * Returns a paginated list of incidencias. Each record has its computed estado attached.
-   * @param {IncidenciaQueryDto} query - Filtering, pagination and sorting parameters.
-   * @param {string} [userRole] - Role of the requesting user; admins may see additional records.
-   * @returns {Promise<PaginatedResponseDto<Incidencia>>} Paginated result with computed estados.
+   * Devuelve una lista paginada de incidencias. Cada registro tiene su estado calculado adjunto.
+   * @param {IncidenciaQueryDto} query - Parámetros de filtrado, paginación y ordenación.
+   * @param {string} [userRole] - Rol del usuario solicitante; los admins pueden ver registros adicionales.
+   * @returns {Promise<PaginatedResponseDto<Incidencia>>} Resultado paginado con los estados calculados.
    */
   async findAll(
     query: IncidenciaQueryDto,
@@ -131,11 +131,11 @@ export class IncidenciaService {
   }
 
   /**
-   * Finds a single incidencia by its UUID and attaches the computed estado.
-   * @param {string} id - UUID of the incidencia to retrieve.
-   * @param {string} [userRole] - Role of the requesting user.
-   * @returns {Promise<Incidencia>} The found Incidencia with all relations and computed estado.
-   * @throws {NotFoundException} If no incidencia with the given ID exists.
+   * Busca una única incidencia por su UUID y adjunta el estado calculado.
+   * @param {string} id - UUID de la incidencia a recuperar.
+   * @param {string} [userRole] - Rol del usuario solicitante.
+   * @returns {Promise<Incidencia>} La Incidencia encontrada con todas las relaciones y el estado calculado.
+   * @throws {NotFoundException} Si no existe ninguna incidencia con el ID dado.
    */
   async findOne(id: string, userRole?: string): Promise<Incidencia> {
     const incidencia = await this.incidenciaRepository.findOneWithRelations(
@@ -151,12 +151,12 @@ export class IncidenciaService {
   }
 
   /**
-   * Updates the header fields of an open (not yet resolved) incidencia.
-   * @param {string} id - UUID of the incidencia to update.
-   * @param {UpdateIncidenciaDto} dto - Partial payload with the fields to update.
-   * @returns {Promise<Incidencia>} The updated Incidencia with computed estado.
-   * @throws {NotFoundException} If no incidencia with the given ID exists.
-   * @throws {BadRequestException} If the incidencia is already resolved.
+   * Actualiza los campos de cabecera de una incidencia abierta (aún no resuelta).
+   * @param {string} id - UUID de la incidencia a actualizar.
+   * @param {UpdateIncidenciaDto} dto - Carga útil parcial con los campos a actualizar.
+   * @returns {Promise<Incidencia>} La Incidencia actualizada con el estado calculado.
+   * @throws {NotFoundException} Si no existe ninguna incidencia con el ID dado.
+   * @throws {BadRequestException} Si la incidencia ya está resuelta.
    */
   async update(id: string, dto: UpdateIncidenciaDto): Promise<Incidencia> {
     const incidencia = await this.findOne(id);
@@ -178,12 +178,12 @@ export class IncidenciaService {
   }
 
   /**
-   * Permanently removes an open incidencia from the database.
-   * Resolved incidencias cannot be deleted.
-   * @param {string} id - UUID of the incidencia to remove.
+   * Elimina permanentemente una incidencia abierta de la base de datos.
+   * Las incidencias resueltas no pueden eliminarse.
+   * @param {string} id - UUID de la incidencia a eliminar.
    * @returns {Promise<void>}
-   * @throws {NotFoundException} If no incidencia with the given ID exists.
-   * @throws {BadRequestException} If the incidencia is already resolved.
+   * @throws {NotFoundException} Si no existe ninguna incidencia con el ID dado.
+   * @throws {BadRequestException} Si la incidencia ya está resuelta.
    */
   async remove(id: string): Promise<void> {
     const incidencia = await this.findOne(id);
@@ -198,17 +198,17 @@ export class IncidenciaService {
   }
 
   /**
-   * Resolves an incidencia, optionally applying line-level quantity adjustments first.
-   * The incidencia is closed when all lines become balanced, when `marcarComoResuelta` is
-   * set to `true`, or when a terminal `estadoFinal` is requested.
-   * Also triggers a pedido status re-evaluation after resolution.
-   * @param {string} id - UUID of the incidencia to resolve.
-   * @param {ResolverIncidenciaDto} dto - Resolution payload with optional line adjustments and final state.
-   * @param {string} [usuarioAutenticadoId] - ID of the authenticated user, used as fallback resolver.
-   * @returns {Promise<Incidencia>} The hydrated Incidencia with computed estado after resolution.
-   * @throws {NotFoundException} If no incidencia with the given ID exists.
-   * @throws {BadRequestException} If the incidencia is already resolved, has no lines,
-   *   or the resolver ID cannot be determined.
+   * Resuelve una incidencia, aplicando opcionalmente primero ajustes de cantidad a nivel de línea.
+   * La incidencia se cierra cuando todas las líneas quedan equilibradas, cuando `marcarComoResuelta` se
+   * establece en `true`, o cuando se solicita un `estadoFinal` terminal.
+   * También dispara una reevaluación del estado del pedido tras la resolución.
+   * @param {string} id - UUID de la incidencia a resolver.
+   * @param {ResolverIncidenciaDto} dto - Carga útil de resolución con ajustes de línea opcionales y estado final.
+   * @param {string} [usuarioAutenticadoId] - ID del usuario autenticado, usado como resolutor de reserva.
+   * @returns {Promise<Incidencia>} La Incidencia hidratada con el estado calculado tras la resolución.
+   * @throws {NotFoundException} Si no existe ninguna incidencia con el ID dado.
+   * @throws {BadRequestException} Si la incidencia ya está resuelta, no tiene líneas,
+   *   o no se puede determinar el ID del resolutor.
    */
   async resolverIncidencia(
     id: string,
@@ -318,13 +318,13 @@ export class IncidenciaService {
   }
 
   /**
-   * Automatically builds an incidencia from the actual discrepancies found in
-   * a recepcion's product lines. Marks the recepcion as having an incidencia.
-   * Only lines with a meaningful quantity difference or DEFECTUOSO status are included.
-   * @param {ReportIncidenciaDto} dto - DTO containing the recepcionId and the reported incidencia type.
-   * @returns {Promise<Incidencia>} The newly created Incidencia with computed estado.
-   * @throws {NotFoundException} If the referenced Recepcion does not exist.
-   * @throws {BadRequestException} If no product lines show a discrepancy.
+   * Construye automáticamente una incidencia a partir de las discrepancias reales encontradas en
+   * las líneas de producto de una recepción. Marca la recepción como que tiene una incidencia.
+   * Solo se incluyen las líneas con una diferencia de cantidad significativa o estado DEFECTUOSO.
+   * @param {ReportIncidenciaDto} dto - DTO que contiene el recepcionId y el tipo de incidencia reportado.
+   * @returns {Promise<Incidencia>} La Incidencia recién creada con el estado calculado.
+   * @throws {NotFoundException} Si la Recepcion referenciada no existe.
+   * @throws {BadRequestException} Si ninguna línea de producto muestra una discrepancia.
    */
   async reportarIncidencia(dto: ReportIncidenciaDto): Promise<Incidencia> {
     const recepcion = await this.recepcionRepository.findOne({
@@ -428,15 +428,15 @@ export class IncidenciaService {
   }
 
   /**
-   * Resolves an incidencia using the legacy transactional flow. Creates an
-   * IncidenciaResuelta record, optionally registers a stock adjustment movement
-   * for DEVOLUCION resolutions, closes the incidencia and triggers pedido sync.
-   * @param {string} id - UUID of the incidencia to resolve.
-   * @param {ResolveIncidenciaDto} dto - Resolution data including the action type and optional observations.
-   * @param {string} usuarioId - ID of the authenticated user performing the resolution.
-   * @returns {Promise<Incidencia>} The resolved Incidencia with computed estado.
-   * @throws {NotFoundException} If no incidencia with the given ID exists.
-   * @throws {BadRequestException} If the incidencia is already resolved or has no lines.
+   * Resuelve una incidencia usando el flujo transaccional heredado. Crea un registro
+   * IncidenciaResuelta, registra opcionalmente un movimiento de ajuste de stock
+   * para resoluciones DEVOLUCION, cierra la incidencia y dispara la sincronización del pedido.
+   * @param {string} id - UUID de la incidencia a resolver.
+   * @param {ResolveIncidenciaDto} dto - Datos de resolución incluyendo el tipo de acción y observaciones opcionales.
+   * @param {string} usuarioId - ID del usuario autenticado que realiza la resolución.
+   * @returns {Promise<Incidencia>} La Incidencia resuelta con el estado calculado.
+   * @throws {NotFoundException} Si no existe ninguna incidencia con el ID dado.
+   * @throws {BadRequestException} Si la incidencia ya está resuelta o no tiene líneas.
    */
   async resolverIncidenciaTransaccional(
     id: string,
@@ -498,7 +498,7 @@ export class IncidenciaService {
   /**
    * Attaches the computed `resuelta` flag and `estado` field to an Incidencia instance.
    * These are virtual fields derived from the entity's persisted data.
-   * @param {Incidencia} incidencia - The Incidencia entity to annotate.
+   * @param {Incidencia} incidencia - La entidad Incidencia entity to annotate.
    * @returns {Incidencia} The same entity with `resuelta` and `estado` fields set.
    */
   private attachEstadoComputado(incidencia: Incidencia): Incidencia {
@@ -511,7 +511,7 @@ export class IncidenciaService {
    * Derives the semantic estado of an incidencia based on its resolution text,
    * resolution date, line balance, and claim states.
    * Priority order: CANCELADA > INVALIDA > RESUELTA > PENDIENTE_VALIDACION > NUEVA > EN_AJUSTE.
-   * @param {Incidencia} incidencia - The Incidencia entity with lines loaded.
+   * @param {Incidencia} incidencia - La entidad Incidencia entity with lines loaded.
    * @returns {EstadoIncidencia} The derived estado value.
    */
   private resolveEstadoIncidencia(incidencia: Incidencia): EstadoIncidencia {
@@ -566,7 +566,7 @@ export class IncidenciaService {
   }
 
   /**
-   * Builds the `observacionesResolucion` string by optionally appending a state tag
+   * Construye the `observacionesResolucion` string by optionally appending a state tag
    * when a terminal `estadoFinal` is requested (CANCELADA or INVALIDA).
    * @param {string | undefined} observaciones - Raw observations from the resolution DTO.
    * @param {EstadoFinalIncidenciaDto} [estadoFinal] - Optional requested terminal state.
@@ -592,7 +592,7 @@ export class IncidenciaService {
   /**
    * Appends a state tag to the base observations string if the tag is not already present.
    * @param {string | undefined} base - Existing observations text. May be empty or undefined.
-   * @param {string} tag - The tag to append (e.g. `[cancelada]`).
+   * @param {string} tag - La etiqueta to append (p. ej. `[cancelada]`).
    * @returns {string} The base string with the tag appended, or just the tag if base is empty.
    */
   private appendStateTag(base: string | undefined, tag: string): string {
@@ -610,8 +610,8 @@ export class IncidenciaService {
   /**
    * Returns `true` when the absolute difference between the received and expected
    * quantities for a line is within the configured epsilon tolerance.
-   * @param {IncidenciaLinea} linea - The incidencia line to check.
-   * @returns {boolean} Whether the line is considered balanced (no meaningful discrepancy).
+   * @param {IncidenciaLinea} linea - La línea de incidencia line to check.
+   * @returns {boolean} Indica si la línea se considera equilibrada (sin discrepancia significativa).
    */
   private isLineaBalanceada(linea: IncidenciaLinea): boolean {
     return (
@@ -627,7 +627,7 @@ export class IncidenciaService {
    * - ABONADO if the line is balanced.
    * - RECLAMADO if some quantity has been received.
    * - PENDIENTE if nothing has been received yet.
-   * @param {IncidenciaLinea} linea - The incidencia line to evaluate.
+   * @param {IncidenciaLinea} linea - La línea de incidencia line to evaluate.
    * @returns {EstadoReclamacion} The derived claim state.
    */
   private resolveEstadoReclamacion(linea: IncidenciaLinea): EstadoReclamacion {
@@ -643,8 +643,8 @@ export class IncidenciaService {
   }
 
   /**
-   * Applies a batch of line-level quantity adjustments to the in-memory incidencia lines.
-   * Validates that lines exist, that only one quantity field is set per adjustment,
+   * Aplica a batch of line-level quantity adjustments to the in-memory incidencia lines.
+   * Valida that lines exist, that only one quantity field is set per adjustment,
    * and that balanced lines are not re-adjusted.
    * Mutates the provided `lineas` array in place; the caller is responsible for persisting.
    * @param {IncidenciaLinea[]} lineas - Existing incidencia lines (must be non-empty).
@@ -745,7 +745,7 @@ export class IncidenciaService {
   /**
    * Re-evaluates the status of a pedido after one of its incidencias has been resolved.
    * If open incidencias remain, keeps the pedido in INCIDENCIA state.
-   * Otherwise determines whether reception is complete or partial and triggers the
+   * Otherwise determines si reception is complete or partial and triggers the
    * appropriate status transition.
    * @param {string} pedidoId - UUID of the pedido to synchronise.
    * @param {EntityManager} manager - Active EntityManager within the enclosing transaction.

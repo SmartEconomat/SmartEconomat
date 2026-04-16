@@ -20,6 +20,7 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import { CategoriaProducto } from '../../services/producto.types';
 import { getCategoryIconFilled } from './utils/getCategoryIconFilled';
 import { useBreakpoints } from '../../utils/useBreakpoints';
+import { useTranslation } from 'react-i18next';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tipos públicos
@@ -74,6 +75,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   filters,
   onChange,
 }) => {
+  const { t } = useTranslation();
   const { isMobileOrTablet } = useBreakpoints();
 
   // Sincronizar las opciones seleccionadas con el estado externo
@@ -192,7 +194,11 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
         <TextField
           {...params}
           size="small"
-          placeholder={selected.length === 0 ? 'Filtrar categoría...' : ''}
+          placeholder={
+            selected.length === 0
+              ? t('productos.filtros.placeholderCategoria')
+              : ''
+          }
           InputProps={{
             ...params.InputProps,
             startAdornment: (

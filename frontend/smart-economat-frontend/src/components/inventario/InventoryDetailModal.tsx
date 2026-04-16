@@ -37,10 +37,10 @@ import { useTranslation } from 'react-i18next';
 const AUDIT_MANUAL_REASON = 'Ajuste de auditoria desde inventario';
 
 /**
- * Parses a raw adjustment string input into a finite number or null.
+ * Convierte una cadena de texto de ajuste en un número finito o nulo.
  *
- * @param value - The raw string from the adjustment text field.
- * @returns The parsed number, or null if the value is empty or non-finite.
+ * @param value - El string sin procesar del campo de texto de ajuste.
+ * @returns El número parseado, o null si el valor está vacío o no es finito.
  */
 const parseAdjustmentValue = (value: string | undefined): number | null => {
   if (!value) return null;
@@ -51,10 +51,10 @@ const parseAdjustmentValue = (value: string | undefined): number | null => {
 const MEASURABLE_STOCK_UNITS = new Set(['KG', 'G', 'L', 'ML']);
 
 /**
- * Formats a stock unit value as a fixed-precision string with the "uds" suffix.
+ * Formatea un valor de stock como cadena de precisión fija con el sufijo "uds".
  *
- * @param value - The numeric stock count.
- * @returns Formatted string, e.g. "3.00 uds".
+ * @param value - El conteo numérico de stock.
+ * @returns Cadena formateada, p. ej. "3.00 uds".
  */
 const formatStockUnits = (value: number): string => {
   const safeValue = Number.isFinite(value) ? value : 0;
@@ -62,11 +62,11 @@ const formatStockUnits = (value: number): string => {
 };
 
 /**
- * Formats a measurement value with automatic unit upgrade (mL→L, g→kg).
+ * Formatea un valor de medición con conversión automática de unidades (mL→L, g→kg).
  *
- * @param value - The numeric measurement value.
- * @param unit  - The base unit string (e.g. "ML", "G").
- * @returns Formatted string with the appropriate unit label.
+ * @param value - El valor numérico de la medición.
+ * @param unit  - La cadena de unidad base (p. ej. "ML", "G").
+ * @returns Cadena formateada con la etiqueta de unidad correspondiente.
  */
 const formatEquivalentAmount = (value: number, unit: string): string => {
   if (unit === 'ML' && Math.abs(value) >= 1000) {
@@ -81,14 +81,14 @@ const formatEquivalentAmount = (value: number, unit: string): string => {
 };
 
 /**
- * Calculates the equivalent measurable amount from stock units and the product
- * construction metadata.  Returns null when the unit is not measurable or
- * the conversion data is missing.
+ * Calcula la cantidad medible equivalente a partir de unidades de stock y los
+ * metadatos de construcción del producto. Devuelve null cuando la unidad no es
+ * medible o faltan los datos de conversión.
  *
- * @param stockUnits         - Number of stock units.
- * @param contenidoPorUnidad - Product content per stock unit (e.g. 330 for 330 mL).
- * @param unidadContenido    - Unit of measurement (e.g. "ML", "G").
- * @returns Formatted equivalent string prefixed with "≈", or null.
+ * @param stockUnits         - Número de unidades de stock.
+ * @param contenidoPorUnidad - Contenido del producto por unidad de stock (p. ej. 330 para 330 mL).
+ * @param unidadContenido    - Unidad de medida (p. ej. "ML", "G").
+ * @returns Cadena equivalente formateada con el prefijo "≈", o null.
  */
 const formatEquivalentFromConstruction = (
   stockUnits: number,
@@ -109,12 +109,12 @@ const formatEquivalentFromConstruction = (
 };
 
 /**
- * Builds a human-readable product construction label, e.g. "1 ud stock = 330.00 ML".
- * Returns null when the unit is not measurable or conversion data is missing.
+ * Genera una etiqueta legible de construcción del producto, p. ej. "1 ud stock = 330.00 ML".
+ * Devuelve null cuando la unidad no es medible o faltan los datos de conversión.
  *
- * @param contenidoPorUnidad - Product content per stock unit.
- * @param unidadContenido    - Unit of measurement.
- * @returns Construction label string or null.
+ * @param contenidoPorUnidad - Contenido del producto por unidad de stock.
+ * @param unidadContenido    - Unidad de medida.
+ * @returns Cadena de etiqueta de construcción o null.
  */
 const formatProductConstruction = (
   contenidoPorUnidad?: number,
@@ -133,12 +133,12 @@ const formatProductConstruction = (
 };
 
 /**
- * Formats a product measure label combining the content amount and its unit.
- * Returns null if either argument is missing or non-finite.
+ * Genera la etiqueta de medida de un producto combinando la cantidad de contenido y su unidad.
+ * Devuelve null si alguno de los argumentos falta o no es finito.
  *
- * @param contenido - Numeric content amount.
- * @param unidad    - Unit of measurement string.
- * @returns Label string like "330 ML", or null.
+ * @param contenido - Cantidad numérica de contenido.
+ * @param unidad    - Cadena de unidad de medida.
+ * @returns Cadena de etiqueta como "330 ML", o null.
  */
 const formatProductoMedidaLabel = (
   contenido?: number,
@@ -151,7 +151,7 @@ const formatProductoMedidaLabel = (
   return `${contenido} ${unidad}`;
 };
 
-/** Props for the {@link InventoryDetailModal} component. */
+/** Props del componente {@link InventoryDetailModal}. */
 interface InventoryDetailModalProps {
   open: boolean;
   mode: 'view' | 'audit';
@@ -162,11 +162,11 @@ interface InventoryDetailModalProps {
 }
 
 /**
- * Modal dialog that displays batch-level inventory details for a given product.
+ * Diálogo modal que muestra los detalles de inventario a nivel de lote para un producto dado.
  *
- * In `view` mode it shows the current stock per batch (read-only).
- * In `audit` mode it allows the user to enter per-batch stock adjustments and
- * save them individually.  A "Report Wastage" shortcut opens a sub-modal.
+ * En modo `view` muestra el stock actual por lote (solo lectura).
+ * En modo `audit` permite al usuario introducir ajustes de stock por lote
+ * y guardarlos individualmente. Un acceso directo a "Reportar Merma" abre un submodal.
  *
  * @param props - {@link InventoryDetailModalProps}
  */
@@ -256,12 +256,12 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
         : 'text.primary';
 
   /**
-   * Returns an inline validation error message for the adjustment field of a
-   * given inventory item, or null when the value is valid.
+   * Devuelve un mensaje de error de validación en línea para el campo de ajuste
+   * del elemento de inventario indicado, o null cuando el valor es válido.
    *
-   * @param item         - The inventory item being validated.
-   * @param requireValue - When true, an empty value also triggers an error.
-   * @returns Error string or null.
+   * @param item         - El elemento de inventario que se está validando.
+   * @param requireValue - Cuando es true, un valor vacío también genera un error.
+   * @returns Cadena de error o null.
    */
   const getAdjustmentError = (
     item: InventarioItem,
@@ -290,20 +290,20 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
   };
 
   /**
-   * Updates the local adjustment input value for a specific inventory item.
+   * Actualiza el valor del campo de ajuste local para un elemento de inventario específico.
    *
-   * @param id    - The inventory item ID.
-   * @param value - The new raw text value from the TextField.
+   * @param id    - El ID del elemento de inventario.
+   * @param value - El nuevo valor de texto sin procesar del TextField.
    */
   const handleAdjustmentChange = (id: string, value: string) => {
     setStockAdjustments((prev) => ({ ...prev, [id]: value }));
   };
 
   /**
-   * Validates and persists the stock adjustment for a single inventory batch.
-   * Displays toast feedback on success or failure.
+   * Valida y persiste el ajuste de stock para un lote de inventario individual.
+   * Muestra feedback mediante toast en caso de éxito o error.
    *
-   * @param item - The inventory item whose adjustment should be saved.
+   * @param item - El elemento de inventario cuyo ajuste se debe guardar.
    */
   const handleSaveAdjustment = async (item: InventarioItem) => {
     const validationError = getAdjustmentError(item, true);
@@ -314,7 +314,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
 
     const adjustment = parseAdjustmentValue(stockAdjustments[item.id]);
     if (adjustment === null) {
-      toast.error('No se pudo interpretar el ajuste de stock.');
+      toast.error(t('inventario.detalle.errors.interpretarAjuste'));
       return;
     }
 
@@ -388,7 +388,9 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
       onRefreshItem();
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : t('inventario.detalle.toast.errorMerma');
+        err instanceof Error
+          ? err.message
+          : t('inventario.detalle.toast.errorMerma');
       toast.error(message);
     } finally {
       setIsSavingMerma(false);
@@ -406,7 +408,9 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle component="div">
         <Typography variant="h6" component="h2">
-          {mode === 'audit' ? t('inventario.detalle.auditarTitulo') : t('inventario.detalle.detalleLotesTitulo')}
+          {mode === 'audit'
+            ? t('inventario.detalle.auditarTitulo')
+            : t('inventario.detalle.detalleLotesTitulo')}
         </Typography>
         <Typography
           variant="subtitle2"
@@ -548,7 +552,9 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
                     <TableCell>{t('inventario.detalle.caducidad')}</TableCell>
                     {mode === 'audit' ? (
                       <>
-                        <TableCell align="right">{t('inventario.detalle.stockActualUds')}</TableCell>
+                        <TableCell align="right">
+                          {t('inventario.detalle.stockActualUds')}
+                        </TableCell>
                         <TableCell align="right">
                           {t('inventario.detalle.ajusteUds')}
                         </TableCell>
@@ -643,11 +649,13 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
                                     e.target.value
                                   )
                                 }
-                                placeholder="+2 / -1"
+                                placeholder={t(
+                                  'inventario.detalle.placeholderAjuste'
+                                )}
                                 error={Boolean(fieldError)}
                                 helperText={
                                   fieldError ??
-                                  'Ajuste en unidades de envase (+/-)'
+                                  t('inventario.detalle.helperAjuste')
                                 }
                                 sx={{ width: '170px' }}
                                 inputProps={{
@@ -729,7 +737,9 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
         </Button>
         <Box>
           <Button onClick={onClose} variant="contained" color="primary">
-            {mode === 'audit' ? t('inventario.detalle.cerrarAuditoria') : t('comun.cerrar')}
+            {mode === 'audit'
+              ? t('inventario.detalle.cerrarAuditoria')
+              : t('comun.cerrar')}
           </Button>
         </Box>
       </DialogActions>

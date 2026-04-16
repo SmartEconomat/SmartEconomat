@@ -36,7 +36,7 @@ export { HttpSeedRequestError } from './seed-context.http-utils';
 
 /**
  * @description Central orchestration context used by all database seeders.
- * Manages HTTP authentication, concurrency-limited API requests with retry/backoff logic,
+ * Gestiona HTTP authentication, concurrency-limited API requests with retry/backoff logic,
  * Docker infrastructure lifecycle, shared in-memory state between seeder steps,
  * and structured HTTP event logging to a file.
  *
@@ -96,7 +96,7 @@ export class SeedContext {
   ];
 
   /**
-   * @description Resolves a writable directory for the HTTP event log file, trying several
+   * @description Resuelve a writable directory for the HTTP event log file, trying several
    * candidate paths in order (`__dirname/logs`, `cwd/logs`, `/tmp/...`).
    * Creates the directory if necessary and writes a header line to verify writability.
    * @returns {string} Absolute path to the initialised log file.
@@ -131,8 +131,8 @@ export class SeedContext {
   }
 
   /**
-   * @description Creates a new SeedContext and initialises all runtime configuration.
-   * Resolves the writable log file path as part of construction.
+   * @description Crea un nuevo SeedContext and initialises all runtime configuration.
+   * Resuelve the writable log file path as part of construction.
    * @param {SeedContextConfig} config - Optional configuration overrides.
    *   Unset or invalid values fall back to their documented defaults.
    */
@@ -211,7 +211,7 @@ export class SeedContext {
   }
 
   /**
-   * @description Applies the provided configuration to the instance properties,
+   * @description Aplica the provided configuration to the instance properties,
    * falling back to defaults for any missing or invalid values.
    * @param {SeedContextConfig} config - Partial configuration object to apply.
    * @returns {void}
@@ -347,7 +347,7 @@ export class SeedContext {
    * or the maximum retry count is reached.
    * @param {number} [retries=60] - Maximum number of polling attempts.
    * @param {number} [delayMs=2000] - Milliseconds to wait between attempts.
-   * @returns {Promise<void>} Resolves when the backend is reachable.
+   * @returns {Promise<void>} Resuelve when the backend is reachable.
    * @throws {Error} If the backend is still unreachable after all retries.
    */
   async waitForBackend(retries = 60, delayMs = 2000): Promise<void> {
@@ -625,7 +625,7 @@ export class SeedContext {
   }
 
   /**
-   * @description Returns the currently active JWT bearer token.
+   * @description Devuelve el/la currently active JWT bearer token.
    * @returns {string} The active bearer token string (empty string if not yet authenticated).
    */
   getAccessToken(): string {
@@ -644,7 +644,7 @@ export class SeedContext {
   /**
    * @description Stores a named session token for later retrieval.
    * The key is trimmed; empty keys or empty tokens are silently ignored.
-   * @param {string} sessionKey - Identifier for the session (e.g. a username).
+   * @param {string} sessionKey - Identifier for the session (p. ej. a username).
    * @param {string} token - JWT bearer token to store under this key.
    * @returns {void}
    */
@@ -680,7 +680,7 @@ export class SeedContext {
   }
 
   /**
-   * @description Returns all session tokens whose keys start with the given prefix.
+   * @description Devuelve todos los session tokens whose keys start with the given prefix.
    * @param {string} prefix - Key prefix to filter sessions by (trimmed).
    * @returns {string[]} Array of matching token strings (may be empty).
    */
@@ -743,7 +743,7 @@ export class SeedContext {
   }
 
   /**
-   * @description Returns the HTTP status code of the most recent API response.
+   * @description Devuelve el/la HTTP status code of the most recent API response.
    * @returns {number | undefined} The last status code, or `undefined` if no request has been made.
    */
   getLastResponseStatusCode(): number | undefined {
@@ -785,7 +785,7 @@ export class SeedContext {
   }
 
   /**
-   * @description Checks whether a value has been stored in the shared state map.
+   * @description Comprueba si a value has been stored in the shared state map.
    * @param {string} key - Identifier to check.
    * @returns {boolean} `true` if the key exists in the state map, `false` otherwise.
    */
@@ -794,9 +794,9 @@ export class SeedContext {
   }
 
   /**
-   * @description Performs an authenticated GET request and returns the parsed response body.
+   * @description Realiza an authenticated GET request and returns the parsed response body.
    * @template T - Expected response type.
-   * @param {string} path - API path relative to `apiBaseUrl` (e.g. `/productos`).
+   * @param {string} path - API path relative to `apiBaseUrl` (p. ej. `/productos`).
    * @returns {Promise<T>} Parsed response body (unwrapped from the data envelope if present).
    * @throws {HttpSeedRequestError} On non-2xx responses after exhausting retries.
    */
@@ -805,7 +805,7 @@ export class SeedContext {
   }
 
   /**
-   * @description Performs an authenticated POST request with a JSON body.
+   * @description Realiza an authenticated POST request with a JSON body.
    * @template T - Expected response type.
    * @param {string} path - API path relative to `apiBaseUrl`.
    * @param {unknown} body - Request payload to serialize as JSON.
@@ -817,8 +817,8 @@ export class SeedContext {
   }
 
   /**
-   * @description Performs an authenticated POST request with a `multipart/form-data` body.
-   * Useful for file uploads (e.g. albaran documents). Supports concurrency limiting,
+   * @description Realiza an authenticated POST request with a `multipart/form-data` body.
+   * Useful for file uploads (p. ej. albaran documents). Supports concurrency limiting,
    * configurable retries, and backoff for 429/5xx responses.
    * @template T - Expected response type.
    * @param {string} path - API path relative to `apiBaseUrl`.
@@ -922,7 +922,7 @@ export class SeedContext {
   }
 
   /**
-   * @description Performs an authenticated PATCH request with a JSON body.
+   * @description Realiza an authenticated PATCH request with a JSON body.
    * @template T - Expected response type.
    * @param {string} path - API path relative to `apiBaseUrl`.
    * @param {unknown} body - Request payload to serialize as JSON.
@@ -934,7 +934,7 @@ export class SeedContext {
   }
 
   /**
-   * @description Performs an authenticated PUT request with a JSON body.
+   * @description Realiza an authenticated PUT request with a JSON body.
    * @template T - Expected response type.
    * @param {string} path - API path relative to `apiBaseUrl`.
    * @param {unknown} body - Request payload to serialize as JSON.
@@ -946,7 +946,7 @@ export class SeedContext {
   }
 
   /**
-   * @description Performs an authenticated DELETE request.
+   * @description Realiza an authenticated DELETE request.
    * @template T - Expected response type.
    * @param {string} path - API path relative to `apiBaseUrl`.
    * @returns {Promise<T>} Parsed response body (unwrapped from the data envelope if present).
@@ -1079,7 +1079,7 @@ export class SeedContext {
   }
 
   /**
-   * @description No-op DTO validation stub. Returns the payload unmodified as `T`.
+   * @description No-op DTO validation stub. Devuelve el/la payload unmodified as `T`.
    * @template T - Expected validated type.
    * @param {unknown} dtoClass - DTO class constructor (ignored).
    * @param {unknown} payload - Payload to return as-is.
@@ -1275,7 +1275,7 @@ export class SeedContext {
   }
 
   /**
-   * @description Computes the exponential back-off delay in milliseconds for a given attempt,
+   * @description Calcula the exponential back-off delay in milliseconds for a given attempt,
    * capped at `backoffMaxMs` and with a deterministic jitter term.
    * @param {number} attempt - Zero-based retry attempt index.
    * @returns {number} Delay in milliseconds.
@@ -1285,7 +1285,7 @@ export class SeedContext {
   }
 
   /**
-   * @description Wraps the native `fetch` with an `AbortController`-based timeout.
+   * @description Envuelve the native `fetch` with an `AbortController`-based timeout.
    * The timeout duration is controlled by `requestTimeoutMs`.
    * @param {string} url - Full URL to fetch.
    * @param {RequestInit} init - Fetch init options (merged with the abort signal).
@@ -1324,7 +1324,7 @@ export class SeedContext {
   /**
    * @description Acquires a concurrency slot. If the in-flight count has reached `maxConcurrency`,
    * the caller is queued until a slot is released.
-   * @returns {Promise<void>} Resolves when a slot is available.
+   * @returns {Promise<void>} Resuelve when a slot is available.
    */
   private async acquireSlot(): Promise<void> {
     if (this.inFlight < this.maxConcurrency) {
@@ -1362,7 +1362,7 @@ export class SeedContext {
   }
 
   /**
-   * @description Formats and appends a structured HTTP event entry to the log file.
+   * @description Formatea and appends a structured HTTP event entry to the log file.
    * Each entry includes method, path, payload, status code, response body, and error details.
    * @param {{ method: string; path: string; payload?: unknown; statusCode?: number; responseBody?: unknown; error?: string }} event - Event data to log.
    * @returns {void}

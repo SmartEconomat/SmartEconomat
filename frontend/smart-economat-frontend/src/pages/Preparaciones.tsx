@@ -334,7 +334,9 @@ const Preparaciones: React.FC = () => {
       setTotalItems(response.total);
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : t('preparaciones.toast.errorCargar')
+        err instanceof Error
+          ? err.message
+          : t('preparaciones.toast.errorCargar')
       );
     } finally {
       setIsLoading(false);
@@ -511,7 +513,7 @@ const Preparaciones: React.FC = () => {
       ) {
         notifyExceededMax(consumeMode);
       } else {
-        toast.error('Introduce una cantidad válida para consumir.');
+        toast.error(t('preparaciones.errors.cantidadInvalida'));
       }
       return;
     }
@@ -624,17 +626,17 @@ const Preparaciones: React.FC = () => {
    */
   const handleSubmitMerma = async () => {
     if (!mermaLote) {
-      toast.error('Selecciona un lote de producción válido.');
+      toast.error(t('preparaciones.errors.loteInvalido'));
       return;
     }
 
     if (!mermaProductoId) {
-      toast.error('Selecciona el ingrediente con merma.');
+      toast.error(t('preparaciones.errors.ingredienteInvalido'));
       return;
     }
 
     if (mermaCantidad === null || mermaCantidad <= 0) {
-      toast.error('Introduce una cantidad de merma mayor que 0.');
+      toast.error(t('preparaciones.errors.mermaCantidadInvalida'));
       return;
     }
 
@@ -801,7 +803,10 @@ const Preparaciones: React.FC = () => {
           title: t('preparaciones.detail.infoGeneral'),
           columns: 3,
           fields: [
-            { label: t('preparaciones.detail.receta'), value: itemToView.receta?.nombre },
+            {
+              label: t('preparaciones.detail.receta'),
+              value: itemToView.receta?.nombre,
+            },
             {
               label: t('preparaciones.detail.fechaEjecucion'),
               value: formatDateTime(itemToView.fechaProduccion),
@@ -848,7 +853,9 @@ const Preparaciones: React.FC = () => {
             },
             {
               label: t('preparaciones.detail.equivalencia'),
-              value: formatRationInfo(itemToView) ?? t('preparaciones.detail.noDefinida'),
+              value:
+                formatRationInfo(itemToView) ??
+                t('preparaciones.detail.noDefinida'),
             },
           ],
         },
@@ -983,7 +990,8 @@ const Preparaciones: React.FC = () => {
                       : isAmountMultipleInvalid && amountConsumptionStep
                         ? t('preparaciones.consumir.multiploRequerido', {
                             step: formatAmount(amountConsumptionStep),
-                            unidad: consumingItem.receta?.unidadResultado || 'unidad',
+                            unidad:
+                              consumingItem.receta?.unidadResultado || 'unidad',
                           })
                         : `${formatAmount(parsedAmount ?? 0)} ${consumingItem.receta?.unidadResultado || ''} a consumir.`}
                 </Typography>
@@ -1017,7 +1025,8 @@ const Preparaciones: React.FC = () => {
                 consumeMode === 'raciones'
                   ? t('preparaciones.consumir.cantidadRaciones')
                   : t('preparaciones.consumir.cantidadConsumir', {
-                      unidad: consumingItem?.receta?.unidadResultado || 'unidad',
+                      unidad:
+                        consumingItem?.receta?.unidadResultado || 'unidad',
                     })
               }
               value={consumeMode === 'raciones' ? portionsInput : amountInput}
@@ -1035,7 +1044,8 @@ const Preparaciones: React.FC = () => {
                     : isAmountMultipleInvalid && amountConsumptionStep
                       ? t('preparaciones.consumir.multiploRequerido', {
                           step: formatAmount(amountConsumptionStep),
-                          unidad: consumingItem?.receta?.unidadResultado || 'unidad',
+                          unidad:
+                            consumingItem?.receta?.unidadResultado || 'unidad',
                         })
                       : t('preparaciones.consumir.maximoDisponibleCantidad', {
                           max: formatAmount(maxConsumableAmount ?? 0),
@@ -1086,7 +1096,8 @@ const Preparaciones: React.FC = () => {
                   {t('preparaciones.mermaDialog.lote')} {mermaLote.id}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {t('preparaciones.mermaDialog.receta')} {mermaLote.receta?.nombre || '—'}
+                  {t('preparaciones.mermaDialog.receta')}{' '}
+                  {mermaLote.receta?.nombre || '—'}
                 </Typography>
               </Box>
             )}

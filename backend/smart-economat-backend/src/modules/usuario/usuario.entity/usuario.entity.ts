@@ -25,7 +25,7 @@ import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
 
 /**
  * Represents a user account stored in the `usuario` table.
- * Handles authentication (bcrypt password hashing), role-based access control,
+ * Gestiona authentication (bcrypt password hashing), role-based access control,
  * and direct permission overrides (additional / excluded).
  *
  * @class Usuario
@@ -74,7 +74,7 @@ export class Usuario extends BaseEntity {
   @Column({ type: 'timestamptz', nullable: true })
   resetPasswordOtpExpires?: Date | null;
 
-  /** When true, the user must change their password on the next login. */
+  /** Cuando es true, the user must change their password on the next login. */
   @Column({ type: 'boolean', default: false, name: 'must_change_password' })
   mustChangePassword!: boolean;
 
@@ -139,7 +139,7 @@ export class Usuario extends BaseEntity {
   })
   permisosExcluidos: Permiso[];
 
-  /** Indicates whether the account is active. Soft-disable without deleting the record. */
+  /** Indicates si the account is active. Soft-disable without deleting the record. */
   @Column({ type: 'boolean', default: true })
   activo: boolean;
 
@@ -159,7 +159,7 @@ export class Usuario extends BaseEntity {
   }
 
   /**
-   * @description Validates a plain-text password against the stored bcrypt hash.
+   * @description Valida a plain-text password against the stored bcrypt hash.
    * @param {string} plainPassword - The plain-text password to verify.
    * @returns {Promise<boolean>} `true` if the password matches the stored hash, `false` otherwise.
    */

@@ -9,41 +9,41 @@ import { PaginationQueryDto } from '../dto/pagination-query.dto';
 import { I18nHelper } from '../helpers/i18n.helper';
 
 /**
- * @description Union type for specifying which sort fields are permitted on a list endpoint.
- * Can be a plain string array (field names) or a record that maps public DTO field names
- * to actual database column names.
+ * @description Tipo unión para especificar qué campos de ordenación están permitidos en un endpoint de listado.
+ * Puede ser un array de cadenas (nombres de campo) o un registro que mapea nombres de campo públicos del DTO
+ * a nombres de columna reales de la base de datos.
  * @example
- * // Array form — allowed public field names:
+ *
  * const allowed: SortableFieldsConfig = ['nombre', 'precio', 'createdAt'];
  *
- * // Record form — DTO key → DB column mapping:
+ *
  * const allowed: SortableFieldsConfig = { nombre: 'producto.nombre', precio: 'producto.precio' };
  */
 export type SortableFieldsConfig = string[] | Record<string, string>;
 
-/** @description Internal alias for a class constructor that produces a `PaginationQueryDto` subclass. */
+/** @description Alias interno para un constructor de clase que produce una subclase de `PaginationQueryDto`. */
 type SortableQueryDtoClass<T extends PaginationQueryDto = PaginationQueryDto> =
   new () => T;
 
 /**
- * @description Extracts the list of allowed sort field names from a {@link SortableFieldsConfig}.
- * For array configs, the array itself is returned; for record configs, the object keys are returned.
- * @param config - The sortable-fields configuration to inspect.
- * @returns An array of allowed sort field name strings.
+ * @description Extrae la lista de nombres de campo de ordenación permitidos de una {@link SortableFieldsConfig}.
+ * Para configuraciones en array, se devuelve el propio array; para configuraciones en registro, se devuelven las claves del objeto.
+ * @param config - La configuración de campos ordenables a inspeccionar.
+ * @returns Un array de cadenas con los nombres de campo de ordenación permitidos.
  */
 function getAllowedSortableFields(config: SortableFieldsConfig): string[] {
   return Array.isArray(config) ? config : Object.keys(config);
 }
 
 /**
- * @description Transforms raw query-string parameters into a typed, validated
- * `PaginationQueryDto` (or subclass) instance. Uses `plainToInstance` for type
- * coercion and `validateSync` for constraint checking.
- * @template T - The concrete `PaginationQueryDto` subclass to produce.
- * @param query - Raw key-value query parameters from the Express request.
- * @param dtoClass - The DTO class to instantiate. Defaults to `PaginationQueryDto`.
- * @returns The validated DTO instance.
- * @throws {BadRequestException} If any class-validator constraint on the DTO is violated.
+ * @description Transforma parámetros brutos de cadena de consulta en una instancia tipada y validada
+ * de `PaginationQueryDto` (o subclase). Usa `plainToInstance` para la conversión de tipos
+ * y `validateSync` para la comprobación de restricciones.
+ * @template T - La subclase concreta de `PaginationQueryDto` a producir.
+ * @param query - Parámetros brutos clave-valor de la petición Express.
+ * @param dtoClass - La clase DTO a instanciar. Por defecto `PaginationQueryDto`.
+ * @returns La instancia validada del DTO.
+ * @throws {BadRequestException} Si se viola alguna restricción de class-validator en el DTO.
  */
 export function transformAndValidateSortableQuery<
   T extends PaginationQueryDto = PaginationQueryDto,
@@ -69,12 +69,12 @@ export function transformAndValidateSortableQuery<
 }
 
 /**
- * @description Validates that the requested `sortBy` field is among the permitted fields.
- * When a `sortableFieldMap` record is supplied via {@link SortableFieldsConfig}, only the
- * record's keys (public DTO field names) are checked — not the mapped DB column names.
- * @param sortBy - The sort field requested by the client, or `undefined` if not provided.
- * @param allowedFields - The permitted sortable fields configuration.
- * @throws {BadRequestException} If `sortBy` is defined and is not in the allowed fields list.
+ * @description Valida que el campo `sortBy` solicitado esté entre los campos permitidos.
+ * Cuando se proporciona un registro `sortableFieldMap` mediante {@link SortableFieldsConfig}, solo se
+ * comprueban las claves del registro (nombres de campo públicos del DTO), no los nombres de columna de BD mapeados.
+ * @param sortBy - El campo de ordenación solicitado por el cliente, o `undefined` si no se proporcionó.
+ * @param allowedFields - La configuración de campos ordenables permitidos.
+ * @throws {BadRequestException} Si `sortBy` está definido y no está en la lista de campos permitidos.
  */
 export function validateSortableField(
   sortBy: string | undefined,
@@ -93,14 +93,14 @@ export function validateSortableField(
 }
 
 /**
- * @description NestJS parameter decorator factory that parses, validates, and type-checks
- * the request query string into a `PaginationQueryDto` instance while also enforcing that
- * the `sortBy` field is one of the explicitly allowed values. Combines query transformation
- * (via `plainToInstance`) with sort-field whitelisting in a single declarative decorator.
- * @param allowedFields - Permitted sort field names or a DTO-key-to-DB-column mapping.
- * @param dtoClass - Optional custom `PaginationQueryDto` subclass to use for transformation.
- * @returns A NestJS `ParameterDecorator` that resolves to the validated DTO instance.
- * @throws {BadRequestException} If the query fails DTO validation or the `sortBy` value is not allowed.
+ * @description Fábrica de decoradores de parámetro de NestJS que analiza, valida y comprueba el tipo
+ * de la cadena de consulta de la petición en una instancia de `PaginationQueryDto`, al mismo tiempo que
+ * exige que el campo `sortBy` sea uno de los valores explícitamente permitidos. Combina la transformación
+ * de la consulta (mediante `plainToInstance`) con la lista blanca de campos de ordenación en un único decorador declarativo.
+ * @param allowedFields - Nombres de campos de ordenación permitidos o un mapeo de clave DTO a columna de BD.
+ * @param dtoClass - Subclase personalizada opcional de `PaginationQueryDto` para usar en la transformación.
+ * @returns Un `ParameterDecorator` de NestJS que se resuelve en la instancia validada del DTO.
+ * @throws {BadRequestException} Si la consulta no supera la validación del DTO o el valor de `sortBy` no está permitido.
  * @example
  * \@Get()
  * findAll(\@SortableFields(['nombre', 'precio']) query: PaginationQueryDto) {

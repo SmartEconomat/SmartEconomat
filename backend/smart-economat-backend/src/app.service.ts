@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 
 /**
- * @description Root application service.
- * Provides utility methods consumed by AppController for root-level endpoints.
+ * @description Servicio raíz de la aplicación.
+ * Proporciona métodos de utilidad consumidos por AppController para los endpoints raíz.
  */
 @Injectable()
 export class AppService {
   /**
-   * @description Returns a simple greeting string used by the root GET endpoint.
-   * @returns {string} Static greeting message "Hello World!".
+   * @description Devuelve una cadena de saludo simple utilizada por el endpoint GET raíz.
+   * @returns {string} Mensaje de saludo estático "Hello World!".
    */
   getHello(): string {
     return 'Hello World!';

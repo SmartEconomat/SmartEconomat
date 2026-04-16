@@ -55,10 +55,10 @@ interface TabPanelProps {
 import { Fade } from '@mui/material';
 
 /**
- * Renders the content panel for a given tab, with a fade-in transition when active.
+ * Renderiza el panel de contenido para una pestaña dada, con transición de aparición gradual cuando está activa.
  *
- * @param props - Tab panel props including children, current value, panel index, and optional loading flag.
- * @returns A div acting as a tabpanel with animated content visibility.
+ * @param props - Props del panel de pestaña: hijos, valor actual, índice del panel e indicador opcional de carga.
+ * @returns Un div que actúa como tabpanel con visibilidad de contenido animada.
  */
 function CustomTabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
@@ -81,10 +81,10 @@ function CustomTabPanel(props: TabPanelProps) {
 }
 
 /**
- * Returns the accessibility props (id and aria-controls) for a tab element.
+ * Devuelve los atributos de accesibilidad (id y aria-controls) para un elemento de pestaña.
  *
- * @param index - The unique string key identifying the tab panel.
- * @returns An object with `id` and `aria-controls` attributes for the tab.
+ * @param index - La clave única de cadena que identifica el panel de pestaña.
+ * @returns Un objeto con los atributos `id` y `aria-controls` para la pestaña.
  */
 function a11yProps(index: string) {
   return {
@@ -221,9 +221,10 @@ const Administracion: React.FC = () => {
   }, [initialTab, activeTab]);
 
   /**
-   * Loads all data required for the Aulas y Clases tab.
-   * Fetches own slots (for pure professors), all slots and professor list (for admins),
-   * and all available ubicaciones. Redirects to home if user lacks permissions.
+   * Carga todos los datos necesarios para la pestaña Aulas y Clases.
+   * Obtiene los slots propios (para profesores puros), todos los slots y la lista de
+   * profesores (para administradores), y todas las ubicaciones disponibles.
+   * Redirige al inicio si el usuario carece de permisos.
    */
   const loadSlotsTabData = useCallback(async () => {
     if (canViewAdmin === false) {
@@ -267,9 +268,9 @@ const Administracion: React.FC = () => {
   }, [canViewAdmin, navigate, isPureProfesor, isAdmin, t]);
 
   /**
-   * Loads all data required for the Alumnos tab.
-   * Fetches the professor's student list and, if not yet loaded, their slot list.
-   * Redirects to home if user lacks permissions.
+   * Carga todos los datos necesarios para la pestaña Alumnos.
+   * Obtiene la lista de alumnos del profesor y, si aún no se ha cargado, su lista de slots.
+   * Redirige al inicio si el usuario carece de permisos.
    */
   const loadStudentsTabData = useCallback(async () => {
     if (canViewAdmin === false) {
@@ -320,11 +321,12 @@ const Administracion: React.FC = () => {
   }, [activeTab, loadedTabs, loadSlotsTabData, loadStudentsTabData]);
 
   /**
-   * Handles tab change events, updates the active tab state, syncs the URL search param,
-   * and closes slot editing mode when leaving the slots tab.
+   * Gestiona los eventos de cambio de pestaña, actualiza el estado de la pestaña activa,
+   * sincroniza el parámetro de búsqueda de la URL y cierra el modo de edición de slots
+   * al abandonar la pestaña correspondiente.
    *
-   * @param _event - The synthetic event from the tab click (unused).
-   * @param newValue - The key of the newly selected tab.
+   * @param _event - El evento sintético del clic en la pestaña (no se utiliza).
+   * @param newValue - La clave de la pestaña recién seleccionada.
    */
   const handleTabChange = (
     _event: React.SyntheticEvent,
@@ -339,20 +341,21 @@ const Administracion: React.FC = () => {
   };
 
   /**
-   * Handles input changes on the new slot form fields.
+   * Gestiona los cambios en los campos del formulario de nuevo slot.
    *
-   * @param e - The change event from an input element inside the new slot form.
+   * @param e - El evento de cambio generado por un campo de entrada del formulario de nuevo slot.
    */
   const handleNewSlotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewSlot((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   /**
-   * Handles form submission to create a new aula/slot.
-   * Supports both professor self-creation and admin creation on behalf of another professor.
-   * Shows a toast on success or error, and resets the form on success.
+   * Gestiona el envío del formulario para crear un nuevo aula/slot.
+   * Admite tanto la creación propia del profesor como la creación por parte de un administrador
+   * en nombre de otro profesor. Muestra un toast en caso de éxito o error, y reinicia el
+   * formulario al completarse.
    *
-   * @param e - The form submit event.
+   * @param e - El evento de envío del formulario.
    */
   const handleCreateSlot = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -415,11 +418,11 @@ const Administracion: React.FC = () => {
   };
 
   /**
-   * Handles deletion of a slot after user confirmation.
-   * Removes the slot from the appropriate list (admin or professor) on success.
+   * Gestiona la eliminación de un slot tras la confirmación del usuario.
+   * Elimina el slot de la lista correspondiente (administrador o profesor) en caso de éxito.
    *
-   * @param id - The ID of the slot to delete.
-   * @param isAdminView - Whether the deletion is performed from the admin view.
+   * @param id - El ID del slot a eliminar.
+   * @param isAdminView - Indica si la eliminación se realiza desde la vista de administrador.
    */
   const handleDeleteSlot = async (id: string, isAdminView?: boolean) => {
     if (!window.confirm(t('admin.confirm.eliminarClase'))) return;
@@ -436,19 +439,19 @@ const Administracion: React.FC = () => {
         }
         toast.success(t('admin.toast.ubicacionEliminada'));
       } else {
-        toast.error(res.message || 'Error al eliminar');
+        toast.error(res.message || t('admin.errors.eliminar'));
       }
     } catch {
-      toast.error('No se pudo eliminar');
+      toast.error(t('admin.errors.eliminar'));
     }
   };
 
   /**
-   * Handles updating a slot owned by the current professor.
-   * Shows a toast on success or error.
+   * Gestiona la actualización de un slot propiedad del profesor actual.
+   * Muestra un toast en caso de éxito o error.
    *
-   * @param id - The ID of the slot to update.
-   * @param data - Partial slot data to update (excluding id and codigoSlot).
+   * @param id - El ID del slot a actualizar.
+   * @param data - Datos parciales del slot a actualizar (excluye id y codigoSlot).
    */
   const handleUpdateSlot = async (
     id: string,
@@ -461,21 +464,22 @@ const Administracion: React.FC = () => {
         setSlots((prev) => prev.map((s) => (s.id === id ? res.data : s)));
         toast.success(t('admin.toast.ubicacionActualizada'));
       } else {
-        toast.error(res.message || 'Error al actualizar');
+        toast.error(res.message || t('admin.errors.actualizar'));
       }
     } catch {
-      toast.error('Error al actualizar');
+      toast.error(t('admin.errors.actualizar'));
     } finally {
       setIsSaving(false);
     }
   };
 
   /**
-   * Handles admin-level update of any slot, including changing the assigned professor.
-   * Reloads the full slot list after a successful update to reflect professor changes.
+   * Gestiona la actualización a nivel de administrador de cualquier slot, incluido el cambio
+   * del profesor asignado. Recarga la lista completa de slots tras una actualización exitosa
+   * para reflejar los cambios del profesor.
    *
-   * @param id - The ID of the slot to update.
-   * @param data - Partial slot data to update, optionally including a new profesorId.
+   * @param id - El ID del slot a actualizar.
+   * @param data - Datos parciales del slot a actualizar, opcionalmente con un nuevo profesorId.
    */
   const handleAdminUpdateSlot = async (
     id: string,
@@ -492,21 +496,21 @@ const Administracion: React.FC = () => {
         if (allSlotsRes.success) setAllSlots(allSlotsRes.data);
         toast.success(t('admin.toast.aulaActualizada'));
       } else {
-        toast.error(res.message || 'Error al actualizar el aula');
+        toast.error(res.message || t('admin.errors.actualizarAula'));
       }
     } catch {
-      toast.error('Error al actualizar el aula');
+      toast.error(t('admin.errors.actualizarAula'));
     } finally {
       setIsSaving(false);
     }
   };
 
   /**
-   * Toggles the active/inactive status of a student.
-   * Updates the local student list with the new status returned by the API.
+   * Alterna el estado activo/inactivo de un alumno.
+   * Actualiza la lista local de alumnos con el nuevo estado devuelto por la API.
    *
-   * @param id - The ID of the student whose status should be toggled.
-   * @param currentStatus - The student's current status string (e.g. 'ACTIVE' or 'INACTIVE').
+   * @param id - El ID del alumno cuyo estado debe alternarse.
+   * @param currentStatus - El estado actual del alumno (p. ej. 'ACTIVE' o 'INACTIVE').
    */
   const handleToggleStudentStatus = async (
     id: string,
@@ -525,36 +529,39 @@ const Administracion: React.FC = () => {
         toast.success(t('admin.toast.estadoAlumnoActualizado'));
       }
     } catch {
-      toast.error('Error al cambiar estado');
+      toast.error(t('admin.errors.cambiarEstado'));
     } finally {
       setIsSaving(false);
     }
   };
 
   /**
-   * Forces a password reset for a student and displays the new provisional password in a toast.
+   * Fuerza el restablecimiento de contraseña de un alumno y muestra la nueva
+   * contraseña provisional en un toast.
    *
-   * @param id - The ID of the student whose password should be reset.
+   * @param id - El ID del alumno cuya contraseña debe restablecerse.
    */
   const handleResetStudentPassword = async (id: string) => {
     try {
       const res = await profesorService.forcePasswordReset(id);
       if (res.success) {
         toast.success(
-          t('admin.toast.contrasenaReset', { clave: res.data.provisionalPassword }),
+          t('admin.toast.contrasenaReset', {
+            clave: res.data.provisionalPassword,
+          }),
           10000
         );
       }
     } catch {
-      toast.error('Error al resetear contraseña');
+      toast.error(t('admin.errors.resetearContrasena'));
     }
   };
 
   /**
-   * Handles deletion of a student after user confirmation.
-   * Removes the student from the local list on success.
+   * Gestiona la eliminación de un alumno tras la confirmación del usuario.
+   * Elimina al alumno de la lista local en caso de éxito.
    *
-   * @param id - The ID of the student to delete.
+   * @param id - El ID del alumno a eliminar.
    */
   const handleDeleteStudent = async (id: string) => {
     if (!window.confirm(t('admin.confirm.eliminarAlumno'))) return;
@@ -571,10 +578,10 @@ const Administracion: React.FC = () => {
   };
 
   /**
-   * Shows an informational toast indicating that the permissions management feature
-   * for the given student is not yet available.
+   * Muestra un toast informativo indicando que la funcionalidad de gestión de permisos
+   * para el alumno indicado aún no está disponible.
    *
-   * @param alumno - The student object whose permissions would be managed.
+   * @param alumno - El objeto alumno cuyos permisos se gestionarían.
    */
   const handleManagePermissions = (alumno: Alumno) => {
     toast.info(
@@ -690,7 +697,9 @@ const Administracion: React.FC = () => {
                       width: { xs: '100%', sm: 'auto' },
                     }}
                   >
-                    {isEditingSlots ? t('admin.actions.finalizarEdicion') : t('admin.actions.gestionar')}
+                    {isEditingSlots
+                      ? t('admin.actions.finalizarEdicion')
+                      : t('admin.actions.gestionar')}
                   </Button>
                 </Box>
               )}

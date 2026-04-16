@@ -35,9 +35,9 @@ export class RecepcionProductoService {
 
   /**
    * @description Creates and persists a new RecepcionProducto record.
-   * Validates that both the referenced Recepcion and PedidoProducto exist before saving.
+   * Valida that both the referenced Recepcion and PedidoProducto exist before saving.
    * @param dto - DTO containing the recepcion ID, pedidoProducto ID, quantities, and optional metadata.
-   * @returns The newly created RecepcionProducto entity with relations loaded.
+   * @returns La entidad recién creada RecepcionProducto entity with relations loaded.
    * @throws {NotFoundException} If the referenced Recepcion does not exist.
    * @throws {NotFoundException} If the referenced PedidoProducto does not exist.
    */
@@ -75,7 +75,7 @@ export class RecepcionProductoService {
   }
 
   /**
-   * @description Returns a paginated list of RecepcionProducto records with full relations.
+   * @description Devuelve una lista paginada de RecepcionProducto records with full relations.
    * Defaults to sorting by `fechaRecepcion` descending, maximum 50 records per page.
    * @param query - Pagination parameters: page, limit, sortBy, and order.
    * @returns Paginated response containing the records and metadata (total, page, totalPages).
@@ -198,7 +198,7 @@ export class RecepcionProductoService {
    * @description Soft-deletes a RecepcionProducto by its UUID.
    * The record is marked as deleted but remains in the database.
    * @param id - UUID of the RecepcionProducto to remove.
-   * @returns Resolves with void on success.
+   * @returns Resuelve with void on success.
    * @throws {NotFoundException} If no RecepcionProducto with the given ID exists.
    */
   async remove(id: string): Promise<void> {

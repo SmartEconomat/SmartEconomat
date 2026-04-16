@@ -24,7 +24,7 @@ import { Ubicacion } from '../../ubicacion/ubicacion.entity/ubicacion.entity';
 
 /**
  * Service that manages professor profiles, classroom slots, and student activation.
- * Handles professor self-registration, slot creation/update/deletion, student listing,
+ * Gestiona professor self-registration, slot creation/update/deletion, student listing,
  * account activation, and forced password resets. Admin variants of slot operations
  * are also provided for use by the admin panel.
  *
@@ -43,7 +43,7 @@ export class ProfesorService {
   ) {}
 
   /**
-   * Resolves a warehouse location entity by its ID.
+   * Resuelve a warehouse location entity by its ID.
    * Returns null when no ID is provided.
    *
    * @param {string} [ubicacionId] - UUID of the Ubicacion to resolve.
@@ -69,9 +69,9 @@ export class ProfesorService {
   }
 
   /**
-   * Registers a new professor account within a database transaction.
+   * Registra a new professor account within a database transaction.
    * Creates the linked Usuario record (INACTIVE) and the Profesor profile simultaneously.
-   * Validates that the username, email and CIAL code are unique before persisting.
+   * Valida that the username, email and CIAL code are unique before persisting.
    *
    * @param {CreateProfesorDto} dto - DTO containing username, email, password and CIAL.
    * @returns {Promise<{ message: string; id: string; username: string }>} Registration confirmation.
@@ -136,8 +136,8 @@ export class ProfesorService {
   }
 
   /**
-   * Creates a new classroom slot for the authenticated professor.
-   * Generates a unique slot code (AL-XXXXXX) and optionally links a warehouse location.
+   * Crea un nuevo classroom slot for the authenticated professor.
+   * Genera a unique slot code (AL-XXXXXX) and optionally links a warehouse location.
    *
    * @param {string} userId - ID of the authenticated professor's user account.
    * @param {CreateSlotDto} dto - DTO containing aula, numeroClase, capacidad and optional ubicacionId.
@@ -226,8 +226,8 @@ export class ProfesorService {
   }
 
   /**
-   * Updates a classroom slot owned by the authenticated professor.
-   * Validates the aula/numeroClase uniqueness constraint before saving.
+   * Actualiza a classroom slot owned by the authenticated professor.
+   * Valida the aula/numeroClase uniqueness constraint before saving.
    *
    * @param {string} userId - ID of the authenticated professor's user account.
    * @param {string} slotId - UUID of the AlumnoSlot to update.
@@ -282,11 +282,11 @@ export class ProfesorService {
   }
 
   /**
-   * Returns all classroom slots belonging to the authenticated professor,
+   * Devuelve todos los classroom slots belonging to the authenticated professor,
    * including their enrolled students and linked warehouse location.
    *
    * @param {string} userId - ID of the authenticated professor's user account.
-   * @returns {Promise<AlumnoSlot[]>} List of slots ordered by aula and numeroClase.
+   * @returns {Promise<AlumnoSlot[]>} Lista de slots ordenados por aula.
    * @throws {NotFoundException} When no Profesor profile exists for the given userId.
    */
   async getSlots(userId: string) {
@@ -307,7 +307,7 @@ export class ProfesorService {
   }
 
   /**
-   * Deletes a classroom slot owned by the authenticated professor.
+   * Elimina a classroom slot owned by the authenticated professor.
    * Refuses deletion when the slot still has enrolled students.
    *
    * @param {string} userId - ID of the authenticated professor's user account.
@@ -413,7 +413,7 @@ export class ProfesorService {
 
   /**
    * Forces a password reset for a student enrolled in one of the professor's slots.
-   * Generates an 8-character provisional password and marks the account as `mustChangePassword`.
+   * Genera an 8-character provisional password and marks the account as `mustChangePassword`.
    * The provisional password is returned in plain text (one-time delivery).
    *
    * @param {string} profesorUserId - ID of the authenticated professor's user account.
@@ -498,7 +498,7 @@ export class ProfesorService {
 
   /**
    * Admin: updates a classroom slot, including reassigning it to a different professor.
-   * Validates aula/numeroClase uniqueness for the (potentially new) professor before saving.
+   * Valida aula/numeroClase uniqueness for the (potentially new) professor before saving.
    *
    * @param {string} slotId - UUID of the AlumnoSlot to update.
    * @param {AdminUpdateSlotDto} dto - DTO with optional fields: aula, numeroClase, capacidad, ubicacionId, profesorId.

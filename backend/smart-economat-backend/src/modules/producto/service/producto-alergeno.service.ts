@@ -32,10 +32,10 @@ export class ProductoAlergenoService {
   ) {}
 
   /**
-   * @description Creates a new association between a Producto and an Alérgeno.
-   * Validates that the product exists and that the association is not already registered.
+   * @description Crea un nuevo association between a Producto and an Alérgeno.
+   * Valida that the product exists and that the association is not already registered.
    * @param dto - DTO containing the product ID and allergen value.
-   * @returns The newly created ProductoAlergeno entity.
+   * @returns La entidad recién creada ProductoAlergeno entity.
    * @throws {NotFoundException} If the referenced Producto does not exist.
    * @throws {ConflictException} If the product–allergen association already exists.
    */
@@ -68,7 +68,7 @@ export class ProductoAlergenoService {
   }
 
   /**
-   * @description Returns all product–allergen associations, optionally filtered by product.
+   * @description Devuelve todos los product–allergen associations, opcionalmente filtrados por producto.
    * When `idProducto` is provided the result is scoped to that product; otherwise all records
    * are returned. The `producto` relation is always joined.
    * @param idProducto - Optional product UUID to filter results by.
@@ -87,8 +87,8 @@ export class ProductoAlergenoService {
   }
 
   /**
-   * @description Returns all allergen associations for a specific product.
-   * Validates that the product exists before querying its allergens.
+   * @description Devuelve todos los allergen associations for a specific product.
+   * Valida that the product exists before querying its allergens.
    * @param idProducto - UUID of the product whose allergens should be returned.
    * @returns Array of ProductoAlergeno entities for the given product.
    * @throws {NotFoundException} If the referenced Producto does not exist.
@@ -149,10 +149,10 @@ export class ProductoAlergenoService {
 
   /**
    * @description Hard-deletes a specific product–allergen association.
-   * Validates that the allergen string is a member of the `Alergeno` enum before querying.
+   * Valida that the allergen string is a member of the `Alergeno` enum before querying.
    * @param idProducto - UUID of the product.
    * @param alergeno - Allergen string value (must be a valid `Alergeno` enum member).
-   * @returns Resolves with void on success.
+   * @returns Resuelve with void on success.
    * @throws {BadRequestException} If the allergen value is not a valid enum member.
    * @throws {NotFoundException} If the product–allergen association does not exist.
    */

@@ -259,7 +259,7 @@ export const UsuariosView: React.FC = () => {
         return prevSerialized === nextSerialized ? prev : response.data;
       });
     } catch {
-      toast.error('Error al cargar los roles disponibles');
+      toast.error(t('usuarios.toast.errorCargarRoles'));
     } finally {
       setIsLoadingRoles(false);
     }
@@ -309,7 +309,7 @@ export const UsuariosView: React.FC = () => {
         student: updatePaginationTotal(prev.student, studentRes.total),
       }));
     } catch {
-      toast.error('Error al cargar los usuarios');
+      toast.error(t('usuarios.toast.errorCargar'));
     } finally {
       setIsLoading(false);
     }
@@ -456,16 +456,18 @@ export const UsuariosView: React.FC = () => {
           }
         }
 
-        toast.success('Usuario actualizado');
+        toast.success(t('usuarios.toast.actualizado'));
       } else {
         await usuarioService.crearUsuario(data as CrearUsuarioDTO);
-        toast.success('Usuario creado');
+        toast.success(t('usuarios.toast.creado'));
       }
       setIsModalOpen(false);
       fetchAllData();
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Error al guardar';
+        error instanceof Error
+          ? error.message
+          : t('usuarios.toast.errorGuardar');
       toast.error(message);
     } finally {
       setIsSaving(false);
@@ -477,10 +479,10 @@ export const UsuariosView: React.FC = () => {
     setIsDeleting(true);
     try {
       await usuarioService.eliminarUsuario(userToDelete.id);
-      toast.success('Usuario eliminado');
+      toast.success(t('usuarios.toast.eliminado'));
       fetchAllData();
     } catch {
-      toast.error('Error al eliminar');
+      toast.error(t('usuarios.toast.errorEliminar'));
     } finally {
       setIsDeleting(false);
       setUserToDelete(null);
@@ -494,7 +496,7 @@ export const UsuariosView: React.FC = () => {
       const res = await usuarioService.resetPassword(userToReset.id);
       setGeneratedPassword(res.data);
     } catch {
-      toast.error('Error al resetear contraseña');
+      toast.error(t('usuarios.toast.errorReset'));
       setUserToReset(null);
     } finally {
       setIsResetting(false);

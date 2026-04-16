@@ -99,7 +99,7 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
       })
       .catch((err: Error) => {
         console.error('Error fetching proveedores for report:', err);
-        toast.error('No se pudieron cargar los proveedores para el reporte.');
+        toast.error(t('reporte.errorCargarProveedores'));
       })
       .finally(() => {
         setIsLoadingProveedores(false);
@@ -145,9 +145,7 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
         });
       }
       toast.success(
-        isExcelMode
-          ? t('reporte.excelGenerado')
-          : t('reporte.reporteGenerado')
+        isExcelMode ? t('reporte.excelGenerado') : t('reporte.reporteGenerado')
       );
       onClose();
     } catch (err: unknown) {

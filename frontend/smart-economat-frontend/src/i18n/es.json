@@ -307,7 +307,8 @@
     "eliminarReceta": "Eliminar receta",
     "sinGluten": "Sin Gluten",
     "sinLacteos": "Sin Lácteos",
-    "incluirImagenReceta": "Incluir imagen de la receta"
+    "incluirImagenReceta": "Incluir imagen de la receta",
+    "buscarMinLetras": "Escribe al menos 2 letras para buscar productos."
   },
   "usuarios": {
     "empty": {
@@ -330,7 +331,17 @@
     "campoEstadoInicial": "Estado Inicial",
     "campoAulaSlot": "Aula / Slot Asignado",
     "campoUbicacionAlmacen": "Ubicación Almacén",
-    "cargandoRoles": "Cargando roles..."
+    "cargandoRoles": "Cargando roles...",
+    "toast": {
+      "actualizado": "Usuario actualizado",
+      "creado": "Usuario creado",
+      "eliminado": "Usuario eliminado",
+      "errorCargarRoles": "Error al cargar los roles disponibles",
+      "errorCargar": "Error al cargar los usuarios",
+      "errorEliminar": "Error al eliminar",
+      "errorReset": "Error al resetear la contraseña",
+      "errorGuardar": "Error al guardar"
+    }
   },
   "incidencias": {
     "titulo": "Centro de Incidencias",
@@ -357,7 +368,8 @@
       "marcadaCancelada": "Incidencia marcada como cancelada",
       "marcadaInvalida": "Incidencia marcada como inválida",
       "marcadaResuelta": "Incidencia marcada como resuelta",
-      "actualizada": "Incidencia actualizada correctamente"
+      "actualizada": "Incidencia actualizada correctamente",
+      "eliminada": "Incidencia eliminada correctamente"
     },
     "actions": {
       "ajustarCantidades": "Ajustar cantidades",
@@ -575,7 +587,12 @@
     "errors": {
       "cargarDatos": "Error al cargar los datos de administración",
       "cargarAlumnos": "Error al cargar los alumnos",
-      "sinProfesorVinculado": "No tienes un perfil de profesor vinculado. Selecciona un profesor de la lista o asegúrate de tener un perfil de profesor creado."
+      "sinProfesorVinculado": "No tienes un perfil de profesor vinculado. Selecciona un profesor de la lista o asegúrate de tener un perfil de profesor creado.",
+      "eliminar": "No se pudo eliminar",
+      "actualizar": "Error al actualizar",
+      "actualizarAula": "Error al actualizar el aula",
+      "cambiarEstado": "Error al cambiar estado",
+      "resetearContrasena": "Error al resetear la contraseña"
     },
     "toast": {
       "aulaCreada": "Aula/Clase añadida con éxito",
@@ -807,12 +824,25 @@
         "loteNoExiste": "El lote seleccionado ya no existe. Se recargó el inventario para continuar con lotes activos.",
         "mermaRegistrada": "Merma registrada correctamente",
         "errorMerma": "Error al registrar merma"
-      }
+      },
+      "errors": {
+        "interpretarAjuste": "No se pudo interpretar el ajuste de stock."
+      },
+      "placeholderAjuste": "+2 / -1",
+      "helperAjuste": "Ajuste en unidades de envase (+/-)"
     },
     "ubicaciones": {
       "titulo": "Gestionar Ubicaciones",
       "nueva": "Nueva ubicación",
-      "sinUbicaciones": "No hay ubicaciones registradas."
+      "sinUbicaciones": "No hay ubicaciones registradas.",
+      "toast": {
+        "creada": "Ubicación añadida",
+        "eliminada": "Ubicación eliminada"
+      },
+      "errors": {
+        "crear": "Error al crear ubicación",
+        "eliminar": "Error al eliminar ubicación"
+      }
     },
     "nuevaUbicacion": {
       "titulo": "Nueva Ubicación de Almacén",
@@ -955,7 +985,10 @@
       "bebida": "Bebida",
       "otro": "Otro"
     },
-    "tabsLabel": "Pestañas de inventario"
+    "tabsLabel": "Pestañas de inventario",
+    "filtros": {
+      "placeholderUbicacion": "Ubicación..."
+    }
   },
   "distribucion": {
     "titulo": "Distribución Interna",
@@ -1128,6 +1161,12 @@
       "mermaRegistrada": "Merma de producción registrada correctamente.",
       "errorMerma": "No se pudo registrar la merma de producción.",
       "errorCargar": "Error al cargar preparaciones"
+    },
+    "errors": {
+      "cantidadInvalida": "Introduce una cantidad válida para consumir.",
+      "loteInvalido": "Selecciona un lote de producción válido.",
+      "ingredienteInvalido": "Selecciona el ingrediente con merma.",
+      "mermaCantidadInvalida": "Introduce una cantidad de merma mayor que 0."
     }
   },
   "merma": {
@@ -1153,11 +1192,6 @@
     "miPerfil": "Mi Perfil",
     "descripcionAlumno": "Consulta tu perfil, cambia tu nombre de usuario o contraseña y solicita cambios de email con aprobación superior.",
     "descripcionOtros": "Consulta y edita tus datos personales y opciones de seguridad.",
-    "preferencias": {
-      "titulo": "Preferencias",
-      "descripcion": "Ajusta las preferencias de visualización de la aplicación.",
-      "idioma": "Idioma de la aplicación"
-    },
     "seccion": {
       "titulo": "Perfil y Seguridad",
       "descripcionAlumno": "Puedes editar tu nombre de usuario y contraseña. El cambio de email requiere aprobación de un rol superior.",
@@ -1220,7 +1254,22 @@
     "sinAsignar": "Sin asignar",
     "campoProfesor": "Profesor",
     "profesorResponsable": "Profesor Responsable",
-    "ubicacionWarehouse": "Ubicación Warehouse (Opcional)"
+    "ubicacionWarehouse": "Ubicación Warehouse (Opcional)",
+    "slot": {
+      "titulo": "Nueva Aula / Clase (Slot)",
+      "crearAula": "Crear Aula",
+      "toast": {
+        "creado": "Aula/Slot creado con éxito"
+      },
+      "errors": {
+        "camposObligatorios": "Todos los campos marcados son obligatorios",
+        "crear": "Error al crear el slot",
+        "crearAcademico": "Error al crear el slot académico"
+      }
+    },
+    "form": {
+      "helperNombre": "El nombre que verán los demás"
+    }
   },
   "comun": {
     "acciones": "Acciones",
@@ -1281,10 +1330,6 @@
     "proveedorLabel": "Proveedor: ",
     "pendiente": "Pendiente",
     "sinElementos": "Sin elementos",
-    "idioma": {
-      "es": "Español",
-      "en": "English"
-    },
     "aprobar": "Aprobar",
     "borrar": "Borrar",
     "iniciarRecepcion": "Iniciar Recepción",
@@ -1435,7 +1480,8 @@
     "soloNoResueltas": "Solo incidencias no resueltas",
     "generando": "Generando...",
     "generarExcel": "Generar Excel",
-    "generarPdf": "Generar PDF"
+    "generarPdf": "Generar PDF",
+    "errorCargarProveedores": "No se pudieron cargar los proveedores para el reporte."
   },
   "resumen": {
     "faltante": "Faltante",
@@ -1564,7 +1610,10 @@
       "eliminarConfirm": "Sí, eliminar",
       "cancelar": "Cancelar"
     },
-    "sinMarca": "Sin marca"
+    "sinMarca": "Sin marca",
+    "filtros": {
+      "placeholderCategoria": "Filtrar categoría..."
+    }
   },
   "proveedores": {
     "titulo": "Gestión de Proveedores",
@@ -1692,6 +1741,36 @@
     "fechaEntregaDialogMensaje": "La fecha prevista para este pedido es {{fecha}}. Este valor se calcula automáticamente por el sistema y no admite edición manual.",
     "buscarPlaceholder": "Buscar por proveedor, estado, usuario...",
     "nuevoPedido": "Nuevo Pedido",
-    "continuarPedido": "Continuar Pedido"
+    "continuarPedido": "Continuar Pedido",
+    "toast": {
+      "compraActualizada": "Compra actualizada correctamente.",
+      "pedidoActualizado": "Pedido actualizado correctamente.",
+      "pedidoActualizadoDividido": "Pedido actualizado y dividido por proveedor cuando ha sido necesario.",
+      "pedidoRegistrado": "Pedido registrado correctamente.",
+      "pedidoRegistradoMultiproveedor": "Se ha registrado el pedido con {{count}} líneas y separación interna por proveedor.",
+      "pedidoEliminado": "Pedido eliminado correctamente.",
+      "pedidoYaNoExistia": "El pedido ya no existía. Se ha actualizado la lista.",
+      "pedidoAprobado": "El pedido visible ha sido aprobado correctamente.",
+      "compraTramitada": "La compra ha sido tramitada correctamente.",
+      "pedidoCancelado": "El pedido visible ha sido cancelado.",
+      "compraCancelada": "La compra ha sido cancelada.",
+      "loteSemanalGenerado": "Se ha generado el lote semanal correctamente.",
+      "sinPedidosRecepcionar": "Esta compra no tiene pedidos por recepcionar. Gestiona los casos parciales o con incidencia desde Incidencias.",
+      "recepcionIniciada": "Se ha iniciado la recepción con los productos de la compra."
+    },
+    "errors": {
+      "sinProductos": "Cada línea debe tener un producto-proveedor y una cantidad mayor que 0.",
+      "errorIdentificarProveedor": "Ocurrió un error al identificar el proveedor de algunos productos.",
+      "mantenerProductoProveedor": "Debes mantener al menos un producto del proveedor original del pedido.",
+      "errorGuardar": "Error al guardar el pedido.",
+      "errorEliminar": "Error al eliminar el pedido.",
+      "errorAprobar": "Error al aprobar el pedido visible.",
+      "errorAprobarCompra": "Error al aprobar la compra.",
+      "errorCancelar": "Error al cancelar el pedido visible.",
+      "errorCancelarCompra": "Error al cancelar la compra.",
+      "errorCargarLote": "Error al cargar el lote.",
+      "errorConsolidar": "Error al consolidar pedidos en un lote.",
+      "errorIniciarRecepcion": "Error al iniciar la recepción desde la compra."
+    }
   }
 }

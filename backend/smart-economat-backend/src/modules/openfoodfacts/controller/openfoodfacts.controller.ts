@@ -79,9 +79,9 @@ export class OpenFoodFactsController {
 
   /**
    * Searches for products in OpenFoodFacts by free-text name.
-   * Returns an empty array when the query is blank or too long.
+   * Devuelve un empty array when the query is blank or too long.
    * @param {string} [nombre] - Optional search term (max 200 characters).
-   * @returns {Promise<OffProductResponseDto[]>} List of matching products.
+   * @returns {Promise<OffProductResponseDto[]>} Lista de productos coincidentes.
    * @throws {BadRequestException} When the search term exceeds 200 characters.
    */
   @Get('buscar')

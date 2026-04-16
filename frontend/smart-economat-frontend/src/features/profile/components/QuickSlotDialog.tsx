@@ -73,7 +73,7 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
       !formData.capacidad ||
       !formData.profesorId
     ) {
-      toast.error('Todos los campos marcados son obligatorios');
+      toast.error(t('perfil.slot.errors.camposObligatorios'));
       return;
     }
 
@@ -88,7 +88,7 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
       });
 
       if (res.success) {
-        toast.success('Aula/Slot creado con éxito');
+        toast.success(t('perfil.slot.toast.creado'));
         onSuccess(res.data);
         onClose();
         setFormData({
@@ -99,11 +99,11 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
           ubicacionId: '',
         });
       } else {
-        toast.error(res.message || 'Error al crear el slot');
+        toast.error(res.message || t('perfil.slot.errors.crear'));
       }
     } catch (error) {
       console.error('Error creating slot', error);
-      toast.error('Error al crear el slot académico');
+      toast.error(t('perfil.slot.errors.crearAcademico'));
     } finally {
       setIsSaving(false);
     }
@@ -111,7 +111,7 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Nueva Aula / Clase (Slot)</DialogTitle>
+      <DialogTitle>{t('perfil.slot.titulo')}</DialogTitle>
       <DialogContent dividers>
         <Box sx={{ pt: 1 }}>
           <Grid container spacing={2}>
@@ -196,7 +196,7 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
                   disabled={isSaving}
                 >
                   <MenuItem value="">
-                    <em>Sin ubicación física</em>
+                    <em>{t('perfil.sinUbicacion')}</em>
                   </MenuItem>
                   {ubicaciones.map((u) => (
                     <MenuItem key={u.id} value={u.id}>
@@ -211,7 +211,7 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={isSaving}>
-          Cancelar
+          {t('comun.cancelar')}
         </Button>
         <Button
           onClick={handleSave}
@@ -219,7 +219,7 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
           disabled={isSaving}
           startIcon={isSaving ? <CircularProgress size={20} /> : null}
         >
-          Crear Aula
+          {t('perfil.slot.crearAula')}
         </Button>
       </DialogActions>
     </Dialog>

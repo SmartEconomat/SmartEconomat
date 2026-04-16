@@ -307,7 +307,8 @@
     "eliminarReceta": "Delete recipe",
     "sinGluten": "Gluten Free",
     "sinLacteos": "Dairy Free",
-    "incluirImagenReceta": "Include recipe image"
+    "incluirImagenReceta": "Include recipe image",
+    "buscarMinLetras": "Type at least 2 characters to search for products."
   },
   "usuarios": {
     "empty": {
@@ -330,7 +331,17 @@
     "campoEstadoInicial": "Initial Status",
     "campoAulaSlot": "Classroom / Assigned Slot",
     "campoUbicacionAlmacen": "Warehouse Location",
-    "cargandoRoles": "Loading roles..."
+    "cargandoRoles": "Loading roles...",
+    "toast": {
+      "actualizado": "User updated",
+      "creado": "User created",
+      "eliminado": "User deleted",
+      "errorCargarRoles": "Error loading available roles",
+      "errorCargar": "Error loading users",
+      "errorEliminar": "Error deleting",
+      "errorReset": "Error resetting password",
+      "errorGuardar": "Error saving"
+    }
   },
   "movimientos": {
     "titulo": "Movement History",
@@ -548,7 +559,8 @@
       "marcadaCancelada": "Incident marked as cancelled",
       "marcadaInvalida": "Incident marked as invalid",
       "marcadaResuelta": "Incident marked as resolved",
-      "actualizada": "Incident updated successfully"
+      "actualizada": "Incident updated successfully",
+      "eliminada": "Incident deleted successfully"
     }
   },
   "admin": {
@@ -575,7 +587,12 @@
     "errors": {
       "cargarDatos": "Error loading administration data",
       "cargarAlumnos": "Error loading students",
-      "sinProfesorVinculado": "You do not have a linked teacher profile. Select a teacher from the list or make sure you have a teacher profile created."
+      "sinProfesorVinculado": "You do not have a linked teacher profile. Select a teacher from the list or make sure you have a teacher profile created.",
+      "eliminar": "Could not delete",
+      "actualizar": "Error updating",
+      "actualizarAula": "Error updating the classroom",
+      "cambiarEstado": "Error changing status",
+      "resetearContrasena": "Error resetting password"
     },
     "toast": {
       "aulaCreada": "Classroom/Class added successfully",
@@ -799,11 +816,6 @@
     "miPerfil": "My Profile",
     "descripcionAlumno": "View your profile, change your username or password, and request email changes with higher-role approval.",
     "descripcionOtros": "View and edit your personal data and security options.",
-    "preferencias": {
-      "titulo": "Preferences",
-      "descripcion": "Adjust the application display preferences.",
-      "idioma": "Application language"
-    },
     "seccion": {
       "titulo": "Profile & Security",
       "descripcionAlumno": "You can edit your username and password. Email changes require approval from a higher-privilege role.",
@@ -866,7 +878,22 @@
     "sinAsignar": "Unassigned",
     "campoProfesor": "Professor",
     "profesorResponsable": "Responsible Professor",
-    "ubicacionWarehouse": "Warehouse Location (Optional)"
+    "ubicacionWarehouse": "Warehouse Location (Optional)",
+    "slot": {
+      "titulo": "New Classroom / Class (Slot)",
+      "crearAula": "Create Classroom",
+      "toast": {
+        "creado": "Classroom/Slot created successfully"
+      },
+      "errors": {
+        "camposObligatorios": "All marked fields are required",
+        "crear": "Error creating the slot",
+        "crearAcademico": "Error creating the academic slot"
+      }
+    },
+    "form": {
+      "helperNombre": "The name others will see"
+    }
   },
   "comun": {
     "acciones": "Actions",
@@ -927,10 +954,6 @@
     "proveedorLabel": "Supplier: ",
     "pendiente": "Pending",
     "sinElementos": "No items",
-    "idioma": {
-      "es": "Español",
-      "en": "English"
-    },
     "aprobar": "Approve",
     "borrar": "Delete",
     "iniciarRecepcion": "Start Reception",
@@ -1143,7 +1166,10 @@
     "errors": {
       "errorCargar": "Unknown error loading data."
     },
-    "sinMarca": "No brand"
+    "sinMarca": "No brand",
+    "filtros": {
+      "placeholderCategoria": "Filter category..."
+    }
   },
   "inventario": {
     "titulo": "Inventory by Product",
@@ -1273,12 +1299,25 @@
         "loteNoExiste": "The selected batch no longer exists. Inventory was reloaded to continue with active batches.",
         "mermaRegistrada": "Wastage recorded successfully",
         "errorMerma": "Error recording wastage"
-      }
+      },
+      "errors": {
+        "interpretarAjuste": "Could not interpret the stock adjustment."
+      },
+      "placeholderAjuste": "+2 / -1",
+      "helperAjuste": "Adjustment in packaging units (+/-)"
     },
     "ubicaciones": {
       "titulo": "Manage Locations",
       "nueva": "New location",
-      "sinUbicaciones": "No locations registered."
+      "sinUbicaciones": "No locations registered.",
+      "toast": {
+        "creada": "Location added",
+        "eliminada": "Location deleted"
+      },
+      "errors": {
+        "crear": "Error creating location",
+        "eliminar": "Error deleting location"
+      }
     },
     "nuevaUbicacion": {
       "titulo": "New Warehouse Location",
@@ -1324,7 +1363,10 @@
       "bebida": "Beverage",
       "otro": "Other"
     },
-    "tabsLabel": "Inventory tabs"
+    "tabsLabel": "Inventory tabs",
+    "filtros": {
+      "placeholderUbicacion": "Location..."
+    }
   },
   "distribucion": {
     "titulo": "Internal Distribution",
@@ -1497,6 +1539,12 @@
       "mermaRegistrada": "Production waste recorded successfully.",
       "errorMerma": "Could not record production waste.",
       "errorCargar": "Error loading preparations"
+    },
+    "errors": {
+      "cantidadInvalida": "Enter a valid quantity to consume.",
+      "loteInvalido": "Select a valid production batch.",
+      "ingredienteInvalido": "Select the ingredient with waste.",
+      "mermaCantidadInvalida": "Enter a waste quantity greater than 0."
     }
   },
   "pedido": {
@@ -1549,7 +1597,8 @@
     "soloNoResueltas": "Only unresolved incidents",
     "generando": "Generating...",
     "generarExcel": "Generate Excel",
-    "generarPdf": "Generate PDF"
+    "generarPdf": "Generate PDF",
+    "errorCargarProveedores": "Could not load suppliers for the report."
   },
   "resumen": {
     "faltante": "Shortage",
@@ -1692,6 +1741,36 @@
     "fechaEntregaDialogMensaje": "The estimated delivery date for this order is {{fecha}}. This value is calculated automatically by the system and cannot be edited manually.",
     "buscarPlaceholder": "Search by supplier, status, user...",
     "nuevoPedido": "New Order",
-    "continuarPedido": "Continue Order"
+    "continuarPedido": "Continue Order",
+    "toast": {
+      "compraActualizada": "Purchase updated successfully.",
+      "pedidoActualizado": "Order updated successfully.",
+      "pedidoActualizadoDividido": "Order updated and split by supplier where necessary.",
+      "pedidoRegistrado": "Order registered successfully.",
+      "pedidoRegistradoMultiproveedor": "Order registered with {{count}} lines and internal split by supplier.",
+      "pedidoEliminado": "Order deleted successfully.",
+      "pedidoYaNoExistia": "The order no longer existed. The list has been refreshed.",
+      "pedidoAprobado": "The order has been approved successfully.",
+      "compraTramitada": "The purchase has been processed successfully.",
+      "pedidoCancelado": "The order has been cancelled.",
+      "compraCancelada": "The purchase has been cancelled.",
+      "loteSemanalGenerado": "Weekly batch generated successfully.",
+      "sinPedidosRecepcionar": "This purchase has no pending orders to receive. Manage partial or incident cases from Incidents.",
+      "recepcionIniciada": "Reception started with the products from this purchase."
+    },
+    "errors": {
+      "sinProductos": "Each line must have a product-supplier and a quantity greater than 0.",
+      "errorIdentificarProveedor": "An error occurred identifying the supplier for some products.",
+      "mantenerProductoProveedor": "You must keep at least one product from the original order supplier.",
+      "errorGuardar": "Error saving the order.",
+      "errorEliminar": "Error deleting the order.",
+      "errorAprobar": "Error approving the order.",
+      "errorAprobarCompra": "Error approving the purchase.",
+      "errorCancelar": "Error cancelling the order.",
+      "errorCancelarCompra": "Error cancelling the purchase.",
+      "errorCargarLote": "Error loading the batch.",
+      "errorConsolidar": "Error consolidating orders into a batch.",
+      "errorIniciarRecepcion": "Error starting reception from the purchase."
+    }
   }
 }

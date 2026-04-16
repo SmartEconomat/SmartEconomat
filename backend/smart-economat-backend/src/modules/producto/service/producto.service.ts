@@ -38,7 +38,7 @@ import { RecetaIngrediente } from '../../receta/receta-ingrediente.entity/receta
 @Injectable()
 export class ProductoService {
   /**
-   * Creates an instance of ProductoService.
+   * Crea una instancia de ProductoService.
    *
    * @param {ProductoRepository} productoRepository - Custom repository for Producto entity.
    * @param {Repository<ProductoProveedor>} productoProveedorRepository - Repository for ProductoProveedor entity.
@@ -60,8 +60,8 @@ export class ProductoService {
   ) {}
 
   /**
-   * Creates a new product with optional allergens and supplier associations
-   * in a single transactional operation. Validates or auto-generates the barcode.
+   * Crea un nuevo product with optional allergens and supplier associations
+   * in a single transactional operation. Valida or auto-generates the barcode.
    *
    * @param {CreateProductoDto} createProductoDto - DTO containing product creation data.
    * @param {string} userId - ID of the user performing the creation.
@@ -140,7 +140,7 @@ export class ProductoService {
    * Admin users also receive soft-deleted records.
    *
    * @param {ProductFilterDto} query - Filtering, sorting, and pagination parameters.
-   * @param {string} [userRole] - Role of the requesting user; admins see deleted records.
+   * @param {string} [userRole] - Role of the requesting user; los administradores ven registros eliminados.
    * @returns {Promise<PaginatedResponseDto<Producto>>} Paginated list of products.
    */
   async findAll(
@@ -255,7 +255,7 @@ export class ProductoService {
   }
 
   /**
-   * Updates an existing product's scalar fields, allergens, and supplier
+   * Actualiza an existing product's scalar fields, allergens, and supplier
    * associations in a single transaction. Cleans up the old image if replaced.
    *
    * @param {string} id - UUID of the product to update.
@@ -391,7 +391,7 @@ export class ProductoService {
   }
 
   /**
-   * Generates a unique EAN-13 barcode by retrying up to a maximum number
+   * Genera a unique EAN-13 barcode by retrying up to a maximum number
    * of attempts until a non-colliding code is found.
    *
    * @returns {Promise<string>} A unique EAN-13 barcode string.
@@ -524,7 +524,7 @@ export class ProductoService {
   }
 
   /**
-   * Returns the price history for a product, optionally filtered by supplier.
+   * Devuelve el historial de precios for a product, opcionalmente filtrados por proveedor.
    *
    * @param {string} productoId - UUID of the product.
    * @param {string} [proveedorId] - Optional UUID of a specific supplier to filter by.
@@ -576,7 +576,7 @@ export class ProductoService {
   }
 
   /**
-   * Validates that the given unit price is strictly greater than zero.
+   * Valida that the given unit price is strictly greater than zero.
    *
    * @param {number} precioUnitario - The unit price to validate.
    * @param {string} proveedorId - UUID of the supplier, used in the error message.
@@ -638,13 +638,13 @@ export class ProductoService {
   }
 
   /**
-   * Validates the supplier payload before creating or updating product-supplier
+   * Valida the supplier payload before creating or updating product-supplier
    * associations: checks for duplicate supplier IDs, validates barcodes, verifies
    * that required prices are present, and confirms all referenced suppliers exist in DB.
    *
    * @param {EntityManager} manager - Entity manager for the current transaction.
    * @param {AddProveedorToProductoDto[]} [proveedores] - Array of supplier association DTOs.
-   * @param {boolean} [requirePrecioUnitario=false] - Whether a unit price is mandatory.
+   * @param {boolean} [requirePrecioUnitario=false] - si a unit price is mandatory.
    * @returns {Promise<void>}
    * @throws {ConflictException} If the same supplier appears more than once.
    * @throws {BadRequestException} If a barcode is invalid or a required price is missing.

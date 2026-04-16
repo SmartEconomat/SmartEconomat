@@ -9,10 +9,10 @@ import { tap } from 'rxjs/operators';
 import { Response } from 'express';
 
 /**
- * @description Returns the standard cookie options used for the `access_token` auth cookie.
- * The cookie is HTTP-only (not readable by JavaScript), uses `strict` SameSite policy,
- * expires after 7 days, and is `secure` only in production to facilitate local development.
- * @returns An options object suitable for `response.cookie()`.
+ * @description Devuelve las opciones estándar de cookie utilizadas para la cookie de autenticación `access_token`.
+ * La cookie es HTTP-only (no legible por JavaScript), utiliza la política SameSite `strict`,
+ * caduca tras 7 días y es `secure` solo en producción para facilitar el desarrollo local.
+ * @returns Un objeto de opciones apto para `response.cookie()`.
  * @example
  * res.cookie('access_token', token, getAuthCookieOptions());
  */
@@ -25,12 +25,12 @@ export const getAuthCookieOptions = () => ({
 });
 
 /**
- * @description NestJS interceptor that automatically sets the `access_token` HTTP-only
- * cookie whenever the downstream handler returns a response object that contains an
- * `access_token` property. This ensures that auth endpoints transparently persist the
- * JWT in a secure cookie without each controller needing to manage cookie logic manually.
+ * @description Interceptor de NestJS que establece automáticamente la cookie HTTP-only `access_token`
+ * cada vez que el manejador descendente devuelve un objeto de respuesta que contiene una
+ * propiedad `access_token`. Esto garantiza que los endpoints de autenticación persistan el
+ * JWT en una cookie segura de forma transparente sin que cada controlador necesite gestionar la lógica de cookies manualmente.
  * @example
- * // Applied on the AuthController login endpoint:
+ *
  * \@UseInterceptors(CookieInterceptor)
  * \@Post('login')
  * login(@Body() dto: LoginDto) { ... }
@@ -38,11 +38,11 @@ export const getAuthCookieOptions = () => ({
 @Injectable()
 export class CookieInterceptor implements NestInterceptor {
   /**
-   * @description Intercepts the response stream and, if the resolved data contains an
-   * `access_token` field, writes it as a secure HTTP-only cookie on the Express response.
-   * @param context - NestJS execution context providing access to the HTTP response object.
-   * @param next - The downstream call handler whose observable is tapped into.
-   * @returns The observable response stream, augmented with a side-effect that sets the cookie.
+   * @description Intercepta el flujo de respuesta y, si los datos resueltos contienen un
+   * campo `access_token`, lo escribe como una cookie HTTP-only segura en la respuesta de Express.
+   * @param context - Contexto de ejecución de NestJS que proporciona acceso al objeto de respuesta HTTP.
+   * @param next - El manejador de llamadas descendente cuyo observable se intercepta.
+   * @returns El flujo observable de respuesta, aumentado con un efecto secundario que establece la cookie.
    */
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(

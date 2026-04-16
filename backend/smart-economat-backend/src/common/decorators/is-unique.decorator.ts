@@ -9,33 +9,33 @@ import { DataSource } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 
 /**
- * @description Async class-validator constraint that checks whether a given field value
- * is unique across a TypeORM entity table. Queries the database using the injected
- * `DataSource` and returns `false` (invalid) if a record with the same value already exists.
- * Register this class as a provider in the NestJS DI container so that the `DataSource`
- * dependency can be resolved.
+ * @description Restricción asíncrona de class-validator que verifica si un valor de campo dado
+ * es único en la tabla de una entidad TypeORM. Consulta la base de datos usando el
+ * `DataSource` inyectado y devuelve `false` (inválido) si ya existe un registro con el mismo valor.
+ * Registra esta clase como proveedor en el contenedor DI de NestJS para que la dependencia
+ * `DataSource` pueda resolverse.
  * @example
- * // In a module:
+ *
  * providers: [IsUniqueConstraint]
  */
 @ValidatorConstraint({ name: 'IsUnique', async: true })
 @Injectable()
 export class IsUniqueConstraint implements ValidatorConstraintInterface {
   /**
-   * @description Injects the TypeORM `DataSource` needed to perform the uniqueness check.
-   * @param dataSource - The active TypeORM `DataSource` instance.
+   * @description Inyecta el `DataSource` de TypeORM necesario para realizar la comprobación de unicidad.
+   * @param dataSource - La instancia activa de `DataSource` de TypeORM.
    */
   constructor(private readonly dataSource: DataSource) {}
 
   /**
-   * @description Performs the async uniqueness check by querying the repository for the
-   * given entity class. Uses the constraint's first argument as the entity class and the
-   * second argument (or the property name) as the field to check.
-   * @param value - The field value to check for uniqueness.
-   * @param args - Validation arguments containing the constraints `[entityClass, field]`
-   *   and the property name being validated.
-   * @returns `true` if no record with the given value exists (i.e. the value is unique);
-   *   `false` otherwise.
+   * @description Realiza la comprobación asíncrona de unicidad consultando el repositorio para la
+   * clase de entidad dada. Usa el primer argumento de la restricción como clase de entidad y el
+   * segundo argumento (o el nombre de la propiedad) como campo a comprobar.
+   * @param value - El valor del campo cuya unicidad se comprueba.
+   * @param args - Argumentos de validación que contienen las restricciones `[entityClass, field]`
+   *   y el nombre de la propiedad que se está validando.
+   * @returns `true` si no existe ningún registro con el valor dado (es decir, el valor es único);
+   *   `false` en caso contrario.
    */
   async validate(value: unknown, args: ValidationArguments) {
     const [entityClass, field] = args.constraints as [new () => object, string];
@@ -47,10 +47,10 @@ export class IsUniqueConstraint implements ValidatorConstraintInterface {
   }
 
   /**
-   * @description Returns the default validation error message when the uniqueness check fails.
-   * The message includes the entity class name and the offending property name.
-   * @param args - Validation arguments providing the entity class and property name.
-   * @returns A human-readable error message string.
+   * @description Devuelve el mensaje de error de validación por defecto cuando falla la comprobación de unicidad.
+   * El mensaje incluye el nombre de la clase de entidad y el nombre de la propiedad que causó el error.
+   * @param args - Argumentos de validación que proporcionan la clase de entidad y el nombre de la propiedad.
+   * @returns Una cadena de mensaje de error legible por humanos.
    */
   defaultMessage(args: ValidationArguments) {
     const [entityClass] = args.constraints;
@@ -59,13 +59,13 @@ export class IsUniqueConstraint implements ValidatorConstraintInterface {
 }
 
 /**
- * @description Property decorator factory that registers the {@link IsUniqueConstraint}
- * async validator on a DTO property. Checks that the decorated property's value does not
- * already exist in the specified entity's table column.
- * @param entity - The TypeORM entity class whose table is queried for the uniqueness check.
- * @param field - Optional entity column name to query against. Defaults to the property name.
- * @param validationOptions - Standard class-validator options (e.g. `message`, `groups`).
- * @returns A property decorator that registers the `IsUnique` constraint.
+ * @description Fábrica de decoradores de propiedad que registra el validador asíncrono
+ * {@link IsUniqueConstraint} en una propiedad DTO. Comprueba que el valor de la propiedad
+ * decorada no exista ya en la columna de tabla de la entidad especificada.
+ * @param entity - La clase de entidad TypeORM cuya tabla se consulta para la comprobación de unicidad.
+ * @param field - Nombre de columna de entidad opcional contra la que consultar. Por defecto, el nombre de la propiedad.
+ * @param validationOptions - Opciones estándar de class-validator (p. ej. `message`, `groups`).
+ * @returns Un decorador de propiedad que registra la restricción `IsUnique`.
  * @example
  * export class CreateUsuarioDto {
  *   \@IsUnique(Usuario, 'email')

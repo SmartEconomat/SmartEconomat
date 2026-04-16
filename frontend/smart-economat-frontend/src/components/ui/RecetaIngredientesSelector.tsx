@@ -593,7 +593,7 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                               {...params}
                               variant="standard"
                               placeholder={t('comun.buscarProducto')}
-                              helperText="Escribe al menos 2 letras para buscar productos."
+                              helperText={t('recetas.buscarMinLetras')}
                               InputProps={{
                                 ...params.InputProps,
                                 endAdornment: (
@@ -663,7 +663,9 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                           disabled={!line.productoId}
                           renderValue={(val) => {
                             if (!val) {
-                              return <em>{t('receta.ingredientes.sinProveedor')}</em>;
+                              return (
+                                <em>{t('receta.ingredientes.sinProveedor')}</em>
+                              );
                             }
 
                             const selected = availableProviders.find(
