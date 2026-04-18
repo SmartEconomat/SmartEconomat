@@ -87,6 +87,8 @@ import StatusChip from '../components/ui/StatusChip';
 import { usePermission } from '../store/auth.hooks';
 import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 import ProductCard from '../features/productos/ProductCard';
+import { useSidebar } from '../store/sidebar.hooks';
+import { useBreakpoints } from '../utils/useBreakpoints';
 import ProductFilters, {
   ProductFiltersState,
 } from '../features/productos/ProductFilters';
@@ -168,6 +170,25 @@ const Productos: React.FC = () => {
     useState<string>('all');
   const historySectionRef = useRef<HTMLDivElement | null>(null);
   const toast = useToast();
+  const { isExpanded: sidebarExpanded } = useSidebar();
+  const { screenWidth } = useBreakpoints();
+
+  // Estado con retraso para la aparición de columnas y evitar parpadeos/solapamientos durante la animación del sidebar
+  const [isSidebarActuallyExpanded, setIsSidebarActuallyExpanded] =
+    useState(sidebarExpanded);
+
+  useEffect(() => {
+    if (sidebarExpanded) {
+      // Si se expande, ocultamos la columna Marca inmediatamente para evitar solapamiento
+      setIsSidebarActuallyExpanded(true);
+    } else {
+      // Si se contrae, esperamos a que termine la animación (~200ms) antes de mostrar Marca
+      const timer = setTimeout(() => {
+        setIsSidebarActuallyExpanded(false);
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [sidebarExpanded]);
 
   // Exportar productos a PDF
   const handleExportPdf = async () => {
@@ -316,14 +337,13 @@ const Productos: React.FC = () => {
     }
   };
 
-  const columns = React.useMemo<Column<Producto>[]>(
-    () => [
+  const columns = React.useMemo<Column<Producto>[]>(() => {
+    const allColumns: Column<Producto>[] = [
       {
         id: 'nombre',
         label: 'Nombre',
         sortable: true,
         minWidth: 280,
-        flex: 2,
         render: (row) => (
           <Stack direction="row" spacing={1} alignItems="center">
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
@@ -397,9 +417,17 @@ const Productos: React.FC = () => {
         sortable: true,
         width: 120,
       },
-    ],
-    []
-  );
+    ];
+
+    // Lógica de ocultación dinámica: si el sidebar está expandido y la pantalla es < 1400px,
+    // ocultamos "Marca" para evitar solapamientos con "Nombre".
+    // Usamos isSidebarActuallyExpanded (con delay al cerrar) para dar tiempo a la animación.
+    if (isSidebarActuallyExpanded && screenWidth < 1400) {
+      return allColumns.filter((col) => col.id !== 'marca');
+    }
+
+    return allColumns;
+  }, [isSidebarActuallyExpanded, screenWidth]);
 
   const handleSort = (key: string | keyof Producto) => {
     const isAsc = sortBy === key && sortOrder === 'asc';

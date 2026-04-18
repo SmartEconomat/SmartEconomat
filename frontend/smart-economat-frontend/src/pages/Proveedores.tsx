@@ -343,6 +343,8 @@ const Proveedores: React.FC = () => {
           onSort={handleSort}
           sortConfig={{ key: sortBy || '', direction: sortOrder }}
           defaultViewMode="list"
+          onRowClick={handleViewClick}
+          getRowAriaLabel={(row) => `Ver detalle de proveedor ${row.nombre}`}
           emptyStateMessage={
             <Box sx={{ py: 4, textAlign: 'center' }}>
               <StorefrontOutlinedIcon

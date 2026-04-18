@@ -100,7 +100,7 @@ const RecipeCarousel: React.FC = () => {
                 width: '100%',
                 height: '70%',
                 background:
-                  'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%)',
+                  'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0) 100%)',
               },
             }}
           >
@@ -110,6 +110,7 @@ const RecipeCarousel: React.FC = () => {
                 bottom: 0,
                 left: 0,
                 p: { xs: 2, md: 3 },
+                pl: { xs: 6, md: 8 },
                 width: { xs: '100%', md: '60%' },
                 zIndex: 2,
                 color: 'white',

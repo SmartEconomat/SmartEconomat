@@ -13,13 +13,16 @@ import 'dayjs/locale/es';
 
 import { Provider } from 'react-redux';
 import { store } from './store';
+import { SidebarProvider } from './store/SidebarContext';
 
 function App() {
   return (
     <Provider store={store}>
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
         <ThemeContextProvider>
-          <Main />
+          <SidebarProvider>
+            <Main />
+          </SidebarProvider>
         </ThemeContextProvider>
       </LocalizationProvider>
     </Provider>

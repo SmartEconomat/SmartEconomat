@@ -117,7 +117,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
   sticky = true,
   extraActions = [],
 }) => {
-  const { isMobile, isMobileOrTablet } = useBreakpoints();
+  const { isMobile, isTabletOrBelow } = useBreakpoints();
   const theme = useTheme();
   const [isExpanded, setIsExpanded] = React.useState(true);
 
@@ -375,7 +375,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
           >
             {extraActions.map((action) => (
               <React.Fragment key={action.id || action.label}>
-                {isMobileOrTablet ? (
+                {isTabletOrBelow ? (
                   <Tooltip title={action.label}>
                     <IconButton
                       id={action.id}
@@ -386,8 +386,8 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                         bgcolor: 'background.paper',
                         border: '1px solid',
                         borderColor: 'divider',
-                        width: isMobile ? 34 : 38,
-                        height: isMobile ? 34 : 38,
+                        width: isMobile ? 36 : 40,
+                        height: isMobile ? 36 : 40,
                         borderRadius: 2,
                       }}
                     >
@@ -418,11 +418,12 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                     disabled={action.disabled || action.isLoading}
                     sx={{
                       borderRadius: 2,
-                      py: 0.6,
+                      height: 36,
                       px: 1.5,
-                      fontWeight: 600,
+                      fontWeight: 700,
                       fontSize: '0.75rem',
                       textTransform: 'uppercase',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {action.label}
@@ -433,7 +434,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
 
             {primaryAction && (
               <>
-                {isMobileOrTablet ? (
+                {isTabletOrBelow ? (
                   <Tooltip title={primaryAction.label}>
                     <IconButton
                       id={primaryAction.id}
@@ -467,11 +468,12 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                     disabled={primaryAction.disabled || primaryAction.isLoading}
                     sx={{
                       borderRadius: 2,
-                      py: 0.6,
+                      height: 36,
                       px: 1.5,
-                      fontWeight: 600,
+                      fontWeight: 700,
                       fontSize: '0.75rem',
                       textTransform: 'uppercase',
+                      whiteSpace: 'nowrap',
                       bgcolor: 'primary.main',
                       '&:hover': { bgcolor: 'primary.dark' },
                     }}
@@ -484,7 +486,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
 
             {secondaryAction && (
               <>
-                {isMobileOrTablet ? (
+                {isTabletOrBelow ? (
                   <Tooltip title={secondaryAction.label}>
                     <IconButton
                       id={secondaryAction.id}
@@ -525,11 +527,12 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                     }
                     sx={{
                       borderRadius: 2,
-                      py: 0.6,
+                      height: 36,
                       px: 1.5,
-                      fontWeight: 600,
+                      fontWeight: 700,
                       fontSize: '0.75rem',
                       textTransform: 'uppercase',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {secondaryAction.label}

@@ -16,8 +16,9 @@ const SkipLinks: React.FC = () => {
     };
 
   return (
-    <div id="skip-links">
+    <div id="skip-links" style={{ pointerEvents: 'none' }}>
       <a
+        style={{ pointerEvents: 'auto' }}
         href="#main-content"
         className="skip-link"
         onClick={handleSkip('main-content')}
