@@ -29,8 +29,8 @@ export default function LearningModeToggle({
   };
 
   const tooltipText = isLearningMode
-    ? 'Desactivar modo aprendizaje (Ocultar descripciones detalladas)'
-    : 'Activar modo aprendizaje (Mostrar descripciones detalladas)';
+    ? 'Desactivar tips de uso (Ocultar descripciones de la interfaz)'
+    : 'Activar tips de uso (Mostrar descripciones de botones e iconos)';
 
   if (mode === 'listitem') {
     return (
@@ -64,7 +64,7 @@ export default function LearningModeToggle({
                 }}
               >
                 <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  Aprendizaje
+                  Tips de uso
                 </Typography>
                 <Typography
                   variant="caption"

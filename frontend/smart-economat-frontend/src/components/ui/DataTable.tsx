@@ -143,6 +143,8 @@ export interface DataTableProps<T> {
   onRowClick?: (row: T) => void;
   /** Etiqueta accesible opcional para filas interactivas */
   getRowAriaLabel?: (row: T) => string;
+  /** ID único para identificación (ej: en tours) */
+  id?: string;
 }
 
 /**
@@ -152,7 +154,7 @@ export interface DataTableProps<T> {
 
 // Eliminada la utilidad extractText local para usar la global en a11y-format.ts
 
-export function DataTable<T extends Record<string, any>>({
+export function DataTable<T extends Record<string, unknown>>({
   columns,
   data,
   isLoading = false,
@@ -178,6 +180,7 @@ export function DataTable<T extends Record<string, any>>({
   getRowAriaLabel,
   viewMode: controlledViewMode,
   onViewModeChange: onControlledViewModeChange,
+  id,
 }: DataTableProps<T>) {
   const colSpanCount =
     columns.length + (renderActions ? 1 : 0) + (selectable ? 1 : 0);
@@ -235,7 +238,7 @@ export function DataTable<T extends Record<string, any>>({
   };
 
   return (
-    <Box sx={{ width: '100%', mb: 2 }}>
+    <Box id={id} sx={{ width: '100%', mb: 2 }}>
       {hasTopBarControls && (
         <Box
           display="flex"
@@ -278,6 +281,7 @@ export function DataTable<T extends Record<string, any>>({
                 }
               >
                 <IconButton
+                  id="btn-export-pdf"
                   color="error"
                   size="small"
                   onClick={exportHandlers.onExportPdf}
@@ -305,6 +309,7 @@ export function DataTable<T extends Record<string, any>>({
                 }
               >
                 <IconButton
+                  id="btn-export-excel"
                   color="success"
                   size="small"
                   onClick={exportHandlers.onExportExcel}
@@ -380,9 +385,14 @@ export function DataTable<T extends Record<string, any>>({
                     />
                   </TableCell>
                 )}
-                {columns.map((column) => (
+                {columns.map((column, index) => (
                   <TableCell
                     key={String(column.id)}
+                    id={
+                      index === 0 && column.sortable
+                        ? 'table-header-sort'
+                        : undefined
+                    }
                     align={column.align || 'left'}
                     sx={{
                       width: column.width,
@@ -594,6 +604,7 @@ export function DataTable<T extends Record<string, any>>({
                     {renderActions && (
                       <TableCell
                         align={actionsAlign}
+                        id={rowIndex === 0 ? 'table-row-actions' : undefined}
                         sx={{ width: actionsWidth }}
                         onClick={(event) => event.stopPropagation()}
                         onKeyDown={(event) => event.stopPropagation()}

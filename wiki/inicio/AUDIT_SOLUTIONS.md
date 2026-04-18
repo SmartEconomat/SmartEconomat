@@ -102,9 +102,32 @@ Se ha implementado un sistema de validación activa en el componente core `Dynam
 ### 📐 Layout Pixel-Perfect (MUI Grid v2)
 - **Migración a Grid v2**: Adopción de la nueva arquitectura de Grilla de Material UI para asegurar alineaciones consistentes entre imágenes y campos de formulario, eliminando desajustes visuales en resoluciones MD y LG.
 
-## ✅ Criterios de Calidad Cumplidos
-- [x] Navegación por teclado funcional en todo el dashboard.
-- [x] Cumplimiento de contrastes AA en widgets y textos secundarios.
-- [x] Cero errores de "Empty Button" en el auditor WAVE.
-- [x] Jerarquía de encabezados (`h1` -> `h2`) validada.
-- [x] Diseño consistente con el UI Kit global.
+---
+105: 
+106: ## Fase 7: Onboarding y Sistema de Ayuda Interactiva
+107: 
+108: ### 🎓 Tutorial de Bienvenida (Guided Tour)
+109: Se ha implementado un motor de tours interactivos (`InteractiveTour.tsx`) para eliminar la curva de aprendizaje inicial.
+110: - **Tour de 7 Pasos**: Guía al usuario por el sidebar, métricas, acciones rápidas, notificaciones e historial.
+111: - **IDs Estables**: Se inyectaron selectores únicos en el DOM para asegurar un anclaje robusto de los diálogos de ayuda.
+112: 
+113: ### 💡 Sistema de "Tips" (Ayuda Visual)
+114: Implementación del **Modo Aprendizaje** accesible desde el menú lateral.
+115: - **Funcionalidad**: Al activarse, los tooltips y etiquetas de la interfaz ofrecen descripciones pedagógicas extendidas en lugar de etiquetas simples.
+116: - **Persistencia**: El estado de los tips se mantiene a través del `ThemeContext`, asegurando una experiencia coherente.
+117: 
+118: ### ♿ Accesibilidad y Responsividad del Tour
+119: - **Keyboard A11y**: Soporte nativo para `Arrows` (navegar) y `Escape` (salir).
+120: - **Compact Mode**: Lógica dinámica para pantallas pequeñas (`<520px` alto) que oculta elementos no críticos del tour para priorizar la navegación.
+121: - **Scroll Clamping**: Evita que los diálogos de ayuda se desborden mediante scroll interno automático.
+122: 
+123: ---
+124: 
+125: ## ✅ Criterios de Calidad Cumplidos
+126: - [x] Navegación por teclado funcional en todo el dashboard y en el tutorial.
+127: - [x] Cumplimiento de contrastes AA en widgets y textos secundarios.
+128: - [x] Cero errores de "Empty Button" en el auditor WAVE.
+129: - [x] Jerarquía de encabezados (`h1` -> `h2`) validada.
+130: - [x] Diseño consistente con el UI Kit global.
+131: - [x] Responsividad total y adaptación a "Modo Compacto" en tours.
+132: 

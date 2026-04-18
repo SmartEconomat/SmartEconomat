@@ -285,6 +285,7 @@ const Movimientos: React.FC = () => {
           onClick={() => handleViewClick(row)}
           size="small"
           aria-label="Ver detalle"
+          id="btn-ver-detalle-movimiento"
           sx={{ color: 'text.secondary' }}
         >
           <VisibilityIcon fontSize="small" />
@@ -376,6 +377,7 @@ const Movimientos: React.FC = () => {
   return (
     <Box>
       <PageToolbar
+        id="movimientos-toolbar"
         title="Historial de Movimientos"
         totalItems={totalItems}
         totalItemsLabel="movimientos"
@@ -385,13 +387,15 @@ const Movimientos: React.FC = () => {
           setPage(1);
         }}
         filters={
-          <MovimientoFilters
-            filters={filters}
-            onChange={(newFilters) => {
-              setFilters(newFilters);
-              setPage(1);
-            }}
-          />
+          <Box id="movimientos-filters">
+            <MovimientoFilters
+              filters={filters}
+              onChange={(newFilters) => {
+                setFilters(newFilters);
+                setPage(1);
+              }}
+            />
+          </Box>
         }
       />
 
@@ -402,6 +406,7 @@ const Movimientos: React.FC = () => {
       )}
 
       <DataTable
+        id="movimientos-table"
         columns={columns}
         data={data}
         isLoading={isLoading}

@@ -40,6 +40,7 @@ import LearningModeToggle from '../components/common/Learning/LearningModeToggle
 import NotificationCenter from '../components/common/Notification/NotificationCenter';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { useSidebar } from '../store/sidebar.hooks';
+import InteractiveTour from '../components/common/Tutorial/InteractiveTour';
 import Logo from '../assets/images/SVG/logo-smat-economato.svg';
 import LogoBlanco from '../assets/images/SVG/logo-smart-economat-blanco.svg';
 import Favicon from '../assets/icons/SVG/favicon.svg';
@@ -477,7 +478,8 @@ export default function MainLayout() {
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
-      {/* <SkipLinks /> - Comentado temporalmente por depuración de clics */}
+      {/* <SkipLinks id="skip-links" /> - Comentado temporalmente por depuración de clics */}
+      <InteractiveTour />
       <AppBar
         position="fixed"
         open={!isMobile && sidebarExpanded}
@@ -541,6 +543,7 @@ export default function MainLayout() {
               {user?.name}
             </Typography>
             <IconButton
+              id="user-menu-button"
               onClick={handleUserMenuOpen}
               sx={{ p: 0 }}
               aria-label="Abrir menú de usuario"

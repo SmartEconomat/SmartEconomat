@@ -128,21 +128,29 @@ const MermasPage: React.FC = () => {
   return (
     <Box>
       <PageToolbar
+        id="mermas-toolbar"
         title="Gestión de Mermas"
         icon={<BrokenImageOutlinedIcon />}
         totalItems={total}
         totalItemsLabel="registros"
         primaryAction={{
           label: 'Reportar Merma',
+          id: 'btn-reportar-merma',
           icon: <AddIcon />,
           onClick: () => setIsModalOpen(true),
         }}
       />
 
       <Box display="flex" flexDirection="column" gap={4}>
-        <MermaStats stats={stats} isLoading={isLoading} />
+        <Box id="merma-stats">
+          <MermaStats stats={stats} isLoading={isLoading} />
+        </Box>
 
-        <Paper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
+        <Paper
+          elevation={0}
+          id="mermas-table-container"
+          sx={{ p: 3, borderRadius: 2 }}
+        >
           <Typography variant="h6" fontWeight={600} mb={3}>
             Historial de Mermas
           </Typography>

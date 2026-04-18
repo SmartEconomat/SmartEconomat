@@ -27,6 +27,23 @@ Para acelerar la operativa diaria, se han implementado atajos globales que permi
 
 ---
 
+## Navegación del Tutorial Interactivo
+
+Cuando el **Tutorial de Página** está activo, el sistema activa capturadores de eventos dedicados para facilitar la navegación sin ratón:
+
+| Tecla | Acción |
+| :--- | :--- |
+| **ArrowRight** | Avanzar al siguiente paso del tour. |
+| **ArrowLeft** | Volver al paso anterior. |
+| **Escape** | Salir/Cerrar el tutorial en cualquier momento. |
+
+### Responsividad de la Ayuda
+El sistema de ayuda es **Mobile-Friendly** y se adapta dinámicamente:
+- **Modo Compacto**: En pantallas con poca altura, el tour oculta elementos decorativos (como el icono grande) para dar prioridad a la visibilidad de los botones de navegación y el texto descriptivo.
+- **Scroll Inteligente**: Si el texto de un paso es muy extenso, el diálogo genera un scroll interno para no desbordar la pantalla del usuario.
+
+---
+
 ## Saltos Rápidos (Skip Links)
 
 Al cargar la página por primera vez o refrescarla, la primera pulsación de la tecla `Tab` activará el menú de **Saltos Rápidos** en la parte superior central:

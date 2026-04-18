@@ -73,6 +73,28 @@ Motor dinámico para la generación de formularios complejos y reutilizables.
 - **Seguridad de Interfaz**: Implementa `e.preventDefault()` nativo para blindar la estabilidad de los modales padres durante el envío de datos.
 - **Tipos de Campo**: Soporte para `text`, `number` (blindaje de negativos), `email`, `date`, `select`, `allergens`, `image` y `barcode`.
 
+### TutorialHelper
+Disparador de asistencia contextual por módulo.
+- **Modos**: `icon` (Toolbar) o `listitem` (Sidebar).
+- **Funcionalidad**: Inicia el tour interactivo correspondiente a la ruta actual del usuario.
+
+### InteractiveTour
+Motor de UI encargado del renderizado de los recorridos guiados.
+- **Capacidades**:
+    - Spotlight dinámico (Resaltado del target).
+    - Posicionamiento inteligente (MUI Popper) con prevención de overflow.
+    - **Modo Compacto**: Adaptación automática para pantallas con altura reducida (< 520px) ocultando elementos decorativos.
+    - **Scroll Claping**: Scroll interno automático para descripciones extensas.
+
+---
+
+## Estándares de Navegación del Tutorial ♿
+Para garantizar la operatividad sin ratón, todo tour interactivo debe seguir este esquema de control:
+- **ArrowRight**: Avanzar paso.
+- **ArrowLeft**: Retroceder paso.
+- **Escape**: Cerrar tour.
+- **Foco Automático**: Al iniciar, el foco debe saltar al diálogo del tutorial para permitir la lectura inmediata por screen readers.
+
 ## Componentes de Autenticación (`src/features/auth/components`)
 
 ### AuthLogo

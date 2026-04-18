@@ -91,6 +91,8 @@ export interface PageToolbarProps {
       | 'inherit';
     variant?: 'text' | 'outlined' | 'contained';
   }[];
+  /** ID único para identificación (ej: en tours) */
+  id?: string;
 }
 
 /**
@@ -116,6 +118,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
   autoFocusSearch = false,
   sticky = true,
   extraActions = [],
+  id,
 }) => {
   const { isMobile, isTabletOrBelow } = useBreakpoints();
   const theme = useTheme();
@@ -125,6 +128,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
 
   return (
     <Paper
+      id={id}
       elevation={0}
       component="section"
       aria-label={`Barra de herramientas de ${title || 'la página'}`}

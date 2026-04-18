@@ -129,6 +129,7 @@ export default function NotificationCenter() {
     <>
       <Tooltip title="Abrir centro de notificaciones">
         <IconButton
+          id="btn-notifications"
           color="inherit"
           onClick={handleOpen}
           aria-label="Notificaciones"

@@ -663,7 +663,13 @@ const Productos: React.FC = () => {
           },
         ]}
         filters={
-          <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
+          <Box
+            id="filter-productos"
+            display="flex"
+            gap={2}
+            alignItems="center"
+            flexWrap="wrap"
+          >
             <ProductFilters
               filters={filters}
               onChange={(newFilters) => {

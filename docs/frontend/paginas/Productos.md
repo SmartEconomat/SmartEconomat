@@ -20,7 +20,25 @@ Esta página concentra la gestión del catálogo de productos: búsqueda, listad
 
 La página ya no usa `DynamicFormModal` como formulario principal.
 
-## Auditoría de Experiencia y Accesibilidad (Marzo 2026) ✅
+## Ayuda y Tutoriales Interactivos ✅
+
+La página de Productos cuenta con asistencia contextual avanzada para facilitar la gestión del catálogo:
+
+### Tour de Gestión de Catálogo (8 pasos)
+Recorrido interactivo que guía al usuario por:
+1. **Búsqueda Inteligente**: Localización por nombre o código de barras.
+2. **Filtros Avanzados**: Refinado por categorías.
+3. **Ordenado de Datos**: Gestión de columnas en la tabla.
+4. **Alta de Productos**: Proceso de creación y escaneo.
+5. **Exportación PDF**: Generación de catálogos impresos.
+6. **Reportes Excel**: Descarga de datos técnicos.
+7. **Acciones de Fila**: Edición, borrado y restauración.
+8. **Tutorial del Módulo**: Cómo reiniciar esta ayuda.
+
+### Modo Tips
+Al activar el botón **Tips** en el sidebar, se habilitan leyendas explicativas en los iconos de la `DataTable` y etiquetas descriptivas en el `BarcodeScanner`.
+
+## Auditoría de Experiencia y Accesibilidad (Abril 2026) ✅
 
 - **Rendimiento (Anti-CLS)**: Se ha eliminado el parpadeo de contenido durante la carga inicial mediante la sincronización milimétrica de Skeletons y anchos de columna en `DataTable`.
 - **Accesibilidad (WAVE Ready)**: Certificada en modo oscuro y alto contraste claro:

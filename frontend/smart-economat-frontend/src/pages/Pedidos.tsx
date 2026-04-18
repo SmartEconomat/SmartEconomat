@@ -614,6 +614,7 @@ const Pedidos: React.FC = () => {
       />
 
       <Paper
+        id="pedidos-content-area"
         elevation={2}
         sx={{
           borderRadius: 3,
@@ -630,6 +631,7 @@ const Pedidos: React.FC = () => {
           }}
         >
           <Tabs
+            id="pedidos-tabs"
             value={tabIndex}
             onChange={(_, newValue: PedidosTabValue) => {
               setTabIndex(newValue);

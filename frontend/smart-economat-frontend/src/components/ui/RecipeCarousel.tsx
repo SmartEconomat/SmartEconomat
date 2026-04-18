@@ -65,7 +65,10 @@ const RecipeCarousel: React.FC = () => {
   }, [activeIndex]);
 
   return (
-    <Box sx={{ width: '100%', mb: 4, position: 'relative' }}>
+    <Box
+      id="recipe-carousel-container"
+      sx={{ width: '100%', mb: 4, position: 'relative' }}
+    >
       <Paper
         elevation={0}
         sx={{

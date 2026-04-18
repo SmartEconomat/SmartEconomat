@@ -353,7 +353,7 @@ const Home: React.FC = () => {
   return (
     <Box>
       {/* Header */}
-      <Box mb={4}>
+      <Box id="dashboard-welcome" mb={4}>
         <Typography component="h1" variant="h4" fontWeight={700} gutterBottom>
           Hola, {user?.name || 'Administrador'}{' '}
           <span role="img" aria-label="emoji saludo">
@@ -404,6 +404,7 @@ const Home: React.FC = () => {
             {/* Estadísticas del Economato */}
             <Paper
               elevation={0}
+              id="dashboard-stats"
               sx={{
                 p: 3,
                 border: '1px solid',
@@ -616,6 +617,7 @@ const Home: React.FC = () => {
             {/* Acciones Rápidas */}
             <Paper
               elevation={0}
+              id="dashboard-quick-actions"
               sx={{
                 p: 3,
                 border: '1px solid',
@@ -684,6 +686,7 @@ const Home: React.FC = () => {
           >
             <Paper
               elevation={0}
+              id="dashboard-activity"
               sx={{
                 p: 3,
                 border: '1px solid',

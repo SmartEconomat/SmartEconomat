@@ -319,6 +319,7 @@ const Incidencias: React.FC = () => {
               onClick={() => openResolveModal(row, 'adjust')}
               size="small"
               color="warning"
+              id="btn-ajustar-incidencia"
               aria-label="Ajustar cantidades"
             >
               <TuneIcon fontSize="small" />
@@ -333,6 +334,7 @@ const Incidencias: React.FC = () => {
               onClick={() => openResolveModal(row, 'resolve')}
               size="small"
               color="success"
+              id="btn-resolver-incidencia"
               aria-label="Resolver incidencia"
             >
               <CheckCircleIcon fontSize="small" />
@@ -572,6 +574,7 @@ const Incidencias: React.FC = () => {
   return (
     <Box>
       <PageToolbar
+        id="incidencias-toolbar"
         title="Centro de Incidencias"
         totalItems={totalItems}
         totalItemsLabel="incidencias"
@@ -627,6 +630,7 @@ const Incidencias: React.FC = () => {
           }}
         >
           <Tabs
+            id="incidencias-tabs"
             value={resolucionTab}
             onChange={(_, newValue: IncidenciasResolucionTab) =>
               handleResolucionTabChange(newValue)
@@ -685,6 +689,7 @@ const Incidencias: React.FC = () => {
           )}
 
           <DataTable
+            id="incidencias-table"
             columns={columns}
             data={data}
             isLoading={isLoading}

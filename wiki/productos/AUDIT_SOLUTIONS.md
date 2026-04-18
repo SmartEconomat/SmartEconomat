@@ -42,3 +42,12 @@
 - **Acción**: Migrar el modal de productos a `Grid v2` con una proporción exacta de **4/8** (Imagen/Campos) y padding compensado.
 - **Solución de Datos**: Implementación de un motor de validación interna en `DynamicFormModal` que filtra números negativos y valida formatos (Email, Teléfono) mediante Regex antes del envío.
 - **UX**: Mejora de la estabilidad del modal mediante el control de burbujeo de eventos (`preventDefault`), eliminando cierres accidentales del proceso de alta.
+
+### 9. Asistencia Contextual Completa (Implementado ✅)
+- **Acción**: Implementar una guía interactiva de 8 pasos integrada en el ciclo de vida del catálogo.
+- **Recorrido**: Cubre desde la búsqueda inteligente y filtros avanzados hasta la exportación técnica a Excel y el uso del escáner en el alta rápida.
+- **Beneficio**: Reducción drástica de la tasa de soporte al ofrecer una explicación asistida de las herramientas de gestión de datos.
+
+### 10. Guía Visual con "Tips" (Implementado ✅)
+- **Acción**: Inyectar descripciones pedagógicas en el `DataTable` y el `BarcodeScanner` activables mediante el selector de **Tips**.
+- **Accesibilidad**: Los tips no solo son visuales (tooltips), sino que también mejoran los `aria-labels` dinámicos del listado de productos, cumpliendo con estándares superiores de WCAG.

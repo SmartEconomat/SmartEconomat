@@ -123,6 +123,7 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
         }}
       >
         <Box
+          id="search-recepcion-productos"
           sx={{
             display: 'flex',
             flex: 1,
@@ -201,6 +202,7 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
         </Box>
 
         <Box
+          id="scale-options-container"
           sx={{
             position: 'relative',
             width: { xs: '100%', sm: '44%', md: '380px' },

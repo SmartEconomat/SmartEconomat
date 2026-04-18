@@ -1,3 +1,4 @@
+import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeContextProvider } from './store/ThemeContext';
@@ -14,6 +15,7 @@ import 'dayjs/locale/es';
 import { Provider } from 'react-redux';
 import { store } from './store';
 import { SidebarProvider } from './store/SidebarContext';
+import { TutorialProvider } from './store/TutorialContext';
 
 function App() {
   return (
@@ -36,9 +38,13 @@ function Main() {
     <ThemeProvider theme={siteTheme}>
       <CssBaseline />
       <ToastProvider>
-        <AuthProvider>
-          <AppRouter />
-        </AuthProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <TutorialProvider>
+              <AppRouter />
+            </TutorialProvider>
+          </AuthProvider>
+        </BrowserRouter>
         <ToastContainer />
       </ToastProvider>
     </ThemeProvider>

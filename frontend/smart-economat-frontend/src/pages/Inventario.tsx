@@ -1095,6 +1095,7 @@ const Inventario: React.FC = () => {
             <IconButton
               size="small"
               color="primary"
+              id="btn-ver-detalle-stock"
               onClick={() => {
                 setSelectedProductId(row.productoId);
                 setDetailMode('view');
@@ -1109,6 +1110,7 @@ const Inventario: React.FC = () => {
               <IconButton
                 size="small"
                 color="secondary"
+                id="btn-ajustar-stock"
                 onClick={() => {
                   setSelectedProductId(row.productoId);
                   setDetailMode('audit');
@@ -1127,6 +1129,7 @@ const Inventario: React.FC = () => {
   return (
     <Box>
       <PageToolbar
+        id="inventario-toolbar"
         title="Inventario por Producto"
         searchValue={searchTerm}
         onSearchChange={(v) => {
@@ -1160,7 +1163,7 @@ const Inventario: React.FC = () => {
         }
         onViewModeChange={undefined}
         filters={
-          <Box width="100%">
+          <Box width="100%" id="inventario-filters">
             <InventarioFilters
               filters={filters}
               onChange={(newFilters) => {
@@ -1200,6 +1203,7 @@ const Inventario: React.FC = () => {
           }}
         >
           <Tabs
+            id="inventario-tabs"
             value={tabIndex}
             onChange={(_, v) => {
               setTabIndex(v);
@@ -1257,6 +1261,7 @@ const Inventario: React.FC = () => {
           )}
 
           <DataTable
+            id="inventario-table"
             columns={columns}
             data={filteredData.slice((page - 1) * pageSize, page * pageSize)}
             isLoading={isLoading || isLocationsLoading}

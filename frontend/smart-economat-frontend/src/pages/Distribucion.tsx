@@ -835,6 +835,7 @@ const DistribucionPage: React.FC = () => {
     <Tooltip title="Distribuir productos">
       <span>
         <IconButton
+          id="btn-distribuir-stock"
           size="small"
           color="primary"
           disabled={!canCreate}
@@ -862,6 +863,7 @@ const DistribucionPage: React.FC = () => {
           >
             <span>
               <IconButton
+                id="btn-confirmar-entrega"
                 size="small"
                 color="success"
                 disabled={!canConfirmAction}
@@ -994,6 +996,7 @@ const DistribucionPage: React.FC = () => {
         title="Distribución Interna"
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
+        searchId="search-distribucion"
         searchPlaceholder="Buscar por pedido, usuario o aula..."
         totalItems={
           activeTab === 'disponibles' ? disponibles.length : totalItems
@@ -1015,6 +1018,7 @@ const DistribucionPage: React.FC = () => {
         }}
       >
         <Box
+          id="distribucion-tabs"
           sx={{
             borderBottom: 1,
             borderColor: 'divider',
@@ -1037,7 +1041,7 @@ const DistribucionPage: React.FC = () => {
           </Tabs>
         </Box>
 
-        <Box sx={{ p: { xs: 2, sm: 4 } }}>
+        <Box id="distribucion-content-area" sx={{ p: { xs: 2, sm: 4 } }}>
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}

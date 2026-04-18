@@ -13,6 +13,17 @@ La página de Movimientos proporciona una auditoría detallada de todos los camb
 - **[DataTable](../componentes/DataTable.md)**: Historial tabular con iconografía direccional para indicar el flujo del stock.
 - **[StatusChip](../componentes/StatusChip.md)**: Etiquetas con variantes Outlined y colores semánticos según el tipo de movimiento.
 - **[DetailModal](../componentes/DetailModal.md)**: Vista técnica del movimiento, incluyendo IDs de entidad relacionada (Pedido, Recepción, etc.) y lotes.
+- **[InteractiveTour](../componentes/InteractiveTour.md)**: Guía paso a paso por el historial de trazabilidad.
+
+## Ayuda y Auditoría Interactiva ✅
+
+La página de Movimientos dispone de un asistente para facilitar el análisis del historial:
+
+### Tour de Trazabilidad (4 pasos)
+1. **Historial de Movimientos**: Registro central de cambios en stock.
+2. **Filtrado por Tipo**: Localización de mermas, entradas o salidas específicas.
+3. **Trazabilidad**: Identificación de responsables y productos.
+4. **Detalles de Auditoría**: Acceso al origen (Pedido/Distribución) y lotes.
 
 ## Funcionalidades Clave
 

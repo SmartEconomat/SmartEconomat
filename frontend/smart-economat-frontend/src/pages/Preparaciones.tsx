@@ -649,6 +649,7 @@ const Preparaciones: React.FC = () => {
           }}
           size="small"
           aria-label="Ver detalles"
+          id="btn-ver-detalle-preparacion"
         >
           <VisibilityIcon fontSize="small" />
         </IconButton>
@@ -668,6 +669,7 @@ const Preparaciones: React.FC = () => {
             }}
             size="small"
             aria-label="Consumir preparación"
+            id="btn-consumir-preparacion"
           >
             <LocalDiningIcon fontSize="small" />
           </IconButton>
@@ -683,6 +685,7 @@ const Preparaciones: React.FC = () => {
             }}
             size="small"
             aria-label="Reportar merma de ingrediente"
+            id="btn-merma-preparacion"
           >
             <ReportProblemIcon fontSize="small" />
           </IconButton>
@@ -754,6 +757,7 @@ const Preparaciones: React.FC = () => {
   return (
     <Box>
       <PageToolbar
+        id="preparaciones-summary"
         title="Bolsa de Preparaciones"
         totalItems={totalItems}
         totalItemsLabel="preparaciones"
@@ -781,9 +785,18 @@ const Preparaciones: React.FC = () => {
             variant="fullWidth"
             textColor="primary"
             indicatorColor="primary"
+            id="preparaciones-tabs"
           >
-            <Tab icon={<RestaurantIcon />} label="Disponibles" />
-            <Tab icon={<HistoryIcon />} label="Agotadas (Consumidas)" />
+            <Tab
+              icon={<RestaurantIcon />}
+              label="Disponibles"
+              id="tab-preparaciones-disponibles"
+            />
+            <Tab
+              icon={<HistoryIcon />}
+              label="Agotadas (Consumidas)"
+              id="tab-preparaciones-historial"
+            />
           </Tabs>
         </Box>
 
@@ -795,6 +808,7 @@ const Preparaciones: React.FC = () => {
           )}
 
           <DataTable
+            id="preparaciones-table"
             columns={columns}
             data={data}
             isLoading={isLoading}
