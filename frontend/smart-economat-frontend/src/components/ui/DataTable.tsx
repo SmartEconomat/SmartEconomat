@@ -154,7 +154,8 @@ export interface DataTableProps<T> {
 
 // Eliminada la utilidad extractText local para usar la global en a11y-format.ts
 
-export function DataTable<T extends Record<string, unknown>>({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function DataTable<T extends Record<string, any>>({
   columns,
   data,
   isLoading = false,
