@@ -24,27 +24,40 @@ export interface PreflightReport {
 export interface InstallerConfigPayload {
   runtimePath: string;
   instanceName: string;
+  installMode: "new" | "reinstall";
   adminUsername: string;
   adminPassword: string;
   superAdminUsername: string;
   superAdminPassword: string;
+  verifyExistingAdminSession: boolean;
+  repairAdminCredentialsOnFailure: boolean;
+  verifyAdminUsername?: string;
+  verifyAdminPassword?: string;
   useSamePasswordForBoth: boolean;
   localHost: string;
   timezone: string;
   tlsProvider: "selfsigned" | "none" | "custom";
   customCertFullchainPath?: string;
   customCertPrivkeyPath?: string;
+  backupDefaultDirectory: string;
   backupFrequency: "off" | "daily" | "weekly";
+  backupScheduleTime: string;
   backupRetentionDays: number;
   postgresPassword?: string;
   redisPassword?: string;
   jwtSecret?: string;
+  sentryDsn?: string;
+  viteSentryDsn?: string;
+  startupRunMigrations?: boolean;
+  httpPort: number;
+  httpsPort: number;
 }
 
 export interface InstallerFilePickerPayload {
   title: string;
   defaultPath?: string;
   buttonLabel?: string;
+  pickDirectories?: boolean;
   filters?: Array<{
     name: string;
     extensions: string[];
@@ -55,6 +68,7 @@ export type InstallerStep =
   | "IDLE"
   | "PREFLIGHT"
   | "CONFIG_VALIDATION"
+  | "PRE_INSTALL_BACKUP"
   | "ENV_RENDER"
   | "TLS_SETUP"
   | "DOCKER_DEPLOY"
@@ -96,6 +110,7 @@ export interface BackupMetadata {
   createdAt: string;
   checksum: string;
   archiveName: string;
+  archivePath?: string;
 }
 
 export interface OperationResult<T = undefined> {
@@ -120,6 +135,7 @@ export interface TailLogsPayload extends RuntimePaths {
 
 export interface BackupPayload extends RuntimePaths {
   label: string;
+  destinationDir: string;
 }
 
 export interface RestorePayload extends RuntimePaths {
@@ -132,6 +148,10 @@ export interface PrunePayload extends RuntimePaths {
   confirmationPhrase: string;
 }
 
+export interface UninstallPayload extends RuntimePaths {
+  confirmationPhrase: string;
+}
+
 export interface InstallerProgressEvent {
   snapshot: InstallerStateSnapshot;
 }
@@ -140,6 +160,11 @@ export interface RuntimeLogEvent {
   service: string;
   line: string;
   timestamp: string;
+}
+
+export interface InstallerBootState {
+  installed: boolean;
+  runtimePath: string;
 }
 
 export interface ExportVisibleLogsPayload extends RuntimePaths {

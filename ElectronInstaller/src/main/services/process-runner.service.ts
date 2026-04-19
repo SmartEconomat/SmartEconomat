@@ -2,6 +2,74 @@ import { spawn } from "node:child_process";
 
 import type { CommandResult } from "@shared/contracts";
 
+function hasLikelyMojibake(text: string): boolean {
+  return /Ã|Â|�|□/.test(text);
+}
+
+function countOccurrences(input: string, pattern: RegExp): number {
+  const matches = input.match(pattern);
+  return matches ? matches.length : 0;
+}
+
+function scoreDecodedText(text: string): number {
+  const replacementPenalty = countOccurrences(text, /�/g) * 8;
+  const mojibakePenalty = countOccurrences(text, /Ã|Â|□/g) * 3;
+  const printableBonus = countOccurrences(
+    text,
+    /[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ.,;:()\-_/\\\s]/g,
+  );
+
+  return printableBonus - replacementPenalty - mojibakePenalty;
+}
+
+function looksLikeUtf16Le(chunk: Buffer): boolean {
+  if (chunk.length < 4) {
+    return false;
+  }
+
+  if (chunk.length >= 2 && chunk[0] === 0xff && chunk[1] === 0xfe) {
+    return true;
+  }
+
+  let zeroBytes = 0;
+  for (let index = 1; index < chunk.length; index += 2) {
+    if (chunk[index] === 0x00) {
+      zeroBytes += 1;
+    }
+  }
+
+  const sampledPairs = Math.floor(chunk.length / 2);
+  return sampledPairs > 0 && zeroBytes / sampledPairs > 0.25;
+}
+
+function decodeWindowsChunk(chunk: Buffer): string {
+  if (looksLikeUtf16Le(chunk)) {
+    return chunk.toString("utf16le");
+  }
+
+  const utf8Text = chunk.toString("utf8");
+  if (!hasLikelyMojibake(utf8Text)) {
+    return utf8Text;
+  }
+
+  try {
+    const windows1252Text = new TextDecoder("windows-1252").decode(chunk);
+    return scoreDecodedText(windows1252Text) >= scoreDecodedText(utf8Text)
+      ? windows1252Text
+      : utf8Text;
+  } catch {
+    return utf8Text;
+  }
+}
+
+function decodeChunk(chunk: Buffer): string {
+  if (process.platform === "win32") {
+    return decodeWindowsChunk(chunk);
+  }
+
+  return chunk.toString("utf8");
+}
+
 export interface ProcessRunOptions {
   command: string;
   args: string[];
@@ -62,7 +130,7 @@ export class ProcessRunnerService {
       }, timeoutMs);
 
       child.stdout.on("data", (chunk: Buffer) => {
-        const text = chunk.toString("utf8");
+        const text = decodeChunk(chunk);
         stdout += text;
 
         if (options.onStdoutLine) {
@@ -71,7 +139,7 @@ export class ProcessRunnerService {
       });
 
       child.stderr.on("data", (chunk: Buffer) => {
-        const text = chunk.toString("utf8");
+        const text = decodeChunk(chunk);
         stderr += text;
 
         if (options.onStderrLine) {

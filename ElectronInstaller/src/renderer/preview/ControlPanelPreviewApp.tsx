@@ -167,6 +167,7 @@ function PreviewShell() {
             onStopLogs={async () => {}}
             onDiagnostics={async () => {}}
             onOpenDanger={() => setDangerOpen(true)}
+            onOpenUninstall={() => {}}
           >
             <Box
               sx={{
@@ -188,6 +189,9 @@ function PreviewShell() {
               <BackupRestorePanel
                 lastBackup={mockBackup}
                 busy={false}
+                backupDefaultDirectory="C:/SmartEconomatRuntime/backups"
+                onSaveBackupDefaultDirectory={() => {}}
+                onPickBackupDirectory={async () => null}
                 onBackup={async () => {}}
                 onRestore={async () => {}}
                 onPickRestoreArtifact={async () => null}

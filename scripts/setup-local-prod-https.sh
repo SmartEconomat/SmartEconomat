@@ -121,9 +121,7 @@ ensure_seed_temp_password() {
     return
   fi
 
-  local generated_password
-  generated_password="$(openssl rand -hex 16)"
-  printf "SEED_DEFAULT_ADMIN_TEMP_PASSWORD=%s\n" "$generated_password" >> "$ENV_FILE"
+  printf "SEED_DEFAULT_ADMIN_TEMP_PASSWORD=%s\n" "SmartEconomat2026!" >> "$ENV_FILE"
 }
 
 ensure_redis_password() {

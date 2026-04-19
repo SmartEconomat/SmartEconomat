@@ -18,27 +18,59 @@ export type WizardStep =
   | "finish"
   | "control";
 
+const defaultRuntimePath = `${globalThis.navigator?.platform?.startsWith("Win") ? "C:/SmartEconomatRuntime" : "/tmp/smarteconomat-runtime"}`;
+
 const defaultConfig: InstallerConfigPayload = {
-  runtimePath: `${globalThis.navigator?.platform?.startsWith("Win") ? "C:/SmartEconomatRuntime" : "/tmp/smarteconomat-runtime"}`,
+  runtimePath: defaultRuntimePath,
   instanceName: "smarteconomat-local",
+  installMode: "new",
   adminUsername: "admin",
-  adminPassword: "AdminTemporal2026",
+  adminPassword: "SmartEconomat2026!",
   superAdminUsername: "superadmin",
-  superAdminPassword: "AdminTemporal2026",
+  superAdminPassword: "SmartEconomat2026!",
+  verifyExistingAdminSession: false,
+  repairAdminCredentialsOnFailure: false,
+  verifyAdminUsername: "",
+  verifyAdminPassword: "",
   useSamePasswordForBoth: true,
   localHost: "smarteconomat.app",
   timezone: "Europe/Madrid",
   tlsProvider: "selfsigned",
   customCertFullchainPath: "",
   customCertPrivkeyPath: "",
+  backupDefaultDirectory: resolveRuntimeBackupDirectory(defaultRuntimePath),
   backupFrequency: "daily",
+  backupScheduleTime: "02:00",
   backupRetentionDays: 30,
+  sentryDsn: "",
+  viteSentryDsn: "",
+  startupRunMigrations: true,
+  httpPort: 80,
+  httpsPort: 443,
 };
 
 type SmartEconomatBridge = Window["smartEconomat"];
 
 const BRIDGE_UNAVAILABLE_ERROR =
   "No se pudo conectar con el bridge de Electron. Reinicia el instalador.";
+const BACKUP_DEFAULT_DIR_STORAGE_KEY = "installer.backupDefaultDirectory";
+
+function resolveRuntimeBackupDirectory(runtimePath: string): string {
+  return `${runtimePath}/backups`;
+}
+
+function readPersistedBackupDirectory(runtimePath: string): string {
+  if (typeof window === "undefined") {
+    return resolveRuntimeBackupDirectory(runtimePath);
+  }
+
+  const stored = window.localStorage.getItem(BACKUP_DEFAULT_DIR_STORAGE_KEY);
+  if (!stored || stored.trim().length === 0) {
+    return resolveRuntimeBackupDirectory(runtimePath);
+  }
+
+  return stored;
+}
 
 function resolveSmartEconomatBridge(
   targetWindow?: Window,
@@ -54,6 +86,17 @@ function resolveSmartEconomatBridge(
   return maybeBridge ?? null;
 }
 
+function shouldOpenControlPanelFromHash(targetWindow?: Window): boolean {
+  const sourceWindow =
+    targetWindow ?? (typeof window === "undefined" ? undefined : window);
+
+  if (!sourceWindow) {
+    return false;
+  }
+
+  return sourceWindow.location.hash.toLowerCase().includes("/control");
+}
+
 export function useInstallerFlow() {
   const [step, setStep] = useState<WizardStep>("welcome");
   const [config, setConfig] = useState<InstallerConfigPayload>(defaultConfig);
@@ -64,8 +107,71 @@ export function useInstallerFlow() {
   const [health, setHealth] = useState<ServiceHealth[]>([]);
   const [logs, setLogs] = useState<RuntimeLogEvent[]>([]);
   const [lastBackup, setLastBackup] = useState<BackupMetadata | null>(null);
+  const [backupDefaultDirectory, setBackupDefaultDirectoryState] = useState(
+    () => readPersistedBackupDirectory(defaultConfig.runtimePath),
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function hydrateBootState(bridge: SmartEconomatBridge): Promise<void> {
+    const result = await bridge.getInstallerBootState();
+    if (!result.ok || !result.data) {
+      return;
+    }
+
+    const nextRuntimePath = result.data.runtimePath.trim();
+    if (nextRuntimePath.length > 0) {
+      setConfig((current) => {
+        if (current.runtimePath === nextRuntimePath) {
+          return current;
+        }
+
+        return {
+          ...current,
+          runtimePath: nextRuntimePath,
+          backupDefaultDirectory:
+            resolveRuntimeBackupDirectory(nextRuntimePath),
+        };
+      });
+    }
+
+    if (result.data.installed) {
+      setConfig((current) =>
+        current.installMode === "reinstall"
+          ? current
+          : {
+              ...current,
+              installMode: "reinstall",
+            },
+      );
+    }
+
+    if (shouldOpenControlPanelFromHash()) {
+      setStep("control");
+    }
+  }
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const stored = window.localStorage.getItem(BACKUP_DEFAULT_DIR_STORAGE_KEY);
+    const resolvedBackupDirectory =
+      stored && stored.trim().length > 0
+        ? stored.trim()
+        : resolveRuntimeBackupDirectory(config.runtimePath);
+
+    setBackupDefaultDirectoryState(resolvedBackupDirectory);
+    setConfig((current) =>
+      current.backupDefaultDirectory === resolvedBackupDirectory
+        ? current
+        : {
+            ...current,
+            backupDefaultDirectory: resolvedBackupDirectory,
+          },
+    );
+  }, [config.runtimePath]);
 
   useEffect(() => {
     let disposed = false;
@@ -97,6 +203,8 @@ export function useInstallerFlow() {
       setError((current) =>
         current === BRIDGE_UNAVAILABLE_ERROR ? null : current,
       );
+
+      void hydrateBootState(bridge);
 
       stopInstallerProgress = bridge.onInstallerProgress((event) => {
         setInstallerState(event.snapshot);
@@ -257,16 +365,25 @@ export function useInstallerFlow() {
       return;
     }
 
-    const result = await bridge.startInstallation(config);
-    setBusy(false);
+    try {
+      const result = await bridge.startInstallation(config);
+      setBusy(false);
 
-    if (!result.ok || !result.data) {
-      setError(result.message);
-      return;
+      if (!result.ok || !result.data) {
+        setError(result.message);
+        return;
+      }
+
+      setInstallerState(result.data);
+      setStep("finish");
+    } catch (error) {
+      setBusy(false);
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Error inesperado al iniciar la instalación.";
+      setError(message);
     }
-
-    setInstallerState(result.data);
-    setStep("finish");
   }
 
   async function refreshHealth(): Promise<void> {
@@ -424,7 +541,41 @@ export function useInstallerFlow() {
     }
   }
 
-  async function backupNow(label: string): Promise<void> {
+  async function uninstall(confirmationPhrase: string): Promise<void> {
+    setBusy(true);
+    setError(null);
+
+    const bridge = requireBridge(true);
+    if (!bridge) {
+      return;
+    }
+
+    const result = await bridge.uninstall({
+      runtimePath: config.runtimePath,
+      confirmationPhrase,
+    });
+    setBusy(false);
+
+    if (!result.ok) {
+      setError(result.message);
+    }
+  }
+
+  function setBackupDefaultDirectory(directory: string): void {
+    const normalizedDirectory = directory.trim();
+    setBackupDefaultDirectoryState(normalizedDirectory);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(
+        BACKUP_DEFAULT_DIR_STORAGE_KEY,
+        normalizedDirectory,
+      );
+    }
+  }
+
+  async function backupNow(
+    label: string,
+    destinationDir: string,
+  ): Promise<void> {
     setBusy(true);
     setError(null);
 
@@ -436,6 +587,7 @@ export function useInstallerFlow() {
     const result = await bridge.backupNow({
       runtimePath: config.runtimePath,
       label: label.trim().length > 0 ? label.trim() : "manual",
+      destinationDir,
     });
     setBusy(false);
 
@@ -475,7 +627,7 @@ export function useInstallerFlow() {
     return pickInstallerFile({
       title: "Seleccionar backup para restaurar",
       buttonLabel: "Usar este backup",
-      defaultPath: `${config.runtimePath}/backups`,
+      defaultPath: backupDefaultDirectory,
       filters: [
         {
           name: "Backups SmartEconomat",
@@ -486,6 +638,17 @@ export function useInstallerFlow() {
           extensions: ["*"],
         },
       ],
+    });
+  }
+
+  async function pickBackupDirectory(
+    defaultPath?: string,
+  ): Promise<string | null> {
+    return pickInstallerFile({
+      title: "Seleccionar carpeta de backups",
+      buttonLabel: "Usar esta carpeta",
+      defaultPath: defaultPath ?? backupDefaultDirectory,
+      pickDirectories: true,
     });
   }
 
@@ -548,6 +711,8 @@ export function useInstallerFlow() {
     error,
     setError,
     lastBackup,
+    backupDefaultDirectory,
+    setBackupDefaultDirectory,
     runPreflight,
     runAutoRepair,
     closeBusyPort,
@@ -561,8 +726,10 @@ export function useInstallerFlow() {
     clearVisibleLogs,
     exportVisibleLogs,
     prune,
+    uninstall,
     backupNow,
     restoreFrom,
+    pickBackupDirectory,
     pickRestoreArtifact,
     generateDiagnostics,
     pickInstallerFile,

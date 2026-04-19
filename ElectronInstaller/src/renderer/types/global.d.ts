@@ -3,6 +3,7 @@ import type {
   BackupPayload,
   DebugLogEntry,
   ExportVisibleLogsPayload,
+  InstallerBootState,
   InstallerFilePickerPayload,
   InstallerConfigPayload,
   InstallerProgressEvent,
@@ -16,6 +17,7 @@ import type {
   RuntimePaths,
   ServiceHealth,
   TailLogsPayload,
+  UninstallPayload,
 } from "@shared/contracts";
 
 declare global {
@@ -37,6 +39,7 @@ declare global {
         payload: InstallerFilePickerPayload,
       ) => Promise<OperationResult<string>>;
       getInstallerState: () => Promise<OperationResult<InstallerStateSnapshot>>;
+      getInstallerBootState: () => Promise<OperationResult<InstallerBootState>>;
       onInstallerProgress: (
         callback: (event: InstallerProgressEvent) => void,
       ) => () => void;
@@ -53,6 +56,7 @@ declare global {
       ) => Promise<OperationResult<string>>;
       onRuntimeLog: (callback: (event: RuntimeLogEvent) => void) => () => void;
       pruneSafe: (payload: PrunePayload) => Promise<OperationResult>;
+      uninstall: (payload: UninstallPayload) => Promise<OperationResult>;
       backupNow: (
         payload: BackupPayload,
       ) => Promise<OperationResult<BackupMetadata>>;

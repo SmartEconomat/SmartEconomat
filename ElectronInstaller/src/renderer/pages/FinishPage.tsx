@@ -13,12 +13,22 @@ export function FinishPage({
   onOpenPanel,
   onRestart,
 }: FinishPageProps) {
+  const isSuccess = snapshot?.state === "DONE";
+
   return (
-    <Box component="section">
-      <Typography variant="h5" component="h2" gutterBottom>
-        Instalación finalizada
+    <Box
+      component="section"
+      sx={{
+        width: "100%",
+        maxWidth: 820,
+        mx: "auto",
+        textAlign: "center",
+      }}
+    >
+      <Typography variant="h5" component="h2" gutterBottom sx={{ mb: 0.75 }}>
+        {isSuccess ? "Instalación finalizada" : "Instalación con incidencias"}
       </Typography>
-      <Typography color="text.secondary">
+      <Typography color="text.secondary" sx={{ lineHeight: 1.6 }}>
         {snapshot
           ? `${snapshot.state} · ${snapshot.message}`
           : "No hay snapshot final disponible."}
@@ -26,12 +36,17 @@ export function FinishPage({
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={1.5}
-        sx={{ mt: 2 }}
+        sx={{ mt: 2.75, justifyContent: "center", alignItems: "center" }}
       >
-        <Button variant="contained" onClick={onOpenPanel}>
-          Abrir panel local
+        <Button
+          variant="contained"
+          onClick={onOpenPanel}
+          disabled={!isSuccess}
+          sx={{ minWidth: 220 }}
+        >
+          Abrir panel de control local
         </Button>
-        <Button variant="outlined" onClick={onRestart}>
+        <Button variant="outlined" onClick={onRestart} sx={{ minWidth: 220 }}>
           Reintentar instalación
         </Button>
       </Stack>

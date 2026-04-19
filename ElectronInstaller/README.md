@@ -43,9 +43,40 @@ npm run build
 npm run build:linux
 npm run build:mac
 npm run build:win
+npm run build:win:fast
+npm run build:win:release
+npm run build:win:signed
+node ./scripts/sign-windows-artifact.mjs
+node ./scripts/verify-win-signature.mjs
 ```
 
 `npm run build` detecta la plataforma actual y construye el target correspondiente (Linux -> `--linux`, macOS -> `--mac`, Windows -> `--win`).
+
+`npm run build:win:fast` es el flujo recomendado para entorno local de Windows: evita dependencias de `winCodeSign` cuando no hay material de firma. Si defines variables de firma (`WIN_CSC_PFX_PATH` o `WIN_CSC_THUMBPRINT`), el script firma y verifica el `.exe` automáticamente al final.
+
+`npm run build:win:release` está pensado para distribución en equipos Windows donde `winCodeSign` puede fallar por privilegios de symlink. El script fuerza `signAndEditExecutable=false` para evitar ese error y, si detecta certificado, firma y verifica automáticamente el instalador.
+
+`npm run build:win:signed` es la variante estricta: además de construir, exige verificación de firma válida al final (fallará si el `.exe` no está firmado).
+
+### Firma de código (Windows)
+
+Variables soportadas:
+
+- `WIN_CSC_PFX_PATH`: ruta al certificado `.pfx`.
+- `WIN_CSC_PFX_PASSWORD`: password del `.pfx` (si aplica).
+- `WIN_CSC_THUMBPRINT`: huella SHA1 de certificado instalado en store de Windows (alternativa al `.pfx`).
+- `SIGNTOOL_PATH`: ruta explícita a `signtool.exe` (opcional si está en PATH).
+- `WIN_TIMESTAMP_URL`: servidor RFC3161 (opcional, por defecto `http://timestamp.digicert.com`).
+
+Ejemplo PowerShell:
+
+```powershell
+$env:WIN_CSC_PFX_PATH = "C:\certs\smarteconomat.pfx"
+$env:WIN_CSC_PFX_PASSWORD = "<secret>"
+npm run build:win:release
+```
+
+Nota: Smart App Control puede bloquear binarios sin firma de confianza o sin reputación. Para producción se recomienda certificado de firma de código confiable (idealmente EV/Trusted Signing).
 
 ## Flujo operativo
 

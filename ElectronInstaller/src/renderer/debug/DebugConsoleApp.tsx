@@ -169,21 +169,29 @@ export function DebugConsoleApp() {
   return (
     <Box
       sx={{
+        width: "100%",
         minHeight: "100vh",
-        p: { xs: 1.5, md: 2.5 },
+        height: "100vh",
+        p: 0,
+        m: 0,
+        boxSizing: "border-box",
+        display: "flex",
+        alignItems: "stretch",
         background:
           "radial-gradient(circle at top left, rgba(2,132,199,0.22), rgba(15,23,42,0.92))",
       }}
     >
       <Paper
-        elevation={12}
+        elevation={0}
         sx={{
-          mx: "auto",
-          width: "min(1200px, 100%)",
-          borderRadius: 3,
+          width: "100%",
+          height: "100%",
+          borderRadius: 0,
           overflow: "hidden",
-          border: "1px solid rgba(148, 163, 184, 0.28)",
+          border: 0,
           backgroundColor: "rgba(15, 23, 42, 0.94)",
+          display: "grid",
+          gridTemplateRows: "auto minmax(0, 1fr)",
         }}
       >
         <Stack
@@ -245,7 +253,7 @@ export function DebugConsoleApp() {
             p: 2,
             display: "grid",
             gap: 1,
-            maxHeight: "calc(100vh - 190px)",
+            minHeight: 0,
             overflowY: "auto",
           }}
         >

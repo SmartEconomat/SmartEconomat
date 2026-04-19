@@ -53,7 +53,7 @@ export class SeedContext {
     },
     {
       email: 'superadmin@smarteconomat.com',
-      password: 'SmartEconomat123!',
+      password: 'SmartEconomat2026!',
     },
     {
       email: 'superadmin',
@@ -61,11 +61,11 @@ export class SeedContext {
     },
     {
       email: 'superadmin',
-      password: 'SmartEconomat2026*',
+      password: 'SmartEconomat2026!',
     },
     {
       email: 'superAdmin',
-      password: 'SmartEconomat2026*',
+      password: 'SmartEconomat2026!',
     },
     {
       email: 'admin@smarteconomat.com',
@@ -73,7 +73,7 @@ export class SeedContext {
     },
     {
       email: 'admin@smarteconomat.com',
-      password: 'SmartEconomat123!',
+      password: 'SmartEconomat2026!',
     },
     {
       email: 'admin',
@@ -81,7 +81,7 @@ export class SeedContext {
     },
     {
       email: 'admin',
-      password: 'SmartEconomat123!',
+      password: 'SmartEconomat2026!',
     },
   ];
 

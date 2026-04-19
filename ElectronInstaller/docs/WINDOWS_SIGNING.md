@@ -7,6 +7,18 @@ La configuracion de build usa estas variables de entorno:
 - `WIN_CSC_LINK`: ruta al archivo `.pfx`.
 - `WIN_CSC_KEY_PASSWORD`: password del `.pfx`.
 
+## Build local sin firma (recomendado para desarrollo)
+
+Para compilar en Windows sin requerir privilegios de symlink ni certificado de firma:
+
+```powershell
+npm run build:win
+```
+
+Este perfil desactiva `signAndEditExecutable` y evita la dependencia operativa de `winCodeSign` en entorno local.
+
+Si prefieres el nombre histórico del flujo local, `npm run build:win:fast` hace exactamente lo mismo.
+
 ## Desarrollo (self-signed)
 
 1. Crear certificado de firma de codigo en Windows PowerShell (Admin):
@@ -33,6 +45,7 @@ npm run build:win
 ```
 
 4. Verificar publisher en el EXE:
+
 - Click derecho en el `.exe` -> Propiedades -> Firmas digitales.
 - Debe aparecer `SmartEconomat Dev` o el publisher que se haya usado.
 
@@ -41,8 +54,10 @@ npm run build:win
 1. Obtener certificado de firma de codigo (ideal EV) de proveedor confiable.
 2. Exportar/acceder al certificado desde el pipeline de release de Windows.
 3. Configurar secretos:
+
 - `WIN_CSC_LINK`
 - `WIN_CSC_KEY_PASSWORD`
+
 4. Ejecutar build release firmado:
 
 ```powershell

@@ -5,6 +5,7 @@ import type {
   BackupPayload,
   DebugLogEntry,
   ExportVisibleLogsPayload,
+  InstallerBootState,
   InstallerFilePickerPayload,
   InstallerConfigPayload,
   InstallerProgressEvent,
@@ -17,6 +18,7 @@ import type {
   RuntimePaths,
   ServiceHealth,
   TailLogsPayload,
+  UninstallPayload,
 } from "@shared/contracts";
 import { IPCChannels } from "@shared/ipc-channels";
 
@@ -216,6 +218,10 @@ contextBridge.exposeInMainWorld("smartEconomat", {
     invokeWithTracing<undefined, OperationResult<InstallerStateSnapshot>>(
       IPCChannels.installer.getState,
     ),
+  getInstallerBootState: () =>
+    invokeWithTracing<undefined, OperationResult<InstallerBootState>>(
+      IPCChannels.installer.getBootState,
+    ),
   onInstallerProgress: (callback: (event: InstallerProgressEvent) => void) =>
     onChannelEvent(IPCChannels.installer.progressEvent, callback),
 
@@ -263,6 +269,11 @@ contextBridge.exposeInMainWorld("smartEconomat", {
   pruneSafe: (payload: PrunePayload) =>
     invokeWithTracing<PrunePayload, OperationResult>(
       IPCChannels.runtime.pruneSafe,
+      payload,
+    ),
+  uninstall: (payload: UninstallPayload) =>
+    invokeWithTracing<UninstallPayload, OperationResult>(
+      IPCChannels.runtime.uninstall,
       payload,
     ),
   backupNow: (payload: BackupPayload) =>

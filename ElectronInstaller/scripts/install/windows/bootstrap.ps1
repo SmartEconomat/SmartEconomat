@@ -54,6 +54,75 @@ function Get-PortOwner {
   }
 }
 
+function Test-IsDockerOwnerProcess {
+  param([Parameter(Mandatory = $true)][string]$ProcessName)
+
+  $normalized = $ProcessName.Trim().ToLowerInvariant()
+  return @('docker', 'dockerd', 'docker desktop', 'com.docker.backend', 'com.docker.service') -contains $normalized
+}
+
+function Get-InstallerDockerContainersByPort {
+  param([Parameter(Mandatory = $true)][int]$Port)
+
+  $format = '{{.ID}}|{{.Names}}|{{.Label "com.docker.compose.project"}}'
+  $lines = docker ps --filter "publish=$Port" --format $format 2>$null
+
+  $containers = @()
+  foreach ($line in $lines) {
+    if ([string]::IsNullOrWhiteSpace($line)) {
+      continue
+    }
+
+    $parts = $line -split '\|', 3
+    if ($parts.Count -lt 2) {
+      continue
+    }
+
+    $id = $parts[0].Trim()
+    $name = $parts[1].Trim()
+    $project = if ($parts.Count -ge 3) { $parts[2].Trim() } else { '' }
+
+    if ([string]::IsNullOrWhiteSpace($id) -or [string]::IsNullOrWhiteSpace($name)) {
+      continue
+    }
+
+    $normalizedName = $name.ToLowerInvariant()
+    $normalizedProject = $project.ToLowerInvariant()
+    $isInstallerContainer =
+      $normalizedProject -eq 'smarteconomat-prod' -or
+      $normalizedProject -eq 'smarteconomat' -or
+      $normalizedName.StartsWith('smarteconomat-') -or
+      $normalizedName.StartsWith('smarteconomat_')
+
+    if ($isInstallerContainer) {
+      $containers += [PSCustomObject]@{
+        Id = $id
+        Name = $name
+        ComposeProject = $project
+      }
+    }
+  }
+
+  return $containers
+}
+
+function Stop-InstallerDockerContainersByPort {
+  param([Parameter(Mandatory = $true)][int]$Port)
+
+  $containers = Get-InstallerDockerContainersByPort -Port $Port
+  if (-not $containers -or $containers.Count -eq 0) {
+    return $false
+  }
+
+  $ids = @($containers | ForEach-Object { $_.Id })
+  docker stop $ids *> $null
+  if ($LASTEXITCODE -ne 0) {
+    return $false
+  }
+
+  return $true
+}
+
 function Ensure-PortAvailable {
   param([Parameter(Mandatory = $true)][int]$Port)
 
@@ -64,6 +133,27 @@ function Ensure-PortAvailable {
 
   if (-not $ReleaseBusyPorts) {
     Write-Error "Puerto $Port ocupado por '$($owner.ProcessName)' (PID $($owner.Pid)). Reejecuta con -ReleaseBusyPorts para cerrarlo automáticamente."
+    return $false
+  }
+
+  $ownerProcessName = [string]$owner.ProcessName
+  if (Test-IsDockerOwnerProcess -ProcessName $ownerProcessName) {
+    $dockerReleased = Stop-InstallerDockerContainersByPort -Port $Port
+    if ($dockerReleased) {
+      $postDockerOwner = Get-PortOwner -Port $Port
+      if (-not $postDockerOwner) {
+        return $true
+      }
+      $owner = $postDockerOwner
+    }
+    else {
+      Write-Error "Puerto $Port ocupado por proceso Docker, pero no se encontraron/stopparon contenedores del instalador SmartEconomat en ese puerto."
+      return $false
+    }
+  }
+
+  if ($owner.Pid -le 0 -or $owner.Pid -eq 4) {
+    Write-Error "Puerto $Port ocupado por PID no terminable ($($owner.Pid))."
     return $false
   }
 

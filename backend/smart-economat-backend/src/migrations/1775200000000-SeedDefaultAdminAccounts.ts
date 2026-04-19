@@ -59,14 +59,14 @@ const DEFAULT_ADMIN_TEMP_PASSWORD =
     ? providedAdminTempPassword
     : providedLegacyTempPassword.length > 0
       ? providedLegacyTempPassword
-      : 'SmartEconomatTemp2026!';
+      : 'SmartEconomat2026!';
 
 const DEFAULT_SUPERADMIN_TEMP_PASSWORD =
   providedSuperAdminTempPassword.length > 0
     ? providedSuperAdminTempPassword
     : providedLegacyTempPassword.length > 0
       ? providedLegacyTempPassword
-      : 'SmartEconomatTemp2026!';
+      : 'SmartEconomat2026!';
 
 const DEFAULT_USERS: readonly DefaultUserSeed[] = [
   {

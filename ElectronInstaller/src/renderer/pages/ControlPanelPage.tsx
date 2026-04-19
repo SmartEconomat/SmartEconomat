@@ -15,6 +15,7 @@ import HealthAndSafetyRoundedIcon from "@mui/icons-material/HealthAndSafetyRound
 import TerminalRoundedIcon from "@mui/icons-material/TerminalRounded";
 import FactCheckRoundedIcon from "@mui/icons-material/FactCheckRounded";
 import DeleteSweepRoundedIcon from "@mui/icons-material/DeleteSweepRounded";
+import DeleteForeverRoundedIcon from "@mui/icons-material/DeleteForeverRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 import type { ServiceHealth } from "@shared/contracts";
@@ -33,6 +34,7 @@ interface ControlPanelPageProps {
   onStopLogs: () => Promise<void>;
   onDiagnostics: () => Promise<void>;
   onOpenDanger: () => void;
+  onOpenUninstall: () => void;
   children: ReactNode;
 }
 
@@ -129,19 +131,33 @@ const actionPalettes: Record<ActionPaletteName, ActionPalette> = {
 };
 
 function buildMonitoredServices(health: ServiceHealth[]): ServiceHealth[] {
-  return ["backend", "frontend"].map((serviceName) => {
+  const orderedServices: ServiceHealth["service"][] = [
+    "backend",
+    "frontend",
+    "db",
+    "redis",
+  ];
+
+  return orderedServices.map((serviceName) => {
     const matched = health.find((service) => service.service === serviceName);
     if (matched) {
       return matched;
     }
 
+    const placeholderDetails: Record<ServiceHealth["service"], string> = {
+      backend:
+        "Ejecuta Verificar Salud para consultar el estado de la API y la capa de negocio.",
+      frontend:
+        "Ejecuta Verificar Salud para consultar el estado de la interfaz y el proxy HTTPS local.",
+      db: "Ejecuta Verificar Salud para consultar el estado de PostgreSQL y la persistencia.",
+      redis:
+        "Ejecuta Verificar Salud para consultar el estado de Redis y las colas auxiliares.",
+    };
+
     return {
       service: serviceName,
       status: "unknown",
-      detail:
-        serviceName === "backend"
-          ? "Ejecuta Verificar Salud para consultar el estado de la API y la capa de negocio."
-          : "Ejecuta Verificar Salud para consultar el estado de la interfaz y el proxy HTTPS local.",
+      detail: placeholderDetails[serviceName],
     } as ServiceHealth;
   });
 }
@@ -167,7 +183,7 @@ function resolveOverallState(services: ServiceHealth[]): {
     return {
       label: "Healthy",
       color: "success",
-      text: "Backend y Frontend están operativos y preparados para atender tráfico.",
+      text: "Backend, Frontend, Base de datos y Redis están operativos y preparados para atender tráfico.",
     };
   }
 
@@ -272,6 +288,7 @@ export function ControlPanelPage({
   onStopLogs,
   onDiagnostics,
   onOpenDanger,
+  onOpenUninstall,
   children,
 }: ControlPanelPageProps) {
   const monitoredServices = buildMonitoredServices(health);
@@ -349,6 +366,14 @@ export function ControlPanelPage({
       icon: <DeleteSweepRoundedIcon fontSize="small" />,
       onClick: onOpenDanger,
     },
+    {
+      title: "Desinstalar SmartEconomat",
+      description:
+        "Elimina completamente la instalación: contenedores, volúmenes, certificados, registro y atajos.",
+      palette: actionPalettes.destructive,
+      icon: <DeleteForeverRoundedIcon fontSize="small" />,
+      onClick: onOpenUninstall,
+    },
   ];
 
   return (
@@ -369,9 +394,9 @@ export function ControlPanelPage({
           color="text.secondary"
           sx={{ maxWidth: 860, lineHeight: 1.65 }}
         >
-          Gestiona el ciclo de vida del stack local, supervisa Backend y
-          Frontend y lanza operaciones de soporte con acciones claras, seguras y
-          auditables.
+          Gestiona el ciclo de vida del stack local, supervisa todos los
+          contenedores levantados y lanza operaciones de soporte con acciones
+          claras, seguras y auditables.
         </Typography>
       </Stack>
 
@@ -393,11 +418,12 @@ export function ControlPanelPage({
             Monitorización principal
           </Typography>
           <Typography variant="h6" sx={{ fontWeight: 800, mb: 0.5 }}>
-            Servicios monitorizados: 2 (Backend y Frontend)
+            Servicios monitorizados: {monitoredServices.length} (Stack completo)
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            La vista principal prioriza los servicios visibles para el usuario
-            final y resume su estado operativo actual.
+            La vista principal resume el estado operativo de todos los
+            contenedores del stack: backend, frontend, base de datos, Redis y
+            cualquier servicio que el healthcheck exponga.
           </Typography>
         </Paper>
 
@@ -497,7 +523,7 @@ export function ControlPanelPage({
           sx={{
             display: "grid",
             gap: 1.25,
-            gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" },
+            gridTemplateColumns: { xs: "1fr", md: "repeat(4, minmax(0, 1fr))" },
           }}
         >
           {advancedActions.map((action) => (
