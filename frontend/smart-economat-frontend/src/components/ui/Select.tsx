@@ -22,11 +22,14 @@ const Select: React.FC<SelectProps> = ({
   margin = 'normal',
   value,
   onChange,
+  multiple,
   SelectProps,
   InputLabelProps,
   children,
   ...props
 }) => {
+  const isMultiple = multiple || SelectProps?.multiple;
+
   return (
     <TextField
       select
@@ -35,12 +38,13 @@ const Select: React.FC<SelectProps> = ({
       label={label}
       name={name}
       id={name}
-      value={value ?? (SelectProps?.multiple ? [] : '')}
+      value={value ?? (isMultiple ? [] : '')}
       onChange={onChange}
       required={required}
       error={error}
       helperText={helperText}
       SelectProps={{
+        multiple: isMultiple,
         displayEmpty: true,
         MenuProps: {
           anchorOrigin: {

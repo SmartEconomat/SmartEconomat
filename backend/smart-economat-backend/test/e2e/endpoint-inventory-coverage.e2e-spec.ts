@@ -63,11 +63,11 @@ describe('Endpoint inventory coverage (e2e)', () => {
       await request(app.getHttpServer())
         .get('/api/v1/admin/roles')
         .set('Authorization', `Bearer ${adminToken}`)
-        .expect([200, 403]);
+        .expect(200);
       await request(app.getHttpServer())
         .get('/api/v1/admin/permissions')
         .set('Authorization', `Bearer ${adminToken}`)
-        .expect([200, 403]);
+        .expect(200);
     });
 
     it('PATCH /api/v1/admin/users/:id/role', async () => {

@@ -26,6 +26,7 @@ const SkipLinks: React.FC = () => {
         Saltar al contenido principal
       </a>
       <a
+        style={{ pointerEvents: 'auto' }}
         href="#sidebar-nav"
         className="skip-link"
         onClick={handleSkip('sidebar-nav')}
@@ -33,6 +34,7 @@ const SkipLinks: React.FC = () => {
         Saltar al menú lateral
       </a>
       <a
+        style={{ pointerEvents: 'auto' }}
         href="#filters-area"
         className="skip-link"
         onClick={handleSkip('filters-area')}
@@ -40,6 +42,7 @@ const SkipLinks: React.FC = () => {
         Saltar a los filtros
       </a>
       <a
+        style={{ pointerEvents: 'auto' }}
         href="#results-area"
         className="skip-link"
         onClick={handleSkip('results-area')}

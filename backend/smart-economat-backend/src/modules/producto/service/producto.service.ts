@@ -315,7 +315,7 @@ export class ProductoService {
 
     const restoredProduct = await this.productoRepository.save(producto);
 
-    await this.movimientoHelper.trackProductoCreation(
+    await this.movimientoHelper.trackProductoRestore(
       userId,
       id,
       `Restauración de producto: ${producto.nombre}`
