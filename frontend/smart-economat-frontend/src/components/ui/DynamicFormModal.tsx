@@ -182,7 +182,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
       setOffResults([]);
       if (onValuesChange) onValuesChange(dataToSet);
     }
-  }, [isOpen, initialData, fields]);
+  }, [isOpen, initialData, fields, onValuesChange]);
 
   useEffect(() => {
     if (isOpen && valueUpdates && Object.keys(valueUpdates).length > 0) {

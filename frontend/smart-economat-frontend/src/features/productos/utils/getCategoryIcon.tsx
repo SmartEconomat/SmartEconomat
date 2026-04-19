@@ -20,7 +20,9 @@ const defaultIconProps = {
  */
 export function getCategoryIcon(
   tipo: CategoriaProducto | undefined,
-  iconProps: React.ComponentProps<typeof CategoryOutlinedIcon> = defaultIconProps
+  iconProps: React.ComponentProps<
+    typeof CategoryOutlinedIcon
+  > = defaultIconProps
 ): React.ReactElement {
   const props = { ...defaultIconProps, ...iconProps };
 

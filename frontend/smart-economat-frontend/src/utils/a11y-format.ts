@@ -30,7 +30,11 @@ export const extractA11yText = (node: ReactNode): string => {
     text = node.map(extractA11yText).join(' ');
   } else if (React.isValidElement(node)) {
     // Caso especial: Chips de MUI o componentes con prop label/title
-    const element = node as React.ReactElement<any>;
+    const element = node as React.ReactElement<{
+      label?: ReactNode;
+      title?: ReactNode;
+      children?: ReactNode;
+    }>;
     if (element.props.label) text = extractA11yText(element.props.label);
     else if (element.props.title) text = extractA11yText(element.props.title);
     else if (element.props.children)

@@ -232,7 +232,6 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   const [torchAvailable, setTorchAvailable] = useState(false);
   const [torchEnabled, setTorchEnabled] = useState(false);
   const [torchBusy, setTorchBusy] = useState(false);
-  const [videoReady, setVideoReady] = useState(false);
 
   const theme = useTheme();
   // Detectar si la ventana es muy baja para simplificar UI
@@ -370,7 +369,6 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     setShowSuccess(false);
     setTorchAvailable(false);
     setTorchEnabled(false);
-    setVideoReady(false);
     setScannerState('requesting');
     readerRef.current = new BrowserMultiFormatReader(
       SCANNER_HINTS,
@@ -613,8 +611,6 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             }}
             muted
             playsInline
-            onLoadedMetadata={() => setVideoReady(true)}
-            onPlaying={() => setVideoReady(true)}
           />
 
           {/* Marco del visor - Feedback inmediato para el usuario */}
