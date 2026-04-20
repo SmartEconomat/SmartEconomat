@@ -1,4 +1,17 @@
 {
+  "errors": {
+    "CANNOT_RENAME_SYSTEM_BASE_TEMPLATE": "No se puede renombrar una plantilla base del sistema",
+    "ADMIN_SUPER_ADMIN_PERMISSIONS_IMMUTABLE": "No se pueden modificar los permisos de ADMIN o SUPER_ADMIN",
+    "CANNOT_DELETE_SYSTEM_TEMPLATE": "No se puede eliminar una plantilla de sistema",
+    "CANNOT_DELETE_SYSTEM_BASE_ROLE_TEMPLATES": "No se pueden eliminar las plantillas base del sistema",
+    "CANNOT_DELETE_TEMPLATE_LINKED_TO_ROLES": "No se puede eliminar la plantilla porque está vinculada a {count} rol(es)",
+    "TEMPLATE_HIERARCHY_CIRCULAR_REFERENCE": "Referencia circular detectada en la jerarquía de plantillas",
+    "TEMPLATE_NAME_ALREADY_EXISTS": "Ya existe una plantilla con el nombre \"{nombre}\"",
+    "PARENT_TEMPLATE_CIRCULAR_REFERENCE": "No se puede asignar la plantilla padre porque genera una referencia circular",
+    "CANNOT_GENERATE_UNIQUE_TEMPLATE_NAME": "No se pudo generar un nombre único para la plantilla duplicada",
+    "INVENTARIO_DELETED_CANNOT_ADJUST": "No se puede ajustar un inventario eliminado",
+    "INVENTARIO_ADJUSTMENT_WOULD_BE_NEGATIVE": "El ajuste dejaría la cantidad en negativo"
+  },
   "auth": {
     "login": {
       "title": "Iniciar sesión",

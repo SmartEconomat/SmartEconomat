@@ -1,4 +1,17 @@
 {
+  "errors": {
+    "CANNOT_RENAME_SYSTEM_BASE_TEMPLATE": "Cannot rename a system base template",
+    "ADMIN_SUPER_ADMIN_PERMISSIONS_IMMUTABLE": "Permissions for ADMIN or SUPER_ADMIN cannot be modified",
+    "CANNOT_DELETE_SYSTEM_TEMPLATE": "Cannot delete a system template",
+    "CANNOT_DELETE_SYSTEM_BASE_ROLE_TEMPLATES": "Cannot delete system base role templates",
+    "CANNOT_DELETE_TEMPLATE_LINKED_TO_ROLES": "Cannot delete template because it is linked to {count} role(s)",
+    "TEMPLATE_HIERARCHY_CIRCULAR_REFERENCE": "Circular reference detected in template hierarchy",
+    "TEMPLATE_NAME_ALREADY_EXISTS": "A template with the name \"{nombre}\" already exists",
+    "PARENT_TEMPLATE_CIRCULAR_REFERENCE": "Cannot assign parent template because it creates a circular reference",
+    "CANNOT_GENERATE_UNIQUE_TEMPLATE_NAME": "Could not generate a unique name for the duplicated template",
+    "INVENTARIO_DELETED_CANNOT_ADJUST": "Cannot adjust a deleted inventory item",
+    "INVENTARIO_ADJUSTMENT_WOULD_BE_NEGATIVE": "The adjustment would leave the quantity negative"
+  },
   "auth": {
     "login": {
       "title": "Login",
