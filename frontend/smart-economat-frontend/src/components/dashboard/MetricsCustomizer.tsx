@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -34,6 +35,7 @@ const MetricsCustomizer: React.FC<MetricsCustomizerProps> = ({
   visibleMetrics,
   onUpdate,
 }) => {
+  const { t } = useTranslation();
   const handleToggle = (id: string) => {
     if (visibleMetrics.includes(id)) {
       // Don't allow removing all metrics
@@ -52,7 +54,7 @@ const MetricsCustomizer: React.FC<MetricsCustomizerProps> = ({
       >
         <SettingsIcon color="primary" />
         <Typography variant="h6" component="h2" fontWeight={700}>
-          Personalizar Panel
+          {t('dashboard.customize')}
         </Typography>
         <IconButton
           onClick={onClose}
@@ -68,8 +70,7 @@ const MetricsCustomizer: React.FC<MetricsCustomizerProps> = ({
       </DialogTitle>
       <DialogContent dividers>
         <Typography variant="body2" color="text.secondary" mb={2}>
-          Selecciona las tarjetas de métricas que deseas ver en tu Dashboard. Al
-          menos una debe estar activa.
+          {t('dashboard.customizeDescription')}
         </Typography>
         <FormGroup>
           {availableMetrics.map((metric) => (
@@ -98,7 +99,7 @@ const MetricsCustomizer: React.FC<MetricsCustomizerProps> = ({
           fullWidth
           disableElevation
         >
-          Guardar cambios
+          {t('dashboard.saveChanges')}
         </Button>
       </DialogActions>
     </Dialog>

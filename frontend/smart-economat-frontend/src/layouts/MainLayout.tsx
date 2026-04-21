@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   AppBar as MuiAppBar,
   Box,
@@ -136,6 +137,7 @@ export default function MainLayout() {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
   const getLogo = () => {
     if (
@@ -186,11 +188,11 @@ export default function MainLayout() {
     });
 
   const groupLabels: Record<MenuConfigItem['group'], string> = {
-    inicio: 'Inicio',
-    catalogo: 'Catálogo',
-    operaciones: 'Operaciones',
-    control: 'Control',
-    gestion: 'Gestión',
+    inicio: t('menuGroups.inicio'),
+    catalogo: t('menuGroups.catalogo'),
+    operaciones: t('menuGroups.operaciones'),
+    control: t('menuGroups.control'),
+    gestion: t('menuGroups.gestion'),
   };
 
   const drawerContent = (
@@ -218,9 +220,13 @@ export default function MainLayout() {
             />
           </Box>
         )}
-        <Tooltip title={open ? 'Minimizar menú' : 'Expandir menú'}>
+        <Tooltip
+          title={open ? t('layout.collapseMenu') : t('layout.expandMenu')}
+        >
           <IconButton
-            aria-label={open ? 'Minimizar menú' : 'Expandir menú'}
+            aria-label={
+              open ? t('layout.collapseMenu') : t('layout.expandMenu')
+            }
             onClick={open ? handleDrawerClose : handleDrawerOpen}
           >
             {theme.direction === 'rtl' ? (
@@ -238,7 +244,7 @@ export default function MainLayout() {
         </Tooltip>
       </DrawerHeader>
       <Divider />
-      <List aria-label="Navegación principal">
+      <List aria-label={t('layout.mainNavigation')}>
         {visibleMenuItems.map((item, index) => {
           const previousGroup =
             index > 0 ? visibleMenuItems[index - 1].group : null;
@@ -272,8 +278,12 @@ export default function MainLayout() {
                   title={getTooltipContent(
                     open,
                     isLearningMode,
-                    item.title,
-                    item.description
+                    t(`menu.${item.i18nKey}.title`, {
+                      defaultValue: item.title,
+                    }),
+                    t(`menu.${item.i18nKey}.description`, {
+                      defaultValue: item.description,
+                    })
                   )}
                   describeChild
                 >
@@ -303,7 +313,9 @@ export default function MainLayout() {
                       {item.icon}
                     </ListItemIcon>
                     <ListItemText
-                      primary={item.title}
+                      primary={t(`menu.${item.i18nKey}.title`, {
+                        defaultValue: item.title,
+                      })}
                       sx={{ opacity: open ? 1 : 0 }}
                     />
                   </ListItemButton>
@@ -315,7 +327,7 @@ export default function MainLayout() {
       </List>
       <Box sx={{ marginTop: 'auto' }}>
         <Divider />
-        <List aria-label="Opciones del sistema">
+        <List aria-label={t('layout.systemOptions')}>
           <ListItem disablePadding sx={{ display: 'block' }}>
             <TutorialHelper mode="listitem" isOpen={open} />
           </ListItem>
@@ -340,10 +352,10 @@ export default function MainLayout() {
             px: { xs: 2, sm: 3 },
           }}
         >
-          <Tooltip title="Expandir menú">
+          <Tooltip title={t('layout.expandMenu')}>
             <IconButton
               color="inherit"
-              aria-label="Expandir menú"
+              aria-label={t('layout.expandMenu')}
               onClick={handleDrawerOpen}
               edge="start"
               sx={{
@@ -402,14 +414,16 @@ export default function MainLayout() {
                 <ListItemIcon>
                   <PersonIcon fontSize="small" />
                 </ListItemIcon>
-                <Typography textAlign="center">Mi Perfil</Typography>
+                <Typography textAlign="center">
+                  {t('layout.myProfile')}
+                </Typography>
               </MuiMenuItem>
               <Divider />
               <MuiMenuItem onClick={handleLogout}>
                 <ListItemIcon>
                   <LogoutIcon fontSize="small" />
                 </ListItemIcon>
-                <Typography textAlign="center">Cerrar Sesión</Typography>
+                <Typography textAlign="center">{t('layout.logout')}</Typography>
               </MuiMenuItem>
             </Menu>
           </Box>

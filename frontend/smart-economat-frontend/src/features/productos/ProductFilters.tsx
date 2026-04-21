@@ -20,6 +20,7 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import { CategoriaProducto } from '../../services/producto.types';
 import { getCategoryIconFilled } from './utils/getCategoryIconFilled';
 import { useBreakpoints } from '../../utils/useBreakpoints';
+import { useTranslation } from 'react-i18next';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tipos públicos
@@ -45,28 +46,6 @@ export interface ProductFiltersProps {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Opciones de categoría
-// ─────────────────────────────────────────────────────────────────────────────
-
-const CATEGORIA_OPTIONS: { value: CategoriaProducto; label: string }[] = [
-  { value: CategoriaProducto.VERDURA, label: 'Verdura' },
-  { value: CategoriaProducto.FRUTA, label: 'Fruta' },
-  { value: CategoriaProducto.CARNE, label: 'Carne' },
-  { value: CategoriaProducto.PESCADO, label: 'Pescado' },
-  { value: CategoriaProducto.MARISCO, label: 'Marisco' },
-  { value: CategoriaProducto.LACTEO, label: 'Lácteo' },
-  { value: CategoriaProducto.HUEVO, label: 'Huevo' },
-  { value: CategoriaProducto.CEREAL, label: 'Cereal' },
-  { value: CategoriaProducto.LEGUMBRE, label: 'Legumbre' },
-  { value: CategoriaProducto.FRUTO_SECO, label: 'Fruto Seco' },
-  { value: CategoriaProducto.CONDIMENTO, label: 'Condimento' },
-  { value: CategoriaProducto.ACEITE, label: 'Aceite' },
-  { value: CategoriaProducto.AZUCAR, label: 'Azúcar' },
-  { value: CategoriaProducto.BEBIDA, label: 'Bebida' },
-  { value: CategoriaProducto.OTRO, label: 'Otro' },
-];
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Componente
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -75,6 +54,34 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   onChange,
 }) => {
   const { isMobileOrTablet } = useBreakpoints();
+  const { t } = useTranslation();
+
+  const CATEGORIA_OPTIONS: { value: CategoriaProducto; label: string }[] = [
+    { value: CategoriaProducto.VERDURA, label: t('productos.filters.verdura') },
+    { value: CategoriaProducto.FRUTA, label: t('productos.filters.fruta') },
+    { value: CategoriaProducto.CARNE, label: t('productos.filters.carne') },
+    { value: CategoriaProducto.PESCADO, label: t('productos.filters.pescado') },
+    { value: CategoriaProducto.MARISCO, label: t('productos.filters.marisco') },
+    { value: CategoriaProducto.LACTEO, label: t('productos.filters.lacteo') },
+    { value: CategoriaProducto.HUEVO, label: t('productos.filters.huevo') },
+    { value: CategoriaProducto.CEREAL, label: t('productos.filters.cereal') },
+    {
+      value: CategoriaProducto.LEGUMBRE,
+      label: t('productos.filters.legumbre'),
+    },
+    {
+      value: CategoriaProducto.FRUTO_SECO,
+      label: t('productos.filters.frutoSeco'),
+    },
+    {
+      value: CategoriaProducto.CONDIMENTO,
+      label: t('productos.filters.condimento'),
+    },
+    { value: CategoriaProducto.ACEITE, label: t('productos.filters.aceite') },
+    { value: CategoriaProducto.AZUCAR, label: t('productos.filters.azucar') },
+    { value: CategoriaProducto.BEBIDA, label: t('productos.filters.bebida') },
+    { value: CategoriaProducto.OTRO, label: t('productos.filters.otro') },
+  ];
 
   // Sincronizar las opciones seleccionadas con el estado externo
   const selected = CATEGORIA_OPTIONS.filter((opt) =>
@@ -192,7 +199,9 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
         <TextField
           {...params}
           size="small"
-          placeholder={selected.length === 0 ? 'Filtrar categoría...' : ''}
+          placeholder={
+            selected.length === 0 ? t('productos.filters.placeholder') : ''
+          }
           InputProps={{
             ...params.InputProps,
             startAdornment: (
@@ -230,10 +239,10 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
         },
       }}
       ListboxProps={{ style: { maxHeight: 300 } }}
-      noOptionsText="Sin resultados"
-      clearText="Limpiar filtros"
-      openText="Ver categorías"
-      closeText="Cerrar"
+      noOptionsText={t('productos.filters.noOptions')}
+      clearText={t('productos.filters.clearFilters')}
+      openText={t('productos.filters.openCategories')}
+      closeText={t('productos.filters.close')}
     />
   );
 };

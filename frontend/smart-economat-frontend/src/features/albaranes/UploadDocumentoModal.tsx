@@ -18,6 +18,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
+import { useTranslation } from 'react-i18next';
 
 interface UploadDocumentoModalProps {
   isOpen: boolean;
@@ -48,6 +49,7 @@ const UploadDocumentoModal: React.FC<UploadDocumentoModalProps> = ({
   isLoading = false,
   defaultNumeroReferencia = '',
 }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -77,7 +79,7 @@ const UploadDocumentoModal: React.FC<UploadDocumentoModalProps> = ({
       return;
     }
     if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-      setFileError(`El archivo excede el tamaño máximo de ${MAX_SIZE_MB} MB.`);
+      setFileError(t('albaranUpload.errorFileSize', { max: MAX_SIZE_MB }));
       setSelectedFile(null);
       return;
     }
@@ -86,7 +88,7 @@ const UploadDocumentoModal: React.FC<UploadDocumentoModalProps> = ({
 
   const handleSubmit = async () => {
     if (!selectedFile) {
-      setFileError('Debes seleccionar un archivo.');
+      setFileError(t('albaranUpload.errorNoFile'));
       return;
     }
     if (!numeroReferencia.trim()) return;
@@ -119,7 +121,7 @@ const UploadDocumentoModal: React.FC<UploadDocumentoModalProps> = ({
         <Box display="flex" alignItems="center" gap={1}>
           <AttachFileIcon color="primary" />
           <Typography variant="h6" fontWeight={700}>
-            Subir Documento de Albarán
+            {t('albaranUpload.title')}
           </Typography>
         </Box>
         <IconButton onClick={onClose} disabled={isLoading} size="small">
@@ -131,14 +133,14 @@ const UploadDocumentoModal: React.FC<UploadDocumentoModalProps> = ({
         <Stack spacing={2.5} sx={{ pt: 1 }}>
           {/* Número de referencia */}
           <TextField
-            label="Número de Referencia del Albarán"
+            label={t('albaranUpload.refLabel')}
             value={numeroReferencia}
             onChange={(e) => setNumeroReferencia(e.target.value)}
             required
             fullWidth
             size="small"
             disabled={isLoading || !!defaultNumeroReferencia}
-            helperText="Número identificativo del albarán físico"
+            helperText={t('albaranUpload.refHelper')}
           />
 
           {/* Selector de archivo */}
@@ -160,7 +162,9 @@ const UploadDocumentoModal: React.FC<UploadDocumentoModalProps> = ({
               disabled={isLoading}
               sx={{ borderRadius: 2, py: 1.5, borderStyle: 'dashed' }}
             >
-              {selectedFile ? 'Cambiar archivo' : 'Seleccionar archivo'}
+              {selectedFile
+                ? t('albaranUpload.changeFile')
+                : t('albaranUpload.selectFile')}
             </Button>
 
             {selectedFile && (
@@ -194,25 +198,25 @@ const UploadDocumentoModal: React.FC<UploadDocumentoModalProps> = ({
               color="text.secondary"
               sx={{ mt: 0.5, display: 'block' }}
             >
-              Formatos aceptados: JPG, PNG, GIF, PDF · Máximo {MAX_SIZE_MB} MB
+              {t('albaranUpload.acceptedFormats', { max: MAX_SIZE_MB })}
             </Typography>
           </Box>
 
           {/* Recepción vinculada (opcional) */}
           <TextField
-            label="ID de Recepción (opcional)"
+            label={t('albaranUpload.recepcionIdLabel')}
             value={recepcionId}
             onChange={(e) => setRecepcionId(e.target.value)}
             fullWidth
             size="small"
             disabled={isLoading}
             placeholder="UUID de la recepción a vincular..."
-            helperText="Si se indica, vincula el albarán a esa recepción"
+            helperText={t('albaranUpload.recepcionIdHelper')}
           />
 
           {/* Observaciones (opcional) */}
           <TextField
-            label="Observaciones (opcional)"
+            label={t('albaranUpload.observacionesLabel')}
             value={observaciones}
             onChange={(e) => setObservaciones(e.target.value)}
             fullWidth
@@ -220,14 +224,14 @@ const UploadDocumentoModal: React.FC<UploadDocumentoModalProps> = ({
             disabled={isLoading}
             multiline
             rows={2}
-            placeholder="Notas sobre el documento..."
+            placeholder={t('albaranUpload.observacionesPlaceholder')}
           />
         </Stack>
       </DialogContent>
 
       <DialogActions sx={{ p: 2, gap: 1 }}>
         <Button onClick={onClose} disabled={isLoading} color="inherit">
-          Cancelar
+          {t('albaranUpload.cancel')}
         </Button>
         <Button
           onClick={handleSubmit}
@@ -235,7 +239,7 @@ const UploadDocumentoModal: React.FC<UploadDocumentoModalProps> = ({
           disabled={isLoading || !selectedFile || !numeroReferencia.trim()}
           startIcon={<AttachFileIcon />}
         >
-          Subir Documento
+          {t('albaranUpload.upload')}
         </Button>
       </DialogActions>
     </Dialog>

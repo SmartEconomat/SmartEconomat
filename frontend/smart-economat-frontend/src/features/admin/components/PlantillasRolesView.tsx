@@ -38,6 +38,7 @@ import { plantillaRolService } from '../../../services/plantillaRolService';
 import { usuarioService } from '../../../services/usuarioService';
 import { ApiError } from '../../../services/api.service';
 import { useToast } from '../../../store/toast.hooks';
+import { useTranslation } from 'react-i18next';
 
 interface PlantillasRolesViewProps {
   canEdit: boolean;
@@ -68,6 +69,7 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
   canEdit,
 }) => {
   const toast = useToast();
+  const { t } = useTranslation();
 
   const [plantillas, setPlantillas] = useState<PlantillaRol[]>([]);
   const [roles, setRoles] = useState<RolOption[]>([]);
@@ -106,7 +108,7 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
     } catch (loadError) {
       const message = getApiErrorMessage(
         loadError,
-        'No se pudieron cargar las plantillas de roles'
+        t('plantillasRoles.loadError')
       );
       setError(message);
     } finally {
@@ -231,11 +233,14 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
       const linkedRoles = rolesCountByPlantillaId.get(editingPlantilla.id) ?? 0;
       const syncMessage =
         linkedRoles > 0
-          ? ` Se sincronizaron ${linkedRoles} rol(es) vinculado(s).`
+          ? t('plantillasRoles.syncedRoles', { count: linkedRoles })
           : '';
 
       toast.success(
-        `Permisos de "${editingPlantilla.nombre}" actualizados correctamente.${syncMessage}`
+        t('plantillasRoles.updateSuccess', {
+          name: editingPlantilla.nombre,
+          sync: syncMessage,
+        })
       );
 
       setPlantillas((prev) =>
@@ -250,7 +255,7 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
     } catch (submitError) {
       const message = getApiErrorMessage(
         submitError,
-        'No se pudieron actualizar los permisos'
+        t('plantillasRoles.updateError')
       );
       toast.error(message);
     } finally {
@@ -278,14 +283,12 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
       <Box display="flex" alignItems="center" gap={1.5}>
         <SecurityIcon color="primary" />
         <Typography variant="h6" fontWeight={700}>
-          Gestión de Permisos por Plantilla de Rol
+          {t('plantillasRoles.title')}
         </Typography>
       </Box>
 
       <Alert severity="info" variant="outlined">
-        Cada plantilla define los permisos base de un rol. Al modificar los
-        permisos de una plantilla, los cambios se sincronizan automáticamente
-        con todos los roles vinculados.
+        {t('plantillasRoles.infoAlert')}
       </Alert>
 
       <TableContainer
@@ -294,11 +297,21 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Plantilla</TableCell>
-              <TableCell>Estado</TableCell>
-              <TableCell align="center">Permisos</TableCell>
-              <TableCell align="center">Roles vinculados</TableCell>
-              {canEdit && <TableCell align="right">Acciones</TableCell>}
+              <TableCell>
+                {t('plantillasRoles.tableColumns.template')}
+              </TableCell>
+              <TableCell>{t('plantillasRoles.tableColumns.status')}</TableCell>
+              <TableCell align="center">
+                {t('plantillasRoles.tableColumns.permissions')}
+              </TableCell>
+              <TableCell align="center">
+                {t('plantillasRoles.tableColumns.linkedRoles')}
+              </TableCell>
+              {canEdit && (
+                <TableCell align="right">
+                  {t('plantillasRoles.tableColumns.actions')}
+                </TableCell>
+              )}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -324,7 +337,11 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
                   <TableCell>
                     <Chip
                       size="small"
-                      label={plantilla.activo ? 'Activa' : 'Inactiva'}
+                      label={
+                        plantilla.activo
+                          ? t('plantillasRoles.chipActive')
+                          : t('plantillasRoles.chipInactive')
+                      }
                       color={plantilla.activo ? 'success' : 'default'}
                     />
                   </TableCell>
@@ -346,10 +363,10 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
                       <Tooltip
                         title={
                           isSuperadmin
-                            ? 'Ver permisos (todos activos)'
+                            ? t('plantillasRoles.tooltipViewAll')
                             : plantilla.esEditable
-                              ? 'Editar permisos'
-                              : 'Plantilla de sistema (no editable)'
+                              ? t('plantillasRoles.tooltipEdit')
+                              : t('plantillasRoles.tooltipSystem')
                         }
                       >
                         <span>
@@ -378,24 +395,24 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="md">
         <DialogTitle>
-          {isReadonly ? 'Ver permisos' : 'Editar permisos'} —{' '}
-          {editingPlantilla?.nombre}
+          {isReadonly
+            ? t('plantillasRoles.dialogViewTitle')
+            : t('plantillasRoles.dialogEditTitle')}{' '}
+          — {editingPlantilla?.nombre}
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2} mt={0.5}>
             {isReadonly ? (
               <Alert severity="info" variant="outlined">
-                La plantilla Superadmin tiene todos los permisos activos
-                automáticamente. No se puede modificar.
+                {t('plantillasRoles.superadminInfo')}
               </Alert>
             ) : (
               <Alert severity="warning" variant="outlined">
-                Al guardar, los permisos se aplicarán a todos los roles
-                vinculados a esta plantilla
-                {editingPlantilla
-                  ? ` (${rolesCountByPlantillaId.get(editingPlantilla.id) ?? 0} rol(es))`
-                  : ''}
-                .
+                {t('plantillasRoles.warningSync', {
+                  roles: editingPlantilla
+                    ? ` (${rolesCountByPlantillaId.get(editingPlantilla.id) ?? 0} rol(es))`
+                    : '',
+                })}
               </Alert>
             )}
 
@@ -407,7 +424,10 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
                 mb={0.5}
               >
                 <Typography variant="subtitle2" fontWeight={700}>
-                  Permisos activos: {selectedCount} / {totalCount}
+                  {t('plantillasRoles.activePermissions', {
+                    selected: selectedCount,
+                    total: totalCount,
+                  })}
                 </Typography>
                 {!isReadonly && (
                   <Stack direction="row" spacing={1}>
@@ -419,13 +439,13 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
                         )
                       }
                     >
-                      Seleccionar todos
+                      {t('plantillasRoles.selectAll')}
                     </Button>
                     <Button
                       size="small"
                       onClick={() => setSelectedPermisoIds(new Set())}
                     >
-                      Deseleccionar todos
+                      {t('plantillasRoles.deselectAll')}
                     </Button>
                   </Stack>
                 )}
@@ -528,7 +548,9 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={closeDialog} disabled={saving}>
-            {isReadonly ? 'Cerrar' : 'Cancelar'}
+            {isReadonly
+              ? t('plantillasRoles.close')
+              : t('plantillasRoles.cancel')}
           </Button>
           {!isReadonly && (
             <Button
@@ -536,7 +558,9 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
               variant="contained"
               disabled={saving}
             >
-              {saving ? 'Guardando...' : 'Guardar permisos'}
+              {saving
+                ? t('plantillasRoles.saving')
+                : t('plantillasRoles.savePermissions')}
             </Button>
           )}
         </DialogActions>

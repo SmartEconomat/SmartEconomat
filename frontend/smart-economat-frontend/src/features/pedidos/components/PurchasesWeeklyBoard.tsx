@@ -20,6 +20,7 @@ import { buildBatchColumns, renderBatchActions } from '../utils/pedidoColumns';
 import { formatCurrency, getBatchTotal } from '../utils/pedidoFormatters';
 import { PedidosViewMode } from '../types/pedidos-ui.types';
 import PurchaseBatchCard from './PurchaseBatchCard';
+import { useTranslation } from 'react-i18next';
 
 dayjs.extend(isoWeek);
 
@@ -38,15 +39,19 @@ interface WeeklyPurchaseGroup {
   batches: PurchaseBatch[];
 }
 
-const getWeekRangeLabel = (referenceDate?: string): string => {
+const getWeekRangeLabel = (
+  referenceDate: string | undefined,
+  invalidLabel: string,
+  weekLabel: (start: string, end: string) => string
+): string => {
   if (!referenceDate || !dayjs(referenceDate).isValid()) {
-    return 'Semana sin fecha válida';
+    return invalidLabel;
   }
 
   const start = dayjs(referenceDate).startOf('isoWeek');
   const end = dayjs(referenceDate).endOf('isoWeek');
 
-  return `Semana ${start.format('DD/MM')} - ${end.format('DD/MM')}`;
+  return weekLabel(start.format('DD/MM'), end.format('DD/MM'));
 };
 
 const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
@@ -54,9 +59,14 @@ const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
   isLoading,
   viewMode,
   handlers,
-  emptyMessage = 'No hay compras registradas para los filtros actuales.',
+  emptyMessage,
 }) => {
-  const columns = useMemo(() => buildBatchColumns(), []);
+  const { t } = useTranslation();
+
+  const columns = useMemo(() => buildBatchColumns(t), [t]);
+
+  const resolvedEmptyMessage =
+    emptyMessage ?? t('pedidos.purchasesWeeklyBoard.emptyMessage');
 
   const groupedData = useMemo<WeeklyPurchaseGroup[]>(() => {
     const groups = new Map<string, WeeklyPurchaseGroup>();
@@ -69,7 +79,12 @@ const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
         groups.get(weekKey) ||
         ({
           weekKey,
-          label: getWeekRangeLabel(batch.createdAt),
+          label: getWeekRangeLabel(
+            batch.createdAt,
+            t('pedidos.purchasesWeeklyBoard.invalidWeek'),
+            (start, end) =>
+              t('pedidos.purchasesWeeklyBoard.weekLabel', { start, end })
+          ),
           totalAmount: 0,
           batches: [],
         } as WeeklyPurchaseGroup);
@@ -82,14 +97,12 @@ const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
     return Array.from(groups.values()).sort((left, right) =>
       right.weekKey.localeCompare(left.weekKey)
     );
-  }, [batches]);
+  }, [batches, t]);
 
   return (
     <Stack spacing={3}>
       <Alert severity="info">
-        Vista de compras consolidadas por proveedor, agrupadas por la semana de
-        creación. Desde aquí puedes revisar los lotes y comenzar la recepción de
-        mercancía.
+        {t('pedidos.purchasesWeeklyBoard.infoMessage')}
       </Alert>
 
       {isLoading && (
@@ -99,7 +112,7 @@ const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
       )}
 
       {!isLoading && groupedData.length === 0 && (
-        <Alert severity="info">{emptyMessage}</Alert>
+        <Alert severity="info">{resolvedEmptyMessage}</Alert>
       )}
 
       {!isLoading &&
@@ -121,14 +134,18 @@ const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
                     {group.label}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {group.batches.length} lote(s) de compra
+                    {t('pedidos.purchasesWeeklyBoard.batchesCount', {
+                      count: group.batches.length,
+                    })}
                   </Typography>
                 </Box>
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
                   <Chip
                     color="primary"
                     variant="outlined"
-                    label={`Inversión semanal ${formatCurrency(group.totalAmount)}`}
+                    label={t('pedidos.purchasesWeeklyBoard.weeklyInvestment', {
+                      amount: formatCurrency(group.totalAmount),
+                    })}
                   />
                 </Stack>
               </Box>
@@ -143,15 +160,17 @@ const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
                 renderGridItem={(row) => (
                   <PurchaseBatchCard
                     batch={row}
-                    actions={renderBatchActions(row, handlers)}
+                    actions={renderBatchActions(row, handlers, t)}
                     onRowClick={handlers.onView}
                   />
                 )}
                 onRowClick={handlers.onView}
                 getRowAriaLabel={(row) =>
-                  `Abrir detalle de la compra ${row.id.substring(0, 8)}`
+                  t('pedidos.purchasesWeeklyBoard.openDetail', {
+                    id: row.id.substring(0, 8),
+                  })
                 }
-                renderActions={(row) => renderBatchActions(row, handlers)}
+                renderActions={(row) => renderBatchActions(row, handlers, t)}
               />
             </AccordionDetails>
           </Accordion>

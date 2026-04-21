@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Container,
@@ -37,6 +38,7 @@ import { SYSTEM_ROLES } from '../sherlock-auth/system-roles.constants';
  * Página de Perfil - Unificada como una Ficha de Usuario.
  */
 const Perfil: React.FC = () => {
+  const { t } = useTranslation();
   const { user, refreshUser } = useAuth();
   const toast = useToast();
 
@@ -136,7 +138,7 @@ const Perfil: React.FC = () => {
 
       if (passwordData.newPassword) {
         if (passwordData.newPassword !== passwordData.confirmPassword) {
-          throw new Error('Las contraseñas no coinciden.');
+          throw new Error(t('perfil.errors.passwordMismatch'));
         }
 
         await authService.changePassword({
@@ -151,16 +153,16 @@ const Perfil: React.FC = () => {
         });
       }
 
-      toast.success('Perfil actualizado correctamente');
+      toast.success(t('perfil.toast.updated'));
 
       await refreshUser();
 
       setIsEditingProfile(false);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Error al guardar los cambios';
+        err instanceof Error ? err.message : t('perfil.errors.saveFailed');
       setError(message);
-      toast.error('Error al actualizar el perfil');
+      toast.error(t('perfil.toast.updateError'));
     } finally {
       setIsSaving(false);
     }
@@ -190,33 +192,31 @@ const Perfil: React.FC = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!newEmail.trim() || !confirmNewEmail.trim()) {
-      toast.error('Introduce y confirma el nuevo email');
+      toast.error(t('perfil.toast.emailRequired'));
       return;
     }
 
     if (!emailRegex.test(newEmail)) {
-      toast.error('El formato del email no es válido');
+      toast.error(t('perfil.toast.emailInvalid'));
       return;
     }
 
     if (newEmail.trim() !== confirmNewEmail.trim()) {
-      toast.error('Los emails no coinciden');
+      toast.error(t('perfil.toast.emailMismatch'));
       return;
     }
 
     if (newEmail.trim().toLowerCase() === user?.email.toLowerCase()) {
-      toast.error('El nuevo email debe ser diferente al actual');
+      toast.error(t('perfil.toast.emailSame'));
       return;
     }
 
     if (!justification.trim() || justification.trim().length < 10) {
-      toast.error('Indica una justificación válida (mínimo 10 caracteres)');
+      toast.error(t('perfil.toast.justificationRequired'));
       return;
     }
 
-    toast.success(
-      'Solicitud enviada. El cambio de email quedará pendiente de aprobación por un rol superior.'
-    );
+    toast.success(t('perfil.toast.emailRequestSent'));
 
     setEmailRequest({
       newEmail: '',
@@ -252,24 +252,21 @@ const Perfil: React.FC = () => {
             color: getRoleColor(user?.rol || ''),
           }}
         >
-          Perfil de Usuario
+          {t('perfil.pageTitle')}
         </Typography>
 
         <Typography variant="body1" color="text.secondary" sx={{ mb: 1.5 }}>
-          {isAlumno &&
-            'Consulta tu perfil, cambia tu nombre de usuario o contraseña y solicita cambios de email con aprobación superior.'}
-          {!isAlumno &&
-            'Consulta y edita tus datos personales y opciones de seguridad.'}
+          {isAlumno ? t('perfil.subtitleAlumno') : t('perfil.subtitleStaff')}
         </Typography>
 
         <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />}>
           <Link underline="hover" color="inherit" component={RouterLink} to="/">
-            Inicio
+            {t('perfil.breadcrumbHome')}
           </Link>
           <Typography
             sx={{ color: getRoleColor(user?.rol || ''), fontWeight: 600 }}
           >
-            Mi Perfil
+            {t('perfil.breadcrumbProfile')}
           </Typography>
         </Breadcrumbs>
       </Box>
@@ -294,12 +291,12 @@ const Perfil: React.FC = () => {
             <Stack spacing={6}>
               <Box>
                 <Typography variant="h5" fontWeight={700} gutterBottom>
-                  Perfil y Seguridad
+                  {t('perfil.sectionTitle')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   {isAlumno
-                    ? 'Puedes editar tu nombre de usuario y contraseña. El cambio de email requiere aprobación de un rol superior.'
-                    : 'Gestiona tu información personal y tu contraseña.'}
+                    ? t('perfil.sectionDescAlumno')
+                    : t('perfil.sectionDescStaff')}
                 </Typography>
               </Box>
 
@@ -336,7 +333,7 @@ const Perfil: React.FC = () => {
                       width: { xs: '100%', sm: 'auto' },
                     }}
                   >
-                    Editar Perfil
+                    {t('perfil.editProfile')}
                   </Button>
                 ) : (
                   <>
@@ -348,17 +345,17 @@ const Perfil: React.FC = () => {
                       disabled={isSaving}
                       sx={{ px: 3, width: { xs: '100%', sm: 'auto' } }}
                     >
-                      Cancelar
+                      {t('perfil.cancel')}
                     </Button>
                     <Button
                       color="primary"
                       startIcon={<SaveIcon />}
                       onClick={handleProfileSave}
                       isLoading={isSaving}
-                      loadingText="Guardando..."
+                      loadingText={t('perfil.saving')}
                       sx={{ px: 4, width: { xs: '100%', sm: 'auto' } }}
                     >
-                      Guardar Cambios
+                      {t('perfil.saveChanges')}
                     </Button>
                   </>
                 )}
@@ -374,17 +371,16 @@ const Perfil: React.FC = () => {
         fullWidth
         maxWidth="sm"
       >
-        <DialogTitle>Solicitar Cambio de Email</DialogTitle>
+        <DialogTitle>{t('perfil.emailDialog.title')}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ my: 2 }}>
-            El cambio de email no es inmediato. La solicitud será revisada por
-            un rol superior y solo se aplicará tras su aprobación.
+            {t('perfil.emailDialog.body')}
           </Typography>
 
           <Stack spacing={2}>
             <Input
               name="newEmail"
-              label="Nuevo Email"
+              label={t('perfil.emailDialog.newEmail')}
               type="email"
               value={emailRequest.newEmail}
               onChange={(e) =>
@@ -396,7 +392,7 @@ const Perfil: React.FC = () => {
             />
             <Input
               name="confirmNewEmail"
-              label="Confirmar Nuevo Email"
+              label={t('perfil.emailDialog.confirmEmail')}
               type="email"
               value={emailRequest.confirmNewEmail}
               onChange={(e) =>
@@ -408,7 +404,7 @@ const Perfil: React.FC = () => {
             />
             <Input
               name="justification"
-              label="Justificación"
+              label={t('perfil.emailDialog.justification')}
               multiline
               rows={3}
               value={emailRequest.justification}
@@ -423,9 +419,11 @@ const Perfil: React.FC = () => {
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
           <Button variant="outlined" onClick={() => setIsEmailModalOpen(false)}>
-            Cancelar
+            {t('perfil.emailDialog.cancel')}
           </Button>
-          <Button onClick={handleSubmitEmailRequest}>Enviar Solicitud</Button>
+          <Button onClick={handleSubmitEmailRequest}>
+            {t('perfil.emailDialog.submit')}
+          </Button>
         </DialogActions>
       </Dialog>
     </Container>

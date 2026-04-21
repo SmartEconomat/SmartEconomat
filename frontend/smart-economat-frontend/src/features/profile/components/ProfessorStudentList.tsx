@@ -23,6 +23,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import ListSkeleton from '../../../components/ui/ListSkeleton';
 import { Alumno, AlumnoSlot } from '../../../services/profesor.service';
+import { useTranslation } from 'react-i18next';
 
 interface ProfessorStudentListProps {
   students: Alumno[];
@@ -50,6 +51,7 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
   isSaving,
   isLoading = false,
 }) => {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = React.useState<string | false>(false);
 
   // Agrupar alumnos por aula y clase
@@ -66,7 +68,7 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
         ? [
             {
               id: 'temp-group',
-              aula: 'Alumnos sin Curso',
+              aula: t('professorStudents.unknownGroup'),
               numeroClase: 0,
               capacidad: students.length,
               codigoSlot: 'PENDIENTE',
@@ -114,7 +116,7 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
           fontWeight={600}
           sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}
         >
-          Gestión de Mis Alumnos
+          {t('professorStudents.manageTitle')}
         </Typography>
       </Box>
       <Divider sx={{ mb: { xs: 3, md: 4 } }} />
@@ -128,7 +130,7 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
           align="center"
           sx={{ py: 4, fontStyle: 'italic' }}
         >
-          Configura tus aulas primero para ver a tus alumnos.
+          {t('professorStudents.configureFirst')}
         </Typography>
       ) : (
         <Box display="flex" flexDirection="column" gap={2}>
@@ -169,16 +171,23 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
                           isPanelExpanded ? 'primary.main' : 'text.primary'
                         }
                       >
-                        Curso: {group.aula} — Clase {group.numeroClase}
+                        {t('professorSlots.courseLabel', {
+                          aula: group.aula,
+                          num: group.numeroClase,
+                        })}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {group.students.length} alumnos de {group.capacidad}{' '}
-                        permitidos
+                        {t('professorStudents.studentCount', {
+                          count: group.students.length,
+                          capacity: group.capacidad,
+                        })}
                       </Typography>
                     </Box>
-                    <Tooltip title="Click para copiar código de clase">
+                    <Tooltip title={t('professorStudents.clickToCopyCode')}>
                       <Chip
-                        label={group.codigoSlot || 'SIN CÓDIGO'}
+                        label={
+                          group.codigoSlot || t('professorStudents.noCode')
+                        }
                         size="small"
                         color="primary"
                         variant={group.codigoSlot ? 'filled' : 'outlined'}
@@ -200,7 +209,7 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
                       align="center"
                       sx={{ py: 3, fontStyle: 'italic' }}
                     >
-                      No hay alumnos registrados en esta clase todavía.
+                      {t('professorStudents.noStudentsInClass')}
                     </Typography>
                   ) : (
                     <List disablePadding>
@@ -252,7 +261,11 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
                                       {student.username}
                                     </Typography>
                                     <Chip
-                                      label={isActive ? 'ACTIVO' : 'PENDIENTE'}
+                                      label={
+                                        isActive
+                                          ? t('professorStudents.statusActive')
+                                          : t('professorStudents.statusPending')
+                                      }
                                       size="small"
                                       color={isActive ? 'success' : 'warning'}
                                       variant="filled"
@@ -281,8 +294,8 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
                                 <Tooltip
                                   title={
                                     isActive
-                                      ? 'Alumno ya activado'
-                                      : 'Activar alumno'
+                                      ? t('professorStudents.alreadyActive')
+                                      : t('professorStudents.activateStudent')
                                   }
                                 >
                                   <Switch
@@ -303,12 +316,16 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
                                   color="warning.main"
                                   sx={{ minWidth: { xs: 'auto', sm: 180 } }}
                                 >
-                                  Pendiente de activación por el profesor
+                                  {t('professorStudents.pendingActivation')}
                                 </Typography>
                               )}
 
                               <Box display="flex" gap={0.5}>
-                                <Tooltip title="Gestionar Permisos">
+                                <Tooltip
+                                  title={t(
+                                    'professorStudents.tooltipPermissions'
+                                  )}
+                                >
                                   <IconButton
                                     size="small"
                                     onClick={() => onManagePermissions(student)}
@@ -321,7 +338,11 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
                                   </IconButton>
                                 </Tooltip>
 
-                                <Tooltip title="Restablecer Contraseña">
+                                <Tooltip
+                                  title={t(
+                                    'professorStudents.tooltipResetPassword'
+                                  )}
+                                >
                                   <IconButton
                                     size="small"
                                     onClick={() => onResetPassword(student.id)}
@@ -334,7 +355,11 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
                                   </IconButton>
                                 </Tooltip>
 
-                                <Tooltip title="Eliminar Alumno">
+                                <Tooltip
+                                  title={t(
+                                    'professorStudents.tooltipDeleteStudent'
+                                  )}
+                                >
                                   <IconButton
                                     size="small"
                                     onClick={() => onDeleteStudent(student.id)}

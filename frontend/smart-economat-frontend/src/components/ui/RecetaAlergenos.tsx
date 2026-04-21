@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Chip, Tooltip, Typography, Alert } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
@@ -12,6 +13,7 @@ interface RecetaAlergenosProps {
 const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
   ingredientes = [],
 }) => {
+  const { t } = useTranslation();
   const presentIds = useMemo(() => {
     const set = new Set<string>();
     ingredientes.forEach((ing) => {
@@ -31,7 +33,7 @@ const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
           icon={
             isGlutenFree ? <CheckCircleOutlineIcon /> : <WarningAmberIcon />
           }
-          label="Sin Gluten"
+          label={t('recetaAlergenos.sinGluten')}
           color={isGlutenFree ? 'success' : 'error'}
           variant={isGlutenFree ? 'filled' : 'outlined'}
         />
@@ -40,16 +42,14 @@ const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
           icon={
             isLacteosFree ? <CheckCircleOutlineIcon /> : <WarningAmberIcon />
           }
-          label="Sin Lácteos"
+          label={t('recetaAlergenos.sinLacteos')}
           color={isLacteosFree ? 'success' : 'error'}
           variant={isLacteosFree ? 'filled' : 'outlined'}
         />
       </Box>
 
       {presentIds.size === 0 ? (
-        <Alert severity="success">
-          No se han detectado alérgenos en los ingredientes de esta receta.
-        </Alert>
+        <Alert severity="success">{t('recetaAlergenos.noAllergens')}</Alert>
       ) : (
         <Box
           sx={{
@@ -65,8 +65,16 @@ const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
                 key={allergen.id}
                 title={
                   isPresent
-                    ? `Contiene ${allergen.label}`
-                    : `Sin ${allergen.label}`
+                    ? t('recetaAlergenos.contains', {
+                        allergen: t(`allergens.${allergen.id}`, {
+                          defaultValue: allergen.label,
+                        }),
+                      })
+                    : t('recetaAlergenos.free', {
+                        allergen: t(`allergens.${allergen.id}`, {
+                          defaultValue: allergen.label,
+                        }),
+                      })
                 }
               >
                 <Box
@@ -105,7 +113,9 @@ const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
                       color: isPresent ? 'warning.dark' : 'text.disabled',
                     }}
                   >
-                    {allergen.label}
+                    {t(`allergens.${allergen.id}`, {
+                      defaultValue: allergen.label,
+                    })}
                   </Typography>
                 </Box>
               </Tooltip>

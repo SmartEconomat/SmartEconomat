@@ -33,6 +33,7 @@ import type { Ubicacion } from '../../../services/ubicacion.types';
 import QuickLocationDialog from '../../../components/inventario/QuickLocationDialog';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
+import { useTranslation } from 'react-i18next';
 
 interface ProfessorSlotsManagerProps {
   isEditing: boolean;
@@ -81,6 +82,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
   onAdminUpdateSlot,
   onRefreshUbicaciones,
 }) => {
+  const { t } = useTranslation();
   const [editingSlotId, setEditingSlotId] = React.useState<string | null>(null);
   const [openLocDialog, setOpenLocDialog] = React.useState(false);
   const [editData, setEditData] = React.useState({
@@ -163,7 +165,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
           align="center"
           sx={{ py: 3, fontStyle: 'italic' }}
         >
-          No hay clases configuradas para mostrar.
+          {t('professorSlots.noClasses')}
         </Typography>
       );
     }
@@ -178,7 +180,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
             const ownerName =
               slot.profesor?.user?.nombre ||
               slot.profesor?.user?.username ||
-              'Desconocido';
+              t('professorSlots.unknown');
 
             return (
               <ListItem
@@ -227,14 +229,18 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                             cursor: 'pointer',
                             '&:hover': { bgcolor: 'primary.main' },
                           }}
-                          title="Haga clic para copiar el código de clase"
+                          title={t('professorSlots.clickToCopyCode')}
                           onClick={() => {
                             if (slot.codigoSlot) {
                               navigator.clipboard.writeText(slot.codigoSlot);
                             }
                           }}
                         >
-                          CÓDIGO: {slot.codigoSlot || 'PENDIENTE'}
+                          {slot.codigoSlot
+                            ? t('professorSlots.codeLabel', {
+                                code: slot.codigoSlot,
+                              })
+                            : t('professorSlots.codePending')}
                         </Box>
 
                         <IconButton
@@ -272,7 +278,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                     flexWrap="wrap"
                   >
                     <TextField
-                      label="Aula/Grupo"
+                      label={t('professorSlots.aulaLabel')}
                       name="aula"
                       size="small"
                       value={editData.aula}
@@ -281,7 +287,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                       sx={{ flex: '1 1 80px', minWidth: 80 }}
                     />
                     <TextField
-                      label="Nº Clase"
+                      label={t('professorSlots.numeroClaseLabel')}
                       name="numeroClase"
                       size="small"
                       type="number"
@@ -291,7 +297,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                       sx={{ flex: '1 1 70px', minWidth: 70 }}
                     />
                     <TextField
-                      label="Capacidad"
+                      label={t('professorSlots.capacidadLabel')}
                       name="capacidad"
                       size="small"
                       type="number"
@@ -309,11 +315,11 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                     >
                       <FormControl size="small" fullWidth>
                         <InputLabel id={`ubicacion-select-${slot.id}`}>
-                          Ubicación
+                          {t('professorSlots.ubicacionLabel')}
                         </InputLabel>
                         <Select
                           labelId={`ubicacion-select-${slot.id}`}
-                          label="Ubicación"
+                          label={t('professorSlots.ubicacionLabel')}
                           value={editData.ubicacionId}
                           onChange={(e) => {
                             const val = e.target.value as string;
@@ -329,7 +335,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                           disabled={isSaving}
                         >
                           <MenuItem value="">
-                            <em>Sin ubicación</em>
+                            <em>{t('professorSlots.noLocation')}</em>
                           </MenuItem>
                           {ubicaciones.map((u) => (
                             <MenuItem key={u.id} value={u.id}>
@@ -341,11 +347,13 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                             value="CREATE_NEW_LOC"
                             sx={{ color: 'primary.main', fontWeight: 'bold' }}
                           >
-                            + CREAR NUEVA UBICACIÓN
+                            {t('professorSlots.createNewLocation')}
                           </MenuItem>
                         </Select>
                       </FormControl>
-                      <Tooltip title="Crear nueva Ubicación">
+                      <Tooltip
+                        title={t('professorSlots.createNewLocationTooltip')}
+                      >
                         <IconButton
                           size="small"
                           color="primary"
@@ -362,11 +370,11 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                         sx={{ flex: '2 1 140px', minWidth: 140 }}
                       >
                         <InputLabel id={`profesor-select-${slot.id}`}>
-                          Profesor
+                          {t('professorSlots.profesorLabel')}
                         </InputLabel>
                         <Select
                           labelId={`profesor-select-${slot.id}`}
-                          label="Profesor"
+                          label={t('professorSlots.profesorLabel')}
                           value={editData.profesorId}
                           onChange={(e) =>
                             setEditData((prev) => ({
@@ -387,7 +395,10 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                   </Box>
                 ) : (
                   <ListItemText
-                    primary={`Curso: ${slot.aula} — Clase ${slot.numeroClase}`}
+                    primary={t('professorSlots.courseLabel', {
+                      aula: slot.aula,
+                      num: slot.numeroClase,
+                    })}
                     secondary={
                       <Box component="span" sx={{ display: 'block' }}>
                         <Typography
@@ -395,14 +406,20 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                           variant="caption"
                           sx={{ display: 'block' }}
                         >
-                          Capacidad máx: {slot.capacidad} alumnos
+                          {t('professorSlots.capacity', {
+                            count: slot.capacidad,
+                          })}
                         </Typography>
                         <Typography
                           component="span"
                           variant="caption"
                           sx={{ display: 'block' }}
                         >
-                          Ubicación: {slot.ubicacion?.nombre || 'Sin asignar'}
+                          {slot.ubicacion?.nombre
+                            ? t('professorSlots.locationAssigned', {
+                                name: slot.ubicacion.nombre,
+                              })
+                            : t('professorSlots.noLocationAssigned')}
                         </Typography>
                         {showOwner && (
                           <Box
@@ -421,7 +438,9 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                               variant="caption"
                               fontWeight={600}
                             >
-                              Profesor: {ownerName}
+                              {t('professorSlots.teacherLabel', {
+                                name: ownerName,
+                              })}
                             </Typography>
                           </Box>
                         )}
@@ -461,9 +480,9 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
               onPageChange(0);
             }}
             rowsPerPageOptions={[5, 10, 15, 20]}
-            labelRowsPerPage="Por página:"
+            labelRowsPerPage={t('professorSlots.perPage')}
             labelDisplayedRows={({ from, to, count }) =>
-              `${from}–${to} de ${count}`
+              t('professorSlots.displayedRows', { from, to, count })
             }
           />
         </Box>
@@ -483,7 +502,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
           fontWeight={600}
           sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}
         >
-          Gestión de Aulas y Clases
+          {t('professorSlots.manageTitle')}
         </Typography>
       </Box>
       <Divider sx={{ mb: { xs: 3, md: 4 } }} />
@@ -495,7 +514,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
           sx={{ mb: 4, p: 2, bgcolor: 'action.hover', borderRadius: 2 }}
         >
           <Typography variant="subtitle2" gutterBottom color="text.secondary">
-            Configurar nueva clase:
+            {t('professorSlots.newClassConfig')}
           </Typography>
           <Box
             display="flex"
@@ -505,7 +524,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
           >
             <Box flex={1} width="100%">
               <Input
-                label="Curso/Grupo (ej: A01)"
+                label={t('professorSlots.aulaLabel')}
                 name="aula"
                 value={newSlot.aula}
                 onChange={onNewSlotChange}
@@ -515,7 +534,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
             </Box>
             <Box flex={1} width="100%">
               <Input
-                label="Nº Clase (ej: 1)"
+                label={t('professorSlots.numeroClaseLabel')}
                 name="numeroClase"
                 type="number"
                 value={newSlot.numeroClase}
@@ -526,7 +545,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
             </Box>
             <Box flex={1} width="100%">
               <Input
-                label="Capacidad (Alumnos)"
+                label={t('professorSlots.capacidadLabel')}
                 name="capacidad"
                 type="number"
                 value={newSlot.capacidad}
@@ -544,10 +563,12 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
               gap={0.5}
             >
               <FormControl fullWidth size="small">
-                <InputLabel id="new-slot-ubicacion-label">Ubicación</InputLabel>
+                <InputLabel id="new-slot-ubicacion-label">
+                  {t('professorSlots.ubicacionLabel')}
+                </InputLabel>
                 <Select
                   labelId="new-slot-ubicacion-label"
-                  label="Ubicación"
+                  label={t('professorSlots.ubicacionLabel')}
                   name="ubicacionId"
                   value={newSlot.ubicacionId || ''}
                   onChange={(e) => {
@@ -567,7 +588,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                   sx={{ bgcolor: 'background.paper' }}
                 >
                   <MenuItem value="">
-                    <em>Sin ubicación</em>
+                    <em>{t('professorSlots.noLocation')}</em>
                   </MenuItem>
                   {ubicaciones.map((u) => (
                     <MenuItem key={u.id} value={u.id}>
@@ -579,11 +600,11 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                     value="CREATE_NEW_LOC"
                     sx={{ color: 'primary.main', fontWeight: 'bold' }}
                   >
-                    + CREAR NUEVA UBICACIÓN
+                    {t('professorSlots.createNewLocation')}
                   </MenuItem>
                 </Select>
               </FormControl>
-              <Tooltip title="Crear nueva Ubicación">
+              <Tooltip title={t('professorSlots.createNewLocationTooltip')}>
                 <IconButton
                   size="small"
                   color="primary"
@@ -597,10 +618,12 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
             {allProfesores.length > 0 && (
               <Box flex={2} width="100%">
                 <FormControl fullWidth size="small">
-                  <InputLabel id="new-slot-profesor-label">Profesor</InputLabel>
+                  <InputLabel id="new-slot-profesor-label">
+                    {t('professorSlots.profesorLabel')}
+                  </InputLabel>
                   <Select
                     labelId="new-slot-profesor-label"
-                    label="Profesor"
+                    label={t('professorSlots.profesorLabel')}
                     name="profesorId"
                     value={newSlot.profesorId || ''}
                     onChange={(e) =>
@@ -615,7 +638,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                     sx={{ bgcolor: 'background.paper' }}
                   >
                     <MenuItem value="">
-                      <em>-- Mío (Propio) --</em>
+                      <em>{t('professorSlots.ownLabel')}</em>
                     </MenuItem>
                     {allProfesores.map((p) => (
                       <MenuItem key={p.id} value={p.id}>
@@ -634,7 +657,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
               sx={{ py: 1.5, minWidth: 120, width: { xs: '100%', md: 'auto' } }}
               startIcon={<AddCircleIcon />}
             >
-              Añadir
+              {t('professorSlots.addButton')}
             </Button>
           </Box>
         </Box>
@@ -656,7 +679,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
           sx={{ bgcolor: 'action.hover' }}
         >
           <Typography variant="subtitle1" fontWeight={700}>
-            MIS AULAS
+            {t('professorSlots.myClassrooms')}
             <Chip
               label={slots.length}
               size="small"
@@ -692,7 +715,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
             sx={{ bgcolor: 'action.hover' }}
           >
             <Typography variant="subtitle1" fontWeight={700}>
-              TODAS LAS AULAS
+              {t('professorSlots.allClassrooms')}
               <Chip
                 label={allSlots.length}
                 size="small"

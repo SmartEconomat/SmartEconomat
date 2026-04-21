@@ -6,6 +6,7 @@
  */
 
 import React, { ReactNode, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Table,
   TableBody,
@@ -153,10 +154,10 @@ export function DataTable<T extends Record<string, any>>({
   columns,
   data,
   isLoading = false,
-  emptyStateMessage = 'No hay datos disponibles.',
+  emptyStateMessage,
   pagination,
   renderActions,
-  actionsLabel = 'Acciones',
+  actionsLabel,
   actionsAlign = 'center',
   actionsWidth,
   renderGridItem,
@@ -176,6 +177,9 @@ export function DataTable<T extends Record<string, any>>({
   viewMode: controlledViewMode,
   onViewModeChange: onControlledViewModeChange,
 }: DataTableProps<T>) {
+  const { t } = useTranslation();
+  const resolvedEmptyStateMessage = emptyStateMessage ?? t('dataTable.empty');
+  const resolvedActionsLabel = actionsLabel ?? t('dataTable.actions');
   const colSpanCount =
     columns.length + (renderActions ? 1 : 0) + (selectable ? 1 : 0);
   const [internalViewMode, setInternalViewMode] = useState<'list' | 'grid'>(
@@ -404,7 +408,7 @@ export function DataTable<T extends Record<string, any>>({
                     align={actionsAlign}
                     sx={{ fontWeight: 'bold', width: actionsWidth }}
                   >
-                    {actionsLabel}
+                    {resolvedActionsLabel}
                   </TableCell>
                 )}
               </TableRow>
@@ -419,7 +423,7 @@ export function DataTable<T extends Record<string, any>>({
                   >
                     <Spinner size="md" color="primary" />
                     <Typography sx={{ mt: 2 }} color="text.secondary">
-                      Cargando datos...
+                      {t('dataTable.loading')}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -431,12 +435,12 @@ export function DataTable<T extends Record<string, any>>({
                     align="center"
                     sx={{ py: 6 }}
                   >
-                    {typeof emptyStateMessage === 'string' ? (
+                    {typeof resolvedEmptyStateMessage === 'string' ? (
                       <Typography color="text.secondary">
-                        {emptyStateMessage}
+                        {resolvedEmptyStateMessage}
                       </Typography>
                     ) : (
-                      emptyStateMessage
+                      resolvedEmptyStateMessage
                     )}
                   </TableCell>
                 </TableRow>
@@ -607,12 +611,12 @@ export function DataTable<T extends Record<string, any>>({
           {!isLoading && data.length === 0 && (
             <Grid size={{ xs: 12 }}>
               <Box display="flex" justifyContent="center" py={6}>
-                {typeof emptyStateMessage === 'string' ? (
+                {typeof resolvedEmptyStateMessage === 'string' ? (
                   <Typography color="text.secondary">
-                    {emptyStateMessage}
+                    {resolvedEmptyStateMessage}
                   </Typography>
                 ) : (
-                  emptyStateMessage
+                  resolvedEmptyStateMessage
                 )}
               </Box>
             </Grid>
@@ -661,9 +665,9 @@ export function DataTable<T extends Record<string, any>>({
               }
             }}
             rowsPerPageOptions={pagination.pageSizeOptions ?? [5, 10, 15, 20]}
-            labelRowsPerPage="Por página:"
+            labelRowsPerPage={t('dataTable.rowsPerPage')}
             labelDisplayedRows={({ from, to, count }) =>
-              `${from}–${to} de ${count}`
+              t('dataTable.displayedRows', { from, to, count })
             }
           />
         </Box>

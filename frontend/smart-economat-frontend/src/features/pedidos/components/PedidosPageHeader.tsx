@@ -4,6 +4,7 @@ import PageToolbar, {
 } from '../../../components/ui/PageToolbar';
 import { PedidoDraftRecord } from '../../../services/pedidoDraft.service';
 import { PedidosViewMode } from '../types/pedidos-ui.types';
+import { useTranslation } from 'react-i18next';
 
 interface PedidosPageHeaderProps {
   canCreate: boolean;
@@ -25,7 +26,7 @@ const PedidosPageHeader: React.FC<PedidosPageHeaderProps> = ({
   draft,
   isLoadingDraft,
   totalItems,
-  totalItemsLabel = 'pedidos',
+  totalItemsLabel,
   searchTerm,
   viewMode,
   onSearchChange,
@@ -33,38 +34,42 @@ const PedidosPageHeader: React.FC<PedidosPageHeaderProps> = ({
   onCreateClick,
   onContinueDraftClick,
   extraActions = [],
-}) => (
-  <PageToolbar
-    title="Gestión de Pedidos"
-    searchValue={searchTerm}
-    onSearchChange={onSearchChange}
-    searchPlaceholder="Buscar por proveedor, estado, usuario..."
-    searchId="search-pedidos"
-    totalItems={totalItems}
-    totalItemsLabel={totalItemsLabel}
-    viewMode={viewMode}
-    onViewModeChange={onViewModeChange}
-    primaryAction={
-      canCreate
-        ? {
-            label: 'Nuevo Pedido',
-            onClick: onCreateClick,
-            id: 'btn-nuevo-pedido',
-          }
-        : undefined
-    }
-    secondaryAction={
-      canCreate && draft
-        ? {
-            label: 'Continuar Pedido',
-            onClick: onContinueDraftClick,
-            id: 'btn-continuar-pedido',
-            isLoading: isLoadingDraft,
-          }
-        : undefined
-    }
-    extraActions={extraActions}
-  />
-);
+}) => {
+  const { t } = useTranslation();
+
+  return (
+    <PageToolbar
+      title={t('pedidos.pageTitle')}
+      searchValue={searchTerm}
+      onSearchChange={onSearchChange}
+      searchPlaceholder={t('pedidos.searchPlaceholder')}
+      searchId="search-pedidos"
+      totalItems={totalItems}
+      totalItemsLabel={totalItemsLabel ?? t('pedidos.totalItemsLabel')}
+      viewMode={viewMode}
+      onViewModeChange={onViewModeChange}
+      primaryAction={
+        canCreate
+          ? {
+              label: t('pedidos.newOrder'),
+              onClick: onCreateClick,
+              id: 'btn-nuevo-pedido',
+            }
+          : undefined
+      }
+      secondaryAction={
+        canCreate && draft
+          ? {
+              label: t('pedidos.continueDraft'),
+              onClick: onContinueDraftClick,
+              id: 'btn-continuar-pedido',
+              isLoading: isLoadingDraft,
+            }
+          : undefined
+      }
+      extraActions={extraActions}
+    />
+  );
+};
 
 export default PedidosPageHeader;

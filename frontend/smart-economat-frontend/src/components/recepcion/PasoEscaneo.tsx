@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   TextField,
@@ -101,6 +102,7 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
   isWeightUnit,
   onOpenWeightScale,
 }) => {
+  const { t } = useTranslation();
   const [scannerOpen, setScannerOpen] = React.useState(false);
 
   const handleBarcodeScan = (code: string) => {
@@ -135,15 +137,15 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
             inputRef={searchInputRef}
             fullWidth
             autoFocus
-            label="Escanear Código de Barras o ID"
+            label={t('pasoEscaneo.title')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && onSearch()}
-            placeholder="EAN-13 o ID de bulto..."
+            placeholder={t('pasoEscaneo.placeholder')}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <Tooltip title="Escanear con cámara">
+                  <Tooltip title={t('pasoEscaneo.scanCamera')}>
                     <IconButton
                       onClick={() => setScannerOpen(true)}
                       size="small"
@@ -195,7 +197,7 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
             open={scannerOpen}
             onClose={() => setScannerOpen(false)}
             onScan={handleBarcodeScan}
-            title="Escanear Producto"
+            title={t('pasoEscaneo.scanProduct')}
             continuous={true}
           />
         </Box>
@@ -235,7 +237,7 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
               letterSpacing: '0.00938em',
             }}
           >
-            Opciones de báscula
+            {t('pasoEscaneo.scaleOptions')}
           </Typography>
 
           <Stack
@@ -259,7 +261,9 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                   textTransform: 'none',
                 }}
               >
-                {isScaleConnected ? 'Cambiar puerto' : 'Vincular'}
+                {isScaleConnected
+                  ? t('pasoEscaneo.changePort')
+                  : t('pasoEscaneo.linkScale')}
               </Button>
             </Stack>
 
@@ -292,7 +296,7 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                     fontWeight: isScaleEnabled && isScaleConnected ? 600 : 500,
                   }}
                 >
-                  Usar báscula
+                  {t('pasoEscaneo.useScale')}
                 </Typography>
               }
               sx={{
@@ -332,7 +336,7 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                 sx={{ ml: 1, color: 'text.secondary' }}
               >
                 ({p.lineas.filter((l) => Number(l.cantidadRecibida) > 0).length}{' '}
-                ítems recibidos)
+                {t('pasoEscaneo.itemsReceived')})
               </Typography>
             </Typography>
           </AccordionSummary>
@@ -341,20 +345,24 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
               <Table size="small" sx={{ tableLayout: 'fixed', minWidth: 800 }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ width: '25%' }}>Producto</TableCell>
+                    <TableCell sx={{ width: '25%' }}>
+                      {t('pasoEscaneo.columns.product')}
+                    </TableCell>
                     <TableCell align="center" sx={{ width: '7%' }}>
-                      Unidad
+                      {t('pasoEscaneo.columns.unit')}
                     </TableCell>
                     <TableCell align="center" sx={{ width: '8%' }}>
-                      Pedida
+                      {t('pasoEscaneo.columns.ordered')}
                     </TableCell>
                     <TableCell align="center" sx={{ width: '15%' }}>
-                      Albarán
+                      {t('pasoEscaneo.columns.albaran')}
                     </TableCell>
                     <TableCell align="center" sx={{ width: '15%' }}>
-                      Recibida
+                      {t('pasoEscaneo.columns.received')}
                     </TableCell>
-                    <TableCell sx={{ width: '15%' }}>Estado</TableCell>
+                    <TableCell sx={{ width: '15%' }}>
+                      {t('pasoEscaneo.columns.status')}
+                    </TableCell>
                     <TableCell align="center" sx={{ width: '15%' }}></TableCell>
                   </TableRow>
                 </TableHead>
@@ -381,7 +389,7 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                         >
                           {l.codigoBarras
                             ? `EAN: ${l.codigoBarras}`
-                            : 'Sin código'}
+                            : t('pasoEscaneo.noCode')}
                         </Typography>
                       </TableCell>
                       <TableCell align="center">
@@ -569,13 +577,13 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                             sx={{ fontSize: '0.8rem' }}
                           >
                             <MenuItem value={EstadoVisualProducto.OPTIMO}>
-                              Óptimo
+                              {t('pasoEscaneo.optimo')}
                             </MenuItem>
                             <MenuItem value={EstadoVisualProducto.ROTO}>
-                              Roto
+                              {t('pasoEscaneo.roto')}
                             </MenuItem>
                             <MenuItem value={EstadoVisualProducto.DEFECTUOSO}>
-                              Defecto
+                              {t('pasoEscaneo.defecto')}
                             </MenuItem>
                           </Select>
                         </FormControl>
@@ -595,25 +603,29 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
       {draft.productosEspontaneos.length > 0 && (
         <Paper sx={{ p: 2, bgcolor: 'background.default' }} elevation={0}>
           <Typography variant="subtitle2" color="secondary">
-            Especial / Fuera de Pedido 🆕
+            {t('pasoEscaneo.special')}
           </Typography>
           <TableContainer sx={{ overflowX: 'auto' }}>
             <Table size="small" sx={{ tableLayout: 'fixed', minWidth: 900 }}>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ width: '25%' }}>Producto</TableCell>
+                  <TableCell sx={{ width: '25%' }}>
+                    {t('pasoEscaneo.columns.product')}
+                  </TableCell>
                   <TableCell align="center" sx={{ width: '8%' }}>
-                    Unidad
+                    {t('pasoEscaneo.columns.unit')}
                   </TableCell>
                   <TableCell align="right" sx={{ width: '17%' }}>
-                    Albarán
+                    {t('pasoEscaneo.columns.albaran')}
                   </TableCell>
                   <TableCell align="right" sx={{ width: '20%' }}>
-                    Recibida
+                    {t('pasoEscaneo.columns.received')}
                   </TableCell>
-                  <TableCell sx={{ width: '15%' }}>Físico</TableCell>
+                  <TableCell sx={{ width: '15%' }}>
+                    {t('pasoEscaneo.columns.physical')}
+                  </TableCell>
                   <TableCell align="center" sx={{ width: '15%' }}>
-                    Acción
+                    {t('pasoEscaneo.columns.action')}
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -640,7 +652,7 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                       >
                         {l.codigoBarras
                           ? `EAN: ${l.codigoBarras}`
-                          : 'Sin código'}
+                          : t('pasoEscaneo.noCode')}
                       </Typography>
                     </TableCell>
                     <TableCell align="center">
@@ -806,13 +818,13 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                           sx={{ fontSize: '0.8rem' }}
                         >
                           <MenuItem value={EstadoVisualProducto.OPTIMO}>
-                            Óptimo
+                            {t('pasoEscaneo.optimo')}
                           </MenuItem>
                           <MenuItem value={EstadoVisualProducto.ROTO}>
-                            Roto
+                            {t('pasoEscaneo.roto')}
                           </MenuItem>
                           <MenuItem value={EstadoVisualProducto.DEFECTUOSO}>
-                            Defecto
+                            {t('pasoEscaneo.defecto')}
                           </MenuItem>
                         </Select>
                       </FormControl>

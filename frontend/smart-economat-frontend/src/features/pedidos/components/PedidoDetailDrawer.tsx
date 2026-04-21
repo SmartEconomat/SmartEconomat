@@ -32,6 +32,7 @@ import {
   getPedidoCreatorName,
   getPedidoProviderName,
 } from '../utils/pedidoFormatters';
+import { useTranslation } from 'react-i18next';
 
 interface PedidoDetailDrawerProps {
   pedido: Pedido | null;
@@ -47,6 +48,7 @@ const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
   onEdit,
 }) => {
   const toast = useToast();
+  const { t } = useTranslation();
   const [isDownloadingPdf, setIsDownloadingPdf] = React.useState(false);
   const [isPrintingPdf, setIsPrintingPdf] = React.useState(false);
 
@@ -60,7 +62,7 @@ const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
       toast.error(
         error instanceof Error
           ? error.message
-          : 'No se pudo descargar el PDF del pedido.'
+          : t('pedidos.drawer.downloadError')
       );
     } finally {
       setIsDownloadingPdf(false);
@@ -75,9 +77,7 @@ const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
       await printPedidoPdf(pedido.id);
     } catch (error: unknown) {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : 'No se pudo abrir la impresión del PDF del pedido.'
+        error instanceof Error ? error.message : t('pedidos.drawer.printError')
       );
     } finally {
       setIsPrintingPdf(false);
@@ -86,44 +86,50 @@ const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
 
   const sections: DetailSection[] = [
     {
-      title: 'Resumen',
+      title: t('pedidos.drawer.summary'),
       fields: [
         {
-          label: 'Proveedor',
+          label: t('pedidos.drawer.providerLabel'),
           value: pedido ? getPedidoProviderName(pedido) : '—',
         },
         {
-          label: 'Estado',
+          label: t('pedidos.drawer.statusLabel'),
           value: pedido ? <StatusChip status={pedido.estado} /> : '—',
         },
         {
-          label: 'Creado por',
+          label: t('pedidos.drawer.createdBy'),
           value: pedido ? getPedidoCreatorName(pedido) : '—',
         },
         {
-          label: 'Coste total',
+          label: t('pedidos.drawer.totalCost'),
           value: pedido ? formatCurrency(pedido.costeTotal) : '—',
         },
         {
-          label: 'Fecha del pedido',
+          label: t('pedidos.drawer.orderDate'),
           value: pedido ? formatPedidoDate(pedido.fechaPedido) : '—',
         },
         {
-          label: 'Fecha estimada de entrega',
+          label: t('pedidos.drawer.deliveryDate'),
           value: pedido ? formatPedidoDate(pedido.fechaEntrega) : '—',
         },
       ],
     },
     {
-      title: 'Líneas del pedido',
+      title: t('pedidos.drawer.lines'),
       content: pedido?.pedidoProductos?.length ? (
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Producto</TableCell>
-              <TableCell align="right">Cantidad</TableCell>
-              <TableCell align="right">Precio</TableCell>
-              <TableCell align="right">Subtotal</TableCell>
+              <TableCell>{t('pedidos.drawer.colProduct')}</TableCell>
+              <TableCell align="right">
+                {t('pedidos.drawer.colQuantity')}
+              </TableCell>
+              <TableCell align="right">
+                {t('pedidos.drawer.colPrice')}
+              </TableCell>
+              <TableCell align="right">
+                {t('pedidos.drawer.colSubtotal')}
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -136,7 +142,7 @@ const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
                     <Stack spacing={0.5}>
                       <Typography variant="body2" fontWeight={600}>
                         {line.productoProveedor?.producto?.nombre ||
-                          'Producto no disponible'}
+                          t('pedidos.drawer.noProduct')}
                       </Typography>
                       <Stack
                         direction="row"
@@ -147,7 +153,7 @@ const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
                         {line.productoProveedor?.marca && (
                           <Chip
                             size="small"
-                            label={`Marca: ${line.productoProveedor.marca}`}
+                            label={`${t('pedidos.drawer.brandPrefix')} ${line.productoProveedor.marca}`}
                           />
                         )}
                         <Typography variant="caption" color="text.secondary">
@@ -170,21 +176,20 @@ const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
         </Table>
       ) : (
         <Typography color="text.secondary">
-          No hay líneas disponibles para este pedido.
+          {t('pedidos.drawer.noLines')}
         </Typography>
       ),
     },
     {
-      title: 'Observaciones',
+      title: t('pedidos.drawer.observations'),
       content: (
         <>
           <Typography variant="body2" color="text.secondary">
-            {pedido?.observaciones || 'Sin observaciones registradas.'}
+            {pedido?.observaciones || t('pedidos.drawer.noNotes')}
           </Typography>
           <Divider sx={{ my: 2 }} />
           <Typography variant="caption" color="text.secondary">
-            La fecha de entrega se calcula automáticamente en backend y no puede
-            modificarse manualmente.
+            {t('pedidos.drawer.deliveryNote')}
           </Typography>
         </>
       ),
@@ -209,10 +214,10 @@ const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
     <DetailModal
       isOpen={!!pedido}
       onClose={onClose}
-      title="Detalle del pedido"
+      title={t('pedidos.drawer.title')}
       subtitle={
         pedido
-          ? `Pedido #${formatPedidoListNumber(pedido)} · ID ${formatPedidoId(pedido.id)}`
+          ? `${t('pedidos.drawer.orderPrefix')}${formatPedidoListNumber(pedido)} · ID ${formatPedidoId(pedido.id)}`
           : undefined
       }
       size="lg"
@@ -236,7 +241,9 @@ const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
                 onClick={() => void handleDownloadPdf()}
                 disabled={isDownloadingPdf || isPrintingPdf}
               >
-                {isDownloadingPdf ? 'Descargando...' : 'Descargar PDF'}
+                {isDownloadingPdf
+                  ? t('pedidos.drawer.downloading')
+                  : t('pedidos.drawer.downloadPdf')}
               </Button>
               <Button
                 variant="outlined"
@@ -245,7 +252,9 @@ const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
                 onClick={() => void handlePrintPdf()}
                 disabled={isPrintingPdf || isDownloadingPdf}
               >
-                {isPrintingPdf ? 'Preparando impresión...' : 'Imprimir PDF'}
+                {isPrintingPdf
+                  ? t('pedidos.drawer.preparing')
+                  : t('pedidos.drawer.printPdf')}
               </Button>
             </Stack>
 
@@ -257,7 +266,7 @@ const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
                   disableElevation
                   onClick={() => onEdit(pedido)}
                 >
-                  Editar pedido
+                  {t('pedidos.drawer.editOrder')}
                 </Button>
               )}
           </Box>
@@ -315,7 +324,7 @@ const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
           ),
         },
         {
-          title: 'Líneas del pedido',
+          title: t('pedidos.drawer.lines'),
           content: (
             <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2 }}>
               {sections[1].content}
@@ -323,7 +332,7 @@ const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
           ),
         },
         {
-          title: 'Observaciones',
+          title: t('pedidos.drawer.observations'),
           content: (
             <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2 }}>
               {sections[2].content}

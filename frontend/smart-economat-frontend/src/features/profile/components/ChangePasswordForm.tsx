@@ -14,6 +14,7 @@ import {
   isStrongPassword,
   STRONG_PASSWORD_MESSAGE,
 } from '../../../utils/passwordValidation';
+import { useTranslation } from 'react-i18next';
 
 interface ChangePasswordFormProps {
   isEditing: boolean;
@@ -32,6 +33,7 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
   onFormChange,
   isSaving,
 }) => {
+  const { t } = useTranslation();
   const [showPass, setShowPass] = useState({
     current: false,
     next: false,
@@ -72,13 +74,12 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
             fontWeight={600}
             sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}
           >
-            Seguridad
+            {t('changePassword.security')}
           </Typography>
         </Box>
         <Divider sx={{ mb: { xs: 3, md: 4 } }} />
         <Typography variant="body2" color="text.secondary">
-          La contraseña está protegida. Para cambiarla, activa el modo de
-          edición de la ficha.
+          {t('changePassword.protectedHint')}
         </Typography>
       </Box>
     );
@@ -96,7 +97,7 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
           fontWeight={600}
           sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}
         >
-          Cambiar Contraseña
+          {t('changePassword.changeTitle')}
         </Typography>
       </Box>
       <Divider sx={{ mb: { xs: 3, md: 4 } }} />
@@ -108,7 +109,7 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
       >
         <Box>
           <Input
-            label="Contraseña Actual"
+            label={t('changePassword.currentPassword')}
             name="currentPassword"
             type={showPass.current ? 'text' : 'password'}
             autoComplete="current-password"
@@ -122,7 +123,7 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
         <Box sx={{ display: { xs: 'none', sm: 'block' } }} /> {/* Spacer */}
         <Box>
           <Input
-            label="Nueva Contraseña"
+            label={t('changePassword.newPassword')}
             name="newPassword"
             type={showPass.next ? 'text' : 'password'}
             autoComplete="new-password"
@@ -136,14 +137,14 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
               passwordLengthValid === false
                 ? STRONG_PASSWORD_MESSAGE
                 : passwordLengthValid === true
-                  ? 'Formato fuerte'
-                  : 'Mínimo 8 caracteres, mayúsculas, números y símbolos'
+                  ? t('changePassword.strongFormat')
+                  : t('changePassword.minRequirements')
             }
           />
         </Box>
         <Box>
           <Input
-            label="Confirmar Nueva Contraseña"
+            label={t('changePassword.confirmPassword')}
             name="confirmPassword"
             type={showPass.confirm ? 'text' : 'password'}
             autoComplete="new-password"
@@ -154,7 +155,9 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
             InputProps={{ endAdornment: passwordAddon('confirm') }}
             error={passwordsMatch === false}
             helperText={
-              passwordsMatch === false ? 'Las contraseñas no coinciden' : ' '
+              passwordsMatch === false
+                ? t('changePassword.passwordMismatch')
+                : ' '
             }
           />
         </Box>

@@ -16,74 +16,7 @@ import { getCategoryIcon } from './utils/getCategoryIcon';
 import { usePermission } from '../../store/auth.hooks';
 import { PERMISSIONS } from '../../sherlock-auth/permissions.constants';
 import { useToast } from '../../store/toast.hooks';
-
-// ── Base schema ────────────────────────────────────────────────────────
-
-const productoBaseSchema: DynamicField[] = [
-  { name: 'nombre', label: 'Nombre Comercial', required: true },
-  { name: 'marca', label: 'Marca' },
-  { name: 'descripcion', label: 'Descripción' },
-  {
-    name: 'contenido',
-    label: 'Contenido Numérico',
-    type: 'number',
-    required: true,
-  },
-  {
-    name: 'unidad',
-    label: 'Unidad de Medida',
-    type: 'select',
-    options: [
-      { value: UnidadMedida.KG, label: 'Kg' },
-      { value: UnidadMedida.G, label: 'Gramo' },
-      { value: UnidadMedida.L, label: 'Litro' },
-      { value: UnidadMedida.ML, label: 'Mililitro' },
-      { value: UnidadMedida.UNIDAD, label: 'Unidad' },
-      { value: UnidadMedida.PAQ, label: 'Paquete' },
-    ],
-    required: true,
-    width: 4,
-  },
-  {
-    name: 'tipo',
-    label: 'Categoría',
-    type: 'select',
-    width: 4,
-    options: [
-      { value: CategoriaProducto.VERDURA, label: 'Verdura' },
-      { value: CategoriaProducto.FRUTA, label: 'Fruta' },
-      { value: CategoriaProducto.CARNE, label: 'Carne' },
-      { value: CategoriaProducto.PESCADO, label: 'Pescado' },
-      { value: CategoriaProducto.MARISCO, label: 'Marisco' },
-      { value: CategoriaProducto.LACTEO, label: 'Lácteo' },
-      { value: CategoriaProducto.HUEVO, label: 'Huevo' },
-      { value: CategoriaProducto.CEREAL, label: 'Cereal' },
-      { value: CategoriaProducto.LEGUMBRE, label: 'Legumbre' },
-      { value: CategoriaProducto.FRUTO_SECO, label: 'Fruto Seco' },
-      { value: CategoriaProducto.CONDIMENTO, label: 'Condimento' },
-      { value: CategoriaProducto.ACEITE, label: 'Aceite' },
-      { value: CategoriaProducto.AZUCAR, label: 'Azúcar' },
-      { value: CategoriaProducto.BEBIDA, label: 'Bebida' },
-      { value: CategoriaProducto.OTRO, label: 'Otro' },
-    ],
-  },
-  { name: 'codigoBarras', label: 'Código de Barras', type: 'barcode' },
-  {
-    name: 'imagen',
-    label: 'Cargar Imagen',
-    type: 'image',
-    getFallbackIcon: (formData) =>
-      getCategoryIcon(formData.tipo as CategoriaProducto, {
-        sx: { fontSize: 80, color: 'text.secondary', opacity: 0.5 },
-      }),
-  },
-  {
-    name: 'alergenos',
-    label: 'Alérgenos Presentes',
-    type: 'allergens',
-    position: 'bottom',
-  },
-];
+import { useTranslation } from 'react-i18next';
 
 // ── OFF helpers ────────────────────────────────────────────────────────
 
@@ -116,6 +49,7 @@ const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
   isSubmitting = false,
   title,
 }) => {
+  const { t } = useTranslation();
   const isEditing = Boolean(initialData.id);
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const canGenerateEan13 = usePermission(PERMISSIONS.productos.generar_ean13);
@@ -128,18 +62,102 @@ const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
       .catch(() => setProveedores([]));
   }, [isOpen]);
 
+  const productoBaseSchema: DynamicField[] = [
+    {
+      name: 'nombre',
+      label: t('productoFormModal.fields.nombre'),
+      required: true,
+    },
+    { name: 'marca', label: t('productoFormModal.fields.marca') },
+    { name: 'descripcion', label: t('productoFormModal.fields.descripcion') },
+    {
+      name: 'contenido',
+      label: t('productoFormModal.fields.contenido'),
+      type: 'number',
+      required: true,
+    },
+    {
+      name: 'unidad',
+      label: t('productoFormModal.fields.unidad'),
+      type: 'select',
+      options: [
+        { value: UnidadMedida.KG, label: t('productoFormModal.units.kg') },
+        { value: UnidadMedida.G, label: t('productoFormModal.units.g') },
+        { value: UnidadMedida.L, label: t('productoFormModal.units.l') },
+        { value: UnidadMedida.ML, label: t('productoFormModal.units.ml') },
+        {
+          value: UnidadMedida.UNIDAD,
+          label: t('productoFormModal.units.unidad'),
+        },
+        { value: UnidadMedida.PAQ, label: t('productoFormModal.units.paq') },
+      ],
+      required: true,
+      width: 4,
+    },
+    {
+      name: 'tipo',
+      label: t('productoFormModal.fields.categoria'),
+      type: 'select',
+      width: 4,
+      options: [
+        { value: CategoriaProducto.VERDURA, label: t('categoria.VERDURA') },
+        { value: CategoriaProducto.FRUTA, label: t('categoria.FRUTA') },
+        { value: CategoriaProducto.CARNE, label: t('categoria.CARNE') },
+        { value: CategoriaProducto.PESCADO, label: t('categoria.PESCADO') },
+        { value: CategoriaProducto.MARISCO, label: t('categoria.MARISCO') },
+        { value: CategoriaProducto.LACTEO, label: t('categoria.LACTEO') },
+        { value: CategoriaProducto.HUEVO, label: t('categoria.HUEVO') },
+        { value: CategoriaProducto.CEREAL, label: t('categoria.CEREAL') },
+        { value: CategoriaProducto.LEGUMBRE, label: t('categoria.LEGUMBRE') },
+        {
+          value: CategoriaProducto.FRUTO_SECO,
+          label: t('categoria.FRUTO_SECO'),
+        },
+        {
+          value: CategoriaProducto.CONDIMENTO,
+          label: t('categoria.CONDIMENTO'),
+        },
+        { value: CategoriaProducto.ACEITE, label: t('categoria.ACEITE') },
+        { value: CategoriaProducto.AZUCAR, label: t('categoria.AZUCAR') },
+        { value: CategoriaProducto.BEBIDA, label: t('categoria.BEBIDA') },
+        { value: CategoriaProducto.OTRO, label: t('categoria.OTRO') },
+      ],
+    },
+    {
+      name: 'codigoBarras',
+      label: t('productoFormModal.fields.codigoBarras'),
+      type: 'barcode',
+    },
+    {
+      name: 'imagen',
+      label: t('productoFormModal.fields.imagen'),
+      type: 'image',
+      getFallbackIcon: (formData) =>
+        getCategoryIcon(formData.tipo as CategoriaProducto, {
+          sx: { fontSize: 80, color: 'text.secondary', opacity: 0.5 },
+        }),
+    },
+    {
+      name: 'alergenos',
+      label: t('productoFormModal.fields.alergenos'),
+      type: 'allergens',
+      position: 'bottom',
+    },
+  ];
+
   const dynamicSchema = React.useMemo(() => {
     const schema = [...productoBaseSchema];
     schema.push({
       name: 'proveedores',
-      label: 'Proveedores Asociados',
+      label: t('productoFormModal.fields.proveedores'),
       type: 'proveedores',
       position: 'bottom',
       defaultValue: [],
       options: proveedores.map((p) => ({ value: p.id, label: p.nombre })),
     });
     return schema;
-  }, [proveedores]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [proveedores, t]);
 
   const handleBarcodeFetch = useCallback(async (code: string) => {
     const product = await searchByBarcode(code);
@@ -179,8 +197,10 @@ const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
       title={
         title ??
         (isEditing
-          ? `Editar: ${String(initialData.nombre || '')}`
-          : 'Crear Nuevo Producto')
+          ? t('productoFormModal.editTitle', {
+              name: String(initialData.nombre || ''),
+            })
+          : t('productoFormModal.createTitle'))
       }
       size="lg"
       fields={dynamicSchema}
@@ -193,8 +213,8 @@ const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
       onOFFSearch={handleOFFSearch}
       confirmationMessage={
         isEditing
-          ? '¿Estás seguro de que deseas guardar los cambios realizados en este producto?'
-          : '¿Estás seguro de que deseas añadir este nuevo producto al inventario?'
+          ? t('productoFormModal.confirmEdit')
+          : t('productoFormModal.confirmCreate')
       }
     />
   );

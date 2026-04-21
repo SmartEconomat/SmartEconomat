@@ -4,6 +4,7 @@ import WatchLaterOutlinedIcon from '@mui/icons-material/WatchLaterOutlined';
 import AutorenewOutlinedIcon from '@mui/icons-material/AutorenewOutlined';
 import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
 import { MisPedidosStatusFilter } from '../types/pedidos-ui.types';
+import { useTranslation } from 'react-i18next';
 
 interface MisPedidosStatusTabsProps {
   value: MisPedidosStatusFilter;
@@ -15,21 +16,22 @@ const MisPedidosStatusTabs: React.FC<MisPedidosStatusTabsProps> = ({
   onChange,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const options = [
     {
       value: 'pendientes' as MisPedidosStatusFilter,
-      label: 'PENDIENTES',
+      label: t('pedidos.statusTabs.pending'),
       icon: <WatchLaterOutlinedIcon sx={{ fontSize: 20 }} />,
     },
     {
       value: 'activos' as MisPedidosStatusFilter,
-      label: 'EN PROCESO',
+      label: t('pedidos.statusTabs.active'),
       icon: <AutorenewOutlinedIcon sx={{ fontSize: 20 }} />,
     },
     {
       value: 'finalizados' as MisPedidosStatusFilter,
-      label: 'FINALIZADOS',
+      label: t('pedidos.statusTabs.finished'),
       icon: <CheckCircleOutlineOutlinedIcon sx={{ fontSize: 20 }} />,
     },
   ];

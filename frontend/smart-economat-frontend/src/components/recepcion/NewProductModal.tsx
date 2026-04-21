@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -36,20 +37,21 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
   setModalData,
   onConfirm,
 }) => {
+  const { t } = useTranslation();
   const isAutoFilled = modalData.nombre.trim() !== '';
 
   return (
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>
         {isAutoFilled
-          ? 'Añadir Producto Encontrado'
-          : 'Añadir Producto Desconocido'}
+          ? t('newProduct.titleKnown')
+          : t('newProduct.titleUnknown')}
       </DialogTitle>
       <DialogContent dividers>
         <Typography variant="body2" sx={{ mb: 2 }}>
           {isAutoFilled
-            ? 'Hemos auto-completado los datos usando una base de datos global. Revisa la información antes de añadir el producto a tu catálogo.'
-            : 'Este producto no figura en el catálogo ni en los pedidos seleccionados. Por favor, introduce sus datos básicos.'}
+            ? t('newProduct.descKnown')
+            : t('newProduct.descUnknown')}
         </Typography>
         <Box
           sx={{
@@ -60,7 +62,7 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
           }}
         >
           <TextField
-            label="Nombre del Producto"
+            label={t('newProduct.nameLabel')}
             value={modalData.nombre}
             onChange={(e) =>
               setModalData({ ...modalData, nombre: e.target.value })
@@ -69,7 +71,7 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
           />
           {modalData.codigoBarras && (
             <TextField
-              label="Código de Barras"
+              label={t('newProduct.barcodeLabel')}
               value={modalData.codigoBarras}
               disabled
               fullWidth
@@ -78,7 +80,7 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
             />
           )}
           <TextField
-            label="Marca"
+            label={t('newProduct.brandLabel')}
             value={modalData.marca}
             onChange={(e) =>
               setModalData({ ...modalData, marca: e.target.value })
@@ -87,7 +89,7 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
           />
           <Box sx={{ display: 'flex', gap: 2 }}>
             <TextField
-              label="Unidad"
+              label={t('newProduct.unitLabel')}
               select
               value={modalData.unidad}
               onChange={(e) =>
@@ -105,7 +107,7 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
               ))}
             </TextField>
             <TextField
-              label="Categoría"
+              label={t('newProduct.categoryLabel')}
               select
               value={modalData.tipo}
               onChange={(e) =>
@@ -124,7 +126,7 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
             </TextField>
           </Box>
           <TextField
-            label="Contenido (Neto)"
+            label={t('newProduct.contentLabel')}
             type="number"
             InputProps={{ inputProps: { min: 0 } }}
             value={modalData.contenido}
@@ -139,13 +141,13 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancelar</Button>
+        <Button onClick={onClose}>{t('newProduct.cancel')}</Button>
         <Button
           variant="contained"
           onClick={onConfirm}
           disabled={!modalData.nombre}
         >
-          Confirmar y Añadir
+          {t('newProduct.confirm')}
         </Button>
       </DialogActions>
     </Dialog>

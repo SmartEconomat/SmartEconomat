@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -31,6 +32,8 @@ const WeightScaleModal: React.FC<WeightScaleModalProps> = ({
   onConfirmWeight,
   productName,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <Dialog
       open={open}
@@ -40,11 +43,11 @@ const WeightScaleModal: React.FC<WeightScaleModalProps> = ({
       PaperProps={{ sx: { borderRadius: 3, textAlign: 'center', py: 2 } }}
     >
       <DialogTitle sx={{ fontWeight: 'bold' }}>
-        Báscula de Recepción
+        {t('weightScale.title')}
       </DialogTitle>
       {productName && (
         <Typography variant="subtitle2" color="primary" sx={{ px: 3, mt: -1 }}>
-          Pesando: {productName}
+          {t('weightScale.weighing')} {productName}
         </Typography>
       )}
       <DialogContent
@@ -67,7 +70,7 @@ const WeightScaleModal: React.FC<WeightScaleModalProps> = ({
           >
             <CircularProgress size={50} color="primary" />
             <Typography variant="h6" color="text.secondary">
-              {statusText || 'Comunicando con la báscula...'}
+              {statusText || t('weightScale.communicating')}
             </Typography>
           </Box>
         ) : (
@@ -99,7 +102,7 @@ const WeightScaleModal: React.FC<WeightScaleModalProps> = ({
       </DialogContent>
       <DialogActions sx={{ justifyContent: 'center', px: 3, pb: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={isWeighing}>
-          Cancelar
+          {t('weightScale.cancel')}
         </Button>
         <Button
           onClick={onStartWeighing}
@@ -107,7 +110,7 @@ const WeightScaleModal: React.FC<WeightScaleModalProps> = ({
           color="secondary"
           disabled={isWeighing}
         >
-          Recalcular
+          {t('weightScale.recalculate')}
         </Button>
         <Button
           onClick={onConfirmWeight}
@@ -115,7 +118,7 @@ const WeightScaleModal: React.FC<WeightScaleModalProps> = ({
           color="success"
           disabled={isWeighing || capturedWeight === null}
         >
-          Confirmar Peso
+          {t('weightScale.confirmWeight')}
         </Button>
       </DialogActions>
     </Dialog>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Alert,
@@ -62,11 +63,11 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
   setExpandedPanel,
   onUpdateLinea,
 }) => {
+  const { t } = useTranslation();
   return (
     <Box>
       <Alert severity="info" sx={{ mb: 2 }}>
-        Revisa los totales. Si no indicas el Nº de Albarán, se generará uno
-        automáticamente.
+        {t('pasoRevision.albaranAlert')}
       </Alert>
 
       {draft.pedidosSeleccionados.map((p, pIdx) => (
@@ -100,8 +101,8 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
               </Typography>
               <TextField
                 size="small"
-                label="Nº Albarán"
-                placeholder="Auto-generado si vacío"
+                label={t('pasoRevision.albaranLabel')}
+                placeholder={t('pasoRevision.albaranPlaceholder')}
                 value={p.nAlbaran || ''}
                 onChange={(e) => {
                   const newPedidos = [...draft.pedidosSeleccionados];
@@ -126,22 +127,30 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
               <Table size="small" sx={{ tableLayout: 'fixed', minWidth: 900 }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ width: '30%' }}>Item</TableCell>
+                    <TableCell sx={{ width: '30%' }}>
+                      {t('pasoRevision.columns.item')}
+                    </TableCell>
                     <TableCell align="center" sx={{ width: '8%' }}>
-                      Unidad
+                      {t('pasoRevision.columns.unit')}
                     </TableCell>
                     <TableCell align="right" sx={{ width: '8%' }}>
-                      Exp.
+                      {t('pasoRevision.columns.expected')}
                     </TableCell>
                     <TableCell align="right" sx={{ width: '8%' }}>
-                      Alb.
+                      {t('pasoRevision.columns.albaran')}
                     </TableCell>
                     <TableCell align="right" sx={{ width: '10%' }}>
-                      Real
+                      {t('pasoRevision.columns.actual')}
                     </TableCell>
-                    <TableCell sx={{ width: '12%' }}>Origen peso</TableCell>
-                    <TableCell sx={{ width: '16%' }}>Estado Físico</TableCell>
-                    <TableCell sx={{ width: '20%' }}>Notas</TableCell>
+                    <TableCell sx={{ width: '12%' }}>
+                      {t('pasoRevision.columns.weightSource')}
+                    </TableCell>
+                    <TableCell sx={{ width: '16%' }}>
+                      {t('pasoRevision.columns.physicalStatus')}
+                    </TableCell>
+                    <TableCell sx={{ width: '20%' }}>
+                      {t('pasoRevision.columns.notes')}
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -172,7 +181,7 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                           >
                             {l.codigoBarras
                               ? `EAN: ${l.codigoBarras}`
-                              : 'Sin código'}
+                              : t('pasoRevision.noCode')}
                           </Typography>
                         </TableCell>
                         <TableCell align="center">
@@ -213,8 +222,8 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                             label={
                               Number(l.cantidadRecibida) > 0
                                 ? l.isWeighedWithScale
-                                  ? 'Báscula'
-                                  : 'Manual'
+                                  ? t('pasoRevision.basicula')
+                                  : t('pasoRevision.manual')
                                 : '—'
                             }
                             variant={
@@ -237,13 +246,13 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                               }
                             >
                               <MenuItem value={EstadoVisualProducto.OPTIMO}>
-                                Óptimo
+                                {t('pasoRevision.optimo')}
                               </MenuItem>
                               <MenuItem value={EstadoVisualProducto.ROTO}>
-                                Roto
+                                {t('pasoRevision.roto')}
                               </MenuItem>
                               <MenuItem value={EstadoVisualProducto.DEFECTUOSO}>
-                                Defectuoso
+                                {t('pasoRevision.defectuoso')}
                               </MenuItem>
                             </Select>
                           </FormControl>
@@ -266,8 +275,8 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                               <TextField
                                 placeholder={
                                   hasDiscrepancy
-                                    ? 'Justificante Obligatorio*'
-                                    : 'Opcional...'
+                                    ? t('pasoRevision.justificanteRequired')
+                                    : t('pasoRevision.justificanteOptional')
                                 }
                                 error={isMissingNote}
                                 size="small"
@@ -307,7 +316,7 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
           elevation={0}
         >
           <Typography variant="subtitle2" color="secondary" sx={{ mb: 2 }}>
-            Especial / Fuera de Pedido 🆕
+            {t('pasoRevision.special')}
           </Typography>
 
           <TableContainer
@@ -324,22 +333,30 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
             <Table size="small" sx={{ tableLayout: 'fixed', minWidth: 900 }}>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ width: '30%' }}>Item</TableCell>
+                  <TableCell sx={{ width: '30%' }}>
+                    {t('pasoRevision.columns.item')}
+                  </TableCell>
                   <TableCell align="center" sx={{ width: '8%' }}>
-                    Unidad
+                    {t('pasoRevision.columns.unit')}
                   </TableCell>
                   <TableCell align="right" sx={{ width: '10%' }}>
-                    Exp.
+                    {t('pasoRevision.columns.expected')}
                   </TableCell>
                   <TableCell align="right" sx={{ width: '10%' }}>
-                    Alb.
+                    {t('pasoRevision.columns.albaran')}
                   </TableCell>
                   <TableCell align="right" sx={{ width: '12%' }}>
-                    Real
+                    {t('pasoRevision.columns.actual')}
                   </TableCell>
-                  <TableCell sx={{ width: '12%' }}>Origen peso</TableCell>
-                  <TableCell sx={{ width: '15%' }}>Estado Físico</TableCell>
-                  <TableCell sx={{ width: '15%' }}>Notas</TableCell>
+                  <TableCell sx={{ width: '12%' }}>
+                    {t('pasoRevision.columns.weightSource')}
+                  </TableCell>
+                  <TableCell sx={{ width: '15%' }}>
+                    {t('pasoRevision.columns.physicalStatus')}
+                  </TableCell>
+                  <TableCell sx={{ width: '15%' }}>
+                    {t('pasoRevision.columns.notes')}
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -368,8 +385,8 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                         label={
                           Number(l.cantidadRecibida) > 0
                             ? l.isWeighedWithScale
-                              ? 'Báscula'
-                              : 'Manual'
+                              ? t('pasoRevision.basicula')
+                              : t('pasoRevision.manual')
                             : '—'
                         }
                         variant={l.isWeighedWithScale ? 'filled' : 'outlined'}
@@ -390,13 +407,13 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                           }
                         >
                           <MenuItem value={EstadoVisualProducto.OPTIMO}>
-                            Óptimo
+                            {t('pasoRevision.optimo')}
                           </MenuItem>
                           <MenuItem value={EstadoVisualProducto.ROTO}>
-                            Roto
+                            {t('pasoRevision.roto')}
                           </MenuItem>
                           <MenuItem value={EstadoVisualProducto.DEFECTUOSO}>
-                            Defectuoso
+                            {t('pasoRevision.defectuoso')}
                           </MenuItem>
                         </Select>
                       </FormControl>
@@ -407,7 +424,7 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                           !l.observaciones || l.observaciones.trim() === '';
                         return (
                           <TextField
-                            placeholder="Justificante Obligatorio*"
+                            placeholder={t('pasoRevision.justificanteRequired')}
                             error={isMissingNote}
                             size="small"
                             fullWidth
@@ -434,7 +451,7 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
 
       <Box sx={{ mt: 3, mb: 1 }}>
         <TextField
-          label="Firma / Observaciones generales"
+          label={t('pasoRevision.signatureLabel')}
           value={draft.observaciones}
           onChange={(e) =>
             setDraft({ ...draft, observaciones: e.target.value })
@@ -442,7 +459,7 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
           fullWidth
           multiline
           rows={2}
-          placeholder="Añade aquí cualquier nota general de la entrega o firma..."
+          placeholder={t('pasoRevision.signaturePlaceholder')}
         />
       </Box>
     </Box>

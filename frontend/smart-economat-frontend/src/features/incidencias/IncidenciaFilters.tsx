@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, TextField } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 export interface IncidenciaFiltersState {
   startDate: string | null;
@@ -15,6 +16,8 @@ const IncidenciaFilters: React.FC<IncidenciaFiltersProps> = ({
   filters,
   onChange,
 }) => {
+  const { t } = useTranslation();
+
   const handleDateChange =
     (field: 'startDate' | 'endDate') =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -33,7 +36,7 @@ const IncidenciaFilters: React.FC<IncidenciaFiltersProps> = ({
     >
       <TextField
         id="start-date"
-        label="Desde"
+        label={t('filters.from')}
         type="date"
         size="small"
         value={filters.startDate || ''}
@@ -50,7 +53,7 @@ const IncidenciaFilters: React.FC<IncidenciaFiltersProps> = ({
 
       <TextField
         id="end-date"
-        label="Hasta"
+        label={t('filters.to')}
         type="date"
         size="small"
         value={filters.endDate || ''}

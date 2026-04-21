@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Typography, Paper, Alert, Button } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SaveIcon from '@mui/icons-material/Save';
@@ -25,6 +26,7 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
   resultado,
   onResetWizard,
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const canViewDistribucion = usePermission(PERMISSIONS.distribuciones.listar);
   const [openDetailModal, setOpenDetailModal] =
@@ -124,10 +126,10 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
     <Box textAlign="center" sx={{ py: 3 }}>
       <CheckCircleIcon color="success" sx={{ fontSize: 60, mb: 2 }} />
       <Typography variant="h5" gutterBottom>
-        ¡Recepción Registrada con éxito!
+        {t('pasoResultado.successTitle')}
       </Typography>
       <Typography variant="body1" color="text.secondary">
-        ID Registro: {resultado?.id}
+        {t('pasoResultado.idLabel')} {resultado?.id}
       </Typography>
 
       <Box
@@ -150,17 +152,17 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
           }}
         >
           <StatCard
-            title="Registros Realizados"
+            title={t('pasoResultado.stats.registros')}
             value={resultado?.movimientosGenerados || 0}
-            subtitle="registrados autom."
+            subtitle={t('pasoResultado.stats.registrosAuto')}
             icon={<ReceiptLongIcon />}
             color="#E91E63" // Pink
             onClick={() => setOpenDetailModal('movimientos')}
           />
           <StatCard
-            title="Productos en Almacén"
+            title={t('pasoResultado.stats.productos')}
             value={resultado?.inventariosCreados || 0}
-            subtitle="disponibles ahora"
+            subtitle={t('pasoResultado.stats.disponibles')}
             icon={<InventoryIcon />}
             color="#FF9800" // Orange
             onClick={() => setOpenDetailModal('inventarios')}
@@ -168,9 +170,9 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
           {resultado?.productosCreados &&
             resultado.productosCreados.length > 0 && (
               <StatCard
-                title="Productos Nuevos"
+                title={t('pasoResultado.stats.nuevos')}
                 value={resultado.productosCreados.length}
-                subtitle="añadidos al catálogo"
+                subtitle={t('pasoResultado.stats.anadidos')}
                 icon={<FiberNewIcon />}
                 color="#2196F3" // Blue
                 onClick={() => setOpenDetailModal('nuevos_productos')}
@@ -185,8 +187,7 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
               color="error"
               sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}
             >
-              <WarningAmberIcon /> Se han detectado discrepancias en la
-              recepción
+              <WarningAmberIcon /> {t('pasoResultado.discrepanciesAlert')}
             </Typography>
             {resultado.incidencias.map((inc, i) => (
               <Box key={i} sx={{ mb: 2, '&:last-child': { mb: 0 } }}>
@@ -196,7 +197,7 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
                   color="text.secondary"
                   sx={{ display: 'block', mb: 0.5 }}
                 >
-                  Pedido Ref: {inc.id.substring(0, 8)}...
+                  {t('pasoResultado.orderRef')} {inc.id.substring(0, 8)}...
                 </Typography>
                 {inc.datosOriginales.productos.map((p, j) => (
                   <Alert
@@ -210,8 +211,10 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
                     }}
                   >
                     <strong>{p.nombreProducto}</strong>:{' '}
-                    {p.tipo === 'FALTA' ? 'Faltan' : 'Sobran'}{' '}
-                    {Math.abs(p.diferencia)} unidades
+                    {p.tipo === 'FALTA'
+                      ? t('pasoResultado.missing')
+                      : t('pasoResultado.excess')}{' '}
+                    {Math.abs(p.diferencia)} {t('pasoResultado.units')}
                   </Alert>
                 ))}
               </Box>
@@ -220,8 +223,7 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
         )}
 
         <Alert severity="info" icon={<SaveIcon />}>
-          La recepción se ha guardado correctamente y el inventario ha sido
-          actualizado.
+          {t('pasoResultado.savedMessage')}
         </Alert>
       </Box>
 
@@ -234,7 +236,9 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
           onClick={handleDownloadPdf}
           disabled={downloading}
         >
-          {downloading ? 'Descargando...' : 'Descargar Detalles (PDF)'}
+          {downloading
+            ? t('pasoResultado.downloading')
+            : t('pasoResultado.downloadPdf')}
         </Button>
 
         {canViewDistribucion && (
@@ -245,12 +249,12 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
             startIcon={<MoveToInboxOutlinedIcon />}
             onClick={() => navigate('/distribucion')}
           >
-            Distribuir ahora
+            {t('pasoResultado.distribute')}
           </Button>
         )}
 
         <Button variant="outlined" onClick={onResetWizard} size="large">
-          Finalizar y Volver
+          {t('pasoResultado.finish')}
         </Button>
       </Box>
 

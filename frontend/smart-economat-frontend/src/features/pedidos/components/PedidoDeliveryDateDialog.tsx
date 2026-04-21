@@ -2,6 +2,7 @@ import React from 'react';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { Pedido } from '../../../services/pedido.types';
 import { formatPedidoDate } from '../utils/pedidoFormatters';
+import { useTranslation } from 'react-i18next';
 
 interface PedidoDeliveryDateDialogProps {
   pedido: Pedido | null;
@@ -11,19 +12,23 @@ interface PedidoDeliveryDateDialogProps {
 const PedidoDeliveryDateDialog: React.FC<PedidoDeliveryDateDialogProps> = ({
   pedido,
   onClose,
-}) => (
-  <ConfirmDialog
-    isOpen={!!pedido}
-    onClose={onClose}
-    onConfirm={onClose}
-    title="Fecha estimada de entrega"
-    message={`La fecha prevista para este pedido es ${formatPedidoDate(
-      pedido?.fechaEntrega
-    )}. Este valor se calcula automáticamente por el sistema y no admite edición manual.`}
-    confirmText="Entendido"
-    cancelText=""
-    confirmColor="primary"
-  />
-);
+}) => {
+  const { t } = useTranslation();
+
+  return (
+    <ConfirmDialog
+      isOpen={!!pedido}
+      onClose={onClose}
+      onConfirm={onClose}
+      title={t('pedidos.deliveryDialog.title')}
+      message={t('pedidos.deliveryDialog.message', {
+        date: formatPedidoDate(pedido?.fechaEntrega),
+      })}
+      confirmText={t('pedidos.deliveryDialog.understood')}
+      cancelText=""
+      confirmColor="primary"
+    />
+  );
+};
 
 export default PedidoDeliveryDateDialog;

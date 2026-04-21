@@ -12,6 +12,7 @@ import StatusChip from '../../components/ui/StatusChip';
 import { Merma, MotivoMerma } from '../../services/merma.types';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 
 interface MermasTableProps {
   data: Merma[];
@@ -44,6 +45,8 @@ const MermasTable: React.FC<MermasTableProps> = ({
   filters,
   onFiltersChange,
 }) => {
+  const { t } = useTranslation();
+
   const columns: Column<Merma>[] = [
     {
       id: 'createdAt',
@@ -69,11 +72,13 @@ const MermasTable: React.FC<MermasTableProps> = ({
           status={row.motivo}
           label={
             {
-              [MotivoMerma.ROTURA]: 'Rotura',
-              [MotivoMerma.DETERIORO]: 'Deterioro',
-              [MotivoMerma.HURTO]: 'Hurto',
-              [MotivoMerma.ERROR_PREPARACION]: 'Error Prep.',
-              [MotivoMerma.OTROS]: 'Otros',
+              [MotivoMerma.ROTURA]: t('mermasTable.chips.ROTURA'),
+              [MotivoMerma.DETERIORO]: t('mermasTable.chips.DETERIORO'),
+              [MotivoMerma.HURTO]: t('mermasTable.chips.HURTO'),
+              [MotivoMerma.ERROR_PREPARACION]: t(
+                'mermasTable.chips.ERROR_PREPARACION'
+              ),
+              [MotivoMerma.OTROS]: t('mermasTable.chips.OTROS'),
             }[row.motivo]
           }
           variant="outlined"
@@ -93,7 +98,7 @@ const MermasTable: React.FC<MermasTableProps> = ({
       align: 'right',
       render: (row) => (
         <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Tooltip title="Ver Notas">
+          <Tooltip title={t('mermasTable.viewNotes')}>
             <IconButton
               size="small"
               onClick={() => alert(`Notas: ${row.notas || 'Sin notas'}`)}
@@ -112,7 +117,7 @@ const MermasTable: React.FC<MermasTableProps> = ({
       <Box mb={3} display="flex" gap={2} flexWrap="wrap">
         <TextField
           select
-          label="Filtrar por Motivo"
+          label={t('mermasTable.filterByMotivo')}
           size="small"
           value={filters.motivo}
           onChange={(e) =>
@@ -120,19 +125,25 @@ const MermasTable: React.FC<MermasTableProps> = ({
           }
           sx={{ minWidth: 200 }}
         >
-          <MenuItem value="">Todos los motivos</MenuItem>
-          <MenuItem value={MotivoMerma.ROTURA}>Rotura de envase</MenuItem>
+          <MenuItem value="">{t('mermasTable.allMotivos')}</MenuItem>
+          <MenuItem value={MotivoMerma.ROTURA}>
+            {t('mermasTable.motivos.ROTURA')}
+          </MenuItem>
           <MenuItem value={MotivoMerma.DETERIORO}>
-            Deterioro / Caducidad
+            {t('mermasTable.motivos.DETERIORO')}
           </MenuItem>
-          <MenuItem value={MotivoMerma.HURTO}>Hurto / Pérdida</MenuItem>
+          <MenuItem value={MotivoMerma.HURTO}>
+            {t('mermasTable.motivos.HURTO')}
+          </MenuItem>
           <MenuItem value={MotivoMerma.ERROR_PREPARACION}>
-            Error de preparación
+            {t('mermasTable.motivos.ERROR_PREPARACION')}
           </MenuItem>
-          <MenuItem value={MotivoMerma.OTROS}>Otros</MenuItem>
+          <MenuItem value={MotivoMerma.OTROS}>
+            {t('mermasTable.motivos.OTROS')}
+          </MenuItem>
         </TextField>
         <TextField
-          label="Desde"
+          label={t('filters.from')}
           type="date"
           size="small"
           InputLabelProps={{ shrink: true }}
@@ -142,7 +153,7 @@ const MermasTable: React.FC<MermasTableProps> = ({
           }
         />
         <TextField
-          label="Hasta"
+          label={t('filters.to')}
           type="date"
           size="small"
           InputLabelProps={{ shrink: true }}

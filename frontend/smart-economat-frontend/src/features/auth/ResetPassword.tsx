@@ -20,8 +20,10 @@ import {
   STRONG_PASSWORD_MESSAGE,
 } from '../../utils/passwordValidation';
 import { getAuthErrorMessage } from '../../utils/authErrorMessages';
+import { useTranslation } from 'react-i18next';
 
 const ResetPassword: React.FC = () => {
+  const { t } = useTranslation();
   const { token } = useParams<{ token: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -48,14 +50,12 @@ const ResetPassword: React.FC = () => {
     setErrorMsg('');
 
     if (resetToken.length === 0) {
-      setErrorMsg(
-        'El enlace de recuperación no es válido o no contiene token.'
-      );
+      setErrorMsg(t('auth.resetPassword.invalidToken'));
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setErrorMsg('Las contraseñas no coinciden.');
+      setErrorMsg(t('auth.resetPassword.passwordMismatch'));
       return;
     }
 
@@ -71,9 +71,7 @@ const ResetPassword: React.FC = () => {
         newPassword: formData.password,
       });
       if (res.success) {
-        setSuccessMsg(
-          'Tu contraseña ha sido restablecida correctamente. Serás redirigido al inicio de sesión.'
-        );
+        setSuccessMsg(t('auth.resetPassword.successMessage'));
         setTimeout(() => navigate('/login'), 4000);
       } else {
         setErrorMsg(
@@ -121,7 +119,7 @@ const ResetPassword: React.FC = () => {
           fontWeight="bold"
           textAlign="center"
         >
-          Restablecer Contraseña
+          {t('auth.resetPassword.title')}
         </Typography>
         <Typography
           variant="body2"
@@ -129,7 +127,7 @@ const ResetPassword: React.FC = () => {
           textAlign="center"
           sx={{ mb: 3 }}
         >
-          Por favor, introduce tu nueva contraseña a continuación.
+          {t('auth.resetPassword.subtitle')}
         </Typography>
 
         {errorMsg && (
@@ -146,7 +144,7 @@ const ResetPassword: React.FC = () => {
         {!successMsg && (
           <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
             <Input
-              label="Nueva Contraseña"
+              label={t('auth.resetPassword.newPassword')}
               name="password"
               type={showPassword ? 'text' : 'password'}
               value={formData.password}
@@ -166,7 +164,7 @@ const ResetPassword: React.FC = () => {
               }}
             />
             <Input
-              label="Confirmar Contraseña"
+              label={t('auth.resetPassword.confirmPassword')}
               name="confirmPassword"
               type={showPassword ? 'text' : 'password'}
               value={formData.confirmPassword}
@@ -176,11 +174,11 @@ const ResetPassword: React.FC = () => {
             <Button
               type="submit"
               isLoading={isLoading}
-              loadingText="Guardando..."
+              loadingText={t('auth.resetPassword.saving')}
               disabled={isSubmitDisabled}
               sx={{ mt: 3 }}
             >
-              Guardar Nueva Contraseña
+              {t('auth.resetPassword.submit')}
             </Button>
           </Box>
         )}
@@ -190,7 +188,7 @@ const ResetPassword: React.FC = () => {
           onClick={() => navigate('/login')}
           sx={{ mt: 2 }}
         >
-          Volver al inicio de sesión
+          {t('auth.resetPassword.backToLogin')}
         </Button>
       </Paper>
     </Container>

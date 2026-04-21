@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Box,
@@ -108,6 +109,7 @@ const collectUbicacionIdsFromPerfil = (
 };
 
 const DistribucionPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -451,9 +453,7 @@ const DistribucionPage: React.FC = () => {
       .filter((linea) => linea.cantidad > 0);
 
     if (lineas.length === 0) {
-      toast.error(
-        'Debes indicar al menos una línea con cantidad a distribuir.'
-      );
+      toast.error(t('distribucion.toast.noLines'));
       return;
     }
 
@@ -463,14 +463,12 @@ const DistribucionPage: React.FC = () => {
     );
 
     if (invalidLine) {
-      toast.error(
-        'Hay líneas con cantidades inválidas o superiores al pendiente.'
-      );
+      toast.error(t('distribucion.toast.invalidLines'));
       return;
     }
 
     if (!destinationId) {
-      toast.error('Debes seleccionar una ubicación destino.');
+      toast.error(t('distribucion.toast.noDestination'));
       return;
     }
 
@@ -480,12 +478,12 @@ const DistribucionPage: React.FC = () => {
     );
 
     if (!effectiveDestinationId) {
-      toast.error('No se encontró una ubicación destino válida.');
+      toast.error(t('distribucion.toast.noValidDestination'));
       return;
     }
 
     if (effectiveDestinationId === originId) {
-      toast.error('La ubicación destino no puede ser la misma que la origen.');
+      toast.error(t('distribucion.toast.sameOriginDestination'));
       return;
     }
 
@@ -509,7 +507,7 @@ const DistribucionPage: React.FC = () => {
     setSubmitting(true);
     try {
       await createDistribucion(payload);
-      toast.success('Distribución realizada con éxito.');
+      toast.success(t('distribucion.toast.created'));
       closeDistributeDialog();
       await loadData();
       setActiveTab('historial');
@@ -535,9 +533,7 @@ const DistribucionPage: React.FC = () => {
           setDestinationId(refreshedFallbackId);
         }
 
-        toast.error(
-          'La ubicación destino ya no existe. Se recargaron las ubicaciones; vuelve a intentar con un destino válido.'
-        );
+        toast.error(t('distribucion.toast.destinationInvalid'));
       } else {
         toast.error(errorMessage);
       }
@@ -549,7 +545,7 @@ const DistribucionPage: React.FC = () => {
   const handleConfirm = async (id: string) => {
     try {
       await confirmDistribucion(id);
-      toast.success('Distribución confirmada y stock trasladado.');
+      toast.success(t('distribucion.toast.confirmed'));
       await loadData();
       if (selectedHistorial?.id === id) {
         const detail = await fetchDistribucionById(id);
@@ -559,17 +555,17 @@ const DistribucionPage: React.FC = () => {
       toast.error(
         confirmError instanceof Error
           ? confirmError.message
-          : 'No se pudo confirmar la distribución.'
+          : t('distribucion.toast.confirmError')
       );
     }
   };
 
   const handleCancel = async (id: string) => {
     const motivo =
-      window.prompt('Motivo de cancelación (opcional):') || undefined;
+      window.prompt(t('distribucion.prompt.cancelMotivo')) || undefined;
     try {
       await cancelDistribucion(id, motivo);
-      toast.success('Distribución cancelada.');
+      toast.success(t('distribucion.toast.cancelled'));
       await loadData();
       if (selectedHistorial?.id === id) {
         setDetailOpen(false);
@@ -579,7 +575,7 @@ const DistribucionPage: React.FC = () => {
       toast.error(
         cancelError instanceof Error
           ? cancelError.message
-          : 'No se pudo cancelar la distribución.'
+          : t('distribucion.toast.cancelError')
       );
     }
   };
@@ -594,7 +590,7 @@ const DistribucionPage: React.FC = () => {
         toast.error(
           detailError instanceof Error
             ? detailError.message
-            : 'No se pudo cargar el detalle.'
+            : t('distribucion.toast.detailError')
         );
       }
     },
@@ -642,52 +638,56 @@ const DistribucionPage: React.FC = () => {
     () => [
       {
         id: 'numeroGlobal',
-        label: 'Pedido',
+        label: t('distribucion.columns.pedido'),
         render: (row) => `#${row.numeroGlobal}`,
         sortable: true,
       },
       {
         id: 'usuario',
-        label: 'Usuario',
+        label: t('distribucion.columns.usuario'),
         render: (row) => row.usuario?.nombre || row.usuario?.username || '—',
         sortable: true,
       },
       {
         id: 'alumnoSlot',
-        label: 'Aula',
+        label: t('distribucion.columns.aula'),
         render: (row) =>
           row.alumnoSlot
             ? `${row.alumnoSlot.aula} · Clase ${row.alumnoSlot.numeroClase}`
-            : 'Sin aula',
+            : t('distribucion.sinAula'),
         sortable: true,
       },
       {
         id: 'lineas',
-        label: 'Pendiente',
+        label: t('distribucion.columns.pendiente'),
         render: (row) => {
           const totalPendiente = row.lineas.reduce(
             (sum, linea) => sum + linea.cantidadPendiente,
             0
           );
-          return `${row.lineas.length} línea(s) · ${totalPendiente.toFixed(3)}`;
+          return t('distribucion.lineaCount', {
+            count: row.lineas.length,
+            total: totalPendiente.toFixed(3),
+          });
         },
         sortable: true,
       },
       {
         id: 'ubicacionDestinoSugerida',
-        label: 'Destino sugerido',
+        label: t('distribucion.columns.destinoSugerido'),
         render: (row) =>
-          row.ubicacionDestinoSugerida?.nombre || 'Sin sugerencia',
+          row.ubicacionDestinoSugerida?.nombre ||
+          t('distribucion.sinSugerencia'),
         sortable: true,
       },
       {
         id: 'estado',
-        label: 'Estado pedido',
+        label: t('distribucion.columns.estadoPedido'),
         render: (row) => <StatusChip status={row.estado} />,
         sortable: true,
       },
     ],
-    []
+    [t]
   );
 
   const sortedDisponibles = useMemo(() => {
@@ -742,42 +742,42 @@ const DistribucionPage: React.FC = () => {
     () => [
       {
         id: 'pedidoUsuario',
-        label: 'Pedido',
+        label: t('distribucion.columns.pedido'),
         render: (row) => `#${row.pedidoUsuario?.numeroGlobal || '—'}`,
         sortable: true,
       },
       {
         id: 'estado',
-        label: 'Estado',
+        label: t('distribucion.columns.estado'),
         render: (row) => <StatusChip status={row.estado} />,
         sortable: true,
       },
       {
         id: 'ubicacionOrigen',
-        label: 'Origen',
+        label: t('distribucion.columns.origen'),
         render: (row) => row.ubicacionOrigen?.nombre || '—',
         sortable: true,
       },
       {
         id: 'ubicacionDestino',
-        label: 'Destino',
+        label: t('distribucion.columns.destino'),
         render: (row) => row.ubicacionDestino?.nombre || '—',
         sortable: true,
       },
       {
         id: 'fechaPreparacion',
-        label: 'Fecha Entrega',
+        label: t('distribucion.columns.fechaEntrega'),
         render: (row) => new Date(row.fechaPreparacion).toLocaleString(),
         sortable: true,
       },
       {
         id: 'lineas',
-        label: 'Líneas',
+        label: t('distribucion.columns.lineas'),
         render: (row) => `${row.lineas?.length || 0}`,
         sortable: true,
       },
     ],
-    []
+    [t]
   );
 
   const sortedHistorial = useMemo(() => {
@@ -829,7 +829,7 @@ const DistribucionPage: React.FC = () => {
   }, [historial, sortConfigHistorial]);
 
   const renderDisponiblesActions = (row: DistribucionDisponible) => (
-    <Tooltip title="Distribuir productos">
+    <Tooltip title={t('distribucion.actions.distribute')}>
       <span>
         <IconButton
           size="small"
@@ -853,8 +853,8 @@ const DistribucionPage: React.FC = () => {
           <Tooltip
             title={
               !isRecipient
-                ? 'Solo el destinatario puede confirmar la recepción'
-                : 'Confirmar recepción'
+                ? t('distribucion.actions.confirmOnly')
+                : t('distribucion.actions.confirm')
             }
           >
             <span>
@@ -873,7 +873,7 @@ const DistribucionPage: React.FC = () => {
           </Tooltip>
         )}
         {!['entregada', 'parcial', 'cancelada'].includes(row.estado) && (
-          <Tooltip title="Cancelar entrega">
+          <Tooltip title={t('distribucion.actions.cancel')}>
             <span>
               <IconButton
                 size="small"
@@ -937,18 +937,25 @@ const DistribucionPage: React.FC = () => {
     }
 
     if (!hasAvailableDestinationOptions) {
-      return `No hay ubicaciones disponibles del usuario porque el origen actual es ${selectedOriginUbicacion.nombre}.`;
+      return t('distribucion.destinationHelper.noOptions', {
+        name: selectedOriginUbicacion.nombre,
+      });
     }
 
     if (usingFallbackDestinationOptions) {
-      return `No se detectaron ubicaciones asociadas al pedido; se muestran ubicaciones generales excluyendo ${selectedOriginUbicacion.nombre}.`;
+      return t('distribucion.destinationHelper.fallback', {
+        name: selectedOriginUbicacion.nombre,
+      });
     }
 
-    return `Solo se muestran las ubicaciones del usuario, excluyendo ${selectedOriginUbicacion.nombre} por estar en origen.`;
+    return t('distribucion.destinationHelper.userOnly', {
+      name: selectedOriginUbicacion.nombre,
+    });
   }, [
     hasAvailableDestinationOptions,
     selectedOriginUbicacion,
     usingFallbackDestinationOptions,
+    t,
   ]);
 
   const visibleUserUbicaciones = useMemo(
@@ -963,8 +970,8 @@ const DistribucionPage: React.FC = () => {
       items.push(
         <ListSubheader key="user-locations-header" disableSticky>
           {usingFallbackDestinationOptions
-            ? 'Ubicaciones disponibles'
-            : 'Ubicaciones del usuario'}
+            ? t('distribucion.dialog.availableLocationsHeader')
+            : t('distribucion.dialog.userLocationsHeader')}
         </ListSubheader>
       );
     }
@@ -997,17 +1004,17 @@ const DistribucionPage: React.FC = () => {
   return (
     <Box>
       <PageToolbar
-        title="Distribución Interna"
+        title={t('distribucion.pageTitle')}
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
-        searchPlaceholder="Buscar por pedido, usuario o aula..."
+        searchPlaceholder={t('distribucion.searchPlaceholder')}
         totalItems={
           activeTab === 'disponibles' ? disponibles.length : totalItems
         }
         totalItemsLabel={
           activeTab === 'disponibles'
-            ? 'pedidos distribuibles'
-            : 'distribuciones'
+            ? t('distribucion.totalItemsLabelDisponibles')
+            : t('distribucion.totalItemsLabelHistorial')
         }
       />
 
@@ -1016,8 +1023,8 @@ const DistribucionPage: React.FC = () => {
         onChange={(_event, value: DistribucionTab) => setActiveTab(value)}
         sx={{ mb: 2 }}
       >
-        <Tab value="disponibles" label="Disponibles" />
-        <Tab value="historial" label="Historial" />
+        <Tab value="disponibles" label={t('distribucion.tabs.disponibles')} />
+        <Tab value="historial" label={t('distribucion.tabs.historial')} />
       </Tabs>
 
       {error && (
@@ -1031,10 +1038,10 @@ const DistribucionPage: React.FC = () => {
           columns={disponiblesColumns}
           data={sortedDisponibles}
           isLoading={loading}
-          emptyStateMessage="No hay pedidos listos para distribuir."
+          emptyStateMessage={t('distribucion.empty.noDisponibles')}
           renderActions={renderDisponiblesActions}
           onRowClick={openDistributeDialog}
-          actionsLabel="Distribuir"
+          actionsLabel={t('distribucion.actions.distribute')}
           hideTopBar
           sortConfig={sortConfigDisponibles || undefined}
           onSort={handleSortDisponibles}
@@ -1044,10 +1051,10 @@ const DistribucionPage: React.FC = () => {
           columns={historialColumns}
           data={sortedHistorial}
           isLoading={loading}
-          emptyStateMessage="No hay distribuciones registradas."
+          emptyStateMessage={t('distribucion.empty.noHistorial')}
           renderActions={renderHistorialActions}
           onRowClick={(row) => void handleViewDetail(row.id)}
-          actionsLabel="Acciones"
+          actionsLabel={t('distribucion.actions.actions')}
           hideTopBar
           sortConfig={sortConfigHistorial || undefined}
           onSort={handleSortHistorial}
@@ -1068,14 +1075,14 @@ const DistribucionPage: React.FC = () => {
         fullWidth
       >
         <DialogTitle>
-          Nueva Entrega{' '}
+          {t('distribucion.dialog.newDeliveryTitle')}{' '}
           {selectedDisponible ? `#${selectedDisponible.numeroGlobal}` : ''}
         </DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
               select
-              label="Ubicación origen"
+              label={t('distribucion.dialog.originLabel')}
               value={originId}
               onChange={(event) => setOriginId(event.target.value)}
             >
@@ -1088,7 +1095,7 @@ const DistribucionPage: React.FC = () => {
 
             <TextField
               select
-              label="Ubicación destino"
+              label={t('distribucion.dialog.destinationLabel')}
               value={destinationId}
               onChange={(event) => setDestinationId(event.target.value)}
               helperText={destinationHelperText}
@@ -1098,7 +1105,7 @@ const DistribucionPage: React.FC = () => {
             </TextField>
 
             <TextField
-              label="Observaciones"
+              label={t('distribucion.dialog.observacionesLabel')}
               value={observaciones}
               onChange={(event) => setObservaciones(event.target.value)}
               multiline
@@ -1106,7 +1113,7 @@ const DistribucionPage: React.FC = () => {
             />
 
             <Typography variant="subtitle2" color="text.secondary">
-              Líneas a entregar
+              {t('distribucion.dialog.lineasTitle')}
             </Typography>
 
             {draftLines.map((linea) => (
@@ -1124,13 +1131,13 @@ const DistribucionPage: React.FC = () => {
                 </Typography>
                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
                   <TextField
-                    label="Cantidad pendiente"
+                    label={t('distribucion.dialog.cantidadPendiente')}
                     value={linea.cantidadPendiente}
                     InputProps={{ readOnly: true }}
                     fullWidth
                   />
                   <TextField
-                    label="Cantidad a entregar"
+                    label={t('distribucion.dialog.cantidadAEntregar')}
                     type="number"
                     value={linea.cantidad}
                     onChange={(event) =>
@@ -1143,7 +1150,7 @@ const DistribucionPage: React.FC = () => {
                     fullWidth
                   />
                   <TextField
-                    label="Observaciones"
+                    label={t('distribucion.dialog.observacionesLabel')}
                     value={linea.observaciones}
                     onChange={(event) =>
                       handleDraftLineChange(
@@ -1161,14 +1168,14 @@ const DistribucionPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={closeDistributeDialog} disabled={submitting}>
-            Cancelar
+            {t('distribucion.dialog.cancel')}
           </Button>
           <Button
             onClick={() => void handleCreateDistribucion()}
             disabled={submitting || !canCreate}
             variant="contained"
           >
-            Distribuir
+            {t('distribucion.dialog.distribute')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1180,7 +1187,7 @@ const DistribucionPage: React.FC = () => {
         fullWidth
       >
         <DialogTitle>
-          Detalle de distribución{' '}
+          {t('distribucion.dialog.detailTitle')}{' '}
           {selectedHistorial?.pedidoUsuario?.numeroGlobal
             ? `#${selectedHistorial.pedidoUsuario.numeroGlobal}`
             : ''}
@@ -1190,19 +1197,19 @@ const DistribucionPage: React.FC = () => {
             <Stack spacing={2}>
               <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
                 <TextField
-                  label="Estado"
+                  label={t('distribucion.dialog.estadoLabel')}
                   value={selectedHistorial.estado}
                   InputProps={{ readOnly: true }}
                   fullWidth
                 />
                 <TextField
-                  label="Origen"
+                  label={t('distribucion.dialog.origenLabel')}
                   value={selectedHistorial.ubicacionOrigen?.nombre || ''}
                   InputProps={{ readOnly: true }}
                   fullWidth
                 />
                 <TextField
-                  label="Destino"
+                  label={t('distribucion.dialog.destinoLabel')}
                   value={selectedHistorial.ubicacionDestino?.nombre || ''}
                   InputProps={{ readOnly: true }}
                   fullWidth
@@ -1210,7 +1217,7 @@ const DistribucionPage: React.FC = () => {
               </Stack>
 
               <Typography variant="subtitle2" color="text.secondary">
-                Líneas
+                {t('distribucion.dialog.lineasDetail')}
               </Typography>
               {detailLineas.map((linea) => (
                 <Box
@@ -1223,14 +1230,17 @@ const DistribucionPage: React.FC = () => {
                   }}
                 >
                   <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                    {linea.productoProveedor?.producto?.nombre || 'Producto'}
+                    {linea.productoProveedor?.producto?.nombre ||
+                      t('distribucion.dialog.defaultProduct')}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Pedido: {linea.cantidadPedida} · Recepcionado:{' '}
-                    {linea.cantidadRecepcionadaAtribuida} · Ya distribuido:{' '}
-                    {linea.cantidadYaDistribuida} · Preparado:{' '}
-                    {linea.cantidadADistribuir} · Entregado:{' '}
-                    {linea.cantidadEntregada}
+                    {t('distribucion.dialog.lineasLineLabel', {
+                      pedida: linea.cantidadPedida,
+                      recepcionada: linea.cantidadRecepcionadaAtribuida,
+                      yaDistribuida: linea.cantidadYaDistribuida,
+                      aDistribuir: linea.cantidadADistribuir,
+                      entregada: linea.cantidadEntregada,
+                    })}
                   </Typography>
                 </Box>
               ))}
@@ -1245,7 +1255,7 @@ const DistribucionPage: React.FC = () => {
                 <Tooltip
                   title={
                     user?.id !== selectedHistorial?.pedidoUsuario?.usuario?.id
-                      ? 'Solo el destinatario puede confirmar la recepción'
+                      ? t('distribucion.dialog.onlyUserRecipient')
                       : ''
                   }
                 >
@@ -1261,7 +1271,7 @@ const DistribucionPage: React.FC = () => {
                       }
                       onClick={() => void handleConfirm(selectedHistorial.id)}
                     >
-                      Confirmar Recepción
+                      {t('distribucion.dialog.confirmReception')}
                     </Button>
                   </span>
                 </Tooltip>
@@ -1272,7 +1282,7 @@ const DistribucionPage: React.FC = () => {
                   disabled={!canCancel}
                   onClick={() => void handleCancel(selectedHistorial.id)}
                 >
-                  Cancelar Entrega
+                  {t('distribucion.dialog.cancelDelivery')}
                 </Button>
                 <Button
                   variant="outlined"
@@ -1280,13 +1290,13 @@ const DistribucionPage: React.FC = () => {
                     handleOpenMovimientosTrace(selectedHistorial.id)
                   }
                 >
-                  Ver Movimientos
+                  {t('distribucion.dialog.viewMovements')}
                 </Button>
               </Stack>
             )}
           </Box>
           <Button onClick={() => setDetailOpen(false)} color="inherit">
-            Cerrar
+            {t('distribucion.dialog.close')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Badge,
   Box,
@@ -35,9 +36,6 @@ const getNotificationIcon = (priority: AppNotification['priority']) =>
     <PendingActionsRoundedIcon color="warning" fontSize="medium" />
   );
 
-const getNotificationLabel = (priority: AppNotification['priority']) =>
-  priority === 'urgent' ? 'Urgente' : 'Pendiente';
-
 export default function NotificationCenter() {
   const navigate = useNavigate();
   const canListUsers = usePermission(PERMISSIONS.usuarios.listar);
@@ -47,6 +45,7 @@ export default function NotificationCenter() {
     'inventario:ver_alertas',
   ]);
 
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -70,11 +69,11 @@ export default function NotificationCenter() {
       setNotifications(data);
     } catch (err) {
       console.error('Error loading notifications', err);
-      setError('No se pudieron cargar las notificaciones.');
+      setError(t('notifications.loadError'));
     } finally {
       setIsLoading(false);
     }
-  }, [canListUsers, canReviewInventoryNotifications]);
+  }, [canListUsers, canReviewInventoryNotifications, t]);
 
   useEffect(() => {
     void loadNotifications();
@@ -113,11 +112,11 @@ export default function NotificationCenter() {
 
   return (
     <>
-      <Tooltip title="Abrir centro de notificaciones">
+      <Tooltip title={t('notifications.openCenter')}>
         <IconButton
           color="inherit"
           onClick={handleOpen}
-          aria-label="Notificaciones"
+          aria-label={t('notifications.title')}
         >
           <Badge badgeContent={totalNotifications} color="error" max={99}>
             <NotificationsOutlinedIcon />
@@ -173,7 +172,7 @@ export default function NotificationCenter() {
             <Box>
               <Stack direction="row" spacing={1} alignItems="center">
                 <Typography variant="h6" fontWeight={800} color="text.primary">
-                  Notificaciones
+                  {t('notifications.title')}
                 </Typography>
                 <Badge
                   badgeContent={totalNotifications}
@@ -189,11 +188,11 @@ export default function NotificationCenter() {
                 />
               </Stack>
               <Typography variant="body2" color="text.secondary">
-                Tareas y alertas que requieren tu atención.
+                {t('notifications.subtitle')}
               </Typography>
             </Box>
             <Stack direction="row" spacing={1}>
-              <Tooltip title="Actualizar">
+              <Tooltip title={t('notifications.refresh')}>
                 <IconButton
                   size="small"
                   onClick={() =>
@@ -208,7 +207,7 @@ export default function NotificationCenter() {
                       })
                       .catch((err) => {
                         console.error('Error loading notifications', err);
-                        setError('No se pudieron cargar las notificaciones.');
+                        setError(t('notifications.loadError'));
                       })
                   }
                   sx={{
@@ -255,7 +254,7 @@ export default function NotificationCenter() {
               >
                 <Spinner size="md" />
                 <Typography variant="caption" color="text.secondary">
-                  Buscando actualizaciones...
+                  {t('notifications.loading')}
                 </Typography>
               </Box>
             ) : error ? (
@@ -270,7 +269,7 @@ export default function NotificationCenter() {
                 }}
               >
                 <Typography color="error.main" fontWeight={700} mb={1}>
-                  Hubo un problema
+                  {t('notifications.errorTitle')}
                 </Typography>
                 <Typography variant="body2" color="error.dark">
                   {error}
@@ -307,11 +306,10 @@ export default function NotificationCenter() {
                   />
                 </Box>
                 <Typography variant="subtitle1" fontWeight={700}>
-                  ¡Todo bajo control!
+                  {t('notifications.allClear')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  No tienes acciones urgentes ni tareas pendientes en este
-                  momento. Buen trabajo.
+                  {t('notifications.allClearDesc')}
                 </Typography>
               </Box>
             ) : (
@@ -389,8 +387,14 @@ export default function NotificationCenter() {
                               {notification.title}
                             </Typography>
                             <Chip
-                              label={getNotificationLabel(
-                                notification.priority
+                              label={t(
+                                `notifications.priority.${notification.priority}`,
+                                {
+                                  defaultValue:
+                                    notification.priority === 'urgent'
+                                      ? 'Urgente'
+                                      : 'Pendiente',
+                                }
                               )}
                               size="small"
                               color={
@@ -473,7 +477,9 @@ export default function NotificationCenter() {
                           color="text.secondary"
                           fontWeight={600}
                         >
-                          Total pendientes: {notification.count}
+                          {t('notifications.totalPending', {
+                            count: notification.count,
+                          })}
                         </Typography>
                         <Button
                           size="small"

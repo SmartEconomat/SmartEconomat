@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -24,6 +25,7 @@ const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { t } = useTranslation();
   const [nombre, setNombre] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const toast = useToast();
@@ -33,14 +35,14 @@ const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
 
     const trimmedNombre = nombre.trim();
     if (!trimmedNombre) {
-      toast.error('El nombre de la ubicación es obligatorio');
+      toast.error(t('quickLocation.nameRequired'));
       return;
     }
 
     setIsSaving(true);
     try {
       const newLoc = await UbicacionService.create({ nombre: trimmedNombre });
-      toast.success('Ubicación creada con éxito');
+      toast.success(t('quickLocation.createSuccess'));
       onSuccess(newLoc);
       setNombre('');
       onClose();
@@ -52,9 +54,9 @@ const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
         msg.includes('already exists') ||
         msg.includes('400')
       ) {
-        toast.error('Ya existe una ubicación con este nombre');
+        toast.error(t('quickLocation.duplicateError'));
       } else {
-        toast.error('Error al crear la ubicación');
+        toast.error(t('quickLocation.createError'));
       }
     } finally {
       setIsSaving(false);
@@ -63,15 +65,15 @@ const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle>Nueva Ubicación de Almacén</DialogTitle>
+      <DialogTitle>{t('quickLocation.title')}</DialogTitle>
       <form onSubmit={handleSave}>
         <DialogContent dividers>
           <Box sx={{ pt: 1 }}>
             <TextField
               autoFocus
               fullWidth
-              label="Nombre de la Ubicación"
-              placeholder="Ej: Estantería A, Almacén Central..."
+              label={t('quickLocation.nameLabel')}
+              placeholder={t('quickLocation.namePlaceholder')}
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               disabled={isSaving}
@@ -81,7 +83,7 @@ const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
           <Button onClick={onClose} color="inherit" disabled={isSaving}>
-            Cancelar
+            {t('quickLocation.cancel')}
           </Button>
           <Button
             type="submit"
@@ -89,7 +91,7 @@ const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
             disabled={isSaving || !nombre.trim()}
             startIcon={isSaving ? <CircularProgress size={20} /> : null}
           >
-            Guardar
+            {t('quickLocation.save')}
           </Button>
         </DialogActions>
       </form>

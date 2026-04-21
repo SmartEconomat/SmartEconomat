@@ -17,6 +17,7 @@ import { resolveStoredFileUrl } from '../../services/api.service';
 import StatusChip from '../../components/ui/StatusChip';
 import { getCategoryIcon } from './utils/getCategoryIcon';
 import { Allergen, EU_ALLERGENS } from '../../utils/constants';
+import { useTranslation } from 'react-i18next';
 
 export interface ProductCardProps {
   producto: Producto;
@@ -33,6 +34,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   onView,
   actions,
 }) => {
+  const { t } = useTranslation();
   // Alérgenos presentes en el producto
   const alergenoIds = producto.alergenos?.map((a) => a.alergeno) ?? [];
   const alergenosActivos = EU_ALLERGENS.filter((a: Allergen) =>
@@ -88,7 +90,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Marca */}
         <Typography variant="body2" color="text.secondary" gutterBottom>
-          {producto.marca || 'Sin marca'}
+          {producto.marca || t('productos.card.noBrand')}
         </Typography>
 
         {/* Chip de tipo — centrado, espacio siempre reservado */}
@@ -165,36 +167,36 @@ const ProductCard: React.FC<ProductCardProps> = ({
         {actions ?? (
           <>
             {onView && (
-              <Tooltip title="Ver detalle">
+              <Tooltip title={t('productos.card.viewDetail')}>
                 <IconButton
                   color="info"
                   onClick={() => onView(producto)}
                   size="small"
-                  aria-label="Ver detalle"
+                  aria-label={t('productos.card.viewDetail')}
                 >
                   <VisibilityIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
             )}
             {onEdit && (
-              <Tooltip title="Editar">
+              <Tooltip title={t('productos.card.edit')}>
                 <IconButton
                   color="secondary"
                   onClick={() => onEdit(producto)}
                   size="small"
-                  aria-label="Editar"
+                  aria-label={t('productos.card.edit')}
                 >
                   <EditIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
             )}
             {onDelete && (
-              <Tooltip title="Eliminar">
+              <Tooltip title={t('productos.card.delete')}>
                 <IconButton
                   color="error"
                   onClick={() => onDelete(producto)}
                   size="small"
-                  aria-label="Borrar"
+                  aria-label={t('productos.card.delete')}
                 >
                   <DeleteIcon fontSize="small" />
                 </IconButton>

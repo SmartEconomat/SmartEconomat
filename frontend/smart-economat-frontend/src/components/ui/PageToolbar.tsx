@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   TextField,
@@ -103,20 +104,24 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
   icon,
   searchValue,
   onSearchChange,
-  searchPlaceholder = 'Buscar...',
+  searchPlaceholder,
   searchId = 'page-search',
   primaryAction,
   secondaryAction,
   filters,
   totalItems,
-  totalItemsLabel = 'elementos',
+  totalItemsLabel,
   viewMode,
   onViewModeChange,
-  onScanBarcode, // Added onScanBarcode to destructuring
+  onScanBarcode,
   autoFocusSearch = false,
   sticky = true,
   extraActions = [],
 }) => {
+  const { t } = useTranslation();
+  const resolvedSearchPlaceholder =
+    searchPlaceholder ?? t('pageToolbar.searchPlaceholder');
+  const resolvedTotalItemsLabel = totalItemsLabel ?? '';
   const { isMobile, isMobileOrTablet } = useBreakpoints();
   const theme = useTheme();
   const [isExpanded, setIsExpanded] = React.useState(true);
@@ -177,7 +182,11 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
               </Typography>
               {hasFiltersOrSearch && (
                 <Tooltip
-                  title={isExpanded ? 'Ocultar filtros' : 'Mostrar filtros'}
+                  title={
+                    isExpanded
+                      ? t('pageToolbar.hideFilters')
+                      : t('pageToolbar.showFilters')
+                  }
                 >
                   <IconButton
                     size="small"
@@ -200,15 +209,18 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
 
             <Box display="flex" alignItems="center" gap={1}>
               {totalItems !== undefined && (
-                <Tooltip title={`Total de ${totalItemsLabel}: ${totalItems}`}>
+                <Tooltip
+                  title={t('pageToolbar.totalItems', {
+                    label: resolvedTotalItemsLabel,
+                    count: totalItems,
+                  })}
+                >
                   <Chip
                     icon={<CheckCircleIcon fontSize="small" />}
-                    label={
-                      <>
-                        Total de <strong>{totalItemsLabel}</strong>:{' '}
-                        {totalItems}
-                      </>
-                    }
+                    label={t('pageToolbar.totalItems', {
+                      label: resolvedTotalItemsLabel,
+                      count: totalItems,
+                    })}
                     size="small"
                     color="success"
                     variant="outlined"
@@ -216,7 +228,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                       fontWeight: 500,
                       px: 1,
                       '& .MuiChip-label': { px: 1 },
-                      display: { xs: 'none', sm: 'inline-flex' }, // Solo en tablet/desktop para no saturar móvil
+                      display: { xs: 'none', sm: 'inline-flex' },
                     }}
                   />
                 </Tooltip>
@@ -224,7 +236,10 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
               {/* Móvil: Versión más compacta del chip */}
               {totalItems !== undefined && (
                 <Chip
-                  label={`Total ${totalItemsLabel}: ${totalItems}`}
+                  label={t('pageToolbar.totalItems', {
+                    label: resolvedTotalItemsLabel,
+                    count: totalItems,
+                  })}
                   size="small"
                   color="success"
                   variant="outlined"
@@ -252,7 +267,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
               {onSearchChange && (
                 <TextField
                   id={searchId}
-                  placeholder={searchPlaceholder}
+                  placeholder={resolvedSearchPlaceholder}
                   value={searchValue}
                   onChange={(e) => onSearchChange(e.target.value)}
                   size="small"
@@ -266,14 +281,14 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                     },
                   }}
                   InputProps={{
-                    'aria-label': searchPlaceholder,
+                    'aria-label': resolvedSearchPlaceholder,
                     startAdornment: onScanBarcode && (
                       <InputAdornment position="start">
-                        <Tooltip title="Escanear con cámara">
+                        <Tooltip title={t('pageToolbar.scanCamera')}>
                           <IconButton
                             size="small"
                             onClick={onScanBarcode}
-                            aria-label="Escanear código"
+                            aria-label={t('pageToolbar.scanCode')}
                             color="primary"
                             sx={{
                               '&:hover': {
@@ -300,7 +315,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                             <IconButton
                               size="small"
                               onClick={() => onSearchChange?.('')}
-                              aria-label="Limpiar búsqueda"
+                              aria-label={t('pageToolbar.clearSearch')}
                             >
                               <ClearIcon fontSize="small" />
                             </IconButton>

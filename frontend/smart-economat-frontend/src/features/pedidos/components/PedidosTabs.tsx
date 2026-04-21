@@ -4,36 +4,38 @@ import AssignmentTurnedInOutlinedIcon from '@mui/icons-material/AssignmentTurned
 import FormatListBulletedOutlinedIcon from '@mui/icons-material/FormatListBulletedOutlined';
 import ShoppingCartCheckoutOutlinedIcon from '@mui/icons-material/ShoppingCartCheckoutOutlined';
 import { PedidosTabValue } from '../types/pedidos-ui.types';
+import { useTranslation } from 'react-i18next';
 
 interface PedidosTabsProps {
   value: PedidosTabValue;
   onChange: (value: PedidosTabValue) => void;
 }
 
-const tabOptions: Array<{
-  value: PedidosTabValue;
-  label: string;
-  icon: React.ReactElement;
-}> = [
-  {
-    value: 0,
-    label: 'MIS PEDIDOS',
-    icon: <AssignmentTurnedInOutlinedIcon sx={{ fontSize: 20 }} />,
-  },
-  {
-    value: 1,
-    label: 'PEDIDOS',
-    icon: <FormatListBulletedOutlinedIcon sx={{ fontSize: 20 }} />,
-  },
-  {
-    value: 2,
-    label: 'COMPRAS',
-    icon: <ShoppingCartCheckoutOutlinedIcon sx={{ fontSize: 20 }} />,
-  },
-];
-
 const PedidosTabs: React.FC<PedidosTabsProps> = ({ value, onChange }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
+
+  const tabOptions: Array<{
+    value: PedidosTabValue;
+    label: string;
+    icon: React.ReactElement;
+  }> = [
+    {
+      value: 0,
+      label: t('pedidos.tabs.myOrders'),
+      icon: <AssignmentTurnedInOutlinedIcon sx={{ fontSize: 20 }} />,
+    },
+    {
+      value: 1,
+      label: t('pedidos.tabs.orders'),
+      icon: <FormatListBulletedOutlinedIcon sx={{ fontSize: 20 }} />,
+    },
+    {
+      value: 2,
+      label: t('pedidos.tabs.purchases'),
+      icon: <ShoppingCartCheckoutOutlinedIcon sx={{ fontSize: 20 }} />,
+    },
+  ];
 
   return (
     <Box sx={{ mb: 3 }}>

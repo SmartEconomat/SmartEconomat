@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Chip,
@@ -95,6 +96,7 @@ const resolveProveedorId = (proveedor: ProductoProveedor): string | undefined =>
   proveedor.proveedor?.id ?? proveedor.proveedorId;
 
 const Productos: React.FC = () => {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
   const [totalPages, setTotalPages] = useState(1);
@@ -172,9 +174,7 @@ const Productos: React.FC = () => {
       })
       .catch((err: unknown) => {
         const message =
-          err instanceof Error
-            ? err.message
-            : 'Error desconocido al cargar datos.';
+          err instanceof Error ? err.message : t('productos.toast.loadError');
         setError(message);
       })
       .finally(() => setIsLoading(false));
@@ -195,7 +195,7 @@ const Productos: React.FC = () => {
       await deleteResource(`/productos/${productToDelete.id}`);
       setData((prev) => prev.filter((p) => p.id !== productToDelete.id));
       toast.success(
-        `Producto "${productToDelete.nombre}" eliminado correctamente.`,
+        t('productos.toast.deleted', { name: productToDelete.nombre }),
         undefined,
         {
           productCategory: productToDelete.tipo,
@@ -203,7 +203,7 @@ const Productos: React.FC = () => {
       );
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Error al eliminar el producto.';
+        err instanceof Error ? err.message : t('productos.toast.deleteError');
       toast.error(message, undefined, {
         productCategory: productToDelete.tipo,
       });
@@ -222,13 +222,13 @@ const Productos: React.FC = () => {
       if (formData.id) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await updateProducto(formData.id as string, payload as any);
-        toast.success('Producto actualizado correctamente.', undefined, {
+        toast.success(t('productos.toast.updated'), undefined, {
           productCategory: category,
         });
       } else {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await createProducto(payload as any);
-        toast.success('Producto creado correctamente.', undefined, {
+        toast.success(t('productos.toast.created'), undefined, {
           productCategory: category,
         });
       }
@@ -237,7 +237,7 @@ const Productos: React.FC = () => {
       setProductToEdit(null);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Error al guardar el producto.';
+        err instanceof Error ? err.message : t('productos.toast.saveError');
       toast.error(message, undefined, {
         productCategory: (formData as { tipo?: CategoriaProducto }).tipo,
       });
@@ -247,17 +247,17 @@ const Productos: React.FC = () => {
   };
 
   const columns: Column<Producto>[] = [
-    { id: 'nombre', label: 'Nombre', sortable: true },
+    { id: 'nombre', label: t('productos.columns.nombre'), sortable: true },
     {
       id: 'marca',
-      label: 'Marca',
+      label: t('productos.columns.marca'),
       render: (row) => row.marca ?? '—',
       hideOnMobile: true,
       sortable: true,
     },
     {
       id: 'tipo',
-      label: 'Tipo',
+      label: t('productos.columns.tipo'),
       render: (row) =>
         row.tipo ? <StatusChip status={row.tipo} variant="outlined" /> : '—',
       hideOnMobile: true,
@@ -265,14 +265,14 @@ const Productos: React.FC = () => {
     },
     {
       id: 'contenido',
-      label: 'Contenido',
+      label: t('productos.columns.contenido'),
       align: 'right',
       render: (row) =>
         row.unidad ? `${row.contenido} ${row.unidad}` : `${row.contenido}`,
     },
     {
       id: 'codigoBarras',
-      label: 'Cód. Barras',
+      label: t('productos.columns.codigoBarras'),
       render: (row) => row.codigoBarras ?? '—',
       hideOnMobile: true,
       sortable: true,
@@ -332,31 +332,25 @@ const Productos: React.FC = () => {
 
       if (existingProduct) {
         setProductToEdit(buildEditData(existingProduct));
-        toast.success('Producto localizado. Abriendo su ficha para editar.');
+        toast.success(t('productos.toast.scanFound'));
         return;
       }
 
       if (!canCreate) {
-        toast.info(
-          'No se encontró el producto. Se dejó el código en la búsqueda.'
-        );
+        toast.info(t('productos.toast.scanNotFound'));
         return;
       }
 
       setProductToEdit(await buildCreateProductDraft(code));
-      toast.info(
-        'Producto no encontrado. Se abrió el formulario para crearlo.'
-      );
+      toast.info(t('productos.toast.scanOpenCreate'));
     } catch {
       if (!canCreate) {
-        toast.error('No se pudo validar el código escaneado.');
+        toast.error(t('productos.toast.scanValidateError'));
         return;
       }
 
       setProductToEdit(await buildCreateProductDraft(code));
-      toast.warning(
-        'No se pudo comprobar el catálogo, pero se abrió el alta del producto.'
-      );
+      toast.warning(t('productos.toast.scanCatalogError'));
     }
   };
 
@@ -406,7 +400,7 @@ const Productos: React.FC = () => {
 
   const renderActions = (row: Producto) => (
     <Stack direction="row" spacing={1} justifyContent="center">
-      <Tooltip title="Ver detalle">
+      <Tooltip title={t('productos.actions.view')}>
         <IconButton
           color="primary"
           onClick={(e) => {
@@ -414,32 +408,32 @@ const Productos: React.FC = () => {
             handleViewClick(row);
           }}
           size="small"
-          aria-label="Ver detalle"
+          aria-label={t('productos.actions.view')}
         >
           <VisibilityIcon fontSize="small" />
         </IconButton>
       </Tooltip>
       {canEdit && (
-        <Tooltip title="Editar">
+        <Tooltip title={t('productos.actions.edit')}>
           <IconButton
             color="secondary"
             onClick={() => {
               setProductToEdit(buildEditData(row));
             }}
             size="small"
-            aria-label="Editar"
+            aria-label={t('productos.actions.edit')}
           >
             <EditIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       )}
       {canDelete && (
-        <Tooltip title="Eliminar">
+        <Tooltip title={t('productos.actions.delete')}>
           <IconButton
             color="error"
             onClick={() => setProductToDelete(row)}
             size="small"
-            aria-label="Borrar"
+            aria-label={t('productos.actions.delete')}
           >
             <DeleteIcon fontSize="small" />
           </IconButton>
@@ -456,21 +450,21 @@ const Productos: React.FC = () => {
   return (
     <Box>
       <PageToolbar
-        title="Gestión de Productos"
+        title={t('productos.pageTitle')}
         searchValue={searchTerm}
         onSearchChange={(v) => {
           setSearchTerm(v);
           setPage(1);
         }}
-        searchPlaceholder="Buscar por nombre, marca, código de barras..."
+        searchPlaceholder={t('productos.searchPlaceholder')}
         searchId="search-productos"
         autoFocusSearch={true}
         totalItems={totalItems}
-        totalItemsLabel="productos"
+        totalItemsLabel={t('productos.totalItemsLabel')}
         primaryAction={
           canCreate
             ? {
-                label: 'Nuevo Producto',
+                label: t('productos.newProduct'),
                 onClick: () => {
                   setProductToEdit({});
                 },
@@ -482,7 +476,7 @@ const Productos: React.FC = () => {
         onViewModeChange={setViewMode}
         extraActions={[
           {
-            label: 'Exportar PDF',
+            label: t('productos.exportPdf'),
             onClick: () => {
               void handleExportPdf();
             },
@@ -492,7 +486,7 @@ const Productos: React.FC = () => {
             variant: 'outlined',
           },
           {
-            label: 'Exportar Excel',
+            label: t('productos.exportExcel'),
             onClick: () => {
               void handleExportExcel();
             },
@@ -527,7 +521,7 @@ const Productos: React.FC = () => {
         onScan={(code) => {
           void handleSearchScannerResult(code);
         }}
-        title="Escanear Producto para Buscar"
+        title={t('productos.scannerTitle')}
       />
 
       <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
@@ -553,13 +547,13 @@ const Productos: React.FC = () => {
               />
               <Typography variant="h6" color="text.secondary" gutterBottom>
                 {hasSearchOrFilters
-                  ? 'No hay productos que coincidan con tu búsqueda o filtros'
-                  : 'No se encontraron productos'}
+                  ? t('productos.empty.withFilters')
+                  : t('productos.empty.noProducts')}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                 {hasSearchOrFilters
-                  ? 'Prueba con otros términos o limpia los filtros.'
-                  : 'Empieza añadiendo el primer producto a tu inventario.'}
+                  ? t('productos.empty.withFiltersHint')
+                  : t('productos.empty.noProductsHint')}
               </Typography>
               {!hasSearchOrFilters && canCreate && (
                 <Button
@@ -573,7 +567,7 @@ const Productos: React.FC = () => {
                     px: 3,
                   }}
                 >
-                  Añadir Producto
+                  {t('productos.empty.addProduct')}
                 </Button>
               )}
             </Box>
@@ -604,16 +598,16 @@ const Productos: React.FC = () => {
           isOpen={!!productToDelete}
           onClose={() => !isDeleting && setProductToDelete(null)}
           onConfirm={() => void handleDeleteConfirm()}
-          title="Eliminar producto"
+          title={t('productos.deleteDialog.title')}
           message={
             <>
-              ¿Estás seguro de que deseas eliminar el producto{' '}
-              <strong>{productToDelete?.nombre}</strong>? Esta acción no se
-              puede deshacer.
+              {t('productos.deleteDialog.messagePre')}{' '}
+              <strong>{productToDelete?.nombre}</strong>
+              {t('productos.deleteDialog.messagePost')}
             </>
           }
-          confirmText="Sí, eliminar"
-          cancelText="Cancelar"
+          confirmText={t('productos.deleteDialog.confirm')}
+          cancelText={t('productos.deleteDialog.cancel')}
           isLoading={isDeleting}
         />
 
@@ -644,7 +638,9 @@ const Productos: React.FC = () => {
                 title={p.nombre}
                 subtitle={p.marca || undefined}
                 size="md"
-                editLabel={canEdit ? 'Editar producto' : undefined}
+                editLabel={
+                  canEdit ? t('productos.detail.editLabel') : undefined
+                }
                 onEdit={
                   canEdit
                     ? () => {
@@ -672,11 +668,11 @@ const Productos: React.FC = () => {
                 }
                 sections={[
                   {
-                    title: 'Información general',
+                    title: t('productos.detail.sectionGeneral'),
                     columns: 3,
                     fields: [
                       {
-                        label: 'Tipo',
+                        label: t('productos.detail.fieldTipo'),
                         value: p.tipo ? (
                           <StatusChip
                             status={p.tipo}
@@ -686,15 +682,15 @@ const Productos: React.FC = () => {
                         ) : undefined,
                       },
                       {
-                        label: 'Contenido',
+                        label: t('productos.detail.fieldContenido'),
                         value: `${p.contenido}${p.unidad ? ' ' + p.unidad : ''}`,
                       },
                       {
-                        label: 'Código de Barras',
+                        label: t('productos.detail.fieldCodBarras'),
                         value: p.codigoBarras ?? undefined,
                       },
                       {
-                        label: 'PMP Actual',
+                        label: t('productos.detail.fieldPmp'),
                         value:
                           p.pmp != null ? (
                             <Typography
@@ -707,7 +703,7 @@ const Productos: React.FC = () => {
                           ) : undefined,
                       },
                       {
-                        label: 'Descripción',
+                        label: t('productos.detail.fieldDescripcion'),
                         value: p.descripcion ?? undefined,
                         fullWidth: true,
                       },
@@ -716,7 +712,7 @@ const Productos: React.FC = () => {
                   ...(alergenosActivos.length > 0
                     ? [
                         {
-                          title: 'Alérgenos',
+                          title: t('productos.detail.sectionAlergenos'),
                           content: (
                             <Box
                               sx={{
@@ -762,7 +758,7 @@ const Productos: React.FC = () => {
                   ...(proveedoresAsociados.length > 0
                     ? [
                         {
-                          title: 'Proveedores asociados',
+                          title: t('productos.detail.sectionProveedores'),
                           content: (
                             <Stack spacing={1.5}>
                               {proveedoresAsociados.map((pv, idx: number) => {
@@ -770,7 +766,9 @@ const Productos: React.FC = () => {
                                 const providerName =
                                   pv.proveedor?.nombre ??
                                   pv.nombre ??
-                                  `Proveedor ${idx + 1}`;
+                                  t('productos.detail.proveedorFallback', {
+                                    n: idx + 1,
+                                  });
 
                                 return (
                                   <Paper
@@ -809,14 +807,27 @@ const Productos: React.FC = () => {
                                           <Chip
                                             label={
                                               pv.ahorroAbsolutoPct != null
-                                                ? `Mejor Opción · -${pv.ahorroAbsolutoPct.toFixed(1)}%`
-                                                : 'Mejor Opción'
+                                                ? t(
+                                                    'productos.detail.mejorOpcionConAhorro',
+                                                    {
+                                                      pct: pv.ahorroAbsolutoPct.toFixed(
+                                                        1
+                                                      ),
+                                                    }
+                                                  )
+                                                : t(
+                                                    'productos.detail.mejorOpcion'
+                                                  )
                                             }
                                             size="small"
                                             color="success"
                                           />
                                         )}
-                                        <Tooltip title="Ver histórico de este proveedor">
+                                        <Tooltip
+                                          title={t(
+                                            'productos.detail.verHistoricoProveedor'
+                                          )}
+                                        >
                                           <span>
                                             <IconButton
                                               size="small"
@@ -826,7 +837,10 @@ const Productos: React.FC = () => {
                                                   providerId
                                                 );
                                               }}
-                                              aria-label={`Ver histórico de ${providerName}`}
+                                              aria-label={t(
+                                                'productos.detail.verHistoricoAriaLabel',
+                                                { name: providerName }
+                                              )}
                                               disabled={!providerId}
                                             >
                                               <HistoryOutlinedIcon fontSize="small" />
@@ -855,7 +869,7 @@ const Productos: React.FC = () => {
                                               mb: 0.25,
                                             }}
                                           >
-                                            Precio
+                                            {t('productos.detail.fieldPrecio')}
                                           </Typography>
                                           <Typography variant="body2">
                                             {pv.precioUnitario.toFixed(2)} €
@@ -875,7 +889,7 @@ const Productos: React.FC = () => {
                                               mb: 0.25,
                                             }}
                                           >
-                                            Merma
+                                            {t('productos.detail.fieldMerma')}
                                           </Typography>
                                           <Typography variant="body2">
                                             {pv.mermaEsperada.toFixed(1)} %
@@ -895,7 +909,9 @@ const Productos: React.FC = () => {
                                               mb: 0.25,
                                             }}
                                           >
-                                            Coste Real
+                                            {t(
+                                              'productos.detail.fieldCosteReal'
+                                            )}
                                           </Typography>
                                           <Typography
                                             variant="body2"
@@ -921,9 +937,15 @@ const Productos: React.FC = () => {
                                         sx={{ mt: 1, display: 'block' }}
                                       >
                                         {[
-                                          pv.marca && `Marca: ${pv.marca}`,
+                                          pv.marca &&
+                                            t('productos.detail.marcaLabel', {
+                                              value: pv.marca,
+                                            }),
                                           pv.codigoBarras &&
-                                            `Cód. Barras: ${pv.codigoBarras}`,
+                                            t(
+                                              'productos.detail.codBarrasLabel',
+                                              { value: pv.codigoBarras }
+                                            ),
                                         ]
                                           .filter(Boolean)
                                           .join(' · ')}
@@ -938,7 +960,7 @@ const Productos: React.FC = () => {
                       ]
                     : []),
                   {
-                    title: 'Histórico de precios',
+                    title: t('productos.detail.sectionHistorico'),
                     content: (
                       <Box ref={historySectionRef}>
                         <Box
@@ -950,19 +972,19 @@ const Productos: React.FC = () => {
                         >
                           <FormControl size="small" sx={{ minWidth: 200 }}>
                             <InputLabel id="history-provider-filter-label">
-                              Filtro por Proveedor
+                              {t('productos.detail.filtroProveedor')}
                             </InputLabel>
                             <Select
                               labelId="history-provider-filter-label"
                               id="history-provider-filter"
                               value={historyProviderFilter}
-                              label="Filtro por Proveedor"
+                              label={t('productos.detail.filtroProveedor')}
                               onChange={(e) =>
                                 setHistoryProviderFilter(e.target.value)
                               }
                             >
                               <MenuItem value="all">
-                                Todos los proveedores
+                                {t('productos.detail.todosProveedores')}
                               </MenuItem>
                               {p.proveedores?.map((pp) => {
                                 const providerId = resolveProveedorId(pp);
@@ -975,7 +997,9 @@ const Productos: React.FC = () => {
                                   >
                                     {pp.proveedor?.nombre ??
                                       pp.nombre ??
-                                      'Proveedor'}
+                                      t('productos.detail.proveedorFallback', {
+                                        n: '',
+                                      })}
                                   </MenuItem>
                                 );
                               })}
@@ -990,7 +1014,7 @@ const Productos: React.FC = () => {
                             align="center"
                             sx={{ py: 3 }}
                           >
-                            Cargando historial...
+                            {t('productos.detail.cargandoHistorial')}
                           </Typography>
                         ) : priceHistory.length > 0 ? (
                           <Box sx={{ overflowX: 'auto' }}>
@@ -998,28 +1022,30 @@ const Productos: React.FC = () => {
                               <TableHead>
                                 <TableRow>
                                   <TableCell sx={{ fontWeight: 600 }}>
-                                    Fecha
+                                    {t('productos.detail.historialColFecha')}
                                   </TableCell>
                                   <TableCell sx={{ fontWeight: 600 }}>
-                                    Proveedor
+                                    {t(
+                                      'productos.detail.historialColProveedor'
+                                    )}
                                   </TableCell>
                                   <TableCell
                                     sx={{ fontWeight: 600 }}
                                     align="right"
                                   >
-                                    Cant.
+                                    {t('productos.detail.historialColCantidad')}
                                   </TableCell>
                                   <TableCell
                                     sx={{ fontWeight: 600 }}
                                     align="right"
                                   >
-                                    Precio
+                                    {t('productos.detail.historialColPrecio')}
                                   </TableCell>
                                   <TableCell
                                     sx={{ fontWeight: 600 }}
                                     align="center"
                                   >
-                                    Doc.
+                                    {t('productos.detail.historialColDoc')}
                                   </TableCell>
                                 </TableRow>
                               </TableHead>
@@ -1063,7 +1089,7 @@ const Productos: React.FC = () => {
                               borderRadius: 1,
                             }}
                           >
-                            No hay registros históricos para este producto.
+                            {t('productos.detail.historialVacio')}
                           </Typography>
                         )}
 
@@ -1083,8 +1109,9 @@ const Productos: React.FC = () => {
                               variant="caption"
                               color="text.secondary"
                             >
-                              Estructura preparada para gráfico de evolución de
-                              precios
+                              {t(
+                                'productos.detail.historialGraficoPlaceholder'
+                              )}
                             </Typography>
                           </Box>
                         )}

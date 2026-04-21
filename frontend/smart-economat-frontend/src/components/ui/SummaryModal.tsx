@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -33,11 +34,7 @@ import { Producto } from '../../services/producto.types';
 import { EstadoPedido, Pedido } from '../../services/pedido.types';
 import { Proveedor } from '../../services/proveedor.types';
 import { fetchIncidencias } from '../../services/incidencia.service';
-import {
-  EstadoReclamacion,
-  Incidencia,
-  TipoDiferencia,
-} from '../../services/incidencia.types';
+import { Incidencia } from '../../services/incidencia.types';
 import { fetchAlertasStock } from '../../services/inventario.service';
 import type { AlertaStock } from '../../services/inventario.types';
 import { formatPedidoListNumber } from '../../features/pedidos/utils/pedidoFormatters';
@@ -97,19 +94,6 @@ const DASHBOARD_PENDING_ORDER_STATES = [
   EstadoPedido.INCIDENCIA,
 ] as const;
 
-const tipoDiferenciaLabel: Record<TipoDiferencia, string> = {
-  FALTANTE: 'Faltante',
-  EXCESO: 'Exceso',
-  DEFECTUOSO: 'Defectuoso',
-};
-
-const estadoReclamacionLabel: Record<EstadoReclamacion, string> = {
-  PENDIENTE: 'Pendiente',
-  RECLAMADO: 'Reclamado',
-  ABONADO: 'Abonado',
-  REENVIADO: 'Reenviado',
-};
-
 const decimalFormatter = new Intl.NumberFormat('es-ES', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
@@ -142,6 +126,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   type,
   title,
 }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<SummaryItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -258,7 +243,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       setData(result);
     } catch (err) {
       console.error('Error loading summary data:', err);
-      setError('No se pudo cargar la información detallada.');
+      setError(t('summaryModal.loadError'));
     } finally {
       setLoading(false);
     }
@@ -370,7 +355,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             secondary={
               <Stack direction="row" spacing={1} alignItems="center" mt={0.5}>
                 <Typography variant="caption" color="text.secondary">
-                  {item.categoria?.nombre || 'Sin categoría'}
+                  {item.categoria?.nombre || t('summaryModal.noCategory')}
                 </Typography>
                 <Chip
                   label={stockLabel}
@@ -397,7 +382,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             <ShoppingCartIcon />
           </ListItemIcon>
           <ListItemText
-            primary={`Pedido #${formatPedidoListNumber(item)}`}
+            primary={`${t('summaryModal.order')} #${formatPedidoListNumber(item)}`}
             secondaryTypographyProps={{ component: 'div' }}
             secondary={
               <Stack direction="row" spacing={1} alignItems="center" mt={0.5}>
@@ -456,7 +441,11 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                   <Chip
                     size="small"
                     color={item.resuelta ? 'success' : 'warning'}
-                    label={item.resuelta ? 'Resuelta' : 'Pendiente'}
+                    label={
+                      item.resuelta
+                        ? t('summaryModal.resolved')
+                        : t('summaryModal.pending')
+                    }
                   />
                   <Chip
                     size="small"
@@ -480,23 +469,26 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 }
                 sx={{ alignSelf: 'center' }}
               >
-                {isExpanded ? 'Ocultar resumen' : 'Ver resumen'}
+                {isExpanded
+                  ? t('summaryModal.hideDetails')
+                  : t('summaryModal.showDetails')}
               </Button>
             </Stack>
 
             <Typography variant="body2" color="text.secondary">
-              Proveedor: {item.proveedorNombre || 'Sin proveedor'}
+              {t('summaryModal.supplier')}:{' '}
+              {item.proveedorNombre || t('summaryModal.noSupplier')}
             </Typography>
 
             <Collapse in={isExpanded} timeout="auto" unmountOnExit>
               <Stack spacing={1.5} sx={{ pt: 0.5 }}>
                 <Box>
                   <Typography variant="caption" color="text.secondary">
-                    Observaciones de recepción
+                    {t('summaryModal.receptionObservations')}
                   </Typography>
                   <Typography variant="body2">
                     {item.observacionesRecepcion ||
-                      'Sin observaciones registradas.'}
+                      t('summaryModal.noObservations')}
                   </Typography>
                 </Box>
 
@@ -506,7 +498,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                     color="text.secondary"
                     sx={{ display: 'block', mb: 1 }}
                   >
-                    Detalle de la incidencia
+                    {t('summaryModal.incidenciaDetail')}
                   </Typography>
                   <Stack spacing={1}>
                     {lineas.map((linea) => (
@@ -528,24 +520,32 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                             <Chip
                               size="small"
                               color="error"
-                              label={tipoDiferenciaLabel[linea.tipoDiferencia]}
+                              label={t(
+                                `summaryModal.tipoDiferencia.${linea.tipoDiferencia}`,
+                                { defaultValue: linea.tipoDiferencia }
+                              )}
                             />
                           </Stack>
                           <Typography variant="caption" color="text.secondary">
-                            Esperado: {linea.cantidadEsperada} · Recibido:{' '}
-                            {linea.cantidadRecibida} · Diferencia:{' '}
-                            {linea.diferencia}
+                            {t('summaryModal.expected')}:{' '}
+                            {linea.cantidadEsperada} ·{' '}
+                            {t('summaryModal.received')}:{' '}
+                            {linea.cantidadRecibida} ·{' '}
+                            {t('summaryModal.difference')}: {linea.diferencia}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            Reclamación:{' '}
-                            {estadoReclamacionLabel[linea.estadoReclamacion]}
+                            {t('summaryModal.claim')}:{' '}
+                            {t(
+                              `summaryModal.estadoReclamacion.${linea.estadoReclamacion}`,
+                              { defaultValue: linea.estadoReclamacion }
+                            )}
                           </Typography>
                           {linea.observaciones ? (
                             <Typography
                               variant="caption"
                               color="text.secondary"
                             >
-                              Nota: {linea.observaciones}
+                              {t('summaryModal.note')}: {linea.observaciones}
                             </Typography>
                           ) : null}
                         </Stack>
@@ -568,7 +568,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           </ListItemIcon>
           <ListItemText
             primary={item.nombre}
-            secondary={item.contacto || 'Sin contacto'}
+            secondary={item.contacto || t('summaryModal.noContact')}
           />
           <Chip
             label={
@@ -595,7 +595,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           {title}
         </Typography>
         <IconButton
-          aria-label="close"
+          aria-label={t('summaryModal.close')}
           onClick={onClose}
           sx={{
             position: 'absolute',
@@ -619,7 +619,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         ) : data.length === 0 ? (
           <Box py={4} textAlign="center">
             <Typography color="text.secondary">
-              No hay elementos para mostrar.
+              {t('summaryModal.empty')}
             </Typography>
           </Box>
         ) : (

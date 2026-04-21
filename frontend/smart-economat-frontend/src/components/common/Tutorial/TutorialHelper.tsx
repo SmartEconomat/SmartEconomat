@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import {
   IconButton,
@@ -21,7 +22,7 @@ import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
 import { useTheme } from '@mui/material/styles';
 import { useThemeContext } from '../../../store/theme.hooks';
 import { getTooltipContent } from '../../../utils/tooltipUtils';
-import { tutorialConfig } from '../../../utils/config/tutorialData';
+import { getTutorialConfig } from '../../../utils/config/tutorialData';
 import { useAuth } from '../../../store/auth.hooks';
 
 interface TutorialStep {
@@ -51,6 +52,7 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
   isOpen = true,
   steps: customSteps,
 }: TutorialHelperProps) => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const location = useLocation();
   const theme = useTheme();
@@ -81,6 +83,7 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
   const id = open ? 'tutorial-popover' : undefined;
 
   const currentPath = location.pathname;
+  const tutorialConfig = getTutorialConfig(t);
   const defaultConfig =
     (tutorialConfig as Record<string, RouteTutorialConfig>)[currentPath] ||
     (tutorialConfig['default'] as RouteTutorialConfig);
@@ -172,7 +175,7 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
           onClick={handleClose}
           sx={{ color: 'text.secondary' }}
         >
-          Cerrar
+          {t('tutorial.close')}
         </Button>
       </CardActions>
     </Card>
@@ -185,14 +188,14 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
           title={getTooltipContent(
             isOpen,
             isLearningMode,
-            'Ayuda',
-            'Ver guía de ayuda de esta página'
+            t('tutorial.help'),
+            t('tutorial.viewGuide')
           )}
         >
           <ListItemButton
             onClick={handleClick}
             aria-describedby={id}
-            aria-label="Mostrar tutorial"
+            aria-label={t('tutorial.showTutorial')}
             sx={{
               minHeight: 48,
               justifyContent: isOpen ? 'initial' : 'center',
@@ -208,7 +211,10 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
             >
               <HelpOutlineIcon />
             </ListItemIcon>
-            <ListItemText primary="Ayuda" sx={{ opacity: isOpen ? 1 : 0 }} />
+            <ListItemText
+              primary={t('tutorial.help')}
+              sx={{ opacity: isOpen ? 1 : 0 }}
+            />
           </ListItemButton>
         </Tooltip>
         <Popover
@@ -240,8 +246,8 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
         title={getTooltipContent(
           false,
           isLearningMode,
-          'Ayuda',
-          'Ver guía de ayuda'
+          t('tutorial.help'),
+          t('tutorial.viewGuideShort')
         )}
         placement="bottom"
       >
@@ -249,7 +255,7 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
           color="inherit"
           aria-describedby={id}
           onClick={handleClick}
-          aria-label="Mostrar tutorial"
+          aria-label={t('tutorial.showTutorial')}
           sx={{ ml: 1 }}
         >
           <HelpOutlineIcon />

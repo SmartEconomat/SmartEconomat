@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Tab, Tabs } from '@mui/material';
 import { EstadoIncidencia } from '../../services/incidencia.types';
+import { useTranslation } from 'react-i18next';
 
 export type IncidenciasResolucionTab = 'abiertas' | 'cerradas';
 export type IncidenciasCerradasTab =
@@ -22,14 +23,16 @@ const IncidenciasStatusTabs: React.FC<IncidenciasStatusTabsProps> = ({
   closedValue,
   onClosedChange,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <Box sx={{ mb: 2 }}>
       <Tabs
         value={value}
         onChange={(_, newValue: IncidenciasResolucionTab) => onChange(newValue)}
       >
-        <Tab value="abiertas" label="Abiertas" />
-        <Tab value="cerradas" label="Cerradas" />
+        <Tab value="abiertas" label={t('incidenciasStatusTabs.open')} />
+        <Tab value="cerradas" label={t('incidenciasStatusTabs.closed')} />
       </Tabs>
 
       {value === 'cerradas' && (
@@ -42,10 +45,19 @@ const IncidenciasStatusTabs: React.FC<IncidenciasStatusTabsProps> = ({
           allowScrollButtonsMobile
           sx={{ mt: 1 }}
         >
-          <Tab value="todas" label="Todas" />
-          <Tab value={EstadoIncidencia.RESUELTA} label="Resueltas" />
-          <Tab value={EstadoIncidencia.CANCELADA} label="Canceladas" />
-          <Tab value={EstadoIncidencia.INVALIDA} label="Inválidas" />
+          <Tab value="todas" label={t('incidenciasStatusTabs.all')} />
+          <Tab
+            value={EstadoIncidencia.RESUELTA}
+            label={t('incidenciasStatusTabs.resolved')}
+          />
+          <Tab
+            value={EstadoIncidencia.CANCELADA}
+            label={t('incidenciasStatusTabs.cancelled')}
+          />
+          <Tab
+            value={EstadoIncidencia.INVALIDA}
+            label={t('incidenciasStatusTabs.invalid')}
+          />
         </Tabs>
       )}
     </Box>

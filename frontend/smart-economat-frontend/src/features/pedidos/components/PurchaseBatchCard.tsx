@@ -22,6 +22,7 @@ import {
   getBatchTotal,
   getBatchPedidosCount,
 } from '../utils/pedidoFormatters';
+import { useTranslation } from 'react-i18next';
 
 interface PurchaseBatchCardProps {
   batch: PurchaseBatch;
@@ -34,6 +35,7 @@ const PurchaseBatchCard: React.FC<PurchaseBatchCardProps> = ({
   actions,
   onRowClick,
 }) => {
+  const { t } = useTranslation();
   const isSelectable = !!onRowClick;
   const totalCost = getBatchTotal(batch);
   const pedidosCount = getBatchPedidosCount(batch);
@@ -72,7 +74,8 @@ const PurchaseBatchCard: React.FC<PurchaseBatchCardProps> = ({
               color="text.secondary"
               sx={{ lineHeight: 1, fontSize: '0.65rem' }}
             >
-              Lote #{formatBatchNumber(batch)}
+              {t('pedidos.batchCard.batchPrefix')}
+              {formatBatchNumber(batch)}
             </Typography>
             <Typography
               variant="caption"
@@ -80,7 +83,7 @@ const PurchaseBatchCard: React.FC<PurchaseBatchCardProps> = ({
               display="block"
               sx={{ mt: 0.5 }}
             >
-              Ref: {formatBatchReference(batch)}
+              {t('pedidos.batchCard.ref')} {formatBatchReference(batch)}
             </Typography>
           </Box>
           <StatusChip status={batch.estado} size="small" />
@@ -93,7 +96,7 @@ const PurchaseBatchCard: React.FC<PurchaseBatchCardProps> = ({
               variant="h6"
               sx={{ fontWeight: 'bold', lineHeight: 1.2 }}
             >
-              {pedidosCount} Pedidos Proveedor
+              {pedidosCount} {t('pedidos.batchCard.providerOrders')}
             </Typography>
           </Box>
         </Box>
@@ -102,7 +105,8 @@ const PurchaseBatchCard: React.FC<PurchaseBatchCardProps> = ({
           <Box display="flex" alignItems="center" gap={1}>
             <CalendarTodayIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
             <Typography variant="body2" color="text.secondary">
-              Creado el {formatPedidoDate(batch.createdAt, 'datetime')}
+              {t('pedidos.batchCard.createdAt')}{' '}
+              {formatPedidoDate(batch.createdAt, 'datetime')}
             </Typography>
           </Box>
           <Box display="flex" alignItems="center" gap={1}>
@@ -128,7 +132,7 @@ const PurchaseBatchCard: React.FC<PurchaseBatchCardProps> = ({
               display="block"
               sx={{ fontWeight: 500 }}
             >
-              Inversión Estimada
+              {t('pedidos.batchCard.estimatedInvestment')}
             </Typography>
             <Typography
               variant="h5"

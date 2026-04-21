@@ -11,21 +11,24 @@ import {
 } from '@mui/material';
 import { MermaStats, MotivoMerma } from '../../services/merma.types';
 import BrokenImageOutlinedIcon from '@mui/icons-material/BrokenImageOutlined';
+import { useTranslation } from 'react-i18next';
 
 interface MermaStatsProps {
   stats: MermaStats | null;
   isLoading?: boolean;
 }
 
-const MOTIVO_LABELS: Record<string, string> = {
-  [MotivoMerma.ROTURA]: 'Rotura de envase',
-  [MotivoMerma.DETERIORO]: 'Deterioro / Caducidad',
-  [MotivoMerma.HURTO]: 'Hurto / Pérdida',
-  [MotivoMerma.ERROR_PREPARACION]: 'Error de preparación',
-  [MotivoMerma.OTROS]: 'Otros motivos',
-};
-
 const MermaStatsView: React.FC<MermaStatsProps> = ({ stats, isLoading }) => {
+  const { t } = useTranslation();
+
+  const MOTIVO_LABELS: Record<string, string> = {
+    [MotivoMerma.ROTURA]: t('mermasTable.motivos.ROTURA'),
+    [MotivoMerma.DETERIORO]: t('mermasTable.motivos.DETERIORO'),
+    [MotivoMerma.HURTO]: t('mermasTable.motivos.HURTO'),
+    [MotivoMerma.ERROR_PREPARACION]: t('mermasTable.motivos.ERROR_PREPARACION'),
+    [MotivoMerma.OTROS]: t('mermasTable.motivos.OTROS'),
+  };
+
   if (isLoading) return <LinearProgress />;
   if (!stats) return null;
 
@@ -62,7 +65,7 @@ const MermaStatsView: React.FC<MermaStatsProps> = ({ stats, isLoading }) => {
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary">
-                    Total Pérdidas (Cantidad)
+                    {t('mermaStats.totalLosses')}
                   </Typography>
                   <Typography variant="h4" fontWeight={700}>
                     {totalCantidad.toFixed(2)}
@@ -93,7 +96,7 @@ const MermaStatsView: React.FC<MermaStatsProps> = ({ stats, isLoading }) => {
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary">
-                    Total Registros de Merma
+                    {t('mermaStats.totalRecords')}
                   </Typography>
                   <Typography variant="h4" fontWeight={700}>
                     {totalRegistros}
@@ -106,7 +109,7 @@ const MermaStatsView: React.FC<MermaStatsProps> = ({ stats, isLoading }) => {
       </Grid>
 
       <Typography variant="h6" fontWeight={600} mb={2}>
-        Distribución por Motivo
+        {t('mermaStats.distribution')}
       </Typography>
       <Paper
         elevation={0}
@@ -144,7 +147,7 @@ const MermaStatsView: React.FC<MermaStatsProps> = ({ stats, isLoading }) => {
               color="text.secondary"
               textAlign="center"
             >
-              No hay datos registrados.
+              {t('mermaStats.noData')}
             </Typography>
           )}
         </Stack>

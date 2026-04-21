@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, IconButton, Paper, Chip } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -15,41 +16,39 @@ interface CarouselItem {
   category: string;
 }
 
-const ITEMS: CarouselItem[] = [
-  {
-    id: '1',
-    title: 'Handmade Marble Chicken',
-    description:
-      'Una pechuga de pollo veteada con finas hierbas y especias, cocinada a baja temperatura para una jugosidad extrema.',
-    image: '/assets/images/recetas/chicken.png',
-    time: '45 min',
-    difficulty: 'Media',
-    category: 'Gourmet',
-  },
-  {
-    id: '2',
-    title: 'Fresh Mediterranean Pasta',
-    description:
-      'Pasta artesanal con tomates cherry confitados, albahaca fresca y lascas de parmesano de 24 meses.',
-    image: '/assets/images/recetas/pasta.png',
-    time: '20 min',
-    difficulty: 'Fácil',
-    category: 'Italiana',
-  },
-  {
-    id: '3',
-    title: 'Quinoa & Avocado Power Bowl',
-    description:
-      'Ensalada vibrante de quinoa con aguacate maduro, garbanzos tostados y semillas de granada.',
-    image: '/assets/images/recetas/salad.png',
-    time: '15 min',
-    difficulty: 'Fácil',
-    category: 'Saludable',
-  },
-];
-
 const RecipeCarousel: React.FC = () => {
+  const { t } = useTranslation();
   const [activeIndex, setActiveIndex] = useState(0);
+
+  const ITEMS: CarouselItem[] = [
+    {
+      id: '1',
+      title: 'Handmade Marble Chicken',
+      description: t('recipeCarousel.items.1.description'),
+      image: '/assets/images/recetas/chicken.png',
+      time: '45 min',
+      difficulty: t('recipeCarousel.items.1.difficulty'),
+      category: t('recipeCarousel.items.1.category'),
+    },
+    {
+      id: '2',
+      title: 'Fresh Mediterranean Pasta',
+      description: t('recipeCarousel.items.2.description'),
+      image: '/assets/images/recetas/pasta.png',
+      time: '20 min',
+      difficulty: t('recipeCarousel.items.2.difficulty'),
+      category: t('recipeCarousel.items.2.category'),
+    },
+    {
+      id: '3',
+      title: 'Quinoa & Avocado Power Bowl',
+      description: t('recipeCarousel.items.3.description'),
+      image: '/assets/images/recetas/salad.png',
+      time: '15 min',
+      difficulty: t('recipeCarousel.items.3.difficulty'),
+      category: t('recipeCarousel.items.3.category'),
+    },
+  ];
 
   const nextSlide = () => {
     setActiveIndex((prev) => (prev === ITEMS.length - 1 ? 0 : prev + 1));

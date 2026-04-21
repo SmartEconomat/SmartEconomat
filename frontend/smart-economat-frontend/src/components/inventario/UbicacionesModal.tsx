@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -25,6 +26,7 @@ interface Props {
 }
 
 const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
+  const { t } = useTranslation();
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
   const [newNombre, setNewNombre] = useState('');
   const [loading, setLoading] = useState(false);
@@ -37,7 +39,7 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
       setUbicaciones(Array.isArray(data) ? data : []);
     } catch (err) {
       const error = err as Error;
-      toast.error(error.message || 'Error al cargar ubicaciones');
+      toast.error(error.message || t('ubicacionesModal.loadError'));
     } finally {
       setLoading(false);
     }
@@ -55,34 +57,34 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
     try {
       await UbicacionService.create({ nombre: newNombre.trim() });
       setNewNombre('');
-      toast.success('Ubicación añadida');
+      toast.success(t('ubicacionesModal.addSuccess'));
       onChanged();
       loadUbicaciones();
     } catch (err) {
       const error = err as Error;
-      toast.error(error.message || 'Error al crear ubicación');
+      toast.error(error.message || t('ubicacionesModal.createError'));
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await UbicacionService.remove(id);
-      toast.success('Ubicación eliminada');
+      toast.success(t('ubicacionesModal.deleteSuccess'));
       onChanged();
       loadUbicaciones();
     } catch (err) {
       const error = err as Error;
-      toast.error(error.message || 'Error al eliminar ubicación');
+      toast.error(error.message || t('ubicacionesModal.deleteError'));
     }
   };
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Gestionar Ubicaciones</DialogTitle>
+      <DialogTitle>{t('ubicacionesModal.title')}</DialogTitle>
       <DialogContent dividers>
         <Box display="flex" gap={1} mb={3}>
           <TextField
-            label="Nueva ubicación"
+            label={t('ubicacionesModal.newLocation')}
             size="small"
             value={newNombre}
             onChange={(e) => setNewNombre(e.target.value)}
@@ -99,15 +101,15 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
             onClick={handleAdd}
             disabled={!newNombre.trim()}
           >
-            Añadir
+            {t('ubicacionesModal.add')}
           </Button>
         </Box>
 
         {loading ? (
-          <Typography>Cargando...</Typography>
+          <Typography>{t('ubicacionesModal.loading')}</Typography>
         ) : ubicaciones.length === 0 ? (
           <Typography color="text.secondary">
-            No hay ubicaciones registradas.
+            {t('ubicacionesModal.noLocations')}
           </Typography>
         ) : (
           <List>
@@ -138,7 +140,7 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cerrar</Button>
+        <Button onClick={onClose}>{t('ubicacionesModal.close')}</Button>
       </DialogActions>
     </Dialog>
   );

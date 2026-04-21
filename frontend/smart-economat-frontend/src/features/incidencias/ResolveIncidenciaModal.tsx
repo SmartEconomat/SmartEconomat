@@ -32,6 +32,7 @@ import {
   Incidencia,
   ResolveIncidenciaPayload,
 } from '../../services/incidencia.types';
+import { useTranslation } from 'react-i18next';
 
 interface ResolveIncidenciaModalProps {
   isOpen: boolean;
@@ -98,6 +99,7 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
   incidencia,
   defaultMarkResolved = true,
 }) => {
+  const { t } = useTranslation();
   const [observaciones, setObservaciones] = useState('');
   const [marcarComoResuelta, setMarcarComoResuelta] = useState(true);
   const [estadoFinal, setEstadoFinal] = useState<
@@ -380,27 +382,25 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
           <CheckCircleIcon color="success" />
           <Typography variant="h6" component="h2" fontWeight={700}>
             {defaultMarkResolved
-              ? 'Resolver incidencia'
-              : 'Ajustar cantidades de incidencia'}
+              ? t('resolveIncidencia.titleResolve')
+              : t('resolveIncidencia.titleAdjust')}
           </Typography>
         </DialogTitle>
 
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <Typography variant="body2" color="text.secondary">
-              Se muestran todas las líneas de la incidencia. Solo las líneas con
-              discrepancia permiten ajuste, manteniendo la cantidad recibida
-              como solo lectura.
+              {t('resolveIncidencia.allLinesInfo')}
             </Typography>
 
             <Alert severity="info" variant="outlined">
-              Proveedor: <strong>{incidencia?.proveedorNombre || '—'}</strong>
+              {t('resolveIncidencia.providerLabel')}{' '}
+              <strong>{incidencia?.proveedorNombre || '—'}</strong>
             </Alert>
 
             {!hasLineas && (
               <Alert severity="error" variant="outlined">
-                Esta incidencia no tiene productos asociados. No se puede
-                ajustar ni resolver hasta que tenga al menos una línea válida.
+                {t('resolveIncidencia.noProducts')}
               </Alert>
             )}
 
@@ -418,17 +418,17 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
                   disabled={isLoading || !hasLineas}
                 />
               }
-              label="Marcar incidencia como resuelta"
+              label={t('resolveIncidencia.markAsResolved')}
             />
 
             {marcarComoResuelta && (
               <FormControl size="small" sx={{ maxWidth: 320 }}>
                 <InputLabel id="estado-final-incidencia-label">
-                  Estado final
+                  {t('resolveIncidencia.finalStatus')}
                 </InputLabel>
                 <Select
                   labelId="estado-final-incidencia-label"
-                  label="Estado final"
+                  label={t('resolveIncidencia.finalStatus')}
                   value={estadoFinal}
                   onChange={(event) =>
                     setEstadoFinal(
@@ -441,13 +441,13 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
                   disabled={isLoading || !hasLineas}
                 >
                   <MenuItem value={EstadoIncidencia.RESUELTA}>
-                    Resuelta
+                    {t('resolveIncidencia.statusResuelta')}
                   </MenuItem>
                   <MenuItem value={EstadoIncidencia.CANCELADA}>
-                    Cancelada
+                    {t('resolveIncidencia.statusCancelada')}
                   </MenuItem>
                   <MenuItem value={EstadoIncidencia.INVALIDA}>
-                    Inválida
+                    {t('resolveIncidencia.statusInvalida')}
                   </MenuItem>
                 </Select>
               </FormControl>
@@ -456,7 +456,7 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
             <Stack spacing={1.25}>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
                 <TextField
-                  label="Buscar producto"
+                  label={t('resolveIncidencia.searchProduct')}
                   value={busquedaProducto}
                   onChange={(event) => setBusquedaProducto(event.target.value)}
                   size="small"
@@ -466,15 +466,17 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
               </Stack>
 
               <Alert severity="info" variant="outlined">
-                Ajustables: <strong>{resumenLineas.ajustables}</strong> | Sin
-                ajuste: <strong>{resumenLineas.sinAjuste}</strong> | Total:{' '}
+                {t('resolveIncidencia.adjustableLabel')}{' '}
+                <strong>{resumenLineas.ajustables}</strong> |{' '}
+                {t('resolveIncidencia.noAdjustLabel')}{' '}
+                <strong>{resumenLineas.sinAjuste}</strong> |{' '}
+                {t('resolveIncidencia.totalLabel')}{' '}
                 <strong>{resumenLineas.total}</strong>
               </Alert>
 
               {!hasLineasAjustables && hasLineas ? (
                 <Alert severity="warning" variant="outlined">
-                  Esta incidencia tiene productos, pero no hay discrepancias
-                  activas para ajustar. Puedes cerrar la incidencia si procede.
+                  {t('resolveIncidencia.noDiscrepanciesWarning')}
                 </Alert>
               ) : null}
 
@@ -482,16 +484,30 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
                 <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 700 }}>Producto</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Pedida</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Recibida</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Ajuste</TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>
-                        Tras ajuste
+                        {t('resolveIncidencia.columns.product')}
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Balance</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Estado</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Nota</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>
+                        {t('resolveIncidencia.columns.ordered')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>
+                        {t('resolveIncidencia.columns.received')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>
+                        {t('resolveIncidencia.columns.adjustment')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>
+                        {t('resolveIncidencia.columns.afterAdjust')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>
+                        {t('resolveIncidencia.columns.balance')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>
+                        {t('resolveIncidencia.columns.status')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>
+                        {t('resolveIncidencia.columns.note')}
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -544,11 +560,17 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
                               helperText={
                                 esEditable
                                   ? balanceOriginal > CANTIDAD_EPSILON
-                                    ? `Rango permitido: ${formatCantidad(boundsAjuste.min)} a 0`
+                                    ? t('resolveIncidencia.rangeText', {
+                                        min: formatCantidad(boundsAjuste.min),
+                                        max: '0',
+                                      })
                                     : balanceOriginal < -CANTIDAD_EPSILON
-                                      ? `Rango permitido: 0 a ${formatCantidad(boundsAjuste.max)}`
-                                      : 'Ajuste manual'
-                                  : 'No requiere ajuste'
+                                      ? t('resolveIncidencia.rangeText', {
+                                          min: '0',
+                                          max: formatCantidad(boundsAjuste.max),
+                                        })
+                                      : t('resolveIncidencia.manualAdjust')
+                                  : t('resolveIncidencia.noAdjustNeeded')
                               }
                             />
                           </TableCell>
@@ -568,9 +590,9 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
                                 esEditable
                                   ? Math.abs(balanceTrasAjuste) >
                                     CANTIDAD_EPSILON
-                                    ? 'Pendiente ajuste'
-                                    : 'Balanceado'
-                                  : 'Sin ajuste'
+                                    ? t('resolveIncidencia.pendingAdjust')
+                                    : t('resolveIncidencia.balanced')
+                                  : t('resolveIncidencia.noAdjust')
                               }
                               color={
                                 esEditable
@@ -584,7 +606,7 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
                           </TableCell>
                           <TableCell sx={{ minWidth: 220 }}>
                             <TextField
-                              label="Nota"
+                              label={t('resolveIncidencia.columns.note')}
                               value={linea.observaciones}
                               onChange={(event) =>
                                 handleObservacionLineaChange(
@@ -615,18 +637,18 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
                   setPage(0);
                 }}
                 rowsPerPageOptions={[5, 8, 12, 20]}
-                labelRowsPerPage="Filas"
+                labelRowsPerPage={t('resolveIncidencia.rowsPerPage')}
               />
               {lineasFiltradas.length === 0 ? (
                 <Alert severity="warning" variant="outlined">
-                  No hay productos que coincidan con el filtro actual.
+                  {t('resolveIncidencia.noMatchFilter')}
                 </Alert>
               ) : null}
             </Stack>
 
             <TextField
-              label="Notas de resolución (opcional)"
-              placeholder="Ej: Ajuste parcial recibido hoy, queda pendiente 1 unidad para mañana."
+              label={t('resolveIncidencia.resolutionNotes')}
+              placeholder={t('resolveIncidencia.resolutionPlaceholder')}
               fullWidth
               multiline
               rows={4}
@@ -645,7 +667,7 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
             variant="text"
             color="inherit"
           >
-            Cancelar
+            {t('resolveIncidencia.cancel')}
           </Button>
           <Button
             type="submit"
@@ -661,10 +683,10 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
             }
           >
             {isLoading
-              ? 'Guardando...'
+              ? t('resolveIncidencia.saving')
               : marcarComoResuelta
-                ? 'Guardar y resolver'
-                : 'Guardar ajustes'}
+                ? t('resolveIncidencia.saveAndResolve')
+                : t('resolveIncidencia.saveAdjustments')}
           </Button>
         </DialogActions>
       </form>

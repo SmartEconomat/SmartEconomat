@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Paper,
@@ -88,10 +89,11 @@ import { DownloadService } from '../services/download.service';
 const RecetaIngredientesView: React.FC<{
   ingredientes?: RecetaIngrediente[];
 }> = ({ ingredientes = [] }) => {
+  const { t } = useTranslation();
   if (ingredientes.length === 0) {
     return (
       <Typography variant="body2" color="text.secondary">
-        Sin ingredientes registrados.
+        {t('recetas.ingredientesView.noIngredientes')}
       </Typography>
     );
   }
@@ -101,12 +103,18 @@ const RecetaIngredientesView: React.FC<{
       <Table size="small">
         <TableHead sx={{ bgcolor: 'action.hover' }}>
           <TableRow>
-            <TableCell sx={{ fontWeight: 'bold' }}>Producto</TableCell>
-            <TableCell sx={{ fontWeight: 'bold', width: 100 }}>
-              Cantidad
+            <TableCell sx={{ fontWeight: 'bold' }}>
+              {t('recetas.ingredientesView.colProducto')}
             </TableCell>
-            <TableCell sx={{ fontWeight: 'bold', width: 80 }}>Unidad</TableCell>
-            <TableCell sx={{ fontWeight: 'bold' }}>Proveedor fav.</TableCell>
+            <TableCell sx={{ fontWeight: 'bold', width: 100 }}>
+              {t('recetas.ingredientesView.colCantidad')}
+            </TableCell>
+            <TableCell sx={{ fontWeight: 'bold', width: 80 }}>
+              {t('recetas.ingredientesView.colUnidad')}
+            </TableCell>
+            <TableCell sx={{ fontWeight: 'bold' }}>
+              {t('recetas.ingredientesView.colProveedorFav')}
+            </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -148,7 +156,7 @@ const RecetaIngredientesView: React.FC<{
                       fontSize: '0.8rem',
                     }}
                   >
-                    Automático
+                    {t('recetas.ingredientesView.automatico')}
                   </span>
                 )}
               </TableCell>
@@ -273,6 +281,7 @@ const RecipeImagePreview: React.FC<{
 };
 
 const Recetas: React.FC = () => {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -328,9 +337,7 @@ const Recetas: React.FC = () => {
       setTotalItems(recetasData.total || recetasData.data.length);
     } catch (err: unknown) {
       const message =
-        err instanceof Error
-          ? err.message
-          : 'Error desconocido al cargar recetas.';
+        err instanceof Error ? err.message : t('recetas.toast.loadError');
       setError(message);
     } finally {
       setIsLoading(false);
@@ -349,10 +356,10 @@ const Recetas: React.FC = () => {
     try {
       await deleteResource(`/recetas/${itemToDelete.id}`);
       setData((prev) => prev.filter((r) => r.id !== itemToDelete.id));
-      toast.success(`Receta "${itemToDelete.nombre}" eliminada correctamente.`);
+      toast.success(t('recetas.toast.deleted', { name: itemToDelete.nombre }));
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Error al eliminar la receta.';
+        err instanceof Error ? err.message : t('recetas.toast.deleteError');
       toast.error(message);
     } finally {
       setIsDeleting(false);
@@ -367,16 +374,16 @@ const Recetas: React.FC = () => {
 
       if (formData.id) {
         await updateReceta(String(formData.id), payload as RecetaPayload);
-        toast.success('Receta actualizada correctamente.');
+        toast.success(t('recetas.toast.updated'));
       } else {
         await createReceta(payload as RecetaPayload);
-        toast.success('Receta creada correctamente.');
+        toast.success(t('recetas.toast.created'));
       }
       await loadData();
       setItemToEdit(null);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Error al guardar la receta.';
+        err instanceof Error ? err.message : t('recetas.toast.saveError');
       toast.error(message);
     } finally {
       setIsSaving(false);
@@ -389,7 +396,7 @@ const Recetas: React.FC = () => {
 
   const openExportDialog = (ids: string[]) => {
     if (ids.length === 0) {
-      toast.error('Selecciona al menos una receta para exportar a PDF.');
+      toast.error(t('recetas.toast.noSelectionForPdf'));
       return;
     }
 
@@ -400,7 +407,7 @@ const Recetas: React.FC = () => {
 
   const handleExportPdf = async () => {
     if (exportIds.length === 0) {
-      toast.error('Selecciona al menos una receta para exportar a PDF.');
+      toast.error(t('recetas.toast.noSelectionForPdf'));
       return;
     }
 
@@ -530,9 +537,7 @@ const Recetas: React.FC = () => {
     if (!stockValidation) return;
 
     if (!hasMissingIngredients) {
-      toast.error(
-        'No se encontraron proveedores válidos para los ingredientes faltantes.'
-      );
+      toast.error(t('recetas.toast.noProveedoresForOrder'));
       return;
     }
 
@@ -547,16 +552,27 @@ const Recetas: React.FC = () => {
       });
 
       const totalPedidos = pedidoUsuario.pedidos?.length ?? 0;
-      toast.success(
-        totalPedidos > 0
-          ? `Se ha generado el pedido #${pedidoUsuario.numeroGlobal} con ${totalPedidos} pedido${totalPedidos === 1 ? '' : 's'} interno${totalPedidos === 1 ? '' : 's'} para cubrir los faltantes.`
-          : `Se ha generado el pedido #${pedidoUsuario.numeroGlobal} para cubrir los faltantes.`
-      );
+      if (totalPedidos > 0) {
+        const key =
+          totalPedidos === 1
+            ? 'recetas.toast.orderFromMissingSuccess'
+            : 'recetas.toast.orderFromMissingSuccessPlural';
+        toast.success(
+          t(key, { num: pedidoUsuario.numeroGlobal, count: totalPedidos })
+        );
+      } else {
+        toast.success(
+          t('recetas.toast.orderFromMissingSuccessSimple', {
+            num: pedidoUsuario.numeroGlobal,
+          })
+        );
+      }
       setIsCookModalOpen(false);
     } catch (err: unknown) {
       toast.error(
-        'Error al generar pedidos: ' +
-          (err instanceof Error ? err.message : String(err))
+        t('recetas.toast.orderFromMissingError', {
+          error: err instanceof Error ? err.message : String(err),
+        })
       );
     } finally {
       setIsCooking(false);
@@ -565,7 +581,7 @@ const Recetas: React.FC = () => {
 
   const handleConfirmCook = async () => {
     if (cookData.items.length === 0 || !cookData.ubicacionId) {
-      toast.error('Debes seleccionar una ubicación de destino.');
+      toast.error(t('recetas.toast.noUbicacion'));
       return;
     }
 
@@ -588,7 +604,7 @@ const Recetas: React.FC = () => {
             const recipeError =
               axiosLike.response?.data?.message ||
               axiosLike.message ||
-              'Error en esta receta';
+              t('recetas.toast.recipeError');
             toast.error(`${item.receta.nombre}: ${recipeError}`);
             return null;
           }
@@ -599,15 +615,18 @@ const Recetas: React.FC = () => {
       if (successful > 0) {
         toast.success(
           successful === cookData.items.length
-            ? 'Producciones lanzadas con éxito'
-            : `Se procesaron ${successful} de ${cookData.items.length} producciones.`
+            ? t('recetas.toast.allProduccionOk')
+            : t('recetas.toast.produccionPartial', {
+                ok: successful,
+                total: cookData.items.length,
+              })
         );
       }
       setIsCookModalOpen(false);
       setSelectedIds([]);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Error al iniciar la preparación.';
+        err instanceof Error ? err.message : t('recetas.toast.produccionError');
       toast.error(message);
     } finally {
       setIsCooking(false);
@@ -617,7 +636,7 @@ const Recetas: React.FC = () => {
   const columns: Column<Receta>[] = [
     {
       id: 'nombre',
-      label: 'Nombre',
+      label: t('recetas.columns.nombre'),
       sortable: true,
       minWidth: 380,
       cellSx: { py: 2, pr: 4 },
@@ -670,7 +689,7 @@ const Recetas: React.FC = () => {
     },
     {
       id: 'dificultad',
-      label: 'Dificultad',
+      label: t('recetas.columns.dificultad'),
       render: (row) =>
         row.dificultad ? (
           <StatusChip status={row.dificultad} size="small" variant="outlined" />
@@ -685,7 +704,7 @@ const Recetas: React.FC = () => {
     },
     {
       id: 'tiempoPreparacion',
-      label: 'Tiempo',
+      label: t('recetas.columns.tiempo'),
       width: 200,
       headerSx: { px: 4 },
       sortable: true,
@@ -712,7 +731,7 @@ const Recetas: React.FC = () => {
     },
     {
       id: 'ingredientes',
-      label: 'Ingredientes',
+      label: t('recetas.columns.ingredientes'),
       align: 'right',
       width: 170,
       render: (row) => row.ingredientes?.length ?? 0,
@@ -742,7 +761,7 @@ const Recetas: React.FC = () => {
       );
 
       if (recetaIds.length === 0) {
-        toast.error('Debes seleccionar al menos una receta.');
+        toast.error(t('recetas.toast.noRecetasForOrder'));
         return;
       }
 
@@ -755,60 +774,67 @@ const Recetas: React.FC = () => {
             .join(', ')}`,
         });
 
+        const orderKey =
+          recetaIds.length === 1
+            ? 'recetas.toast.orderFromRecipesSuccess'
+            : 'recetas.toast.orderFromRecipesSuccessPlural';
         toast.success(
-          `Pedido #${pedidoUsuario.numeroGlobal} generado correctamente desde ${recetaIds.length} receta${recetaIds.length === 1 ? '' : 's'}.`
+          t(orderKey, {
+            num: pedidoUsuario.numeroGlobal,
+            count: recetaIds.length,
+          })
         );
         setItemToView(null);
       } catch (err: unknown) {
         const message =
           err instanceof Error
             ? err.message
-            : 'Error al generar el pedido desde recetas.';
+            : t('recetas.toast.orderFromRecipesError');
         toast.error(message);
       } finally {
         setIsCooking(false);
       }
     },
-    [toast]
+    [t, toast]
   );
 
   const renderActions = (row: Receta) => (
     <Stack direction="row" spacing={1} justifyContent="center">
-      <Tooltip title="Ver detalles">
+      <Tooltip title={t('recetas.actions.view')}>
         <IconButton
           color="primary"
           onClick={() => {
             setItemToView(row);
           }}
           size="small"
-          aria-label="Ver detalles"
+          aria-label={t('recetas.actions.view')}
         >
           <VisibilityIcon fontSize="small" />
         </IconButton>
       </Tooltip>
       {canCook && (
-        <Tooltip title="Preparar ahora">
+        <Tooltip title={t('recetas.actions.cook')}>
           <IconButton
             color="success"
             onClick={() => {
               handleCookClick([row]);
             }}
             size="small"
-            aria-label="Preparar"
+            aria-label={t('recetas.actions.cook')}
           >
             <PlayCircleOutlineIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       )}
       {canCreateOrders && (
-        <Tooltip title="Crear pedido">
+        <Tooltip title={t('recetas.actions.createOrder')}>
           <IconButton
             color="warning"
             onClick={() => {
               void handleCreateOrderFromRecipes([row]);
             }}
             size="small"
-            aria-label="Crear pedido"
+            aria-label={t('recetas.actions.createOrder')}
             disabled={isCooking}
           >
             <ShoppingCartCheckoutOutlinedIcon fontSize="small" />
@@ -816,14 +842,14 @@ const Recetas: React.FC = () => {
         </Tooltip>
       )}
       {canExportPdf && (
-        <Tooltip title="Exportar PDF">
+        <Tooltip title={t('recetas.actions.exportPdf')}>
           <IconButton
             color="error"
             onClick={() => {
               openExportDialog([row.id]);
             }}
             size="small"
-            aria-label="Exportar PDF"
+            aria-label={t('recetas.actions.exportPdf')}
             disabled={isExportingPdf}
           >
             <PictureAsPdfOutlinedIcon fontSize="small" />
@@ -837,7 +863,7 @@ const Recetas: React.FC = () => {
             handleEditClick(row);
           }}
           size="small"
-          aria-label="Editar"
+          aria-label={t('recetas.actions.edit')}
         >
           <EditIcon fontSize="small" />
         </IconButton>
@@ -849,7 +875,7 @@ const Recetas: React.FC = () => {
             setItemToDelete(row);
           }}
           size="small"
-          aria-label="Borrar"
+          aria-label={t('recetas.actions.delete')}
         >
           <DeleteIcon fontSize="small" />
         </IconButton>
@@ -860,11 +886,11 @@ const Recetas: React.FC = () => {
   const viewSections: DetailSection[] = itemToView
     ? [
         {
-          title: 'Información',
+          title: t('recetas.detail.sectionInfo'),
           columns: 3,
           fields: [
             {
-              label: 'Dificultad',
+              label: t('recetas.detail.fieldDificultad'),
               value: itemToView.dificultad ? (
                 <StatusChip
                   status={itemToView.dificultad}
@@ -874,45 +900,51 @@ const Recetas: React.FC = () => {
               ) : undefined,
             },
             {
-              label: 'Franja de tiempo',
+              label: t('recetas.detail.fieldFranjaTiempo'),
               value: getFranjaTiempoLabel(itemToView),
             },
             {
-              label: 'Tiempo de preparación',
+              label: t('recetas.detail.fieldTiempoPreparacion'),
               value: getTiempoPreparacionLabel(itemToView),
             },
           ],
         },
         {
-          title: 'Instrucciones',
+          title: t('recetas.detail.sectionInstrucciones'),
           fields: [
             {
-              label: 'Pasos de elaboración',
+              label: t('recetas.detail.fieldPasosElaboracion'),
               value: itemToView.instrucciones,
               fullWidth: true,
             },
           ],
         },
         {
-          title: 'Producción',
+          title: t('recetas.detail.sectionProduccion'),
           columns: 3,
           fields: [
             {
-              label: 'Rendimiento',
+              label: t('recetas.detail.fieldRendimiento'),
               value: itemToView.rendimiento
                 ? `${itemToView.rendimiento} ${itemToView.unidadResultado}`
                 : undefined,
             },
-            { label: 'Días de Caducidad', value: itemToView.diasCaducidad },
             {
-              label: 'Coste Est. por unidad',
+              label: t('recetas.detail.fieldDiasCaducidad'),
+              value: itemToView.diasCaducidad,
+            },
+            {
+              label: t('recetas.detail.fieldCosteEst'),
               value: getCosteUnitarioEstimadoLabel(
                 itemToView.costeUnitarioEstimado
               ),
             },
-            { label: 'Raciones (base)', value: itemToView.raciones },
             {
-              label: 'Tamaño ración',
+              label: t('recetas.detail.fieldRaciones'),
+              value: itemToView.raciones,
+            },
+            {
+              label: t('recetas.detail.fieldTamanioRacion'),
               value: itemToView.tamanioRacion
                 ? `${itemToView.tamanioRacion} ${itemToView.unidadResultado}`
                 : undefined,
@@ -920,13 +952,13 @@ const Recetas: React.FC = () => {
           ],
         },
         {
-          title: 'Ingredientes',
+          title: t('recetas.detail.sectionIngredientes'),
           content: (
             <RecetaIngredientesView ingredientes={itemToView.ingredientes} />
           ),
         },
         {
-          title: 'Alérgenos detectados',
+          title: t('recetas.detail.sectionAlergenos'),
           content: <RecetaAlergenos ingredientes={itemToView.ingredientes} />,
         },
       ]
@@ -937,21 +969,21 @@ const Recetas: React.FC = () => {
       <RecipeCarousel />
 
       <PageToolbar
-        title="Gestión de Recetas"
+        title={t('recetas.pageTitle')}
         searchValue={searchTerm}
         onSearchChange={(v) => {
           setSearchTerm(v);
           setPage(1);
         }}
-        searchPlaceholder="Buscar por nombre, instrucciones, ingredientes..."
+        searchPlaceholder={t('recetas.searchPlaceholder')}
         searchId="search-recetas"
         totalItems={totalItems}
-        totalItemsLabel="recetas"
+        totalItemsLabel={t('recetas.totalItemsLabel')}
         viewMode={viewMode}
         primaryAction={
           canCreate
             ? {
-                label: 'Nueva Receta',
+                label: t('recetas.newReceta'),
                 onClick: () => setItemToEdit({}),
                 id: 'btn-nueva-receta',
               }
@@ -963,8 +995,10 @@ const Recetas: React.FC = () => {
                 {
                   label:
                     selectedIds.length > 0
-                      ? `Preparar (${selectedIds.length})`
-                      : 'Preparar recetas',
+                      ? t('recetas.prepararConCount', {
+                          count: selectedIds.length,
+                        })
+                      : t('recetas.prepararRecetas'),
                   icon: <RestaurantIcon />,
                   onClick: () => {
                     const items = data.filter((r) =>
@@ -984,8 +1018,10 @@ const Recetas: React.FC = () => {
                 {
                   label:
                     selectedIds.length > 0
-                      ? `Exportar PDF (${selectedIds.length})`
-                      : 'Exportar PDF',
+                      ? t('recetas.exportPdfConCount', {
+                          count: selectedIds.length,
+                        })
+                      : t('recetas.exportPdf'),
                   icon: <PictureAsPdfOutlinedIcon />,
                   onClick: () => {
                     const ids =
@@ -1004,7 +1040,7 @@ const Recetas: React.FC = () => {
           ...(canExportPdf
             ? [
                 {
-                  label: 'Exportar Excel',
+                  label: t('recetas.exportExcel'),
                   icon: <FileDownloadOutlinedIcon />,
                   onClick: () => {
                     void handleExportExcel();
@@ -1020,8 +1056,10 @@ const Recetas: React.FC = () => {
                 {
                   label:
                     selectedIds.length > 0
-                      ? `Crear pedido (${selectedIds.length})`
-                      : 'Crear pedido',
+                      ? t('recetas.crearPedidoConCount', {
+                          count: selectedIds.length,
+                        })
+                      : t('recetas.crearPedido'),
                   icon: <ShoppingCartCheckoutOutlinedIcon />,
                   onClick: () => {
                     const items = data.filter((r) =>
@@ -1069,13 +1107,13 @@ const Recetas: React.FC = () => {
               />
               <Typography variant="h6" color="text.secondary" gutterBottom>
                 {searchTerm.trim()
-                  ? 'No hay recetas que coincidan con tu búsqueda'
-                  : 'No hay recetas registradas'}
+                  ? t('recetas.empty.withSearch')
+                  : t('recetas.empty.noRecetas')}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                 {searchTerm.trim()
-                  ? 'Prueba con otros términos o limpia el filtro.'
-                  : 'Crea la primera receta del economato para comenzar.'}
+                  ? t('recetas.empty.withSearchHint')
+                  : t('recetas.empty.noRecetasHint')}
               </Typography>
               {!searchTerm.trim() && canCreate && (
                 <Button
@@ -1083,7 +1121,7 @@ const Recetas: React.FC = () => {
                   startIcon={<AddIcon />}
                   onClick={() => setItemToEdit({})}
                 >
-                  Añadir Receta
+                  {t('recetas.empty.addReceta')}
                 </Button>
               )}
             </Box>
@@ -1166,7 +1204,9 @@ const Recetas: React.FC = () => {
                 }}
               >
                 <Typography variant="caption" color="text.secondary">
-                  {receta.ingredientes?.length || 0} ingredientes
+                  {t('recetas.ingredientesCount', {
+                    count: receta.ingredientes?.length || 0,
+                  })}
                 </Typography>
                 <Box>{renderActions(receta)}</Box>
               </CardActions>
@@ -1179,16 +1219,16 @@ const Recetas: React.FC = () => {
           isOpen={!!itemToDelete}
           onClose={() => !isDeleting && setItemToDelete(null)}
           onConfirm={() => void handleDeleteConfirm()}
-          title="Eliminar receta"
+          title={t('recetas.deleteDialog.title')}
           message={
             <>
-              ¿Estás seguro de que deseas eliminar la receta{' '}
-              <strong>{itemToDelete?.nombre}</strong>? Esta acción no se puede
-              deshacer.
+              {t('recetas.deleteDialog.messagePre')}{' '}
+              <strong>{itemToDelete?.nombre}</strong>
+              {t('recetas.deleteDialog.messagePost')}
             </>
           }
-          confirmText="Sí, eliminar"
-          cancelText="Cancelar"
+          confirmText={t('recetas.deleteDialog.confirm')}
+          cancelText={t('recetas.deleteDialog.cancel')}
           isLoading={isDeleting}
         />
 
@@ -1204,7 +1244,9 @@ const Recetas: React.FC = () => {
           isOpen={!!itemToView}
           onClose={() => setItemToView(null)}
           title={itemToView?.nombre ?? ''}
-          subtitle={`${itemToView?.ingredientes?.length ?? 0} ingredientes`}
+          subtitle={t('recetas.detail.subtitleIngredientes', {
+            count: itemToView?.ingredientes?.length ?? 0,
+          })}
           size="lg"
           headerMedia={
             itemToView ? (
@@ -1231,7 +1273,7 @@ const Recetas: React.FC = () => {
                       setItemToView(null);
                     }}
                   >
-                    Preparar
+                    {t('recetas.detail.buttonPreparar')}
                   </Button>
                 )}
                 {canCreateOrders && (
@@ -1244,7 +1286,7 @@ const Recetas: React.FC = () => {
                       setItemToView(null);
                     }}
                   >
-                    Pedido
+                    {t('recetas.detail.buttonPedido')}
                   </Button>
                 )}
                 <Button
@@ -1253,7 +1295,7 @@ const Recetas: React.FC = () => {
                   startIcon={<PictureAsPdfOutlinedIcon />}
                   onClick={() => openExportDialog([itemToView!.id])}
                 >
-                  Ficha PDF
+                  {t('recetas.detail.buttonFichaPdf')}
                 </Button>
               </Box>
             )
@@ -1267,7 +1309,7 @@ const Recetas: React.FC = () => {
                 }
               : undefined
           }
-          editLabel="Editar receta"
+          editLabel={t('recetas.detail.editLabel')}
         />
 
         <Dialog
@@ -1276,12 +1318,14 @@ const Recetas: React.FC = () => {
           maxWidth="xs"
           fullWidth
         >
-          <DialogTitle>Exportar recetas a PDF</DialogTitle>
+          <DialogTitle>{t('recetas.exportDialog.title')}</DialogTitle>
           <DialogContent dividers>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               {exportIds.length === 1
-                ? 'Vas a exportar 1 receta.'
-                : `Vas a exportar ${exportIds.length} recetas.`}
+                ? t('recetas.exportDialog.countSingle')
+                : t('recetas.exportDialog.countMultiple', {
+                    count: exportIds.length,
+                  })}
             </Typography>
 
             <FormControlLabel
@@ -1294,7 +1338,7 @@ const Recetas: React.FC = () => {
                   color="primary"
                 />
               }
-              label="Incluir imagen de la receta"
+              label={t('recetas.exportDialog.includeImage')}
             />
 
             <Typography
@@ -1302,7 +1346,7 @@ const Recetas: React.FC = () => {
               color="text.secondary"
               sx={{ display: 'block', mt: 1 }}
             >
-              Si la imagen no existe, el PDF se generará igualmente sin ella.
+              {t('recetas.exportDialog.imageNote')}
             </Typography>
           </DialogContent>
           <DialogActions>
@@ -1310,7 +1354,7 @@ const Recetas: React.FC = () => {
               onClick={() => setIsExportDialogOpen(false)}
               disabled={isExportingPdf}
             >
-              Cancelar
+              {t('recetas.exportDialog.cancel')}
             </Button>
             <Button
               variant="contained"
@@ -1321,7 +1365,9 @@ const Recetas: React.FC = () => {
               }}
               disabled={isExportingPdf}
             >
-              {isExportingPdf ? 'Exportando...' : 'Exportar PDF'}
+              {isExportingPdf
+                ? t('recetas.exportDialog.exporting')
+                : t('recetas.exportDialog.exportButton')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -1351,8 +1397,12 @@ const Recetas: React.FC = () => {
             <Box>
               <Typography variant="h6" component="h2" sx={{ fontWeight: 800 }}>
                 {cookData.items.length > 1
-                  ? `Producción en Lote (${cookData.items.length} recetas)`
-                  : `Preparar Receta: ${cookData.items[0]?.receta.nombre}`}
+                  ? t('recetas.cookDialog.titleBatch', {
+                      count: cookData.items.length,
+                    })
+                  : t('recetas.cookDialog.titleSingle', {
+                      name: cookData.items[0]?.receta.nombre,
+                    })}
               </Typography>
               <Typography
                 variant="caption"
@@ -1363,7 +1413,7 @@ const Recetas: React.FC = () => {
                   fontWeight: 500,
                 }}
               >
-                Configura las cantidades y valida el stock antes de iniciar.
+                {t('recetas.cookDialog.subtitle')}
               </Typography>
             </Box>
           </DialogTitle>
@@ -1381,7 +1431,8 @@ const Recetas: React.FC = () => {
                     gap: 1,
                   }}
                 >
-                  <MenuBookOutlinedIcon fontSize="small" /> Recetas a procesar
+                  <MenuBookOutlinedIcon fontSize="small" />{' '}
+                  {t('recetas.cookDialog.sectionRecetas')}
                 </Typography>
                 <TableContainer
                   component={Paper}
@@ -1400,7 +1451,7 @@ const Recetas: React.FC = () => {
                         <TableCell
                           sx={{ fontWeight: 700, bgcolor: 'background.paper' }}
                         >
-                          Receta
+                          {t('recetas.cookDialog.colReceta')}
                         </TableCell>
                         <TableCell
                           sx={{
@@ -1410,7 +1461,7 @@ const Recetas: React.FC = () => {
                           }}
                           align="right"
                         >
-                          Cantidad
+                          {t('recetas.cookDialog.colCantidad')}
                         </TableCell>
                         <TableCell
                           sx={{
@@ -1420,7 +1471,7 @@ const Recetas: React.FC = () => {
                           }}
                           align="right"
                         >
-                          Raciones
+                          {t('recetas.cookDialog.colRaciones')}
                         </TableCell>
                         <TableCell
                           sx={{
@@ -1429,7 +1480,7 @@ const Recetas: React.FC = () => {
                             bgcolor: 'background.paper',
                           }}
                         >
-                          Und.
+                          {t('recetas.cookDialog.colUnidad')}
                         </TableCell>
                       </TableRow>
                     </TableHead>
@@ -1452,8 +1503,10 @@ const Recetas: React.FC = () => {
                                 color="text.secondary"
                                 sx={{ display: 'block', mt: 0.5 }}
                               >
-                                Rendimiento base: {item.receta.rendimiento}{' '}
-                                {item.receta.unidadResultado || ''}
+                                {t('recetas.cookDialog.rendimientoBase', {
+                                  value: item.receta.rendimiento,
+                                  unit: item.receta.unidadResultado || '',
+                                })}
                               </Typography>
                             ) : null}
                           </TableCell>
@@ -1543,12 +1596,12 @@ const Recetas: React.FC = () => {
                       variant="subtitle2"
                       sx={{ mb: 1.5, fontWeight: 700 }}
                     >
-                      Configuración del Lote
+                      {t('recetas.cookDialog.sectionConfig')}
                     </Typography>
                     <Stack spacing={2}>
                       <MuiTextField
                         select
-                        label="Ubicación de destino"
+                        label={t('recetas.cookDialog.ubicacionLabel')}
                         fullWidth
                         value={cookData.ubicacionId}
                         onChange={(e) =>
@@ -1568,7 +1621,7 @@ const Recetas: React.FC = () => {
                       </MuiTextField>
 
                       <MuiTextField
-                        label="Fecha de caducidad (manual)"
+                        label={t('recetas.cookDialog.fechaCaducidadLabel')}
                         type="date"
                         fullWidth
                         value={cookData.fechaCaducidadManual || ''}
@@ -1599,7 +1652,7 @@ const Recetas: React.FC = () => {
                       }}
                     >
                       <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                        Verificación de Stock
+                        {t('recetas.cookDialog.sectionStock')}
                       </Typography>
                       {isValidatingStock && (
                         <Box
@@ -1607,7 +1660,7 @@ const Recetas: React.FC = () => {
                         >
                           <CircularProgress size={14} thickness={6} />
                           <Typography variant="caption" color="text.secondary">
-                            Garantizando stock...
+                            {t('recetas.cookDialog.validatingStock')}
                           </Typography>
                         </Box>
                       )}
@@ -1627,7 +1680,7 @@ const Recetas: React.FC = () => {
                           variant="caption"
                           sx={{ fontWeight: 800, display: 'block', mb: 0.5 }}
                         >
-                          INGREDIENTES INSUFICIENTES
+                          {t('recetas.cookDialog.stockInsuficiente')}
                         </Typography>
                         <Box
                           component="ul"
@@ -1635,11 +1688,13 @@ const Recetas: React.FC = () => {
                         >
                           {missingIngredients.map((ing) => (
                             <li key={ing.productoId}>
-                              <b>{ing.nombre}</b>: Faltan{' '}
-                              {Number(
-                                (ing.requerido - ing.disponible).toFixed(3)
-                              )}{' '}
-                              {ing.unidad}
+                              <b>{ing.nombre}</b>:{' '}
+                              {t('recetas.cookDialog.stockFaltan', {
+                                amount: Number(
+                                  (ing.requerido - ing.disponible).toFixed(3)
+                                ),
+                                unit: ing.unidad,
+                              })}
                               {ing.cheapestProveedorNombre && (
                                 <Typography
                                   variant="caption"
@@ -1649,7 +1704,9 @@ const Recetas: React.FC = () => {
                                     opacity: 0.7,
                                   }}
                                 >
-                                  (Prov: {ing.cheapestProveedorNombre})
+                                  {t('recetas.cookDialog.stockProv', {
+                                    name: ing.cheapestProveedorNombre,
+                                  })}
                                 </Typography>
                               )}
                             </li>
@@ -1664,14 +1721,13 @@ const Recetas: React.FC = () => {
                           disabled={isCooking}
                           sx={{ fontWeight: 800, borderRadius: 2 }}
                         >
-                          Lanzar Pedido de Faltantes
+                          {t('recetas.cookDialog.lanzarPedidoFaltantes')}
                         </Button>
                       </Alert>
                     ) : (
                       <Alert severity="success" sx={{ borderRadius: 2 }}>
                         <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                          Todo en orden. Stock suficiente para procesar este
-                          lote.
+                          {t('recetas.cookDialog.stockOk')}
                         </Typography>
                       </Alert>
                     )}
@@ -1696,7 +1752,7 @@ const Recetas: React.FC = () => {
               variant="text"
               sx={{ px: 4, borderRadius: 2 }}
             >
-              Cancelar
+              {t('recetas.cookDialog.cancel')}
             </Button>
             <Button
               variant="contained"
@@ -1725,8 +1781,8 @@ const Recetas: React.FC = () => {
               }
             >
               {cookData.items.length > 1
-                ? 'Iniciar Producción de Lote'
-                : 'Iniciar Preparación'}
+                ? t('recetas.cookDialog.iniciarLote')
+                : t('recetas.cookDialog.iniciarPreparacion')}
             </Button>
             {hasMissingIngredients && (
               <Button
@@ -1742,7 +1798,7 @@ const Recetas: React.FC = () => {
                   borderRadius: 2,
                 }}
               >
-                Crear pedido de faltantes
+                {t('recetas.cookDialog.crearPedidoFaltantes')}
               </Button>
             )}
           </DialogActions>

@@ -15,6 +15,7 @@ import {
 } from '../utils/pedidoColumns';
 import { formatPedidoListNumber } from '../utils/pedidoFormatters';
 import PedidoCard from './PedidoCard';
+import { useTranslation } from 'react-i18next';
 
 interface PedidosTableProps {
   data: PedidoListItem[];
@@ -30,8 +31,6 @@ interface PedidosTableProps {
   onCreateClick: () => void;
 }
 
-const columns = buildPedidoColumns();
-
 const PedidosTable: React.FC<PedidosTableProps> = ({
   data,
   isLoading,
@@ -45,6 +44,8 @@ const PedidosTable: React.FC<PedidosTableProps> = ({
   onPageSizeChange,
   onCreateClick,
 }) => {
+  const { t } = useTranslation();
+  const columns = buildPedidoColumns(t);
   return (
     <DataTable
       columns={columns}
@@ -56,7 +57,7 @@ const PedidosTable: React.FC<PedidosTableProps> = ({
       renderGridItem={(row) => (
         <PedidoCard
           pedido={row}
-          actions={renderPedidoActions(row, permissions, handlers)}
+          actions={renderPedidoActions(row, permissions, handlers, t)}
           onRowClick={handlers.onView}
         />
       )}
@@ -66,10 +67,10 @@ const PedidosTable: React.FC<PedidosTableProps> = ({
             sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
           />
           <Typography variant="h6" color="text.secondary" gutterBottom>
-            No se encontraron pedidos
+            {t('pedidos.empty.noOrders')}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Empieza registrando un nuevo pedido al catálogo de proveedores.
+            {t('pedidos.empty.startFirst')}
           </Typography>
           {permissions.canCreate && (
             <Button
@@ -77,7 +78,7 @@ const PedidosTable: React.FC<PedidosTableProps> = ({
               startIcon={<AddIcon />}
               onClick={onCreateClick}
             >
-              Registrar Pedido
+              {t('pedidos.empty.register')}
             </Button>
           )}
         </Box>
@@ -93,9 +94,11 @@ const PedidosTable: React.FC<PedidosTableProps> = ({
       }}
       onRowClick={handlers.onView}
       getRowAriaLabel={(row) =>
-        `Ver detalle del pedido ${formatPedidoListNumber(row)}`
+        t('pedidos.drawer.title') + ` ${formatPedidoListNumber(row)}`
       }
-      renderActions={(row) => renderPedidoActions(row, permissions, handlers)}
+      renderActions={(row) =>
+        renderPedidoActions(row, permissions, handlers, t)
+      }
     />
   );
 };

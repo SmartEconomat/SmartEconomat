@@ -1,4 +1,5 @@
 import React, { useCallback, useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Button,
@@ -54,6 +55,7 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
   value = [],
   onChange,
 }) => {
+  const { t } = useTranslation();
   const [allProducts, setAllProducts] = useState<Producto[]>([]);
   const [productDetails, setProductDetails] = useState<
     Record<string, Producto>
@@ -402,7 +404,7 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
         }}
       >
         <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-          Ingredientes de la Receta
+          {t('recetaIngredientes.title')}
         </Typography>
         <Button
           startIcon={<AddIcon />}
@@ -411,7 +413,7 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
           onClick={handleAddLine}
           disabled={isLoading}
         >
-          Añadir Ingrediente
+          {t('recetaIngredientes.addIngredient')}
         </Button>
       </Box>
 
@@ -439,7 +441,7 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
           >
             <ErrorOutlineIcon />
             <Typography variant="body2" fontWeight="bold">
-              Alérgenos en esta receta:
+              {t('recetaIngredientes.allergenWarning')}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -477,16 +479,16 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
             <TableHead sx={{ bgcolor: 'action.hover' }}>
               <TableRow>
                 <TableCell sx={{ fontWeight: 'bold', width: '35%' }}>
-                  Producto
+                  {t('recetaIngredientes.columns.product')}
                 </TableCell>
                 <TableCell sx={{ fontWeight: 'bold', width: '10%' }}>
-                  Cantidad
+                  {t('recetaIngredientes.columns.quantity')}
                 </TableCell>
                 <TableCell sx={{ fontWeight: 'bold', width: '12%' }}>
-                  Unidad
+                  {t('recetaIngredientes.columns.unit')}
                 </TableCell>
                 <TableCell sx={{ fontWeight: 'bold', width: '35%' }}>
-                  Proveedor fav.
+                  {t('recetaIngredientes.columns.favoriteSupplier')}
                 </TableCell>
                 <TableCell sx={{ width: '8%' }}></TableCell>
               </TableRow>
@@ -499,7 +501,7 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                     align="center"
                     sx={{ py: 3, color: 'text.secondary' }}
                   >
-                    No hay ingredientes añadidos a la receta
+                    {t('recetaIngredientes.empty')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -580,8 +582,10 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                             <TextField
                               {...params}
                               variant="standard"
-                              placeholder="Buscar producto..."
-                              helperText="Escribe al menos 2 letras para buscar productos."
+                              placeholder={t(
+                                'recetaIngredientes.searchProduct'
+                              )}
+                              helperText={t('recetaIngredientes.searchHint')}
                               InputProps={{
                                 ...params.InputProps,
                                 endAdornment: (
@@ -598,7 +602,7 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                               }}
                             />
                           )}
-                          noOptionsText="No hay productos disponibles"
+                          noOptionsText={t('recetaIngredientes.noProducts')}
                           size="small"
                           fullWidth
                         />
@@ -651,7 +655,9 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                           disabled={!line.productoId}
                           renderValue={(val) => {
                             if (!val) {
-                              return <em>Sin proveedor disponible</em>;
+                              return (
+                                <em>{t('recetaIngredientes.noSupplier')}</em>
+                              );
                             }
 
                             const selected = availableProviders.find(
@@ -699,7 +705,9 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                           }}
                         >
                           <MenuItem value="">
-                            <em>Seleccionar automáticamente el más barato</em>
+                            <em>
+                              {t('recetaIngredientes.autoSelectCheapest')}
+                            </em>
                           </MenuItem>
                           {availableProviders.map((pp) => (
                             <MenuItem
@@ -723,7 +731,9 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                               >
                                 <span>
                                   {pp.proveedor?.nombre ||
-                                    'Proveedor desconocido'}{' '}
+                                    t(
+                                      'recetaIngredientes.unknownSupplier'
+                                    )}{' '}
                                   ({pp.precioUnitario}€)
                                 </span>
                                 {pp.proveedor?.id === cheapestProviderId && (
@@ -739,7 +749,7 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                                       fontWeight: 700,
                                     }}
                                   >
-                                    Más barato
+                                    {t('recetaIngredientes.cheapest')}
                                   </Box>
                                 )}
                               </Box>
@@ -748,7 +758,7 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                         </Select>
                       </TableCell>
                       <TableCell>
-                        <Tooltip title="Quitar">
+                        <Tooltip title={t('recetaIngredientes.remove')}>
                           <IconButton
                             size="small"
                             color="error"

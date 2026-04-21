@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Typography, Divider } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import Input from '../../../components/ui/Input';
+import { useTranslation } from 'react-i18next';
 
 interface ProfileFormProps {
   isEditing: boolean;
@@ -25,6 +26,8 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
   onOpenEmailModal,
   isSaving,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <Box>
       <Box display="flex" alignItems="center" mb={{ xs: 2, md: 3 }}>
@@ -37,7 +40,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
           fontWeight={600}
           sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}
         >
-          Datos Personales
+          {t('profileForm.personalData')}
         </Typography>
       </Box>
       <Divider sx={{ mb: { xs: 3, md: 4 } }} />
@@ -51,13 +54,13 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
         <Box>
           {isEditing ? (
             <Input
-              label="Nombre de Usuario"
+              label={t('profileForm.username')}
               name="username"
               value={formData.username}
               onChange={onFormChange}
               required
               disabled={isSaving}
-              helperText="El nombre que verán los demás"
+              helperText={t('profileForm.usernameHelper')}
             />
           ) : (
             <Box>
@@ -67,10 +70,10 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                 fontWeight={600}
                 sx={{ textTransform: 'uppercase', mb: 0.5, display: 'block' }}
               >
-                Nombre de Usuario
+                {t('profileForm.username')}
               </Typography>
               <Typography variant="body1" fontWeight={500}>
-                {formData.username || 'No configurado'}
+                {formData.username || t('profileForm.notConfigured')}
               </Typography>
             </Box>
           )}
@@ -84,7 +87,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
             fontWeight={600}
             sx={{ textTransform: 'uppercase', mb: 0.5, display: 'block' }}
           >
-            ID de Usuario
+            {t('profileForm.userId')}
           </Typography>
           <Typography variant="body1" color="text.secondary">
             {formData.usernameAlias}
@@ -99,7 +102,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
             fontWeight={600}
             sx={{ textTransform: 'uppercase', mb: 0.5, display: 'block' }}
           >
-            Correo Electrónico
+            {t('profileForm.email')}
           </Typography>
           <Box display="flex" alignItems="center" gap={1}>
             <Typography variant="body1">{formData.email}</Typography>
@@ -115,7 +118,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                   '&:hover': { color: 'primary.dark' },
                 }}
               >
-                Solicitar cambio
+                {t('profileForm.requestChange')}
               </Typography>
             )}
           </Box>

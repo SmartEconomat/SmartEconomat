@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -42,6 +43,8 @@ const PasoSeleccionPedidos: React.FC<PasoSeleccionPedidosProps> = ({
   onDeselectProvider,
   onTogglePedido,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <Box>
       <Box
@@ -52,9 +55,7 @@ const PasoSeleccionPedidos: React.FC<PasoSeleccionPedidosProps> = ({
           mb: 2,
         }}
       >
-        <Typography variant="h6">
-          Selecciona los pedidos que estás recibiendo
-        </Typography>
+        <Typography variant="h6">{t('pasoSeleccion.title')}</Typography>
       </Box>
       {loadingPedidos ? (
         <CircularProgress />
@@ -62,20 +63,20 @@ const PasoSeleccionPedidos: React.FC<PasoSeleccionPedidosProps> = ({
         <>
           <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
             <Button variant="outlined" size="small" onClick={onSelectAll}>
-              Seleccionar Todos
+              {t('pasoSeleccion.selectAll')}
             </Button>
             <Button variant="outlined" size="small" onClick={onDeselectAll}>
-              Deseleccionar Todos
+              {t('pasoSeleccion.deselectAll')}
             </Button>
             <FormControl size="small" sx={{ minWidth: 200 }}>
-              <InputLabel>Añadir por Proveedor</InputLabel>
+              <InputLabel>{t('pasoSeleccion.addByProvider')}</InputLabel>
               <Select
                 value=""
-                label="Añadir por Proveedor"
+                label={t('pasoSeleccion.addByProvider')}
                 onChange={onSelectProvider}
               >
                 <MenuItem value="" disabled>
-                  Selecciona un proveedor
+                  {t('pasoSeleccion.selectProvider')}
                 </MenuItem>
                 {uniqueProviders.map((provider) => (
                   <MenuItem key={provider} value={provider}>
@@ -85,14 +86,14 @@ const PasoSeleccionPedidos: React.FC<PasoSeleccionPedidosProps> = ({
               </Select>
             </FormControl>
             <FormControl size="small" sx={{ minWidth: 200 }}>
-              <InputLabel>Deseleccionar por Prov.</InputLabel>
+              <InputLabel>{t('pasoSeleccion.deselectByProvider')}</InputLabel>
               <Select
                 value=""
-                label="Deseleccionar por Prov."
+                label={t('pasoSeleccion.deselectByProvider')}
                 onChange={onDeselectProvider}
               >
                 <MenuItem value="" disabled>
-                  Selecciona un proveedor
+                  {t('pasoSeleccion.selectProvider')}
                 </MenuItem>
                 {uniqueProviders.map((provider) => (
                   <MenuItem key={provider} value={provider}>

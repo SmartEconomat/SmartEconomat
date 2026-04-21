@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Autocomplete, TextField, Chip } from '@mui/material';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { TipoMovimiento } from '../../services/movimiento.types';
+import { useTranslation } from 'react-i18next';
 
 export interface MovimientoFiltersState {
   types: TipoMovimiento[];
@@ -20,6 +21,7 @@ const MovimientoFilters: React.FC<MovimientoFiltersProps> = ({
   filters,
   onChange,
 }) => {
+  const { t } = useTranslation();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleTypeChange = (_: any, newValue: TipoMovimiento[]) => {
     onChange({ ...filters, types: newValue });
@@ -53,8 +55,8 @@ const MovimientoFilters: React.FC<MovimientoFiltersProps> = ({
         renderInput={(params) => (
           <TextField
             {...params}
-            label="Tipos"
-            placeholder="Filtrar por tipo..."
+            label={t('filters.types')}
+            placeholder={t('filters.filterByType')}
             size="small"
             InputProps={{
               ...params.InputProps,
@@ -97,7 +99,7 @@ const MovimientoFilters: React.FC<MovimientoFiltersProps> = ({
 
       <TextField
         id="start-date"
-        label="Desde"
+        label={t('filters.from')}
         type="date"
         size="small"
         value={filters.startDate || ''}
@@ -114,7 +116,7 @@ const MovimientoFilters: React.FC<MovimientoFiltersProps> = ({
 
       <TextField
         id="end-date"
-        label="Hasta"
+        label={t('filters.to')}
         type="date"
         size="small"
         value={filters.endDate || ''}

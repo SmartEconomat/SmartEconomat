@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, useTheme } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import PersonAddOutlinedIcon from '@mui/icons-material/PersonAddOutlined';
+import { useTranslation } from 'react-i18next';
 
 // ─────────────────────────────────────────────
 // Datos del carrusel informativo
@@ -15,43 +16,6 @@ interface SlideData {
   title: string;
   description: string;
 }
-
-/** Slides que se muestran en modo inicio de sesión. */
-const LOGIN_SLIDES: SlideData[] = [
-  {
-    title: 'Bienvenido a SmartEconomat',
-    description:
-      'Gestiona tu economat de forma eficiente, rápida y desde cualquier dispositivo.',
-  },
-  {
-    title: 'Control en tiempo real',
-    description:
-      'Consulta el stock, movimientos y pedidos al momento, sin retrasos ni sorpresas.',
-  },
-  {
-    title: 'Siempre disponible',
-    description: 'Tu economat accesible 24/7 con un sistema seguro y fiable.',
-  },
-];
-
-/** Slides que se muestran en modo registro. */
-const REGISTER_SLIDES: SlideData[] = [
-  {
-    title: 'Únete a SmartEconomat',
-    description:
-      'Regístrate en segundos y empieza a gestionar tu economat hoy mismo.',
-  },
-  {
-    title: 'Todo en un lugar',
-    description:
-      'Productos, recetas, pedidos, incidencias y más, todo integrado en una sola plataforma.',
-  },
-  {
-    title: 'Interfaz moderna y sencilla',
-    description:
-      'Diseño intuitivo para que puedas centrarte en lo que realmente importa.',
-  },
-];
 
 // ─────────────────────────────────────────────
 // Props
@@ -84,7 +48,39 @@ interface AuthSlideProps {
  * @returns {JSX.Element} Panel lateral de autenticación.
  */
 const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
+
+  const LOGIN_SLIDES: SlideData[] = [
+    {
+      title: t('auth.slides.login.slide1Title'),
+      description: t('auth.slides.login.slide1Desc'),
+    },
+    {
+      title: t('auth.slides.login.slide2Title'),
+      description: t('auth.slides.login.slide2Desc'),
+    },
+    {
+      title: t('auth.slides.login.slide3Title'),
+      description: t('auth.slides.login.slide3Desc'),
+    },
+  ];
+
+  const REGISTER_SLIDES: SlideData[] = [
+    {
+      title: t('auth.slides.register.slide1Title'),
+      description: t('auth.slides.register.slide1Desc'),
+    },
+    {
+      title: t('auth.slides.register.slide2Title'),
+      description: t('auth.slides.register.slide2Desc'),
+    },
+    {
+      title: t('auth.slides.register.slide3Title'),
+      description: t('auth.slides.register.slide3Desc'),
+    },
+  ];
+
   const slides = isLogin ? LOGIN_SLIDES : REGISTER_SLIDES;
 
   const [activeSlide, setActiveSlide] = useState(0);
@@ -270,7 +266,7 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
           zIndex: 3,
         }}
         role="tablist"
-        aria-label="Navegación de slides informativos"
+        aria-label={t('auth.slides.navAriaLabel')}
       >
         {slides.map((_, idx) => (
           <Box
@@ -278,7 +274,10 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
             component="button"
             role="tab"
             aria-selected={idx === activeSlide}
-            aria-label={`Slide ${idx + 1} de ${slides.length}`}
+            aria-label={t('auth.slides.slideAriaLabel', {
+              num: idx + 1,
+              total: slides.length,
+            })}
             onClick={() => goToSlide(idx)}
             sx={{
               width: idx === activeSlide ? 28 : 10,

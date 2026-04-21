@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Autocomplete, TextField } from '@mui/material';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import { useTranslation } from 'react-i18next';
 
 export interface AlbaranFiltersState {
   concordancia: boolean | null;
@@ -13,15 +14,17 @@ interface AlbaranFiltersProps {
   onChange: (filters: AlbaranFiltersState) => void;
 }
 
-const CONCORDANCIA_OPTIONS = [
-  { label: 'Conforme', value: true },
-  { label: 'No conforme', value: false },
-];
-
 const AlbaranFilters: React.FC<AlbaranFiltersProps> = ({
   filters,
   onChange,
 }) => {
+  const { t } = useTranslation();
+
+  const CONCORDANCIA_OPTIONS = [
+    { label: t('albaranes.concordancia.conforme'), value: true },
+    { label: t('albaranes.concordancia.noConforme'), value: false },
+  ];
+
   const handleConcordanciaChange = (
     _: unknown,
     newValue: { label: string; value: boolean } | null
@@ -58,8 +61,8 @@ const AlbaranFilters: React.FC<AlbaranFiltersProps> = ({
         renderInput={(params) => (
           <TextField
             {...params}
-            label="Concordancia"
-            placeholder="Filtrar por concordancia..."
+            label={t('filters.concordancia')}
+            placeholder={t('filters.filterByConcordancia')}
             size="small"
             InputProps={{
               ...params.InputProps,
@@ -87,7 +90,7 @@ const AlbaranFilters: React.FC<AlbaranFiltersProps> = ({
 
       <TextField
         id="start-date"
-        label="Desde"
+        label={t('filters.from')}
         type="date"
         size="small"
         value={filters.startDate || ''}
@@ -104,7 +107,7 @@ const AlbaranFilters: React.FC<AlbaranFiltersProps> = ({
 
       <TextField
         id="end-date"
-        label="Hasta"
+        label={t('filters.to')}
         type="date"
         size="small"
         value={filters.endDate || ''}

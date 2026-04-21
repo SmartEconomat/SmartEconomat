@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Stepper,
   Step,
@@ -87,12 +88,7 @@ const isLineaDraftActiva = (linea: LineaDraft): boolean =>
     linea.estadoVisual !== EstadoVisualProducto.OPTIMO
   );
 
-const steps = [
-  'Selección de Pedidos',
-  'Escaneo y Conteo',
-  'Revisión y Ajuste',
-  'Resultado',
-];
+// steps array moved inside the component to support i18n
 
 type SerialNavigator = Navigator & {
   serial: {
@@ -131,12 +127,13 @@ const getScaleHeaderChipConfig = (
   isScaleConnected: boolean,
   isScaleEnabled: boolean,
   isScaleBusy: boolean,
-  scaleStatusText: string
+  scaleStatusText: string,
+  notSupportedLabel: string
 ) => {
   if (!isScaleSupported) {
     return {
       icon: <WarningAmberIcon />,
-      label: 'Web Serial no disponible',
+      label: notSupportedLabel,
       color: 'warning' as const,
     };
   }
@@ -173,6 +170,13 @@ const getScaleHeaderChipConfig = (
 };
 
 const Recepcion: React.FC = () => {
+  const { t } = useTranslation();
+  const steps = [
+    t('recepcion.steps.seleccion'),
+    t('recepcion.steps.escaneo'),
+    t('recepcion.steps.revision'),
+    t('recepcion.steps.resultado'),
+  ];
   const [activeStep, setActiveStep] = useState(0);
   const [resultado, setResultado] = useState<RecepcionResultado | null>(null);
 
@@ -236,7 +240,8 @@ const Recepcion: React.FC = () => {
     isScaleConnected,
     isScaleEnabled,
     isScaleBusy,
-    scaleStatusText
+    scaleStatusText,
+    t('recepcion.scaleStatus.notSupported')
   );
   const isSearchingRef = useRef(false);
 
@@ -1292,7 +1297,7 @@ const Recepcion: React.FC = () => {
           }}
         >
           <Typography variant="h4" component="h1">
-            Gestión de Recepción
+            {t('recepcion.pageTitle')}
           </Typography>
           <Box
             sx={{
@@ -1304,7 +1309,11 @@ const Recepcion: React.FC = () => {
             }}
           >
             {activeStep === 1 && (
-              <Tooltip title={`Estado de báscula: ${scaleHeaderChip.label}`}>
+              <Tooltip
+                title={t('recepcion.scaleTooltip', {
+                  label: scaleHeaderChip.label,
+                })}
+              >
                 <Chip
                   icon={scaleHeaderChip.icon}
                   label={scaleHeaderChip.label}
@@ -1315,10 +1324,10 @@ const Recepcion: React.FC = () => {
               </Tooltip>
             )}
             {syncStatus === 'saving' && (
-              <Tooltip title="Sincronizando borrador con el servidor">
+              <Tooltip title={t('recepcion.sync.savingTooltip')}>
                 <Chip
                   icon={<SaveIcon />}
-                  label="Guardando..."
+                  label={t('recepcion.sync.saving')}
                   size="small"
                   color="warning"
                   variant="outlined"
@@ -1326,10 +1335,10 @@ const Recepcion: React.FC = () => {
               </Tooltip>
             )}
             {syncStatus === 'synced' && (
-              <Tooltip title="Borrador sincronizado de forma segura">
+              <Tooltip title={t('recepcion.sync.syncedTooltip')}>
                 <Chip
                   icon={<CheckCircleIcon />}
-                  label="Sincronizado"
+                  label={t('recepcion.sync.synced')}
                   size="small"
                   color="success"
                   variant="outlined"
@@ -1337,10 +1346,12 @@ const Recepcion: React.FC = () => {
               </Tooltip>
             )}
             {syncStatus === 'error' && (
-              <Tooltip title={syncError || 'Error al sincronizar el borrador'}>
+              <Tooltip
+                title={syncError || t('recepcion.sync.syncErrorDefault')}
+              >
                 <Chip
                   icon={<ErrorOutlineIcon />}
-                  label="Error de sync"
+                  label={t('recepcion.sync.syncError')}
                   size="small"
                   color="error"
                   variant="outlined"
@@ -1348,10 +1359,10 @@ const Recepcion: React.FC = () => {
               </Tooltip>
             )}
             {syncStatus === 'conflict' && (
-              <Tooltip title="El borrador cambió en otro dispositivo">
+              <Tooltip title={t('recepcion.sync.conflictTooltip')}>
                 <Chip
                   icon={<WarningAmberIcon />}
-                  label="Conflicto"
+                  label={t('recepcion.sync.conflict')}
                   size="small"
                   color="warning"
                   variant="outlined"
@@ -1374,7 +1385,7 @@ const Recepcion: React.FC = () => {
           >
             <CircularProgress size={40} />
             <Typography variant="body2" color="text.secondary">
-              Recuperando borrador de recepción...
+              {t('recepcion.loading')}
             </Typography>
           </Box>
         ) : (
@@ -1424,7 +1435,7 @@ const Recepcion: React.FC = () => {
               onClick={() => setIsDiscardDialogOpen(true)}
               color="secondary"
             >
-              Descartar
+              {t('recepcion.buttons.discard')}
             </Button>
 
             <Box>
@@ -1433,7 +1444,7 @@ const Recepcion: React.FC = () => {
                 onClick={handleBack}
                 sx={{ mr: 1 }}
               >
-                Atrás
+                {t('recepcion.buttons.back')}
               </Button>
               <Button
                 variant="contained"
@@ -1453,9 +1464,9 @@ const Recepcion: React.FC = () => {
               >
                 {activeStep === 2
                   ? isSubmitting
-                    ? 'Procesando...'
-                    : 'Finalizar Recepción'
-                  : 'Siguiente'}
+                    ? t('recepcion.buttons.processing')
+                    : t('recepcion.buttons.finish')
+                  : t('recepcion.buttons.next')}
               </Button>
             </Box>
           </Box>
@@ -1504,14 +1515,13 @@ const Recepcion: React.FC = () => {
         isOpen={isRecoveryDialogOpen && !!pendingRecoveryDraft}
         onClose={handleRecoverDraft}
         onConfirm={handleRecoverDraft}
-        title="Recuperar recepción pendiente"
+        title={t('recepcion.recoveryDialog.title')}
         message={
           <>
-            Has dejado una recepción a medias. ¿Deseas recuperarla y continuar
-            donde lo dejaste?
+            {t('recepcionConflict.hint')}
             <br />
             <br />
-            Última actualización:{' '}
+            {t('recepcion.recoveryDialog.lastUpdate')}{' '}
             <strong>
               {(() => {
                 const updatedAt =
@@ -1519,21 +1529,21 @@ const Recepcion: React.FC = () => {
                   draft.serverUpdatedAt ??
                   draft.modificadoEn;
                 if (!updatedAt) {
-                  return 'desconocida';
+                  return t('recepcionConflict.unknown');
                 }
 
                 const parsed = new Date(updatedAt);
                 if (Number.isNaN(parsed.getTime())) {
-                  return 'desconocida';
+                  return t('recepcionConflict.unknown');
                 }
 
-                return parsed.toLocaleString('es-ES');
+                return parsed.toLocaleString();
               })()}
             </strong>
           </>
         }
-        confirmText="Sí, recuperar"
-        cancelText="No, descartar"
+        confirmText={t('recepcion.recoveryDialog.confirm')}
+        cancelText={t('recepcion.recoveryDialog.cancel')}
         confirmColor="primary"
         onCancel={handleDiscardRecoveredDraft}
       />
@@ -1545,10 +1555,10 @@ const Recepcion: React.FC = () => {
           setIsDiscardDialogOpen(false);
           void resetWizard();
         }}
-        title="Descartar recepción"
-        message="¿Estás seguro de que quieres borrar el borrador de recepción actual? Perderás todo el progreso no validado."
-        confirmText="Sí, descartar"
-        cancelText="Cancelar"
+        title={t('recepcion.discardDialog.title')}
+        message={t('recepcion.discardDialog.message')}
+        confirmText={t('recepcion.discardDialog.confirm')}
+        cancelText={t('recepcion.discardDialog.cancel')}
       />
 
       <Snackbar
@@ -1571,10 +1581,9 @@ const Recepcion: React.FC = () => {
         open={isSubmitting}
       >
         <CircularProgress color="inherit" />
-        <Typography variant="h6">Procesando Recepción Masiva...</Typography>
+        <Typography variant="h6">{t('recepcion.processing.title')}</Typography>
         <Typography variant="body2">
-          Garantizando integridad transaccional (ACID). Por favor, no cierres el
-          navegador.
+          {t('recepcion.processing.subtitle')}
         </Typography>
       </Backdrop>
     </Box>

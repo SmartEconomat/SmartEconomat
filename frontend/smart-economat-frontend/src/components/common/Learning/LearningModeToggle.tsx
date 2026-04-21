@@ -4,6 +4,7 @@ import { Tooltip } from '../../ui/Tooltip';
 import SchoolIcon from '@mui/icons-material/SchoolOutlined';
 import SchoolIconFilled from '@mui/icons-material/School';
 import { useThemeContext } from '../../../store/theme.hooks';
+import { useTranslation } from 'react-i18next';
 
 interface LearningModeToggleProps {
   mode?: 'icon' | 'listitem';
@@ -15,16 +16,17 @@ export default function LearningModeToggle({
   isOpen = true,
 }: LearningModeToggleProps) {
   const { isLearningMode, setLearningMode } = useThemeContext();
+  const { t } = useTranslation();
 
   const handleClick = () => {
     setLearningMode(!isLearningMode);
   };
 
   const tooltipText = isLearningMode
-    ? 'Desactivar modo aprendizaje (Ocultar descripciones detalladas)'
-    : 'Activar modo aprendizaje (Mostrar descripciones detalladas)';
+    ? t('learning.deactivate')
+    : t('learning.activate');
 
-  const label = isLearningMode ? 'Aprendizaje: ON' : 'Aprendizaje: OFF';
+  const label = isLearningMode ? t('learning.on') : t('learning.off');
 
   if (mode === 'listitem') {
     return (

@@ -11,6 +11,7 @@ import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import GroupIcon from '@mui/icons-material/Group';
 import EmailIcon from '@mui/icons-material/Email';
 import SettingsIcon from '@mui/icons-material/Settings';
+import type { TFunction } from 'i18next';
 
 export interface TutorialStep {
   icon: React.ReactNode;
@@ -23,132 +24,128 @@ export interface TutorialConfigItem {
   roles?: Record<string, TutorialStep[]>;
 }
 
-export const tutorialConfig: Record<string, TutorialConfigItem> = {
-  '/': {
-    steps: [
-      {
-        icon: <DashboardIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Panel de Inicio',
-        description:
-          'Este es tu centro de control principal. Aquí tendrás una vista rápida del estado de tu economato.',
-      },
-      {
-        icon: (
-          <AddShoppingCartIcon sx={{ fontSize: 60, color: 'secondary.main' }} />
-        ),
-        title: 'Accesos Rápidos',
-        description:
-          'Usa las tarjetas de acceso rápido para crear nuevos pedidos o registrar artículos en segundos.',
-      },
-      {
-        icon: <AssessmentIcon sx={{ fontSize: 60, color: 'success.main' }} />,
-        title: 'Resumen de Actividad',
-        description:
-          'Mantente al día con las últimas notificaciones y alertas de stock bajo.',
-      },
-    ],
-  },
-  '/recepciones': {
-    steps: [
-      {
-        icon: (
-          <QrCodeScannerIcon sx={{ fontSize: 60, color: 'primary.main' }} />
-        ),
-        title: 'Recepción de Mercancía',
-        description:
-          'Gestiona la entrada de productos al almacén de manera eficiente.',
-      },
-      {
-        icon: (
-          <QrCodeScannerIcon sx={{ fontSize: 60, color: 'secondary.main' }} />
-        ),
-        title: 'Escaneo de Códigos',
-        description:
-          'Usa el lector de códigos de barras para identificar productos rápidamente y evitar errores.',
-      },
-    ],
-  },
-  '/inventario': {
-    steps: [
-      {
-        icon: <InventoryIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Gestión de Inventario',
-        description:
-          'Consulta el stock actual de todos tus productos en tiempo real.',
-      },
-      {
-        icon: <AssessmentIcon sx={{ fontSize: 60, color: 'info.main' }} />,
-        title: 'Ajustes y Filtros',
-        description:
-          'Realiza ajustes manuales y filtra por categorías para encontrar lo que buscas.',
-      },
-    ],
-  },
-  '/perfil': {
-    roles: {
-      PROFESOR: [
+export function getTutorialConfig(
+  t: TFunction
+): Record<string, TutorialConfigItem> {
+  return {
+    '/': {
+      steps: [
         {
-          icon: <PersonIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-          title: 'Perfil de usuario',
-          description:
-            'Desde esta tarjeta puedes revisar y editar tus datos personales básicos.',
-        },
-        {
-          icon: <LockIcon sx={{ fontSize: 60, color: 'warning.main' }} />,
-          title: 'Seguridad y contraseña',
-          description:
-            'Puedes cambiar tu nombre de usuario y contraseña. El cambio de email requiere autorización de un rol superior.',
+          icon: <DashboardIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
+          title: t('tutorial.home.step1Title'),
+          description: t('tutorial.home.step1Desc'),
         },
         {
           icon: (
-            <MeetingRoomIcon sx={{ fontSize: 60, color: 'secondary.main' }} />
+            <AddShoppingCartIcon
+              sx={{ fontSize: 60, color: 'secondary.main' }}
+            />
           ),
-          title: 'Administración de aulas',
-          description:
-            'Como profesor puedes gestionar clases, cupos y ubicaciones académicas.',
+          title: t('tutorial.home.step2Title'),
+          description: t('tutorial.home.step2Desc'),
         },
         {
-          icon: <GroupIcon sx={{ fontSize: 60, color: 'success.main' }} />,
-          title: 'Gestión de alumnos',
-          description:
-            'Puedes consultar alumnos, activar su estado y realizar acciones docentes permitidas.',
-        },
-      ],
-      ALUMNO: [
-        {
-          icon: <PersonIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-          title: 'Perfil de usuario',
-          description: 'Aquí puedes consultar tu información personal.',
-        },
-        {
-          icon: <LockIcon sx={{ fontSize: 60, color: 'warning.main' }} />,
-          title: 'Seguridad y contraseña',
-          description:
-            'Como alumno puedes editar tu nombre de usuario y cambiar tu contraseña.',
-        },
-        {
-          icon: <EmailIcon sx={{ fontSize: 60, color: 'info.main' }} />,
-          title: 'Cambio de email',
-          description:
-            'El email no se modifica directamente. Debes enviar una solicitud y esperar la aprobación de un rol superior.',
+          icon: <AssessmentIcon sx={{ fontSize: 60, color: 'success.main' }} />,
+          title: t('tutorial.home.step3Title'),
+          description: t('tutorial.home.step3Desc'),
         },
       ],
     },
-  },
-  default: {
-    steps: [
-      {
-        icon: <HelpIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Ayuda General',
-        description:
-          'Navega por el menú lateral para acceder a las diferentes secciones de la aplicación.',
+    '/recepciones': {
+      steps: [
+        {
+          icon: (
+            <QrCodeScannerIcon sx={{ fontSize: 60, color: 'primary.main' }} />
+          ),
+          title: t('tutorial.recepciones.step1Title'),
+          description: t('tutorial.recepciones.step1Desc'),
+        },
+        {
+          icon: (
+            <QrCodeScannerIcon sx={{ fontSize: 60, color: 'secondary.main' }} />
+          ),
+          title: t('tutorial.recepciones.step2Title'),
+          description: t('tutorial.recepciones.step2Desc'),
+        },
+      ],
+    },
+    '/inventario': {
+      steps: [
+        {
+          icon: <InventoryIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
+          title: t('tutorial.inventario.step1Title'),
+          description: t('tutorial.inventario.step1Desc'),
+        },
+        {
+          icon: <AssessmentIcon sx={{ fontSize: 60, color: 'info.main' }} />,
+          title: t('tutorial.inventario.step2Title'),
+          description: t('tutorial.inventario.step2Desc'),
+        },
+      ],
+    },
+    '/perfil': {
+      roles: {
+        PROFESOR: [
+          {
+            icon: <PersonIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
+            title: t('tutorial.perfilProfesor.step1Title'),
+            description: t('tutorial.perfilProfesor.step1Desc'),
+          },
+          {
+            icon: <LockIcon sx={{ fontSize: 60, color: 'warning.main' }} />,
+            title: t('tutorial.perfilProfesor.step2Title'),
+            description: t('tutorial.perfilProfesor.step2Desc'),
+          },
+          {
+            icon: (
+              <MeetingRoomIcon sx={{ fontSize: 60, color: 'secondary.main' }} />
+            ),
+            title: t('tutorial.perfilProfesor.step3Title'),
+            description: t('tutorial.perfilProfesor.step3Desc'),
+          },
+          {
+            icon: <GroupIcon sx={{ fontSize: 60, color: 'success.main' }} />,
+            title: t('tutorial.perfilProfesor.step4Title'),
+            description: t('tutorial.perfilProfesor.step4Desc'),
+          },
+        ],
+        ALUMNO: [
+          {
+            icon: <PersonIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
+            title: t('tutorial.perfilAlumno.step1Title'),
+            description: t('tutorial.perfilAlumno.step1Desc'),
+          },
+          {
+            icon: <LockIcon sx={{ fontSize: 60, color: 'warning.main' }} />,
+            title: t('tutorial.perfilAlumno.step2Title'),
+            description: t('tutorial.perfilAlumno.step2Desc'),
+          },
+          {
+            icon: <EmailIcon sx={{ fontSize: 60, color: 'info.main' }} />,
+            title: t('tutorial.perfilAlumno.step3Title'),
+            description: t('tutorial.perfilAlumno.step3Desc'),
+          },
+        ],
       },
-      {
-        icon: <SettingsIcon sx={{ fontSize: 60, color: 'action.active' }} />,
-        title: 'Configuración',
-        description:
-          'Personaliza tu experiencia, cambia el tema o gestiona tu perfil desde el menú superior.',
-      },
-    ],
-  },
-};
+    },
+    default: {
+      steps: [
+        {
+          icon: <HelpIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
+          title: t('tutorial.default.step1Title'),
+          description: t('tutorial.default.step1Desc'),
+        },
+        {
+          icon: <SettingsIcon sx={{ fontSize: 60, color: 'action.active' }} />,
+          title: t('tutorial.default.step2Title'),
+          description: t('tutorial.default.step2Desc'),
+        },
+      ],
+    },
+  };
+}
+
+// Keep a backward-compatible export for any remaining static usages
+export const tutorialConfig = getTutorialConfig(
+  ((key: string) => key) as unknown as TFunction
+);

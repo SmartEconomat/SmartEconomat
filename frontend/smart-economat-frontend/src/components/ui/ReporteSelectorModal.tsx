@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Button,
@@ -35,23 +36,13 @@ interface ReporteSelectorModalProps {
   formato?: ReporteFormato;
 }
 
-const TITLES: Record<TipoReportePdf, Record<ReporteFormato, string>> = {
-  pedido: {
-    pdf: 'Reporte de Pedidos (PDF)',
-    excel: 'Reporte de Pedidos (PDF)',
-  },
-  incidencias: {
-    pdf: 'Reporte de Incidencias (PDF)',
-    excel: 'Reporte de Incidencias (Excel)',
-  },
-};
-
 const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
   isOpen,
   onClose,
   tipo,
   formato = 'pdf',
 }) => {
+  const { t } = useTranslation();
   const toast = useToast();
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -88,7 +79,7 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
       })
       .catch((err: Error) => {
         console.error('Error fetching proveedores for report:', err);
-        toast.error('No se pudieron cargar los proveedores para el reporte.');
+        toast.error(t('reporteSelector.loadSuppliersError'));
       })
       .finally(() => {
         setIsLoadingProveedores(false);
@@ -97,10 +88,10 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
 
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
-    if (!startDate) errs.startDate = 'La fecha de inicio es obligatoria';
-    if (!endDate) errs.endDate = 'La fecha de fin es obligatoria';
+    if (!startDate) errs.startDate = t('reporteSelector.startDateRequired');
+    if (!endDate) errs.endDate = t('reporteSelector.endDateRequired');
     if (startDate && endDate && dayjs(startDate).isAfter(dayjs(endDate))) {
-      errs.endDate = 'La fecha de fin debe ser posterior a la de inicio';
+      errs.endDate = t('reporteSelector.endDateBeforeStart');
     }
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
@@ -135,8 +126,8 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
       }
       toast.success(
         isExcelMode
-          ? 'Excel generado correctamente.'
-          : 'Reporte generado correctamente.'
+          ? t('reporteSelector.excelSuccess')
+          : t('reporteSelector.reportSuccess')
       );
       onClose();
     } catch (err: unknown) {
@@ -144,8 +135,8 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
         err instanceof Error
           ? err.message
           : isExcelMode
-            ? 'Error al generar el Excel.'
-            : 'Error al generar el reporte.';
+            ? t('reporteSelector.excelError')
+            : t('reporteSelector.reportError');
       toast.error(message);
     } finally {
       setIsDownloading(false);
@@ -160,12 +151,12 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={TITLES[tipo][formato]}
+      title={t(`reporteSelector.titles.${tipo}.${formato}`)}
       size="sm"
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
         <DatePicker
-          label="Fecha de inicio"
+          label={t('reporteSelector.startDate')}
           name="startDate"
           value={startDate}
           onChange={(_, val) => {
@@ -181,7 +172,7 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
         )}
 
         <DatePicker
-          label="Fecha de fin"
+          label={t('reporteSelector.endDate')}
           name="endDate"
           value={endDate}
           onChange={(_, val) => {
@@ -197,23 +188,23 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
         )}
 
         <FormControl fullWidth sx={{ mt: 1.5, mb: 0.5 }}>
-          <InputLabel>Proveedor (opcional)</InputLabel>
+          <InputLabel>{t('reporteSelector.supplierOptional')}</InputLabel>
           <Select
             value={proveedorId}
             onChange={(e) => setProveedorId(e.target.value as string)}
-            label="Proveedor (opcional)"
+            label={t('reporteSelector.supplierOptional')}
             disabled={isLoadingProveedores}
           >
-            <MenuItem value="">Todos los proveedores</MenuItem>
+            <MenuItem value="">{t('reporteSelector.allSuppliers')}</MenuItem>
             {isLoadingProveedores && (
               <MenuItem disabled value="_loading">
                 <CircularProgress size={16} sx={{ mr: 1 }} />
-                Cargando proveedores...
+                {t('reporteSelector.loadingSuppliers')}
               </MenuItem>
             )}
             {!isLoadingProveedores && proveedores.length === 0 && (
               <MenuItem disabled value="_empty">
-                No se encontraron proveedores
+                {t('reporteSelector.noSuppliers')}
               </MenuItem>
             )}
             {proveedores.map((p) => (
@@ -236,7 +227,7 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
               }
               label={
                 <Typography variant="body2">
-                  Incluir pedidos cancelados
+                  {t('reporteSelector.includeCancelled')}
                 </Typography>
               }
             />
@@ -250,7 +241,7 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
               }
               label={
                 <Typography variant="body2">
-                  Una página por proveedor
+                  {t('reporteSelector.pagePerSupplier')}
                 </Typography>
               }
             />
@@ -269,7 +260,7 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
             }
             label={
               <Typography variant="body2">
-                Solo incidencias no resueltas
+                {t('reporteSelector.onlyUnresolved')}
               </Typography>
             }
           />
@@ -283,7 +274,7 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
             onClick={handleClose}
             disabled={isDownloading}
           >
-            Cancelar
+            {t('reporteSelector.cancel')}
           </Button>
           <Button
             variant={isExcelMode ? 'outlined' : 'contained'}
@@ -301,10 +292,10 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
             disabled={isDownloading}
           >
             {isDownloading
-              ? 'Generando...'
+              ? t('reporteSelector.generating')
               : isExcelMode
-                ? 'Generar Excel'
-                : 'Generar PDF'}
+                ? t('reporteSelector.generateExcel')
+                : t('reporteSelector.generatePdf')}
           </Button>
         </Box>
       </Box>

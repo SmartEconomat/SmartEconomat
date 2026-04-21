@@ -5,6 +5,7 @@
  */
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Button,
@@ -102,9 +103,11 @@ const DetailModal: React.FC<DetailModalProps> = ({
   size = 'md',
   onEdit,
   editConfig,
-  editLabel = 'Editar',
+  editLabel,
   actions,
 }) => {
+  const { t } = useTranslation();
+  const resolvedEditLabel = editLabel ?? t('detailModal.edit');
   const [editOpen, setEditOpen] = useState(false);
 
   const handleOpenEdit = () => {
@@ -175,9 +178,9 @@ const DetailModal: React.FC<DetailModalProps> = ({
             )}
           </Box>
 
-          <Tooltip title="Cerrar">
+          <Tooltip title={t('detailModal.close')}>
             <IconButton
-              aria-label="Cerrar"
+              aria-label={t('detailModal.close')}
               onClick={onClose}
               size="small"
               sx={{
@@ -330,7 +333,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
                 onClick={handleOpenEdit}
                 disableElevation
               >
-                {editLabel}
+                {resolvedEditLabel}
               </Button>
             )}
           </DialogActions>
@@ -342,7 +345,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
         <DynamicFormModal
           isOpen={editOpen}
           onClose={handleCloseEdit}
-          title={editConfig.title ?? `Editar ${title}`}
+          title={editConfig.title ?? t('detailModal.editTitle', { title })}
           size={editConfig.size ?? 'lg'}
           fields={editConfig.fields}
           initialData={editConfig.initialData}

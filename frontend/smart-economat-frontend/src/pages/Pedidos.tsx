@@ -5,6 +5,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { Box, Alert, Paper } from '@mui/material';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
@@ -86,6 +87,7 @@ const isEditablePedidoForm = (itemToEdit: PedidoFormValues | null): boolean => {
 };
 
 const Pedidos: React.FC = () => {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [itemToDelete, setItemToDelete] = useState<Pedido | null>(null);
@@ -553,7 +555,11 @@ const Pedidos: React.FC = () => {
         draft={draft}
         isLoadingDraft={isLoadingDraft}
         totalItems={visibleTotalItems}
-        totalItemsLabel={isBatchTab ? 'compras' : 'pedidos'}
+        totalItemsLabel={
+          isBatchTab
+            ? t('pedidos.totalItemsLabelBatch')
+            : t('pedidos.totalItemsLabel')
+        }
         searchTerm={searchTerm}
         viewMode={viewMode}
         onSearchChange={(value) => {
@@ -565,7 +571,7 @@ const Pedidos: React.FC = () => {
         onContinueDraftClick={handleRecoverDraft}
         extraActions={[
           {
-            label: 'Reporte PDF',
+            label: t('reporteSelector.generatePdf'),
             onClick: () => setIsReporteOpen(true),
             icon: <PictureAsPdfIcon />,
             id: 'btn-reporte-pedidos-pdf',
@@ -573,7 +579,7 @@ const Pedidos: React.FC = () => {
             variant: 'outlined',
           },
           {
-            label: 'Exportar Excel',
+            label: t('reporteSelector.generateExcel'),
             onClick: () => {
               void handleExportExcel();
             },
@@ -663,7 +669,7 @@ const Pedidos: React.FC = () => {
           isOpen={!!itemToDelete}
           onClose={() => !isDeleting && setItemToDelete(null)}
           onConfirm={() => void handleDeleteConfirm()}
-          title="Eliminar pedido"
+          title={t('pedidos.confirmDialogs.deleteTitle')}
           message={
             <>
               ¿Estás seguro de que deseas eliminar el pedido del{' '}
@@ -675,8 +681,8 @@ const Pedidos: React.FC = () => {
               ? Esta acción no se puede deshacer.
             </>
           }
-          confirmText="Sí, eliminar"
-          cancelText="Cancelar"
+          confirmText={t('pedidos.confirmDialogs.deleteConfirm')}
+          cancelText={t('pedidos.confirmDialogs.deleteCancelBtn')}
           isLoading={isDeleting}
         />
 
@@ -684,7 +690,7 @@ const Pedidos: React.FC = () => {
           isOpen={!!itemToAceptar}
           onClose={() => !isAceptando && setItemToAceptar(null)}
           onConfirm={() => void handleAceptarConfirm()}
-          title="Aprobar Pedido"
+          title={t('pedidos.confirmDialogs.approveTitle')}
           message={
             <>
               {itemToAceptar?.targetType === 'purchase_batch' ? (
@@ -713,8 +719,8 @@ const Pedidos: React.FC = () => {
               )}
             </>
           }
-          confirmText="Sí, Aprobar"
-          cancelText="Cancelar"
+          confirmText={t('pedidos.confirmDialogs.approveConfirm')}
+          cancelText={t('pedidos.confirmDialogs.approveCancelBtn')}
           isLoading={isAceptando}
           confirmColor="success"
         />
@@ -724,14 +730,14 @@ const Pedidos: React.FC = () => {
           onClose={() => !isCancelando && setItemToCancelar(null)}
           title={
             itemToCancelar?.targetType === 'purchase_batch'
-              ? `Cancelar Compra: ${formatPedidoId(itemToCancelar?.id)}`
-              : `Cancelar Pedido: ${itemToCancelar?.proveedorNombre || ''}`
+              ? `${t('pedidos.confirmDialogs.cancelBatchTitle')} ${formatPedidoId(itemToCancelar?.id)}`
+              : `${t('pedidos.confirmDialogs.cancelFormTitle')} ${itemToCancelar?.proveedorNombre || ''}`
           }
           size="sm"
           fields={[
             {
               name: 'motivoCancelacion',
-              label: 'Motivo de Cancelación (Opcional)',
+              label: t('pedidos.confirmDialogs.cancelMotivo'),
               type: 'text',
               width: 12,
               required: false,
@@ -749,17 +755,17 @@ const Pedidos: React.FC = () => {
           title={
             itemToEdit?.targetType === 'purchase_batch'
               ? isItemToEditEditable
-                ? `Editar Compra ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)}`
-                : `Detalles de la Compra ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)} (Solo lectura)`
+                ? `${t('pedidos.batchDetail.editCompra')} ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)}`
+                : `${t('pedidos.batchDetail.purchaseTitle')} ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)}`
               : itemToEdit?.targetType === 'pedido_usuario'
                 ? isItemToEditEditable
-                  ? `Editar Pedido ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)}`
-                  : `Detalles del Pedido ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)} (Solo lectura)`
+                  ? `${t('pedidos.batchDetail.editPedido')} ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)}`
+                  : `${t('pedidos.batchDetail.orderTitle')} ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)}`
                 : itemToEdit?.id
                   ? isItemToEditEditable
-                    ? 'Editar Pedido'
-                    : 'Detalles del Pedido (Solo lectura)'
-                  : 'Crear Nuevo Pedido'
+                    ? t('pedidos.batchDetail.editPedido')
+                    : t('pedidos.drawer.title')
+                  : t('pedidos.newOrder')
           }
           size="lg"
           fields={pedidoSchema}
@@ -770,14 +776,18 @@ const Pedidos: React.FC = () => {
           isSubmitting={isSaving}
           onValuesChange={handleValuesChange}
           requireConfirmation={isItemToEditEditable}
-          submitLabel={isItemToEditEditable ? 'Guardar' : 'Cerrar'}
-          cancelLabel={isItemToEditEditable ? 'Cancelar' : ''}
+          submitLabel={
+            isItemToEditEditable
+              ? t('dynamicForm.save')
+              : t('detailModal.close')
+          }
+          cancelLabel={isItemToEditEditable ? t('dynamicForm.cancel') : ''}
           confirmationMessage={
             itemToEdit?.id
               ? itemToEdit.targetType === 'purchase_batch'
-                ? '¿Estás seguro de que deseas guardar los cambios en esta compra?'
-                : '¿Estás seguro de que deseas guardar los cambios en este pedido?'
-              : '¿Estás seguro de que deseas registrar este nuevo pedido?'
+                ? t('dynamicForm.confirmSave')
+                : t('dynamicForm.confirmSave')
+              : t('dynamicForm.confirmSave')
           }
         />
 
@@ -824,7 +834,7 @@ const Pedidos: React.FC = () => {
           isOpen={isRecoveryOpen}
           onClose={() => setIsRecoveryOpen(false)}
           onConfirm={handleRecoverDraft}
-          title="Recuperar Pedido Pendiente"
+          title={t('pedidos.confirmDialogs.recoverTitle')}
           message={
             <>
               Tienes un pedido que no llegaste a finalizar el día{' '}
@@ -845,8 +855,8 @@ const Pedidos: React.FC = () => {
               ¿Deseas recuperarlo y continuar donde lo dejaste?
             </>
           }
-          confirmText="Sí, Recuperar"
-          cancelText="No, Descartar"
+          confirmText={t('pedidos.confirmDialogs.recoverConfirm')}
+          cancelText={t('pedidos.confirmDialogs.recoverDiscard')}
           confirmColor="primary"
           onCancel={handleDiscardDraft}
         />
@@ -858,7 +868,7 @@ const Pedidos: React.FC = () => {
             setIsNewPedidoWarningOpen(false);
             openNewPedidoForm();
           }}
-          title="Ya tienes un pedido pendiente"
+          title={t('pedidos.confirmDialogs.newPedidoTitle')}
           message={
             <>
               Ya existe un borrador de pedido guardado del día{' '}
@@ -874,8 +884,8 @@ const Pedidos: React.FC = () => {
               ¿Qué quieres hacer?
             </>
           }
-          confirmText="Crear nuevo pedido"
-          cancelText="Continuar borrador"
+          confirmText={t('pedidos.confirmDialogs.newPedidoConfirm')}
+          cancelText={t('pedidos.confirmDialogs.newPedidoContinue')}
           confirmColor="warning"
           onCancel={handleRecoverDraft}
         />
@@ -884,10 +894,10 @@ const Pedidos: React.FC = () => {
           isOpen={isDraftCloseConfirmOpen}
           onClose={() => setIsDraftCloseConfirmOpen(false)}
           onConfirm={handleSaveDraftAndClose}
-          title="¿Qué quieres hacer con este pedido?"
-          message="Si lo guardas en borrador, podrás retomarlo más tarde. Si cancelas ahora, se descartará el pedido pendiente."
-          confirmText="Guardar en borrador"
-          cancelText="Cancelar pedido"
+          title={t('pedidos.confirmDialogs.draftCloseTitle')}
+          message={t('pedidos.confirmDialogs.draftCloseMessage')}
+          confirmText={t('pedidos.confirmDialogs.saveDraft')}
+          cancelText={t('pedidos.confirmDialogs.cancelOrder')}
           confirmColor="primary"
           onCancel={handleDiscardDraftAndClose}
         />
