@@ -1,0 +1,84 @@
+{
+  "language": {
+    "es": "Español",
+    "en": "English",
+    "select": "Select language"
+  },
+  "layout": {
+    "expandMenu": "Expand menu",
+    "collapseMenu": "Collapse menu",
+    "mainNavigation": "Main navigation",
+    "systemOptions": "System options",
+    "myProfile": "My Profile",
+    "logout": "Log Out"
+  },
+  "menuGroups": {
+    "inicio": "Home",
+    "catalogo": "Catalogue",
+    "operaciones": "Operations",
+    "control": "Control",
+    "gestion": "Management"
+  },
+  "menu": {
+    "inicio": {
+      "title": "Home",
+      "description": "View general summary and storeroom metrics"
+    },
+    "productos": {
+      "title": "Products",
+      "description": "Manage product catalogue and prices"
+    },
+    "proveedores": {
+      "title": "Suppliers",
+      "description": "Manage external supplier information"
+    },
+    "recetas": {
+      "title": "Recipes",
+      "description": "Recipe catalogue and cost breakdowns"
+    },
+    "pedidos": {
+      "title": "Orders",
+      "description": "Manage user and supplier orders"
+    },
+    "recepcion": {
+      "title": "Reception",
+      "description": "Register incoming goods to the warehouse"
+    },
+    "distribucion": {
+      "title": "Distribution",
+      "description": "Manage product outflows and distribution"
+    },
+    "preparaciones": {
+      "title": "Preparations",
+      "description": "Recipe production history"
+    },
+    "albaranes": {
+      "title": "Delivery Notes",
+      "description": "Manage and digitise reception delivery notes"
+    },
+    "inventario": {
+      "title": "Inventory",
+      "description": "Control stock and perform inventory adjustments"
+    },
+    "movimientos": {
+      "title": "Movements",
+      "description": "View stock movement history"
+    },
+    "mermas": {
+      "title": "Waste",
+      "description": "Manage product losses and breakages"
+    },
+    "incidencias": {
+      "title": "Incidents",
+      "description": "Report and manage issues or returns"
+    },
+    "administracion": {
+      "title": "Administration",
+      "description": "Manage classes, students and academic settings"
+    },
+    "miPerfil": {
+      "title": "My Profile",
+      "description": "Configure personal details and security"
+    }
+  }
+}

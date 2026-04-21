@@ -40,6 +40,7 @@ import SettingsMenu from '../components/common/Settings/SettingsMenu';
 import TutorialHelper from '../components/common/Tutorial/TutorialHelper';
 import LearningModeToggle from '../components/common/Learning/LearningModeToggle';
 import NotificationCenter from '../components/common/Notification/NotificationCenter';
+import LanguageSwitcher from '../components/common/Settings/LanguageSwitcher';
 import Logo from '../assets/images/SVG/logo-smat-economato.svg';
 import LogoBlanco from '../assets/images/SVG/logo-smart-economat-blanco.svg';
 
@@ -359,6 +360,7 @@ export default function MainLayout() {
           <Box
             sx={{ flexGrow: 0, display: 'flex', alignItems: 'center', gap: 2 }}
           >
+            <LanguageSwitcher />
             <NotificationCenter />
             <Typography
               variant="subtitle1"

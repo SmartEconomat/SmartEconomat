@@ -1,0 +1,84 @@
+{
+  "language": {
+    "es": "Español",
+    "en": "English",
+    "select": "Seleccionar idioma"
+  },
+  "layout": {
+    "expandMenu": "Expandir menú",
+    "collapseMenu": "Minimizar menú",
+    "mainNavigation": "Navegación principal",
+    "systemOptions": "Opciones del sistema",
+    "myProfile": "Mi Perfil",
+    "logout": "Cerrar Sesión"
+  },
+  "menuGroups": {
+    "inicio": "Inicio",
+    "catalogo": "Catálogo",
+    "operaciones": "Operaciones",
+    "control": "Control",
+    "gestion": "Gestión"
+  },
+  "menu": {
+    "inicio": {
+      "title": "Inicio",
+      "description": "Ver resumen general y métricas del economato"
+    },
+    "productos": {
+      "title": "Productos",
+      "description": "Gestionar catálogo de productos y precios"
+    },
+    "proveedores": {
+      "title": "Proveedores",
+      "description": "Gestionar información de proveedores externos"
+    },
+    "recetas": {
+      "title": "Recetas",
+      "description": "Catálogo de recetas y escandallos"
+    },
+    "pedidos": {
+      "title": "Pedidos",
+      "description": "Administrar pedidos de usuarios y proveedores"
+    },
+    "recepcion": {
+      "title": "Recepción",
+      "description": "Registrar entrada de mercancía al almacén"
+    },
+    "distribucion": {
+      "title": "Distribución",
+      "description": "Gestionar salidas y distribución de productos"
+    },
+    "preparaciones": {
+      "title": "Preparaciones",
+      "description": "Historial de producción de recetas"
+    },
+    "albaranes": {
+      "title": "Albaranes",
+      "description": "Gestionar y digitalizar albaranes de recepción"
+    },
+    "inventario": {
+      "title": "Inventario",
+      "description": "Controlar stock y realizar ajustes de inventario"
+    },
+    "movimientos": {
+      "title": "Movimientos",
+      "description": "Consultar historial de movimientos de stock"
+    },
+    "mermas": {
+      "title": "Mermas",
+      "description": "Gestión de pérdidas y roturas de productos"
+    },
+    "incidencias": {
+      "title": "Incidencias",
+      "description": "Reportar y gestionar problemas o devoluciones"
+    },
+    "administracion": {
+      "title": "Administración",
+      "description": "Gestión de clases, alumnos y configuración académica"
+    },
+    "miPerfil": {
+      "title": "Mi Perfil",
+      "description": "Configurar datos personales y seguridad"
+    }
+  }
+}
