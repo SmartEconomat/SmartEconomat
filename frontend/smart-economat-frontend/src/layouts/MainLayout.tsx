@@ -40,8 +40,10 @@ import SettingsMenu from '../components/common/Settings/SettingsMenu';
 import TutorialHelper from '../components/common/Tutorial/TutorialHelper';
 import LearningModeToggle from '../components/common/Learning/LearningModeToggle';
 import NotificationCenter from '../components/common/Notification/NotificationCenter';
+import LanguageSwitcher from '../components/common/Settings/LanguageSwitcher';
 import Logo from '../assets/images/SVG/logo-smat-economato.svg';
 import LogoBlanco from '../assets/images/SVG/logo-smart-economat-blanco.svg';
+import { useTranslation } from 'react-i18next';
 
 const drawerWidth = 240;
 
@@ -133,6 +135,7 @@ export default function MainLayout() {
     null
   );
   const { logout, user } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -185,11 +188,11 @@ export default function MainLayout() {
     });
 
   const groupLabels: Record<MenuConfigItem['group'], string> = {
-    inicio: 'Inicio',
-    catalogo: 'Catálogo',
-    operaciones: 'Operaciones',
-    control: 'Control',
-    gestion: 'Gestión',
+    inicio: t('menuGroups.inicio'),
+    catalogo: t('menuGroups.catalogo'),
+    operaciones: t('menuGroups.operaciones'),
+    control: t('menuGroups.control'),
+    gestion: t('menuGroups.gestion'),
   };
 
   const drawerContent = (
@@ -271,8 +274,8 @@ export default function MainLayout() {
                   title={getTooltipContent(
                     open,
                     isLearningMode,
-                    item.title,
-                    item.description
+                    t(item.title),
+                    t(item.description)
                   )}
                   describeChild
                 >
@@ -302,7 +305,7 @@ export default function MainLayout() {
                       {item.icon}
                     </ListItemIcon>
                     <ListItemText
-                      primary={item.title}
+                      primary={t(item.title)}
                       sx={{ opacity: open ? 1 : 0 }}
                     />
                   </ListItemButton>
@@ -332,7 +335,14 @@ export default function MainLayout() {
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
-      <AppBar position="fixed" open={open} color="inherit" elevation={1}>
+
+      <AppBar
+        position="fixed"
+        open={open}
+        color="inherit"
+        elevation={1}
+        className="notranslate"
+      >
         <Toolbar
           sx={{
             minHeight: { xs: '80px !important', sm: '100px !important' },
@@ -359,10 +369,12 @@ export default function MainLayout() {
           <Box
             sx={{ flexGrow: 0, display: 'flex', alignItems: 'center', gap: 2 }}
           >
+            <LanguageSwitcher />
             <NotificationCenter />
             <Typography
               variant="subtitle1"
               sx={{ display: { xs: 'none', sm: 'block' } }}
+              className="notranslate"
             >
               {user?.name}
             </Typography>
@@ -431,7 +443,7 @@ export default function MainLayout() {
           {drawerContent}
         </MuiDrawer>
       ) : (
-        <DesktopDrawer variant="permanent" open={open}>
+        <DesktopDrawer variant="permanent" open={open} className="notranslate">
           {drawerContent}
         </DesktopDrawer>
       )}

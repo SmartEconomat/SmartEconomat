@@ -1,0 +1,356 @@
+{
+  "language": {
+    "es": "Spanish",
+    "en": "English",
+    "de": "German",
+    "fr": "French",
+    "select": "Select language"
+  },
+  "common": {
+    "expandMenu": "Expand menu",
+    "collapseMenu": "Collapse menu",
+    "mainNavigation": "Main navigation",
+    "systemOptions": "System options",
+    "myProfile": "My Profile",
+    "logout": "Logout",
+    "retry": "Retry",
+    "viewHistory": "View All History",
+    "confirmDelete": "Yes, delete",
+    "cancel": "Cancel",
+    "exportPdf": "Export PDF",
+    "exportExcel": "Export Excel",
+    "loading": "Loading...",
+    "viewDetails": "View details",
+    "edit": "Edit",
+    "unit": "Unit",
+    "automatic": "Automatic",
+    "days": "days",
+    "units": "units",
+    "exporting": "Exporting...",
+    "export": "Export",
+    "validating": "Validating...",
+    "searchPlaceholder": "Search...",
+    "items": "items",
+    "hideFilters": "Hide filters",
+    "showFilters": "Show filters",
+    "totalItemsOf": "Total of {{label}}: {{count}}",
+    "totalOf": "Total of",
+    "totalCount": "Total {{label}}: {{count}}",
+    "scanWithCamera": "Scan with camera",
+    "scanCode": "Scan code",
+    "clearSearch": "Clear search",
+    "noData": "No data available.",
+    "actions": "Actions",
+    "exportPdfSelected": "Export the {{count}} selected records to PDF",
+    "exportPdfAll": "Export the {{count}} {{label}} to PDF",
+    "exportExcelSelected": "Export the {{count}} selected records to EXCEL",
+    "exportExcelAll": "Export the {{count}} {{label}} to EXCEL",
+    "records": "records",
+    "loadingData": "Loading data...",
+    "rowsPerPage": "Rows per page:",
+    "displayedRows": "{{from}}–{{to}} of {{count}}",
+    "confirmAction": "Confirm Action",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "editItem": "Edit: {{name}}",
+    "downloadPdf": "Download PDF",
+    "save": "Save",
+    "close": "Close",
+    "uploadImage": "Upload Image",
+    "generateEan13": "Generate EAN-13 code",
+    "searchOpenFoodFacts": "Search on OpenFoodFacts",
+    "confirmSaveMessage": "Are you sure you want to save this data?",
+    "scanX": "Scan {{label}}",
+    "errors": {
+      "required": "This field is required",
+      "invalidId": "The ID must be a valid UUID"
+    },
+    "barcodeScanner": {
+      "title": "Scan Barcode",
+      "camera": "Camera",
+      "requesting": "Requesting camera access...",
+      "closeAria": "Close scanner",
+      "lastScanned": "Last scanned code",
+      "instructions": "Bring the code close to the frame. Rear cameras, continuous focus, and EAN, UPC, and Code 128 formats are prioritized.",
+      "restart": "Restart camera",
+      "torchOn": "Turn light on",
+      "torchOff": "Turn light off",
+      "errors": {
+        "permissionTitle": "Camera permission denied",
+        "permissionBody": "To use the scanner, allow camera access in your browser settings and reload the page.",
+        "noCameraTitle": "No camera detected",
+        "noCameraBody": "This device has no available or accessible camera. Enter the barcode manually.",
+        "genericTitle": "Error starting camera",
+        "genericBody": "Could not start the scanner. Check if another application is using the camera and try again."
+      }
+    }
+  },
+  "menuGroups": {
+    "inicio": "Home",
+    "catalogo": "Catalogue",
+    "operaciones": "Operations",
+    "control": "Control",
+    "gestion": "Management"
+  },
+  "menu": {
+    "inicio": {
+      "title": "Home",
+      "description": "View general summary and storeroom metrics"
+    },
+    "productos": {
+      "title": "Products",
+      "description": "Manage product catalogue and prices"
+    },
+    "proveedores": {
+      "title": "Suppliers",
+      "description": "Manage external supplier information"
+    },
+    "recetas": {
+      "title": "Recipes",
+      "description": "Recipe catalogue and cost breakdowns"
+    },
+    "pedidos": {
+      "title": "Orders",
+      "description": "Manage user and supplier orders"
+    },
+    "recepcion": {
+      "title": "Reception",
+      "description": "Register incoming goods to the warehouse"
+    },
+    "distribucion": {
+      "title": "Distribution",
+      "description": "Manage product outflows and distribution"
+    },
+    "preparaciones": {
+      "title": "Preparations",
+      "description": "Recipe production history"
+    },
+    "albaranes": {
+      "title": "Delivery Notes",
+      "description": "Manage and digitise reception delivery notes"
+    },
+    "inventario": {
+      "title": "Inventory",
+      "description": "Control stock and perform inventory adjustments"
+    },
+    "movimientos": {
+      "title": "Movements",
+      "description": "View stock movement history"
+    },
+    "mermas": {
+      "title": "Waste",
+      "description": "Manage product losses and breakages"
+    },
+    "incidencias": {
+      "title": "Incidents",
+      "description": "Report and manage issues or returns"
+    },
+    "administracion": {
+      "title": "Administration",
+      "description": "Manage classes, students and academic settings"
+    },
+    "miPerfil": {
+      "title": "My Profile",
+      "description": "Configure personal details and security"
+    }
+  },
+  "dashboard": {
+    "welcome": "Hello, {{name}} 👋",
+    "summary": "Here is a summary of the current status of the economato.",
+    "statsTitle": "Economato Statistics",
+    "quickActions": "Quick Actions",
+    "recentActivity": "Recent Activity",
+    "noActivity": "No recent activity recorded.",
+    "metrics": {
+      "productos": "Total Products",
+      "pedidos": "Pending Orders",
+      "incidencias": "Incidencies",
+      "stock": "Stock Alerts",
+      "proveedores": "Suppliers",
+      "notificaciones": "Notifications"
+    },
+    "actions": {
+      "newOrder": "New Order",
+      "addProduct": "Add Product",
+      "registerReception": "Register Reception",
+      "newRecipe": "New Recipe"
+    },
+    "modals": {
+      "productsSummary": "Products List",
+      "pndingOrders": "Pending Orders",
+      "incidencesSummary": "Incidents List",
+      "stockAlerts": "Low Stock Products",
+      "suppliersSummary": "Our Suppliers",
+      "newProduct": "Add New Product",
+      "newOrder": "Create New Order",
+      "newRecipe": "New Recipe"
+    }
+  },
+  "productos": {
+    "title": "Product Management",
+    "searchPlaceholder": "Search by name, brand, barcode...",
+    "totalItemsLabel": "products",
+    "table": {
+      "name": "Name",
+      "brand": "Brand",
+      "type": "Type",
+      "content": "Content",
+      "barcode": "Barcode"
+    },
+    "actions": {
+      "newProduct": "New Product",
+      "addProduct": "Add Product",
+      "editProduct": "Edit product"
+    },
+    "empty": {
+      "filtered": "No products match your search or filters",
+      "total": "No products found",
+      "filteredHint": "Try other terms or clear filters.",
+      "totalHint": "Start by adding the first product to your inventory."
+    },
+    "dialogs": {
+      "deleteTitle": "Delete product",
+      "deleteMessage": "Are you sure you want to delete the product **{{name}}**? This action cannot be undone."
+    },
+    "feedback": {
+      "deleted": "Product \"{{name}}\" deleted successfully.",
+      "deleteError": "Error deleting product.",
+      "updated": "Product updated successfully.",
+      "created": "Product created successfully."
+    },
+    "scanner": {
+      "title": "Scan Product to Search"
+    },
+    "detail": {
+      "sections": {
+        "general": "General information",
+        "allergens": "Allergens",
+        "suppliers": "Associated suppliers",
+        "priceHistory": "Price history"
+      },
+      "fields": {
+        "pmpActual": "Current PMP",
+        "description": "Description",
+        "price": "Price",
+        "waste": "Waste",
+        "effectiveCost": "Effective Cost",
+        "brand": "Brand",
+        "provider": "Supplier"
+      },
+      "filters": {
+        "provider": "Filter by Supplier",
+        "allProviders": "All suppliers"
+      },
+      "history": {
+        "date": "Date",
+        "provider": "Supplier",
+        "quantity": "Qty.",
+        "price": "Price",
+        "document": "Doc."
+      },
+      "actions": {
+        "viewHistory": "View All History"
+      }
+    }
+  },
+  "proveedores": {
+    "title": "Supplier Management",
+    "searchPlaceholder": "Search by name, NIF, contact, email...",
+    "totalItemsLabel": "suppliers",
+    "table": {
+      "name": "Name",
+      "contact": "Contact",
+      "phone": "Phone"
+    },
+    "actions": {
+      "newProvider": "New Supplier",
+      "addProvider": "Add Supplier"
+    },
+    "empty": {
+      "search": "No suppliers match your search",
+      "title": "No suppliers found",
+      "searchSubtitle": "Try other terms or clear the filter.",
+      "subtitle": "Start by adding the first supplier to your catalog."
+    },
+    "dialogs": {
+      "deleteTitle": "Delete supplier",
+      "deleteMessage": "Are you sure you want to delete the supplier **{{name}}**? This action cannot be undone.",
+      "confirmEdit": "Are you sure you want to save the changes made to this supplier?",
+      "confirmCreate": "Are you sure you want to add this new supplier to the system?"
+    },
+    "feedback": {
+      "loadError": "Unknown error loading suppliers.",
+      "deleted": "Supplier \"{{name}}\" deleted successfully.",
+      "deleteError": "Error deleting supplier.",
+      "updated": "Supplier updated successfully.",
+      "created": "Supplier created successfully.",
+      "saveError": "Error saving supplier."
+    },
+    "detail": {
+      "sections": {
+        "fiscalInfo": "Tax Information",
+        "location": "Location"
+      },
+      "fields": {
+        "address": "Address"
+      }
+    }
+  },
+  "recetas": {
+    "title": "Recipe Management",
+    "totalItemsLabel": "recipes",
+    "searchPlaceholder": "Search by recipe name...",
+    "table": {
+      "recipe": "Recipe",
+      "quantity": "Quantity",
+      "ingredientsCount": "{{count}} ingredients",
+      "unit": "Unit",
+      "cost": "Cost"
+    },
+    "actions": {
+      "newRecipe": "New Recipe",
+      "prepareRecipes": "Prepare Recipes",
+      "prepareSelected": "Prepare ({{count}})",
+      "createOrder": "Create Order",
+      "createOrderSelected": "Create order ({{count}})",
+      "exportPdf": "Export PDF",
+      "exportSelected": "Export PDF ({{count}})",
+      "cookNow": "Cook now"
+    },
+    "dialogs": {
+      "deleteTitle": "Delete recipe",
+      "deleteMessage": "Are you sure you want to delete the recipe **{{name}}**? This action cannot be undone.",
+      "recipesToCook": "Recipes to prepare",
+      "insufficientStock": "Insufficient stock to produce some recipes",
+      "missingAmount": "Missing {{amount}} {{unit}}",
+      "provider": "Supplier: {{name}}",
+      "createMissingOrder": "Create order for missing items",
+      "stockOk": "Stock available for all recipes.",
+      "startBatchProduction": "Start batch production",
+      "startPreparation": "Start preparation",
+      "noIngredients": "This recipe has no registered ingredients."
+    },
+    "feedback": {
+      "loadError": "Error loading recipes.",
+      "deleted": "Recipe \"{{name}}\" deleted successfully.",
+      "recipeCooked": "Production registered successfully.",
+      "orderCreated": "Order #{{id}} generated successfully from {{count}} recipes."
+    }
+  },
+  "allergens": {
+    "GLUTEN": "Gluten",
+    "CRUSTACEOS": "Crustaceans",
+    "HUEVOS": "Eggs",
+    "PESCADO": "Fish",
+    "CACAHUETES": "Peanuts",
+    "SOJA": "Soya",
+    "LACTEOS": "Dairy",
+    "FRUTOS_CON_CASCARA": "Nuts",
+    "APIO": "Celery",
+    "MOSTAZA": "Mustard",
+    "SESAMO": "Sesame",
+    "SULFITO": "Sulphites",
+    "ALTRAMUCES": "Lupin",
+    "MOLUSCOS": "Molluscs"
+  }
+}

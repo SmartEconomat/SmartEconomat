@@ -2,6 +2,7 @@ import React, { ReactNode } from 'react';
 import { Button, Box, Typography } from '@mui/material';
 import Modal from './Modal';
 import Spinner from './Spinner';
+import { useTranslation } from 'react-i18next';
 
 type ButtonColor =
   | 'inherit'
@@ -32,10 +33,10 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   isOpen,
   onClose,
   onConfirm,
-  title = 'Confirmar acción',
+  title,
   message,
-  confirmText = 'Confirmar',
-  cancelText = 'Cancelar',
+  confirmText,
+  cancelText,
   cancelColor = 'inherit',
   cancelVariant = 'text',
   onCancel,
@@ -43,6 +44,11 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   confirmVariant = 'contained',
   isLoading = false,
 }) => {
+  const { t } = useTranslation();
+  const actualTitle = title || t('common.confirmAction');
+  const actualConfirmText = confirmText || t('common.confirm');
+  const actualCancelText = cancelText || t('common.cancel');
+
   const handleCancel = () => {
     (onCancel || onClose)();
   };
@@ -52,7 +58,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} title={actualTitle} size="sm">
       <Box sx={{ pb: 3 }}>
         {typeof message === 'string' ? (
           <Typography variant="body1" color="text.secondary">
@@ -65,13 +71,13 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
       {/* Acciones */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-        {cancelText && (
+        {actualCancelText && (
           <Button
             onClick={handleCancel}
             color={cancelColor}
             variant={cancelVariant}
           >
-            {cancelText}
+            {actualCancelText}
           </Button>
         )}
         <Button
@@ -84,7 +90,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             isLoading ? <Spinner size="sm" color="inherit" /> : undefined
           }
         >
-          {confirmText}
+          {actualConfirmText}
         </Button>
       </Box>
     </Modal>

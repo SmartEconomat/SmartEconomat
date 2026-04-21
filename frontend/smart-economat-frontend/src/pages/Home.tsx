@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Typography,
   Box,
@@ -271,18 +272,19 @@ function getActividadColor(tipo: string): string {
 }
 
 const AVAILABLE_METRICS: MetricDefinition[] = [
-  { id: 'productos', label: 'Total Productos' },
-  { id: 'pedidos', label: 'Pedidos Pendientes' },
-  { id: 'incidencias', label: 'Incidencias' },
-  { id: 'stock', label: 'Alertas de Stock' },
-  { id: 'proveedores', label: 'Proveedores' },
-  { id: 'notificaciones', label: 'Notificaciones' },
+  { id: 'productos', label: 'dashboard.metrics.productos' },
+  { id: 'pedidos', label: 'dashboard.metrics.pedidos' },
+  { id: 'incidencias', label: 'dashboard.metrics.incidencias' },
+  { id: 'stock', label: 'dashboard.metrics.stock' },
+  { id: 'proveedores', label: 'dashboard.metrics.proveedores' },
+  { id: 'notificaciones', label: 'dashboard.metrics.notificaciones' },
 ];
 
 // ─── Home ─────────────────────────────────────────────────────────────────────
 
 const Home: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -462,10 +464,10 @@ const Home: React.FC = () => {
       {/* Header */}
       <Box mb={4}>
         <Typography variant="h4" fontWeight={700} gutterBottom>
-          Hola, {user?.name || 'Administrador'} 👋
+          {t('dashboard.welcome', { name: user?.name || 'Administrador' })}
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Aquí tienes un resumen del estado actual del economato.
+          {t('dashboard.summary')}
         </Typography>
       </Box>
 
@@ -512,7 +514,7 @@ const Home: React.FC = () => {
               mb={3}
             >
               <Typography variant="h6" fontWeight={600}>
-                Estadísticas del Economato
+                {t('dashboard.statsTitle')}
               </Typography>
               <IconButton
                 size="small"
@@ -541,12 +543,15 @@ const Home: React.FC = () => {
               {/* Total Productos */}
               {visibleMetrics.includes('productos') && canListProductos && (
                 <MetricCard
-                  title="Total Productos"
+                  title={t('dashboard.metrics.productos')}
                   value={isLoading ? <Spinner size="sm" /> : totalProductos}
                   icon={<InventoryIcon />}
                   color="primary"
                   onClick={() =>
-                    openSummary('productos', 'Listado de Productos')
+                    openSummary(
+                      'productos',
+                      t('dashboard.modals.productsSummary')
+                    )
                   }
                   subtitle={
                     isLoading ? undefined : (
@@ -568,11 +573,13 @@ const Home: React.FC = () => {
               {/* Pedidos Pendientes */}
               {visibleMetrics.includes('pedidos') && canListPedidos && (
                 <MetricCard
-                  title="Pedidos Pendientes"
+                  title={t('dashboard.metrics.pedidos')}
                   value={isLoading ? <Spinner size="sm" /> : pedidosPendientes}
                   icon={<ShoppingCartIcon />}
                   color="warning"
-                  onClick={() => openSummary('pedidos', 'Pedidos Pendientes')}
+                  onClick={() =>
+                    openSummary('pedidos', t('dashboard.modals.pndingOrders'))
+                  }
                   subtitle={
                     isLoading ? undefined : (
                       <>
@@ -589,12 +596,15 @@ const Home: React.FC = () => {
               {/* Incidencias */}
               {visibleMetrics.includes('incidencias') && canListIncidencias && (
                 <MetricCard
-                  title="Incidencias"
+                  title={t('dashboard.metrics.incidencias')}
                   value={isLoading ? <Spinner size="sm" /> : incidenciasCount}
                   icon={<ErrorOutlineIcon />}
                   color="error"
                   onClick={() =>
-                    openSummary('incidencias', 'Listado de Incidencias')
+                    openSummary(
+                      'incidencias',
+                      t('dashboard.modals.incidencesSummary')
+                    )
                   }
                   subtitle={
                     isLoading ? undefined : (
@@ -612,11 +622,13 @@ const Home: React.FC = () => {
               {/* Alertas de Stock */}
               {visibleMetrics.includes('stock') && canListInventario && (
                 <MetricCard
-                  title="Alertas de Stock"
+                  title={t('dashboard.metrics.stock')}
                   value={isLoading ? <Spinner size="sm" /> : alertasStock}
                   icon={<WarningAmberIcon />}
                   color="error"
-                  onClick={() => openSummary('stock', 'Productos Bajo Mínimo')}
+                  onClick={() =>
+                    openSummary('stock', t('dashboard.modals.stockAlerts'))
+                  }
                   subtitle={
                     isLoading ? undefined : (
                       <>
@@ -636,12 +648,15 @@ const Home: React.FC = () => {
               {/* Proveedores */}
               {visibleMetrics.includes('proveedores') && canListProveedores && (
                 <MetricCard
-                  title="Proveedores"
+                  title={t('dashboard.metrics.proveedores')}
                   value={isLoading ? <Spinner size="sm" /> : totalProveedores}
                   icon={<LocalShippingIcon />}
                   color="info"
                   onClick={() =>
-                    openSummary('proveedores', 'Nuestros Proveedores')
+                    openSummary(
+                      'proveedores',
+                      t('dashboard.modals.suppliersSummary')
+                    )
                   }
                   subtitle={
                     isLoading ? undefined : (
@@ -660,7 +675,7 @@ const Home: React.FC = () => {
               {/* Card de Notificaciones */}
               {visibleMetrics.includes('notificaciones') && (
                 <MetricCard
-                  title="Notificaciones"
+                  title={t('dashboard.metrics.notificaciones')}
                   value={
                     isLoading ? (
                       <Spinner size="sm" />
@@ -703,7 +718,7 @@ const Home: React.FC = () => {
             }}
           >
             <Typography variant="h6" fontWeight={600} mb={3}>
-              Acciones Rápidas
+              {t('dashboard.quickActions')}
             </Typography>
             <Box
               sx={{
@@ -714,7 +729,7 @@ const Home: React.FC = () => {
             >
               {canCreatePedido && (
                 <QuickAction
-                  title="Nuevo Pedido"
+                  title={t('dashboard.actions.newOrder')}
                   icon={<ShoppingCartIcon fontSize="small" />}
                   color="primary"
                   onClick={() => setQuickActionTask('order')}
@@ -722,7 +737,7 @@ const Home: React.FC = () => {
               )}
               {canCreateProducto && (
                 <QuickAction
-                  title="Añadir Producto"
+                  title={t('dashboard.actions.addProduct')}
                   icon={<InventoryIcon fontSize="small" />}
                   color="secondary"
                   onClick={() => setQuickActionTask('product')}
@@ -730,7 +745,7 @@ const Home: React.FC = () => {
               )}
               {canCreateRecepcion && (
                 <QuickAction
-                  title="Registrar Recepción"
+                  title={t('dashboard.actions.registerReception')}
                   icon={<AddCircleOutlineIcon fontSize="small" />}
                   color="success"
                   onClick={() => navigate('/recepciones')}
@@ -738,7 +753,7 @@ const Home: React.FC = () => {
               )}
               {canCreateReceta && (
                 <QuickAction
-                  title="Nueva Receta"
+                  title={t('dashboard.actions.newRecipe')}
                   icon={<AssignmentIcon fontSize="small" />}
                   color="warning"
                   onClick={() => setQuickActionTask('recipe')}
@@ -763,7 +778,7 @@ const Home: React.FC = () => {
             }}
           >
             <Typography variant="h6" fontWeight={600} mb={3}>
-              Actividad Reciente
+              {t('dashboard.recentActivity')}
             </Typography>
 
             <Box sx={{ flexGrow: 1 }}>
@@ -784,7 +799,7 @@ const Home: React.FC = () => {
                   minHeight={120}
                 >
                   <Typography variant="body2" color="text.secondary">
-                    No hay actividad reciente registrada.
+                    {t('dashboard.noActivity')}
                   </Typography>
                 </Box>
               ) : (
@@ -865,7 +880,7 @@ const Home: React.FC = () => {
                 onClick={() => navigate('/movimientos')}
                 fullWidth
               >
-                Ver todo el historial
+                {t('common.viewHistory')}
               </Button>
             </Box>
           </Paper>
@@ -893,7 +908,7 @@ const Home: React.FC = () => {
       <ProductoFormModal
         isOpen={quickActionTask === 'product'}
         onClose={() => setQuickActionTask(null)}
-        title="Añadir Nuevo Producto"
+        title={t('dashboard.modals.newProduct')}
         initialData={EMPTY_INITIAL_DATA}
         onSubmit={handleSaveQuickAction}
         isSubmitting={isSavingQuickAction}
@@ -902,19 +917,20 @@ const Home: React.FC = () => {
       <DynamicFormModal
         isOpen={quickActionTask === 'order'}
         onClose={() => setQuickActionTask(null)}
-        title="Crear Nuevo Pedido"
+        title={t('dashboard.modals.newOrder')}
         size="lg"
         fields={pedidoSchema}
         initialData={PEDIDO_NEW_INITIAL_DATA}
         onSubmit={handleSavePedidoQuickAction}
         isSubmitting={isSavingPedido}
         requireConfirmation
-        confirmationMessage="¿Estás seguro de que deseas registrar este nuevo pedido?"
+        confirmationMessage={t('common.confirmAction')}
       />
 
       <RecetaFormModal
         isOpen={quickActionTask === 'recipe'}
         onClose={() => setQuickActionTask(null)}
+        title={t('dashboard.modals.newRecipe')}
         initialData={EMPTY_INITIAL_DATA}
         onSubmit={handleSaveQuickAction}
         isSubmitting={isSavingQuickAction}

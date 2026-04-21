@@ -1,0 +1,356 @@
+{
+  "language": {
+    "es": "Espagnol",
+    "en": "Anglais",
+    "de": "Allemand",
+    "fr": "Français",
+    "select": "Choisir la langue"
+  },
+  "common": {
+    "expandMenu": "Développer le menu",
+    "collapseMenu": "Réduire le menu",
+    "mainNavigation": "Navigation principale",
+    "systemOptions": "Options du système",
+    "myProfile": "Mon profil",
+    "logout": "Se déconnecter",
+    "retry": "Réessayer",
+    "viewHistory": "Voir tout l'historique",
+    "confirmDelete": "Oui, supprimer",
+    "cancel": "Annuler",
+    "exportPdf": "Exporter PDF",
+    "exportExcel": "Exporter Excel",
+    "loading": "Chargement...",
+    "viewDetails": "Voir les détails",
+    "edit": "Modifier",
+    "unit": "Unité",
+    "automatic": "Automatique",
+    "days": "jours",
+    "units": "unités",
+    "exporting": "Exportation...",
+    "export": "Exporter",
+    "validating": "Validation...",
+    "searchPlaceholder": "Rechercher...",
+    "items": "éléments",
+    "hideFilters": "Masquer les filtres",
+    "showFilters": "Afficher les filtres",
+    "totalItemsOf": "Total de {{label}} : {{count}}",
+    "totalOf": "Total de",
+    "totalCount": "Total {{label}} : {{count}}",
+    "scanWithCamera": "Scanner avec la caméra",
+    "scanCode": "Scanner le code",
+    "clearSearch": "Effacer la recherche",
+    "noData": "Aucune donnée disponible.",
+    "actions": "Actions",
+    "exportPdfSelected": "Exporter les {{count}} enregistrements sélectionnés en PDF",
+    "exportPdfAll": "Exporter les {{count}} {{label}} en PDF",
+    "exportExcelSelected": "Exporter les {{count}} enregistrements sélectionnés en EXCEL",
+    "exportExcelAll": "Exporter les {{count}} {{label}} en EXCEL",
+    "records": "enregistrements",
+    "loadingData": "Chargement des données...",
+    "rowsPerPage": "Par page :",
+    "displayedRows": "{{from}}–{{to}} sur {{count}}",
+    "confirmAction": "Confirmer l'action",
+    "confirm": "Confirmer",
+    "delete": "Supprimer",
+    "editItem": "Modifier : {{name}}",
+    "downloadPdf": "Télécharger le PDF",
+    "save": "Enregistrer",
+    "close": "Fermer",
+    "uploadImage": "Charger une image",
+    "generateEan13": "Générer un code EAN-13",
+    "searchOpenFoodFacts": "Chercher sur OpenFoodFacts",
+    "confirmSaveMessage": "Êtes-vous sûr de vouloir enregistrer ces données ?",
+    "scanX": "Scanner {{label}}",
+    "errors": {
+      "required": "Ce champ est obligatoire",
+      "invalidId": "L'ID doit être un UUID valide"
+    },
+    "barcodeScanner": {
+      "title": "Scanner le code-barres",
+      "camera": "Caméra",
+      "requesting": "Demande d'accès à la caméra...",
+      "closeAria": "Fermer le scanner",
+      "lastScanned": "Dernier code scanné",
+      "instructions": "Placez le code dans le cadre. Les caméras arrière, la mise au point continue et les formats EAN, UPC et Code 128 sont prioritaires.",
+      "restart": "Redémarrer la caméra",
+      "torchOn": "Allumer la lumière",
+      "torchOff": "Éteindre la lumière",
+      "errors": {
+        "permissionTitle": "Accès à la caméra refusé",
+        "permissionBody": "Pour utiliser le scanner, autorisez l'accès à la caméra dans les paramètres de votre navigateur et rechargez la page.",
+        "noCameraTitle": "Aucune caméra détectée",
+        "noCameraBody": "Cet appareil n'a pas de caméra disponible ou elle n'est pas accessible. Entrez le code-barres manuellement.",
+        "genericTitle": "Erreur lors du démarrage de la caméra",
+        "genericBody": "Impossible de démarrer le scanner. Vérifiez qu'aucune autre application n'utilise la caméra et réessayez."
+      }
+    }
+  },
+  "menuGroups": {
+    "inicio": "Accueil",
+    "catalogo": "Catalogue",
+    "operaciones": "Opérations",
+    "control": "Contrôle",
+    "gestion": "Gestion"
+  },
+  "menu": {
+    "inicio": {
+      "title": "Accueil",
+      "description": "Voir le résumé général et les métriques de l'économat"
+    },
+    "productos": {
+      "title": "Produits",
+      "description": "Gérer le catalogue des produits et les prix"
+    },
+    "proveedores": {
+      "title": "Fournisseurs",
+      "description": "Gérer les informations des fournisseurs externes"
+    },
+    "recetas": {
+      "title": "Recettes",
+      "description": "Catalogue de recettes et fiches techniques"
+    },
+    "pedidos": {
+      "title": "Commandes",
+      "description": "Gérer les commandes des utilisateurs et des fournisseurs"
+    },
+    "recepcion": {
+      "title": "Réception",
+      "description": "Enregistrer l'entrée des marchandises dans l'entrepôt"
+    },
+    "distribucion": {
+      "title": "Distribution",
+      "description": "Gérer les sorties et la distribution des produits"
+    },
+    "preparaciones": {
+      "title": "Préparations",
+      "description": "Historique de production des recettes"
+    },
+    "albaranes": {
+      "title": "Bons de livraison",
+      "description": "Gérer et numériser les bons de livraison de réception"
+    },
+    "inventario": {
+      "title": "Inventaire",
+      "description": "Contrôler le stock et effectuer des ajustements d'inventaire"
+    },
+    "movimientos": {
+      "title": "Mouvements",
+      "description": "Consulter l'historique des mouvements de stock"
+    },
+    "mermas": {
+      "title": "Pertes",
+      "description": "Gestion des pertes et des casses de produits"
+    },
+    "incidencias": {
+      "title": "Incidents",
+      "description": "Signaler et gérer les problèmes ou les retours"
+    },
+    "administracion": {
+      "title": "Administration",
+      "description": "Gestion des classes, des élèves et configuration académique"
+    },
+    "miPerfil": {
+      "title": "Mon profil",
+      "description": "Configurer les données personnelles et la sécurité"
+    }
+  },
+  "dashboard": {
+    "welcome": "Bonjour, {{name}} 👋",
+    "summary": "Voici un résumé de l'état actuel de l'économat.",
+    "statsTitle": "Statistiques de l'Économat",
+    "quickActions": "Actions Rapides",
+    "recentActivity": "Activité Récente",
+    "noActivity": "Aucune activité récente enregistrée.",
+    "metrics": {
+      "productos": "Total Produits",
+      "pedidos": "Commandes en attente",
+      "incidencias": "Incidents",
+      "stock": "Alertes de Stock",
+      "proveedores": "Fournisseurs",
+      "notificaciones": "Notifications"
+    },
+    "actions": {
+      "newOrder": "Nouvelle Commande",
+      "addProduct": "Ajouter un Produit",
+      "registerReception": "Enregistrer une Réception",
+      "newRecipe": "Nouvelle Recette"
+    },
+    "modals": {
+      "productsSummary": "Liste des Produits",
+      "pndingOrders": "Commandes en attente",
+      "incidencesSummary": "Liste des Incidents",
+      "stockAlerts": "Produits sous le seuil minimum",
+      "suppliersSummary": "Nos Fournisseurs",
+      "newProduct": "Ajouter un Nouveau Produit",
+      "newOrder": "Créer une Nouvelle Commande",
+      "newRecipe": "Nouvelle Recette"
+    }
+  },
+  "productos": {
+    "title": "Gestion des Produits",
+    "searchPlaceholder": "Rechercher par nom, marque, code barres...",
+    "totalItemsLabel": "produits",
+    "table": {
+      "name": "Nom",
+      "brand": "Marque",
+      "type": "Type",
+      "content": "Contenu",
+      "barcode": "Code barres"
+    },
+    "actions": {
+      "newProduct": "Nouveau Produit",
+      "addProduct": "Ajouter un Produit",
+      "editProduct": "Modifier le produit"
+    },
+    "empty": {
+      "filtered": "Aucun produit ne correspond à votre recherche ou à vos filtres",
+      "total": "Aucun produit trouvé",
+      "filteredHint": "Essayez d'autres termes ou effacez les filtres.",
+      "totalHint": "Commencez par ajouter le premier produit à votre inventaire."
+    },
+    "dialogs": {
+      "deleteTitle": "Supprimer le produit",
+      "deleteMessage": "Êtes-vous sûr de vouloir supprimer le produit **{{name}}** ? Cette action est irréversible."
+    },
+    "feedback": {
+      "deleted": "Produit \"{{name}}\" supprimé avec succès.",
+      "deleteError": "Erreur lors de la suppression du produit.",
+      "updated": "Produit mis à jour avec succès.",
+      "created": "Produit créé avec succès."
+    },
+    "scanner": {
+      "title": "Scanner un Produit pour Rechercher"
+    },
+    "detail": {
+      "sections": {
+        "general": "Informations générales",
+        "allergens": "Allergènes",
+        "suppliers": "Fournisseurs associés",
+        "priceHistory": "Historique des prix"
+      },
+      "fields": {
+        "pmpActual": "PRMP Actuel",
+        "description": "Description",
+        "price": "Prix",
+        "waste": "Perte",
+        "effectiveCost": "Coût Réel",
+        "brand": "Marque",
+        "provider": "Fournisseur"
+      },
+      "filters": {
+        "provider": "Filtrer par Fournisseur",
+        "allProviders": "Tous les fournisseurs"
+      },
+      "history": {
+        "date": "Date",
+        "provider": "Fournisseur",
+        "quantity": "Qté.",
+        "price": "Prix",
+        "document": "Doc."
+      },
+      "actions": {
+        "viewHistory": "Voir tout l'historique"
+      }
+    }
+  },
+  "proveedores": {
+    "title": "Gestion des Fournisseurs",
+    "searchPlaceholder": "Rechercher par nom, NIF, contact, email...",
+    "totalItemsLabel": "fournisseurs",
+    "table": {
+      "name": "Nom",
+      "contact": "Contact",
+      "phone": "Téléphone"
+    },
+    "actions": {
+      "newProvider": "Nouveau Fournisseur",
+      "addProvider": "Ajouter un Fournisseur"
+    },
+    "empty": {
+      "search": "Aucun fournisseur ne correspond à votre recherche",
+      "title": "Aucun fournisseur trouvé",
+      "searchSubtitle": "Essayez d'autres termes ou effacez le filtre.",
+      "subtitle": "Commencez par ajouter le premier fournisseur à votre catalogue."
+    },
+    "dialogs": {
+      "deleteTitle": "Supprimer le fournisseur",
+      "deleteMessage": "Êtes-vous sûr de vouloir supprimer le fournisseur **{{name}}** ? Cette action est irréversible.",
+      "confirmEdit": "Êtes-vous sûr de vouloir enregistrer les modifications apportées à ce fournisseur ?",
+      "confirmCreate": "Êtes-vous sûr de vouloir ajouter ce nouveau fournisseur au système ?"
+    },
+    "feedback": {
+      "loadError": "Erreur inconnue lors du chargement des fournisseurs.",
+      "deleted": "Fournisseur \"{{name}}\" supprimé avec succès.",
+      "deleteError": "Erreur lors de la suppression du fournisseur.",
+      "updated": "Fournisseur mis à jour avec succès.",
+      "created": "Fournisseur créé avec succès.",
+      "saveError": "Erreur lors de l'enregistrement du fournisseur."
+    },
+    "detail": {
+      "sections": {
+        "fiscalInfo": "Informations Fiscales",
+        "location": "Emplacement"
+      },
+      "fields": {
+        "address": "Adresse"
+      }
+    }
+  },
+  "recetas": {
+    "title": "Gestion des Recettes",
+    "totalItemsLabel": "recettes",
+    "searchPlaceholder": "Rechercher par nom de recette...",
+    "table": {
+      "recipe": "Recette",
+      "quantity": "Quantité",
+      "ingredientsCount": "{{count}} ingrédients",
+      "unit": "Unité",
+      "cost": "Coût"
+    },
+    "actions": {
+      "newRecipe": "Nouvelle Recette",
+      "prepareRecipes": "Préparer des Recettes",
+      "prepareSelected": "Préparer ({{count}})",
+      "createOrder": "Créer une commande",
+      "createOrderSelected": "Créer une commande ({{count}})",
+      "exportPdf": "Exporter en PDF",
+      "exportSelected": "Exporter en PDF ({{count}})",
+      "cookNow": "Cuisiner maintenant"
+    },
+    "dialogs": {
+      "deleteTitle": "Supprimer la recette",
+      "deleteMessage": "Êtes-vous sûr de vouloir supprimer la recette **{{name}}** ? Cette action est irréversible.",
+      "recipesToCook": "Recettes à préparer",
+      "insufficientStock": "Stock insuffisant pour produire certaines recettes",
+      "missingAmount": "Il manque {{amount}} {{unit}}",
+      "provider": "Fournisseur : {{name}}",
+      "createMissingOrder": "Créer une commande pour les manquants",
+      "stockOk": "Stock disponible pour toutes les recettes.",
+      "startBatchProduction": "Lancer la production par lot",
+      "startPreparation": "Lancer la préparation",
+      "noIngredients": "Cette recette n'a aucun ingrédient enregistré."
+    },
+    "feedback": {
+      "loadError": "Erreur lors du chargement des recettes.",
+      "deleted": "Recette \"{{name}}\" supprimée avec succès.",
+      "recipeCooked": "Production enregistrée avec succès.",
+      "orderCreated": "Commande #{{id}} générée avec succès depuis {{count}} recettes."
+    }
+  },
+  "allergens": {
+    "GLUTEN": "Gluten",
+    "CRUSTACEOS": "Crustacés",
+    "HUEVOS": "Œufs",
+    "PESCADO": "Poisson",
+    "CACAHUETES": "Arachides",
+    "SOJA": "Soja",
+    "LACTEOS": "Produits laitiers",
+    "FRUTOS_CON_CASCARA": "Fruits à coque",
+    "APIO": "Céleri",
+    "MOSTAZA": "Moutarde",
+    "SESAMO": "Sésame",
+    "SULFITO": "Sulfites",
+    "ALTRAMUCES": "Lupin",
+    "MOLUSCOS": "Mollusques"
+  }
+}

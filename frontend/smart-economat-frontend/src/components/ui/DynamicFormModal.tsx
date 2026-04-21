@@ -37,6 +37,7 @@ import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import { resolveStoredFileUrl } from '../../services/api.service';
 import { parseLocalizedNumber } from '../../utils/numberUtils';
 import { PedidoUsuario, PurchaseBatch } from '../../services/pedido.types';
+import { useTranslation } from 'react-i18next';
 
 export type FieldType =
   | 'text'
@@ -109,8 +110,8 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   initialData = {},
   onSubmit,
   onCancel,
-  submitLabel = 'Aceptar',
-  cancelLabel = 'Cancelar',
+  submitLabel,
+  cancelLabel,
   isSubmitting = false,
   requireConfirmation = false,
   onBarcodeFetch,
@@ -123,6 +124,10 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   onSecondarySubmit,
   secondarySubmitColor = 'success',
 }) => {
+  const { t } = useTranslation();
+  const actualSubmitLabel = submitLabel || t('common.save');
+  const actualCancelLabel = cancelLabel || t('common.cancel');
+
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const formDataRef = useRef<Record<string, unknown>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -295,7 +300,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
           val === '' ||
           (Array.isArray(val) && val.length === 0);
         if (isEmpty) {
-          newErrors[field.name] = 'Este campo es obligatorio';
+          newErrors[field.name] = t('common.errors.required');
         }
       }
       // Specific validation: proveedorId must be UUID v4
@@ -303,7 +308,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
         const uuidRegex =
           /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         if (!uuidRegex.test(String(formDataRef.current[field.name]))) {
-          newErrors[field.name] = 'El ID del proveedor debe ser un UUID válido';
+          newErrors[field.name] = t('common.errors.invalidId');
         }
       }
     });
@@ -376,13 +381,12 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   const nonImageFields = formFields.filter((f) => f.type !== 'image');
 
   const imageFieldName = mainImageField?.name;
+  const actualImageValue =
+    imageFieldName !== undefined ? formData[imageFieldName] : undefined;
   const imageRawValue = useMemo(
-    () => (imageFieldName !== undefined ? formData[imageFieldName] : undefined),
+    () => actualImageValue,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      imageFieldName,
-      imageFieldName !== undefined ? formData[imageFieldName] : undefined,
-    ]
+    [imageFieldName, actualImageValue]
   );
   const [imageBlobUrl, setImageBlobUrl] = useState<string | null>(null);
 
@@ -578,7 +582,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Tooltip title="Escanear con cámara">
+                    <Tooltip title={t('common.scanWithCamera')}>
                       <IconButton
                         size="small"
                         onClick={() => setActiveBarcodeField(name)}
@@ -602,7 +606,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                   <InputAdornment position="end">
                     <Stack direction="row" spacing={0.5}>
                       {onBarcodeGenerate && (
-                        <Tooltip title="Generar codigo EAN-13">
+                        <Tooltip title={t('common.generateEan13')}>
                           <span>
                             <IconButton
                               size="small"
@@ -632,7 +636,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                         </Tooltip>
                       )}
                       {onOFFSearch && (
-                        <Tooltip title="Buscar en OpenFoodFacts">
+                        <Tooltip title={t('common.searchOpenFoodFacts')}>
                           <span>
                             <IconButton
                               size="small"
@@ -733,7 +737,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                   }
                 }
               }}
-              title={`Escanear ${label}`}
+              title={t('common.scanX', { label })}
             />
           </Box>
         );
@@ -831,7 +835,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                     size="small"
                     sx={{ mt: 0, py: 1 }}
                   >
-                    {label || 'Cargar Imagen'}
+                    {label || t('common.uploadImage')}
                     <input
                       type="file"
                       hidden
@@ -877,14 +881,14 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
         <Box
           sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}
         >
-          {Boolean(cancelLabel) && (
+          {Boolean(actualCancelLabel) && (
             <Button
               onClick={handleCancel}
               variant="outlined"
               fullWidth={false}
               sx={{ mt: 0, mb: 0 }}
             >
-              {cancelLabel}
+              {actualCancelLabel}
             </Button>
           )}
           {secondarySubmitLabel && onSecondarySubmit && (
@@ -906,7 +910,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
             fullWidth={false}
             sx={{ mt: 0, mb: 0 }}
           >
-            {submitLabel}
+            {actualSubmitLabel}
           </Button>
         </Box>
       </form>
@@ -915,13 +919,10 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
         isOpen={isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}
         onConfirm={handleConfirmSubmit}
-        title="Confirmar acción"
-        message={
-          confirmationMessage ||
-          '¿Estás seguro de que deseas guardar estos datos?'
-        }
-        confirmText="Guardar"
-        cancelText="Cerrar"
+        title={t('common.confirmAction')}
+        message={confirmationMessage || t('common.confirmSaveMessage')}
+        confirmText={t('common.save')}
+        cancelText={t('common.close')}
         confirmColor="primary"
       />
     </Modal>

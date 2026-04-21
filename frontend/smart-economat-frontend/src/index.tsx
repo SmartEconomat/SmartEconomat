@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import 'wicg-inert';
 import './index.css';
+import './i18n';
 import * as Sentry from '@sentry/react';
 import App from './App';
 import reportWebVitals from './reportWebVitals';

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Paper,
@@ -46,6 +47,7 @@ const proveedorSchema: DynamicField[] = [
 ];
 
 const Proveedores: React.FC = () => {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -83,12 +85,12 @@ const Proveedores: React.FC = () => {
       const message =
         err instanceof Error
           ? err.message
-          : 'Error desconocido al cargar proveedores.';
+          : t('proveedores.feedback.loadError');
       setError(message);
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, searchTerm, sortBy, sortOrder]);
+  }, [page, pageSize, searchTerm, sortBy, sortOrder, t]);
 
   useEffect(() => {
     loadData();
@@ -101,11 +103,13 @@ const Proveedores: React.FC = () => {
       await deleteResource(`/proveedor/${itemToDelete.id}`);
       setData((prev) => prev.filter((p) => p.id !== itemToDelete.id));
       toast.success(
-        `Proveedor "${itemToDelete.nombre}" eliminado correctamente.`
+        t('proveedores.feedback.deleted', { name: itemToDelete.nombre })
       );
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Error al eliminar el proveedor.';
+        err instanceof Error
+          ? err.message
+          : t('proveedores.feedback.deleteError');
       toast.error(message);
     } finally {
       setIsDeleting(false);
@@ -127,16 +131,18 @@ const Proveedores: React.FC = () => {
 
       if (formData.id) {
         await updateProveedor(formData.id as string, payload);
-        toast.success('Proveedor actualizado correctamente.');
+        toast.success(t('proveedores.feedback.updated'));
       } else {
         await createProveedor(payload);
-        toast.success('Proveedor creado correctamente.');
+        toast.success(t('proveedores.feedback.created'));
       }
       await loadData();
       setItemToEdit(null);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Error al guardar el proveedor.';
+        err instanceof Error
+          ? err.message
+          : t('proveedores.feedback.saveError');
       toast.error(message);
     } finally {
       setIsSaving(false);
@@ -197,7 +203,7 @@ const Proveedores: React.FC = () => {
   const canCreate = usePermission(PERMISSIONS.proveedores.crear);
 
   const columns: Column<Proveedor>[] = [
-    { id: 'nombre', label: 'Nombre', sortable: true },
+    { id: 'nombre', label: t('proveedores.table.name'), sortable: true },
     {
       id: 'nif',
       label: 'NIF',
@@ -207,14 +213,14 @@ const Proveedores: React.FC = () => {
     },
     {
       id: 'contacto',
-      label: 'Contacto',
+      label: t('proveedores.table.contact'),
       render: (row) => row.contacto ?? '—',
       responsiveDisplay: { xs: 'none', md: 'table-cell' },
       sortable: true,
     },
     {
       id: 'telefono',
-      label: 'Teléfono',
+      label: t('proveedores.table.phone'),
       render: (row) => row.telefono ?? '—',
       sortable: true,
       responsiveDisplay: { xs: 'none', sm: 'table-cell' },
@@ -230,7 +236,7 @@ const Proveedores: React.FC = () => {
 
   const renderActions = (row: Proveedor) => (
     <Stack direction="row" spacing={1} justifyContent="center">
-      <Tooltip title="Ver detalle">
+      <Tooltip title={t('common.viewDetails')}>
         <IconButton
           onClick={() => handleViewClick(row)}
           size="small"
@@ -241,7 +247,7 @@ const Proveedores: React.FC = () => {
         </IconButton>
       </Tooltip>
       {canEdit && (
-        <Tooltip title="Editar">
+        <Tooltip title={t('common.edit')}>
           <IconButton
             color="secondary"
             onClick={() => handleEditClick(row)}
@@ -253,7 +259,7 @@ const Proveedores: React.FC = () => {
         </Tooltip>
       )}
       {canDelete && (
-        <Tooltip title="Eliminar">
+        <Tooltip title={t('common.delete')}>
           <IconButton
             color="error"
             onClick={() => setItemToDelete(row)}
@@ -270,20 +276,20 @@ const Proveedores: React.FC = () => {
   return (
     <Box>
       <PageToolbar
-        title="Gestión de Proveedores"
+        title={t('proveedores.title')}
         searchValue={searchTerm}
         onSearchChange={(v) => {
           setSearchTerm(v);
           setPage(1);
         }}
-        searchPlaceholder="Buscar por nombre, NIF, contacto, email..."
+        searchPlaceholder={t('proveedores.searchPlaceholder')}
         searchId="search-proveedores"
         totalItems={totalItems}
-        totalItemsLabel="proveedores"
+        totalItemsLabel={t('proveedores.totalItemsLabel')}
         primaryAction={
           canCreate
             ? {
-                label: 'Nuevo Proveedor',
+                label: t('proveedores.actions.newProvider'),
                 onClick: () => setItemToEdit({}),
                 id: 'btn-nuevo-proveedor',
               }
@@ -307,7 +313,7 @@ const Proveedores: React.FC = () => {
           exportHandlers={{
             onExportPdf: handleExportPdf,
             onExportExcel: handleExportExcel,
-            exportLabel: 'proveedores filtrados',
+            exportLabel: t('proveedores.totalItemsLabel'),
           }}
           onSort={handleSort}
           sortConfig={{ key: sortBy || '', direction: sortOrder }}
@@ -319,13 +325,13 @@ const Proveedores: React.FC = () => {
               />
               <Typography variant="h6" color="text.secondary" gutterBottom>
                 {searchTerm.trim()
-                  ? 'No hay proveedores que coincidan con tu búsqueda'
-                  : 'No se encontraron proveedores'}
+                  ? t('proveedores.empty.search')
+                  : t('proveedores.empty.title')}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                 {searchTerm.trim()
-                  ? 'Prueba con otros términos o limpia el filtro.'
-                  : 'Empieza añadiendo el primer proveedor a tu catálogo.'}
+                  ? t('proveedores.empty.searchSubtitle')
+                  : t('proveedores.empty.subtitle')}
               </Typography>
               {!searchTerm.trim() && canCreate && (
                 <Button
@@ -333,7 +339,7 @@ const Proveedores: React.FC = () => {
                   startIcon={<AddIcon />}
                   onClick={() => setItemToEdit({})}
                 >
-                  Añadir Proveedor
+                  {t('proveedores.actions.addProvider')}
                 </Button>
               )}
             </Box>
@@ -357,16 +363,16 @@ const Proveedores: React.FC = () => {
           isOpen={!!itemToDelete}
           onClose={() => !isDeleting && setItemToDelete(null)}
           onConfirm={() => void handleDeleteConfirm()}
-          title="Eliminar proveedor"
+          title={t('proveedores.dialogs.deleteTitle')}
           message={
-            <>
-              ¿Estás seguro de que deseas eliminar el proveedor{' '}
-              <strong>{itemToDelete?.nombre}</strong>? Esta acción no se puede
-              deshacer.
-            </>
+            <Box>
+              {t('proveedores.dialogs.deleteMessage', {
+                name: itemToDelete?.nombre,
+              })}
+            </Box>
           }
-          confirmText="Sí, eliminar"
-          cancelText="Cancelar"
+          confirmText={t('common.confirmDelete')}
+          cancelText={t('common.cancel')}
           isLoading={isDeleting}
         />
 
@@ -375,8 +381,8 @@ const Proveedores: React.FC = () => {
           onClose={() => setItemToEdit(null)}
           title={
             itemToEdit?.id
-              ? `Editar: ${itemToEdit.nombre || ''}`
-              : 'Crear Nuevo Proveedor'
+              ? t('common.editItem', { name: itemToEdit.nombre || '' })
+              : t('proveedores.actions.newProvider')
           }
           size="md"
           fields={proveedorSchema}
@@ -386,8 +392,8 @@ const Proveedores: React.FC = () => {
           requireConfirmation={true}
           confirmationMessage={
             itemToEdit?.id
-              ? '¿Estás seguro de que deseas guardar los cambios realizados en este proveedor?'
-              : '¿Estás seguro de que deseas añadir este nuevo proveedor al sistema?'
+              ? t('proveedores.dialogs.confirmEdit')
+              : t('proveedores.dialogs.confirmCreate')
           }
         />
 
@@ -397,7 +403,7 @@ const Proveedores: React.FC = () => {
           title={itemToView?.nombre || ''}
           subtitle={itemToView?.nif || undefined}
           size="md"
-          editLabel="Editar proveedor"
+          editLabel={t('common.edit')}
           onEdit={
             canEdit
               ? () => {
@@ -417,31 +423,40 @@ const Proveedores: React.FC = () => {
                 onClick={() => handleExportIndividualPdf(itemToView)}
                 disableElevation
               >
-                Descargar Ficha
+                {t('common.downloadPdf')}
               </Button>
             )
           }
           sections={[
             {
-              title: 'Información Fiscal',
+              title: t('proveedores.detail.sections.fiscalInfo'),
               fields: [
-                { label: 'Razón Social', value: itemToView?.nombre },
+                {
+                  label: t('proveedores.table.name'),
+                  value: itemToView?.nombre,
+                },
                 { label: 'NIF / CUIT', value: itemToView?.nif },
               ],
             },
             {
-              title: 'Contacto',
+              title: t('proveedores.table.contact'),
               fields: [
-                { label: 'Persona de Contacto', value: itemToView?.contacto },
-                { label: 'Teléfono', value: itemToView?.telefono },
+                {
+                  label: t('proveedores.table.contact'),
+                  value: itemToView?.contacto,
+                },
+                {
+                  label: t('proveedores.table.phone'),
+                  value: itemToView?.telefono,
+                },
                 { label: 'Email', value: itemToView?.email, fullWidth: true },
               ],
             },
             {
-              title: 'Ubicación',
+              title: t('proveedores.detail.sections.location'),
               fields: [
                 {
-                  label: 'Dirección',
+                  label: t('proveedores.detail.fields.address'),
                   value: itemToView?.direccion,
                   fullWidth: true,
                 },

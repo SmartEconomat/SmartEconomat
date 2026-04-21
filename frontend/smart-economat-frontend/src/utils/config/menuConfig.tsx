@@ -40,6 +40,7 @@ const Administracion = React.lazy(() => import('../../pages/Administracion'));
 
 export interface MenuItem {
   path: string;
+  id: string; // Used for translation keys: menu.{id}.title
   title: string;
   description: string;
   group: 'inicio' | 'catalogo' | 'operaciones' | 'control' | 'gestion';
@@ -54,8 +55,9 @@ export interface MenuItem {
 export const menuItems: MenuItem[] = [
   {
     path: '/',
-    title: 'Inicio',
-    description: 'Ver resumen general y métricas del economato',
+    id: 'inicio',
+    title: 'menu.inicio.title',
+    description: 'menu.inicio.description',
     group: 'inicio',
     icon: <HomeIconOption />,
     component: Home,
@@ -64,8 +66,9 @@ export const menuItems: MenuItem[] = [
   },
   {
     path: '/productos',
-    title: 'Productos',
-    description: 'Gestionar catálogo de productos y precios',
+    id: 'productos',
+    title: 'menu.productos.title',
+    description: 'menu.productos.description',
     group: 'catalogo',
     icon: <CategoryIconOption />,
     component: Productos,
@@ -74,8 +77,9 @@ export const menuItems: MenuItem[] = [
   },
   {
     path: '/proveedores',
-    title: 'Proveedores',
-    description: 'Gestionar información de proveedores externos',
+    id: 'proveedores',
+    title: 'menu.proveedores.title',
+    description: 'menu.proveedores.description',
     group: 'catalogo',
     icon: <LocalShippingIconOption />,
     component: Proveedores,
@@ -84,8 +88,9 @@ export const menuItems: MenuItem[] = [
   },
   {
     path: '/recetas',
-    title: 'Recetas',
-    description: 'Catálogo de recetas y escandallos',
+    id: 'recetas',
+    title: 'menu.recetas.title',
+    description: 'menu.recetas.description',
     group: 'catalogo',
     icon: <MenuBookIconOption />,
     component: Recetas,
@@ -94,8 +99,9 @@ export const menuItems: MenuItem[] = [
   },
   {
     path: '/pedidos',
-    title: 'Pedidos',
-    description: 'Administrar pedidos de usuarios y proveedores',
+    id: 'pedidos',
+    title: 'menu.pedidos.title',
+    description: 'menu.pedidos.description',
     group: 'operaciones',
     icon: <ShoppingCartIconOption />,
     component: Pedidos,
@@ -104,8 +110,9 @@ export const menuItems: MenuItem[] = [
   },
   {
     path: '/recepciones',
-    title: 'Recepción',
-    description: 'Registrar entrada de mercancía al almacén',
+    id: 'recepcion',
+    title: 'menu.recepcion.title',
+    description: 'menu.recepcion.description',
     group: 'operaciones',
     icon: <LoginIconOption />,
     component: Recepcion,
@@ -114,9 +121,9 @@ export const menuItems: MenuItem[] = [
   },
   {
     path: '/distribucion',
-    title: 'Distribución',
-    description:
-      'Distribuir stock recepcionado hacia aulas y destinos internos',
+    id: 'distribucion',
+    title: 'menu.distribucion.title',
+    description: 'menu.distribucion.description',
     group: 'operaciones',
     icon: <CallSplitIcon />,
     component: Distribucion,
@@ -125,8 +132,9 @@ export const menuItems: MenuItem[] = [
   },
   {
     path: '/preparaciones',
-    title: 'Preparaciones',
-    description: 'Historial de producción de recetas',
+    id: 'preparaciones',
+    title: 'menu.preparaciones.title',
+    description: 'menu.preparaciones.description',
     group: 'operaciones',
     icon: <RestaurantIconOption />,
     component: Preparaciones,
@@ -135,8 +143,9 @@ export const menuItems: MenuItem[] = [
   },
   {
     path: '/albaranes',
-    title: 'Albaranes',
-    description: 'Gestionar y digitalizar albaranes de recepción',
+    id: 'albaranes',
+    title: 'menu.albaranes.title',
+    description: 'menu.albaranes.description',
     group: 'operaciones',
     icon: <AssignmentOutlinedIcon />,
     component: Albaranes,
@@ -145,8 +154,9 @@ export const menuItems: MenuItem[] = [
   },
   {
     path: '/inventario',
-    title: 'Inventario',
-    description: 'Controlar stock y realizar ajustes de inventario',
+    id: 'inventario',
+    title: 'menu.inventario.title',
+    description: 'menu.inventario.description',
     group: 'control',
     icon: <InventoryIconOption />,
     component: Inventario,
@@ -155,8 +165,9 @@ export const menuItems: MenuItem[] = [
   },
   {
     path: '/movimientos',
-    title: 'Movimientos',
-    description: 'Consultar historial de movimientos de stock',
+    id: 'movimientos',
+    title: 'menu.movimientos.title',
+    description: 'menu.movimientos.description',
     group: 'control',
     icon: <SwapHorizIconOption />,
     component: Movimientos,
@@ -165,8 +176,9 @@ export const menuItems: MenuItem[] = [
   },
   {
     path: '/mermas',
-    title: 'Mermas',
-    description: 'Gestión de pérdidas y roturas de productos',
+    id: 'mermas',
+    title: 'menu.mermas.title',
+    description: 'menu.mermas.description',
     group: 'control',
     icon: <BrokenImageOutlinedIcon />,
     component: Mermas,
@@ -175,8 +187,9 @@ export const menuItems: MenuItem[] = [
   },
   {
     path: '/incidencias',
-    title: 'Incidencias',
-    description: 'Reportar y gestionar problemas o devoluciones',
+    id: 'incidencias',
+    title: 'menu.incidencias.title',
+    description: 'menu.incidencias.description',
     group: 'control',
     icon: <ReportProblemIconOption />,
     component: Incidencias,
@@ -185,8 +198,9 @@ export const menuItems: MenuItem[] = [
   },
   {
     path: '/administracion',
-    title: 'Administración',
-    description: 'Gestión de clases, alumnos y configuración académica',
+    id: 'administracion',
+    title: 'menu.administracion.title',
+    description: 'menu.administracion.description',
     group: 'gestion',
     icon: <AdminPanelSettingsIcon />,
     component: Administracion,
@@ -200,8 +214,9 @@ export const menuItems: MenuItem[] = [
   },
   {
     path: '/perfil',
-    title: 'Mi Perfil',
-    description: 'Configurar datos personales y seguridad',
+    id: 'miPerfil',
+    title: 'menu.miPerfil.title',
+    description: 'menu.miPerfil.description',
     group: 'gestion',
     icon: <PersonIconOption />,
     component: Perfil,

@@ -6,6 +6,7 @@
  */
 
 import React, { ReactNode, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Table,
   TableBody,
@@ -153,10 +154,10 @@ export function DataTable<T extends Record<string, any>>({
   columns,
   data,
   isLoading = false,
-  emptyStateMessage = 'No hay datos disponibles.',
+  emptyStateMessage,
   pagination,
   renderActions,
-  actionsLabel = 'Acciones',
+  actionsLabel,
   actionsAlign = 'center',
   actionsWidth,
   renderGridItem,
@@ -176,6 +177,10 @@ export function DataTable<T extends Record<string, any>>({
   viewMode: controlledViewMode,
   onViewModeChange: onControlledViewModeChange,
 }: DataTableProps<T>) {
+  const { t } = useTranslation();
+  const actualEmptyStateMessage = emptyStateMessage || t('common.noData');
+  const actualActionsLabel = actionsLabel || t('common.actions');
+
   const colSpanCount =
     columns.length + (renderActions ? 1 : 0) + (selectable ? 1 : 0);
   const [internalViewMode, setInternalViewMode] = useState<'list' | 'grid'>(
@@ -259,10 +264,14 @@ export function DataTable<T extends Record<string, any>>({
               <Tooltip
                 title={
                   selectedIds.length > 0
-                    ? `Exportar los ${selectedIds.length} registros seleccionados a PDF`
-                    : `Exportar los ${pagination?.totalItems ?? data.length} ${
-                        exportHandlers.exportLabel || 'registros'
-                      } a PDF`
+                    ? t('common.exportPdfSelected', {
+                        count: selectedIds.length,
+                      })
+                    : t('common.exportPdfAll', {
+                        count: pagination?.totalItems ?? data.length,
+                        label:
+                          exportHandlers.exportLabel || t('common.records'),
+                      })
                 }
               >
                 <IconButton
@@ -286,10 +295,14 @@ export function DataTable<T extends Record<string, any>>({
               <Tooltip
                 title={
                   selectedIds.length > 0
-                    ? `Exportar los ${selectedIds.length} registros seleccionados a EXCEL`
-                    : `Exportar los ${pagination?.totalItems ?? data.length} ${
-                        exportHandlers.exportLabel || 'registros'
-                      } a EXCEL`
+                    ? t('common.exportExcelSelected', {
+                        count: selectedIds.length,
+                      })
+                    : t('common.exportExcelAll', {
+                        count: pagination?.totalItems ?? data.length,
+                        label:
+                          exportHandlers.exportLabel || t('common.records'),
+                      })
                 }
               >
                 <IconButton
@@ -404,7 +417,7 @@ export function DataTable<T extends Record<string, any>>({
                     align={actionsAlign}
                     sx={{ fontWeight: 'bold', width: actionsWidth }}
                   >
-                    {actionsLabel}
+                    {actualActionsLabel}
                   </TableCell>
                 )}
               </TableRow>
@@ -419,7 +432,7 @@ export function DataTable<T extends Record<string, any>>({
                   >
                     <Spinner size="md" color="primary" />
                     <Typography sx={{ mt: 2 }} color="text.secondary">
-                      Cargando datos...
+                      {t('common.loadingData')}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -431,12 +444,12 @@ export function DataTable<T extends Record<string, any>>({
                     align="center"
                     sx={{ py: 6 }}
                   >
-                    {typeof emptyStateMessage === 'string' ? (
+                    {typeof actualEmptyStateMessage === 'string' ? (
                       <Typography color="text.secondary">
-                        {emptyStateMessage}
+                        {actualEmptyStateMessage}
                       </Typography>
                     ) : (
-                      emptyStateMessage
+                      actualEmptyStateMessage
                     )}
                   </TableCell>
                 </TableRow>
@@ -599,7 +612,7 @@ export function DataTable<T extends Record<string, any>>({
               >
                 <Spinner size="md" color="primary" />
                 <Typography sx={{ mt: 2 }} color="text.secondary">
-                  Cargando datos...
+                  {t('common.loadingData')}
                 </Typography>
               </Box>
             </Grid>
@@ -607,12 +620,12 @@ export function DataTable<T extends Record<string, any>>({
           {!isLoading && data.length === 0 && (
             <Grid size={{ xs: 12 }}>
               <Box display="flex" justifyContent="center" py={6}>
-                {typeof emptyStateMessage === 'string' ? (
+                {typeof actualEmptyStateMessage === 'string' ? (
                   <Typography color="text.secondary">
-                    {emptyStateMessage}
+                    {actualEmptyStateMessage}
                   </Typography>
                 ) : (
-                  emptyStateMessage
+                  actualEmptyStateMessage
                 )}
               </Box>
             </Grid>
@@ -661,9 +674,9 @@ export function DataTable<T extends Record<string, any>>({
               }
             }}
             rowsPerPageOptions={pagination.pageSizeOptions ?? [5, 10, 15, 20]}
-            labelRowsPerPage="Por página:"
+            labelRowsPerPage={t('common.rowsPerPage')}
             labelDisplayedRows={({ from, to, count }) =>
-              `${from}–${to} de ${count}`
+              t('common.displayedRows', { from, to, count })
             }
           />
         </Box>

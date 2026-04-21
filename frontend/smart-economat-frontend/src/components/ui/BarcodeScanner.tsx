@@ -26,6 +26,7 @@ import {
   Stack,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { useTranslation } from 'react-i18next';
 import FlashOnIcon from '@mui/icons-material/FlashOn';
 import FlashOffIcon from '@mui/icons-material/FlashOff';
 import BarcodeIcon from './BarcodeIcon';
@@ -131,7 +132,7 @@ const applyPreferredTrackSettings = async (
         )
       : [];
     if (exposureModes.includes('continuous')) {
-      advanced.exposureMode = 'continuous';
+      exposureModes.includes('continuous');
     }
 
     if (Object.keys(advanced).length > 0) {
@@ -209,9 +210,12 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   open,
   onClose,
   onScan,
-  title = 'Escanear Código de Barras',
+  title,
   continuous = false,
 }) => {
+  const { t } = useTranslation();
+  const actualTitle = title || t('common.barcodeScanner.title');
+  const actualCancelLabel = t('common.cancel');
   const videoRef = useRef<HTMLVideoElement>(null);
   const readerRef = useRef<BrowserMultiFormatReader | null>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
@@ -339,7 +343,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
           setScannerState('error_permission');
         } else if (
           errorMsg.toLowerCase().includes('notfound') ||
-          errorMsg.toLowerCase().includes('no camera')
+          errorMsg.toLowerCase().includes('no camera') ||
+          errorMsg.toLowerCase().includes('devices not found')
         ) {
           setScannerState('error_no_camera');
         } else {
@@ -382,7 +387,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         const cameraList: CameraDevice[] = devices.map(
           (d: MediaDeviceInfo) => ({
             deviceId: d.deviceId,
-            label: d.label || `Cámara ${d.deviceId.substring(0, 6)}`,
+            label:
+              d.label ||
+              `${t('common.barcodeScanner.camera')} ${d.deviceId.substring(0, 6)}`,
           })
         );
         setCameras(cameraList);
@@ -418,7 +425,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     return () => {
       stopScanner();
     };
-  }, [open, startScanner, stopScanner]);
+  }, [open, startScanner, stopScanner, t]);
 
   // Limpiar al cerrar
   const handleClose = () => {
@@ -453,11 +460,10 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         return (
           <Alert severity="error" sx={{ mt: 2 }}>
             <Typography variant="subtitle2" gutterBottom>
-              Permiso de cámara denegado
+              {t('common.barcodeScanner.errors.permissionTitle')}
             </Typography>
             <Typography variant="body2">
-              Para usar el escáner, permite el acceso a la cámara en la
-              configuración de tu navegador y recarga la página.
+              {t('common.barcodeScanner.errors.permissionBody')}
             </Typography>
           </Alert>
         );
@@ -466,11 +472,10 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         return (
           <Alert severity="warning" sx={{ mt: 2 }}>
             <Typography variant="subtitle2" gutterBottom>
-              No se detectó ninguna cámara
+              {t('common.barcodeScanner.errors.noCameraTitle')}
             </Typography>
             <Typography variant="body2">
-              Este dispositivo no tiene cámara disponible o no es accesible.
-              Introduce el código de barras manualmente.
+              {t('common.barcodeScanner.errors.noCameraBody')}
             </Typography>
           </Alert>
         );
@@ -479,18 +484,17 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         return (
           <Alert severity="error" sx={{ mt: 2 }}>
             <Typography variant="subtitle2" gutterBottom>
-              Error al iniciar la cámara
+              {t('common.barcodeScanner.errors.genericTitle')}
             </Typography>
             <Typography variant="body2">
-              No se pudo iniciar el escáner. Verifica que no haya otra
-              aplicación usando la cámara e inténtalo de nuevo.
+              {t('common.barcodeScanner.errors.genericBody')}
             </Typography>
             <Button
               size="small"
               sx={{ mt: 1 }}
               onClick={() => void startScanner(selectedCamera)}
             >
-              Reintentar
+              {t('common.retry')}
             </Button>
           </Alert>
         );
@@ -508,7 +512,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
           >
             <CircularProgress />
             <Typography variant="body2" color="text.secondary">
-              Solicitando acceso a la cámara…
+              {t('common.barcodeScanner.requesting')}
             </Typography>
           </Box>
         );
@@ -541,9 +545,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         }}
       >
         <BarcodeIcon color="primary" />
-        {title}
+        {actualTitle}
         <IconButton
-          aria-label="Cerrar escáner"
+          aria-label={t('common.barcodeScanner.closeAria')}
           onClick={handleClose}
           sx={{ position: 'absolute', right: 8, top: 8 }}
         >
@@ -646,10 +650,10 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         {/* Selector de cámara */}
         {cameras.length > 1 && (
           <FormControl fullWidth size="small" sx={{ mt: 2 }}>
-            <InputLabel>Cámara</InputLabel>
+            <InputLabel>{t('common.barcodeScanner.camera')}</InputLabel>
             <Select
               value={selectedCamera}
-              label="Cámara"
+              label={t('common.barcodeScanner.camera')}
               onChange={(e) => void handleCameraChange(e.target.value)}
             >
               {cameras.map((cam) => (
@@ -664,7 +668,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         {/* Último código leído (modo continuo) */}
         {continuous && lastCode && (
           <Alert severity="success" icon={<CheckCircleIcon />} sx={{ mt: 2 }}>
-            Último código leído: <strong>{lastCode}</strong>
+            {t('common.barcodeScanner.lastScanned')}:{' '}
+            <strong>{lastCode}</strong>
           </Alert>
         )}
 
@@ -674,8 +679,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             color="text.secondary"
             sx={{ display: 'block', textAlign: 'center', mt: 1.5 }}
           >
-            Acerca el código al recuadro. Se priorizan cámaras traseras, enfoque
-            continuo y formatos EAN, UPC y Code 128.
+            {t('common.barcodeScanner.instructions')}
           </Typography>
         )}
 
@@ -691,7 +695,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
               size="small"
               onClick={() => void startScanner(selectedCamera)}
             >
-              Reiniciar cámara
+              {t('common.barcodeScanner.restart')}
             </Button>
             {torchAvailable && (
               <Button
@@ -702,7 +706,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                 disabled={torchBusy}
                 startIcon={torchEnabled ? <FlashOffIcon /> : <FlashOnIcon />}
               >
-                {torchEnabled ? 'Apagar luz' : 'Encender luz'}
+                {torchEnabled
+                  ? t('common.barcodeScanner.torchOff')
+                  : t('common.barcodeScanner.torchOn')}
               </Button>
             )}
           </Stack>
@@ -711,7 +717,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
       <DialogActions sx={{ px: 2, pb: 2 }}>
         <Button variant="outlined" onClick={handleClose}>
-          Cancelar
+          {actualCancelLabel}
         </Button>
       </DialogActions>
     </Dialog>

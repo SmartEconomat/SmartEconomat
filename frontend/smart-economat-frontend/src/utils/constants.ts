@@ -21,38 +21,70 @@ export interface Allergen {
 }
 
 export const EU_ALLERGENS: Allergen[] = [
-  { id: 'GLUTEN', label: 'Gluten', icon: React.createElement(GrassIcon) },
+  {
+    id: 'GLUTEN',
+    label: 'allergens.GLUTEN',
+    icon: React.createElement(GrassIcon),
+  },
   {
     id: 'CRUSTACEOS',
-    label: 'Crustáceos',
+    label: 'allergens.CRUSTACEOS',
     icon: React.createElement(BugReportIcon),
   },
-  { id: 'HUEVOS', label: 'Huevos', icon: React.createElement(EggIcon) },
-  { id: 'PESCADO', label: 'Pescado', icon: React.createElement(SetMealIcon) },
+  {
+    id: 'HUEVOS',
+    label: 'allergens.HUEVOS',
+    icon: React.createElement(EggIcon),
+  },
+  {
+    id: 'PESCADO',
+    label: 'allergens.PESCADO',
+    icon: React.createElement(SetMealIcon),
+  },
   {
     id: 'CACAHUETES',
-    label: 'Cacahuetes',
+    label: 'allergens.CACAHUETES',
     icon: React.createElement(GrainIcon),
   },
-  { id: 'SOJA', label: 'Soja', icon: React.createElement(NatureIcon) },
+  {
+    id: 'SOJA',
+    label: 'allergens.SOJA',
+    icon: React.createElement(NatureIcon),
+  },
   {
     id: 'LACTEOS',
-    label: 'Lácteos',
+    label: 'allergens.LACTEOS',
     icon: React.createElement(LocalDrinkIcon),
   },
   {
     id: 'FRUTOS_CON_CASCARA',
-    label: 'Frutos de cáscara',
+    label: 'allergens.FRUTOS_CON_CASCARA',
     icon: React.createElement(SpaIcon),
   },
-  { id: 'APIO', label: 'Apio', icon: React.createElement(YardIcon) },
-  { id: 'MOSTAZA', label: 'Mostaza', icon: React.createElement(ColorizeIcon) },
-  { id: 'SESAMO', label: 'Sésamo', icon: React.createElement(ScatterPlotIcon) },
-  { id: 'SULFITO', label: 'Sulfitos', icon: React.createElement(ScienceIcon) },
+  { id: 'APIO', label: 'allergens.APIO', icon: React.createElement(YardIcon) },
+  {
+    id: 'MOSTAZA',
+    label: 'allergens.MOSTAZA',
+    icon: React.createElement(ColorizeIcon),
+  },
+  {
+    id: 'SESAMO',
+    label: 'allergens.SESAMO',
+    icon: React.createElement(ScatterPlotIcon),
+  },
+  {
+    id: 'SULFITO',
+    label: 'allergens.SULFITO',
+    icon: React.createElement(ScienceIcon),
+  },
   {
     id: 'ALTRAMUCES',
-    label: 'Altramuces',
+    label: 'allergens.ALTRAMUCES',
     icon: React.createElement(LocalFloristIcon),
   },
-  { id: 'MOLUSCOS', label: 'Moluscos', icon: React.createElement(WaterIcon) },
+  {
+    id: 'MOLUSCOS',
+    label: 'allergens.MOLUSCOS',
+    icon: React.createElement(WaterIcon),
+  },
 ];

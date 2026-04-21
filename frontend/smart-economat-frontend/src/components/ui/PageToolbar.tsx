@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   TextField,
@@ -103,13 +104,13 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
   icon,
   searchValue,
   onSearchChange,
-  searchPlaceholder = 'Buscar...',
+  searchPlaceholder,
   searchId = 'page-search',
   primaryAction,
   secondaryAction,
   filters,
   totalItems,
-  totalItemsLabel = 'elementos',
+  totalItemsLabel,
   viewMode,
   onViewModeChange,
   onScanBarcode, // Added onScanBarcode to destructuring
@@ -117,6 +118,11 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
   sticky = true,
   extraActions = [],
 }) => {
+  const { t } = useTranslation();
+  const actualSearchPlaceholder =
+    searchPlaceholder || t('common.searchPlaceholder');
+  const actualTotalItemsLabel = totalItemsLabel || t('common.items');
+
   const { isMobile, isMobileOrTablet } = useBreakpoints();
   const theme = useTheme();
   const [isExpanded, setIsExpanded] = React.useState(true);
@@ -177,7 +183,11 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
               </Typography>
               {hasFiltersOrSearch && (
                 <Tooltip
-                  title={isExpanded ? 'Ocultar filtros' : 'Mostrar filtros'}
+                  title={
+                    isExpanded
+                      ? t('common.hideFilters')
+                      : t('common.showFilters')
+                  }
                 >
                   <IconButton
                     size="small"
@@ -200,13 +210,18 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
 
             <Box display="flex" alignItems="center" gap={1}>
               {totalItems !== undefined && (
-                <Tooltip title={`Total de ${totalItemsLabel}: ${totalItems}`}>
+                <Tooltip
+                  title={t('common.totalItemsOf', {
+                    label: actualTotalItemsLabel,
+                    count: totalItems,
+                  })}
+                >
                   <Chip
                     icon={<CheckCircleIcon fontSize="small" />}
                     label={
                       <>
-                        Total de <strong>{totalItemsLabel}</strong>:{' '}
-                        {totalItems}
+                        {t('common.totalOf')}{' '}
+                        <strong>{actualTotalItemsLabel}</strong>: {totalItems}
                       </>
                     }
                     size="small"
@@ -224,7 +239,10 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
               {/* Móvil: Versión más compacta del chip */}
               {totalItems !== undefined && (
                 <Chip
-                  label={`Total ${totalItemsLabel}: ${totalItems}`}
+                  label={t('common.totalCount', {
+                    label: actualTotalItemsLabel,
+                    count: totalItems,
+                  })}
                   size="small"
                   color="success"
                   variant="outlined"
@@ -252,7 +270,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
               {onSearchChange && (
                 <TextField
                   id={searchId}
-                  placeholder={searchPlaceholder}
+                  placeholder={actualSearchPlaceholder}
                   value={searchValue}
                   onChange={(e) => onSearchChange(e.target.value)}
                   size="small"
@@ -266,14 +284,14 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                     },
                   }}
                   InputProps={{
-                    'aria-label': searchPlaceholder,
+                    'aria-label': actualSearchPlaceholder,
                     startAdornment: onScanBarcode && (
                       <InputAdornment position="start">
-                        <Tooltip title="Escanear con cámara">
+                        <Tooltip title={t('common.scanWithCamera')}>
                           <IconButton
                             size="small"
                             onClick={onScanBarcode}
-                            aria-label="Escanear código"
+                            aria-label={t('common.scanCode')}
                             color="primary"
                             sx={{
                               '&:hover': {
@@ -300,7 +318,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                             <IconButton
                               size="small"
                               onClick={() => onSearchChange?.('')}
-                              aria-label="Limpiar búsqueda"
+                              aria-label={t('common.clearSearch')}
                             >
                               <ClearIcon fontSize="small" />
                             </IconButton>
