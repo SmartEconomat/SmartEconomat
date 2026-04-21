@@ -197,7 +197,7 @@ describe('Preparaciones page', () => {
     render(<Preparaciones />);
 
     const consumeButton = await screen.findAllByRole('button', {
-      name: /consumir preparación/i,
+      name: /consumir raciones o cantidad/i,
     });
 
     fireEvent.click(consumeButton[0]);
@@ -236,7 +236,7 @@ describe('Preparaciones page', () => {
     render(<Preparaciones />);
 
     const consumeButton = await screen.findAllByRole('button', {
-      name: /consumir preparación/i,
+      name: /consumir raciones o cantidad/i,
     });
 
     fireEvent.click(consumeButton[0]);
@@ -248,7 +248,7 @@ describe('Preparaciones page', () => {
     fireEvent.change(amountInput, { target: { value: '1,2' } });
 
     expect(
-      screen.getByText('Debe ser múltiplo de 0,25 kg.')
+      screen.getAllByText('La cantidad debe ser múltiplo de 0,25 kg.')[0]
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /confirmar consumo/i })
@@ -282,7 +282,7 @@ describe('Preparaciones page', () => {
     render(<Preparaciones />);
 
     const consumeButton = await screen.findAllByRole('button', {
-      name: /consumir preparación/i,
+      name: /consumir raciones o cantidad/i,
     });
 
     fireEvent.click(consumeButton[0]);
@@ -327,7 +327,7 @@ describe('Preparaciones page', () => {
     render(<Preparaciones />);
 
     const consumeButton = await screen.findAllByRole('button', {
-      name: /consumir preparación/i,
+      name: /consumir raciones o cantidad/i,
     });
 
     fireEvent.click(consumeButton[0]);
@@ -415,7 +415,7 @@ describe('Preparaciones page', () => {
     });
 
     expect(
-      screen.queryByRole('button', { name: /consumir preparación/i })
+      screen.queryByRole('button', { name: /consumir raciones o cantidad/i })
     ).not.toBeInTheDocument();
   });
 

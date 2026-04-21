@@ -1,5 +1,7 @@
 import '@testing-library/jest-dom/vitest';
 import 'wicg-inert';
+import i18n from './i18n';
+i18n.changeLanguage('es');
 
 function createMemoryStorage(): Storage {
   const data = new Map<string, string>();
