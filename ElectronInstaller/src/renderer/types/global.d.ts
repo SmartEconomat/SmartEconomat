@@ -3,6 +3,7 @@ import type {
   BackupPayload,
   DebugLogEntry,
   ExportVisibleLogsPayload,
+  HealthUpdateEvent,
   InstallerBootState,
   InstallerFilePickerPayload,
   InstallerConfigPayload,
@@ -62,6 +63,10 @@ declare global {
       ) => Promise<OperationResult<BackupMetadata>>;
       restoreFrom: (payload: RestorePayload) => Promise<OperationResult>;
       diagnostics: (payload: RuntimePaths) => Promise<OperationResult<string>>;
+      getWatchdogStatus: () => Promise<OperationResult<HealthUpdateEvent>>;
+      onHealthUpdate: (
+        callback: (event: HealthUpdateEvent) => void,
+      ) => () => void;
       onDebugLog: (callback: (event: DebugLogEntry) => void) => () => void;
       getDebugLogs: () => Promise<OperationResult<DebugLogEntry[]>>;
       clearDebugLogs: () => Promise<OperationResult>;

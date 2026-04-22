@@ -54,6 +54,15 @@
   IfFileExists "$INSTDIR\resources\scripts\ops\uninstall-clean.ps1" 0 +2
     nsExec::ExecToLog 'powershell -NoProfile -ExecutionPolicy Bypass -File "$INSTDIR\resources\scripts\ops\uninstall-clean.ps1" -RuntimePath "$1" -InstallDir "$INSTDIR" -PreserveRuntime'
 
+  ; Eliminar tarea programada de autoarranque de Docker Desktop
+  nsExec::ExecToLog 'schtasks /Delete /TN "DockerDesktopAutoStart" /F'
+
+  ; Eliminar clave de registro de autoarranque
+  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "DockerDesktopAutoStart"
+
+  ; Detener y eliminar script guardian-watchdog si está ejecutándose
+  nsExec::ExecToLog 'taskkill /IM powershell.exe /FI "WINDOWTITLE eq guardian-watchdog*" /F'
+
   RMDir /r "$APPDATA\SmartEconomatInstaller"
   RMDir /r "$LOCALAPPDATA\SmartEconomatInstaller"
   Delete "$DESKTOP\SmartEconomat.lnk"

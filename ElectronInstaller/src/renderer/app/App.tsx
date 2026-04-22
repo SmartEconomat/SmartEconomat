@@ -258,6 +258,7 @@ export function App() {
                 <ControlPanelPage
                   busy={flow.busy}
                   health={flow.health}
+                  watchdogStatus={flow.watchdogStatus}
                   onStart={flow.startStack}
                   onStop={flow.stopStack}
                   onRestart={flow.restartStack}

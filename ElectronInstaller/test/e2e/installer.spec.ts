@@ -257,6 +257,22 @@ test.describe("SmartEconomat Installer E2E", () => {
           data: false,
         }),
         sendDebugLog: () => undefined,
+        getWatchdogStatus: async () => ({
+          ok: true,
+          message: "Watchdog status",
+          data: {
+            health: [],
+            watchdog: {
+              state: "idle" as const,
+              consecutiveFailures: 0,
+              currentRecoveryLevel: 1 as const,
+              nextCheckInMs: 0,
+              lastCheck: new Date().toISOString(),
+            },
+            timestamp: new Date().toISOString(),
+          },
+        }),
+        onHealthUpdate: () => () => {},
       };
     });
 

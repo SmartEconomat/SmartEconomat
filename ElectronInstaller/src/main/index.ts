@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { app, BrowserWindow, Menu, Tray, nativeImage } from "electron";
+import { app, BrowserWindow, Menu, Tray, nativeImage, powerMonitor } from "electron";
 import type { MenuItemConstructorOptions } from "electron";
 
 import { registerDebugIpc } from "./ipc/debug.ipc";
@@ -150,7 +150,7 @@ function showMainWindow(hash?: string): void {
 }
 
 function createTray(): void {
-  if (tray || process.platform !== "win32") {
+  if (tray) {
     return;
   }
 
@@ -235,6 +235,9 @@ function createMainWindow(options?: {
   } else {
     runtimeIpc.setWindow(mainWindow);
   }
+
+  // Mantener sincronizada la referencia de ventana en el boot guardian
+  bootGuardian?.setMainWindow(mainWindow);
 
   mainWindow.webContents.on("did-finish-load", () => {
     if (app.isPackaged || !mainWindow) {
@@ -342,13 +345,13 @@ if (!hasSingleInstanceLock) {
   app.whenReady().then(() => {
     if (process.platform === "win32") {
       app.setAppUserModelId("com.smarteconomat.installer");
+    }
 
-      if (app.isPackaged) {
-        app.setLoginItemSettings({
-          openAtLogin: true,
-          args: ["--background", "--control-panel"],
-        });
-      }
+    if (app.isPackaged) {
+      app.setLoginItemSettings({
+        openAtLogin: true,
+        args: ["--background", "--control-panel"],
+      });
     }
 
     Menu.setApplicationMenu(null);
@@ -360,7 +363,7 @@ if (!hasSingleInstanceLock) {
     createTray();
 
     const shouldStartHiddenToTray =
-      process.platform === "win32" && app.isPackaged && launchedInBackground;
+      app.isPackaged && launchedInBackground;
 
     createMainWindow({
       initialHash: shouldStartHiddenToTray ? "/control" : undefined,
@@ -393,8 +396,39 @@ if (!hasSingleInstanceLock) {
         },
       });
 
+      // Inyectar la ventana principal al boot guardian para health push
+      if (mainWindow) {
+        bootGuardian.setMainWindow(mainWindow);
+      }
+
+      // Inyectar boot guardian en el IPC runtime para getWatchdogStatus
+      if (runtimeIpc) {
+        runtimeIpc.setBootGuardian(bootGuardian);
+      }
+
       void bootGuardian.bootstrap();
     }
+
+    // Eventos de power management (multi-OS)
+    powerMonitor.on("resume", () => {
+      debugLogService.publish({
+        type: "system",
+        source: "main",
+        message: "[POWER] Sistema reanudado desde suspensión.",
+        timestamp: Date.now(),
+      });
+      void bootGuardian?.onSystemResume();
+    });
+
+    powerMonitor.on("suspend", () => {
+      debugLogService.publish({
+        type: "system",
+        source: "main",
+        message: "[POWER] Sistema entrando en suspensión.",
+        timestamp: Date.now(),
+      });
+      bootGuardian?.onSystemSuspend();
+    });
 
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) {

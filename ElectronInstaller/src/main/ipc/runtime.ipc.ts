@@ -7,6 +7,7 @@ import { z } from "zod";
 import type {
   BackupPayload,
   ExportVisibleLogsPayload,
+  HealthUpdateEvent,
   OperationResult,
   PrunePayload,
   RestorePayload,
@@ -22,6 +23,7 @@ import {
 
 import { registerIpcHandleWithDebug } from "@main/ipc/ipc-handler-with-debug";
 import type { DebugLogService } from "@main/services/debug-log.service";
+import type { BootGuardianService } from "@main/services/boot-guardian.service";
 import { assertDangerConfirmation } from "@main/security/command-allowlist";
 import { BackupRestoreService } from "@main/services/backup-restore.service";
 import { CertificateService } from "@main/services/certificate.service";
@@ -90,6 +92,12 @@ export class RuntimeIPC {
     private readonly processRunner = new ProcessRunnerService(),
     private readonly pathResolver = new PathResolverService(),
   ) {}
+
+  private bootGuardian: BootGuardianService | null = null;
+
+  setBootGuardian(guardian: BootGuardianService | null): void {
+    this.bootGuardian = guardian;
+  }
 
   setWindow(window: BrowserWindow): void {
     this.window = window;
@@ -308,6 +316,26 @@ export class RuntimeIPC {
         }
 
         return this.runFullUninstall(parsed.data.runtimePath);
+      },
+    );
+
+    registerIpcHandleWithDebug(
+      this.debugLogService,
+      IPCChannels.runtime.getWatchdogStatus,
+      async (): Promise<OperationResult<HealthUpdateEvent>> => {
+        if (!this.bootGuardian) {
+          return {
+            ok: false,
+            message: "Boot Guardian no está activo.",
+            errorCode: "GUARDIAN_NOT_ACTIVE",
+          };
+        }
+
+        return {
+          ok: true,
+          message: "Estado del watchdog obtenido.",
+          data: this.bootGuardian.getStatus(),
+        };
       },
     );
   }

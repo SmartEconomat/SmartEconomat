@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 
 import type {
   BackupMetadata,
+  HealthUpdateEvent,
   InstallerFilePickerPayload,
   InstallerConfigPayload,
   InstallerStateSnapshot,
   PreflightReport,
   RuntimeLogEvent,
   ServiceHealth,
+  WatchdogStatus,
 } from "@shared/contracts";
 
 export type WizardStep =
@@ -105,6 +107,8 @@ export function useInstallerFlow() {
   const [installerState, setInstallerState] =
     useState<InstallerStateSnapshot | null>(null);
   const [health, setHealth] = useState<ServiceHealth[]>([]);
+  const [watchdogStatus, setWatchdogStatus] =
+    useState<WatchdogStatus | null>(null);
   const [logs, setLogs] = useState<RuntimeLogEvent[]>([]);
   const [lastBackup, setLastBackup] = useState<BackupMetadata | null>(null);
   const [backupDefaultDirectory, setBackupDefaultDirectoryState] = useState(
@@ -178,6 +182,7 @@ export function useInstallerFlow() {
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
     let stopInstallerProgress: (() => void) | null = null;
     let stopRuntimeLog: (() => void) | null = null;
+    let stopHealthUpdate: (() => void) | null = null;
 
     const maxAttempts = 20;
     const retryDelayMs = 120;
@@ -213,6 +218,11 @@ export function useInstallerFlow() {
       stopRuntimeLog = bridge.onRuntimeLog((event) => {
         setLogs((previous) => [...previous.slice(-499), event]);
       });
+
+      stopHealthUpdate = bridge.onHealthUpdate((event: HealthUpdateEvent) => {
+        setHealth(event.health);
+        setWatchdogStatus(event.watchdog);
+      });
     };
 
     attachBridge(0);
@@ -226,6 +236,7 @@ export function useInstallerFlow() {
 
       stopInstallerProgress?.();
       stopRuntimeLog?.();
+      stopHealthUpdate?.();
     };
   }, []);
 
@@ -706,6 +717,7 @@ export function useInstallerFlow() {
     installerState,
     blockersCount,
     health,
+    watchdogStatus,
     logs,
     busy,
     error,

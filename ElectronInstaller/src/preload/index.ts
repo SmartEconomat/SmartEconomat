@@ -5,6 +5,7 @@ import type {
   BackupPayload,
   DebugLogEntry,
   ExportVisibleLogsPayload,
+  HealthUpdateEvent,
   InstallerBootState,
   InstallerFilePickerPayload,
   InstallerConfigPayload,
@@ -291,6 +292,13 @@ contextBridge.exposeInMainWorld("smartEconomat", {
       IPCChannels.runtime.diagnostics,
       payload,
     ),
+
+  getWatchdogStatus: () =>
+    invokeWithTracing<undefined, OperationResult<HealthUpdateEvent>>(
+      IPCChannels.runtime.getWatchdogStatus,
+    ),
+  onHealthUpdate: (callback: (event: HealthUpdateEvent) => void) =>
+    onChannelEvent(IPCChannels.runtime.healthUpdate, callback),
 
   onDebugLog: (callback: (event: DebugLogEntry) => void) =>
     onChannelEvent(IPCChannels.debug.streamEvent, callback),

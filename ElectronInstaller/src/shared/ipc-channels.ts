@@ -26,6 +26,8 @@ export const IPCChannels = {
     reinstallCertificate: "runtime:reinstall-certificate",
     getDockerAutostartStatus: "runtime:get-docker-autostart-status",
     setDockerAutostart: "runtime:set-docker-autostart",
+    healthUpdate: "runtime:health-update",
+    getWatchdogStatus: "runtime:get-watchdog-status",
   },
   debug: {
     rendererLog: "debug:renderer-log",

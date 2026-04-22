@@ -18,12 +18,13 @@ import DeleteSweepRoundedIcon from "@mui/icons-material/DeleteSweepRounded";
 import DeleteForeverRoundedIcon from "@mui/icons-material/DeleteForeverRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
-import type { ServiceHealth } from "@shared/contracts";
+import type { ServiceHealth, WatchdogStatus } from "@shared/contracts";
 import { ServiceStatusCard } from "@renderer/components/ServiceStatusCard";
 
 interface ControlPanelPageProps {
   busy: boolean;
   health: ServiceHealth[];
+  watchdogStatus: WatchdogStatus | null;
   onStart: () => Promise<void>;
   onStop: () => Promise<void>;
   onRestart: () => Promise<void>;
@@ -280,6 +281,7 @@ function ActionCard({
 export function ControlPanelPage({
   busy,
   health,
+  watchdogStatus,
   onStart,
   onStop,
   onRestart,
@@ -461,6 +463,102 @@ export function ControlPanelPage({
           </Stack>
         </Paper>
       </Box>
+
+      {watchdogStatus && (
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 1.5,
+            borderRadius: 3,
+            borderColor:
+              watchdogStatus.state === "active"
+                ? "rgba(24, 135, 84, 0.25)"
+                : watchdogStatus.state === "recovering"
+                  ? "rgba(239, 143, 26, 0.25)"
+                  : watchdogStatus.state === "backoff"
+                    ? "rgba(216, 58, 82, 0.25)"
+                    : "rgba(148, 163, 184, 0.24)",
+            bgcolor:
+              watchdogStatus.state === "active"
+                ? "rgba(24, 135, 84, 0.04)"
+                : watchdogStatus.state === "recovering"
+                  ? "rgba(239, 143, 26, 0.04)"
+                  : watchdogStatus.state === "backoff"
+                    ? "rgba(216, 58, 82, 0.04)"
+                    : "transparent",
+          }}
+        >
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1.5}
+            alignItems={{ xs: "flex-start", sm: "center" }}
+            justifyContent="space-between"
+          >
+            <Stack direction="row" spacing={1} alignItems="center">
+              <HealthAndSafetyRoundedIcon
+                fontSize="small"
+                sx={{
+                  color:
+                    watchdogStatus.state === "active"
+                      ? "#188754"
+                      : watchdogStatus.state === "recovering"
+                        ? "#ef8f1a"
+                        : watchdogStatus.state === "backoff"
+                          ? "#d83a52"
+                          : "#475569",
+                }}
+              />
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                  Boot Guardian
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {watchdogStatus.state === "active" &&
+                    "Vigilancia activa — todos los servicios bajo monitorización."}
+                  {watchdogStatus.state === "recovering" &&
+                    `Recuperación en curso — nivel ${watchdogStatus.currentRecoveryLevel}/3, ${watchdogStatus.consecutiveFailures} fallo(s).`}
+                  {watchdogStatus.state === "backoff" &&
+                    `Backoff activo — esperando ${Math.round(watchdogStatus.nextCheckInMs / 1000)}s antes del próximo intento.`}
+                  {watchdogStatus.state === "idle" &&
+                    "Guardian inactivo — no se está monitorizando el stack."}
+                </Typography>
+              </Box>
+            </Stack>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Chip
+                label={
+                  watchdogStatus.state === "active"
+                    ? "Activo"
+                    : watchdogStatus.state === "recovering"
+                      ? "Recuperando"
+                      : watchdogStatus.state === "backoff"
+                        ? "Backoff"
+                        : "Inactivo"
+                }
+                size="small"
+                color={
+                  watchdogStatus.state === "active"
+                    ? "success"
+                    : watchdogStatus.state === "recovering"
+                      ? "warning"
+                      : watchdogStatus.state === "backoff"
+                        ? "error"
+                        : "default"
+                }
+                sx={{ fontWeight: 800 }}
+              />
+              {watchdogStatus.currentRecoveryLevel > 1 && (
+                <Chip
+                  label={`Nivel ${watchdogStatus.currentRecoveryLevel}`}
+                  size="small"
+                  variant="outlined"
+                  sx={{ fontWeight: 700 }}
+                />
+              )}
+            </Stack>
+          </Stack>
+        </Paper>
+      )}
 
       <Paper
         variant="outlined"

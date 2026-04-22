@@ -4,7 +4,7 @@ import { ProcessRunnerService } from "./process-runner.service";
 
 export interface DockerAutostartStatus {
   /**
-   * Docker Desktop está configurado para iniciar con Windows
+   * Docker Desktop está configurado para iniciar con el sistema operativo
    */
   autoStartEnabled: boolean;
   /**
@@ -28,32 +28,91 @@ export interface DockerAutostartConfigResult {
 }
 
 /**
- * Servicio que gestiona la configuración de inicio automático de Docker Desktop
- * en Windows. Permite verificar y configurar que Docker arranque con el sistema.
+ * Servicio multiplataforma para gestionar el inicio automático de Docker Desktop.
+ * Soporta Windows (Registro + Tarea programada + settings.json),
+ * macOS (launchctl) y Linux (systemd).
  */
 export class DockerAutostartService {
   private readonly processRunner = new ProcessRunnerService();
 
-  private readonly dockerDesktopPaths = [
+  async getAutostartStatus(): Promise<DockerAutostartStatus> {
+    const platform = process.platform;
+
+    if (platform === "win32") {
+      return this.getAutostartStatusWindows();
+    }
+
+    if (platform === "darwin") {
+      return this.getAutostartStatusMacOS();
+    }
+
+    if (platform === "linux") {
+      return this.getAutostartStatusLinux();
+    }
+
+    return {
+      autoStartEnabled: false,
+      dockerDesktopInstalled: false,
+      dockerDesktopPath: null,
+      message: `Plataforma no soportada: ${platform}`,
+    };
+  }
+
+  async enableAutostart(): Promise<DockerAutostartConfigResult> {
+    const platform = process.platform;
+
+    if (platform === "win32") {
+      return this.enableAutostartWindows();
+    }
+
+    if (platform === "darwin") {
+      return this.enableAutostartMacOS();
+    }
+
+    if (platform === "linux") {
+      return this.enableAutostartLinux();
+    }
+
+    return {
+      ok: false,
+      message: `Plataforma no soportada: ${platform}`,
+      errorCode: "PLATFORM_NOT_SUPPORTED",
+    };
+  }
+
+  async disableAutostart(): Promise<DockerAutostartConfigResult> {
+    const platform = process.platform;
+
+    if (platform === "win32") {
+      return this.disableAutostartWindows();
+    }
+
+    if (platform === "darwin") {
+      return this.disableAutostartMacOS();
+    }
+
+    if (platform === "linux") {
+      return this.disableAutostartLinux();
+    }
+
+    return {
+      ok: false,
+      message: `Plataforma no soportada: ${platform}`,
+      errorCode: "PLATFORM_NOT_SUPPORTED",
+    };
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // ── Windows ──────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════
+
+  private readonly dockerDesktopWindowsPaths = [
     "C:/Program Files/Docker/Docker/Docker Desktop.exe",
     "C:/Program Files/Docker/Docker/Docker Desktop",
   ];
 
-  /**
-   * Verifica el estado actual de la configuración de auto-inicio de Docker Desktop.
-   */
-  async getAutostartStatus(): Promise<DockerAutostartStatus> {
-    if (process.platform !== "win32") {
-      return {
-        autoStartEnabled: false,
-        dockerDesktopInstalled: false,
-        dockerDesktopPath: null,
-        message:
-          "La configuración de auto-inicio de Docker Desktop solo está disponible en Windows.",
-      };
-    }
-
-    const dockerPath = await this.findDockerDesktopPath();
+  private async getAutostartStatusWindows(): Promise<DockerAutostartStatus> {
+    const dockerPath = await this.findDockerDesktopPathWindows();
     if (!dockerPath) {
       return {
         autoStartEnabled: false,
@@ -64,7 +123,7 @@ export class DockerAutostartService {
       };
     }
 
-    const autoStartEnabled = await this.isAutoStartEnabled();
+    const autoStartEnabled = await this.isAutoStartEnabledWindows();
 
     return {
       autoStartEnabled,
@@ -76,23 +135,8 @@ export class DockerAutostartService {
     };
   }
 
-  /**
-   * Configura Docker Desktop para iniciar automáticamente con Windows.
-   * Utiliza múltiples estrategias:
-   * 1. Configuración via Docker Desktop settings.json
-   * 2. Registro de Windows (Run key)
-   * 3. Tarea programada como fallback
-   */
-  async enableAutostart(): Promise<DockerAutostartConfigResult> {
-    if (process.platform !== "win32") {
-      return {
-        ok: false,
-        message: "Esta funcionalidad solo está disponible en Windows.",
-        errorCode: "PLATFORM_NOT_SUPPORTED",
-      };
-    }
-
-    const dockerPath = await this.findDockerDesktopPath();
+  private async enableAutostartWindows(): Promise<DockerAutostartConfigResult> {
+    const dockerPath = await this.findDockerDesktopPathWindows();
     if (!dockerPath) {
       return {
         ok: false,
@@ -101,13 +145,9 @@ export class DockerAutostartService {
       };
     }
 
-    // Estrategia 1: Modificar settings.json de Docker Desktop
-    const settingsResult = await this.configureDockerSettings(true);
-
-    // Estrategia 2: Añadir al registro de Windows (Run key)
+    const settingsResult = await this.configureDockerSettingsWindows(true);
     const registryResult = await this.addToWindowsStartup(dockerPath);
 
-    // Verificar resultado
     if (settingsResult || registryResult) {
       return {
         ok: true,
@@ -116,8 +156,7 @@ export class DockerAutostartService {
       };
     }
 
-    // Estrategia 3: Crear tarea programada como último recurso
-    const taskResult = await this.createStartupTask(dockerPath);
+    const taskResult = await this.createStartupTaskWindows(dockerPath);
     if (taskResult) {
       return {
         ok: true,
@@ -129,26 +168,15 @@ export class DockerAutostartService {
     return {
       ok: false,
       message:
-        "No se pudo configurar el inicio automático de Docker Desktop. Habilítalo manualmente desde la configuración de Docker Desktop.",
+        "No se pudo configurar el inicio automático de Docker Desktop. Habilítalo manualmente.",
       errorCode: "AUTOSTART_CONFIG_FAILED",
     };
   }
 
-  /**
-   * Desactiva el inicio automático de Docker Desktop.
-   */
-  async disableAutostart(): Promise<DockerAutostartConfigResult> {
-    if (process.platform !== "win32") {
-      return {
-        ok: false,
-        message: "Esta funcionalidad solo está disponible en Windows.",
-        errorCode: "PLATFORM_NOT_SUPPORTED",
-      };
-    }
-
-    await this.configureDockerSettings(false);
+  private async disableAutostartWindows(): Promise<DockerAutostartConfigResult> {
+    await this.configureDockerSettingsWindows(false);
     await this.removeFromWindowsStartup();
-    await this.removeStartupTask();
+    await this.removeStartupTaskWindows();
 
     return {
       ok: true,
@@ -156,11 +184,9 @@ export class DockerAutostartService {
     };
   }
 
-  // ── Métodos privados ──────────────────────────────────────────
-
-  private async findDockerDesktopPath(): Promise<string | null> {
-    for (const candidatePath of this.dockerDesktopPaths) {
-      const exists = await this.fileExists(candidatePath);
+  private async findDockerDesktopPathWindows(): Promise<string | null> {
+    for (const candidatePath of this.dockerDesktopWindowsPaths) {
+      const exists = await this.fileExistsWindows(candidatePath);
       if (exists) {
         return candidatePath;
       }
@@ -168,7 +194,7 @@ export class DockerAutostartService {
     return null;
   }
 
-  private async fileExists(filePath: string): Promise<boolean> {
+  private async fileExistsWindows(filePath: string): Promise<boolean> {
     const result = await this.processRunner.run({
       command: "powershell",
       args: [
@@ -181,12 +207,7 @@ export class DockerAutostartService {
     return result.ok;
   }
 
-  /**
-   * Verifica si Docker Desktop está configurado para iniciar automáticamente
-   * verificando el registro de Windows y las configuraciones de Docker.
-   */
-  private async isAutoStartEnabled(): Promise<boolean> {
-    // Verificar en el registro de Windows
+  private async isAutoStartEnabledWindows(): Promise<boolean> {
     const registryCheck = await this.processRunner.run({
       command: "powershell",
       args: [
@@ -205,7 +226,6 @@ export class DockerAutostartService {
       return true;
     }
 
-    // Verificar configuración de Docker Desktop settings.json
     const settingsCheck = await this.processRunner.run({
       command: "powershell",
       args: [
@@ -226,7 +246,6 @@ export class DockerAutostartService {
       return true;
     }
 
-    // Verificar tarea programada
     const taskCheck = await this.processRunner.run({
       command: "powershell",
       args: [
@@ -243,10 +262,9 @@ export class DockerAutostartService {
     return taskCheck.ok;
   }
 
-  /**
-   * Modifica settings.json de Docker Desktop para habilitar/deshabilitar autoStart.
-   */
-  private async configureDockerSettings(enable: boolean): Promise<boolean> {
+  private async configureDockerSettingsWindows(
+    enable: boolean,
+  ): Promise<boolean> {
     const script = `
       $settingsPath = "$env:APPDATA\\Docker\\settings.json"
       $settingsDir = Split-Path $settingsPath
@@ -280,12 +298,8 @@ export class DockerAutostartService {
     return result.ok;
   }
 
-  /**
-   * Añade Docker Desktop al registro de Windows para inicio automático.
-   */
   private async addToWindowsStartup(dockerPath: string): Promise<boolean> {
     const normalizedPath = path.win32.normalize(dockerPath);
-    // Usamos comillas simples de PowerShell para evitar problemas con template literals
     const script = [
       "$regPath = 'HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run'",
       `$dockerPath = '${normalizedPath}'`,
@@ -308,13 +322,9 @@ export class DockerAutostartService {
     return result.ok;
   }
 
-  /**
-   * Elimina Docker Desktop del registro de Windows.
-   */
   private async removeFromWindowsStartup(): Promise<boolean> {
     const script = `
       $regPath = 'HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run'
-      
       try {
         Remove-ItemProperty -Path $regPath -Name 'Docker Desktop' -ErrorAction SilentlyContinue
         exit 0
@@ -332,13 +342,10 @@ export class DockerAutostartService {
     return result.ok;
   }
 
-  /**
-   * Crea una tarea programada para iniciar Docker Desktop al iniciar sesión.
-   * Este es un método de respaldo si las otras opciones fallan.
-   */
-  private async createStartupTask(dockerPath: string): Promise<boolean> {
+  private async createStartupTaskWindows(
+    dockerPath: string,
+  ): Promise<boolean> {
     const normalizedPath = path.win32.normalize(dockerPath);
-    // Usamos un array y join para evitar problemas con template literals y comentarios
     const script = [
       "$taskName = 'DockerDesktopAutoStart'",
       `$dockerPath = '${normalizedPath}'`,
@@ -366,10 +373,7 @@ export class DockerAutostartService {
     return result.ok;
   }
 
-  /**
-   * Elimina la tarea programada de inicio de Docker Desktop.
-   */
-  private async removeStartupTask(): Promise<boolean> {
+  private async removeStartupTaskWindows(): Promise<boolean> {
     const script = `
       $taskName = 'DockerDesktopAutoStart'
       Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
@@ -383,5 +387,284 @@ export class DockerAutostartService {
     });
 
     return result.ok;
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // ── macOS ────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════
+
+  private async getAutostartStatusMacOS(): Promise<DockerAutostartStatus> {
+    const dockerInstalled = await this.isDockerInstalledMacOS();
+    if (!dockerInstalled) {
+      return {
+        autoStartEnabled: false,
+        dockerDesktopInstalled: false,
+        dockerDesktopPath: null,
+        message: "Docker Desktop no está instalado en macOS.",
+      };
+    }
+
+    const autoStartEnabled = await this.isAutoStartEnabledMacOS();
+
+    return {
+      autoStartEnabled,
+      dockerDesktopInstalled: true,
+      dockerDesktopPath: "/Applications/Docker.app",
+      message: autoStartEnabled
+        ? "Docker Desktop está configurado para iniciar automáticamente con macOS."
+        : "Docker Desktop NO está configurado para iniciar automáticamente. Se recomienda habilitarlo.",
+    };
+  }
+
+  private async enableAutostartMacOS(): Promise<DockerAutostartConfigResult> {
+    const installed = await this.isDockerInstalledMacOS();
+    if (!installed) {
+      return {
+        ok: false,
+        message: "Docker Desktop no está instalado en macOS.",
+        errorCode: "DOCKER_DESKTOP_NOT_FOUND",
+      };
+    }
+
+    // Configurar Docker Desktop settings.json para macOS
+    const settingsResult = await this.configureDockerSettingsMacOS(true);
+
+    // Añadir via osascript (Login Items)
+    const loginItemResult = await this.addLoginItemMacOS();
+
+    if (settingsResult || loginItemResult) {
+      return {
+        ok: true,
+        message:
+          "Docker Desktop configurado para iniciar automáticamente con macOS.",
+      };
+    }
+
+    return {
+      ok: false,
+      message:
+        "No se pudo configurar el inicio automático. Configúralo manualmente desde Docker Desktop > Preferences.",
+      errorCode: "AUTOSTART_CONFIG_FAILED",
+    };
+  }
+
+  private async disableAutostartMacOS(): Promise<DockerAutostartConfigResult> {
+    await this.configureDockerSettingsMacOS(false);
+    await this.removeLoginItemMacOS();
+
+    return {
+      ok: true,
+      message: "Inicio automático de Docker Desktop desactivado en macOS.",
+    };
+  }
+
+  private async isDockerInstalledMacOS(): Promise<boolean> {
+    const result = await this.processRunner.run({
+      command: "test",
+      args: ["-d", "/Applications/Docker.app"],
+      timeoutMs: 5_000,
+    });
+    return result.ok;
+  }
+
+  private async isAutoStartEnabledMacOS(): Promise<boolean> {
+    // Verificar en Docker settings.json
+    const result = await this.processRunner.run({
+      command: "bash",
+      args: [
+        "-c",
+        `settingsPath="$HOME/Library/Group Containers/group.com.docker/settings.json"; if [ -f "$settingsPath" ]; then grep -q '"autoStart"\\s*:\\s*true' "$settingsPath" && exit 0; fi; exit 1`,
+      ],
+      timeoutMs: 10_000,
+    });
+
+    return result.ok;
+  }
+
+  private async configureDockerSettingsMacOS(
+    enable: boolean,
+  ): Promise<boolean> {
+    const script = `
+      SETTINGS_PATH="$HOME/Library/Group Containers/group.com.docker/settings.json"
+      SETTINGS_DIR="$(dirname "$SETTINGS_PATH")"
+      mkdir -p "$SETTINGS_DIR"
+      if [ -f "$SETTINGS_PATH" ]; then
+        # Usar python3 (incluido en macOS) para manipular JSON
+        python3 -c "
+import json, sys
+try:
+    with open('$SETTINGS_PATH', 'r') as f:
+        data = json.load(f)
+except:
+    data = {}
+data['autoStart'] = ${enable ? "True" : "False"}
+data['openAtLogin'] = ${enable ? "True" : "False"}
+with open('$SETTINGS_PATH', 'w') as f:
+    json.dump(data, f, indent=2)
+" && exit 0 || exit 1
+      else
+        echo '{"autoStart": ${enable}, "openAtLogin": ${enable}}' > "$SETTINGS_PATH"
+        exit 0
+      fi
+    `;
+
+    const result = await this.processRunner.run({
+      command: "bash",
+      args: ["-c", script],
+      timeoutMs: 15_000,
+    });
+
+    return result.ok;
+  }
+
+  private async addLoginItemMacOS(): Promise<boolean> {
+    const result = await this.processRunner.run({
+      command: "osascript",
+      args: [
+        "-e",
+        'tell application "System Events" to make login item at end with properties {path:"/Applications/Docker.app", hidden:true}',
+      ],
+      timeoutMs: 15_000,
+    });
+
+    return result.ok;
+  }
+
+  private async removeLoginItemMacOS(): Promise<boolean> {
+    const result = await this.processRunner.run({
+      command: "osascript",
+      args: [
+        "-e",
+        'tell application "System Events" to delete login item "Docker"',
+      ],
+      timeoutMs: 15_000,
+    });
+
+    return result.ok;
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // ── Linux ────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════
+
+  private async getAutostartStatusLinux(): Promise<DockerAutostartStatus> {
+    const dockerInstalled = await this.isDockerInstalledLinux();
+    if (!dockerInstalled) {
+      return {
+        autoStartEnabled: false,
+        dockerDesktopInstalled: false,
+        dockerDesktopPath: null,
+        message: "Docker no está instalado en este sistema Linux.",
+      };
+    }
+
+    const autoStartEnabled = await this.isAutoStartEnabledLinux();
+
+    return {
+      autoStartEnabled,
+      dockerDesktopInstalled: true,
+      dockerDesktopPath: "/usr/bin/docker",
+      message: autoStartEnabled
+        ? "El servicio Docker está configurado para iniciar automáticamente con Linux."
+        : "El servicio Docker NO está configurado para iniciar automáticamente. Se recomienda habilitarlo.",
+    };
+  }
+
+  private async enableAutostartLinux(): Promise<DockerAutostartConfigResult> {
+    const installed = await this.isDockerInstalledLinux();
+    if (!installed) {
+      return {
+        ok: false,
+        message: "Docker no está instalado en este sistema Linux.",
+        errorCode: "DOCKER_NOT_FOUND",
+      };
+    }
+
+    // Habilitar Docker daemon via systemd
+    const systemdResult = await this.processRunner.run({
+      command: "systemctl",
+      args: ["enable", "docker"],
+      timeoutMs: 15_000,
+    });
+
+    if (systemdResult.ok) {
+      return {
+        ok: true,
+        message:
+          "Servicio Docker habilitado para inicio automático via systemd.",
+      };
+    }
+
+    // Intentar Docker Desktop para Linux
+    const desktopResult = await this.processRunner.run({
+      command: "systemctl",
+      args: ["--user", "enable", "docker-desktop"],
+      timeoutMs: 15_000,
+    });
+
+    if (desktopResult.ok) {
+      return {
+        ok: true,
+        message:
+          "Docker Desktop habilitado para inicio automático via systemd (user).",
+      };
+    }
+
+    return {
+      ok: false,
+      message:
+        "No se pudo habilitar el inicio automático de Docker. Configúralo manualmente con: sudo systemctl enable docker",
+      errorCode: "AUTOSTART_CONFIG_FAILED",
+    };
+  }
+
+  private async disableAutostartLinux(): Promise<DockerAutostartConfigResult> {
+    await this.processRunner.run({
+      command: "systemctl",
+      args: ["disable", "docker"],
+      timeoutMs: 15_000,
+    });
+
+    await this.processRunner.run({
+      command: "systemctl",
+      args: ["--user", "disable", "docker-desktop"],
+      timeoutMs: 15_000,
+    });
+
+    return {
+      ok: true,
+      message: "Inicio automático de Docker desactivado en Linux.",
+    };
+  }
+
+  private async isDockerInstalledLinux(): Promise<boolean> {
+    const result = await this.processRunner.run({
+      command: "which",
+      args: ["docker"],
+      timeoutMs: 5_000,
+    });
+    return result.ok;
+  }
+
+  private async isAutoStartEnabledLinux(): Promise<boolean> {
+    // Verificar Docker daemon
+    const daemonCheck = await this.processRunner.run({
+      command: "systemctl",
+      args: ["is-enabled", "docker"],
+      timeoutMs: 10_000,
+    });
+
+    if (daemonCheck.ok) {
+      return true;
+    }
+
+    // Verificar Docker Desktop para Linux
+    const desktopCheck = await this.processRunner.run({
+      command: "systemctl",
+      args: ["--user", "is-enabled", "docker-desktop"],
+      timeoutMs: 10_000,
+    });
+
+    return desktopCheck.ok;
   }
 }

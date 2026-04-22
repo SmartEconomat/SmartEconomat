@@ -259,7 +259,10 @@ export function BackupRestorePanel({
             <Typography
               variant="caption"
               color="text.secondary"
-              sx={{ fontFamily: '"JetBrains Mono", Consolas, monospace' }}
+              sx={{
+                fontFamily: '"JetBrains Mono", Consolas, monospace',
+                wordBreak: "break-all",
+              }}
             >
               Checksum: {lastBackup.checksum}
             </Typography>

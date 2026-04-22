@@ -159,6 +159,13 @@ function PreviewShell() {
           <ControlPanelPage
             busy={false}
             health={mockHealth}
+            watchdogStatus={{
+              state: "active",
+              consecutiveFailures: 0,
+              currentRecoveryLevel: 1,
+              nextCheckInMs: 30000,
+              lastCheck: new Date().toISOString(),
+            }}
             onStart={async () => {}}
             onStop={async () => {}}
             onRestart={async () => {}}

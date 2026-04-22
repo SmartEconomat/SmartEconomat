@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import { Box, Chip, Paper, Stack, Typography } from "@mui/material";
+import { Box, Chip, Paper, Skeleton, Stack, Typography } from "@mui/material";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import DnsRoundedIcon from "@mui/icons-material/DnsRounded";
 import ErrorRoundedIcon from "@mui/icons-material/ErrorRounded";
@@ -212,4 +212,30 @@ function getStatusPresentation(status: ServiceHealth["status"]): {
     iconSurface: "rgba(148, 163, 184, 0.14)",
     iconColor: "#475569",
   };
+}
+
+export function ServiceStatusCardSkeleton() {
+  return (
+    <Paper
+      variant="outlined"
+      sx={{
+        p: 2,
+        borderRadius: 3,
+        borderColor: "rgba(148, 163, 184, 0.24)",
+      }}
+    >
+      <Stack direction="row" justifyContent="space-between" spacing={1.5}>
+        <Stack direction="row" spacing={1.2} alignItems="flex-start">
+          <Skeleton variant="rounded" width={42} height={42} />
+          <Box>
+            <Skeleton width={100} height={22} />
+            <Skeleton width={160} height={16} />
+          </Box>
+        </Stack>
+        <Skeleton variant="rounded" width={64} height={24} />
+      </Stack>
+      <Skeleton width="80%" height={20} sx={{ mt: 1.6 }} />
+      <Skeleton width="100%" height={40} sx={{ mt: 1.1 }} />
+    </Paper>
+  );
 }

@@ -181,3 +181,22 @@ export interface DebugLogEntry {
   context?: unknown;
   source?: "main" | "renderer";
 }
+
+// ── Watchdog / Health Push ───────────────────────────────────
+
+export type WatchdogState = "active" | "recovering" | "backoff" | "idle";
+export type RecoveryLevel = 1 | 2 | 3;
+
+export interface WatchdogStatus {
+  state: WatchdogState;
+  consecutiveFailures: number;
+  currentRecoveryLevel: RecoveryLevel;
+  nextCheckInMs: number;
+  lastCheck: string | null;
+}
+
+export interface HealthUpdateEvent {
+  health: ServiceHealth[];
+  watchdog: WatchdogStatus;
+  timestamp: string;
+}
