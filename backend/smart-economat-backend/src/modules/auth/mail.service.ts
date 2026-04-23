@@ -2,9 +2,11 @@ import {
   Injectable,
   Logger,
   InternalServerErrorException,
+  OnApplicationBootstrap,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
-import type { Transporter } from 'nodemailer';
+import type { Transporter, SentMessageInfo } from 'nodemailer';
 import { I18nHelper } from '../../common/helpers/i18n.helper';
 
 const PASSWORD_RESET_HTML = `<!DOCTYPE html>
@@ -136,57 +138,108 @@ SmartEconomat — Sistema de gestión de economato
 Este es un mensaje automático, por favor no respondas a este correo.`;
 
 @Injectable()
-export class MailService {
+export class MailService implements OnApplicationBootstrap {
   private readonly logger = new Logger(MailService.name);
   private transporter: Transporter | null = null;
 
-  private getTransporter(): Transporter | null {
-    if (this.transporter) return this.transporter;
+  constructor(private readonly configService: ConfigService) {}
 
-    const host = process.env.MAIL_HOST;
-    const user = process.env.MAIL_USER;
-    const pass = process.env.MAIL_PASS;
+  async onApplicationBootstrap(): Promise<void> {
+    if (this.configService.get<string>('NODE_ENV') === 'test') return;
 
-    if (!host || !user || !pass) return null;
+    const host = this.configService.get<string>('MAIL_HOST');
+    const user = this.configService.get<string>('MAIL_USER');
+    const pass = this.configService.get<string>('MAIL_PASS');
+    const isProduction =
+      this.configService.get<string>('NODE_ENV') === 'production';
 
-    const port = parseInt(process.env.MAIL_PORT || '587', 10);
+    if (!host || !user || !pass) {
+      if (isProduction) {
+        this.logger.error(
+          'SMTP sin configurar en producción. ' +
+            'Define MAIL_HOST, MAIL_USER y MAIL_PASS en el entorno. ' +
+            'Los emails de recuperación de contraseña NO se enviarán.'
+        );
+      } else {
+        this.logger.warn(
+          'SMTP no configurado — modo simulación activo. Los emails se imprimirán en logs.'
+        );
+      }
+      return;
+    }
 
-    this.transporter = nodemailer.createTransport({
+    const port = parseInt(
+      this.configService.get<string>('MAIL_PORT') ?? '587',
+      10
+    );
+
+    const transport = nodemailer.createTransport({
       host,
       port,
       secure: port === 465,
       auth: { user, pass },
+
+      tls: { rejectUnauthorized: isProduction },
     });
 
-    return this.transporter;
+    try {
+      await transport.verify();
+      this.transporter = transport;
+      this.logger.log(`SMTP listo: ${host}:${port} (usuario: ${user})`);
+    } catch (err) {
+      this.logger.error(
+        `SMTP no disponible (${host}:${port}): ${(err as Error).message}. ` +
+          'Revisa MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASS y que el puerto no esté bloqueado por el firewall.'
+      );
+    }
   }
 
   async sendPasswordResetEmail(
     email: string,
     resetToken: string
   ): Promise<void> {
-    const frontendUrl = process.env.FRONTEND_API_URL || 'http://localhost:5173';
+    const frontendUrl =
+      this.configService.get<string>('FRONTEND_API_URL') ??
+      'http://localhost:5173';
     const recoveryLink = `${frontendUrl}/reset-password?token=${resetToken}`;
-    const transporter = this.getTransporter();
 
-    if (!transporter) {
-      this.logger.warn('SMTP no configurado — modo simulación');
-      this.logger.log(`To: ${email} | Link: ${recoveryLink}`);
+    if (!this.transporter) {
+      const isProduction =
+        this.configService.get<string>('NODE_ENV') === 'production';
+
+      if (isProduction) {
+        this.logger.error(
+          `Email de reset NO enviado a ${email} — SMTP no disponible. ` +
+            'Configura las variables MAIL_* y reinicia el servidor.'
+        );
+        throw new InternalServerErrorException(
+          I18nHelper.getError('EMAIL_SEND_FAILED')
+        );
+      }
+
+      this.logger.warn(`[SMTP simulado] To: ${email} | Link: ${recoveryLink}`);
       return;
     }
 
-    const from = process.env.MAIL_FROM || process.env.MAIL_USER;
+    const from =
+      this.configService.get<string>('MAIL_FROM') ??
+      this.configService.get<string>('MAIL_USER');
 
     try {
-      await transporter.sendMail({
+      const info: SentMessageInfo = await this.transporter.sendMail({
         from: `"SmartEconomat" <${from}>`,
         to: email,
         subject: 'Recuperación de contraseña - SmartEconomat',
         html: PASSWORD_RESET_HTML.replaceAll('{{RESET_URL}}', recoveryLink),
         text: PASSWORD_RESET_TEXT.replaceAll('{{RESET_URL}}', recoveryLink),
       });
-    } catch (error) {
-      this.logger.error('Fallo SMTP al enviar correo de recuperación', error);
+      this.logger.log(
+        `Email de reset enviado a ${email} — messageId: ${info.messageId}`
+      );
+    } catch (err) {
+      this.logger.error(
+        `Error SMTP al enviar reset a ${email}: ${(err as Error).message}`
+      );
       throw new InternalServerErrorException(
         I18nHelper.getError('EMAIL_SEND_FAILED')
       );
