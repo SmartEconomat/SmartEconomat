@@ -2426,24 +2426,6 @@ Content-Disposition: attachment; filename="productos.xlsx"
         <li>Integrar o descartar definitivamente ElectronInstaller como componente de entrega del producto.</li>
       </ul>
     </section>
-
-    <section class="appendix" id="exportacion-pdf">
-      <h1 class="section-title">Anexo A. Exportacion a PDF</h1>
-      <p class="lead">El metodo recomendado para convertir este HTML a PDF es mantener el documento tal como esta, activar la impresion de fondos y exportarlo con un motor que respete CSS de impresion.</p>
-
-      <h2>Metodo recomendado</h2>
-      <pre><code class="language-bash">wkhtmltopdf documentacion.html documentacion.pdf</code></pre>
-
-      <p>Alternativamente, puede automatizarse con Puppeteer desde Node.js para mantener una salida consistente en Chromium. En ambos casos conviene imprimir con escala al 100% y con fondos activados, ya que la maquetacion usa sombreado suave, bandas de seccion y diagramas SVG inline.</p>
-
-      <h2>Recomendaciones practicas</h2>
-      <ul>
-        <li>Activar impresion de fondos para no perder cabeceras, diagramas y cajas informativas.</li>
-        <li>Mantener escala 100% para respetar la composicion A4.</li>
-        <li>Revisar manualmente las tablas largas para confirmar que no se producen cortes no deseados en el motor de PDF utilizado.</li>
-        <li>Si se usa el cuadro de impresion del navegador, desactivar las cabeceras y pies del navegador para que no aparezcan fecha, titulo del documento ni ruta local.</li>
-      </ul>
-    </section>
   </main>
 
   <script>
