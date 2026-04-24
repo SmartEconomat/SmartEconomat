@@ -83,6 +83,7 @@ function buildProductosQueryString(params?: ProductosQueryParams): string {
 
   const normalizedOrder = normalizeProductSortOrder(params.order);
   if (normalizedOrder) search.set('order', normalizedOrder);
+  if (params.soloEliminados) search.set('soloEliminados', 'true');
 
   const qs = search.toString();
   return qs ? `?${qs}` : `?limit=${PRODUCTOS_MAX_LIMIT}`;
@@ -160,7 +161,8 @@ export async function fetchProductos(
   search: string = '',
   categorias: string[] = [],
   sortBy?: string,
-  sortOrder?: ProductSortOrder
+  sortOrder?: ProductSortOrder,
+  soloEliminados?: boolean
 ): Promise<PaginatedData<Producto>> {
   const query = buildProductosQueryString({
     page,
@@ -169,6 +171,7 @@ export async function fetchProductos(
     categorias: categorias.length > 0 ? categorias : undefined,
     sortBy,
     order: sortOrder,
+    soloEliminados,
   });
   return requestProductos(query);
 }
@@ -258,9 +261,13 @@ export async function createProducto(
   });
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({}));
-    throw new Error(
-      errorBody.message || `Error al crear producto: ${response.status}`
-    );
+    let message = `Error al procesar producto: ${response.status}`;
+    if (errorBody.message) {
+      message = Array.isArray(errorBody.message)
+        ? errorBody.message.join('\n')
+        : String(errorBody.message);
+    }
+    throw new Error(message);
   }
   const body = (await response.json()) as ApiResponse<Producto>;
   return body.data;
@@ -285,9 +292,32 @@ export async function updateProducto(
   });
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({}));
-    throw new Error(
-      errorBody.message || `Error al actualizar producto: ${response.status}`
-    );
+    let message = `Error al actualizar producto: ${response.status}`;
+    if (errorBody.message) {
+      message = Array.isArray(errorBody.message)
+        ? errorBody.message.join('\n')
+        : String(errorBody.message);
+    }
+    throw new Error(message);
+  }
+  const body = (await response.json()) as ApiResponse<Producto>;
+  return body.data;
+}
+
+export async function restoreProducto(id: string): Promise<Producto> {
+  invalidateProductosCache();
+  const response = await baseFetch(`/productos/${id}/restore`, {
+    method: 'PATCH',
+  });
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    let message = `Error al restaurar producto: ${response.status}`;
+    if (errorBody.message) {
+      message = Array.isArray(errorBody.message)
+        ? errorBody.message.join('\n')
+        : String(errorBody.message);
+    }
+    throw new Error(message);
   }
   const body = (await response.json()) as ApiResponse<Producto>;
   return body.data;

@@ -526,6 +526,7 @@ const AlbaranPage: React.FC = () => {
               void handleOpenView(row);
             }}
             size="small"
+            id="btn-albaran-view"
           >
             <VisibilityIcon fontSize="small" />
           </IconButton>
@@ -539,6 +540,7 @@ const AlbaranPage: React.FC = () => {
               color="info"
               onClick={() => setItemToUpload(row)}
               size="small"
+              id="btn-albaran-upload"
             >
               <AttachFileIcon fontSize="small" />
             </IconButton>
@@ -553,6 +555,7 @@ const AlbaranPage: React.FC = () => {
               color="secondary"
               onClick={() => handleOpenEdit(row)}
               size="small"
+              id="btn-albaran-edit"
             >
               <EditIcon fontSize="small" />
             </IconButton>
@@ -567,6 +570,7 @@ const AlbaranPage: React.FC = () => {
               color="error"
               onClick={() => setItemToDelete(row)}
               size="small"
+              id="btn-albaran-delete"
             >
               <DeleteIcon fontSize="small" />
             </IconButton>
@@ -693,6 +697,7 @@ const AlbaranPage: React.FC = () => {
                 label: t('albaran.nuevo'),
                 onClick: handleOpenCreate,
                 icon: <AddIcon />,
+                id: 'btn-nuevo-albaran',
               }
             : undefined
         }
@@ -705,6 +710,7 @@ const AlbaranPage: React.FC = () => {
             }}
           />
         }
+        id="albaranes-toolbar"
       />
 
       <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
@@ -715,6 +721,7 @@ const AlbaranPage: React.FC = () => {
         )}
 
         <DataTable
+          id="albaranes-table"
           columns={columns}
           data={filteredData}
           isLoading={isLoading}

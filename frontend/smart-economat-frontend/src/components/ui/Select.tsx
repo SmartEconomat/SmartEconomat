@@ -1,56 +1,20 @@
 import React from 'react';
-import {
-  FormControl,
-  InputLabel,
-  Select as MuiSelect,
-  MenuItem,
-  FormHelperText,
-  SelectProps as MuiSelectProps,
-} from '@mui/material';
+import { TextField, MenuItem, TextFieldProps } from '@mui/material';
 
-/**
- * A single option in the {@link Select} dropdown.
- */
 export interface SelectOption {
-  /** Underlying value submitted by the form. */
   value: string | number;
-  /** Human-readable label shown in the menu item. */
   label: string;
 }
 
-/**
- * Props for the {@link Select} component.
- */
-export type SelectProps = MuiSelectProps & {
-  /** Visible field label. */
-  label: string;
-  /** HTML `name` attribute and the base for ARIA `labelledby`. */
-  name: string;
-  /** Menu options rendered as `MenuItem` elements. */
-  options: SelectOption[];
-  /** Optional helper / error text shown below the select. */
-  helperText?: string;
+export type SelectProps = TextFieldProps & {
+  options?: SelectOption[];
+  multiple?: boolean;
 };
 
-/**
- * Controlled select field built on top of MUI's `Select` and `FormControl`.
- *
- * Handles both single and multi-select modes, normalises empty values, and
- * surfaces an optional helper text beneath the control.
- *
- * @param props - See {@link SelectProps}.
- * @returns JSX element rendering a labelled select inside a `FormControl`.
- * @example
- * <Select
- *   label="Estado"
- *   name="estado"
- *   options={[{ value: 'active', label: 'Activo' }]}
- * />
- */
 const Select: React.FC<SelectProps> = ({
   label,
   name,
-  options,
+  options = [],
   helperText,
   error,
   required,
@@ -58,44 +22,80 @@ const Select: React.FC<SelectProps> = ({
   margin = 'normal',
   value,
   onChange,
+  multiple,
+  SelectProps,
+  InputLabelProps,
+  children,
   ...props
 }) => {
-  const isValueEmpty = value === undefined || value === null || value === '';
-  const formMargin =
-    (margin as 'none' | 'normal' | 'dense' | undefined) || 'normal';
-
-  const renderValue = () => {
-    if (props.multiple) {
-      return Array.isArray(value) ? value : [];
-    }
-    return isValueEmpty ? '' : value;
-  };
+  const isMultiple = multiple || SelectProps?.multiple;
 
   return (
-    <FormControl
+    <TextField
+      select
       fullWidth={fullWidth}
-      margin={formMargin}
-      error={error}
+      margin={margin}
+      label={label}
+      name={name}
+      id={name}
+      value={value ?? (isMultiple ? [] : '')}
+      onChange={onChange}
       required={required}
+      error={error}
+      helperText={helperText}
+      SelectProps={{
+        multiple: isMultiple,
+        displayEmpty: true,
+        MenuProps: {
+          anchorOrigin: {
+            vertical: 'bottom',
+            horizontal: 'left',
+          },
+          transformOrigin: {
+            vertical: 'top',
+            horizontal: 'left',
+          },
+          PaperProps: {
+            sx: {
+              maxHeight: 'min(450px, 80vh)',
+              mt: 0.5,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+              border: '1px solid',
+              borderColor: 'divider',
+              '& .MuiList-root': {
+                padding: '4px',
+              },
+              '& .MuiMenuItem-root': {
+                borderRadius: 1,
+                margin: '2px 0',
+                '&.Mui-selected': {
+                  bgcolor: 'rgba(var(--mui-palette-primary-mainChannel), 0.12)',
+                  fontWeight: 600,
+                  '&:hover': {
+                    bgcolor:
+                      'rgba(var(--mui-palette-primary-mainChannel), 0.18)',
+                  },
+                },
+              },
+            },
+          },
+          ...SelectProps?.MenuProps,
+        },
+        ...SelectProps,
+      }}
+      InputLabelProps={{
+        shrink: true,
+        ...InputLabelProps,
+      }}
+      {...props}
     >
-      <InputLabel id={`${name}-label`}>{label}</InputLabel>
-      <MuiSelect
-        labelId={`${name}-label`}
-        id={name}
-        name={name}
-        value={renderValue()}
-        label={label}
-        onChange={onChange}
-        {...props}
-      >
-        {options.map((option) => (
+      {children ||
+        options.map((option) => (
           <MenuItem key={option.value} value={option.value}>
             {option.label}
           </MenuItem>
         ))}
-      </MuiSelect>
-      {helperText && <FormHelperText>{helperText}</FormHelperText>}
-    </FormControl>
+    </TextField>
   );
 };
 

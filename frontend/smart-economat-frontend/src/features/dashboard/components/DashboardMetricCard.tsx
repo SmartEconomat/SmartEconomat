@@ -1,0 +1,173 @@
+import React from 'react';
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  alpha,
+  useTheme,
+  Skeleton,
+} from '@mui/material';
+
+interface DashboardMetricCardProps {
+  title: string;
+  value: React.ReactNode;
+  icon: React.ReactNode;
+  color: 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success';
+  subtitle?: React.ReactNode;
+  onClick?: () => void;
+  isLoading?: boolean;
+}
+
+const DashboardMetricCard: React.FC<DashboardMetricCardProps> = ({
+  title,
+  value,
+  icon,
+  color,
+  subtitle,
+  onClick,
+  isLoading = false,
+}) => {
+  const theme = useTheme();
+
+  // Manejador de teclado para accesibilidad
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (onClick && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
+  return (
+    <Card
+      elevation={0}
+      role={onClick ? 'button' : 'article'}
+      tabIndex={onClick ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={handleKeyDown}
+      aria-label={
+        isLoading
+          ? `Cargando métrica de ${title}...`
+          : onClick
+            ? `${title}: ${value}. Haz clic para ver detalles.`
+            : `${title}: ${value}`
+      }
+      sx={{
+        height: '100%',
+        border: '1px solid',
+        borderColor: 'divider',
+        borderRadius: 2,
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        position: 'relative',
+        overflow: 'hidden',
+        '&:hover': onClick
+          ? {
+              borderColor: `${color}.main`,
+              transform: 'translateY(-4px)',
+              boxShadow: theme.shadows[4],
+              '& .metric-icon-box': {
+                transform: 'scale(1.1) rotate(-5deg)',
+                bgcolor: `${color}.main`,
+                color: 'common.white',
+              },
+            }
+          : {},
+        '&:focus-visible': {
+          outline: `2px solid ${theme.palette[color].main}`,
+          outlineOffset: '2px',
+        },
+      }}
+    >
+      <CardContent sx={{ p: 3 }}>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="flex-start"
+          gap={2}
+        >
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
+              variant="subtitle2"
+              color="text.secondary"
+              fontWeight={600}
+              sx={{
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                mb: 0.5,
+              }}
+            >
+              {title}
+            </Typography>
+            <Typography variant="h4" fontWeight={800} color="text.primary">
+              {isLoading ? (
+                <Skeleton variant="text" width={60} height={40} />
+              ) : (
+                value
+              )}
+            </Typography>
+          </Box>
+          <Box
+            className="metric-icon-box"
+            sx={{
+              p: 1.5,
+              borderRadius: 2,
+              // Usamos alpha para asegurar contraste y un diseño más premium
+              bgcolor: alpha(theme.palette[color].main, 0.1),
+              color: `${color}.main`,
+              display: 'flex',
+              flexShrink: 0,
+              transition: 'all 0.3s ease',
+            }}
+          >
+            {React.isValidElement(icon)
+              ? React.cloneElement(
+                  icon as React.ReactElement<{
+                    fontSize?: string;
+                    'aria-hidden'?: string;
+                  }>,
+                  {
+                    fontSize: 'medium',
+                    'aria-hidden': 'true',
+                  }
+                )
+              : icon}
+          </Box>
+        </Box>
+
+        {subtitle && (
+          <Box
+            sx={{
+              mt: 2.5,
+              pt: 2,
+              borderTop: '1px solid',
+              borderColor: 'divider',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+                fontWeight: 600,
+                color:
+                  theme.palette.mode === 'dark'
+                    ? 'text.primary'
+                    : 'text.secondary',
+                opacity: theme.palette.mode === 'dark' ? 0.9 : 1,
+              }}
+            >
+              {subtitle}
+            </Typography>
+          </Box>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+export default DashboardMetricCard;

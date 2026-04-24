@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -7,14 +7,16 @@ import {
   Autocomplete,
   Paper,
   Stack,
+  InputAdornment,
+  Tooltip,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { useTranslation } from 'react-i18next';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { Proveedor } from '../../services/proveedor.types';
+import QuickProveedorModal from './QuickProveedorModal';
+import { usePermission } from '../../store/auth.hooks';
+import { PERMISSIONS } from '../../sherlock-auth/permissions.constants';
 
-/**
- * Represents a supplier association for a product, including commercial conditions.
- */
 export interface ProveedorAsociado {
   proveedorId: string;
   nombre?: string;
@@ -23,45 +25,30 @@ export interface ProveedorAsociado {
   precioUnitario?: number;
 }
 
-/**
- * Props for the {@link ProveedorSelector} component.
- */
 interface ProveedorSelectorProps {
-  /** Currently associated suppliers with their commercial conditions. */
   value: ProveedorAsociado[];
-  /** Callback invoked with the updated supplier list after any add/remove/edit. */
   onChange: (value: ProveedorAsociado[]) => void;
-  /** Full catalogue of available suppliers for the autocomplete options. */
   proveedores: Proveedor[];
-  /** If `true`, all inputs are disabled. */
   disabled?: boolean;
+  onRefreshProveedores?: () => void;
+  masterMarca?: string;
+  masterBarcode?: string;
 }
 
-/**
- * Multi-supplier selector for products.
- *
- * Renders an autocomplete to add new suppliers and a list of cards for each
- * already-associated supplier where the user can set brand, barcode, and
- * unit purchase price. Duplicate suppliers are prevented automatically.
- *
- * @param props - See {@link ProveedorSelectorProps}.
- * @returns JSX element with autocomplete and editable supplier cards.
- * @example
- * <ProveedorSelector
- *   value={proveedores}
- *   onChange={setProveedores}
- *   proveedores={allProveedores}
- * />
- */
 const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
   value = [],
   onChange,
   proveedores = [],
   disabled = false,
+  onRefreshProveedores,
+  masterMarca = '',
+  masterBarcode = '',
 }) => {
-  const { t } = useTranslation();
+  const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false);
+  const canCreate = usePermission(PERMISSIONS.proveedores.crear);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleAdd = (_event: any, newValue: Proveedor | null) => {
+  const handleAdd = (_event?: any, newValue?: Proveedor | null) => {
     if (!newValue) return;
     if (value.find((p) => p.proveedorId === newValue.id)) return;
 
@@ -70,8 +57,8 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
       {
         proveedorId: newValue.id,
         nombre: newValue.nombre,
-        marca: '',
-        codigoBarras: '',
+        marca: masterMarca || '',
+        codigoBarras: masterBarcode || '',
         precioUnitario: 0,
       },
     ]);
@@ -96,6 +83,15 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
     );
   };
 
+  const handleQuickSuccess = (newProveedor: Proveedor) => {
+    // Añadirlo a la selección actual
+    handleAdd(undefined, newProveedor);
+    // Notificar al padre para que refresque la lista de opciones
+    if (onRefreshProveedores) {
+      onRefreshProveedores();
+    }
+  };
+
   const options = proveedores.filter(
     (p) => !value.find((v) => v.proveedorId === p.id)
   );
@@ -103,7 +99,7 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
   return (
     <Box sx={{ width: '100%', mt: 1 }}>
       <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-        {t('proveedores.condicionesLabel')}
+        Proveedores y Condiciones
       </Typography>
 
       <Autocomplete
@@ -115,10 +111,36 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
         renderInput={(params) => (
           <TextField
             {...params}
-            label={t('proveedores.acciones.anadir')}
+            label="Añadir Proveedor"
             variant="outlined"
             size="small"
-            placeholder={t('comun.buscarProveedor')}
+            placeholder="Buscar proveedor..."
+            slotProps={{
+              inputLabel: {
+                shrink: true,
+              },
+              input: {
+                ...params.InputProps,
+                endAdornment: (
+                  <React.Fragment>
+                    {canCreate && !disabled && (
+                      <InputAdornment position="end" sx={{ mr: 1 }}>
+                        <Tooltip title="Crear Nuevo Proveedor">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => setIsQuickCreateOpen(true)}
+                          >
+                            <AddCircleOutlineIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </InputAdornment>
+                    )}
+                    {params.InputProps.endAdornment}
+                  </React.Fragment>
+                ),
+              },
+            }}
           />
         )}
         sx={{ mb: 2 }}
@@ -137,9 +159,7 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
               disabled={disabled}
               onClick={() => handleRemove(prov.proveedorId)}
               sx={{ position: 'absolute', top: 8, right: 8 }}
-              aria-label={t('proveedores.eliminarAria', {
-                nombre: prov.nombre ?? '',
-              })}
+              aria-label={`Eliminar proveedor ${prov.nombre || ''}`}
             >
               <DeleteIcon fontSize="small" />
             </IconButton>
@@ -151,24 +171,31 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
             >
               {prov.nombre ||
                 proveedores.find((p) => p.id === prov.proveedorId)?.nombre ||
-                t('proveedores.nombreDesconocido')}
+                'Proveedor Desconocido'}
             </Typography>
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField
-                label={t('proveedores.campoMarca')}
+                label="Marca"
                 size="small"
                 value={prov.marca || ''}
+                placeholder={
+                  masterMarca ? `Ej: ${masterMarca}` : 'Marca específica'
+                }
                 onChange={(e) =>
                   handleChangeField(prov.proveedorId, 'marca', e.target.value)
                 }
+                slotProps={{ inputLabel: { shrink: true } }}
                 disabled={disabled}
                 fullWidth
               />
               <TextField
-                label={t('proveedores.campoCodigoBarras')}
+                label="Código Barras Prov."
                 size="small"
                 value={prov.codigoBarras || ''}
+                placeholder={
+                  masterBarcode ? `Ej: ${masterBarcode}` : 'Ref. específica'
+                }
                 onChange={(e) =>
                   handleChangeField(
                     prov.proveedorId,
@@ -176,14 +203,18 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
                     e.target.value
                   )
                 }
+                slotProps={{ inputLabel: { shrink: true } }}
                 disabled={disabled}
                 fullWidth
               />
               <TextField
-                label={t('proveedores.campoPrecioCompra')}
+                label="Precio Compra"
                 size="small"
                 type="number"
-                InputProps={{ inputProps: { min: 0, step: 0.01 } }}
+                slotProps={{
+                  inputLabel: { shrink: true },
+                  input: { inputProps: { min: 0, step: 0.01 } },
+                }}
                 value={prov.precioUnitario ?? ''}
                 onChange={(e) =>
                   handleChangeField(
@@ -199,6 +230,12 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
           </Paper>
         ))}
       </Stack>
+
+      <QuickProveedorModal
+        isOpen={isQuickCreateOpen}
+        onClose={() => setIsQuickCreateOpen(false)}
+        onSuccess={handleQuickSuccess}
+      />
     </Box>
   );
 };

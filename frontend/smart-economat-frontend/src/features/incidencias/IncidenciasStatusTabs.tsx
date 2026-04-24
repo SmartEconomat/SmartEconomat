@@ -1,100 +1,121 @@
-import React from 'react';
-import { Box, Tab, Tabs } from '@mui/material';
-import { EstadoIncidencia } from '../../services/incidencia.types';
-import { useTranslation } from 'react-i18next';
+import { Box, alpha, useTheme, Tab, Tabs } from '@mui/material';
+import PendingActionsIcon from '@mui/icons-material/PendingActions';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
-/**
- * Union type representing the top-level resolution tab selection.
- * - `'abiertas'` — open (unresolved) incidencias.
- * - `'cerradas'` — closed (resolved / cancelled / invalid) incidencias.
- */
-export type IncidenciasResolucionTab = 'abiertas' | 'cerradas';
+export type IncidenciasResolucionTab = 'por_resolver' | 'resueltas';
 
-/**
- * Union type for the secondary tab when the "cerradas" top-level tab is active.
- * - `'todas'` — all closed incidencias.
- * - {@link EstadoIncidencia.RESUELTA} — only resolved.
- * - {@link EstadoIncidencia.CANCELADA} — only cancelled.
- * - {@link EstadoIncidencia.INVALIDA} — only invalid.
- */
-export type IncidenciasCerradasTab =
-  | 'todas'
-  | EstadoIncidencia.RESUELTA
-  | EstadoIncidencia.CANCELADA
-  | EstadoIncidencia.INVALIDA;
-
-/**
- * Props for the {@link IncidenciasStatusTabs} component.
- */
 interface IncidenciasStatusTabsProps {
-  /** Currently selected top-level resolution tab. */
   value: IncidenciasResolucionTab;
-  /** Callback invoked when the top-level tab changes. */
   onChange: (value: IncidenciasResolucionTab) => void;
-  /** Currently selected secondary (closed) tab. */
-  closedValue: IncidenciasCerradasTab;
-  /** Callback invoked when the secondary (closed) tab changes. */
-  onClosedChange: (value: IncidenciasCerradasTab) => void;
 }
 
-/**
- * Two-level tab bar for filtering incidencias by resolution status.
- * The secondary tab row is only rendered when the "cerradas" top-level tab is
- * active, allowing further filtering by specific closed state.
- *
- * @param {IncidenciasStatusTabsProps} props - Component props.
- * @returns JSX rendered tab bar.
- * @example
- * <IncidenciasStatusTabs
- *   value={tab}
- *   onChange={setTab}
- *   closedValue={closedTab}
- *   onClosedChange={setClosedTab}
- * />
- */
 const IncidenciasStatusTabs: React.FC<IncidenciasStatusTabsProps> = ({
   value,
   onChange,
-  closedValue,
-  onClosedChange,
 }) => {
-  const { t } = useTranslation();
+  const theme = useTheme();
 
   return (
     <Box sx={{ mb: 2 }}>
-      <Tabs
-        value={value}
-        onChange={(_, newValue: IncidenciasResolucionTab) => onChange(newValue)}
+      <Box
+        sx={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          height: 30,
+          p: '2px',
+          borderRadius: '10px',
+          bgcolor: alpha(theme.palette.divider, 0.05),
+          border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+        }}
       >
-        <Tab value="abiertas" label={t('incidencias.tabs.abiertas')} />
-        <Tab value="cerradas" label={t('incidencias.tabs.cerradas')} />
-      </Tabs>
-
-      {value === 'cerradas' && (
         <Tabs
-          value={closedValue}
-          onChange={(_, newValue: IncidenciasCerradasTab) =>
-            onClosedChange(newValue)
+          value={value}
+          onChange={(_, newValue: IncidenciasResolucionTab) =>
+            onChange(newValue)
           }
-          variant="scrollable"
-          allowScrollButtonsMobile
-          sx={{ mt: 1 }}
+          centered
+          sx={{
+            minHeight: 26,
+            height: 26,
+            '& .MuiTabs-indicator': {
+              height: 26,
+              borderRadius: '8px',
+              backgroundColor: theme.palette.background.paper,
+              boxShadow: '0px 2px 4px rgba(0,0,0,0.08)',
+              zIndex: 0,
+            },
+            '& .MuiTabs-flexContainer': {
+              position: 'relative',
+              zIndex: 1,
+              height: '100%',
+              alignItems: 'center',
+            },
+          }}
         >
-          <Tab value="todas" label={t('incidencias.tabs.todas')} />
           <Tab
-            value={EstadoIncidencia.RESUELTA}
-            label={t('incidencias.estados.resuelta')}
+            value="por_resolver"
+            label="POR RESOLVER"
+            icon={<PendingActionsIcon sx={{ fontSize: 16 }} />}
+            iconPosition="start"
+            disableRipple
+            sx={{
+              minWidth: 0,
+              minHeight: '26px !important',
+              height: '26px !important',
+              padding: '0px !important',
+              px: '12px !important',
+              borderRadius: '8px',
+              lineHeight: 1,
+              fontSize: '0.65rem',
+              fontWeight: 800,
+              gap: 0.5,
+              letterSpacing: '0.02em',
+              color: theme.palette.text.secondary,
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              '&.Mui-selected': {
+                color: theme.palette.primary.main,
+              },
+              '&:hover:not(.Mui-selected)': {
+                bgcolor: alpha(theme.palette.divider, 0.05),
+              },
+            }}
           />
           <Tab
-            value={EstadoIncidencia.CANCELADA}
-            label={t('incidencias.estados.cancelada')}
-          />
-          <Tab
-            value={EstadoIncidencia.INVALIDA}
-            label={t('incidencias.estados.invalida')}
+            value="resueltas"
+            label="RESUELTAS"
+            icon={<CheckCircleOutlineIcon sx={{ fontSize: 16 }} />}
+            iconPosition="start"
+            disableRipple
+            sx={{
+              minWidth: 0,
+              minHeight: '26px !important',
+              height: '26px !important',
+              padding: '0px !important',
+              px: '12px !important',
+              borderRadius: '8px',
+              lineHeight: 1,
+              fontSize: '0.65rem',
+              fontWeight: 800,
+              gap: 0.5,
+              letterSpacing: '0.02em',
+              color: theme.palette.text.secondary,
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              '&.Mui-selected': {
+                color: theme.palette.primary.main,
+              },
+              '&:hover:not(.Mui-selected)': {
+                bgcolor: alpha(theme.palette.divider, 0.05),
+              },
+            }}
           />
         </Tabs>
-      )}
+      </Box>
     </Box>
   );
 };

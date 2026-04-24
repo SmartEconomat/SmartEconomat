@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Box,
   Paper,
+  Tab,
+  Tabs,
   Typography,
   Alert,
   IconButton,
@@ -16,7 +19,10 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import TuneIcon from '@mui/icons-material/Tune';
-import { useTranslation } from 'react-i18next';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import ClearIcon from '@mui/icons-material/Clear';
+import PendingActionsIcon from '@mui/icons-material/PendingActions';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import DataTable, { Column } from '../components/ui/DataTable';
 import PageToolbar from '../components/ui/PageToolbar';
 import DetailModal from '../components/ui/DetailModal';
@@ -37,10 +43,7 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import IncidenciaFilters, {
   IncidenciaFiltersState,
 } from '../features/incidencias/IncidenciaFilters';
-import IncidenciasStatusTabs, {
-  IncidenciasCerradasTab,
-  IncidenciasResolucionTab,
-} from '../features/incidencias/IncidenciasStatusTabs';
+import { type IncidenciasResolucionTab } from '../features/incidencias/IncidenciasStatusTabs';
 import ResolveIncidenciaModal from '../features/incidencias/ResolveIncidenciaModal';
 import { useAuth, usePermission } from '../store/auth.hooks';
 import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
@@ -50,48 +53,32 @@ import ReporteSelectorModal, {
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 
-/**
- * Maps each `EstadoIncidencia` value to its corresponding StatusChip variant string.
- * Used to determine the visual style of status chips in the incidencias table.
- */
-const INCIDENCIA_STATUS_CHIP: Record<EstadoIncidencia, string> = {
-  nueva: 'pending',
-  en_ajuste: 'warning',
-  pendiente_validacion: 'review',
-  resuelta: 'completed',
-  cancelada: 'cancelled',
-  invalida: 'error',
+const INCIDENCIA_STATUS_LABEL: Record<EstadoIncidencia, string> = {
+  [EstadoIncidencia.NUEVA]: 'Nueva',
+  [EstadoIncidencia.EN_AJUSTE]: 'En ajuste',
+  [EstadoIncidencia.PENDIENTE_VALIDACION]: 'Pendiente validación',
+  [EstadoIncidencia.RESUELTA]: 'Resuelta',
+  [EstadoIncidencia.CANCELADA]: 'Cancelada',
+  [EstadoIncidencia.INVALIDA]: 'Inválida',
 };
 
-const CLOSED_INCIDENCIA_STATES = new Set<EstadoIncidencia>([
-  EstadoIncidencia.RESUELTA,
-  EstadoIncidencia.CANCELADA,
-  EstadoIncidencia.INVALIDA,
-]);
-
-const CLOSED_STATE_PRIORITY: Record<EstadoIncidencia, number> = {
-  [EstadoIncidencia.CANCELADA]: 0,
-  [EstadoIncidencia.INVALIDA]: 1,
-  [EstadoIncidencia.RESUELTA]: 2,
-  [EstadoIncidencia.EN_AJUSTE]: 3,
-  [EstadoIncidencia.PENDIENTE_VALIDACION]: 4,
-  [EstadoIncidencia.NUEVA]: 5,
+const INCIDENCIA_STATUS_CHIP: Record<EstadoIncidencia, string> = {
+  [EstadoIncidencia.NUEVA]: 'pending',
+  [EstadoIncidencia.EN_AJUSTE]: 'review',
+  [EstadoIncidencia.PENDIENTE_VALIDACION]: 'warning',
+  [EstadoIncidencia.RESUELTA]: 'completed',
+  [EstadoIncidencia.CANCELADA]: 'cancelled',
+  [EstadoIncidencia.INVALIDA]: 'error',
 };
 
 type ResolveDialogMode = 'adjust' | 'resolve';
 
-/**
- * Page component that displays the Incidencias (incident management) centre.
- *
- * Renders a filterable, paginated table of incidencias with support for
- * resolving, adjusting quantities, deleting, and exporting incidents.
- * Permissions are enforced via `usePermission` hooks.
- */
 const Incidencias: React.FC = () => {
-  const { t } = useTranslation();
   const theme = useTheme();
   const toast = useToast();
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hasDashboardFilter = searchParams.get('resolucion') === 'por_resolver';
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
@@ -101,13 +88,23 @@ const Incidencias: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [resolucionTab, setResolucionTab] =
-    useState<IncidenciasResolucionTab>('abiertas');
-  const [cerradasTab, setCerradasTab] =
-    useState<IncidenciasCerradasTab>('todas');
+    useState<IncidenciasResolucionTab>('por_resolver');
   const [filters, setFilters] = useState<IncidenciaFiltersState>({
     startDate: null,
     endDate: null,
   });
+
+  useEffect(() => {
+    if (hasDashboardFilter) {
+      setResolucionTab('por_resolver');
+    }
+  }, [hasDashboardFilter]);
+
+  const clearDashboardFilter = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('resolucion');
+    setSearchParams(nextParams, { replace: true });
+  };
   const [itemToView, setItemToView] = useState<Incidencia | null>(null);
   const [itemToResolve, setItemToResolve] = useState<Incidencia | null>(null);
   const [resolveDialogMode, setResolveDialogMode] =
@@ -121,102 +118,22 @@ const Incidencias: React.FC = () => {
   const canResolve = usePermission(PERMISSIONS.incidencias.resolver);
   const canDelete = usePermission(PERMISSIONS.incidencias.eliminar);
 
-  const isCerradasTab = resolucionTab === 'cerradas';
-
-  /**
-   * Devuelve la etiqueta localizada para un valor `EstadoIncidencia` dado.
-   * Usa el string de estado sin procesar como alternativa si no se encuentra la clave de traducción.
-   *
-   * @param status - El estado de la incidencia a traducir.
-   * @returns La cadena de etiqueta traducida.
-   */
-  const incidenciaStatusLabel = (status: EstadoIncidencia): string =>
-    ({
-      nueva: t('incidencias.estados.nueva'),
-      en_ajuste: t('incidencias.estados.enAjuste'),
-      pendiente_validacion: t('incidencias.estados.pendienteValidacion'),
-      resuelta: t('incidencias.estados.resuelta'),
-      cancelada: t('incidencias.estados.cancelada'),
-      invalida: t('incidencias.estados.invalida'),
-    })[status] ?? status;
-
-  /**
-   * Obtiene las incidencias desde la API y actualiza el estado local.
-   *
-   * Cuando la pestaña "cerradas" está activa, se obtienen todas las páginas en paralelo,
-   * se combinan, se filtran a estados cerrados y se ordenan por prioridad de estado
-   * y luego por fecha de creación. Para incidencias abiertas se utiliza paginación
-   * estándar del servidor.
-   */
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      if (isCerradasTab) {
-        const limit = 50;
-        const baseParams: IncidenciasQueryParams = {
-          limit,
-          searchTerm: searchTerm || undefined,
-          startDate: filters.startDate || undefined,
-          endDate: filters.endDate || undefined,
-        };
-
-        const firstPage = await fetchIncidencias({
-          ...baseParams,
-          page: 1,
-        });
-
-        let mergedData = [...firstPage.data];
-        if (firstPage.totalPages > 1) {
-          const restPages = await Promise.all(
-            Array.from({ length: firstPage.totalPages - 1 }, (_, idx) =>
-              fetchIncidencias({
-                ...baseParams,
-                page: idx + 2,
-              })
-            )
-          );
-
-          mergedData = mergedData.concat(
-            ...restPages.map((result) => result.data)
-          );
-        }
-
-        const mergedClosedData = mergedData.filter((item) =>
-          CLOSED_INCIDENCIA_STATES.has(item.estado)
-        );
-
-        mergedClosedData.sort((a, b) => {
-          const stateDiff =
-            (CLOSED_STATE_PRIORITY[a.estado] ?? 99) -
-            (CLOSED_STATE_PRIORITY[b.estado] ?? 99);
-
-          if (stateDiff !== 0) {
-            return stateDiff;
-          }
-
-          return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-        });
-
-        setData(mergedClosedData);
-        setTotalItems(mergedClosedData.length);
-        setTotalPages(1);
-      } else {
-        const params: IncidenciasQueryParams = {
-          page,
-          limit: pageSize,
-          searchTerm: searchTerm || undefined,
-          resuelta: false,
-          startDate: filters.startDate || undefined,
-          endDate: filters.endDate || undefined,
-        };
-        const result = await fetchIncidencias(params);
-        setData(result.data);
-        setTotalItems(result.total);
-        setTotalPages(result.totalPages);
-      }
+      const params: IncidenciasQueryParams = {
+        page,
+        limit: pageSize,
+        searchTerm: searchTerm || undefined,
+        resuelta: resolucionTab === 'resueltas',
+        startDate: filters.startDate || undefined,
+        endDate: filters.endDate || undefined,
+      };
+      const result = await fetchIncidencias(params);
+      setData(result.data);
+      setTotalItems(result.total);
+      setTotalPages(result.totalPages);
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'Error al cargar incidencias';
@@ -224,21 +141,12 @@ const Incidencias: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, searchTerm, isCerradasTab, filters]);
+  }, [page, pageSize, searchTerm, resolucionTab, filters]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  /**
-   * Envía un payload de resolución/ajuste a la API para una incidencia dada.
-   *
-   * Muestra un toast de éxito contextual según el estado final elegido,
-   * cierra el modal de resolución y recarga los datos de la tabla.
-   *
-   * @param id - UUID de la incidencia a resolver.
-   * @param payload - Detalles de resolución incluyendo el estado final y las cantidades.
-   */
   const handleResolve = async (
     id: string,
     payload: ResolveIncidenciaPayload
@@ -250,21 +158,11 @@ const Incidencias: React.FC = () => {
         usuarioId:
           payload.usuarioId || (user?.id ? String(user.id) : undefined),
       });
-      if (payload.marcarComoResuelta) {
-        switch (payload.estadoFinal) {
-          case EstadoIncidencia.CANCELADA:
-            toast.success(t('incidencias.toast.marcadaCancelada'));
-            break;
-          case EstadoIncidencia.INVALIDA:
-            toast.success(t('incidencias.toast.marcadaInvalida'));
-            break;
-          default:
-            toast.success(t('incidencias.toast.marcadaResuelta'));
-            break;
-        }
-      } else {
-        toast.success(t('incidencias.toast.actualizada'));
-      }
+      toast.success(
+        payload.marcarComoResuelta
+          ? 'Incidencia marcada como resuelta'
+          : 'Incidencia actualizada correctamente'
+      );
       setItemToResolve(null);
       if (itemToView?.id === id) {
         setItemToView(null);
@@ -279,18 +177,12 @@ const Incidencias: React.FC = () => {
     }
   };
 
-  /**
-   * Elimina la incidencia seleccionada actualmente (`itemToDelete`).
-   *
-   * Muestra un toast de éxito al completarse, limpia la selección y
-   * recarga los datos de la tabla. Muestra un toast de error si la solicitud falla.
-   */
   const handleDelete = async () => {
     if (!itemToDelete) return;
     setIsDeleting(true);
     try {
       await removeIncidencia(itemToDelete.id);
-      toast.success(t('incidencias.toast.eliminada'));
+      toast.success('Incidencia eliminada correctamente');
       setItemToDelete(null);
       loadData();
     } catch (err: unknown) {
@@ -302,12 +194,6 @@ const Incidencias: React.FC = () => {
     }
   };
 
-  /**
-   * Abre el modal de resolución/ajuste para una incidencia específica.
-   *
-   * @param incidencia - La incidencia sobre la que operar.
-   * @param mode - `'adjust'` para ajustar cantidades, `'resolve'` para marcar como resuelta.
-   */
   const openResolveModal = (
     incidencia: Incidencia,
     mode: ResolveDialogMode
@@ -316,65 +202,15 @@ const Incidencias: React.FC = () => {
     setItemToResolve(incidencia);
   };
 
-  /**
-   * Abre el modal selector de reporte preconfigurado con el formato indicado.
-   *
-   * @param formato - El formato de reporte deseado (`'pdf'` o `'excel'`).
-   */
   const openReporteModal = (formato: ReporteFormato) => {
     setReporteFormato(formato);
     setIsReporteOpen(true);
   };
 
-  /**
-   * Gestiona el cambio entre las pestañas de resolución "abiertas" y "cerradas".
-   *
-   * Restablece la subpestaña de cerradas a `'todas'` al abandonar la pestaña de cerradas
-   * y reinicia la paginación a la página 1.
-   *
-   * @param nextTab - La pestaña a la que cambia el usuario.
-   */
   const handleResolucionTabChange = (nextTab: IncidenciasResolucionTab) => {
     setResolucionTab(nextTab);
-    if (nextTab !== 'cerradas') {
-      setCerradasTab('todas');
-    }
     setPage(1);
   };
-
-  /**
-   * Lista memorizada de incidencias filtradas por la subpestaña activa de cerradas.
-   *
-   * Cuando se está en la pestaña de cerradas y se selecciona una subpestaña específica
-   * (p. ej. `'resuelta'`), solo se devuelven los elementos con ese estado exacto.
-   * En caso contrario, se devuelve el conjunto de datos completo sin modificar.
-   */
-  const dataFiltrada = useMemo(() => {
-    if (!isCerradasTab || cerradasTab === 'todas') {
-      return data;
-    }
-
-    return data.filter((item) => item.estado === cerradasTab);
-  }, [data, isCerradasTab, cerradasTab]);
-
-  /**
-   * Memoised page slice of `dataFiltrada` used for client-side pagination
-   * when the cerradas tab is active. For open incidencias, server-side
-   * pagination is used and the full `data` array is returned directly.
-   */
-  const dataPaginada = useMemo(() => {
-    if (!isCerradasTab) {
-      return data;
-    }
-
-    const start = (page - 1) * pageSize;
-    return dataFiltrada.slice(start, start + pageSize);
-  }, [data, dataFiltrada, isCerradasTab, page, pageSize]);
-
-  const totalItemsVista = isCerradasTab ? dataFiltrada.length : totalItems;
-  const totalPagesVista = isCerradasTab
-    ? Math.max(1, Math.ceil(totalItemsVista / pageSize))
-    : totalPages;
 
   const columns: Column<Incidencia>[] = useMemo(
     () => [
@@ -447,7 +283,7 @@ const Incidencias: React.FC = () => {
         render: (row) => (
           <StatusChip
             status={INCIDENCIA_STATUS_CHIP[row.estado]}
-            label={incidenciaStatusLabel(row.estado)}
+            label={INCIDENCIA_STATUS_LABEL[row.estado]}
             icon={
               row.resuelta ? <CheckCircleIcon /> : <ReportProblemOutlinedIcon />
             }
@@ -455,93 +291,75 @@ const Incidencias: React.FC = () => {
         ),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [t]
+    []
   );
 
-  /**
-   * Renders the action buttons for a given row in the incidencias table.
-   *
-   * Shows View, Adjust, Resolve, and Delete actions depending on the
-   * incidencia state and the current user's permissions.
-   *
-   * @param row - The incidencia row to render actions for.
-   * @returns A JSX element containing the action icon buttons.
-   */
-  const renderActions = (row: Incidencia) => {
-    const hasLineas = (row.lineas?.length ?? 0) > 0;
-    const canOperate = !row.resuelta && hasLineas;
-
-    return (
-      <Stack
-        direction="row"
-        spacing={0.5}
-        sx={{ minWidth: 160, justifyContent: 'flex-start' }}
-      >
-        <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-          <Tooltip title={t('comun.verDetalle')}>
+  const renderActions = (row: Incidencia) => (
+    <Stack
+      direction="row"
+      spacing={0.5}
+      sx={{ minWidth: 160, justifyContent: 'flex-start' }}
+    >
+      <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
+        <Tooltip title="Ver detalle">
+          <IconButton
+            color="primary"
+            onClick={(e) => {
+              e.currentTarget.blur();
+              setItemToView(row);
+            }}
+            size="small"
+          >
+            <VisibilityIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      </Box>
+      <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
+        {!row.resuelta && canResolve && (
+          <Tooltip title="Ajustar cantidades">
             <IconButton
-              color="primary"
-              onClick={(e) => {
-                e.currentTarget.blur();
-                setItemToView(row);
-              }}
+              onClick={() => openResolveModal(row, 'adjust')}
               size="small"
+              color="warning"
+              id="btn-ajustar-incidencia"
+              aria-label="Ajustar cantidades"
             >
-              <VisibilityIcon fontSize="small" />
+              <TuneIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-        </Box>
-        <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-          {canOperate && canResolve && (
-            <Tooltip title={t('incidencias.actions.ajustarCantidades')}>
-              <IconButton
-                onClick={() => openResolveModal(row, 'adjust')}
-                size="small"
-                color="warning"
-                aria-label={t('incidencias.actions.ajustarCantidades')}
-              >
-                <TuneIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Box>
-        <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-          {canOperate && canResolve && (
-            <Tooltip title={t('incidencias.actions.resolverIncidencia')}>
-              <IconButton
-                onClick={() => openResolveModal(row, 'resolve')}
-                size="small"
-                color="success"
-                aria-label={t('incidencias.actions.resolverIncidencia')}
-              >
-                <CheckCircleIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Box>
-        <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-          {canDelete && (
-            <Tooltip title={t('comun.eliminar')}>
-              <IconButton
-                onClick={() => setItemToDelete(row)}
-                size="small"
-                color="error"
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Box>
-      </Stack>
-    );
-  };
+        )}
+      </Box>
+      <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
+        {!row.resuelta && canResolve && (
+          <Tooltip title="Resolver incidencia">
+            <IconButton
+              onClick={() => openResolveModal(row, 'resolve')}
+              size="small"
+              color="success"
+              id="btn-resolver-incidencia"
+              aria-label="Resolver incidencia"
+            >
+              <CheckCircleIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
+      <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
+        {canDelete && (
+          <Tooltip title="Eliminar">
+            <IconButton
+              onClick={() => setItemToDelete(row)}
+              size="small"
+              color="error"
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
+    </Stack>
+  );
 
-  /**
-   * Memoised array of detail sections passed to `DetailModal` when viewing
-   * a single incidencia. Includes incident info, notes, resolution details
-   * (if resolved), and a per-line product discrepancy breakdown.
-   */
   const detailSections = useMemo(() => {
     if (!itemToView) return [];
     return [
@@ -555,7 +373,7 @@ const Incidencias: React.FC = () => {
           },
           {
             label: 'Estado',
-            value: incidenciaStatusLabel(itemToView.estado),
+            value: INCIDENCIA_STATUS_LABEL[itemToView.estado],
           },
           { label: 'ID Recepción', value: itemToView.recepcionId || '—' },
           {
@@ -753,21 +571,21 @@ const Incidencias: React.FC = () => {
         ),
       },
     ];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [itemToView, theme, t]);
+  }, [itemToView, theme]);
 
   return (
     <Box>
       <PageToolbar
-        title={t('incidencias.titulo')}
-        totalItems={totalItemsVista}
-        totalItemsLabel={t('incidencias.totalItemsLabel')}
+        id="incidencias-toolbar"
+        title="Centro de Incidencias"
+        totalItems={totalItems}
+        totalItemsLabel="incidencias"
         searchValue={searchTerm}
         onSearchChange={(v) => {
           setSearchTerm(v);
           setPage(1);
         }}
-        searchPlaceholder={t('incidencias.buscar')}
+        searchPlaceholder="Buscar por proveedor u observaciones..."
         extraActions={[
           {
             label: 'Reporte PDF',
@@ -797,70 +615,128 @@ const Incidencias: React.FC = () => {
         }
       />
 
-      <IncidenciasStatusTabs
-        value={resolucionTab}
-        onChange={handleResolucionTabChange}
-        closedValue={cerradasTab}
-        onClosedChange={(nextTab) => {
-          setCerradasTab(nextTab);
-          setPage(1);
+      <Paper
+        elevation={2}
+        sx={{
+          borderRadius: 3,
+          overflow: 'hidden',
+          border: '1px solid',
+          borderColor: 'divider',
         }}
-      />
-
-      <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
-        {error && (
-          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-            {error}
-          </Alert>
-        )}
-
-        <DataTable
-          columns={columns}
-          data={dataPaginada}
-          isLoading={isLoading}
-          renderActions={renderActions}
-          emptyStateMessage={
-            <Box sx={{ py: 8, textAlign: 'center' }}>
-              <ReportProblemOutlinedIcon
-                sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
-              />
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                {isCerradasTab
-                  ? cerradasTab === 'todas'
-                    ? t('incidencias.empty.noCerradas')
-                    : `No hay incidencias ${incidenciaStatusLabel(cerradasTab as EstadoIncidencia)}`
-                  : 'No hay incidencias abiertas'}
-              </Typography>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ maxWidth: 400, mx: 'auto' }}
-              >
-                {searchTerm
-                  ? 'No se encontraron incidencias que coincidan con tu búsqueda.'
-                  : isCerradasTab
-                    ? t('incidencias.empty.mensajeCerradas')
-                    : t('incidencias.empty.noPendientes')}
-              </Typography>
-            </Box>
-          }
-          pagination={{
-            currentPage: page,
-            totalPages: totalPagesVista,
-            onPageChange: (_, p) => setPage(p),
-            pageSize: pageSize,
-            onPageSizeChange: (e) => {
-              setPageSize(Number(e.target.value));
-              setPage(1);
-            },
+      >
+        <Box
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
           }}
-        />
+        >
+          <Tabs
+            id="incidencias-tabs"
+            value={resolucionTab}
+            onChange={(_, newValue: IncidenciasResolucionTab) =>
+              handleResolucionTabChange(newValue)
+            }
+            variant="fullWidth"
+            textColor="primary"
+            indicatorColor="primary"
+          >
+            <Tab
+              value="por_resolver"
+              label="Por resolver"
+              icon={<PendingActionsIcon />}
+            />
+            <Tab
+              value="resueltas"
+              label="Resueltas"
+              icon={<CheckCircleOutlineIcon />}
+            />
+          </Tabs>
+        </Box>
+
+        <Box sx={{ p: { xs: 2, sm: 4 } }}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          {hasDashboardFilter && (
+            <Alert
+              severity="info"
+              icon={<FilterListIcon />}
+              action={
+                <Button
+                  color="inherit"
+                  size="small"
+                  onClick={clearDashboardFilter}
+                  startIcon={<ClearIcon />}
+                  sx={{ fontWeight: 700 }}
+                >
+                  Quitar filtro
+                </Button>
+              }
+              sx={{
+                mb: 3,
+                borderRadius: 2,
+                bgcolor: alpha(theme.palette.info.main, 0.1),
+                border: '1px solid',
+                borderColor: alpha(theme.palette.info.main, 0.3),
+                '& .MuiAlert-message': { fontWeight: 500 },
+              }}
+            >
+              Estas visualizando las incidencias pendientes filtradas desde el
+              Dashboard.
+            </Alert>
+          )}
+
+          <DataTable
+            id="incidencias-table"
+            columns={columns}
+            data={data}
+            isLoading={isLoading}
+            renderActions={renderActions}
+            emptyStateMessage={
+              <Box sx={{ py: 8, textAlign: 'center' }}>
+                <ReportProblemOutlinedIcon
+                  sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
+                />
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  {resolucionTab === 'resueltas'
+                    ? 'No hay incidencias resueltas'
+                    : 'No hay incidencias por resolver'}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ maxWidth: 400, mx: 'auto' }}
+                >
+                  {searchTerm
+                    ? 'No se encontraron incidencias que coincidan con tu búsqueda.'
+                    : resolucionTab === 'resueltas'
+                      ? 'Aún no se han registrado incidencias resueltas con los filtros aplicados.'
+                      : '¡Excelente trabajo! No se han detectado discrepancias pendientes en las recepciones recientes.'}
+                </Typography>
+              </Box>
+            }
+            pagination={{
+              currentPage: page,
+              totalPages: totalPages,
+              onPageChange: (_, p) => setPage(p),
+              pageSize: pageSize,
+              onPageSizeChange: (e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              },
+            }}
+          />
+        </Box>
       </Paper>
 
       <DetailModal
         isOpen={!!itemToView}
         onClose={() => setItemToView(null)}
-        title={t('incidencias.modal.detalle')}
+        title="Detalle de Incidencia"
         subtitle={itemToView?.proveedorNombre}
         sections={detailSections}
         size="md"
@@ -877,7 +753,7 @@ const Incidencias: React.FC = () => {
                   }
                 }}
               >
-                {t('incidencias.actions.ajustarCantidades')}
+                Ajustar cantidades
               </Button>
               <Button
                 variant="contained"
@@ -889,7 +765,7 @@ const Incidencias: React.FC = () => {
                   }
                 }}
               >
-                {t('incidencias.actions.resolverIncidencia')}
+                Resolver incidencia
               </Button>
             </Stack>
           ) : undefined
@@ -900,9 +776,9 @@ const Incidencias: React.FC = () => {
         isOpen={!!itemToDelete}
         onClose={() => !isDeleting && setItemToDelete(null)}
         onConfirm={handleDelete}
-        title={t('incidencias.confirm.titulo')}
-        message={t('incidencias.confirm.mensaje')}
-        confirmText={t('incidencias.confirm.eliminar')}
+        title="Eliminar Incidencia"
+        message="¿Estás seguro de que deseas eliminar esta incidencia? Esta acción no se puede deshacer y se perderá el registro de la discrepancia."
+        confirmText="Eliminar"
         isLoading={isDeleting}
       />
 

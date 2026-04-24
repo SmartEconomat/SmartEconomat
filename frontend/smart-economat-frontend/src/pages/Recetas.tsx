@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Box,
   Paper,
@@ -89,11 +88,10 @@ import { DownloadService } from '../services/download.service';
 const RecetaIngredientesView: React.FC<{
   ingredientes?: RecetaIngrediente[];
 }> = ({ ingredientes = [] }) => {
-  const { t } = useTranslation();
   if (ingredientes.length === 0) {
     return (
       <Typography variant="body2" color="text.secondary">
-        {t('recetas.ingredientes.empty')}
+        Sin ingredientes registrados.
       </Typography>
     );
   }
@@ -103,18 +101,12 @@ const RecetaIngredientesView: React.FC<{
       <Table size="small">
         <TableHead sx={{ bgcolor: 'action.hover' }}>
           <TableRow>
-            <TableCell sx={{ fontWeight: 'bold' }}>
-              {t('recetas.ingredientes.producto')}
-            </TableCell>
+            <TableCell sx={{ fontWeight: 'bold' }}>Producto</TableCell>
             <TableCell sx={{ fontWeight: 'bold', width: 100 }}>
-              {t('recetas.ingredientes.cantidad')}
+              Cantidad
             </TableCell>
-            <TableCell sx={{ fontWeight: 'bold', width: 80 }}>
-              {t('recetas.ingredientes.unidad')}
-            </TableCell>
-            <TableCell sx={{ fontWeight: 'bold' }}>
-              {t('recetas.ingredientes.proveedorFav')}
-            </TableCell>
+            <TableCell sx={{ fontWeight: 'bold', width: 80 }}>Unidad</TableCell>
+            <TableCell sx={{ fontWeight: 'bold' }}>Proveedor fav.</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -145,7 +137,7 @@ const RecetaIngredientesView: React.FC<{
                         fontWeight: 700,
                       }}
                     >
-                      {t('recetas.ingredientes.auto')}
+                      Auto
                     </Box>
                   </Box>
                 ) : (
@@ -156,7 +148,7 @@ const RecetaIngredientesView: React.FC<{
                       fontSize: '0.8rem',
                     }}
                   >
-                    {t('recetas.ingredientes.automatico')}
+                    Automático
                   </span>
                 )}
               </TableCell>
@@ -168,8 +160,10 @@ const RecetaIngredientesView: React.FC<{
   );
 };
 
-const getRecipeImageUrl = (receta?: Receta | null): string =>
-  resolveStoredFileUrl(receta?.pathImgOptimized || receta?.pathImg || '');
+function getRecipeImageUrl(receta?: Receta | null): string | undefined {
+  if (!receta?.pathImg) return undefined;
+  return resolveStoredFileUrl(receta.pathImg);
+}
 
 const TIEMPO_FRANJAS_MINUTOS = [10, 20, 30, 45, 60] as const;
 
@@ -281,7 +275,6 @@ const RecipeImagePreview: React.FC<{
 };
 
 const Recetas: React.FC = () => {
-  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -358,12 +351,10 @@ const Recetas: React.FC = () => {
     try {
       await deleteResource(`/recetas/${itemToDelete.id}`);
       setData((prev) => prev.filter((r) => r.id !== itemToDelete.id));
-      toast.success(
-        t('recetas.toast.eliminada', { nombre: itemToDelete.nombre })
-      );
+      toast.success(`Receta "${itemToDelete.nombre}" eliminada correctamente.`);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : t('recetas.toast.errorEliminar');
+        err instanceof Error ? err.message : 'Error al eliminar la receta.';
       toast.error(message);
     } finally {
       setIsDeleting(false);
@@ -378,16 +369,16 @@ const Recetas: React.FC = () => {
 
       if (formData.id) {
         await updateReceta(String(formData.id), payload as RecetaPayload);
-        toast.success(t('recetas.toast.actualizada'));
+        toast.success('Receta actualizada correctamente.');
       } else {
         await createReceta(payload as RecetaPayload);
-        toast.success(t('recetas.toast.creada'));
+        toast.success('Receta creada correctamente.');
       }
       await loadData();
       setItemToEdit(null);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : t('recetas.toast.errorGuardar');
+        err instanceof Error ? err.message : 'Error al guardar la receta.';
       toast.error(message);
     } finally {
       setIsSaving(false);
@@ -400,7 +391,7 @@ const Recetas: React.FC = () => {
 
   const openExportDialog = (ids: string[]) => {
     if (ids.length === 0) {
-      toast.error(t('recetas.toast.seleccionaParaExportar'));
+      toast.error('Selecciona al menos una receta para exportar a PDF.');
       return;
     }
 
@@ -411,7 +402,7 @@ const Recetas: React.FC = () => {
 
   const handleExportPdf = async () => {
     if (exportIds.length === 0) {
-      toast.error(t('recetas.toast.seleccionaParaExportar'));
+      toast.error('Selecciona al menos una receta para exportar a PDF.');
       return;
     }
 
@@ -541,7 +532,9 @@ const Recetas: React.FC = () => {
     if (!stockValidation) return;
 
     if (!hasMissingIngredients) {
-      toast.error(t('recetas.toast.noProveedoresFaltantes'));
+      toast.error(
+        'No se encontraron proveedores válidos para los ingredientes faltantes.'
+      );
       return;
     }
 
@@ -558,20 +551,14 @@ const Recetas: React.FC = () => {
       const totalPedidos = pedidoUsuario.pedidos?.length ?? 0;
       toast.success(
         totalPedidos > 0
-          ? t('recetas.toast.pedidoGeneradoConInternos', {
-              numero: pedidoUsuario.numeroGlobal,
-              total: totalPedidos,
-            })
-          : t('recetas.toast.pedidoGenerado', {
-              numero: pedidoUsuario.numeroGlobal,
-            })
+          ? `Se ha generado el pedido #${pedidoUsuario.numeroGlobal} con ${totalPedidos} pedido${totalPedidos === 1 ? '' : 's'} interno${totalPedidos === 1 ? '' : 's'} para cubrir los faltantes.`
+          : `Se ha generado el pedido #${pedidoUsuario.numeroGlobal} para cubrir los faltantes.`
       );
       setIsCookModalOpen(false);
     } catch (err: unknown) {
       toast.error(
-        t('recetas.toast.errorGenerarPedidos', {
-          error: err instanceof Error ? err.message : String(err),
-        })
+        'Error al generar pedidos: ' +
+          (err instanceof Error ? err.message : String(err))
       );
     } finally {
       setIsCooking(false);
@@ -580,7 +567,7 @@ const Recetas: React.FC = () => {
 
   const handleConfirmCook = async () => {
     if (cookData.items.length === 0 || !cookData.ubicacionId) {
-      toast.error(t('recetas.toast.seleccionaUbicacion'));
+      toast.error('Debes seleccionar una ubicación de destino.');
       return;
     }
 
@@ -634,24 +621,24 @@ const Recetas: React.FC = () => {
       id: 'nombre',
       label: 'Nombre',
       sortable: true,
-      minWidth: 380,
-      cellSx: { py: 2, pr: 4 },
+      width: 350,
+      cellSx: { py: 2 },
       render: (row) => (
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
-            gap: 1.5,
+            gap: 1,
             minWidth: 0,
             overflow: 'hidden',
           }}
         >
           <RecipeImagePreview
             receta={row}
-            width={56}
-            height={56}
+            width={44}
+            height={44}
             borderRadius={1.5}
-            iconSize={24}
+            iconSize={20}
           />
           <Box sx={{ minWidth: 0, overflow: 'hidden' }}>
             <Typography
@@ -690,19 +677,16 @@ const Recetas: React.FC = () => {
         row.dificultad ? (
           <StatusChip status={row.dificultad} size="small" variant="outlined" />
         ) : (
-          <span>—</span>
+          <span style={{ color: '#bbb' }}>—</span>
         ),
-      width: 200,
-      headerSx: { px: 4 },
-      cellSx: { whiteSpace: 'nowrap', px: 4 },
-      hideOnMobile: true,
       sortable: true,
+      width: 120,
+      cellSx: { py: 2 },
     },
     {
       id: 'tiempoPreparacion',
       label: 'Tiempo',
-      width: 200,
-      headerSx: { px: 4 },
+      width: 140,
       sortable: true,
       render: (row) => {
         const tiempoLabel = getTiempoPreparacionLabel(row);
@@ -723,17 +707,15 @@ const Recetas: React.FC = () => {
           <span>—</span>
         );
       },
-      cellSx: { px: 4 },
     },
     {
       id: 'ingredientes',
       label: 'Ingredientes',
       align: 'right',
-      width: 170,
+      width: 120,
       render: (row) => row.ingredientes?.length ?? 0,
-      headerSx: { px: 4 },
-      cellSx: { whiteSpace: 'nowrap', px: 4 },
-      hideOnMobile: true,
+      cellSx: { whiteSpace: 'nowrap' },
+      responsiveDisplay: { xs: 'none', lg: 'table-cell' },
     },
   ];
 
@@ -789,41 +771,41 @@ const Recetas: React.FC = () => {
 
   const renderActions = (row: Receta) => (
     <Stack direction="row" spacing={1} justifyContent="center">
-      <Tooltip title={t('recetas.verDetalles')}>
+      <Tooltip title="Ver detalles">
         <IconButton
           color="primary"
           onClick={() => {
             setItemToView(row);
           }}
           size="small"
-          aria-label={t('recetas.verDetalles')}
+          aria-label="Ver detalles"
         >
           <VisibilityIcon fontSize="small" />
         </IconButton>
       </Tooltip>
       {canCook && (
-        <Tooltip title={t('recetas.prepararAhora')}>
+        <Tooltip title="Preparar ahora">
           <IconButton
             color="success"
             onClick={() => {
               handleCookClick([row]);
             }}
             size="small"
-            aria-label={t('recetas.preparar')}
+            aria-label="Preparar"
           >
             <PlayCircleOutlineIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       )}
       {canCreateOrders && (
-        <Tooltip title={t('recetas.crearPedido')}>
+        <Tooltip title="Crear pedido">
           <IconButton
             color="warning"
             onClick={() => {
               void handleCreateOrderFromRecipes([row]);
             }}
             size="small"
-            aria-label={t('recetas.crearPedido')}
+            aria-label="Crear pedido"
             disabled={isCooking}
           >
             <ShoppingCartCheckoutOutlinedIcon fontSize="small" />
@@ -831,14 +813,14 @@ const Recetas: React.FC = () => {
         </Tooltip>
       )}
       {canExportPdf && (
-        <Tooltip title={t('recetas.exportarPdf')}>
+        <Tooltip title="Exportar PDF">
           <IconButton
             color="error"
             onClick={() => {
               openExportDialog([row.id]);
             }}
             size="small"
-            aria-label={t('recetas.exportarPdf')}
+            aria-label="Exportar PDF"
             disabled={isExportingPdf}
           >
             <PictureAsPdfOutlinedIcon fontSize="small" />
@@ -852,7 +834,7 @@ const Recetas: React.FC = () => {
             handleEditClick(row);
           }}
           size="small"
-          aria-label={t('comun.editar')}
+          aria-label="Editar"
         >
           <EditIcon fontSize="small" />
         </IconButton>
@@ -864,7 +846,7 @@ const Recetas: React.FC = () => {
             setItemToDelete(row);
           }}
           size="small"
-          aria-label={t('comun.eliminar')}
+          aria-label="Borrar"
         >
           <DeleteIcon fontSize="small" />
         </IconButton>
@@ -952,7 +934,7 @@ const Recetas: React.FC = () => {
       <RecipeCarousel />
 
       <PageToolbar
-        title={t('recetas.gestionTitulo')}
+        title="Gestión de Recetas"
         searchValue={searchTerm}
         onSearchChange={(v) => {
           setSearchTerm(v);
@@ -1056,713 +1038,726 @@ const Recetas: React.FC = () => {
         onViewModeChange={setViewMode}
       />
 
-      <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
+      <Paper
+        elevation={2}
+        sx={{
+          borderRadius: 3,
+          overflow: 'hidden',
+          border: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
+        <Box sx={{ p: { xs: 2, sm: 4 } }}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
 
-        <DataTable
-          columns={columns}
-          data={data}
-          isLoading={isLoading}
-          actionsWidth={300}
-          hideTopBar={true}
-          actionsAlign="center"
-          viewMode={viewMode}
-          defaultViewMode={viewMode}
-          onSort={handleSort}
-          sortConfig={{ key: sortBy || '', direction: sortOrder }}
-          selectable={canCook || canExportPdf || canCreateOrders}
-          selectedIds={selectedIds}
-          onSelectionChange={setSelectedIds}
-          emptyStateMessage={
-            <Box sx={{ py: 4, textAlign: 'center' }}>
-              <MenuBookOutlinedIcon
-                sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
-              />
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                {searchTerm.trim()
-                  ? 'No hay recetas que coincidan con tu búsqueda'
-                  : 'No hay recetas registradas'}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                {searchTerm.trim()
-                  ? 'Prueba con otros términos o limpia el filtro.'
-                  : 'Crea la primera receta del economato para comenzar.'}
-              </Typography>
-              {!searchTerm.trim() && canCreate && (
-                <Button
-                  variant="outlined"
-                  startIcon={<AddIcon />}
-                  onClick={() => setItemToEdit({})}
-                >
-                  Añadir Receta
-                </Button>
-              )}
-            </Box>
-          }
-          pagination={{
-            currentPage: page,
-            totalPages: totalPages,
-            onPageChange: (_, newPage) => setPage(newPage),
-            pageSize: pageSize,
-            pageSizeOptions: [5, 10, 25, 50],
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            onPageSizeChange: (e: any) => {
-              setPageSize(Number(e.target.value));
-              setPage(1);
-            },
-          }}
-          renderGridItem={(receta) => (
-            <Card
-              variant="outlined"
-              sx={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                borderRadius: 2,
-                overflow: 'hidden',
-              }}
-            >
-              <RecipeImagePreview
-                receta={receta}
-                height={180}
-                width="100%"
-                borderRadius={0}
-                iconSize={56}
-              />
-              <CardContent sx={{ flexGrow: 1 }}>
-                <Typography
-                  gutterBottom
-                  variant="h6"
-                  component="div"
-                  sx={{ fontWeight: 600 }}
-                >
-                  {receta.nombre}
+          <DataTable
+            columns={columns}
+            data={data}
+            isLoading={isLoading}
+            actionsWidth={220}
+            hideTopBar={true}
+            actionsAlign="center"
+            viewMode={viewMode}
+            defaultViewMode={viewMode}
+            onSort={handleSort}
+            sortConfig={{ key: sortBy || '', direction: sortOrder }}
+            selectable={canCook || canExportPdf || canCreateOrders}
+            selectedIds={selectedIds}
+            onSelectionChange={setSelectedIds}
+            onRowClick={handleEditClick}
+            getRowAriaLabel={(row) => `Editar receta ${row.nombre}`}
+            emptyStateMessage={
+              <Box sx={{ py: 4, textAlign: 'center' }}>
+                <MenuBookOutlinedIcon
+                  sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
+                />
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  {searchTerm.trim()
+                    ? 'No hay recetas que coincidan con tu búsqueda'
+                    : 'No hay recetas registradas'}
                 </Typography>
-                <Box display="flex" gap={1} flexWrap="wrap" mb={2} mt={1}>
-                  {receta.dificultad && (
-                    <StatusChip
-                      status={receta.dificultad}
-                      size="small"
-                      variant="outlined"
-                    />
-                  )}
-                  {getTiempoPreparacionLabel(receta) && (
-                    <Chip
-                      icon={<AccessTimeOutlinedIcon />}
-                      label={getTiempoPreparacionLabel(receta)}
-                      size="small"
-                      variant="outlined"
-                    />
-                  )}
-                </Box>
                 <Typography
                   variant="body2"
                   color="text.secondary"
-                  sx={{
-                    display: '-webkit-box',
-                    WebkitLineClamp: 3,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
-                  }}
+                  sx={{ mb: 3 }}
                 >
-                  {receta.instrucciones}
+                  {searchTerm.trim()
+                    ? 'Prueba con otros términos o limpia el filtro.'
+                    : 'Crea la primera receta del economato para comenzar.'}
                 </Typography>
-              </CardContent>
-              <Divider />
-              <CardActions
-                sx={{
-                  justifyContent: 'space-between',
-                  px: 2,
-                  bgcolor: 'action.hover',
-                }}
-              >
-                <Typography variant="caption" color="text.secondary">
-                  {receta.ingredientes?.length || 0} ingredientes
-                </Typography>
-                <Box>{renderActions(receta)}</Box>
-              </CardActions>
-            </Card>
-          )}
-          renderActions={renderActions}
-        />
-
-        <ConfirmDialog
-          isOpen={!!itemToDelete}
-          onClose={() => !isDeleting && setItemToDelete(null)}
-          onConfirm={() => void handleDeleteConfirm()}
-          title={t('recetas.eliminarReceta')}
-          message={
-            <>
-              ¿Estás seguro de que deseas eliminar la receta{' '}
-              <strong>{itemToDelete?.nombre}</strong>? Esta acción no se puede
-              deshacer.
-            </>
-          }
-          confirmText="Sí, eliminar"
-          cancelText="Cancelar"
-          isLoading={isDeleting}
-        />
-
-        <RecetaFormModal
-          isOpen={!!itemToEdit}
-          onClose={() => setItemToEdit(null)}
-          initialData={itemToEdit || {}}
-          onSubmit={handleSave}
-          isSubmitting={isSaving}
-        />
-
-        <DetailModal
-          isOpen={!!itemToView}
-          onClose={() => setItemToView(null)}
-          title={itemToView?.nombre ?? ''}
-          subtitle={`${itemToView?.ingredientes?.length ?? 0} ingredientes`}
-          size="lg"
-          headerMedia={
-            itemToView ? (
-              <RecipeImagePreview
-                receta={itemToView}
-                height={220}
-                width="100%"
-                borderRadius={2}
-                iconSize={72}
-              />
-            ) : undefined
-          }
-          sections={viewSections}
-          actions={
-            itemToView && (
-              <Box display="flex" gap={1}>
-                {canCook && (
-                  <Button
-                    variant="contained"
-                    color="success"
-                    startIcon={<PlayCircleOutlineIcon />}
-                    onClick={() => {
-                      handleCookClick([itemToView!]);
-                      setItemToView(null);
-                    }}
-                  >
-                    Preparar
-                  </Button>
-                )}
-                {canCreateOrders && (
+                {!searchTerm.trim() && canCreate && (
                   <Button
                     variant="outlined"
-                    color="warning"
-                    startIcon={<ShoppingCartCheckoutOutlinedIcon />}
-                    onClick={() => {
-                      void handleCreateOrderFromRecipes([itemToView!]);
-                      setItemToView(null);
-                    }}
+                    startIcon={<AddIcon />}
+                    onClick={() => setItemToEdit({})}
                   >
-                    Pedido
+                    Añadir Receta
                   </Button>
                 )}
-                <Button
-                  variant="outlined"
-                  color="error"
-                  startIcon={<PictureAsPdfOutlinedIcon />}
-                  onClick={() => openExportDialog([itemToView!.id])}
-                >
-                  Ficha PDF
-                </Button>
               </Box>
-            )
-          }
-          onEdit={
-            canEdit
-              ? () => {
-                  const receta = itemToView;
-                  setItemToView(null);
-                  if (receta) handleEditClick(receta);
-                }
-              : undefined
-          }
-          editLabel="Editar receta"
-        />
-
-        <Dialog
-          open={isExportDialogOpen}
-          onClose={() => !isExportingPdf && setIsExportDialogOpen(false)}
-          maxWidth="xs"
-          fullWidth
-        >
-          <DialogTitle>Exportar recetas a PDF</DialogTitle>
-          <DialogContent dividers>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              {exportIds.length === 1
-                ? 'Vas a exportar 1 receta.'
-                : `Vas a exportar ${exportIds.length} recetas.`}
-            </Typography>
-
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={includeImageInPdf}
-                  onChange={(event) =>
-                    setIncludeImageInPdf(event.target.checked)
-                  }
-                  color="primary"
-                />
-              }
-              label={t('recetas.incluirImagenReceta')}
-            />
-
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ display: 'block', mt: 1 }}
-            >
-              Si la imagen no existe, el PDF se generará igualmente sin ella.
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button
-              onClick={() => setIsExportDialogOpen(false)}
-              disabled={isExportingPdf}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="contained"
-              color="error"
-              startIcon={<PictureAsPdfOutlinedIcon />}
-              onClick={() => {
-                void handleExportPdf();
-              }}
-              disabled={isExportingPdf}
-            >
-              {isExportingPdf ? 'Exportando...' : 'Exportar PDF'}
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Modal para Ejecutar Preparación */}
-        <Dialog
-          open={isCookModalOpen}
-          onClose={() => !isCooking && setIsCookModalOpen(false)}
-          maxWidth="md"
-          fullWidth
-          PaperProps={{
-            sx: { borderRadius: 3, p: 1 },
-          }}
-        >
-          <DialogTitle
-            component="div"
-            sx={{
-              fontWeight: 800,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1.5,
-              pb: 1,
-              color: 'primary.main',
+            }
+            pagination={{
+              currentPage: page,
+              totalPages: totalPages,
+              onPageChange: (_, newPage) => setPage(newPage),
+              pageSize: pageSize,
+              pageSizeOptions: [5, 10, 25, 50],
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              onPageSizeChange: (e: any) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              },
             }}
-          >
-            <PlayCircleOutlineIcon sx={{ fontSize: 32 }} />
-            <Box>
-              <Typography variant="h6" component="h2" sx={{ fontWeight: 800 }}>
-                {cookData.items.length > 1
-                  ? `Producción en Lote (${cookData.items.length} recetas)`
-                  : `Preparar Receta: ${cookData.items[0]?.receta.nombre}`}
-              </Typography>
-              <Typography
-                variant="caption"
-                component="span"
+            renderGridItem={(receta) => (
+              <Card
+                variant="outlined"
                 sx={{
-                  display: 'block',
-                  color: 'text.secondary',
-                  fontWeight: 500,
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  borderRadius: 2,
+                  overflow: 'hidden',
                 }}
               >
-                Configura las cantidades y valida el stock antes de iniciar.
-              </Typography>
-            </Box>
-          </DialogTitle>
-          <DialogContent>
-            <Grid container spacing={3} sx={{ mt: 0 }}>
-              {/* Columna Izquierda: Tabla de Recetas */}
-              <Grid size={{ xs: 12, md: 7 }}>
-                <Typography
-                  variant="subtitle2"
+                <RecipeImagePreview
+                  receta={receta}
+                  height={180}
+                  width="100%"
+                  borderRadius={0}
+                  iconSize={56}
+                />
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Typography
+                    gutterBottom
+                    variant="h6"
+                    component="div"
+                    sx={{ fontWeight: 600 }}
+                  >
+                    {receta.nombre}
+                  </Typography>
+                  <Box display="flex" gap={1} flexWrap="wrap" mb={2} mt={1}>
+                    {receta.dificultad && (
+                      <StatusChip
+                        status={receta.dificultad}
+                        size="small"
+                        variant="outlined"
+                      />
+                    )}
+                    {getTiempoPreparacionLabel(receta) && (
+                      <Chip
+                        icon={<AccessTimeOutlinedIcon />}
+                        label={getTiempoPreparacionLabel(receta)}
+                        size="small"
+                        variant="outlined"
+                      />
+                    )}
+                  </Box>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {receta.instrucciones}
+                  </Typography>
+                </CardContent>
+                <Divider />
+                <CardActions
                   sx={{
-                    mb: 1.5,
-                    fontWeight: 700,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                  }}
-                >
-                  <MenuBookOutlinedIcon fontSize="small" /> Recetas a procesar
-                </Typography>
-                <TableContainer
-                  component={Paper}
-                  variant="outlined"
-                  sx={{
-                    maxHeight: 400,
-                    borderRadius: 2,
-                    border: '1px solid',
-                    borderColor: 'divider',
+                    justifyContent: 'space-between',
+                    px: 2,
                     bgcolor: 'action.hover',
                   }}
                 >
-                  <Table size="small" stickyHeader>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell
-                          sx={{ fontWeight: 700, bgcolor: 'background.paper' }}
-                        >
-                          Receta
+                  <Typography variant="caption" color="text.secondary">
+                    {receta.ingredientes?.length || 0} ingredientes
+                  </Typography>
+                  <Box>{renderActions(receta)}</Box>
+                </CardActions>
+              </Card>
+            )}
+            renderActions={renderActions}
+          />
+        </Box>
+      </Paper>
+
+      <ConfirmDialog
+        isOpen={!!itemToDelete}
+        onClose={() => !isDeleting && setItemToDelete(null)}
+        onConfirm={() => void handleDeleteConfirm()}
+        title="Eliminar receta"
+        message={
+          <>
+            ¿Estás seguro de que deseas eliminar la receta{' '}
+            <strong>{itemToDelete?.nombre}</strong>? Esta acción no se puede
+            deshacer.
+          </>
+        }
+        confirmText="Sí, eliminar"
+        cancelText="Cancelar"
+        isLoading={isDeleting}
+      />
+
+      <RecetaFormModal
+        isOpen={!!itemToEdit}
+        onClose={() => setItemToEdit(null)}
+        initialData={itemToEdit || {}}
+        onSubmit={handleSave}
+        isSubmitting={isSaving}
+      />
+
+      <DetailModal
+        isOpen={!!itemToView}
+        onClose={() => setItemToView(null)}
+        title={itemToView?.nombre ?? ''}
+        subtitle={`${itemToView?.ingredientes?.length ?? 0} ingredientes`}
+        size="lg"
+        headerMedia={
+          itemToView ? (
+            <RecipeImagePreview
+              receta={itemToView}
+              height={220}
+              width="100%"
+              borderRadius={2}
+              iconSize={72}
+            />
+          ) : undefined
+        }
+        sections={viewSections}
+        actions={
+          itemToView && (
+            <Box display="flex" gap={1}>
+              {canCook && (
+                <Button
+                  variant="contained"
+                  color="success"
+                  startIcon={<PlayCircleOutlineIcon />}
+                  onClick={() => {
+                    handleCookClick([itemToView!]);
+                    setItemToView(null);
+                  }}
+                >
+                  Preparar
+                </Button>
+              )}
+              {canCreateOrders && (
+                <Button
+                  variant="outlined"
+                  color="warning"
+                  startIcon={<ShoppingCartCheckoutOutlinedIcon />}
+                  onClick={() => {
+                    void handleCreateOrderFromRecipes([itemToView!]);
+                    setItemToView(null);
+                  }}
+                >
+                  Pedido
+                </Button>
+              )}
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<PictureAsPdfOutlinedIcon />}
+                onClick={() => openExportDialog([itemToView!.id])}
+              >
+                Ficha PDF
+              </Button>
+            </Box>
+          )
+        }
+        onEdit={
+          canEdit
+            ? () => {
+                const receta = itemToView;
+                setItemToView(null);
+                if (receta) handleEditClick(receta);
+              }
+            : undefined
+        }
+        editLabel="Editar receta"
+      />
+
+      <Dialog
+        open={isExportDialogOpen}
+        onClose={() => !isExportingPdf && setIsExportDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Exportar recetas a PDF</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {exportIds.length === 1
+              ? 'Vas a exportar 1 receta.'
+              : `Vas a exportar ${exportIds.length} recetas.`}
+          </Typography>
+
+          <FormControlLabel
+            control={
+              <Switch
+                checked={includeImageInPdf}
+                onChange={(event) => setIncludeImageInPdf(event.target.checked)}
+                color="primary"
+              />
+            }
+            label="Incluir imagen de la receta"
+          />
+
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: 'block', mt: 1 }}
+          >
+            Si la imagen no existe, el PDF se generará igualmente sin ella.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setIsExportDialogOpen(false)}
+            disabled={isExportingPdf}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            startIcon={<PictureAsPdfOutlinedIcon />}
+            onClick={() => {
+              void handleExportPdf();
+            }}
+            disabled={isExportingPdf}
+          >
+            {isExportingPdf ? 'Exportando...' : 'Exportar PDF'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modal para Ejecutar Preparación */}
+      <Dialog
+        open={isCookModalOpen}
+        onClose={() => !isCooking && setIsCookModalOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: { borderRadius: 3, p: 1 },
+        }}
+      >
+        <DialogTitle
+          component="div"
+          sx={{
+            fontWeight: 800,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            pb: 1,
+            color: 'primary.main',
+          }}
+        >
+          <PlayCircleOutlineIcon sx={{ fontSize: 32 }} />
+          <Box>
+            <Typography variant="h6" component="h2" sx={{ fontWeight: 800 }}>
+              {cookData.items.length > 1
+                ? `Producción en Lote (${cookData.items.length} recetas)`
+                : `Preparar Receta: ${cookData.items[0]?.receta.nombre}`}
+            </Typography>
+            <Typography
+              variant="caption"
+              component="span"
+              sx={{
+                display: 'block',
+                color: 'text.secondary',
+                fontWeight: 500,
+              }}
+            >
+              Configura las cantidades y valida el stock antes de iniciar.
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Grid container spacing={3} sx={{ mt: 0 }}>
+            {/* Columna Izquierda: Tabla de Recetas */}
+            <Grid size={{ xs: 12, md: 7 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  mb: 1.5,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}
+              >
+                <MenuBookOutlinedIcon fontSize="small" /> Recetas a procesar
+              </Typography>
+              <TableContainer
+                component={Paper}
+                variant="outlined"
+                sx={{
+                  maxHeight: 400,
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  bgcolor: 'action.hover',
+                }}
+              >
+                <Table size="small" stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell
+                        sx={{ fontWeight: 700, bgcolor: 'background.paper' }}
+                      >
+                        Receta
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontWeight: 700,
+                          width: 100,
+                          bgcolor: 'background.paper',
+                        }}
+                        align="right"
+                      >
+                        Cantidad
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontWeight: 700,
+                          width: 100,
+                          bgcolor: 'background.paper',
+                        }}
+                        align="right"
+                      >
+                        Raciones
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontWeight: 700,
+                          width: 60,
+                          bgcolor: 'background.paper',
+                        }}
+                      >
+                        Und.
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {cookData.items.map((item, idx) => (
+                      <TableRow
+                        key={item.receta.id}
+                        sx={{
+                          '&:last-child td, &:last-child th': { border: 0 },
+                          bgcolor: 'background.paper',
+                        }}
+                      >
+                        <TableCell sx={{ py: 2 }}>
+                          <Typography variant="body2" fontWeight={600}>
+                            {item.receta.nombre}
+                          </Typography>
+                          {item.receta.rendimiento ? (
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{ display: 'block', mt: 0.5 }}
+                            >
+                              Rendimiento base: {item.receta.rendimiento}{' '}
+                              {item.receta.unidadResultado || ''}
+                            </Typography>
+                          ) : null}
                         </TableCell>
-                        <TableCell
-                          sx={{
-                            fontWeight: 700,
-                            width: 100,
-                            bgcolor: 'background.paper',
-                          }}
-                          align="right"
-                        >
-                          Cantidad
+                        <TableCell align="right">
+                          <MuiTextField
+                            type="number"
+                            size="small"
+                            variant="outlined"
+                            value={item.cantidad}
+                            onChange={(e) =>
+                              handleUpdateItemQuantity(
+                                idx,
+                                parseLocalizedNumber(e.target.value) ?? 0,
+                                'cantidad'
+                              )
+                            }
+                            autoComplete="off"
+                            sx={{ width: 80 }}
+                            slotProps={{
+                              input: {
+                                inputProps: {
+                                  min: 0.01,
+                                  step: 'any',
+                                  inputMode: 'decimal',
+                                },
+                                sx: { fontSize: '0.85rem', fontWeight: 600 },
+                              },
+                            }}
+                          />
                         </TableCell>
-                        <TableCell
-                          sx={{
-                            fontWeight: 700,
-                            width: 100,
-                            bgcolor: 'background.paper',
-                          }}
-                          align="right"
-                        >
-                          Raciones
+                        <TableCell align="right">
+                          <MuiTextField
+                            type="number"
+                            size="small"
+                            variant="outlined"
+                            value={item.raciones || 0}
+                            onChange={(e) =>
+                              handleUpdateItemQuantity(
+                                idx,
+                                parseLocalizedNumber(e.target.value) ?? 0,
+                                'raciones'
+                              )
+                            }
+                            autoComplete="off"
+                            sx={{ width: 80 }}
+                            slotProps={{
+                              input: {
+                                inputProps: {
+                                  min: 0.001,
+                                  step: 'any',
+                                  inputMode: 'decimal',
+                                },
+                                sx: { fontSize: '0.85rem', fontWeight: 600 },
+                              },
+                            }}
+                          />
                         </TableCell>
-                        <TableCell
-                          sx={{
-                            fontWeight: 700,
-                            width: 60,
-                            bgcolor: 'background.paper',
-                          }}
-                        >
-                          Und.
+                        <TableCell>
+                          <Box
+                            sx={{
+                              display: 'inline-flex',
+                              px: 1,
+                              py: 0.5,
+                              borderRadius: 1,
+                              bgcolor: 'action.selected',
+                              fontSize: '0.7rem',
+                              fontWeight: 800,
+                              color: 'text.secondary',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            {item.receta.unidadResultado}
+                          </Box>
                         </TableCell>
                       </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {cookData.items.map((item, idx) => (
-                        <TableRow
-                          key={item.receta.id}
-                          sx={{
-                            '&:last-child td, &:last-child th': { border: 0 },
-                            bgcolor: 'background.paper',
-                          }}
-                        >
-                          <TableCell sx={{ py: 2 }}>
-                            <Typography variant="body2" fontWeight={600}>
-                              {item.receta.nombre}
-                            </Typography>
-                            {item.receta.rendimiento ? (
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                sx={{ display: 'block', mt: 0.5 }}
-                              >
-                                Rendimiento base: {item.receta.rendimiento}{' '}
-                                {item.receta.unidadResultado || ''}
-                              </Typography>
-                            ) : null}
-                          </TableCell>
-                          <TableCell align="right">
-                            <MuiTextField
-                              type="number"
-                              size="small"
-                              variant="outlined"
-                              value={item.cantidad}
-                              onChange={(e) =>
-                                handleUpdateItemQuantity(
-                                  idx,
-                                  parseLocalizedNumber(e.target.value) ?? 0,
-                                  'cantidad'
-                                )
-                              }
-                              autoComplete="off"
-                              sx={{ width: 80 }}
-                              slotProps={{
-                                input: {
-                                  inputProps: {
-                                    min: 0.01,
-                                    step: 'any',
-                                    inputMode: 'decimal',
-                                  },
-                                  sx: { fontSize: '0.85rem', fontWeight: 600 },
-                                },
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell align="right">
-                            <MuiTextField
-                              type="number"
-                              size="small"
-                              variant="outlined"
-                              value={item.raciones || 0}
-                              onChange={(e) =>
-                                handleUpdateItemQuantity(
-                                  idx,
-                                  parseLocalizedNumber(e.target.value) ?? 0,
-                                  'raciones'
-                                )
-                              }
-                              autoComplete="off"
-                              sx={{ width: 80 }}
-                              slotProps={{
-                                input: {
-                                  inputProps: {
-                                    min: 0.001,
-                                    step: 'any',
-                                    inputMode: 'decimal',
-                                  },
-                                  sx: { fontSize: '0.85rem', fontWeight: 600 },
-                                },
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Box
-                              sx={{
-                                display: 'inline-flex',
-                                px: 1,
-                                py: 0.5,
-                                borderRadius: 1,
-                                bgcolor: 'action.selected',
-                                fontSize: '0.7rem',
-                                fontWeight: 800,
-                                color: 'text.secondary',
-                                textTransform: 'uppercase',
-                              }}
-                            >
-                              {item.receta.unidadResultado}
-                            </Box>
-                          </TableCell>
-                        </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Grid>
+
+            {/* Columna Derecha: Configuración y Stock */}
+            <Grid size={{ xs: 12, md: 5 }}>
+              <Stack spacing={2.5}>
+                <Box>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ mb: 1.5, fontWeight: 700 }}
+                  >
+                    Configuración del Lote
+                  </Typography>
+                  <Stack spacing={2}>
+                    <MuiTextField
+                      select
+                      label="Ubicación de destino"
+                      fullWidth
+                      value={cookData.ubicacionId}
+                      onChange={(e) =>
+                        setCookData({
+                          ...cookData,
+                          ubicacionId: e.target.value,
+                        })
+                      }
+                      sx={{ bgcolor: 'background.paper' }}
+                      required
+                    >
+                      {ubicaciones.map((u) => (
+                        <MenuItem key={u.id} value={u.id}>
+                          {u.nombre}
+                        </MenuItem>
                       ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Grid>
+                    </MuiTextField>
 
-              {/* Columna Derecha: Configuración y Stock */}
-              <Grid size={{ xs: 12, md: 5 }}>
-                <Stack spacing={2.5}>
-                  <Box>
-                    <Typography
-                      variant="subtitle2"
-                      sx={{ mb: 1.5, fontWeight: 700 }}
-                    >
-                      {t('receta.cocinar.configuracionLote')}
-                    </Typography>
-                    <Stack spacing={2}>
-                      <MuiTextField
-                        select
-                        label={t('receta.cocinar.ubicacionDestino')}
-                        fullWidth
-                        value={cookData.ubicacionId}
-                        onChange={(e) =>
-                          setCookData({
-                            ...cookData,
-                            ubicacionId: e.target.value,
-                          })
-                        }
-                        sx={{ bgcolor: 'background.paper' }}
-                        required
-                      >
-                        {ubicaciones.map((u) => (
-                          <MenuItem key={u.id} value={u.id}>
-                            {u.nombre}
-                          </MenuItem>
-                        ))}
-                      </MuiTextField>
-
-                      <MuiTextField
-                        label={t('receta.cocinar.fechaCaducidadManual')}
-                        type="date"
-                        fullWidth
-                        value={cookData.fechaCaducidadManual || ''}
-                        onChange={(e) =>
-                          setCookData({
-                            ...cookData,
-                            fechaCaducidadManual: e.target.value,
-                          })
-                        }
-                        sx={{ bgcolor: 'background.paper' }}
-                        slotProps={{
-                          inputLabel: { shrink: true },
-                        }}
-                      />
-                    </Stack>
-                  </Box>
-
-                  <Divider />
-
-                  {/* Sección de Validación de Stock */}
-                  <Box>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        mb: 1,
+                    <MuiTextField
+                      label="Fecha de caducidad (manual)"
+                      type="date"
+                      fullWidth
+                      value={cookData.fechaCaducidadManual || ''}
+                      onChange={(e) =>
+                        setCookData({
+                          ...cookData,
+                          fechaCaducidadManual: e.target.value,
+                        })
+                      }
+                      sx={{ bgcolor: 'background.paper' }}
+                      slotProps={{
+                        inputLabel: { shrink: true },
                       }}
-                    >
-                      <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                        Verificación de Stock
-                      </Typography>
-                      {isValidatingStock && (
-                        <Box
-                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                        >
-                          <CircularProgress size={14} thickness={6} />
-                          <Typography variant="caption" color="text.secondary">
-                            Garantizando stock...
-                          </Typography>
-                        </Box>
-                      )}
-                    </Box>
+                    />
+                  </Stack>
+                </Box>
 
-                    {hasMissingIngredients ? (
-                      <Alert
-                        severity="error"
-                        variant="standard"
-                        sx={{
-                          borderRadius: 2,
-                          border: '1px solid',
-                          borderColor: 'error.main',
-                        }}
+                <Divider />
+
+                {/* Sección de Validación de Stock */}
+                <Box>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      mb: 1,
+                    }}
+                  >
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                      Verificación de Stock
+                    </Typography>
+                    {isValidatingStock && (
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
                       >
-                        <Typography
-                          variant="caption"
-                          sx={{ fontWeight: 800, display: 'block', mb: 0.5 }}
-                        >
-                          INGREDIENTES INSUFICIENTES
+                        <CircularProgress size={14} thickness={6} />
+                        <Typography variant="caption" color="text.secondary">
+                          Garantizando stock...
                         </Typography>
-                        <Box
-                          component="ul"
-                          sx={{ m: 0, pl: 2, fontSize: '0.75rem', mb: 1.5 }}
-                        >
-                          {missingIngredients.map((ing) => (
-                            <li key={ing.productoId}>
-                              <b>{ing.nombre}</b>: Faltan{' '}
-                              {Number(
-                                (ing.requerido - ing.disponible).toFixed(3)
-                              )}{' '}
-                              {ing.unidad}
-                              {ing.cheapestProveedorNombre && (
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    display: 'block',
-                                    fontStyle: 'italic',
-                                    opacity: 0.7,
-                                  }}
-                                >
-                                  (Prov: {ing.cheapestProveedorNombre})
-                                </Typography>
-                              )}
-                            </li>
-                          ))}
-                        </Box>
-                        <Button
-                          variant="contained"
-                          color="error"
-                          size="small"
-                          fullWidth
-                          onClick={() => void handleCreateMissingOrder()}
-                          disabled={isCooking}
-                          sx={{ fontWeight: 800, borderRadius: 2 }}
-                        >
-                          Lanzar Pedido de Faltantes
-                        </Button>
-                      </Alert>
-                    ) : (
-                      <Alert severity="success" sx={{ borderRadius: 2 }}>
-                        <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                          Todo en orden. Stock suficiente para procesar este
-                          lote.
-                        </Typography>
-                      </Alert>
+                      </Box>
                     )}
                   </Box>
-                </Stack>
-              </Grid>
-            </Grid>
-          </DialogContent>
 
-          <DialogActions
-            sx={{
-              p: 3,
-              gap: 1.5,
-              borderTop: '1px solid',
-              borderColor: 'divider',
-              mt: 1,
-            }}
+                  {hasMissingIngredients ? (
+                    <Alert
+                      severity="error"
+                      variant="standard"
+                      sx={{
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: 'error.main',
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        sx={{ fontWeight: 800, display: 'block', mb: 0.5 }}
+                      >
+                        INGREDIENTES INSUFICIENTES
+                      </Typography>
+                      <Box
+                        component="ul"
+                        sx={{ m: 0, pl: 2, fontSize: '0.75rem', mb: 1.5 }}
+                      >
+                        {missingIngredients.map((ing) => (
+                          <li key={ing.productoId}>
+                            <b>{ing.nombre}</b>: Faltan{' '}
+                            {Number(
+                              (ing.requerido - ing.disponible).toFixed(3)
+                            )}{' '}
+                            {ing.unidad}
+                            {ing.cheapestProveedorNombre && (
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  display: 'block',
+                                  fontStyle: 'italic',
+                                  opacity: 0.7,
+                                }}
+                              >
+                                (Prov: {ing.cheapestProveedorNombre})
+                              </Typography>
+                            )}
+                          </li>
+                        ))}
+                      </Box>
+                      <Button
+                        variant="contained"
+                        color="error"
+                        size="small"
+                        fullWidth
+                        onClick={() => void handleCreateMissingOrder()}
+                        disabled={isCooking}
+                        sx={{ fontWeight: 800, borderRadius: 2 }}
+                      >
+                        Lanzar Pedido de Faltantes
+                      </Button>
+                    </Alert>
+                  ) : (
+                    <Alert severity="success" sx={{ borderRadius: 2 }}>
+                      <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                        Todo en orden. Stock suficiente para procesar este lote.
+                      </Typography>
+                    </Alert>
+                  )}
+                </Box>
+              </Stack>
+            </Grid>
+          </Grid>
+        </DialogContent>
+
+        <DialogActions
+          sx={{
+            p: 3,
+            gap: 1.5,
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            mt: 1,
+          }}
+        >
+          <Button
+            onClick={() => setIsCookModalOpen(false)}
+            disabled={isCooking}
+            variant="text"
+            sx={{ px: 4, borderRadius: 2 }}
           >
-            <Button
-              onClick={() => setIsCookModalOpen(false)}
-              disabled={isCooking}
-              variant="text"
-              sx={{ px: 4, borderRadius: 2 }}
-            >
-              Cancelar
-            </Button>
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            color={hasMissingIngredients ? 'error' : 'success'}
+            onClick={() => void handleConfirmCook()}
+            disabled={
+              isCooking ||
+              !cookData.ubicacionId ||
+              cookData.items.some((i) => i.cantidad <= 0) ||
+              hasMissingIngredients
+            }
+            size="large"
+            sx={{
+              px: 5,
+              py: 1.2,
+              fontWeight: 800,
+              borderRadius: 2,
+              boxShadow: 3,
+            }}
+            startIcon={
+              isCooking ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                <PlayCircleOutlineIcon />
+              )
+            }
+          >
+            {cookData.items.length > 1
+              ? 'Iniciar Producción de Lote'
+              : 'Iniciar Preparación'}
+          </Button>
+          {hasMissingIngredients && (
             <Button
               variant="contained"
-              color={hasMissingIngredients ? 'error' : 'success'}
-              onClick={() => void handleConfirmCook()}
-              disabled={
-                isCooking ||
-                !cookData.ubicacionId ||
-                cookData.items.some((i) => i.cantidad <= 0) ||
-                hasMissingIngredients
-              }
+              color="warning"
+              onClick={() => void handleCreateMissingOrder()}
+              disabled={isCooking}
               size="large"
               sx={{
                 px: 5,
                 py: 1.2,
                 fontWeight: 800,
                 borderRadius: 2,
-                boxShadow: 3,
               }}
-              startIcon={
-                isCooking ? (
-                  <CircularProgress size={20} color="inherit" />
-                ) : (
-                  <PlayCircleOutlineIcon />
-                )
-              }
             >
-              {cookData.items.length > 1
-                ? 'Iniciar Producción de Lote'
-                : 'Iniciar Preparación'}
+              Crear pedido de faltantes
             </Button>
-            {hasMissingIngredients && (
-              <Button
-                variant="contained"
-                color="warning"
-                onClick={() => void handleCreateMissingOrder()}
-                disabled={isCooking}
-                size="large"
-                sx={{
-                  px: 5,
-                  py: 1.2,
-                  fontWeight: 800,
-                  borderRadius: 2,
-                }}
-              >
-                Crear pedido de faltantes
-              </Button>
-            )}
-          </DialogActions>
-        </Dialog>
-      </Paper>
+          )}
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

@@ -214,6 +214,17 @@ La especificación viva puede consultarse en `/docs` con la aplicación levantad
 
 ---
 
+## Evolución UX: Interfaz Integrada (Quick-Add) ✅
+
+Para garantizar la fluidez en el alta compleja, se ha implementado el patrón **Quick-Add** en el frontend:
+- **Contexto**: El `ProductoFormModal` permite invocar la creación de un nuevo `Proveedor` de forma instantánea mediante un sub-modal `QuickProveedorModal`.
+- **Integridad Directa**: Al guardar con éxito el proveedor, este se inyecta y selecciona automáticamente en la colección de proveedores del producto actual, refrescando la lista de opciones sin necesidad de recarga manual.
+- **Validación UX**: El sub-modal aplica las mismas reglas estrictas que el maestro de proveedores (Regex para Email/Teléfono y límites físicos `maxLength`) para asegurar que la relación `ProductoProveedor` nazca con datos íntegros.
+
+Este flujo resuelve el cuello de botella de "proveedor no encontrado" durante el alta del catálogo.
+
+---
+
 ## Referencias relacionadas
 
 - [Referencia API](../../reference/api/README.md)

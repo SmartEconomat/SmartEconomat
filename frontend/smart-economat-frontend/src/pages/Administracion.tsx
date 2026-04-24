@@ -593,7 +593,7 @@ const Administracion: React.FC = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4, px: { xs: 1, sm: 2, md: 3 } }}>
-      <Box mb={{ xs: 3, md: 4 }}>
+      <Box id="admin-header" mb={{ xs: 3, md: 4 }}>
         <Typography
           variant="h4"
           fontWeight={700}
@@ -641,6 +641,7 @@ const Administracion: React.FC = () => {
           }}
         >
           <Tabs
+            id="admin-tabs"
             value={activeTab}
             onChange={handleTabChange}
             aria-label={t('admin.tabs.ariaLabel')}
@@ -653,10 +654,8 @@ const Administracion: React.FC = () => {
                 key={tab.key}
                 value={tab.key}
                 icon={tab.icon}
-                iconPosition="start"
                 label={tab.label}
                 {...a11yProps(tab.key)}
-                sx={{ fontWeight: 600, py: 2 }}
               />
             ))}
           </Tabs>
@@ -687,6 +686,7 @@ const Administracion: React.FC = () => {
               {canManageSlots && (
                 <Box display="flex" justifyContent="flex-end">
                   <Button
+                    id="btn-gestionar-slots"
                     variant={isEditingSlots ? 'outlined' : 'contained'}
                     color={isEditingSlots ? 'inherit' : 'success'}
                     startIcon={isEditingSlots ? <CancelIcon /> : <EditIcon />}

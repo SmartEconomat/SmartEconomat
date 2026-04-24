@@ -6,11 +6,18 @@
 
 import React, { useState } from 'react';
 import {
+  Box,
+  Button,
+  Dialog,
+  DialogContent,
   IconButton,
   Typography,
+  Tooltip,
+  Divider,
   DialogTitle,
   DialogActions,
 } from '@mui/material';
+import { extractA11yText } from '../../utils/a11y-format';
 import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
 import DynamicFormModal, {
@@ -274,7 +281,10 @@ const DetailModal: React.FC<DetailModalProps> = ({
                         {field.value != null && field.value !== '' ? (
                           typeof field.value === 'string' ||
                           typeof field.value === 'number' ? (
-                            <Typography variant="body2">
+                            <Typography
+                              variant="body2"
+                              aria-label={`${field.label}: ${extractA11yText(field.value)}`}
+                            >
                               {field.value}
                             </Typography>
                           ) : (

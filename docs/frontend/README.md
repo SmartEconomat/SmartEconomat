@@ -5,6 +5,7 @@ Esta sección documenta la arquitectura y las piezas principales del cliente Rea
 ## Documentos base
 
 - [arquitectura.md](arquitectura.md): visión general del frontend.
+- [accessibility.md](accessibility.md): guía maestra de accesibilidad y atajos de teclado. ✅
 - [hooks-permisos.md](hooks-permisos.md): consumo de permisos desde el cliente.
 - [useBreakpoints.md](useBreakpoints.md): responsive centralizado.
 - [gestion-usuarios.md](gestion-usuarios.md): comportamiento del módulo de administración de usuarios.
@@ -13,6 +14,7 @@ Esta sección documenta la arquitectura y las piezas principales del cliente Rea
 
 | Documento | Uso principal |
 | --- | --- |
+| [componentes/SkipLinks.md](componentes/SkipLinks.md) | Enlaces de salto rápido para accesibilidad por teclado |
 | [componentes/MainLayout.md](componentes/MainLayout.md) | Shell principal de la aplicación |
 | [componentes/PageToolbar.md](componentes/PageToolbar.md) | Cabecera reutilizable con búsqueda, filtros y acciones |
 | [componentes/DataTable.md](componentes/DataTable.md) | Tablas y vistas list/grid reutilizables |

@@ -117,11 +117,30 @@ Este layout reutiliza `Paper`, `Card`, `Stack`, `Alert`, `Spinner` y el sistema 
 
 ---
 
+## Onboarding y Ayuda Interactiva
+
+El Dashboard sirve como punto de partida para el **Tutorial de Bienvenida**, una guía interactiva de 7 pasos diseñada para orientar a los nuevos usuarios.
+
+### Tour de Inicio (7 pasos)
+Este recorrido cubre los elementos clave de la interfaz global:
+1. **Bienvenida**: Introducción al panel central.
+2. **Navegación**: Uso del sidebar para cambiar de módulo.
+3. **Estado del Economato**: Explicación de los KPIs y métricas.
+4. **Acciones Rápidas**: Acceso directo a funciones frecuentes.
+5. **Centro de Notificaciones**: Gestión de alertas críticas.
+6. **Actividad Reciente**: Historial de movimientos.
+7. **Perfil**: Acceso a configuración y repetición del tutorial.
+
+Este sistema utiliza el componente `InteractiveTour` y se dispara automáticamente la primera vez o manualmente mediante el botón de **Tutorial** en el sidebar.
+
+---
+
 ## Componentes relacionados
 
 | Archivo | Rol |
 |---|---|
 | `src/pages/Home.tsx` | Orquestador principal del dashboard |
+| `src/components/common/Tutorial/InteractiveTour.tsx` | Motor de ayuda interactiva |
 | `src/services/dashboard.service.ts` | Acceso al endpoint consolidado de KPIs |
 | `src/components/dashboard/MetricsCustomizer.tsx` | Selector de tarjetas visibles |
 | `src/components/ui/SummaryModal.tsx` | Modal de resumen enlazado desde varias métricas |
@@ -137,6 +156,7 @@ Este layout reutiliza `Paper`, `Card`, `Stack`, `Alert`, `Spinner` y el sistema 
 - La actividad reciente se ordena en cliente de más reciente a más antigua para mantener consistencia con la vista de movimientos.
 - Las acciones rápidas reutilizan los servicios existentes del dominio en lugar de introducir wrappers específicos del dashboard.
 - La personalización de UI permanece separada de la seguridad y la sesión.
+- Se ha inyectado un sistema de **IDs estables** (`dashboard-welcome`, `dashboard-stats`, etc.) para anclar los pasos del tutorial de forma robusta.
 
 ---
 
@@ -144,6 +164,7 @@ Este layout reutiliza `Paper`, `Card`, `Stack`, `Alert`, `Spinner` y el sistema 
 
 | Fecha | Cambio |
 |---|---|
+| 2026-04-18 | Implementación del sistema de **Tutorial Interactivos** y **Modo Tips** en todo el dashboard. Mejora de la responsividad y accesibilidad por teclado (`Arrows`, `Esc`). |
 | 2026-03-21 | Ruta `/` alineada con `dashboard:ver_estadisticas`; corrección de permisos granulares internos y documentación del modelo de personalización visual. |
 | 2026-03-21 | Corrección de la tarjeta de incidencias para usar `incidencias:listar` en lugar de permisos de pedidos. |
 | 2026-03-21 | Navegación de acción rápida de recepción actualizada a `/recepciones`. |

@@ -26,17 +26,17 @@ const MisPedidosStatusTabs: React.FC<MisPedidosStatusTabsProps> = ({
     {
       value: 'pendientes' as MisPedidosStatusFilter,
       label: 'PENDIENTES',
-      icon: <WatchLaterOutlinedIcon sx={{ fontSize: 20 }} />,
+      icon: <WatchLaterOutlinedIcon sx={{ fontSize: 15 }} />,
     },
     {
       value: 'activos' as MisPedidosStatusFilter,
       label: 'EN PROCESO',
-      icon: <AutorenewOutlinedIcon sx={{ fontSize: 20 }} />,
+      icon: <AutorenewOutlinedIcon sx={{ fontSize: 15 }} />,
     },
     {
       value: 'finalizados' as MisPedidosStatusFilter,
       label: 'FINALIZADOS',
-      icon: <CheckCircleOutlineOutlinedIcon sx={{ fontSize: 20 }} />,
+      icon: <CheckCircleOutlineOutlinedIcon sx={{ fontSize: 15 }} />,
     },
   ];
 
@@ -45,8 +45,10 @@ const MisPedidosStatusTabs: React.FC<MisPedidosStatusTabsProps> = ({
       <Box
         sx={{
           display: 'inline-flex',
-          p: 0.5,
-          borderRadius: '12px',
+          alignItems: 'center',
+          height: 30,
+          p: '2px',
+          borderRadius: '10px',
           bgcolor: alpha(theme.palette.divider, 0.05),
           border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
         }}
@@ -54,12 +56,12 @@ const MisPedidosStatusTabs: React.FC<MisPedidosStatusTabsProps> = ({
         <Tabs
           value={value}
           onChange={(_, newValue: MisPedidosStatusFilter) => onChange(newValue)}
-          variant="scrollable"
-          scrollButtons="auto"
+          centered
           sx={{
-            minHeight: 40,
+            minHeight: 26,
+            height: 26,
             '& .MuiTabs-indicator': {
-              height: '100%',
+              height: 26,
               borderRadius: '8px',
               backgroundColor: theme.palette.background.paper,
               boxShadow: '0px 2px 4px rgba(0,0,0,0.08)',
@@ -68,6 +70,8 @@ const MisPedidosStatusTabs: React.FC<MisPedidosStatusTabsProps> = ({
             '& .MuiTabs-flexContainer': {
               position: 'relative',
               zIndex: 1,
+              height: '100%',
+              alignItems: 'center',
             },
           }}
         >
@@ -76,18 +80,26 @@ const MisPedidosStatusTabs: React.FC<MisPedidosStatusTabsProps> = ({
               key={option.value}
               value={option.value}
               icon={option.icon}
-              iconPosition="start"
               label={option.label}
+              iconPosition="start"
               disableRipple
               sx={{
-                minHeight: 40,
-                px: 2.5,
+                minWidth: 0,
+                minHeight: '26px !important',
+                height: '26px !important',
+                padding: '0px !important',
+                px: '12px !important',
                 borderRadius: '8px',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                letterSpacing: '0.05em',
+                lineHeight: 1,
+                fontSize: '0.65rem',
+                fontWeight: 800,
+                gap: 0.5,
+                letterSpacing: '0.02em',
                 color: theme.palette.text.secondary,
                 transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 '&.Mui-selected': {
                   color: theme.palette.primary.main,
                 },

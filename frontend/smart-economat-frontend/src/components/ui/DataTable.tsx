@@ -6,31 +6,31 @@
  */
 
 import React, { ReactNode, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-  Box,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  TableSortLabel,
-  TablePagination,
   Paper,
+  Typography,
+  Box,
+  TablePagination,
   Stack,
-  ToggleButton,
   ToggleButtonGroup,
+  ToggleButton,
+  SelectChangeEvent,
   Grid,
+  TableSortLabel,
   Skeleton,
+  Checkbox,
   SxProps,
   Theme,
   IconButton,
-  Typography,
-  SelectChangeEvent,
-  Checkbox,
   alpha,
 } from '@mui/material';
+import { extractA11yText } from '../../utils/a11y-format';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
@@ -42,8 +42,11 @@ import Spinner from './Spinner';
  * Representa la configuración de una columna en la tabla.
  */
 export interface Column<T> {
+  /** Identificador único o key del objeto de la fila */
   id: keyof T | string;
+  /** Etiqueta visual que va en el encabezado de la columna */
   label: ReactNode;
+  /** Renderizado personalizado opcional para la celda. Si no se pasa, inyecta `row[id]` directamente */
   render?: (row: T) => ReactNode;
   /** Alineación del texto en la columna */
   align?: 'inherit' | 'left' | 'center' | 'right' | 'justify';
@@ -64,6 +67,7 @@ export interface Column<T> {
   width?: number | string;
   /** Anchura mínima de la columna */
   minWidth?: number | string;
+  /** Estilos extra para la cabecera */
   headerSx?: SxProps<Theme>;
   /** Estilos extra para las celdas */
   cellSx?: SxProps<Theme>;
@@ -139,22 +143,23 @@ export interface DataTableProps<T> {
   onRowClick?: (row: T) => void;
   /** Etiqueta accesible opcional para filas interactivas */
   getRowAriaLabel?: (row: T) => string;
+  /** ID único para identificación (ej: en tours) */
+  id?: string;
 }
 
 /**
  * Componente genérico para mostrar listas tabulares de datos
  * con soporte para estado de carga, paginación unificada (TablePagination), acciones y vista en mosaico.
- *
- * @template T - Tipo del objeto de datos de cada fila.
- * @param props - Propiedades del componente definidas en {@link DataTableProps}.
- * @returns Tabla o cuadrícula de datos con paginación opcional.
  */
+
+// Eliminada la utilidad extractText local para usar la global en a11y-format.ts
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function DataTable<T extends Record<string, any>>({
   columns,
   data,
   isLoading = false,
-  emptyStateMessage,
+  emptyStateMessage = 'No hay datos disponibles.',
   pagination,
   renderActions,
   actionsLabel = 'Acciones',
@@ -176,13 +181,22 @@ export function DataTable<T extends Record<string, any>>({
   getRowAriaLabel,
   viewMode: controlledViewMode,
   onViewModeChange: onControlledViewModeChange,
+  id,
 }: DataTableProps<T>) {
-  const { t } = useTranslation();
   const colSpanCount =
     columns.length + (renderActions ? 1 : 0) + (selectable ? 1 : 0);
   const [internalViewMode, setInternalViewMode] = useState<'list' | 'grid'>(
     defaultViewMode
   );
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [minHeight, setMinHeight] = useState<number | undefined>(undefined);
+
+  // Capturar la altura del contenedor antes de que cambie el contenido (prevención de CLS)
+  React.useLayoutEffect(() => {
+    if (!isLoading && containerRef.current) {
+      setMinHeight(containerRef.current.offsetHeight);
+    }
+  }, [isLoading]);
 
   // Determinar qué modo usar (el prop controlado tiene prioridad)
   const viewMode = controlledViewMode || internalViewMode;
@@ -213,13 +227,6 @@ export function DataTable<T extends Record<string, any>>({
     pagination?.totalItems ??
     (pagination ? pagination.totalPages * pageSize : 0);
 
-  /**
-   * Maneja la pulsación de teclas sobre una fila de la tabla para accesibilidad.
-   * Ejecuta {@link onRowClick} cuando se pulsa Enter o Espacio.
-   *
-   * @param event - Evento de teclado sobre el elemento `<tr>`.
-   * @param row - Objeto de datos correspondiente a la fila.
-   */
   const handleRowKeyDown = (
     event: React.KeyboardEvent<HTMLTableRowElement>,
     row: T
@@ -232,7 +239,7 @@ export function DataTable<T extends Record<string, any>>({
   };
 
   return (
-    <Box sx={{ width: '100%', mb: 2 }}>
+    <Box id={id} sx={{ width: '100%', mb: 2 }}>
       {hasTopBarControls && (
         <Box
           display="flex"
@@ -251,10 +258,10 @@ export function DataTable<T extends Record<string, any>>({
                 onChange={handleViewModeChange}
                 size="small"
               >
-                <ToggleButton value="list">
+                <ToggleButton value="list" aria-label="Vista de lista">
                   <ViewListIcon />
                 </ToggleButton>
-                <ToggleButton value="grid">
+                <ToggleButton value="grid" aria-label="Vista de cuadrícula">
                   <ViewModuleIcon />
                 </ToggleButton>
               </ToggleButtonGroup>
@@ -275,6 +282,7 @@ export function DataTable<T extends Record<string, any>>({
                 }
               >
                 <IconButton
+                  id="btn-export-pdf"
                   color="error"
                   size="small"
                   onClick={exportHandlers.onExportPdf}
@@ -302,6 +310,7 @@ export function DataTable<T extends Record<string, any>>({
                 }
               >
                 <IconButton
+                  id="btn-export-excel"
                   color="success"
                   size="small"
                   onClick={exportHandlers.onExportExcel}
@@ -329,13 +338,25 @@ export function DataTable<T extends Record<string, any>>({
       )}
 
       {viewMode === 'list' || !renderGridItem ? (
-        <TableContainer component={Paper} elevation={0}>
+        <TableContainer
+          ref={containerRef}
+          component={Paper}
+          id="results-area"
+          tabIndex={-1}
+          elevation={0}
+          sx={{
+            minHeight: isLoading ? minHeight : 'auto',
+            transition: 'min-height 0.2s ease',
+            outline: 'none',
+            overflowX: 'auto',
+          }}
+        >
           <Table
             sx={{
               minWidth: { xs: '100%', md: 650 },
               tableLayout: hasSizedColumns ? 'fixed' : 'auto',
             }}
-            aria-label={t('comun.tablaDatos')}
+            aria-label="data table"
           >
             <TableHead>
               <TableRow>
@@ -365,9 +386,14 @@ export function DataTable<T extends Record<string, any>>({
                     />
                   </TableCell>
                 )}
-                {columns.map((column) => (
+                {columns.map((column, index) => (
                   <TableCell
                     key={String(column.id)}
+                    id={
+                      index === 0 && column.sortable
+                        ? 'table-header-sort'
+                        : undefined
+                    }
                     align={column.align || 'left'}
                     sx={{
                       width: column.width,
@@ -419,20 +445,57 @@ export function DataTable<T extends Record<string, any>>({
               </TableRow>
             </TableHead>
             <TableBody>
-              {isLoading && (
-                <TableRow>
-                  <TableCell
-                    colSpan={colSpanCount}
-                    align="center"
-                    sx={{ py: 6 }}
-                  >
-                    <Spinner size="md" color="primary" />
-                    <Typography sx={{ mt: 2 }} color="text.secondary">
-                      {t('comun.cargando')}
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              )}
+              {isLoading &&
+                Array.from({ length: pageSize }).map((_, i) => (
+                  <TableRow key={`skeleton-row-${i}`}>
+                    {selectable && (
+                      <TableCell padding="checkbox">
+                        <Skeleton
+                          variant="rectangular"
+                          width={20}
+                          height={20}
+                          sx={{ borderRadius: 0.5 }}
+                        />
+                      </TableCell>
+                    )}
+                    {columns.map((column, j) => (
+                      <TableCell
+                        key={`skeleton-col-${j}`}
+                        align={column.align || 'left'}
+                        sx={{
+                          height: 53, // Altura estándar de una fila de tabla MUI con padding
+                          width: column.width,
+                          minWidth: column.minWidth,
+                          display:
+                            column.responsiveDisplay ||
+                            (column.hideOnMobile
+                              ? { xs: 'none', md: 'table-cell' }
+                              : undefined),
+                        }}
+                      >
+                        <Skeleton variant="text" width="80%" height={24} />
+                      </TableCell>
+                    ))}
+                    {renderActions && (
+                      <TableCell align={actionsAlign}>
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          justifyContent={
+                            actionsAlign === 'right'
+                              ? 'flex-end'
+                              : actionsAlign === 'center'
+                                ? 'center'
+                                : 'flex-start'
+                          }
+                        >
+                          <Skeleton variant="circular" width={28} height={28} />
+                          <Skeleton variant="circular" width={28} height={28} />
+                        </Stack>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
               {!isLoading && data.length === 0 && (
                 <TableRow>
                   <TableCell
@@ -444,12 +507,8 @@ export function DataTable<T extends Record<string, any>>({
                       <Typography color="text.secondary">
                         {emptyStateMessage}
                       </Typography>
-                    ) : emptyStateMessage ? (
-                      emptyStateMessage
                     ) : (
-                      <Typography color="text.secondary">
-                        {t('comun.sinDatos')}
-                      </Typography>
+                      emptyStateMessage
                     )}
                   </TableCell>
                 </TableRow>
@@ -511,29 +570,42 @@ export function DataTable<T extends Record<string, any>>({
                         />
                       </TableCell>
                     )}
-                    {columns.map((column) => (
-                      <TableCell
-                        key={String(column.id)}
-                        align={column.align || 'left'}
-                        sx={{
-                          width: column.width,
-                          minWidth: column.minWidth,
-                          display:
-                            column.responsiveDisplay ||
-                            (column.hideOnMobile
-                              ? { xs: 'none', md: 'table-cell' }
-                              : undefined),
-                          ...column.cellSx,
-                        }}
-                      >
-                        {column.render
-                          ? column.render(row)
-                          : (row[column.id as keyof T] as ReactNode)}
-                      </TableCell>
-                    ))}
+                    {columns.map((column) => {
+                      const cellValue = column.render
+                        ? column.render(row)
+                        : (row[column.id as keyof T] as ReactNode);
+
+                      const colLabel = extractA11yText(column.label);
+                      const valText = extractA11yText(cellValue);
+
+                      return (
+                        <TableCell
+                          key={String(column.id)}
+                          align={column.align || 'left'}
+                          aria-label={
+                            colLabel && valText
+                              ? `${colLabel}: ${valText}`
+                              : undefined
+                          }
+                          sx={{
+                            width: column.width,
+                            minWidth: column.minWidth,
+                            display:
+                              column.responsiveDisplay ||
+                              (column.hideOnMobile
+                                ? { xs: 'none', md: 'table-cell' }
+                                : undefined),
+                            ...column.cellSx,
+                          }}
+                        >
+                          {cellValue}
+                        </TableCell>
+                      );
+                    })}
                     {renderActions && (
                       <TableCell
                         align={actionsAlign}
+                        id={rowIndex === 0 ? 'table-row-actions' : undefined}
                         sx={{ width: actionsWidth }}
                         onClick={(event) => event.stopPropagation()}
                         onKeyDown={(event) => event.stopPropagation()}
@@ -561,10 +633,17 @@ export function DataTable<T extends Record<string, any>>({
           </Table>
         </TableContainer>
       ) : (
-        <Grid container spacing={3}>
+        <Grid
+          container
+          spacing={3}
+          ref={containerRef}
+          sx={{
+            minHeight: isLoading ? minHeight : 'auto',
+          }}
+        >
           {isLoading && viewMode === 'grid' && (
             <>
-              {Array.from({ length: 8 }).map((_, i) => (
+              {Array.from({ length: pageSize }).map((_, i) => (
                 <Grid
                   size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
                   key={`skeleton-${i}`}
@@ -612,7 +691,7 @@ export function DataTable<T extends Record<string, any>>({
               >
                 <Spinner size="md" color="primary" />
                 <Typography sx={{ mt: 2 }} color="text.secondary">
-                  {t('comun.cargando')}
+                  Cargando datos...
                 </Typography>
               </Box>
             </Grid>
@@ -624,12 +703,8 @@ export function DataTable<T extends Record<string, any>>({
                   <Typography color="text.secondary">
                     {emptyStateMessage}
                   </Typography>
-                ) : emptyStateMessage ? (
-                  emptyStateMessage
                 ) : (
-                  <Typography color="text.secondary">
-                    {t('comun.sinDatos')}
-                  </Typography>
+                  emptyStateMessage
                 )}
               </Box>
             </Grid>
@@ -678,10 +753,19 @@ export function DataTable<T extends Record<string, any>>({
               }
             }}
             rowsPerPageOptions={pagination.pageSizeOptions ?? [5, 10, 15, 20]}
-            labelRowsPerPage={t('comun.porPagina')}
+            labelRowsPerPage="Filas por página:"
             labelDisplayedRows={({ from, to, count }) =>
               `${from}–${to} de ${count}`
             }
+            slotProps={{
+              select: {
+                'aria-label': 'Cantidad de filas por página',
+              },
+              actions: {
+                nextButton: { 'aria-label': 'Página siguiente' },
+                previousButton: { 'aria-label': 'Página anterior' },
+              },
+            }}
           />
         </Box>
       )}

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, Paper } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import BrokenImageOutlinedIcon from '@mui/icons-material/BrokenImageOutlined';
-import { useTranslation } from 'react-i18next';
 import PageToolbar from '../components/ui/PageToolbar';
 import { MermasTable, MermaStats } from '../features/mermas';
 import {
@@ -21,12 +20,6 @@ import { mermaSchema } from '../utils/schemas';
 import { useToast } from '../store/toast.hooks';
 import { fetchAllProductos } from '../services/producto.service';
 
-/**
- * @description Formats a product's measurement label combining content and unit.
- * @param contenido - Numeric content value.
- * @param unidad - Unit string (e.g. 'kg', 'L').
- * @returns A formatted string like "500 g", or null if inputs are invalid.
- */
 const formatProductoMedidaLabel = (
   contenido?: number,
   unidad?: string
@@ -38,13 +31,7 @@ const formatProductoMedidaLabel = (
   return `${contenido} ${unidad}`;
 };
 
-/**
- * @description Page component for managing and reporting product waste (mermas).
- * Displays waste statistics, a history table, and a modal to register new waste entries.
- * @returns The MermasPage React element.
- */
 const MermasPage: React.FC = () => {
-  const { t } = useTranslation();
   const [mermas, setMermas] = useState<Merma[]>([]);
   const [stats, setStats] = useState<IMermaStats | null>(null);
   const [total, setTotal] = useState(0);
@@ -64,11 +51,6 @@ const MermasPage: React.FC = () => {
 
   const toast = useToast();
 
-  /**
-   * @description Fetches the paginated waste list and global stats from the API.
-   * Updates mermas, total count, and stats state. Shows a toast on error.
-   * @returns Promise that resolves when data is loaded.
-   */
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -90,12 +72,12 @@ const MermasPage: React.FC = () => {
       setStats(statsData);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : t('mermas.toast.errorCargar');
+        err instanceof Error ? err.message : 'Error al cargar datos de mermas';
       toast.error(message);
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, filters, toast, t]);
+  }, [page, pageSize, filters, toast]);
 
   useEffect(() => {
     loadData();
@@ -115,15 +97,7 @@ const MermasPage: React.FC = () => {
     });
   }, []);
 
-  /**
-   * @description Handles submission of the new waste form. Calls the createMerma API,
-   * shows a success toast, closes the modal, and refreshes the data.
-   * @param formData - Form values containing productoId, cantidad, motivo, and optional notas.
-   * @returns Promise that resolves when the waste entry is saved.
-   */
-  const handleCreateMerma = async (
-    formData: Record<string, string | number>
-  ) => {
+  const handleCreateMerma = async (formData: Record<string, unknown>) => {
     setIsSaving(true);
     try {
       await createMerma({
@@ -132,12 +106,12 @@ const MermasPage: React.FC = () => {
         motivo: formData.motivo as MotivoMerma,
         notas: formData.notas as string | undefined,
       });
-      toast.success(t('mermas.toast.registrada'));
+      toast.success('Merma registrada correctamente');
       setIsModalOpen(false);
       loadData();
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : t('mermas.toast.errorRegistrar');
+        err instanceof Error ? err.message : 'Error al registrar merma';
       toast.error(message);
     } finally {
       setIsSaving(false);
@@ -154,23 +128,31 @@ const MermasPage: React.FC = () => {
   return (
     <Box>
       <PageToolbar
-        title={t('mermas.titulo')}
+        id="mermas-toolbar"
+        title="Gestión de Mermas"
         icon={<BrokenImageOutlinedIcon />}
         totalItems={total}
-        totalItemsLabel={t('mermas.totalItemsLabel')}
+        totalItemsLabel="registros"
         primaryAction={{
-          label: t('mermas.acciones.registrar'),
+          label: 'Reportar Merma',
+          id: 'btn-reportar-merma',
           icon: <AddIcon />,
           onClick: () => setIsModalOpen(true),
         }}
       />
 
       <Box display="flex" flexDirection="column" gap={4}>
-        <MermaStats stats={stats} isLoading={isLoading} />
+        <Box id="merma-stats">
+          <MermaStats stats={stats} isLoading={isLoading} />
+        </Box>
 
-        <Paper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
+        <Paper
+          elevation={0}
+          id="mermas-table-container"
+          sx={{ p: 3, borderRadius: 2 }}
+        >
           <Typography variant="h6" fontWeight={600} mb={3}>
-            {t('mermas.historial')}
+            Historial de Mermas
           </Typography>
           <MermasTable
             data={mermas}
@@ -189,12 +171,12 @@ const MermasPage: React.FC = () => {
       <DynamicFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={t('mermas.modal.titulo')}
+        title="Registrar Merma de Producto"
         fields={dynamicSchema}
         onSubmit={handleCreateMerma}
         isSubmitting={isSaving}
         requireConfirmation={true}
-        confirmationMessage={t('mermas.modal.confirmacion')}
+        confirmationMessage="Esta acción descontará el stock del inventario de forma permanente. ¿Estás seguro?"
       />
     </Box>
   );

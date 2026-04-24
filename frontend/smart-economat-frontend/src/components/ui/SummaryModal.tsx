@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogActions,
   IconButton,
   Typography,
   Box,
@@ -34,7 +35,11 @@ import { Producto } from '../../services/producto.types';
 import { EstadoPedido, Pedido } from '../../services/pedido.types';
 import { Proveedor } from '../../services/proveedor.types';
 import { fetchIncidencias } from '../../services/incidencia.service';
-import { Incidencia } from '../../services/incidencia.types';
+import {
+  EstadoReclamacion,
+  Incidencia,
+  TipoDiferencia,
+} from '../../services/incidencia.types';
 import { fetchAlertasStock } from '../../services/inventario.service';
 import type { AlertaStock } from '../../services/inventario.types';
 import { formatPedidoListNumber } from '../../features/pedidos/utils/pedidoFormatters';
@@ -94,6 +99,19 @@ const DASHBOARD_PENDING_ORDER_STATES = [
   EstadoPedido.INCIDENCIA,
 ] as const;
 
+const tipoDiferenciaLabel: Record<TipoDiferencia, string> = {
+  FALTANTE: 'Faltante',
+  EXCESO: 'Exceso',
+  DEFECTUOSO: 'Defectuoso',
+};
+
+const estadoReclamacionLabel: Record<EstadoReclamacion, string> = {
+  PENDIENTE: 'Pendiente',
+  RECLAMADO: 'Reclamado',
+  ABONADO: 'Abonado',
+  REENVIADO: 'Reenviado',
+};
+
 const decimalFormatter = new Intl.NumberFormat('es-ES', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
@@ -120,24 +138,13 @@ function formatCompactId(value: string | null | undefined): string {
   return value.substring(0, 8);
 }
 
-/**
- * Modal de resumen del dashboard que muestra una lista detallada de elementos
- * según el tipo seleccionado (productos, pedidos, incidencias, stock o proveedores).
- *
- * Carga los datos bajo demanda cuando el modal se abre y los limpia al cerrarse.
- *
- * @param props.isOpen - Controla la visibilidad del modal.
- * @param props.onClose - Callback para cerrar el modal.
- * @param props.type - Tipo de datos a mostrar.
- * @param props.title - Título que se muestra en la cabecera del modal.
- */
 const SummaryModal: React.FC<SummaryModalProps> = ({
   isOpen,
   onClose,
   type,
   title,
 }) => {
-  const { t } = useTranslation();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<SummaryItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -254,11 +261,11 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       setData(result);
     } catch (err) {
       console.error('Error loading summary data:', err);
-      setError(t('resumen.errorCarga'));
+      setError('No se pudo cargar la información detallada.');
     } finally {
       setLoading(false);
     }
-  }, [fetchAllIncidencias, fetchDashboardPendingPedidos, t, type]);
+  }, [fetchAllIncidencias, fetchDashboardPendingPedidos, type]);
 
   useEffect(() => {
     if (isOpen && type) {
@@ -299,6 +306,46 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
     return byStatus;
   }, [data, type]);
+
+  const getButtonLabel = () => {
+    if (!type) return `Ver todos los ${title.toLowerCase()}`;
+
+    const labels: Record<SummaryModalType, string> = {
+      productos: 'Ver todos los productos',
+      pedidos: 'Ver todos los pedidos',
+      incidencias: 'Ver todas las incidencias',
+      stock: 'Ver todo el inventario',
+      proveedores: 'Ver todos los proveedores',
+    };
+
+    return labels[type] || `Ver todos los ${title.toLowerCase()}`;
+  };
+
+  const handleSeeAll = () => {
+    onClose();
+    switch (type) {
+      case 'productos':
+        navigate('/productos');
+        break;
+      case 'pedidos':
+        // Redirigir a mis pedidos pendientes
+        navigate('/pedidos?tab=0&ownStatus=pendientes');
+        break;
+      case 'incidencias':
+        // Redirigir a incidencias por resolver
+        navigate('/incidencias?resolucion=por_resolver');
+        break;
+      case 'stock':
+        // Redirigir a inventario con filtro de stock bajo
+        navigate('/inventario?filter=stockBajo');
+        break;
+      case 'proveedores':
+        navigate('/proveedores');
+        break;
+      default:
+        break;
+    }
+  };
 
   const handleToggleIncidencia = (incidenciaId: string) => {
     setExpandedIncidenciaId((current) =>
@@ -452,7 +499,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                   <Chip
                     size="small"
                     color={item.resuelta ? 'success' : 'warning'}
-                    label={item.resuelta ? 'Resuelta' : t('resumen.pendiente')}
+                    label={item.resuelta ? 'Resuelta' : 'Pendiente'}
                   />
                   <Chip
                     size="small"
@@ -476,7 +523,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 }
                 sx={{ alignSelf: 'center' }}
               >
-                {isExpanded ? t('resumen.ocultar') : t('resumen.ver')}
+                {isExpanded ? 'Ocultar resumen' : 'Ver resumen'}
               </Button>
             </Stack>
 
@@ -488,11 +535,11 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               <Stack spacing={1.5} sx={{ pt: 0.5 }}>
                 <Box>
                   <Typography variant="caption" color="text.secondary">
-                    {t('resumen.observaciones')}
+                    Observaciones de recepción
                   </Typography>
                   <Typography variant="body2">
                     {item.observacionesRecepcion ||
-                      t('resumen.sinObservaciones')}
+                      'Sin observaciones registradas.'}
                   </Typography>
                 </Box>
 
@@ -502,7 +549,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                     color="text.secondary"
                     sx={{ display: 'block', mb: 1 }}
                   >
-                    {t('resumen.detalleIncidencia')}
+                    Detalle de la incidencia
                   </Typography>
                   <Stack spacing={1}>
                     {lineas.map((linea) => (
@@ -524,9 +571,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                             <Chip
                               size="small"
                               color="error"
-                              label={t(
-                                `resumen.${linea.tipoDiferencia.toLowerCase()}`
-                              )}
+                              label={tipoDiferenciaLabel[linea.tipoDiferencia]}
                             />
                           </Stack>
                           <Typography variant="caption" color="text.secondary">
@@ -536,9 +581,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
                             Reclamación:{' '}
-                            {t(
-                              `resumen.${linea.estadoReclamacion.toLowerCase()}`
-                            )}
+                            {estadoReclamacionLabel[linea.estadoReclamacion]}
                           </Typography>
                           {linea.observaciones ? (
                             <Typography
@@ -595,7 +638,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           {title}
         </Typography>
         <IconButton
-          aria-label={t('comun.cerrar')}
+          aria-label="close"
           onClick={onClose}
           sx={{
             position: 'absolute',
@@ -644,18 +687,31 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             ) : null}
 
             <List disablePadding>
-              {data.map((item, index) => (
+              {data.slice(0, 10).map((item, index) => (
                 <React.Fragment key={'id' in item ? item.id : index}>
                   {renderItem(item)}
-                  {type !== 'incidencias' && index < data.length - 1 && (
-                    <Divider component="li" />
-                  )}
+                  {type !== 'incidencias' &&
+                    index < Math.min(data.length, 10) - 1 && (
+                      <Divider component="li" />
+                    )}
                 </React.Fragment>
               ))}
             </List>
           </>
         )}
       </DialogContent>
+      {data.length > 0 && !loading && (
+        <DialogActions sx={{ p: 2, justifyContent: 'center' }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSeeAll}
+            sx={{ borderRadius: 2, px: 4, fontWeight: 700 }}
+          >
+            {getButtonLabel()}
+          </Button>
+        </DialogActions>
+      )}
     </Dialog>
   );
 };

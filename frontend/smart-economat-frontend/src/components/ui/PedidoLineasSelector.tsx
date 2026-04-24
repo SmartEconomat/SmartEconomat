@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Box,
   Button,
@@ -17,6 +16,7 @@ import {
   Autocomplete,
   CircularProgress,
 } from '@mui/material';
+import Select from './Select';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import {
@@ -117,24 +117,12 @@ const formatContenido = (contenido?: number, unidad?: UnidadMedida) => {
 const hasPackageFormat = (contenido?: number, unidad?: UnidadMedida) =>
   Boolean(Number.isFinite(contenido) && contenido && contenido > 0 && unidad);
 
-/**
- * Selector de líneas de pedido con soporte multi-proveedor.
- *
- * Permite añadir, editar y eliminar productos de un pedido, seleccionar
- * proveedor por línea y calcula el total estimado del pedido.
- *
- * @param props.value - Lista de líneas del pedido.
- * @param props.onChange - Callback invocado cuando cambia la lista de líneas.
- * @param props.proveedorId - Si se proporciona, filtra productos por proveedor.
- * @param props.disabled - Cuando es `true`, renderiza las líneas en modo lectura.
- */
 const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
   value = [],
   onChange,
   proveedorId,
   disabled = false,
 }) => {
-  const { t } = useTranslation();
   const [allFlatProducts, setAllFlatProducts] = useState<
     FlatProductoProveedor[]
   >([]);
@@ -473,7 +461,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
   >();
 
   groups.set('empty', {
-    proveedorNombre: t('pedido.lineas.nuevosProductos'),
+    proveedorNombre: 'Nuevos Productos (Selecciona uno)',
     lines: [],
   });
 
@@ -529,7 +517,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
               pb: 0.5,
             }}
           >
-            {t('comun.proveedorLabel')}{proveedorName}
+            Proveedor: {proveedorName}
           </Typography>
         )}
         <TableContainer component={Paper} variant="outlined" sx={{ mb: 2 }}>
@@ -549,17 +537,17 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                 <TableCell
                   sx={{ fontWeight: 'bold', width: 100, minWidth: 80 }}
                 >
-                  {t('comun.cantidad')}
+                  Cantidad
                 </TableCell>
                 <TableCell
                   sx={{ fontWeight: 'bold', width: 160, minWidth: 140 }}
                 >
-                  {t('pedido.lineas.precioUnid')}
+                  Precio Unid.
                 </TableCell>
                 <TableCell
                   sx={{ fontWeight: 'bold', width: 140, minWidth: 120 }}
                 >
-                  {t('pedido.lineas.subtotal')}
+                  Subtotal
                 </TableCell>
                 {!disabled && (
                   <TableCell
@@ -660,8 +648,8 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                           renderInput={(params) => (
                             <TextField
                               {...params}
-                              variant="standard"
-                              placeholder={disabled ? '' : t('comun.buscarProducto')}
+                              variant="outlined"
+                              placeholder={disabled ? '' : 'Buscar producto...'}
                               sx={{
                                 '& .MuiInputBase-root': {
                                   flexWrap: 'wrap',
@@ -683,29 +671,39 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                         </Typography>
                       ) : providerOptions.length <= 1 ? (
                         <TextField
-                          variant="standard"
+                          variant="outlined"
+                          size="small"
                           fullWidth
                           value={providerOptions[0]?.nombreProveedor || ''}
                           placeholder={
                             selectedProduct
-                              ? t('pedido.lineas.proveedorAuto')
-                              : t('pedido.lineas.seleccionaProducto')
+                              ? 'Proveedor automático'
+                              : 'Selecciona un producto'
                           }
                           InputProps={{ readOnly: true }}
                         />
                       ) : (
-                        <TextField
-                          select
-                          variant="standard"
+                        <Select
+                          name={`prov-${uniqueKey}`}
+                          label=""
+                          variant="outlined"
+                          size="small"
                           fullWidth
+                          margin="none"
                           value={selectedProvider?.id || ''}
                           onChange={(event) =>
-                            handleProviderChange(uniqueKey, event.target.value)
+                            handleProviderChange(
+                              uniqueKey,
+                              event.target.value as string
+                            )
                           }
-                          placeholder={t('pedido.lineas.seleccionaProveedor')}
+                          placeholder="Selecciona proveedor"
+                          SelectProps={{
+                            displayEmpty: true,
+                          }}
                         >
                           <MenuItem value="" disabled>
-                            {t('pedido.lineas.seleccionaProveedor')}
+                            Selecciona proveedor
                           </MenuItem>
                           {providerOptions.map((provider) => (
                             <MenuItem
@@ -722,7 +720,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                               {provider.marca ? ` (${provider.marca})` : ''}
                             </MenuItem>
                           ))}
-                        </TextField>
+                        </Select>
                       )}
                     </TableCell>
                     <TableCell>
@@ -757,7 +755,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                               parsedValue
                             );
                           }}
-                          variant="standard"
+                          variant="outlined"
                           InputProps={{
                             sx: { '& input': { pb: '4px' } },
                           }}
@@ -793,7 +791,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                         <TextField
                           type="number"
                           value={line.precioUnitario || ''}
-                          variant="standard"
+                          variant="outlined"
                           InputProps={{
                             readOnly: true,
                             sx: {
@@ -807,7 +805,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                     </TableCell>
                     <TableCell>
                       <TextField
-                        variant="standard"
+                        variant="outlined"
                         fullWidth
                         value={`${(
                           Number(line.cantidad || 0) *
@@ -815,7 +813,6 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                         ).toFixed(2)} €`}
                         InputProps={{
                           readOnly: true,
-                          disableUnderline: false,
                           sx: {
                             '& input': { textAlign: 'right', pb: '4px' },
                           },
@@ -861,8 +858,8 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
         }}
       >
         <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-          {t('pedido.lineas.titulo')}{' '}
-          {!proveedorId && !disabled ? t('pedido.lineas.multiProveedor') : ''}
+          Líneas del Pedido{' '}
+          {!proveedorId && !disabled ? '(Multi-Proveedor Habilitado)' : ''}
         </Typography>
       </Box>
 
@@ -885,13 +882,13 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                     Proveedor
                   </TableCell>
                   <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
-                    {t('comun.cantidad')}
+                    Cantidad
                   </TableCell>
                   <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
-                    {t('pedido.lineas.precioUnid')}
+                    Precio Unid.
                   </TableCell>
                   <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
-                    {t('pedido.lineas.subtotal')}
+                    Subtotal
                   </TableCell>
                   {!disabled && (
                     <TableCell
@@ -908,7 +905,8 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                     sx={{ py: 4 }}
                   >
                     <Typography color="text.secondary">
-                      {t('pedido.lineas.cestaVacia')}
+                      Aún no hay ningún producto en la cesta. Usa el botón
+                      "Añadir Producto" para comenzar.
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -926,7 +924,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                 disabled={isLoading}
                 color="primary"
               >
-                {t('pedido.lineas.anadirProducto')}
+                Añadir Producto
               </Button>
             </Box>
           )}
@@ -956,7 +954,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                 disabled={isLoading}
                 color="primary"
               >
-                {t('pedido.lineas.anadirProducto')}
+                Añadir Producto
               </Button>
             </Box>
           )}
@@ -972,7 +970,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
             }}
           >
             <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-              {t('pedido.lineas.totalEstimado')}{totalOrder.toFixed(2)} €
+              TOTAL ESTIMADO: {totalOrder.toFixed(2)} €
             </Typography>
           </Box>
         </Box>

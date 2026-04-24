@@ -1518,12 +1518,15 @@ const Recepcion: React.FC = () => {
             {t('recepcion.titulo')}
           </Typography>
           <Box
+            id="recepcion-sync-status"
             sx={{
               display: 'flex',
               alignItems: 'center',
               gap: 1,
               flexWrap: 'wrap',
               justifyContent: { xs: 'flex-start', md: 'flex-end' },
+              minWidth: 120,
+              minHeight: 32,
             }}
           >
             {activeStep === 1 && (
@@ -1608,7 +1611,11 @@ const Recepcion: React.FC = () => {
           </Box>
         ) : (
           <>
-            <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+            <Stepper
+              id="recepcion-stepper"
+              activeStep={activeStep}
+              sx={{ mb: 4 }}
+            >
               {steps.map((label) => (
                 <Step key={label}>
                   <StepLabel>{label}</StepLabel>
@@ -1649,6 +1656,7 @@ const Recepcion: React.FC = () => {
             }}
           >
             <Button
+              id="btn-discard-recepcion"
               variant="outlined"
               onClick={() => setIsDiscardDialogOpen(true)}
               color="secondary"
@@ -1658,6 +1666,7 @@ const Recepcion: React.FC = () => {
 
             <Box>
               <Button
+                id="btn-back-step"
                 disabled={activeStep === 0 || isSubmitting}
                 onClick={handleBack}
                 sx={{ mr: 1 }}
@@ -1665,6 +1674,7 @@ const Recepcion: React.FC = () => {
                 {t('recepcion.acciones.atras')}
               </Button>
               <Button
+                id="btn-next-step"
                 variant="contained"
                 onClick={handleNext}
                 disabled={

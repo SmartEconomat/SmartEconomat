@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import {
   AppBar as MuiAppBar,
   Box,
@@ -28,11 +27,9 @@ import { Tooltip } from '../components/ui/Tooltip';
 import { getTooltipContent } from '../utils/tooltipUtils';
 import MenuIcon from '@mui/icons-material/MenuOutlined';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import PersonIcon from '@mui/icons-material/PersonOutlined';
 import LogoutIcon from '@mui/icons-material/LogoutOutlined';
 import { menuItems } from '../utils/config/menuConfig';
-import type { MenuItem as MenuConfigItem } from '../utils/config/menuConfig';
 import { useAuth } from '../store/auth.hooks';
 import { hasAnyPermission, hasPermission } from '../utils/auth/permissionUtils';
 import { useThemeContext } from '../store/theme.hooks';
@@ -41,8 +38,13 @@ import SettingsMenu from '../components/common/Settings/SettingsMenu';
 import TutorialHelper from '../components/common/Tutorial/TutorialHelper';
 import LearningModeToggle from '../components/common/Learning/LearningModeToggle';
 import NotificationCenter from '../components/common/Notification/NotificationCenter';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+import { useSidebar } from '../store/sidebar.hooks';
+import InteractiveTour from '../components/common/Tutorial/InteractiveTour';
 import Logo from '../assets/images/SVG/logo-smat-economato.svg';
 import LogoBlanco from '../assets/images/SVG/logo-smart-economat-blanco.svg';
+import Favicon from '../assets/icons/SVG/favicon.svg';
+import FaviconInv from '../assets/icons/SVG/favicon-inv.svg';
 
 const drawerWidth = 240;
 
@@ -59,6 +61,7 @@ const closedMixin = (theme: Theme): CSSObject => ({
   transition: theme.transitions.create('width', {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
+    delay: 50, // Espera a que el texto se desvanezca
   }),
   overflowX: 'hidden',
   width: `calc(${theme.spacing(7)} + 1px)`,
@@ -71,42 +74,58 @@ const DrawerHeader = styled('div')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  padding: theme.spacing(0, 1),
+  padding: theme.spacing(0, 2),
   ...theme.mixins.toolbar,
   [theme.breakpoints.down('sm')]: {
-    minHeight: '80px !important',
+    minHeight: '64px !important',
   },
   [theme.breakpoints.up('sm')]: {
-    minHeight: '100px !important',
+    minHeight: '76px !important',
   },
 }));
 
 interface AppBarProps extends React.ComponentProps<typeof MuiAppBar> {
   open?: boolean;
+  component?: React.ElementType;
 }
 
 const AppBar = styled(MuiAppBar, {
   shouldForwardProp: (prop) => prop !== 'open',
-})<AppBarProps>(({ theme, open }) => ({
-  zIndex: theme.zIndex.drawer + 1,
-  transition: theme.transitions.create(['width', 'margin'], {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  ...(open && {
-    marginLeft: drawerWidth,
-    width: `calc(100% - ${drawerWidth}px)`,
-    transition: theme.transitions.create(['width', 'margin'], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
-  }),
-  [theme.breakpoints.down('sm')]: {
+})<AppBarProps>(({ theme, open }) => {
+  const miniWidth = `calc(${theme.spacing(8)} + 1px)`;
+
+  return {
+    // Bajamos zIndex al mínimo estándar para que los drawers (especialmente el overlay) reinen
     zIndex: theme.zIndex.appBar,
-    marginLeft: 0,
-    width: '100%',
-  },
-}));
+    transition: theme.transitions.create(['width', 'left'], {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.leavingScreen,
+    }),
+    left: miniWidth,
+    width: `calc(100% - ${miniWidth})`,
+    backgroundColor: theme.palette.background.paper,
+    // Pointer events: none en el contenedor raíz para TOTAL transparencia en la zona izquierda
+    pointerEvents: 'none',
+    '& > *': {
+      pointerEvents: 'auto',
+    },
+    ...(open && {
+      left: drawerWidth,
+      width: `calc(100% - ${drawerWidth}px)`,
+      transition: theme.transitions.create(['width', 'left'], {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
+    }),
+    [theme.breakpoints.down('sm')]: {
+      zIndex: theme.zIndex.appBar,
+      marginLeft: 0,
+      left: 0,
+      width: '100%',
+      pointerEvents: 'auto',
+    },
+  };
+});
 
 const DesktopDrawer = styled(MuiDrawer, {
   shouldForwardProp: (prop) => prop !== 'open',
@@ -115,6 +134,7 @@ const DesktopDrawer = styled(MuiDrawer, {
   flexShrink: 0,
   whiteSpace: 'nowrap',
   boxSizing: 'border-box',
+  zIndex: theme.zIndex.drawer, // 1200
   ...(open && {
     ...openedMixin(theme),
     '& .MuiDrawer-paper': openedMixin(theme),
@@ -125,49 +145,274 @@ const DesktopDrawer = styled(MuiDrawer, {
   }),
 }));
 
-/**
- * Layout principal de la aplicación autenticada.
- *
- * Compone el AppBar superior, el drawer de navegación lateral (mini/expandido)
- * y el área de contenido donde se renderizan las rutas hijas mediante `<Outlet>`.
- *
- * El drawer soporta modo mobile (temporal) y desktop (permanente mini-drawer).
- * Los textos del menú se obtienen vía `useTranslation()`.
- *
- * @returns {JSX.Element} Estructura de layout completa.
- * @example
- * <Route element={<MainLayout />}>
- *   <Route path="/dashboard" element={<Home />} />
- * </Route>
- */
+interface SidebarContentProps {
+  isExpanded: boolean;
+  onNavigate: (path: string) => void;
+  onClose?: () => void;
+  isTablet?: boolean;
+  isLearningMode?: boolean;
+  currentThemeName?: string;
+  location?: { pathname: string };
+  theme?: Theme;
+  visibleMenuItems?: Array<{
+    path: string;
+    title: string;
+    description: string;
+    group: 'inicio' | 'catalogo' | 'operaciones' | 'control' | 'gestion';
+    icon?: React.ReactNode;
+  }>;
+}
+
+const SidebarContent = React.memo(
+  ({
+    isExpanded,
+    onNavigate,
+    isLearningMode,
+    currentThemeName,
+    location,
+    theme,
+    visibleMenuItems,
+  }: SidebarContentProps) => {
+    if (!theme || !location || !visibleMenuItems) {
+      return null;
+    }
+
+    const getLogo = (isMini = false) => {
+      const isDark =
+        currentThemeName === 'dark' || currentThemeName === 'highContrastDark';
+      if (isMini) {
+        return isDark ? FaviconInv : Favicon;
+      }
+      return isDark ? LogoBlanco : Logo;
+    };
+
+    const groupLabels: Record<
+      'inicio' | 'catalogo' | 'operaciones' | 'control' | 'gestion',
+      string
+    > = {
+      inicio: 'Inicio',
+      catalogo: 'Catálogo',
+      operaciones: 'Operaciones',
+      control: 'Control',
+      gestion: 'Gestión',
+    };
+
+    return (
+      <>
+        <DrawerHeader
+          sx={{ justifyContent: 'center', alignItems: 'center', px: 0 }}
+        >
+          {isExpanded ? (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+              }}
+            >
+              <Box
+                component="img"
+                src={getLogo(false)}
+                alt="Smart Economat Logo"
+                sx={{
+                  height: { xs: 52, sm: 64 },
+                  maxWidth: '80%',
+                  objectFit: 'contain',
+                }}
+              />
+            </Box>
+          ) : (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+              }}
+            >
+              <Box
+                component="img"
+                src={getLogo(true)}
+                alt="Favicon"
+                sx={{
+                  height: 36,
+                  width: 36,
+                  objectFit: 'contain',
+                }}
+              />
+            </Box>
+          )}
+        </DrawerHeader>
+        <Divider />
+        <List aria-label="Navegación principal">
+          {visibleMenuItems.map((item, index) => {
+            const previousGroup =
+              index > 0 ? visibleMenuItems[index - 1].group : null;
+            const showNewGroup = index === 0 || previousGroup !== item.group;
+
+            return (
+              <React.Fragment key={item.path}>
+                {index > 0 && showNewGroup && (
+                  <ListItem disablePadding sx={{ display: 'block' }}>
+                    <Divider sx={{ my: isExpanded ? 1.5 : 1 }} />
+                  </ListItem>
+                )}
+
+                {isExpanded && showNewGroup && item.group !== 'inicio' && (
+                  <ListItem disablePadding sx={{ display: 'block' }}>
+                    <Typography
+                      variant="overline"
+                      sx={{
+                        display: 'block',
+                        px: 2.5,
+                        pt: index === 0 ? 1 : 0,
+                        pb: 0.5,
+                        color: 'text.secondary',
+                        letterSpacing: '0.08em',
+                        fontWeight: 700,
+                        opacity: isExpanded ? 1 : 0,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        transition: theme.transitions.create('opacity', {
+                          easing: theme.transitions.easing.easeInOut,
+                          duration: isExpanded
+                            ? theme.transitions.duration.standard
+                            : 150,
+                          delay: isExpanded ? 150 : 0,
+                        }),
+                      }}
+                    >
+                      {groupLabels[item.group]}
+                    </Typography>
+                  </ListItem>
+                )}
+
+                <ListItem disablePadding sx={{ display: 'block' }}>
+                  <Tooltip
+                    title={getTooltipContent(
+                      isExpanded,
+                      isLearningMode || false,
+                      item.title,
+                      item.description
+                    )}
+                    describeChild
+                  >
+                    <ListItemButton
+                      sx={{
+                        minHeight: 48,
+                        justifyContent: isExpanded ? 'initial' : 'center',
+                        px: 2.5,
+                        borderRadius: isExpanded ? 0 : '10px',
+                        mx: isExpanded ? 0 : 1,
+                        mb: isExpanded ? 0 : 0.5,
+                      }}
+                      selected={location.pathname === item.path}
+                      onClick={() => onNavigate(item.path)}
+                    >
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 0,
+                          mr: isExpanded ? 3 : 0,
+                          justifyContent: 'center',
+                          color:
+                            location.pathname === item.path
+                              ? 'primary.main'
+                              : 'inherit',
+                        }}
+                      >
+                        {item.icon}
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={item.title}
+                        sx={{
+                          display: isExpanded ? 'block' : 'none',
+                          opacity: isExpanded ? 1 : 0,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          transition: theme.transitions.create('opacity', {
+                            easing: theme.transitions.easing.easeInOut,
+                            duration: isExpanded
+                              ? theme.transitions.duration.standard
+                              : 150,
+                            delay: isExpanded ? 250 : 0,
+                          }),
+                        }}
+                      />
+                    </ListItemButton>
+                  </Tooltip>
+                </ListItem>
+              </React.Fragment>
+            );
+          })}
+        </List>
+        <Box sx={{ marginTop: 'auto' }}>
+          <Divider />
+          <List aria-label="Opciones del sistema">
+            <ListItem disablePadding sx={{ display: 'block' }}>
+              <TutorialHelper mode="listitem" isOpen={isExpanded} />
+            </ListItem>
+            <ListItem disablePadding sx={{ display: 'block' }}>
+              <LearningModeToggle mode="listitem" isOpen={isExpanded} />
+            </ListItem>
+            <ListItem disablePadding sx={{ display: 'block' }}>
+              <SettingsMenu mode="listitem" isOpen={isExpanded} />
+            </ListItem>
+          </List>
+        </Box>
+      </>
+    );
+  }
+);
+
+SidebarContent.displayName = 'SidebarContent';
+
 export default function MainLayout() {
   const theme = useTheme();
-  const { isMobile } = useBreakpoints();
+  const { isMobile, isTablet, isDesktop, isLargeDesktop, isXLarge } =
+    useBreakpoints();
+  const isDesktopMode = isLargeDesktop || isXLarge; // >= 1200px
   const { currentThemeName, isLearningMode } = useThemeContext();
-  const [open, setOpen] = useState(!isMobile);
-  const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(
-    null
-  );
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const getLogo = () => {
-    if (
-      currentThemeName === 'dark' ||
-      currentThemeName === 'highContrastDark'
-    ) {
-      return LogoBlanco;
+  // Usar contexto global para el sidebar
+  const {
+    isExpanded: sidebarExpanded,
+    setIsExpanded: setSidebarExpanded,
+    toggleSidebar: handleSidebarToggle,
+  } = useSidebar();
+
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(
+    null
+  );
+
+  // Activar atajos de teclado globales
+  useKeyboardShortcuts();
+
+  // Cerrar sidebar overlay automáticamente al cambiar de ruta (solo en modo overlay)
+  React.useEffect(() => {
+    if (isMobile) {
+      setMobileOpen(false);
     }
-    return Logo;
+  }, [location.pathname, isMobile]);
+
+  React.useEffect(() => {
+    if (isDesktopMode) {
+      setSidebarExpanded(true);
+    } else if (isTablet || isDesktop) {
+      setSidebarExpanded(false);
+    }
+  }, [isDesktopMode, isTablet, isDesktop, setSidebarExpanded]);
+
+  const handleMobileDrawerOpen = () => {
+    setMobileOpen(true);
   };
 
-  const handleDrawerOpen = () => {
-    setOpen(true);
-  };
-
-  const handleDrawerClose = () => {
-    setOpen(false);
+  const handleMobileDrawerClose = () => {
+    setMobileOpen(false);
   };
 
   const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -183,6 +428,20 @@ export default function MainLayout() {
     await logout();
     navigate('/login');
   };
+
+  const handleNavigation = useCallback(
+    (path: string) => {
+      navigate(path);
+      // Cerrar sidebar overlay en mobile y tablet al navegar
+      if (isMobile) {
+        setMobileOpen(false);
+      }
+      if (isTablet || isDesktop) {
+        setSidebarExpanded(false);
+      }
+    },
+    [navigate, isMobile, isTablet, isDesktop, setSidebarExpanded]
+  );
 
   const visibleMenuItems = menuItems
     .filter((item) => item.showInMenu)
@@ -200,178 +459,74 @@ export default function MainLayout() {
       return true;
     });
 
-  const { t } = useTranslation();
-  const groupLabels: Record<MenuConfigItem['group'], string> = {
-    inicio: t('layout.menu.inicio'),
-    catalogo: t('layout.menu.catalogo'),
-    operaciones: t('layout.menu.operaciones'),
-    control: t('layout.menu.control'),
-    gestion: t('layout.menu.gestion'),
-  };
-
-  const drawerContent = (
-    <>
-      <DrawerHeader sx={{ justifyContent: open ? 'center' : 'center', px: 1 }}>
-        {open && (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-              mr: 1,
-            }}
-          >
-            <Box
-              component="img"
-              src={getLogo()}
-              alt="Smart Economat Logo"
-              sx={{
-                height: { xs: 60, sm: 80 },
-                maxWidth: '100%',
-                objectFit: 'contain',
-              }}
-            />
-          </Box>
-        )}
-        <Tooltip
-          title={open ? t('layout.menu.minimizar') : t('layout.menu.expandir')}
-        >
-          <IconButton
-            aria-label={
-              open ? t('layout.menu.minimizar') : t('layout.menu.expandir')
-            }
-            onClick={open ? handleDrawerClose : handleDrawerOpen}
-          >
-            {theme.direction === 'rtl' ? (
-              open ? (
-                <ChevronRightIcon />
-              ) : (
-                <ChevronLeftIcon />
-              )
-            ) : open ? (
-              <ChevronLeftIcon />
-            ) : (
-              <ChevronRightIcon />
-            )}
-          </IconButton>
-        </Tooltip>
-      </DrawerHeader>
-      <Divider />
-      <List aria-label={t('layout.menu.navegacionPrincipal')}>
-        {visibleMenuItems.map((item, index) => {
-          const previousGroup =
-            index > 0 ? visibleMenuItems[index - 1].group : null;
-          const showNewGroup = index === 0 || previousGroup !== item.group;
-
-          return (
-            <React.Fragment key={item.path}>
-              {index > 0 && showNewGroup && (
-                <Divider sx={{ my: open ? 1.5 : 1 }} />
-              )}
-
-              {open && showNewGroup && item.group !== 'inicio' && (
-                <Typography
-                  variant="overline"
-                  sx={{
-                    display: 'block',
-                    px: 2.5,
-                    pt: index === 0 ? 1 : 0,
-                    pb: 0.5,
-                    color: 'text.secondary',
-                    letterSpacing: '0.08em',
-                    fontWeight: 700,
-                  }}
-                >
-                  {groupLabels[item.group]}
-                </Typography>
-              )}
-
-              <ListItem disablePadding sx={{ display: 'block' }}>
-                <Tooltip
-                  title={getTooltipContent(
-                    open,
-                    isLearningMode,
-                    item.title,
-                    item.description
-                  )}
-                  describeChild
-                >
-                  <ListItemButton
-                    sx={{
-                      minHeight: 48,
-                      justifyContent: open ? 'initial' : 'center',
-                      px: 2.5,
-                    }}
-                    selected={location.pathname === item.path}
-                    onClick={() => {
-                      navigate(item.path);
-                      if (isMobile) setOpen(false);
-                    }}
-                  >
-                    <ListItemIcon
-                      sx={{
-                        minWidth: 0,
-                        mr: open ? 3 : 'auto',
-                        justifyContent: 'center',
-                        color:
-                          location.pathname === item.path
-                            ? 'primary.main'
-                            : 'inherit',
-                      }}
-                    >
-                      {item.icon}
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={item.title}
-                      sx={{ opacity: open ? 1 : 0 }}
-                    />
-                  </ListItemButton>
-                </Tooltip>
-              </ListItem>
-            </React.Fragment>
-          );
-        })}
-      </List>
-      <Box sx={{ marginTop: 'auto' }}>
-        <Divider />
-        <List aria-label={t('comun.opcionesSistema')}>
-          <ListItem disablePadding sx={{ display: 'block' }}>
-            <TutorialHelper mode="listitem" isOpen={open} />
-          </ListItem>
-          <ListItem disablePadding sx={{ display: 'block' }}>
-            <LearningModeToggle mode="listitem" isOpen={open} />
-          </ListItem>
-          <ListItem disablePadding sx={{ display: 'block' }}>
-            <SettingsMenu mode="listitem" isOpen={open} />
-          </ListItem>
-        </List>
-      </Box>
-    </>
+  /**
+   * Componente interno para renderizar el contenido del menú lateral.
+   * Props necesarios para cada caso de uso.
+   */
+  const renderSidebarContent = (isExpanded: boolean) => (
+    <SidebarContent
+      isExpanded={isExpanded}
+      onNavigate={handleNavigation}
+      isLearningMode={isLearningMode}
+      currentThemeName={currentThemeName}
+      location={location}
+      theme={theme}
+      visibleMenuItems={visibleMenuItems}
+    />
   );
 
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
-      <AppBar position="fixed" open={open} color="inherit" elevation={1}>
+      {/* <SkipLinks id="skip-links" /> - Comentado temporalmente por depuración de clics */}
+      <InteractiveTour />
+      <AppBar
+        position="fixed"
+        open={!isMobile && sidebarExpanded}
+        color="inherit"
+        elevation={1}
+        component="header"
+        role="banner"
+        aria-label="Cabecera superior"
+      >
         <Toolbar
           sx={{
-            minHeight: { xs: '80px !important', sm: '100px !important' },
+            minHeight: { xs: '64px !important', sm: '76px !important' },
             px: { xs: 2, sm: 3 },
           }}
         >
-          <Tooltip title={t('comun.expandirMenu')}>
+          {/* Mobile/Tablet: Menu toggle | Desktop: Toggle expand/collapse */}
+          <Tooltip
+            title={
+              isMobile
+                ? 'Abrir menú'
+                : sidebarExpanded
+                  ? 'Minimizar menú'
+                  : 'Expandir menú'
+            }
+          >
             <IconButton
               color="inherit"
-              aria-label={t('comun.expandirMenu')}
-              onClick={handleDrawerOpen}
+              aria-label={
+                isMobile
+                  ? 'Abrir menú'
+                  : sidebarExpanded
+                    ? 'Minimizar menú'
+                    : 'Expandir menú'
+              }
+              onClick={isMobile ? handleMobileDrawerOpen : handleSidebarToggle}
               edge="start"
               sx={{
                 marginRight: 5,
-                ...(open && !isMobile && { display: 'none' }),
               }}
             >
-              <MenuIcon />
+              {isMobile ? (
+                <MenuIcon />
+              ) : sidebarExpanded ? (
+                <ChevronLeftIcon />
+              ) : (
+                <MenuIcon />
+              )}
             </IconButton>
           </Tooltip>
 
@@ -387,7 +542,12 @@ export default function MainLayout() {
             >
               {user?.name}
             </Typography>
-            <IconButton onClick={handleUserMenuOpen} sx={{ p: 0 }}>
+            <IconButton
+              id="user-menu-button"
+              onClick={handleUserMenuOpen}
+              sx={{ p: 0 }}
+              aria-label="Abrir menú de usuario"
+            >
               <Avatar
                 sx={{
                   bgcolor: getRoleColor(user?.rol || ''),
@@ -439,8 +599,29 @@ export default function MainLayout() {
       {isMobile ? (
         <MuiDrawer
           variant="temporary"
-          open={open}
-          onClose={handleDrawerClose}
+          open={mobileOpen}
+          onClose={handleMobileDrawerClose}
+          component="nav"
+          aria-label="Menú principal lateral"
+          PaperProps={{
+            id: 'sidebar-nav',
+            tabIndex: -1,
+            sx: {
+              outline: 'none',
+              boxShadow: 'none',
+              border: 'none',
+              '&:focus': {
+                outline: 'none',
+                border: 'none',
+                boxShadow: 'none',
+              },
+              '&:focus-visible': {
+                outline: 'none',
+                border: 'none',
+                boxShadow: 'none',
+              },
+            },
+          }}
           sx={{
             display: { xs: 'block', sm: 'none' },
             '& .MuiDrawer-paper': {
@@ -449,15 +630,37 @@ export default function MainLayout() {
             },
           }}
         >
-          {drawerContent}
+          {renderSidebarContent(true)}
         </MuiDrawer>
       ) : (
-        <DesktopDrawer variant="permanent" open={open}>
-          {drawerContent}
+        <DesktopDrawer
+          variant="permanent"
+          open={sidebarExpanded}
+          component="nav"
+          aria-label="Menú principal lateral"
+          PaperProps={{
+            id: 'sidebar-nav',
+            tabIndex: -1,
+            sx: { outline: 'none' },
+          }}
+          sx={{ outline: 'none' }}
+        >
+          {renderSidebarContent(sidebarExpanded)}
         </DesktopDrawer>
       )}
 
-      <Box component="main" sx={{ flexGrow: 1, p: { xs: 1, sm: 3 } }}>
+      <Box
+        component="main"
+        id="main-content"
+        role="main"
+        aria-label="Contenido principal"
+        tabIndex={-1}
+        sx={{
+          flexGrow: 1,
+          p: { xs: 2.5, sm: 3 },
+          outline: 'none', // Evitar borde al recibir foco por salto
+        }}
+      >
         <DrawerHeader />
         <Outlet />
       </Box>

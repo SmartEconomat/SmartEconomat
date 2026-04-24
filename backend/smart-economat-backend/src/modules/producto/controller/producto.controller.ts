@@ -178,13 +178,17 @@ export class ProductoController {
     return this.productoService.update(id, updateProductoDto, userId);
   }
 
-  /**
-   * Soft-deletes a product. Returns HTTP 204 No Content on success.
-   *
-   * @param {string} id - UUID of the product to delete.
-   * @param {{ user: { id: string } }} req - Authenticated request object.
-   * @returns {Promise<void>}
-   */
+  @Patch(':id/restore')
+  @RequirePermissions(PERMISSIONS.productos.eliminar)
+  @ApiOperation({ summary: 'Restaurar un producto eliminado' })
+  @ApiResponse({ status: 200, type: Producto })
+  restore(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: { user: { id: string } }
+  ): Promise<Producto> {
+    const userId = req.user.id;
+    return this.productoService.restore(id, userId);
+  }
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.productos.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)

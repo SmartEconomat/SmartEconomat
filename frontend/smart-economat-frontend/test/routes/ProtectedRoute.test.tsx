@@ -113,6 +113,6 @@ describe('ProtectedRoute', () => {
       requiredPermission: 'usuarios:listar',
     });
 
-    expect(screen.getByLabelText('Cargando...')).toBeInTheDocument();
+    expect(screen.getByLabelText('Cargando')).toBeInTheDocument();
   });
 });

@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Box,
   TextField,
@@ -25,8 +24,8 @@ import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import BarcodeIcon from './BarcodeIcon';
 import ClearIcon from '@mui/icons-material/Clear'; // Added ClearIcon
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { useBreakpoints } from '../../utils/useBreakpoints';
 
 export interface PageToolbarProps {
@@ -50,7 +49,7 @@ export interface PageToolbarProps {
     disabled?: boolean;
     isLoading?: boolean;
   };
-  /** Acción secundaria (ej: "Gestionar") */
+  /** Acción secundaria (botón outline, ej: Gestionar Ubicaciones) */
   secondaryAction?: {
     label: string;
     onClick: () => void;
@@ -92,22 +91,21 @@ export interface PageToolbarProps {
       | 'inherit';
     variant?: 'text' | 'outlined' | 'contained';
   }[];
+  /** ID único para identificación (ej: en tours) */
+  id?: string;
 }
 
 /**
  * PageToolbar: Componente unificado para cabeceras de página.
  * Incluye Título, Búsqueda, Filtros y Controles de Tabla (Paginación/Vista)
  * siguiendo un diseño premium y responsive.
- *
- * @param props - Propiedades del componente definidas en {@link PageToolbarProps}.
- * @returns Barra de herramientas sticky con búsqueda, filtros y acciones principales.
  */
 const PageToolbar: React.FC<PageToolbarProps> = ({
   title,
   icon,
   searchValue,
   onSearchChange,
-  searchPlaceholder,
+  searchPlaceholder = 'Buscar...',
   searchId = 'page-search',
   primaryAction,
   secondaryAction,
@@ -120,21 +118,23 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
   autoFocusSearch = false,
   sticky = true,
   extraActions = [],
+  id,
 }) => {
-  const { t } = useTranslation();
-  const { isMobile, isMobileOrTablet } = useBreakpoints();
+  const { isMobile, isTabletOrBelow } = useBreakpoints();
   const theme = useTheme();
   const [isExpanded, setIsExpanded] = React.useState(true);
-  const resolvedSearchPlaceholder = searchPlaceholder ?? t('comun.buscar');
 
   const hasFiltersOrSearch = onSearchChange || filters;
 
   return (
     <Paper
+      id={id}
       elevation={0}
+      component="section"
+      aria-label={`Barra de herramientas de ${title || 'la página'}`}
       sx={{
-        p: { xs: 2, sm: 3 },
-        mb: 3,
+        p: { xs: 1.5, sm: 2 },
+        mb: 2.5,
         borderRadius: 2,
         backgroundColor: alpha(theme.palette.background.paper, 0.95),
         backdropFilter: 'blur(8px)',
@@ -142,14 +142,14 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
         borderColor: 'divider',
         ...(sticky && {
           position: 'sticky',
-          top: { xs: 80, sm: 100 }, // Desktop AppBar height - adjust if MainLayout changes
+          top: { xs: 72, sm: 80 },
           zIndex: 1000,
-          mx: -1, // Slight negative margin to flow better on scroll
+          mx: -0.5,
           boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
         }),
       }}
     >
-      <Box display="flex" flexDirection="column" gap={2}>
+      <Box display="flex" flexDirection="column" gap={1.5}>
         {/* FILA 1: TÍTULO Y CONTEO */}
         {title && (
           <Box
@@ -171,48 +171,33 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                     justifyContent: 'center',
                     color: 'primary.main',
                     bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
-                    p: 1,
+                    p: 0.75,
                     borderRadius: 1.5,
                   }}
                 >
                   {icon}
                 </Box>
               )}
-              <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
+              <Typography variant="h5" component="h1" sx={{ fontWeight: 700 }}>
                 {title}
               </Typography>
-              {hasFiltersOrSearch && (
-                <Tooltip
-                  title={isExpanded ? t('comun.ocultarFiltros') : t('comun.mostrarFiltros')}
-                >
-                  <IconButton
-                    size="small"
-                    onClick={() => setIsExpanded(!isExpanded)}
-                    sx={{
-                      bgcolor: isExpanded
-                        ? 'transparent'
-                        : alpha(theme.palette.primary.main, 0.1),
-                      color: isExpanded ? 'text.secondary' : 'primary.main',
-                      '&:hover': {
-                        bgcolor: alpha(theme.palette.primary.main, 0.1),
-                      },
-                    }}
-                  >
-                    {isExpanded ? <ExpandLessIcon /> : <FilterListIcon />}
-                  </IconButton>
-                </Tooltip>
-              )}
             </Box>
 
-            <Box display="flex" alignItems="center" gap={1}>
+            <Box
+              display="flex"
+              alignItems="center"
+              gap={1.5}
+              sx={{ ml: 'auto', flexWrap: 'wrap', justifyContent: 'flex-end' }}
+            >
               {totalItems !== undefined && (
-                <Tooltip title={`${t('comun.totalDe')} ${totalItemsLabel}: ${totalItems}`}>
+                <Tooltip title={`Total de ${totalItemsLabel}: ${totalItems}`}>
                   <Chip
-                    icon={<CheckCircleIcon fontSize="small" />}
+                    icon={
+                      <CheckCircleIcon sx={{ fontSize: '14px !important' }} />
+                    }
                     label={
                       <>
-                        {t('comun.totalDe')} <strong>{totalItemsLabel}</strong>:{' '}
-                        {totalItems}
+                        Total: <strong>{totalItems}</strong>
                       </>
                     }
                     size="small"
@@ -220,22 +205,25 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                     variant="outlined"
                     sx={{
                       fontWeight: 500,
-                      px: 1,
-                      '& .MuiChip-label': { px: 1 },
-                      display: { xs: 'none', sm: 'inline-flex' }, // Solo en tablet/desktop para no saturar móvil
+                      height: 24,
+                      fontSize: '0.75rem',
+                      px: 0.5,
+                      '& .MuiChip-label': { px: 0.5 },
+                      display: { xs: 'none', sm: 'inline-flex' },
                     }}
                   />
                 </Tooltip>
               )}
-              {/* Móvil: Versión más compacta del chip */}
               {totalItems !== undefined && (
                 <Chip
-                  label={`Total ${totalItemsLabel}: ${totalItems}`}
+                  label={`Total: ${totalItems}`}
                   size="small"
                   color="success"
                   variant="outlined"
                   sx={{
                     fontWeight: 700,
+                    height: 24,
+                    fontSize: '0.7rem',
                     display: { xs: 'inline-flex', sm: 'none' },
                   }}
                 />
@@ -248,38 +236,44 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
         {hasFiltersOrSearch && (
           <Collapse in={isExpanded}>
             <Box
+              id="filters-area"
+              tabIndex={-1}
               display="flex"
-              flexDirection={isMobileOrTablet ? 'column' : 'row'}
-              gap={2}
-              alignItems={isMobileOrTablet ? 'stretch' : 'center'}
+              flexDirection={isMobile ? 'column' : 'row'}
+              gap={isMobile ? 1 : 2}
+              alignItems={isMobile ? 'stretch' : 'flex-start'}
               flexWrap="wrap"
-              sx={{ mt: 1, mb: 1 }}
+              sx={{ outline: 'none', mt: 0.5, mb: 0.5, width: '100%' }}
             >
-              {onSearchChange && (
-                <TextField
-                  id={searchId}
-                  placeholder={resolvedSearchPlaceholder}
-                  value={searchValue}
-                  onChange={(e) => onSearchChange(e.target.value)}
-                  size="small"
-                  autoFocus={autoFocusSearch}
-                  sx={{
-                    minWidth: { xs: '100%', sm: 240, md: 400 },
-                    flex: { xs: '1 1 100%', sm: '1000 1 auto' },
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      bgcolor: 'background.paper',
-                    },
-                  }}
-                  InputProps={{
-                    'aria-label': resolvedSearchPlaceholder,
+              <TextField
+                id={searchId}
+                placeholder={searchPlaceholder}
+                value={searchValue}
+                onChange={(e) => onSearchChange?.(e.target.value)}
+                size="small"
+                autoFocus={autoFocusSearch}
+                fullWidth
+                sx={{
+                  flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 8px)' },
+                  width: { xs: '100%', sm: 'calc(50% - 8px)' },
+                  minWidth: 0,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    bgcolor: 'background.paper',
+                  },
+                }}
+                slotProps={{
+                  htmlInput: {
+                    'aria-label': searchPlaceholder,
+                  },
+                  input: {
                     startAdornment: onScanBarcode && (
                       <InputAdornment position="start">
-                        <Tooltip title={t('comun.escanearCamara')}>
+                        <Tooltip title="Escanear con cámara">
                           <IconButton
                             size="small"
                             onClick={onScanBarcode}
-                            aria-label={t('comun.escanearCodigo')}
+                            aria-label="Escanear código"
                             color="primary"
                             sx={{
                               '&:hover': {
@@ -306,29 +300,29 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                             <IconButton
                               size="small"
                               onClick={() => onSearchChange?.('')}
-                              aria-label={t('comun.limpiarBusqueda')}
+                              aria-label="Limpiar búsqueda"
                             >
                               <ClearIcon fontSize="small" />
                             </IconButton>
                           )}
                           <SearchIcon
                             fontSize="small"
-                            sx={{ color: 'text.disabled', ml: 0.5 }}
+                            sx={{ color: 'text.secondary', ml: 0.5 }}
                           />
                         </Stack>
                       </InputAdornment>
                     ),
-                  }}
-                />
-              )}
-
+                  },
+                }}
+              />
               {filters && (
                 <Box
                   sx={{
-                    flex: { xs: '1 1 100%', sm: '1 1 auto' },
+                    flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 8px)' },
                     display: 'flex',
-                    width: { xs: '100%', sm: 'auto' },
-                    flexGrow: 1,
+                    width: { xs: '100%', sm: 'calc(50% - 8px)' },
+                    minWidth: 0,
+                    '& > *': { width: '100%' },
                   }}
                 >
                   {filters}
@@ -338,49 +332,54 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
           </Collapse>
         )}
 
-        {/* FILA 3: CONTROLES DE TABLA Y ACCIÓN */}
+        {/* FILA 3: ACCIONES Y CONTROLES */}
         <Box
           display="flex"
           justifyContent="space-between"
           alignItems="center"
           flexWrap="wrap"
-          gap={2}
-          pt={1}
+          gap={1.5}
+          pt={0.5}
+          sx={{
+            mt: isMobile ? 0 : 0.25,
+          }}
         >
-          {/* IZQUIERDA: Vista + PageSize */}
-          <Box display="flex" alignItems="center" gap={2}>
+          {/* IZQUIERDA: Vista Toggle */}
+          <Box display="flex" alignItems="center" gap={1.5}>
             {onViewModeChange && viewMode && (
               <ToggleButtonGroup
                 value={viewMode}
                 exclusive
                 onChange={(_, next) => next && onViewModeChange(next)}
                 size="small"
-                sx={{ bgcolor: 'background.paper', borderRadius: 1.5 }}
+                sx={{
+                  bgcolor: 'background.paper',
+                  borderRadius: 1.5,
+                  '& .MuiToggleButton-root': { py: 0.5, px: 1 },
+                }}
               >
-                <ToggleButton value="list">
+                <ToggleButton value="list" aria-label="Vista de lista">
                   <ViewListIcon fontSize="small" />
                 </ToggleButton>
-                <ToggleButton value="grid">
+                <ToggleButton value="grid" aria-label="Vista de cuadrícula">
                   <ViewModuleIcon fontSize="small" />
                 </ToggleButton>
               </ToggleButtonGroup>
             )}
-
-            {/* Selector 'Por página' eliminado: ahora se usa TablePagination al final de la tabla */}
           </Box>
 
-          {/* DERECHA: Acción Principal + Secundaria */}
+          {/* DERECHA: Acciones */}
           <Box
             sx={{
               ml: 'auto',
               display: 'flex',
               alignItems: 'center',
-              gap: 1.5,
+              gap: 1.25,
             }}
           >
             {extraActions.map((action) => (
               <React.Fragment key={action.id || action.label}>
-                {isMobile ? (
+                {isTabletOrBelow ? (
                   <Tooltip title={action.label}>
                     <IconButton
                       id={action.id}
@@ -391,13 +390,16 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                         bgcolor: 'background.paper',
                         border: '1px solid',
                         borderColor: 'divider',
-                        width: 40,
-                        height: 40,
+                        width: isMobile ? 36 : 40,
+                        height: isMobile ? 36 : 40,
                         borderRadius: 2,
                       }}
                     >
                       {action.isLoading ? (
-                        <CircularProgress size={20} color="inherit" />
+                        <CircularProgress
+                          size={isMobile ? 18 : 20}
+                          color="inherit"
+                        />
                       ) : (
                         action.icon
                       )}
@@ -408,9 +410,10 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                     id={action.id}
                     variant={action.variant || 'outlined'}
                     color={action.color || 'primary'}
+                    size="small"
                     startIcon={
                       action.isLoading ? (
-                        <CircularProgress size={20} color="inherit" />
+                        <CircularProgress size={16} color="inherit" />
                       ) : (
                         action.icon
                       )
@@ -419,11 +422,12 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                     disabled={action.disabled || action.isLoading}
                     sx={{
                       borderRadius: 2,
-                      px: { sm: 2, md: 3 },
-                      py: 1,
-                      fontWeight: 600,
-                      whiteSpace: 'nowrap',
+                      height: 36,
+                      px: 1.5,
+                      fontWeight: 700,
+                      fontSize: '0.75rem',
                       textTransform: 'uppercase',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {action.label}
@@ -432,60 +436,9 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
               </React.Fragment>
             ))}
 
-            {secondaryAction && (
-              <>
-                {isMobile ? (
-                  <Tooltip title={secondaryAction.label}>
-                    <IconButton
-                      id={secondaryAction.id}
-                      onClick={secondaryAction.onClick}
-                      disabled={secondaryAction.disabled}
-                      sx={{
-                        bgcolor: 'background.paper',
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        color: 'primary.main',
-                        width: 40,
-                        height: 40,
-                        borderRadius: 2,
-                      }}
-                    >
-                      {secondaryAction.icon || <AddIcon />}
-                    </IconButton>
-                  </Tooltip>
-                ) : (
-                  <Button
-                    id={secondaryAction.id}
-                    variant="outlined"
-                    startIcon={
-                      secondaryAction.isLoading ? (
-                        <CircularProgress size={20} color="inherit" />
-                      ) : (
-                        secondaryAction.icon
-                      )
-                    }
-                    onClick={secondaryAction.onClick}
-                    disabled={
-                      secondaryAction.disabled || secondaryAction.isLoading
-                    }
-                    sx={{
-                      borderRadius: 2,
-                      px: { sm: 2, md: 3 },
-                      py: 1,
-                      fontWeight: 600,
-                      whiteSpace: 'nowrap',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    {secondaryAction.label}
-                  </Button>
-                )}
-              </>
-            )}
-
             {primaryAction && (
               <>
-                {isMobile ? (
+                {isTabletOrBelow ? (
                   <Tooltip title={primaryAction.label}>
                     <IconButton
                       id={primaryAction.id}
@@ -495,8 +448,8 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                         bgcolor: 'primary.main',
                         color: 'white',
                         '&:hover': { bgcolor: 'primary.dark' },
-                        width: 40,
-                        height: 40,
+                        width: isMobile ? 36 : 40,
+                        height: isMobile ? 36 : 40,
                         borderRadius: 2,
                       }}
                     >
@@ -507,9 +460,10 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                   <Button
                     id={primaryAction.id}
                     variant="contained"
+                    size="small"
                     startIcon={
                       primaryAction.isLoading ? (
-                        <CircularProgress size={20} color="inherit" />
+                        <CircularProgress size={16} color="inherit" />
                       ) : (
                         primaryAction.icon || <AddIcon />
                       )
@@ -518,11 +472,12 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                     disabled={primaryAction.disabled || primaryAction.isLoading}
                     sx={{
                       borderRadius: 2,
-                      px: { sm: 2, md: 3 },
-                      py: 1,
-                      fontWeight: 600,
-                      whiteSpace: 'nowrap',
+                      height: 36,
+                      px: 1.5,
+                      fontWeight: 700,
+                      fontSize: '0.75rem',
                       textTransform: 'uppercase',
+                      whiteSpace: 'nowrap',
                       bgcolor: 'primary.main',
                       '&:hover': { bgcolor: 'primary.dark' },
                     }}
@@ -532,8 +487,108 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                 )}
               </>
             )}
+
+            {secondaryAction && (
+              <>
+                {isTabletOrBelow ? (
+                  <Tooltip title={secondaryAction.label}>
+                    <IconButton
+                      id={secondaryAction.id}
+                      onClick={secondaryAction.onClick}
+                      disabled={secondaryAction.disabled}
+                      sx={{
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        color: 'text.secondary',
+                        '&:hover': {
+                          bgcolor: alpha(theme.palette.primary.main, 0.08),
+                          borderColor: 'primary.main',
+                          color: 'primary.main',
+                        },
+                        width: isMobile ? 36 : 40,
+                        height: isMobile ? 36 : 40,
+                        borderRadius: 2,
+                      }}
+                    >
+                      {secondaryAction.icon || <AddIcon />}
+                    </IconButton>
+                  </Tooltip>
+                ) : (
+                  <Button
+                    id={secondaryAction.id}
+                    variant="outlined"
+                    size="small"
+                    startIcon={
+                      secondaryAction.isLoading ? (
+                        <CircularProgress size={16} color="inherit" />
+                      ) : (
+                        secondaryAction.icon || <AddIcon />
+                      )
+                    }
+                    onClick={secondaryAction.onClick}
+                    disabled={
+                      secondaryAction.disabled || secondaryAction.isLoading
+                    }
+                    sx={{
+                      borderRadius: 2,
+                      height: 36,
+                      px: 1.5,
+                      fontWeight: 700,
+                      fontSize: '0.75rem',
+                      textTransform: 'uppercase',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {secondaryAction.label}
+                  </Button>
+                )}
+              </>
+            )}
           </Box>
         </Box>
+
+        {/* FILA DE COLAPSO (PARTE INFERIOR) */}
+        {hasFiltersOrSearch && (
+          <Box
+            display="flex"
+            justifyContent="center"
+            sx={{
+              mt: -1,
+              mb: -1, // Compensar el padding del Paper para que el botón esté al límite
+              borderTop: isExpanded ? 'none' : '1px solid',
+              borderColor: 'divider',
+              opacity: 0.5,
+              '&:hover': { opacity: 1 },
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <IconButton
+              size="small"
+              onClick={() => setIsExpanded(!isExpanded)}
+              aria-label={isExpanded ? 'Ocultar filtros' : 'Mostrar filtros'}
+              sx={{
+                p: 0,
+                width: 40,
+                height: 20,
+                borderRadius: '0 0 12px 12px',
+                bgcolor: alpha(theme.palette.background.paper, 0.8),
+                border: '1px solid',
+                borderColor: 'divider',
+                borderTop: 'none',
+                '&:hover': {
+                  bgcolor: alpha(theme.palette.primary.main, 0.05),
+                  color: 'primary.main',
+                },
+              }}
+            >
+              {isExpanded ? (
+                <KeyboardArrowUpIcon sx={{ fontSize: 20 }} />
+              ) : (
+                <KeyboardArrowDownIcon sx={{ fontSize: 20 }} />
+              )}
+            </IconButton>
+          </Box>
+        )}
       </Box>
     </Paper>
   );

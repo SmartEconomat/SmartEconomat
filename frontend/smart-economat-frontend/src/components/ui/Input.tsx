@@ -48,6 +48,11 @@ const Input: React.FC<InputProps> = ({
       autoComplete={autoComplete}
       value={value}
       onChange={onChange}
+      slotProps={{
+        inputLabel: {
+          shrink: true,
+        },
+      }}
       {...props}
     />
   );

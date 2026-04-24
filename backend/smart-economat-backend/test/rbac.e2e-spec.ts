@@ -4,7 +4,7 @@ import { INestApplication } from '@nestjs/common';
 
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import { Permiso } from '../src/modules/permisos/entities/permiso.entity';
+import { Permiso } from '../src/modules/permisos/permiso.entity/permiso.entity';
 import { Usuario } from '../src/modules/usuario/usuario.entity/usuario.entity';
 import { UserStatus } from '../src/modules/usuario/enums/usuario.enums';
 

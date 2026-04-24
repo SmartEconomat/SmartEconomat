@@ -30,6 +30,14 @@ const Checkbox: React.FC<CheckboxProps> = ({ label, ...props }) => {
     <FormControlLabel
       control={<MuiCheckbox color="primary" {...props} />}
       label={label}
+      sx={{
+        width: '100%',
+        ml: -1,
+        my: 0.5,
+        p: 1,
+        '& .MuiTypography-root': { fontSize: '0.94rem' },
+        '&:hover': { bgcolor: 'rgba(0,0,0,0.04)', borderRadius: 1 },
+      }}
     />
   );
 };
