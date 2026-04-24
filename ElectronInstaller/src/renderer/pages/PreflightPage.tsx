@@ -75,49 +75,53 @@ export function PreflightPage({
           Comprobaciones del sistema, Docker, puertos y dependencias TLS.
         </Typography>
 
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={1.5}
-          useFlexGap
-          flexWrap="wrap"
-          justifyContent="center"
-          alignItems="center"
-          sx={{ mb: 2 }}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 1.5,
+            flexWrap: "wrap",
+            mb: 2,
+          }}
         >
           <Button variant="outlined" onClick={onBack}>
-            Volver
+            Atrás
           </Button>
-          <Button
-            variant="contained"
-            disabled={busy}
-            onClick={() => void onRun()}
-          >
-            {busy ? "Validando..." : "Ejecutar preflight"}
-          </Button>
-          <Button
-            variant="contained"
-            color="secondary"
-            disabled={busy || !report || blockersCount === 0}
-            onClick={() => void onAutoRepair()}
-          >
-            {busy
-              ? "Aplicando fixes..."
-              : "Intentar solucionar automáticamente"}
-          </Button>
-          <Button
-            variant="contained"
-            color={blockersCount > 0 ? "warning" : "primary"}
-            disabled={!report}
-            onClick={onContinue}
-            title={
-              blockersCount > 0
-                ? "Continuar con advertencias"
-                : "Continuar al formulario"
-            }
-          >
-            {blockersCount > 0 ? "Continuar con advertencias" : "Continuar"}
-          </Button>
-        </Stack>
+
+          <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
+            <Button
+              variant="contained"
+              disabled={busy}
+              onClick={() => void onRun()}
+            >
+              {busy ? "Validando..." : "Ejecutar preflight"}
+            </Button>
+            <Button
+              variant="contained"
+              color="secondary"
+              disabled={busy || !report || blockersCount === 0}
+              onClick={() => void onAutoRepair()}
+            >
+              {busy
+                ? "Aplicando fixes..."
+                : "Intentar solucionar automáticamente"}
+            </Button>
+            <Button
+              variant="contained"
+              color={blockersCount > 0 ? "warning" : "primary"}
+              disabled={!report}
+              onClick={onContinue}
+              title={
+                blockersCount > 0
+                  ? "Continuar con advertencias"
+                  : "Continuar al formulario"
+              }
+            >
+              {blockersCount > 0 ? "Continuar con advertencias" : "Continuar"}
+            </Button>
+          </Stack>
+        </Box>
       </Box>
 
       {busy && runtimeLogs.length > 0 && (

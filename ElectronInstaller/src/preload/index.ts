@@ -18,6 +18,7 @@ import type {
   RestorePayload,
   RuntimePaths,
   ServiceHealth,
+  SupervisorSnapshot,
   TailLogsPayload,
   UninstallPayload,
 } from "@shared/contracts";
@@ -215,6 +216,11 @@ contextBridge.exposeInMainWorld("smartEconomat", {
       IPCChannels.installer.pickFile,
       payload,
     ),
+  testSmtp: (config: Partial<InstallerConfigPayload>) =>
+    invokeWithTracing<Partial<InstallerConfigPayload>, OperationResult<boolean>>(
+      IPCChannels.installer.testSmtp,
+      config,
+    ),
   getInstallerState: () =>
     invokeWithTracing<undefined, OperationResult<InstallerStateSnapshot>>(
       IPCChannels.installer.getState,
@@ -296,6 +302,18 @@ contextBridge.exposeInMainWorld("smartEconomat", {
   getWatchdogStatus: () =>
     invokeWithTracing<undefined, OperationResult<HealthUpdateEvent>>(
       IPCChannels.runtime.getWatchdogStatus,
+    ),
+  getSupervisorSnapshot: () =>
+    invokeWithTracing<undefined, OperationResult<SupervisorSnapshot>>(
+      IPCChannels.runtime.getSupervisorSnapshot,
+    ),
+  restartDockerDesktop: () =>
+    invokeWithTracing<undefined, OperationResult>(
+      IPCChannels.runtime.restartDockerDesktop,
+    ),
+  runSupervisorRecovery: () =>
+    invokeWithTracing<undefined, OperationResult>(
+      IPCChannels.runtime.runSupervisorRecovery,
     ),
   onHealthUpdate: (callback: (event: HealthUpdateEvent) => void) =>
     onChannelEvent(IPCChannels.runtime.healthUpdate, callback),

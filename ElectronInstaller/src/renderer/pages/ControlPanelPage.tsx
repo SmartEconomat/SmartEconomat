@@ -18,17 +18,24 @@ import DeleteSweepRoundedIcon from "@mui/icons-material/DeleteSweepRounded";
 import DeleteForeverRoundedIcon from "@mui/icons-material/DeleteForeverRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
-import type { ServiceHealth, WatchdogStatus } from "@shared/contracts";
+import type {
+  ServiceHealth,
+  SupervisorSnapshot,
+  WatchdogStatus,
+} from "@shared/contracts";
 import { ServiceStatusCard } from "@renderer/components/ServiceStatusCard";
 
 interface ControlPanelPageProps {
   busy: boolean;
   health: ServiceHealth[];
   watchdogStatus: WatchdogStatus | null;
+  supervisorSnapshot: SupervisorSnapshot | null;
   onStart: () => Promise<void>;
   onStop: () => Promise<void>;
   onRestart: () => Promise<void>;
   onRefresh: () => Promise<void>;
+  onRestartDockerDesktop: () => Promise<void>;
+  onRunSupervisorRecovery: () => Promise<void>;
   onStartLogs: (
     service: "frontend" | "backend" | "db" | "redis",
   ) => Promise<void>;
@@ -282,10 +289,13 @@ export function ControlPanelPage({
   busy,
   health,
   watchdogStatus,
+  supervisorSnapshot,
   onStart,
   onStop,
   onRestart,
   onRefresh,
+  onRestartDockerDesktop,
+  onRunSupervisorRecovery,
   onStartLogs,
   onStopLogs,
   onDiagnostics,
@@ -345,6 +355,21 @@ export function ControlPanelPage({
   ];
 
   const advancedActions: ActionDefinition[] = [
+    {
+      title: "Reparar ahora",
+      description:
+        "Ejecuta de inmediato la recuperación automática del supervisor.",
+      palette: actionPalettes.warning,
+      icon: <RestartAltRoundedIcon fontSize="small" />,
+      onClick: () => void onRunSupervisorRecovery(),
+    },
+    {
+      title: "Reiniciar Docker",
+      description: "Reinicia Docker Desktop y vuelve a verificar el stack.",
+      palette: actionPalettes.info,
+      icon: <RestartAltRoundedIcon fontSize="small" />,
+      onClick: () => void onRestartDockerDesktop(),
+    },
     {
       title: "Detener Logs",
       description: "Cierra cualquier stream activo de logs en tiempo real.",
@@ -557,6 +582,41 @@ export function ControlPanelPage({
               )}
             </Stack>
           </Stack>
+        </Paper>
+      )}
+
+      {supervisorSnapshot && (
+        <Paper
+          variant="outlined"
+          sx={{ p: 2, borderRadius: 3, borderColor: "rgba(148, 163, 184, 0.24)" }}
+        >
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+              Supervisor autónomo
+            </Typography>
+            <Chip
+              size="small"
+              color={
+                supervisorSnapshot.overallState === "healthy"
+                  ? "success"
+                  : supervisorSnapshot.overallState === "recovering"
+                    ? "warning"
+                    : "error"
+              }
+              label={
+                supervisorSnapshot.overallState === "healthy"
+                  ? "Todo correcto"
+                  : supervisorSnapshot.overallState === "recovering"
+                    ? "Recuperando"
+                    : "Error crítico"
+              }
+            />
+          </Stack>
+          <Typography variant="caption" color="text.secondary">
+            Uptime: {Math.floor(supervisorSnapshot.uptimeSeconds / 60)} min ·
+            Última reparación automática:{" "}
+            {supervisorSnapshot.lastAutomaticAction ?? "Sin acciones aún"}
+          </Typography>
         </Paper>
       )}
 

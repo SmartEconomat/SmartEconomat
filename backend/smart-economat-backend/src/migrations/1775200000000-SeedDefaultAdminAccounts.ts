@@ -1,16 +1,7 @@
-import * as bcrypt from 'bcrypt';
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import { ALL_PERMISSION_CODES } from '../common/constants/permissions.constants';
 import { ADMIN_PERMISSION_CODES } from '../common/constants/role-permission-sets.constants';
-import { rolUsuario, UserStatus } from '../modules/usuario/enums/usuario.enums';
-
-type DefaultUserSeed = {
-  username: string;
-  email: string;
-  nombre: string;
-  rol: rolUsuario;
-  tempPassword: string;
-};
+import { rolUsuario } from '../modules/usuario/enums/usuario.enums';
 
 type PermissionSeed = {
   codigo: string;
@@ -21,69 +12,6 @@ type PermissionSeed = {
 };
 
 const MIGRATION_TAG = '[MIGRACION_DEFAULT_ADMINS_20260403]';
-const providedLegacyTempPassword =
-  process.env.SEED_DEFAULT_ADMIN_TEMP_PASSWORD?.trim() || '';
-const providedAdminTempPassword =
-  process.env.SEED_DEFAULT_ADMIN_USER_TEMP_PASSWORD?.trim() || '';
-const providedSuperAdminTempPassword =
-  process.env.SEED_DEFAULT_SUPERADMIN_TEMP_PASSWORD?.trim() || '';
-const providedAdminUsername =
-  process.env.SEED_DEFAULT_ADMIN_USERNAME?.trim() ||
-  process.env.ADMIN_USERNAME?.trim() ||
-  'admin';
-const providedSuperAdminUsername =
-  process.env.SEED_DEFAULT_SUPERADMIN_USERNAME?.trim() || 'superadmin';
-const isProductionEnv = process.env.NODE_ENV === 'production';
-const hasAnyProvidedTempPassword =
-  providedLegacyTempPassword.length > 0 ||
-  providedAdminTempPassword.length > 0 ||
-  providedSuperAdminTempPassword.length > 0;
-
-if (isProductionEnv && !hasAnyProvidedTempPassword) {
-  throw new Error(
-    `${MIGRATION_TAG} En produccion debes definir credenciales temporales para admin/superadmin (SEED_DEFAULT_ADMIN_TEMP_PASSWORD legacy o variables dedicadas).`
-  );
-}
-
-if (
-  providedAdminUsername.toLowerCase() ===
-  providedSuperAdminUsername.toLowerCase()
-) {
-  throw new Error(
-    `${MIGRATION_TAG} Los usernames de admin y superadmin no pueden coincidir.`
-  );
-}
-
-const DEFAULT_ADMIN_TEMP_PASSWORD =
-  providedAdminTempPassword.length > 0
-    ? providedAdminTempPassword
-    : providedLegacyTempPassword.length > 0
-      ? providedLegacyTempPassword
-      : 'SmartEconomat2026!';
-
-const DEFAULT_SUPERADMIN_TEMP_PASSWORD =
-  providedSuperAdminTempPassword.length > 0
-    ? providedSuperAdminTempPassword
-    : providedLegacyTempPassword.length > 0
-      ? providedLegacyTempPassword
-      : 'SmartEconomat2026!';
-
-const DEFAULT_USERS: readonly DefaultUserSeed[] = [
-  {
-    username: providedSuperAdminUsername,
-    email: 'superadmin@smarteconomat.com',
-    nombre: 'Super Administrador',
-    rol: rolUsuario.SUPER_ADMIN,
-    tempPassword: DEFAULT_SUPERADMIN_TEMP_PASSWORD,
-  },
-  {
-    username: providedAdminUsername,
-    email: 'admin@smarteconomat.com',
-    nombre: 'Administrador Principal',
-    rol: rolUsuario.ADMIN,
-    tempPassword: DEFAULT_ADMIN_TEMP_PASSWORD,
-  },
-];
 
 export class SeedDefaultAdminAccounts1775200000000 implements MigrationInterface {
   public name = 'SeedDefaultAdminAccounts1775200000000';
@@ -101,28 +29,6 @@ export class SeedDefaultAdminAccounts1775200000000 implements MigrationInterface
       roleIdByName,
       permissionIdByCode
     );
-
-    for (const seedUser of DEFAULT_USERS) {
-      const roleId = roleIdByName.get(seedUser.rol);
-      if (!roleId) {
-        throw new Error(
-          `${MIGRATION_TAG} No se encontró el rol requerido ${seedUser.rol}`
-        );
-      }
-
-      const hashedTemporaryPassword = await bcrypt.hash(
-        seedUser.tempPassword,
-        10
-      );
-
-      const userId = await this.upsertDefaultUser(
-        queryRunner,
-        seedUser,
-        hashedTemporaryPassword
-      );
-
-      await this.ensureUserRoleAssignments(queryRunner, userId, roleId);
-    }
   }
 
   public down(queryRunner: QueryRunner): Promise<void> {
@@ -304,116 +210,5 @@ export class SeedDefaultAdminAccounts1775200000000 implements MigrationInterface
         );
       }
     }
-  }
-
-  private async upsertDefaultUser(
-    queryRunner: QueryRunner,
-    seedUser: DefaultUserSeed,
-    hashedTemporaryPassword: string
-  ): Promise<string> {
-    const existingRows = (await queryRunner.query(
-      `SELECT "id"
-       FROM "usuario"
-       WHERE "email" = $1 OR "username" = $2
-       ORDER BY "created_at" ASC
-       LIMIT 1`,
-      [seedUser.email, seedUser.username]
-    )) as Array<{ id?: string }>;
-
-    const existingUserId = this.normalizeId(existingRows[0]?.id);
-
-    if (existingUserId) {
-      await queryRunner.query(
-        `UPDATE "usuario"
-         SET "nombre" = $1,
-             "username" = $2,
-             "email" = $3,
-             "password" = $4,
-             "rol" = $5,
-             "status" = $6,
-             "activo" = TRUE,
-             "must_change_password" = TRUE,
-             "resetPasswordOtp" = NULL,
-             "resetPasswordOtpExpires" = NULL,
-             "deleted_at" = NULL,
-             "deleted_by" = NULL,
-             "updated_at" = NOW()
-         WHERE "id" = $7`,
-        [
-          seedUser.nombre,
-          seedUser.username,
-          seedUser.email,
-          hashedTemporaryPassword,
-          seedUser.rol,
-          UserStatus.ACTIVE,
-          existingUserId,
-        ]
-      );
-
-      return existingUserId;
-    }
-
-    const insertedRows = (await queryRunner.query(
-      `INSERT INTO "usuario" (
-        "nombre",
-        "username",
-        "password",
-        "email",
-        "rol",
-        "status",
-        "must_change_password",
-        "activo",
-        "resetPasswordOtp",
-        "resetPasswordOtpExpires"
-      ) VALUES ($1, $2, $3, $4, $5, $6, TRUE, TRUE, NULL, NULL)
-      RETURNING "id"`,
-      [
-        seedUser.nombre,
-        seedUser.username,
-        hashedTemporaryPassword,
-        seedUser.email,
-        seedUser.rol,
-        UserStatus.ACTIVE,
-      ]
-    )) as Array<{ id?: string }>;
-
-    const insertedUserId = this.normalizeId(insertedRows[0]?.id);
-    if (!insertedUserId) {
-      throw new Error(
-        `${MIGRATION_TAG} No se pudo crear el usuario ${seedUser.username}`
-      );
-    }
-
-    return insertedUserId;
-  }
-
-  private async ensureUserRoleAssignments(
-    queryRunner: QueryRunner,
-    userId: string,
-    roleId: string
-  ): Promise<void> {
-    await queryRunner.query(
-      `DELETE FROM "usuario_rol"
-       WHERE "usuario_id" = $1
-         AND "rol_id" <> $2`,
-      [userId, roleId]
-    );
-
-    await queryRunner.query(
-      `INSERT INTO "usuario_rol" (
-        "usuario_id",
-        "rol_id",
-        "activo"
-      ) VALUES ($1, $2, TRUE)
-      ON CONFLICT ("usuario_id", "rol_id") DO UPDATE
-      SET "activo" = TRUE`,
-      [userId, roleId]
-    );
-
-    await queryRunner.query(
-      `DELETE FROM "usuario_permiso_excluido"
-       WHERE "usuario_id" = $1`,
-      [userId]
-    );
   }
 }

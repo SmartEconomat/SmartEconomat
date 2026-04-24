@@ -12,6 +12,7 @@ import type {
   PrunePayload,
   RestorePayload,
   RuntimePaths,
+  SupervisorSnapshot,
   TailLogsPayload,
   UninstallPayload,
 } from "@shared/contracts";
@@ -336,6 +337,63 @@ export class RuntimeIPC {
           message: "Estado del watchdog obtenido.",
           data: this.bootGuardian.getStatus(),
         };
+      },
+    );
+
+    registerIpcHandleWithDebug(
+      this.debugLogService,
+      IPCChannels.runtime.getSupervisorSnapshot,
+      async (): Promise<OperationResult<SupervisorSnapshot>> => {
+        if (!this.bootGuardian) {
+          return {
+            ok: false,
+            message: "Boot Guardian no está activo.",
+            errorCode: "GUARDIAN_NOT_ACTIVE",
+          };
+        }
+        return {
+          ok: true,
+          message: "Snapshot del supervisor obtenido.",
+          data: this.bootGuardian.getSupervisorSnapshot(),
+        };
+      },
+    );
+
+    registerIpcHandleWithDebug(
+      this.debugLogService,
+      IPCChannels.runtime.restartDockerDesktop,
+      async (): Promise<OperationResult> => {
+        if (!this.bootGuardian) {
+          return {
+            ok: false,
+            message: "Boot Guardian no está activo.",
+            errorCode: "GUARDIAN_NOT_ACTIVE",
+          };
+        }
+        const restarted = await this.bootGuardian.restartDockerDesktopNow();
+        return restarted
+          ? { ok: true, message: "Docker Desktop reiniciado correctamente." }
+          : {
+              ok: false,
+              message: "No fue posible reiniciar Docker Desktop.",
+              errorCode: "DOCKER_RESTART_FAILED",
+            };
+      },
+    );
+
+    registerIpcHandleWithDebug(
+      this.debugLogService,
+      IPCChannels.runtime.runSupervisorRecovery,
+      async (): Promise<OperationResult> => {
+        if (!this.bootGuardian) {
+          return {
+            ok: false,
+            message: "Boot Guardian no está activo.",
+            errorCode: "GUARDIAN_NOT_ACTIVE",
+          };
+        }
+        await this.bootGuardian.runRecoveryNow();
+        return { ok: true, message: "Recuperación manual ejecutada." };
       },
     );
   }

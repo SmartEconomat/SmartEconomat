@@ -121,6 +121,12 @@ export function ConfigPage({
     config.adminUsername.trim().toLowerCase() ===
       config.superAdminUsername.trim().toLowerCase();
 
+  const emailCollision =
+    config.adminEmail?.trim() &&
+    config.superAdminEmail?.trim() &&
+    config.adminEmail.trim().toLowerCase() ===
+      config.superAdminEmail.trim().toLowerCase();
+
   const certModeIncomplete =
     config.tlsProvider === "custom" &&
     (!config.customCertFullchainPath?.trim() ||
@@ -143,6 +149,7 @@ export function ConfigPage({
   const canContinue =
     !busy &&
     !usernameCollision &&
+    !emailCollision &&
     !certModeIncomplete &&
     !passwordMismatch &&
     !scheduleTimeInvalid &&
@@ -697,6 +704,20 @@ export function ConfigPage({
                       }}
                     />
                   </Box>
+                  <Box>
+                    <FieldLabel label="Email admin (opcional)" tooltip="Email para recuperación de contraseña del administrador principal." />
+                    <TextField
+                      fullWidth
+                      placeholder="admin@ejemplo.com"
+                      value={config.adminEmail ?? ""}
+                      onChange={(event) =>
+                        onChange({
+                          ...config,
+                          adminEmail: event.target.value,
+                        })
+                      }
+                    />
+                  </Box>
                 </Stack>
               </Paper>
 
@@ -754,6 +775,20 @@ export function ConfigPage({
                       }}
                     />
                   </Box>
+                  <Box>
+                    <FieldLabel label="Email superadmin (opcional)" tooltip="Email para recuperación de contraseña del super administrador." />
+                    <TextField
+                      fullWidth
+                      placeholder="superadmin@ejemplo.com"
+                      value={config.superAdminEmail ?? ""}
+                      onChange={(event) =>
+                        onChange({
+                          ...config,
+                          superAdminEmail: event.target.value,
+                        })
+                      }
+                    />
+                  </Box>
                 </Stack>
               </Paper>
             </Box>
@@ -778,9 +813,23 @@ export function ConfigPage({
               usuarios que crea la migración inicial de la aplicación.
             </Typography>
 
+            {(!config.adminEmail?.trim() || !config.superAdminEmail?.trim()) && (
+              <Alert severity="info" sx={{ mt: 2 }}>
+                <Typography variant="body2">
+                  <strong>⚠️ Advertencia:</strong> Si no configuras los correos electrónicos, no será posible recuperar la contraseña por email. En ese caso, la única alternativa será que otro usuario con permisos de administrador acceda y establezca una contraseña temporal.
+                </Typography>
+              </Alert>
+            )}
+
             {usernameCollision ? (
               <Alert severity="error" sx={{ mt: 1.5 }}>
                 Los usuarios admin y superadmin deben ser distintos.
+              </Alert>
+            ) : null}
+
+            {emailCollision ? (
+              <Alert severity="error" sx={{ mt: 1.5 }}>
+                Los correos electrónicos de admin y superadmin deben ser distintos si se proporcionan.
               </Alert>
             ) : null}
           </Paper>
@@ -1168,33 +1217,53 @@ export function ConfigPage({
         </Alert>
       ) : null}
 
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={1.5}
-        sx={{ mt: 2.25 }}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 1.5,
+          mt: 2.25,
+        }}
       >
         <Button variant="outlined" disabled={busy} onClick={onBack}>
-          Volver
+          Atrás
         </Button>
-        <Button
-          variant="contained"
-          disabled={!canContinue}
-          onClick={onContinue}
-          sx={{
-            backgroundColor: "primary.main",
-            color: "common.white",
-            fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: 0.4,
-            px: 2.5,
-            "&:hover": {
-              backgroundColor: "#b90043",
-            },
-          }}
+        <Tooltip
+          title={
+            config.installMode === "new" && !newInstallConfirmed
+              ? "Debes marcar el checkbox de confirmación para continuar con la instalación nueva."
+              : certModeIncomplete
+                ? "Debes seleccionar los archivos de certificado TLS para continuar."
+                : ""
+          }
+          arrow
+          disableHoverListener={canContinue}
+          disableFocusListener={canContinue}
+          disableTouchListener={canContinue}
         >
-          IR A DESPLIEGUE
-        </Button>
-      </Stack>
+          <span>
+            <Button
+              variant="contained"
+              disabled={!canContinue}
+              onClick={onContinue}
+              sx={{
+                backgroundColor: "primary.main",
+                color: "common.white",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: 0.4,
+                px: 2.5,
+                "&:hover": {
+                  backgroundColor: "#b90043",
+                },
+              }}
+            >
+              Continuar
+            </Button>
+          </span>
+        </Tooltip>
+      </Box>
 
       <Typography
         variant="caption"

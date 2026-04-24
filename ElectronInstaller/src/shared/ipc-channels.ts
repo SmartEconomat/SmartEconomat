@@ -7,6 +7,7 @@ export const IPCChannels = {
     getState: "installer:get-state",
     getBootState: "installer:get-boot-state",
     pickFile: "installer:pick-file",
+    testSmtp: "installer:test-smtp",
     progressEvent: "installer:progress-event",
   },
   runtime: {
@@ -28,6 +29,9 @@ export const IPCChannels = {
     setDockerAutostart: "runtime:set-docker-autostart",
     healthUpdate: "runtime:health-update",
     getWatchdogStatus: "runtime:get-watchdog-status",
+    getSupervisorSnapshot: "runtime:get-supervisor-snapshot",
+    restartDockerDesktop: "runtime:restart-docker-desktop",
+    runSupervisorRecovery: "runtime:run-supervisor-recovery",
   },
   debug: {
     rendererLog: "debug:renderer-log",

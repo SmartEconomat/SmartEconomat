@@ -335,6 +335,38 @@ async function applySchemaAlignment(dataSource) {
   console.log('[prod-bootstrap-runner] Alineacion de esquema completada.');
 }
 
+async function runSeederIfEnabled() {
+  const enabled = parseBooleanEnv(process.env.RUN_BOOTSTRAP_SEEDER, false);
+  if (!enabled) {
+    return;
+  }
+
+  console.log(
+    '[prod-bootstrap-runner] RUN_BOOTSTRAP_SEEDER=true. Iniciando siembra automatica de administradores...'
+  );
+
+  const { spawnSync } = require('node:child_process');
+  const seederPath = resolve(
+    process.cwd(),
+    'scripts/bootstrap-admin-users-runner.js'
+  );
+
+  const result = spawnSync('node', [seederPath, '--force-production'], {
+    stdio: 'inherit',
+    env: process.env,
+  });
+
+  if (result.status !== 0) {
+    console.error(
+      `[prod-bootstrap-runner] El seeder de administradores fallo con codigo ${result.status}`
+    );
+  } else {
+    console.log(
+      '[prod-bootstrap-runner] Siembra de administradores completada.'
+    );
+  }
+}
+
 async function runBootstrap() {
   const cwd = process.cwd();
   const dataSource = getDistDataSource(cwd);
@@ -349,6 +381,8 @@ async function runBootstrap() {
       await dataSource.destroy();
     }
   }
+
+  await runSeederIfEnabled();
 }
 
 async function main() {
@@ -393,7 +427,10 @@ async function main() {
     });
 
     child.on('error', (error) => {
-      console.error('[prod-bootstrap-runner] Error ejecutando aplicación:', error);
+      console.error(
+        '[prod-bootstrap-runner] Error ejecutando aplicación:',
+        error
+      );
       process.exit(1);
     });
 

@@ -5,10 +5,13 @@ import { fileURLToPath } from "node:url";
 
 const scriptPath = fileURLToPath(import.meta.url);
 const rootDir = path.resolve(path.dirname(scriptPath), "..");
-const exePath = path.join(rootDir, "dist", "win-unpacked", "SmartEconomat.exe");
+const exePath =
+  process.env.VERIFY_WIN_EXE_PATH?.trim() ||
+  path.join(rootDir, "dist", "win-unpacked", "SmartEconomat.exe");
 const icoPath = path.join(rootDir, "resources", "icons", "win", "icon.ico");
-const bmpExePath = path.join(rootDir, "dist", "_icon-from-exe.bmp");
-const bmpSrcPath = path.join(rootDir, "dist", "_icon-from-src.bmp");
+const verifyTempDir = path.resolve(rootDir, ".cache", "verify-icon");
+const bmpExePath = path.join(verifyTempDir, "_icon-from-exe.bmp");
+const bmpSrcPath = path.join(verifyTempDir, "_icon-from-src.bmp");
 
 const psScript = [
   "Add-Type -AssemblyName System.Drawing",
@@ -39,6 +42,10 @@ const psScript = [
   "if ($h1 -ne $h2) { Write-Error \"ICON_MISMATCH\"; exit 2 }",
   "Write-Output \"ICON_MATCH\"",
 ].join("; ");
+
+await import("node:fs/promises").then((fs) =>
+  fs.mkdir(verifyTempDir, { recursive: true }),
+);
 
 const result = spawnSync(
   "powershell",

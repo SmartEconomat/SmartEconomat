@@ -1,6 +1,6 @@
 {
   "name": "smarteconomat-installer",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Instalador de SmartEconomat vía Docker",
   "main": "out/main/index.js",
   "type": "module",
@@ -20,7 +20,7 @@
     "test:e2e": "npm run build:app && playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
-    "build:app": "node ./scripts/ensure-win-icons.mjs && electron-vite build",
+    "build:app": "node ./scripts/ensure-win-icons.mjs && node ./scripts/maybe-electron-rebuild.mjs && electron-vite build",
     "build:win": "npm run build:win:fast",
     "build:win:fast": "node ./scripts/build-win-fast-local.mjs",
     "build:win:release": "npm run build:win:fast",
@@ -29,6 +29,7 @@
     "sign:win:artifact": "node ./scripts/sign-windows-artifact.mjs",
     "verify:win:signature": "node ./scripts/verify-win-signature.mjs",
     "verify:win:icon": "node ./scripts/verify-win-exe-icon.mjs",
+    "build:win:cleanup": "node ./scripts/kill-stuck-builds.mjs",
     "build:windows-from-linux": "node ./scripts/build-windows-from-linux.mjs",
     "build:win:linux": "npm run build:windows-from-linux",
     "build:mac": "node ./scripts/build-mac-safe.mjs",
@@ -36,6 +37,8 @@
     "pack": "npm run build:app && electron-builder --dir",
     "build": "npm run build:app && node ./scripts/build-current-platform.mjs",
     "validate:env-template": "node ./scripts/validate-env-template.mjs",
+    "fix:local-hosts": "node ./scripts/fix-local-hosts.mjs",
+    "validate:local-domain": "node ./scripts/validate-local-domain.mjs",
     "analyze:artifacts": "node ./scripts/analyze-artifacts.mjs"
   },
   "author": "SmartEconomat",
@@ -49,6 +52,7 @@
     "ajv-formats": "^3.0.1",
     "dayjs": "^1.11.19",
     "electron-log": "^5.4.3",
+    "nodemailer": "^8.0.5",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "selfsigned": "^2.4.1",
@@ -58,6 +62,7 @@
     "@eslint/js": "^9.39.1",
     "@playwright/test": "^1.59.1",
     "@types/node": "^22.18.12",
+    "@types/nodemailer": "^8.0.0",
     "@types/react": "^19.2.13",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react-swc": "^4.3.0",
@@ -86,7 +91,7 @@
     "appId": "com.smarteconomat.installer",
     "productName": "SmartEconomat",
     "buildDependenciesFromSource": false,
-    "compression": "normal",
+    "compression": "store",
     "asar": true,
     "asarUnpack": [
       "out/preload/**/*"
@@ -139,6 +144,9 @@
       "installerIcon": "resources/icons/nsis/installer.ico",
       "uninstallerIcon": "resources/icons/nsis/uninstaller.ico",
       "installerHeaderIcon": "resources/icons/nsis/installer.ico",
+      "installerHeader": "resources/icons/nsis/installerHeader.bmp",
+      "installerSidebar": "resources/icons/nsis/installerSidebar.bmp",
+      "uninstallerSidebar": "resources/icons/nsis/uninstallerSidebar.bmp",
       "runAfterFinish": true,
       "include": "resources/nsis/installer-hooks.nsh"
     },
@@ -197,55 +205,30 @@
         ]
       },
       {
-        "from": "../backend",
-        "to": "project/backend",
+        "from": "../backend/smart-economat-backend",
+        "to": "project/backend/smart-economat-backend",
         "filter": [
-          "**/*",
-          "!**/*.map",
-          "!**/*.md",
-          "!**/node_modules/**",
-          "!**/test/**",
-          "!**/tests/**",
-          "!**/__tests__/**",
-          "!**/*.spec.*",
-          "!**/*.test.*",
-          "!**/coverage/**",
-          "!**/.cache/**",
-          "!**/.next/**",
-          "!**/.turbo/**",
-          "!**/logs/**",
-          "!**/.git/**",
-          "!**/.github/**"
+          "dist/**/*",
+          "scripts/**/*",
+          "package.json",
+          "package-lock.json",
+          "src/i18n/**/*",
+          "src/seeders/datos-base-economato/**/*",
+          "!**/*.map"
         ]
       },
       {
-        "from": "../backend/smart-economat-backend/dist",
-        "to": "project/backend/smart-economat-backend/dist"
-      },
-      {
-        "from": "../frontend",
-        "to": "project/frontend",
+        "from": "../frontend/smart-economat-frontend",
+        "to": "project/frontend/smart-economat-frontend",
         "filter": [
-          "**/*",
-          "!**/*.map",
-          "!**/*.md",
-          "!**/test/**",
-          "!**/tests/**",
-          "!**/__tests__/**",
-          "!**/*.spec.*",
-          "!**/*.test.*",
-          "!**/node_modules/**",
-          "!**/coverage/**",
-          "!**/.cache/**",
-          "!**/.next/**",
-          "!**/.turbo/**",
-          "!**/.git/**",
-          "!**/.github/**"
+          "build/**/*",
+          "nginx.conf",
+          "nginx-http.conf",
+          "docker-entrypoint.d/**/*",
+          "package.json",
+          "package-lock.json",
+          "!**/*.map"
         ]
-      },
-      {
-        "from": "../frontend/smart-economat-frontend/build",
-        "to": "project/frontend/smart-economat-frontend/build"
       },
       {
         "from": "../database",

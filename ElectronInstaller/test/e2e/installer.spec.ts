@@ -90,6 +90,11 @@ test.describe("SmartEconomat Installer E2E", () => {
           message: "AutoRepair OK",
           data: preflightReport,
         }),
+        testSmtp: async () => ({
+          ok: true,
+          message: "Mocked SMTP",
+          data: true,
+        }),
         releaseBusyPort: async () => ({
           ok: true,
           message: "Puerto liberado",
@@ -271,6 +276,25 @@ test.describe("SmartEconomat Installer E2E", () => {
             },
             timestamp: new Date().toISOString(),
           },
+        }),
+        getSupervisorSnapshot: async () => ({
+          ok: true,
+          message: "Supervisor snapshot",
+          data: {
+            overallState: "healthy" as const,
+            checks: [],
+            lastAutomaticActionAt: null,
+            lastAutomaticAction: null,
+            uptimeSeconds: 120,
+          },
+        }),
+        restartDockerDesktop: async () => ({
+          ok: true,
+          message: "Docker reiniciado",
+        }),
+        runSupervisorRecovery: async () => ({
+          ok: true,
+          message: "Recuperación ejecutada",
         }),
         onHealthUpdate: () => () => {},
       };

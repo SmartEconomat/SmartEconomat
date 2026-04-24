@@ -37,6 +37,7 @@ export class TLSService {
 
     return this.certificateService.ensureLocalCertificates(runtimePath, {
       overwrite: true,
+      domain: config.localHost,
     });
   }
 

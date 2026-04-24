@@ -9,6 +9,11 @@ const rootDir = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   main: {
     plugins: [externalizeDepsPlugin()],
+    build: {
+      sourcemap: false,
+      minify: true,
+      reportCompressedSize: false,
+    },
     resolve: {
       alias: {
         "@main": path.resolve(rootDir, "src/main"),
@@ -18,6 +23,11 @@ export default defineConfig({
   },
   preload: {
     plugins: [externalizeDepsPlugin()],
+    build: {
+      sourcemap: false,
+      minify: true,
+      reportCompressedSize: false,
+    },
     resolve: {
       alias: {
         "@preload": path.resolve(rootDir, "src/preload"),
@@ -27,7 +37,12 @@ export default defineConfig({
   },
   renderer: {
     root: path.resolve(rootDir, "src/renderer"),
+    cacheDir: path.resolve(rootDir, "node_modules/.vite/electron-renderer"),
     plugins: [react()],
+    build: {
+      sourcemap: false,
+      reportCompressedSize: false,
+    },
     resolve: {
       alias: {
         "@renderer": path.resolve(rootDir, "src/renderer"),

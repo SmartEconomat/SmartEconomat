@@ -9,6 +9,7 @@ import type {
   PreflightReport,
   RuntimeLogEvent,
   ServiceHealth,
+  SupervisorSnapshot,
   WatchdogStatus,
 } from "@shared/contracts";
 
@@ -16,6 +17,7 @@ export type WizardStep =
   | "welcome"
   | "preflight"
   | "config"
+  | "smtp"
   | "deploy"
   | "finish"
   | "control";
@@ -49,6 +51,12 @@ const defaultConfig: InstallerConfigPayload = {
   startupRunMigrations: true,
   httpPort: 80,
   httpsPort: 443,
+  smtpHost: "",
+  smtpPort: "",
+  smtpUser: "",
+  smtpPass: "",
+  smtpFrom: "",
+  smtpSecure: false,
 };
 
 type SmartEconomatBridge = Window["smartEconomat"];
@@ -56,6 +64,7 @@ type SmartEconomatBridge = Window["smartEconomat"];
 const BRIDGE_UNAVAILABLE_ERROR =
   "No se pudo conectar con el bridge de Electron. Reinicia el instalador.";
 const BACKUP_DEFAULT_DIR_STORAGE_KEY = "installer.backupDefaultDirectory";
+const INSTALL_TIMEOUT_MS = 12 * 60 * 1000;
 
 function resolveRuntimeBackupDirectory(runtimePath: string): string {
   return `${runtimePath}/backups`;
@@ -107,8 +116,11 @@ export function useInstallerFlow() {
   const [installerState, setInstallerState] =
     useState<InstallerStateSnapshot | null>(null);
   const [health, setHealth] = useState<ServiceHealth[]>([]);
-  const [watchdogStatus, setWatchdogStatus] =
-    useState<WatchdogStatus | null>(null);
+  const [watchdogStatus, setWatchdogStatus] = useState<WatchdogStatus | null>(
+    null,
+  );
+  const [supervisorSnapshot, setSupervisorSnapshot] =
+    useState<SupervisorSnapshot | null>(null);
   const [logs, setLogs] = useState<RuntimeLogEvent[]>([]);
   const [lastBackup, setLastBackup] = useState<BackupMetadata | null>(null);
   const [backupDefaultDirectory, setBackupDefaultDirectoryState] = useState(
@@ -377,7 +389,18 @@ export function useInstallerFlow() {
     }
 
     try {
-      const result = await bridge.startInstallation(config);
+      const result = (await Promise.race([
+        bridge.startInstallation(config),
+        new Promise<never>((_resolve, reject) => {
+          setTimeout(() => {
+            reject(
+              new Error(
+                "La instalación tardó demasiado. Puedes reintentar sin cerrar la aplicación.",
+              ),
+            );
+          }, INSTALL_TIMEOUT_MS);
+        }),
+      ])) as Awaited<ReturnType<SmartEconomatBridge["startInstallation"]>>;
       setBusy(false);
 
       if (!result.ok || !result.data) {
@@ -409,6 +432,42 @@ export function useInstallerFlow() {
     if (result.ok && result.data) {
       setHealth(result.data);
     }
+    const snapshotResult = await bridge.getSupervisorSnapshot();
+    if (snapshotResult.ok && snapshotResult.data) {
+      setSupervisorSnapshot(snapshotResult.data);
+    }
+  }
+
+  async function restartDockerDesktop(): Promise<void> {
+    setBusy(true);
+    setError(null);
+    const bridge = requireBridge(true);
+    if (!bridge) {
+      return;
+    }
+    const result = await bridge.restartDockerDesktop();
+    setBusy(false);
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+    await refreshHealth();
+  }
+
+  async function runSupervisorRecovery(): Promise<void> {
+    setBusy(true);
+    setError(null);
+    const bridge = requireBridge(true);
+    if (!bridge) {
+      return;
+    }
+    const result = await bridge.runSupervisorRecovery();
+    setBusy(false);
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+    await refreshHealth();
   }
 
   async function startStack(): Promise<void> {
@@ -718,6 +777,7 @@ export function useInstallerFlow() {
     blockersCount,
     health,
     watchdogStatus,
+    supervisorSnapshot,
     logs,
     busy,
     error,
@@ -730,6 +790,8 @@ export function useInstallerFlow() {
     closeBusyPort,
     startInstallation,
     refreshHealth,
+    restartDockerDesktop,
+    runSupervisorRecovery,
     startStack,
     stopStack,
     restartStack,

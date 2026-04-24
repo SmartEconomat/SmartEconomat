@@ -223,7 +223,7 @@ export function DeployPage({
             sx={{ height: 9, borderRadius: 999 }}
           />
           <Typography variant="caption" color="text.secondary">
-            {state?.state === "DONE"
+            {state?.state === "DONE" || state?.state === "DONE_WITH_WARNINGS"
               ? "Instalación validada; puedes continuar al panel de control"
               : "Instalando dependencias, configurando entorno y verificando salud del sistema"}
           </Typography>
@@ -284,7 +284,8 @@ export function DeployPage({
               <Typography variant="body2" color="text.secondary">
                 {nextPhase
                   ? `${nextPhase.title}: ${nextPhase.detail}`
-                  : state?.state === "DONE"
+                  : state?.state === "DONE" ||
+                      state?.state === "DONE_WITH_WARNINGS"
                     ? "No quedan pasos. La instalación ya terminó."
                     : "Aún no se ha iniciado el flujo."}
               </Typography>
@@ -432,13 +433,17 @@ export function DeployPage({
         </Box>
       </Paper>
 
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={1.5}
-        sx={{ mt: 0.5 }}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 1.5,
+          mt: 0.5,
+        }}
       >
         <Button variant="outlined" disabled={busy} onClick={onBack}>
-          VOLVER
+          Atrás
         </Button>
         <Button
           variant="contained"
@@ -455,7 +460,7 @@ export function DeployPage({
             "Iniciar instalación"
           )}
         </Button>
-      </Stack>
+      </Box>
     </Box>
   );
 }

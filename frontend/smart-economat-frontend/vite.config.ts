@@ -133,9 +133,11 @@ function getManualChunk(id: string): string | undefined {
 
 export default defineConfig(() => {
   return {
-    cacheDir: '/tmp/.vite-smarteconomat',
+    cacheDir: 'node_modules/.vite/frontend',
     build: {
       outDir: 'build',
+      sourcemap: false,
+      reportCompressedSize: false,
       rollupOptions: {
         output: {
           manualChunks: getManualChunk,

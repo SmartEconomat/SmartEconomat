@@ -13,7 +13,8 @@ export function FinishPage({
   onOpenPanel,
   onRestart,
 }: FinishPageProps) {
-  const isSuccess = snapshot?.state === "DONE";
+  const isSuccess =
+    snapshot?.state === "DONE" || snapshot?.state === "DONE_WITH_WARNINGS";
 
   return (
     <Box

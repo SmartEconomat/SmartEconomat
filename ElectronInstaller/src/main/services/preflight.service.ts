@@ -3,12 +3,14 @@ import path from "node:path";
 
 import type {
   CommandResult,
+  DockerRuntimeStatus,
   OperationResult,
   PortRepairPayload,
   PreflightCheck,
   PreflightReport,
 } from "@shared/contracts";
 
+import { DockerReadinessService } from "./docker-readiness.service";
 import { OSDetectorService } from "./os-detector.service";
 import { ProcessRunnerService } from "./process-runner.service";
 
@@ -115,6 +117,7 @@ export class PreflightService {
   constructor(
     private readonly osDetector = new OSDetectorService(),
     private readonly processRunner = new ProcessRunnerService(),
+    private readonly dockerReadiness = new DockerReadinessService(),
   ) {}
 
   setLogCallback(callback: (message: string) => void): void {
@@ -350,6 +353,13 @@ export class PreflightService {
     const checks: PreflightCheck[] = [];
     const dockerDesktopChecks: PreflightCheck[] = [];
 
+    const runtimeProbe = await this.dockerReadiness.probe({
+      source: "preflight",
+      timeoutMs: 12_000,
+    });
+
+    checks.push(this.buildDockerRuntimeStateCheck(runtimeProbe));
+
     if (process.platform === "win32") {
       dockerDesktopChecks.push(await this.checkWsl2());
       dockerDesktopChecks.push(await this.checkDockerDesktopInstalled());
@@ -426,6 +436,47 @@ export class PreflightService {
     }
 
     return [...checks, ...dockerChecks];
+  }
+
+  private buildDockerRuntimeStateCheck(
+    runtimeProbe: DockerRuntimeStatus,
+  ): PreflightCheck {
+    const statusByState: Record<DockerRuntimeStatus["state"], PreflightCheck["status"]> = {
+      "not-installed": "BLOCKER",
+      "desktop-not-running": process.platform === "win32" ? "BLOCKER" : "WARN",
+      "daemon-starting": "WARN",
+      "daemon-ready": "OK",
+      "daemon-error": "BLOCKER",
+      "compose-error": "BLOCKER",
+      "recovery-in-progress": "WARN",
+    };
+
+    const recommendationByState: Record<DockerRuntimeStatus["state"], string | undefined> = {
+      "not-installed": "Instala Docker Desktop (Windows/macOS) o Docker Engine (Linux) antes de continuar.",
+      "desktop-not-running": "Inicia Docker Desktop o ejecuta Auto-repair para abrirlo automáticamente.",
+      "daemon-starting": "Docker está iniciando. Espera unos segundos y reintenta preflight.",
+      "daemon-ready": undefined,
+      "daemon-error": "Revisa Docker Desktop/Engine y vuelve a ejecutar preflight. Si persiste, consulta diagnósticos.",
+      "compose-error": "Revisa docker compose y los artefactos del runtime antes de continuar.",
+      "recovery-in-progress": "El sistema está recuperando Docker. Reintenta al finalizar.",
+    };
+
+    return {
+      id: "docker-runtime-state",
+      label: "Estado runtime de Docker",
+      status: statusByState[runtimeProbe.state],
+      detail: runtimeProbe.detail,
+      recommendation: recommendationByState[runtimeProbe.state],
+      repairable:
+        runtimeProbe.state === "desktop-not-running" ||
+        runtimeProbe.state === "daemon-starting" ||
+        runtimeProbe.state === "daemon-error",
+      repairAction:
+        runtimeProbe.state === "daemon-ready" ||
+        runtimeProbe.state === "not-installed"
+          ? undefined
+          : "auto-repair",
+    };
   }
 
   private async runWithTimeoutRetry(input: {

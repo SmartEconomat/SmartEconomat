@@ -11,6 +11,7 @@ import { DeployPage } from "@renderer/pages/DeployPage";
 import { FinishPage } from "@renderer/pages/FinishPage";
 import { PreflightPage } from "@renderer/pages/PreflightPage";
 import { WelcomePage } from "@renderer/pages/WelcomePage";
+import { SmtpConfigPage } from "@renderer/pages/SmtpConfigPage";
 import BrandLogo from "@renderer/assets/images/SVG/logo-smat-economato.svg";
 
 export function App() {
@@ -230,8 +231,18 @@ export function App() {
                   onSaveBackupDefaultDirectory={flow.setBackupDefaultDirectory}
                   onPickBackupDirectory={flow.pickBackupDirectory}
                   onBack={() => flow.setStep("preflight")}
-                  onContinue={() => flow.setStep("deploy")}
+                  onContinue={() => flow.setStep("smtp")}
                   onPickInstallerFile={flow.pickInstallerFile}
+                />
+              ) : null}
+
+              {flow.step === "smtp" ? (
+                <SmtpConfigPage
+                  config={flow.config}
+                  busy={flow.busy}
+                  onChange={flow.setConfig}
+                  onBack={() => flow.setStep("config")}
+                  onContinue={() => flow.setStep("deploy")}
                 />
               ) : null}
 
@@ -241,7 +252,7 @@ export function App() {
                   busy={flow.busy}
                   logs={flow.logs}
                   state={flow.installerState}
-                  onBack={() => flow.setStep("config")}
+                  onBack={() => flow.setStep("smtp")}
                   onDeploy={flow.startInstallation}
                 />
               ) : null}
@@ -259,10 +270,13 @@ export function App() {
                   busy={flow.busy}
                   health={flow.health}
                   watchdogStatus={flow.watchdogStatus}
+                  supervisorSnapshot={flow.supervisorSnapshot}
                   onStart={flow.startStack}
                   onStop={flow.stopStack}
                   onRestart={flow.restartStack}
                   onRefresh={flow.refreshHealth}
+                  onRestartDockerDesktop={flow.restartDockerDesktop}
+                  onRunSupervisorRecovery={flow.runSupervisorRecovery}
                   onStartLogs={flow.tailLogs}
                   onStopLogs={flow.stopLogs}
                   onDiagnostics={flow.generateDiagnostics}

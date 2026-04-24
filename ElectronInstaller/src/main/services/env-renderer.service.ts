@@ -69,9 +69,10 @@ export class EnvRendererService {
     const envMap = this.buildEnvMap(config, persistedSecrets);
 
     if (!validate(envMap)) {
+      console.error("[ENV-RENDERER] Validation errors:", validate.errors);
       return {
         ok: false,
-        message: "Validación de env.schema.json falló.",
+        message: "Validación de env.schema.json falló: " + JSON.stringify(validate.errors),
         errorCode: "ENV_SCHEMA_INVALID",
         data: undefined,
       };
@@ -93,6 +94,7 @@ export class EnvRendererService {
       envMap.JWT_SECRET,
       envMap.SEED_DEFAULT_ADMIN_TEMP_PASSWORD,
       envMap.SEED_DEFAULT_SUPERADMIN_TEMP_PASSWORD,
+      envMap.MAIL_PASS,
     ].filter((value): value is string => typeof value === "string");
 
     return {
@@ -276,8 +278,7 @@ export class EnvRendererService {
         : (persistedSecrets.JWT_SECRET ?? this.secretStore.generateSecret(48));
 
     const requestedHost = config.localHost.trim();
-    const effectiveHost =
-      config.tlsProvider === "none" ? "localhost" : requestedHost;
+    const effectiveHost = requestedHost || "localhost";
     const protocol = config.tlsProvider === "none" ? "http" : "https";
     const backendApiUrl = `${protocol}://${effectiveHost}/api/v1`;
     const frontendApiUrl = `${protocol}://${effectiveHost}`;
@@ -308,7 +309,10 @@ export class EnvRendererService {
       SEED_DEFAULT_ADMIN_TEMP_PASSWORD: config.adminPassword,
       SEED_DEFAULT_ADMIN_USER_TEMP_PASSWORD: config.adminPassword,
       SEED_DEFAULT_ADMIN_USERNAME: config.adminUsername,
+      SEED_DEFAULT_ADMIN_EMAIL: config.adminEmail || "admin@smarteconomat.com",
       SEED_DEFAULT_SUPERADMIN_USERNAME: config.superAdminUsername,
+      SEED_DEFAULT_SUPERADMIN_EMAIL:
+        config.superAdminEmail || "superadmin@smarteconomat.com",
       SEED_DEFAULT_SUPERADMIN_TEMP_PASSWORD: superAdminPassword,
       SEED_DEFAULT_USERS_SYNCED: String(config.useSamePasswordForBoth),
       REDIS_PASSWORD: redisPassword,
@@ -325,10 +329,17 @@ export class EnvRendererService {
       VITE_API_PROXY_TARGET: backendApiUrl,
       STARTUP_RUN_MIGRATIONS:
         config.startupRunMigrations === false ? "false" : "true",
+      RUN_BOOTSTRAP_SEEDER: config.installMode === "new" ? "true" : "false",
       SENTRY_DSN: config.sentryDsn?.trim() ?? "",
       VITE_SENTRY_DSN: config.viteSentryDsn?.trim() ?? "",
       FRONTEND_HTTP_PORT: String(config.httpPort),
       FRONTEND_HTTPS_PORT: String(config.httpsPort),
+      MAIL_HOST: config.smtpHost?.trim() ?? "",
+      MAIL_PORT: config.smtpPort?.trim() ?? "",
+      MAIL_USER: config.smtpUser?.trim() ?? "",
+      MAIL_PASS: config.smtpPass?.trim() ?? "",
+      MAIL_FROM: config.smtpFrom?.trim() ?? "",
+      MAIL_SECURE: String(config.smtpSecure ?? false),
     };
   }
 

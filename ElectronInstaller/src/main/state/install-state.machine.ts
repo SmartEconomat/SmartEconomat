@@ -11,6 +11,7 @@ const stageLabels: Record<InstallerStep, string> = {
   INITIALIZE_APP: "Iniciando backend y bootstrap de app",
   VERIFY: "Verificando salud y accesibilidad final",
   DONE: "Instalación finalizada",
+  DONE_WITH_WARNINGS: "Instalación finalizada con advertencias",
   FAILED: "Error durante la instalación",
 };
 
@@ -25,6 +26,7 @@ const progressByState: Record<InstallerStep, number> = {
   INITIALIZE_APP: 88,
   VERIFY: 96,
   DONE: 100,
+  DONE_WITH_WARNINGS: 100,
   FAILED: 100,
 };
 
@@ -37,8 +39,9 @@ const transitions: Record<InstallerStep, InstallerStep[]> = {
   TLS_SETUP: ["DOCKER_DEPLOY", "FAILED"],
   DOCKER_DEPLOY: ["INITIALIZE_APP", "FAILED"],
   INITIALIZE_APP: ["VERIFY", "FAILED"],
-  VERIFY: ["DONE", "FAILED"],
+  VERIFY: ["DONE", "DONE_WITH_WARNINGS", "FAILED"],
   DONE: ["IDLE"],
+  DONE_WITH_WARNINGS: ["IDLE"],
   FAILED: ["PREFLIGHT", "IDLE"],
 };
 

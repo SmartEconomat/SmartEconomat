@@ -162,3 +162,10 @@ powershell -ExecutionPolicy Bypass -File ElectronInstaller/scripts/install/windo
 - Verifica que el stack esté levantado y `.env.prod` exista.
 - Comprueba permisos de escritura en runtime path.
 - Valida artefacto y metadata del backup.
+
+## Runbooks operativos
+
+- Arquitectura Plug-and-Play: `docs/ARQUITECTURA_PLUG_AND_PLAY.md`
+- Firma Windows: `docs/WINDOWS_SIGNING.md`
+- Matriz de caos del supervisor autónomo: `docs/SUPERVISOR_CHAOS_MATRIX.md`
+- Ejecución guiada en 1 sesión (QA/soporte): `docs/SUPERVISOR_CHAOS_SESSION_GUIDE.md`

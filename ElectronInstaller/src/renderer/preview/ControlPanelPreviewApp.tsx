@@ -159,6 +159,13 @@ function PreviewShell() {
           <ControlPanelPage
             busy={false}
             health={mockHealth}
+            supervisorSnapshot={{
+              overallState: "healthy",
+              checks: [],
+              lastAutomaticActionAt: null,
+              lastAutomaticAction: null,
+              uptimeSeconds: 3600,
+            }}
             watchdogStatus={{
               state: "active",
               consecutiveFailures: 0,
@@ -170,6 +177,8 @@ function PreviewShell() {
             onStop={async () => {}}
             onRestart={async () => {}}
             onRefresh={async () => {}}
+            onRestartDockerDesktop={async () => {}}
+            onRunSupervisorRecovery={async () => {}}
             onStartLogs={async () => {}}
             onStopLogs={async () => {}}
             onDiagnostics={async () => {}}

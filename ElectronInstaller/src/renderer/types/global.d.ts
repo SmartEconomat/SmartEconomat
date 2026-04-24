@@ -17,6 +17,7 @@ import type {
   RuntimeLogEvent,
   RuntimePaths,
   ServiceHealth,
+  SupervisorSnapshot,
   TailLogsPayload,
   UninstallPayload,
 } from "@shared/contracts";
@@ -39,6 +40,9 @@ declare global {
       pickInstallerFile: (
         payload: InstallerFilePickerPayload,
       ) => Promise<OperationResult<string>>;
+      testSmtp: (
+        config: Partial<InstallerConfigPayload>,
+      ) => Promise<OperationResult<boolean>>;
       getInstallerState: () => Promise<OperationResult<InstallerStateSnapshot>>;
       getInstallerBootState: () => Promise<OperationResult<InstallerBootState>>;
       onInstallerProgress: (
@@ -64,6 +68,9 @@ declare global {
       restoreFrom: (payload: RestorePayload) => Promise<OperationResult>;
       diagnostics: (payload: RuntimePaths) => Promise<OperationResult<string>>;
       getWatchdogStatus: () => Promise<OperationResult<HealthUpdateEvent>>;
+      getSupervisorSnapshot: () => Promise<OperationResult<SupervisorSnapshot>>;
+      restartDockerDesktop: () => Promise<OperationResult>;
+      runSupervisorRecovery: () => Promise<OperationResult>;
       onHealthUpdate: (
         callback: (event: HealthUpdateEvent) => void,
       ) => () => void;

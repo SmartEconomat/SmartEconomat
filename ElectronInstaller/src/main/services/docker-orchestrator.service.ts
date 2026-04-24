@@ -614,8 +614,10 @@ export class DockerOrchestratorService {
     runtimePath: string,
     adminUsername: string,
     adminPassword: string,
+    adminEmail: string | undefined,
     superAdminUsername: string,
     superAdminPassword: string,
+    superAdminEmail: string | undefined,
     onLogLine?: (event: RuntimeLogEvent) => void,
   ): Promise<OperationResult> {
     const envCheck = await this.ensureRuntimeEnvFile(runtimePath);
@@ -671,8 +673,10 @@ export class DockerOrchestratorService {
     const repairSql = this.buildAdminCredentialsRepairSql({
       adminUsername,
       adminHash: adminHashResult.data,
+      adminEmail,
       superAdminUsername,
       superAdminHash: superAdminHashResult.data,
+      superAdminEmail,
     });
 
     const repairResult = await this.runCompose(
@@ -967,21 +971,29 @@ export class DockerOrchestratorService {
   private buildAdminCredentialsRepairSql(input: {
     adminUsername: string;
     adminHash: string;
+    adminEmail?: string;
     superAdminUsername: string;
     superAdminHash: string;
+    superAdminEmail?: string;
   }): string {
     const adminUsername = this.toSqlLiteral(input.adminUsername.trim());
     const adminHash = this.toSqlLiteral(input.adminHash);
+    const adminEmail = this.toSqlLiteral(
+      input.adminEmail?.trim() || "admin@smarteconomat.com",
+    );
     const superAdminUsername = this.toSqlLiteral(
       input.superAdminUsername.trim(),
     );
     const superAdminHash = this.toSqlLiteral(input.superAdminHash);
+    const superAdminEmail = this.toSqlLiteral(
+      input.superAdminEmail?.trim() || "superadmin@smarteconomat.com",
+    );
 
     return [
       `UPDATE "usuario" SET
          "nombre" = 'Administrador Principal',
          "username" = ${adminUsername},
-         "email" = 'admin@smarteconomat.com',
+         "email" = ${adminEmail},
          "password" = ${adminHash},
          "rol" = 'ADMIN',
          "status" = 'ACTIVE',
@@ -1009,7 +1021,7 @@ export class DockerOrchestratorService {
          'Administrador Principal',
          ${adminUsername},
          ${adminHash},
-         'admin@smarteconomat.com',
+         ${adminEmail},
          'ADMIN',
          'ACTIVE',
          FALSE,
@@ -1022,7 +1034,7 @@ export class DockerOrchestratorService {
       `UPDATE "usuario" SET
          "nombre" = 'Super Administrador',
          "username" = ${superAdminUsername},
-         "email" = 'superadmin@smarteconomat.com',
+         "email" = ${superAdminEmail},
          "password" = ${superAdminHash},
          "rol" = 'SUPER_ADMIN',
          "status" = 'ACTIVE',
@@ -1050,7 +1062,7 @@ export class DockerOrchestratorService {
          'Super Administrador',
          ${superAdminUsername},
          ${superAdminHash},
-         'superadmin@smarteconomat.com',
+         ${superAdminEmail},
          'SUPER_ADMIN',
          'ACTIVE',
          FALSE,

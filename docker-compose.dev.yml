@@ -42,17 +42,9 @@ services:
       - HOME=/tmp
       - CHOKIDAR_USEPOLLING=true
       - CHOKIDAR_INTERVAL=1000
-      # ── Info del anfitrión ──
-      - HOST_USER=${USER:-}
-      - HOST_HOSTNAME=${HOSTNAME:-}
-      - HOST_PWD=${PWD:-}
-      - HOST_SHELL=${SHELL:-}
-      - HOST_MAC=${HOST_MAC:-}
-      - HOST_GIT_USER=${GIT_USER:-}
-      - HOST_GIT_EMAIL=${GIT_EMAIL:-}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    command: sh -c "sh scripts/ensure-deps.sh && npm run migration:run && npx ts-node scripts/log-user-info.ts && npm run start:dev"
+    command: sh -c "sh scripts/ensure-deps.sh && npm run migration:run && npm run start:dev"
     depends_on:
       db:
         condition: service_healthy

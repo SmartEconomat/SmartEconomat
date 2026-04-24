@@ -150,11 +150,15 @@ export class MailService {
     if (!host || !user || !pass) return null;
 
     const port = parseInt(process.env.MAIL_PORT || '587', 10);
+    const secure =
+      process.env.MAIL_SECURE !== undefined
+        ? process.env.MAIL_SECURE === 'true'
+        : port === 465;
 
     this.transporter = nodemailer.createTransport({
       host,
       port,
-      secure: port === 465,
+      secure,
       auth: { user, pass },
     });
 

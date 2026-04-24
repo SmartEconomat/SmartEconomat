@@ -1,20 +1,27 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import os from "node:os";
+import net from "node:net";
 
-import { app } from "electron";
+import { Notification, app } from "electron";
 import type { BrowserWindow } from "electron";
 
 import type {
+  DockerRuntimeStatus,
   HealthUpdateEvent,
+  RecoveryLevel,
   ServiceHealth,
+  SupervisorCheck,
+  SupervisorSnapshot,
   WatchdogState,
 } from "@shared/contracts";
 import { IPCChannels } from "@shared/ipc-channels";
 
 import { DockerAutostartService } from "./docker-autostart.service";
 import { DockerOrchestratorService } from "./docker-orchestrator.service";
+import { DockerReadinessService } from "./docker-readiness.service";
 import { GuardianStateService } from "./guardian-state.service";
-import { ProcessRunnerService } from "./process-runner.service";
+import { SupervisorLogService } from "./supervisor-log.service";
 
 export interface BootGuardianOptions {
   onLog: (message: string) => void;
@@ -47,9 +54,9 @@ export interface BootGuardianOptions {
    * Por defecto 20 000 (20 s).
    */
   postResumeDelayMs?: number;
+  onSnapshot?: (snapshot: SupervisorSnapshot) => void;
+  onTrayStateChange?: (state: "healthy" | "recovering" | "degraded") => void;
 }
-
-type RecoveryLevel = 1 | 2 | 3;
 
 /**
  * Servicio que garantiza la alta disponibilidad del stack Docker.
@@ -63,11 +70,16 @@ type RecoveryLevel = 1 | 2 | 3;
  * - Preparado para eventos de power (sleep/resume) inyectados desde index.ts.
  */
 export class BootGuardianService {
-  private readonly processRunner = new ProcessRunnerService();
   private readonly dockerOrchestrator = new DockerOrchestratorService();
   private readonly dockerAutostart = new DockerAutostartService();
+  private readonly dockerReadiness = new DockerReadinessService();
   private readonly guardianState = new GuardianStateService();
+  private readonly supervisorLog = new SupervisorLogService();
   private readonly onLog: (message: string) => void;
+  private readonly onSnapshot?: (snapshot: SupervisorSnapshot) => void;
+  private readonly onTrayStateChange?: (
+    state: "healthy" | "recovering" | "degraded",
+  ) => void;
   private readonly baseIntervalMs: number;
   private readonly maxIntervalMs: number;
   private readonly maxRetriesPerLevel: number;
@@ -82,8 +94,19 @@ export class BootGuardianService {
   private runtimePath: string | null = null;
   private mainWindow: BrowserWindow | null = null;
   private lastHealth: ServiceHealth[] = [];
+  private lastDockerStatus: DockerRuntimeStatus = {
+    state: "daemon-starting",
+    detail: "Aún no verificado.",
+    source: "boot-guardian",
+    retries: 0,
+    lastCheckedAt: new Date().toISOString(),
+  };
   private currentWatchdogState: WatchdogState = "idle";
   private cycleInProgress = false;
+  private startedAtMs = Date.now();
+  private supervisorChecks: SupervisorCheck[] = [];
+  private lastAutomaticActionAt: string | null = null;
+  private lastAutomaticAction: string | null = null;
 
   constructor(options: BootGuardianOptions) {
     this.onLog = options.onLog;
@@ -93,6 +116,8 @@ export class BootGuardianService {
     this.enableDockerAutostart = options.enableDockerAutostart ?? true;
     this.dockerStartupTimeoutMs = options.dockerStartupTimeoutMs ?? 120_000;
     this.postResumeDelayMs = options.postResumeDelayMs ?? 20_000;
+    this.onSnapshot = options.onSnapshot;
+    this.onTrayStateChange = options.onTrayStateChange;
   }
 
   /**
@@ -114,8 +139,30 @@ export class BootGuardianService {
         currentRecoveryLevel: this.currentRecoveryLevel,
         nextCheckInMs: this.computeCurrentInterval(),
         lastCheck: this.guardianState.get().lastHealthCheck,
+        dockerStatus: this.lastDockerStatus,
       },
       timestamp: new Date().toISOString(),
+    };
+  }
+
+  getSupervisorSnapshot(): SupervisorSnapshot {
+    const now = Date.now();
+    const hasErrors = this.supervisorChecks.some((check) => check.state === "error");
+    const hasWarnings = this.supervisorChecks.some((check) => check.state === "warn");
+    const overallState = hasErrors
+      ? "degraded"
+      : this.currentWatchdogState === "recovering"
+        ? "recovering"
+        : hasWarnings
+          ? "recovering"
+          : "healthy";
+
+    return {
+      overallState,
+      checks: this.supervisorChecks,
+      lastAutomaticActionAt: this.lastAutomaticActionAt,
+      lastAutomaticAction: this.lastAutomaticAction,
+      uptimeSeconds: Math.max(0, Math.floor((now - this.startedAtMs) / 1000)),
     };
   }
 
@@ -137,13 +184,20 @@ export class BootGuardianService {
     }
 
     this.running = true;
+    this.startedAtMs = Date.now();
     this.log("[BOOT-GUARDIAN] Iniciando secuencia de arranque automático...");
 
     // Recuperar estado previo del disco
     const savedState = await this.guardianState.load();
     this.consecutiveFailures = savedState.consecutiveFailures;
-    this.currentRecoveryLevel =
-      savedState.lastRecoveryLevel ?? 1;
+    this.currentRecoveryLevel = savedState.lastRecoveryLevel ?? 1;
+    this.lastDockerStatus = {
+      state: savedState.lastDockerState,
+      detail: savedState.lastDockerDetail || "Estado cargado desde persistencia.",
+      source: "boot-guardian",
+      retries: 0,
+      lastCheckedAt: new Date().toISOString(),
+    };
 
     if (this.enableDockerAutostart) {
       await this.ensureDockerAutostartConfigured();
@@ -170,6 +224,7 @@ export class BootGuardianService {
 
     if (dockerReady) {
       await this.ensureStackHealthy(resolvedPath);
+      await this.refreshSupervisorChecks(resolvedPath);
     }
 
     this.scheduleNextWatchdogCycle();
@@ -217,6 +272,23 @@ export class BootGuardianService {
     this.log(
       "[BOOT-GUARDIAN] Sistema entrando en suspensión. Registrando evento.",
     );
+  }
+
+  async restartDockerDesktopNow(): Promise<boolean> {
+    const ready = await this.ensureDockerDesktopRunning();
+    if (ready && this.runtimePath) {
+      await this.ensureStackHealthy(this.runtimePath);
+      await this.refreshSupervisorChecks(this.runtimePath);
+    }
+    return ready;
+  }
+
+  async runRecoveryNow(): Promise<void> {
+    if (!this.runtimePath) {
+      return;
+    }
+    await this.ensureStackHealthy(this.runtimePath);
+    await this.refreshSupervisorChecks(this.runtimePath);
   }
 
   // ── Docker Desktop ────────────────────────────────────────────
@@ -272,208 +344,79 @@ export class BootGuardianService {
    * plataforma (Windows, macOS, Linux) y espera hasta que esté disponible.
    */
   private async ensureDockerDesktopRunning(): Promise<boolean> {
-    if (await this.isDockerEngineReady()) {
+    const initialProbe = await this.dockerReadiness.probe({
+      source: "boot-guardian",
+      timeoutMs: 12_000,
+    });
+    this.lastDockerStatus = initialProbe;
+    await this.guardianState.update({
+      lastDockerState: initialProbe.state,
+      lastDockerDetail: initialProbe.detail,
+    });
+
+    if (initialProbe.state === "daemon-ready") {
       this.log("[BOOT-GUARDIAN] Docker Engine ya está operativo.");
       return true;
+    }
+
+    if (initialProbe.state === "not-installed") {
+      this.log("[BOOT-GUARDIAN] Docker no está instalado en el host.");
+      return false;
     }
 
     this.log(
       "[BOOT-GUARDIAN] Docker Engine no responde. Intentando iniciar Docker Desktop...",
     );
 
-    const started = await this.tryStartDockerDesktop();
-    if (!started) {
-      this.log("[BOOT-GUARDIAN] ⚠️ No se pudo lanzar Docker Desktop.");
+    const started = await this.dockerReadiness.startDockerDesktop(
+      "boot-guardian",
+    );
+    this.lastDockerStatus = started;
+    await this.guardianState.update({
+      lastDockerState: started.state,
+      lastDockerDetail: started.detail,
+    });
+
+    if (started.state === "daemon-error") {
+      this.log(`[BOOT-GUARDIAN] ⚠️ ${started.detail}`);
       return false;
     }
 
-    const checkIntervalMs = 4_000;
-    const maxAttempts = Math.max(
-      10,
-      Math.ceil(this.dockerStartupTimeoutMs / checkIntervalMs),
-    );
-
-    const ready = await this.waitForDockerEngine(maxAttempts, checkIntervalMs);
+    const waited = await this.dockerReadiness.waitUntilReady({
+      maxWaitMs: this.dockerStartupTimeoutMs,
+      initialDelayMs: 2_000,
+      maxDelayMs: 10_000,
+      source: "boot-guardian",
+    });
+    const ready = waited.state === "daemon-ready";
+    this.lastDockerStatus = waited;
+    await this.guardianState.update({
+      lastDockerState: waited.state,
+      lastDockerDetail: waited.detail,
+    });
 
     if (ready) {
       await this.guardianState.update({
         lastDockerDesktopRestart: new Date().toISOString(),
       });
+    } else {
+      this.log(`[BOOT-GUARDIAN] ⚠️ ${waited.detail}`);
     }
 
     return ready;
   }
 
-  private async isDockerEngineReady(): Promise<boolean> {
-    const result = await this.processRunner.run({
-      command: "docker",
-      args: ["version", "--format", "{{.Server.Version}}"],
-      timeoutMs: 15_000,
-    });
-
-    return result.ok;
-  }
-
-  /**
-   * Intenta arrancar Docker Desktop de forma multiplataforma.
-   */
-  private async tryStartDockerDesktop(): Promise<boolean> {
-    const platform = process.platform;
-
-    if (platform === "win32") {
-      return this.tryStartDockerDesktopWindows();
-    }
-
-    if (platform === "darwin") {
-      return this.tryStartDockerDesktopMacOS();
-    }
-
-    if (platform === "linux") {
-      return this.tryStartDockerDesktopLinux();
-    }
-
-    this.log(
-      `[BOOT-GUARDIAN] Plataforma no soportada para arranque de Docker Desktop: ${platform}`,
-    );
-    return false;
-  }
-
-  private async tryStartDockerDesktopWindows(): Promise<boolean> {
-    const candidatePaths = [
-      "C:/Program Files/Docker/Docker/Docker Desktop.exe",
-      "C:/Program Files/Docker/Docker/Docker Desktop",
-    ];
-
-    for (const executablePath of candidatePaths) {
-      const result = await this.processRunner.run({
-        command: "powershell",
-        args: [
-          "-NoProfile",
-          "-Command",
-          `if (Test-Path '${executablePath}') { Start-Process -FilePath '${executablePath}'; exit 0 } else { exit 1 }`,
-        ],
-        timeoutMs: 15_000,
-      });
-
-      if (result.ok) {
-        this.log(
-          "[BOOT-GUARDIAN] Docker Desktop lanzado (Windows). Esperando engine...",
-        );
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private async tryStartDockerDesktopMacOS(): Promise<boolean> {
-    // Intentar abrir Docker Desktop via open (aplicación .app)
-    const result = await this.processRunner.run({
-      command: "open",
-      args: ["-a", "Docker"],
-      timeoutMs: 15_000,
-    });
-
-    if (result.ok) {
-      this.log(
-        "[BOOT-GUARDIAN] Docker Desktop lanzado (macOS). Esperando engine...",
-      );
-      return true;
-    }
-
-    // Fallback: intentar abrir la ruta completa
-    const fallback = await this.processRunner.run({
-      command: "open",
-      args: ["/Applications/Docker.app"],
-      timeoutMs: 15_000,
-    });
-
-    if (fallback.ok) {
-      this.log(
-        "[BOOT-GUARDIAN] Docker Desktop lanzado via path directo (macOS). Esperando engine...",
-      );
-      return true;
-    }
-
-    return false;
-  }
-
-  private async tryStartDockerDesktopLinux(): Promise<boolean> {
-    // Linux: intentar arrancar el servicio Docker daemon via systemctl
-    const systemctlResult = await this.processRunner.run({
-      command: "systemctl",
-      args: ["start", "docker"],
-      timeoutMs: 30_000,
-    });
-
-    if (systemctlResult.ok) {
-      this.log(
-        "[BOOT-GUARDIAN] Servicio Docker iniciado via systemctl (Linux). Esperando engine...",
-      );
-      return true;
-    }
-
-    // Fallback: intentar con service
-    const serviceResult = await this.processRunner.run({
-      command: "sudo",
-      args: ["service", "docker", "start"],
-      timeoutMs: 30_000,
-    });
-
-    if (serviceResult.ok) {
-      this.log(
-        "[BOOT-GUARDIAN] Servicio Docker iniciado via service (Linux). Esperando engine...",
-      );
-      return true;
-    }
-
-    // Último recurso: Docker Desktop para Linux
-    const desktopResult = await this.processRunner.run({
-      command: "systemctl",
-      args: ["--user", "start", "docker-desktop"],
-      timeoutMs: 30_000,
-    });
-
-    if (desktopResult.ok) {
-      this.log(
-        "[BOOT-GUARDIAN] Docker Desktop iniciado (Linux). Esperando engine...",
-      );
-      return true;
-    }
-
-    return false;
-  }
-
-  private async waitForDockerEngine(
-    maxAttempts: number,
-    delayMs: number,
-  ): Promise<boolean> {
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      if (await this.isDockerEngineReady()) {
-        this.log(
-          `[BOOT-GUARDIAN] Docker Engine operativo (intento ${attempt}/${maxAttempts}) ✅`,
-        );
-        return true;
-      }
-
-      if (attempt < maxAttempts) {
-        await this.delay(delayMs);
-      }
-    }
-
-    this.log(
-      `[BOOT-GUARDIAN] Docker Engine no respondió después de ${maxAttempts} intentos.`,
-    );
-    return false;
-  }
 
   // ── Graduated Recovery ────────────────────────────────────────
 
   /**
    * Verifica salud y aplica recuperación graduada:
-   * - Nivel 1: restart solo de servicios unhealthy.
-   * - Nivel 2: docker compose up -d (ligero, sin --build ni --force-recreate).
-   * - Nivel 3: full startStack (down + up --build --force-recreate).
+   * - Nivel 1: reinicio de servicio puntual.
+   * - Nivel 2: docker compose up -d.
+   * - Nivel 3: recreate completo.
+   * - Nivel 4: prune + recreate.
+   * - Nivel 5: reinicio Docker Desktop.
+   * - Nivel 6: escalado a intervención guiada.
    */
   private async ensureStackHealthy(runtimePath: string): Promise<void> {
     const healthResult = await this.dockerOrchestrator.getHealth(runtimePath);
@@ -561,6 +504,44 @@ export class BootGuardianService {
         return;
       }
       this.consecutiveFailures++;
+      if (this.consecutiveFailures >= this.maxRetriesPerLevel) {
+        this.log("[BOOT-GUARDIAN] Nivel 3 agotado. Escalando a nivel 4.");
+        this.currentRecoveryLevel = 4;
+        this.consecutiveFailures = 0;
+      }
+    }
+
+    if (this.currentRecoveryLevel === 4) {
+      const success = await this.performRecoveryLevel4(runtimePath);
+      if (success) {
+        await this.resetRecoveryState();
+        return;
+      }
+      this.consecutiveFailures++;
+      if (this.consecutiveFailures >= this.maxRetriesPerLevel) {
+        this.log("[BOOT-GUARDIAN] Nivel 4 agotado. Escalando a nivel 5.");
+        this.currentRecoveryLevel = 5;
+        this.consecutiveFailures = 0;
+      }
+    }
+
+    if (this.currentRecoveryLevel === 5) {
+      const success = await this.performRecoveryLevel5(runtimePath);
+      if (success) {
+        await this.resetRecoveryState();
+        return;
+      }
+      this.consecutiveFailures++;
+      if (this.consecutiveFailures >= this.maxRetriesPerLevel) {
+        this.log("[BOOT-GUARDIAN] Nivel 5 agotado. Escalando a nivel 6.");
+        this.currentRecoveryLevel = 6;
+        this.consecutiveFailures = 0;
+      }
+    }
+
+    if (this.currentRecoveryLevel === 6) {
+      await this.performRecoveryLevel6();
+      this.consecutiveFailures++;
     }
 
     await this.guardianState.update({
@@ -584,6 +565,7 @@ export class BootGuardianService {
     runtimePath: string,
     downServices: ServiceHealth[],
   ): Promise<boolean> {
+    this.markAutomaticAction("Nivel 1: reinicio de contenedor");
     this.log(
       `[BOOT-GUARDIAN] 🔧 Nivel 1: Reiniciando servicios individuales: ${downServices.map((s) => s.service).join(", ")}`,
     );
@@ -626,6 +608,7 @@ export class BootGuardianService {
    * Nivel 2: docker compose up -d (sin --build ni --force-recreate).
    */
   private async performRecoveryLevel2(runtimePath: string): Promise<boolean> {
+    this.markAutomaticAction("Nivel 2: compose up -d");
     this.log(
       "[BOOT-GUARDIAN] 🔧 Nivel 2: Iniciando stack ligero (up -d sin rebuild)...",
     );
@@ -656,6 +639,7 @@ export class BootGuardianService {
    * Nivel 3: Full startStack (down + up --build --force-recreate).
    */
   private async performRecoveryLevel3(runtimePath: string): Promise<boolean> {
+    this.markAutomaticAction("Nivel 3: compose down && up -d --build");
     this.log(
       "[BOOT-GUARDIAN] 🔧 Nivel 3: Recreando stack completo (down + up --build --force-recreate)...",
     );
@@ -680,6 +664,38 @@ export class BootGuardianService {
       `[BOOT-GUARDIAN] ⚠️ Nivel 3 fallido: ${result.message}`,
     );
     return false;
+  }
+
+  private async performRecoveryLevel4(runtimePath: string): Promise<boolean> {
+    this.log("[BOOT-GUARDIAN] 🔧 Nivel 4: limpieza docker + recreate...");
+    this.markAutomaticAction("Nivel 4: prune + recreate");
+    await this.dockerOrchestrator.pruneSafe(runtimePath, "safe");
+    return this.performRecoveryLevel3(runtimePath);
+  }
+
+  private async performRecoveryLevel5(runtimePath: string): Promise<boolean> {
+    this.log("[BOOT-GUARDIAN] 🔧 Nivel 5: reinicio de Docker Desktop...");
+    this.markAutomaticAction("Nivel 5: reinicio Docker Desktop");
+    const started = await this.ensureDockerDesktopRunning();
+    if (!started) {
+      return false;
+    }
+    return this.performRecoveryLevel2(runtimePath);
+  }
+
+  private async performRecoveryLevel6(): Promise<void> {
+    const title = "SmartEconomat requiere intervención";
+    const body =
+      "No se pudo recuperar automáticamente el stack Docker. Abre el panel para diagnóstico avanzado.";
+    this.log(`[BOOT-GUARDIAN] ⚠️ Nivel 6: ${body}`);
+    this.markAutomaticAction("Nivel 6: intervención guiada");
+    this.sendNotification(title, body);
+    await this.supervisorLog.append({
+      at: new Date().toISOString(),
+      action: "recovery-level-6",
+      outcome: "error",
+      userSuggestion: "Abrir panel y ejecutar diagnóstico avanzado.",
+    });
   }
 
   private async resetRecoveryState(): Promise<void> {
@@ -743,10 +759,19 @@ export class BootGuardianService {
 
     try {
       // Verificar Docker Engine de forma independiente del stack
-      const dockerReady = await this.isDockerEngineReady();
+      const dockerProbe = await this.dockerReadiness.probe({
+        source: "boot-guardian",
+        timeoutMs: 10_000,
+      });
+      this.lastDockerStatus = dockerProbe;
+      await this.guardianState.update({
+        lastDockerState: dockerProbe.state,
+        lastDockerDetail: dockerProbe.detail,
+      });
+      const dockerReady = dockerProbe.state === "daemon-ready";
       if (!dockerReady) {
         this.log(
-          "[BOOT-GUARDIAN] Docker Engine no responde. Intentando reiniciar...",
+          `[BOOT-GUARDIAN] Docker no listo (${dockerProbe.state}). Intentando recuperación...`,
         );
         const started = await this.ensureDockerDesktopRunning();
         if (!started) {
@@ -760,6 +785,7 @@ export class BootGuardianService {
       }
 
       await this.ensureStackHealthy(this.runtimePath);
+      await this.refreshSupervisorChecks(this.runtimePath);
     } finally {
       this.cycleInProgress = false;
 
@@ -854,10 +880,237 @@ export class BootGuardianService {
     }
   }
 
+  private async refreshSupervisorChecks(runtimePath: string): Promise<void> {
+    const now = new Date().toISOString();
+    const checks: SupervisorCheck[] = [];
+    const dockerStatus = this.lastDockerStatus;
+
+    checks.push({
+      id: "docker-desktop",
+      label: "Docker Desktop",
+      state:
+        dockerStatus.state === "desktop-not-running"
+          ? "error"
+          : dockerStatus.state === "not-installed"
+            ? "error"
+            : "ok",
+      detail: dockerStatus.detail,
+      measuredAt: now,
+    });
+    checks.push({
+      id: "docker-engine",
+      label: "Docker Engine",
+      state: dockerStatus.state === "daemon-ready" ? "ok" : "error",
+      detail: dockerStatus.detail,
+      measuredAt: now,
+    });
+    checks.push({
+      id: "docker-version",
+      label: "docker version",
+      state: dockerStatus.state === "daemon-ready" ? "ok" : "warn",
+      detail:
+        dockerStatus.state === "daemon-ready"
+          ? "Comando docker operativo."
+          : "Pendiente de disponibilidad del daemon.",
+      measuredAt: now,
+    });
+    checks.push({
+      id: "docker-info",
+      label: "docker info",
+      state: dockerStatus.state === "daemon-ready" ? "ok" : "warn",
+      detail:
+        dockerStatus.state === "daemon-ready"
+          ? "Información del daemon accesible."
+          : "Docker info no disponible aún.",
+      measuredAt: now,
+    });
+
+    const unhealthyCount = this.lastHealth.filter(
+      (service) =>
+        service.status === "unhealthy" || service.status === "unknown",
+    ).length;
+    checks.push({
+      id: "containers-running",
+      label: "Contenedores running",
+      state: unhealthyCount === 0 ? "ok" : "error",
+      detail:
+        unhealthyCount === 0
+          ? "Todos los contenedores requeridos están operativos."
+          : `${unhealthyCount} contenedor(es) con incidencia.`,
+      measuredAt: now,
+    });
+    checks.push({
+      id: "containers-health",
+      label: "Healthchecks",
+      state: unhealthyCount === 0 ? "ok" : "warn",
+      detail:
+        unhealthyCount === 0
+          ? "Healthchecks en estado esperado."
+          : "Se detectaron healthchecks degradados.",
+      measuredAt: now,
+    });
+
+    const envValues = await this.readRuntimeEnv(runtimePath);
+    const httpPort = Number(envValues.FRONTEND_HTTP_PORT || 80);
+    const httpsPort = Number(envValues.FRONTEND_HTTPS_PORT || 443);
+    const domain = (envValues.DOMAIN || "localhost").trim();
+    const portChecks = await Promise.all([
+      this.isPortReachable("127.0.0.1", httpPort),
+      this.isPortReachable("127.0.0.1", httpsPort),
+    ]);
+    const anyPortUnavailable = portChecks.some((entry) => !entry);
+    checks.push({
+      id: "ports",
+      label: "Puertos del stack",
+      state: anyPortUnavailable ? "warn" : "ok",
+      detail: anyPortUnavailable
+        ? `No todos los puertos están accesibles (${httpPort}/${httpsPort}).`
+        : `Puertos ${httpPort}/${httpsPort} accesibles en localhost.`,
+      measuredAt: now,
+    });
+
+    const httpOk = await this.checkHttpEndpoint(`http://${domain}:${httpPort}/`);
+    checks.push({
+      id: "http-endpoint",
+      label: "Endpoint HTTP",
+      state: httpOk ? "ok" : "warn",
+      detail: httpOk ? "Endpoint HTTP responde." : "Endpoint HTTP no responde.",
+      measuredAt: now,
+    });
+    const httpsOk = await this.checkHttpEndpoint(
+      `https://${domain}:${httpsPort}/`,
+    );
+    checks.push({
+      id: "https-endpoint",
+      label: "Endpoint HTTPS",
+      state: httpsOk ? "ok" : "warn",
+      detail: httpsOk ? "Endpoint HTTPS responde." : "Endpoint HTTPS no responde.",
+      measuredAt: now,
+    });
+
+    const freeMemRatio = os.freemem() / os.totalmem();
+    checks.push({
+      id: "memory",
+      label: "Memoria disponible",
+      state: freeMemRatio < 0.1 ? "error" : freeMemRatio < 0.2 ? "warn" : "ok",
+      detail: `Memoria libre ${(freeMemRatio * 100).toFixed(1)}%.`,
+      measuredAt: now,
+    });
+    checks.push({
+      id: "cpu",
+      label: "Carga CPU",
+      state: this.currentWatchdogState === "backoff" ? "warn" : "ok",
+      detail:
+        this.currentWatchdogState === "backoff"
+          ? "El sistema está en backoff por fallos consecutivos."
+          : "Sin bloqueo de CPU detectado desde el supervisor.",
+      measuredAt: now,
+    });
+    checks.push({
+      id: "disk",
+      label: "Espacio en disco",
+      state: "ok",
+      detail: "Sin señal de espacio crítico detectada por el supervisor.",
+      measuredAt: now,
+    });
+    checks.push({
+      id: "docker-network",
+      label: "Red Docker",
+      state: dockerStatus.state === "daemon-ready" ? "ok" : "warn",
+      detail:
+        dockerStatus.state === "daemon-ready"
+          ? "Networking Docker activo."
+          : "Networking pendiente de validación.",
+      measuredAt: now,
+    });
+
+    this.supervisorChecks = checks;
+    const snapshot = this.getSupervisorSnapshot();
+    this.onSnapshot?.(snapshot);
+    this.onTrayStateChange?.(snapshot.overallState);
+  }
+
+  private async readRuntimeEnv(
+    runtimePath: string,
+  ): Promise<Record<string, string>> {
+    const envPath = path.join(runtimePath, ".env.prod");
+    try {
+      const content = await fs.readFile(envPath, "utf8");
+      return content
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0 && !line.startsWith("#"))
+        .reduce<Record<string, string>>((acc, line) => {
+          const separator = line.indexOf("=");
+          if (separator <= 0) {
+            return acc;
+          }
+          const key = line.slice(0, separator).trim();
+          const value = line.slice(separator + 1).trim();
+          acc[key] = value;
+          return acc;
+        }, {});
+    } catch {
+      return {};
+    }
+  }
+
+  private async isPortReachable(host: string, port: number): Promise<boolean> {
+    if (!Number.isFinite(port) || port <= 0) {
+      return false;
+    }
+    return new Promise((resolve) => {
+      const socket = new net.Socket();
+      socket.setTimeout(2000);
+      socket.once("connect", () => {
+        socket.destroy();
+        resolve(true);
+      });
+      socket.once("timeout", () => {
+        socket.destroy();
+        resolve(false);
+      });
+      socket.once("error", () => {
+        socket.destroy();
+        resolve(false);
+      });
+      socket.connect(port, host);
+    });
+  }
+
+  private async checkHttpEndpoint(url: string): Promise<boolean> {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 4_000);
+      const response = await fetch(url, { method: "GET", signal: controller.signal });
+      clearTimeout(timer);
+      return response.ok || response.status < 500;
+    } catch {
+      return false;
+    }
+  }
+
   // ── Utilidades ────────────────────────────────────────────────
 
   private log(message: string): void {
     this.onLog(message);
+  }
+
+  private sendNotification(title: string, body: string): void {
+    if (!Notification.isSupported()) {
+      return;
+    }
+    try {
+      const notification = new Notification({ title, body, silent: false });
+      notification.show();
+    } catch {
+      // Ignorar fallos de notificación del SO.
+    }
+  }
+
+  private markAutomaticAction(action: string): void {
+    this.lastAutomaticAction = action;
+    this.lastAutomaticActionAt = new Date().toISOString();
   }
 
   private delay(ms: number): Promise<void> {

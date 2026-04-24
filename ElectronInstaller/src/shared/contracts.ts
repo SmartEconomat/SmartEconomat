@@ -27,8 +27,10 @@ export interface InstallerConfigPayload {
   installMode: "new" | "reinstall";
   adminUsername: string;
   adminPassword: string;
+  adminEmail?: string;
   superAdminUsername: string;
   superAdminPassword: string;
+  superAdminEmail?: string;
   verifyExistingAdminSession: boolean;
   repairAdminCredentialsOnFailure: boolean;
   verifyAdminUsername?: string;
@@ -51,6 +53,12 @@ export interface InstallerConfigPayload {
   startupRunMigrations?: boolean;
   httpPort: number;
   httpsPort: number;
+  smtpHost?: string;
+  smtpPort?: string;
+  smtpUser?: string;
+  smtpPass?: string;
+  smtpFrom?: string;
+  smtpSecure?: boolean;
 }
 
 export interface InstallerFilePickerPayload {
@@ -75,6 +83,7 @@ export type InstallerStep =
   | "INITIALIZE_APP"
   | "VERIFY"
   | "DONE"
+  | "DONE_WITH_WARNINGS"
   | "FAILED";
 
 export interface InstallerStateSnapshot {
@@ -84,6 +93,7 @@ export interface InstallerStateSnapshot {
   stageLabel?: string;
   progressPercent?: number;
   errorCode?: string;
+  warnings?: string[];
 }
 
 export interface InstallJournalEntry extends InstallerStateSnapshot {
@@ -185,7 +195,24 @@ export interface DebugLogEntry {
 // ── Watchdog / Health Push ───────────────────────────────────
 
 export type WatchdogState = "active" | "recovering" | "backoff" | "idle";
-export type RecoveryLevel = 1 | 2 | 3;
+export type RecoveryLevel = 1 | 2 | 3 | 4 | 5 | 6;
+
+export type DockerRuntimeState =
+  | "not-installed"
+  | "desktop-not-running"
+  | "daemon-starting"
+  | "daemon-ready"
+  | "daemon-error"
+  | "compose-error"
+  | "recovery-in-progress";
+
+export interface DockerRuntimeStatus {
+  state: DockerRuntimeState;
+  detail: string;
+  source: "boot-guardian" | "preflight" | "runtime";
+  retries: number;
+  lastCheckedAt: string;
+}
 
 export interface WatchdogStatus {
   state: WatchdogState;
@@ -193,10 +220,45 @@ export interface WatchdogStatus {
   currentRecoveryLevel: RecoveryLevel;
   nextCheckInMs: number;
   lastCheck: string | null;
+  dockerStatus?: DockerRuntimeStatus;
 }
 
 export interface HealthUpdateEvent {
   health: ServiceHealth[];
   watchdog: WatchdogStatus;
   timestamp: string;
+}
+
+export type SupervisorCheckState = "ok" | "warn" | "error";
+
+export interface SupervisorCheck {
+  id:
+    | "docker-desktop"
+    | "docker-engine"
+    | "docker-version"
+    | "docker-info"
+    | "docker-network"
+    | "containers-running"
+    | "containers-health"
+    | "ports"
+    | "disk"
+    | "memory"
+    | "cpu"
+    | "http-endpoint"
+    | "https-endpoint";
+  label: string;
+  state: SupervisorCheckState;
+  detail: string;
+  recommendation?: string;
+  measuredAt: string;
+}
+
+export type SupervisorOverallState = "healthy" | "recovering" | "degraded";
+
+export interface SupervisorSnapshot {
+  overallState: SupervisorOverallState;
+  checks: SupervisorCheck[];
+  lastAutomaticActionAt: string | null;
+  lastAutomaticAction: string | null;
+  uptimeSeconds: number;
 }

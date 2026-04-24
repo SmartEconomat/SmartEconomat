@@ -37,6 +37,7 @@ COPY src/seeders/datos-base-economato ./dist/seeders/datos-base-economato
 COPY scripts/prod-bootstrap-runner.js ./scripts/prod-bootstrap-runner.js
 COPY scripts/db-reset-runner.js ./scripts/db-reset-runner.js
 COPY scripts/seed-runner.js ./scripts/seed-runner.js
+COPY scripts/bootstrap-admin-users-runner.js ./scripts/bootstrap-admin-users-runner.js
 
 # Usuario no-root para seguridad
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup \

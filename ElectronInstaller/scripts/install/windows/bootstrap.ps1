@@ -1,6 +1,7 @@
 param(
   [Parameter(Mandatory = $true)][string]$RuntimePath,
   [ValidateSet('all', 'tls')][string]$Mode = 'all',
+  [string]$Domain = 'smarteconomat.app',
   [switch]$ReleaseBusyPorts
 )
 
@@ -41,15 +42,15 @@ function Get-PortOwner {
     return $null
   }
 
-  $pid = [int]$connection.OwningProcess
-  $processName = (Get-Process -Id $pid -ErrorAction SilentlyContinue).ProcessName
+  $owningPid = [int]$connection.OwningProcess
+  $processName = (Get-Process -Id $owningPid -ErrorAction SilentlyContinue).ProcessName
   if (-not $processName) {
     $processName = 'desconocido'
   }
 
   return [PSCustomObject]@{
     Port = $Port
-    Pid = $pid
+    Pid = $owningPid
     ProcessName = $processName
   }
 }
@@ -200,8 +201,28 @@ if ($Mode -eq 'all' -or $Mode -eq 'tls') {
 
   $keyFile = Join-Path $liveDir 'privkey.pem'
   $fullchain = Join-Path $liveDir 'fullchain.pem'
+  $sanCnf = Join-Path $certsDir 'san.cnf'
 
-  & $openssl.Path req -x509 -nodes -newkey rsa:4096 -sha256 -days 825 -keyout "$keyFile" -out "$fullchain" -subj '/CN=smarteconomat.app/O=SmartEconomat/C=ES' | Out-Null
+  $sanContent = @"
+[req]
+distinguished_name = req_distinguished_name
+x509_extensions = v3_req
+prompt = no
+
+[req_distinguished_name]
+C = ES
+O = SmartEconomat
+CN = $Domain
+
+[v3_req]
+subjectAltName = DNS:$Domain, DNS:localhost, DNS:api.$Domain, IP:127.0.0.1
+basicConstraints = CA:TRUE
+keyUsage = digitalSignature, keyEncipherment, keyCertSign
+extendedKeyUsage = serverAuth
+"@
+  Set-Content -Path $sanCnf -Value $sanContent -Encoding Ascii
+
+  & $openssl.Path req -x509 -nodes -newkey rsa:4096 -sha256 -days 825 -keyout "$keyFile" -out "$fullchain" -config "$sanCnf" | Out-Null
 
   Copy-Item -Path $fullchain -Destination (Join-Path $certsDir 'fullchain.pem') -Force
   Copy-Item -Path $keyFile -Destination (Join-Path $certsDir 'privkey.pem') -Force

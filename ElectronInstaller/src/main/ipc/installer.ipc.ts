@@ -2,6 +2,7 @@ import http from "node:http";
 import https from "node:https";
 import fs from "node:fs/promises";
 import path from "node:path";
+import nodemailer from "nodemailer";
 
 import { app, BrowserWindow, dialog, shell } from "electron";
 import { z } from "zod";
@@ -31,6 +32,7 @@ import { PathResolverService } from "@main/services/path-resolver.service";
 import { PreflightService } from "@main/services/preflight.service";
 import { ProcessRunnerService } from "@main/services/process-runner.service";
 import { BackupRestoreService } from "@main/services/backup-restore.service";
+import { FirewallFacadeService } from "@main/services/firewall/firewall-facade.service";
 import { TLSService } from "@main/services/tls.service";
 import { InstallStateMachine } from "@main/state/install-state.machine";
 
@@ -50,8 +52,10 @@ const installerConfigSchema = z
     installMode: z.union([z.literal("new"), z.literal("reinstall")]),
     adminUsername: z.string().min(4),
     adminPassword: z.string().min(12),
+    adminEmail: z.string().email().optional().or(z.literal("")),
     superAdminUsername: z.string().min(4),
     superAdminPassword: z.string().min(12),
+    superAdminEmail: z.string().email().optional().or(z.literal("")),
     verifyExistingAdminSession: z.boolean().default(false),
     repairAdminCredentialsOnFailure: z.boolean().default(false),
     verifyAdminUsername: z.string().optional(),
@@ -87,6 +91,12 @@ const installerConfigSchema = z
     startupRunMigrations: z.boolean().optional(),
     httpPort: z.number().int().min(1).max(65535),
     httpsPort: z.number().int().min(1).max(65535),
+    smtpHost: z.string().optional(),
+    smtpPort: z.string().optional(),
+    smtpUser: z.string().optional(),
+    smtpPass: z.string().optional(),
+    smtpFrom: z.string().optional(),
+    smtpSecure: z.boolean().optional(),
   })
   .superRefine((payload, context) => {
     if (payload.tlsProvider === "custom") {
@@ -133,6 +143,20 @@ const installerConfigSchema = z
       });
     }
 
+    if (
+      payload.adminEmail?.trim() &&
+      payload.superAdminEmail?.trim() &&
+      payload.adminEmail.trim().toLowerCase() ===
+        payload.superAdminEmail.trim().toLowerCase()
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "Los correos de admin y superadmin deben ser distintos si se proporcionan.",
+        path: ["superAdminEmail"],
+      });
+    }
+
     if (payload.httpPort === payload.httpsPort) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
@@ -172,6 +196,8 @@ const installerFilePickerSchema = z.object({
 
 export class InstallerIPC {
   private readonly stateMachine = new InstallStateMachine();
+  private hostsBackupPath: string | null = null;
+  private readonly installationWarnings: string[] = [];
 
   constructor(
     private window: BrowserWindow,
@@ -184,7 +210,74 @@ export class InstallerIPC {
     private readonly pathResolver = new PathResolverService(),
     private readonly processRunner = new ProcessRunnerService(),
     private readonly backupRestoreService = new BackupRestoreService(),
+    private readonly firewallFacade = new FirewallFacadeService(),
   ) {}
+
+  // #region agent log
+  private resolveRepoRootForDebugLogs(): string {
+    const cwd = process.cwd();
+    const base = path.basename(cwd);
+    if (base.toLowerCase() === "electroninstaller") {
+      return path.resolve(cwd, "..");
+    }
+    return cwd;
+  }
+
+  private resolveDebugLogTargets(): string[] {
+    const repoRoot = this.resolveRepoRootForDebugLogs();
+    const targets = new Set<string>();
+    targets.add(path.join(repoRoot, "debug-1b9740.log"));
+    targets.add(path.join(repoRoot, ".cursor", "debug-1b9740.log"));
+
+    const cwdBase = path.basename(process.cwd()).toLowerCase();
+    if (cwdBase === "smarteconomat") {
+      targets.add(path.join(process.cwd(), "debug-1b9740.log"));
+      targets.add(path.join(process.cwd(), ".cursor", "debug-1b9740.log"));
+    }
+
+    return Array.from(targets);
+  }
+
+  private agentLog(hypothesisId: string, message: string, data: Record<string, unknown>) {
+    const payload = {
+      sessionId: "1b9740",
+      runId: process.env.DEBUG_RUN_ID ?? "runtime",
+      hypothesisId,
+      location: "installer.ipc.ts",
+      message,
+      data: {
+        ...data,
+        electronPackaged: app.isPackaged,
+        electronVersion: app.getVersion?.() ?? "unknown",
+      },
+      timestamp: Date.now(),
+    };
+
+    void (async () => {
+      for (const logPath of this.resolveDebugLogTargets()) {
+        try {
+          await fs.mkdir(path.dirname(logPath), { recursive: true });
+          await fs.appendFile(logPath, `${JSON.stringify(payload)}\n`, "utf8");
+        } catch {
+          // try next
+        }
+      }
+
+      try {
+        await fetch("http://127.0.0.1:7788/ingest/ae88677f-9837-49c4-8f3e-780503dbdea8", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "1b9740",
+          },
+          body: JSON.stringify(payload),
+        });
+      } catch {
+        // ignore
+      }
+    })();
+  }
+  // #endregion
 
   setWindow(window: BrowserWindow): void {
     this.window = window;
@@ -341,12 +434,61 @@ export class InstallerIPC {
         };
       },
     );
+
+    registerIpcHandleWithDebug(
+      this.debugLogService,
+      IPCChannels.installer.testSmtp,
+      async (
+        _event,
+        payload: Partial<InstallerConfigPayload>,
+      ): Promise<OperationResult<boolean>> => {
+        if (!payload.smtpHost || !payload.smtpPort) {
+          return {
+            ok: false,
+            message: "Host y puerto son obligatorios para probar SMTP",
+            errorCode: "INVALID_SMTP_PAYLOAD",
+          };
+        }
+
+        try {
+          const transporter = nodemailer.createTransport({
+            host: payload.smtpHost,
+            port: parseInt(payload.smtpPort.toString(), 10),
+            secure: payload.smtpSecure ?? false,
+            auth:
+              payload.smtpUser && payload.smtpPass
+                ? {
+                    user: payload.smtpUser,
+                    pass: payload.smtpPass,
+                  }
+                : undefined,
+          });
+
+          await transporter.verify();
+          return {
+            ok: true,
+            message: "Conexión SMTP exitosa",
+            data: true,
+          };
+        } catch (error) {
+          return {
+            ok: false,
+            message:
+              error instanceof Error
+                ? error.message
+                : "Error al conectar con SMTP",
+            errorCode: "SMTP_CONNECTION_FAILED",
+          };
+        }
+      },
+    );
   }
 
   private async runInstallation(
     payload: InstallerConfigPayload,
   ): Promise<OperationResult<InstallerStateSnapshot>> {
     try {
+      this.installationWarnings.length = 0;
       this.emitRuntimeLog(
         "installer",
         "El instalador nativo ya terminó de copiar archivos. Ahora comienza la fase detallada de preparación del entorno.",
@@ -454,9 +596,59 @@ export class InstallerIPC {
         "Revisando configuración elegida: runtime, puertos HTTP/HTTPS, backup, TLS y credenciales de administración.",
       );
 
+      this.agentLog("CFG-0", "installer.config_validation.entered", {
+        runtimePath: payload.runtimePath,
+        httpPort: payload.httpPort,
+        httpsPort: payload.httpsPort,
+        localHost: payload.localHost,
+        tlsProvider: payload.tlsProvider,
+      });
+
+      this.agentLog("CFG-1", "installer.firewall.pre.start", {
+        runtimePath: payload.runtimePath,
+        httpPort: payload.httpPort,
+        httpsPort: payload.httpsPort,
+        host: payload.localHost.trim() || "smarteconomat.app",
+      });
+
+      const firewallPreResult = await this.firewallFacade.ensure({
+        httpPort: payload.httpPort,
+        httpsPort: payload.httpsPort,
+        host: payload.localHost.trim() || "smarteconomat.app",
+        runtimePath: payload.runtimePath,
+        verificationMode: "preHostMapping",
+        log: (line) => this.emitRuntimeLog("installer", line),
+      });
+      this.emitRuntimeLog("installer", firewallPreResult.userMessage);
+      this.agentLog("CFG-2", "installer.firewall.pre.done", {
+        canContinue: firewallPreResult.canContinue,
+        warningCode: firewallPreResult.warningCode,
+        technicalMessage: firewallPreResult.technicalMessage,
+      });
+      if (!firewallPreResult.canContinue) {
+        return this.fail(
+          payload.runtimePath,
+          firewallPreResult.userMessage,
+          "FIREWALL_CONNECTIVITY_BLOCKED",
+          { rollbackHosts: false },
+        );
+      }
+      if (firewallPreResult.warningCode) {
+        this.installationWarnings.push(firewallPreResult.warningCode);
+        this.emitRuntimeLog(
+          "installer",
+          `Advertencia firewall (pre-hosts): ${firewallPreResult.technicalMessage}`,
+        );
+      }
+
       const hostsResult = await this.ensureWindowsHostsMapping(
         payload.localHost,
+        payload.runtimePath,
       );
+      this.agentLog("CFG-3", "installer.hosts.update.done", {
+        ok: hostsResult.ok,
+        errorCode: hostsResult.errorCode,
+      });
       if (!hostsResult.ok) {
         return this.fail(
           payload.runtimePath,
@@ -466,9 +658,47 @@ export class InstallerIPC {
       }
       this.emitRuntimeLog("installer", hostsResult.message);
 
+      this.agentLog("CFG-4", "installer.firewall.post.start", {
+        runtimePath: payload.runtimePath,
+        httpPort: payload.httpPort,
+        httpsPort: payload.httpsPort,
+        host: payload.localHost.trim() || "smarteconomat.app",
+      });
+
+      const firewallPostResult = await this.firewallFacade.ensure({
+        httpPort: payload.httpPort,
+        httpsPort: payload.httpsPort,
+        host: payload.localHost.trim() || "smarteconomat.app",
+        runtimePath: payload.runtimePath,
+        verificationMode: "postHostMapping",
+        log: (line) => this.emitRuntimeLog("installer", line),
+      });
+      this.emitRuntimeLog("installer", firewallPostResult.userMessage);
+      this.agentLog("CFG-5", "installer.firewall.post.done", {
+        canContinue: firewallPostResult.canContinue,
+        warningCode: firewallPostResult.warningCode,
+        technicalMessage: firewallPostResult.technicalMessage,
+      });
+      if (!firewallPostResult.canContinue) {
+        return this.fail(
+          payload.runtimePath,
+          firewallPostResult.userMessage,
+          "FIREWALL_CONNECTIVITY_BLOCKED",
+          { rollbackHosts: false },
+        );
+      }
+      if (firewallPostResult.warningCode) {
+        this.installationWarnings.push(firewallPostResult.warningCode);
+        this.emitRuntimeLog(
+          "installer",
+          `Advertencia firewall (post-hosts): ${firewallPostResult.technicalMessage}`,
+        );
+      }
+
       // ── Backup de seguridad pre-instalación ─────────────────────
-      const existingInstallation =
-        await this.detectExistingInstallation(payload.runtimePath);
+      const existingInstallation = await this.detectExistingInstallation(
+        payload.runtimePath,
+      );
 
       if (existingInstallation) {
         await this.transition(
@@ -692,7 +922,22 @@ export class InstallerIPC {
         );
       }
 
+      this.emitRuntimeLog(
+        "installer",
+        "Stack inicializado. El backend está completando migraciones y seeders internos...",
+      );
+
       const validatedPublicUrl = accessCheck.data?.validatedUrl ?? publicUrl;
+      const strictTlsValidation =
+        await this.validateStrictTlsAndLocalDomain(payload);
+      if (!strictTlsValidation.ok) {
+        return this.fail(
+          payload.runtimePath,
+          strictTlsValidation.message,
+          strictTlsValidation.errorCode ?? "STRICT_TLS_VALIDATION_FAILED",
+        );
+      }
+      this.emitRuntimeLog("installer", strictTlsValidation.message);
 
       const shouldValidateAdminSession =
         payload.verifyExistingAdminSession === true;
@@ -751,10 +996,12 @@ export class InstallerIPC {
               payload.runtimePath,
               payload.adminUsername,
               payload.adminPassword,
+              payload.adminEmail,
               payload.superAdminUsername,
               payload.useSamePasswordForBoth
                 ? payload.adminPassword
                 : payload.superAdminPassword,
+              payload.superAdminEmail,
               (event) => {
                 this.emitRuntimeLog(event.service, event.line, event.timestamp);
               },
@@ -829,10 +1076,18 @@ export class InstallerIPC {
         this.emitRuntimeLog("installer", backupScheduleResult.message);
       }
 
+      const doneState =
+        this.installationWarnings.length > 0 ? "DONE_WITH_WARNINGS" : "DONE";
       const doneSnapshot = this.stateMachine.transition(
-        "DONE",
-        "Instalación completada y accesibilidad validada",
+        doneState,
+        this.installationWarnings.length > 0
+          ? "Instalación completada con advertencias no críticas."
+          : "Instalación completada y accesibilidad validada",
       );
+      doneSnapshot.warnings =
+        this.installationWarnings.length > 0
+          ? [...this.installationWarnings]
+          : undefined;
       await this.log(payload.runtimePath, doneSnapshot, {
         runtimePath: payload.runtimePath,
       });
@@ -847,7 +1102,10 @@ export class InstallerIPC {
 
       return {
         ok: true,
-        message: "Instalación completada correctamente.",
+        message:
+          doneState === "DONE_WITH_WARNINGS"
+            ? "Instalación completada con advertencias."
+            : "Instalación completada correctamente.",
         data: doneSnapshot,
       };
     } catch (error) {
@@ -882,7 +1140,12 @@ export class InstallerIPC {
     runtimePath: string,
     message: string,
     errorCode: string,
+    options?: { rollbackHosts?: boolean },
   ): Promise<OperationResult<InstallerStateSnapshot>> {
+    const rollbackHosts = options?.rollbackHosts ?? true;
+    if (rollbackHosts) {
+      await this.tryRollbackWindowsHosts(runtimePath);
+    }
     const snapshot = this.stateMachine.forceState("FAILED", message, errorCode);
     await this.log(runtimePath, snapshot, { runtimePath });
     this.emitProgress(snapshot);
@@ -1021,13 +1284,13 @@ export class InstallerIPC {
 
   private resolvePublicUrl(payload: InstallerConfigPayload): string {
     const protocol = payload.tlsProvider === "none" ? "http" : "https";
-    const host =
-      payload.tlsProvider === "none" ? "localhost" : payload.localHost;
+    const host = payload.localHost.trim() || "localhost";
     return `${protocol}://${host}`;
   }
 
   private async ensureWindowsHostsMapping(
     configuredHost: string,
+    runtimePath: string,
   ): Promise<OperationResult> {
     if (process.platform !== "win32") {
       return {
@@ -1057,8 +1320,19 @@ export class InstallerIPC {
       .map((value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
       .join("|");
     const aliasesLine = aliases.join(" ");
+    const diagnosticsDir = path.join(runtimePath, "diagnostics");
+    const backupFile = path
+      .join(diagnosticsDir, `hosts.backup.${Date.now()}.txt`)
+      .replace(/\\/g, "\\\\");
+    this.hostsBackupPath = backupFile.replace(/\\\\/g, "\\");
     const command = [
+      `$diagnosticsDir = "${diagnosticsDir.replace(/\\/g, "\\\\")}"`,
+      `$backupPath = "${backupFile}"`,
       "$hostsPath = Join-Path $env:SystemRoot 'System32\\drivers\\etc\\hosts'",
+      "New-Item -ItemType Directory -Path $diagnosticsDir -Force | Out-Null",
+      "if (Test-Path -LiteralPath $hostsPath) {",
+      "  Copy-Item -LiteralPath $hostsPath -Destination $backupPath -Force",
+      "}",
       `$aliasesPattern = '(?i)(^|\\s)(${aliasesLiteral})(?=\\s|$)'`,
       "$current = @()",
       "if (Test-Path -LiteralPath $hostsPath) {",
@@ -1072,7 +1346,7 @@ export class InstallerIPC {
       `$filtered += '127.0.0.1 ${aliasesLine}'`,
       `$filtered += '::1 ${aliasesLine}'`,
       "Set-Content -LiteralPath $hostsPath -Value $filtered -Encoding ascii",
-      "Write-Output 'HOSTS_UPDATED'",
+      "Write-Output ('HOSTS_UPDATED|' + $backupPath)",
     ].join("; ");
 
     const result = await this.processRunner.run({
@@ -1082,18 +1356,463 @@ export class InstallerIPC {
     });
 
     if (!result.ok) {
-      return {
-        ok: false,
-        message:
-          "No se pudo actualizar hosts de Windows para smarteconomat.app. Ejecuta el instalador como administrador y reintenta.",
-        errorCode: "HOSTS_UPDATE_FAILED",
-      };
+      this.emitRuntimeLog(
+        "installer",
+        "No se pudo escribir hosts directamente. Intentando auto-reparación con elevación UAC...",
+      );
+      const elevatedFix = await this.runElevatedHostsFix();
+      if (!elevatedFix.ok) {
+        return {
+          ok: false,
+          message:
+            "No se pudo actualizar hosts de Windows para smarteconomat.app. Ejecuta el instalador como administrador y reintenta.",
+          errorCode: "HOSTS_UPDATE_FAILED",
+        };
+      }
+
+      const verification =
+        await this.verifyWindowsHostsEntry("smarteconomat.app");
+      if (!verification.ok) {
+        return {
+          ok: false,
+          message:
+            "La auto-reparación de hosts terminó sin errores, pero no se confirmó la entrada del dominio.",
+          errorCode: "HOSTS_UPDATE_FAILED",
+        };
+      }
     }
 
     return {
       ok: true,
       message: `Hosts actualizado automáticamente: ${aliases.join(", ")} -> 127.0.0.1 / ::1.`,
     };
+  }
+
+  private async ensureWindowsFirewallRules(
+    payload: InstallerConfigPayload,
+  ): Promise<OperationResult> {
+    if (process.platform !== "win32") {
+      return {
+        ok: true,
+        message:
+          "Sistema no Windows: no se requiere configuración de firewall.",
+      };
+    }
+
+    const ports = [payload.httpPort, payload.httpsPort]
+      .filter((value, index, all) => all.indexOf(value) === index)
+      .filter((value) => value > 0);
+
+    const rulesScript = ports
+      .map((port) => {
+        const safeName = `SmartEconomat Local Port (${port})`;
+        return [
+          `netsh advfirewall firewall delete rule name="${safeName}" protocol=TCP localport=${port} >$null 2>&1`,
+          `netsh advfirewall firewall add rule name="${safeName}" dir=in action=allow protocol=TCP localport=${port} profile=domain,private >$null`,
+        ].join("; ");
+      })
+      .join("; ");
+
+    const result = await this.processRunner.run({
+      command: "powershell",
+      args: [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        rulesScript,
+      ],
+      timeoutMs: 25_000,
+    });
+
+    if (!result.ok) {
+      this.emitRuntimeLog(
+        "installer",
+        "No se pudieron aplicar reglas de firewall directamente. Intentando auto-reparación con elevación UAC...",
+      );
+      const elevatedFix = await this.runElevatedFirewallFix(payload);
+      if (!elevatedFix.ok) {
+        return {
+          ok: false,
+          message:
+            "No se pudieron aplicar reglas de firewall para SmartEconomat. Ejecuta el instalador como administrador y reintenta.",
+          errorCode: "FIREWALL_RULES_FAILED",
+        };
+      }
+    }
+
+    const firewallVerification = await this.verifyWindowsFirewallRules(payload);
+    if (!firewallVerification.ok) {
+      return {
+        ok: false,
+        message:
+          "Se intentó configurar firewall, pero no se confirmó la presencia de reglas para los puertos locales.",
+        errorCode: "FIREWALL_RULES_FAILED",
+      };
+    }
+
+    return {
+      ok: true,
+      message: `Firewall configurado para puertos locales ${ports.join(", ")}.`,
+    };
+  }
+
+  private async validateStrictTlsAndLocalDomain(
+    payload: InstallerConfigPayload,
+  ): Promise<OperationResult> {
+    const host = payload.localHost.trim() || "smarteconomat.app";
+    const protocol = payload.tlsProvider === "none" ? "http" : "https";
+    const port = protocol === "https" ? payload.httpsPort : payload.httpPort;
+    const targetUrl = `${protocol}://${host}`;
+
+    if (protocol === "http") {
+      const reachable = await this.checkUrl(targetUrl);
+      if (!reachable) {
+        return {
+          ok: false,
+          message: `Fallback HTTP activado pero ${targetUrl} no responde.`,
+          errorCode: "HTTP_FALLBACK_UNREACHABLE",
+        };
+      }
+      return {
+        ok: true,
+        message: `Validación HTTP completada en ${targetUrl}.`,
+      };
+    }
+
+    if (process.platform !== "win32") {
+      const strictHttpsOk = await this.checkStrictHttps(targetUrl);
+      if (!strictHttpsOk) {
+        return {
+          ok: false,
+          message:
+            "HTTPS no superó validación estricta de certificado. Verifica trust store y certificado local para smarteconomat.app.",
+          errorCode: "STRICT_TLS_VALIDATION_FAILED",
+        };
+      }
+
+      return {
+        ok: true,
+        message: `HTTPS estricto validado en ${targetUrl}.`,
+      };
+    }
+
+    const psScript = [
+      `$hostName = "${host.replace(/"/g, "")}"`,
+      `$targetUrl = "${targetUrl}"`,
+      `$port = ${port}`,
+      "$hostsPath = Join-Path $env:SystemRoot 'System32\\drivers\\etc\\hosts'",
+      "$hostsLines = Get-Content -LiteralPath $hostsPath -ErrorAction Stop",
+      "$hostMatches = $hostsLines | Where-Object { $_ -match ('(?i)(^|\\s)' + [Regex]::Escape($hostName) + '(\\s|$)') }",
+      "if (-not $hostMatches -or $hostMatches.Count -eq 0) { throw 'HOSTS_MISSING' }",
+      "$resolved = [System.Net.Dns]::GetHostAddresses($hostName)",
+      "$loopback = $resolved | Where-Object { $_.ToString() -eq '127.0.0.1' -or $_.ToString() -eq '::1' }",
+      "if (-not $loopback -or $loopback.Count -eq 0) { throw 'DNS_NOT_LOOPBACK' }",
+      "$listener = Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue | Select-Object -First 1",
+      "if (-not $listener) { throw 'PORT_NOT_LISTENING' }",
+      "Invoke-WebRequest -UseBasicParsing -Uri $targetUrl -TimeoutSec 12 | Out-Null",
+      "Write-Output 'WINDOWS_DOMAIN_VALIDATION_OK'",
+    ].join("; ");
+
+    let result = await this.processRunner.run({
+      command: "powershell",
+      args: ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", psScript],
+      timeoutMs: 30_000,
+    });
+
+    if (!result.ok) {
+      const hostFix = await this.runElevatedHostsFix();
+      if (hostFix.ok) {
+        this.emitRuntimeLog(
+          "installer",
+          "Hosts auto-reparado durante validación final. Reintentando validación Windows...",
+        );
+        result = await this.processRunner.run({
+          command: "powershell",
+          args: [
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            psScript,
+          ],
+          timeoutMs: 30_000,
+        });
+      }
+    }
+
+    if (!result.ok) {
+      return {
+        ok: false,
+        message: `Validación final Windows falló (${result.stderr || result.message}).`,
+        errorCode: "WINDOWS_DOMAIN_VALIDATION_FAILED",
+      };
+    }
+
+    return {
+      ok: true,
+      message: `Validación final Windows completada: ${targetUrl} operativo con TLS confiable.`,
+    };
+  }
+
+  private async runElevatedHostsFix(): Promise<OperationResult> {
+    if (process.platform !== "win32") {
+      return {
+        ok: true,
+        message: "Sistema no Windows: no se requiere auto-reparación de hosts.",
+      };
+    }
+
+    const scriptPath = path.join(
+      this.pathResolver.getInstallerScriptsRoot(),
+      "fix-local-hosts.ps1",
+    );
+    const command = [
+      `$script = "${scriptPath.replace(/\\/g, "\\\\")}"`,
+      "if (-not (Test-Path -LiteralPath $script)) { throw 'HOSTS_FIX_SCRIPT_NOT_FOUND' }",
+      "Start-Process -FilePath 'powershell.exe' -Verb RunAs -Wait -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$script)",
+      "Write-Output 'HOSTS_FIX_ELEVATED_OK'",
+    ].join("; ");
+
+    const result = await this.processRunner.run({
+      command: "powershell",
+      args: ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command],
+      timeoutMs: 60_000,
+    });
+
+    if (!result.ok) {
+      return {
+        ok: false,
+        message: result.stderr || result.message,
+        errorCode: "HOSTS_FIX_ELEVATED_FAILED",
+      };
+    }
+
+    return {
+      ok: true,
+      message:
+        "Auto-reparación de hosts ejecutada correctamente con elevación.",
+    };
+  }
+
+  private async verifyWindowsHostsEntry(
+    host: string,
+  ): Promise<OperationResult> {
+    const checkScript = [
+      `$hostsPath = Join-Path $env:SystemRoot 'System32\\drivers\\etc\\hosts'`,
+      `$hostName = "${host.replace(/"/g, "")}"`,
+      "$lines = Get-Content -LiteralPath $hostsPath -ErrorAction Stop",
+      "$matches = $lines | Where-Object { $_ -match ('(?i)(^|\\s)' + [Regex]::Escape($hostName) + '(\\s|$)') }",
+      "if (-not $matches -or $matches.Count -eq 0) { throw 'HOST_MISSING' }",
+      "Write-Output 'HOST_PRESENT'",
+    ].join("; ");
+
+    const result = await this.processRunner.run({
+      command: "powershell",
+      args: [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        checkScript,
+      ],
+      timeoutMs: 15_000,
+    });
+
+    return result.ok
+      ? { ok: true, message: "Entrada hosts validada." }
+      : {
+          ok: false,
+          message: result.stderr || result.message,
+          errorCode: "HOSTS_VERIFY_FAILED",
+        };
+  }
+
+  private async runElevatedFirewallFix(
+    payload: InstallerConfigPayload,
+  ): Promise<OperationResult> {
+    if (process.platform !== "win32") {
+      return {
+        ok: true,
+        message:
+          "Sistema no Windows: no se requiere auto-reparación de firewall.",
+      };
+    }
+
+    const scriptPath = path.join(
+      this.pathResolver.getInstallerScriptsRoot(),
+      "fix-local-firewall.ps1",
+    );
+    const command = [
+      `$script = "${scriptPath.replace(/\\/g, "\\\\")}"`,
+      `$httpPort = ${payload.httpPort}`,
+      `$httpsPort = ${payload.httpsPort}`,
+      "if (-not (Test-Path -LiteralPath $script)) { throw 'FIREWALL_FIX_SCRIPT_NOT_FOUND' }",
+      "Start-Process -FilePath 'powershell.exe' -Verb RunAs -Wait -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$script,'-HttpPort',$httpPort,'-HttpsPort',$httpsPort)",
+      "Write-Output 'FIREWALL_FIX_ELEVATED_OK'",
+    ].join("; ");
+
+    const result = await this.processRunner.run({
+      command: "powershell",
+      args: ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command],
+      timeoutMs: 60_000,
+    });
+
+    return result.ok
+      ? {
+          ok: true,
+          message:
+            "Auto-reparación de firewall ejecutada correctamente con elevación.",
+        }
+      : {
+          ok: false,
+          message: result.stderr || result.message,
+          errorCode: "FIREWALL_FIX_ELEVATED_FAILED",
+        };
+  }
+
+  private async verifyWindowsFirewallRules(
+    payload: InstallerConfigPayload,
+  ): Promise<OperationResult> {
+    if (process.platform !== "win32") {
+      return {
+        ok: true,
+        message: "Sistema no Windows: no se requiere verificación de firewall.",
+      };
+    }
+
+    const ports = [payload.httpPort, payload.httpsPort]
+      .filter((value, index, all) => all.indexOf(value) === index)
+      .filter((value) => value > 0);
+
+    const checkScript = [
+      `$ports = @(${ports.join(",")})`,
+      "$candidateRules = Get-NetFirewallRule -ErrorAction SilentlyContinue | Where-Object {",
+      "  $_.Direction -eq 'Inbound' -and",
+      "  $_.Action -eq 'Allow' -and",
+      "  $_.Enabled -eq 'True' -and",
+      "  $_.DisplayName -like 'SmartEconomat Local*'",
+      "}",
+      "foreach ($port in $ports) {",
+      "  $matched = $false",
+      "  foreach ($rule in $candidateRules) {",
+      "    $profileRaw = [string]$rule.Profile",
+      "    if (-not ($profileRaw -match 'Domain' -or $profileRaw -match 'Private')) { continue }",
+      "    $portFilters = Get-NetFirewallPortFilter -AssociatedNetFirewallRule $rule -ErrorAction SilentlyContinue",
+      "    if (-not $portFilters) { continue }",
+      "    $hasPort = $portFilters | Where-Object {",
+      "      $_.Protocol -eq 'TCP' -and",
+      "      (",
+      "        $_.LocalPort -eq [string]$port -or",
+      "        $_.LocalPort -eq 'Any'",
+      "      )",
+      "    }",
+      "    if ($hasPort) {",
+      "      $matched = $true",
+      "      break",
+      "    }",
+      "  }",
+      "  if (-not $matched) { throw ('FIREWALL_RULE_MISSING_' + $port) }",
+      "}",
+      "Write-Output 'FIREWALL_RULES_PRESENT'",
+    ].join("; ");
+
+    const result = await this.processRunner.run({
+      command: "powershell",
+      args: [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        checkScript,
+      ],
+      timeoutMs: 20_000,
+    });
+
+    return result.ok
+      ? {
+          ok: true,
+          message: "Reglas de firewall validadas correctamente.",
+        }
+      : {
+          ok: false,
+          message: result.stderr || result.message,
+          errorCode: "FIREWALL_VERIFY_FAILED",
+        };
+  }
+
+  private async checkStrictHttps(targetUrl: string): Promise<boolean> {
+    return new Promise<boolean>((resolve) => {
+      const parsed = new URL(targetUrl);
+      const request = https.request(
+        {
+          method: "GET",
+          hostname: parsed.hostname,
+          port: parsed.port || 443,
+          path: parsed.pathname || "/",
+          timeout: 8_000,
+          rejectUnauthorized: true,
+        },
+        (response) => {
+          response.resume();
+          const statusCode = response.statusCode ?? 0;
+          resolve(statusCode >= 200 && statusCode < 500);
+        },
+      );
+
+      request.on("timeout", () => {
+        request.destroy();
+        resolve(false);
+      });
+      request.on("error", () => {
+        resolve(false);
+      });
+      request.end();
+    });
+  }
+
+  private async tryRollbackWindowsHosts(runtimePath: string): Promise<void> {
+    if (process.platform !== "win32" || !this.hostsBackupPath) {
+      return;
+    }
+
+    const backupPath = this.hostsBackupPath;
+    this.hostsBackupPath = null;
+
+    const rollbackScript = [
+      `$backupPath = "${backupPath.replace(/\\/g, "\\\\")}"`,
+      "$hostsPath = Join-Path $env:SystemRoot 'System32\\drivers\\etc\\hosts'",
+      "if (-not (Test-Path -LiteralPath $backupPath)) { exit 0 }",
+      "Copy-Item -LiteralPath $backupPath -Destination $hostsPath -Force",
+      "Write-Output 'HOSTS_ROLLED_BACK'",
+    ].join("; ");
+
+    const result = await this.processRunner.run({
+      command: "powershell",
+      args: [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        rollbackScript,
+      ],
+      timeoutMs: 15_000,
+    });
+
+    if (result.ok) {
+      this.emitRuntimeLog(
+        "installer",
+        `Rollback aplicado: se restauró hosts desde ${backupPath}.`,
+      );
+      return;
+    }
+
+    this.emitRuntimeLog(
+      "installer",
+      `No se pudo restaurar hosts automáticamente (${result.stderr || result.message}). Backup disponible en ${backupPath}.`,
+    );
+
+    await fs.mkdir(path.join(runtimePath, "diagnostics"), { recursive: true });
   }
 
   private async verifyUrlReachability(

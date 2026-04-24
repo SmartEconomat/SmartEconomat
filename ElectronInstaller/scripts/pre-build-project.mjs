@@ -32,6 +32,13 @@ const BACKEND_DIR = path.join(ROOT, "backend", "smart-economat-backend");
 const FRONTEND_DIR = path.join(ROOT, "frontend", "smart-economat-frontend");
 const BACKEND_CACHE_FILE = path.join(BACKEND_DIR, ".prebuild-cache.json");
 const FRONTEND_CACHE_FILE = path.join(FRONTEND_DIR, ".prebuild-cache.json");
+const PREBUILD_METRICS_FILE = path.join(
+  ROOT,
+  "ElectronInstaller",
+  ".cache",
+  "build-metrics",
+  "prebuild-last.json",
+);
 
 const GREEN = "\x1b[32m";
 const YELLOW = "\x1b[33m";
@@ -78,7 +85,7 @@ function resolveCommand(command) {
 /**
  * Ejecuta un comando en un directorio dado, heredando stdio del proceso padre.
  */
-function run(command, args, cwd) {
+function run(command, args, cwd, options = {}) {
   return new Promise((resolve, reject) => {
     const resolvedCommand = resolveCommand(command);
     const useShell =
@@ -91,6 +98,7 @@ function run(command, args, cwd) {
       cwd,
       stdio: "inherit",
       shell: useShell,
+      ...options,
     });
 
     child.on("error", reject);
@@ -124,6 +132,20 @@ async function readCache(cacheFile) {
 
 async function writeCache(cacheFile, payload) {
   await fs.writeFile(cacheFile, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+}
+
+async function withTiming(label, fn) {
+  const startedAt = Date.now();
+  info(`Iniciando etapa: ${label}`);
+  await fn();
+  const elapsedMs = Date.now() - startedAt;
+  const elapsedSeconds = Number((elapsedMs / 1000).toFixed(2));
+  success(`Etapa completada: ${label} (${elapsedSeconds}s)`);
+  return {
+    label,
+    elapsedMs,
+    elapsedSeconds,
+  };
 }
 
 async function getDependencyState(projectDir) {
@@ -304,7 +326,12 @@ async function buildFrontend() {
 
   // Compilar con Vite → build/
   info("Compilando frontend con Vite...");
-  await run("npm", ["run", "build"], FRONTEND_DIR);
+  await run("npm", ["run", "build"], FRONTEND_DIR, {
+    env: {
+      ...process.env,
+      NODE_OPTIONS: process.env.NODE_OPTIONS ?? "--max-old-space-size=4096",
+    },
+  });
 
   // El frontend React/Vite normalmente genera en 'build' o 'dist'
   // Intentar ambas rutas
@@ -365,14 +392,50 @@ async function main() {
   console.log("\n");
 
   const startTime = Date.now();
+  const stageMetrics = [];
 
   try {
-    await buildBackend();
-    console.log("\n");
-    await buildFrontend();
+    const runInParallel = process.env.PREBUILD_PARALLEL === "1";
+    if (runInParallel) {
+      try {
+        const parallelResults = await Promise.all([
+          withTiming("build-backend", buildBackend),
+          withTiming("build-frontend", buildFrontend),
+        ]);
+        stageMetrics.push(...parallelResults);
+      } catch (parallelError) {
+        warn(
+          `Build paralelo falló (${parallelError instanceof Error ? parallelError.message : String(parallelError)}). Reintentando en modo secuencial por estabilidad.`,
+        );
+        const backendMetrics = await withTiming("build-backend-sequential", buildBackend);
+        const frontendMetrics = await withTiming(
+          "build-frontend-sequential",
+          buildFrontend,
+        );
+        stageMetrics.push(backendMetrics, frontendMetrics);
+      }
+    } else {
+      const backendMetrics = await withTiming("build-backend", buildBackend);
+      const frontendMetrics = await withTiming("build-frontend", buildFrontend);
+      stageMetrics.push(backendMetrics, frontendMetrics);
+    }
     console.log("\n");
 
-    const elapsedSeconds = ((Date.now() - startTime) / 1000).toFixed(1);
+    const elapsedMs = Date.now() - startTime;
+    const elapsedSeconds = Number((elapsedMs / 1000).toFixed(1));
+    const metricsPayload = {
+      timestamp: new Date().toISOString(),
+      elapsedMs,
+      elapsedSeconds,
+      stageMetrics,
+    };
+    await fs.mkdir(path.dirname(PREBUILD_METRICS_FILE), { recursive: true });
+    await fs.writeFile(
+      PREBUILD_METRICS_FILE,
+      `${JSON.stringify(metricsPayload, null, 2)}\n`,
+      "utf8",
+    );
+
     success("================================================================");
     success(`Pre-build completado en ${elapsedSeconds}s 🚀`);
     success("El instalador ahora incluirá binarios pre-compilados.");

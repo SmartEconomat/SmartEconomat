@@ -23,6 +23,10 @@ interface EnsureCertificateOptions {
    * Por defecto true en Windows.
    */
   installToTrustStore?: boolean;
+  /**
+   * El dominio para el cual se generarán los certificados.
+   */
+  domain?: string;
 }
 
 export class CertificateService {
@@ -60,7 +64,7 @@ export class CertificateService {
     }
 
     try {
-      await this.writeLocalSelfSignedCertificates(certPaths);
+      await this.writeLocalSelfSignedCertificates(certPaths, options.domain || "smarteconomat.app");
 
       // Instalar en el almacén de certificados de Windows
       if (shouldInstallToTrustStore) {
@@ -150,6 +154,7 @@ export class CertificateService {
 
   private async writeLocalSelfSignedCertificates(
     paths: CertificatePaths,
+    domain: string,
   ): Promise<void> {
     await fs.mkdir(paths.liveDir, { recursive: true });
     await fs.mkdir(path.dirname(paths.stableFullchainPath), {
@@ -158,7 +163,7 @@ export class CertificateService {
 
     const pems = selfsigned.generate(
       [
-        { name: "commonName", value: "smarteconomat.app" },
+        { name: "commonName", value: domain },
         { name: "organizationName", value: "SmartEconomat" },
         { name: "countryName", value: "ES" },
       ],
@@ -169,18 +174,34 @@ export class CertificateService {
         extensions: [
           {
             name: "basicConstraints",
-            cA: false,
+            cA: true,
+          },
+          {
+            name: "keyUsage",
+            keyCertSign: true,
+            digitalSignature: true,
+            nonRepudiation: true,
+            keyEncipherment: true,
+            dataEncipherment: true,
+          },
+          {
+            name: "extKeyUsage",
+            serverAuth: true,
+            clientAuth: true,
+            codeSigning: true,
+            emailProtection: true,
+            timeStamping: true,
           },
           {
             name: "subjectAltName",
             altNames: [
-              { type: 2, value: "smarteconomat.app" },
+              { type: 2, value: domain },
               { type: 2, value: "localhost" },
-              { type: 2, value: "api.smarteconomat.app" },
+              { type: 2, value: `api.${domain}` },
               { type: 7, ip: "127.0.0.1" },
             ],
           },
-        ],
+        ] as any[],
       },
     );
 
@@ -201,8 +222,18 @@ export class CertificateService {
 
   /**
    * Instala el certificado en el almacén de certificados raíz de confianza
-   * del usuario actual en Windows. Esto permite que los navegadores confíen
-   * en el certificado autofirmado sin mostrar advertencias.
+   * en Windows usando Import-Certificate (convierte PEM → DER en memoria).
+   *
+   * Estrategia:
+   *  1. Intentar CurrentUser\Root (no requiere elevación, no usa Remove).
+   *  2. Si falla, intentar LocalMachine\Root directamente (funciona si el
+   *     proceso ya corre elevado como administrador).
+   *
+   * Se evita deliberadamente X509Store.Remove() en el almacén Root porque
+   * lanza "Acceso denegado" en contextos no interactivos incluso con permisos
+   * de administrador. Import-Certificate maneja duplicados internamente.
+   * Se evita Start-Process -Verb RunAs porque falla cuando el proceso padre
+   * ya está elevado por UAC.
    */
   private async installCertificateToWindowsTrustStore(
     certPath: string,
@@ -216,105 +247,93 @@ export class CertificateService {
 
     const normalizedPath = path.win32.normalize(certPath);
 
-    // PowerShell script para importar el certificado al almacén Root del usuario
-    const script = `
-      $certPath = '${normalizedPath}'
-      
-      if (-not (Test-Path $certPath)) {
-        Write-Error "El certificado no existe: $certPath"
+    // Script robusto: convierte PEM → DER en memoria y usa Import-Certificate.
+    // Import-Certificate no requiere Remove previo y no lanza AccessDenied.
+    const buildScript = (storeLocation: "CurrentUser" | "LocalMachine") => `
+      $ErrorActionPreference = 'Stop'
+      $certPemPath = '${normalizedPath}'
+
+      if (-not (Test-Path $certPemPath)) {
+        Write-Error "El certificado no existe: $certPemPath"
         exit 1
       }
-      
+
       try {
-        # Importar al almacén de certificados raíz de confianza del usuario actual
-        $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($certPath)
-        
-        # Almacén Root del usuario actual (CurrentUser)
-        $store = New-Object System.Security.Cryptography.X509Certificates.X509Store("Root", "CurrentUser")
-        $store.Open("ReadWrite")
-        
-        # Verificar si ya existe un certificado con el mismo subject
-        $existingCerts = $store.Certificates | Where-Object { $_.Subject -like "*smarteconomat*" }
-        foreach ($existing in $existingCerts) {
-          $store.Remove($existing)
-        }
-        
-        $store.Add($cert)
-        $store.Close()
-        
-        Write-Host "Certificado instalado correctamente en el almacén de confianza del usuario."
+        # Leer PEM y convertir a bytes DER (quitar cabeceras y decodificar Base64)
+        $pemContent = Get-Content -Path $certPemPath -Raw
+        $b64 = $pemContent \`
+          -replace '-----BEGIN CERTIFICATE-----', '' \`
+          -replace '-----END CERTIFICATE-----', '' \`
+          -replace '\`r', '' \`
+          -replace '\`n', '' \`
+          -replace ' ', ''
+        $derBytes = [System.Convert]::FromBase64String($b64)
+
+        # Escribir DER a archivo temporal
+        $derTempPath = [System.IO.Path]::GetTempFileName() + '.cer'
+        [System.IO.File]::WriteAllBytes($derTempPath, $derBytes)
+
+        # Importar al almacén Root (Import-Certificate gestiona duplicados sin Remove)
+        $imported = Import-Certificate -FilePath $derTempPath -CertStoreLocation 'Cert:\\${storeLocation}\\Root'
+
+        Remove-Item -Path $derTempPath -Force -ErrorAction SilentlyContinue
+        Write-Host "Certificado importado correctamente. Thumbprint: $($imported.Thumbprint)"
         exit 0
       } catch {
-        Write-Error "Error al instalar certificado: $_"
+        Write-Error "Error al importar certificado en ${storeLocation}: $($_.Exception.Message)"
         exit 1
       }
     `;
 
-    const result = await this.processRunner.run({
-      command: "powershell",
-      args: ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script],
-      timeoutMs: 30_000,
-    });
-
-    if (result.ok) {
-      return {
-        ok: true,
-        message:
-          "Certificado instalado en el almacén de confianza de Windows.",
-      };
-    }
-
-    // Si falla con el usuario actual, intentar con el almacén de la máquina local (requiere admin)
-    const adminScript = `
-      $certPath = '${normalizedPath}'
-      
-      try {
-        $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($certPath)
-        
-        # Almacén Root de la máquina local (LocalMachine) - requiere elevación
-        $store = New-Object System.Security.Cryptography.X509Certificates.X509Store("Root", "LocalMachine")
-        $store.Open("ReadWrite")
-        
-        $existingCerts = $store.Certificates | Where-Object { $_.Subject -like "*smarteconomat*" }
-        foreach ($existing in $existingCerts) {
-          $store.Remove($existing)
-        }
-        
-        $store.Add($cert)
-        $store.Close()
-        
-        Write-Host "Certificado instalado en el almacén de confianza de la máquina."
-        exit 0
-      } catch {
-        Write-Error "Error al instalar certificado: $_"
-        exit 1
-      }
-    `;
-
-    const adminResult = await this.processRunner.run({
+    // Intento 1: CurrentUser\Root (sin necesidad de elevación)
+    const currentUserResult = await this.processRunner.run({
       command: "powershell",
       args: [
         "-NoProfile",
         "-ExecutionPolicy",
         "Bypass",
         "-Command",
-        `Start-Process powershell -Verb RunAs -Wait -ArgumentList '-NoProfile -ExecutionPolicy Bypass -Command "${adminScript.replace(/"/g, '\\"').replace(/\n/g, " ")}"'`,
+        buildScript("CurrentUser"),
       ],
-      timeoutMs: 60_000,
+      timeoutMs: 30_000,
     });
 
-    if (adminResult.ok) {
+    if (currentUserResult.ok) {
       return {
         ok: true,
         message:
-          "Certificado instalado en el almacén de confianza de Windows (nivel sistema).",
+          "Certificado instalado en el almacén de confianza del usuario (CurrentUser).",
+      };
+    }
+
+    // Intento 2: LocalMachine\Root directamente (funciona si ya corremos como admin)
+    // No se usa Start-Process -Verb RunAs porque falla cuando el proceso padre ya está elevado.
+    const localMachineResult = await this.processRunner.run({
+      command: "powershell",
+      args: [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        buildScript("LocalMachine"),
+      ],
+      timeoutMs: 30_000,
+    });
+
+    if (localMachineResult.ok) {
+      return {
+        ok: true,
+        message:
+          "Certificado instalado en el almacén de confianza del sistema (LocalMachine).",
       };
     }
 
     return {
       ok: false,
       message:
-        "No se pudo instalar el certificado en el almacén de confianza. Puede que necesites permisos de administrador o instalarlo manualmente.",
+        "No se pudo instalar el certificado en el almacén de confianza. " +
+        `CurrentUser: ${currentUserResult.stderr || currentUserResult.message}. ` +
+        `LocalMachine: ${localMachineResult.stderr || localMachineResult.message}.`,
       errorCode: "TLS_TRUST_STORE_INSTALL_FAILED",
     };
   }
@@ -365,6 +384,8 @@ export class CertificateService {
 
   /**
    * Elimina los certificados de SmartEconomat del almacén de confianza.
+   * Usa Get-ChildItem + Remove-Item que es el método correcto en PowerShell
+   * para eliminar del Root store sin lanzar AccessDenied como X509Store.Remove().
    */
   private async removeCertificateFromWindowsTrustStore(): Promise<boolean> {
     if (process.platform !== "win32") {
@@ -372,27 +393,24 @@ export class CertificateService {
     }
 
     const script = `
-      $stores = @(
-        @{ Location = "CurrentUser"; Store = "Root" },
-        @{ Location = "LocalMachine"; Store = "Root" }
-      )
-      
-      foreach ($storeInfo in $stores) {
+      $storeLocations = @('CurrentUser', 'LocalMachine')
+      foreach ($loc in $storeLocations) {
         try {
-          $store = New-Object System.Security.Cryptography.X509Certificates.X509Store($storeInfo.Store, $storeInfo.Location)
-          $store.Open("ReadWrite")
-          
-          $certs = $store.Certificates | Where-Object { $_.Subject -like "*smarteconomat*" }
+          $storePath = "Cert:\\$loc\\Root"
+          $certs = Get-ChildItem -Path $storePath -ErrorAction SilentlyContinue |
+            Where-Object { $_.Subject -like '*smarteconomat*' }
           foreach ($cert in $certs) {
-            $store.Remove($cert)
+            try {
+              Remove-Item -Path "$storePath\\$($cert.Thumbprint)" -Force -ErrorAction Stop
+              Write-Host "Eliminado de $($loc): $($cert.Thumbprint)"
+            } catch {
+              Write-Host "No se pudo eliminar de $($loc): $($_.Exception.Message)"
+            }
           }
-          
-          $store.Close()
         } catch {
-          # Ignorar errores - puede no tener permisos para LocalMachine
+          Write-Host "Error accediendo a $($loc): $($_.Exception.Message)"
         }
       }
-      
       exit 0
     `;
 
