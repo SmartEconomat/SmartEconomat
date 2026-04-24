@@ -38,6 +38,20 @@ interface PurchaseBatchDetailModalProps {
   onRecepcion?: (batch: PurchaseBatch) => void;
 }
 
+/**
+ * @description Detail modal for a PedidoBatchDetail (either a PedidoUsuario or a PurchaseBatch).
+ * Shows product lines, batch metadata, and conditional action buttons (approve, cancel, edit, reception, PDF).
+ * @param props.detail - The batch/pedido detail to display, or null when the modal is closed
+ * @param props.canEdit - Whether the edit action should be available
+ * @param props.canApprove - Whether the approve action should be available
+ * @param props.canCancel - Whether the cancel action should be available
+ * @param props.onClose - Callback invoked when the modal is dismissed
+ * @param props.onEdit - Optional callback invoked when the user clicks edit
+ * @param props.onApprove - Optional callback invoked when the user approves
+ * @param props.onCancel - Optional callback invoked when the user cancels
+ * @param props.onRecepcion - Optional callback invoked when the user initiates reception
+ * @returns DetailModal with batch information and context-sensitive action buttons
+ */
 const PurchaseBatchDetailModal: React.FC<PurchaseBatchDetailModalProps> = ({
   detail,
   canEdit = false,

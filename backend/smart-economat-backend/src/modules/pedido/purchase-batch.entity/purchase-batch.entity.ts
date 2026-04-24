@@ -26,16 +26,27 @@ import { Pedido } from '../pedido.entity/pedido.entity';
 @Index(['createdAt'])
 @Index(['usuarioId'])
 export class PurchaseBatch extends BaseEntity {
+  /** Auto-incremented global sequential reference number for this purchase batch. */
   @Column({ name: 'numero_global', type: 'bigint', unique: true })
   numeroGlobal!: string;
 
+  /** Human-readable unique reference code for the batch (e.g. BATCH-2024-00001). */
   @Column({ name: 'referencia', type: 'varchar', length: 32, unique: true })
   referencia!: string;
 
+  /**
+   * Transient alias for `numeroGlobal`. Not persisted.
+   * Provided for compatibility with older display code.
+   */
   numeroLote?: string;
 
+  /**
+   * Transient alias for `referencia`. Not persisted.
+   * Provided for compatibility with older display code.
+   */
   referenciaLote?: string;
 
+  /** Foreign key referencing the User who created the batch. Nullable (SET NULL on delete). */
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
 

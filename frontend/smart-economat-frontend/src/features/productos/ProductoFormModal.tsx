@@ -108,6 +108,18 @@ export type ProductoFormModalProps = Pick<
   title?: DynamicFormModalProps['title'];
 };
 
+/**
+ * @description Dynamic form modal for creating or editing a Producto.
+ * Loads available proveedores on mount, fetches OpenFoodFacts product data when a barcode is entered,
+ * supports EAN-13 generation (permission-gated), and builds a category-aware dynamic field schema.
+ * @param props.isOpen - Whether the modal should be visible
+ * @param props.onClose - Callback invoked when the user closes the modal
+ * @param props.initialData - Pre-populated form values for editing mode; empty object for creation
+ * @param props.onSubmit - Callback invoked with validated form data when the user submits
+ * @param props.isSubmitting - Whether a submit operation is in progress
+ * @param props.title - Optional modal title (defaults to 'Nuevo Producto' or 'Editar Producto')
+ * @returns DynamicFormModal configured for the producto domain
+ */
 const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
   isOpen,
   onClose,

@@ -1,6 +1,10 @@
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { ExportColumn } from './producto-export.mapper';
 
+/**
+ * @description Column definitions used when exporting Usuario data to Excel/CSV.
+ * Each entry specifies the column header label, the data key, and the column width.
+ */
 export const USUARIO_COLUMNS: ExportColumn[] = [
   { header: 'ID', key: 'id', width: 38 },
   { header: 'Nombre', key: 'nombre', width: 25 },
@@ -13,6 +17,14 @@ export const USUARIO_COLUMNS: ExportColumn[] = [
   { header: 'Fecha Creación', key: 'createdAt', width: 15 },
 ];
 
+/**
+ * @description Maps a Usuario entity to a flat key-value record suitable for an Excel row.
+ * Boolean `activo` is converted to 'Sí'/'No', the optional profesor CIAL is resolved
+ * with null-safe access, and `createdAt` is formatted as an ISO date string (YYYY-MM-DD).
+ * @param usuario - The Usuario entity to map (requires the `profesor` relation loaded
+ *   for `cialProfesor` to be populated).
+ * @returns A plain record whose keys match the keys declared in {@link USUARIO_COLUMNS}.
+ */
 export function mapUsuarioToExcelRow(
   usuario: Usuario
 ): Record<string, unknown> {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -21,10 +22,20 @@ import {
 } from '../../utils/passwordValidation';
 import { getAuthErrorMessage } from '../../utils/authErrorMessages';
 
+/**
+ * Page component for resetting a user's password via a token link.
+ *
+ * The reset token is read from the URL path parameter (`:token`) or, as a
+ * fallback, from the `token` query-string parameter. Validates that the two
+ * password fields match and that the new password meets the strength policy
+ * before calling the API. On success the user is redirected to `/login` after
+ * a short delay.
+ */
 const ResetPassword: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     password: '',
     confirmPassword: '',
@@ -39,23 +50,37 @@ const ResetPassword: React.FC = () => {
     formData.password.length === 0 ||
     formData.confirmPassword.length === 0;
 
+  /**
+   * Generic controlled-input change handler.
+   * Updates the matching field in `formData` state using the input's `name` attribute.
+   *
+   * @param e - The change event from the password or confirmPassword input.
+   */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  /**
+   * Handles form submission for the password reset flow.
+   *
+   * Validates that a token is present, that both password fields match and
+   * that the new password satisfies the strength policy. On success a
+   * localised success message is shown and the user is redirected to `/login`
+   * after 4 seconds. Displays localised error messages for all failure cases.
+   *
+   * @param e - The form submit event.
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
     if (resetToken.length === 0) {
-      setErrorMsg(
-        'El enlace de recuperación no es válido o no contiene token.'
-      );
+      setErrorMsg(t('auth.resetPassword.errors.tokenInvalido'));
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setErrorMsg('Las contraseñas no coinciden.');
+      setErrorMsg(t('auth.resetPassword.errors.contrasenasNoCoinciden'));
       return;
     }
 
@@ -71,16 +96,14 @@ const ResetPassword: React.FC = () => {
         newPassword: formData.password,
       });
       if (res.success) {
-        setSuccessMsg(
-          'Tu contraseña ha sido restablecida correctamente. Serás redirigido al inicio de sesión.'
-        );
+        setSuccessMsg(t('auth.resetPassword.exito'));
         setTimeout(() => navigate('/login'), 4000);
       } else {
         setErrorMsg(
           getAuthErrorMessage(
             res.message,
             'resetPassword',
-            'No se pudo restablecer la contraseña.'
+            t('auth.resetPassword.errors.noSePudo')
           )
         );
       }
@@ -90,7 +113,7 @@ const ResetPassword: React.FC = () => {
         getAuthErrorMessage(
           err,
           'resetPassword',
-          'Error de conexión con el servidor.'
+          t('auth.resetPassword.errors.conexion')
         )
       );
     } finally {
@@ -121,7 +144,7 @@ const ResetPassword: React.FC = () => {
           fontWeight="bold"
           textAlign="center"
         >
-          Restablecer Contraseña
+          {t('auth.resetPassword.titulo')}
         </Typography>
         <Typography
           variant="body2"
@@ -129,7 +152,7 @@ const ResetPassword: React.FC = () => {
           textAlign="center"
           sx={{ mb: 3 }}
         >
-          Por favor, introduce tu nueva contraseña a continuación.
+          {t('auth.resetPassword.descripcion')}
         </Typography>
 
         {errorMsg && (
@@ -146,7 +169,7 @@ const ResetPassword: React.FC = () => {
         {!successMsg && (
           <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
             <Input
-              label="Nueva Contraseña"
+              label={t('auth.resetPassword.nuevaContrasena')}
               name="password"
               type={showPassword ? 'text' : 'password'}
               value={formData.password}
@@ -166,7 +189,7 @@ const ResetPassword: React.FC = () => {
               }}
             />
             <Input
-              label="Confirmar Contraseña"
+              label={t('auth.resetPassword.confirmarContrasena')}
               name="confirmPassword"
               type={showPassword ? 'text' : 'password'}
               value={formData.confirmPassword}
@@ -176,11 +199,11 @@ const ResetPassword: React.FC = () => {
             <Button
               type="submit"
               isLoading={isLoading}
-              loadingText="Guardando..."
+              loadingText={t('auth.resetPassword.guardando')}
               disabled={isSubmitDisabled}
               sx={{ mt: 3 }}
             >
-              Guardar Nueva Contraseña
+              {t('auth.resetPassword.guardar')}
             </Button>
           </Box>
         )}
@@ -190,7 +213,7 @@ const ResetPassword: React.FC = () => {
           onClick={() => navigate('/login')}
           sx={{ mt: 2 }}
         >
-          Volver al inicio de sesión
+          {t('auth.resetPassword.volver')}
         </Button>
       </Paper>
     </Container>

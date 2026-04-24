@@ -1,5 +1,11 @@
 import { UsuarioBasico } from '../../services/movimiento.types';
 
+/**
+ * @description Resolves the best available display name for a movimiento's associated user.
+ * Priority: nombre > username > email. Returns '—' when no information is available.
+ * @param usuario - Optional partial user object from the movimiento
+ * @returns Display name string or '—'
+ */
 export function getMovimientoUsuarioDisplayName(
   usuario?: UsuarioBasico
 ): string {
@@ -21,6 +27,12 @@ export function getMovimientoUsuarioDisplayName(
   return '—';
 }
 
+/**
+ * @description Returns a single uppercase initial character for an avatar derived from the user's display name.
+ * Falls back to 'U' when no display name can be resolved.
+ * @param usuario - Optional partial user object from the movimiento
+ * @returns Single uppercase letter for use in avatar components
+ */
 export function getMovimientoUsuarioInitial(usuario?: UsuarioBasico): string {
   const displayName = getMovimientoUsuarioDisplayName(usuario);
 

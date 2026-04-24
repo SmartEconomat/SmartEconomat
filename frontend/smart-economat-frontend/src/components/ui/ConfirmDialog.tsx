@@ -12,6 +12,9 @@ type ButtonColor =
   | 'info'
   | 'warning';
 
+/**
+ * Props for the {@link ConfirmDialog} component.
+ */
 export interface ConfirmDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -28,6 +31,26 @@ export interface ConfirmDialogProps {
   isLoading?: boolean;
 }
 
+/**
+ * Two-button confirmation dialog (cancel + confirm).
+ *
+ * Renders a small `Modal` with a title, a message body (string or arbitrary
+ * JSX), and two action buttons whose text, colour, and variant are fully
+ * configurable. Shows an inline `Spinner` on the confirm button while
+ * `isLoading` is `true`.
+ *
+ * @param props - See {@link ConfirmDialogProps}.
+ * @returns A modal confirmation dialog.
+ * @example
+ * <ConfirmDialog
+ *   isOpen={showDelete}
+ *   onClose={() => setShowDelete(false)}
+ *   onConfirm={handleDelete}
+ *   title="Eliminar registro"
+ *   message="Esta acción no se puede deshacer."
+ *   confirmText="Eliminar"
+ * />
+ */
 export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   isOpen,
   onClose,
@@ -63,7 +86,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         )}
       </Box>
 
-      {/* Acciones */}
+      {/* Actions */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
         {cancelText && (
           <Button

@@ -135,11 +135,25 @@ Si no solicitaste este cambio, puedes ignorar este correo de forma segura — tu
 SmartEconomat — Sistema de gestión de economato
 Este es un mensaje automático, por favor no respondas a este correo.`;
 
+/**
+ * Servicio de correo electrónico para el envío de notificaciones transaccionales.
+ * Gestiona la creación del transportador SMTP y el envío de plantillas de correo.
+ * Cuando SMTP no está configurado, opera en modo simulación registrando el enlace por log.
+ *
+ * @class MailService
+ */
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
   private transporter: Transporter | null = null;
 
+  /**
+   * Obtiene (o crea en la primera llamada) el transportador SMTP de Nodemailer.
+   * Devuelve `null` si las variables de entorno MAIL_HOST, MAIL_USER o MAIL_PASS no están definidas,
+   * activando el modo simulación.
+   *
+   * @returns {Transporter | null} Instancia del transportador SMTP, o `null` si no está configurado.
+   */
   private getTransporter(): Transporter | null {
     if (this.transporter) return this.transporter;
 
@@ -161,6 +175,17 @@ export class MailService {
     return this.transporter;
   }
 
+  /**
+   * Envía un correo electrónico de recuperación de contraseña al usuario.
+   * Construye el enlace de restablecimiento a partir del token proporcionado y lo inyecta
+   * en las plantillas HTML y de texto plano. Si el transportador SMTP no está configurado,
+   * registra el enlace en el logger (modo simulación) sin lanzar error.
+   *
+   * @param {string} email - Dirección de correo del destinatario.
+   * @param {string} resetToken - Token de restablecimiento generado por el servicio de autenticación.
+   * @returns {Promise<void>}
+   * @throws {InternalServerErrorException} Cuando el envío SMTP falla por un error del servidor de correo.
+   */
   async sendPasswordResetEmail(
     email: string,
     resetToken: string
@@ -181,7 +206,7 @@ export class MailService {
       await transporter.sendMail({
         from: `"SmartEconomat" <${from}>`,
         to: email,
-        subject: 'Recuperación de contraseña - SmartEconomat',
+        subject: I18nHelper.getError('PASSWORD_RESET_SUBJECT'),
         html: PASSWORD_RESET_HTML.replaceAll('{{RESET_URL}}', recoveryLink),
         text: PASSWORD_RESET_TEXT.replaceAll('{{RESET_URL}}', recoveryLink),
       });

@@ -18,12 +18,28 @@ import ContrastIcon from '@mui/icons-material/ContrastOutlined';
 import InvertColorsIcon from '@mui/icons-material/InvertColorsOutlined';
 import CheckIcon from '@mui/icons-material/Check';
 import { useThemeContext } from '../../../store/theme.hooks';
+import { useTranslation } from 'react-i18next';
 
+/**
+ * Props for the SettingsMenu component.
+ */
 interface SettingsMenuProps {
+  /** Display mode: 'icon' renders a standalone icon button, 'listitem' renders a sidebar list item. */
   mode?: 'icon' | 'listitem';
+  /** Whether the sidebar drawer is currently open (affects label visibility in listitem mode). */
   isOpen?: boolean;
 }
 
+/**
+ * Settings dropdown menu that allows the user to change the application
+ * theme and font size.
+ *
+ * In `listitem` mode the trigger is a MUI ListItemButton suitable for a
+ * navigation drawer. In `icon` mode the trigger is a small IconButton
+ * typically placed in a top app-bar.
+ *
+ * @param props - {@link SettingsMenuProps}
+ */
 export default function SettingsMenu({
   mode = 'icon',
   isOpen = true,
@@ -31,16 +47,28 @@ export default function SettingsMenu({
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const { currentThemeName, setTheme, fontSize, setFontSize, isLearningMode } =
     useThemeContext();
+  const { t } = useTranslation();
   const open = Boolean(anchorEl);
 
+  /**
+   * Opens the settings dropdown menu.
+   * @param event - The click event from the trigger element.
+   */
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
+  /**
+   * Closes the settings dropdown menu.
+   */
   const handleClose = () => {
     setAnchorEl(null);
   };
 
+  /**
+   * Applies the selected theme and closes the menu.
+   * @param theme - The theme identifier to apply.
+   */
   const handleThemeChange = (
     theme: 'light' | 'dark' | 'highContrastLight' | 'highContrastDark'
   ) => {
@@ -55,8 +83,8 @@ export default function SettingsMenu({
           title={getTooltipContent(
             isOpen,
             isLearningMode,
-            'Configuración',
-            'Configuración de tema y apariencia'
+            t('configuracion.titulo'),
+            t('configuracion.descripcion')
           )}
         >
           <ListItemButton
@@ -80,7 +108,7 @@ export default function SettingsMenu({
               <SettingsIcon />
             </ListItemIcon>
             <ListItemText
-              primary="Configuración"
+              primary={t('configuracion.titulo')}
               sx={{ opacity: isOpen ? 1 : 0 }}
             />
           </ListItemButton>
@@ -124,7 +152,7 @@ export default function SettingsMenu({
           {/* Menu Items (Same) */}
           <MenuItem disabled>
             <Typography variant="subtitle2" color="text.secondary">
-              Tema
+              {t('configuracion.tema')}
             </Typography>
           </MenuItem>
           <Divider />
@@ -132,7 +160,7 @@ export default function SettingsMenu({
             <ListItemIcon>
               <LightModeIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Claro</ListItemText>
+            <ListItemText>{t('configuracion.temaClaro')}</ListItemText>
             {currentThemeName === 'light' && (
               <Typography variant="body2" color="text.secondary">
                 <CheckIcon fontSize="small" />
@@ -143,7 +171,7 @@ export default function SettingsMenu({
             <ListItemIcon>
               <DarkModeIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Oscuro</ListItemText>
+            <ListItemText>{t('configuracion.temaOscuro')}</ListItemText>
             {currentThemeName === 'dark' && (
               <Typography variant="body2" color="text.secondary">
                 <CheckIcon fontSize="small" />
@@ -154,7 +182,7 @@ export default function SettingsMenu({
             <ListItemIcon>
               <ContrastIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Alto Contraste (Claro)</ListItemText>
+            <ListItemText>{t('configuracion.temaAltoClaroContraste')}</ListItemText>
             {currentThemeName === 'highContrastLight' && (
               <Typography variant="body2" color="text.secondary">
                 <CheckIcon fontSize="small" />
@@ -165,7 +193,7 @@ export default function SettingsMenu({
             <ListItemIcon>
               <InvertColorsIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Alto Contraste (Oscuro)</ListItemText>
+            <ListItemText>{t('configuracion.temaAltoOscuroContraste')}</ListItemText>
             {currentThemeName === 'highContrastDark' && (
               <Typography variant="body2" color="text.secondary">
                 <CheckIcon fontSize="small" />
@@ -175,7 +203,7 @@ export default function SettingsMenu({
           <Divider />
           <MenuItem disabled>
             <Typography variant="subtitle2" color="text.secondary">
-              Tamaño de Fuente
+              {t('configuracion.tamanoFuente')}
             </Typography>
           </MenuItem>
           <Divider />
@@ -191,7 +219,7 @@ export default function SettingsMenu({
               </Typography>
             </ListItemIcon>
             <ListItemText primaryTypographyProps={{ fontSize: 12 }}>
-              Pequeño
+              {t('configuracion.fuente.pequeno')}
             </ListItemText>
             {fontSize === 'small' && (
               <CheckIcon
@@ -212,7 +240,7 @@ export default function SettingsMenu({
               </Typography>
             </ListItemIcon>
             <ListItemText primaryTypographyProps={{ fontSize: 14 }}>
-              Mediano
+              {t('configuracion.fuente.mediano')}
             </ListItemText>
             {fontSize === 'medium' && (
               <CheckIcon
@@ -233,7 +261,7 @@ export default function SettingsMenu({
               </Typography>
             </ListItemIcon>
             <ListItemText primaryTypographyProps={{ fontSize: 16 }}>
-              Grande
+              {t('configuracion.fuente.grande')}
             </ListItemText>
             {fontSize === 'large' && (
               <CheckIcon
@@ -253,8 +281,8 @@ export default function SettingsMenu({
         title={getTooltipContent(
           false,
           isLearningMode,
-          'Ajustes',
-          'Configuración'
+          t('configuracion.ajustes'),
+          t('configuracion.titulo')
         )}
         placement="bottom"
       >
@@ -306,7 +334,7 @@ export default function SettingsMenu({
       >
         <MenuItem disabled>
           <Typography variant="subtitle2" color="text.secondary">
-            Tema
+            {t('configuracion.tema')}
           </Typography>
         </MenuItem>
         <Divider />
@@ -314,7 +342,7 @@ export default function SettingsMenu({
           <ListItemIcon>
             <LightModeIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Claro</ListItemText>
+          <ListItemText>{t('configuracion.temaClaro')}</ListItemText>
           {currentThemeName === 'light' && (
             <Typography variant="body2" color="text.secondary">
               <CheckIcon fontSize="small" />
@@ -325,7 +353,7 @@ export default function SettingsMenu({
           <ListItemIcon>
             <DarkModeIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Oscuro</ListItemText>
+          <ListItemText>{t('configuracion.temaOscuro')}</ListItemText>
           {currentThemeName === 'dark' && (
             <Typography variant="body2" color="text.secondary">
               <CheckIcon fontSize="small" />
@@ -336,7 +364,7 @@ export default function SettingsMenu({
           <ListItemIcon>
             <ContrastIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Alto Contraste (Claro)</ListItemText>
+          <ListItemText>{t('configuracion.temaAltoClaroContraste')}</ListItemText>
           {currentThemeName === 'highContrastLight' && (
             <Typography variant="body2" color="text.secondary">
               <CheckIcon fontSize="small" />
@@ -347,7 +375,7 @@ export default function SettingsMenu({
           <ListItemIcon>
             <InvertColorsIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Alto Contraste (Oscuro)</ListItemText>
+          <ListItemText>{t('configuracion.temaAltoOscuroContraste')}</ListItemText>
           {currentThemeName === 'highContrastDark' && (
             <Typography variant="body2" color="text.secondary">
               <CheckIcon fontSize="small" />
@@ -357,7 +385,7 @@ export default function SettingsMenu({
         <Divider />
         <MenuItem disabled>
           <Typography variant="subtitle2" color="text.secondary">
-            Tamaño de Fuente
+            {t('configuracion.tamanoFuente')}
           </Typography>
         </MenuItem>
         <Divider />
@@ -373,7 +401,7 @@ export default function SettingsMenu({
             </Typography>
           </ListItemIcon>
           <ListItemText primaryTypographyProps={{ fontSize: 12 }}>
-            Pequeño
+            {t('configuracion.fuente.pequeno')}
           </ListItemText>
           {fontSize === 'small' && (
             <CheckIcon
@@ -394,7 +422,7 @@ export default function SettingsMenu({
             </Typography>
           </ListItemIcon>
           <ListItemText primaryTypographyProps={{ fontSize: 14 }}>
-            Mediano
+            {t('configuracion.fuente.mediano')}
           </ListItemText>
           {fontSize === 'medium' && (
             <CheckIcon
@@ -415,7 +443,7 @@ export default function SettingsMenu({
             </Typography>
           </ListItemIcon>
           <ListItemText primaryTypographyProps={{ fontSize: 16 }}>
-            Grande
+            {t('configuracion.fuente.grande')}
           </ListItemText>
           {fontSize === 'large' && (
             <CheckIcon

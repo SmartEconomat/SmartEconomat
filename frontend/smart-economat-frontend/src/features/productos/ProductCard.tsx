@@ -12,6 +12,7 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import { useTranslation } from 'react-i18next';
 import { Producto } from '../../services/producto.types';
 import { resolveStoredFileUrl } from '../../services/api.service';
 import StatusChip from '../../components/ui/StatusChip';
@@ -26,6 +27,17 @@ export interface ProductCardProps {
   actions?: ReactNode;
 }
 
+/**
+ * @description Card component for displaying a single Producto in the product grid.
+ * Shows the product image (or a category icon placeholder), name, unit, content, allergens,
+ * and status chip. Renders optional edit, delete, and view icon buttons.
+ * @param props.producto - The Producto entity to display
+ * @param props.onEdit - Optional callback invoked when the edit button is clicked
+ * @param props.onDelete - Optional callback invoked when the delete button is clicked
+ * @param props.onView - Optional callback invoked when the view button is clicked
+ * @param props.actions - Optional extra React nodes rendered in the card actions area
+ * @returns MUI Card representing a single product
+ */
 const ProductCard: React.FC<ProductCardProps> = ({
   producto,
   onEdit,
@@ -33,6 +45,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   onView,
   actions,
 }) => {
+  const { t } = useTranslation();
   // Alérgenos presentes en el producto
   const alergenoIds = producto.alergenos?.map((a) => a.alergeno) ?? [];
   const alergenosActivos = EU_ALLERGENS.filter((a: Allergen) =>
@@ -88,7 +101,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Marca */}
         <Typography variant="body2" color="text.secondary" gutterBottom>
-          {producto.marca || 'Sin marca'}
+          {producto.marca || t('productos.sinMarca')}
         </Typography>
 
         {/* Chip de tipo — centrado, espacio siempre reservado */}
@@ -165,36 +178,36 @@ const ProductCard: React.FC<ProductCardProps> = ({
         {actions ?? (
           <>
             {onView && (
-              <Tooltip title="Ver detalle">
+              <Tooltip title={t('comun.verDetalle')}>
                 <IconButton
                   color="info"
                   onClick={() => onView(producto)}
                   size="small"
-                  aria-label="Ver detalle"
+                  aria-label={t('comun.verDetalle')}
                 >
                   <VisibilityIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
             )}
             {onEdit && (
-              <Tooltip title="Editar">
+              <Tooltip title={t('comun.editar')}>
                 <IconButton
                   color="secondary"
                   onClick={() => onEdit(producto)}
                   size="small"
-                  aria-label="Editar"
+                  aria-label={t('comun.editar')}
                 >
                   <EditIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
             )}
             {onDelete && (
-              <Tooltip title="Eliminar">
+              <Tooltip title={t('comun.eliminar')}>
                 <IconButton
                   color="error"
                   onClick={() => onDelete(producto)}
                   size="small"
-                  aria-label="Borrar"
+                  aria-label={t('comun.eliminar')}
                 >
                   <DeleteIcon fontSize="small" />
                 </IconButton>

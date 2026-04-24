@@ -6,6 +6,26 @@ import {
   PedidoDraftRecord,
 } from '../services/pedidoDraft.service';
 
+/**
+ * Hook for managing a transient pedido draft in the backend.
+ *
+ * Exposes helpers to load, auto-save (debounced), immediately flush, and
+ * discard the draft. The save is debounced by 1 second and skipped when the
+ * serialised payload has not changed. Optimistic conflict resolution: on HTTP
+ * 409 the server-side draft is used as the new source of truth.
+ *
+ * @returns
+ *   - `draft` — current draft record or `null` if none exists
+ *   - `isLoadingDraft` — `true` while `loadDraft` is in flight
+ *   - `loadDraft` — fetches the latest draft from the server
+ *   - `saveDraft` — debounced save; no-op when payload is unchanged
+ *   - `flushSave` — immediate save (bypasses debounce timer)
+ *   - `discardDraft` — optimistically clears local state then deletes server draft
+ *
+ * @example
+ * const { draft, loadDraft, saveDraft, discardDraft } = usePedidoDraft();
+ * useEffect(() => { void loadDraft(); }, [loadDraft]);
+ */
 export function usePedidoDraft() {
   const [draft, _setDraft] = useState<PedidoDraftRecord | null>(null);
   const draftRef = useRef<PedidoDraftRecord | null>(null);

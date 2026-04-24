@@ -1,17 +1,37 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Chip, Tooltip, Typography, Alert } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { RecetaIngrediente } from '../../services/receta.types';
 import { EU_ALLERGENS } from '../../utils/constants';
 
+/**
+ * Props for the {@link RecetaAlergenos} component.
+ */
 interface RecetaAlergenosProps {
+  /** List of recipe ingredients whose products are scanned for allergens. */
   ingredientes?: RecetaIngrediente[];
 }
 
+/**
+ * Allergen panel for a recipe.
+ *
+ * Derives the complete set of allergens present in the recipe by inspecting
+ * each ingredient's product allergen list. Renders:
+ * - Quick gluten-free / dairy-free badge chips.
+ * - A success alert when no allergens are detected.
+ * - A responsive grid of all 14 EU allergen tiles (highlighted if present).
+ *
+ * @param props - See {@link RecetaAlergenosProps}.
+ * @returns JSX element with allergen summary chips and an allergen grid.
+ * @example
+ * <RecetaAlergenos ingredientes={receta.ingredientes} />
+ */
 const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
   ingredientes = [],
 }) => {
+  const { t } = useTranslation();
   const presentIds = useMemo(() => {
     const set = new Set<string>();
     ingredientes.forEach((ing) => {
@@ -31,7 +51,7 @@ const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
           icon={
             isGlutenFree ? <CheckCircleOutlineIcon /> : <WarningAmberIcon />
           }
-          label="Sin Gluten"
+          label={t('recetas.sinGluten')}
           color={isGlutenFree ? 'success' : 'error'}
           variant={isGlutenFree ? 'filled' : 'outlined'}
         />
@@ -40,7 +60,7 @@ const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
           icon={
             isLacteosFree ? <CheckCircleOutlineIcon /> : <WarningAmberIcon />
           }
-          label="Sin Lácteos"
+          label={t('recetas.sinLacteos')}
           color={isLacteosFree ? 'success' : 'error'}
           variant={isLacteosFree ? 'filled' : 'outlined'}
         />

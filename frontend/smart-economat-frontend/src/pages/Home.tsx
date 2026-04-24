@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Typography,
   Box,
@@ -84,6 +85,17 @@ interface QuickActionFormData {
 
 // ─── MetricCard ─────────────────────────────────────────────────────────────
 
+/**
+ * Displays a single KPI metric card with an icon, value, title and optional subtitle.
+ * Supports an onClick handler that triggers hover-lift styling when provided.
+ *
+ * @param title - i18n key for the metric title (passed through `t()`).
+ * @param value - The metric value to display (can be a number or a React node such as a spinner).
+ * @param icon - MUI icon element shown in the colored badge.
+ * @param color - MUI color token (e.g. 'primary', 'error') used for border and icon background.
+ * @param subtitle - Optional supporting text or node rendered below the value.
+ * @param onClick - Optional click handler; when provided, the card becomes interactive.
+ */
 const MetricCard = ({
   title,
   value,
@@ -98,77 +110,89 @@ const MetricCard = ({
   color: string;
   subtitle?: React.ReactNode;
   onClick?: () => void;
-}) => (
-  <Card
-    elevation={0}
-    onClick={onClick}
-    sx={{
-      height: '100%',
-      border: '1px solid',
-      borderColor: 'divider',
-      borderRadius: 2,
-      cursor: onClick ? 'pointer' : 'default',
-      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-      '&:hover': onClick
-        ? {
-            borderColor: `${color}.main`,
-            transform: 'translateY(-4px)',
-            boxShadow: `0 4px 20px -4px ${color === 'primary' ? 'rgba(0,0,0,0.1)' : 'rgba(0,0,0,0.05)'}`,
-            '& .metric-icon-box': {
-              transform: 'scale(1.1)',
-            },
-          }
-        : {},
-    }}
-  >
-    <CardContent>
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="flex-start"
-      >
-        <Box>
-          <Typography
-            color="text.secondary"
-            variant="subtitle2"
-            fontWeight={600}
-            gutterBottom
-          >
-            {title}
-          </Typography>
-          <Typography variant="h4" fontWeight={700} color="text.primary">
-            {value}
-          </Typography>
-        </Box>
+}) => {
+  const { t } = useTranslation();
+  return (
+    <Card
+      elevation={0}
+      onClick={onClick}
+      sx={{
+        height: '100%',
+        border: '1px solid',
+        borderColor: 'divider',
+        borderRadius: 2,
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        '&:hover': onClick
+          ? {
+              borderColor: `${color}.main`,
+              transform: 'translateY(-4px)',
+              boxShadow: `0 4px 20px -4px ${color === 'primary' ? 'rgba(0,0,0,0.1)' : 'rgba(0,0,0,0.05)'}`,
+              '& .metric-icon-box': {
+                transform: 'scale(1.1)',
+              },
+            }
+          : {},
+      }}
+    >
+      <CardContent>
         <Box
-          className="metric-icon-box"
-          sx={{
-            p: 1,
-            borderRadius: 1.5,
-            bgcolor: `${color}.light`,
-            color: 'common.white',
-            display: 'flex',
-            transition: 'transform 0.2s',
-          }}
+          display="flex"
+          justifyContent="space-between"
+          alignItems="flex-start"
         >
-          {icon}
+          <Box>
+            <Typography
+              color="text.secondary"
+              variant="subtitle2"
+              fontWeight={600}
+              gutterBottom
+            >
+              {t(title)}
+            </Typography>
+            <Typography variant="h4" fontWeight={700} color="text.primary">
+              {value}
+            </Typography>
+          </Box>
+          <Box
+            className="metric-icon-box"
+            sx={{
+              p: 1,
+              borderRadius: 1.5,
+              bgcolor: `${color}.light`,
+              color: 'common.white',
+              display: 'flex',
+              transition: 'transform 0.2s',
+            }}
+          >
+            {icon}
+          </Box>
         </Box>
-      </Box>
-      {subtitle && (
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 0.5 }}
-        >
-          {subtitle}
-        </Typography>
-      )}
-    </CardContent>
-  </Card>
-);
+        {subtitle && (
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 0.5 }}
+          >
+            {subtitle}
+          </Typography>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
 
 // ─── QuickAction ─────────────────────────────────────────────────────────────
 
+/**
+ * Renders a single quick-action button with an icon and label.
+ * Designed for the dashboard quick-actions panel.
+ *
+ * @param title - Display label for the action.
+ * @param icon - MUI icon element shown inside the colored badge.
+ * @param color - MUI color token used for icon background and hover border.
+ * @param onClick - Callback invoked when the user clicks the action.
+ */
 const QuickAction = ({
   title,
   icon,
@@ -219,7 +243,20 @@ const QuickAction = ({
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function tiempoRelativoCorto(fechaStr: string): string {
+/**
+ * Converts an ISO date string into a short, human-readable relative-time label
+ * using the provided i18n translation function.
+ *
+ * Examples: "ahora", "5min", "2h", "ayer", "3d", or a localised short date.
+ *
+ * @param fechaStr - ISO 8601 date string to compare against the current time.
+ * @param t - i18next translation function used to localise the output labels.
+ * @returns A short relative-time string.
+ */
+function tiempoRelativoCorto(
+  fechaStr: string,
+  t: (key: string, opts?: Record<string, unknown>) => string
+): string {
   const fecha = new Date(fechaStr);
   const ahora = new Date();
   const diffMs = ahora.getTime() - fecha.getTime();
@@ -227,23 +264,35 @@ function tiempoRelativoCorto(fechaStr: string): string {
   const diffH = Math.floor(diffMin / 60);
   const diffD = Math.floor(diffH / 24);
 
-  if (diffMin < 1) return 'ahora';
-  if (diffMin < 60) return `${diffMin}min`;
-  if (diffH < 24) return `${diffH}h`;
-  if (diffD === 1) return 'ayer';
-  if (diffD < 7) return `${diffD}d`;
+  if (diffMin < 1) return t('dashboard.time.ahora');
+  if (diffMin < 60) return t('dashboard.time.min', { count: diffMin });
+  if (diffH < 24) return t('dashboard.time.hora', { count: diffH });
+  if (diffD === 1) return t('dashboard.time.ayer');
+  if (diffD < 7) return t('dashboard.time.dias', { count: diffD });
   return fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
 }
 
-function tipoActividadLabel(mov: DashboardMovimiento): string {
+/**
+ * Returns a human-readable label describing a dashboard movement/activity entry.
+ * Appends the product name or description when available.
+ *
+ * @param mov - A `DashboardMovimiento` object from the dashboard stats API.
+ * @param t - i18next translation function used to localise the activity labels.
+ * @returns A descriptive string for the activity feed.
+ */
+function tipoActividadLabel(
+  mov: DashboardMovimiento,
+  t: (key: string, opts?: Record<string, unknown>) => string
+): string {
   const labels: Record<string, string> = {
-    entrada: 'Se ha registrado una entrada de stock',
-    salida: 'Se ha registrado una salida de stock',
-    ajuste: 'Se ha realizado un ajuste de inventario',
-    pedido: 'Se ha registrado un pedido',
-    entrada_compra: 'Se ha registrado una recepción de compra',
+    entrada: t('dashboard.activity.entrada'),
+    salida: t('dashboard.activity.salida'),
+    ajuste: t('dashboard.activity.ajuste'),
+    pedido: t('dashboard.activity.pedido'),
+    entrada_compra: t('dashboard.activity.entradaCompra'),
   };
-  const base = labels[mov.tipo] ?? `Se ha registrado actividad (${mov.tipo})`;
+  const base =
+    labels[mov.tipo] ?? t('dashboard.activity.desconocido', { tipo: mov.tipo });
   if (mov.productoNombre) return `${base}: ${mov.productoNombre}`;
   if (mov.descripcion) return `${base}: ${mov.descripcion}`;
   return base;
@@ -260,30 +309,54 @@ const TIPO_ACTIVIDAD_CONFIG: Record<
   entrada_compra: { color: 'secondary', icon: <LoginIcon fontSize="small" /> },
 };
 
+/**
+ * Returns the MUI icon element associated with a given activity type.
+ * Falls back to a generic `AssignmentIcon` for unknown types.
+ *
+ * @param tipo - The activity type key (e.g. 'entrada', 'salida', 'ajuste').
+ * @returns A React node containing the corresponding icon.
+ */
 function getActividadIcon(tipo: string): React.ReactNode {
   return (
     TIPO_ACTIVIDAD_CONFIG[tipo]?.icon ?? <AssignmentIcon fontSize="small" />
   );
 }
 
+/**
+ * Returns the MUI color token associated with a given activity type.
+ * Falls back to `'info'` for unknown types.
+ *
+ * @param tipo - The activity type key (e.g. 'entrada', 'salida', 'ajuste').
+ * @returns A MUI color string such as 'success', 'error', 'warning', etc.
+ */
 function getActividadColor(tipo: string): string {
   return TIPO_ACTIVIDAD_CONFIG[tipo]?.color ?? 'info';
 }
 
-const AVAILABLE_METRICS: MetricDefinition[] = [
-  { id: 'productos', label: 'Total Productos' },
-  { id: 'pedidos', label: 'Pedidos Pendientes' },
-  { id: 'incidencias', label: 'Incidencias' },
-  { id: 'stock', label: 'Alertas de Stock' },
-  { id: 'proveedores', label: 'Proveedores' },
-  { id: 'notificaciones', label: 'Notificaciones' },
-];
-
 // ─── Home ─────────────────────────────────────────────────────────────────────
 
+/**
+ * Dashboard home page component.
+ *
+ * Displays key performance metrics, quick-action shortcuts, recent inventory
+ * activity, and a notifications count. Metric visibility is user-configurable
+ * and persisted to `localStorage`. Permissions are enforced via `usePermission`
+ * hooks so cards and actions are only rendered when the user has the required
+ * rights.
+ */
 const Home: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
+
+  const AVAILABLE_METRICS: MetricDefinition[] = [
+    { id: 'productos', label: t('dashboard.metrics.totalProductos') },
+    { id: 'pedidos', label: t('dashboard.metrics.pedidosPendientes') },
+    { id: 'incidencias', label: t('dashboard.metrics.incidencias') },
+    { id: 'stock', label: t('dashboard.metrics.alertasStock') },
+    { id: 'proveedores', label: t('dashboard.metrics.proveedores') },
+    { id: 'notificaciones', label: t('dashboard.metrics.notificaciones') },
+  ];
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -340,6 +413,11 @@ const Home: React.FC = () => {
     return saved ? JSON.parse(saved) : AVAILABLE_METRICS.map((m) => m.id);
   });
 
+  /**
+   * Persists the updated list of visible metric IDs to state and `localStorage`.
+   *
+   * @param newMetrics - Array of metric ID strings that should be visible.
+   */
   const handleUpdateVisibleMetrics = (newMetrics: string[]) => {
     setVisibleMetrics(newMetrics);
     localStorage.setItem(
@@ -348,11 +426,16 @@ const Home: React.FC = () => {
     );
   };
 
+  /**
+   * Fetches dashboard statistics and app notifications from the API.
+   * Sets an error message if the user lacks the required permission or if the
+   * request fails. Recent activity is sorted newest-first before being stored.
+   */
   const loadStats = useCallback(async () => {
     if (!canViewDashboard) {
       setStats(null);
       setIsLoading(false);
-      setError('No tienes permisos para ver el dashboard.');
+      setError(t('dashboard.errors.sinPermisos'));
       return;
     }
 
@@ -386,12 +469,12 @@ const Home: React.FC = () => {
       setError(
         err instanceof Error
           ? err.message
-          : 'Error desconocido al cargar el dashboard.'
+          : t('dashboard.errors.desconocido')
       );
     } finally {
       setIsLoading(false);
     }
-  }, [canListUsers, canReviewInventoryNotifications, canViewDashboard]);
+  }, [canListUsers, canReviewInventoryNotifications, canViewDashboard, t]);
 
   useEffect(() => {
     loadStats();
@@ -403,6 +486,13 @@ const Home: React.FC = () => {
     discardDraft: noOpDiscardDraft,
   });
 
+  /**
+   * Handles saving a new pedido (order) created from the quick-action modal.
+   * Delegates to `savePedido` and closes the modal on success. Errors are
+   * handled internally by `savePedido` via toast notifications.
+   *
+   * @param formData - Raw form values from the dynamic pedido form.
+   */
   const handleSavePedidoQuickAction = useCallback(
     async (formData: Record<string, unknown>) => {
       try {
@@ -415,6 +505,13 @@ const Home: React.FC = () => {
     [savePedido]
   );
 
+  /**
+   * Handles saving a new product or recipe created from the quick-action modals.
+   * Shows a success toast on completion or an error toast on failure, then
+   * refreshes dashboard stats.
+   *
+   * @param formData - Raw form values from the product or recipe quick-action form.
+   */
   const handleSaveQuickAction = async (formData: QuickActionFormData) => {
     setIsSavingQuickAction(true);
     try {
@@ -423,11 +520,11 @@ const Home: React.FC = () => {
         const payload = await buildProductoPayload(formData as any);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await createProducto(payload as any);
-        toast.success('Producto añadido correctamente.');
+        toast.success(t('dashboard.toast.productoAniadido'));
       } else if (quickActionTask === 'recipe') {
         const payload = await buildRecetaPayload(formData);
         await createReceta(payload);
-        toast.success('Receta creada correctamente.');
+        toast.success(t('dashboard.toast.recetaCreada'));
       }
       setQuickActionTask(null);
       loadStats();
@@ -435,7 +532,7 @@ const Home: React.FC = () => {
       const message =
         err instanceof Error
           ? err.message
-          : 'Error al guardar la acción rápida.';
+          : t('dashboard.toast.errorQuickAction');
       toast.error(message);
     } finally {
       setIsSavingQuickAction(false);
@@ -462,10 +559,13 @@ const Home: React.FC = () => {
       {/* Header */}
       <Box mb={4}>
         <Typography variant="h4" fontWeight={700} gutterBottom>
-          Hola, {user?.name || 'Administrador'} 👋
+          {t('dashboard.greeting', {
+            name: user?.name || t('dashboard.admin'),
+          })}{' '}
+          👋
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Aquí tienes un resumen del estado actual del economato.
+          {t('dashboard.intro')}
         </Typography>
       </Box>
 
@@ -476,7 +576,7 @@ const Home: React.FC = () => {
           icon={<ErrorOutlineIcon />}
           action={
             <Button color="inherit" size="small" onClick={loadStats}>
-              Reintentar
+              {t('dashboard.retry')}
             </Button>
           }
           sx={{ mb: 3, borderRadius: 2 }}
@@ -512,7 +612,7 @@ const Home: React.FC = () => {
               mb={3}
             >
               <Typography variant="h6" fontWeight={600}>
-                Estadísticas del Economato
+                {t('dashboard.statsTitle')}
               </Typography>
               <IconButton
                 size="small"
@@ -541,12 +641,12 @@ const Home: React.FC = () => {
               {/* Total Productos */}
               {visibleMetrics.includes('productos') && canListProductos && (
                 <MetricCard
-                  title="Total Productos"
+                  title="dashboard.metrics.totalProductos"
                   value={isLoading ? <Spinner size="sm" /> : totalProductos}
                   icon={<InventoryIcon />}
                   color="primary"
                   onClick={() =>
-                    openSummary('productos', 'Listado de Productos')
+                    openSummary('productos', t('dashboard.summary.productos'))
                   }
                   subtitle={
                     isLoading ? undefined : (
@@ -557,8 +657,10 @@ const Home: React.FC = () => {
                           <TrendingFlatIcon fontSize="small" color="disabled" />
                         )}
                         {productosEsteMes > 0
-                          ? `+${productosEsteMes} agregado${productosEsteMes !== 1 ? 's' : ''} este mes`
-                          : 'Sin nuevos productos este mes'}
+                          ? t('dashboard.metrics.productosEsteMes', {
+                              count: productosEsteMes,
+                            })
+                          : t('dashboard.metrics.sinNuevosProductos')}
                       </>
                     )
                   }
@@ -568,18 +670,22 @@ const Home: React.FC = () => {
               {/* Pedidos Pendientes */}
               {visibleMetrics.includes('pedidos') && canListPedidos && (
                 <MetricCard
-                  title="Pedidos Pendientes"
+                  title="dashboard.metrics.pedidosPendientes"
                   value={isLoading ? <Spinner size="sm" /> : pedidosPendientes}
                   icon={<ShoppingCartIcon />}
                   color="warning"
-                  onClick={() => openSummary('pedidos', 'Pedidos Pendientes')}
+                  onClick={() =>
+                    openSummary('pedidos', t('dashboard.summary.pedidos'))
+                  }
                   subtitle={
                     isLoading ? undefined : (
                       <>
                         <CalendarTodayIcon fontSize="small" />
                         {pedidosProcesarHoy > 0
-                          ? `${pedidosProcesarHoy} recibido${pedidosProcesarHoy !== 1 ? 's' : ''} hoy`
-                          : 'Sin recepciones hoy'}
+                          ? t('dashboard.metrics.pedidosHoy', {
+                              count: pedidosProcesarHoy,
+                            })
+                          : t('dashboard.metrics.sinRecepcionesHoy')}
                       </>
                     )
                   }
@@ -589,20 +695,25 @@ const Home: React.FC = () => {
               {/* Incidencias */}
               {visibleMetrics.includes('incidencias') && canListIncidencias && (
                 <MetricCard
-                  title="Incidencias"
+                  title="dashboard.metrics.incidencias"
                   value={isLoading ? <Spinner size="sm" /> : incidenciasCount}
                   icon={<ErrorOutlineIcon />}
                   color="error"
                   onClick={() =>
-                    openSummary('incidencias', 'Listado de Incidencias')
+                    openSummary(
+                      'incidencias',
+                      t('dashboard.summary.incidencias')
+                    )
                   }
                   subtitle={
                     isLoading ? undefined : (
                       <>
                         <ErrorOutlineIcon fontSize="small" />
                         {incidenciasCount > 0
-                          ? `${incidenciasCount} pedido${incidenciasCount !== 1 ? 's' : ''} con incidencias`
-                          : 'Sin incidencias'}
+                          ? t('dashboard.metrics.pedidosConIncidencias', {
+                              count: incidenciasCount,
+                            })
+                          : t('dashboard.metrics.sinIncidencias')}
                       </>
                     )
                   }
@@ -612,11 +723,13 @@ const Home: React.FC = () => {
               {/* Alertas de Stock */}
               {visibleMetrics.includes('stock') && canListInventario && (
                 <MetricCard
-                  title="Alertas de Stock"
+                  title="dashboard.metrics.alertasStock"
                   value={isLoading ? <Spinner size="sm" /> : alertasStock}
                   icon={<WarningAmberIcon />}
                   color="error"
-                  onClick={() => openSummary('stock', 'Productos Bajo Mínimo')}
+                  onClick={() =>
+                    openSummary('stock', t('dashboard.summary.stock'))
+                  }
                   subtitle={
                     isLoading ? undefined : (
                       <>
@@ -625,8 +738,10 @@ const Home: React.FC = () => {
                           color={alertasStock > 0 ? 'error' : 'disabled'}
                         />
                         {alertasStock > 0
-                          ? `${alertasStock} ítem${alertasStock !== 1 ? 's' : ''} bajo mínimo`
-                          : 'Stock correcto'}
+                          ? t('dashboard.metrics.itemsBajoMinimo', {
+                              count: alertasStock,
+                            })
+                          : t('dashboard.metrics.stockCorrecto')}
                       </>
                     )
                   }
@@ -636,12 +751,15 @@ const Home: React.FC = () => {
               {/* Proveedores */}
               {visibleMetrics.includes('proveedores') && canListProveedores && (
                 <MetricCard
-                  title="Proveedores"
+                  title="dashboard.metrics.proveedores"
                   value={isLoading ? <Spinner size="sm" /> : totalProveedores}
                   icon={<LocalShippingIcon />}
                   color="info"
                   onClick={() =>
-                    openSummary('proveedores', 'Nuestros Proveedores')
+                    openSummary(
+                      'proveedores',
+                      t('dashboard.summary.proveedores')
+                    )
                   }
                   subtitle={
                     isLoading ? undefined : (
@@ -650,7 +768,7 @@ const Home: React.FC = () => {
                           fontSize="small"
                           color="success"
                         />
-                        Catálogo actualizado
+                        {t('dashboard.metrics.catalogoActualizado')}
                       </>
                     )
                   }
@@ -660,7 +778,7 @@ const Home: React.FC = () => {
               {/* Card de Notificaciones */}
               {visibleMetrics.includes('notificaciones') && (
                 <MetricCard
-                  title="Notificaciones"
+                  title="dashboard.metrics.notificaciones"
                   value={
                     isLoading ? (
                       <Spinner size="sm" />
@@ -682,8 +800,13 @@ const Home: React.FC = () => {
                       <>
                         <NotificationsIcon fontSize="small" />
                         {notifications.length > 0
-                          ? `${notifications.reduce((acc, curr) => acc + curr.count, 0)} acción${notifications.reduce((acc, curr) => acc + curr.count, 0) !== 1 ? 'es' : ''} pendiente${notifications.reduce((acc, curr) => acc + curr.count, 0) !== 1 ? 'es' : ''}`
-                          : 'Sin notificaciones'}
+                          ? t('dashboard.metrics.accionesPendientes', {
+                              count: notifications.reduce(
+                                (acc, curr) => acc + curr.count,
+                                0
+                              ),
+                            })
+                          : t('dashboard.metrics.sinNotificaciones')}
                       </>
                     )
                   }
@@ -703,7 +826,7 @@ const Home: React.FC = () => {
             }}
           >
             <Typography variant="h6" fontWeight={600} mb={3}>
-              Acciones Rápidas
+              {t('dashboard.quickActions')}
             </Typography>
             <Box
               sx={{
@@ -714,7 +837,7 @@ const Home: React.FC = () => {
             >
               {canCreatePedido && (
                 <QuickAction
-                  title="Nuevo Pedido"
+                  title={t('dashboard.quickActions.nuevoPedido')}
                   icon={<ShoppingCartIcon fontSize="small" />}
                   color="primary"
                   onClick={() => setQuickActionTask('order')}
@@ -722,7 +845,7 @@ const Home: React.FC = () => {
               )}
               {canCreateProducto && (
                 <QuickAction
-                  title="Añadir Producto"
+                  title={t('dashboard.quickActions.anadirProducto')}
                   icon={<InventoryIcon fontSize="small" />}
                   color="secondary"
                   onClick={() => setQuickActionTask('product')}
@@ -730,7 +853,7 @@ const Home: React.FC = () => {
               )}
               {canCreateRecepcion && (
                 <QuickAction
-                  title="Registrar Recepción"
+                  title={t('dashboard.quickActions.registrarRecepcion')}
                   icon={<AddCircleOutlineIcon fontSize="small" />}
                   color="success"
                   onClick={() => navigate('/recepciones')}
@@ -738,7 +861,7 @@ const Home: React.FC = () => {
               )}
               {canCreateReceta && (
                 <QuickAction
-                  title="Nueva Receta"
+                  title={t('dashboard.quickActions.nuevaReceta')}
                   icon={<AssignmentIcon fontSize="small" />}
                   color="warning"
                   onClick={() => setQuickActionTask('recipe')}
@@ -763,7 +886,7 @@ const Home: React.FC = () => {
             }}
           >
             <Typography variant="h6" fontWeight={600} mb={3}>
-              Actividad Reciente
+              {t('dashboard.recentActivity')}
             </Typography>
 
             <Box sx={{ flexGrow: 1 }}>
@@ -784,7 +907,7 @@ const Home: React.FC = () => {
                   minHeight={120}
                 >
                   <Typography variant="body2" color="text.secondary">
-                    No hay actividad reciente registrada.
+                    {t('dashboard.noRecentActivity')}
                   </Typography>
                 </Box>
               ) : (
@@ -812,7 +935,7 @@ const Home: React.FC = () => {
                           fontWeight={500}
                           sx={{ mb: 0.5, lineHeight: 1.2 }}
                         >
-                          {tipoActividadLabel(mov)}
+                          {tipoActividadLabel(mov, t)}
                         </Typography>
                         <Stack direction="row" spacing={1} alignItems="center">
                           <Typography
@@ -826,7 +949,7 @@ const Home: React.FC = () => {
                               borderRadius: 1,
                             }}
                           >
-                            {tiempoRelativoCorto(mov.createdAt)}
+                            {tiempoRelativoCorto(mov.createdAt, t)}
                           </Typography>
                           {mov.usuario && (
                             <Typography
@@ -865,7 +988,7 @@ const Home: React.FC = () => {
                 onClick={() => navigate('/movimientos')}
                 fullWidth
               >
-                Ver todo el historial
+                {t('dashboard.viewAllHistory')}
               </Button>
             </Box>
           </Paper>
@@ -893,7 +1016,7 @@ const Home: React.FC = () => {
       <ProductoFormModal
         isOpen={quickActionTask === 'product'}
         onClose={() => setQuickActionTask(null)}
-        title="Añadir Nuevo Producto"
+        title={t('dashboard.quickActions.anadirNuevoProducto')}
         initialData={EMPTY_INITIAL_DATA}
         onSubmit={handleSaveQuickAction}
         isSubmitting={isSavingQuickAction}
@@ -902,14 +1025,14 @@ const Home: React.FC = () => {
       <DynamicFormModal
         isOpen={quickActionTask === 'order'}
         onClose={() => setQuickActionTask(null)}
-        title="Crear Nuevo Pedido"
+        title={t('dashboard.quickActions.crearNuevoPedido')}
         size="lg"
         fields={pedidoSchema}
         initialData={PEDIDO_NEW_INITIAL_DATA}
         onSubmit={handleSavePedidoQuickAction}
         isSubmitting={isSavingPedido}
         requireConfirmation
-        confirmationMessage="¿Estás seguro de que deseas registrar este nuevo pedido?"
+        confirmationMessage={t('dashboard.quickActions.confirmarNuevoPedido')}
       />
 
       <RecetaFormModal

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Box,
@@ -24,15 +25,35 @@ import {
 import { getAuthErrorMessage } from '../../../utils/authErrorMessages';
 import { SYSTEM_ROLES } from '../../../sherlock-auth/system-roles.constants';
 
+/**
+ * Propiedades del componente RegisterForm.
+ *
+ * @interface RegisterFormProps
+ * @property {() => void} onToggleForm - Callback para volver al modo de inicio de sesión.
+ * @property {() => void} onRegisterSuccess - Callback invocado tras un registro exitoso.
+ */
 interface RegisterFormProps {
   onToggleForm: () => void;
   onRegisterSuccess: () => void;
 }
 
+/**
+ * Formulario de registro de nuevos usuarios.
+ *
+ * Soporta dos roles:
+ * - **ALUMNO**: requiere nombre de usuario, contraseña y código de clase (verificado en tiempo real).
+ * - **PROFESOR**: requiere nombre de usuario, email, contraseña y CIAL.
+ *
+ * Todos los textos visibles se obtienen del sistema i18n.
+ *
+ * @param {RegisterFormProps} props - Propiedades del componente.
+ * @returns {JSX.Element} Formulario de registro.
+ */
 const RegisterForm: React.FC<RegisterFormProps> = ({
   onToggleForm,
   onRegisterSuccess,
 }) => {
+  const { t } = useTranslation();
   const [role, setRole] = useState<'ALUMNO' | 'PROFESOR'>(SYSTEM_ROLES.ALUMNO);
   const [formData, setFormData] = useState({
     username: '',
@@ -69,15 +90,20 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       : isProfesorSubmitDisabled;
 
   const slotReferenceMessage = slotReference
-    ? `Te estás registrando en la clase ${slotReference.aula} - Clase ${slotReference.numeroClase} del profesor ${slotReference.profesor}.`
+    ? t('auth.registerForm.slotReferenceMessage', {
+        aula: slotReference.aula,
+        numeroClase: slotReference.numeroClase,
+        profesor: slotReference.profesor,
+      })
     : '';
 
   const codigoClaseHelperText = slotLoadError
     ? slotLoadError
     : slotReference
-      ? 'Código verificado correctamente.'
-      : 'Escribe el código de la clase para confirmar que corresponde a tu grupo.';
+      ? t('auth.registerForm.codigoVerificado')
+      : t('auth.registerForm.codigoHelper');
 
+  /** Debounced effect: verifies the class code against the API 350ms after the user stops typing. */
   useEffect(() => {
     if (role !== SYSTEM_ROLES.ALUMNO) {
       setSlotReference(null);
@@ -115,7 +141,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             getAuthErrorMessage(
               err,
               'registerAlumno',
-              'No se pudo validar el código de la clase.'
+              t('auth.registerForm.errorValidarCodigo')
             )
           );
         }
@@ -130,8 +156,15 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [formData.codigoClase, role]);
+  }, [formData.codigoClase, role, t]);
 
+  /**
+   * Handles role toggle between ALUMNO and PROFESOR.
+   * Resets all form fields and error messages on role change.
+   *
+   * @param {React.MouseEvent<HTMLElement>} _event - Click event (unused).
+   * @param {'ALUMNO' | 'PROFESOR' | null} newRole - The newly selected role.
+   */
   const handleRoleChange = (
     _event: React.MouseEvent<HTMLElement>,
     newRole: 'ALUMNO' | 'PROFESOR' | null
@@ -152,6 +185,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     });
   };
 
+  /**
+   * Handles registration form submission.
+   * Validates passwords, password strength and role-specific fields before calling the API.
+   *
+   * @param {React.FormEvent<HTMLFormElement>} e - The form submit event.
+   */
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMsg('');
@@ -161,7 +200,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
     try {
       if (formData.password !== formData.confirmPassword) {
-        setErrorMsg('Las contraseñas no coinciden.');
+        setErrorMsg(t('auth.registerForm.errorPasswordMismatch'));
         return;
       }
 
@@ -172,14 +211,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
       if (isAlumno) {
         if (!formData.codigoClase.trim()) {
-          setErrorMsg('Por favor escribe el código de la clase.');
+          setErrorMsg(t('auth.registerForm.errorCodigoRequerido'));
           return;
         }
 
         if (!slotReference) {
-          setErrorMsg(
-            'Debes ingresar un código de clase válido para completar el registro.'
-          );
+          setErrorMsg(t('auth.registerForm.errorCodigoInvalido'));
           return;
         }
 
@@ -196,7 +233,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             getAuthErrorMessage(
               res.message,
               'registerAlumno',
-              'No se pudo completar el registro.'
+              t('auth.registerForm.errorNoSePudo')
             )
           );
         }
@@ -218,7 +255,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           getAuthErrorMessage(
             res.message,
             'registerProfesor',
-            'No se pudo completar el registro.'
+            t('auth.registerForm.errorNoSePudo')
           )
         );
       }
@@ -227,7 +264,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         getAuthErrorMessage(
           err,
           isAlumno ? 'registerAlumno' : 'registerProfesor',
-          'Error de conexión con el servidor.'
+          t('auth.registerForm.errorConexion')
         )
       );
     } finally {
@@ -235,6 +272,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     }
   };
 
+  /**
+   * Generic change handler for all registration form inputs.
+   * Automatically uppercases the `codigoClase` field.
+   *
+   * @param {React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>} e - Change event.
+   */
   const handleChange = (
     e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
   ) => {
@@ -246,6 +289,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     }));
   };
 
+  /** Toggles password visibility for all password fields. */
   const togglePasswordVisibility = () => setShowPassword((v) => !v);
 
   return (
@@ -271,7 +315,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         variant="h6"
         sx={{ mb: 2, fontWeight: 'bold', color: 'primary.main' }}
       >
-        Crear una cuenta
+        {t('auth.registerForm.createAccount')}
       </Typography>
 
       <ToggleButtonGroup
@@ -279,15 +323,15 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         value={role}
         exclusive
         onChange={handleRoleChange}
-        aria-label="Rol de usuario"
+        aria-label={t('auth.registerForm.roleAriaLabel')}
         sx={{ mb: 3 }}
         size="small"
       >
         <ToggleButton value={SYSTEM_ROLES.ALUMNO} sx={{ px: 3 }}>
-          Alumno
+          {t('auth.registerForm.roleAlumno')}
         </ToggleButton>
         <ToggleButton value={SYSTEM_ROLES.PROFESOR} sx={{ px: 3 }}>
-          Profesor
+          {t('auth.registerForm.roleProfesor')}
         </ToggleButton>
       </ToggleButtonGroup>
 
@@ -304,7 +348,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         sx={{ width: '100%', maxWidth: 400 }}
       >
         <Input
-          label="Nombre de Usuario"
+          label={t('auth.registerForm.username')}
           name="username"
           autoComplete="username"
           value={formData.username}
@@ -320,7 +364,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
         {role === SYSTEM_ROLES.PROFESOR && (
           <Input
-            label="Correo Electrónico"
+            label={t('auth.registerForm.email')}
             name="email"
             type="email"
             value={formData.email}
@@ -332,7 +376,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         {role === SYSTEM_ROLES.ALUMNO ? (
           <>
             <Input
-              label="Código de la clase"
+              label={t('auth.registerForm.codigoClase')}
               name="codigoClase"
               value={formData.codigoClase}
               onChange={handleChange}
@@ -343,19 +387,19 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
             {isLoadingData && formData.codigoClase.trim().length > 0 && (
               <Alert severity="info" sx={{ mt: 1 }}>
-                Verificando el código de la clase…
+                {t('auth.registerForm.verificandoCodigo')}
               </Alert>
             )}
 
             {slotReference && (
               <Alert severity="success" sx={{ mt: 1 }}>
-                Código válido.
+                {t('auth.registerForm.codigoValido')}
               </Alert>
             )}
           </>
         ) : (
           <Input
-            label="CIAL (DNI o Identificador)"
+            label={t('auth.registerForm.cial')}
             name="cial"
             value={formData.cial}
             onChange={handleChange}
@@ -364,7 +408,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         )}
 
         <Input
-          label="Contraseña"
+          label={t('auth.registerForm.password')}
           name="password"
           type={showPassword ? 'text' : 'password'}
           autoComplete="new-password"
@@ -375,7 +419,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             endAdornment: (
               <InputAdornment position="end">
                 <IconButton
-                  aria-label="revelar contraseña"
+                  aria-label={t('auth.registerForm.ariaRevealPassword')}
                   onClick={togglePasswordVisibility}
                   edge="end"
                 >
@@ -388,7 +432,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         />
 
         <Input
-          label="Confirmar Contraseña"
+          label={t('auth.registerForm.confirmPassword')}
           name="confirmPassword"
           type={showPassword ? 'text' : 'password'}
           autoComplete="new-password"
@@ -402,7 +446,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           helperText={
             formData.confirmPassword.length > 0 &&
             formData.password !== formData.confirmPassword
-              ? 'Las contraseñas no coinciden.'
+              ? t('auth.registerForm.errorPasswordMismatch')
               : ' '
           }
         />
@@ -413,8 +457,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           disabled={isSubmitDisabled}
           sx={{ mt: 0, mb: 0 }}
         >
-          Registrarse como{' '}
-          {role === SYSTEM_ROLES.ALUMNO ? 'Alumno' : 'Profesor'}
+          {role === SYSTEM_ROLES.ALUMNO
+            ? t('auth.registerForm.submitAlumno')
+            : t('auth.registerForm.submitProfesor')}
         </Button>
 
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
@@ -424,7 +469,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             onClick={() => onToggleForm()}
             sx={{ mt: 1, fontSize: '0.875rem', textTransform: 'none' }}
           >
-            ¿Ya tienes cuenta? Inicia sesión aquí
+            {t('auth.registerForm.alreadyHaveAccount')}
           </Button>
         </Box>
       </Box>

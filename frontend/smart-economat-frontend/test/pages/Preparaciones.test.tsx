@@ -247,9 +247,10 @@ describe('Preparaciones page', () => {
     const amountInput = screen.getByLabelText(/cantidad a consumir/i);
     fireEvent.change(amountInput, { target: { value: '1,2' } });
 
+    // The message appears as both a hint label and a form field helper text — use getAllByText
     expect(
-      screen.getByText('Debe ser múltiplo de 0,25 kg.')
-    ).toBeInTheDocument();
+      screen.getAllByText('Debe ser múltiplo de 0,25 kg.').length
+    ).toBeGreaterThan(0);
     expect(
       screen.getByRole('button', { name: /confirmar consumo/i })
     ).toBeDisabled();

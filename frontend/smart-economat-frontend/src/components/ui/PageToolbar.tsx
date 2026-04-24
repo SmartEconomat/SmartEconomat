@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   TextField,
@@ -97,13 +98,16 @@ export interface PageToolbarProps {
  * PageToolbar: Componente unificado para cabeceras de página.
  * Incluye Título, Búsqueda, Filtros y Controles de Tabla (Paginación/Vista)
  * siguiendo un diseño premium y responsive.
+ *
+ * @param props - Propiedades del componente definidas en {@link PageToolbarProps}.
+ * @returns Barra de herramientas sticky con búsqueda, filtros y acciones principales.
  */
 const PageToolbar: React.FC<PageToolbarProps> = ({
   title,
   icon,
   searchValue,
   onSearchChange,
-  searchPlaceholder = 'Buscar...',
+  searchPlaceholder,
   searchId = 'page-search',
   primaryAction,
   secondaryAction,
@@ -117,9 +121,11 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
   sticky = true,
   extraActions = [],
 }) => {
+  const { t } = useTranslation();
   const { isMobile, isMobileOrTablet } = useBreakpoints();
   const theme = useTheme();
   const [isExpanded, setIsExpanded] = React.useState(true);
+  const resolvedSearchPlaceholder = searchPlaceholder ?? t('comun.buscar');
 
   const hasFiltersOrSearch = onSearchChange || filters;
 
@@ -177,7 +183,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
               </Typography>
               {hasFiltersOrSearch && (
                 <Tooltip
-                  title={isExpanded ? 'Ocultar filtros' : 'Mostrar filtros'}
+                  title={isExpanded ? t('comun.ocultarFiltros') : t('comun.mostrarFiltros')}
                 >
                   <IconButton
                     size="small"
@@ -200,12 +206,12 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
 
             <Box display="flex" alignItems="center" gap={1}>
               {totalItems !== undefined && (
-                <Tooltip title={`Total de ${totalItemsLabel}: ${totalItems}`}>
+                <Tooltip title={`${t('comun.totalDe')} ${totalItemsLabel}: ${totalItems}`}>
                   <Chip
                     icon={<CheckCircleIcon fontSize="small" />}
                     label={
                       <>
-                        Total de <strong>{totalItemsLabel}</strong>:{' '}
+                        {t('comun.totalDe')} <strong>{totalItemsLabel}</strong>:{' '}
                         {totalItems}
                       </>
                     }
@@ -252,7 +258,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
               {onSearchChange && (
                 <TextField
                   id={searchId}
-                  placeholder={searchPlaceholder}
+                  placeholder={resolvedSearchPlaceholder}
                   value={searchValue}
                   onChange={(e) => onSearchChange(e.target.value)}
                   size="small"
@@ -266,14 +272,14 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                     },
                   }}
                   InputProps={{
-                    'aria-label': searchPlaceholder,
+                    'aria-label': resolvedSearchPlaceholder,
                     startAdornment: onScanBarcode && (
                       <InputAdornment position="start">
-                        <Tooltip title="Escanear con cámara">
+                        <Tooltip title={t('comun.escanearCamara')}>
                           <IconButton
                             size="small"
                             onClick={onScanBarcode}
-                            aria-label="Escanear código"
+                            aria-label={t('comun.escanearCodigo')}
                             color="primary"
                             sx={{
                               '&:hover': {
@@ -300,7 +306,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                             <IconButton
                               size="small"
                               onClick={() => onSearchChange?.('')}
-                              aria-label="Limpiar búsqueda"
+                              aria-label={t('comun.limpiarBusqueda')}
                             >
                               <ClearIcon fontSize="small" />
                             </IconButton>

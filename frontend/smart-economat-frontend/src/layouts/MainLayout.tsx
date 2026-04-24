@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   AppBar as MuiAppBar,
   Box,
@@ -124,6 +125,21 @@ const DesktopDrawer = styled(MuiDrawer, {
   }),
 }));
 
+/**
+ * Layout principal de la aplicación autenticada.
+ *
+ * Compone el AppBar superior, el drawer de navegación lateral (mini/expandido)
+ * y el área de contenido donde se renderizan las rutas hijas mediante `<Outlet>`.
+ *
+ * El drawer soporta modo mobile (temporal) y desktop (permanente mini-drawer).
+ * Los textos del menú se obtienen vía `useTranslation()`.
+ *
+ * @returns {JSX.Element} Estructura de layout completa.
+ * @example
+ * <Route element={<MainLayout />}>
+ *   <Route path="/dashboard" element={<Home />} />
+ * </Route>
+ */
 export default function MainLayout() {
   const theme = useTheme();
   const { isMobile } = useBreakpoints();
@@ -184,12 +200,13 @@ export default function MainLayout() {
       return true;
     });
 
+  const { t } = useTranslation();
   const groupLabels: Record<MenuConfigItem['group'], string> = {
-    inicio: 'Inicio',
-    catalogo: 'Catálogo',
-    operaciones: 'Operaciones',
-    control: 'Control',
-    gestion: 'Gestión',
+    inicio: t('layout.menu.inicio'),
+    catalogo: t('layout.menu.catalogo'),
+    operaciones: t('layout.menu.operaciones'),
+    control: t('layout.menu.control'),
+    gestion: t('layout.menu.gestion'),
   };
 
   const drawerContent = (
@@ -217,9 +234,13 @@ export default function MainLayout() {
             />
           </Box>
         )}
-        <Tooltip title={open ? 'Minimizar menú' : 'Expandir menú'}>
+        <Tooltip
+          title={open ? t('layout.menu.minimizar') : t('layout.menu.expandir')}
+        >
           <IconButton
-            aria-label={open ? 'Minimizar menú' : 'Expandir menú'}
+            aria-label={
+              open ? t('layout.menu.minimizar') : t('layout.menu.expandir')
+            }
             onClick={open ? handleDrawerClose : handleDrawerOpen}
           >
             {theme.direction === 'rtl' ? (
@@ -237,7 +258,7 @@ export default function MainLayout() {
         </Tooltip>
       </DrawerHeader>
       <Divider />
-      <List aria-label="Navegación principal">
+      <List aria-label={t('layout.menu.navegacionPrincipal')}>
         {visibleMenuItems.map((item, index) => {
           const previousGroup =
             index > 0 ? visibleMenuItems[index - 1].group : null;
@@ -314,7 +335,7 @@ export default function MainLayout() {
       </List>
       <Box sx={{ marginTop: 'auto' }}>
         <Divider />
-        <List aria-label="Opciones del sistema">
+        <List aria-label={t('comun.opcionesSistema')}>
           <ListItem disablePadding sx={{ display: 'block' }}>
             <TutorialHelper mode="listitem" isOpen={open} />
           </ListItem>
@@ -339,10 +360,10 @@ export default function MainLayout() {
             px: { xs: 2, sm: 3 },
           }}
         >
-          <Tooltip title="Expandir menú">
+          <Tooltip title={t('comun.expandirMenu')}>
             <IconButton
               color="inherit"
-              aria-label="Expandir menú"
+              aria-label={t('comun.expandirMenu')}
               onClick={handleDrawerOpen}
               edge="start"
               sx={{

@@ -13,8 +13,35 @@ const ResetPassword = React.lazy(
 );
 import Spinner from '../components/ui/Spinner';
 
+/**
+ * Full-screen loading fallback shown via `React.Suspense` while a lazily
+ * loaded route chunk is being fetched.
+ *
+ * @returns JSX rendered spinner overlay
+ */
 const LoadingFallback = () => <Spinner overlay="screen" size="lg" />;
 
+/**
+ * Root router component for the application.
+ *
+ * Defines the complete route tree:
+ * - **Public routes** (`/login`, `/reset-password`, `/reset-password/:token`)
+ *   are wrapped in `PublicRoute` (redirects authenticated users away) and
+ *   rendered inside `AuthLayout`.
+ * - **Protected routes** are derived dynamically from `menuItems`, wrapped in
+ *   `ProtectedRoute` (redirects unauthenticated users to `/login`), and
+ *   rendered inside `MainLayout`.
+ * - A catch-all `*` route redirects any unknown path to `/`.
+ *
+ * All route-level components are lazily imported and wrapped in
+ * `React.Suspense` with a full-screen spinner as the fallback.
+ *
+ * @returns JSX rendered browser router with the full route configuration
+ *
+ * @example
+ * // Mount at the application root
+ * <AppRouter />
+ */
 const AppRouter: React.FC = () => {
   return (
     <BrowserRouter>

@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Paper, Typography } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import WavingHandOutlinedIcon from '@mui/icons-material/WavingHandOutlined';
@@ -117,8 +118,14 @@ const PEEL_EASE = 'cubic-bezier(0.4, 0, 0.2, 1)';
  *
  * @returns {JSX.Element} Vista controladora de autenticación.
  */
+/**
+ * Página principal de Autenticación internacionalizada.
+ * Todos los textos visibles usan i18n.
+ * @returns {JSX.Element} Vista controladora de autenticación.
+ */
 export default function Login() {
   const { login } = useAuth();
+  const { t } = useTranslation();
 
   const [isLogin, setIsLogin] = useState(true);
   const [phase, setPhase] = useState<AuthPhase>('idle');
@@ -325,10 +332,10 @@ export default function Login() {
                   sx={{ fontSize: 80, color: 'secondary.main', mb: 2 }}
                 />
                 <Typography variant="h3" fontWeight={700} gutterBottom>
-                  ¡Registro exitoso!
+                  {t('auth.register.successTitle')}
                 </Typography>
                 <Typography variant="h6" color="text.secondary">
-                  debes esperar a que tu usuario esté activo.
+                  {t('auth.register.successWait')}
                 </Typography>
               </>
             ) : (
@@ -337,10 +344,10 @@ export default function Login() {
                   sx={{ fontSize: 80, color: 'primary.main', mb: 2 }}
                 />
                 <Typography variant="h3" fontWeight={700} gutterBottom>
-                  ¡Bienvenido!
+                  {t('auth.login.welcome')}
                 </Typography>
                 <Typography variant="h6" color="text.secondary">
-                  Cargando tu aplicación…
+                  {t('auth.login.loading')}
                 </Typography>
               </>
             )}

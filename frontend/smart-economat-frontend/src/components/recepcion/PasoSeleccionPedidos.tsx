@@ -16,6 +16,7 @@ import {
   Chip,
   SelectChangeEvent,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { Pedido, EstadoPedido } from '../../services/pedido.types';
 import { formatPedidoListNumber } from '../../features/pedidos/utils/pedidoFormatters';
 
@@ -42,6 +43,8 @@ const PasoSeleccionPedidos: React.FC<PasoSeleccionPedidosProps> = ({
   onDeselectProvider,
   onTogglePedido,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <Box>
       <Box
@@ -52,9 +55,7 @@ const PasoSeleccionPedidos: React.FC<PasoSeleccionPedidosProps> = ({
           mb: 2,
         }}
       >
-        <Typography variant="h6">
-          Selecciona los pedidos que estás recibiendo
-        </Typography>
+        <Typography variant="h6">{t('recepcion.seleccion.titulo')}</Typography>
       </Box>
       {loadingPedidos ? (
         <CircularProgress />
@@ -62,20 +63,22 @@ const PasoSeleccionPedidos: React.FC<PasoSeleccionPedidosProps> = ({
         <>
           <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
             <Button variant="outlined" size="small" onClick={onSelectAll}>
-              Seleccionar Todos
+              {t('comun.seleccionarTodos')}
             </Button>
             <Button variant="outlined" size="small" onClick={onDeselectAll}>
-              Deseleccionar Todos
+              {t('comun.deseleccionarTodos')}
             </Button>
             <FormControl size="small" sx={{ minWidth: 200 }}>
-              <InputLabel>Añadir por Proveedor</InputLabel>
+              <InputLabel>
+                {t('recepcion.seleccion.anadirProveedor')}
+              </InputLabel>
               <Select
                 value=""
-                label="Añadir por Proveedor"
+                label={t('recepcion.seleccion.anadirProveedor')}
                 onChange={onSelectProvider}
               >
                 <MenuItem value="" disabled>
-                  Selecciona un proveedor
+                  {t('recepcion.seleccion.seleccionaProveedor')}
                 </MenuItem>
                 {uniqueProviders.map((provider) => (
                   <MenuItem key={provider} value={provider}>
@@ -85,14 +88,16 @@ const PasoSeleccionPedidos: React.FC<PasoSeleccionPedidosProps> = ({
               </Select>
             </FormControl>
             <FormControl size="small" sx={{ minWidth: 200 }}>
-              <InputLabel>Deseleccionar por Prov.</InputLabel>
+              <InputLabel>
+                {t('recepcion.seleccion.deseleccionarProveedor')}
+              </InputLabel>
               <Select
                 value=""
-                label="Deseleccionar por Prov."
+                label={t('recepcion.seleccion.deseleccionarProveedor')}
                 onChange={onDeselectProvider}
               >
                 <MenuItem value="" disabled>
-                  Selecciona un proveedor
+                  {t('recepcion.seleccion.seleccionaProveedor')}
                 </MenuItem>
                 {uniqueProviders.map((provider) => (
                   <MenuItem key={provider} value={provider}>
@@ -123,8 +128,8 @@ const PasoSeleccionPedidos: React.FC<PasoSeleccionPedidosProps> = ({
                     checked={pedidosSeleccionadosIds.includes(pedido.id)}
                   />
                   <ListItemText
-                    primary={`${pedido.proveedor?.nombre} - Pedido ${formatPedidoListNumber(pedido, 'pedido-proveedor')}`}
-                    secondary={`ID: ${pedido.id} | Fecha: ${new Date(pedido.fechaPedido).toLocaleDateString()} | Estado: ${pedido.estado}`}
+                    primary={`${pedido.proveedor?.nombre} - ${t('recepcion.seleccion.pedido')} ${formatPedidoListNumber(pedido, 'pedido-proveedor')}`}
+                    secondary={`${t('comun.id')}${pedido.id} | Fecha: ${new Date(pedido.fechaPedido).toLocaleDateString()} | ${t('comun.estado')}: ${pedido.estado}`}
                   />
                   <Chip
                     label={pedido.estado}

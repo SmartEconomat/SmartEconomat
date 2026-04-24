@@ -22,6 +22,13 @@ import { CreatePedidoUsuarioDto } from '../../pedido/dto/pedido-usuario.dto';
 import { PedidoUsuario } from '../../pedido/pedido-usuario.entity/pedido-usuario.entity';
 import { PedidoUsuarioService } from '../../pedido/service/pedido-usuario.service';
 
+/**
+ * Manages order draft persistence using a Redis-first, PostgreSQL-fallback strategy.
+ *
+ * Drafts are written to Redis with a TTL and asynchronously mirrored to PostgreSQL.
+ * On Redis failure, the database acts as the source of truth. Optimistic-concurrency
+ * conflicts are detected via a monotonically-increasing `version` field.
+ */
 @Injectable()
 export class PedidoDraftService implements OnModuleDestroy {
   private readonly logger = new Logger(PedidoDraftService.name);
@@ -45,6 +52,18 @@ export class PedidoDraftService implements OnModuleDestroy {
     }
   }
 
+  /**
+   * Creates or updates a draft for the given user.
+   *
+   * Performs an optimistic-concurrency check: if `dto.version` is provided and
+   * does not match the current stored version a {@link ConflictException} is thrown
+   * and the existing draft is returned so the caller can resolve the conflict.
+   *
+   * @param userId - Owner of the draft.
+   * @param dto - New payload and optional expected version.
+   * @returns The saved draft record (source: 'redis' or 'database').
+   * @throws {ConflictException} When the version does not match the stored draft.
+   */
   async upsertDraft(
     userId: string,
     dto: UpsertPedidoDraftDto
@@ -102,6 +121,14 @@ export class PedidoDraftService implements OnModuleDestroy {
     return nextDraft;
   }
 
+  /**
+   * Retrieves the most recent valid draft for the user.
+   *
+   * Checks Redis first; on a cache miss (or Redis error) falls back to PostgreSQL
+   * and re-warms the cache. Returns `null` when no non-expired draft exists.
+   *
+   * @param userId - Owner of the draft.
+   */
   async getLatestDraft(userId: string): Promise<PedidoDraftRecord | null> {
     const fromCache = await this.getDraftFromCache(userId);
     if (fromCache) {
@@ -123,6 +150,12 @@ export class PedidoDraftService implements OnModuleDestroy {
     return fromDatabase;
   }
 
+  /**
+   * Removes the draft from both Redis and PostgreSQL (soft-delete in DB).
+   * Uses `Promise.allSettled` so a Redis failure does not block the DB delete.
+   *
+   * @param userId - Owner of the draft.
+   */
   async clearDraft(userId: string): Promise<void> {
     await Promise.allSettled([
       this.deleteDraftFromCache(userId),
@@ -130,6 +163,16 @@ export class PedidoDraftService implements OnModuleDestroy {
     ]);
   }
 
+  /**
+   * Finalizes the stored draft as a confirmed order.
+   *
+   * Reads the latest draft, submits it via {@link PedidoUsuarioService.create},
+   * and clears the draft on success. Throws without clearing when the downstream
+   * service fails so the draft is preserved for retry.
+   *
+   * @param userId - Owner of the draft.
+   * @throws {NotFoundException} When no draft exists for the user.
+   */
   async finalizeOrder(userId: string): Promise<PedidoUsuario> {
     const draft = await this.getLatestDraft(userId);
     if (!draft) {
