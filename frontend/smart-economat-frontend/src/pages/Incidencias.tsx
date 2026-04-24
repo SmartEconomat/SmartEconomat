@@ -54,19 +54,21 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 
 const INCIDENCIA_STATUS_LABEL: Record<EstadoIncidencia, string> = {
-  pendiente: 'Pendiente',
-  en_revision: 'En revisión',
-  parcial: 'Parcial',
-  resuelta: 'Resuelta',
-  cancelada: 'Cancelada',
+  [EstadoIncidencia.NUEVA]: 'Nueva',
+  [EstadoIncidencia.EN_AJUSTE]: 'En ajuste',
+  [EstadoIncidencia.PENDIENTE_VALIDACION]: 'Pendiente validación',
+  [EstadoIncidencia.RESUELTA]: 'Resuelta',
+  [EstadoIncidencia.CANCELADA]: 'Cancelada',
+  [EstadoIncidencia.INVALIDA]: 'Inválida',
 };
 
 const INCIDENCIA_STATUS_CHIP: Record<EstadoIncidencia, string> = {
-  pendiente: 'pending',
-  en_revision: 'review',
-  parcial: 'parcial',
-  resuelta: 'completed',
-  cancelada: 'cancelled',
+  [EstadoIncidencia.NUEVA]: 'pending',
+  [EstadoIncidencia.EN_AJUSTE]: 'review',
+  [EstadoIncidencia.PENDIENTE_VALIDACION]: 'warning',
+  [EstadoIncidencia.RESUELTA]: 'completed',
+  [EstadoIncidencia.CANCELADA]: 'cancelled',
+  [EstadoIncidencia.INVALIDA]: 'error',
 };
 
 type ResolveDialogMode = 'adjust' | 'resolve';

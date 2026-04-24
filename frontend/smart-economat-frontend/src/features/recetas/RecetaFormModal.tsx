@@ -10,6 +10,13 @@ import {
   UnidadIngrediente,
 } from '../../services/receta.types';
 
+type RecetaFormModalProps = Pick<
+  DynamicFormModalProps,
+  'isOpen' | 'onClose' | 'initialData' | 'onSubmit' | 'isSubmitting'
+> & {
+  title?: DynamicFormModalProps['title'];
+};
+
 /**
  * Modal de formulario para crear o editar una receta.
  *
@@ -147,13 +154,6 @@ const RecetaFormModal: React.FC<RecetaFormModalProps> = ({
       position: 'left',
     },
   ];
-
-  type RecetaFormModalProps = Pick<
-    DynamicFormModalProps,
-    'isOpen' | 'onClose' | 'initialData' | 'onSubmit' | 'isSubmitting'
-  > & {
-    title?: DynamicFormModalProps['title'];
-  };
 
   return (
     <DynamicFormModal

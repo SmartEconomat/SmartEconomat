@@ -81,7 +81,7 @@ services:
       - BACKEND_API_URL=${BACKEND_API_URL:-https://smarteconomat.app/api/v1}
       - DOMAIN=${DOMAIN:-smarteconomat.app}
       - DB_SYNC=${DB_SYNC:-false}
-      - STARTUP_RUN_MIGRATIONS=${STARTUP_RUN_MIGRATIONS:-false}
+      - STARTUP_RUN_MIGRATIONS=${STARTUP_RUN_MIGRATIONS:-true}
       - SEED_DEFAULT_ADMIN_TEMP_PASSWORD=${SEED_DEFAULT_ADMIN_TEMP_PASSWORD:-}
     networks:
       - backend-network
@@ -89,7 +89,7 @@ services:
     volumes:
       - uploads_prod:/app/uploads
     healthcheck:
-      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:3000/']
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://127.0.0.1:3000/docs']
       interval: 10s
       timeout: 5s
       retries: 3
@@ -131,7 +131,7 @@ services:
       - ./certs:/etc/nginx/certs:ro
       - ./certs-webroot:/var/www/acme-challenge:ro
     healthcheck:
-      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:80/']
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://127.0.0.1:80/']
       interval: 10s
       timeout: 5s
       retries: 3

@@ -30,6 +30,7 @@ COPY --from=builder /app/package.json ./
 
 # Copy scripts needed for production
 COPY --from=builder /app/scripts/prod-bootstrap-runner.js ./scripts/prod-bootstrap-runner.js
+COPY --from=builder /app/scripts/prod-bootstrap-guards.js ./scripts/prod-bootstrap-guards.js
 COPY --from=builder /app/scripts/db-reset-runner.js ./scripts/db-reset-runner.js
 COPY --from=builder /app/scripts/seed-runner.js ./scripts/seed-runner.js
 
