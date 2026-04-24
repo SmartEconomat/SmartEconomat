@@ -44,11 +44,23 @@ import {
 async function flushPermissionCache(): Promise<void> {
   const redisHost = process.env.REDIS_HOST || 'localhost';
   const redisPort = parseInt(process.env.REDIS_PORT || '6379', 10);
+  let firstRedisError: string | null = null;
   const redis = new Redis({
     host: redisHost,
     port: redisPort,
     lazyConnect: true,
+    connectTimeout: 1500,
+    enableOfflineQueue: false,
+    maxRetriesPerRequest: 1,
+    retryStrategy: () => null,
   });
+
+  redis.on('error', (error) => {
+    if (!firstRedisError) {
+      firstRedisError = String(error instanceof Error ? error.message : error);
+    }
+  });
+
   try {
     await redis.connect();
     const keys = await redis.keys('user:permissions:*');
@@ -59,12 +71,17 @@ async function flushPermissionCache(): Promise<void> {
       );
     }
   } catch (error) {
+    const message =
+      firstRedisError || String(error instanceof Error ? error.message : error);
     console.warn(
-      '[seed-massive] Could not flush Redis permission cache:',
-      error
+      `[seed-massive] Could not flush Redis permission cache (${redisHost}:${redisPort}): ${message}`
     );
   } finally {
-    redis.disconnect();
+    try {
+      await redis.quit();
+    } catch {
+      redis.disconnect();
+    }
   }
 }
 
@@ -910,6 +927,97 @@ export async function ensureResetActor(context: SeedContext): Promise<void> {
   context.set('seedResetPasswordToken', rawToken);
 }
 
+export async function ensureCanonicalSeedCredentials(
+  context: SeedContext
+): Promise<void> {
+  const fixedSuperAdminUser = await upsertSeedUserViaRepository(
+    FIXED_SEED_SUPERADMIN
+  );
+  const fixedAdminUser = await upsertSeedUserViaRepository(FIXED_SEED_ADMIN);
+  const fixedProfesor =
+    await upsertSeedProfesorViaRepository(FIXED_SEED_PROFESOR);
+  const fixedProfesorSlot = await upsertAlumnoSlotViaRepository({
+    profesor: fixedProfesor.profesor,
+    ...FIXED_SEED_PROFESOR_SLOT,
+  });
+  const fixedAlumno = await upsertSeedAlumnoViaRepository({
+    username: FIXED_SEED_ALUMNO.username,
+    email: FIXED_SEED_ALUMNO.email,
+    password: FIXED_SEED_ALUMNO.password,
+    nombre: FIXED_SEED_ALUMNO.nombre,
+    profesor: fixedProfesor.profesor,
+    slot: fixedProfesorSlot,
+  });
+
+  const superAdminToken = await context.loginWithCredentials(
+    {
+      email: FIXED_SEED_SUPERADMIN.email,
+      password: FIXED_SEED_SUPERADMIN.password,
+    },
+    {
+      setActiveToken: false,
+      sessionKey: 'superadmin:0',
+    }
+  );
+
+  const adminToken = await context.loginWithCredentials(
+    {
+      email: FIXED_SEED_ADMIN.email,
+      password: FIXED_SEED_ADMIN.password,
+    },
+    {
+      setActiveToken: false,
+      sessionKey: 'admin:0',
+    }
+  );
+
+  const profesorToken = await context.loginWithCredentials(
+    {
+      email: FIXED_SEED_PROFESOR.email,
+      password: FIXED_SEED_PROFESOR.password,
+    },
+    {
+      setActiveToken: false,
+      sessionKey: 'profesor:0',
+    }
+  );
+
+  const alumnoToken = await context.loginWithCredentials(
+    {
+      email: FIXED_SEED_ALUMNO.email,
+      password: FIXED_SEED_ALUMNO.password,
+    },
+    {
+      setActiveToken: false,
+      sessionKey: 'alumno:0',
+    }
+  );
+
+  context.set('seedTokenSuperAdmin', superAdminToken);
+  context.set('seedTokenAdmin', superAdminToken);
+  context.set('seedTokenProfesor', profesorToken);
+  context.set('seedTokenAlumno', alumnoToken);
+  context.set('seedTokenAdminRoutesSuper', superAdminToken);
+  context.set('seedTokenAdminRoutesAdmin', adminToken);
+  context.set('seedTokenAdminRoutesProfesor', profesorToken);
+  context.set('seedAdminLoginEmail', FIXED_SEED_SUPERADMIN.email);
+  context.set('seedAdminCurrentPassword', DEFAULT_SEED_PASSWORD);
+  context.set('seedFixedSuperAdminUserId', fixedSuperAdminUser.id);
+  context.set('seedFixedAdminUserId', fixedAdminUser.id);
+  context.set('seedFixedProfesorUserId', fixedProfesor.user.id);
+  context.set('seedFixedProfesorSlotId', fixedProfesorSlot.id);
+  context.set('seedFixedAlumnoId', fixedAlumno.alumno.id);
+  context.set('seedFixedAlumnoUserId', fixedAlumno.user.id);
+  pushStateValue(context, 'seedProtectedUserIds', fixedSuperAdminUser.id);
+  pushStateValue(context, 'seedProtectedUserIds', fixedAdminUser.id);
+  pushStateValue(context, 'seedProtectedUserIds', fixedProfesor.user.id);
+  pushStateValue(context, 'seedProtectedUserIds', fixedAlumno.user.id);
+
+  console.log(
+    '[seed-massive] Credenciales canónicas verificadas para superadmin/admin/profesor/alumno'
+  );
+}
+
 function resolveCountInRange(
   envName: string,
   min: number,
@@ -1104,6 +1212,8 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
   context.set('seedFixedAlumnoId', fixedAlumno.alumno.id);
   context.set('seedFixedAlumnoUserId', fixedAlumno.user.id);
   context.set('seedTokenAlumnoTransfer', transferAlumnoToken);
+  context.set('seedAdminLoginEmail', FIXED_SEED_SUPERADMIN.email);
+  context.set('seedAdminCurrentPassword', DEFAULT_SEED_PASSWORD);
 
   const runTag =
     context.getState<string>('seedRunTag') ||

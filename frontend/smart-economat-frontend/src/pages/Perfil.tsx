@@ -21,6 +21,7 @@ import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
+import { useTranslation } from 'react-i18next';
 
 import ProfileForm from '../features/profile/components/ProfileForm';
 import ChangePasswordForm from '../features/profile/components/ChangePasswordForm';
@@ -34,9 +35,20 @@ import Input from '../components/ui/Input';
 import { SYSTEM_ROLES } from '../sherlock-auth/system-roles.constants';
 
 /**
- * Página de Perfil - Unificada como una Ficha de Usuario.
+ * User profile page rendered as a unified user card.
+ *
+ * Displays the authenticated user's profile information and allows them to:
+ * - Edit their username.
+ * - Change their password.
+ * - Request an e-mail change (requires approval from a higher-privilege role).
+ *
+ * On mount the component loads the current user from the auth store; if the
+ * user object is not yet available it fetches it via `refreshUser`.
+ *
+ * @returns JSX rendered profile page
  */
 const Perfil: React.FC = () => {
+  const { t } = useTranslation();
   const { user, refreshUser } = useAuth();
   const toast = useToast();
 
@@ -69,6 +81,13 @@ const Perfil: React.FC = () => {
 
   const isInitialized = useRef(false);
 
+  /**
+   * Loads the initial profile data from the auth store or fetches it via
+   * `refreshUser` when not yet available.  Runs only once thanks to the
+   * `isInitialized` ref guard.
+   *
+   * @returns {Promise<void>}
+   */
   useEffect(() => {
     const loadInitialData = async () => {
       const fallbackUser = user;
@@ -117,14 +136,33 @@ const Perfil: React.FC = () => {
     }
   }, [refreshUser, user]);
 
+  /**
+   * Generic change handler for the profile form inputs.
+   *
+   * @param {React.ChangeEvent<HTMLInputElement>} e - The input change event.
+   * @returns {void}
+   */
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setProfileData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  /**
+   * Generic change handler for the password form inputs.
+   *
+   * @param {React.ChangeEvent<HTMLInputElement>} e - The input change event.
+   * @returns {void}
+   */
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPasswordData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  /**
+   * Submits the profile form: persists username and/or password changes via
+   * the auth service, refreshes the auth store, and collapses the edit panel
+   * on success.  Displays toast notifications for both success and error cases.
+   *
+   * @returns {Promise<void>}
+   */
   const handleProfileSave = async () => {
     setIsSaving(true);
     setError(null);
@@ -136,7 +174,7 @@ const Perfil: React.FC = () => {
 
       if (passwordData.newPassword) {
         if (passwordData.newPassword !== passwordData.confirmPassword) {
-          throw new Error('Las contraseñas no coinciden.');
+          throw new Error(t('perfil.errors.passwordMismatch'));
         }
 
         await authService.changePassword({
@@ -151,21 +189,27 @@ const Perfil: React.FC = () => {
         });
       }
 
-      toast.success('Perfil actualizado correctamente');
+      toast.success(t('perfil.toast.updated'));
 
       await refreshUser();
 
       setIsEditingProfile(false);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Error al guardar los cambios';
+        err instanceof Error ? err.message : t('perfil.errors.saveFailed');
       setError(message);
-      toast.error('Error al actualizar el perfil');
+      toast.error(t('perfil.toast.updateError'));
     } finally {
       setIsSaving(false);
     }
   };
 
+  /**
+   * Discards any unsaved profile changes, resets the form fields back to the
+   * current user values, and exits edit mode.
+   *
+   * @returns {void}
+   */
   const handleProfileCancel = () => {
     if (user) {
       setProfileData({
@@ -185,38 +229,46 @@ const Perfil: React.FC = () => {
     setError(null);
   };
 
+  /**
+   * Validates and submits the e-mail change request.
+   *
+   * Performs client-side checks: non-empty fields, valid e-mail format,
+   * matching confirmation, difference from the current e-mail, and minimum
+   * justification length.  On success it shows a toast, clears the form, and
+   * closes the modal.
+   *
+   * @returns {void}
+   */
   const handleSubmitEmailRequest = () => {
     const { newEmail, confirmNewEmail, justification } = emailRequest;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!newEmail.trim() || !confirmNewEmail.trim()) {
-      toast.error('Introduce y confirma el nuevo email');
+      toast.error(t('perfil.emailModal.errors.required'));
       return;
     }
 
     if (!emailRegex.test(newEmail)) {
-      toast.error('El formato del email no es válido');
+      toast.error(t('perfil.emailModal.errors.invalidFormat'));
       return;
     }
 
     if (newEmail.trim() !== confirmNewEmail.trim()) {
-      toast.error('Los emails no coinciden');
+      toast.error(t('perfil.emailModal.errors.mismatch'));
       return;
     }
 
     if (newEmail.trim().toLowerCase() === user?.email.toLowerCase()) {
-      toast.error('El nuevo email debe ser diferente al actual');
+      toast.error(t('perfil.emailModal.errors.sameEmail'));
       return;
     }
 
     if (!justification.trim() || justification.trim().length < 10) {
-      toast.error('Indica una justificación válida (mínimo 10 caracteres)');
+      toast.error(t('perfil.emailModal.errors.justificationTooShort'));
       return;
     }
 
-    toast.success(
-      'Solicitud enviada. El cambio de email quedará pendiente de aprobación por un rol superior.'
-    );
+    toast.success(t('perfil.emailModal.toast.requestSent'));
 
     setEmailRequest({
       newEmail: '',
@@ -252,24 +304,22 @@ const Perfil: React.FC = () => {
             color: getRoleColor(user?.rol || ''),
           }}
         >
-          Perfil de Usuario
+          {t('perfil.titulo')}
         </Typography>
 
         <Typography variant="body1" color="text.secondary" sx={{ mb: 1.5 }}>
-          {isAlumno &&
-            'Consulta tu perfil, cambia tu nombre de usuario o contraseña y solicita cambios de email con aprobación superior.'}
-          {!isAlumno &&
-            'Consulta y edita tus datos personales y opciones de seguridad.'}
+          {isAlumno && t('perfil.descripcionAlumno')}
+          {!isAlumno && t('perfil.descripcionOtros')}
         </Typography>
 
         <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />}>
           <Link underline="hover" color="inherit" component={RouterLink} to="/">
-            Inicio
+            {t('layout.menu.inicio')}
           </Link>
           <Typography
             sx={{ color: getRoleColor(user?.rol || ''), fontWeight: 600 }}
           >
-            Mi Perfil
+            {t('perfil.miPerfil')}
           </Typography>
         </Breadcrumbs>
       </Box>
@@ -294,12 +344,12 @@ const Perfil: React.FC = () => {
             <Stack spacing={6}>
               <Box>
                 <Typography variant="h5" fontWeight={700} gutterBottom>
-                  Perfil y Seguridad
+                  {t('perfil.seccion.titulo')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   {isAlumno
-                    ? 'Puedes editar tu nombre de usuario y contraseña. El cambio de email requiere aprobación de un rol superior.'
-                    : 'Gestiona tu información personal y tu contraseña.'}
+                    ? t('perfil.seccion.descripcionAlumno')
+                    : t('perfil.seccion.descripcionOtros')}
                 </Typography>
               </Box>
 
@@ -336,7 +386,7 @@ const Perfil: React.FC = () => {
                       width: { xs: '100%', sm: 'auto' },
                     }}
                   >
-                    Editar Perfil
+                    {t('perfil.actions.editarPerfil')}
                   </Button>
                 ) : (
                   <>
@@ -348,17 +398,17 @@ const Perfil: React.FC = () => {
                       disabled={isSaving}
                       sx={{ px: 3, width: { xs: '100%', sm: 'auto' } }}
                     >
-                      Cancelar
+                      {t('comun.cancelar')}
                     </Button>
                     <Button
                       color="primary"
                       startIcon={<SaveIcon />}
                       onClick={handleProfileSave}
                       isLoading={isSaving}
-                      loadingText="Guardando..."
+                      loadingText={t('comun.cargando')}
                       sx={{ px: 4, width: { xs: '100%', sm: 'auto' } }}
                     >
-                      Guardar Cambios
+                      {t('perfil.actions.guardarCambios')}
                     </Button>
                   </>
                 )}
@@ -374,17 +424,16 @@ const Perfil: React.FC = () => {
         fullWidth
         maxWidth="sm"
       >
-        <DialogTitle>Solicitar Cambio de Email</DialogTitle>
+        <DialogTitle>{t('perfil.emailModal.titulo')}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ my: 2 }}>
-            El cambio de email no es inmediato. La solicitud será revisada por
-            un rol superior y solo se aplicará tras su aprobación.
+            {t('perfil.emailModal.descripcion')}
           </Typography>
 
           <Stack spacing={2}>
             <Input
               name="newEmail"
-              label="Nuevo Email"
+              label={t('perfil.emailModal.nuevoEmail')}
               type="email"
               value={emailRequest.newEmail}
               onChange={(e) =>
@@ -396,7 +445,7 @@ const Perfil: React.FC = () => {
             />
             <Input
               name="confirmNewEmail"
-              label="Confirmar Nuevo Email"
+              label={t('perfil.emailModal.confirmarNuevoEmail')}
               type="email"
               value={emailRequest.confirmNewEmail}
               onChange={(e) =>
@@ -408,7 +457,7 @@ const Perfil: React.FC = () => {
             />
             <Input
               name="justification"
-              label="Justificación"
+              label={t('perfil.emailModal.justificacion')}
               multiline
               rows={3}
               value={emailRequest.justification}
@@ -423,9 +472,11 @@ const Perfil: React.FC = () => {
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
           <Button variant="outlined" onClick={() => setIsEmailModalOpen(false)}>
-            Cancelar
+            {t('comun.cancelar')}
           </Button>
-          <Button onClick={handleSubmitEmailRequest}>Enviar Solicitud</Button>
+          <Button onClick={handleSubmitEmailRequest}>
+            {t('perfil.emailModal.enviarSolicitud')}
+          </Button>
         </DialogActions>
       </Dialog>
     </Container>

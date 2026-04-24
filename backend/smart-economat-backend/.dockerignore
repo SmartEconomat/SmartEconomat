@@ -1,11 +1,72 @@
+# Dependencies
 node_modules
-dist
-uploads
 npm-debug.log
+
+# Build output
+dist
+.next
+.cache
+build
+
+# Runtime configuration - PRODUCTION SAFE
+.env
+.env.*
+!.env.prod
+
+# Version control
 .git
 .gitignore
-.env
-.env.dev
-.env.prod
-Dockerfile*
-docker-compose*
+.gitattributes
+
+# IDE and editors
+.vscode
+.idea
+.DS_Store
+.editorconfig
+
+# Development utilities
+.husky
+.pre-commit-hooks.yaml
+
+# Documentation
+*.md
+LICENSE
+CONTRIBUTING.md
+CHANGELOG.md
+
+# Testing and development
+test
+tests
+spec
+specs
+**/*.test.ts
+**/*.spec.ts
+**/*.e2e-spec.ts
+jest.config.js
+jest.config.ts
+vitest.config.ts
+vitest.config.js
+coverage
+.nyc_output
+cypress
+cypress.config.js
+.mocharc.json
+
+# Source code (NEEDED for build stage, NOT copied to runtime image by multi-stage)
+# Removed: src, **/*.ts - these are needed for compilation in builder stage
+
+# Package managers
+pnpm-lock.yaml
+yarn.lock
+
+# OS files
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Temporary and backup files
+*.tmp
+*.bak
+*.backup
+*.log

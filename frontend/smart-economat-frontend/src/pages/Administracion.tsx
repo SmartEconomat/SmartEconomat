@@ -24,6 +24,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import SchoolIcon from '@mui/icons-material/SchoolOutlined';
 import PeopleIcon from '@mui/icons-material/PeopleOutlined';
 import SecurityIcon from '@mui/icons-material/SecurityOutlined';
+import { useTranslation } from 'react-i18next';
 
 import ProfessorSlotsManager from '../features/profile/components/ProfessorSlotsManager';
 import { UbicacionService } from '../services/ubicacion.service';
@@ -53,6 +54,12 @@ interface TabPanelProps {
 
 import { Fade } from '@mui/material';
 
+/**
+ * Renderiza el panel de contenido para una pestaña dada, con transición de aparición gradual cuando está activa.
+ *
+ * @param props - Props del panel de pestaña: hijos, valor actual, índice del panel e indicador opcional de carga.
+ * @returns Un div que actúa como tabpanel con visibilidad de contenido animada.
+ */
 function CustomTabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
   const isActive = value === index;
@@ -73,6 +80,12 @@ function CustomTabPanel(props: TabPanelProps) {
   );
 }
 
+/**
+ * Devuelve los atributos de accesibilidad (id y aria-controls) para un elemento de pestaña.
+ *
+ * @param index - La clave única de cadena que identifica el panel de pestaña.
+ * @returns Un objeto con los atributos `id` y `aria-controls` para la pestaña.
+ */
 function a11yProps(index: string) {
   return {
     id: `admin-tab-${index}`,
@@ -84,8 +97,13 @@ type AdminTabKey = 'slots' | 'alumnos' | 'usuarios' | 'plantillas';
 
 /**
  * Página de Administración Académica para Profesores con Tabs.
+ * Gestiona aulas/clases, alumnos, usuarios del sistema y plantillas de roles
+ * según los permisos del usuario autenticado.
+ *
+ * @returns The full administration page with permission-based tab navigation.
  */
 const Administracion: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -134,28 +152,28 @@ const Administracion: React.FC = () => {
         canManageSlots
           ? {
               key: 'slots' as const,
-              label: 'Aulas y Clases',
+              label: t('admin.tabs.aulasClases'),
               icon: <SchoolIcon />,
             }
           : null,
         canViewStudents
           ? {
               key: 'alumnos' as const,
-              label: 'Alumnos',
+              label: t('admin.tabs.alumnos'),
               icon: <PeopleIcon />,
             }
           : null,
         isAdmin
           ? {
               key: 'usuarios' as const,
-              label: 'Gestión Usuarios',
+              label: t('admin.tabs.gestionUsuarios'),
               icon: <PeopleIcon />,
             }
           : null,
         canViewRoleTemplates
           ? {
               key: 'plantillas' as const,
-              label: 'Plantillas Roles',
+              label: t('admin.tabs.plantillasRoles'),
               icon: <SecurityIcon />,
             }
           : null,
@@ -164,7 +182,7 @@ const Administracion: React.FC = () => {
         label: string;
         icon: React.ReactElement;
       }>,
-    [canManageSlots, canViewStudents, isAdmin, canViewRoleTemplates]
+    [canManageSlots, canViewStudents, isAdmin, canViewRoleTemplates, t]
   );
 
   const initialTab = useMemo<AdminTabKey>(() => {
@@ -202,6 +220,12 @@ const Administracion: React.FC = () => {
     }
   }, [initialTab, activeTab]);
 
+  /**
+   * Carga todos los datos necesarios para la pestaña Aulas y Clases.
+   * Obtiene los slots propios (para profesores puros), todos los slots y la lista de
+   * profesores (para administradores), y todas las ubicaciones disponibles.
+   * Redirige al inicio si el usuario carece de permisos.
+   */
   const loadSlotsTabData = useCallback(async () => {
     if (canViewAdmin === false) {
       navigate('/');
@@ -237,12 +261,17 @@ const Administracion: React.FC = () => {
       setLoadedTabs((prev) => ({ ...prev, slots: true }));
     } catch (loadError) {
       console.error('Error loading administración data', loadError);
-      setError('Error al cargar los datos de administración');
+      setError(t('admin.errors.cargarDatos'));
     } finally {
       setLoadingTab((current) => (current === 'slots' ? null : current));
     }
-  }, [canViewAdmin, navigate, isPureProfesor, isAdmin]);
+  }, [canViewAdmin, navigate, isPureProfesor, isAdmin, t]);
 
+  /**
+   * Carga todos los datos necesarios para la pestaña Alumnos.
+   * Obtiene la lista de alumnos del profesor y, si aún no se ha cargado, su lista de slots.
+   * Redirige al inicio si el usuario carece de permisos.
+   */
   const loadStudentsTabData = useCallback(async () => {
     if (canViewAdmin === false) {
       navigate('/');
@@ -275,11 +304,11 @@ const Administracion: React.FC = () => {
       }));
     } catch (loadError) {
       console.error('Error loading administración students', loadError);
-      setError('Error al cargar los alumnos');
+      setError(t('admin.errors.cargarAlumnos'));
     } finally {
       setLoadingTab((current) => (current === 'alumnos' ? null : current));
     }
-  }, [canViewAdmin, navigate, isPureProfesor, slots.length]);
+  }, [canViewAdmin, navigate, isPureProfesor, slots.length, t]);
 
   useEffect(() => {
     if (activeTab === 'slots' && !loadedTabs.slots) {
@@ -291,6 +320,14 @@ const Administracion: React.FC = () => {
     }
   }, [activeTab, loadedTabs, loadSlotsTabData, loadStudentsTabData]);
 
+  /**
+   * Gestiona los eventos de cambio de pestaña, actualiza el estado de la pestaña activa,
+   * sincroniza el parámetro de búsqueda de la URL y cierra el modo de edición de slots
+   * al abandonar la pestaña correspondiente.
+   *
+   * @param _event - El evento sintético del clic en la pestaña (no se utiliza).
+   * @param newValue - La clave de la pestaña recién seleccionada.
+   */
   const handleTabChange = (
     _event: React.SyntheticEvent,
     newValue: AdminTabKey
@@ -303,10 +340,23 @@ const Administracion: React.FC = () => {
     if (newValue !== 'slots') setIsEditingSlots(false);
   };
 
+  /**
+   * Gestiona los cambios en los campos del formulario de nuevo slot.
+   *
+   * @param e - El evento de cambio generado por un campo de entrada del formulario de nuevo slot.
+   */
   const handleNewSlotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewSlot((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  /**
+   * Gestiona el envío del formulario para crear un nuevo aula/slot.
+   * Admite tanto la creación propia del profesor como la creación por parte de un administrador
+   * en nombre de otro profesor. Muestra un toast en caso de éxito o error, y reinicia el
+   * formulario al completarse.
+   *
+   * @param e - El evento de envío del formulario.
+   */
   const handleCreateSlot = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
@@ -327,9 +377,7 @@ const Administracion: React.FC = () => {
           targetProfesorId = myProfile.id;
         } else if (!isPureProfesor) {
           // Si no es "puro profesor" y no tiene perfil, el backend fallará con PROFESSOR_PROFILE_NOT_FOUND
-          toast.error(
-            'No tienes un perfil de profesor vinculado. Selecciona un profesor de la lista o asegúrate de tener un perfil de profesor creado.'
-          );
+          toast.error(t('admin.errors.sinProfesorVinculado'));
           setIsSaving(false);
           return;
         }
@@ -358,19 +406,26 @@ const Administracion: React.FC = () => {
           profesorId: '',
           ubicacionId: '',
         });
-        toast.success('Aula/Clase añadida con éxito');
+        toast.success(t('admin.toast.aulaCreada'));
       } else {
-        toast.error(res.message || 'Error al crear la clase');
+        toast.error(res.message || t('admin.toast.errorCrearClase'));
       }
     } catch {
-      toast.error('Error al crear la clase');
+      toast.error(t('admin.toast.errorCrearClase'));
     } finally {
       setIsSaving(false);
     }
   };
 
+  /**
+   * Gestiona la eliminación de un slot tras la confirmación del usuario.
+   * Elimina el slot de la lista correspondiente (administrador o profesor) en caso de éxito.
+   *
+   * @param id - El ID del slot a eliminar.
+   * @param isAdminView - Indica si la eliminación se realiza desde la vista de administrador.
+   */
   const handleDeleteSlot = async (id: string, isAdminView?: boolean) => {
-    if (!window.confirm('¿Seguro que quieres eliminar esta clase?')) return;
+    if (!window.confirm(t('admin.confirm.eliminarClase'))) return;
     try {
       const res = isAdminView
         ? await profesorService.adminDeleteSlot(id)
@@ -382,15 +437,22 @@ const Administracion: React.FC = () => {
         } else {
           setSlots((prev) => prev.filter((s) => s.id !== id));
         }
-        toast.success('Ubicación eliminada');
+        toast.success(t('admin.toast.ubicacionEliminada'));
       } else {
-        toast.error(res.message || 'Error al eliminar');
+        toast.error(res.message || t('admin.errors.eliminar'));
       }
     } catch {
-      toast.error('No se pudo eliminar');
+      toast.error(t('admin.errors.eliminar'));
     }
   };
 
+  /**
+   * Gestiona la actualización de un slot propiedad del profesor actual.
+   * Muestra un toast en caso de éxito o error.
+   *
+   * @param id - El ID del slot a actualizar.
+   * @param data - Datos parciales del slot a actualizar (excluye id y codigoSlot).
+   */
   const handleUpdateSlot = async (
     id: string,
     data: Partial<Omit<AlumnoSlot, 'id' | 'codigoSlot'>>
@@ -400,17 +462,25 @@ const Administracion: React.FC = () => {
       const res = await profesorService.updateSlot(id, data);
       if (res.success) {
         setSlots((prev) => prev.map((s) => (s.id === id ? res.data : s)));
-        toast.success('Ubicación actualizada');
+        toast.success(t('admin.toast.ubicacionActualizada'));
       } else {
-        toast.error(res.message || 'Error al actualizar');
+        toast.error(res.message || t('admin.errors.actualizar'));
       }
     } catch {
-      toast.error('Error al actualizar');
+      toast.error(t('admin.errors.actualizar'));
     } finally {
       setIsSaving(false);
     }
   };
 
+  /**
+   * Gestiona la actualización a nivel de administrador de cualquier slot, incluido el cambio
+   * del profesor asignado. Recarga la lista completa de slots tras una actualización exitosa
+   * para reflejar los cambios del profesor.
+   *
+   * @param id - El ID del slot a actualizar.
+   * @param data - Datos parciales del slot a actualizar, opcionalmente con un nuevo profesorId.
+   */
   const handleAdminUpdateSlot = async (
     id: string,
     data: Partial<Omit<AlumnoSlot, 'id' | 'codigoSlot'>> & {
@@ -424,17 +494,24 @@ const Administracion: React.FC = () => {
         // Recargar todos los slots para reflejar el nuevo profesor
         const allSlotsRes = await profesorService.getAllSlots();
         if (allSlotsRes.success) setAllSlots(allSlotsRes.data);
-        toast.success('Aula actualizada correctamente');
+        toast.success(t('admin.toast.aulaActualizada'));
       } else {
-        toast.error(res.message || 'Error al actualizar el aula');
+        toast.error(res.message || t('admin.errors.actualizarAula'));
       }
     } catch {
-      toast.error('Error al actualizar el aula');
+      toast.error(t('admin.errors.actualizarAula'));
     } finally {
       setIsSaving(false);
     }
   };
 
+  /**
+   * Alterna el estado activo/inactivo de un alumno.
+   * Actualiza la lista local de alumnos con el nuevo estado devuelto por la API.
+   *
+   * @param id - El ID del alumno cuyo estado debe alternarse.
+   * @param currentStatus - El estado actual del alumno (p. ej. 'ACTIVE' o 'INACTIVE').
+   */
   const handleToggleStudentStatus = async (
     id: string,
     currentStatus: string
@@ -449,43 +526,63 @@ const Administracion: React.FC = () => {
         setStudents((prev) =>
           prev.map((s) => (s.id === id ? { ...s, status: newStatus } : s))
         );
-        toast.success('Estado de alumno actualizado');
+        toast.success(t('admin.toast.estadoAlumnoActualizado'));
       }
     } catch {
-      toast.error('Error al cambiar estado');
+      toast.error(t('admin.errors.cambiarEstado'));
     } finally {
       setIsSaving(false);
     }
   };
 
+  /**
+   * Fuerza el restablecimiento de contraseña de un alumno y muestra la nueva
+   * contraseña provisional en un toast.
+   *
+   * @param id - El ID del alumno cuya contraseña debe restablecerse.
+   */
   const handleResetStudentPassword = async (id: string) => {
     try {
       const res = await profesorService.forcePasswordReset(id);
       if (res.success) {
         toast.success(
-          `Contraseña reseteada. Nueva clave: ${res.data.provisionalPassword}`,
+          t('admin.toast.contrasenaReset', {
+            clave: res.data.provisionalPassword,
+          }),
           10000
         );
       }
     } catch {
-      toast.error('Error al resetear contraseña');
+      toast.error(t('admin.errors.resetearContrasena'));
     }
   };
 
+  /**
+   * Gestiona la eliminación de un alumno tras la confirmación del usuario.
+   * Elimina al alumno de la lista local en caso de éxito.
+   *
+   * @param id - El ID del alumno a eliminar.
+   */
   const handleDeleteStudent = async (id: string) => {
-    if (!window.confirm('¿Seguro que quieres eliminar a este alumno?')) return;
+    if (!window.confirm(t('admin.confirm.eliminarAlumno'))) return;
 
     try {
       const res = await profesorService.removeStudent(id);
       if (res.success) {
         setStudents((prev) => prev.filter((s) => s.id !== id));
-        toast.success('Alumno eliminado');
+        toast.success(t('admin.toast.alumnoEliminado'));
       }
     } catch {
       toast.error('No se pudo eliminar');
     }
   };
 
+  /**
+   * Muestra un toast informativo indicando que la funcionalidad de gestión de permisos
+   * para el alumno indicado aún no está disponible.
+   *
+   * @param alumno - El objeto alumno cuyos permisos se gestionarían.
+   */
   const handleManagePermissions = (alumno: Alumno) => {
     toast.info(
       `Funcionalidad de permisos para ${alumno.username} próximamente`
@@ -504,19 +601,19 @@ const Administracion: React.FC = () => {
           color="primary.main"
           sx={{ fontSize: { xs: '1.75rem', md: '2.125rem' } }}
         >
-          Administración Académica
+          {t('admin.titulo')}
         </Typography>
 
         <Typography variant="body1" color="text.secondary" sx={{ mb: 1.5 }}>
-          Gestiona tus aulas, clases y alumnos vinculados desde un solo lugar.
+          {t('admin.subtitulo')}
         </Typography>
 
         <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />}>
           <Link underline="hover" color="inherit" component={RouterLink} to="/">
-            Inicio
+            {t('admin.breadcrumb.inicio')}
           </Link>
           <Typography color="text.primary" fontWeight={500}>
-            Administración
+            {t('admin.breadcrumb.administracion')}
           </Typography>
         </Breadcrumbs>
       </Box>
@@ -547,7 +644,7 @@ const Administracion: React.FC = () => {
             id="admin-tabs"
             value={activeTab}
             onChange={handleTabChange}
-            aria-label="admin tabs"
+            aria-label={t('admin.tabs.ariaLabel')}
             variant="fullWidth"
             textColor="primary"
             indicatorColor="primary"
@@ -600,7 +697,9 @@ const Administracion: React.FC = () => {
                       width: { xs: '100%', sm: 'auto' },
                     }}
                   >
-                    {isEditingSlots ? 'Finalizar Edición' : 'Gestionar'}
+                    {isEditingSlots
+                      ? t('admin.actions.finalizarEdicion')
+                      : t('admin.actions.gestionar')}
                   </Button>
                 </Box>
               )}

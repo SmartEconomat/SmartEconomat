@@ -14,6 +14,7 @@ import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
 import { Pedido } from '../../pedido/pedido.entity/pedido.entity';
 import { IncidenciaLinea } from '../incidencia-linea.entity/incidencia-linea.entity';
 import { RecepcionProducto } from '../../recepcion/recepcion-productos.entity/recepcion-producto.entity';
+import { EstadoIncidencia } from '../enums/incidencia.enums';
 
 /**
  * Entidad Incidencia
@@ -32,6 +33,13 @@ import { RecepcionProducto } from '../../recepcion/recepcion-productos.entity/re
 @Index(['pedidoId'])
 @Index(['usuarioResolutorId'])
 export class Incidencia extends BaseEntity {
+  /**
+   * Campos derivados para serialización de respuesta API.
+   * No se persisten en base de datos.
+   */
+  estado?: EstadoIncidencia;
+  resuelta?: boolean;
+
   @Column({ name: 'recepcion_id' })
   recepcionId!: string;
 

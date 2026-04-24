@@ -1,4 +1,4 @@
-import { LowercaseStringTransformer } from 'src/common/transformers/lowercase-string.transformer';
+import { LowercaseStringTransformer } from '../../../src/common/transformers/lowercase-string.transformer';
 
 /**
  * Tests Unitarios de LowercaseStringTransformer

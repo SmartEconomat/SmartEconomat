@@ -8,6 +8,7 @@ Esta es la guía canónica de despliegue para SmartEconomat. Describe el comport
 - Stack de producción: PostgreSQL, Redis, backend NestJS y frontend Nginx con TLS local.
 - Despliegue automatizado disponible mediante [scripts/deploy.sh](../scripts/deploy.sh).
 - Casos específicos: [PRODUCTION.md](PRODUCTION.md) para un escenario Linux con `nip.io`, y [Windows-Deployment.md](Windows-Deployment.md) para hosts Windows con contenedores Linux.
+- Entorno local HTTPS con dominio fijo: [operations/local-https-smarteconomat-app.md](operations/local-https-smarteconomat-app.md).
 - Gestión TLS detallada: [security/self-signed-tls.md](security/self-signed-tls.md).
 
 ## Arquitectura de runtime

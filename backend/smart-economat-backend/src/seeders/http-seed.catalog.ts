@@ -1,5 +1,5 @@
 import { SeedContext } from './seed-context';
-import { SEED_GLOBAL_CONFIG } from './massive.config';
+import { INCIDENCIA_ESTADOS, SEED_GLOBAL_CONFIG } from './massive.config';
 import {
   fetchOpenFoodFactsProducts,
   offProductToCreateProductoPayload,
@@ -318,6 +318,20 @@ async function usuariosTask(context: SeedContext): Promise<void> {
     );
   }
 
+  const ubicacionesDisponibles = (await saveListIds(
+    context,
+    '/ubicacion',
+    'ubicacionIds'
+  )) as SeedUbicacionEntity[];
+
+  const ubicacionSlotProfesor =
+    ubicacionesDisponibles.find(
+      (ubicacion) => getStringField(ubicacion, 'nombre') !== 'Almacén Principal'
+    ) || ubicacionesDisponibles[0];
+  const ubicacionSlotProfesorId = ubicacionSlotProfesor
+    ? getEntityId(ubicacionSlotProfesor)
+    : undefined;
+
   try {
     await safe('crear slot fijo profesor', () =>
       context.postJson<SeedEntity>('/profesores/admin-slots', {
@@ -325,6 +339,9 @@ async function usuariosTask(context: SeedContext): Promise<void> {
         numeroClase: 2026,
         capacidad: 30,
         profesorId: profesorPrincipalId,
+        ...(ubicacionSlotProfesorId
+          ? { ubicacionId: ubicacionSlotProfesorId }
+          : {}),
       })
     );
   } catch (error) {
@@ -1113,21 +1130,140 @@ async function incidenciaTask(context: SeedContext): Promise<void> {
   await saveListIds(context, '/incidencias', 'incidenciaIds');
   await saveListIds(context, '/incidencias-resueltas', 'incidenciaResueltaIds');
   await saveListIds(context, '/recepciones', 'recepcionIds');
+  await saveListIds(context, '/usuarios', 'usuarioIds');
 
   const incIds = context.getState<string[]>('incidenciaIds') || [];
+  const usuarioIds = context.getState<string[]>('usuarioIds') || [];
+  const recepcionIds = context.getState<string[]>('recepcionIds') || [];
+
+  const unwrapIncidencia = (payload: unknown): SeedRecord | null => {
+    if (!isSeedRecord(payload)) {
+      return null;
+    }
+
+    if (isSeedRecord(payload.data)) {
+      return payload.data;
+    }
+
+    return payload;
+  };
+
+  const readIncidenciaEstado = (payload: unknown): string | undefined => {
+    const incidencia = unwrapIncidencia(payload);
+    return incidencia ? getStringField(incidencia, 'estado') : undefined;
+  };
+
+  const observedIncidenciaEstados = new Set<string>();
+
+  const observeEstado = (payload: unknown): string | undefined => {
+    const estado = readIncidenciaEstado(payload);
+    const normalizedEstado = estado ? estado.trim().toLowerCase() : '';
+    if (normalizedEstado.length > 0) {
+      observedIncidenciaEstados.add(normalizedEstado);
+    }
+    return estado;
+  };
+
+  const readIncidenciaLineas = (payload: unknown): SeedRecord[] => {
+    const incidencia = unwrapIncidencia(payload);
+    if (!incidencia) {
+      return [];
+    }
+
+    const lineas = incidencia.lineas;
+    if (!Array.isArray(lineas)) {
+      return [];
+    }
+
+    return lineas.filter(isSeedRecord);
+  };
+
+  const createReportedIncidencia = async (
+    index: number,
+    reason: string
+  ): Promise<string> => {
+    if (recepcionIds.length === 0) {
+      throw new Error(
+        '[seed] incidenciaTask requiere recepciones para cubrir estados de incidencia'
+      );
+    }
+
+    const recepcionId = recepcionIds[index % recepcionIds.length];
+
+    const created = await safe(`crear incidencia reportada (${reason})`, () =>
+      context.postJson('/incidencias/reportar', {
+        recepcionId,
+        tipo: pickDeterministic(
+          ['rotura', 'caducado', 'falta_producto', 'exceso_producto', 'otro'],
+          index,
+          `http-incidencia-estado-${reason}`
+        ),
+      })
+    );
+
+    const incidencia = unwrapIncidencia(created);
+    const id = incidencia ? getEntityId(incidencia) : undefined;
+    if (!id) {
+      throw new Error(
+        `[seed] crear incidencia reportada (${reason}) no devolvio id`
+      );
+    }
+
+    return id;
+  };
+
+  const fetchIncidencia = async (id: string): Promise<unknown> =>
+    safe(`get incidencia ${id} (estado)`, () =>
+      context.getJson(`/incidencias/${id}`)
+    );
+
+  const warnUnexpectedEstado = (
+    targetEstado: string,
+    actualEstado: string | undefined,
+    incidenciaId: string
+  ): void => {
+    if (actualEstado === targetEstado) {
+      return;
+    }
+
+    throw new Error(
+      `[seed] Estado incidencia no coincide para ${incidenciaId}: esperado=${targetEstado}, actual=${actualEstado ?? 'desconocido'}`
+    );
+  };
   if (incIds.length > 0) {
     const iid = incIds[0];
     await safe(`get incidencia ${iid}`, () =>
       context.getJson(`/incidencias/${iid}`)
     );
     await safe(`PATCH incidencia ${iid}`, () =>
-      context.patchJson(`/incidencias/${iid}`, { tipo: 'otro' })
+      context.patchJson(`/incidencias/${iid}`, {
+        observacionesRecepcion: pickDeterministic(
+          DETERMINISTIC_SHORT_NOTES,
+          0,
+          'http-incidencia-patch-observaciones'
+        ),
+      })
     );
     await safe(`PATCH resolver incidencia ${iid}`, () =>
-      context.patchJson(`/incidencias/${iid}/resolver`, {})
+      context.patchJson(`/incidencias/${iid}/resolver`, {
+        ...(usuarioIds[0] ? { usuarioId: usuarioIds[0] } : {}),
+        estadoFinal: 'resuelta',
+        observacionesResolucion: pickDeterministic(
+          DETERMINISTIC_SHORT_NOTES,
+          0,
+          'http-incidencia-resolver-patch-observaciones'
+        ),
+      })
     );
     await safe(`POST resolver incidencia ${iid}`, () =>
-      context.postJson(`/incidencias/${iid}/resolver`, {})
+      context.postJson(`/incidencias/${iid}/resolver`, {
+        accion: 'aceptada',
+        observaciones: pickDeterministic(
+          DETERMINISTIC_SHORT_NOTES,
+          0,
+          'http-incidencia-resolver-post-observaciones'
+        ),
+      })
     );
     await safe(`delete incidencia ${iid}`, () =>
       context.deleteJson(`/incidencias/${iid}`)
@@ -1148,11 +1284,188 @@ async function incidenciaTask(context: SeedContext): Promise<void> {
     );
   }
 
-  await safe('POST incidencias-resueltas dummy', () =>
-    context.postJson('/incidencias-resueltas', { incidenciaId: incIds[0] })
-  );
+  if (incIds[0] && usuarioIds[0]) {
+    await safe('POST incidencias-resueltas dummy', () =>
+      context.postJson('/incidencias-resueltas', {
+        idIncidencia: incIds[0],
+        idUsuarioResolutor: usuarioIds[0],
+        tipoResolucion: 'aceptada',
+        observaciones: pickDeterministic(
+          DETERMINISTIC_SHORT_NOTES,
+          0,
+          'http-incidencia-resuelta-create-observaciones'
+        ),
+      })
+    );
+  }
 
-  const recepcionIds = context.getState<string[]>('recepcionIds') || [];
+  if (recepcionIds.length > 0) {
+    const usuarioResolutorId = usuarioIds[0];
+
+    const incidenciaNuevaId = await createReportedIncidencia(0, 'nueva');
+    const incidenciaNueva = await fetchIncidencia(incidenciaNuevaId);
+    warnUnexpectedEstado(
+      'nueva',
+      observeEstado(incidenciaNueva),
+      incidenciaNuevaId
+    );
+
+    const incidenciaPendienteId = await createReportedIncidencia(
+      1,
+      'pendiente-validacion'
+    );
+    const incidenciaPendienteDetalle = await fetchIncidencia(
+      incidenciaPendienteId
+    );
+    const lineasPendiente = readIncidenciaLineas(incidenciaPendienteDetalle);
+    if (lineasPendiente.length > 0) {
+      await safe(
+        `patch resolver incidencia ${incidenciaPendienteId} (pendiente_validacion)`,
+        () =>
+          context.patchJson(`/incidencias/${incidenciaPendienteId}/resolver`, {
+            marcarComoResuelta: false,
+            observacionesResolucion: pickDeterministic(
+              DETERMINISTIC_SHORT_NOTES,
+              1,
+              'http-incidencia-estado-pendiente-validacion-observaciones'
+            ),
+            lineas: lineasPendiente
+              .map((linea) => {
+                const id = getEntityId(linea);
+                const cantidadEsperada = getNumberField(
+                  linea,
+                  'cantidadEsperada'
+                );
+
+                if (!id || cantidadEsperada === undefined) {
+                  return null;
+                }
+
+                return {
+                  id,
+                  cantidadRecibida: cantidadEsperada,
+                };
+              })
+              .filter((linea) => linea !== null),
+          })
+      );
+    }
+    const incidenciaPendiente = await fetchIncidencia(incidenciaPendienteId);
+    warnUnexpectedEstado(
+      'pendiente_validacion',
+      observeEstado(incidenciaPendiente),
+      incidenciaPendienteId
+    );
+
+    const incidenciaAjusteId = await createReportedIncidencia(2, 'en-ajuste');
+    const incidenciaAjusteDetalle = await fetchIncidencia(incidenciaAjusteId);
+    const lineaAjuste = readIncidenciaLineas(incidenciaAjusteDetalle)[0];
+    const lineaAjusteId = lineaAjuste ? getEntityId(lineaAjuste) : undefined;
+    if (lineaAjusteId) {
+      await safe(
+        `patch resolver incidencia ${incidenciaAjusteId} (en_ajuste)`,
+        () =>
+          context.patchJson(`/incidencias/${incidenciaAjusteId}/resolver`, {
+            marcarComoResuelta: false,
+            observacionesResolucion: pickDeterministic(
+              DETERMINISTIC_SHORT_NOTES,
+              2,
+              'http-incidencia-estado-en-ajuste-observaciones'
+            ),
+            lineas: [
+              {
+                id: lineaAjusteId,
+                estadoReclamacion: 'RECLAMADO',
+              },
+            ],
+          })
+      );
+    }
+    const incidenciaAjuste = await fetchIncidencia(incidenciaAjusteId);
+    warnUnexpectedEstado(
+      'en_ajuste',
+      observeEstado(incidenciaAjuste),
+      incidenciaAjusteId
+    );
+
+    const incidenciaResueltaId = await createReportedIncidencia(3, 'resuelta');
+    await safe(
+      `patch resolver incidencia ${incidenciaResueltaId} (resuelta)`,
+      () =>
+        context.patchJson(`/incidencias/${incidenciaResueltaId}/resolver`, {
+          ...(usuarioResolutorId ? { usuarioId: usuarioResolutorId } : {}),
+          marcarComoResuelta: true,
+          estadoFinal: 'resuelta',
+          observacionesResolucion: pickDeterministic(
+            DETERMINISTIC_SHORT_NOTES,
+            3,
+            'http-incidencia-estado-resuelta-observaciones'
+          ),
+        })
+    );
+    const incidenciaResuelta = await fetchIncidencia(incidenciaResueltaId);
+    warnUnexpectedEstado(
+      'resuelta',
+      observeEstado(incidenciaResuelta),
+      incidenciaResueltaId
+    );
+
+    const incidenciaCanceladaId = await createReportedIncidencia(
+      4,
+      'cancelada'
+    );
+    await safe(
+      `patch resolver incidencia ${incidenciaCanceladaId} (cancelada)`,
+      () =>
+        context.patchJson(`/incidencias/${incidenciaCanceladaId}/resolver`, {
+          ...(usuarioResolutorId ? { usuarioId: usuarioResolutorId } : {}),
+          marcarComoResuelta: true,
+          estadoFinal: 'cancelada',
+          observacionesResolucion: pickDeterministic(
+            DETERMINISTIC_SHORT_NOTES,
+            4,
+            'http-incidencia-estado-cancelada-observaciones'
+          ),
+        })
+    );
+    const incidenciaCancelada = await fetchIncidencia(incidenciaCanceladaId);
+    warnUnexpectedEstado(
+      'cancelada',
+      observeEstado(incidenciaCancelada),
+      incidenciaCanceladaId
+    );
+
+    const incidenciaInvalidaId = await createReportedIncidencia(5, 'invalida');
+    await safe(
+      `patch resolver incidencia ${incidenciaInvalidaId} (invalida)`,
+      () =>
+        context.patchJson(`/incidencias/${incidenciaInvalidaId}/resolver`, {
+          ...(usuarioResolutorId ? { usuarioId: usuarioResolutorId } : {}),
+          marcarComoResuelta: true,
+          estadoFinal: 'invalida',
+          observacionesResolucion: pickDeterministic(
+            DETERMINISTIC_SHORT_NOTES,
+            5,
+            'http-incidencia-estado-invalida-observaciones'
+          ),
+        })
+    );
+    const incidenciaInvalida = await fetchIncidencia(incidenciaInvalidaId);
+    warnUnexpectedEstado(
+      'invalida',
+      observeEstado(incidenciaInvalida),
+      incidenciaInvalidaId
+    );
+
+    const missingObservedEstados = INCIDENCIA_ESTADOS.filter(
+      (estado) => !observedIncidenciaEstados.has(estado)
+    );
+    if (missingObservedEstados.length > 0) {
+      throw new Error(
+        `[seed] Cobertura de estados de incidencia incompleta en http-seed: faltan ${missingObservedEstados.join(', ')}`
+      );
+    }
+  }
 
   for (let i = 0; i < 6 * volumeMultiplier; i++) {
     const recepcionId = recepcionIds[i % Math.max(1, recepcionIds.length)];

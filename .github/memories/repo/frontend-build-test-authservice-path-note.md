@@ -1,3 +1,0 @@
-- Frontend `npm run build` falla en fase `tsc -b` por `test/store/AuthContext.test.tsx` importando `../../src/services/authService` (archivo inexistente).
-- `npm test -- --run` también falla por el mismo import, aunque 52 tests pasan y 18 suites pasan.
-- Para validar cambios puntuales de UI, `npx eslint src/pages/Inventario.tsx` y `npx vite build` sí pasan.

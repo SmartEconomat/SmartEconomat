@@ -1,2 +1,0 @@
-- En `SeedContext.ensureDockerInfra()` conviene consultar `docker compose ps --services --filter status=running` y omitir `up -d` cuando `db`, `redis` y `backend` ya están en ejecución; evita bloqueos del comando `npm run seed`.
-- Mantener fallback a `docker compose up -d` si el `ps` falla por entorno o versión de compose.

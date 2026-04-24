@@ -1,3 +1,0 @@
-- Vista detalle de recetas: backend canonico expone `tiempoEstimadoMinutos` y no garantiza `tiempo`/`tiempoPreparacion` legacy.
-- En frontend, derivar `Franja de tiempo` y `Tiempo de preparacion` desde minutos (franjas canonicas UI: 10/20/30/45/60) para evitar campos en `—`.
-- `costeUnitarioEstimado` debe renderizarse tambien cuando vale `0` (no usar chequeo truthy para ocultar).

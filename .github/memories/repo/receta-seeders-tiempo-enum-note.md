@@ -1,2 +1,0 @@
-- Seeders de recetas: usar `TiempoReceta` canonico (`10/20/30/45/60 min`) y convertirlo con `getTiempoRecetaMinutos`, manteniendo `tiempoEstimadoMinutos` numerico en DTOs/backend.
-- Afecta tanto al seeder directo `receta.seeder.ts` como al generador HTTP masivo `massive.helpers.body.inventory-production.ts`.

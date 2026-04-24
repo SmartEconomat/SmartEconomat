@@ -4,8 +4,20 @@ import { useToastList } from '../../../store/toast.hooks';
 import { getCategoryIconFilled } from '../../../features/productos/utils/getCategoryIconFilled';
 import NearMeIcon from '@mui/icons-material/NearMeOutlined';
 
+/** Fixed width for each toast card in pixels. */
 const TOAST_WIDTH = 360;
 
+/**
+ * Global toast notification container.
+ *
+ * Reads the current list of toasts from the toast store and renders each one
+ * as a stacked MUI `Snackbar`/`Alert` in the top-right corner of the viewport.
+ * Each toast can be dismissed by clicking its close button, which calls
+ * `removeToast` from the store.
+ *
+ * The component is intended to be mounted once at the application root level
+ * (e.g. inside `App.tsx`) so it is always present.
+ */
 export default function ToastContainer() {
   const { toasts, removeToast } = useToastList();
 

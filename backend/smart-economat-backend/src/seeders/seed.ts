@@ -10,6 +10,7 @@ assertDevelopmentSeedEnvironment('seed');
 
 const seedersInOrder = [
   'roles-permisos.seeder',
+  'ubicacion.seeder',
   'usuario.seeder',
   'proveedor.seeder',
   'producto.seeder',

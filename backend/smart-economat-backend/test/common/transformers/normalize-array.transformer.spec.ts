@@ -1,4 +1,4 @@
-import { NormalizeArrayTransformer } from 'src/common/transformers/normalize-array.transformer';
+import { NormalizeArrayTransformer } from '../../../src/common/transformers/normalize-array.transformer';
 
 /**
  * Tests Unitarios de NormalizeArrayTransformer

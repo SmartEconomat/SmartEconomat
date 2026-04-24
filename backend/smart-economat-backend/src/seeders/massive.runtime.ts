@@ -1,7 +1,9 @@
 export {
   adminRouteActorByIteration,
+  ensureCanonicalSeedCredentials,
   ensureAdminRouteActors,
   ensureDistribucionDisponiblesPostRun,
+  ensureIncidenciaEstadosPostRun,
   ensurePasswordActor,
   ensureResetActor,
   ensureRoleActors,

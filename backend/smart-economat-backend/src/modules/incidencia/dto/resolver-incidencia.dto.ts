@@ -13,6 +13,12 @@ import {
 import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
 import { EstadoReclamacion } from '../incidencia-linea.entity/incidencia-linea.entity';
 
+export enum EstadoFinalIncidenciaDto {
+  RESUELTA = 'resuelta',
+  CANCELADA = 'cancelada',
+  INVALIDA = 'invalida',
+}
+
 function toOptionalBoolean(value: unknown): unknown {
   if (value === undefined || value === null || value === '') {
     return undefined;
@@ -111,6 +117,12 @@ export class ResolverIncidenciaDto {
   @IsOptional()
   @Transform(({ value }) => toOptionalBoolean(value))
   marcarComoResuelta?: boolean;
+
+  @IsOptional()
+  @IsEnum(EstadoFinalIncidenciaDto, {
+    message: i18nValidationMessage('validation.INVALID_ENUM'),
+  })
+  estadoFinal?: EstadoFinalIncidenciaDto;
 
   @IsOptional()
   @IsArray()

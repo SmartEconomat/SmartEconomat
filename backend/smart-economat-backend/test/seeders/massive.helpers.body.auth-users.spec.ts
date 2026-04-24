@@ -38,6 +38,7 @@ describe('massive.helpers.body.auth-users', () => {
       recetaDificultad: '',
       recetaUnidad: '',
       incidenciaTipo: '',
+      incidenciaEstadoObjetivo: 'nueva',
       resolucionTipo: '',
       mermaMotivo: '',
       estadoVisual: '',

@@ -23,6 +23,7 @@ Este documento resume las variables soportadas por el proyecto y diferencia clar
 | `BACKEND_API_URL` | URL pública o interna del backend | `http://localhost:3000` |
 | `JWT_SECRET` | Secreto de firma JWT | `changeme` en el ejemplo |
 | `JWT_EXPIRATION` | Vida útil del token | `7d` |
+| `SEED_DEFAULT_ADMIN_TEMP_PASSWORD` | Password temporal exigida por la migracion de admins por defecto en `NODE_ENV=production` | sin default recomendado |
 | `SENTRY_DSN` | DSN de Sentry para backend | vacío |
 
 ## Base de datos

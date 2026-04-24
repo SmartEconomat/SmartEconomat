@@ -1,4 +1,4 @@
-import { StringToDateTransformer } from 'src/common/transformers/string-to-date.transformer';
+import { StringToDateTransformer } from '../../../src/common/transformers/string-to-date.transformer';
 
 /**
  * Tests Unitarios de StringToDateTransformer

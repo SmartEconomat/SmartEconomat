@@ -6,6 +6,13 @@ import type {
   InventarioPorProducto,
 } from './inventario.types';
 
+/**
+ * Returns `true` when an inventory item has been soft-deleted (supports both
+ * camelCase and snake_case field names returned by different API versions).
+ *
+ * @param {InventarioItem} item - The inventory item to check.
+ * @returns {boolean} Whether the item has been deleted.
+ */
 function isInventarioItemDeleted(item: InventarioItem): boolean {
   const withSnakeCase = item as InventarioItem & {
     deleted_at?: string | null;
@@ -14,6 +21,14 @@ function isInventarioItemDeleted(item: InventarioItem): boolean {
   return Boolean(item.deletedAt || withSnakeCase.deleted_at);
 }
 
+/**
+ * Fetches all current low-stock alerts from the dedicated alerts endpoint.
+ *
+ * @returns {Promise<AlertaStock[]>} List of stock alerts.
+ * @throws {Error} If the API returns a non-OK response.
+ * @example
+ * const alerts = await fetchAlertasStock();
+ */
 export async function fetchAlertasStock(): Promise<AlertaStock[]> {
   const response = await baseFetch('/alertas/stock');
   if (!response.ok) {
@@ -25,6 +40,14 @@ export async function fetchAlertasStock(): Promise<AlertaStock[]> {
   return unwrapList<AlertaStock>(body.data);
 }
 
+/**
+ * Fetches all active (non-deleted) inventory lot records.
+ *
+ * @returns {Promise<InventarioItem[]>} List of inventory items.
+ * @throws {Error} If the API returns a non-OK response.
+ * @example
+ * const items = await fetchInventario();
+ */
 export async function fetchInventario(): Promise<InventarioItem[]> {
   const response = await baseFetch('/inventario');
   if (!response.ok) {
@@ -41,6 +64,12 @@ export async function fetchInventario(): Promise<InventarioItem[]> {
 /**
  * Agrupa los registros de inventario por producto, sumando cantidades.
  * Un producto aparece una sola vez con el stock total de todos sus lotes y proveedores.
+ *
+ * @param {InventarioItem[]} items - Raw inventory lot records to aggregate.
+ * @returns {InventarioPorProducto[]} Aggregated list sorted alphabetically by product name.
+ * @example
+ * const items = await fetchInventario();
+ * const aggregated = agregarInventarioPorProducto(items);
  */
 export function agregarInventarioPorProducto(
   items: InventarioItem[]
@@ -128,15 +157,33 @@ export function agregarInventarioPorProducto(
   return result.sort((a, b) => a.nombre.localeCompare(b.nombre));
 }
 
+/**
+ * Payload for creating a new inventory lot record.
+ */
 export interface CreateInventarioPayload {
+  /** Identifier of the product-supplier relation. */
   productoProveedorId: string;
+  /** Initial quantity in stock. */
   cantidadActual: number;
+  /** Minimum stock threshold. */
   cantidadMinima: number;
+  /** Optional maximum stock limit. */
   cantidadMaxima?: number;
+  /** Storage location identifier. */
   ubicacionId: string;
+  /** Optional expiry date in ISO format (YYYY-MM-DD). */
   fechaCaducidad?: string;
 }
 
+/**
+ * Creates a new inventory lot record.
+ *
+ * @param {CreateInventarioPayload} payload - Data for the new lot.
+ * @returns {Promise<InventarioItem>} The created inventory item.
+ * @throws {Error} If the API returns an error response.
+ * @example
+ * const item = await createInventarioItem({ productoProveedorId: 'abc', cantidadActual: 10, cantidadMinima: 2, ubicacionId: 'xyz' });
+ */
 export async function createInventarioItem(
   payload: CreateInventarioPayload
 ): Promise<InventarioItem> {
@@ -157,6 +204,16 @@ export async function createInventarioItem(
   return body.data;
 }
 
+/**
+ * Partially updates an existing inventory lot record.
+ *
+ * @param {string} id - The inventory item UUID to update.
+ * @param {Partial<CreateInventarioPayload>} payload - Fields to update.
+ * @returns {Promise<InventarioItem>} The updated inventory item.
+ * @throws {Error} If the API returns an error response.
+ * @example
+ * const updated = await updateInventarioItem('abc-123', { cantidadMinima: 5 });
+ */
 export async function updateInventarioItem(
   id: string,
   payload: Partial<CreateInventarioPayload>
@@ -179,6 +236,15 @@ export async function updateInventarioItem(
   return body.data;
 }
 
+/**
+ * Registers a manual stock adjustment (entry or exit) for a specific inventory lot.
+ *
+ * @param {CreateAjusteManualInventarioPayload} payload - Adjustment details.
+ * @returns {Promise<InventarioItem>} The updated inventory item after the adjustment.
+ * @throws {Error} If the API returns an error response.
+ * @example
+ * const item = await createAjusteManualInventario({ inventarioId: 'abc', tipo: 'salida_ajuste', ajuste: 3, motivo: 'Merma' });
+ */
 export async function createAjusteManualInventario(
   payload: CreateAjusteManualInventarioPayload
 ): Promise<InventarioItem> {

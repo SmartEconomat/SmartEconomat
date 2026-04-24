@@ -19,6 +19,7 @@ import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveed
 @Index(['fecha'])
 @Check(`"precio" > 0`)
 export class HistorialPrecio extends BaseEntity {
+  /** Foreign key referencing the ProductoProveedor this price history belongs to. */
   @Column({ name: 'producto_proveedor_id' })
   productoProveedorId!: string;
 

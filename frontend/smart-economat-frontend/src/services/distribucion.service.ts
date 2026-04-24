@@ -5,6 +5,15 @@ import type {
   DistribucionDisponible,
 } from './distribucion.types';
 
+/**
+ * Fetches a paginated list of distribution records.
+ *
+ * @param {{ page?: number; limit?: number; searchTerm?: string; estado?: string }} params - Filter and pagination options.
+ * @returns {Promise<PaginatedData<Distribucion>>} Paginated distributions.
+ * @throws {ApiError} If the API returns an error response.
+ * @example
+ * const result = await fetchDistribuciones({ page: 1, estado: 'preparacion' });
+ */
 export async function fetchDistribuciones(
   params: {
     page?: number;
@@ -29,6 +38,15 @@ export async function fetchDistribuciones(
   return body.data;
 }
 
+/**
+ * Fetches the list of pedido-usuarios available for distribution (not yet fully distributed).
+ *
+ * @param {{ limit?: number; searchTerm?: string }} params - Optional filter options.
+ * @returns {Promise<DistribucionDisponible[]>} List of distributable orders.
+ * @throws {ApiError} If the API returns an error response.
+ * @example
+ * const orders = await fetchDistribucionesDisponibles({ searchTerm: 'Juan' });
+ */
 export async function fetchDistribucionesDisponibles(
   params: {
     limit?: number;
@@ -51,6 +69,15 @@ export async function fetchDistribucionesDisponibles(
   return body.data;
 }
 
+/**
+ * Creates a new distribution record for a pedido-usuario.
+ *
+ * @param {CreateDistribucionPayload} payload - Distribution details and product lines.
+ * @returns {Promise<Distribucion>} The created distribution record.
+ * @throws {ApiError} If the API returns an error response.
+ * @example
+ * const dist = await createDistribucion({ pedidoUsuarioId: 'abc', lineas: [...] });
+ */
 export async function createDistribucion(
   payload: CreateDistribucionPayload
 ): Promise<Distribucion> {
@@ -67,6 +94,15 @@ export async function createDistribucion(
   return body.data;
 }
 
+/**
+ * Marks a distribution as confirmed (delivered to the recipient).
+ *
+ * @param {string} id - The distribution UUID to confirm.
+ * @returns {Promise<Distribucion>} The updated distribution record.
+ * @throws {ApiError} If the API returns an error response.
+ * @example
+ * const dist = await confirmDistribucion('abc-123');
+ */
 export async function confirmDistribucion(id: string): Promise<Distribucion> {
   const response = await baseFetch(`/distribuciones/${id}/confirmar`, {
     method: 'PATCH',
@@ -80,6 +116,16 @@ export async function confirmDistribucion(id: string): Promise<Distribucion> {
   return body.data;
 }
 
+/**
+ * Cancels a distribution, optionally providing a cancellation reason.
+ *
+ * @param {string} id - The distribution UUID to cancel.
+ * @param {string} [motivoCancelacion] - Optional reason for cancellation.
+ * @returns {Promise<Distribucion>} The updated distribution record.
+ * @throws {ApiError} If the API returns an error response.
+ * @example
+ * const dist = await cancelDistribucion('abc-123', 'Pedido duplicado');
+ */
 export async function cancelDistribucion(
   id: string,
   motivoCancelacion?: string
@@ -97,6 +143,15 @@ export async function cancelDistribucion(
   return body.data;
 }
 
+/**
+ * Fetches the full detail of a single distribution record by its identifier.
+ *
+ * @param {string} id - The distribution UUID.
+ * @returns {Promise<Distribucion>} The distribution detail.
+ * @throws {ApiError} If the API returns an error response.
+ * @example
+ * const dist = await fetchDistribucionById('abc-123');
+ */
 export async function fetchDistribucionById(id: string): Promise<Distribucion> {
   const response = await baseFetch(`/distribuciones/${id}`);
   const body = await parseApiResponse<Distribucion>(

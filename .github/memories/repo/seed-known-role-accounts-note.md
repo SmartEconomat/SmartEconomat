@@ -1,8 +1,0 @@
-- `npm run seed` usa `src/seeders/seed.cli.ts` -> `runMassiveSeeder()`, no `seed.ts`.
-- El seeder masivo fija cuentas conocidas e idempotentes: `superadmin`, `admin`, `profesor`, `alumno`, todas con `SmartEconomat2026!`.
-- `alumno` queda vinculado al slot fijo de `profesor` (`Aula Seed Principal`, clase `2026`, codigo `AL-SEED2026`).
-- El bootstrap de `SeedContext` debe arrancar con `superadmin`, no con `admin`, para no dejar `admin` como `SUPER_ADMIN`.
-- La baseline de tests tambien siembra `superadmin`, `admin`, `profesor`, `profesor1`, `profesor2`, `alumno` y `alumno_profesor1`.
-- El seeder masivo debe construir `/purchase-batches/consolidate` con `pedidoIds` canónicos de los pedidos hijos recién precreados; reusar `pedidoUsuarioId` o colas viejas rompe con 404/400.
-- `SeedContext.ensureDockerInfra()` puede reutilizar un backend local accesible si `db` y `redis` ya están en Docker, evitando conflictos por el puerto `3000`.
-- El selector de `/profesores/alumnos/:id/*` no debe usar el alumno fijo `alumno`; si lo hace, `force-reset` rompe la contraseña conocida y deja de cumplir el contrato de seed.

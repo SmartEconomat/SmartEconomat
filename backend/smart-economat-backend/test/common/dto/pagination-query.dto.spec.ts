@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
-import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { PaginationQueryDto } from '../../../src/common/dto/pagination-query.dto';
 
 describe('PaginationQueryDto', () => {
   it('mantiene los valores por defecto esperados', () => {

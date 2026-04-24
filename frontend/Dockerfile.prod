@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.4
 FROM node:22.2.0-alpine AS builder
 
 WORKDIR /app
@@ -5,23 +6,33 @@ WORKDIR /app
 ARG VITE_SENTRY_DSN
 ENV VITE_SENTRY_DSN=$VITE_SENTRY_DSN
 
+# Copy package files and install dependencies with build cache
 COPY package*.json ./
-RUN npm ci --no-audit --no-fund
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --no-audit --no-fund --cache /root/.npm
 
+# Copy source and build
 COPY . .
 RUN npm run build
 
+# ============================================================================
 FROM nginx:alpine
 
+# Copy built frontend assets to nginx
 COPY --from=builder /app/build /usr/share/nginx/html
 
+# Copy nginx configuration templates (only if needed - validate paths)
 COPY nginx.conf /opt/nginx-templates/default-ssl.conf.template
 COPY nginx-http.conf /opt/nginx-templates/default-http.conf.template
 COPY nginx-http.conf /etc/nginx/templates/default.conf.template
-COPY docker-entrypoint.d/19-select-nginx-template.sh /docker-entrypoint.d/19-select-nginx-template.sh
 
-RUN chmod +x /docker-entrypoint.d/19-select-nginx-template.sh
+# Copy entrypoint scripts and make executable
+COPY docker-entrypoint.d/19-select-nginx-template.sh /docker-entrypoint.d/19-select-nginx-template.sh
+COPY docker-entrypoint.d/15-export-vars.sh /docker-entrypoint.d/15-export-vars.sh
+
+RUN chmod +x /docker-entrypoint.d/19-select-nginx-template.sh /docker-entrypoint.d/15-export-vars.sh
 
 EXPOSE 80 443
 
+# Use exec form for proper signal handling  
 CMD ["nginx", "-g", "daemon off;"]

@@ -1,2 +1,0 @@
-- Al iniciar recepción desde una compra, navegar directamente a /recepciones con state autoResumeRecepcionDraft=true.
-- Evitar /recepcion porque redirige y puede perder el state, reabriendo el modal de recuperación en lugar de cargar el borrador recién generado.

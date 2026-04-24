@@ -1,4 +1,4 @@
-import { buildFindManyOptions } from 'src/common/utils/typeorm-query.helper';
+import { buildFindManyOptions } from '../../../src/common/utils/typeorm-query.helper';
 
 describe('buildFindManyOptions', () => {
   it('construye opciones de paginación y ordenación compatibles con TypeORM', () => {

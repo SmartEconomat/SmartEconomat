@@ -89,6 +89,11 @@ const HEADER_FILL: ExcelJS.Fill = {
   fgColor: { argb: 'FFD3D3D3' },
 };
 
+/**
+ * Service responsible for streaming entity data to Excel (XLSX) and PDF formats.
+ * Uses batched queries and streaming writers to handle large datasets efficiently.
+ * @class ExportService
+ */
 @Injectable()
 export class ExportService {
   constructor(
@@ -96,6 +101,13 @@ export class ExportService {
     private readonly dataSource: DataSource
   ) {}
 
+  /**
+   * Streams the productos dataset as an Excel file to the HTTP response.
+   * @param {ExportProductoFilterDto} query - Filter criteria and optional maxRows limit.
+   * @param {Response} res - Express response object used as the write target.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the result set exceeds the allowed row limit.
+   */
   async streamProductosToExcel(
     query: ExportProductoFilterDto,
     res: Response
@@ -110,6 +122,13 @@ export class ExportService {
     );
   }
 
+  /**
+   * Streams the pedidos dataset as an Excel file to the HTTP response.
+   * @param {ExportPedidoFilterDto} query - Filter criteria and optional maxRows limit.
+   * @param {Response} res - Express response object used as the write target.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the result set exceeds the allowed row limit.
+   */
   async streamPedidosToExcel(
     query: ExportPedidoFilterDto,
     res: Response
@@ -124,6 +143,13 @@ export class ExportService {
     );
   }
 
+  /**
+   * Streams the proveedores dataset as an Excel file to the HTTP response.
+   * @param {ExportProveedorFilterDto} query - Filter criteria and optional maxRows limit.
+   * @param {Response} res - Express response object used as the write target.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the result set exceeds the allowed row limit.
+   */
   async streamProveedoresToExcel(
     query: ExportProveedorFilterDto,
     res: Response
@@ -138,6 +164,13 @@ export class ExportService {
     );
   }
 
+  /**
+   * Streams the albaranes dataset as an Excel file to the HTTP response.
+   * @param {ExportAlbaranFilterDto} query - Filter criteria and optional maxRows limit.
+   * @param {Response} res - Express response object used as the write target.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the result set exceeds the allowed row limit.
+   */
   async streamAlbaranesToExcel(
     query: ExportAlbaranFilterDto,
     res: Response
@@ -152,6 +185,13 @@ export class ExportService {
     );
   }
 
+  /**
+   * Streams the incidencias dataset as an Excel file to the HTTP response.
+   * @param {ExportIncidenciaFilterDto} query - Filter criteria and optional maxRows limit.
+   * @param {Response} res - Express response object used as the write target.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the result set exceeds the allowed row limit.
+   */
   async streamIncidenciasToExcel(
     query: ExportIncidenciaFilterDto,
     res: Response
@@ -166,6 +206,13 @@ export class ExportService {
     );
   }
 
+  /**
+   * Streams the inventario dataset as an Excel file to the HTTP response.
+   * @param {ExportInventarioFilterDto} query - Filter criteria and optional maxRows limit.
+   * @param {Response} res - Express response object used as the write target.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the result set exceeds the allowed row limit.
+   */
   async streamInventarioToExcel(
     query: ExportInventarioFilterDto,
     res: Response
@@ -180,6 +227,13 @@ export class ExportService {
     );
   }
 
+  /**
+   * Streams the movimientos dataset as an Excel file to the HTTP response.
+   * @param {ExportMovimientoFilterDto} query - Filter criteria and optional maxRows limit.
+   * @param {Response} res - Express response object used as the write target.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the result set exceeds the allowed row limit.
+   */
   async streamMovimientosToExcel(
     query: ExportMovimientoFilterDto,
     res: Response
@@ -194,6 +248,13 @@ export class ExportService {
     );
   }
 
+  /**
+   * Streams the recepciones dataset as an Excel file to the HTTP response.
+   * @param {ExportRecepcionFilterDto} query - Filter criteria and optional maxRows limit.
+   * @param {Response} res - Express response object used as the write target.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the result set exceeds the allowed row limit.
+   */
   async streamRecepcionesToExcel(
     query: ExportRecepcionFilterDto,
     res: Response
@@ -208,6 +269,13 @@ export class ExportService {
     );
   }
 
+  /**
+   * Streams the recetas dataset as an Excel file to the HTTP response.
+   * @param {ExportRecetaFilterDto} query - Filter criteria and optional maxRows limit.
+   * @param {Response} res - Express response object used as the write target.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the result set exceeds the allowed row limit.
+   */
   async streamRecetasToExcel(
     query: ExportRecetaFilterDto,
     res: Response
@@ -222,6 +290,13 @@ export class ExportService {
     );
   }
 
+  /**
+   * Streams the ubicaciones dataset as an Excel file to the HTTP response.
+   * @param {ExportUbicacionFilterDto} query - Filter criteria and optional maxRows limit.
+   * @param {Response} res - Express response object used as the write target.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the result set exceeds the allowed row limit.
+   */
   async streamUbicacionesToExcel(
     query: ExportUbicacionFilterDto,
     res: Response
@@ -236,6 +311,13 @@ export class ExportService {
     );
   }
 
+  /**
+   * Streams the usuarios dataset as an Excel file to the HTTP response.
+   * @param {ExportUsuarioFilterDto} query - Filter criteria and optional maxRows limit.
+   * @param {Response} res - Express response object used as the write target.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the result set exceeds the allowed row limit.
+   */
   async streamUsuariosToExcel(
     query: ExportUsuarioFilterDto,
     res: Response
@@ -250,6 +332,13 @@ export class ExportService {
     );
   }
 
+  /**
+   * Streams the productos dataset as a PDF file to the HTTP response.
+   * @param {ExportProductoFilterDto} query - Filter criteria and optional maxRows limit.
+   * @param {Response} res - Express response object used as the write target.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the result set exceeds the allowed row limit.
+   */
   async streamProductosToPdf(
     query: ExportProductoFilterDto,
     res: Response
@@ -264,6 +353,13 @@ export class ExportService {
     );
   }
 
+  /**
+   * Streams the proveedores dataset as a PDF file to the HTTP response.
+   * @param {ExportProveedorFilterDto} query - Filter criteria and optional maxRows limit.
+   * @param {Response} res - Express response object used as the write target.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the result set exceeds the allowed row limit.
+   */
   async streamProveedoresToPdf(
     query: ExportProveedorFilterDto,
     res: Response
@@ -278,6 +374,13 @@ export class ExportService {
     );
   }
 
+  /**
+   * Streams the inventario dataset as a PDF file to the HTTP response.
+   * @param {ExportInventarioFilterDto} query - Filter criteria and optional maxRows limit.
+   * @param {Response} res - Express response object used as the write target.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the result set exceeds the allowed row limit.
+   */
   async streamInventarioToPdf(
     query: ExportInventarioFilterDto,
     res: Response
@@ -292,6 +395,13 @@ export class ExportService {
     );
   }
 
+  /**
+   * Streams the pedidos dataset as a PDF file to the HTTP response.
+   * @param {ExportPedidoFilterDto} query - Filter criteria and optional maxRows limit.
+   * @param {Response} res - Express response object used as the write target.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the result set exceeds the allowed row limit.
+   */
   async streamPedidosToPdf(
     query: ExportPedidoFilterDto,
     res: Response
@@ -306,6 +416,13 @@ export class ExportService {
     );
   }
 
+  /**
+   * Streams the albaranes dataset as a PDF file to the HTTP response.
+   * @param {ExportAlbaranFilterDto} query - Filter criteria and optional maxRows limit.
+   * @param {Response} res - Express response object used as the write target.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the result set exceeds the allowed row limit.
+   */
   async streamAlbaranesToPdf(
     query: ExportAlbaranFilterDto,
     res: Response
@@ -320,6 +437,13 @@ export class ExportService {
     );
   }
 
+  /**
+   * Streams the incidencias dataset as a PDF file to the HTTP response.
+   * @param {ExportIncidenciaFilterDto} query - Filter criteria and optional maxRows limit.
+   * @param {Response} res - Express response object used as the write target.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the result set exceeds the allowed row limit.
+   */
   async streamIncidenciasToPdf(
     query: ExportIncidenciaFilterDto,
     res: Response
@@ -334,6 +458,13 @@ export class ExportService {
     );
   }
 
+  /**
+   * Streams the recetas dataset as a PDF file to the HTTP response.
+   * @param {ExportRecetaFilterDto} query - Filter criteria and optional maxRows limit.
+   * @param {Response} res - Express response object used as the write target.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the result set exceeds the allowed row limit.
+   */
   async streamRecetasToPdf(
     query: ExportRecetaFilterDto,
     res: Response
@@ -348,6 +479,17 @@ export class ExportService {
     );
   }
 
+  /**
+   * Generic helper that enforces the row limit and then delegates to streamToPdf.
+   * @param {Response} res - Express response object.
+   * @param {string} title - Title shown in the PDF document.
+   * @param {ExportColumn[]} columns - Column definitions (header label + key).
+   * @param {SelectQueryBuilder<T>} qb - Pre-configured TypeORM query builder.
+   * @param {(entity: T) => Record<string, unknown>} mapper - Maps an entity to a plain row object.
+   * @param {number} maxRows - Maximum number of rows to export.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the total row count exceeds maxRows.
+   */
   private async streamQueryToPdf<T extends object>(
     res: Response,
     title: string,
@@ -366,6 +508,17 @@ export class ExportService {
     );
   }
 
+  /**
+   * Generic helper that enforces the row limit and then delegates to streamToExcel.
+   * @param {Response} res - Express response object.
+   * @param {string} sheetName - Name of the worksheet tab.
+   * @param {ExportColumn[]} columns - Column definitions (header label + key).
+   * @param {SelectQueryBuilder<T>} qb - Pre-configured TypeORM query builder.
+   * @param {(entity: T) => Record<string, unknown>} mapper - Maps an entity to a plain row object.
+   * @param {number} maxRows - Maximum number of rows to export.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the total row count exceeds maxRows.
+   */
   private async streamQueryToExcel<T extends object>(
     res: Response,
     sheetName: string,
@@ -384,6 +537,13 @@ export class ExportService {
     );
   }
 
+  /**
+   * Counts total matching rows and throws if the count exceeds the allowed limit.
+   * @param {SelectQueryBuilder<T>} qb - Query builder to count against.
+   * @param {number} maxRows - The maximum allowed number of rows.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the count exceeds maxRows.
+   */
   private async ensureWithinLimit<T extends object>(
     qb: SelectQueryBuilder<T>,
     maxRows: number
@@ -397,6 +557,15 @@ export class ExportService {
     }
   }
 
+  /**
+   * Collects all batches from fetchBatch and delegates to buildPdfTable for rendering.
+   * @param {Response} res - Express response object.
+   * @param {string} title - Title shown at the top of the PDF.
+   * @param {ExportColumn[]} columns - Column definitions used for headers and data mapping.
+   * @param {(offset: number, limit: number) => Promise<Record<string, unknown>[]>} fetchBatch - Function that returns a page of rows.
+   * @param {number} maxRows - Maximum number of rows to include.
+   * @returns {Promise<void>}
+   */
   private async streamToPdf(
     res: Response,
     title: string,
@@ -428,6 +597,16 @@ export class ExportService {
     await buildPdfTable(res, title, columns, rows);
   }
 
+  /**
+   * Streams data to the response as a styled XLSX workbook using batched writes.
+   * Applies header styling, borders, column widths, number formats, and auto row height.
+   * @param {Response} res - Express response object to pipe the workbook into.
+   * @param {string} sheetName - Name of the worksheet tab.
+   * @param {ExportColumn[]} columns - Column definitions (header label, key, width, numFmt).
+   * @param {(offset: number, limit: number) => Promise<Record<string, unknown>[]>} fetchBatch - Function that returns a page of mapped rows.
+   * @param {number} maxRows - Maximum number of data rows to write.
+   * @returns {Promise<void>}
+   */
   private async streamToExcel(
     res: Response,
     sheetName: string,
@@ -525,6 +704,14 @@ export class ExportService {
     await workbook.commit();
   }
 
+  /**
+   * Fetches a single page of entities from the query builder and maps them to plain objects.
+   * @param {SelectQueryBuilder<T>} qb - Query builder to execute (will be mutated with skip/take).
+   * @param {number} offset - Number of rows to skip.
+   * @param {number} limit - Maximum number of rows to return.
+   * @param {(entity: T) => Record<string, unknown>} mapper - Row mapper function.
+   * @returns {Promise<Record<string, unknown>[]>} Array of plain row objects.
+   */
   private async fetchBatch<T extends object>(
     qb: SelectQueryBuilder<T>,
     offset: number,
@@ -536,6 +723,12 @@ export class ExportService {
     return items.map(mapper);
   }
 
+  /**
+   * Builds a TypeORM query builder for Producto with optional filters applied.
+   * Joins proveedores, proveedor, and alergenos relations.
+   * @param {ExportProductoFilterDto} query - Filter options (codigoBarras, searchTerm, categorias, marcas, alergenos, minStock).
+   * @returns {SelectQueryBuilder<Producto>} Configured query builder ordered by nombre ASC.
+   */
   private buildProductoQueryBuilder(
     query: ExportProductoFilterDto
   ): SelectQueryBuilder<Producto> {
@@ -586,6 +779,12 @@ export class ExportService {
     return qb;
   }
 
+  /**
+   * Builds a TypeORM query builder for Pedido with optional filters applied.
+   * Joins usuario, proveedor, and pedidoProductos relations.
+   * @param {ExportPedidoFilterDto} query - Filter options (estado, fechaDesde, fechaHasta, searchTerm).
+   * @returns {SelectQueryBuilder<Pedido>} Configured query builder ordered by fechaPedido DESC.
+   */
   private buildPedidoQueryBuilder(
     query: ExportPedidoFilterDto
   ): SelectQueryBuilder<Pedido> {
@@ -621,6 +820,12 @@ export class ExportService {
     return qb;
   }
 
+  /**
+   * Builds a TypeORM query builder for Proveedor with an optional full-text search filter.
+   * Searches across nombre, nif, contacto, and email fields.
+   * @param {ExportProveedorFilterDto} query - Filter options (searchTerm).
+   * @returns {SelectQueryBuilder<Proveedor>} Configured query builder ordered by nombre ASC.
+   */
   private buildProveedorQueryBuilder(
     query: ExportProveedorFilterDto
   ): SelectQueryBuilder<Proveedor> {
@@ -637,6 +842,12 @@ export class ExportService {
     return qb;
   }
 
+  /**
+   * Builds a TypeORM query builder for Albaran with optional date range and search filters.
+   * Joins albaranPedidoRecepcion relation.
+   * @param {ExportAlbaranFilterDto} query - Filter options (searchTerm, fechaDesde, fechaHasta).
+   * @returns {SelectQueryBuilder<Albaran>} Configured query builder ordered by fecha DESC.
+   */
   private buildAlbaranQueryBuilder(
     query: ExportAlbaranFilterDto
   ): SelectQueryBuilder<Albaran> {
@@ -666,6 +877,12 @@ export class ExportService {
     return qb;
   }
 
+  /**
+   * Builds a TypeORM query builder for Incidencia with optional resolution, date, and proveedor filters.
+   * Joins pedido, proveedor, usuarioResolutor, and lineas relations.
+   * @param {ExportIncidenciaFilterDto} query - Filter options (soloNoResueltas, resuelta, startDate, endDate, proveedorId).
+   * @returns {SelectQueryBuilder<Incidencia>} Configured query builder ordered by createdAt DESC.
+   */
   private buildIncidenciaQueryBuilder(
     query: ExportIncidenciaFilterDto
   ): SelectQueryBuilder<Incidencia> {
@@ -716,6 +933,12 @@ export class ExportService {
     return qb;
   }
 
+  /**
+   * Builds a TypeORM query builder for Inventario with optional stock, search, and location filters.
+   * Joins productoProveedor, producto, proveedor, and ubicacion relations.
+   * @param {ExportInventarioFilterDto} query - Filter options (bajoStock, searchTerm, ubicacionId).
+   * @returns {SelectQueryBuilder<Inventario>} Configured query builder ordered by producto.nombre ASC.
+   */
   private buildInventarioQueryBuilder(
     query: ExportInventarioFilterDto
   ): SelectQueryBuilder<Inventario> {
@@ -746,6 +969,12 @@ export class ExportService {
     return qb;
   }
 
+  /**
+   * Builds a TypeORM query builder for Movimiento with optional type and date range filters.
+   * Joins usuario, productoProveedor, and producto relations.
+   * @param {ExportMovimientoFilterDto} query - Filter options (tipo, fechaDesde, fechaHasta).
+   * @returns {SelectQueryBuilder<Movimiento>} Configured query builder ordered by createdAt DESC.
+   */
   private buildMovimientoQueryBuilder(
     query: ExportMovimientoFilterDto
   ): SelectQueryBuilder<Movimiento> {
@@ -775,6 +1004,12 @@ export class ExportService {
     return qb;
   }
 
+  /**
+   * Builds a TypeORM query builder for Recepcion with optional state and date range filters.
+   * Joins usuario and recepcionesPedidos relations.
+   * @param {ExportRecepcionFilterDto} query - Filter options (estado, fechaDesde, fechaHasta).
+   * @returns {SelectQueryBuilder<Recepcion>} Configured query builder ordered by fechaRecepcion DESC.
+   */
   private buildRecepcionQueryBuilder(
     query: ExportRecepcionFilterDto
   ): SelectQueryBuilder<Recepcion> {
@@ -803,6 +1038,12 @@ export class ExportService {
     return qb;
   }
 
+  /**
+   * Builds a TypeORM query builder for Receta with optional name, difficulty, and time filters.
+   * Joins ingredientes and producto relations.
+   * @param {ExportRecetaFilterDto} query - Filter options (searchTerm, dificultad, maxTiempoMinutos).
+   * @returns {SelectQueryBuilder<Receta>} Configured query builder ordered by nombre ASC.
+   */
   private buildRecetaQueryBuilder(
     query: ExportRecetaFilterDto
   ): SelectQueryBuilder<Receta> {
@@ -833,6 +1074,12 @@ export class ExportService {
     return qb;
   }
 
+  /**
+   * Builds a TypeORM query builder for Ubicacion with an optional full-text search filter.
+   * Searches across nombre and descripcion fields.
+   * @param {ExportUbicacionFilterDto} query - Filter options (searchTerm).
+   * @returns {SelectQueryBuilder<Ubicacion>} Configured query builder ordered by nombre ASC.
+   */
   private buildUbicacionQueryBuilder(
     query: ExportUbicacionFilterDto
   ): SelectQueryBuilder<Ubicacion> {
@@ -849,6 +1096,12 @@ export class ExportService {
     return qb;
   }
 
+  /**
+   * Builds a TypeORM query builder for Usuario with optional search, role, and active status filters.
+   * Joins the profesor relation and selects only the fields needed for export.
+   * @param {ExportUsuarioFilterDto} query - Filter options (searchTerm, rol, activo).
+   * @returns {SelectQueryBuilder<Usuario>} Configured query builder ordered by nombre ASC.
+   */
   private buildUsuarioQueryBuilder(
     query: ExportUsuarioFilterDto
   ): SelectQueryBuilder<Usuario> {

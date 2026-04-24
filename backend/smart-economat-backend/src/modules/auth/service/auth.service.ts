@@ -18,6 +18,12 @@ import * as crypto from 'crypto';
 import { Rol } from '../../roles/rol.entity/rol.entity';
 import { getRolPrincipal } from '../../sherlock-auth/utils/access.utils';
 
+/**
+ * Service responsible for authentication operations including user registration,
+ * login, password management, and JWT token generation.
+ *
+ * @class AuthService
+ */
 @Injectable()
 export class AuthService {
   constructor(
@@ -28,6 +34,14 @@ export class AuthService {
     private readonly mailService: MailService
   ) {}
 
+  /**
+   * Registers a new user account within a database transaction.
+   * Assigns the ALUMNO role by default and creates the account in INACTIVE status.
+   *
+   * @param {RegisterUserDto} dto - Data transfer object containing registration details.
+   * @returns {Promise<{ access_token: string }>} A JWT access token for the new user.
+   * @throws {ConflictException} When a user with the same username or email already exists.
+   */
   async register(dto: RegisterUserDto) {
     return await this.dataSource.transaction(async (manager) => {
       const whereConditions: any[] = [{ username: dto.username }];
@@ -61,6 +75,16 @@ export class AuthService {
     });
   }
 
+  /**
+   * Authenticates a user by validating their credentials and returning a JWT token.
+   * Supports login by either email or username.
+   *
+   * @param {LoginUserDto} dto - Data transfer object containing login credentials.
+   * @returns {Promise<{ access_token: string; requirePasswordChange: boolean }>} JWT token and password change flag.
+   * @throws {BadRequestException} When credentials are invalid.
+   * @throws {BadRequestException} When the account is inactive.
+   * @throws {BadRequestException} When the account is blocked.
+   */
   async login(dto: LoginUserDto) {
     const usuario = await this.usuarioRepo
       .createQueryBuilder('usuario')
@@ -90,6 +114,13 @@ export class AuthService {
     };
   }
 
+  /**
+   * Initiates a password reset flow by generating a secure token and sending a reset email.
+   * Silently returns if the email is not found to prevent user enumeration.
+   *
+   * @param {string} email - The email address of the account to reset.
+   * @returns {Promise<void>}
+   */
   async forgotPassword(email: string): Promise<void> {
     if (!email) return;
 
@@ -108,6 +139,14 @@ export class AuthService {
     }
   }
 
+  /**
+   * Resets the user's password using a valid, non-expired reset token.
+   *
+   * @param {string} token - The plain-text reset token received via email.
+   * @param {string} newPassword - The new password to set for the user.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the token is invalid or has expired.
+   */
   async resetPassword(token: string, newPassword: string): Promise<void> {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
@@ -134,6 +173,16 @@ export class AuthService {
     await this.usuarioRepo.save(usuario);
   }
 
+  /**
+   * Changes the password of an authenticated user after validating the current password.
+   *
+   * @param {string} userId - The ID of the authenticated user.
+   * @param {string} currentPassword - The user's current password for verification.
+   * @param {string} newPassword - The new password to set.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} When the user is not found.
+   * @throws {BadRequestException} When the current password is incorrect.
+   */
   async changePassword(
     userId: string,
     currentPassword: string,
@@ -160,6 +209,12 @@ export class AuthService {
     await this.usuarioRepo.save(usuario);
   }
 
+  /**
+   * Generates a signed JWT token for the given user.
+   *
+   * @param {Usuario} usuario - The user entity for whom the token is generated.
+   * @returns {{ access_token: string }} An object containing the signed JWT access token.
+   */
   private generateToken(usuario: Usuario) {
     const payload: JwtPayload = {
       sub: usuario.id,

@@ -26,12 +26,33 @@ import { RequirePermissions } from '../../../common/decorators/require-permissio
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
+/**
+ * Controller that exposes REST endpoints for managing stock movement records (movimientos).
+ * All routes require JWT authentication and permission-based authorization.
+ *
+ * @class MovimientoController
+ */
 @ApiTags('movimientos')
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('movimientos')
 export class MovimientoController {
+  /**
+   * Creates an instance of MovimientoController.
+   *
+   * @param {MovimientoService} movimientoService - Service handling movimiento business logic.
+   */
   constructor(private readonly movimientoService: MovimientoService) {}
 
+  /**
+   * Creates a new stock movement record manually.
+   * Restricted to users with stock adjustment permissions.
+   *
+   * @param {CreateMovimientoDto} dto - Body containing the movement type, quantity, and inventory reference.
+   * @returns The created movimiento entity.
+   * @throws {BadRequestException} When the DTO fails validation.
+   * @example
+   * POST /movimientos
+   */
   @Post()
   @RequirePermissions(PERMISSIONS.inventario.ajustar_stock)
   @ApiOperation({
@@ -54,6 +75,14 @@ export class MovimientoController {
     return this.movimientoService.create(dto);
   }
 
+  /**
+   * Returns a paginated and filtered list of all stock movements.
+   *
+   * @param {MovimientoListQueryDto} query - Pagination, sorting, and filter parameters.
+   * @returns {Promise<PaginatedResponseDto<any>>} Paginated collection of movimientos.
+   * @example
+   * GET /movimientos?page=1&limit=20&sortBy=createdAt&order=DESC
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.movimientos.listar)
   @ApiOperation({
@@ -74,6 +103,17 @@ export class MovimientoController {
     return this.movimientoService.findAll(query);
   }
 
+  /**
+   * Returns a paginated traceability history of stock movements filtered by product-supplier or user.
+   * At least one of entityId or userId must be provided.
+   *
+   * @param {MovimientoHistoryDto} dto - Query parameters: entityId, userId, type, startDate, endDate, sortBy, sortOrder.
+   * @returns {Promise<PaginatedResponseDto<Movimiento>>} Paginated and chronologically ordered movement history.
+   * @throws {BadRequestException} When neither entityId nor userId is provided, or when date range is invalid.
+   * @throws {NotFoundException} When no movements match the specified criteria.
+   * @example
+   * GET /movimientos/historial?entityId=019c9b4f-74f8-7a6e-8b5b-96191c30c1e5
+   */
   @Get('historial')
   @RequirePermissions(PERMISSIONS.movimientos.listar)
   @ApiOperation({
@@ -145,6 +185,15 @@ export class MovimientoController {
     return this.movimientoService.getMovimientoHistory(dto);
   }
 
+  /**
+   * Retrieves a single stock movement by its UUID.
+   *
+   * @param {string} id - UUID of the movimiento to retrieve.
+   * @returns The found movimiento entity.
+   * @throws {NotFoundException} When no movimiento exists with the given ID.
+   * @example
+   * GET /movimientos/:id
+   */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.movimientos.listar)
   @ApiOperation({
@@ -163,6 +212,18 @@ export class MovimientoController {
     return this.movimientoService.findOne(id);
   }
 
+  /**
+   * Updates an existing stock movement record.
+   * Restricted to users with stock adjustment permissions.
+   *
+   * @param {string} id - UUID of the movimiento to update.
+   * @param {UpdateMovimientoDto} dto - Partial data to update on the movimiento.
+   * @returns The updated movimiento entity.
+   * @throws {NotFoundException} When no movimiento exists with the given ID.
+   * @throws {BadRequestException} When the DTO fails validation.
+   * @example
+   * PATCH /movimientos/:id
+   */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.inventario.ajustar_stock)
   @ApiOperation({
@@ -192,6 +253,16 @@ export class MovimientoController {
     return this.movimientoService.update(id, dto);
   }
 
+  /**
+   * Soft-deletes a stock movement record.
+   * Restricted to users with stock adjustment permissions.
+   *
+   * @param {string} id - UUID of the movimiento to remove.
+   * @returns {Promise<void>}
+   * @throws {NotFoundException} When no movimiento exists with the given ID.
+   * @example
+   * DELETE /movimientos/:id
+   */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequirePermissions(PERMISSIONS.inventario.ajustar_stock)

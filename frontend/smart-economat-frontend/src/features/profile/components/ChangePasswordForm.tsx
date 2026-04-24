@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -32,6 +33,7 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
   onFormChange,
   isSaving,
 }) => {
+  const { t } = useTranslation();
   const [showPass, setShowPass] = useState({
     current: false,
     next: false,
@@ -108,7 +110,7 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
       >
         <Box>
           <Input
-            label="Contraseña Actual"
+            label={t('perfil.contrasenaActual')}
             name="currentPassword"
             type={showPass.current ? 'text' : 'password'}
             autoComplete="current-password"
@@ -122,7 +124,7 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
         <Box sx={{ display: { xs: 'none', sm: 'block' } }} /> {/* Spacer */}
         <Box>
           <Input
-            label="Nueva Contraseña"
+            label={t('perfil.nuevaContrasena')}
             name="newPassword"
             type={showPass.next ? 'text' : 'password'}
             autoComplete="new-password"
@@ -143,7 +145,7 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
         </Box>
         <Box>
           <Input
-            label="Confirmar Nueva Contraseña"
+            label={t('perfil.confirmarNuevaContrasena')}
             name="confirmPassword"
             type={showPass.confirm ? 'text' : 'password'}
             autoComplete="new-password"

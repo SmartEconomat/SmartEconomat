@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Box,
@@ -89,81 +90,98 @@ const UserAccordion = React.memo(
         student: { total: number; page: number; limit: number };
       }>
     >;
-  }) => (
-    <Accordion
-      defaultExpanded={data.length > 0}
-      sx={{
-        mb: 2,
-        borderRadius: '8px !important',
-        overflow: 'hidden',
-        border: '1px solid',
-        borderColor: 'divider',
-      }}
-    >
-      <AccordionSummary
-        expandIcon={<ExpandMoreIcon />}
-        sx={{ bgcolor: 'action.hover' }}
+  }) => {
+    const { t } = useTranslation();
+    return (
+      <Accordion
+        defaultExpanded={data.length > 0}
+        sx={{
+          mb: 2,
+          borderRadius: '8px !important',
+          overflow: 'hidden',
+          border: '1px solid',
+          borderColor: 'divider',
+        }}
       >
-        <Box display="flex" alignItems="center" gap={1.5}>
-          <Avatar sx={{ bgcolor: color, width: 32, height: 32 }}>{icon}</Avatar>
-          <Typography fontWeight={700}>
-            {title} ({rolePagination.total})
-          </Typography>
-        </Box>
-      </AccordionSummary>
-      <AccordionDetails sx={{ p: 0 }}>
-        {rolePagination.total === 0 ? (
-          <Typography
-            variant="body2"
-            sx={{
-              p: 3,
-              textAlign: 'center',
-              fontStyle: 'italic',
-              color: 'text.secondary',
-            }}
-          >
-            No hay usuarios encontrados para este rol y búsqueda.
-          </Typography>
-        ) : (
-          <DataTable
-            columns={columns}
-            data={data}
-            isLoading={false}
-            renderActions={renderActions}
-            pagination={{
-              currentPage: rolePagination.page,
-              totalPages: Math.ceil(
-                rolePagination.total / rolePagination.limit
-              ),
-              onPageChange: (_, newPage) => {
-                setPagination((prev) => ({
-                  ...prev,
-                  [role]: { ...prev[role], page: newPage },
-                }));
-              },
-              pageSize: rolePagination.limit,
-              onPageSizeChange: (e: SelectChangeEvent<number>) => {
-                setPagination((prev) => ({
-                  ...prev,
-                  [role]: {
-                    ...prev[role],
-                    limit: Number(e.target.value),
-                    page: 1,
-                  },
-                }));
-              },
-              pageSizeOptions: [10, 20, 50],
-            }}
-          />
-        )}
-      </AccordionDetails>
-    </Accordion>
-  )
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          sx={{ bgcolor: 'action.hover' }}
+        >
+          <Box display="flex" alignItems="center" gap={1.5}>
+            <Avatar sx={{ bgcolor: color, width: 32, height: 32 }}>
+              {icon}
+            </Avatar>
+            <Typography fontWeight={700}>
+              {t(title)} ({rolePagination.total})
+            </Typography>
+          </Box>
+        </AccordionSummary>
+        <AccordionDetails sx={{ p: 0 }}>
+          {rolePagination.total === 0 ? (
+            <Typography
+              variant="body2"
+              sx={{
+                p: 3,
+                textAlign: 'center',
+                fontStyle: 'italic',
+                color: 'text.secondary',
+              }}
+            >
+              {t('usuarios.empty.noUsuariosRol')}
+            </Typography>
+          ) : (
+            <DataTable
+              columns={columns}
+              data={data}
+              isLoading={false}
+              renderActions={renderActions}
+              pagination={{
+                currentPage: rolePagination.page,
+                totalPages: Math.ceil(
+                  rolePagination.total / rolePagination.limit
+                ),
+                onPageChange: (_, newPage) => {
+                  setPagination((prev) => ({
+                    ...prev,
+                    [role]: { ...prev[role], page: newPage },
+                  }));
+                },
+                pageSize: rolePagination.limit,
+                onPageSizeChange: (e: SelectChangeEvent<number>) => {
+                  setPagination((prev) => ({
+                    ...prev,
+                    [role]: {
+                      ...prev[role],
+                      limit: Number(e.target.value),
+                      page: 1,
+                    },
+                  }));
+                },
+                pageSizeOptions: [10, 20, 50],
+              }}
+            />
+          )}
+        </AccordionDetails>
+      </Accordion>
+    );
+  }
 );
 
 UserAccordion.displayName = 'UserAccordion';
 
+/**
+ * Vista principal de gestión de usuarios del sistema.
+ *
+ * Muestra los usuarios agrupados por rol en acordeones expandibles.
+ * Permite buscar, crear, editar, bloquear/desbloquear y eliminar usuarios,
+ * así como cambiar contraseñas. Las acciones se protegen por permisos.
+ *
+ * @returns {JSX.Element} Vista completa de gestión de usuarios.
+ * @example
+ * <Route path="/usuarios" element={<UsuariosView />} />
+ */
 export const UsuariosView: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   // Estados para datos por rol
@@ -241,7 +259,7 @@ export const UsuariosView: React.FC = () => {
         return prevSerialized === nextSerialized ? prev : response.data;
       });
     } catch {
-      toast.error('Error al cargar los roles disponibles');
+      toast.error(t('usuarios.toast.errorCargarRoles'));
     } finally {
       setIsLoadingRoles(false);
     }
@@ -291,7 +309,7 @@ export const UsuariosView: React.FC = () => {
         student: updatePaginationTotal(prev.student, studentRes.total),
       }));
     } catch {
-      toast.error('Error al cargar los usuarios');
+      toast.error(t('usuarios.toast.errorCargar'));
     } finally {
       setIsLoading(false);
     }
@@ -438,16 +456,18 @@ export const UsuariosView: React.FC = () => {
           }
         }
 
-        toast.success('Usuario actualizado');
+        toast.success(t('usuarios.toast.actualizado'));
       } else {
         await usuarioService.crearUsuario(data as CrearUsuarioDTO);
-        toast.success('Usuario creado');
+        toast.success(t('usuarios.toast.creado'));
       }
       setIsModalOpen(false);
       fetchAllData();
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Error al guardar';
+        error instanceof Error
+          ? error.message
+          : t('usuarios.toast.errorGuardar');
       toast.error(message);
     } finally {
       setIsSaving(false);
@@ -459,10 +479,10 @@ export const UsuariosView: React.FC = () => {
     setIsDeleting(true);
     try {
       await usuarioService.eliminarUsuario(userToDelete.id);
-      toast.success('Usuario eliminado');
+      toast.success(t('usuarios.toast.eliminado'));
       fetchAllData();
     } catch {
-      toast.error('Error al eliminar');
+      toast.error(t('usuarios.toast.errorEliminar'));
     } finally {
       setIsDeleting(false);
       setUserToDelete(null);
@@ -476,7 +496,7 @@ export const UsuariosView: React.FC = () => {
       const res = await usuarioService.resetPassword(userToReset.id);
       setGeneratedPassword(res.data);
     } catch {
-      toast.error('Error al resetear contraseña');
+      toast.error(t('usuarios.toast.errorReset'));
       setUserToReset(null);
     } finally {
       setIsResetting(false);
@@ -556,7 +576,7 @@ export const UsuariosView: React.FC = () => {
             color="primary"
             onClick={() => setUserToReset(row)}
             size="small"
-            title="Reset Password"
+            title={t('usuarios.resetPassword')}
           >
             <VpnKeyIcon fontSize="small" />
           </IconButton>
@@ -567,7 +587,7 @@ export const UsuariosView: React.FC = () => {
             onClick={() => void handleEditUser(row)}
             disabled={isLoadingUserDetail}
             size="small"
-            title="Editar"
+            title={t('comun.editar')}
           >
             <EditIcon fontSize="small" />
           </IconButton>
@@ -577,7 +597,7 @@ export const UsuariosView: React.FC = () => {
             color="error"
             onClick={() => setUserToDelete(row)}
             size="small"
-            title="Eliminar"
+            title={t('comun.eliminar')}
           >
             <DeleteIcon fontSize="small" />
           </IconButton>
@@ -592,6 +612,7 @@ export const UsuariosView: React.FC = () => {
       fetchAllData,
       handleEditUser,
       isLoadingUserDetail,
+      t,
       toast,
     ]
   );
@@ -642,7 +663,7 @@ export const UsuariosView: React.FC = () => {
         >
           <Box display="flex" alignItems="center" gap={2} flex={1}>
             <TextField
-              placeholder="Buscar por nombre o email..."
+              placeholder={t('usuarios.buscarPlaceholder')}
               size="small"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -691,7 +712,7 @@ export const UsuariosView: React.FC = () => {
       ) : (
         <Box>
           <UserAccordion
-            title="Administradores"
+            title={t('usuarios.roles.administradores')}
             icon={<AdminPanelSettingsIcon sx={{ fontSize: 20 }} />}
             data={admins}
             role="admin"
@@ -702,7 +723,7 @@ export const UsuariosView: React.FC = () => {
             setPagination={setPagination}
           />
           <UserAccordion
-            title="Profesores"
+            title={t('usuarios.roles.profesores')}
             icon={<SupervisorAccountIcon sx={{ fontSize: 20 }} />}
             data={professors}
             role="professor"
@@ -713,7 +734,7 @@ export const UsuariosView: React.FC = () => {
             setPagination={setPagination}
           />
           <UserAccordion
-            title="Alumnos"
+            title={t('usuarios.roles.alumnos')}
             icon={<SchoolIcon sx={{ fontSize: 20 }} />}
             data={students}
             role="student"
@@ -742,7 +763,7 @@ export const UsuariosView: React.FC = () => {
         isOpen={!!userToDelete}
         onClose={() => setUserToDelete(null)}
         onConfirm={handleDeleteConfirm}
-        title="Eliminar usuario"
+        title={t('usuarios.eliminarUsuario')}
         message={
           <>
             ¿Seguro que quieres eliminar a{' '}

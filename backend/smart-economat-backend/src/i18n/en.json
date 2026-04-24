@@ -1,0 +1,34 @@
+{
+  "auth": {
+    "login": {
+      "title": "Login",
+      "username": "Username",
+      "password": "Password",
+      "submit": "Sign In",
+      "success": "Login successful!"
+    }
+  },
+  "errors": {
+    "notFound": "Resource not found.",
+    "unauthorized": "Unauthorized access.",
+    "forbidden": "You do not have permission to perform this action.",
+    "badRequest": "Invalid request data.",
+    "conflict": "A conflict occurred with the current resource state.",
+    "internalServer": "An internal server error occurred.",
+    "validationFailed": "Validation failed.",
+    "onlySuperAdmin": "Only a Super Administrator can assign this role.",
+    "onlyAdmin": "Only an administrator can perform this action."
+  },
+  "success": {
+    "created": "Resource created successfully.",
+    "updated": "Resource updated successfully.",
+    "deleted": "Resource deleted successfully.",
+    "operation": "Operation completed successfully."
+  },
+  "admin": {
+    "errors": {
+      "onlySuperAdminCanAssign": "Only a Super Administrator can assign the Super Administrator role.",
+      "onlyAdminCanAssign": "Only an administrator can assign the Administrator role."
+    }
+  }
+}

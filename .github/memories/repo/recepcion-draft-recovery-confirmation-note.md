@@ -1,4 +1,0 @@
-- En recepciones, el borrador remoto no debe aplicarse automáticamente al montar la página.
-- Patrón correcto: cargarlo como pendingRecoveryDraft y pedir confirmación al usuario antes de hidratar el wizard.
-- Excepción explícita: al iniciar desde pedidos/compras se navega a /recepciones con state autoResumeRecepcionDraft=true para reanudar sin diálogo.
-- Normalización útil: un draft remoto con paso RESULTADO debe degradarse a REVISION_FINAL; sin líneas válidas debe volver a SELECCION_PEDIDOS.

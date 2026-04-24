@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { I18nHelper } from '../../../src/common/helpers/i18n.helper';
-import { ParseUUIDv7Pipe } from 'src/common/pipes/parse-uuid-v7.pipe';
+import { ParseUUIDv7Pipe } from '../../../src/common/pipes/parse-uuid-v7.pipe';
 
 /**
  * Tests Unitarios de ParseUUIDv7Pipe

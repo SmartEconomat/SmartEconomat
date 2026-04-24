@@ -28,12 +28,15 @@ import { ProductoProveedor } from '../../producto/producto-proveedor.entity/prod
 @Index(['createdAt'])
 @Check(`"cantidad" >= 0`)
 export class Movimiento extends BaseEntity {
+  /** Foreign key referencing the User who performed the movement. Nullable (SET NULL on delete). */
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
 
+  /** Foreign key referencing the Inventario lot affected by this movement. Nullable (SET NULL on delete). */
   @Column({ name: 'inventario_id', nullable: true })
   inventarioId?: string;
 
+  /** Foreign key referencing the ProductoProveedor for quick product-level queries. Nullable (SET NULL on delete). */
   @Column({ name: 'producto_proveedor_id', nullable: true })
   productoProveedorId?: string;
 

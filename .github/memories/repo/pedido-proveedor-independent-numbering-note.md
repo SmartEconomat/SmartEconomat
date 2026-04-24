@@ -1,4 +1,0 @@
-- `PedidoUsuario.numeroGlobal` sigue siendo el número visible de la solicitud origen en Pedidos.
-- `Pedido.numeroGlobal` ahora es el número visible del pedido proveedor en Compras y se asigna explícitamente desde una serie separada alta (`200000+`) para no colisionar con `PedidoUsuario`.
-- No confiar en `@Generated('increment')` para `Pedido.numeroGlobal`: TypeORM pisa el valor reservado del dominio; el número debe reservarse en código en todos los puntos de creación (`PedidoService`, `PedidoUsuarioService`, `PurchaseBatchService`, seeders y utilidades de precreación como `massive.runtime.deletables`).
-- En UI de compras, mostrar `pedido.numeroGlobal` como pedido proveedor y `pedido.pedidoUsuario.numeroGlobal` solo como referencia de origen separada.

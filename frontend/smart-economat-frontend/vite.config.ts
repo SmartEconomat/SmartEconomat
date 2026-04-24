@@ -134,6 +134,10 @@ function getManualChunk(id: string): string | undefined {
 export default defineConfig(() => {
   return {
     cacheDir: '/tmp/.vite-smarteconomat',
+    optimizeDeps: {
+      // Forzar re-optimización con: VITE_FORCE_OPTIMIZE=true docker compose up
+      force: process.env.VITE_FORCE_OPTIMIZE === 'true',
+    },
     build: {
       outDir: 'build',
       rollupOptions: {

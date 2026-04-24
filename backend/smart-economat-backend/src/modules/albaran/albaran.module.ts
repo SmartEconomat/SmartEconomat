@@ -13,6 +13,7 @@ import { AlbaranService } from './service/albaran.service';
 import { AlbaranRecepcionListener } from './listeners/albaran-recepcion.listener';
 import { I18nHelper } from '../../common/helpers/i18n.helper';
 import { ArchivoModule } from '../archivo/archivo.module';
+import { resolveWritableLocalStoragePath } from '../../common/utils/local-storage-path.util';
 
 @Module({
   imports: [
@@ -23,10 +24,9 @@ import { ArchivoModule } from '../archivo/archivo.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const uploadDir = configService.get<string>(
-          'LOCAL_STORAGE_PATH',
-          './uploads'
-        );
+        const configuredUploadDir =
+          configService.get<string>('LOCAL_STORAGE_PATH');
+        const uploadDir = resolveWritableLocalStoragePath(configuredUploadDir);
         if (!fs.existsSync(uploadDir)) {
           fs.mkdirSync(uploadDir, { recursive: true });
         }

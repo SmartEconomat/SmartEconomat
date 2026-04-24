@@ -1,19 +1,36 @@
+/**
+ * @module UppercaseStringTransformer
+ * class-transformer compatible transformer that converts string values to uppercase.
+ * Applies `trim()` before uppercasing. Handles `null` and `undefined` gracefully.
+ */
+
 import { TransformFnParams } from 'class-transformer/types/interfaces';
 
+/** Subset of `TransformFnParams` that this transformer requires. */
 type TransformValueParams = Pick<TransformFnParams, 'value'>;
 
 /**
- * UppercaseStringTransformer
+ * Transformer that converts a string to uppercase after trimming whitespace.
  *
- * Transformador para convertir strings a mayúsculas después de hacer trim.
- * Maneja valores null/undefined de forma segura.
+ * Use with the `@Transform` decorator from `class-transformer`:
  *
  * @example
+ * import { Transform } from 'class-transformer';
+ * import { UppercaseStringTransformer } from '../transformers';
  *
- * @Transform(UppercaseStringTransformer.transform)
- * codigo: string;
+ * export class CreateProductoDto {
+ *   \@Transform(UppercaseStringTransformer.transform)
+ *   codigo: string;
+ * }
  */
 export class UppercaseStringTransformer {
+  /**
+   * Transforms a value to a trimmed, uppercase string.
+   *
+   * @param {TransformValueParams} params - Transform parameters provided by `class-transformer`.
+   * @returns {string | undefined} The uppercased string, or the original value if it is
+   *   `null`, `undefined`, or not a string.
+   */
   static transform(params: TransformValueParams): string | undefined {
     const value = params.value as string;
     if (value == null) return value;

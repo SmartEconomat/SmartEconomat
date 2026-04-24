@@ -1,4 +1,4 @@
-import { UppercaseStringTransformer } from 'src/common/transformers/uppercase-string.transformer';
+import { UppercaseStringTransformer } from '../../../src/common/transformers/uppercase-string.transformer';
 
 /**
  * Tests Unitarios de UppercaseStringTransformer

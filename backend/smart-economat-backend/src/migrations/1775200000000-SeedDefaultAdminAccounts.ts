@@ -20,9 +20,20 @@ type PermissionSeed = {
 };
 
 const MIGRATION_TAG = '[MIGRACION_DEFAULT_ADMINS_20260403]';
+const providedTempPassword =
+  process.env.SEED_DEFAULT_ADMIN_TEMP_PASSWORD?.trim() || '';
+const isProductionEnv = process.env.NODE_ENV === 'production';
+
+if (isProductionEnv && providedTempPassword.length === 0) {
+  throw new Error(
+    `${MIGRATION_TAG} En produccion debes definir SEED_DEFAULT_ADMIN_TEMP_PASSWORD para ejecutar la migracion de admins por defecto.`
+  );
+}
+
 const DEFAULT_TEMP_PASSWORD =
-  process.env.SEED_DEFAULT_ADMIN_TEMP_PASSWORD?.trim() ||
-  'SmartEconomatTemp2026!';
+  providedTempPassword.length > 0
+    ? providedTempPassword
+    : 'SmartEconomatTemp2026!';
 
 const DEFAULT_USERS: readonly DefaultUserSeed[] = [
   {

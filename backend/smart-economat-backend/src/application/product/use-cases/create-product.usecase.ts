@@ -18,8 +18,13 @@ export type ProductOutput = {
 };
 
 /**
- * Ejemplo de UseCase: responsabilidad única, orquesta repositorios/entidades.
- * Nota: es sólo un ejemplo para guiar la migración incremental.
+ * Use case that encapsulates the business logic for creating a new product.
+ * Validates the product name, delegates persistence to the repository, and
+ * returns a minimal output object. This class serves as a reference example
+ * for incremental migration to the DDD application layer.
+ *
+ * @class CreateProductUseCase
+ * @implements {UseCase<CreateProductInput, ProductOutput>}
  */
 export class CreateProductUseCase implements UseCase<
   CreateProductInput,
