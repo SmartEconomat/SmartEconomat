@@ -44,7 +44,6 @@ foreach ($folder in $heavyFolders) {
     if (Test-Path $folder) {
         $sizeGB = 0
         try {
-            # Use a simpler way to get size if possible, or keep the function
             $sizeGB = (Get-ChildItem -Path $folder -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum / 1GB
             $sizeGB = [math]::Round($sizeGB, 2)
         } catch {}

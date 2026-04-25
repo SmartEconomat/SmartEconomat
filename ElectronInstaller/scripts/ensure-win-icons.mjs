@@ -3,8 +3,17 @@ import crypto from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import sharp from "sharp";
-import pngToIco from "png-to-ico";
+let sharp;
+let pngToIco;
+
+try {
+  ({ default: sharp } = await import("sharp"));
+  ({ default: pngToIco } = await import("png-to-ico"));
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  console.warn(`[ICONS] Dependencias opcionales no disponibles (${message}). Se omite generación de iconos.`);
+  process.exit(0);
+}
 
 async function hashFile(filePath) {
   const content = await fs.readFile(filePath);

@@ -36,12 +36,12 @@ Revisa al menos estas variables dentro de `.env`:
 ```env
 NODE_ENV=development
 BACKEND_PORT=3000
-FRONTEND_API_URL=http://localhost:5173
+URL_FRONTEND_DERIVADA=http://localhost:5173
 DB_HOST=localhost
-DB_PORT=5432
-DB_USERNAME=postgres
-DB_PASSWORD=postgres
-DB_DATABASE=app_db
+POSTGRES_PORT=5432
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=app_db
 JWT_SECRET=changeme
 JWT_EXPIRATION=7d
 ```
@@ -103,12 +103,12 @@ npm run test:e2e
 
 ### El backend no conecta con la base de datos
 
-- Verifica `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD` y `DB_DATABASE`.
+- Verifica `DB_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD` y `POSTGRES_DB`.
 - Comprueba que el contenedor `db` está levantado.
 
 ### Fallan los correos de recuperación
 
-- Revisa `MAIL_HOST`, `MAIL_USER`, `MAIL_PASS` y `MAIL_FROM`.
+- Revisa `MAIL_HOST`, `MAIL_USER`, `MAIL_PASS` y `EMAIL_DERIVADO`.
 - Si no configuras SMTP, el backend opera en modo simulación y escribe el intento en logs.
 
 ### Swagger no abre

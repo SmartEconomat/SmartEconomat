@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const scriptPath = path.join(__dirname, "validate-local-domain.ps1");
-const domain = process.env.SMART_DOMAIN || "smarteconomat.app";
+const domain = process.env.DOMAIN || "smarteconomat.app";
 const httpPort = process.env.SMART_HTTP_PORT || "80";
 const httpsPort = process.env.SMART_HTTPS_PORT || "443";
 

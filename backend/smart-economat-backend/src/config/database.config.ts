@@ -61,16 +61,10 @@ if (isProductionEnv && process.env.DB_SYNC === 'true') {
 export const dbConfig: DataSourceOptions = {
   type: 'postgres',
   host: isTestEnv ? 'pg-mem' : finalHost,
-  port: isTestEnv ? 5432 : parseInt(process.env.DB_PORT || '5432', 10),
-  username: isTestEnv
-    ? 'test'
-    : process.env.DB_USERNAME || process.env.POSTGRES_USER || 'postgres',
-  password: isTestEnv
-    ? 'test'
-    : process.env.DB_PASSWORD || process.env.POSTGRES_PASSWORD || 'postgres',
-  database: isTestEnv
-    ? 'test'
-    : process.env.DB_DATABASE || process.env.POSTGRES_DB || 'smart_economat',
+  port: isTestEnv ? 5432 : parseInt(process.env.POSTGRES_PORT || '5432', 10),
+  username: isTestEnv ? 'test' : process.env.POSTGRES_USER || 'postgres',
+  password: isTestEnv ? 'test' : process.env.POSTGRES_PASSWORD || 'postgres',
+  database: isTestEnv ? 'test' : process.env.POSTGRES_DB || 'smart_economat',
   synchronize: synchronizeEnabled,
   logging: false,
   entities: [join(__dirname, '../**/*.entity.{ts,js}')],

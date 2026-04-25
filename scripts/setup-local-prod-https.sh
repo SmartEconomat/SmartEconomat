@@ -209,8 +209,6 @@ ln -sfn "live/local-${DOMAIN}/privkey.pem" "${ROOT_DIR}/certs/privkey.pem"
 rm -f "$SERVER_CSR" "$EXT_FILE"
 
 upsert_env "DOMAIN" "$DOMAIN"
-upsert_env "BACKEND_API_URL" "https://${DOMAIN}/api/v1"
-upsert_env "FRONTEND_API_URL" "https://${DOMAIN}"
 upsert_env "DB_SYNC" "false"
 upsert_env "TLS_PROVIDER" "selfsigned"
 ensure_network_ip_env

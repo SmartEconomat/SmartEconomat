@@ -310,8 +310,26 @@ test.describe("SmartEconomat Installer E2E", () => {
     await expect(page.getByText("Docker Engine")).toBeVisible();
     await page.getByRole("button", { name: /^Continuar$/ }).click();
 
-    await expect(page.getByRole("button", { name: "IR A DESPLIEGUE" })).toBeVisible();
-    await page.getByRole("button", { name: "IR A DESPLIEGUE" }).click();
+    const confirmNewInstallCheckbox = page.getByRole("checkbox", {
+      name: /Entiendo las implicaciones y deseo continuar con la instalación nueva/i,
+    });
+    if (await confirmNewInstallCheckbox.isVisible()) {
+      await confirmNewInstallCheckbox.check();
+    }
+
+    const scheduleTimeInput = page.getByLabel("Hora programada");
+    if (await scheduleTimeInput.isVisible()) {
+      await scheduleTimeInput.fill("02:00");
+    }
+
+    await page.getByRole("button", { name: /^Continuar$/ }).click();
+
+    const smtpStepHeading = page.getByRole("heading", {
+      name: "Configuración de Email (SMTP)",
+    });
+    if (await smtpStepHeading.isVisible()) {
+      await page.getByRole("button", { name: /^Continuar$/ }).click();
+    }
 
     await page.getByRole("button", { name: "Iniciar instalación" }).click();
     await expect(page.getByText("Instalación finalizada")).toBeVisible();
@@ -402,7 +420,12 @@ test.describe("SmartEconomat Installer E2E", () => {
     await goToControlPanel(page);
 
     await page.getByRole("button", { name: "Crear Backup Ahora" }).click();
-    await expect(page.getByText("backup-e2e.tar.gz")).toBeVisible();
+    const backupDialog = page.getByRole("dialog", {
+      name: "Destino del backup manual",
+    });
+    await expect(backupDialog).toBeVisible();
+    await backupDialog.getByRole("button", { name: "Iniciar backup" }).click();
+    await expect(backupDialog).not.toBeVisible();
 
     await page.getByRole("button", { name: "Seleccionar archivo..." }).click();
     await expect(

@@ -64,8 +64,8 @@ $ npm run test:cov
 1. Define las variables de entorno en `.env.prod` o en el entorno donde vayas a desplegar:
 
 - BACKEND_PORT
-- BACKEND_API_URL
-- DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE
+- URL_BACKEND_DERIVADA
+- DB_HOST, POSTGRES_PORT, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
 - SENTRY_DSN
 - DOMAIN (si aplica)
 - NODE_ENV=production

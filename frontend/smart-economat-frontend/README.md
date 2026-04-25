@@ -6,8 +6,8 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 1. Define las variables de entorno en tu archivo `.env.prod` o en el entorno donde vayas a desplegar:
    - FRONTEND_PORT
-   - FRONTEND_API_URL
-   - VITE_API_PROXY_TARGET
+   - URL_FRONTEND_DERIVADA
+   - VITE_PROXY_DERIVADO
    - VITE_SENTRY_DSN
    - DOMAIN (si aplica)
    - NODE_ENV=production

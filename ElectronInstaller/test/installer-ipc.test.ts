@@ -21,6 +21,16 @@ vi.mock("electron", () => {
   };
 });
 
+vi.mock("nodemailer", () => {
+  return {
+    default: {
+      createTransport: vi.fn(() => ({
+        sendMail: vi.fn().mockResolvedValue({ messageId: "test-message-id" }),
+      })),
+    },
+  };
+});
+
 const basePayload: InstallerConfigPayload = {
   runtimePath: "C:/SmartEconomatRuntime",
   instanceName: "smarteconomat-local",

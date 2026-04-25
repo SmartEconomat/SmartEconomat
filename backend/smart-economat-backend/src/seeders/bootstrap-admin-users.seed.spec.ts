@@ -11,7 +11,8 @@ describe('resolveBootstrapAdminUsersFromEnv', () => {
     expect(users).toHaveLength(2);
     expect(users[0]?.username).toBe('superadmin');
     expect(users[1]?.username).toBe('admin');
-    expect(users[0]?.tempPassword).toBe('SmartEconomat2026!');
+    expect(users[0]?.tempPassword).toMatch(/^[A-Za-z0-9_-]{24}$/);
+    expect(users[1]?.tempPassword).toMatch(/^[A-Za-z0-9_-]{24}$/);
   });
 
   it('falla en produccion sin passwords temporales', () => {

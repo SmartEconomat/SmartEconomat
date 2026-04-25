@@ -140,6 +140,28 @@ export class MailService {
   private readonly logger = new Logger(MailService.name);
   private transporter: Transporter | null = null;
 
+  private deriveFrontendUrl(): string {
+    const domain = (process.env.DOMAIN || '').trim();
+    if (!domain) {
+      return 'http://localhost:5173';
+    }
+
+    if (domain === 'localhost' || domain === '127.0.0.1') {
+      const frontendPort = process.env.FRONTEND_PORT || '5173';
+      return `http://${domain}:${frontendPort}`;
+    }
+
+    return `https://${domain}`;
+  }
+
+  private deriveMailFromAddress(): string {
+    const domain = (process.env.DOMAIN || '').trim();
+    if (!domain || domain === 'localhost' || domain === '127.0.0.1') {
+      return 'noreply@localhost';
+    }
+    return `noreply@${domain}`;
+  }
+
   private getTransporter(): Transporter | null {
     if (this.transporter) return this.transporter;
 
@@ -169,7 +191,7 @@ export class MailService {
     email: string,
     resetToken: string
   ): Promise<void> {
-    const frontendUrl = process.env.FRONTEND_API_URL || 'http://localhost:5173';
+    const frontendUrl = this.deriveFrontendUrl();
     const recoveryLink = `${frontendUrl}/reset-password?token=${resetToken}`;
     const transporter = this.getTransporter();
 
@@ -179,7 +201,7 @@ export class MailService {
       return;
     }
 
-    const from = process.env.MAIL_FROM || process.env.MAIL_USER;
+    const from = this.deriveMailFromAddress();
 
     try {
       await transporter.sendMail({

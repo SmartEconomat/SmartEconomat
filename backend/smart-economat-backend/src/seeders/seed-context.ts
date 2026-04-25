@@ -348,13 +348,8 @@ export class SeedContext {
     }
 
     const composeFile = resolve(__dirname, this.dockerComposeFile);
-    const dbUser =
-      process.env.POSTGRES_USER || process.env.DB_USERNAME || 'postgres';
-    const dbName =
-      process.env.POSTGRES_DB ||
-      process.env.DB_DATABASE ||
-      process.env.DB_NAME ||
-      'smart_economat';
+    const dbUser = process.env.POSTGRES_USER || 'postgres';
+    const dbName = process.env.POSTGRES_DB || 'smart_economat';
 
     const countCommand =
       `docker compose -f "${composeFile}" exec -T db ` +

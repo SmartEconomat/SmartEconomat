@@ -78,6 +78,10 @@ deploy_key.pub
 **/qa-tests/
 **/test-results/
 
+#reports
+**/e2e-report/**
+**/e2e-report/*.*
+
 # SSL certs & prod volumes (Except renewal hooks)
 /certs-data/
 /certs-webroot/

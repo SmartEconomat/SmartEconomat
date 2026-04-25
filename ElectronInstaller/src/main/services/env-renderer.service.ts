@@ -281,7 +281,6 @@ export class EnvRendererService {
     const effectiveHost = requestedHost || "localhost";
     const protocol = config.tlsProvider === "none" ? "http" : "https";
     const backendApiUrl = `${protocol}://${effectiveHost}/api/v1`;
-    const frontendApiUrl = `${protocol}://${effectiveHost}`;
     const superAdminPassword = config.useSamePasswordForBoth
       ? config.adminPassword
       : config.superAdminPassword;
@@ -292,17 +291,12 @@ export class EnvRendererService {
     return {
       NODE_ENV: "production",
       DOMAIN: effectiveHost,
-      BACKEND_API_URL: backendApiUrl,
-      FRONTEND_API_URL: frontendApiUrl,
       SMARTECONOMAT_ENV_FILE: envFilePath,
       POSTGRES_USER: "postgres",
       POSTGRES_PASSWORD: postgresPassword,
       POSTGRES_DB: "smarteconomat",
+      POSTGRES_PORT: "5432",
       DB_HOST: "db",
-      DB_PORT: "5432",
-      DB_USERNAME: "postgres",
-      DB_PASSWORD: postgresPassword,
-      DB_DATABASE: "smarteconomat",
       DB_SYNC: "false",
       JWT_SECRET: jwtSecret,
       JWT_EXPIRATION: "7d",
@@ -326,7 +320,6 @@ export class EnvRendererService {
       BACKUP_RETENTION_DAYS: String(config.backupRetentionDays),
       CERTS_DIR: path.join(config.runtimePath, "certs"),
       CERTS_WEBROOT_DIR: path.join(config.runtimePath, "certs-webroot"),
-      VITE_API_PROXY_TARGET: backendApiUrl,
       STARTUP_RUN_MIGRATIONS:
         config.startupRunMigrations === false ? "false" : "true",
       RUN_BOOTSTRAP_SEEDER: config.installMode === "new" ? "true" : "false",
@@ -338,7 +331,6 @@ export class EnvRendererService {
       MAIL_PORT: config.smtpPort?.trim() ?? "",
       MAIL_USER: config.smtpUser?.trim() ?? "",
       MAIL_PASS: config.smtpPass?.trim() ?? "",
-      MAIL_FROM: config.smtpFrom?.trim() ?? "",
       MAIL_SECURE: String(config.smtpSecure ?? false),
     };
   }
@@ -398,8 +390,7 @@ export class EnvRendererService {
       const parsed = this.parseEnv(raw);
 
       return {
-        POSTGRES_PASSWORD:
-          parsed.POSTGRES_PASSWORD ?? parsed.DB_PASSWORD ?? undefined,
+        POSTGRES_PASSWORD: parsed.POSTGRES_PASSWORD ?? undefined,
         REDIS_PASSWORD: parsed.REDIS_PASSWORD ?? undefined,
         JWT_SECRET: parsed.JWT_SECRET ?? undefined,
       };
@@ -417,8 +408,7 @@ export class EnvRendererService {
       const snapshot = JSON.parse(raw) as EnvSnapshotFile;
 
       return {
-        POSTGRES_PASSWORD:
-          snapshot.envMap.POSTGRES_PASSWORD ?? snapshot.envMap.DB_PASSWORD,
+        POSTGRES_PASSWORD: snapshot.envMap.POSTGRES_PASSWORD,
         REDIS_PASSWORD: snapshot.envMap.REDIS_PASSWORD,
         JWT_SECRET: snapshot.envMap.JWT_SECRET,
       };

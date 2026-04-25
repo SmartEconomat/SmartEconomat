@@ -30,10 +30,10 @@ Valores mínimos recomendados para desarrollo:
 ```env
 NODE_ENV=development
 BACKEND_PORT=3000
-BACKEND_API_URL=http://localhost:3000
+URL_BACKEND_DERIVADA=http://localhost:3000
 FRONTEND_PORT=5173
-FRONTEND_API_URL=http://localhost:5173
-DB_PORT=5432
+URL_FRONTEND_DERIVADA=http://localhost:5173
+POSTGRES_PORT=5432
 JWT_SECRET=changeme
 JWT_EXPIRATION=7d
 ```

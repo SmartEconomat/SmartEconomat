@@ -2,7 +2,8 @@ import * as Sentry from '@sentry/nestjs';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 
 const sentryDsn = process.env.SENTRY_DSN?.trim() ?? '';
-const sentryEnabled = process.env.NODE_ENV === 'production' && sentryDsn.length > 0;
+const sentryEnabled =
+  process.env.NODE_ENV === 'production' && sentryDsn.length > 0;
 
 Sentry.init({
   dsn: sentryDsn,

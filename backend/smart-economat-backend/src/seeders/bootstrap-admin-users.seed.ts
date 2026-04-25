@@ -1,4 +1,5 @@
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 import type { QueryRunner } from 'typeorm';
 
 import AppDataSource from '../config/typeorm.config';
@@ -13,6 +14,10 @@ type BootstrapAdminUserSeed = {
 };
 
 const SEED_TAG = '[seed-bootstrap-admin-users]';
+
+function generateSecureTemporaryPassword(): string {
+  return randomBytes(18).toString('base64url');
+}
 
 function readOptionalEnv(env: NodeJS.ProcessEnv, key: string): string {
   return env[key]?.trim() || '';
@@ -72,14 +77,14 @@ export function resolveBootstrapAdminUsersFromEnv(
       ? providedAdminTempPassword
       : providedLegacyTempPassword.length > 0
         ? providedLegacyTempPassword
-        : 'SmartEconomat2026!';
+        : generateSecureTemporaryPassword();
 
   const defaultSuperAdminTempPassword =
     providedSuperAdminTempPassword.length > 0
       ? providedSuperAdminTempPassword
       : providedLegacyTempPassword.length > 0
         ? providedLegacyTempPassword
-        : 'SmartEconomat2026!';
+        : generateSecureTemporaryPassword();
 
   return [
     {
@@ -158,22 +163,19 @@ async function upsertBootstrapUser(
        SET "nombre" = $1,
            "username" = $2,
            "email" = $3,
-           "password" = $4,
-           "rol" = $5,
-           "status" = $6,
+           "rol" = $4,
+           "status" = $5,
            "activo" = TRUE,
-           "must_change_password" = TRUE,
            "resetPasswordOtp" = NULL,
            "resetPasswordOtpExpires" = NULL,
            "deleted_at" = NULL,
            "deleted_by" = NULL,
            "updated_at" = NOW()
-       WHERE "id" = $7`,
+       WHERE "id" = $6`,
       [
         seedUser.nombre,
         seedUser.username,
         seedUser.email,
-        hashedTemporaryPassword,
         seedUser.rol,
         UserStatus.ACTIVE,
         existingUserId,

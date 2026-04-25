@@ -32,7 +32,7 @@ describe("DockerReadinessService.probe", () => {
     expect(status.source).toBe("preflight");
   });
 
-  it("detecta daemon-starting cuando docker info no conecta al daemon", async () => {
+  it("detecta daemon-error cuando docker ps falla tras docker info correcto", async () => {
     const outputs: CommandResult[] = [
       result({ ok: true, stdout: "Docker version 26.1.1" }),
       result({ ok: true, stdout: "RUNNING" }),
@@ -46,7 +46,7 @@ describe("DockerReadinessService.probe", () => {
     const service = new DockerReadinessService(fakeRunner as never);
     const status = await service.probe({ source: "preflight" });
 
-    expect(status.state).toBe("daemon-starting");
+    expect(status.state).toBe("daemon-error");
   });
 
   it("detecta daemon-ready cuando info y ps responden", async () => {

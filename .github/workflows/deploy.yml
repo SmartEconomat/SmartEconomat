@@ -138,19 +138,15 @@ jobs:
           REMOTE_BASE_DIR: ${{ env.REMOTE_BASE_DIR }}
           NODE_ENV: production
           DOMAIN: ${{ secrets.DOMAIN }}
-          BACKEND_API_URL: ${{ secrets.BACKEND_API_URL }}
-          FRONTEND_API_URL: ${{ secrets.FRONTEND_API_URL }}
+          BACKEND_PORT: ${{ secrets.BACKEND_PORT }}
+          FRONTEND_PORT: ${{ secrets.FRONTEND_PORT }}
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
           DB_HOST: ${{ secrets.DB_HOST }}
-          DB_PORT: ${{ secrets.DB_PORT }}
-          DB_USERNAME: ${{ secrets.DB_USERNAME }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_DATABASE: ${{ secrets.DB_DATABASE }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           JWT_EXPIRATION: ${{ secrets.JWT_EXPIRATION }}
-          VITE_API_PROXY_TARGET: ${{ secrets.VITE_API_PROXY_TARGET }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
           TLS_PROVIDER: ${{ secrets.TLS_PROVIDER }}
@@ -163,7 +159,7 @@ jobs:
           key: ${{ secrets.SMARTECONOMAT_DO }}
           port: ${{ secrets.SERVER_PORT || 22 }}
           timeout: 60s
-          envs: APP_NAME,ARCHIVE_NAME,REMOTE_BASE_DIR,NODE_ENV,DOMAIN,BACKEND_API_URL,FRONTEND_API_URL,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,DB_HOST,DB_PORT,DB_USERNAME,DB_PASSWORD,DB_DATABASE,JWT_SECRET,JWT_EXPIRATION,VITE_API_PROXY_TARGET,SENTRY_DSN,VITE_SENTRY_DSN,TLS_PROVIDER,TLS_SELF_SIGNED_DAYS,LETSENCRYPT_EMAIL,LETSENCRYPT_DIRECTORY_URL
+          envs: APP_NAME,ARCHIVE_NAME,REMOTE_BASE_DIR,NODE_ENV,DOMAIN,BACKEND_PORT,FRONTEND_PORT,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,POSTGRES_PORT,DB_HOST,JWT_SECRET,JWT_EXPIRATION,SENTRY_DSN,VITE_SENTRY_DSN,TLS_PROVIDER,TLS_SELF_SIGNED_DAYS,LETSENCRYPT_EMAIL,LETSENCRYPT_DIRECTORY_URL
           script: |
             set -e
             # Instalar unzip si no existe (necesario para el primer despliegue)

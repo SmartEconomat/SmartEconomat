@@ -76,8 +76,8 @@ function buildSigningArgs(filePath) {
     process.env.WIN_TIMESTAMP_URL?.trim() || "http://timestamp.digicert.com";
   const description =
     process.env.WIN_SIGN_DESCRIPTION?.trim() || "SmartEconomat Installer";
-  const descriptionUrl =
-    process.env.WIN_SIGN_DESCRIPTION_URL?.trim() || "https://smarteconomat.app";
+  const domain = process.env.DOMAIN?.trim() || "smarteconomat.app";
+  const descriptionUrl = `https://${domain}`;
 
   const base = [
     "sign",

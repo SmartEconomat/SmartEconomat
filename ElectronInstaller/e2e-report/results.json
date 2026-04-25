@@ -1,7 +1,7 @@
 {
   "config": {
-    "configFile": "c:\\Users\\psych\\projects\\SmartEconomat\\ElectronInstaller\\playwright.config.ts",
-    "rootDir": "c:/Users/psych/projects/SmartEconomat/ElectronInstaller/test/e2e",
+    "configFile": "/home/psych/projects/SmartEconomat/ElectronInstaller/playwright.config.ts",
+    "rootDir": "/home/psych/projects/SmartEconomat/ElectronInstaller/test/e2e",
     "forbidOnly": false,
     "fullyParallel": false,
     "globalSetup": null,
@@ -16,7 +16,7 @@
     "preserveOutput": "always",
     "projects": [
       {
-        "outputDir": "c:/Users/psych/projects/SmartEconomat/ElectronInstaller/test-results",
+        "outputDir": "/home/psych/projects/SmartEconomat/ElectronInstaller/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -24,7 +24,7 @@
         },
         "id": "chromium",
         "name": "chromium",
-        "testDir": "c:/Users/psych/projects/SmartEconomat/ElectronInstaller/test/e2e",
+        "testDir": "/home/psych/projects/SmartEconomat/ElectronInstaller/test/e2e",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -99,12 +99,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1399,
+                      "duration": 8762,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-15T21:22:05.757Z",
+                      "startTime": "2026-04-25T10:51:31.064Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -114,7 +114,7 @@
               ],
               "id": "6160a0eab4e43b4eb173-4e740a9ac6262fc1213d",
               "file": "installer.spec.ts",
-              "line": 273,
+              "line": 342,
               "column": 3
             },
             {
@@ -133,12 +133,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2147,
+                      "duration": 16502,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-15T21:22:07.409Z",
+                      "startTime": "2026-04-25T10:51:40.457Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -148,7 +148,7 @@
               ],
               "id": "6160a0eab4e43b4eb173-174b826f793731173b03",
               "file": "installer.spec.ts",
-              "line": 284,
+              "line": 353,
               "column": 3
             },
             {
@@ -167,12 +167,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1817,
+                      "duration": 12347,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-15T21:22:09.581Z",
+                      "startTime": "2026-04-25T10:51:57.057Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -182,7 +182,7 @@
               ],
               "id": "6160a0eab4e43b4eb173-e261daa5ad213f333e8f",
               "file": "installer.spec.ts",
-              "line": 326,
+              "line": 395,
               "column": 3
             },
             {
@@ -201,12 +201,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2341,
+                      "duration": 14916,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-15T21:22:11.428Z",
+                      "startTime": "2026-04-25T10:52:09.532Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -216,7 +216,7 @@
               ],
               "id": "6160a0eab4e43b4eb173-8cd2765121bb13020200",
               "file": "installer.spec.ts",
-              "line": 350,
+              "line": 419,
               "column": 3
             }
           ]
@@ -226,8 +226,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-04-15T21:22:00.608Z",
-    "duration": 13583.881,
+    "startTime": "2026-04-25T10:51:27.594Z",
+    "duration": 57224.013,
     "expected": 4,
     "skipped": 0,
     "unexpected": 0,

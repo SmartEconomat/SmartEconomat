@@ -585,7 +585,8 @@ function Invoke-WizardEquivalentInstall {
   Set-InstallState -State "DONE" -Message "Instalación completada"
   Print-FinalSummary -EnvMap $Script:EnvMap
   if (-not $SkipOpenBrowser) {
-    try { Start-Process -FilePath $Script:EnvMap["FRONTEND_API_URL"] | Out-Null } catch { }
+    $scheme = if ($Script:EnvMap["TLS_PROVIDER"] -eq "none") { "http" } else { "https" }
+    try { Start-Process -FilePath ("{0}://{1}" -f $scheme, $Script:EnvMap["DOMAIN"]) | Out-Null } catch { }
   }
 }
 
@@ -1326,23 +1327,16 @@ function Build-InstallerEquivalentConfig {
   }
 
   $envFilePath = (Join-Path $RuntimePath ".env.prod").Replace("\", "/")
-  $backendApiUrl = "${protocol}://$effectiveHost/api/v1"
-  $frontendApiUrl = "${protocol}://$effectiveHost"
 
   return @{
     NODE_ENV = "production"
     DOMAIN = $effectiveHost
-    BACKEND_API_URL = $backendApiUrl
-    FRONTEND_API_URL = $frontendApiUrl
     SMARTECONOMAT_ENV_FILE = $envFilePath
     POSTGRES_USER = "postgres"
     POSTGRES_PASSWORD = $postgresPassword
     POSTGRES_DB = "smarteconomat"
+    POSTGRES_PORT = "5432"
     DB_HOST = "db"
-    DB_PORT = "5432"
-    DB_USERNAME = "postgres"
-    DB_PASSWORD = $postgresPassword
-    DB_DATABASE = "smarteconomat"
     DB_SYNC = "false"
     JWT_SECRET = $jwtSecret
     JWT_EXPIRATION = "7d"
@@ -1363,7 +1357,6 @@ function Build-InstallerEquivalentConfig {
     BACKUP_RETENTION_DAYS = $backupRetentionDays.ToString()
     CERTS_DIR = (Join-Path $RuntimePath "certs")
     CERTS_WEBROOT_DIR = (Join-Path $RuntimePath "certs-webroot")
-    VITE_API_PROXY_TARGET = $backendApiUrl
     STARTUP_RUN_MIGRATIONS = "true"
     SENTRY_DSN = Get-EnvValue -Env $ExistingEnv -Key "SENTRY_DSN" -Default ""
     VITE_SENTRY_DSN = Get-EnvValue -Env $ExistingEnv -Key "VITE_SENTRY_DSN" -Default ""
@@ -1685,8 +1678,9 @@ function Print-FinalSummary {
   Write-Log "Env file: $(Join-Path $RuntimePath '.env.prod')"
   Write-Log "Compose file: $Script:ComposeFile"
   Write-Log "Host: $($EnvMap['DOMAIN'])"
-  Write-Log "Frontend URL: $($EnvMap['FRONTEND_API_URL'])"
-  Write-Log "Backend URL: $($EnvMap['BACKEND_API_URL'])"
+  $summaryScheme = if ($EnvMap["TLS_PROVIDER"] -eq "none") { "http" } else { "https" }
+  Write-Log "Frontend URL: $summaryScheme://$($EnvMap['DOMAIN'])"
+  Write-Log "Backend URL: $summaryScheme://$($EnvMap['DOMAIN'])/api/v1"
   Write-Log "Admin user: $($EnvMap['SEED_DEFAULT_ADMIN_USERNAME'])"
   Write-Log "Superadmin user: $($EnvMap['SEED_DEFAULT_SUPERADMIN_USERNAME'])"
   Write-Log "Postgres password: $(Get-MaskedValue -Value $EnvMap['POSTGRES_PASSWORD'])"
