@@ -32,7 +32,7 @@ Este bloque agrupa la documentación completa y detallada del backend NestJS + T
 | Sección | Documento |
 |---|---|
 | Overview | [Visión general backend](overview.md) |
-| Arquitectura | [Arquitectura NestJS + TypeORM](architecture/backend-nestjs-typeorm.md) |
+| Arquitectura | [Arquitectura backend](architecture/backend.md) |
 | Patrones | [Patrones y trade-offs](architecture/patrones-y-tradeoffs.md) |
 | Tutorial | [Levantar proyecto desde cero](tutorials/levantar-proyecto-desde-cero.md) |
 | Tutorial | [Laboratorio de estados de incidencias](tutorials/laboratorio-estados-incidencias.md) |
@@ -96,10 +96,8 @@ Este bloque agrupa la documentación completa y detallada del backend NestJS + T
 |-----------|-------------|
 | [Arquitectura backend](architecture/backend.md) | Capas, patrones y organización del servidor NestJS |
 | [Arquitectura frontend](architecture/frontend.md) | Estructura React, estado y composición |
-| [Estructura backend](architecture/backend-structure.md) | Mapa de carpetas del backend |
 | [Modelo de datos](architecture/data-model.md) | Entidades y relaciones principales |
 | [UUID v7](architecture/uuid-v7.md) | Implementación de UUID v7 en BD y aplicación |
-| [UI inventario](architecture/ui-inventario.md) | Arquitectura de la interfaz de inventario |
 | [Soft Delete](architecture/soft-delete.md) | Sistema de borrado lógico global |
 
 ## Desarrollo
@@ -152,7 +150,7 @@ Este bloque agrupa la documentación completa y detallada del backend NestJS + T
 | Documento | Descripción |
 |-----------|-------------|
 | [Índice frontend](frontend/README.md) | Punto de entrada a la documentación de UI |
-| [Arquitectura UI](frontend/arquitectura.md) | Arquitectura de la interfaz |
+| [UI inventario](frontend/ui-inventario.md) | Arquitectura de la interfaz de inventario |
 | [useBreakpoints](frontend/useBreakpoints.md) | Hook responsive centralizado |
 | [Hooks de Permisos](frontend/hooks-permisos.md) | Gestión reactiva de autorizaciones |
 | [Gestión de Usuarios](frontend/gestion-usuarios.md) | Vista consolidada de administración |

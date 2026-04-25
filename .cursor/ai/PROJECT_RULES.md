@@ -8,7 +8,10 @@
 - no usar `any`;
 - centralizar el cliente API en `frontend/smart-economat-frontend/src/services/api.service.ts` y en los servicios por módulo;
 - no duplicar lógica de requests, auth, mapeo de payloads o normalización de respuestas en componentes y hooks;
-- tratar el backend como fuente de verdad para DTOs, enums, filtros, schemas y envelopes de respuesta.
+- tratar el backend como fuente de verdad para DTOs, enums, filtros, schemas y envelopes de respuesta;
+- **UX/Rendimiento**: evitar bloqueos globales con Spinners de pantalla completa; priorizar el uso de **Skeletons** contextuales;
+- **Code Splitting**: implementar `React.lazy` y `Suspense` en componentes pesados (modales, páginas) para optimizar el bundle inicial;
+- **Accesibilidad**: mantener una jerarquía semántica rigurosa (un solo `h1` por página, sin saltos de nivel en `h2-h6`) y asegurar que todo `IconButton` tenga un `aria-label` descriptivo.
 
 ## Criterios de implementación
 
