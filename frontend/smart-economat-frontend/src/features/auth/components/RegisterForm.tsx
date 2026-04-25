@@ -12,7 +12,8 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
-import Logo from '../../../assets/images/SVG/logo-smat-economato.svg';
+import AuthLogo from './AuthLogo';
+import SecondaryActionButton from './SecondaryActionButton';
 import {
   authService,
   SlotReferenceResponse,
@@ -259,13 +260,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         alignItems: 'center',
       }}
     >
-      <Box sx={{ mb: 1, mt: { xs: 0, md: 1 } }}>
-        <img
-          src={Logo}
-          alt="SmartEconomat"
-          style={{ height: 'clamp(70px, 12vw, 100px)', width: 'auto' }}
-        />
-      </Box>
+      <AuthLogo condensed />
 
       <Typography
         variant="h6"
@@ -418,14 +413,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         </Button>
 
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={() => onToggleForm()}
-            sx={{ mt: 1, fontSize: '0.875rem', textTransform: 'none' }}
-          >
+          <SecondaryActionButton onClick={() => onToggleForm()}>
             ¿Ya tienes cuenta? Inicia sesión aquí
-          </Button>
+          </SecondaryActionButton>
         </Box>
       </Box>
     </Box>

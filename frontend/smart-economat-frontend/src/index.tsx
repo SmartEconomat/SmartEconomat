@@ -1,3 +1,4 @@
+import './i18n/index';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import 'wicg-inert';
@@ -6,20 +7,23 @@ import * as Sentry from '@sentry/react';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
-Sentry.init({
-  dsn: import.meta.env.VITE_SENTRY_DSN,
-  enabled: import.meta.env.MODE === 'production',
-  environment: import.meta.env.MODE || 'development',
-  integrations: [
-    Sentry.browserTracingIntegration(),
-    Sentry.replayIntegration(),
-  ],
-  // Performance Monitoring
-  tracesSampleRate: 1.0, //  Capture 100% of the transactions
-  // Session Replay
-  replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
-  replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
-});
+const sentryDsn = String(import.meta.env.VITE_SENTRY_DSN || '').trim();
+if (import.meta.env.MODE === 'production' && sentryDsn.length > 0) {
+  Sentry.init({
+    dsn: sentryDsn,
+    enabled: true,
+    environment: import.meta.env.MODE || 'development',
+    integrations: [
+      Sentry.browserTracingIntegration(),
+      Sentry.replayIntegration(),
+    ],
+    // Performance Monitoring
+    tracesSampleRate: 1.0,
+    // Session Replay
+    replaysSessionSampleRate: 0.1,
+    replaysOnErrorSampleRate: 1.0,
+  });
+}
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Failed to find the root element');

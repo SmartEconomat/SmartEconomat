@@ -3,24 +3,35 @@ import { BadRequestException } from '@nestjs/common';
 import { I18nHelper } from '../helpers/i18n.helper';
 
 /**
- * NormalizeStringPipe
+ * @description Utility class that produces `class-transformer` `@Transform` callbacks
+ * for common string normalisation tasks. Supports trim, uppercase, and lowercase
+ * transformations via a single configurable factory method.
  *
- * Pipe especializado para normalización de strings con opciones configurables.
- *
- * Opciones:
- * - trim: Elimina espacios al inicio y final (default: true)
- * - uppercase: Convierte a mayúsculas (default: false)
- * - lowercase: Convierte a minúsculas (default: false)
+ * Designed to be used with the `@Transform` decorator on DTO properties:
  *
  * @example
- *
- * @Transform(NormalizeStringPipe.transform({ trim: true, lowercase: true }))
+ * \@Transform(NormalizeStringPipe.transform({ trim: true, lowercase: true }))
  * email: string;
  *
- * @Transform(NormalizeStringPipe.transform({ trim: true, uppercase: true }))
+ * \@Transform(NormalizeStringPipe.transform({ trim: true, uppercase: true }))
  * codigo: string;
  */
 export class NormalizeStringPipe {
+  /**
+   * @description Factory that returns a `class-transformer` transform function
+   * configured with the supplied normalisation options. The returned function trims
+   * and/or changes the case of the input string value. `null` and non-string values
+   * are returned as-is without modification.
+   * @param options - Normalisation flags.
+   * @param options.trim - When `true` (default), leading and trailing whitespace is removed.
+   * @param options.uppercase - When `true`, the string is converted to upper case.
+   * @param options.lowercase - When `true`, the string is converted to lower case.
+   * @returns A transform callback compatible with `class-transformer`'s `@Transform` decorator.
+   * @throws {BadRequestException} If both `uppercase` and `lowercase` are set to `true` simultaneously.
+   * @example
+   * \@Transform(NormalizeStringPipe.transform({ uppercase: true }))
+   * sku: string;
+   */
   static transform(
     options: {
       trim?: boolean;

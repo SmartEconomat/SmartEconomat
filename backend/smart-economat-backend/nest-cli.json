@@ -8,5 +8,18 @@
     "typeCheck": true,
     "assets": ["i18n/**/*", "seeders/datos-base-economato/**/*"],
     "watchAssets": false
+  },
+  "watchOptions": {
+    "ignored": [
+      "node_modules",
+      "dist",
+      "coverage",
+      "uploads",
+      "**/*.spec.ts",
+      "**/*.e2e-spec.ts",
+      "test/**",
+      "scripts/**",
+      "tools/**"
+    ]
   }
 }

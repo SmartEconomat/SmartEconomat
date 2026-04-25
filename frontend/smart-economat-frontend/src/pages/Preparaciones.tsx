@@ -649,6 +649,7 @@ const Preparaciones: React.FC = () => {
           }}
           size="small"
           aria-label="Ver detalles"
+          id="btn-ver-detalle-preparacion"
         >
           <VisibilityIcon fontSize="small" />
         </IconButton>
@@ -668,6 +669,7 @@ const Preparaciones: React.FC = () => {
             }}
             size="small"
             aria-label="Consumir preparación"
+            id="btn-consumir-preparacion"
           >
             <LocalDiningIcon fontSize="small" />
           </IconButton>
@@ -683,6 +685,7 @@ const Preparaciones: React.FC = () => {
             }}
             size="small"
             aria-label="Reportar merma de ingrediente"
+            id="btn-merma-preparacion"
           >
             <ReportProblemIcon fontSize="small" />
           </IconButton>
@@ -754,342 +757,368 @@ const Preparaciones: React.FC = () => {
   return (
     <Box>
       <PageToolbar
+        id="preparaciones-summary"
         title="Bolsa de Preparaciones"
         totalItems={totalItems}
         totalItemsLabel="preparaciones"
       />
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-        <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
-          <Tab
-            icon={<RestaurantIcon />}
-            iconPosition="start"
-            label="Disponibles"
-          />
-          <Tab
-            icon={<HistoryIcon />}
-            iconPosition="start"
-            label="Agotadas (Consumidas)"
-          />
-        </Tabs>
-      </Box>
-
-      <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-
-        <DataTable
-          columns={columns}
-          data={data}
-          isLoading={isLoading}
-          hideTopBar
-          emptyStateMessage={
-            <Box sx={{ py: 4, textAlign: 'center' }}>
-              <RestaurantIcon
-                sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
-              />
-              <Typography variant="h6" color="text.secondary">
-                No hay preparaciones registradas
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Ejecuta una receta para ver su historial aquí.
-              </Typography>
-            </Box>
-          }
-          pagination={{
-            currentPage: page,
-            totalPages: totalPages,
-            onPageChange: (_, newPage) => setPage(newPage),
-            pageSize: pageSize,
-            onPageSizeChange: (e) => {
-              setPageSize(Number(e.target.value));
-              setPage(1);
-            },
+      <Paper
+        elevation={2}
+        sx={{
+          borderRadius: 3,
+          overflow: 'hidden',
+          border: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
+        <Box
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
           }}
-          renderActions={renderActions}
-        />
-
-        <DetailModal
-          isOpen={!!itemToView}
-          onClose={() => setItemToView(null)}
-          title={`Preparación: ${itemToView?.receta?.nombre}`}
-          subtitle={`Ejecutada el ${
-            itemToView
-              ? new Date(itemToView.fechaProduccion).toLocaleDateString()
-              : ''
-          }`}
-          size="md"
-          sections={viewSections}
-        />
-
-        <Dialog open={!!consumingId} onClose={() => setConsumingId(null)}>
-          <DialogTitle>Consumir preparación</DialogTitle>
-          <DialogContent>
-            <Typography variant="body2" sx={{ mb: 2 }}>
-              Puedes consumir este lote por raciones o por cantidad/peso total.
-            </Typography>
-            {consumingItem && (
-              <Box
-                sx={{
-                  mb: 2,
-                  p: 1.5,
-                  borderRadius: 2,
-                  bgcolor: 'action.hover',
-                }}
-              >
-                <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  Disponibles: {formatRations(consumingItem.porcionesRestantes)}{' '}
-                  raciones
-                </Typography>
-                {getAvailableAmountLabel(consumingItem) && (
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ display: 'block', mt: 0.5 }}
-                  >
-                    Cantidad disponible:{' '}
-                    {getAvailableAmountLabel(consumingItem)}
-                  </Typography>
-                )}
-                {formatRationInfo(consumingItem) && (
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ display: 'block', mt: 0.5 }}
-                  >
-                    {formatRationInfo(consumingItem)}
-                  </Typography>
-                )}
-                <Typography
-                  variant="caption"
-                  color="primary.main"
-                  sx={{ display: 'block', mt: 0.5, fontWeight: 600 }}
-                >
-                  {consumeMode === 'raciones'
-                    ? formatRationInfo(
-                        consumingItem,
-                        parsedPortions ?? undefined
-                      )
-                    : isAmountModeWithoutEquivalence
-                      ? 'Esta receta no admite consumo por cantidad o peso.'
-                      : isAmountMultipleInvalid && amountConsumptionStep
-                        ? `La cantidad debe ser múltiplo de ${formatAmount(amountConsumptionStep)} ${consumingItem.receta?.unidadResultado || 'unidad'}.`
-                        : `${formatAmount(parsedAmount ?? 0)} ${consumingItem.receta?.unidadResultado || ''} a consumir.`}
-                </Typography>
-              </Box>
-            )}
-            <ToggleButtonGroup
-              exclusive
-              size="small"
-              color="primary"
-              value={consumeMode}
-              onChange={(_, value: TipoConsumoProduccion | null) => {
-                if (!value) {
-                  return;
-                }
-
-                setConsumeMode(value);
-              }}
-              sx={{ mb: 2 }}
-            >
-              <ToggleButton value="raciones">Por raciones</ToggleButton>
-              <ToggleButton value="cantidad" disabled={rationAmount === null}>
-                Por cantidad/peso
-              </ToggleButton>
-            </ToggleButtonGroup>
-            <TextField
-              fullWidth
-              type="text"
-              label={
-                consumeMode === 'raciones'
-                  ? 'Cantidad de Raciones'
-                  : `Cantidad a consumir (${consumingItem?.receta?.unidadResultado || 'unidad'})`
-              }
-              value={consumeMode === 'raciones' ? portionsInput : amountInput}
-              onChange={(e) => {
-                handleConsumptionInputChange(consumeMode, e.target.value);
-              }}
-              error={isCurrentValueInvalid}
-              helperText={
-                consumeMode === 'raciones'
-                  ? `Máximo disponible: ${formatRations(availablePortions)} raciones.`
-                  : isAmountModeWithoutEquivalence
-                    ? 'Esta receta no tiene una equivalencia válida por ración para consumir por cantidad o peso.'
-                    : isAmountMultipleInvalid && amountConsumptionStep
-                      ? `Debe ser múltiplo de ${formatAmount(amountConsumptionStep)} ${consumingItem?.receta?.unidadResultado || 'unidad'}.`
-                      : `Máximo disponible: ${formatAmount(maxConsumableAmount ?? 0)} ${consumingItem?.receta?.unidadResultado || ''}.`
-              }
-              inputProps={{ inputMode: 'decimal' }}
-              margin="dense"
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setConsumingId(null)}>Cancelar</Button>
-            <Button
-              variant="contained"
-              color="success"
-              onClick={handleConsume}
-              disabled={isCurrentValueInvalid}
-            >
-              Confirmar Consumo
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        <Dialog
-          open={!!mermaLote}
-          onClose={closeMermaDialog}
-          fullWidth
-          maxWidth="sm"
         >
-          <DialogTitle>Reportar merma de producción</DialogTitle>
-          <DialogContent>
-            <Typography variant="body2" sx={{ mb: 2 }}>
-              Registra la merma real de un ingrediente usado en esta preparación
-              sin alterar estados históricos del lote.
-            </Typography>
+          <Tabs
+            value={activeTab}
+            onChange={(_, v) => setActiveTab(v)}
+            variant="fullWidth"
+            textColor="primary"
+            indicatorColor="primary"
+            id="preparaciones-tabs"
+          >
+            <Tab
+              icon={<RestaurantIcon />}
+              label="Disponibles"
+              id="tab-preparaciones-disponibles"
+            />
+            <Tab
+              icon={<HistoryIcon />}
+              label="Agotadas (Consumidas)"
+              id="tab-preparaciones-historial"
+            />
+          </Tabs>
+        </Box>
 
-            {mermaLote && (
-              <Box
-                sx={{
-                  mb: 2,
-                  p: 1.5,
-                  borderRadius: 2,
-                  bgcolor: 'action.hover',
-                }}
-              >
-                <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  Lote: {mermaLote.id}
+        <Box sx={{ p: { xs: 2, sm: 4 } }}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          <DataTable
+            id="preparaciones-table"
+            columns={columns}
+            data={data}
+            isLoading={isLoading}
+            hideTopBar
+            emptyStateMessage={
+              <Box sx={{ py: 4, textAlign: 'center' }}>
+                <RestaurantIcon
+                  sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
+                />
+                <Typography variant="h6" color="text.secondary">
+                  No hay preparaciones registradas
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Receta: {mermaLote.receta?.nombre || '—'}
+                  Ejecuta una receta para ver su historial aquí.
                 </Typography>
               </Box>
-            )}
+            }
+            pagination={{
+              currentPage: page,
+              totalPages: totalPages,
+              onPageChange: (_, newPage) => setPage(newPage),
+              pageSize: pageSize,
+              onPageSizeChange: (e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              },
+            }}
+            renderActions={renderActions}
+          />
 
-            {isLoadingMermaDetalle ? (
-              <Typography variant="body2" color="text.secondary">
-                Cargando ingredientes de la receta...
+          <DetailModal
+            isOpen={!!itemToView}
+            onClose={() => setItemToView(null)}
+            title={`Preparación: ${itemToView?.receta?.nombre}`}
+            subtitle={`Ejecutada el ${
+              itemToView
+                ? new Date(itemToView.fechaProduccion).toLocaleDateString()
+                : ''
+            }`}
+            size="md"
+            sections={viewSections}
+          />
+
+          <Dialog open={!!consumingId} onClose={() => setConsumingId(null)}>
+            <DialogTitle>Consumir preparación</DialogTitle>
+            <DialogContent>
+              <Typography variant="body2" sx={{ mb: 2 }}>
+                Puedes consumir este lote por raciones o por cantidad/peso
+                total.
               </Typography>
-            ) : mermaLoadError ? (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {mermaLoadError}
-              </Alert>
-            ) : mermaIngredientes.length === 0 ? (
-              <Alert severity="warning" sx={{ mb: 2 }}>
-                No se encontraron ingredientes válidos para reportar merma en
-                este lote.
-              </Alert>
-            ) : (
-              <>
-                <FormControl fullWidth margin="dense">
-                  <InputLabel id="merma-ingrediente-label">
-                    Ingrediente
-                  </InputLabel>
-                  <Select
-                    labelId="merma-ingrediente-label"
-                    label="Ingrediente"
-                    value={mermaProductoId}
-                    onChange={(event) =>
-                      setMermaProductoId(String(event.target.value))
-                    }
-                  >
-                    {mermaIngredientes.map((ingrediente) => (
-                      <MenuItem
-                        key={ingrediente.productoId}
-                        value={ingrediente.productoId}
-                      >
-                        {ingrediente.productoNombre} ·{' '}
-                        {getMermaUnitInfo(ingrediente.unidad).fullLabel}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-
-                {selectedMermaIngrediente && (
+              {consumingItem && (
+                <Box
+                  sx={{
+                    mb: 2,
+                    p: 1.5,
+                    borderRadius: 2,
+                    bgcolor: 'action.hover',
+                  }}
+                >
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                    Disponibles:{' '}
+                    {formatRations(consumingItem.porcionesRestantes)} raciones
+                  </Typography>
+                  {getAvailableAmountLabel(consumingItem) && (
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: 'block', mt: 0.5 }}
+                    >
+                      Cantidad disponible:{' '}
+                      {getAvailableAmountLabel(consumingItem)}
+                    </Typography>
+                  )}
+                  {formatRationInfo(consumingItem) && (
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: 'block', mt: 0.5 }}
+                    >
+                      {formatRationInfo(consumingItem)}
+                    </Typography>
+                  )}
                   <Typography
                     variant="caption"
-                    color="text.secondary"
-                    sx={{ display: 'block', mt: 0.5, mb: 1 }}
+                    color="primary.main"
+                    sx={{ display: 'block', mt: 0.5, fontWeight: 600 }}
                   >
-                    Se registrará en {selectedMermaUnitInfo.fullLabel}.
-                    {selectedMermaUnitInfo.note
-                      ? ` ${selectedMermaUnitInfo.note}`
-                      : ''}
+                    {consumeMode === 'raciones'
+                      ? formatRationInfo(
+                          consumingItem,
+                          parsedPortions ?? undefined
+                        )
+                      : isAmountModeWithoutEquivalence
+                        ? 'Esta receta no admite consumo por cantidad o peso.'
+                        : isAmountMultipleInvalid && amountConsumptionStep
+                          ? `La cantidad debe ser múltiplo de ${formatAmount(amountConsumptionStep)} ${consumingItem.receta?.unidadResultado || 'unidad'}.`
+                          : `${formatAmount(parsedAmount ?? 0)} ${consumingItem.receta?.unidadResultado || ''} a consumir.`}
                   </Typography>
-                )}
+                </Box>
+              )}
+              <ToggleButtonGroup
+                exclusive
+                size="small"
+                color="primary"
+                value={consumeMode}
+                onChange={(_, value: TipoConsumoProduccion | null) => {
+                  if (!value) {
+                    return;
+                  }
 
-                <TextField
-                  fullWidth
-                  margin="dense"
-                  label={mermaCantidadLabel}
-                  value={mermaCantidadInput}
-                  placeholder={`Ejemplo: ${selectedMermaUnitInfo.example}`}
-                  inputProps={{ inputMode: 'decimal' }}
-                  onChange={(event) => {
-                    const sanitized = sanitizeLocalizedDecimalInput(
-                      event.target.value
-                    );
-                    setMermaCantidadInput(sanitized);
+                  setConsumeMode(value);
+                }}
+                sx={{ mb: 2 }}
+              >
+                <ToggleButton value="raciones">Por raciones</ToggleButton>
+                <ToggleButton value="cantidad" disabled={rationAmount === null}>
+                  Por cantidad/peso
+                </ToggleButton>
+              </ToggleButtonGroup>
+              <TextField
+                fullWidth
+                type="text"
+                label={
+                  consumeMode === 'raciones'
+                    ? 'Cantidad de Raciones'
+                    : `Cantidad a consumir (${consumingItem?.receta?.unidadResultado || 'unidad'})`
+                }
+                value={consumeMode === 'raciones' ? portionsInput : amountInput}
+                onChange={(e) => {
+                  handleConsumptionInputChange(consumeMode, e.target.value);
+                }}
+                error={isCurrentValueInvalid}
+                helperText={
+                  consumeMode === 'raciones'
+                    ? `Máximo disponible: ${formatRations(availablePortions)} raciones.`
+                    : isAmountModeWithoutEquivalence
+                      ? 'Esta receta no tiene una equivalencia válida por ración para consumir por cantidad o peso.'
+                      : isAmountMultipleInvalid && amountConsumptionStep
+                        ? `Debe ser múltiplo de ${formatAmount(amountConsumptionStep)} ${consumingItem?.receta?.unidadResultado || 'unidad'}.`
+                        : `Máximo disponible: ${formatAmount(maxConsumableAmount ?? 0)} ${consumingItem?.receta?.unidadResultado || ''}.`
+                }
+                inputProps={{ inputMode: 'decimal' }}
+                margin="dense"
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setConsumingId(null)}>Cancelar</Button>
+              <Button
+                variant="contained"
+                color="success"
+                onClick={handleConsume}
+                disabled={isCurrentValueInvalid}
+              >
+                Confirmar Consumo
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          <Dialog
+            open={!!mermaLote}
+            onClose={closeMermaDialog}
+            fullWidth
+            maxWidth="sm"
+          >
+            <DialogTitle>Reportar merma de producción</DialogTitle>
+            <DialogContent>
+              <Typography variant="body2" sx={{ mb: 2 }}>
+                Registra la merma real de un ingrediente usado en esta
+                preparación sin alterar estados históricos del lote.
+              </Typography>
+
+              {mermaLote && (
+                <Box
+                  sx={{
+                    mb: 2,
+                    p: 1.5,
+                    borderRadius: 2,
+                    bgcolor: 'action.hover',
                   }}
-                  error={isMermaCantidadInvalid}
-                  helperText={mermaCantidadHelperText}
-                />
+                >
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                    Lote: {mermaLote.id}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Receta: {mermaLote.receta?.nombre || '—'}
+                  </Typography>
+                </Box>
+              )}
 
-                <FormControl fullWidth margin="dense">
-                  <InputLabel id="merma-motivo-label">Motivo</InputLabel>
-                  <Select
-                    labelId="merma-motivo-label"
-                    label="Motivo"
-                    value={mermaMotivo}
-                    onChange={(event) =>
-                      setMermaMotivo(event.target.value as MotivoMerma)
-                    }
-                  >
-                    <MenuItem value={MotivoMerma.ERROR_PREPARACION}>
-                      Error de preparación
-                    </MenuItem>
-                    <MenuItem value={MotivoMerma.ROTURA}>Rotura</MenuItem>
-                    <MenuItem value={MotivoMerma.DETERIORO}>
-                      Deterioro / Caducidad
-                    </MenuItem>
-                    <MenuItem value={MotivoMerma.HURTO}>
-                      Hurto / Pérdida
-                    </MenuItem>
-                    <MenuItem value={MotivoMerma.OTROS}>Otros</MenuItem>
-                  </Select>
-                </FormControl>
+              {isLoadingMermaDetalle ? (
+                <Typography variant="body2" color="text.secondary">
+                  Cargando ingredientes de la receta...
+                </Typography>
+              ) : mermaLoadError ? (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  {mermaLoadError}
+                </Alert>
+              ) : mermaIngredientes.length === 0 ? (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  No se encontraron ingredientes válidos para reportar merma en
+                  este lote.
+                </Alert>
+              ) : (
+                <>
+                  <FormControl fullWidth margin="dense">
+                    <InputLabel id="merma-ingrediente-label">
+                      Ingrediente
+                    </InputLabel>
+                    <Select
+                      labelId="merma-ingrediente-label"
+                      label="Ingrediente"
+                      value={mermaProductoId}
+                      onChange={(event) =>
+                        setMermaProductoId(String(event.target.value))
+                      }
+                    >
+                      {mermaIngredientes.map((ingrediente) => (
+                        <MenuItem
+                          key={ingrediente.productoId}
+                          value={ingrediente.productoId}
+                        >
+                          {ingrediente.productoNombre} ·{' '}
+                          {getMermaUnitInfo(ingrediente.unidad).fullLabel}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
 
-                <TextField
-                  fullWidth
-                  margin="dense"
-                  multiline
-                  minRows={2}
-                  maxRows={4}
-                  label="Observaciones"
-                  value={mermaNotas}
-                  onChange={(event) => setMermaNotas(event.target.value)}
-                />
-              </>
-            )}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={closeMermaDialog} disabled={isSubmittingMerma}>
-              Cancelar
-            </Button>
-            <Button
-              variant="contained"
-              color="warning"
-              onClick={handleSubmitMerma}
-              disabled={isMermaFormInvalid}
-            >
-              Registrar merma
-            </Button>
-          </DialogActions>
-        </Dialog>
+                  {selectedMermaIngrediente && (
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: 'block', mt: 0.5, mb: 1 }}
+                    >
+                      Se registrará en {selectedMermaUnitInfo.fullLabel}.
+                      {selectedMermaUnitInfo.note
+                        ? ` ${selectedMermaUnitInfo.note}`
+                        : ''}
+                    </Typography>
+                  )}
+
+                  <TextField
+                    fullWidth
+                    margin="dense"
+                    label={mermaCantidadLabel}
+                    value={mermaCantidadInput}
+                    placeholder={`Ejemplo: ${selectedMermaUnitInfo.example}`}
+                    inputProps={{ inputMode: 'decimal' }}
+                    onChange={(event) => {
+                      const sanitized = sanitizeLocalizedDecimalInput(
+                        event.target.value
+                      );
+                      setMermaCantidadInput(sanitized);
+                    }}
+                    error={isMermaCantidadInvalid}
+                    helperText={mermaCantidadHelperText}
+                  />
+
+                  <FormControl fullWidth margin="dense">
+                    <InputLabel id="merma-motivo-label">Motivo</InputLabel>
+                    <Select
+                      labelId="merma-motivo-label"
+                      label="Motivo"
+                      value={mermaMotivo}
+                      onChange={(event) =>
+                        setMermaMotivo(event.target.value as MotivoMerma)
+                      }
+                    >
+                      <MenuItem value={MotivoMerma.ERROR_PREPARACION}>
+                        Error de preparación
+                      </MenuItem>
+                      <MenuItem value={MotivoMerma.ROTURA}>Rotura</MenuItem>
+                      <MenuItem value={MotivoMerma.DETERIORO}>
+                        Deterioro / Caducidad
+                      </MenuItem>
+                      <MenuItem value={MotivoMerma.HURTO}>
+                        Hurto / Pérdida
+                      </MenuItem>
+                      <MenuItem value={MotivoMerma.OTROS}>Otros</MenuItem>
+                    </Select>
+                  </FormControl>
+
+                  <TextField
+                    fullWidth
+                    margin="dense"
+                    multiline
+                    minRows={2}
+                    maxRows={4}
+                    label="Observaciones"
+                    value={mermaNotas}
+                    onChange={(event) => setMermaNotas(event.target.value)}
+                  />
+                </>
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={closeMermaDialog} disabled={isSubmittingMerma}>
+                Cancelar
+              </Button>
+              <Button
+                variant="contained"
+                color="warning"
+                onClick={handleSubmitMerma}
+                disabled={isMermaFormInvalid}
+              >
+                Registrar merma
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </Box>
       </Paper>
     </Box>
   );

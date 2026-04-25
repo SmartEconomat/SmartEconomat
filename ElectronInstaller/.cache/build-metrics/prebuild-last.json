@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-04-24T20:23:38.907Z",
+  "elapsedMs": 76513,
+  "elapsedSeconds": 76.5,
+  "stageMetrics": [
+    {
+      "label": "build-backend",
+      "elapsedMs": 29896,
+      "elapsedSeconds": 29.9
+    },
+    {
+      "label": "build-frontend",
+      "elapsedMs": 46615,
+      "elapsedSeconds": 46.62
+    }
+  ]
+}

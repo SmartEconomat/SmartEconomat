@@ -1,6 +1,18 @@
 import { SEED_REFERENCE_DATE } from './deterministic.seed-data';
 
+/**
+ * @description Custom error class for HTTP failures that occur during seeder HTTP requests.
+ * Carries the HTTP status code, a retriable flag, and an optional `Retry-After` delay
+ * so that the SeedContext retry loop can make informed back-off decisions.
+ */
 export class HttpSeedRequestError extends Error {
+  /**
+   * @description Creates a new HttpSeedRequestError.
+   * @param {number} status - HTTP response status code (e.g. 429, 500).
+   * @param {string} message - Human-readable error message.
+   * @param {boolean} retriable - Whether the request should be retried.
+   * @param {number} [retryAfterMs] - Optional milliseconds to wait before retrying (from `Retry-After` header).
+   */
   constructor(
     public readonly status: number,
     message: string,
@@ -12,10 +24,25 @@ export class HttpSeedRequestError extends Error {
   }
 }
 
+/**
+ * @description Type guard that checks whether a parsed API response is wrapped in a
+ * `{ data: ... }` envelope as returned by the SmartEconomat `TransformInterceptor`.
+ * @param {unknown} value - Parsed response body to check.
+ * @returns {value is { data: unknown }} `true` if the value has a `data` property.
+ */
 export function hasDataEnvelope(value: unknown): value is { data: unknown } {
   return !!value && typeof value === 'object' && 'data' in value;
 }
 
+/**
+ * @description Reads and parses the body of a Fetch API Response based on its `Content-Type`.
+ * - `application/json` → parsed JSON object.
+ * - `application/pdf` or Office `xlsx` → `{ raw: 'binary:<bytes>' }` summary.
+ * - Other content types → raw text string.
+ * - Empty or missing content type → `null`.
+ * @param {Response} response - Fetch API Response whose body has not yet been consumed.
+ * @returns {Promise<Record<string, unknown> | string | null>} Parsed body representation.
+ */
 export async function parseSeedResponseBody(
   response: Response
 ): Promise<Record<string, unknown> | string | null> {
@@ -44,6 +71,15 @@ export async function parseSeedResponseBody(
   return text || null;
 }
 
+/**
+ * @description Computes the back-off delay in milliseconds for a given retry attempt
+ * using exponential back-off with a deterministic jitter term.
+ * The result is capped at `backoffMaxMs`.
+ * @param {number} backoffBaseMs - Base delay in milliseconds (used as the multiplier for `2^attempt`).
+ * @param {number} backoffMaxMs - Maximum allowed delay in milliseconds.
+ * @param {number} attempt - Zero-based retry attempt index.
+ * @returns {number} Computed back-off delay in milliseconds.
+ */
 export function computeSeedBackoffMs(
   backoffBaseMs: number,
   backoffMaxMs: number,
@@ -55,6 +91,13 @@ export function computeSeedBackoffMs(
   return Math.min(backoffMaxMs, exponential + jitter);
 }
 
+/**
+ * @description Parses the value of a `Retry-After` HTTP response header into milliseconds.
+ * Accepts both a numeric seconds value (e.g. `"30"`) and an HTTP-date string
+ * (e.g. `"Wed, 21 Oct 2026 07:28:00 GMT"`). Returns `undefined` for unparseable values.
+ * @param {string | null} headerValue - Raw `Retry-After` header value, or `null` if absent.
+ * @returns {number | undefined} Non-negative milliseconds to wait, or `undefined` if not parseable.
+ */
 export function parseSeedRetryAfterMs(
   headerValue: string | null
 ): number | undefined {
@@ -75,6 +118,14 @@ export function parseSeedRetryAfterMs(
   return Math.max(0, targetTime - SEED_REFERENCE_DATE.getTime());
 }
 
+/**
+ * @description Converts an arbitrary value to a string safe for log output.
+ * - `undefined` → `'undefined'`.
+ * - Strings are returned as-is.
+ * - All other values are JSON-serialized; unserializable values yield `'[unserializable]'`.
+ * @param {unknown} value - Value to stringify.
+ * @returns {string} A string representation of the value.
+ */
 export function seedSafeStringify(value: unknown): string {
   if (value === undefined) {
     return 'undefined';

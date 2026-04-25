@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
 import { Button, Box, Typography } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import Modal from './Modal';
 import Spinner from './Spinner';
 
@@ -12,6 +13,9 @@ type ButtonColor =
   | 'info'
   | 'warning';
 
+/**
+ * Props for the {@link ConfirmDialog} component.
+ */
 export interface ConfirmDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -28,14 +32,34 @@ export interface ConfirmDialogProps {
   isLoading?: boolean;
 }
 
+/**
+ * Two-button confirmation dialog (cancel + confirm).
+ *
+ * Renders a small `Modal` with a title, a message body (string or arbitrary
+ * JSX), and two action buttons whose text, colour, and variant are fully
+ * configurable. Shows an inline `Spinner` on the confirm button while
+ * `isLoading` is `true`.
+ *
+ * @param props - See {@link ConfirmDialogProps}.
+ * @returns A modal confirmation dialog.
+ * @example
+ * <ConfirmDialog
+ *   isOpen={showDelete}
+ *   onClose={() => setShowDelete(false)}
+ *   onConfirm={handleDelete}
+ *   title="Eliminar registro"
+ *   message="Esta acción no se puede deshacer."
+ *   confirmText="Eliminar"
+ * />
+ */
 export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   isOpen,
   onClose,
   onConfirm,
-  title = 'Confirmar acción',
+  title,
   message,
-  confirmText = 'Confirmar',
-  cancelText = 'Cancelar',
+  confirmText,
+  cancelText,
   cancelColor = 'inherit',
   cancelVariant = 'text',
   onCancel,
@@ -43,6 +67,11 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   confirmVariant = 'contained',
   isLoading = false,
 }) => {
+  const { t } = useTranslation();
+  const resolvedTitle = title ?? t('confirmDialog.title');
+  const resolvedConfirmText = confirmText ?? t('confirmDialog.confirm');
+  const resolvedCancelText = cancelText ?? t('confirmDialog.cancel');
+
   const handleCancel = () => {
     (onCancel || onClose)();
   };
@@ -52,7 +81,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} title={resolvedTitle} size="sm">
       <Box sx={{ pb: 3 }}>
         {typeof message === 'string' ? (
           <Typography variant="body1" color="text.secondary">
@@ -63,15 +92,15 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         )}
       </Box>
 
-      {/* Acciones */}
+      {/* Actions */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-        {cancelText && (
+        {resolvedCancelText && (
           <Button
             onClick={handleCancel}
             color={cancelColor}
             variant={cancelVariant}
           >
-            {cancelText}
+            {resolvedCancelText}
           </Button>
         )}
         <Button
@@ -84,7 +113,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             isLoading ? <Spinner size="sm" color="inherit" /> : undefined
           }
         >
-          {confirmText}
+          {resolvedConfirmText}
         </Button>
       </Box>
     </Modal>

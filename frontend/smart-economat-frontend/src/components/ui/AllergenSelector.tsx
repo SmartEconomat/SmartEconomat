@@ -1,18 +1,39 @@
 import React from 'react';
 import { Box, Typography, Tooltip } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { EU_ALLERGENS } from '../../utils/constants';
 
+/**
+ * Props for the {@link AllergenSelector} component.
+ */
 export interface AllergenSelectorProps {
+  /** Currently selected allergen IDs (e.g. `['GLUTEN', 'LACTEOS']`). */
   value: string[];
+  /** Called with the updated selection whenever a tile is toggled. */
   onChange: (newValue: string[]) => void;
+  /** When `true` all tiles are non-interactive and visually dimmed. */
   disabled?: boolean;
 }
 
+/**
+ * Interactive allergen picker rendered as a responsive grid of icon tiles.
+ *
+ * Displays all 14 EU-regulated allergens from {@link EU_ALLERGENS}. Each tile
+ * toggles the corresponding allergen ID in/out of `value`. Selected tiles are
+ * highlighted with the primary colour; deselected tiles use a neutral style.
+ *
+ * @param props - See {@link AllergenSelectorProps}.
+ * @returns A labelled grid of toggleable allergen tiles.
+ * @example
+ * const [selected, setSelected] = useState<string[]>([]);
+ * <AllergenSelector value={selected} onChange={setSelected} />
+ */
 const AllergenSelector: React.FC<AllergenSelectorProps> = ({
   value = [],
   onChange,
   disabled,
 }) => {
+  const { t } = useTranslation();
   const handleToggle = (id: string) => {
     if (disabled) return;
     const currentIndex = value.indexOf(id);
@@ -30,7 +51,7 @@ const AllergenSelector: React.FC<AllergenSelectorProps> = ({
   return (
     <Box sx={{ width: '100%', mt: 2 }}>
       <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-        Información de Alérgenos
+        {t('allergens.sectionTitle')}
       </Typography>
       <Box display="flex" flexWrap="wrap" gap={1}>
         {EU_ALLERGENS.map((allergen) => {
@@ -68,7 +89,11 @@ const AllergenSelector: React.FC<AllergenSelectorProps> = ({
                 },
               }}
             >
-              <Tooltip title={allergen.label}>
+              <Tooltip
+                title={t(`allergens.${allergen.id}`, {
+                  defaultValue: allergen.label,
+                })}
+              >
                 <Box sx={{ display: 'flex', mb: 0.5 }}>{allergen.icon}</Box>
               </Tooltip>
               <Typography
@@ -81,7 +106,9 @@ const AllergenSelector: React.FC<AllergenSelectorProps> = ({
                   hyphens: 'auto',
                 }}
               >
-                {allergen.label}
+                {t(`allergens.${allergen.id}`, {
+                  defaultValue: allergen.label,
+                })}
               </Typography>
             </Box>
           );

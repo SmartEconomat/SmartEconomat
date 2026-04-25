@@ -12,8 +12,8 @@ Desplegar backend con imagen optimizada, variables seguras y ejecución no-root.
 ## Variables críticas
 - `NODE_ENV=production`
 - `JWT_SECRET` robusto
-- `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`
-- `FRONTEND_API_URL`
+- `DB_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
+- `URL_FRONTEND_DERIVADA`
 - `SENTRY_DSN`
 
 ## Checklist de hardening

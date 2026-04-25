@@ -95,6 +95,8 @@ export interface Producto {
   fechaCaducidad?: string;
   proveedores?: ProductoProveedor[];
   pmp?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface HistorialPrecio {
@@ -127,4 +129,5 @@ export interface ProductosQueryParams {
   alergenos?: string[];
   sortBy?: string;
   order?: 'ASC' | 'DESC' | 'asc' | 'desc';
+  soloEliminados?: boolean;
 }

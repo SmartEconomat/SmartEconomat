@@ -3,6 +3,11 @@
 const { existsSync } = require('node:fs');
 const { resolve } = require('node:path');
 
+const {
+  parseBooleanEnv,
+  assertSchemaReadyForAlignment,
+} = require('./prod-bootstrap-guards');
+
 const MAX_INIT_ATTEMPTS = 30;
 const RETRY_DELAY_MS = 2000;
 
@@ -10,23 +15,6 @@ function sleep(ms) {
   return new Promise((resolvePromise) => {
     setTimeout(resolvePromise, ms);
   });
-}
-
-function parseBooleanEnv(value, defaultValue) {
-  if (typeof value !== 'string') {
-    return defaultValue;
-  }
-
-  const normalized = value.trim().toLowerCase();
-  if (normalized === 'true' || normalized === '1' || normalized === 'yes') {
-    return true;
-  }
-
-  if (normalized === 'false' || normalized === '0' || normalized === 'no') {
-    return false;
-  }
-
-  return defaultValue;
 }
 
 function getDistDataSource(cwd) {
@@ -107,6 +95,40 @@ async function applySchemaAlignment(dataSource) {
     `ALTER TABLE IF EXISTS "produccion_lote" ADD COLUMN IF NOT EXISTS "fecha_agotado" TIMESTAMP WITH TIME ZONE`,
 
     `ALTER TABLE IF EXISTS "pedido_usuario" ADD COLUMN IF NOT EXISTS "ubicacion_entrega_sugerida_id" uuid`,
+
+    `ALTER TABLE IF EXISTS "rol" ADD COLUMN IF NOT EXISTS "plantilla_rol_id" uuid`,
+    `CREATE INDEX IF NOT EXISTS "idx_rol_plantilla_rol_id" ON "rol" ("plantilla_rol_id")`,
+    `UPDATE "rol" SET "plantilla_rol_id" = "plantilla_rol"."id" FROM "plantilla_rol" WHERE "rol"."plantilla_rol_id" IS NULL AND "rol"."deleted_at" IS NULL AND "plantilla_rol"."deleted_at" IS NULL AND UPPER("rol"."nombre") = UPPER("plantilla_rol"."nombre")`,
+    `ALTER TABLE "rol" DROP CONSTRAINT IF EXISTS "FK_rol_plantilla_rol_id"`,
+    `ALTER TABLE "rol" DROP CONSTRAINT IF EXISTS "FK_rol_plantilla_rol_id_plantilla_rol"`,
+    `DO $$
+     BEGIN
+       IF EXISTS (
+         SELECT 1
+         FROM information_schema.columns
+         WHERE table_schema = 'public'
+           AND table_name = 'rol'
+           AND column_name = 'plantilla_rol_id'
+       ) AND EXISTS (
+         SELECT 1
+         FROM information_schema.tables
+         WHERE table_schema = 'public'
+           AND table_name = 'plantilla_rol'
+       ) AND NOT EXISTS (
+         SELECT 1
+         FROM pg_constraint c
+         JOIN pg_class t ON t.oid = c.conrelid
+         JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY(c.conkey)
+         WHERE t.relname = 'rol'
+           AND c.contype = 'f'
+           AND a.attname = 'plantilla_rol_id'
+       ) THEN
+         ALTER TABLE "rol"
+           ADD CONSTRAINT "FK_rol_plantilla_rol_id_plantilla_rol"
+           FOREIGN KEY ("plantilla_rol_id") REFERENCES "plantilla_rol"("id")
+           ON DELETE SET NULL ON UPDATE NO ACTION;
+       END IF;
+     END $$;`,
 
     `ALTER TABLE IF EXISTS "purchase_batch" ADD COLUMN IF NOT EXISTS "numero_global" bigint`,
     `ALTER TABLE IF EXISTS "purchase_batch" ADD COLUMN IF NOT EXISTS "referencia" varchar(32)`,
@@ -304,6 +326,38 @@ async function applySchemaAlignment(dataSource) {
   console.log('[prod-bootstrap-runner] Alineacion de esquema completada.');
 }
 
+async function runSeederIfEnabled() {
+  const enabled = parseBooleanEnv(process.env.RUN_BOOTSTRAP_SEEDER, false);
+  if (!enabled) {
+    return;
+  }
+
+  console.log(
+    '[prod-bootstrap-runner] RUN_BOOTSTRAP_SEEDER=true. Iniciando siembra automatica de administradores...'
+  );
+
+  const { spawnSync } = require('node:child_process');
+  const seederPath = resolve(
+    process.cwd(),
+    'scripts/bootstrap-admin-users-runner.js'
+  );
+
+  const result = spawnSync('node', [seederPath, '--force-production'], {
+    stdio: 'inherit',
+    env: process.env,
+  });
+
+  if (result.status !== 0) {
+    console.error(
+      `[prod-bootstrap-runner] El seeder de administradores fallo con codigo ${result.status}`
+    );
+  } else {
+    console.log(
+      '[prod-bootstrap-runner] Siembra de administradores completada.'
+    );
+  }
+}
+
 async function runBootstrap() {
   const cwd = process.cwd();
   const dataSource = getDistDataSource(cwd);
@@ -312,12 +366,15 @@ async function runBootstrap() {
 
   try {
     await runMigrationsIfEnabled(dataSource);
+    await assertSchemaReadyForAlignment(dataSource);
     await applySchemaAlignment(dataSource);
   } finally {
     if (dataSource.isInitialized) {
       await dataSource.destroy();
     }
   }
+
+  await runSeederIfEnabled();
 }
 
 async function main() {
@@ -362,7 +419,10 @@ async function main() {
     });
 
     child.on('error', (error) => {
-      console.error('[prod-bootstrap-runner] Error ejecutando aplicación:', error);
+      console.error(
+        '[prod-bootstrap-runner] Error ejecutando aplicación:',
+        error
+      );
       process.exit(1);
     });
 
@@ -382,4 +442,6 @@ async function main() {
   }
 }
 
-main();
+if (require.main === module) {
+  main();
+}

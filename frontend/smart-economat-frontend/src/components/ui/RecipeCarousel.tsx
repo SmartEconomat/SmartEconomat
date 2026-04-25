@@ -5,16 +5,27 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 
+/**
+ * Represents a single slide in the {@link RecipeCarousel}.
+ */
 interface CarouselItem {
+  /** Unique identifier for the slide. */
   id: string;
+  /** Recipe name displayed as the slide title. */
   title: string;
+  /** Brief description of the recipe. */
   description: string;
+  /** Path to the background image. */
   image: string;
+  /** Estimated preparation time (e.g. `'45 min'`). */
   time: string;
+  /** Difficulty level (e.g. `'Fácil'`, `'Media'`). */
   difficulty: string;
+  /** Cuisine or dietary category badge label. */
   category: string;
 }
 
+/** Static demo slides shown in the carousel. */
 const ITEMS: CarouselItem[] = [
   {
     id: '1',
@@ -48,6 +59,16 @@ const ITEMS: CarouselItem[] = [
   },
 ];
 
+/**
+ * Auto-advancing image carousel showcasing featured recipes.
+ *
+ * Cycles through {@link ITEMS} every 5 seconds with a cross-fade transition.
+ * Includes previous/next navigation buttons and dot indicators for manual control.
+ *
+ * @returns JSX element rendering the recipe carousel with animated slides.
+ * @example
+ * <RecipeCarousel />
+ */
 const RecipeCarousel: React.FC = () => {
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -65,7 +86,10 @@ const RecipeCarousel: React.FC = () => {
   }, [activeIndex]);
 
   return (
-    <Box sx={{ width: '100%', mb: 4, position: 'relative' }}>
+    <Box
+      id="recipe-carousel-container"
+      sx={{ width: '100%', mb: 4, position: 'relative' }}
+    >
       <Paper
         elevation={0}
         sx={{
@@ -73,7 +97,7 @@ const RecipeCarousel: React.FC = () => {
           borderRadius: 4,
           overflow: 'hidden',
           position: 'relative',
-          background: '#000',
+          background: (theme) => theme.palette.background.default,
           transition: 'all 0.5s ease-in-out',
         }}
       >
@@ -100,7 +124,7 @@ const RecipeCarousel: React.FC = () => {
                 width: '100%',
                 height: '70%',
                 background:
-                  'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%)',
+                  'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0) 100%)',
               },
             }}
           >
@@ -110,6 +134,7 @@ const RecipeCarousel: React.FC = () => {
                 bottom: 0,
                 left: 0,
                 p: { xs: 2, md: 3 },
+                pl: { xs: 6, md: 8 },
                 width: { xs: '100%', md: '60%' },
                 zIndex: 2,
                 color: 'white',

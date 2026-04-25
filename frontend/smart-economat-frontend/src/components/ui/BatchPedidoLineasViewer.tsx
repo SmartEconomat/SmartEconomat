@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -67,11 +68,24 @@ interface BatchPedidoLineasViewerProps {
   showPdfActions?: boolean;
 }
 
+/**
+ * Viewer for the product lines of a purchase batch or user order.
+ *
+ * Groups products by supplier, aggregates quantities across individual orders,
+ * and optionally shows a summary table of all involved orders. Provides PDF
+ * download with configurable options (include cancelled orders, page per supplier).
+ *
+ * @param props - See {@link BatchPedidoLineasViewerProps}.
+ * @returns JSX element with grouped product tables, optional order summary, and print controls.
+ * @example
+ * <BatchPedidoLineasViewer batch={purchaseBatch} mode="batch" />
+ */
 const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
   batch,
   mode = 'batch',
   showPdfActions = true,
 }) => {
+  const { t } = useTranslation();
   const toast = useToast();
   const [incluirCancelados, setIncluirCancelados] = React.useState(true);
   const [paginaPorProveedor, setPaginaPorProveedor] = React.useState(false);
@@ -91,7 +105,7 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
       );
     } catch (err: unknown) {
       toast.error(
-        err instanceof Error ? err.message : 'Error al descargar el PDF'
+        err instanceof Error ? err.message : t('batchLineas.downloadError')
       );
     } finally {
       setIsDownloading(false);
@@ -101,14 +115,20 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
   const groupedByProvider = React.useMemo(() => {
     const groups: Record<string, BatchProviderGroup> = {};
 
-    batch.pedidos?.forEach((p) => {
-      if (!incluirCancelados && p.estado === EstadoPedido.CANCELADO) return;
-      const provId = p.proveedor?.id || 'unknown';
-      if (!groups[provId]) {
-        groups[provId] = { proveedor: p.proveedor, pedidos: [], total: 0 };
+    batch.pedidos?.forEach((pedido) => {
+      if (!incluirCancelados && pedido.estado === EstadoPedido.CANCELADO)
+        return;
+
+      const key = pedido.proveedor?.id ?? '__sin_proveedor__';
+      if (!groups[key]) {
+        groups[key] = {
+          proveedor: pedido.proveedor,
+          pedidos: [],
+          total: 0,
+        };
       }
-      groups[provId].pedidos.push(p);
-      groups[provId].total += Number(p.costeTotal || 0);
+      groups[key].pedidos.push(pedido);
+      groups[key].total += Number(pedido.costeTotal ?? 0);
     });
 
     return Object.values(groups);
@@ -202,8 +222,8 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
       <Box sx={{ p: 4, textAlign: 'center' }}>
         <Typography color="text.secondary">
           {mode === 'pedido'
-            ? 'No hay líneas asociadas a este pedido.'
-            : 'No hay pedidos en este lote.'}
+            ? t('batchLineas.noLines')
+            : t('batchLineas.noPedidos')}
         </Typography>
       </Box>
     );
@@ -240,7 +260,7 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
             color="info.main"
             sx={{ fontWeight: 'bold', textTransform: 'uppercase' }}
           >
-            Observaciones:
+            {t('batchLineas.observations')}:
           </Typography>
           <Typography variant="body2" sx={{ mt: 0.5 }}>
             {batch.observaciones}
@@ -267,15 +287,16 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
                 color="primary.main"
                 sx={{ fontWeight: 'bold' }}
               >
-                {group.proveedor?.nombre || 'Proveedor Desconocido'}
+                {group.proveedor?.nombre || t('batchLineas.unknownSupplier')}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {group.pedidos.length} pedido(s) consolidado(s) para este
-                proveedor
+                {t('batchLineas.consolidatedOrders', {
+                  count: group.pedidos.length,
+                })}
               </Typography>
             </Box>
             <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-              Subtotal: {group.total.toFixed(2)} €
+              {t('batchLineas.subtotal')}: {group.total.toFixed(2)} €
             </Typography>
           </Box>
 
@@ -284,26 +305,28 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
               <TableHead sx={{ bgcolor: 'grey.50' }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 'bold' }}>
-                    Producto / Marca
+                    {t('batchLineas.columns.productBrand')}
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Pedido por</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    {t('batchLineas.columns.orderedBy')}
+                  </TableCell>
                   <TableCell
                     align="right"
                     sx={{ fontWeight: 'bold', width: 90 }}
                   >
-                    Cantidad
+                    {t('batchLineas.columns.quantity')}
                   </TableCell>
                   <TableCell
                     align="right"
                     sx={{ fontWeight: 'bold', width: 110 }}
                   >
-                    Precio Unid.
+                    {t('batchLineas.columns.unitPrice')}
                   </TableCell>
                   <TableCell
                     align="right"
                     sx={{ fontWeight: 'bold', width: 110 }}
                   >
-                    Subtotal
+                    {t('batchLineas.columns.subtotal')}
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -313,11 +336,12 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
                     <TableCell>
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
                         {item.pp.productoProveedor?.producto?.nombre ||
-                          'Desconocido'}
+                          t('batchLineas.unknown')}
                       </Typography>
                       {item.pp.productoProveedor?.marca && (
                         <Typography variant="caption" color="text.secondary">
-                          Marca: {item.pp.productoProveedor.marca}
+                          {t('batchLineas.brand')}:{' '}
+                          {item.pp.productoProveedor.marca}
                         </Typography>
                       )}
                     </TableCell>
@@ -332,7 +356,7 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
                           display="block"
                           sx={{ fontSize: '0.7rem' }}
                         >
-                          Pedidos proveedor: #
+                          {t('batchLineas.supplierOrders')}: #
                           {Array.from(item.numerosPedidoProveedor).join(', #')}
                         </Typography>
                       )}
@@ -343,7 +367,7 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
                           display="block"
                           sx={{ fontSize: '0.7rem' }}
                         >
-                          Ref. pedido visible:{' '}
+                          {t('batchLineas.visibleRef')}:{' '}
                           {Array.from(item.referenciasPedidoVisible).join(', ')}
                         </Typography>
                       )}
@@ -372,23 +396,29 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
       {mode === 'batch' && involvedPedidos.length > 0 && (
         <Box sx={{ mb: 4 }}>
           <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-            Pedidos involucrados en la compra
+            {t('batchLineas.involvedOrders')}
           </Typography>
           <TableContainer component={Paper} variant="outlined" elevation={0}>
             <Table size="small">
               <TableHead sx={{ bgcolor: 'grey.50' }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 'bold' }}>
-                    Nº Pedido Proveedor
+                    {t('batchLineas.involvedColumns.supplierOrderNo')}
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Proveedor</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>
-                    Ref. Pedido Visible
+                    {t('batchLineas.involvedColumns.supplier')}
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Usuario</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Fecha</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    {t('batchLineas.involvedColumns.visibleRef')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    {t('batchLineas.involvedColumns.user')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    {t('batchLineas.involvedColumns.date')}
+                  </TableCell>
                   <TableCell align="center" sx={{ fontWeight: 'bold' }}>
-                    Estado
+                    {t('batchLineas.involvedColumns.status')}
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -443,7 +473,7 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
             gutterBottom
             sx={{ fontWeight: 'bold', color: 'text.secondary' }}
           >
-            OPCIONES DE IMPRESIÓN / REPORTE
+            {t('batchLineas.printOptions').toUpperCase()}
           </Typography>
           <Stack direction="row" spacing={3}>
             <FormControlLabel
@@ -456,7 +486,7 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
               }
               label={
                 <Typography variant="caption" sx={{ fontWeight: 500 }}>
-                  Incluir cancelados
+                  {t('batchLineas.includeCancelled')}
                 </Typography>
               }
             />
@@ -470,7 +500,7 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
               }
               label={
                 <Typography variant="caption" sx={{ fontWeight: 500 }}>
-                  Pág. por proveedor
+                  {t('batchLineas.pagePerSupplier')}
                 </Typography>
               }
             />
@@ -493,7 +523,7 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
               disabled={isDownloading}
               size="small"
             >
-              Descargar PDF
+              {t('batchLineas.downloadPdf')}
             </Button>
           )}
           <Box
@@ -513,7 +543,9 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
               variant="h5"
               sx={{ fontWeight: 800, letterSpacing: -0.5 }}
             >
-              {mode === 'pedido' ? 'TOTAL: ' : 'TOTAL COMPRA: '}
+              {mode === 'pedido'
+                ? `${t('batchLineas.total')}: `
+                : `${t('batchLineas.totalPurchase')}: `}
               {totalBatch.toFixed(2)} €
             </Typography>
           </Box>

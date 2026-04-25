@@ -217,6 +217,14 @@ async function getInventoryNotifications(): Promise<AppNotification[]> {
   return notifications;
 }
 
+/**
+ * @description Fetches application notifications (pending users, low stock, expiring products)
+ * with in-memory caching and in-flight deduplication.
+ * @param {FetchNotificationsOptions} options - Flags controlling which notification categories to include.
+ * @returns {Promise<AppNotification[]>} Sorted list of notifications (urgent first).
+ * @example
+ * const notifications = await fetchAppNotifications({ includePendingUsers: true, includeInventoryAlerts: true });
+ */
 export async function fetchAppNotifications(
   options: FetchNotificationsOptions
 ): Promise<AppNotification[]> {

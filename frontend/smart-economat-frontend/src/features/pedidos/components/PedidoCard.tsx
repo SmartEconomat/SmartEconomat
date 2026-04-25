@@ -21,6 +21,7 @@ import {
   getPedidoCreatorName,
   getPedidoProviderName,
 } from '../utils/pedidoFormatters';
+import { useTranslation } from 'react-i18next';
 
 interface PedidoCardProps {
   pedido: PedidoListItem;
@@ -34,12 +35,23 @@ interface PedidoCardProps {
   };
 }
 
+/**
+ * @description Card representation of a single PedidoListItem for the grid view.
+ * Displays key pedido metadata (number, dates, cost, status, creator) and optionally
+ * renders inline action buttons and a checkbox for bulk selection.
+ * @param props.pedido - The pedido data to display
+ * @param props.actions - Optional React node with action buttons rendered in the card footer
+ * @param props.onRowClick - Optional click handler; when provided the card becomes interactive
+ * @param props.selectionProps - Optional checkbox configuration for bulk-select mode
+ * @returns MUI Card component representing a single pedido
+ */
 const PedidoCard: React.FC<PedidoCardProps> = ({
   pedido,
   actions,
   onRowClick,
   selectionProps,
 }) => {
+  const { t } = useTranslation();
   const isSelectable = !!onRowClick;
 
   return (
@@ -104,7 +116,8 @@ const PedidoCard: React.FC<PedidoCardProps> = ({
               color="text.secondary"
               sx={{ lineHeight: 1, fontSize: '0.65rem' }}
             >
-              Pedido #{formatPedidoListNumber(pedido)}
+              {t('pedidos.card.orderPrefix')}
+              {formatPedidoListNumber(pedido)}
             </Typography>
             <Typography variant="caption" color="text.disabled" display="block">
               ID: {formatPedidoId(pedido.id)}
@@ -159,7 +172,7 @@ const PedidoCard: React.FC<PedidoCardProps> = ({
               display="block"
               sx={{ fontWeight: 500 }}
             >
-              Coste Estimado
+              {t('pedidos.card.estimatedCost')}
             </Typography>
             <Typography
               variant="h6"

@@ -82,6 +82,16 @@ function normalizeProviderSortOrder(
   return String(value).toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
 }
 
+/**
+ * @description Fetches a paginated list of suppliers with optional search and sort filters.
+ * @param {number} [page=1] - Page number to retrieve.
+ * @param {number} [limit=10] - Number of records per page.
+ * @param {string} [search=''] - Optional text search filter.
+ * @param {string} [sortBy] - Field name to sort by.
+ * @param {ProviderSortOrder} [sortOrder] - Sort direction ('asc' | 'desc').
+ * @returns {Promise<PaginatedData<Proveedor>>} Paginated supplier records.
+ * @throws {Error} When the API returns a non-OK response.
+ */
 export async function fetchProveedores(
   page: number = 1,
   limit: number = 10,
@@ -111,6 +121,12 @@ export async function fetchProveedores(
   return body.data;
 }
 
+/**
+ * @description Creates a new supplier after sanitizing and validating the payload.
+ * @param {CreateProveedorPayload} proveedor - Supplier data (nombre is required).
+ * @returns {Promise<Proveedor>} The created supplier.
+ * @throws {Error} When validation fails or the API returns an error response.
+ */
 export async function createProveedor(
   proveedor: CreateProveedorPayload
 ): Promise<Proveedor> {
@@ -130,6 +146,13 @@ export async function createProveedor(
   return body.data;
 }
 
+/**
+ * @description Partially updates an existing supplier after sanitizing the payload.
+ * @param {string} id - The supplier UUID to update.
+ * @param {UpdateProveedorPayload} proveedor - Fields to update.
+ * @returns {Promise<Proveedor>} The updated supplier.
+ * @throws {Error} When validation fails or the API returns an error response.
+ */
 export async function updateProveedor(
   id: string,
   proveedor: UpdateProveedorPayload

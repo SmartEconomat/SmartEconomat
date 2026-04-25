@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, useTheme } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import PersonAddOutlinedIcon from '@mui/icons-material/PersonAddOutlined';
 
@@ -9,6 +10,7 @@ import PersonAddOutlinedIcon from '@mui/icons-material/PersonAddOutlined';
 
 /**
  * Estructura de cada slide del carrusel informativo.
+ *
  * @interface SlideData
  */
 interface SlideData {
@@ -16,49 +18,13 @@ interface SlideData {
   description: string;
 }
 
-/** Slides que se muestran en modo inicio de sesión. */
-const LOGIN_SLIDES: SlideData[] = [
-  {
-    title: 'Bienvenido a SmartEconomat',
-    description:
-      'Gestiona tu economat de forma eficiente, rápida y desde cualquier dispositivo.',
-  },
-  {
-    title: 'Control en tiempo real',
-    description:
-      'Consulta el stock, movimientos y pedidos al momento, sin retrasos ni sorpresas.',
-  },
-  {
-    title: 'Siempre disponible',
-    description: 'Tu economat accesible 24/7 con un sistema seguro y fiable.',
-  },
-];
-
-/** Slides que se muestran en modo registro. */
-const REGISTER_SLIDES: SlideData[] = [
-  {
-    title: 'Únete a SmartEconomat',
-    description:
-      'Regístrate en segundos y empieza a gestionar tu economat hoy mismo.',
-  },
-  {
-    title: 'Todo en un lugar',
-    description:
-      'Productos, recetas, pedidos, incidencias y más, todo integrado en una sola plataforma.',
-  },
-  {
-    title: 'Interfaz moderna y sencilla',
-    description:
-      'Diseño intuitivo para que puedas centrarte en lo que realmente importa.',
-  },
-];
-
 // ─────────────────────────────────────────────
 // Props
 // ─────────────────────────────────────────────
 
 /**
  * Propiedades del componente AuthSlide.
+ *
  * @interface AuthSlideProps
  * @property {boolean} isLogin - Indica si se muestra el modo de inicio de sesión o de registro.
  */
@@ -79,19 +45,58 @@ interface AuthSlideProps {
  * - Muestra un carrusel de 3 slides informativos con dots de navegación fijados al fondo del panel.
  * - El icono (candado / agregar usuario) cambia con una animación de spin suave y llega
  *   siempre en posición vertical (0 deg).
+ * - Los textos de los slides se obtienen del sistema i18n.
  *
  * @param {AuthSlideProps} props - Propiedades del componente.
  * @returns {JSX.Element} Panel lateral de autenticación.
  */
 const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
+
+  /** Slides que se muestran en modo inicio de sesión. */
+  const LOGIN_SLIDES: SlideData[] = [
+    {
+      title: t('auth.slide.login.slide1.title'),
+      description: t('auth.slide.login.slide1.description'),
+    },
+    {
+      title: t('auth.slide.login.slide2.title'),
+      description: t('auth.slide.login.slide2.description'),
+    },
+    {
+      title: t('auth.slide.login.slide3.title'),
+      description: t('auth.slide.login.slide3.description'),
+    },
+  ];
+
+  /** Slides que se muestran en modo registro. */
+  const REGISTER_SLIDES: SlideData[] = [
+    {
+      title: t('auth.slide.register.slide1.title'),
+      description: t('auth.slide.register.slide1.description'),
+    },
+    {
+      title: t('auth.slide.register.slide2.title'),
+      description: t('auth.slide.register.slide2.description'),
+    },
+    {
+      title: t('auth.slide.register.slide3.title'),
+      description: t('auth.slide.register.slide3.description'),
+    },
+  ];
+
   const slides = isLogin ? LOGIN_SLIDES : REGISTER_SLIDES;
 
   const [activeSlide, setActiveSlide] = useState(0);
   /** slideKey es incrementado para disparar la animación del texto en cada cambio. */
   const [slideKey, setSlideKey] = useState(0);
 
-  /** Navega a un slide concreto y dispara la animación de texto. */
+  /**
+   * Navega a un slide concreto y dispara la animación de texto.
+   *
+   * @param {number} index - Índice del slide al que navegar.
+   */
   const goToSlide = useCallback((index: number) => {
     setActiveSlide(index);
     setSlideKey((k) => k + 1);
@@ -178,11 +183,11 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
           justifyContent: 'center',
           alignItems: 'center',
           textAlign: 'center',
-          px: 5,
+          px: { xs: 3, md: 5 },
           color: 'white',
           // En móvil damos más pb para que los dots (48px) no tapen el texto
-          pb: { xs: 7, md: 8 },
-          pt: { xs: 3, md: 0 },
+          pb: { xs: 5, md: 8 },
+          pt: { xs: 2, md: 0 },
         }}
       >
         {/* Icono — oculto en móvil para ahorrar espacio vertical */}
@@ -270,7 +275,7 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
           zIndex: 3,
         }}
         role="tablist"
-        aria-label="Navegación de slides informativos"
+        aria-label={t('auth.slide.navAriaLabel')}
       >
         {slides.map((_, idx) => (
           <Box
@@ -278,7 +283,10 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
             component="button"
             role="tab"
             aria-selected={idx === activeSlide}
-            aria-label={`Slide ${idx + 1} de ${slides.length}`}
+            aria-label={t('auth.slide.dotAriaLabel', {
+              current: idx + 1,
+              total: slides.length,
+            })}
             onClick={() => goToSlide(idx)}
             sx={{
               width: idx === activeSlide ? 28 : 10,

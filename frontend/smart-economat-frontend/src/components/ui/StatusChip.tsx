@@ -1,6 +1,7 @@
 import React from 'react';
 import { Chip, ChipProps } from '@mui/material';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
+import { useTranslation } from 'react-i18next';
 import { CategoriaProducto } from '../../services/producto.types';
 import { getCategoryIconFilled } from '../../features/productos/utils/getCategoryIconFilled';
 
@@ -26,8 +27,16 @@ export type StatusType =
   | 'default'
   | 'unknown';
 
+/**
+ * Props for the {@link StatusChip} component.
+ */
 export interface StatusChipProps extends Omit<ChipProps, 'color'> {
+  /**
+   * Status or category value used to derive the chip colour and default label.
+   * Accepts any {@link StatusType} string or a {@link CategoriaProducto} value.
+   */
   status: StatusType | string;
+  /** Override for the displayed label. When omitted, the status is translated automatically. */
   label?: string;
 }
 
@@ -40,6 +49,18 @@ const CATEGORIA_VALUES = new Set<string>(Object.values(CategoriaProducto));
 const isCategoriaProducto = (status: string): status is CategoriaProducto =>
   CATEGORIA_VALUES.has(status.toLowerCase());
 
+/**
+ * Maps a status string to a MUI semantic colour.
+ *
+ * Normalises the input to lower-case before matching against known status
+ * tokens. Returns `'default'` for unrecognised values.
+ *
+ * @param status - The raw status string to evaluate.
+ * @returns A MUI colour string suitable for `Chip`'s `color` prop.
+ * @example
+ * getStatusColor('completed'); // 'success'
+ * getStatusColor('cancelled'); // 'error'
+ */
 export const getStatusColor = (
   status: string
 ): 'success' | 'error' | 'warning' | 'info' | 'default' => {
@@ -173,6 +194,20 @@ const getTranslatedStatus = (status: string) => {
   return capitalize(String(status));
 };
 
+/**
+ * Versatile status/category chip component.
+ *
+ * Automatically resolves the MUI colour, translated label, and icon based on
+ * the `status` value. Works for workflow statuses (e.g. `'completed'`, `'cancelled'`)
+ * as well as product category values from {@link CategoriaProducto}.
+ *
+ * @param props - See {@link StatusChipProps}.
+ * @returns JSX element rendering a styled MUI `Chip`.
+ * @example
+ * <StatusChip status="completed" />
+ * <StatusChip status={CategoriaProducto.VERDURA} />
+ * <StatusChip status="pending" label="Awaiting review" />
+ */
 export const StatusChip: React.FC<StatusChipProps> = ({
   status,
   label,
@@ -180,15 +215,31 @@ export const StatusChip: React.FC<StatusChipProps> = ({
   variant = 'outlined',
   ...rest
 }) => {
+  const { t } = useTranslation();
   const statusStr = status as string;
   const isCategoria = isCategoriaProducto(statusStr);
 
   const resolvedColor = getStatusColor(statusStr);
-  const displayLabel =
-    label ||
-    (isCategoria
-      ? categoriaTranslations[statusStr.toLowerCase() as CategoriaProducto]
-      : getTranslatedStatus(statusStr));
+
+  const getI18nLabel = (s: string): string => {
+    if (!s) return '—';
+    const normalized = s.toLowerCase();
+    // Try status namespace first, then categoria
+    const statusKey = `status.${s}`;
+    const statusTranslated = t(statusKey, { defaultValue: '' });
+    if (statusTranslated) return statusTranslated;
+    if (isCategoria) {
+      const catKey = `categoria.${s.toUpperCase()}`;
+      const catTranslated = t(catKey, { defaultValue: '' });
+      if (catTranslated) return catTranslated;
+      return (
+        categoriaTranslations[normalized as CategoriaProducto] || capitalize(s)
+      );
+    }
+    return getTranslatedStatus(normalized);
+  };
+
+  const displayLabel = label || getI18nLabel(statusStr);
 
   // Icono de punto para estados que no son categorías
   const dotIcon = (

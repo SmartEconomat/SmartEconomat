@@ -1,0 +1,34 @@
+{
+  "auth": {
+    "login": {
+      "title": "Iniciar sesión",
+      "username": "Usuario",
+      "password": "Contraseña",
+      "submit": "Entrar",
+      "success": "¡Inicio de sesión correcto!"
+    }
+  },
+  "errors": {
+    "notFound": "Recurso no encontrado.",
+    "unauthorized": "Acceso no autorizado.",
+    "forbidden": "No tienes permisos para realizar esta acción.",
+    "badRequest": "Datos de la solicitud no válidos.",
+    "conflict": "Se ha producido un conflicto con el estado actual del recurso.",
+    "internalServer": "Se ha producido un error interno del servidor.",
+    "validationFailed": "La validación ha fallado.",
+    "onlySuperAdmin": "Solo un Super Administrador puede asignar este rol.",
+    "onlyAdmin": "Solo un administrador puede realizar esta acción."
+  },
+  "success": {
+    "created": "Recurso creado correctamente.",
+    "updated": "Recurso actualizado correctamente.",
+    "deleted": "Recurso eliminado correctamente.",
+    "operation": "Operación completada correctamente."
+  },
+  "admin": {
+    "errors": {
+      "onlySuperAdminCanAssign": "Solo un Super Administrador puede asignar el rol de Super Administrador.",
+      "onlyAdminCanAssign": "Solo un administrador puede asignar el rol de Administrador."
+    }
+  }
+}

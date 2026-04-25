@@ -137,12 +137,41 @@ Si no solicitaste este cambio, puedes ignorar este correo de forma segura — tu
 SmartEconomat — Sistema de gestión de economato
 Este es un mensaje automático, por favor no respondas a este correo.`;
 
+/**
+ * Servicio de correo electrónico para el envío de notificaciones transaccionales.
+ * Gestiona la creación del transportador SMTP y el envío de plantillas de correo.
+ * Cuando SMTP no está configurado, opera en modo simulación registrando el enlace por log.
+ *
+ * @class MailService
+ */
 @Injectable()
 export class MailService implements OnApplicationBootstrap {
   private readonly logger = new Logger(MailService.name);
   private transporter: Transporter | null = null;
 
   constructor(private readonly configService: ConfigService) {}
+
+  private deriveFrontendUrl(): string {
+    const domain = (process.env.DOMAIN || '').trim();
+    if (!domain) {
+      return 'http://localhost:5173';
+    }
+
+    if (domain === 'localhost' || domain === '127.0.0.1') {
+      const frontendPort = process.env.FRONTEND_PORT || '5173';
+      return `http://${domain}:${frontendPort}`;
+    }
+
+    return `https://${domain}`;
+  }
+
+  private deriveMailFromAddress(): string {
+    const domain = (process.env.DOMAIN || '').trim();
+    if (!domain || domain === 'localhost' || domain === '127.0.0.1') {
+      return 'noreply@localhost';
+    }
+    return `noreply@${domain}`;
+  }
 
   async onApplicationBootstrap(): Promise<void> {
     if (this.configService.get<string>('NODE_ENV') === 'test') return;
@@ -172,11 +201,15 @@ export class MailService implements OnApplicationBootstrap {
       this.configService.get<string>('MAIL_PORT') ?? '587',
       10
     );
+    const secure =
+      this.configService.get<string>('MAIL_SECURE') !== undefined
+        ? this.configService.get<string>('MAIL_SECURE') === 'true'
+        : port === 465;
 
     const transport = nodemailer.createTransport({
       host,
       port,
-      secure: port === 465,
+      secure,
       auth: { user, pass },
 
       tls: { rejectUnauthorized: isProduction },
@@ -194,13 +227,22 @@ export class MailService implements OnApplicationBootstrap {
     }
   }
 
+  /**
+   * Envía un correo electrónico de recuperación de contraseña al usuario.
+   * Construye el enlace de restablecimiento a partir del token proporcionado y lo inyecta
+   * en las plantillas HTML y de texto plano. Si el transportador SMTP no está configurado,
+   * registra el enlace en el logger (modo simulación) sin lanzar error.
+   *
+   * @param {string} email - Dirección de correo del destinatario.
+   * @param {string} resetToken - Token de restablecimiento generado por el servicio de autenticación.
+   * @returns {Promise<void>}
+   * @throws {InternalServerErrorException} Cuando el envío SMTP falla por un error del servidor de correo.
+   */
   async sendPasswordResetEmail(
     email: string,
     resetToken: string
   ): Promise<void> {
-    const frontendUrl =
-      this.configService.get<string>('FRONTEND_API_URL') ??
-      'http://localhost:5173';
+    const frontendUrl = this.deriveFrontendUrl();
     const recoveryLink = `${frontendUrl}/reset-password?token=${resetToken}`;
 
     if (!this.transporter) {
@@ -221,15 +263,13 @@ export class MailService implements OnApplicationBootstrap {
       return;
     }
 
-    const from =
-      this.configService.get<string>('MAIL_FROM') ??
-      this.configService.get<string>('MAIL_USER');
+    const from = this.deriveMailFromAddress();
 
     try {
       const info: SentMessageInfo = await this.transporter.sendMail({
         from: `"SmartEconomat" <${from}>`,
         to: email,
-        subject: 'Recuperación de contraseña - SmartEconomat',
+        subject: I18nHelper.getError('PASSWORD_RESET_SUBJECT'),
         html: PASSWORD_RESET_HTML.replaceAll('{{RESET_URL}}', recoveryLink),
         text: PASSWORD_RESET_TEXT.replaceAll('{{RESET_URL}}', recoveryLink),
       });

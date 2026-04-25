@@ -12,6 +12,19 @@ import { NormalizeDataPipe } from './common/pipes/normalize-data.pipe';
 
 import helmet from 'helmet';
 
+function deriveFrontendOrigin(): string {
+  const domain = (process.env.DOMAIN || '').trim();
+  if (!domain) {
+    return 'http://localhost:5173';
+  }
+
+  if (domain === 'localhost' || domain === '127.0.0.1') {
+    const frontendPort = process.env.FRONTEND_PORT || '5173';
+    return `http://${domain}:${frontendPort}`;
+  }
+
+  return `https://${domain}`;
+}
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
@@ -50,7 +63,7 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: process.env.FRONTEND_API_URL || '*',
+    origin: deriveFrontendOrigin(),
     credentials: true,
   });
 

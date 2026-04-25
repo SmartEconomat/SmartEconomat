@@ -23,14 +23,21 @@ import { PedidoUsuarioLinea } from '../pedido-usuario-linea.entity/pedido-usuari
 @Check(`"cantidad" > 0`)
 @Check(`"precio_unitario" >= 0`)
 export class PedidoProducto extends BaseEntity {
+  /**
+   * Transient flag (not persisted) indicating whether this line has associated
+   * inventory movements. Populated by the service layer for display purposes.
+   */
   hasLinkedMovements?: boolean;
 
+  /** Foreign key referencing the parent Pedido. */
   @Column({ name: 'pedido_id' })
   pedidoId!: string;
 
+  /** Foreign key referencing the ProductoProveedor for this line. */
   @Column({ name: 'producto_proveedor_id' })
   productoProveedorId!: string;
 
+  /** Foreign key referencing the originating PedidoUsuarioLinea, if consolidated from a user order. */
   @Column({ name: 'pedido_usuario_linea_id', nullable: true })
   pedidoUsuarioLineaId?: string;
 
@@ -91,13 +98,16 @@ export class PedidoProducto extends BaseEntity {
   })
   precioUnitario!: number;
 
+  /** Optional free-text observations for this line (e.g. special packaging requirements). */
   @Column({ type: 'text', nullable: true })
   observaciones?: string;
 
   /* --- Métodos de Dominio --- */
 
   /**
-   * Calcular subtotal (cantidad * precio)
+   * Computes the line subtotal as `cantidad * precioUnitario`.
+   *
+   * @returns {number} The line subtotal.
    */
   get subtotal(): number {
     return Number(this.cantidad) * Number(this.precioUnitario);

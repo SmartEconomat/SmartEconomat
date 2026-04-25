@@ -40,7 +40,15 @@ import { PedidoDraftModule } from './modules/pedido-draft/pedido-draft.module';
 import { RecepcionDraftModule } from './modules/recepcion-draft/recepcion-draft.module';
 import { OpenfoodfactsModule } from './modules/openfoodfacts/openfoodfacts.module';
 import { DistribucionModule } from './modules/distribucion/distribucion.module';
+import { I18nConfigModule } from './config/i18n.module';
 
+/**
+ * @description Root application module for SmartEconomat.
+ * Bootstraps all feature modules, configures global infrastructure (TypeORM, Redis throttling,
+ * Sentry, caching, event emitter, config), and registers global guards and interceptors.
+ *
+ * In `test` environments the TypeORM datasource is replaced with an in-memory pg-mem instance.
+ */
 @Module({
   imports: [
     EventEmitterModule.forRoot(),
@@ -52,6 +60,7 @@ import { DistribucionModule } from './modules/distribucion/distribucion.module';
     ]),
     SentryModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
+    I18nConfigModule,
     TypeOrmModule.forRootAsync({
       useFactory: (): TypeOrmModuleOptions => {
         if (process.env.NODE_ENV === 'test') {

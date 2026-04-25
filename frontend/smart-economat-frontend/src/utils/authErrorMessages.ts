@@ -1,4 +1,13 @@
 import { ApiError, extractApiMessage } from '../services/api.service';
+import i18n from '../i18n';
+
+/**
+ * @module authErrorMessages
+ * Mapeo de errores de autenticación a claves i18n.
+ *
+ * Convierte mensajes de error raw de la API en cadenas localizadas
+ * según la acción que originó el error.
+ */
 
 type AuthAction =
   | 'login'
@@ -12,52 +21,41 @@ const actionMessageMap: Record<AuthAction, Array<[RegExp, string]>> = {
   login: [
     [
       /invalid|inválid|credenciales|contraseña|password/i,
-      'Usuario o contraseña inválidos.',
+      'auth.errors.invalidCredentials',
     ],
-    [
-      /inactive|inactivo|pendiente/i,
-      'Tu cuenta aún está pendiente de activación.',
-    ],
-    [
-      /blocked|bloquead/i,
-      'Tu cuenta está bloqueada. Contacta al administrador.',
-    ],
+    [/inactive|inactivo|pendiente/i, 'auth.errors.accountPending'],
+    [/blocked|bloquead/i, 'auth.errors.accountBlocked'],
   ],
-  forgotPassword: [
-    [
-      /email|correo/i,
-      'Introduce un correo electrónico válido para recuperar tu contraseña.',
-    ],
-  ],
+  forgotPassword: [[/email|correo/i, 'auth.errors.invalidEmail']],
   resetPassword: [
-    [
-      /token|expirad|inválid/i,
-      'El enlace para restablecer la contraseña no es válido o ha expirado.',
-    ],
+    [/token|expirad|inválid/i, 'auth.errors.invalidOrExpiredToken'],
   ],
   changePassword: [
     [
       /actual|current|incorrecta|incorrect/i,
-      'La contraseña actual no es correcta.',
+      'auth.errors.invalidCurrentPassword',
     ],
   ],
   registerAlumno: [
-    [
-      /código|codigo|slot|clase/i,
-      'El código de la clase no es válido o ya no está disponible.',
-    ],
-    [/capacity|cupo|ocupad/i, 'Esta clase ya no tiene plazas disponibles.'],
-    [/taken|exist|username|usuario/i, 'Ese nombre de usuario ya está en uso.'],
+    [/código|codigo|slot|clase/i, 'auth.errors.invalidClassCode'],
+    [/capacity|cupo|ocupad/i, 'auth.errors.classFull'],
+    [/taken|exist|username|usuario/i, 'auth.errors.usernameTaken'],
   ],
   registerProfesor: [
-    [/cial/i, 'El CIAL ingresado ya existe o no es válido.'],
+    [/cial/i, 'auth.errors.invalidCial'],
     [
       /taken|exist|username|usuario|email|correo/i,
-      'El usuario o correo ya están registrados.',
+      'auth.errors.userOrEmailTaken',
     ],
   ],
 };
 
+/**
+ * Normaliza un error desconocido a un mensaje de texto plano.
+ *
+ * @param {unknown} error - Error capturado en un bloque catch.
+ * @returns {string | null} Mensaje legible o `null` si no se puede extraer.
+ */
 function normalizeErrorMessage(error: unknown): string | null {
   if (typeof error === 'string' && error.trim()) {
     return error.trim();
@@ -74,6 +72,19 @@ function normalizeErrorMessage(error: unknown): string | null {
   return extractApiMessage(error);
 }
 
+/**
+ * Obtiene el mensaje de error localizado para una acción de autenticación.
+ *
+ * Recorre el mapa de patrones de la acción hasta encontrar una coincidencia
+ * con el mensaje raw. Si no hay coincidencia devuelve el fallback.
+ *
+ * @param {unknown} error - Error capturado (string, ApiError, Error u objeto).
+ * @param {AuthAction} action - Acción que originó el error (p. ej. `'login'`).
+ * @param {string} fallbackMessage - Mensaje a mostrar si no hay coincidencia.
+ * @returns {string} Cadena traducida o el fallback.
+ * @example
+ * getAuthErrorMessage(err, 'login', t('toast.error')) // => 'Usuario o contraseña inválidos.'
+ */
 export function getAuthErrorMessage(
   error: unknown,
   action: AuthAction,
@@ -85,9 +96,13 @@ export function getAuthErrorMessage(
     return fallbackMessage;
   }
 
-  const mappedMessage = actionMessageMap[action].find(([pattern]) =>
+  const matched = actionMessageMap[action]?.find(([pattern]) =>
     pattern.test(rawMessage)
   );
 
-  return mappedMessage?.[1] || rawMessage || fallbackMessage;
+  if (matched) {
+    return i18n.t(matched[1]);
+  }
+
+  return rawMessage || fallbackMessage;
 }

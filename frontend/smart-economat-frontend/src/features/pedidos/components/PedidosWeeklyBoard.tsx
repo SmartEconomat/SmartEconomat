@@ -30,6 +30,7 @@ import {
   buildPedidoColumns,
   renderPedidoActions,
 } from '../utils/pedidoColumns';
+import { useTranslation } from 'react-i18next';
 import {
   formatCurrency,
   formatPedidoListNumber,
@@ -70,30 +71,53 @@ interface WeeklyGroup {
   users: WeeklyUserGroup[];
 }
 
-const weeklyColumns = buildPedidoColumns().filter(
-  (column) => column.id !== 'usuario'
-);
+// weeklyColumns will be built inside the component using t()
 
-const getWeekRangeLabel = (referenceDate?: string): string => {
+const getWeekRangeLabel = (
+  referenceDate: string | undefined,
+  invalidLabel: string,
+  weekLabel: (start: string, end: string) => string
+): string => {
   if (!referenceDate || !dayjs(referenceDate).isValid()) {
-    return 'Semana sin fecha válida';
+    return invalidLabel;
   }
 
   const start = dayjs(referenceDate).startOf('isoWeek');
   const end = dayjs(referenceDate).endOf('isoWeek');
 
-  return `Semana ${start.format('DD/MM')} - ${end.format('DD/MM')}`;
+  return weekLabel(start.format('DD/MM'), end.format('DD/MM'));
 };
 
-const getPedidoUserName = (pedido: PedidoListItem): string =>
+const getPedidoUserName = (
+  pedido: PedidoListItem,
+  unknownLabel: string
+): string =>
   pedido.usuario?.nombre ||
   pedido.usuario?.username ||
   pedido.usuario?.email ||
-  'Usuario sin identificar';
+  unknownLabel;
 
 const isPendingPedido = (pedido: PedidoListItem): boolean =>
   isPendingPedidoUsuarioStatus(String(pedido.estado));
 
+/**
+ * @description Weekly accordion board for displaying user-visible pedidos grouped by ISO week.
+ * Within each week pedidos are further grouped by user.
+ * Supports optional multi-select consolidation into a purchase batch.
+ * @param props.data - List of pedidos to display
+ * @param props.isLoading - Loading state flag
+ * @param props.permissions - Permission flags for actions
+ * @param props.viewMode - 'list' or 'grid' display mode
+ * @param props.handlers - Action callbacks for each pedido row
+ * @param props.totalItems - Total pedido count displayed in the toolbar
+ * @param props.isConsolidating - Whether a consolidation operation is in progress
+ * @param props.onConsolidateWeek - Callback to consolidate a week's pedidos into a batch
+ * @param props.enableSelection - Whether checkbox selection for consolidation is enabled
+ * @param props.infoMessage - Optional informational message shown above the board
+ * @param props.emptyMessage - Optional message shown when there are no pedidos
+ * @param props.warningMessage - Optional warning message shown above the board
+ * @returns Accordion-based weekly board component
+ */
 const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
   data,
   isLoading,
@@ -104,10 +128,23 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
   isConsolidating = false,
   onConsolidateWeek,
   enableSelection = true,
-  infoMessage = 'Vista operativa para revisar los pedidos pendientes agrupados por semana y por usuario antes de consolidarlos por proveedor.',
-  emptyMessage = 'No hay pedidos pendientes que coincidan con los filtros actuales.',
-  warningMessage = 'Se muestran los primeros {count} pedidos. Si necesitas trabajar con más volumen en una sola vista, el siguiente paso lógico es añadir paginación o filtro de semana específico.',
+  infoMessage,
+  emptyMessage,
+  warningMessage,
 }) => {
+  const { t } = useTranslation();
+  const weeklyColumns = buildPedidoColumns().filter(
+    (column) => column.id !== 'usuario'
+  );
+
+  const resolvedInfoMessage =
+    infoMessage ?? t('pedidos.weeklyBoard.infoMessage');
+  const resolvedEmptyMessage =
+    emptyMessage ?? t('pedidos.weeklyBoard.emptyMessage');
+  const resolvedWarningMessage =
+    warningMessage ??
+    t('pedidos.weeklyBoard.warningMessage', { count: data.length });
+
   const [selectedPedidoUsuarioIds, setSelectedPedidoUsuarioIds] = useState<
     string[]
   >([]);
@@ -123,14 +160,21 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
         groups.get(weekKey) ||
         ({
           weekKey,
-          label: getWeekRangeLabel(pedido.fechaPedido),
+          label: getWeekRangeLabel(
+            pedido.fechaPedido,
+            t('pedidos.weeklyBoard.invalidWeek'),
+            (start, end) => t('pedidos.weeklyBoard.weekLabel', { start, end })
+          ),
           totalAmount: 0,
           users: [],
         } as WeeklyGroup);
 
       currentWeek.totalAmount += Number(pedido.costeTotal || 0);
 
-      const userName = getPedidoUserName(pedido);
+      const userName = getPedidoUserName(
+        pedido,
+        t('pedidos.weeklyBoard.unknownUser')
+      );
       const userId = pedido.usuario?.id || `sin-id-${userName}`;
       const existingUser = currentWeek.users.find(
         (user) => user.userId === userId
@@ -213,7 +257,7 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
             toggleUserSelection(pedidoUsuarioIdsInScope);
           }}
           inputProps={{
-            'aria-label': 'Seleccionar pedidos del usuario',
+            'aria-label': t('pedidos.weeklyBoard.selectUserOrders'),
           }}
         />
       ),
@@ -244,7 +288,9 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
                 toggleUserSelection(pedidoUsuarioIds);
               }}
               inputProps={{
-                'aria-label': `Seleccionar pedido ${pedido.id}`,
+                'aria-label': t('pedidos.weeklyBoard.selectOrder', {
+                  id: pedido.id,
+                }),
               }}
             />
           );
@@ -271,7 +317,7 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
 
   return (
     <Stack spacing={3}>
-      <Alert severity="info">{infoMessage}</Alert>
+      <Alert severity="info">{resolvedInfoMessage}</Alert>
 
       {isLoading && (
         <Paper variant="outlined" sx={{ p: 2 }}>
@@ -280,13 +326,11 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
       )}
 
       {!isLoading && groupedData.length === 0 && (
-        <Alert severity="info">{emptyMessage}</Alert>
+        <Alert severity="info">{resolvedEmptyMessage}</Alert>
       )}
 
       {!isLoading && totalItems > data.length && (
-        <Alert severity="warning">
-          {warningMessage.replace('{count}', String(data.length))}
-        </Alert>
+        <Alert severity="warning">{resolvedWarningMessage}</Alert>
       )}
 
       {!isLoading &&
@@ -308,19 +352,22 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
                     {group.label}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {group.users.length} usuario(s) ·{' '}
-                    {group.users.reduce(
-                      (sum, user) => sum + user.visiblePedidos.length,
-                      0
-                    )}{' '}
-                    pedido(s)
+                    {t('pedidos.weeklyBoard.usersAndOrders', {
+                      users: group.users.length,
+                      orders: group.users.reduce(
+                        (sum, user) => sum + user.visiblePedidos.length,
+                        0
+                      ),
+                    })}
                   </Typography>
                 </Box>
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
                   <Chip
                     color="primary"
                     variant="outlined"
-                    label={`Total estimado ${formatCurrency(group.totalAmount)}`}
+                    label={t('pedidos.weeklyBoard.totalEstimated', {
+                      amount: formatCurrency(group.totalAmount),
+                    })}
                   />
                 </Stack>
               </Box>
@@ -359,7 +406,7 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
                         });
                       }}
                     >
-                      Consolidar semana
+                      {t('pedidos.weeklyBoard.consolidate')}
                     </Button>
                   </Box>
                 )}
@@ -396,7 +443,10 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
                             {user.userName}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            {user.visiblePedidos.length} pedido(s) ·{' '}
+                            {t('pedidos.weeklyBoard.ordersCount', {
+                              count: user.visiblePedidos.length,
+                            })}{' '}
+                            ·{' '}
                             {formatCurrency(
                               user.pedidos.reduce(
                                 (sum, pedido) =>
@@ -462,7 +512,8 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
                         }}
                         onRowClick={handlers.onView}
                         getRowAriaLabel={(pedido) =>
-                          `Ver detalle del pedido ${formatPedidoListNumber(pedido)}`
+                          t('pedidos.drawer.title') +
+                          ` ${formatPedidoListNumber(pedido)}`
                         }
                         renderActions={(pedido) =>
                           renderPedidoActions(pedido, permissions, handlers)

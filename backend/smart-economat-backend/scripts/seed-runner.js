@@ -4,6 +4,8 @@ const { existsSync } = require('node:fs');
 const { resolve } = require('node:path');
 const { spawnSync } = require('node:child_process');
 
+const NPX = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+
 function runCommand(command, args) {
   const result = spawnSync(command, args, {
     stdio: 'inherit',
@@ -21,13 +23,13 @@ function runCommand(command, args) {
 
 function runSeed() {
   const cwd = process.cwd();
-  const tsNodeBin = resolve(cwd, 'node_modules/.bin/ts-node');
   const tsCliPath = resolve(cwd, 'src/seeders/seed.cli.ts');
   const distCliPath = resolve(cwd, 'dist/seeders/seed.cli.js');
   const passthroughArgs = process.argv.slice(2);
 
-  if (existsSync(tsNodeBin) && existsSync(tsCliPath)) {
-    runCommand(tsNodeBin, [
+  if (existsSync(tsCliPath)) {
+    runCommand(NPX, [
+      'ts-node',
       '-r',
       'tsconfig-paths/register',
       '-r',

@@ -89,6 +89,26 @@ export class MovimientoHelper {
   }
 
   /**
+   * Helper to create movement for product restoration
+   */
+  async trackProductoRestore(
+    userId: string,
+    productoId: string,
+    descripcion?: string
+  ) {
+    return this.createMovimiento(
+      userId,
+      TipoMovimiento.ENTRADA,
+      'Producto',
+      productoId,
+      0,
+      undefined,
+      undefined,
+      descripcion || `Restauración de producto ${productoId}`
+    );
+  }
+
+  /**
    * Helper to create movement for product deletion
    */
   async trackProductoDeletion(

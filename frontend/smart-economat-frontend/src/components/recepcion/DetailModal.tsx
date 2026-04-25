@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -18,25 +19,56 @@ import FiberNewIcon from '@mui/icons-material/FiberNew';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
+/**
+ * The category of detail information to display inside {@link DetailModal}.
+ * - `'movimientos'` — warehouse movement summary with a link to the movement log.
+ * - `'inventarios'` — physical inventory entries with a link to the inventory module.
+ * - `'nuevos_productos'` — list of spontaneously created products from unknown barcodes.
+ */
 export type DetailType =
   | 'movimientos'
   | 'inventarios'
   | 'nuevos_productos'
   | null;
 
+/**
+ * Props for the recepcion {@link DetailModal} component.
+ */
 interface DetailModalProps {
+  /** Whether the dialog is open. */
   open: boolean;
+  /** Which category of detail to display. */
   type: DetailType;
+  /** Reception result data used to populate the dialog content. */
   resultado: RecepcionResultado | null;
+  /** Callback to close the dialog. */
   onClose: () => void;
 }
 
+/**
+ * Detail dialog for a completed goods reception.
+ *
+ * Renders contextual information about a reception result depending on the
+ * `type` prop: warehouse movements, new inventory entries, or spontaneously
+ * created products. Returns `null` when `resultado` is not provided.
+ *
+ * @param props - See {@link DetailModalProps}.
+ * @returns JSX element with a MUI `Dialog`, or `null` if `resultado` is absent.
+ * @example
+ * <DetailModal
+ *   open={isOpen}
+ *   type="movimientos"
+ *   resultado={recepcionResultado}
+ *   onClose={handleClose}
+ * />
+ */
 const DetailModal: React.FC<DetailModalProps> = ({
   open,
   type,
   resultado,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   if (!resultado) return null;
@@ -47,12 +79,12 @@ const DetailModal: React.FC<DetailModalProps> = ({
         return (
           <Box>
             <Alert severity="info" sx={{ mb: 2 }}>
-              Se registraron <strong>{resultado.movimientosGenerados}</strong>{' '}
-              movimientos de almacén de tipo Entrada.
+              {t('recepcionDetail.movementsRegistered', {
+                count: resultado.movimientosGenerados,
+              })}
             </Alert>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              * El detalle individual de cada movimiento está consolidado en el
-              historial general del módulo de Inventario.
+              {t('recepcionDetail.movementsNote')}
             </Typography>
             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
               <Button
@@ -64,7 +96,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
                   navigate('/inventario/movimientos');
                 }}
               >
-                Ver Historial de Movimientos
+                {t('recepcionDetail.viewHistory')}
               </Button>
             </Box>
           </Box>
@@ -73,12 +105,12 @@ const DetailModal: React.FC<DetailModalProps> = ({
         return (
           <Box>
             <Alert severity="success" sx={{ mb: 2 }}>
-              Se registraron <strong>{resultado.inventariosCreados}</strong>{' '}
-              nuevas entradas en el inventario físico.
+              {t('recepcionDetail.entriesRegistered', {
+                count: resultado.inventariosCreados,
+              })}
             </Alert>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              * Las nuevas unidades ya están disponibles para su consumo y
-              asignación en órdenes de trabajo.
+              {t('recepcionDetail.entriesNote')}
             </Typography>
             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
               <Button
@@ -90,7 +122,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
                   navigate('/inventario');
                 }}
               >
-                Ver Inventario
+                {t('recepcionDetail.viewInventory')}
               </Button>
             </Box>
           </Box>
@@ -104,8 +136,9 @@ const DetailModal: React.FC<DetailModalProps> = ({
               sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
             >
               <FiberNewIcon color="primary" />{' '}
-              {resultado.productosCreados.length} Productos Desconocidos
-              Añadidos
+              {t('recepcionDetail.unknownProductsAdded', {
+                count: resultado.productosCreados.length,
+              })}
             </Typography>
             <List
               sx={{
@@ -123,7 +156,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
                     secondary={
                       prod.codigoBarras
                         ? `EAN/ID: ${prod.codigoBarras}`
-                        : 'Sin código asignado'
+                        : t('recepcionDetail.noCode')
                     }
                   />
                 </ListItem>
@@ -140,17 +173,17 @@ const DetailModal: React.FC<DetailModalProps> = ({
     if (type === 'movimientos')
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <SwapHorizIcon /> Detalles de Movimientos
+          <SwapHorizIcon /> {t('recepcionDetail.movementsTitle')}
         </Box>
       );
     if (type === 'inventarios')
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <InventoryIcon /> Entradas de Inventario
+          <InventoryIcon /> {t('recepcionDetail.entriesTitle')}
         </Box>
       );
-    if (type === 'nuevos_productos') return 'Productos Creados (Espontáneos)';
-    return 'Detalle de Recepción';
+    if (type === 'nuevos_productos') return t('recepcionDetail.createdTitle');
+    return t('recepcionDetail.detailTitle');
   };
 
   return (
@@ -159,7 +192,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
       <DialogContent dividers>{renderContent()}</DialogContent>
       <DialogActions>
         <Button onClick={onClose} variant="contained" color="primary">
-          Cerrar
+          {t('recepcionDetail.close')}
         </Button>
       </DialogActions>
     </Dialog>

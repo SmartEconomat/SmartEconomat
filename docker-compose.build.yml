@@ -1,0 +1,35 @@
+name: smarteconomat-build
+
+# ============================================================================
+# docker-compose.build.yml — USO EXCLUSIVO DEL DESARROLLADOR
+# ============================================================================
+# Este fichero mantiene los bloques build: originales para que el equipo
+# de desarrollo pueda construir las imágenes localmente y publicarlas.
+#
+# NO se usa en el instalador del cliente (docker-compose.prod.yml no tiene build:).
+#
+# Uso típico:
+#   docker compose -f docker-compose.build.yml build
+#   docker compose -f docker-compose.build.yml push
+# ============================================================================
+
+services:
+  db:
+    build:
+      context: ./database
+      dockerfile: Dockerfile
+    image: smarteconomat-db:prod
+
+  backend:
+    build:
+      context: ./backend/smart-economat-backend
+      dockerfile: ../Dockerfile.prod
+    image: smarteconomat-backend:prod
+
+  frontend:
+    build:
+      context: ./frontend/smart-economat-frontend
+      dockerfile: ../Dockerfile.prod
+      args:
+        - VITE_SENTRY_DSN=${VITE_SENTRY_DSN:-}
+    image: smarteconomat-frontend:prod

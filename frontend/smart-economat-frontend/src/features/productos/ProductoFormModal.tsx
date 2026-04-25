@@ -19,20 +19,34 @@ import { useToast } from '../../store/toast.hooks';
 
 // ── Base schema ────────────────────────────────────────────────────────
 
+// Estructura de campos para el formulario de producto
 const productoBaseSchema: DynamicField[] = [
-  { name: 'nombre', label: 'Nombre Comercial', required: true },
-  { name: 'marca', label: 'Marca' },
-  { name: 'descripcion', label: 'Descripción' },
+  // --- Bloque Superior (Junto a Imagen) ---
+  { name: 'nombre', label: 'Nombre Comercial', required: true, width: 8 },
+  { name: 'marca', label: 'Fabricante / Marca Genérica', width: 4 },
+  {
+    name: 'descripcion',
+    label: 'Descripción',
+    type: 'textarea',
+    width: 12,
+    maxLength: 500,
+  },
+
+  // --- Bloque Técnico (Fila de Datos) ---
   {
     name: 'contenido',
     label: 'Contenido Numérico',
     type: 'number',
     required: true,
+    width: 4,
+    defaultValue: 1,
+    position: 'bottom',
   },
   {
     name: 'unidad',
     label: 'Unidad de Medida',
     type: 'select',
+    required: true,
     options: [
       { value: UnidadMedida.KG, label: 'Kg' },
       { value: UnidadMedida.G, label: 'Gramo' },
@@ -41,8 +55,9 @@ const productoBaseSchema: DynamicField[] = [
       { value: UnidadMedida.UNIDAD, label: 'Unidad' },
       { value: UnidadMedida.PAQ, label: 'Paquete' },
     ],
-    required: true,
     width: 4,
+    defaultValue: UnidadMedida.UNIDAD,
+    position: 'bottom',
   },
   {
     name: 'tipo',
@@ -66,8 +81,19 @@ const productoBaseSchema: DynamicField[] = [
       { value: CategoriaProducto.BEBIDA, label: 'Bebida' },
       { value: CategoriaProducto.OTRO, label: 'Otro' },
     ],
+    position: 'bottom',
   },
-  { name: 'codigoBarras', label: 'Código de Barras', type: 'barcode' },
+
+  // --- Bloque Código de Barras (Línea Sola) ---
+  {
+    name: 'codigoBarras',
+    label: 'EAN Maestro / Global',
+    type: 'barcode',
+    width: 12,
+    position: 'bottom',
+  },
+
+  // --- Media y Otros ---
   {
     name: 'imagen',
     label: 'Cargar Imagen',
@@ -108,6 +134,18 @@ export type ProductoFormModalProps = Pick<
   title?: DynamicFormModalProps['title'];
 };
 
+/**
+ * @description Dynamic form modal for creating or editing a Producto.
+ * Loads available proveedores on mount, fetches OpenFoodFacts product data when a barcode is entered,
+ * supports EAN-13 generation (permission-gated), and builds a category-aware dynamic field schema.
+ * @param props.isOpen - Whether the modal should be visible
+ * @param props.onClose - Callback invoked when the user closes the modal
+ * @param props.initialData - Pre-populated form values for editing mode; empty object for creation
+ * @param props.onSubmit - Callback invoked with validated form data when the user submits
+ * @param props.isSubmitting - Whether a submit operation is in progress
+ * @param props.title - Optional modal title (defaults to 'Nuevo Producto' or 'Editar Producto')
+ * @returns DynamicFormModal configured for the producto domain
+ */
 const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
   isOpen,
   onClose,
@@ -121,12 +159,17 @@ const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
   const canGenerateEan13 = usePermission(PERMISSIONS.productos.generar_ean13);
   const toast = useToast();
 
-  useEffect(() => {
-    if (!isOpen) return;
-    fetchProveedores(1, 50)
+  const loadProveedores = useCallback(() => {
+    fetchProveedores(1, 100) // Aumentamos un poco el límite para asegurarnos de que el nuevo aparezca
       .then((resp) => setProveedores(resp.data))
       .catch(() => setProveedores([]));
-  }, [isOpen]);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadProveedores();
+    }
+  }, [isOpen, loadProveedores]);
 
   const dynamicSchema = React.useMemo(() => {
     const schema = [...productoBaseSchema];
@@ -183,6 +226,7 @@ const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
           : 'Crear Nuevo Producto')
       }
       size="lg"
+      submitLabel={isEditing ? 'Guardar Cambios' : 'Crear Producto'}
       fields={dynamicSchema}
       initialData={initialData}
       onSubmit={onSubmit}

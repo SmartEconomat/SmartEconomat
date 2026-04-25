@@ -25,6 +25,7 @@ import {
   formatBatchReference,
   formatPedidoId,
 } from '../utils/pedidoFormatters';
+import { useTranslation } from 'react-i18next';
 
 interface PurchaseBatchDetailModalProps {
   detail: PedidoBatchDetail | null;
@@ -38,6 +39,20 @@ interface PurchaseBatchDetailModalProps {
   onRecepcion?: (batch: PurchaseBatch) => void;
 }
 
+/**
+ * @description Detail modal for a PedidoBatchDetail (either a PedidoUsuario or a PurchaseBatch).
+ * Shows product lines, batch metadata, and conditional action buttons (approve, cancel, edit, reception, PDF).
+ * @param props.detail - The batch/pedido detail to display, or null when the modal is closed
+ * @param props.canEdit - Whether the edit action should be available
+ * @param props.canApprove - Whether the approve action should be available
+ * @param props.canCancel - Whether the cancel action should be available
+ * @param props.onClose - Callback invoked when the modal is dismissed
+ * @param props.onEdit - Optional callback invoked when the user clicks edit
+ * @param props.onApprove - Optional callback invoked when the user approves
+ * @param props.onCancel - Optional callback invoked when the user cancels
+ * @param props.onRecepcion - Optional callback invoked when the user initiates reception
+ * @returns DetailModal with batch information and context-sensitive action buttons
+ */
 const PurchaseBatchDetailModal: React.FC<PurchaseBatchDetailModalProps> = ({
   detail,
   canEdit = false,
@@ -50,6 +65,7 @@ const PurchaseBatchDetailModal: React.FC<PurchaseBatchDetailModalProps> = ({
   onRecepcion,
 }) => {
   const toast = useToast();
+  const { t } = useTranslation();
   const [isDownloadingPdf, setIsDownloadingPdf] = React.useState(false);
   const [isPrintingPdf, setIsPrintingPdf] = React.useState(false);
   const batch = detail?.data ?? null;
@@ -75,7 +91,7 @@ const PurchaseBatchDetailModal: React.FC<PurchaseBatchDetailModalProps> = ({
       toast.error(
         error instanceof Error
           ? error.message
-          : 'No se pudo descargar el PDF del lote.'
+          : t('pedidos.batchDetail.downloadError')
       );
     } finally {
       setIsDownloadingPdf(false);
@@ -96,7 +112,7 @@ const PurchaseBatchDetailModal: React.FC<PurchaseBatchDetailModalProps> = ({
       toast.error(
         error instanceof Error
           ? error.message
-          : 'No se pudo abrir la impresión del PDF del lote.'
+          : t('pedidos.batchDetail.printError')
       );
     } finally {
       setIsPrintingPdf(false);
@@ -108,15 +124,17 @@ const PurchaseBatchDetailModal: React.FC<PurchaseBatchDetailModalProps> = ({
       isOpen={!!detail}
       onClose={onClose}
       title={
-        isPedidoUsuarioDetail ? 'Detalle del pedido' : 'Detalle de la compra'
+        isPedidoUsuarioDetail
+          ? t('pedidos.batchDetail.orderTitle')
+          : t('pedidos.batchDetail.purchaseTitle')
       }
       subtitle={
         batch
           ? isPedidoUsuarioDetail &&
             'numeroGlobal' in batch &&
             batch.numeroGlobal
-            ? `Pedido #${batch.numeroGlobal}`
-            : `Lote #${formatBatchNumber(batch as PurchaseBatch)} · ${formatBatchReference(batch as PurchaseBatch) || `ID ${formatPedidoId(batch.id)}`}`
+            ? `${t('pedidos.batchDetail.orderPrefix')}${batch.numeroGlobal}`
+            : `${t('pedidos.batchDetail.batchPrefix')}${formatBatchNumber(batch as PurchaseBatch)} · ${formatBatchReference(batch as PurchaseBatch) || `ID ${formatPedidoId(batch.id)}`}`
           : undefined
       }
       size="lg"
@@ -140,7 +158,9 @@ const PurchaseBatchDetailModal: React.FC<PurchaseBatchDetailModalProps> = ({
                 onClick={() => void handleDownloadPdf()}
                 disabled={isDownloadingPdf || isPrintingPdf}
               >
-                {isDownloadingPdf ? 'Descargando...' : 'Descargar PDF'}
+                {isDownloadingPdf
+                  ? t('pedidos.batchDetail.downloading')
+                  : t('pedidos.batchDetail.downloadPdf')}
               </Button>
               <Button
                 variant="outlined"
@@ -149,7 +169,9 @@ const PurchaseBatchDetailModal: React.FC<PurchaseBatchDetailModalProps> = ({
                 onClick={() => void handlePrintPdf()}
                 disabled={isPrintingPdf || isDownloadingPdf}
               >
-                {isPrintingPdf ? 'Preparando impresión...' : 'Imprimir PDF'}
+                {isPrintingPdf
+                  ? t('pedidos.batchDetail.preparing')
+                  : t('pedidos.batchDetail.printPdf')}
               </Button>
             </Stack>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
@@ -163,7 +185,7 @@ const PurchaseBatchDetailModal: React.FC<PurchaseBatchDetailModalProps> = ({
                     startIcon={<CheckIcon />}
                     onClick={() => detail && onApprove(detail)}
                   >
-                    Aprobar pedido
+                    {t('pedidos.batchDetail.approvePedido')}
                   </Button>
                 )}
               {isPedidoUsuarioDetail &&
@@ -176,7 +198,7 @@ const PurchaseBatchDetailModal: React.FC<PurchaseBatchDetailModalProps> = ({
                     startIcon={<CancelIcon />}
                     onClick={() => detail && onCancel(detail)}
                   >
-                    Cancelar pedido
+                    {t('pedidos.batchDetail.cancelPedido')}
                   </Button>
                 )}
               {canEdit && onEdit && isPendingState && (
@@ -186,7 +208,9 @@ const PurchaseBatchDetailModal: React.FC<PurchaseBatchDetailModalProps> = ({
                   disableElevation
                   onClick={() => detail && onEdit(detail)}
                 >
-                  {isPedidoUsuarioDetail ? 'Editar pedido' : 'Editar compra'}
+                  {isPedidoUsuarioDetail
+                    ? t('pedidos.batchDetail.editPedido')
+                    : t('pedidos.batchDetail.editCompra')}
                 </Button>
               )}
               {!isPedidoUsuarioDetail && onRecepcion && batch && (
@@ -197,7 +221,7 @@ const PurchaseBatchDetailModal: React.FC<PurchaseBatchDetailModalProps> = ({
                   startIcon={<LoginOutlinedIcon />}
                   onClick={() => onRecepcion(batch as PurchaseBatch)}
                 >
-                  Recepción
+                  {t('pedidos.batchDetail.recepcion')}
                 </Button>
               )}
             </Stack>

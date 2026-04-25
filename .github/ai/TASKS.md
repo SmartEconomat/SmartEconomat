@@ -13,3 +13,11 @@
 - sin requests fuera de contrato en el flujo afectado;
 - sin lógica API duplicada en componentes;
 - con verificación de testing y validación contractual completada.
+
+## Tareas completadas (Abril 2026) ✅
+
+- [x] **Elasticidad del Catálogo**: Implementación del campo `precioReferencia` en la entidad `Producto` y DTOs para permitir productos sin proveedores inmediatos.
+- [x] **Automatización de Costes**: Lógica de sincronización `PMP` -> `precioReferencia` en el backend para mantener costes maestros actualizados.
+- [x] **Rediseño UX de Productos**: Nuevo layout de formulario responsivo con imagen lateral, alineación vertical centrada y fila técnica optimizada.
+- [x] **Limpieza de UI**: Implementación de visibilidad condicionada de precios y avisos de suministro ("Sin Prov.") en tablas y tarjetas.
+- [x] **Estabilidad de Entorno**: Sincronización manual de esquema de BD ante fallos de entorno.

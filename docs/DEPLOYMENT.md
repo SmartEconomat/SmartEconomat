@@ -34,12 +34,12 @@ Esta es la guía canónica de despliegue para SmartEconomat. Describe el comport
 | Variable | Uso |
 | --- | --- |
 | `DOMAIN` | Dominio base del despliegue |
-| `BACKEND_API_URL` | URL pública esperada para el backend |
-| `FRONTEND_API_URL` | URL pública del frontend |
+| `URL_BACKEND_DERIVADA` | URL pública esperada para el backend |
+| `URL_FRONTEND_DERIVADA` | URL pública del frontend |
 | `POSTGRES_USER` | Usuario de PostgreSQL |
 | `POSTGRES_PASSWORD` | Contraseña de PostgreSQL |
-| `POSTGRES_DB` | Base de datos principal |
-| `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE` | Configuración efectiva de TypeORM |
+| `POSTGRES_DB` | Nombre de base de datos único (fuente de verdad) |
+| `DB_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | Configuración efectiva de TypeORM |
 | `JWT_SECRET` | Secreto de firma JWT |
 | `JWT_EXPIRATION` | Expiración del token |
 | `TLS_PROVIDER` | Proveedor TLS del script (`selfsigned` por defecto, `letsencrypt` opcional) |
@@ -47,7 +47,7 @@ Esta es la guía canónica de despliegue para SmartEconomat. Describe el comport
 | `LETSENCRYPT_EMAIL` | Email para registro en Let's Encrypt (solo si `TLS_PROVIDER=letsencrypt`) |
 | `LETSENCRYPT_DIRECTORY_URL` | Endpoint ACME de Let's Encrypt (`prod` o `staging`, solo para deploy script) |
 
-Variables opcionales frecuentes: `SENTRY_DSN`, `VITE_SENTRY_DSN`, `VITE_API_PROXY_TARGET`.
+Variables opcionales frecuentes: `SENTRY_DSN`, `VITE_SENTRY_DSN`, `VITE_PROXY_DERIVADO`.
 
 ## Opción recomendada: despliegue automatizado
 

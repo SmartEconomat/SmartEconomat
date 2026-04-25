@@ -11,6 +11,14 @@ import { UpdateHistorialPrecioDto } from '../dto/historial-precio.dto/update-his
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { DataSource } from 'typeorm';
 
+/**
+ * CRUD service for supplier price history entries.
+ *
+ * Every create/update/delete operation automatically syncs the
+ * `precioUnitario` field on the parent {@link ProductoProveedor} to the most
+ * recent active history record, keeping the denormalised price up-to-date.
+ * All writes run inside a TypeORM transaction.
+ */
 @Injectable()
 export class HistorialPrecioService {
   constructor(

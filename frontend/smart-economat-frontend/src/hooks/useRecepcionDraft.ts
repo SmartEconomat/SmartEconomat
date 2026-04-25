@@ -42,6 +42,39 @@ function extractRemoteDraft(error: ApiError): RecepcionDraftEnvelope | null {
   return payload.error?.draft ?? null;
 }
 
+/**
+ * Hook that manages a server-persisted draft for the goods reception wizard.
+ *
+ * On mount it optionally fetches an existing draft and resumes the wizard at
+ * the saved step (`autoResume`). While the user fills in data, changes are
+ * auto-saved to the backend after a configurable debounce window. Optimistic
+ * conflict resolution: when the server returns a 409, the hook surfaces a
+ * `conflict` payload so the caller can prompt the user to choose between local
+ * and remote versions.
+ *
+ * @param options.activeStep - Index of the current wizard step (controlled externally)
+ * @param options.autoResume - When `true`, automatically restores the saved step on mount
+ * @param options.debounceMs - Debounce delay in milliseconds for auto-save (default 2000)
+ * @param options.defaultDraft - Factory function returning the empty initial draft state
+ * @param options.setActiveStep - Setter to advance/restore the wizard step
+ *
+ * @returns
+ *   - `draft` / `setDraftField` / `resetDraft` — draft state management
+ *   - `syncStatus` — `'idle' | 'saving' | 'synced' | 'error' | 'conflict'`
+ *   - `syncError` — error message when `syncStatus === 'error'`
+ *   - `isReady` — `true` once the initial fetch has completed
+ *   - `conflict` — `{ remoteDraft, localDraft }` when a version conflict is detected
+ *   - `resolveConflict` — call with `'local'` or `'remote'` to resolve the conflict
+ *   - `discardDraft` — deletes the server-side draft and resets to default state
+ *   - `pendingRecoveryDraft` / `confirmRestore` / `cancelRestore` — opt-in resume flow
+ *
+ * @example
+ * const { draft, setDraftField, syncStatus, discardDraft } = useRecepcionDraft({
+ *   activeStep,
+ *   setActiveStep,
+ *   defaultDraft: () => defaultRecepcionDraft(batchId),
+ * });
+ */
 export function useRecepcionDraft({
   activeStep,
   autoResume = false,
